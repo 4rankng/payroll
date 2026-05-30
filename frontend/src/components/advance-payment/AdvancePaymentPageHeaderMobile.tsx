@@ -13,12 +13,15 @@ interface AdvancePaymentPageHeaderMobileProps {
   onImportPayroll: () => void;
   onViewEmployees: () => void;
   overflowContent?: ReactNode;
+  /** Render-prop variant — receives close() so overflow actions can dismiss the sheet. */
+  renderOverflowContent?: (close: () => void) => ReactNode;
 }
 
 export function AdvancePaymentPageHeaderMobile({
   onImportPayroll,
   onViewEmployees,
   overflowContent,
+  renderOverflowContent,
 }: AdvancePaymentPageHeaderMobileProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -69,7 +72,7 @@ export function AdvancePaymentPageHeaderMobile({
             </SheetHeader>
 
             <div className="space-y-0.5">
-              {overflowContent}
+              {renderOverflowContent ? renderOverflowContent(close) : overflowContent}
             </div>
 
             <div className="flex justify-center pt-3 pb-1">

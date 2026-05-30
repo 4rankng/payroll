@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface MobileOverflowActionProps {
@@ -21,9 +22,13 @@ export function MobileOverflowAction({
       variant="ghost"
       className="w-full justify-start gap-3 h-12 px-2"
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
     >
-      <Icon className={`h-5 w-5 text-muted-foreground shrink-0${isLoading ? " animate-spin" : ""}`} />
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 text-muted-foreground shrink-0 animate-spin" />
+      ) : (
+        <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+      )}
       <span className="text-sm font-medium">{label}</span>
     </Button>
   );

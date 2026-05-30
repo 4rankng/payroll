@@ -108,12 +108,12 @@ const AdvancePaymentsPageMobile = () => {
       <AdvancePaymentPageHeaderMobile
         onImportPayroll={() => setIsImportSheetOpen(true)}
         onViewEmployees={() => navigate("employees")}
-        overflowContent={
+        renderOverflowContent={(close) => (
           <>
             <MobileOverflowAction
               icon={FileDown}
               label="Chuyển lô"
-              onClick={() => { exportBatchMutation.mutate(undefined); }}
+              onClick={() => { exportBatchMutation.mutate(undefined); close(); }}
               disabled={exportBatchMutation.isPending}
               isLoading={exportBatchMutation.isPending}
             />
@@ -121,18 +121,18 @@ const AdvancePaymentsPageMobile = () => {
               <MobileOverflowAction
                 icon={ArrowRightLeft}
                 label="Nhập KQ"
-                onClick={() => setIsResultUploadOpen(true)}
+                onClick={() => { setIsResultUploadOpen(true); close(); }}
               />
             )}
             <MobileOverflowAction
               icon={FileText}
               label="Sao kê"
-              onClick={() => setIsStatementSheetOpen(true)}
+              onClick={() => { setIsStatementSheetOpen(true); close(); }}
             />
             <MobileOverflowAction
               icon={Mail}
               label="Email sao kê"
-              onClick={() => setIsEmailDialogOpen(true)}
+              onClick={() => { setIsEmailDialogOpen(true); close(); }}
               disabled={sendEmailMutation.isPending}
               isLoading={sendEmailMutation.isPending}
             />
@@ -141,11 +141,11 @@ const AdvancePaymentsPageMobile = () => {
               <MobileOverflowAction
                 icon={History}
                 label="Lịch sử file"
-                onClick={() => setIsHistorySheetOpen(true)}
+                onClick={() => { setIsHistorySheetOpen(true); close(); }}
               />
             )}
           </>
-        }
+        )}
       />
 
       {/* Month selector */}

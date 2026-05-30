@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { TimesheetFilters } from "@/components/timesheet/TimesheetFilters";
 import { TimesheetListTable } from "@/components/timesheet/TimesheetListTable";
 import { TimesheetMobileList } from "@/components/timesheet/TimesheetMobileList";
+import { TimesheetProvider } from "@/components/timesheet/TimesheetContext";
 import { EditRequestTable } from "@/components/timesheet/EditRequestTable";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
@@ -506,74 +507,28 @@ export default function TimesheetsPage() {
         <MissingBankDetailsSection />
 
         {/* Filters + Table */}
-        <div className="space-y-3">
-          <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-            <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2">
-              <TimesheetFilters
-                selectedMonth={timesheetManagement.selectedMonth}
-                onMonthChange={timesheetManagement.setSelectedMonth}
-                selectedProject={timesheetManagement.selectedProject}
-                onProjectChange={timesheetManagement.setSelectedProject}
-                selectedEmployee={timesheetManagement.selectedEmployee}
-                onEmployeeChange={timesheetManagement.setSelectedEmployee}
-                statusFilter={timesheetManagement.statusFilter}
-                onStatusChange={timesheetManagement.setStatusFilter}
-                projects={timesheetManagement.projects}
-                projectEmployees={timesheetManagement.projectEmployees}
-                searchTerm={timesheetManagement.searchTerm}
-                onSearchChange={timesheetManagement.setSearchTerm}
-                userRole="partner"
-              />
+        <TimesheetProvider
+          management={timesheetManagement}
+          onEdit={timesheetManagement.handleEdit}
+          onDelete={handleDelete}
+          userRole="partner"
+          onRequestEdit={handleRequestEdit}
+          requestingTimesheetId={requestingTimesheetId}
+          bulkTransferPercentage={bulkTransferPercentage}
+          onExportExcel={() => timesheetManagement.handleExportExcel()}
+        >
+          <div className="space-y-3">
+            <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
+              <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2">
+                <TimesheetFilters />
+              </div>
+            </div>
+
+            <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+              {isMobile ? <TimesheetMobileList /> : <TimesheetListTable />}
             </div>
           </div>
-
-          <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
-            {isMobile ? (
-              <TimesheetMobileList
-                timesheets={timesheetManagement.timesheets}
-                isLoading={timesheetManagement.isLoading}
-                error={timesheetManagement.error}
-                onView={timesheetManagement.handleView}
-                onEdit={timesheetManagement.handleEdit}
-                onApprove={() => {}}
-                onReject={() => {}}
-                onDelete={handleDelete}
-                canDelete={timesheetManagement.canDeleteTimesheet}
-                onExportExcel={timesheetManagement.handleExportExcel}
-                isExportLoading={timesheetManagement.isLoading}
-                bulkTransferPercentage={bulkTransferPercentage}
-                pagination={timesheetManagement.paginationInfo}
-                onPageChange={timesheetManagement.handlePageChange}
-                onPageSizeChange={timesheetManagement.handlePageSizeChange}
-                onRequestEdit={handleRequestEdit}
-                requestingTimesheetId={requestingTimesheetId}
-              />
-            ) : (
-              <TimesheetListTable
-                timesheets={timesheetManagement.timesheets}
-                isLoading={timesheetManagement.isLoading}
-                error={timesheetManagement.error}
-                onView={timesheetManagement.handleView}
-                onEdit={timesheetManagement.handleEdit}
-                onApprove={() => {}}
-                onReject={() => {}}
-                onDelete={handleDelete}
-                canDelete={timesheetManagement.canDeleteTimesheet}
-                onExportExcel={timesheetManagement.handleExportExcel}
-                isExportLoading={timesheetManagement.isLoading}
-                bulkTransferPercentage={bulkTransferPercentage}
-                pagination={timesheetManagement.paginationInfo}
-                onPageChange={timesheetManagement.handlePageChange}
-                onPageSizeChange={timesheetManagement.handlePageSizeChange}
-                sorting={timesheetManagement.sorting}
-                onSortingChange={timesheetManagement.setSorting}
-                onRequestEdit={handleRequestEdit}
-                requestingTimesheetId={requestingTimesheetId}
-                userRole="partner"
-              />
-            )}
-          </div>
-        </div>
+        </TimesheetProvider>
 
       </div>
 

@@ -42,7 +42,7 @@ export function TimesheetListTable() {
         showErrorNotification(err);
       });
     },
-    [actions, handleEntryModalClose],
+    [actions.requestEdit, handleEntryModalClose],
   );
 
   return (

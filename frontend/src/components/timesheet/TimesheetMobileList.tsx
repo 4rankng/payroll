@@ -38,7 +38,7 @@ export function TimesheetMobileList() {
   const handleRequestEditWithClose = useCallback((timesheet: Timesheet) => {
     if (!actions.requestEdit) return;
     void Promise.resolve(actions.requestEdit(timesheet, handleEntryModalClose)).catch((error) => { showErrorNotification(error); });
-  }, [actions, handleEntryModalClose]);
+  }, [actions.requestEdit, handleEntryModalClose]);
 
   const getRequestEditHandler = useCallback((timesheet: Timesheet) => {
     if (!actions.requestEdit) return undefined;
@@ -46,7 +46,7 @@ export function TimesheetMobileList() {
       event.stopPropagation();
       void Promise.resolve(actions.requestEdit(timesheet)).catch((error) => { showErrorNotification(error); });
     };
-  }, [actions]);
+  }, [actions.requestEdit]);
 
   const toggleGroup = useCallback((key: string) => {
     setExpandedGroups(prev => {
