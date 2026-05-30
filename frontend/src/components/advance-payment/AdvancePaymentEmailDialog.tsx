@@ -1,0 +1,307 @@
+import { useState, memo, useCallback, useMemo, useEffect } from 'react';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Mail, Loader2, AlertCircle, X, Plus, FileSpreadsheet } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { formatMonthDisplay } from '@/utils/advancePaymentHelpers';
+import { apiClient } from '@/services/api/client';
+import { API_ENDPOINTS } from '@/config/api.config';
+import { getErrorMessage } from '@/utils/error-handler';
+import { DEFAULT_SAOKE_RECIPIENTS, DEFAULT_SAOKE_CC } from '@/constants/emailDefaults';
+
+// ── Types ──────────────────────────────────────────────────────────────
+
+export interface AdvancePaymentEmailParams {
+  forMonth: string;
+  recipients: string[];
+  cc: string[];
+}
+
+interface AdvancePaymentEmailDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSendEmail: (params: AdvancePaymentEmailParams) => void;
+  isLoading?: boolean;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+const DEFAULT_RECIPIENTS = [...DEFAULT_SAOKE_RECIPIENTS];
+const DEFAULT_CC = [...DEFAULT_SAOKE_CC];
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+function generateMonthOptions(count: number) {
+  const options: { value: string; label: string }[] = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    options.push({ value, label: formatMonthDisplay(value) });
+  }
+  return options;
+}
+
+function getDefaultMonth(monthOptions: { value: string }[]) {
+  const currentDay = new Date().getDate();
+  const defaultIndex = currentDay <= 8 ? 1 : 0;
+  return monthOptions[defaultIndex]?.value || '';
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────
+
+const Tag = memo(function Tag({ email, onRemove, primary }: { email: string; onRemove: () => void; primary?: boolean }) {
+  return (
+    <span className={cn(
+      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border',
+      primary ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border',
+    )}>
+      <span className="max-w-[150px] truncate">{email}</span>
+      <button type="button" onClick={onRemove} className="rounded-full p-0.5 hover:opacity-70">
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </span>
+  );
+});
+
+interface EmailColProps {
+  label: string;
+  sublabel: string;
+  placeholder: string;
+  value: string;
+  emails: string[];
+  error: string;
+  primary?: boolean;
+  onChange: (v: string) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+}
+
+const EmailCol = memo(function EmailCol({ label, sublabel, placeholder, value, emails, error, primary, onChange, onAdd, onRemove, onKeyDown }: EmailColProps) {
+  return (
+    <div className="flex flex-col gap-1.5 min-w-0">
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-semibold">{label}</span>
+        <span className="text-xs text-muted-foreground">{sublabel}</span>
+        <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground tabular-nums">{emails.length}</span>
+      </div>
+      <div className="flex gap-1.5">
+        <Input
+          type="email"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          className={cn('h-7 text-xs', error && 'border-destructive')}
+        />
+        <Button type="button" onClick={onAdd} size="icon" variant="outline" className="h-7 w-7 shrink-0 border-dashed">
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
+      {error && <p className="flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" />{error}</p>}
+      <div className={cn(
+        'flex flex-wrap gap-1 rounded-xl border border-border/50 bg-muted/30 px-2 py-1.5 min-h-[32px]',
+        emails.length === 0 && 'opacity-40',
+      )}>
+        {emails.length === 0
+          ? <span className="text-xs text-muted-foreground italic">Chưa có</span>
+          : emails.map((e, i) => <Tag key={i} email={e} onRemove={() => onRemove(i)} primary={primary} />)
+        }
+      </div>
+    </div>
+  );
+});
+
+// ── Main Component ─────────────────────────────────────────────────────
+
+export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog({
+  open,
+  onOpenChange,
+  onSendEmail,
+  isLoading = false,
+}: AdvancePaymentEmailDialogProps) {
+  const monthOptions = useMemo(() => generateMonthOptions(4), []);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [recipients, setRecipients] = useState<string[]>([]);
+  const [cc, setCc] = useState<string[]>([]);
+  const [curTo, setCurTo] = useState('');
+  const [curCc, setCurCc] = useState('');
+  const [toErr, setToErr] = useState('');
+  const [ccErr, setCcErr] = useState('');
+  const [attempted, setAttempted] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setSelectedMonth(getDefaultMonth(monthOptions));
+      setRecipients(DEFAULT_RECIPIENTS);
+      setCc(DEFAULT_CC);
+      setCurTo('');
+      setCurCc('');
+      setToErr('');
+      setCcErr('');
+      setAttempted(false);
+      setPreviewError('');
+    }
+  }, [open, monthOptions]);
+
+  const canSend = useMemo(() => !!selectedMonth && recipients.length > 0, [selectedMonth, recipients.length]);
+
+  const add = useCallback((raw: string, list: string[], setList: (l: string[]) => void, setCur: (v: string) => void, setErr: (v: string) => void) => {
+    const v = raw.trim();
+    if (!v) { setErr('Không được để trống'); return; }
+    if (!isValidEmail(v)) { setErr('Email không hợp lệ'); return; }
+    if (list.includes(v)) { setErr('Đã tồn tại'); return; }
+    setList([...list, v]); setCur(''); setErr('');
+  }, []);
+
+  const remove = useCallback((i: number, list: string[], setList: (l: string[]) => void) => {
+    setList(list.filter((_, idx) => idx !== i));
+  }, []);
+
+  const handleSend = useCallback(() => {
+    setAttempted(true);
+    if (!canSend) return;
+    onSendEmail({ forMonth: selectedMonth, recipients, cc });
+  }, [canSend, selectedMonth, recipients, cc, onSendEmail]);
+
+  const handlePreview = useCallback(async () => {
+    if (!selectedMonth) return;
+    setIsPreviewing(true);
+    setPreviewError('');
+    try {
+      await apiClient.download(
+        `${API_ENDPOINTS.advancePayments.reconciliation.export}?forMonth=${selectedMonth}`,
+        `sao_ke_ung_luong_${selectedMonth}.xlsx`,
+      );
+    } catch (err) {
+      setPreviewError(getErrorMessage(err));
+    } finally {
+      setIsPreviewing(false);
+    }
+  }, [selectedMonth]);
+
+  const toErrMsg = toErr || (attempted && recipients.length === 0 ? 'Phải có ít nhất một người nhận' : '');
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-2xl p-0 gap-0 overflow-hidden sm:max-w-2xl max-w-[calc(100vw-1rem)]" hideCloseButton>
+
+        {/* Navy header with inline actions */}
+        <div className="bg-slate-900 px-4 pt-4 pb-3 text-white flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white leading-tight">Email Sao kê ứng lương</p>
+              <p className="text-xs text-slate-400 mt-0.5">Gửi báo cáo sao kê ứng lương tháng qua email</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-xs bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Hủy
+              </Button>
+              <Button
+                size="sm"
+                className="h-7 gap-1.5 px-3 text-xs bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                onClick={handleSend}
+                disabled={!canSend || isLoading}
+              >
+                {isLoading
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Đang gửi...</>
+                  : <><Mail className="h-3.5 w-3.5" />Gửi email</>}
+              </Button>
+              <DialogClose className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors outline-none">
+                <X className="w-3.5 h-3.5 text-white" />
+              </DialogClose>
+            </div>
+          </div>
+        </div>
+
+        {/* Body: Month | To | CC */}
+        <div className="flex flex-col sm:flex-row sm:divide-x sm:divide-border">
+
+          {/* Month selector column */}
+          <div className="flex flex-col gap-2 px-4 py-3 sm:w-48 sm:shrink-0 border-b sm:border-b-0">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tháng</p>
+            <div className="flex flex-wrap gap-1.5">
+              {monthOptions.map((month) => (
+                <button
+                  key={month.value}
+                  type="button"
+                  onClick={() => { setSelectedMonth(month.value); setPreviewError(''); }}
+                  className={cn(
+                    'h-8 px-3 rounded-xl text-sm font-medium border transition-colors',
+                    selectedMonth === month.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-foreground border-border hover:bg-muted',
+                  )}
+                >
+                  {month.label}
+                </button>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 w-full gap-1.5 text-xs"
+              onClick={handlePreview}
+              disabled={!selectedMonth || isPreviewing}
+            >
+              {isPreviewing
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <FileSpreadsheet className="h-3 w-3" />}
+              {isPreviewing ? 'Đang tải...' : 'Xem sao kê'}
+            </Button>
+            {previewError && (
+              <p className="flex items-center gap-1 text-xs text-destructive">
+                <AlertCircle className="h-3 w-3 shrink-0" />{previewError}
+              </p>
+            )}
+          </div>
+
+          {/* To + CC columns */}
+          <div className="flex flex-1 divide-x divide-border min-w-0">
+            <div className="flex-1 px-4 py-3 min-w-0">
+              <EmailCol
+                label="Người nhận"
+                sublabel="(bắt buộc)"
+                placeholder="email@domain.com"
+                value={curTo}
+                emails={recipients}
+                error={toErrMsg}
+                primary
+                onChange={(v) => { setCurTo(v); setToErr(''); }}
+                onAdd={() => add(curTo, recipients, setRecipients, setCurTo, setToErr)}
+                onRemove={(i) => remove(i, recipients, setRecipients)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(curTo, recipients, setRecipients, setCurTo, setToErr); } }}
+              />
+            </div>
+            <div className="flex-1 px-4 py-3 min-w-0">
+              <EmailCol
+                label="CC"
+                sublabel="(tùy chọn)"
+                placeholder="email@domain.com"
+                value={curCc}
+                emails={cc}
+                error={ccErr}
+                onChange={(v) => { setCurCc(v); setCcErr(''); }}
+                onAdd={() => add(curCc, cc, setCc, setCurCc, setCcErr)}
+                onRemove={(i) => remove(i, cc, setCc)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(curCc, cc, setCc, setCurCc, setCcErr); } }}
+              />
+            </div>
+          </div>
+        </div>
+
+      </DialogContent>
+    </Dialog>
+  );
+});

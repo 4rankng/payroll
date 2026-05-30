@@ -1,0 +1,95 @@
+# =============================
+# .dockerignore (optimized)
+# Goal: minimize build context while keeping only what's needed for Go build
+# =============================
+
+# --- VCS ---
+.git
+
+# --- Local env / secrets (never send into build context) ---
+.env
+.env.*
+
+# --- Editor / OS junk ---
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# --- Logs & temp ---
+*.log
+logs
+**/logs
+tmp
+temp
+*.tmp
+*.swp
+*.swo
+*~
+.cache
+**/.cache
+
+# --- Go build outputs & cache ---
+bin
+**/*.test
+**/*.out
+.gocache
+
+# --- Node / frontend (if present anywhere in repo) ---
+node_modules
+**/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist
+**/dist
+build
+**/build
+.next
+out
+coverage
+
+# --- Tests / fixtures (omit if not required for docker build) ---
+*_test.go
+testdata
+tests
+**/fixtures
+
+# --- Docs / specs (omit if not required for docker build) ---
+docs
+README.md
+api/openapi
+
+# --- Tooling / local scripts (omit if not required for docker build) ---
+.air.toml
+scripts
+deployments
+Makefile
+AGENTS.md
+QWEN.md
+adminer.sh
+fix_ledger_entries.sql
+
+# --- AI assistant folders ---
+.claude
+.gemini-clipboard
+
+# --- Python venvs (if present) ---
+.venv
+venv
+
+# --- DB / backups / local data ---
+db_data
+data
+mysql_backup
+*.sql
+*.sql.gz
+*.dump
+
+# --- Optional: vendor ---
+# If you DON'T rely on vendoring inside Docker, keep this ignored.
+# If you DO rely on -mod=vendor during docker builds, delete the next line.
+vendor
+
+# --- IMPORTANT: do NOT ignore Dockerfile/.dockerignore themselves ---
+# (They are tiny and useful for reproducible builds.)

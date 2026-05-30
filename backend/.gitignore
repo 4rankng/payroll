@@ -1,0 +1,98 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+.gocache
+.gocache/*
+# env file
+.env
+
+# Build artifacts
+bin/
+dist/
+
+# Logs
+logs/
+*.log
+
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# API documentation
+api/openapi/
+
+# Temporary files
+tmp/
+temp/
+uploads/
+
+# Development environment
+.env.local
+build-errors.log
+
+# Air hot-reload
+.air_history
+
+# Database volumes (local development)
+mysql_data/
+redis_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.kiro
+.claude/
+.vscode/
+.kiro/
+
+# Integration test binary
+/integration
+
+# Integration test results
+tests/integration/results/
+sandbox/onepay/onepay-mock
+
+graphify-out

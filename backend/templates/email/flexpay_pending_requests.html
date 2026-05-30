@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yêu cầu ứng lương đang chờ xử lý</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #e74c3c;
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            color: #666;
+            margin: 10px 0 0;
+        }
+        .summary-box {
+            background-color: #f8f9f8;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .summary-box h2 {
+            color: #e74c3c;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .summary-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .summary-item .label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .info-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .info-box p {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #e74c3c;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f8f8f8;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            background-color: #f8f8f8;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Yêu cầu ứng lương đang chờ xử lý</h1>
+            <p>Ngày: {{.Date}}</p>
+        </div>
+        
+        <div class="summary-box">
+            <h2>Tổng quan</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="value">{{.TotalRequests}}</div>
+                    <div class="label">Yêu cầu</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{.TotalEmployees}}</div>
+                    <div class="label">Nhân viên</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{.TotalAmount}}</div>
+                    <div class="label">Tổng tiền (VND)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <p><strong>Lưu ý:</strong> Vui lòng xử lý các yêu cầu ứng lương trong file đính kèm và upload kết quả chuyển khoản vào hệ thống.</p>
+        </div>
+
+        <h2>Chi tiết yêu cầu</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã nhân viên</th>
+                    <th>Tên nhân viên</th>
+                    <th>Số tài khoản</th>
+                    <th>Ngân hàng</th>
+                    <th class="text-right">Số tiền yêu cầu</th>
+                    <th class="text-right">Phí dịch vụ</th>
+                    <th class="text-right">Thực nhận</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Requests}}
+                <tr>
+                    <td>{{.STT}}</td>
+                    <td>{{.EmployeeCCCD}}</td>
+                    <td>{{.EmployeeName}}</td>
+                    <td>{{.AccountNumber}}</td>
+                    <td>{{.BankName}}</td>
+                    <td class="text-right">{{.RequestAmount}}</td>
+                    <td class="text-right">{{.Fee}}</td>
+                    <td class="text-right">{{.NetAmount}}</td>
+                </tr>
+                {{end}}
+                <tr class="total-row">
+                    <td colspan="5"><strong>Tổng cộng</strong></td>
+                    <td class="text-right"><strong>{{.TotalRequestAmount}}</strong></td>
+                    <td class="text-right"><strong>{{.TotalFee}}</strong></td>
+                    <td class="text-right"><strong>{{.TotalNetAmount}}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p>Đây là email tự động từ hệ thống Ứng lương - TingTing.</p>
+            <p>Vui lòng không phản hồi email này.</p>
+        </div>
+    </div>
+</body>
+</html>

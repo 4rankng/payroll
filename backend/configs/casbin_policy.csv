@@ -1,0 +1,121 @@
+# Admin has full access to everything
+p, admin, /api/*, *, allow
+p, admin, /metrics, GET, allow
+
+# Partner specific permissions - restricted access
+p, partner, /api/v1/auth/me, GET, allow
+p, partner, /api/v1/auth/change-password, POST, allow
+
+# Projects - full access
+p, partner, /api/v1/projects, *, allow
+p, partner, /api/v1/projects/*, *, allow
+
+# Users - read only access
+p, partner, /api/v1/users, GET, allow
+p, partner, /api/v1/users/*, GET, allow
+
+# Employees - full access
+p, partner, /api/v1/employees, *, allow
+p, partner, /api/v1/employees/*, *, allow
+
+# Project Employees - full access
+p, partner, /api/v1/project-employees, *, allow
+p, partner, /api/v1/project-employees/*, *, allow
+
+# Timesheets - full access (admin approval endpoints omitted)
+p, partner, /api/v1/timesheets, GET, allow
+p, partner, /api/v1/timesheets, POST, allow
+p, partner, /api/v1/timesheets/*, *, allow
+p, partner, /api/v1/timesheets/*/request-edit, POST, allow
+p, partner, /api/v1/timesheets/*/request-edit-cancel, POST, allow
+p, partner, /api/v1/timesheets/projects/*, GET, allow
+
+# Payrates - CRUD access (approval endpoints omitted)
+p, partner, /api/v1/payrates, GET, allow
+p, partner, /api/v1/payrates, POST, allow
+p, partner, /api/v1/payrates/validate, POST, allow
+p, partner, /api/v1/payrates/*, GET, allow
+p, partner, /api/v1/payrates/*, PUT, allow
+p, partner, /api/v1/payrates/*, POST, allow
+
+# Banks - read access only
+p, partner, /api/v1/banks, GET, allow
+p, partner, /api/v1/banks/*, GET, allow
+
+# Dashboard - read access
+p, partner, /api/v1/dashboard/*, GET, allow
+
+# Payrolls - limited access
+p, partner, /api/v1/payrolls/histories, GET, allow
+p, partner, /api/v1/payrolls/histories/export, POST, allow
+p, partner, /api/v1/payrolls/bulk-transfer-template, GET, allow
+
+# Settings - read access only
+p, partner, /api/v1/settings, GET, allow
+p, partner, /api/v1/settings/*, GET, allow
+
+# adv_partner role - external partner for advance payment pipeline.
+# Can import FlexPay data, view/export sao ke and reconciliation.
+# Financial actions (cancel, settle, upload-result, send-email) remain admin-only.
+p, adv_partner, /api/v1/auth/me, GET, allow
+p, adv_partner, /api/v1/auth/logout, POST, allow
+p, adv_partner, /api/v1/auth/change-password, POST, allow
+
+# Advance payment reads
+p, adv_partner, /api/v1/advance-payments, GET, allow
+p, adv_partner, /api/v1/advance-payments/summary, GET, allow
+p, adv_partner, /api/v1/advance-payments/available-months, GET, allow
+p, adv_partner, /api/v1/advance-payments/employees, GET, allow
+p, adv_partner, /api/v1/advance-payments/employees/export, GET, allow
+p, adv_partner, /api/v1/advance-payments/export, GET, allow
+p, adv_partner, /api/v1/advance-payments/reconciliation/export, GET, allow
+
+# Advance payment imports
+p, adv_partner, /api/v1/advance-payments/import, POST, allow
+p, adv_partner, /api/v1/advance-payments/import/*, GET, allow
+p, adv_partner, /api/v1/advance-payments/import-employee-list, POST, allow
+
+# Employees - read access (needed by advance payment UI)
+p, adv_partner, /api/v1/employees, GET, allow
+p, adv_partner, /api/v1/employees/*, GET, allow
+
+# Users - read + update (manage user info: bank account, email, username)
+p, adv_partner, /api/v1/users, GET, allow
+p, adv_partner, /api/v1/users/*, GET, allow
+p, adv_partner, /api/v1/users/*, PUT, allow
+
+# Adv partner user management
+p, adv_partner, /api/v1/adv-partner/users/*, *, allow
+
+# Employee role - self-service only
+p, employee, /api/v1/me, GET, allow
+p, employee, /api/v1/me, PUT, allow
+p, employee, /api/v1/me/*, PUT, allow
+p, employee, /api/v1/me/*, GET, allow
+p, employee, /api/v1/me/advance-payment, GET, allow
+p, employee, /api/v1/me/advance-payment/request, POST, allow
+p, employee, /api/v1/me/advance-payment/request/*, POST, allow
+p, employee, /api/v1/me/advance-payment/history, GET, allow
+p, employee, /api/v1/me/advance-payment/calculate-fee, POST, allow
+p, employee, /api/v1/auth/me, GET, allow
+p, employee, /api/v1/auth/change-password, POST, allow
+p, employee, /api/v1/auth/logout, POST, allow
+p, employee, /api/v1/settings, GET, allow
+p, employee, /api/v1/settings/*, GET, allow
+
+# Employee role - mobile attendance (self-service check-in/out)
+p, employee, /api/v1/mobile/attendance/today, GET, allow
+p, employee, /api/v1/mobile/attendance/check-in, POST, allow
+p, employee, /api/v1/mobile/attendance/check-out, POST, allow
+p, employee, /api/v1/mobile/attendance/history, GET, allow
+
+# All authenticated users - common notifications access
+p, *, /api/v1/notifications, GET, allow
+p, *, /api/v1/notifications/unread, GET, allow
+p, *, /api/v1/notifications/unread/count, GET, allow
+p, *, /api/v1/notifications/*/read, PUT, allow
+p, *, /api/v1/notifications/read-all, PUT, allow
+
+# Push notifications - all authenticated users can subscribe/unsubscribe
+p, *, /api/v1/push/subscribe, POST, allow
+p, *, /api/v1/push/unsubscribe, POST, allow

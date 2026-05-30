@@ -1,0 +1,140 @@
+package domain
+
+import (
+	"context"
+	"time"
+)
+
+// AdvancePayment represents monthly advance payment limits from Flexible Payroll Template uploads
+type AdvancePayment struct {
+	ID                 uint      `json:"id" gorm:"primaryKey;type:bigint unsigned"`
+	ProjectID          uint      `json:"project_id" gorm:"not null;type:bigint unsigned;index"`
+	EmployeeID         uint      `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
+	ForMonth           string    `json:"for_month" gorm:"size:7;not null;index"` // YYYY-MM
+	UploadDate         string    `json:"upload_date" gorm:"size:7;not null"`     // YYYY-MM
+	MaxAdvAmount       uint64    `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
+	LastAppliedAssetID *uint     `json:"last_applied_asset_id,omitempty" gorm:"type:bigint unsigned"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+
+	// Relationships
+	Project  Project  `json:"project" gorm:"foreignKey:ProjectID;references:ID"`
+	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
+}
+
+// TableName returns the table name for AdvancePayment
+func (AdvancePayment) TableName() string {
+	return "advance_payments"
+}
+
+// ValidateForMonth validates the for_month field
+func (ap *AdvancePayment) ValidateForMonth() error {
+	if ap.ForMonth == "" {
+		return NewValidationError("Tháng là bắt buộc")
+	}
+	if len(ap.ForMonth) != 7 {
+		return NewValidationError("Định dạng tháng không hợp lệ (YYYY-MM)")
+	}
+	return nil
+}
+
+// IsValid validates the entire AdvancePayment entity
+func (ap *AdvancePayment) IsValid() error {
+	return ap.ValidateForMonth()
+}
+
+// AdvancePaymentRepository defines the interface for advance payment persistence operations
+type AdvancePaymentRepository interface {
+	Create(ctx context.Context, ap *AdvancePayment) error
+	Upsert(ctx context.Context, ap *AdvancePayment) error
+	GetByID(ctx context.Context, id uint64) (*AdvancePayment, error)
+	GetByEmployeeAndMonth(ctx context.Context, employeeID uint64, forMonth string) ([]*AdvancePayment, error)
+	SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
+	BatchCreate(ctx context.Context, aps []*AdvancePayment) error
+	BatchUpsert(ctx context.Context, aps []*AdvancePayment) error
+	Update(ctx context.Context, ap *AdvancePayment) error
+	IncrementMaxAdvAmount(ctx context.Context, id uint64, amount int64) error
+	ZeroOutQuota(ctx context.Context, projectID, employeeID uint, currentMonth string) error
+	BatchZeroOutQuota(ctx context.Context, projectID uint, employeeIDs []uint, currentMonth string) error
+	GetLatestForMonth(ctx context.Context) (string, error)
+	GetEmployeeAdvanceStats(ctx context.Context, filters EmployeeAdvanceStatsFilters) ([]*EmployeeAdvanceStats, int64, error)
+	GetAvailableMonths(ctx context.Context) ([]*AvailableMonth, error)
+	GetEmployeeByID(ctx context.Context, employeeID uint64) (*Employee, error)
+	HasDataForMonth(ctx context.Context, forMonth string) (bool, error)
+}
+
+// AvailableMonth represents a month with flex pay data
+type AvailableMonth struct {
+	ForMonth      string `json:"for_month"`
+	EmployeeCount int    `json:"employee_count"`
+}
+
+// AdvancePaymentSummary represents summary data for an employee's advance payments
+type AdvancePaymentSummary struct {
+	TotalMaxAdvance     uint64 `json:"total_max_advance"`
+	CompletedAmount     uint64 `json:"completed_amount"`
+	PendingAmount       uint64 `json:"pending_amount"`
+	RemainingAmount     uint64 `json:"remaining_amount"`
+	CurrentMonth        string `json:"current_month"`
+	CanRequest          bool   `json:"can_request"`
+	HasFlexibleSchedule bool   `json:"has_flexible_schedule"`
+}
+
+// EmployeeAdvanceInfo represents advance payment info for an employee (used by employee endpoints)
+type AdvancePaymentQuota struct {
+	ForMonth         string `json:"for_month"`
+	MaxAdvanceAmount uint64 `json:"max_advance_amount"`
+	CompletedAmount  uint64 `json:"completed_amount"`
+	PendingAmount    uint64 `json:"pending_amount"`
+	RemainingAmount  uint64 `json:"remaining_amount"`
+}
+
+type EmployeeAdvanceInfo struct {
+	TotalMaxAdvance     uint64                `json:"total_max_advance"`
+	CompletedAmount     uint64                `json:"completed_amount"`
+	PendingAmount       uint64                `json:"pending_amount"`
+	RemainingAmount     uint64                `json:"remaining_amount"`
+	CurrentMonth        string                `json:"current_month"`
+	CanRequest          bool                  `json:"can_request"`
+	CanRequestTitle     string                `json:"can_request_title,omitempty"`
+	CanRequestReason    string                `json:"can_request_reason,omitempty"`
+	HasFlexibleSchedule bool                  `json:"has_flexible_schedule"`
+	Quotas              []AdvancePaymentQuota `json:"quotas"`
+}
+
+// EmployeeAdvanceStats represents an employee with their advance payment statistics
+type EmployeeAdvanceStats struct {
+	EmployeeID             uint       `json:"employee_id" gorm:"column:employee_id"`
+	Fullname               string     `json:"fullname" gorm:"column:fullname"`
+	CCCD                   string     `json:"cccd" gorm:"column:cccd"`
+	Username               string     `json:"username" gorm:"column:username"`
+	Email                  *string    `json:"email" gorm:"column:email"`
+	Mobile                 string     `json:"mobile" gorm:"column:mobile"`
+	BankID                 *uint      `json:"bank_id" gorm:"column:bank_id"`
+	BankName               *string    `json:"bank_name" gorm:"column:bank_name"`
+	BankAccountNumber      string     `json:"bank_account_number" gorm:"column:bank_account_number"`
+	BankAccountName        string     `json:"bank_account_name" gorm:"column:bank_account_name"`
+	ProjectID              uint       `json:"project_id" gorm:"column:project_id"`
+	ProjectName            string     `json:"project_name" gorm:"column:project_name"`
+	ProjectCode            string     `json:"project_code" gorm:"column:project_code"`
+	ForMonth               string     `json:"for_month" gorm:"column:for_month"`
+	MaxAdvanceAmount       uint64     `json:"max_advance_amount" gorm:"column:max_advance_amount"`
+	UtilizedAmount         uint64     `json:"utilized_amount" gorm:"column:utilized_amount"`
+	TotalFeeGenerated      uint64     `json:"total_fee_generated" gorm:"column:total_fee_generated"`
+	PendingAmount          uint64     `json:"pending_amount" gorm:"column:pending_amount"`
+	CompletedRequestsCount int        `json:"completed_requests_count" gorm:"column:completed_requests_count"`
+	PendingRequestsCount   int        `json:"pending_requests_count" gorm:"column:pending_requests_count"`
+	CreatedAt              *time.Time `json:"created_at" gorm:"column:created_at"`
+	ProjectEmployeeID      uint       `json:"project_employee_id" gorm:"column:project_employee_id"`
+	CheckInEnabled         bool       `json:"check_in_enabled" gorm:"column:check_in_enabled"`
+}
+
+// EmployeeAdvanceStatsFilters represents filters for querying employee advance stats
+type EmployeeAdvanceStatsFilters struct {
+	ForMonth  *string
+	Search    string
+	Limit     int
+	Offset    int
+	SortBy    string
+	SortOrder string
+}

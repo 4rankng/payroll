@@ -1,0 +1,54 @@
+import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
+
+interface StatCardData {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  description?: string;
+  change?: string;
+  trend?: 'up' | 'down' | 'neutral';
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray';
+}
+
+interface StatsCardsProps {
+  stats: StatCardData[];
+  columns?: 1 | 2 | 3 | 4;
+}
+
+const COLOR_MAP: Record<string, 'blue' | 'emerald' | 'amber' | 'violet'> = {
+  blue: 'blue',
+  green: 'emerald',
+  red: 'amber',
+  yellow: 'amber',
+  purple: 'violet',
+  gray: 'blue',
+};
+
+const gridColsMap: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-2 sm:grid-cols-3',
+  4: 'grid-cols-2 sm:grid-cols-4',
+};
+
+export const StatsCards = ({ stats, columns = 4 }: StatsCardsProps) => (
+  <div className={cn('grid gap-2.5', gridColsMap[columns] ?? gridColsMap[4])}>
+    {stats.map((stat, i) => (
+      <KpiHeroCard
+        key={i}
+        label={stat.title}
+        value={stat.value}
+        icon={stat.icon}
+        color={COLOR_MAP[stat.color ?? 'blue']}
+        sublabel={stat.description}
+        trend={
+          stat.change
+            ? { value: stat.change, positive: stat.trend === 'up' }
+            : undefined
+        }
+      />
+    ))}
+  </div>
+);

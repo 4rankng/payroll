@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quản lý người dùng — TingTing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand */
+    --navy-900: #0A1228;
+    --navy-800: #0F1A38;
+    --navy-700: #18234A;
+    --navy-600: #243161;
+    --navy-500: #3B4A82;
+    --navy-100: #E6E9F4;
+
+    /* Surfaces */
+    --bg: #F4F5F8;
+    --bg-warm: #EFEFEA;
+    --card: #FFFFFF;
+    --charcoal: #11151E;
+    --charcoal-2: #1A1F2C;
+    --charcoal-3: #262B38;
+
+    /* Ink */
+    --ink-900: #0B1020;
+    --ink-700: #2B3142;
+    --ink-500: #5A627A;
+    --ink-400: #8189A0;
+    --ink-300: #A8AEC2;
+    --ink-200: #CFD3DF;
+    --ink-100: #E8EAF1;
+    --ink-50:  #F4F5F8;
+    --on-charcoal: #F5F6FA;
+    --on-charcoal-dim: #9CA3B4;
+
+    /* Accents */
+    --lime: #C5F23B;
+    --lime-deep: #9DCB1F;
+    --emerald: #19B97A;
+    --amber: #E8A82B;
+    --rose: #E5484D;
+    --violet: #7C5CFF;
+    --sky: #2B8DFF;
+
+    /* Misc */
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow-card: 0 1px 0 rgba(15, 26, 56, 0.04), 0 1px 2px rgba(15, 26, 56, 0.04);
+    --shadow-pop: 0 12px 32px -8px rgba(11, 16, 32, 0.18), 0 4px 12px -2px rgba(11, 16, 32, 0.08);
+    --border: rgba(11, 16, 32, 0.08);
+    --border-soft: rgba(11, 16, 32, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input { font-family: inherit; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'zero', 'ss01'; }
+
+  /* ---------- APP SHELL ---------- */
+  .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar {
+    background: var(--navy-900);
+    color: var(--on-charcoal);
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+  }
+  .sidebar::after {
+    /* faint vertical light line for depth */
+    content: '';
+    position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(197,242,59,0.18) 30%, rgba(255,255,255,0) 80%);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 22px 22px 24px;
+  }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: var(--lime);
+    display: grid; place-items: center;
+    color: var(--navy-900); font-weight: 800; font-size: 16px;
+    box-shadow: 0 0 0 4px rgba(197,242,59,0.12);
+  }
+  .brand-name { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+  .brand-name .dot { color: var(--lime); }
+
+  .nav-group { padding: 8px 14px; }
+  .nav-group-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 10px 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    color: var(--on-charcoal-dim); text-transform: uppercase;
+  }
+  .nav-group-header svg { opacity: 0.5; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    color: var(--ink-200);
+    font-size: 14px; font-weight: 500;
+    text-decoration: none;
+    margin: 2px 0;
+    position: relative;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+  .nav-item.active {
+    background: linear-gradient(180deg, rgba(197,242,59,0.10) 0%, rgba(197,242,59,0.04) 100%);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(197,242,59,0.20);
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -14px; top: 8px; bottom: 8px;
+    width: 3px; background: var(--lime); border-radius: 0 3px 3px 0;
+  }
+  .nav-item .badge {
+    margin-left: auto; font-size: 11px; font-weight: 700;
+    background: rgba(197,242,59,0.18); color: var(--lime);
+    padding: 2px 7px; border-radius: 999px;
+  }
+
+  .sidebar-foot { margin-top: auto; padding: 14px; }
+  .user-pill {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .user-pill .ava {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #C5F23B, #19B97A);
+    display: grid; place-items: center;
+    color: var(--navy-900); font-weight: 800; font-size: 14px;
+    position: relative;
+  }
+  .user-pill .ava::after {
+    content: ''; position: absolute; right: -2px; bottom: -2px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--emerald);
+    border: 2px solid var(--navy-900);
+  }
+  .user-pill .who { display: flex; flex-direction: column; line-height: 1.25; flex: 1; min-width: 0; }
+  .user-pill .who small { font-size: 10px; color: var(--on-charcoal-dim); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .user-pill .who strong { font-size: 14px; font-weight: 700; color: #fff; }
+  .ver { text-align: center; font-size: 11px; color: var(--on-charcoal-dim); margin-top: 10px; letter-spacing: 0.05em; }
+
+  /* ---------- MAIN ---------- */
+  .main { display: flex; flex-direction: column; min-width: 0; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-500); }
+  .crumbs .sep { color: var(--ink-300); }
+  .crumbs .here { color: var(--ink-900); font-weight: 600; }
+
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: grid; place-items: center;
+    color: var(--ink-500);
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+  }
+  .icon-btn:hover { background: var(--ink-50); color: var(--ink-900); }
+  .icon-btn .pulse {
+    position: absolute; top: 8px; right: 8px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--rose);
+    box-shadow: 0 0 0 3px rgba(229,72,77,0.18);
+  }
+
+  /* ---------- CONTENT ---------- */
+  .content { padding: 28px 32px 60px; max-width: 1600px; width: 100%; margin: 0 auto; }
+
+  /* Page Header */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .page-head h1 {
+    font-size: 30px; font-weight: 800; letter-spacing: -0.02em;
+    margin: 0 0 6px; color: var(--ink-900);
+  }
+  .page-head h1 .accent { color: var(--ink-400); font-weight: 600; }
+  .page-head p { margin: 0; color: var(--ink-500); font-size: 14px; max-width: 560px; }
+  .head-actions { display: flex; gap: 10px; flex-shrink: 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600;
+    border: 1px solid transparent;
+    transition: transform 0.05s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-ghost {
+    color: var(--ink-700);
+    background: var(--card);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { background: var(--ink-50); border-color: var(--ink-200); }
+  .btn-primary {
+    background: var(--charcoal); color: #fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 6px 14px -4px rgba(11,16,32,0.30);
+  }
+  .btn-primary:hover { background: #000; }
+  .btn-primary .kbd {
+    margin-left: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; padding: 2px 5px; border-radius: 4px;
+    background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.7);
+  }
+
+  /* ---------- STATS ---------- */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat {
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .stat.alt { background: var(--card); color: var(--ink-900); border: 1px solid var(--border); }
+  .stat .label {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--on-charcoal-dim);
+    margin-bottom: 12px;
+  }
+  .stat.alt .label { color: var(--ink-500); }
+  .stat .value {
+    font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+  }
+  .stat .value sub {
+    font-size: 14px; font-weight: 600; color: var(--on-charcoal-dim);
+    margin-left: 6px; vertical-align: baseline;
+  }
+  .stat.alt .value sub { color: var(--ink-400); }
+  .stat .meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 14px;
+    font-size: 12.5px; color: var(--on-charcoal-dim);
+  }
+  .stat.alt .meta { color: var(--ink-500); }
+  .delta {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .delta.up { color: var(--lime); background: rgba(197,242,59,0.10); }
+  .delta.down { color: #FF8B8E; background: rgba(229,72,77,0.10); }
+  .stat.alt .delta.up { color: #1E8F5E; background: rgba(25,185,122,0.10); }
+
+  .stat .glyph {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    display: grid; place-items: center;
+    color: var(--on-charcoal);
+  }
+  .stat.alt .glyph { background: var(--ink-50); color: var(--ink-700); }
+
+  /* tiny sparkline */
+  .spark { display: block; width: 90px; height: 28px; }
+
+  /* highlight stat */
+  .stat.hl::before {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background:
+      radial-gradient(60% 80% at 100% 0%, rgba(197,242,59,0.20), transparent 60%),
+      radial-gradient(40% 60% at 0% 100%, rgba(124,92,255,0.15), transparent 70%);
+  }
+
+  /* ---------- TABLE CARD ---------- */
+  .table-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-wrap: wrap;
+  }
+  .search {
+    position: relative; flex: 1; min-width: 280px; max-width: 420px;
+  }
+  .search input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+    background: var(--ink-50);
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    color: var(--ink-900);
+  }
+  .search input::placeholder { color: var(--ink-400); }
+  .search input:focus {
+    background: #fff; border-color: var(--charcoal);
+    box-shadow: 0 0 0 4px rgba(11,16,32,0.06);
+  }
+  .search .icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-400);
+  }
+  .search .kbd {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-400); padding: 3px 6px; border-radius: 5px;
+    background: var(--card); border: 1px solid var(--border-soft);
+  }
+
+  .chips { display: flex; gap: 6px; align-items: center; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 11px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--ink-700);
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .chip:hover { background: var(--ink-50); }
+  .chip.on {
+    background: var(--charcoal); color: #fff; border-color: var(--charcoal);
+  }
+  .chip .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-400);
+    background: var(--ink-50);
+    padding: 1px 6px; border-radius: 5px;
+  }
+  .chip.on .count { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+
+  .toolbar-spacer { flex: 1; }
+
+  .view-toggle {
+    display: inline-flex; background: var(--ink-50); border-radius: 9px; padding: 3px; border: 1px solid var(--border-soft);
+  }
+  .view-toggle button {
+    padding: 6px 10px; border-radius: 7px; color: var(--ink-500); display: grid; place-items: center;
+  }
+  .view-toggle button.on { background: #fff; color: var(--ink-900); box-shadow: 0 1px 2px rgba(11,16,32,0.06); }
+
+  /* ---------- TABLE ---------- */
+  .tbl-wrap { overflow-x: auto; }
+  table.tbl {
+    width: 100%; border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  .tbl thead th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+    color: var(--ink-400); text-transform: uppercase;
+    border-bottom: 1px solid var(--border-soft);
+    background: #FBFBFC;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tbl thead th.sortable { cursor: pointer; }
+  .tbl thead th.sortable:hover { color: var(--ink-700); }
+  .sort-ic { display: inline-flex; vertical-align: middle; margin-left: 4px; opacity: 0.6; }
+  .tbl tbody tr {
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.12s;
+  }
+  .tbl tbody tr:hover { background: #FAFBFC; }
+  .tbl tbody tr:last-child { border-bottom: 0; }
+  .tbl tbody td {
+    padding: 14px 18px;
+    vertical-align: middle;
+    color: var(--ink-700);
+    white-space: nowrap;
+  }
+  .tbl tbody tr.checked { background: rgba(197,242,59,0.06); }
+  .tbl tbody tr.checked:hover { background: rgba(197,242,59,0.10); }
+
+  /* Cells */
+  .col-check { width: 36px; padding-right: 0 !important; }
+  .col-idx { width: 44px; color: var(--ink-400); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  .check {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--ink-200);
+    display: inline-grid; place-items: center;
+    cursor: pointer; transition: all 0.12s;
+    background: #fff;
+  }
+  .check:hover { border-color: var(--ink-400); }
+  .check.on { background: var(--charcoal); border-color: var(--charcoal); }
+  .check svg { opacity: 0; }
+  .check.on svg { opacity: 1; color: #fff; }
+
+  /* User cell */
+  .user-cell { display: flex; align-items: center; gap: 12px; }
+  .user-cell .ava {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 13px;
+    color: #fff;
+    flex-shrink: 0;
+    position: relative;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .user-cell .ava.online::after {
+    content: ''; position: absolute; right: -1px; bottom: -1px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--emerald);
+    border: 2px solid #fff;
+  }
+  .user-cell .id { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+  .user-cell .id strong { color: var(--ink-900); font-weight: 600; font-size: 13.5px; }
+  .user-cell .id span { color: var(--ink-400); font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Role pills */
+  .role {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid transparent;
+  }
+  .role .pin { width: 6px; height: 6px; border-radius: 50%; }
+  .role-staff { background: #F0F2F7; color: #3D4762; border-color: rgba(61,71,98,0.08); }
+  .role-staff .pin { background: #6B7693; }
+  .role-mgr { background: rgba(43,141,255,0.08); color: #1968C6; border-color: rgba(43,141,255,0.15); }
+  .role-mgr .pin { background: #2B8DFF; }
+  .role-acc { background: rgba(124,92,255,0.08); color: #5B41D6; border-color: rgba(124,92,255,0.15); }
+  .role-acc .pin { background: #7C5CFF; }
+  .role-admin { background: rgba(232,168,43,0.10); color: #9A6610; border-color: rgba(232,168,43,0.20); }
+  .role-admin .pin { background: var(--amber); }
+
+  /* Activity */
+  .activity {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--ink-700);
+  }
+  .activity .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0; position: relative;
+  }
+  .activity .dot.live { background: var(--emerald); box-shadow: 0 0 0 3px rgba(25,185,122,0.18); }
+  .activity .dot.recent { background: var(--lime-deep); }
+  .activity .dot.stale { background: var(--amber); opacity: 0.7; }
+  .activity .dot.never { background: transparent; border: 1.5px solid var(--ink-300); }
+  .activity .when { font-size: 13px; color: var(--ink-700); font-weight: 500; }
+  .activity .ago { font-size: 11.5px; color: var(--ink-400); font-family: 'JetBrains Mono', monospace; }
+  .activity.never .when { color: var(--ink-400); font-style: italic; font-weight: 400; }
+
+  .date-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px; color: var(--ink-500); font-weight: 500;
+  }
+
+  /* Row actions */
+  .row-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; justify-content: flex-end; }
+  .tbl tbody tr:hover .row-actions { opacity: 1; }
+  .row-actions .ra {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: grid; place-items: center;
+    color: var(--ink-400);
+    transition: background 0.12s, color 0.12s;
+  }
+  .row-actions .ra:hover { background: var(--ink-50); color: var(--ink-900); }
+  .row-actions .ra.danger:hover { color: var(--rose); background: rgba(229,72,77,0.08); }
+
+  /* Pagination */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 13px; color: var(--ink-500);
+    background: #FBFBFC;
+  }
+  .pagination .per-page { display: flex; align-items: center; gap: 8px; }
+  .pagination .per-page select {
+    padding: 6px 26px 6px 10px;
+    border-radius: 7px; border: 1px solid var(--border);
+    background: #fff;
+    font-family: inherit; font-size: 13px;
+    color: var(--ink-900);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235A627A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+  .pages { display: flex; gap: 4px; align-items: center; }
+  .pg {
+    min-width: 32px; height: 32px; padding: 0 8px;
+    border-radius: 8px;
+    display: inline-grid; place-items: center;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-500);
+    border: 1px solid transparent;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pg:hover { background: var(--ink-50); color: var(--ink-900); }
+  .pg.on {
+    background: var(--charcoal); color: #fff; border-color: var(--charcoal);
+  }
+  .pg.nav { color: var(--ink-700); }
+  .pg:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---------- BULK BAR ---------- */
+  .bulk-bar {
+    position: fixed;
+    bottom: 24px; left: 50%; transform: translate(-50%, 30px);
+    background: var(--charcoal); color: var(--on-charcoal);
+    border-radius: 14px;
+    padding: 8px 8px 8px 20px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: var(--shadow-pop);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .bulk-bar.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .bulk-bar .count {
+    font-weight: 700; font-size: 14px;
+  }
+  .bulk-bar .count em {
+    font-style: normal; color: var(--lime); font-family: 'JetBrains Mono', monospace;
+    margin-right: 4px;
+  }
+  .bulk-bar .divider {
+    width: 1px; height: 22px; background: rgba(255,255,255,0.10);
+  }
+  .bulk-bar .ba {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    transition: background 0.15s, color 0.15s;
+  }
+  .bulk-bar .ba:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .bulk-bar .ba.danger:hover { background: rgba(229,72,77,0.18); color: #FF8B8E; }
+  .bulk-bar .clear {
+    width: 30px; height: 30px; border-radius: 7px;
+    display: grid; place-items: center;
+    color: rgba(255,255,255,0.6);
+  }
+  .bulk-bar .clear:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+  /* Avatar palette generator */
+  .ava-1 { background: linear-gradient(135deg, #3B4A82, #1E2A5C); }
+  .ava-2 { background: linear-gradient(135deg, #D86A4C, #B53E2E); }
+  .ava-3 { background: linear-gradient(135deg, #19B97A, #0E8455); }
+  .ava-4 { background: linear-gradient(135deg, #7C5CFF, #4A2FCC); }
+  .ava-5 { background: linear-gradient(135deg, #E8A82B, #B97A12); }
+  .ava-6 { background: linear-gradient(135deg, #2B8DFF, #0E5BC8); }
+  .ava-7 { background: linear-gradient(135deg, #5A627A, #2B3142); }
+  .ava-8 { background: linear-gradient(135deg, #C5F23B, #7DA516); color: var(--navy-900) !important; }
+  .ava-9 { background: linear-gradient(135deg, #FF6B9D, #C13C70); }
+  .ava-10{ background: linear-gradient(135deg, #00B8C4, #006670); }
+
+  /* Mobile */
+  @media (max-width: 1100px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .app { grid-template-columns: 76px 1fr; }
+    .brand-name, .nav-group-header, .nav-item span, .user-pill .who, .ver { display: none; }
+    .nav-item { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============== SIDEBAR ============== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <div class="brand-name">Ting<span class="dot">Ting</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-header">
+        Quản lý
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+      <a class="nav-item active" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg>
+        <span>Người dùng</span>
+        <span class="badge">147</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+        <span>Ứng lương</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span>Bảng công</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg>
+        <span>Báo cáo</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-header">Hệ thống</div>
+      <a class="nav-item" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Cài đặt</span>
+      </a>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="user-pill">
+        <div class="ava">Đ</div>
+        <div class="who">
+          <small>Xin chào</small>
+          <strong>Mr Đức</strong>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--on-charcoal-dim)"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+      <div class="ver mono">v1.10.0</div>
+    </div>
+  </aside>
+
+  <!-- ============== MAIN ============== -->
+  <main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="crumbs">
+        <span>Quản lý</span>
+        <span class="sep">/</span>
+        <span class="here">Người dùng</span>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" title="Trợ giúp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+        <button class="icon-btn" title="Thông báo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="pulse"></span>
+        </button>
+        <button class="icon-btn" title="Cài đặt nhanh">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Page header -->
+      <div class="page-head">
+        <div>
+          <h1>Người dùng <span class="accent">/ 147</span></h1>
+          <p>Quản lý nhân viên, phân quyền và theo dõi hoạt động đăng nhập trong hệ thống.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Xuất danh sách
+          </button>
+          <button class="btn btn-ghost">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Nhập từ Excel
+          </button>
+          <button class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Thêm người dùng
+            <span class="kbd">N</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat hl">
+          <div class="label">
+            Tổng người dùng
+            <div class="glyph">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
+          <div class="value mono">147</div>
+          <div class="meta">
+            <span class="delta up">↑ 12</span>
+            <span>so với tháng trước</span>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="label">
+            Đã đăng nhập 24h
+            <div class="glyph">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+          </div>
+          <div class="value mono">42<sub>/147</sub></div>
+          <div class="meta">
+            <svg class="spark" viewBox="0 0 90 28" preserveAspectRatio="none">
+              <polyline points="0,20 10,18 20,21 30,16 40,14 50,15 60,11 70,13 80,8 90,10" fill="none" stroke="#C5F23B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,20 10,18 20,21 30,16 40,14 50,15 60,11 70,13 80,8 90,10 90,28 0,28" fill="rgba(197,242,59,0.10)" stroke="none"/>
+            </svg>
+            <span>7 ngày</span>
+          </div>
+        </div>
+
+        <div class="stat alt">
+          <div class="label">
+            Chưa kích hoạt
+            <div class="glyph">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+          </div>
+          <div class="value mono">23</div>
+          <div class="meta">
+            <span class="delta up" style="color:#9A6610; background:rgba(232,168,43,0.10);">⤳ 8</span>
+            <span>gửi lời mời lại</span>
+          </div>
+        </div>
+
+        <div class="stat alt">
+          <div class="label">
+            Mới trong 7 ngày
+            <div class="glyph">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+          </div>
+          <div class="value mono">+9</div>
+          <div class="meta">
+            <span class="delta up">↑ 28%</span>
+            <span>nhịp tăng trưởng</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table card -->
+      <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="search">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Tìm theo tên, email, mã nhân viên..." />
+            <span class="kbd">⌘K</span>
+          </div>
+
+          <div class="chips">
+            <button class="chip on">Tất cả <span class="count">147</span></button>
+            <button class="chip">Đang hoạt động <span class="count">124</span></button>
+            <button class="chip">Chưa kích hoạt <span class="count">23</span></button>
+          </div>
+
+          <div class="toolbar-spacer"></div>
+
+          <button class="chip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Vai trò
+          </button>
+          <button class="chip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            Khoảng ngày
+          </button>
+
+          <div class="view-toggle">
+            <button class="on" title="Bảng">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <button title="Thẻ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th class="col-check">
+                  <div class="check" id="check-all" onclick="toggleAll()">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                </th>
+                <th class="col-idx">#</th>
+                <th class="sortable">Người dùng <span class="sort-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"/><polyline points="7 9 12 4 17 9"/></svg></span></th>
+                <th>Vai trò</th>
+                <th class="sortable">Hoạt động cuối <span class="sort-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"/><polyline points="7 9 12 4 17 9"/></svg></span></th>
+                <th class="sortable">Ngày tạo <span class="sort-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <!-- rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <div class="per-page">
+            <span>Hiển thị</span>
+            <select>
+              <option>20</option>
+              <option>50</option>
+              <option>100</option>
+            </select>
+            <span>trong <strong class="mono" style="color:var(--ink-700)">147</strong> kết quả</span>
+          </div>
+          <div class="pages">
+            <button class="pg nav" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="pg on">1</button>
+            <button class="pg">2</button>
+            <button class="pg">3</button>
+            <button class="pg">4</button>
+            <span class="pg" style="cursor:default">…</span>
+            <button class="pg">8</button>
+            <button class="pg nav">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Bulk action bar (floating) -->
+<div class="bulk-bar" id="bulkBar">
+  <div class="count"><em id="bulkCount">0</em>đã chọn</div>
+  <div class="divider"></div>
+  <button class="ba">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+    Đổi vai trò
+  </button>
+  <button class="ba">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    Gửi lời mời
+  </button>
+  <button class="ba">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Xuất .csv
+  </button>
+  <button class="ba danger">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    Vô hiệu hóa
+  </button>
+  <div class="divider"></div>
+  <button class="clear" onclick="clearAll()" title="Bỏ chọn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+</div>
+
+<script>
+  // ----- Mock data preserving original Vietnamese names -----
+  const ROWS = [
+    { name:'Bắt Buộc',              handle:'buoc*b',    role:'staff',  activity:null,                  created:'25/05/2026', initial:'B', avaClass:'ava-1', online:false },
+    { name:'Lê Văn Dũng',           handle:'dunglv',    role:'staff',  activity:null,                  created:'23/05/2026', initial:'D', avaClass:'ava-2', online:false },
+    { name:'Trần Văn Dũng',         handle:'dungtv',    role:'mgr',    activity:'23/05/2026 05:12',    created:'23/05/2026', initial:'D', avaClass:'ava-3', online:false, ago:'2 ngày trước' },
+    { name:'Đặng Khánh Duy',        handle:'duydk',     role:'staff',  activity:null,                  created:'23/05/2026', initial:'D', avaClass:'ava-4', online:false },
+    { name:'Nguyễn Văn Lịch',       handle:'lichnv',    role:'staff',  activity:null,                  created:'23/05/2026', initial:'L', avaClass:'ava-5', online:false },
+    { name:'Nguyễn Đình Dương',     handle:'duongnd',   role:'acc',    activity:null,                  created:'23/05/2026', initial:'D', avaClass:'ava-6', online:false },
+    { name:'Nguyễn Thị Thu Phương', handle:'phuongntt', role:'staff',  activity:null,                  created:'23/05/2026', initial:'P', avaClass:'ava-9', online:false },
+    { name:'Chu Nguyên Thái Toàn',  handle:'toancnt',   role:'admin',  activity:'Hôm nay, 14:22',      created:'22/05/2026', initial:'T', avaClass:'ava-7', online:true,  ago:'vừa xong',     live:true },
+    { name:'Ngô Thị Hương',         handle:'huongnt',   role:'staff',  activity:null,                  created:'22/05/2026', initial:'H', avaClass:'ava-9', online:false },
+    { name:'Phạm Thị Loan',         handle:'loanpt',    role:'mgr',    activity:'17/05/2026 11:34',    created:'17/05/2026', initial:'L', avaClass:'ava-10', online:false, ago:'8 ngày trước' },
+    { name:'Tạ Thị Minh Thu',       handle:'thuttm',    role:'staff',  activity:'17/05/2026 13:08',    created:'17/05/2026', initial:'T', avaClass:'ava-2', online:false, ago:'8 ngày trước' },
+    { name:'Đào Thị Tâm',           handle:'tamdt',     role:'acc',    activity:'17/05/2026 09:45',    created:'17/05/2026', initial:'T', avaClass:'ava-4', online:false, ago:'8 ngày trước' },
+    { name:'Cà Văn Hùng',           handle:'hungcv',    role:'staff',  activity:'23/05/2026 05:40',    created:'17/05/2026', initial:'H', avaClass:'ava-3', online:false, ago:'2 ngày trước' },
+    { name:'Phạm Thị Tơ',           handle:'topt',      role:'staff',  activity:null,                  created:'17/05/2026', initial:'T', avaClass:'ava-9', online:false },
+    { name:'Nguyễn Văn Mạnh',       handle:'manhnv',    role:'staff',  activity:'17/05/2026 13:08',    created:'17/05/2026', initial:'M', avaClass:'ava-1', online:false, ago:'8 ngày trước' },
+    { name:'Lê Trần Ngọc Anh',      handle:'anhltn',    role:'staff',  activity:null,                  created:'17/05/2026', initial:'A', avaClass:'ava-5', online:false },
+    { name:'Lê Tuấn Vũ',            handle:'vult',      role:'staff',  activity:null,                  created:'17/05/2026', initial:'V', avaClass:'ava-6', online:false },
+    { name:'Đinh Chính Quý',        handle:'quydc',     role:'staff',  activity:null,                  created:'17/05/2026', initial:'Q', avaClass:'ava-7', online:false },
+    { name:'Vũ Văn Công',           handle:'congvv',    role:'staff',  activity:null,                  created:'16/05/2026', initial:'C', avaClass:'ava-10', online:false },
+  ];
+
+  const ROLES = {
+    staff: { cls:'role-staff', label:'Nhân viên' },
+    mgr:   { cls:'role-mgr',   label:'Quản lý' },
+    acc:   { cls:'role-acc',   label:'Kế toán' },
+    admin: { cls:'role-admin', label:'Quản trị' },
+  };
+
+  function activityCell(r) {
+    if (!r.activity) {
+      return `<div class="activity never">
+                <span class="dot never"></span>
+                <span class="when">Chưa đăng nhập</span>
+              </div>`;
+    }
+    let dotCls = 'stale';
+    if (r.live) dotCls = 'live';
+    else if (r.ago && r.ago.includes('2 ngày')) dotCls = 'recent';
+    return `<div class="activity">
+              <span class="dot ${dotCls}"></span>
+              <div style="display:flex; flex-direction:column; line-height:1.3;">
+                <span class="when">${r.activity}</span>
+                ${r.ago ? `<span class="ago">${r.ago}</span>` : ''}
+              </div>
+            </div>`;
+  }
+
+  function rowHTML(r, i) {
+    const role = ROLES[r.role];
+    return `
+      <tr data-idx="${i}">
+        <td class="col-check">
+          <div class="check" onclick="toggleRow(${i}, event)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </td>
+        <td class="col-idx">${String(i+1).padStart(2,'0')}</td>
+        <td>
+          <div class="user-cell">
+            <div class="ava ${r.avaClass} ${r.online ? 'online' : ''}">${r.initial}</div>
+            <div class="id">
+              <strong>${r.name}</strong>
+              <span>@${r.handle}</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="role ${role.cls}">
+            <span class="pin"></span>${role.label}
+          </span>
+        </td>
+        <td>${activityCell(r)}</td>
+        <td class="date-cell">${r.created}</td>
+        <td>
+          <div class="row-actions">
+            <button class="ra" title="Xem chi tiết">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button class="ra" title="Chỉnh sửa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="ra danger" title="Vô hiệu hóa">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = ROWS.map(rowHTML).join('');
+
+  // Selection
+  const selected = new Set();
+  function refreshBulk() {
+    const bar = document.getElementById('bulkBar');
+    document.getElementById('bulkCount').textContent = selected.size;
+    bar.classList.toggle('show', selected.size > 0);
+    const all = document.getElementById('check-all');
+    all.classList.toggle('on', selected.size === ROWS.length);
+  }
+  function toggleRow(i, ev) {
+    if (ev) ev.stopPropagation();
+    const tr = document.querySelector(`tr[data-idx="${i}"]`);
+    const chk = tr.querySelector('.check');
+    if (selected.has(i)) { selected.delete(i); chk.classList.remove('on'); tr.classList.remove('checked'); }
+    else { selected.add(i); chk.classList.add('on'); tr.classList.add('checked'); }
+    refreshBulk();
+  }
+  function toggleAll() {
+    if (selected.size === ROWS.length) clearAll();
+    else {
+      ROWS.forEach((_, i) => {
+        selected.add(i);
+        const tr = document.querySelector(`tr[data-idx="${i}"]`);
+        tr.querySelector('.check').classList.add('on');
+        tr.classList.add('checked');
+      });
+      refreshBulk();
+    }
+  }
+  function clearAll() {
+    selected.clear();
+    document.querySelectorAll('.check.on').forEach(c => c.classList.remove('on'));
+    document.querySelectorAll('tr.checked').forEach(t => t.classList.remove('checked'));
+    refreshBulk();
+  }
+
+  // Filter chip toggles (visual only)
+  document.querySelectorAll('.chips .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.chips .chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+    });
+  });
+</script>
+
+</body>
+</html>

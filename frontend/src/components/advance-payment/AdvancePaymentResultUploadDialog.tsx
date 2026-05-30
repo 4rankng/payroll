@@ -1,0 +1,235 @@
+import { useState, memo, useCallback, useMemo } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogNavyHeader,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FileDropZone } from './FileDropZone';
+import {
+  Upload,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  FileDown,
+  ArrowUpFromLine,
+} from 'lucide-react';
+import { FILE_LIMITS } from '@/config/api.config';
+import { useUploadBankResult } from '@/hooks/api/useAdvancePayments';
+import { useQueryClient } from '@tanstack/react-query';
+import type { UploadBankResultResponse } from '@/types/api/advance-payment.types';
+import { generateAdvancePaymentResultPdf } from '@/utils/pdf/advance-payment-result';
+
+interface AdvancePaymentResultUploadDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const AdvancePaymentResultUploadDialog = memo(
+  function AdvancePaymentResultUploadDialog({
+    open,
+    onOpenChange,
+  }: AdvancePaymentResultUploadDialogProps) {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadResult, setUploadResult] = useState<UploadBankResultResponse | null>(null);
+    const [showResults, setShowResults] = useState(false);
+    const [uploadedAtForFilename, setUploadedAtForFilename] = useState<string | null>(null);
+
+    const queryClient = useQueryClient();
+    const uploadMutation = useUploadBankResult();
+
+    const validateExcelFile = useCallback((file: File) => {
+      const allowedExtensions = ['.xls', '.xlsx'];
+      const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+      if (!hasValidExtension) return { isValid: false, error: 'Chỉ chấp nhận file Excel (.xls, .xlsx)' };
+      if (file.size > FILE_LIMITS.excel.maxSize) {
+        return { isValid: false, error: `File quá lớn. Tối đa ${FILE_LIMITS.excel.maxSize / 1024 / 1024}MB` };
+      }
+      return { isValid: true };
+    }, []);
+
+    const handleUpload = useCallback(async () => {
+      if (!selectedFile) return;
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        const result = await uploadMutation.mutateAsync(formData);
+        if (result.data) {
+          setUploadResult(result.data);
+          setShowResults(true);
+          setUploadedAtForFilename(new Date().toISOString());
+        }
+        await queryClient.invalidateQueries({ queryKey: ['admin', 'advance-payments'] });
+        await queryClient.invalidateQueries({ queryKey: ['employee', 'advance-payment'] });
+      } catch {
+        // handled in hook
+      }
+    }, [selectedFile, uploadMutation, queryClient]);
+
+    const handleClose = useCallback(() => {
+      if (uploadMutation.isPending) return;
+      setSelectedFile(null);
+      setUploadResult(null);
+      setShowResults(false);
+      onOpenChange(false);
+    }, [uploadMutation.isPending, onOpenChange]);
+
+    const handleBackToUpload = useCallback(() => {
+      setShowResults(false);
+      setUploadResult(null);
+      setSelectedFile(null);
+    }, []);
+
+    const handleDownloadPdf = useCallback(async () => {
+      if (!uploadResult) return;
+      const src = uploadedAtForFilename || new Date().toISOString();
+      const sanitized = src.trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_');
+      await generateAdvancePaymentResultPdf(uploadResult, { fileName: `chuyen_tien_ung_luong_${sanitized}.pdf` });
+    }, [uploadResult, uploadedAtForFilename]);
+
+    const canUpload = useMemo(() => selectedFile && !uploadMutation.isPending, [selectedFile, uploadMutation.isPending]);
+
+    const formatCurrency = useCallback((amount: string) => {
+      const numValue = Number(amount?.replace(/,/g, ''));
+      return isNaN(numValue) ? amount : `${numValue.toLocaleString('vi-VN')} đ`;
+    }, []);
+
+    const formatDate = useCallback((dateString: string) => {
+      if (!dateString) return '';
+      try {
+        return new Date(dateString).toLocaleString('vi-VN', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        });
+      } catch { return dateString; }
+    }, []);
+
+    // ── Results view ──
+    if (showResults && uploadResult) {
+      return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col" hideCloseButton>
+            <DialogNavyHeader
+              title="Kết quả chuyển tiền"
+              description="Chi tiết xử lý file Excel chuyển tiền ứng lương"
+            />
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Tổng giao dịch", value: uploadResult.total_txn, color: "text-foreground" },
+                  { label: "Thành công", value: uploadResult.completed_txn, color: "text-emerald-600" },
+                  { label: "Thất bại", value: uploadResult.failed_txn, color: "text-destructive" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="rounded-xl border bg-muted/30 px-3 py-2.5 text-center">
+                    <p className={`text-xl font-semibold tabular-nums ${color}`}>{value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Detail grid */}
+              <div>
+                <p className="text-sm font-semibold mb-2">
+                  Chi tiết ({uploadResult.items?.length ?? 0})
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {uploadResult.items?.map((detail, index) => {
+                    const isPaid = detail.payment_status === 'paid';
+                    return (
+                      <div
+                        key={index}
+                        className="rounded-xl border bg-background p-3 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {isPaid
+                              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                              : <XCircle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+                            }
+                            <span className="text-xs text-muted-foreground">Dòng {detail.row}</span>
+                          </div>
+                          <Badge
+                            variant={isPaid ? "secondary" : "destructive"}
+                            className={isPaid ? "bg-emerald-100 text-emerald-800 text-xs" : "text-xs"}
+                          >
+                            {isPaid ? "Thành công" : "Thất bại"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium truncate" title={detail.employee_name}>
+                          {detail.employee_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {detail.employee_bank} · {detail.employee_account_number}
+                        </p>
+                        <p className="text-sm font-semibold">{formatCurrency(detail.amount)}</p>
+                        {detail.paid_at && (
+                          <p className="text-xs text-muted-foreground">{formatDate(detail.paid_at)}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="px-5 py-4 border-t flex flex-row gap-2 flex-shrink-0">
+              <Button variant="outline" onClick={handleBackToUpload} className="flex-none">
+                Nhập file khác
+              </Button>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={handleDownloadPdf} className="gap-1.5">
+                <FileDown className="w-4 h-4" />
+                Tải PDF
+              </Button>
+              <Button onClick={handleClose}>Đóng</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    // ── Upload view ──
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton>
+          <DialogNavyHeader
+            title="Kết quả chuyển tiền"
+            description="Tải lên file Excel kết quả chuyển tiền để cập nhật trạng thái"
+          />
+
+          <div className="px-5 py-4">
+            <FileDropZone
+              file={selectedFile}
+              onFileChange={setSelectedFile}
+              accept=".xls,.xlsx"
+              inputId="result-upload-file-input"
+            />
+          </div>
+
+          <DialogFooter className="px-5 py-4 border-t flex flex-row gap-2">
+            <Button variant="outline" onClick={handleClose} disabled={uploadMutation.isPending} className="min-w-[72px]">
+              Đóng
+            </Button>
+            <Button onClick={handleUpload} disabled={!canUpload} className="flex-1 gap-1.5">
+              {uploadMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4" />
+                  Nhập file
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  },
+);

@@ -1,0 +1,357 @@
+import { useState, useCallback, useMemo } from "react";
+import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UserMobileList } from "@/components/users/UserMobileList";
+import { useUserDataInfinite } from "@/hooks/users/useUserDataInfinite";
+import { useUserModals } from "@/hooks/useModalNavigation";
+import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";
+import { useUsersSummary } from "@/hooks/api/useUsers";
+import { useAuth } from "@/contexts";
+import {
+  Users,
+  UserCog,
+  Briefcase,
+  User,
+  Plus,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+
+const UsersPageMobile = () => {
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdvPartner = user?.role === "adv_partner";
+
+  const filterState = useUserFiltersWithBackend();
+  const userData = useUserDataInfinite({
+    pageSize: filterState.filters.pageSize,
+    sortBy: filterState.filters.sortBy,
+    sortOrder: filterState.filters.sortOrder,
+    search: filterState.filters.search,
+    role: filterState.filters.role,
+    last_login_today: filterState.filters.last_login_today,
+  });
+  const { data: summaryData, isLoading: summaryLoading } = useUsersSummary();
+  const { openUserDetails, openAddUser } = useUserModals();
+
+  const handleRoleSelect = useCallback(
+    (role?: "admin" | "partner" | "employee") => {
+      filterState.setLastLoginToday(false);
+      filterState.setRole(role);
+    },
+    [filterState],
+  );
+
+  const { hasMore, isFetchingNextPage, fetchNextPage } = userData;
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasMore, isFetchingNextPage, fetchNextPage]);
+
+  const stats = useMemo(() => {
+    if (!summaryData) return [];
+    return [
+      {
+        label: "Tổng",
+        value: summaryData.total_users || 0,
+        icon: Users,
+        color: "text-blue-600",
+        bg: "bg-blue-50",
+        role: null as "admin" | "partner" | "employee" | null,
+      },
+      {
+        label: "Quản trị",
+        value: summaryData.total_admins || 0,
+        icon: UserCog,
+        color: "text-red-600",
+        bg: "bg-red-50",
+        role: "admin" as const,
+      },
+      {
+        label: "Quản lý",
+        value: summaryData.total_partners || 0,
+        icon: Briefcase,
+        color: "text-blue-600",
+        bg: "bg-blue-50",
+        role: "partner" as const,
+      },
+      {
+        label: "Nhân viên",
+        value: summaryData.total_employees || 0,
+        icon: User,
+        color: "text-muted-foreground",
+        bg: "bg-muted/40",
+        role: "employee" as const,
+      },
+    ];
+  }, [summaryData]);
+
+  const activeFilterCount = useMemo(() => {
+    return filterState.role ? 1 : 0;
+  }, [filterState.role]);
+
+  if (userData.isLoading && userData.users.length === 0) {
+    return (
+      <div className="flex flex-col gap-3 p-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-9 w-16" />
+        </div>
+        <div className="flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-11 w-full rounded-xl" />
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-full pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-4 pb-3 flex items-center justify-between gap-3 border-b border-border/40">
+        <h1 className="text-xl font-bold text-foreground">Người dùng</h1>
+        {!isAdvPartner && (
+          <Button
+            size="sm"
+            className="h-9 px-4 btn-admin-primary shrink-0"
+            onClick={() => openAddUser()}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Thêm
+          </Button>
+        )}
+      </div>
+
+      {/* Stats strip */}
+      {!isAdvPartner && !summaryLoading && stats.length > 0 && (
+        <div className="px-4 pb-3">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              const isActive =
+                stat.role !== null && filterState.role === stat.role;
+              return (
+                <button
+                  key={stat.label}
+                  onClick={() => {
+                    if (stat.role === null) {
+                      handleRoleSelect(undefined);
+                      return;
+                    }
+                    handleRoleSelect(isActive ? undefined : stat.role);
+                  }}
+                  className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border shrink-0 min-w-[72px] transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+                >
+                  <div className={`p-1 rounded-xl ${stat.bg}`}>
+                    <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                  </div>
+                  <span
+                    className={`text-sm font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
+                  >
+                    {stat.value.toLocaleString("vi-VN")}
+                  </span>
+                  <span
+                    className={`text-[10px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
+                  >
+                    {stat.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {summaryLoading && !isAdvPartner && (
+        <div className="px-4 pb-3 flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+          ))}
+        </div>
+      )}
+
+      {/* Search + filter */}
+      <div className="px-4 pb-3 flex gap-2">
+        <MobileSearchInput
+          value={filterState.search}
+          onSearch={filterState.setSearch}
+          placeholder="Tìm tên, email..."
+          className={isAdvPartner ? 'flex-1' : ''}
+        />
+        {!isAdvPartner && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 rounded-xl border-border/60 bg-card shrink-0 relative"
+            onClick={() => setFilterSheetOpen(true)}
+            aria-label="Bộ lọc"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-white flex items-center justify-center font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* Active filter chips */}
+      {activeFilterCount > 0 && (
+        <div className="px-4 pb-3 flex gap-2 flex-wrap">
+          {filterState.role && (
+            <Badge
+              variant="secondary"
+              className="gap-1 cursor-pointer"
+              onClick={() => filterState.setRole(undefined)}
+            >
+              {
+                {
+                  admin: "Quản trị viên",
+                  partner: "Quản lý",
+                  employee: "Nhân viên",
+                }[filterState.role]
+              }
+              <X className="h-3 w-3" />
+            </Badge>
+          )}
+          <button
+            onClick={filterState.clearFilters}
+            className="text-xs text-muted-foreground underline underline-offset-2"
+          >
+            Xóa tất cả
+          </button>
+        </div>
+      )}
+
+      {/* List with infinite scroll */}
+      <div className="flex-1 px-4">
+        <UserMobileList
+          users={userData.users.filter((u) => u.role !== 'adv_partner')}
+          onRowClick={(user) => openUserDetails(user.id.toString())}
+          emptyState={
+            <div className="text-center py-12">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 typography-title-large">
+                Không tìm thấy người dùng nào
+              </h3>
+              <p className="mt-2 typography-body-medium text-muted-foreground">
+                {filterState.hasActiveFilters
+                  ? "Không có kết quả phù hợp."
+                  : "Hãy tạo người dùng đầu tiên."}
+              </p>
+            </div>
+          }
+        />
+        {userData.hasMore && (
+          <div className="flex justify-center py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleLoadMore}
+              disabled={userData.isFetchingNextPage}
+            >
+              {userData.isFetchingNextPage ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Đang tải...
+                </>
+              ) : (
+                "Tải thêm"
+              )}
+            </Button>
+          </div>
+        )}
+        {userData.isFetchingNextPage && (
+          <div className="flex justify-center py-2">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        {!userData.hasMore &&
+          !userData.isFetchingNextPage &&
+          userData.users.filter((u) => u.role !== 'adv_partner').length > 0 && (
+            <p className="text-center py-3 text-xs text-muted-foreground">
+              {userData.users.filter((u) => u.role !== 'adv_partner').length} người dùng
+            </p>
+          )}
+      </div>
+
+      {/* Filter sheet */}
+      <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-safe">
+          <SheetHeader className="pb-4">
+            <SheetTitle>Bộ lọc</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Vai trò</label>
+              <Select
+                value={filterState.role ?? "all"}
+                onValueChange={(v) =>
+                  filterState.setRole(
+                    v === "all"
+                      ? undefined
+                      : (v as "admin" | "partner" | "employee"),
+                  )
+                }
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Tất cả vai trò" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả vai trò</SelectItem>
+                  <SelectItem value="admin">Quản trị viên</SelectItem>
+                  <SelectItem value="partner">Quản lý</SelectItem>
+                  <SelectItem value="employee">Nhân viên</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 h-11"
+                onClick={() => {
+                  filterState.clearFilters();
+                  setFilterSheetOpen(false);
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+              <Button
+                className="flex-1 h-11 btn-admin-primary"
+                onClick={() => setFilterSheetOpen(false)}
+              >
+                Áp dụng
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+};
+
+export default UsersPageMobile;

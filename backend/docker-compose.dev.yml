@@ -1,0 +1,115 @@
+# Port map:
+#   3306  mysql
+#   6379  redis
+#   8081  adminer
+#   9001  sandbox (9pay + onepay mocks)
+#   8080  backend (host process via `air`)
+#   5173  frontend (vite dev server, host process)
+
+name: payroll-backend
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: payroll-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MYSQL_DATABASE: payroll_db
+      MYSQL_USER: payroll_user
+      MYSQL_PASSWORD: payroll_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --innodb-log-file-size=64M
+      --max-connections=200
+      --wait-timeout=600
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: payroll-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 5s
+
+  # Unified sandbox — mocks external APIs so local dev works
+  # without real credentials. Serves both:
+  #   • 9Pay disbursement mock (routes: /disbursement/*, /api/transaction/*)
+  #   • OnePay PayOut mock (routes: /onepayout/*)
+  sandbox:
+    build: ./sandbox
+    container_name: payroll-sandbox
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    environment:
+      MOCK_LISTEN_ADDR: ":9001"
+      # 9Pay
+      MOCK_PUBLIC_URL: ${MOCK_PUBLIC_URL:-http://localhost:9001}
+      NINEPAY_MERCHANT_KEY: ${NINEPAY_MERCHANT_KEY:-mock-merchant}
+      NINEPAY_SECRET_KEY: ${NINEPAY_SECRET_KEY:-mock-secret}
+      NINEPAY_SECRET_KEY_CHECKSUM: ${NINEPAY_SECRET_KEY_CHECKSUM:-mock-checksum}
+      MOCK_IPN_URL: ${MOCK_IPN_URL:-http://host.docker.internal:8080/api/v1/webhooks/disbursement/9pay}
+      MOCK_IPN_DELAY: ${MOCK_IPN_DELAY:-3s}
+      MOCK_SLOW_DELAY: ${MOCK_SLOW_DELAY:-5m}
+      MOCK_BASE64_LINEWRAP: ${MOCK_BASE64_LINEWRAP:-alternate}
+      MOCK_SKIP_VERIFY: ${MOCK_SKIP_VERIFY:-false}
+      MOCK_DB_DSN: ${MOCK_DB_DSN:-root:${ROOT_PASSWORD}@tcp(mysql:3306)/payroll_db?parseTime=true&loc=UTC}
+      # OnePay
+      ONEPAY_PARTNER_ID: ${ONEPAY_PARTNER_ID:-TESTVFICPO}
+      ONEPAY_PARTNER_KEY: ${ONEPAY_PARTNER_KEY:-C2B5DA903DAE19E215454211C66A59DD}
+      ONEPAY_ACCOUNT_ID: ${ONEPAY_ACCOUNT_ID:-666894931888}
+      MOCK_ONEPAY_IPN_URL: ${MOCK_ONEPAY_IPN_URL:-http://host.docker.internal:8080/api/v1/webhooks/disbursement/1pay}
+      MOCK_ONEPAY_IPN_DELAY: ${MOCK_ONEPAY_IPN_DELAY:-3s}
+      MOCK_ONEPAY_SLOW_DELAY: ${MOCK_ONEPAY_SLOW_DELAY:-5m}
+      MOCK_ONEPAY_SKIP_VERIFY: ${MOCK_ONEPAY_SKIP_VERIFY:-false}
+      MOCK_ONEPAY_DB_DSN: ${MOCK_ONEPAY_DB_DSN:-root:${ROOT_PASSWORD}@tcp(mysql:3306)/payroll_db?parseTime=true&loc=UTC}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # Optional: Database management interface
+  adminer:
+    image: adminer:latest
+    container_name: payroll-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: pepa-linha
+
+volumes:
+  mysql_data:
+    name: payroll_mysql_data
+  redis_data:
+    name: payroll_redis_data

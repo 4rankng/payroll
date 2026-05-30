@@ -1,0 +1,308 @@
+package payroll
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"sort"
+	"strings"
+	"time"
+
+	"api-server/internal/app/services/excel"
+	domainServices "api-server/internal/domain/services"
+	pkgConstants "api-server/internal/pkg/constants"
+
+	"github.com/xuri/excelize/v2"
+)
+
+// PayrollReportSummary captures key figures needed for presentation layers.
+type PayrollReportSummary struct {
+	TotalAmount    int64
+	FeePercentage  float64
+	FeeAmount      int64
+	TotalWithFee   int64
+	DueDate        time.Time
+	FormattedRange string
+}
+
+// PayrollReportExcelData holds the Excel rows and associated timesheet IDs.
+type PayrollReportExcelData struct {
+	Rows         [][]interface{}
+	TimesheetIDs []uint
+}
+
+// SettingsConfigProvider exposes the subset of settings config methods required by the exporter.
+type SettingsConfigProvider interface {
+	GetWeeklyPaymentPercentage(ctx context.Context) float64
+	GetAdvanceCashFeePercentage(ctx context.Context) float64
+}
+
+// PayrollReportExporter centralizes payroll report Excel generation so HTTP handlers
+// and email services reuse the same implementation.
+type PayrollReportExporter struct {
+	settingsConfigService SettingsConfigProvider
+}
+
+// NewPayrollReportExporter builds a new exporter.
+func NewPayrollReportExporter(settingsConfigService SettingsConfigProvider) *PayrollReportExporter {
+	return &PayrollReportExporter{settingsConfigService: settingsConfigService}
+}
+
+type payrollAggregate struct {
+	name      string
+	cccd      string
+	date      time.Time
+	projects  map[string]struct{}
+	paidTotal int64
+}
+
+// BuildPayrollReportData aggregates report entries into the Excel-friendly structure.
+func (e *PayrollReportExporter) BuildPayrollReportData(ctx context.Context, entries []*domainServices.PayrollReportEntry) *PayrollReportExcelData {
+	aggregates := map[string]*payrollAggregate{}
+	timesheetIDSet := make(map[uint]struct{})
+
+	for _, entry := range entries {
+		if entry == nil || entry.PaymentDate == nil {
+			continue
+		}
+
+		for _, tsID := range entry.TimesheetIDs {
+			if tsID == 0 {
+				continue
+			}
+			timesheetIDSet[tsID] = struct{}{}
+		}
+
+		empKey := entry.EmployeeCCCD
+		if empKey == "" {
+			empKey = entry.EmployeeName
+		}
+
+		dateOnly := entry.PaymentDate.Format("2006-01-02")
+		key := empKey + "|" + dateOnly
+
+		aggregate, ok := aggregates[key]
+		if !ok {
+			aggregate = &payrollAggregate{
+				name:     entry.EmployeeName,
+				cccd:     entry.EmployeeCCCD,
+				date:     entry.PaymentDate.Truncate(24 * time.Hour),
+				projects: map[string]struct{}{},
+			}
+			aggregates[key] = aggregate
+		}
+
+		aggregate.paidTotal += entry.PaidAmount
+		if entry.ProjectName != "" {
+			aggregate.projects[entry.ProjectName] = struct{}{}
+		}
+	}
+
+	items := make([]*payrollAggregate, 0, len(aggregates))
+	for _, v := range aggregates {
+		items = append(items, v)
+	}
+
+	sortAggregated(items)
+
+	excelService := excel.NewExportService()
+	var data [][]interface{}
+
+	for idx, ag := range items {
+		date := ag.date
+		paymentDate := excelService.FormatDate(&date)
+
+		projectNames := make([]string, 0, len(ag.projects))
+		for project := range ag.projects {
+			projectNames = append(projectNames, project)
+		}
+		sortStrings(projectNames)
+
+		row := []interface{}{idx + 1, paymentDate, ag.name, ag.cccd, strings.Join(projectNames, ", "), ag.paidTotal}
+		data = append(data, row)
+	}
+
+	sortedTimesheetIDs := make([]uint, 0, len(timesheetIDSet))
+	for tsID := range timesheetIDSet {
+		sortedTimesheetIDs = append(sortedTimesheetIDs, tsID)
+	}
+	sort.Slice(sortedTimesheetIDs, func(i, j int) bool {
+		return sortedTimesheetIDs[i] < sortedTimesheetIDs[j]
+	})
+
+	return &PayrollReportExcelData{
+		Rows:         data,
+		TimesheetIDs: sortedTimesheetIDs,
+	}
+}
+
+// GenerateExcel assembles the payroll report Excel file and returns its bytes along
+// with a summary of monetary figures for downstream use (e.g., email template).
+func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toDate time.Time, data *PayrollReportExcelData) ([]byte, *PayrollReportSummary, error) {
+	f, err := excelize.OpenFile(pkgConstants.PayrollReportTemplatePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open payroll template: %w", err)
+	}
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			slog.Default().Warn("failed to close Excel file", "error", closeErr)
+		}
+	}()
+
+	sheetList := f.GetSheetList()
+	if len(sheetList) == 0 {
+		return nil, nil, fmt.Errorf("payroll template has no sheets")
+	}
+	sheetName := sheetList[0]
+	mainSheetIndex, _ := f.GetSheetIndex(sheetName)
+	excelService := excel.NewExportService()
+
+	dataStyleWhite, err := excelService.SetupDataStyle(f, false)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create white data style: %w", err)
+	}
+
+	dataStyleGray, err := excelService.SetupDataStyle(f, true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create gray data style: %w", err)
+	}
+
+	currencyStyleWhite, err := excelService.SetupCurrencyStyle(f, false)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create white currency style: %w", err)
+	}
+
+	currencyStyleGray, err := excelService.SetupCurrencyStyle(f, true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create gray currency style: %w", err)
+	}
+
+	summaryCurrencyStyle, err := excelService.SetupCurrencyStyle(f, false)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create summary currency style: %w", err)
+	}
+
+	dateRangeValue := fmt.Sprintf("%s - %s", fromDate.Format("02/01"), toDate.Format("02/01/2006"))
+	if err := f.SetCellValue(sheetName, "E2", dateRangeValue); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E2 date range: %w", err)
+	}
+
+	if data == nil {
+		data = &PayrollReportExcelData{}
+	}
+
+	var totalAmount int64
+	for _, row := range data.Rows {
+		if len(row) >= 6 {
+			if amount, ok := row[5].(int64); ok {
+				totalAmount += amount
+			}
+		}
+	}
+
+	if err := f.SetCellValue(sheetName, "E3", totalAmount); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E3 total amount: %w", err)
+	}
+	if err := f.SetCellStyle(sheetName, "E3", "E3", summaryCurrencyStyle); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E3 currency style: %w", err)
+	}
+
+	feePercentage := e.settingsConfigService.GetAdvanceCashFeePercentage(ctx)
+	feeAmount := int64(float64(totalAmount) * feePercentage)
+	if err := f.SetCellValue(sheetName, "E4", feeAmount); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E4 advance cash fee: %w", err)
+	}
+	if err := f.SetCellStyle(sheetName, "E4", "E4", summaryCurrencyStyle); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E4 currency style: %w", err)
+	}
+
+	totalWithFee := totalAmount + feeAmount
+	if err := f.SetCellValue(sheetName, "E5", totalWithFee); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E5 total with fee: %w", err)
+	}
+	if err := f.SetCellStyle(sheetName, "E5", "E5", summaryCurrencyStyle); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E5 currency style: %w", err)
+	}
+
+	// Calculate the 16th of the month following the payment cycle
+	// Use month arithmetic to avoid date overflow issues (e.g., Oct 31 + 1 month = Dec 1)
+	nextMonth := toDate.Month() + 1
+	nextYear := toDate.Year()
+	if nextMonth > 12 {
+		nextMonth = 1
+		nextYear++
+	}
+	sixteenthNextMonth := time.Date(nextYear, nextMonth, 16, 0, 0, 0, 0, toDate.Location())
+	if err := f.SetCellValue(sheetName, "E6", sixteenthNextMonth.Format("02/01/2006")); err != nil {
+		return nil, nil, fmt.Errorf("failed to set E6 date: %w", err)
+	}
+
+	for i, rowData := range data.Rows {
+		currentRow := 16 + i
+		styleID := dataStyleWhite
+		currencyStyle := currencyStyleWhite
+		if i%2 == 1 {
+			styleID = dataStyleGray
+			currencyStyle = currencyStyleGray
+		}
+
+		for colIdx, val := range rowData {
+			columnName := excelService.GetColumnName(colIdx)
+			cell := fmt.Sprintf("%s%d", columnName, currentRow)
+			if err := f.SetCellValue(sheetName, cell, val); err != nil {
+				return nil, nil, fmt.Errorf("failed to set cell %s: %w", cell, err)
+			}
+			// Apply currency style to column F (index 5)
+			cellStyleID := styleID
+			if colIdx == 5 {
+				cellStyleID = currencyStyle
+			}
+			if err := f.SetCellStyle(sheetName, cell, cell, cellStyleID); err != nil {
+				return nil, nil, fmt.Errorf("failed to set style for cell %s: %w", cell, err)
+			}
+		}
+	}
+
+	if err := addInternalSheet(f, data.TimesheetIDs); err != nil {
+		return nil, nil, fmt.Errorf("failed to add INTERNAL sheet: %w", err)
+	}
+
+	if mainSheetIndex >= 0 {
+		f.SetActiveSheet(mainSheetIndex)
+	}
+
+	buffer, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to write payroll report: %w", err)
+	}
+
+	summary := &PayrollReportSummary{
+		TotalAmount:    totalAmount,
+		FeePercentage:  feePercentage,
+		FeeAmount:      feeAmount,
+		TotalWithFee:   totalWithFee,
+		DueDate:        sixteenthNextMonth,
+		FormattedRange: dateRangeValue,
+	}
+
+	return buffer.Bytes(), summary, nil
+}
+
+func sortStrings(values []string) {
+	sort.Slice(values, func(i, j int) bool {
+		return values[i] < values[j]
+	})
+}
+
+func sortAggregated(items []*payrollAggregate) {
+	sort.Slice(items, func(i, j int) bool {
+		ai, aj := items[i], items[j]
+		if ai.date.Equal(aj.date) {
+			if ai.name == aj.name {
+				return ai.cccd < aj.cccd
+			}
+			return ai.name < aj.name
+		}
+		return ai.date.After(aj.date)
+	})
+}

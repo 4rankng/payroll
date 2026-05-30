@@ -1,0 +1,83 @@
+# === Backend (Go) ===
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+vendor/
+go.work
+go.work.sum
+.gocache
+.gocache/*
+bin/
+api/openapi/
+
+# Integration test binary
+backend/integration
+tests/integration/results/
+sandbox/onepay/onepay-mock
+
+# === Frontend (React/Node) ===
+node_modules
+dist
+dist-ssr
+dev-dist/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# === Shared ===
+.env
+.env.local
+.env.docker
+build-errors.log
+logs/
+*.log
+tmp/
+temp/
+uploads/
+.DS_Store
+
+# === Editor/IDE ===
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*.sln
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*~
+
+# === Tooling ===
+.codegraph/
+graphify-out/
+.kiro
+.claude/
+.crush/
+.antigravitycli/
+.opencode/
+.superpowers/
+.agents/
+
+# === Database volumes ===
+mysql_data/
+redis_data/
+
+# === Python (scripts) ===
+__pycache__/
+*.py[cod]
+.Python
+venv/
+.tox/
+.pytest_cache/

@@ -1,0 +1,23 @@
+{
+  "name": "TingTing",
+  "short_name": "TingTing",
+  "description": "TingTing",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a2540",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "82x82",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "vi",
+  "dir": "ltr",
+  "screenshots": [],
+  "prefer_related_applications": false
+}

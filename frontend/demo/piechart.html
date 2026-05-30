@@ -1,0 +1,200 @@
+
+<style>
+  .wrap { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: center; padding: 0.5rem 0; }
+  .chart-wrap { position: relative; width: 320px; height: 320px; }
+  .chart-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .chart-center-num { font-size: 28px; font-weight: 500; color: var(--color-text-primary); line-height: 1.1; }
+  .chart-center-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 3px; }
+  .legend { display: flex; flex-direction: column; gap: 11px; }
+  .legend-item { display: grid; grid-template-columns: 10px 1fr auto; gap: 10px; align-items: center; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .legend-short { font-size: 13px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+  .legend-full { font-size: 11px; color: var(--color-text-secondary); }
+  .legend-pct { font-size: 14px; font-weight: 500; }
+  .legend-bar-wrap { width: 80px; height: 3px; background: var(--color-background-secondary); border-radius: 2px; margin-top: 4px; margin-left: auto; }
+  .legend-bar { height: 3px; border-radius: 2px; }
+</style>
+
+<div class="wrap">
+  <div>
+    <div class="chart-wrap">
+      <canvas id="bankChart" role="img" aria-label="Donut chart: MB 56%, MSB 24%, VCB 7%, VIETINBANK 5%, Khác 4%, TCB 3%.">MB 56%, MSB 24%, VCB 7%, VIETINBANK 5%, Khác 4%, TCB 3%.</canvas>
+      <div class="chart-center">
+        <div class="chart-center-num">518</div>
+        <div class="chart-center-sub">nhân viên</div>
+      </div>
+    </div>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const banks = [
+  { short: 'MB',         full: 'Quân đội',       pct: 56, color: '#3B6FE8' },
+  { short: 'MSB',        full: 'Hàng hải',        pct: 24, color: '#60B8F0' },
+  { short: 'VCB',        full: 'Ngoại thương VN',  pct: 7,  color: '#3CAB72' },
+  { short: 'VIETINBANK', full: 'Công Thương VN',   pct: 5,  color: '#E09820' },
+  { short: 'TCB',        full: 'Kỹ Thương',        pct: 3,  color: '#E04848' },
+  { short: 'Khác',       full: 'Ngân hàng khác',   pct: 4,  color: '#8888A0' },
+];
+
+const INSIDE_THRESHOLD = 15;
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const bgColor = isDark ? '#1e1e1e' : '#ffffff';
+
+const labelPlugin = {
+  id: 'sliceLabels',
+  afterDraw(chart) {
+    const ctx = chart.ctx;
+    const meta = chart.getDatasetMeta(0);
+    const { left, top, width, height } = chart.chartArea;
+    const cx = left + width / 2;
+    const cy = top + height / 2;
+
+    // Draw inside labels for large slices
+    meta.data.forEach((arc, i) => {
+      const b = banks[i];
+      if (b.pct < INSIDE_THRESHOLD) return;
+      const mid = (arc.startAngle + arc.endAngle) / 2;
+      const r = (arc.outerRadius + arc.innerRadius) / 2;
+      const lx = cx + Math.cos(mid) * r;
+      const ly = cy + Math.sin(mid) * r;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '500 13px system-ui,sans-serif';
+      ctx.fillText(b.short, lx, ly - 7);
+      ctx.font = '500 12px system-ui,sans-serif';
+      ctx.fillText(b.pct + '%', lx, ly + 7);
+      ctx.restore();
+    });
+
+    // Collect outside label candidates
+    const items = [];
+    meta.data.forEach((arc, i) => {
+      const b = banks[i];
+      if (b.pct >= INSIDE_THRESHOLD) return;
+      const mid = (arc.startAngle + arc.endAngle) / 2;
+      const sliceOff = (arc.options && arc.options.offset) ? arc.options.offset : 0;
+      const totalR = arc.outerRadius + sliceOff;
+      // Edge of the arc
+      const edgeX = cx + Math.cos(mid) * totalR;
+      const edgeY = cy + Math.sin(mid) * totalR;
+      // Elbow projected outward
+      const elbowR = totalR + 14;
+      const elbowX = cx + Math.cos(mid) * elbowR;
+      const elbowY = cy + Math.sin(mid) * elbowR;
+      // Natural label position
+      const natR = totalR + 18;
+      const natX = cx + Math.cos(mid) * natR;
+      const natY = cy + Math.sin(mid) * natR;
+      items.push({ b, mid, edgeX, edgeY, elbowX, elbowY, x: natX, y: natY });
+    });
+
+    // Iterative collision resolution — push overlapping labels apart vertically
+    const MIN_DY = 26;
+    const MAX_DX = 75;
+    for (let iter = 0; iter < 40; iter++) {
+      for (let a = 0; a < items.length; a++) {
+        for (let bb = a + 1; bb < items.length; bb++) {
+          const A = items[a], B = items[bb];
+          const dx = Math.abs(B.x - A.x);
+          const dy = Math.abs(B.y - A.y);
+          if (dx < MAX_DX && dy < MIN_DY) {
+            const push = (MIN_DY - dy) / 2 + 1;
+            if (B.y >= A.y) { A.y -= push; B.y += push; }
+            else { A.y += push; B.y -= push; }
+          }
+        }
+      }
+    }
+
+    // Draw connectors and labels
+    items.forEach(({ b, edgeX, edgeY, elbowX, elbowY, x, y }) => {
+      const isRight = elbowX > cx;
+      const textX = x + (isRight ? 6 : -6);
+
+      // Polyline connector: arc edge → elbow → label point
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(edgeX, edgeY);
+      ctx.lineTo(elbowX, elbowY);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Dot at label end
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = b.color;
+      ctx.fill();
+
+      // Text — colored, no blend with background
+      ctx.textAlign = isRight ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = b.color;
+      ctx.font = '600 11px system-ui,sans-serif';
+      ctx.fillText(b.short, textX, y - 7);
+      ctx.font = '400 11px system-ui,sans-serif';
+      ctx.fillText(b.pct + '%', textX, y + 6);
+      ctx.restore();
+    });
+  }
+};
+
+new Chart(document.getElementById('bankChart'), {
+  type: 'doughnut',
+  plugins: [labelPlugin],
+  data: {
+    labels: banks.map(b => b.short),
+    datasets: [{
+      data: banks.map(b => b.pct),
+      backgroundColor: banks.map(b => b.color),
+      borderColor: bgColor,
+      borderWidth: 3,
+      hoverOffset: 4,
+      offset: banks.map(b => b.pct < INSIDE_THRESHOLD ? 14 : 0),
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    cutout: '60%',
+    layout: { padding: { top: 55, bottom: 30, left: 70, right: 30 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${banks[ctx.dataIndex].short} — ${banks[ctx.dataIndex].pct}%`
+        }
+      }
+    }
+  }
+});
+
+// Build legend
+const legend = document.getElementById('legend');
+banks.forEach(b => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `
+    <div class="legend-dot" style="background:${b.color};"></div>
+    <div>
+      <div class="legend-short">${b.short}</div>
+      <div class="legend-full">${b.full}</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="legend-pct" style="color:${b.color};">${b.pct}%</div>
+      <div class="legend-bar-wrap">
+        <div class="legend-bar" style="width:${b.pct}%;background:${b.color};"></div>
+      </div>
+    </div>
+  `;
+  legend.appendChild(item);
+});
+</script>

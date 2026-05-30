@@ -1,0 +1,470 @@
+import { useState, useMemo, useCallback, memo } from "react";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
+import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Wallet, Calendar, Users, Banknote } from "lucide-react";
+import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
+import { SearchBar } from "@/components/shared/SearchBar";
+import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
+import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
+import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
+import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
+import { AdvancePaymentActionButtons } from "@/components/advance-payment/AdvancePaymentActionButtons";
+import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
+import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
+import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
+import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
+import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
+import { EmployeeAdvancePaymentDetailSheet } from "@/components/advance-payment/EmployeeAdvancePaymentDetailSheet";
+import {
+  getAdvancePaymentColumns,
+  getFlexPayColumns,
+  requestMobileFields,
+  flexPayMobileFields,
+  requestEmptyState,
+  flexPayEmptyState,
+} from "@/components/advance-payment/table-config";
+import {
+  getAdminAttendanceColumns,
+  attendanceMobileFields,
+  attendanceEmptyState,
+} from "@/components/attendance/AdminAttendanceTableConfig";
+import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
+import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHeroStrip";
+import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
+import { AdvPartnerMetricsStrip } from "@/components/advance-payment/AdvPartnerMetricsStrip";
+import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
+import { TabBarWithBadges } from "@/components/shared/TabBarWithBadges";
+import { useAuth } from "@/contexts";
+import { cn } from "@/lib/utils";
+import type {
+  AdvancePaymentListItem,
+  FlexPayEmployeeListItem,
+  AdvancePaymentRequestStatus,
+} from "@/types/api/advance-payment.types";
+import type { ActiveTab } from "./types";
+
+const AdvancePaymentsPage = () => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
+  const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [isUploadResultDialogOpen, setIsUploadResultDialogOpen] = useState(false);
+  const [isEmployeeListUploadDialogOpen, setIsEmployeeListUploadDialogOpen] =
+    useState(false);
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<FlexPayEmployeeListItem | null>(null);
+
+  const { user } = useAuth();
+  const isAdvPartner = user?.role === "adv_partner";
+
+  const page = useAdvancePaymentsPage({ employeesTabActive: activeTab === "employees" });
+  const attendancePage = useAdminAttendancePage({ active: activeTab === "attendances" });
+  const exportBatchMutation = useExportAdvancePayments();
+
+  const summaryData = page.summary?.data;
+
+  const heroProps = useMemo(
+    () => ({
+      totalPaidAmount: summaryData?.totalPaidAmount ?? 0,
+      totalAmount: summaryData?.totalAmount ?? 0,
+      totalFeeEarned: summaryData?.totalFeeEarned ?? 0,
+      totalPaid: summaryData?.totalPaid ?? 0,
+      totalRequests: summaryData?.totalRequests ?? 0,
+      totalCancelled: summaryData?.totalCancelled ?? 0,
+      avgProcessingTimeSecs: summaryData?.avgProcessingTimeSecs ?? 0,
+      completedUnder30s: summaryData?.completedUnder30s ?? 0,
+      disbursementPercentage: summaryData?.disbursementPercentage ?? 0,
+    }),
+    [summaryData],
+  );
+
+  const statusProps = useMemo(
+    () => ({
+      totalPaid: summaryData?.totalPaid ?? 0,
+      totalPending: summaryData?.totalPending ?? 0,
+      totalFailed: summaryData?.totalFailed ?? 0,
+      totalCancelled: summaryData?.totalCancelled ?? 0,
+      totalRequests: summaryData?.totalRequests ?? 0,
+      totalPaidAmount: summaryData?.totalPaidAmount ?? 0,
+      totalPendingAmount: summaryData?.totalPendingAmount ?? 0,
+      totalFailedAmount: summaryData?.totalFailedAmount ?? 0,
+      totalCancelledAmount: summaryData?.totalCancelledAmount ?? 0,
+      successRate: summaryData?.successRate ?? 0,
+    }),
+    [summaryData],
+  );
+
+  const metricsProps = useMemo(
+    () => ({
+      totalPaid: summaryData?.totalPaid ?? 0,
+      totalRequests: summaryData?.totalRequests ?? 0,
+      totalCancelled: summaryData?.totalCancelled ?? 0,
+      avgProcessingTimeSecs: summaryData?.avgProcessingTimeSecs ?? 0,
+      completedUnder30s: summaryData?.completedUnder30s ?? 0,
+      feePercentage: summaryData?.feePercentage ?? 0,
+      avgFeePerRequest: summaryData?.avgFeePerRequest ?? 0,
+      successRate: summaryData?.successRate ?? 0,
+    }),
+    [summaryData],
+  );
+
+  const feePanelProps = useMemo(
+    () => ({
+      totalFeeEarned: summaryData?.totalFeeEarned ?? 0,
+      totalPaid: summaryData?.totalPaid ?? 0,
+      totalRequests: summaryData?.totalRequests ?? 0,
+      feePercentage: summaryData?.feePercentage ?? 0,
+      avgFeePerRequest: summaryData?.avgFeePerRequest ?? 0,
+      avgFeePerEmployee: summaryData?.avgFeePerEmployee ?? 0,
+    }),
+    [summaryData],
+  );
+
+  const columns = useMemo(
+    () => getAdvancePaymentColumns({ onCancel: page.handleCancelRequest }),
+    [page.handleCancelRequest],
+  );
+
+  const flexPayColumns = useMemo(
+    () =>
+      getFlexPayColumns({
+        sortBy: page.flexPayFilters.sortBy,
+        sortOrder: page.flexPayFilters.sortOrder,
+        onSort: page.handleFlexPaySort,
+      }),
+    [page.flexPayFilters.sortBy, page.flexPayFilters.sortOrder, page.handleFlexPaySort],
+  );
+
+  const attendanceColumns = useMemo(
+    () => getAdminAttendanceColumns(),
+    []
+  );
+
+  const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
+
+  return (
+    <div className="min-h-full animate-hero-reveal">
+      <div className="max-w-[1440px] mx-auto space-y-4 p-4 lg:p-6">
+
+        {/* ─── 1. Page header ─── */}
+        <PageHeader
+          title="Quản lý ứng lương"
+          description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
+          icon={Banknote}
+        >
+          <TimesheetMonthSelector
+            value={page.selectedMonth}
+            onChange={page.setSelectedMonth}
+          />
+        </PageHeader>
+
+        {/* ─── 2. Treasury Hero — Wallet | Flow | Fee ─── */}
+        <section
+          aria-label="Tổng quan kỳ ứng lương"
+          className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_0_rgba(14,23,41,0.04),0_6px_24px_rgba(14,23,41,0.06)]"
+        >
+          <div className={cn(
+            "grid divide-border/50",
+            isAdvPartner
+              ? "grid-cols-1 divide-y lg:grid-cols-[1fr_300px] lg:divide-y-0 lg:divide-x"
+              : "grid-cols-1 divide-y lg:grid-cols-[280px_1fr_300px] xl:grid-cols-[320px_1fr_340px] lg:divide-y-0 lg:divide-x",
+          )}>
+
+            {/* Panel A: Wallet — admins only */}
+            {!isAdvPartner && (
+              <WalletBalanceCard
+                monthlyProviderFee={page.providerFees.monthlyProviderFee}
+                totalProviderFee={page.providerFees.totalProviderFee}
+                className="rounded-none border-0 shadow-none"
+              />
+            )}
+
+            {/* Panel B: Disbursement flow */}
+            <AdvPartnerHeroStrip
+              {...heroProps}
+              isLoading={page.summaryLoading}
+              className="border-0 shadow-none"
+            />
+
+            {/* Panel C: Fee earned */}
+            <TreasuryFeePanel
+              {...feePanelProps}
+              isLoading={page.summaryLoading}
+            />
+          </div>
+        </section>
+
+        {/* ─── 3. Pipeline — status bar + cards ─── */}
+        <AdvPartnerStatusOverview
+          {...statusProps}
+          isLoading={page.summaryLoading}
+        />
+
+        {/* ─── 4. Metrics strip — success rate | avg time | avg fee ─── */}
+        <AdvPartnerMetricsStrip
+          {...metricsProps}
+          isLoading={page.summaryLoading}
+        />
+
+        {/* ─── 5. Operations — tabs + filters + table ─── */}
+        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(15,23,42,0.06)]">
+
+          {/* Header row: tabs + actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-gradient-to-b from-muted/40 to-transparent px-3 py-3 sm:px-4">
+            <TabBarWithBadges
+              tabs={[
+                {
+                  id: "requests",
+                  label: "Yêu cầu",
+                  icon: Wallet,
+                  count: page.statusCounts?.all ?? 0,
+                },
+                {
+                  id: "employees",
+                  label: "Nhân viên",
+                  icon: Users,
+                  count: page.flexPayPagination?.totalRecords ?? 0,
+                },
+                {
+                  id: "attendances",
+                  label: "Chấm công",
+                  icon: Calendar,
+                  count: attendancePage.totalRecords ?? 0,
+                },
+              ]}
+              activeTab={activeTab}
+              onTabChange={(id) => setActiveTab(id as ActiveTab)}
+            />
+
+            <AdvancePaymentActionButtons
+              onImportPayroll={() => setIsImportSheetOpen(true)}
+              onExportBatch={() => exportBatchMutation.mutate(undefined)}
+              isExportBatchPending={exportBatchMutation.isPending}
+              onUploadResult={() => setIsUploadResultDialogOpen(true)}
+              onHistory={() => setIsHistorySheetOpen(true)}
+              hideUploadResult={isAdvPartner}
+              hideHistory={isAdvPartner}
+              hideExportBatch={isAdvPartner}
+              onExportList={page.handleExportFlexPayEmployees}
+              isExportListPending={page.exportFlexPayMutation.isPending}
+              onCheckIn={() => setIsCheckInDialogOpen(true)}
+            />
+          </div>
+
+          {/* Filter row */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-border/40 bg-muted/20 px-3 py-2.5 sm:px-4">
+            {activeTab === "requests" && (
+              <>
+                <SearchBar
+                  searchTerm={page.searchInput}
+                  onSearchChange={page.handleSearch}
+                  placeholder="Tên hoặc CCCD..."
+                  className="h-8 w-44 text-sm"
+                />
+                <StatusFilterBar
+                  value={(page.filters.status as AdvancePaymentRequestStatus) || "all"}
+                  onChange={page.handleStatusChange}
+                  counts={page.statusCounts}
+                />
+              </>
+            )}
+
+            {activeTab === "employees" && (
+              <>
+                <SearchBar
+                  searchTerm={page.flexPaySearchInput}
+                  onSearchChange={page.handleFlexPaySearch}
+                  placeholder="Tên hoặc CCCD..."
+                  className="h-8 w-44 text-sm"
+                />
+                <Select
+                  value={page.selectedViewMonth ?? ""}
+                  onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
+                >
+                  <SelectTrigger className="h-8 w-auto min-w-36 shrink-0 text-sm">
+                    <Calendar className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <SelectValue placeholder="Tháng" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {page.availableMonths.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        Chưa có dữ liệu
+                      </SelectItem>
+                    ) : (
+                      page.availableMonths.map((m) => (
+                        <SelectItem key={m.forMonth} value={m.forMonth} className="text-sm">
+                          {formatMonthDisplay(m.forMonth)}{!isAdvPartner && ` (${m.employeeCount})`}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+
+            {activeTab === "attendances" && (
+              <>
+                <Select
+                  value={attendancePage.filters.status || "all"}
+                  onValueChange={attendancePage.handleStatusChange}
+                >
+                  <SelectTrigger className="h-8 w-auto min-w-36 shrink-0 text-sm bg-white">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="checked_in">Đang làm</SelectItem>
+                    <SelectItem value="completed">Hoàn thành</SelectItem>
+                    <SelectItem value="orphaned">Thiếu check-out</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+          </div>
+
+          {/* Table */}
+          {activeTab === "requests" && (
+            <ResponsiveTable
+              data={page.requests}
+              columns={columns}
+              mobileFields={requestMobileFields}
+              embedded
+              rowTitle={(row: AdvancePaymentListItem) => (
+                <div className="text-[15px] font-semibold text-slate-800">{row.employeeName}</div>
+              )}
+              rowSubtitle={(row: AdvancePaymentListItem) => (
+                <div>
+                  <div className="text-[13px] font-medium text-slate-500">{row.employeeCCCD}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.projectName || "-"}</div>
+                </div>
+              )}
+              getRowId={(row: AdvancePaymentListItem) => row.id.toString()}
+              pagination={page.pagination}
+              onPageChange={page.handlePageChange}
+              onPageSizeChange={page.handlePageSizeChange}
+              emptyState={requestEmptyState}
+            />
+          )}
+
+          {activeTab === "employees" && (
+            <ResponsiveTable
+              data={page.flexPayEmployees}
+              columns={flexPayColumns}
+              mobileFields={flexPayMobileFields}
+              embedded
+              rowTitle={(row: FlexPayEmployeeListItem) => (
+                <div className="text-[15px] font-semibold text-slate-800">{row.fullname}</div>
+              )}
+              rowSubtitle={(row: FlexPayEmployeeListItem) => (
+                <div>
+                  <div className="text-[13px] font-medium text-slate-500">{row.cccd}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.project?.name || "-"}</div>
+                </div>
+              )}
+              getRowId={(row: FlexPayEmployeeListItem) =>
+                `${row.employeeId}-${row.project.id}`
+              }
+              onRowClick={(row: FlexPayEmployeeListItem) => setSelectedEmployee(row)}
+              pagination={page.flexPayPagination}
+              onPageChange={page.handleFlexPayPageChange}
+              onPageSizeChange={page.handleFlexPayPageSizeChange}
+              emptyState={flexPayEmptyState}
+            />
+          )}
+
+          {activeTab === "attendances" && (
+            <ResponsiveTable
+              data={attendancePage.attendances}
+              columns={attendanceColumns}
+              mobileFields={attendanceMobileFields}
+              embedded
+              rowTitle={(row: AdminAttendanceResponse) => (
+                <div className="text-[15px] font-semibold text-slate-800">{row.employee_name}</div>
+              )}
+              rowSubtitle={(row: AdminAttendanceResponse) => (
+                <div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.project_name || "-"}</div>
+                </div>
+              )}
+              getRowId={(row: AdminAttendanceResponse) => row.id.toString()}
+              pagination={attendancePage.pagination}
+              onPageChange={attendancePage.handlePageChange}
+              onPageSizeChange={attendancePage.handlePageSizeChange}
+              emptyState={attendanceEmptyState}
+            />
+          )}
+        </section>
+
+        {/* ─── Dialogs & Sheets ─── */}
+        <ImportPayrollDialog
+          open={isImportSheetOpen}
+          onOpenChange={setIsImportSheetOpen}
+        />
+        <AdvancePaymentResultUploadDialog
+          open={isUploadResultDialogOpen}
+          onOpenChange={setIsUploadResultDialogOpen}
+        />
+        <FileHistorySheet
+          open={isHistorySheetOpen}
+          onOpenChange={setIsHistorySheetOpen}
+        />
+
+        <EmployeeAdvancePaymentDetailSheet
+          employee={selectedEmployee}
+          onClose={handleEmployeeClose}
+        />
+
+        <CheckInBulkDialog
+          open={isCheckInDialogOpen}
+          onOpenChange={setIsCheckInDialogOpen}
+        />
+
+        <AlertDialog
+          open={page.cancelConfirmId !== null}
+          onOpenChange={(open) => {
+            if (!open) page.dismissCancelConfirm();
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hủy yêu cầu ứng lương?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Hành động này không thể hoàn tác. Yêu cầu ứng lương sẽ bị hủy vĩnh viễn.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Thoát</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={page.confirmCancelRequest}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              >
+                {page.cancelMutation.isPending ? "Đang hủy..." : "Xác nhận hủy"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+};
+
+export default AdvancePaymentsPage;

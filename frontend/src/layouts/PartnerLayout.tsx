@@ -1,0 +1,52 @@
+import { Outlet } from "react-router-dom";
+import PartnerSidebar from "@/components/PartnerSidebar";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { NotificationFAB } from "@/components/notifications/NotificationFAB";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { SidebarToggle } from "@/components/SidebarToggle";
+import { SectionErrorBoundary } from "@/components/ErrorBoundary";
+import { Briefcase, Users, Calendar, LayoutDashboard } from "lucide-react";
+import type { NavGroup } from "@/components/MobileBottomNav";
+
+const PARTNER_NAV_GROUPS: NavGroup[] = [
+  { title: "Tổng quan", icon: LayoutDashboard, path: "/partner/dashboard", end: true },
+  { title: "Dự án", icon: Briefcase, path: "/partner/projects" },
+  { title: "Nhân viên", icon: Users, path: "/partner/employees" },
+  { title: "Bảng công", icon: Calendar, path: "/partner/timesheet" },
+];
+
+const PartnerLayoutInner = () => {
+  return (
+    <div className="relative flex h-dvh w-full group/layout">
+      <PartnerSidebar />
+      <SidebarToggle />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <main
+          id="main-content"
+          className="flex-1 overflow-auto bg-gradient-subtle"
+        >
+          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1280px] mx-auto">
+            <SectionErrorBoundary sectionName="trang đối tác">
+              <Outlet />
+            </SectionErrorBoundary>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const PartnerLayout = () => {
+  return (
+    <ProtectedRoute requiredRole="partner">
+      <SidebarProvider defaultOpen={true}>
+        <PartnerLayoutInner />
+        <MobileBottomNav groups={PARTNER_NAV_GROUPS} />
+        <NotificationFAB />
+      </SidebarProvider>
+    </ProtectedRoute>
+  );
+};
+
+export default PartnerLayout;

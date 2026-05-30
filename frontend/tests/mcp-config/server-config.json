@@ -1,0 +1,55 @@
+{
+  "name": "playwright-mcp-server",
+  "version": "1.0.0",
+  "description": "Playwright MCP server configuration for TingTing frontend testing",
+  "config": {
+    "server": {
+      "port": 3001,
+      "host": "localhost",
+      "headless": true,
+      "browsers": ["chromium", "firefox", "webkit"]
+    },
+    "claude": {
+      "desktop": {
+        "enabled": true,
+        "model": "claude-3-5-sonnet-20241022",
+        "maxTokens": 4096,
+        "temperature": 0.1
+      }
+    },
+    "testing": {
+      "baseUrl": "http://localhost:3000",
+      "timeout": 30000,
+      "retries": 2,
+      "parallel": true,
+      "workers": 4,
+      "screenshot": "only-on-failure",
+      "video": "retain-on-failure",
+      "trace": "on-first-retry"
+    },
+    "features": {
+      "snapshotMode": true,
+      "aiTestGeneration": true,
+      "naturalLanguageTests": true,
+      "visualRegression": true,
+      "performanceTesting": true,
+      "accessibilityTesting": true
+    },
+    "localization": {
+      "defaultLocale": "vi",
+      "supportedLocales": ["vi", "en"],
+      "textValidation": true
+    },
+    "security": {
+      "rateLimitTesting": true,
+      "authenticationTesting": true,
+      "xssTesting": true,
+      "csrfTesting": true
+    }
+  },
+  "scripts": {
+    "start": "npx @playwright/mcp --headless",
+    "start:headed": "npx @playwright/mcp --headed",
+    "start:debug": "npx @playwright/mcp --debug"
+  }
+}

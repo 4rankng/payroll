@@ -1,0 +1,743 @@
+package constants
+
+// Error Messages - Vietnamese
+const (
+	// Authentication & Authorization
+	MsgInvalidRequestFormat      = "Định dạng yêu cầu không hợp lệ"
+	MsgUserIDNotFoundInContext   = "Không tìm thấy ID người dùng trong ngữ cảnh"
+	MsgUserRoleNotFoundInContext = "Không tìm thấy vai trò người dùng trong ngữ cảnh"
+	MsgUnauthorized              = "Không được phép truy cập"
+	MsgForbidden                 = "Bị cấm truy cập"
+
+	// Validation Errors
+	MsgInvalidRequestBody         = "Nội dung yêu cầu không hợp lệ"
+	MsgInvalidEmployeeID          = "ID nhân viên phải là một số hợp lệ"
+	MsgInvalidUserID              = "ID người dùng không hợp lệ"
+	MsgInvalidProjectID           = "Định dạng project_id không hợp lệ"
+	MsgInvalidPayrateID           = "ID mức lương phải là một số hợp lệ"
+	MsgInvalidDateFormat          = "Định dạng ngày không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidFromDateFormat      = "Định dạng from_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidToDateFormat        = "Định dạng to_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidStartDateFormat     = "Định dạng ngày bắt đầu không hợp lệ. Mong đợi YYYY-MM-DD"
+	MsgInvalidEndDateFormat       = "Định dạng ngày kết thúc không hợp lệ. Mong đợi YYYY-MM-DD"
+	MsgInvalidEffectiveFromFormat = "Định dạng effective_from không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidAtDateFormat        = "Định dạng at_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidQueryParameters     = "Tham số truy vấn không hợp lệ"
+	MsgInvalidPaymentSchedule     = "Dự án phải có lịch thanh toán theo tuần hoặc theo tháng"
+	MsgBothPaymentSchedules       = "Dự án không thể có cả lịch thanh toán theo tuần và theo tháng"
+
+	// Required Fields
+	MsgCCCDRequired  = "CCCD là bắt buộc"
+	MsgFieldRequired = "Trường này là bắt buộc"
+
+	// Business Logic Errors
+	MsgCannotCreatePayrateForProject = "Không thể tạo mức lương cho dự án với trạng thái"
+	MsgInvalidPayrateConfiguration   = "Cấu hình mức lương không hợp lệ"
+	MsgProjectNotFound               = "Không tìm thấy dự án"
+	MsgEmployeeNotFound              = "Không tìm thấy nhân viên"
+	MsgUserNotFound                  = "Không tìm thấy người dùng"
+	MsgPayrateNotFound               = "Không tìm thấy mức lương"
+	MsgTimesheetNotFound             = "Không tìm thấy bảng chấm công"
+
+	// Service Errors
+	MsgTimesheetServiceNotAvailable        = "Dịch vụ bảng chấm công không khả dụng"
+	MsgProjectEmployeeServiceNotAvailable  = "Dịch vụ nhân viên dự án không khả dụng"
+	MsgFailedToRetrieveTimesheetSummary    = "Không thể lấy tóm tắt bảng chấm công"
+	MsgFailedToRetrievePayrollHistory      = "Không thể lấy lịch sử bảng lương"
+	MsgFailedToCountTimesheets             = "Không thể đếm bảng chấm công"
+	MsgFailedToListEmployees               = "Không thể liệt kê nhân viên"
+	MsgFailedToCountEmployees              = "Không thể đếm nhân viên"
+	MsgFailedToRetrieveUnassignedEmployees = "Không thể lấy nhân viên chưa được phân công"
+	MsgFailedToCountUnassignedEmployees    = "Không thể đếm nhân viên chưa được phân công"
+	MsgFailedToBuildComprehensiveResponse  = "Không thể xây dựng phản hồi toàn diện cho nhân viên"
+
+	// Success Messages
+	MsgSuccess                        = "Thành công"
+	MsgCreatedSuccessfully            = "Tạo thành công"
+	MsgUpdatedSuccessfully            = "Cập nhật thành công"
+	MsgDeletedSuccessfully            = "Xóa thành công"
+	MsgEmailHistoryRetrieved          = "Lịch sử email đã được tải thành công"
+	MsgEmployeesRetrievedSuccessfully = "Lấy danh sách nhân viên thành công"
+
+	// Payroll specific
+	PayrollHistoriesFetched = "Lấy lịch sử thanh toán thành công"
+
+	// Generic Messages
+	MsgInternalServerError = "Lỗi máy chủ nội bộ"
+	MsgNotFound            = "Không tìm thấy"
+	MsgConflict            = "Xung đột tài nguyên"
+	MsgValidationFailed    = "Xác thực thất bại"
+)
+
+// Vietnamese Error Messages (to be implemented gradually)
+const (
+	// Authentication & Authorization - Vietnamese
+	MsgInvalidRequestFormatVN      = "Định dạng yêu cầu không hợp lệ"
+	MsgUserIDNotFoundInContextVN   = "Không tìm thấy ID người dùng trong ngữ cảnh"
+	MsgUserRoleNotFoundInContextVN = "Không tìm thấy vai trò người dùng trong ngữ cảnh"
+	MsgUnauthorizedVN              = "Không được phép truy cập"
+	MsgForbiddenVN                 = "Bị cấm truy cập"
+
+	// Validation Errors - Vietnamese
+	MsgInvalidRequestBodyVN         = "Nội dung yêu cầu không hợp lệ"
+	MsgInvalidEmployeeIDVN          = "ID nhân viên phải là một số hợp lệ"
+	MsgInvalidUserIDVN              = "ID người dùng không hợp lệ"
+	MsgInvalidProjectIDVN           = "Định dạng project_id không hợp lệ"
+	MsgInvalidPayrateIDVN           = "ID mức lương phải là một số hợp lệ"
+	MsgInvalidDateFormatVN          = "Định dạng ngày không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidFromDateFormatVN      = "Định dạng from_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidToDateFormatVN        = "Định dạng to_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidStartDateFormatVN     = "Định dạng ngày bắt đầu không hợp lệ. Mong đợi YYYY-MM-DD"
+	MsgInvalidEndDateFormatVN       = "Định dạng ngày kết thúc không hợp lệ. Mong đợi YYYY-MM-DD"
+	MsgInvalidEffectiveFromFormatVN = "Định dạng effective_from không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidAtDateFormatVN        = "Định dạng at_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidQueryParametersVN     = "Tham số truy vấn không hợp lệ"
+	MsgInvalidPaymentScheduleVN     = "Dự án phải có lịch thanh toán theo tuần hoặc theo tháng"
+	MsgBothPaymentSchedulesVN       = "Dự án không thể có cả lịch thanh toán theo tuần và theo tháng"
+
+	// Required Fields - Vietnamese
+	MsgCCCDRequiredVN  = "CCCD là bắt buộc"
+	MsgFieldRequiredVN = "Trường này là bắt buộc"
+
+	// Business Logic Errors - Vietnamese
+	MsgCannotCreatePayrateForProjectVN = "Không thể tạo mức lương cho dự án với trạng thái"
+	MsgInvalidPayrateConfigurationVN   = "Cấu hình mức lương không hợp lệ"
+	MsgProjectNotFoundVN               = "Không tìm thấy dự án"
+	MsgEmployeeNotFoundVN              = "Không tìm thấy nhân viên"
+	MsgUserNotFoundVN                  = "Không tìm thấy người dùng"
+	MsgPayrateNotFoundVN               = "Không tìm thấy mức lương"
+	MsgTimesheetNotFoundVN             = "Không tìm thấy bảng chấm công"
+
+	// Service Errors - Vietnamese
+	MsgTimesheetServiceNotAvailableVN        = "Dịch vụ bảng chấm công không khả dụng"
+	MsgProjectEmployeeServiceNotAvailableVN  = "Dịch vụ nhân viên dự án không khả dụng"
+	MsgFailedToRetrieveTimesheetSummaryVN    = "Không thể lấy tóm tắt bảng chấm công"
+	MsgFailedToRetrievePayrollHistoryVN      = "Không thể lấy lịch sử bảng lương"
+	MsgFailedToCountTimesheetsVN             = "Không thể đếm bảng chấm công"
+	MsgFailedToListEmployeesVN               = "Không thể liệt kê nhân viên"
+	MsgFailedToCountEmployeesVN              = "Không thể đếm nhân viên"
+	MsgFailedToRetrieveUnassignedEmployeesVN = "Không thể lấy nhân viên chưa được phân công"
+	MsgFailedToCountUnassignedEmployeesVN    = "Không thể đếm nhân viên chưa được phân công"
+	MsgFailedToBuildComprehensiveResponseVN  = "Không thể xây dựng phản hồi toàn diện cho nhân viên"
+	MsgFailedToCreateEmployeeVN              = "Không thể tạo nhân viên"
+	MsgFailedToUpdateEmployeeVN              = "Không thể cập nhật nhân viên"
+	MsgFailedToDeleteEmployeeVN              = "Không thể xóa nhân viên"
+	MsgFailedToDeleteEmployeeAssignmentsVN   = "Không thể xóa phân công dự án của nhân viên"
+	MsgFailedToValidateBankVN                = "Không thể xác thực ngân hàng"
+
+	// Success Messages - Vietnamese
+	MsgSuccessVN                      = "Thành công"
+	MsgCreatedSuccessfullyVN          = "Tạo thành công"
+	MsgUpdatedSuccessfullyVN          = "Cập nhật thành công"
+	MsgDeletedSuccessfullyVN          = "Xóa thành công"
+	MsgEmailSentSuccessfullyVN        = "Email đã được gửi thành công"
+	MsgPayrollEmailSentSuccessfullyVN = "Báo cáo payroll đã được gửi thành công"
+	MsgEmailHistoryRetrievedVN        = "Lịch sử email đã được tải thành công"
+
+	// Generic Messages - Vietnamese
+	MsgInternalServerErrorVN = "Lỗi máy chủ nội bộ"
+	MsgNotFoundVN            = "Không tìm thấy"
+	MsgConflictVN            = "Xung đột tài nguyên"
+	MsgValidationFailedVN    = "Xác thực thất bại"
+
+	// Additional Auth Messages - Vietnamese
+	MsgUserNotAuthenticatedVN        = "Người dùng chưa được xác thực"
+	MsgAuthorizationHeaderRequiredVN = "Yêu cầu header ủy quyền"
+	MsgInvalidAuthorizationFormatVN  = "Định dạng ủy quyền không hợp lệ"
+
+	// Additional Service Messages - Vietnamese
+	MsgFailedToListPayratesVN          = "Không thể liệt kê mức lương"
+	MsgFailedToCountPayratesVN         = "Không thể đếm mức lương"
+	MsgCannotUpdatePayrateForProjectVN = "Không thể cập nhật mức lương cho dự án với trạng thái"
+	MsgPayrateCreatedSuccessfullyVN    = "Tạo mức lương thành công"
+	MsgPayrateRetrievedSuccessfullyVN  = "Lấy mức lương thành công"
+	MsgPayrateUpdatedSuccessfullyVN    = "Cập nhật mức lương thành công"
+	MsgPayratesRetrievedSuccessfullyVN = "Lấy danh sách mức lương thành công"
+	MsgNoPayratesFoundVN               = "Không tìm thấy mức lương nào"
+	MsgPageOfPayratesRetrievedVN       = "Trang %d của danh sách mức lương được lấy thành công"
+
+	// Domain Error Messages - Vietnamese
+	MsgInvalidCredentialsVN     = "Thông tin đăng nhập không hợp lệ"
+	MsgFailedToGenerateTokenVN  = "Không thể tạo token truy cập"
+	MsgInvalidEmployeeDataVN    = "Dữ liệu nhân viên không hợp lệ"
+	MsgGoogleAccountNotLinkedVN = "Tài khoản Google này chưa được liên kết với bất kỳ người dùng nào trên hệ thống"
+
+	// Timesheet Validation Messages - Vietnamese
+	MsgEmployeeAlreadyHasTimesheetVN = "Nhân viên ID %d đã có bảng chấm công cho Dự án ID %d vào ngày %s. Một nhân viên chỉ có thể làm việc cho một dự án trong một ngày. Vui lòng đảm bảo các mục chấm công cho cùng nhân viên và ngày thuộc về cùng một dự án"
+
+	// Project Messages - Vietnamese
+	MsgProjectCreatedSuccessfullyVN            = "Tạo dự án thành công"
+	MsgProjectDetailsRetrievedSuccessfullyVN   = "Lấy chi tiết dự án thành công"
+	MsgProjectRetrievedSuccessfullyVN          = "Lấy dự án thành công"
+	MsgProjectsRetrievedSuccessfullyVN         = "Lấy danh sách dự án thành công"
+	MsgProjectUpdatedSuccessfullyVN            = "Cập nhật dự án thành công"
+	MsgProjectsActivatedSuccessfullyVN         = "Kích hoạt dự án thành công"
+	MsgNoProjectsFoundVN                       = "Không tìm thấy dự án nào"
+	MsgPageOfProjectsRetrievedVN               = "Trang %d của danh sách dự án được lấy thành công"
+	MsgCannotModifyProjectWithStatusVN         = "Không thể sửa đổi dự án với trạng thái"
+	MsgCannotChangeSalaryPeriodWithUnsettledVN = "Không thể thay đổi kỳ lương khi còn bảng chấm công đã thanh toán chưa quyết toán. Vui lòng xuất sao kê và quyết toán trước khi thay đổi."
+	MsgFailedToListProjectsVN                  = "Không thể liệt kê dự án"
+	MsgFailedToCountProjectsVN                 = "Không thể đếm dự án"
+	MsgFailedToGetUpdatedProjectVN             = "Không thể lấy dự án đã cập nhật"
+	MsgFailedToActivateProjectsVN              = "Không thể kích hoạt dự án"
+	MsgProjectActivationCompletedVN            = "Quá trình kích hoạt dự án hoàn thành thành công"
+	MsgProjectUsersRetrievedSuccessfullyVN     = "Lấy danh sách người dùng dự án thành công"
+	MsgEmployeeUsersRetrievedSuccessfullyVN    = "Lấy danh sách người dùng nhân viên thành công"
+	MsgAccessGrantedSuccessfullyVN             = "Cấp quyền truy cập thành công"
+	MsgAccessRevokedSuccessfullyVN             = "Thu hồi quyền truy cập thành công"
+	MsgCanOnlyGrantProjectAccessToPartnerVN    = "Chỉ có thể cấp quyền truy cập dự án cho người dùng có vai trò quản lý"
+	MsgCanOnlyGrantEmployeeAccessToPartnerVN   = "Chỉ có thể cấp quyền truy cập nhân viên cho người dùng có vai trò quản lý"
+
+	// Project Payrate Messages - Vietnamese
+	MsgNoPayratesFoundForProjectVN         = "Không tìm thấy mức lương nào cho dự án này"
+	MsgProjectPayratesRetrievedVN          = "Lấy mức lương dự án thành công"
+	MsgPageOfProjectPayratesRetrievedVN    = "Trang %d của mức lương dự án được lấy thành công"
+	MsgProjectPayrateCreatedSuccessfullyVN = "Tạo mức lương dự án thành công"
+	MsgCurrentProjectPayrateRetrievedVN    = "Lấy mức lương dự án hiện tại thành công"
+	MsgInvalidRequestBodyFormatVN          = "Định dạng nội dung yêu cầu không hợp lệ: %s"
+	MsgInvalidEffectiveToFormatVN          = "Định dạng effective_to không hợp lệ. Sử dụng YYYY-MM-DD"
+
+	// Project Summary Messages - Vietnamese
+	MsgFailedToGetProjectSummaryVN        = "Không thể lấy tóm tắt dự án"
+	MsgProjectSummaryRetrievedVN          = "Lấy tóm tắt dự án thành công"
+	MsgFailedToGetPartnerProjectSummaryVN = "Không thể lấy tóm tắt dự án quản lý"
+	MsgPartnerProjectSummaryRetrievedVN   = "Lấy tóm tắt dự án quản lý thành công"
+
+	// Timesheet Messages - Vietnamese
+	MsgFailedToListTimesheetsVN                 = "Không thể liệt kê bảng chấm công"
+	MsgTimesheetsRetrievedSuccessfullyVN        = "Lấy danh sách bảng chấm công thành công"
+	MsgTimesheetCreatedSuccessfullyVN           = "Tạo bảng chấm công thành công"
+	MsgTimesheetUpdatedSuccessfullyVN           = "Cập nhật bảng chấm công thành công"
+	MsgTimesheetDeletedSuccessfullyVN           = "Xóa bảng chấm công thành công"
+	MsgTimesheetApprovedSuccessfullyVN          = "Phê duyệt bảng chấm công thành công"
+	MsgTimesheetRejectedSuccessfullyVN          = "Từ chối bảng chấm công thành công"
+	MsgTimesheetMarkedForNextPayrollVN          = "Chấm công sẽ được trả trong kỳ trả lương tới"
+	MsgTimesheetSummaryRetrievedVN              = "Lấy tóm tắt bảng chấm công thành công"
+	MsgDateParameterRequiredVN                  = "Tham số ngày là bắt buộc"
+	MsgInvalidTimesheetIDVN                     = "ID bảng chấm công phải là một số hợp lệ"
+	MsgFailedToGetUpdatedTimesheetVN            = "Không thể lấy bảng chấm công đã cập nhật"
+	MsgFailedToGetPendingTimesheetsVN           = "Không thể lấy bảng chấm công đang chờ"
+	MsgFailedToGetTimesheetSummaryVN            = "Không thể lấy tóm tắt bảng chấm công"
+	MsgBulkTimesheetsCreatedSuccessfullyVN      = "Tạo hàng loạt bảng chấm công thành công"
+	MsgBulkTimesheetsUpdatedSuccessfullyVN      = "Cập nhật hàng loạt bảng chấm công thành công"
+	MsgBulkTimesheetsDeletedSuccessfullyVN      = "Xóa hàng loạt bảng chấm công thành công"
+	MsgProjectTimesheetsRetrievedSuccessfullyVN = "Dữ liệu bảng chấm công của dự án được lấy thành công"
+	MsgNoProjectTimesheetsFoundVN               = "Không tìm thấy bảng chấm công nào"
+
+	// Payroll Messages - Vietnamese
+	MsgInvalidPeriodStartFormatVN       = "Định dạng period_start không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidPeriodEndFormatVN         = "Định dạng period_end không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidPayDateFormatVN           = "Định dạng pay_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidPayrollIDVN               = "ID bảng lương phải là một số hợp lệ"
+	MsgFailedToListPayrollsVN           = "Không thể liệt kê bảng lương"
+	MsgFailedToCountPayrollsVN          = "Không thể đếm bảng lương"
+	MsgPayrollCreatedSuccessfullyVN     = "Tạo bảng lương thành công"
+	MsgPayrollsRetrievedSuccessfullyVN  = "Lấy danh sách bảng lương thành công"
+	MsgPayrollRetrievedSuccessfullyVN   = "Lấy bảng lương thành công"
+	MsgPayrollUpdatedSuccessfullyVN     = "Cập nhật bảng lương thành công"
+	MsgPayrollDeletedSuccessfullyVN     = "Xóa bảng lương thành công"
+	MsgInvalidPaymentDateFormatVN       = "Định dạng payment_date không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgFailedToGetTemplateFileVN        = "Không thể lấy tệp mẫu"
+	MsgNoFileUploadedVN                 = "Không có tệp nào được tải lên hoặc tệp không hợp lệ"
+	MsgFileNameEmptyVN                  = "Tên tệp trống"
+	MsgFileSizeExceedsLimitVN           = "Kích thước tệp vượt quá giới hạn tối đa 10MB"
+	MsgFileNotExcelFormatVN             = "Tệp phải ở định dạng Excel (.xlsx hoặc .xls)"
+	MsgPayrollProcessedSuccessfullyVN   = "Xử lý bảng lương thành công"
+	MsgTemplateDownloadedSuccessfullyVN = "Tải xuống mẫu thành công"
+
+	// Service Layer Domain Error Messages - Vietnamese
+	MsgSelectedBankNotExistVN                = "Ngân hàng được chọn không tồn tại"
+	MsgSearchParameterRequiredVN             = "Tham số tìm kiếm là bắt buộc"
+	MsgSearchTermMinLengthVN                 = "Cụm từ tìm kiếm phải có ít nhất 3 ký tự"
+	MsgInvalidEmailFormatVN                  = "Định dạng email không hợp lệ"
+	MsgExcelFileNoSheetsVN                   = "Tệp Excel không chứa sheet nào"
+	MsgExcelFileMinRowsVN                    = "Tệp Excel phải chứa ít nhất 2 hàng (header + dữ liệu)"
+	MsgCannotUpdatePayrateInvalidDateVN      = "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày chấm công gần nhất"
+	MsgCannotDeletePayrateUsedByTimesheetsVN = "Không thể xóa mức lương đã được sử dụng bởi bảng chấm công"
+	MsgAtLeastOneEntryRequiredVN             = "Ít nhất một mục nhập là bắt buộc"
+	MsgFromDateAfterToDateVN                 = "ngày bắt đầu không thể sau ngày kết thúc"
+	MsgSearchQueryRequiredVN                 = "Truy vấn tìm kiếm là bắt buộc"
+	MsgSearchQueryMinLengthVN                = "Truy vấn tìm kiếm phải có ít nhất 3 ký tự"
+	MsgTransactionGroupCannotBeNilVN         = "Nhóm giao dịch không thể là nil"
+	MsgCannotProcessPayrateInvalidDateVN     = "Không thể xử lý mức lương: ngày hiệu lực phải sau ngày chấm công gần nhất"
+	MsgDatabaseConstraintViolationVN         = "Vi phạm ràng buộc cơ sở dữ liệu"
+	MsgValidationFailedWithDetailsVN         = "Xác thực thất bại: %s"
+	MsgTimesheetAlreadyExistsPendingVN       = "Đã có bảng chấm công cho nhân viên này tại dự án và ngày đã chọn, hiện đang chờ phê duyệt"
+	MsgTimesheetAlreadyExistsApprovedVN      = "Đã có bảng chấm công cho nhân viên này tại dự án và ngày đã chọn, đã được phê duyệt và không thể sửa đổi"
+	MsgTimesheetCannotBeEditedVN             = "Bảng chấm công không thể chỉnh sửa"
+	MsgFailedToExportBulkTransferVN          = "Không thể xuất chuyển khoản hàng loạt"
+	MsgTransactionAlreadySettledVN           = "Giao dịch đã được thanh toán"
+
+	// Dashboard Messages - Vietnamese
+	MsgDashboardSummaryRetrievedVN      = "Lấy dữ liệu thành công"
+	MsgFinancialOverviewRetrievedVN     = "Lấy tổng quan tài chính thành công"
+	MsgRecentActivitiesRetrievedVN      = "Lấy hoạt động gần đây thành công"
+	MsgSystemNotificationsRetrievedVN   = "Lấy thông báo hệ thống thành công"
+	MsgNewEmployeesRetrievedVN          = "Lấy nhân viên mới thành công"
+	MsgProjectStatusOverviewRetrievedVN = "Lấy tổng quan trạng thái dự án thành công"
+	MsgProjectionRetrievedVN            = "Lấy dữ liệu dự báo thành công"
+
+	// Employee Messages - Vietnamese
+	MsgEmployeeCreatedSuccessfullyVN       = "Tạo nhân viên thành công"
+	MsgEmployeeRetrievedSuccessfullyVN     = "Lấy thông tin nhân viên thành công"
+	MsgEmployeeUpdatedSuccessfullyVN       = "Cập nhật nhân viên thành công"
+	MsgEmployeeDeletedSuccessfullyVN       = "Xóa nhân viên thành công"
+	MsgEmployeeTimesheetSummaryRetrievedVN = "Lấy tổng hợp timesheet nhân viên thành công"
+	MsgEmployeeProjectAssignmentUpdatedVN  = "Cập nhật phân công dự án nhân viên thành công"
+	MsgCannotDeleteEmployeeHasTimesheetsVN = "Không thể xóa nhân viên vì đã có bảng chấm công liên kết. Vui lòng xóa tất cả bảng chấm công trước khi xóa nhân viên"
+	MsgEmployeeDeletedWithAssignmentsVN    = "Xóa nhân viên và tất cả phân công dự án thành công"
+
+	// Asset Messages - Vietnamese
+	MsgInvalidFormDataVN                   = "Dữ liệu form không hợp lệ"
+	MsgNoFileUploadedAssetVN               = "Chưa tải lên file nào"
+	MsgAssetUploadedSuccessfullyVN         = "Tải lên  thành công"
+	MsgAssetIDMustBeValidNumberVN          = "ID  phải là số hợp lệ"
+	MsgAssetRetrievedSuccessfullyVN        = "Lấy thông tin  thành công"
+	MsgFailedToListAssetsVN                = "Không thể lấy danh sách "
+	MsgFailedToCountAssetsVN               = "Không thể đếm số lượng "
+	MsgNoAssetsFoundVN                     = "Không tìm thấy  nào"
+	MsgAssetsRetrievedSuccessfullyVN       = "Lấy danh sách  thành công"
+	MsgPageOfAssetsRetrievedVN             = "Trang %s của danh sách  được lấy thành công"
+	MsgAssetDeletedSuccessfullyVN          = "Xóa  thành công"
+	MsgAssetReferenceUpdatedSuccessfullyVN = "Cập nhật tham chiếu  thành công"
+	MsgAssetFileNotFoundVN                 = "Không tìm thấy file "
+	MsgFailedToAccessAssetFileVN           = "Không thể truy cập file "
+
+	// Ledger Messages - Vietnamese
+	MsgLedgerEntryCreatedSuccessfullyVN         = "Tạo bản ghi sổ cái thành công"
+	MsgLedgerEntryIDMustBeValidNumberVN         = "ID bản ghi phải là số hợp lệ"
+	MsgLedgerEntryRetrievedSuccessfullyVN       = "Lấy bản ghi sổ cái thành công"
+	MsgLedgerAccountRequiredVN                  = "Tài khoản là bắt buộc"
+	MsgLedgerPartyRequiredVN                    = "Quản lý là bắt buộc"
+	MsgLedgerDescriptionRequiredVN              = "Mô tả là bắt buộc"
+	MsgLedgerDateRequiredVN                     = "Ngày là bắt buộc"
+	MsgLedgerDebitCannotBeNegativeVN            = "Số tiền ghi nợ không thể âm"
+	MsgLedgerCreditCannotBeNegativeVN           = "Số tiền ghi có không thể âm"
+	MsgLedgerDuplicateAssetVN                   = " này đã được sử dụng trong bản ghi sổ cái khác"
+	MsgLedgerDuplicateEntryVN                   = "Bản ghi sổ cái trùng lặp"
+	MsgLedgerDuplicateAssetInBatchVN            = "Có  trùng lặp trong lô tạo"
+	MsgFailedToListLedgerEntriesVN              = "Không thể lấy danh sách bản ghi sổ cái"
+	MsgFailedToCountLedgerEntriesVN             = "Không thể đếm số lượng bản ghi sổ cái"
+	MsgNoLedgerEntriesFoundVN                   = "Không tìm thấy bản ghi sổ cái nào"
+	MsgLedgerEntriesRetrievedSuccessfullyVN     = "Lấy danh sách bản ghi sổ cái thành công"
+	MsgPageOfLedgerEntriesRetrievedVN           = "Trang %s của danh sách bản ghi sổ cái được lấy thành công"
+	MsgLedgerEntriesCreatedSuccessfullyVN       = "Tạo các bản ghi sổ cái thành công"
+	MsgFailedToGetBalanceVN                     = "Không thể lấy số dư"
+	MsgBalanceRetrievedSuccessfullyVN           = "Lấy số dư thành công"
+	MsgBothFromDateAndToDateRequiredVN          = "Cần cả tham số fromDate và toDate"
+	MsgFromDateCannotBeAfterToDateVN            = "fromDate không thể sau toDate"
+	MsgCashFlowSummaryRetrievedSuccessfullyVN   = "Lấy tổng hợp dòng tiền thành công"
+	MsgLedgerBalancesRecalculatedSuccessfullyVN = "Tính lại số dư sổ cái thành công"
+	MsgLedgerEntryReversedSuccessfullyVN        = "Hoàn tác bản ghi sổ cái thành công"
+	MsgBothFromAndToDateRequiredVN              = "Cần cả tham số ngày 'from' và 'to'"
+	MsgInvalidFromDateFormatLedgerVN            = "Định dạng ngày 'from' không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidToDateFormatLedgerVN              = "Định dạng ngày 'to' không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgInvalidProjectIDParameterVN              = "Tham số project_id không hợp lệ"
+	MsgLedgerSummaryRetrievedSuccessfullyVN     = "Lấy tổng hợp sổ cái thành công"
+	MsgAccountMetadataRetrievedSuccessfullyVN   = "Lấy metadata tài khoản thành công"
+
+	// User Messages - Vietnamese
+	MsgUserCreatedSuccessfullyVN                = "Tạo người dùng thành công"
+	MsgUserRetrievedSuccessfullyVN              = "Lấy thông tin người dùng thành công"
+	MsgUserUpdatedSuccessfullyVN                = "Cập nhật người dùng thành công"
+	MsgUsersRetrievedSuccessfullyVN             = "Lấy danh sách người dùng thành công"
+	MsgNoUsersFoundVN                           = "Không tìm thấy người dùng nào"
+	MsgUserSummaryFetchedSuccessfullyVN         = "Lấy tóm tắt người dùng thành công"
+	MsgPasswordResetSuccessfullyVN              = "Đặt lại mật khẩu thành công"
+	MsgUserPasswordResetSuccessfullyVN          = "Đặt lại mật khẩu người dùng thành công"
+	MsgUserPasswordResetProcessingVN            = "Đang đặt lại mật khẩu người dùng"
+	MsgUserPasswordResetJobNotFoundVN           = "Không tìm thấy job"
+	MsgUserActivitySummaryFetchedSuccessfullyVN = "Lấy tóm tắt hoạt động người dùng thành công"
+	MsgEmployeePasswordChangedSuccessfullyVN    = "Mật khẩu đã đổi thành công"
+
+	// Bank Messages - Vietnamese
+	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"
+	MsgBankNotFoundVN              = "Không tìm thấy ngân hàng"
+	MsgFailedToCreateBankVN        = "Không thể tạo ngân hàng"
+	MsgBankCreatedSuccessfullyVN   = "Tạo ngân hàng thành công"
+	MsgFailedToRetrieveBankVN      = "Không thể lấy thông tin ngân hàng"
+	MsgBankRetrievedSuccessfullyVN = "Lấy thông tin ngân hàng thành công"
+	MsgFailedToUpdateBankVN        = "Không thể cập nhật ngân hàng"
+	MsgBankUpdatedSuccessfullyVN   = "Cập nhật ngân hàng thành công"
+	MsgFailedToDeleteBankVN        = "Không thể xóa ngân hàng"
+	MsgBankDeletedSuccessfullyVN   = "Xóa ngân hàng thành công"
+
+	// Project Employee Messages - Vietnamese
+	MsgAssignmentNotFoundVN           = "Không tìm thấy phân công nhân viên"
+	MsgActiveAssignmentNotFoundVN     = "Không tìm thấy phân công hiện tại cho nhân viên trong dự án này"
+	MsgAssignmentOverlapVN            = "Khoảng thời gian phân công bị trùng lặp với phân công hiện có"
+	MsgCannotAssignToProjectStatusVN  = "Không thể phân công nhân viên cho dự án có trạng thái"
+	MsgAtLeastOneAssignmentRequiredVN = "Cần ít nhất một phân công nhân viên"
+	MsgAssignmentSuccessVN            = "Phân công nhân viên vào dự án thành công"
+	MsgMultipleAssignmentsSuccessVN   = "Phân công %d nhân viên vào dự án thành công"
+
+	// Employee Domain Service Messages - Vietnamese
+	MsgEmployeeWithCCCDExistsVN  = "Nhân viên với CCCD này đã tồn tại"
+	MsgEmployeeWithEmailExistsVN = "Nhân viên với email này đã tồn tại"
+	MsgInvalidAgeRangeVN         = "Phạm vi tuổi không hợp lệ"
+	MsgDateCannotBeInFutureVN    = "Ngày không thể trong tương lai"
+
+	// Timesheet Domain Service Messages - Vietnamese
+	MsgTimesheetNotPendingApprovalVN       = "Bảng chấm công không ở trạng thái chờ phê duyệt"
+	MsgTimesheetTooOldForApprovalVN        = "Bảng chấm công quá cũ không thể phê duyệt"
+	MsgCannotApproveSelfCreatedTimesheetVN = "Không thể phê duyệt bảng chấm công do chính mình tạo"
+	MsgRejectionReasonRequiredVN           = "Lý do từ chối là bắt buộc"
+	MsgCannotRejectSelfCreatedTimesheetVN  = "Không thể từ chối bảng chấm công do chính mình tạo"
+	MsgCanOnlyPayApprovedTimesheetsVN      = "Chỉ có thể thanh toán bảng chấm công đã được phê duyệt"
+	MsgPaidAmountRequiredVN                = "Số tiền thanh toán là bắt buộc"
+	MsgPaymentReferenceRequiredVN          = "Mã tham chiếu thanh toán là bắt buộc"
+	MsgInvalidDateRangeVN                  = "Phạm vi ngày không hợp lệ"
+	MsgDateRangeTooLargeVN                 = "Phạm vi ngày quá lớn (tối đa 1 năm)"
+	MsgCannotModifyApprovedTimesheetVN     = "Không thể sửa đổi bảng chấm công đã được phê duyệt"
+	MsgCannotModifyRejectedTimesheetVN     = "Không thể sửa đổi bảng chấm công đã bị từ chối"
+	MsgTimesheetTooOldForModificationVN    = "Bảng chấm công quá cũ không thể sửa đổi"
+	MsgCannotDeleteApprovedTimesheetVN     = "Không thể xóa bảng chấm công đã được phê duyệt"
+	MsgCannotDeletePaidTimesheetVN         = "Không thể xóa bảng chấm công đã được thanh toán"
+	MsgInvalidPaymentStatusVN              = "Trạng thái thanh toán không hợp lệ"
+	MsgInvalidPaymentStatusTransitionVN    = "Chuyển đổi trạng thái thanh toán không hợp lệ"
+	MsgBulkTimesheetApprovalFailedVN       = "Không thể phê duyệt các bảng chấm công. Vui lòng kiểm tra trạng thái của các bảng chấm công."
+	MsgBulkTimesheetApprovalPartialVN      = "Đã phê duyệt %d/%d bảng chấm công. %d bảng chấm công không thể phê duyệt do trạng thái không hợp lệ."
+	MsgTimesheetCannotBeApprovedVN         = "Bảng chấm công không thể phê duyệt do trạng thái không hợp lệ"
+	MsgTimesheetApprovalFailedVN           = "Không thể phê duyệt bảng chấm công này"
+	MsgTimesheetCannotBeRejectedVN         = "Bảng chấm công không thể từ chối do trạng thái không hợp lệ"
+	MsgTimesheetRejectionFailedVN          = "Không thể từ chối bảng chấm công này"
+	MsgTimesheetUpdateFailedVN             = "Không thể cập nhật bảng chấm công"
+
+	// Bulk Transfer Messages - Vietnamese
+	MsgBulkTransferFileAlreadyProcessedVN = "Tệp đã được xử lý trước đó. Tìm thấy %d bản ghi sổ cái hiện có."
+	MsgOrphanTransferFilesDeletedVN       = "Đã xóa %d file chuyển khoản không có kết quả thành công"
+	MsgNoOrphanTransferFilesVN            = "Không tìm thấy file chuyển khoản không có kết quả"
+
+	// Payrate Update Restriction Messages - Vietnamese
+	MsgCannotUpdatePayrateWithTimesheetsVN = "Không thể cập nhật cấu hình mức lương khi đã có bảng chấm công. Chỉ có thể cập nhật ngày kết thúc về hôm nay hoặc sau đó."
+	MsgPayrateAlreadyExistsForDateVN       = "Đã tồn tại mức lương với ngày hiệu lực %s"
+
+	// Timesheet Work Period Validation Messages - Vietnamese
+	MsgTimesheetDateOutsideWorkPeriodVN = "Không thể tạo bảng chấm công cho ngày %s. Nhân viên ID %d không được phân công làm việc trong dự án này vào ngày đó. Thời gian phân công: %s đến %s."
+
+	// Timesheet Deletion Validation Messages - Vietnamese
+	MsgCanOnlyDeletePendingOrRejectedTimesheetVN = "Chỉ có thể xóa bảng chấm công ở trạng thái 'chờ phê duyệt' hoặc 'bị từ chối'"
+	MsgCannotEditPaidTimesheetVN                 = "Không thể chỉnh sửa bảng chấm công đã được xử lý thanh toán (đã thanh toán, thất bại, hoặc đã hủy)"
+	MsgCannotEditPaidTimesheetDetailedVN         = "Công %s %s ngày %s của %s dự án %s đã được thanh toán nên không thể thay đổi"
+	MsgOnlyAdminCanEditApprovedTimesheetVN       = "Chỉ admin mới có thể chỉnh sửa bảng chấm công đã duyệt"
+
+	// Payrate Configuration Messages - Vietnamese
+	MsgPayrateConfigurationRequiredVN  = "cấu hình mức lương là bắt buộc"
+	MsgNoActivePayrateConfigVN         = "không có cấu hình mức lương hiệu lực cho ngày này"
+	MsgPayTypeRequiredVN               = "loại thanh toán là bắt buộc"
+	MsgPositionNotFoundInAssignmentVN  = "không tìm thấy chức vụ của nhân viên trong dự án"
+	MsgCannotCreateTimesheetZeroRateVN = "Dự án không có cấu hình cho loại giờ '%s'"
+
+	// Default Password Notification Messages - Vietnamese
+	MsgFailedToNotifyDefaultPasswordUsersVN = "Không thể gửi thông báo cho người dùng sử dụng mật khẩu mặc định"
+
+	// Notification Messages - Vietnamese
+	MsgUnreadNotificationsRetrievedVN = "Lấy thông báo chưa đọc thành công"
+
+	// Transaction Messages - Vietnamese
+	MsgFailedToListTransactionsVN  = "Không thể lấy danh sách giao dịch"
+	MsgFailedToCreateExcelFileVN   = "Không thể tạo file Excel"
+	MsgFailedToWriteExcelHeadersVN = "Không thể ghi tiêu đề Excel"
+	MsgFailedToWriteExcelDataVN    = "Không thể ghi dữ liệu Excel"
+	MsgFailedToAutoSizeColumnsVN   = "Không thể tự động điều chỉnh cột"
+	MsgFailedToCreateExcelBufferVN = "Không thể tạo file Excel"
+
+	// General Data Retrieval Messages - Vietnamese
+	MsgFailedToRetrieveDataVN      = "Không thể lấy dữ liệu"
+	MsgDataRetrievedSuccessfullyVN = "Lấy dữ liệu thành công"
+	MsgInvalidIDFormatVN           = "Định dạng ID không hợp lệ"
+
+	// Settings Messages - Vietnamese
+	MsgInvalidSettingIDVN          = "ID cài đặt không hợp lệ"
+	MsgFailedToCreateSettingVN     = "Không thể tạo cài đặt"
+	MsgFailedToGetSettingVN        = "Không thể lấy thông tin cài đặt"
+	MsgFailedToUpdateSettingVN     = "Không thể cập nhật cài đặt"
+	MsgFailedToDeleteSettingVN     = "Không thể xóa cài đặt"
+	MsgFailedToListSettingsVN      = "Không thể liệt kê cài đặt"
+	MsgFailedToGetActiveSettingsVN = "Không thể lấy cài đặt đang hoạt động"
+
+	// Payment Schedule Messages - Vietnamese
+	MsgInvalidPaymentScheduleValueVN          = "Lịch thanh toán không hợp lệ. Phải là 'weekly' hoặc 'monthly'"
+	MsgFailedToRequestScheduleChangeVN        = "Không thể yêu cầu thay đổi lịch thanh toán"
+	MsgFailedToRetrievePendingSchedulesVN     = "Không thể lấy danh sách thay đổi lịch đang chờ"
+	MsgFailedToCancelScheduleChangeVN         = "Không thể hủy yêu cầu thay đổi lịch thanh toán"
+	MsgCannotRemoveEmployeesProjectStatusVN   = "Không thể xóa nhân viên khỏi dự án có trạng thái: "
+	MsgCannotUpdateAssignmentsProjectStatusVN = "Không thể cập nhật phân công nhân viên trong dự án có trạng thái: "
+
+	// Notification Messages (additional) - Vietnamese
+	MsgFailedToRetrieveNotificationsVN = "Không thể lấy danh sách thông báo"
+	MsgFailedToCountNotificationsVN    = "Không thể đếm thông báo"
+	MsgFailedToGetUnreadCountVN        = "Không thể lấy số thông báo chưa đọc"
+	MsgInvalidNotificationIDVN         = "ID thông báo không hợp lệ"
+	MsgFailedToMarkNotificationReadVN  = "Không thể đánh dấu thông báo đã đọc"
+	MsgFailedToMarkAllNotificationsVN  = "Không thể đánh dấu tất cả thông báo đã đọc"
+	MsgInvalidContentTypeVN            = "Loại nội dung không hợp lệ. Phải là 'plain_text', 'html', hoặc 'markdown'"
+	MsgFailedToCreateNotificationVN    = "Không thể tạo thông báo"
+	MsgAtLeastOneRecipientRequiredVN   = "Vui lòng chỉ định ít nhất một người dùng hoặc vai trò nhận thông báo"
+	MsgOnlyAdminCanSendNotificationsVN = "Chỉ admin mới có thể gửi thông báo tùy chỉnh"
+
+	// Advance Payment / Reconciliation Messages - Vietnamese
+	MsgInvalidRequestParametersVN           = "Tham số yêu cầu không hợp lệ"
+	MsgInvalidMonthFormatVN                 = "Định dạng tháng không hợp lệ. Sử dụng định dạng YYYY-MM"
+	MsgFailedToGenerateReconciliationVN     = "Không thể tạo báo cáo đối soát"
+	MsgFailedToGenerateReconciliationFileVN = "Không thể tạo file đối soát"
+	MsgFailedToSendReconciliationEmailVN    = "Không thể gửi email đối soát"
+
+	// Bank Messages (additional) - Vietnamese
+	MsgFailedToRetrieveBanksVN = "Không thể lấy danh sách ngân hàng"
+
+	// Employee Import Messages - Vietnamese
+	MsgFailedToOpenFileVN          = "Không thể mở file"
+	MsgFailedToStoreFileVN         = "Không thể lưu file"
+	MsgFailedToInitImportVN        = "Không thể khởi tạo quá trình nhập"
+	MsgFailedToQueueImportJobVN    = "Không thể đưa vào hàng đợi nhập"
+	MsgFailedToInitEmployeeUsersVN = "Không thể khởi tạo người dùng nhân viên"
+
+	// Timesheet Export Messages - Vietnamese
+	MsgInvalidStatusFilterVN            = "Trạng thái không hợp lệ. Giá trị hợp lệ: approved, pending_approval, rejected"
+	MsgFailedToGetTimesheetsVN          = "Không thể lấy danh sách bảng chấm công"
+	MsgFailedToGetPayrollReportDataVN   = "Không thể lấy dữ liệu báo cáo sao kê"
+	MsgFailedToGeneratePayrollReportVN  = "Không thể tạo báo cáo sao kê"
+	MsgFailedToCheckProjectAccessVN     = "Không thể kiểm tra quyền truy cập dự án"
+	MsgFailedToGetAccessibleEmployeesVN = "Không thể lấy danh sách nhân viên có quyền truy cập"
+	MsgEmployeeAccessDeniedVN           = "Bạn không có quyền truy cập nhân viên ID %d"
+	MsgFailedToGetProjectEmployeesVN    = "Không thể lấy danh sách nhân viên dự án"
+	MsgFailedToExtractDayTypesVN        = "Không thể trích xuất loại ngày từ cấu hình lương"
+	MsgFailedToExtractShiftTypesVN      = "Không thể trích xuất loại ca từ cấu hình lương"
+	MsgFailedToGenerateTemplateVN       = "Không thể tạo file mẫu"
+	MsgFailedToSaveExcelFileVN          = "Không thể lưu file Excel"
+	MsgInvalidMonthFormatTimesheetVN    = "Định dạng tháng không hợp lệ. Sử dụng định dạng YYYY-MM"
+
+	// Employee Payroll Messages - Vietnamese
+	MsgInvalidPayrollStatusVN            = "Trạng thái không hợp lệ. Phải là một trong: pending, paid, failed, cancelled"
+	MsgFailedToRetrieveCurrentProjectsVN = "Không thể lấy danh sách dự án hiện tại"
+	MsgFailedToRetrieveTimesheetsVN      = "Không thể lấy danh sách bảng chấm công"
+	MsgInvalidEmployeeStatusFilterVN     = "Trạng thái không hợp lệ. Phải là 'working' hoặc 'unassigned'"
+	MsgInvalidUserIDFormatVN             = "Định dạng ID người dùng không hợp lệ"
+
+	MsgLenderCreatedVN        = "Tạo người cho vay thành công"
+	MsgLenderListFetchedVN    = "Lấy danh sách người cho vay thành công"
+	MsgLenderFetchedVN        = "Lấy thông tin người cho vay thành công"
+	MsgLenderUpdatedVN        = "Cập nhật người cho vay thành công"
+	MsgLenderDeletedVN        = "Xóa người cho vay thành công"
+	MsgLenderNotFoundVN       = "Không tìm thấy người cho vay"
+	MsgLenderHasActiveLoansVN = "Không thể xóa người cho vay có khoản vay đang hoạt động"
+
+	// Loan Messages - Vietnamese
+	MsgLoanCreatedVN               = "Tạo khoản vay thành công"
+	MsgLoanListFetchedVN           = "Lấy danh sách khoản vay thành công"
+	MsgLoanFetchedVN               = "Lấy thông tin khoản vay thành công"
+	MsgLoanUpdatedVN               = "Cập nhật khoản vay thành công"
+	MsgLoanDeletedVN               = "Xóa khoản vay thành công"
+	MsgLoanDisbursedVN             = "Giải ngân khoản vay thành công"
+	MsgLoanRepaidVN                = "Trả nợ gốc thành công"
+	MsgLoanScheduleFetchedVN       = "Lấy lịch thanh toán thành công"
+	MsgLoanNotFoundVN              = "Không tìm thấy khoản vay"
+	MsgLoanAlreadyDisbursedVN      = "Khoản vay đã được giải ngân"
+	MsgLoanNotDisbursedVN          = "Khoản vay chưa được giải ngân"
+	MsgInvalidRepaymentAmountVN    = "Số tiền trả nợ không hợp lệ"
+	MsgInvalidLenderIDVN           = "ID người cho vay không hợp lệ"
+	MsgInvalidLoanIDVN             = "ID khoản vay không hợp lệ"
+	MsgCustomLoanCreatedVN         = "Tạo khoản vay lịch tùy chỉnh thành công"
+	MsgScheduledPaymentProcessedVN = "Thanh toán theo lịch thành công"
+
+	// Auth Service - Vietnamese
+	MsgInvalidTokenVN                = "Token không hợp lệ"
+	MsgTokenBlacklistedVN            = "Token đã bị vô hiệu hóa"
+	MsgFailedToCheckTokenBlacklistVN = "Không thể kiểm tra danh sách đen token"
+	MsgFailedToBlacklistTokenVN      = "Không thể vô hiệu hóa token"
+
+	// Dashboard Services - Vietnamese
+	MsgInvalidPeriodFormatVN                  = "Định dạng khoảng thời gian không hợp lệ. Phải là: day, week, month, quarter, year"
+	MsgFailedToGetRecentActivitiesVN          = "Không thể lấy hoạt động gần đây"
+	MsgFailedToCountActivitiesVN              = "Không thể đếm hoạt động"
+	MsgFailedToConvertAuditLogsToActivitiesVN = "Không thể chuyển đổi log kiểm tra thành hoạt động"
+	MsgFailedToCountTotalEmployeesVN          = "Không thể đếm tổng số nhân viên"
+	MsgFailedToCountWorkingEmployeesVN        = "Không thể đếm nhân viên đang làm việc"
+	MsgFailedToGetEmployeesSummaryForHiresVN  = "Không thể lấy tóm tắt nhân viên được tuyển dụng trong tháng này"
+	MsgFailedToGetTotalPaidSalaryVN           = "Không thể lấy tổng lương đã thanh toán"
+	MsgFailedToGetPendingSalaryVN             = "Không thể lấy lương đang chờ"
+	MsgFailedToGetPaidSalaryVN                = "Không thể lấy lương đã thanh toán"
+	MsgFailedToGetMonthlyFinancialsVN         = "Không thể lấy tài chính hàng tháng"
+	MsgFailedToGetFinancialChartDataVN        = "Không thể lấy dữ liệu biểu đồ tài chính"
+	MsgFailedToGetNotificationsVN             = "Không thể lấy thông báo"
+	MsgFailedToCountUnreadNotificationsVN     = "Không thể đếm thông báo chưa đọc"
+	MsgFailedToGetUnreadNotificationsVN       = "Không thể lấy thông báo chưa đọc"
+
+	// Notification Service - Vietnamese
+	MsgEmailSentEventRequiredVN                    = "Sự kiện email đã gửi là bắt buộc"
+	MsgFailedToSerializeRecipientsVN               = "Không thể tuần tự hóa người nhận"
+	MsgFailedToLogEmailNotificationVN              = "Không thể ghi log thông báo email"
+	MsgRequestPayloadRequiredVN                    = "Dữ liệu yêu cầu là bắt buộc"
+	MsgFailedToFetchPayrollReportDataVN            = "Không thể lấy dữ liệu báo cáo bảng lương"
+	MsgLimitMustBeGreaterThanZeroVN                = "Giới hạn phải lớn hơn 0"
+	MsgFailedToGeneratePayrollEmailReportVN        = "Không thể tạo báo cáo bảng lương"
+	MsgOffsetCannotBeNegativeVN                    = "Offset không thể là số âm"
+	MsgFailedToRetrieveEmailHistoryVN              = "Không thể lấy lịch sử email"
+	MsgFailedToCountEmailHistoryVN                 = "Không thể đếm lịch sử email"
+	MsgEmailHistoryRecordNotFoundVN                = "Không tìm thấy bản ghi lịch sử email"
+	MsgFailedToParseEmailMetadataVN                = "Không thể phân tích metadata email"
+	MsgFailedToSerializeUpdatedMetadataVN          = "Không thể tuần tự hóa metadata đã cập nhật"
+	MsgRecipientsCannotBeEmptyVN                   = "Người nhận không thể để trống"
+	MsgFailedToRenderPayrollEmailTemplateVN        = "Không thể hiển thị mẫu email bảng lương"
+	MsgPaymentCycleChangedEventRequiredVN          = "Sự kiện thay đổi chu kỳ thanh toán là bắt buộc"
+	MsgFailedToLogPaymentCycleChangeNotificationVN = "Không thể ghi log thông báo thay đổi chu kỳ thanh toán"
+	MsgNotificationNotFoundOrAccessDeniedVN        = "Không tìm thấy thông báo hoặc bị từ chối truy cập"
+	MsgRecipientUserNotFoundVN                     = "Không tìm thấy người dùng nhận"
+
+	// Advance Payment Service - Vietnamese
+	MsgFailedToRetrieveTransferFilesVN    = "Không thể lấy file chuyển khoản"
+	MsgTransferHistoryNotFoundVN          = "Không tìm thấy lịch sử chuyển khoản"
+	MsgFailedToParseTransferDataVN        = "Không thể phân tích dữ liệu chuyển khoản"
+	MsgFailedToGetCurrentProgressVN       = "Không thể lấy tiến độ hiện tại"
+	MsgFailedToCalculateDateRangeVN       = "Không thể tính toán phạm vi ngày"
+	MsgFailedToAcquireLockVN              = "Không thể lấy khóa"
+	MsgFailedToGetPreviousResultVN        = "Không thể lấy kết quả trước đó"
+	MsgFailedToCancelPendingRequestsVN    = "Không thể hủy yêu cầu đang chờ"
+	MsgFailedToGetPaidRequestsVN          = "Không thể lấy yêu cầu đã thanh toán"
+	MsgFailedToExportReconciliationFileVN = "Không thể xuất file đối soát"
+	MsgFailedToGetPendingRequestsVN       = "Không thể lấy yêu cầu đang chờ"
+	MsgFailedToGroupRequestsVN            = "Không thể nhóm yêu cầu"
+	MsgFailedToMarshalBulkTransferDataVN  = "Không thể tuần tự hóa dữ liệu chuyển khoản hàng loạt"
+	MsgFailedToSaveBulkTransferFileVN     = "Không thể lưu file chuyển khoản hàng loạt"
+
+	// Asset Service - Vietnamese
+	MsgFailedToResetFilePointerForChecksumVN = "Không thể đặt lại con trỏ file để kiểm tra checksum"
+	MsgFailedToCalculateFileChecksumVN       = "Không thể tính checksum file"
+	MsgFailedToResetFilePointerForStorageVN  = "Không thể đặt lại con trỏ file để lưu trữ"
+	MsgFailedToStoreFileBytesVN              = "Không thể lưu byte file"
+
+	// Employee Import - Vietnamese
+
+	// General Pattern Constants - Vietnamese
+	MsgFailedToCreateXVN = "Không thể tạo %s"
+	MsgFailedToUpdateXVN = "Không thể cập nhật %s"
+	MsgFailedToDeleteXVN = "Không thể xóa %s"
+	MsgFailedToListXVN   = "Không thể liệt kê %s"
+	MsgFailedToCountXVN  = "Không thể đếm %s"
+	MsgFailedToGetXVN    = "Không thể lấy %s"
+	MsgXNotFoundVN       = "Không tìm thấy %s"
+	MsgXRequiredVN       = "%s là bắt buộc"
+	MsgInvalidXFormatVN  = "Định dạng %s không hợp lệ"
+
+	// Additional Service Errors - Vietnamese
+	MsgAccountDisabledVN                           = "Tài khoản đã bị vô hiệu hóa"
+	MsgCurrentPasswordIncorrectVN                  = "Mật khẩu hiện tại không chính xác"
+	MsgEmailAlreadyTakenVN                         = "Email đã được sử dụng"
+	MsgUsernameAlreadyTakenVN                      = "Tên đăng nhập đã được sử dụng"
+	MsgUserWithEmailExistsVN                       = "Người dùng với email này đã tồn tại"
+	MsgUserWithUsernameExistsVN                    = "Người dùng với tên đăng nhập này đã tồn tại"
+	MsgUserNotFoundVN2                             = "Không tìm thấy người dùng"
+	MsgCannotDeleteProjectWithApprovedTimesheetsVN = "Không thể xóa dự án có bảng chấm công đã phê duyệt"
+	MsgCannotEndAssignmentBeforeTimesheetDatesVN   = "Không thể kết thúc phân công trước ngày chấm công hiện có"
+	MsgCannotGrantAccessToEmployeeCreatorVN        = "Không thể cấp quyền truy cập cho người tạo nhân viên"
+	MsgOnlyEmployeeCreatorOrAdminCanGrantAccessVN  = "Chỉ người tạo nhân viên hoặc quản trị viên mới có thể cấp quyền truy cập"
+	MsgOnlyEmployeeCreatorOrAdminCanRevokeAccessVN = "Chỉ người tạo nhân viên hoặc quản trị viên mới có thể thu hồi quyền truy cập"
+	MsgOnlyProjectCreatorOrAdminCanGrantAccessVN   = "Chỉ người tạo dự án hoặc quản trị viên mới có thể cấp quyền truy cập"
+	MsgOnlyProjectCreatorOrAdminCanRevokeAccessVN  = "Chỉ người tạo dự án hoặc quản trị viên mới có thể thu hồi quyền truy cập"
+	MsgUserAlreadyHasAccessToEmployeeVN            = "Người dùng đã có quyền truy cập nhân viên này"
+	MsgUserAlreadyHasAccessToProjectVN             = "Người dùng đã có quyền truy cập dự án này"
+	MsgRecipientUserNotActiveVN                    = "Người dùng nhận không hoạt động"
+	MsgNoRecipientsOrRolesProvidedVN               = "Không có người nhận hoặc vai trò được chỉ định cho thông báo"
+	MsgEmailHistoryRepoNotConfiguredVN             = "Kho lưu trữ lịch sử email chưa được cấu hình"
+	MsgNotificationRepoNotConfiguredVN             = "Kho lưu trữ thông báo chưa được cấu hình"
+	MsgEmailDeliveryFailedVN                       = "Gửi email thất bại"
+	MsgMissingResendAPIKeyVN                       = "Thiếu khóa API RESEND"
+	MsgFailedToCreateProjectVN                     = "Không thể tạo dự án"
+	MsgFailedToGetProjectsVN                       = "Không thể lấy dự án"
+	MsgFailedToHashPasswordVN                      = "Không thể mã hóa mật khẩu"
+	MsgFailedToHashNewPasswordVN                   = "Không thể mã hóa mật khẩu mới"
+	MsgFailedToUpdateUserPasswordVN                = "Không thể cập nhật mật khẩu người dùng"
+	MsgFailedToValidateProjectDeletionVN           = "Không thể xác thực việc xóa dự án"
+	MsgFailedToCountNewEmployeesVN                 = "Không thể đếm nhân viên mới"
+	MsgFailedToGetRecentEmployeesVN                = "Không thể lấy nhân viên gần đây"
+	MsgFailedToGetStatusCountsVN                   = "Không thể lấy số lượng theo trạng thái"
+	MsgFailedToGetActiveEmployeeCountVN            = "Không thể lấy số lượng nhân viên đang làm việc"
+	MsgFailedToGetUserActivitiesVN                 = "Không thể lấy hoạt động người dùng"
+	MsgBulkTransferHistoryNotFoundVN               = "Không tìm thấy lịch sử chuyển khoản hàng loạt"
+
+	// Advance Payment Business Errors - Vietnamese
+	MsgNoEmployeesThisMonthVN           = "Không có nhân viên nào trong tháng này"
+	MsgMonthRequiredVN                  = "Tháng là bắt buộc"
+	MsgInvalidMonthFormatYYYYMMVN       = "Định dạng tháng không hợp lệ (YYYY-MM)"
+	MsgInvalidDateFormatGenericVN       = "Định dạng ngày không hợp lệ"
+	MsgEmployeeInfoNotFoundVN           = "Không tìm thấy thông tin nhân viên"
+	MsgMinAdvanceAmountVN               = "Số tiền yêu cầu tối thiểu là 10,000 VND"
+	MsgEmployeeNoFlexiblePayScheduleVN  = "Nhân viên không có lịch thanh toán linh hoạt"
+	MsgAdvanceAmountExceedsLimitVN      = "Số tiền yêu cầu vượt quá số tiền có thể ứng"
+	MsgSalaryInfoNotFoundForMonthVN     = "Không tìm thấy thông tin lương cho nhân viên trong tháng này"
+	MsgCannotCancelRequestVN            = "Bạn không có quyền hủy yêu cầu này"
+	MsgCanOnlyCancelPendingRequestVN    = "Chỉ có thể hủy yêu cầu đang chờ xử lý"
+	MsgCanOnlyCancelPendingOrApprovedVN = "Chỉ có thể hủy yêu cầu đang chờ xử lý hoặc đã duyệt"
+
+	// Advance Payment Cutoff Errors - Vietnamese
+	MsgAdvanceRequestCutoffVN       = "Đã quá hạn mức ngày 10, không thể yêu cầu ứng lương. Vui lòng đợi quản trị viên tải lên bảng lương cho kỳ tiếp theo."
+	MsgAdvancePeriodNotAvailableVN  = "Kỳ lương tiếp theo chưa sẵn sàng. Vui lòng đợi quản trị viên tải lên bảng lương."
+	MsgAdvanceCutoffTitleVN         = "Kỳ ứng lương %s kết thúc"
+	MsgAdvanceCutoffWaitingUploadVN = "Xin chờ bảng lương %s để tiếp tục"
+
+	// Auth Business Errors - Vietnamese
+	MsgCCCDUsedByAnotherAccountVN  = "Số CCCD này đã được sử dụng bởi tài khoản khác"
+	MsgPhoneUsedByAnotherAccountVN = "Số điện thoại này đã được sử dụng bởi tài khoản khác"
+
+	// Employee Business Errors - Vietnamese
+	MsgEmployeeNoUserAccountVN = "Nhân viên chưa có tài khoản người dùng"
+	MsgFailedToCheckAccessVN   = "Kiểm tra quyền truy cập thất bại"
+
+	// Loan Business Errors - Vietnamese
+	MsgLenderNotFoundVN2                      = "Không tìm thấy người cho vay"
+	MsgMinOneScheduleRequiredVN               = "Phải có ít nhất một lịch thanh toán"
+	MsgScheduleDueDatesMustAscendVN           = "Ngày đáo hạn trong lịch thanh toán phải theo thứ tự tăng dần"
+	MsgFailedToGenerateUniqueLoanCodeVN       = "Không thể tạo mã khoản vay duy nhất. Vui lòng thử lại."
+	MsgScheduleNotBelongToLoanVN              = "Lịch thanh toán không thuộc về khoản vay này"
+	MsgScheduleAlreadyPaidVN                  = "Lịch thanh toán đã được thanh toán"
+	MsgCannotDeleteLenderWithDisbursedLoansVN = "Không thể xóa người cho vay có khoản vay đã giải ngân"
+	MsgLoanAlreadyDisbursedVN2                = "Khoản vay đã được giải ngân"
+
+	// Settlement Business Errors - Vietnamese
+	MsgCannotOpenFileVN                     = "không thể mở file"
+	MsgCannotReadExcelFileVN                = "không thể đọc file Excel"
+	MsgEmptyCurrencyValueVN                 = "giá trị tiền tệ trống"
+	MsgInternalSheetNoTimesheetIDsVN        = "Sheet INTERNAL không chứa timesheet ID nào"
+	MsgCannotGetTimesheetInfoVN             = "Không thể lấy thông tin timesheets"
+	MsgCannotFindTransactionsVN             = "Không thể tìm transactions"
+	MsgTransactionFullySettledVN            = "giao dịch đã thanh toán đầy đủ"
+	MsgCannotOpenFileForUploadVN            = "không thể mở file để upload"
+	MsgCannotUploadFileVN                   = "không thể upload file"
+	MsgTimesheetListNotEmptyVN              = "danh sách timesheet không được trống"
+	MsgReceiveAmountMustBePositiveVN        = "số tiền nhận phải lớn hơn 0"
+	MsgReconciledFileNotFoundVN             = "không tìm thấy file sao kê đã lưu"
+	MsgInvalidAssetIDVN                     = "Asset ID không hợp lệ"
+	MsgCannotPublishSettlementEventVN       = "không thể phát sự kiện settlement"
+	MsgCannotWriteFractionalLedgerVN        = "không thể ghi sổ cái cho số tiền lẻ"
+	MsgCannotPublishTimesheetMarkingEventVN = "không thể phát sự kiện timesheet marking"
+
+	// Reconciliation Business Errors - Vietnamese
+	MsgCanOnlyReconcileFromStatementEmailVN = "chỉ có thể đối soát từ email sao kê"
+	MsgStatementEmailNoTimesheetsVN         = "email sao kê này không có danh sách timesheet để đối soát"
+	MsgStatementEmailNoFinancialDataVN      = "email sao kê này không có dữ liệu tài chính để đối soát"
+	MsgStatementEmailNoAttachmentsVN        = "email sao kê này không có file đính kèm để đối soát"
+	MsgStatementEmailAlreadyReconciledVN    = "email sao kê này đã được đối soát"
+
+	// Payroll Business Errors - Vietnamese
+	MsgNoPayrollDataForPeriodVN    = "không có dữ liệu payroll cho kỳ được chọn"
+	MsgInvalidAssignmentDataVN     = "Dữ liệu phân công không hợp lệ"
+	MsgForMonthRequiredVN          = "for_month là bắt buộc khi xuất lương tháng"
+	MsgForMonthInvalidFormatVN     = "Định dạng for_month không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM"
+	MsgFromDateRequiredForWeeklyVN = "from_date và to_date là bắt buộc khi xuất lương tuần"
+	MsgFromDateInvalidFormatVN2    = "Định dạng from_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgToDateInvalidFormatVN2      = "Định dạng to_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgFromDateAfterToDateVN2      = "from_date không được lớn hơn to_date"
+	MsgFromDateAfterToDateVN3      = "fromDate không được lớn hơn toDate"
+	MsgFromDateInvalidVN           = "Định dạng fromDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgToDateInvalidVN             = "Định dạng toDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+
+	// Timesheet Edit Request - Vietnamese
+	MsgEditRequestAlreadyPendingVN   = "đã có yêu cầu chỉnh sửa đang chờ phê duyệt cho bảng chấm công này"
+	MsgCanOnlyCancelOwnEditRequestVN = "bạn chỉ có thể hủy yêu cầu chỉnh sửa của chính mình"
+
+	// Request Validation - Vietnamese
+	MsgLimitCannotExceed1000VN    = "Giới hạn không được vượt quá 1000"
+	MsgInvalidSortFieldVN         = "Trường sắp xếp không hợp lệ"
+	MsgSortOrderMustBeAscOrDescVN = "Thứ tự sắp xếp phải là 'asc' hoặc 'desc'"
+)
