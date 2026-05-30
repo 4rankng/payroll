@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -7,44 +7,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  MoreHorizontal,
-  FileSpreadsheet,
-  FileDown,
-  ArrowRightLeft,
-  Users,
-  Loader2,
-  History,
-  Mail,
-  FileText,
-} from "lucide-react";
+import { MoreHorizontal, FileSpreadsheet, Users } from "lucide-react";
 
 interface AdvancePaymentPageHeaderMobileProps {
   onImportPayroll: () => void;
-  onExportBatch: () => void;
-  isExportBatchPending?: boolean;
-  onUploadResult: () => void;
-  onFileHistory: () => void;
   onViewEmployees: () => void;
-  onStatement?: () => void;
-  onEmail?: () => void;
-  isEmailPending?: boolean;
-  hideUploadResult?: boolean;
-  hideFileHistory?: boolean;
+  overflowContent?: ReactNode;
 }
 
 export function AdvancePaymentPageHeaderMobile({
   onImportPayroll,
-  onExportBatch,
-  isExportBatchPending = false,
-  onUploadResult,
-  onFileHistory,
   onViewEmployees,
-  onStatement,
-  onEmail,
-  isEmailPending = false,
-  hideUploadResult = false,
-  hideFileHistory = false,
+  overflowContent,
 }: AdvancePaymentPageHeaderMobileProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -95,73 +69,9 @@ export function AdvancePaymentPageHeaderMobile({
             </SheetHeader>
 
             <div className="space-y-0.5">
-              {/* ── Transfer group ── */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-12 px-2"
-                onClick={() => { onExportBatch(); close(); }}
-                disabled={isExportBatchPending}
-              >
-                {isExportBatchPending
-                  ? <Loader2 className="h-5 w-5 text-muted-foreground shrink-0 animate-spin" />
-                  : <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                }
-                <span className="text-sm font-medium">Chuyển lô</span>
-              </Button>
-
-              {!hideUploadResult && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-12 px-2"
-                  onClick={() => { onUploadResult(); close(); }}
-                >
-                  <ArrowRightLeft className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Nhập KQ</span>
-                </Button>
-              )}
-
-              {onStatement && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-12 px-2"
-                  onClick={() => { onStatement(); close(); }}
-                >
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Sao kê</span>
-                </Button>
-              )}
-
-              {onEmail && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-12 px-2"
-                  onClick={() => { onEmail(); close(); }}
-                  disabled={isEmailPending}
-                >
-                  {isEmailPending
-                    ? <Loader2 className="h-5 w-5 text-muted-foreground shrink-0 animate-spin" />
-                    : <Mail className="h-5 w-5 text-muted-foreground shrink-0" />
-                  }
-                  <span className="text-sm font-medium">Email sao kê</span>
-                </Button>
-              )}
-
-              <div className="h-px bg-border mx-2 my-1" />
-
-              {/* ── History ── */}
-              {!hideFileHistory && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-12 px-2"
-                  onClick={() => { onFileHistory(); close(); }}
-                >
-                  <History className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Lịch sử file</span>
-                </Button>
-              )}
+              {overflowContent}
             </div>
 
-            {/* Drag handle at bottom signals the sheet can be dismissed */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
             </div>

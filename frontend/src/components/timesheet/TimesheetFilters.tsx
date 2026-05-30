@@ -9,35 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SlidersHorizontal } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import type { Timesheet } from '@/types/api/timesheet.types';
-
-interface Project { id: number; code: string; name: string; }
-interface Employee {
-  id: number; name: string; subtitle?: string;
-  cccd?: string; fullname?: string;
-  current_projects?: Array<{ project_id: number }>;
-}
-
-interface TimesheetFiltersProps {
-  selectedMonth: string;
-  onMonthChange: (value: string) => void;
-  selectedProject: string;
-  onProjectChange: (value: string) => void;
-  selectedEmployee: string;
-  onEmployeeChange: (value: string) => void;
-  statusFilter: Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment';
-  onStatusChange: (value: Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment') => void;
-  projects: Project[];
-  employees?: Employee[];
-  projectEmployees?: Employee[];
-  searchTerm?: string;
-  onSearchChange?: (value: string) => void;
-  onAddTimesheet?: () => void;
-  onExportExcel?: () => void;
-  onPaymentHistory?: () => void;
-  isExportLoading?: boolean;
-  userRole?: 'admin' | 'partner';
-}
+import { useTimesheetContext } from '@/components/timesheet/TimesheetContext';
 
 const STATUS_OPTIONS = [
   { value: 'pending_approval', label: 'Chờ duyệt' },
@@ -47,21 +19,24 @@ const STATUS_OPTIONS = [
   { value: 'rejected', label: 'Bị loại' },
 ];
 
-export const TimesheetFilters = ({
-  selectedMonth,
-  onMonthChange,
-  selectedProject,
-  onProjectChange,
-  selectedEmployee,
-  onEmployeeChange,
-  statusFilter,
-  onStatusChange,
-  projects,
-  projectEmployees,
-  searchTerm = '',
-  onSearchChange,
-  userRole = 'admin',
-}: TimesheetFiltersProps) => {
+export const TimesheetFilters = () => {
+  const { filters } = useTimesheetContext();
+  const {
+    selectedMonth,
+    onMonthChange,
+    selectedProject,
+    onProjectChange,
+    selectedEmployee,
+    onEmployeeChange,
+    statusFilter,
+    onStatusChange,
+    projects,
+    projectEmployees,
+    searchTerm = '',
+    onSearchChange,
+    userRole = 'admin',
+  } = filters;
+
   const isMobile = useMediaQuery('(max-width: 767px)');
 
   const monthOptions = useMemo(() => {

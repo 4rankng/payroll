@@ -10,76 +10,43 @@ import { formatCurrency, formatDateWithWeekday, getMergedStatusBadge, getPaytype
 import { cn } from '@/lib/utils';
 import { AccentStripCard, type AccentColor } from '@/components/shared/AccentStripCard';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { MobilePagination, type PaginationInfo } from '@/components/shared/MobilePagination';
+import { MobilePagination } from '@/components/shared/MobilePagination';
 import type { MouseEvent } from 'react';
+import { useTimesheetContext } from './TimesheetContext';
 
-interface TimesheetMobileListProps {
-  timesheets: Timesheet[];
-  isLoading?: boolean;
-  error?: unknown;
-  onView: (timesheet: Timesheet) => void;
-  onEdit: (timesheet: Timesheet) => void;
-  onApprove: (timesheet: Timesheet) => void;
-  onReject: (timesheet: Timesheet, reason: string) => void;
-  onDelete: (timesheet: Timesheet) => void;
-  canDelete?: (timesheet: Timesheet) => boolean;
-  onExportExcel: () => void;
-  isExportLoading?: boolean;
-  bulkTransferPercentage?: number;
-  pagination?: PaginationInfo | null;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  onRefetch?: () => void;
-  onRequestEdit?: (timesheet: Timesheet, onSuccess?: () => Promise<void> | void) => Promise<void> | void;
-  requestingTimesheetId?: number | null;
-}
-
-export function TimesheetMobileList({
-  timesheets,
-  isLoading = false,
-  onView,
-  onEdit,
-  onApprove,
-  onReject,
-  onDelete,
-  canDelete,
-  onRequestEdit,
-  requestingTimesheetId = null,
-  pagination,
-  onPageChange,
-  onPageSizeChange,
-}: TimesheetMobileListProps) {
+export function TimesheetMobileList() {
+  const { state, actions, meta } = useTimesheetContext();
   const [selectedTimesheet, setSelectedTimesheet] = useState<Timesheet | null>(null);
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const groupedTimesheets = useMemo(() => {
-    const grouped = groupTimesheetsByEmployeeDate(timesheets);
+    const grouped = groupTimesheetsByEmployeeDate(state.timesheets);
     return sortGroupedTimesheets(grouped);
-  }, [timesheets]);
+  }, [state.timesheets]);
 
   const handleEntryClick = (timesheet: Timesheet) => {
     setSelectedTimesheet(timesheet);
     setIsEntryModalOpen(true);
   };
 
-  const handleEntryModalClose = () => {
+  const handleEntryModalClose = useCallback(() => {
     setIsEntryModalOpen(false);
     setSelectedTimesheet(null);
-  };
+  }, []);
 
   const handleRequestEditWithClose = useCallback((timesheet: Timesheet) => {
-    if (!onRequestEdit) return;
-    void Promise.resolve(onRequestEdit(timesheet, handleEntryModalClose)).catch((error) => { showErrorNotification(error); });
-  }, [onRequestEdit]);
+    if (!actions.requestEdit) return;
+    void Promise.resolve(actions.requestEdit(timesheet, handleEntryModalClose)).catch((error) => { showErrorNotification(error); });
+  }, [actions, handleEntryModalClose]);
 
   const getRequestEditHandler = useCallback((timesheet: Timesheet) => {
-    if (!onRequestEdit) return undefined;
+    if (!actions.requestEdit) return undefined;
     return (event: MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();
-      void Promise.resolve(onRequestEdit(timesheet)).catch((error) => { showErrorNotification(error); });
+      void Promise.resolve(actions.requestEdit(timesheet)).catch((error) => { showErrorNotification(error); });
     };
-  }, [onRequestEdit]);
+  }, [actions]);
 
   const toggleGroup = useCallback((key: string) => {
     setExpandedGroups(prev => {
@@ -90,7 +57,7 @@ export function TimesheetMobileList({
     });
   }, []);
 
-  if (isLoading) {
+  if (state.isLoading) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -128,7 +95,6 @@ export function TimesheetMobileList({
 
   return (
     <>
-      {/* Cards */}
       <div className="space-y-2.5">
         {groupedTimesheets.map((group) => {
           const groupKey = `${group.employeeId}_${group.date}`;
@@ -145,7 +111,6 @@ export function TimesheetMobileList({
               : group.entries[0]?.status;
           const dominantPayment = group.entries.map(e => e.payment_status).includes('paid') ? 'paid' : group.entries[0]?.payment_status;
 
-          // Left accent color based on status
           const accentColor: AccentColor = dominantPayment === 'paid'
             ? 'green'
             : dominantStatus === 'pending_approval'
@@ -161,7 +126,6 @@ export function TimesheetMobileList({
               key={groupKey}
               accentColor={accentColor}
             >
-              {/* Main tap area */}
               <div
                 className="px-4 pt-3.5 pb-3 cursor-pointer active:bg-muted/40 transition-colors touch-manipulation"
                 onClick={() => {
@@ -179,7 +143,6 @@ export function TimesheetMobileList({
                 }}
                 aria-expanded={group.entries.length > 1 ? isExpanded : undefined}
               >
-                {/* Top row: name + status */}
                 <div className="flex items-start justify-between gap-2 mb-2.5">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground leading-tight truncate">{group.employeeName}</p>
@@ -195,7 +158,6 @@ export function TimesheetMobileList({
                   </div>
                 </div>
 
-                {/* Bottom row: metrics */}
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
                     <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -209,7 +171,6 @@ export function TimesheetMobileList({
                 </div>
               </div>
 
-              {/* Expanded sub-entries */}
               {group.entries.length > 1 && isExpanded && (
                 <div className="border-t border-border/60 divide-y divide-border/40 bg-muted/[0.03]">
                   {group.entries.map((entry) => (
@@ -243,10 +204,9 @@ export function TimesheetMobileList({
                 </div>
               )}
 
-              {/* Request edit CTA for single-entry groups */}
               {group.entries.length === 1 && (() => {
                 const entry = group.entries[0];
-                const showRequestEdit = onRequestEdit &&
+                const showRequestEdit = actions.requestEdit &&
                   entry.status === 'approved' &&
                   entry.payment_status === 'pending' &&
                   !entry.allowed_edit &&
@@ -259,9 +219,9 @@ export function TimesheetMobileList({
                       variant="outline"
                       size="sm"
                       className="w-full h-8 text-xs"
-                      disabled={requestingTimesheetId === entry.id}
+                      disabled={meta.requestingTimesheetId === entry.id}
                     >
-                      {requestingTimesheetId === entry.id ? 'Đang gửi...' : 'Yêu cầu chỉnh sửa'}
+                      {meta.requestingTimesheetId === entry.id ? 'Đang gửi...' : 'Yêu cầu chỉnh sửa'}
                     </Button>
                   </div>
                 );
@@ -271,9 +231,8 @@ export function TimesheetMobileList({
         })}
       </div>
 
-      {/* Pagination */}
-      {pagination && onPageChange && (
-        <MobilePagination pagination={pagination} onPageChange={onPageChange} />
+      {state.pagination && actions.pageChange && (
+        <MobilePagination pagination={state.pagination} onPageChange={actions.pageChange} />
       )}
 
       {selectedTimesheet && (
@@ -287,11 +246,11 @@ export function TimesheetMobileList({
           date={new Date(selectedTimesheet.date)}
           existingEntry={selectedTimesheet}
           onSuccess={handleEntryModalClose}
-          onDelete={onDelete}
-          canDelete={canDelete}
+          onDelete={actions.delete}
+          canDelete={actions.canDelete}
           onRequestEdit={handleRequestEditWithClose}
           onRequestEditSuccess={handleEntryModalClose}
-          requestingTimesheetId={requestingTimesheetId}
+          requestingTimesheetId={meta.requestingTimesheetId}
         />
       )}
     </>

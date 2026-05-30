@@ -27,7 +27,7 @@ import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
 import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
-import { AdvancePaymentActionButtons } from "@/components/advance-payment/AdvancePaymentActionButtons";
+import { ActionBar, ButtonGroup, ImportAction, ExportListAction, ExportBatchAction, UploadResultAction, CheckInAction, HistoryAction } from "@/components/advance-payment/actions";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
@@ -255,19 +255,30 @@ const AdvancePaymentsPage = () => {
               onTabChange={(id) => setActiveTab(id as ActiveTab)}
             />
 
-            <AdvancePaymentActionButtons
-              onImportPayroll={() => setIsImportSheetOpen(true)}
-              onExportBatch={() => exportBatchMutation.mutate(undefined)}
-              isExportBatchPending={exportBatchMutation.isPending}
-              onUploadResult={() => setIsUploadResultDialogOpen(true)}
-              onHistory={() => setIsHistorySheetOpen(true)}
-              hideUploadResult={isAdvPartner}
-              hideHistory={isAdvPartner}
-              hideExportBatch={isAdvPartner}
-              onExportList={page.handleExportFlexPayEmployees}
-              isExportListPending={page.exportFlexPayMutation.isPending}
-              onCheckIn={() => setIsCheckInDialogOpen(true)}
-            />
+            <ActionBar>
+              <ButtonGroup>
+                <ImportAction onClick={() => setIsImportSheetOpen(true)} />
+                {page.handleExportFlexPayEmployees && (
+                  <ExportListAction
+                    onClick={page.handleExportFlexPayEmployees}
+                    isLoading={page.exportFlexPayMutation.isPending}
+                  />
+                )}
+              </ButtonGroup>
+              {!isAdvPartner && (
+                <ButtonGroup>
+                  <ExportBatchAction
+                    onClick={() => exportBatchMutation.mutate(undefined)}
+                    isLoading={exportBatchMutation.isPending}
+                  />
+                  <UploadResultAction onClick={() => setIsUploadResultDialogOpen(true)} />
+                </ButtonGroup>
+              )}
+              <CheckInAction onClick={() => setIsCheckInDialogOpen(true)} />
+              {!isAdvPartner && (
+                <HistoryAction onClick={() => setIsHistorySheetOpen(true)} />
+              )}
+            </ActionBar>
           </div>
 
           {/* Filter row */}

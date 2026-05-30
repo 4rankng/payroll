@@ -1,10 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { showErrorNotification } from "@/utils/error-handler";
 import { Timesheet } from "@/types/api/timesheet.types";
-import { SortingState, OnChangeFn } from "@tanstack/react-table";
 import { TimesheetEntryModal } from "./components/TimesheetEntryModal";
-import { userService } from "@/services/api/user.service";
-import type { User } from "@/types/user";
 import {
   TIMESHEET_STRIP_COLORS,
   PAYMENT_STRIP_COLORS,
@@ -12,62 +9,10 @@ import {
 import { cn } from "@/lib/utils";
 import { TimesheetGroupedTable } from "./components/TimesheetGroupedTable";
 import { TimesheetTablePagination } from "./components/TimesheetTablePagination";
+import { useTimesheetContext } from "./TimesheetContext";
 
-interface TimesheetListTableProps {
-  timesheets: Timesheet[];
-  isLoading?: boolean;
-  error?: unknown;
-  onView: (timesheet: Timesheet) => void;
-  onEdit: (timesheet: Timesheet) => void;
-  onApprove: (timesheet: Timesheet) => void;
-  onReject: (timesheet: Timesheet, reason: string) => void;
-  onDelete: (timesheet: Timesheet) => void;
-  canDelete?: (timesheet: Timesheet) => boolean;
-  onExportExcel: () => void;
-  isExportLoading?: boolean;
-  bulkTransferPercentage?: number;
-  pagination?: {
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    totalRecords: number;
-  } | null;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  onRefetch?: () => void;
-  onRequestEdit?: (
-    timesheet: Timesheet,
-    onSuccess?: () => Promise<void> | void,
-  ) => Promise<void> | void;
-  requestingTimesheetId?: number | null;
-  userRole?: "admin" | "partner";
-  sorting?: SortingState;
-  onSortingChange?: OnChangeFn<SortingState>;
-}
-
-export function TimesheetListTable({
-  timesheets,
-  isLoading = false,
-  error,
-  onView,
-  onEdit,
-  onApprove,
-  onReject,
-  onDelete,
-  canDelete,
-  onExportExcel,
-  isExportLoading = false,
-  bulkTransferPercentage = 0,
-  pagination,
-  onPageChange,
-  onPageSizeChange,
-  onRefetch,
-  onRequestEdit,
-  requestingTimesheetId = null,
-  userRole = "admin",
-  sorting,
-  onSortingChange,
-}: TimesheetListTableProps) {
+export function TimesheetListTable() {
+  const { state, actions, meta } = useTimesheetContext();
   const [selectedTimesheet, setSelectedTimesheet] = useState<Timesheet | null>(null);
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -92,18 +37,17 @@ export function TimesheetListTable({
 
   const handleRequestEditWithClose = useCallback(
     (timesheet: Timesheet) => {
-      if (!onRequestEdit) return;
-      void Promise.resolve(onRequestEdit(timesheet, handleEntryModalClose)).catch((err) => {
+      if (!actions.requestEdit) return;
+      void Promise.resolve(actions.requestEdit(timesheet, handleEntryModalClose)).catch((err) => {
         showErrorNotification(err);
       });
     },
-    [onRequestEdit, handleEntryModalClose],
+    [actions, handleEntryModalClose],
   );
 
   return (
     <div className="space-y-5">
-      {/* Status legend (admin only) */}
-      {userRole === "admin" && (
+      {state.userRole === "admin" && (
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {[
             { bg: TIMESHEET_STRIP_COLORS.pending_approval.bg, label: "Chờ duyệt" },
@@ -120,20 +64,20 @@ export function TimesheetListTable({
       )}
 
       <TimesheetGroupedTable
-        timesheets={timesheets}
-        userRole={userRole}
+        timesheets={state.timesheets}
+        userRole={state.userRole}
         expandedGroups={expandedGroups}
         onToggleGroup={toggleGroup}
         onRowClick={handleRowClick}
       />
 
-      {pagination && onPageChange && (
+      {state.pagination && actions.pageChange && (
         <TimesheetTablePagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          totalPages={pagination.totalPages}
-          totalRecords={pagination.totalRecords}
-          onPageChange={onPageChange}
+          page={state.pagination.page}
+          pageSize={state.pagination.pageSize}
+          totalPages={state.pagination.totalPages}
+          totalRecords={state.pagination.totalRecords}
+          onPageChange={actions.pageChange}
         />
       )}
 
@@ -148,11 +92,11 @@ export function TimesheetListTable({
           date={new Date(selectedTimesheet.date)}
           existingEntry={selectedTimesheet}
           onSuccess={handleEntryModalClose}
-          onDelete={onDelete}
-          canDelete={canDelete}
+          onDelete={actions.delete}
+          canDelete={actions.canDelete}
           onRequestEdit={handleRequestEditWithClose}
           onRequestEditSuccess={handleEntryModalClose}
-          requestingTimesheetId={requestingTimesheetId}
+          requestingTimesheetId={meta.requestingTimesheetId}
         />
       )}
     </div>

@@ -7,7 +7,9 @@ import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
+import { FileDown, ArrowRightLeft, History, Mail, FileText } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
+import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
@@ -105,16 +107,45 @@ const AdvancePaymentsPageMobile = () => {
       {/* Header + actions */}
       <AdvancePaymentPageHeaderMobile
         onImportPayroll={() => setIsImportSheetOpen(true)}
-        onExportBatch={() => exportBatchMutation.mutate(undefined)}
-        isExportBatchPending={exportBatchMutation.isPending}
-        onUploadResult={() => setIsResultUploadOpen(true)}
-        onStatement={() => setIsStatementSheetOpen(true)}
-        onFileHistory={() => setIsHistorySheetOpen(true)}
-        onEmail={() => setIsEmailDialogOpen(true)}
-        isEmailPending={sendEmailMutation.isPending}
         onViewEmployees={() => navigate("employees")}
-        hideUploadResult={isAdvPartner}
-        hideFileHistory={isAdvPartner}
+        overflowContent={
+          <>
+            <MobileOverflowAction
+              icon={FileDown}
+              label="Chuyển lô"
+              onClick={() => { exportBatchMutation.mutate(undefined); }}
+              disabled={exportBatchMutation.isPending}
+              isLoading={exportBatchMutation.isPending}
+            />
+            {!isAdvPartner && (
+              <MobileOverflowAction
+                icon={ArrowRightLeft}
+                label="Nhập KQ"
+                onClick={() => setIsResultUploadOpen(true)}
+              />
+            )}
+            <MobileOverflowAction
+              icon={FileText}
+              label="Sao kê"
+              onClick={() => setIsStatementSheetOpen(true)}
+            />
+            <MobileOverflowAction
+              icon={Mail}
+              label="Email sao kê"
+              onClick={() => setIsEmailDialogOpen(true)}
+              disabled={sendEmailMutation.isPending}
+              isLoading={sendEmailMutation.isPending}
+            />
+            <MobileOverflowDivider />
+            {!isAdvPartner && (
+              <MobileOverflowAction
+                icon={History}
+                label="Lịch sử file"
+                onClick={() => setIsHistorySheetOpen(true)}
+              />
+            )}
+          </>
+        }
       />
 
       {/* Month selector */}
