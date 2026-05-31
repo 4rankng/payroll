@@ -20,6 +20,7 @@ import {
 } from "@/components/timesheet/TimesheetsExportDialog";
 import { BulkTransferResultUploadDialog } from "@/components/timesheet/BulkTransferResultUploadDialog";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
+import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { BulkTransferHistoryDialog } from "@/components/transaction/BulkTransferHistoryDialog";
 import { BulkTransferHistoryDetailDialog } from "@/components/transaction/BulkTransferHistoryDetailDialog";
 import { GroupedStatCard, StatItem } from "@/components/shared/GroupedStatCard";
@@ -61,6 +62,7 @@ const TimesheetPageMobile = () => {
   const [shouldLoadBulkTransferHistory, setShouldLoadBulkTransferHistory] =
     useState(false);
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
+  const [bccUploadOpen, setBccUploadOpen] = useState(false);
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
   const [projectBulkApproveDialogOpen, setProjectBulkApproveDialogOpen] =
     useState(false);
@@ -379,6 +381,7 @@ const TimesheetPageMobile = () => {
         onBulkTransferHistory={handleBulkTransferHistory}
         onBulkApprove={() => setBulkApproveDialogOpen(true)}
         onBccHistory={handleBccHistory}
+        onBccUpload={() => setBccUploadOpen(true)}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         isPayrollReportPending={exportPayrollReportMutation.isPending}
       />
@@ -479,6 +482,18 @@ const TimesheetPageMobile = () => {
         confirmText="Duyệt dự án"
         onConfirm={handleConfirmProjectBulkApprove}
         loading={timesheetManagement.isLoading}
+      />
+
+      {/* BCC Upload */}
+      <BCCUploadModal
+        open={bccUploadOpen}
+        onClose={() => setBccUploadOpen(false)}
+        projectId={
+          timesheetManagement.selectedProject !== "all"
+            ? parseInt(timesheetManagement.selectedProject, 10)
+            : 0
+        }
+        projects={timesheetManagement.projects}
       />
 
       {/* BCC Upload History */}

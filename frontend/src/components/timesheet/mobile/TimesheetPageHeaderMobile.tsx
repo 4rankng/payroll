@@ -13,6 +13,7 @@ interface TimesheetPageHeaderMobileProps {
   onBulkTransferHistory?: () => void;
   onBulkApprove?: () => void;
   onBccHistory?: () => void;
+  onBccUpload?: () => void;
   // Partner-only
   onPaymentHistory?: () => void;
   isApprovedExportPending?: boolean;
@@ -29,6 +30,7 @@ export function TimesheetPageHeaderMobile({
   onBulkTransferHistory,
   onBulkApprove,
   onBccHistory,
+  onBccUpload,
   onPaymentHistory,
   isApprovedExportPending = false,
   isPayrollReportPending = false,
@@ -135,6 +137,17 @@ export function TimesheetPageHeaderMobile({
                 >
                   <History className="h-5 w-5 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium">Lịch sử chuyển lô</span>
+                </Button>
+              )}
+
+              {onBccUpload && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto px-2 py-3"
+                  onClick={() => { onBccUpload(); close(); }}
+                >
+                  <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">Tải lên BCC</span>
                 </Button>
               )}
 

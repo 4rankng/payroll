@@ -11,6 +11,7 @@ import { TimesheetsExportDialog, TimesheetsExportParams } from '@/components/tim
 import { BulkTransferResultUploadDialog } from '@/components/timesheet/BulkTransferResultUploadDialog';
 import { BulkTransferHistoryDialog } from '@/components/transaction/BulkTransferHistoryDialog';
 import { UploadHistorySheet } from '@/components/timesheet/UploadHistorySheet';
+import { BCCUploadModal } from '@/components/timesheet/BCCUploadModal';
 import { BulkTransferHistoryDetailDialog } from '@/components/transaction/BulkTransferHistoryDetailDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -61,6 +62,7 @@ const TimesheetPage = () => {
   const [selectedHistoryUploadedAt, setSelectedHistoryUploadedAt] = useState<string | null>(null);
   const [shouldLoadBulkTransferHistory, setShouldLoadBulkTransferHistory] = useState(false);
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
+  const [bccUploadOpen, setBccUploadOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get initial values from URL parameters
@@ -334,7 +336,13 @@ const TimesheetPage = () => {
                 Nhập KQ chuyển lô
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {/* Group 2: Báo cáo / Reports */}
+              {/* Group 2: Import / Upload */}
+              <DropdownMenuItem onClick={() => setBccUploadOpen(true)}>
+                <FileUp className="w-4 h-4 mr-2" />
+                Tải lên BCC
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* Group 3: Báo cáo / Reports */}
               <DropdownMenuItem onClick={handleApprovedTimesheetsExport} disabled={exportApprovedTimesheetsMutation.isPending}>
                 <FileText className="w-4 h-4 mr-2" />
                 {exportApprovedTimesheetsMutation.isPending ? 'Đang xuất...' : 'Xuất bảng công'}
@@ -435,6 +443,18 @@ const TimesheetPage = () => {
         uploadedAt={selectedHistoryUploadedAt || undefined}
         onOpenChange={handleCloseHistory}
         onBack={handleBackToHistoryList}
+      />
+
+      {/* BCC Upload */}
+      <BCCUploadModal
+        open={bccUploadOpen}
+        onClose={() => setBccUploadOpen(false)}
+        projectId={
+          timesheetManagement.selectedProject !== 'all'
+            ? parseInt(timesheetManagement.selectedProject, 10)
+            : 0
+        }
+        projects={timesheetManagement.projects}
       />
 
       {/* BCC Upload History */}
