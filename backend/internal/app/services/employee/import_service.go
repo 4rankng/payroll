@@ -13,16 +13,15 @@ import (
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
-	bankpkg "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/utils"
 )
 
 // ImportService handles employee import operations
 type ImportService struct {
+	employeeService     *EmployeeService
 	employeeRepo        domain.EmployeeRepository
 	projectRepo         domain.ProjectRepository
 	projectEmployeeRepo domain.ProjectEmployeeRepository
-	bankRepo            domain.BankRepository
 	userService         *EmployeeUserService
 	progressService     *infrastructure.EmployeeImportProgressService
 	logger              *slog.Logger
@@ -30,18 +29,18 @@ type ImportService struct {
 
 // NewImportService creates a new employee import service
 func NewImportService(
+	employeeService *EmployeeService,
 	employeeRepo domain.EmployeeRepository,
 	projectRepo domain.ProjectRepository,
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
-	bankRepo domain.BankRepository,
 	userService *EmployeeUserService,
 	progressService *infrastructure.EmployeeImportProgressService,
 ) *ImportService {
 	return &ImportService{
+		employeeService:     employeeService,
 		employeeRepo:        employeeRepo,
 		projectRepo:         projectRepo,
 		projectEmployeeRepo: projectEmployeeRepo,
-		bankRepo:            bankRepo,
 		userService:         userService,
 		progressService:     progressService,
 		logger:              slog.Default().With("component", "EmployeeImportService"),
@@ -294,7 +293,7 @@ func (s *ImportService) getOrCreateProject(ctx context.Context, code string, cre
 
 // getOrCreateEmployee gets an existing employee or creates a new one
 func (s *ImportService) getOrCreateEmployee(ctx context.Context, row dto.EmployeeImportRow, createdBy uint) (*domain.Employee, bool, bool, error) {
-	employee, err := s.employeeRepo.GetByCCCD(ctx, row.CCCD)
+	employee, err := s.employeeService.GetEmployeeByCCCD(ctx, row.CCCD)
 	if err == nil {
 		// Employee exists, check if update is needed
 		needsUpdate := s.shouldUpdateEmployee(employee, row)
@@ -495,31 +494,7 @@ func (s *ImportService) getOrCreateAssignment(ctx context.Context, projectID, em
 
 // resolveBankID resolves a bank name to a bank ID
 func (s *ImportService) resolveBankID(ctx context.Context, bankName string) *uint {
-	if bankName == "" {
-		return nil
-	}
-
-	// Map to exact branch_name using keyword-based matching
-	// e.g., "Ngân hàng TMCP An Bình - ABBANK" -> "An Bình (ABBANK)"
-	mappedName := bankpkg.MapName(bankName)
-	if mappedName == "" {
-		return nil
-	}
-
-	// Search using the mapped exact branch_name
-	banks, err := s.bankRepo.SearchByBranchName(ctx, mappedName, 1)
-	if err != nil {
-		s.logger.Warn("failed to search bank", "name", mappedName, "error", err)
-		return nil
-	}
-
-	if len(banks) == 0 {
-		s.logger.Warn("bank not found", "search_name", mappedName, "original_name", bankName)
-		return nil
-	}
-
-	id := banks[0].ID
-	return &id
+	return s.employeeService.ResolveBankID(ctx, bankName)
 }
 
 // GetProgress retrieves the current import progress

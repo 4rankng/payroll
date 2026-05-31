@@ -4,6 +4,7 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/infra/observability"
+	bankpkg "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/utils"
 )
 
@@ -395,6 +397,54 @@ func (s *EmployeeService) CountEmployees(ctx context.Context, filters domain.Emp
 
 func (s *EmployeeService) GetEmployeeByCCCD(ctx context.Context, cccd string) (*domain.Employee, error) {
 	return s.EmployeeRepo.GetByCCCD(ctx, cccd)
+}
+
+// ResolveBankID maps a raw bank name (from Excel/import) to a database bank ID.
+// Returns nil if the bank cannot be resolved (non-fatal).
+func (s *EmployeeService) ResolveBankID(ctx context.Context, bankName string) *uint {
+	if bankName == "" {
+		return nil
+	}
+	mappedName := bankpkg.MapName(bankName)
+	if mappedName == "" {
+		return nil
+	}
+	banks, err := s.BankRepo.SearchByBranchName(ctx, mappedName, 1)
+	if err != nil {
+		slog.Warn("bank search failed", "mapped_name", mappedName, "original", bankName, "error", err)
+		return nil
+	}
+	if len(banks) == 0 {
+		slog.Warn("bank not found", "mapped_name", mappedName, "original", bankName)
+		return nil
+	}
+	return &banks[0].ID
+}
+
+// UpdateBankInfo updates bank-related fields for an employee (targeted update).
+// Uses column-level update to avoid full Save overwriting concurrent changes.
+func (s *EmployeeService) UpdateBankInfo(ctx context.Context, employeeID uint, bankUpdates map[string]any) error {
+	return s.EmployeeRepo.UpdateColumns(ctx, employeeID, bankUpdates)
+}
+
+// UpdateUserLink sets the user_id on an employee record (targeted update).
+func (s *EmployeeService) UpdateUserLink(ctx context.Context, employeeID uint, userID uint) error {
+	return s.EmployeeRepo.UpdateColumns(ctx, employeeID, map[string]any{"user_id": userID})
+}
+
+// GetActiveAssignment returns the active project assignment for an employee, if any.
+func (s *EmployeeService) GetActiveAssignment(ctx context.Context, projectID, employeeID uint) (*domain.ProjectEmployee, error) {
+	return s.ProjectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, employeeID)
+}
+
+// GetActiveAssignments returns all active assignments for a project.
+func (s *EmployeeService) GetActiveAssignments(ctx context.Context, projectID uint) ([]*domain.ProjectEmployee, error) {
+	return s.ProjectEmployeeRepo.GetActiveAssignments(ctx, projectID)
+}
+
+// CreateAssignment creates a new project-employee assignment.
+func (s *EmployeeService) CreateAssignment(ctx context.Context, assignment *domain.ProjectEmployee) error {
+	return s.ProjectEmployeeRepo.Create(ctx, assignment)
 }
 
 // GetEmployeeStatistics delegates to domain service for business logic

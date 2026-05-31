@@ -1,6 +1,9 @@
 package bank
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // Keyword represents a keyword and its corresponding bank name
 // The bank name must match exact branch_name value in the banks table
@@ -9,8 +12,8 @@ type Keyword struct {
 	Bank    string // Must match exact branch_name in database
 }
 
-// keywords contains all keyword mappings for bank name resolution
-// Order matters: more specific keywords should come first
+// keywords contains all keyword mappings for bank name resolution.
+// Order does NOT matter — keywords are auto-sorted by length at init time.
 var keywords = []Keyword{
 	// Vietcombank
 	{"VCB", "Ngoại thương Việt Nam (VCB)"},
@@ -56,8 +59,8 @@ var keywords = []Keyword{
 	{"VPB", "Việt Nam Thịnh Vượng (VPB)"},
 	{"THINHVUONG", "Việt Nam Thịnh Vượng (VPB)"},
 
-	// Sacombank (Sài Gòn Công thương / Sài Gòn)
-	{"SACOMBANK", "Sài Gòn (STB)"},
+	// Sacombank
+	{"SACOMBANK", "Sacombank (STB)"},
 	{"SGB", "Sài Gòn Công thương (SGB)"},
 	{"SAIGONCONGTHUONG", "Sài Gòn Công thương (SGB)"},
 
@@ -111,13 +114,14 @@ var keywords = []Keyword{
 	{"DONGA", "Đông Á (DAB)"},
 
 	// PG Bank (Ngân hàng TMCP Thượng vượng và Phát triển)
-	{"PGB", "Ngân hàng TMCP Thượng vượng và Phát triển (PGB)"},
-	{"PGBANK", "Ngân hàng TMCP Thượng vượng và Phát triển (PGB)"},
+	{"PGB", "Ngân hàng TMCP Thịnh vượng và Phát triển (PGB)"},
+	{"PGBANK", "Ngân hàng TMCP Thịnh vượng và Phát triển (PGB)"},
 
-	// OceanBank (Đại Dương)
-	{"PVC", "Đại Dương (PVC)"},
-	{"OCEANBANK", "Đại Dương (PVC)"},
-	{"DAIDUONG", "Đại Dương (PVC)"},
+	// PVcomBank (Đại chúng Việt Nam) — formerly OceanBank/PVC
+	{"PVC", "Đại chúng Việt Nam (PVC)"},
+	{"PVCOMBANK", "Đại chúng Việt Nam (PVC)"},
+	{"OCEANBANK", "Đại chúng Việt Nam (PVC)"},
+	{"DAICHUNG", "Đại chúng Việt Nam (PVC)"},
 
 	// VRB (Liên Doanh Việt Nga)
 	{"VRB", "Liên Doanh Việt Nga (VRB)"},
@@ -142,15 +146,16 @@ var keywords = []Keyword{
 	{"XAYDUNG", "Xây dựng Việt Nam (CBB)"},
 
 	// BVBank
-	{"VCCB", "BVBank Việt Ngân hàng TMCP Bản Việt (VCCB)"},
+	{"VCCB", "BVBank – Ngân hàng TMCP Bản Việt (VCCB)"},
 	{"BVB", "Bảo Việt (BVB)"},
 
 	// NCB (Quốc Dân)
 	{"NCB", "Quốc Dân (NCB)"},
 	{"QUOCDAN", "Quốc Dân (NCB)"},
 
-	// LPB (Ngân hàng Thương mại Cổ phần Lực Phát Việt Nam)
-	{"LPB", "Ngân hàng Thương mại Cổ phần Lực Phát Việt Nam (LPB)"},
+	// LPBank (Lộc Phát Việt Nam)
+	{"LPB", "Ngân hàng Thương mại Cổ phần Lộc Phát Việt Nam (LPB)"},
+	{"LPBANK", "Ngân hàng Thương mại Cổ phần Lộc Phát Việt Nam (LPB)"},
 
 	// MBV (Ngân hàng TNHH MTV Việt Nam Hiện Đại)
 	{"MBV", "Ngân hàng TNHH MTV Việt Nam Hiện Đại (MBV)"},
@@ -158,8 +163,8 @@ var keywords = []Keyword{
 	// VID (Liên doanh VID Public Bank)
 	{"VID", "Liên doanh VID Public Bank (VID)"},
 
-	// GP Bank (Đầu khu toán cảu)
-	{"GPB", "Đầu khu toán cảu (GPB)"},
+	// GP Bank (Dầu khí toàn cầu)
+	{"GPB", "Dầu khí toàn cầu (GPB)"},
 
 	// VAB (Việt Á)
 	{"VAB", "Việt Á (VAB)"},
@@ -173,12 +178,9 @@ var keywords = []Keyword{
 	{"NASB", "Bắc Á (NASB)"},
 	{"BACA", "Bắc Á (NASB)"},
 
-	// BVB (Bảo Việt)
-	{"BVB", "Bảo Việt (BVB)"},
-
 	// VietBank (Việt Nam Thương Tín)
-	{"VIETBANK", "Việt Nam Thương Tín (VIETBANK)"},
-	{"THUONGTIN", "Việt Nam Thương Tín (VIETBANK)"},
+	{"VIETBANK", "Việt Nam Thương tín (VIETBANK)"},
+	{"THUONGTIN", "Việt Nam Thương tín (VIETBANK)"},
 
 	// HLB (TNHH MTV Hong Leong VN)
 	{"HLB", "TNHH MTV Hong Leong VN (HLB)"},
@@ -191,21 +193,86 @@ var keywords = []Keyword{
 	{"UBANK", "Việt Nam Thịnh Vượng UBANK (UBANKVPB)"},
 }
 
-// MapName maps a bank name from Excel/import to the actual branch_name in the banks table
-// It uses keyword-based matching - checks if the normalized name contains any of the keywords
-//
-// Example:
-//
-//	"Ngân hàng TMCP An Bình - ABBANK" -> "An Bình (ABBANK)"
-//	"Ngân hàng TMCP Đầu tư và Phát triển Việt Nam - BIDV" -> "Đầu tư và Phát triển (BIDV)"
-func MapName(name string) string {
-	normalizedName := strings.ToUpper(strings.ReplaceAll(strings.TrimSpace(name), " ", ""))
+// sortedKeywords is keywords sorted by length descending (longest first),
+// so more specific matches take priority over shorter substrings.
+var sortedKeywords []Keyword
 
-	for _, kw := range keywords {
-		if strings.Contains(normalizedName, kw.Keyword) {
+func init() {
+	sortedKeywords = make([]Keyword, len(keywords))
+	copy(sortedKeywords, keywords)
+	sort.Slice(sortedKeywords, func(i, j int) bool {
+		li, lj := len(sortedKeywords[i].Keyword), len(sortedKeywords[j].Keyword)
+		if li != lj {
+			return li > lj // longest first
+		}
+		return sortedKeywords[i].Keyword < sortedKeywords[j].Keyword
+	})
+}
+
+// MapName maps a bank name from Excel/import to the actual branch_name in the banks table.
+//
+// Algorithm (3-pass, false-positive resistant):
+//
+//	Pass 1: Exact match on normalized string (uppercase, spaces removed)
+//	Pass 2: Contains match for keywords ≥ 5 chars (low false-positive risk)
+//	Pass 3: Word-boundary match for short keywords (< 5 chars) on original text
+//
+// If no match, returns the original name — which will cause resolveBankID to return nil,
+// leaving the bank field empty so partners can fix it manually.
+func MapName(name string) string {
+	raw := strings.TrimSpace(name)
+	if raw == "" {
+		return ""
+	}
+
+	normalized := strings.ToUpper(strings.ReplaceAll(raw, " ", ""))
+
+	// Pass 1: Exact match on normalized string
+	for _, kw := range sortedKeywords {
+		if normalized == kw.Keyword {
 			return kw.Bank
 		}
 	}
 
-	return name
+	// Pass 2: Contains match for long keywords (≥ 5 chars)
+	for _, kw := range sortedKeywords {
+		if len(kw.Keyword) >= 5 && strings.Contains(normalized, kw.Keyword) {
+			return kw.Bank
+		}
+	}
+
+	// Pass 3: Word-boundary match for short keywords (< 5 chars)
+	// Uses the original text (with spaces) to prevent false positives:
+	//   "ACB" in "Á châu ACB" → space before, end after → match ✅
+	//   "PVC" in "PV connect" → no "PVC" substring (space breaks it) → no match ✅
+	upper := strings.ToUpper(raw)
+	for _, kw := range sortedKeywords {
+		if len(kw.Keyword) < 5 && matchAtWordBoundary(upper, kw.Keyword) {
+			return kw.Bank
+		}
+	}
+
+	return raw
+}
+
+// matchAtWordBoundary checks if keyword appears in text surrounded by
+// non-ASCII-letter characters (or at string boundaries).
+// Vietnamese characters (Â, Ê, Ơ, etc.) are treated as non-letters,
+// so they act as natural word boundaries.
+func matchAtWordBoundary(text, keyword string) bool {
+	kl := len(keyword)
+	for i := 0; i <= len(text)-kl; i++ {
+		if text[i:i+kl] == keyword {
+			beforeOK := i == 0 || !isASCIILetter(text[i-1])
+			afterOK := i+kl >= len(text) || !isASCIILetter(text[i+kl])
+			if beforeOK && afterOK {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isASCIILetter(b byte) bool {
+	return (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z')
 }

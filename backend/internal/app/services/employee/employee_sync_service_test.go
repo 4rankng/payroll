@@ -316,6 +316,11 @@ func (m *MockEmployeeRepository) CountEmployeesWithMissingBankDetails(ctx contex
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {
+	args := m.Called(ctx, id, columns)
+	return args.Error(0)
+}
+
 // MockEventBus is a mock for EventBus
 type MockEventBus struct {
 	mock.Mock

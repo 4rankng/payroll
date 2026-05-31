@@ -312,16 +312,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// Initialize employee import progress service
 	employeeImportProgressService := infraServices.NewEmployeeImportProgressService(cacheService)
 
-	// Initialize employee import service
-	employeeImportService := employee.NewImportService(
-		repos.Employee,
-		repos.Project,
-		repos.ProjectEmployee,
-		repos.Bank,
-		employeeUserService,
-		employeeImportProgressService,
-	)
-
 	idempotencyService := infraServices.NewIdempotencyService(redis.Client, logger)
 
 	// Disbursement provider registry. Registration is gated at boot by
@@ -530,6 +520,17 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	employeeService := employee.NewEmployeeService(employeeConfig)
 
+	advancePaymentConfig.EmployeeService = employeeService
+	// Initialize employee import service
+	employeeImportService := employee.NewImportService(
+		employeeService,
+		repos.Employee,
+		repos.Project,
+		repos.ProjectEmployee,
+		employeeUserService,
+		employeeImportProgressService,
+	)
+
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
@@ -593,13 +594,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		NinePayBatchCompletion:            ninePayBatchCompletion,
 		BulkTransferPayment:               bulkTransferPaymentWorker,
 		BCCImport: services.NewBCCImportService(
-			repos.ProjectEmployee,
 			repos.Payrate,
 			repos.Timesheet,
 			timesheetService,
 			repos.Asset,
 			fileStorage,
-			db.DB,
+			transactionManager,
 			redis.Client,
 			employeeService,
 			employeeUserService,

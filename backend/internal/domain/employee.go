@@ -177,6 +177,9 @@ type EmployeeRepository interface {
 	SearchEmployees(ctx context.Context, search string, limit int) ([]*EmployeeWithProject, error)
 	GetEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
 	CountEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) (int64, error)
+	// UpdateColumns performs a targeted update of specific columns for an employee.
+	// Used by import flows to update bank info or user_id without a full Save.
+	UpdateColumns(ctx context.Context, id uint, columns map[string]any) error
 }
 
 // EmployeeFilters represents filtering options for employee queries

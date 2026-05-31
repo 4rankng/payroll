@@ -13,7 +13,6 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
-	bankpkg "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/utils"
 )
 
@@ -367,7 +366,7 @@ func (s *Service) getOrCreateProject(ctx context.Context, code string, createdBy
 }
 
 func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNumber, accountName, bankName, mobile string, createdBy uint) (*domain.Employee, bool, bool, error) {
-	employee, err := s.config.EmployeeRepo.GetByCCCD(ctx, cccd)
+	employee, err := s.config.EmployeeService.GetEmployeeByCCCD(ctx, cccd)
 	if err == nil {
 		needsUpdate := false
 
@@ -469,26 +468,7 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 }
 
 func (s *Service) resolveBankID(ctx context.Context, bankName string) *uint {
-	mappedName := bankpkg.MapName(bankName)
-	if mappedName == "" {
-		s.logger.Debug("bank name is empty after mapping", "original", bankName)
-		return nil
-	}
-
-	banks, err := s.config.BankRepo.SearchByBranchName(ctx, mappedName, 1)
-	if err != nil {
-		s.logger.Warn("failed to search bank", "name", mappedName, "error", err)
-		return nil
-	}
-
-	if len(banks) == 0 {
-		s.logger.Warn("bank not found", "search_name", mappedName, "original_name", bankName)
-		return nil
-	}
-
-	id := banks[0].ID
-	s.logger.Debug("resolved bank id", "bank_name", bankName, "mapped_name", mappedName, "bank_id", id)
-	return &id
+	return s.config.EmployeeService.ResolveBankID(ctx, bankName)
 }
 
 func parseCommaNumber(s string) (uint64, error) {

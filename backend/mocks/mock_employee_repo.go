@@ -80,6 +80,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) CountEmployeesWithMissingBankDetai
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmployeesWithMissingBankDetails", reflect.TypeOf((*MockEmployeeRepository)(nil).CountEmployeesWithMissingBankDetails), ctx, filters)
 }
 
+// CountRecentEmployees mocks base method.
+func (m *MockEmployeeRepository) CountRecentEmployees(ctx context.Context, startDate, endDate time.Time) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRecentEmployees", ctx, startDate, endDate)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRecentEmployees indicates an expected call of CountRecentEmployees.
+func (mr *MockEmployeeRepositoryMockRecorder) CountRecentEmployees(ctx, startDate, endDate interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRecentEmployees", reflect.TypeOf((*MockEmployeeRepository)(nil).CountRecentEmployees), ctx, startDate, endDate)
+}
+
 // CountUnassignedEmployeesAtDate mocks base method.
 func (m *MockEmployeeRepository) CountUnassignedEmployeesAtDate(ctx context.Context, atDate time.Time, filters domain.EmployeeFilters) (int64, error) {
 	m.ctrl.T.Helper()
@@ -121,6 +136,36 @@ func (m *MockEmployeeRepository) Delete(ctx context.Context, id uint) error {
 func (mr *MockEmployeeRepositoryMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockEmployeeRepository)(nil).Delete), ctx, id)
+}
+
+// ExistsByCCCD mocks base method.
+func (m *MockEmployeeRepository) ExistsByCCCD(ctx context.Context, cccd string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsByCCCD", ctx, cccd)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsByCCCD indicates an expected call of ExistsByCCCD.
+func (mr *MockEmployeeRepositoryMockRecorder) ExistsByCCCD(ctx, cccd interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsByCCCD", reflect.TypeOf((*MockEmployeeRepository)(nil).ExistsByCCCD), ctx, cccd)
+}
+
+// ExistsByEmail mocks base method.
+func (m *MockEmployeeRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsByEmail", ctx, email)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsByEmail indicates an expected call of ExistsByEmail.
+func (mr *MockEmployeeRepositoryMockRecorder) ExistsByEmail(ctx, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsByEmail", reflect.TypeOf((*MockEmployeeRepository)(nil).ExistsByEmail), ctx, email)
 }
 
 // GetActiveCountAtDate mocks base method.
@@ -213,6 +258,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByID), ctx, id)
 }
 
+// GetByIDForUpdate mocks base method.
+func (m *MockEmployeeRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.Employee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByIDForUpdate", ctx, id)
+	ret0, _ := ret[0].(*domain.Employee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByIDForUpdate indicates an expected call of GetByIDForUpdate.
+func (mr *MockEmployeeRepositoryMockRecorder) GetByIDForUpdate(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDForUpdate", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByIDForUpdate), ctx, id)
+}
+
 // GetByIDs mocks base method.
 func (m *MockEmployeeRepository) GetByIDs(ctx context.Context, ids []int64) ([]*domain.Employee, error) {
 	m.ctrl.T.Helper()
@@ -228,19 +288,19 @@ func (mr *MockEmployeeRepositoryMockRecorder) GetByIDs(ctx, ids interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByIDs), ctx, ids)
 }
 
-// GetByIDForUpdate mocks base method.
-func (m *MockEmployeeRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.Employee, error) {
+// GetByMobile mocks base method.
+func (m *MockEmployeeRepository) GetByMobile(ctx context.Context, mobile string) (*domain.Employee, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByIDForUpdate", ctx, id)
+	ret := m.ctrl.Call(m, "GetByMobile", ctx, mobile)
 	ret0, _ := ret[0].(*domain.Employee)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetByIDForUpdate indicates an expected call of GetByIDForUpdate.
-func (mr *MockEmployeeRepositoryMockRecorder) GetByIDForUpdate(ctx, id interface{}) *gomock.Call {
+// GetByMobile indicates an expected call of GetByMobile.
+func (mr *MockEmployeeRepositoryMockRecorder) GetByMobile(ctx, mobile interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDForUpdate", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByIDForUpdate), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByMobile", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByMobile), ctx, mobile)
 }
 
 // GetByProject mocks base method.
@@ -348,6 +408,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) GetRecentEmployees(ctx, startDate,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecentEmployees", reflect.TypeOf((*MockEmployeeRepository)(nil).GetRecentEmployees), ctx, startDate, endDate, limit)
 }
 
+// GetRecentEmployeesPaginated mocks base method.
+func (m *MockEmployeeRepository) GetRecentEmployeesPaginated(ctx context.Context, startDate, endDate time.Time, limit, offset int) ([]*domain.Employee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRecentEmployeesPaginated", ctx, startDate, endDate, limit, offset)
+	ret0, _ := ret[0].([]*domain.Employee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRecentEmployeesPaginated indicates an expected call of GetRecentEmployeesPaginated.
+func (mr *MockEmployeeRepositoryMockRecorder) GetRecentEmployeesPaginated(ctx, startDate, endDate, limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecentEmployeesPaginated", reflect.TypeOf((*MockEmployeeRepository)(nil).GetRecentEmployeesPaginated), ctx, startDate, endDate, limit, offset)
+}
+
 // GetUnassignedEmployeesAtDate mocks base method.
 func (m *MockEmployeeRepository) GetUnassignedEmployeesAtDate(ctx context.Context, atDate time.Time, filters domain.EmployeeFilters) ([]*domain.Employee, error) {
 	m.ctrl.T.Helper()
@@ -435,4 +510,18 @@ func (m *MockEmployeeRepository) Update(ctx context.Context, employee *domain.Em
 func (mr *MockEmployeeRepositoryMockRecorder) Update(ctx, employee interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockEmployeeRepository)(nil).Update), ctx, employee)
+}
+
+// UpdateColumns mocks base method.
+func (m *MockEmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateColumns", ctx, id, columns)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateColumns indicates an expected call of UpdateColumns.
+func (mr *MockEmployeeRepositoryMockRecorder) UpdateColumns(ctx, id, columns interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateColumns", reflect.TypeOf((*MockEmployeeRepository)(nil).UpdateColumns), ctx, id, columns)
 }

@@ -16,13 +16,11 @@ import (
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/infra/storage"
-	bankpkg "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/utils"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
-	"gorm.io/gorm"
 )
 
 // BCCImportStats holds common import statistics shared between service result,
@@ -62,38 +60,35 @@ func buildResult(stats BCCImportStats, id, uploaderID uint, createdAt time.Time)
 }
 
 type BCCImportService struct {
-	projectEmpRepo      domain.ProjectEmployeeRepository
 	payrateRepo         domain.PayrateRepository
 	timesheetRepo       domain.TimesheetRepository
 	timesheetService    *timesheetSvc.TimesheetService
 	assetRepo           domain.AssetRepository
 	fileStorage         storage.FileStorage
-	db                  *gorm.DB
+	transactionManager  domain.TransactionManager
 	redis               *redis.Client
 	employeeService     *employee.EmployeeService
 	employeeUserService *employee.EmployeeUserService
 }
 
 func NewBCCImportService(
-	projectEmpRepo domain.ProjectEmployeeRepository,
 	payrateRepo domain.PayrateRepository,
 	timesheetRepo domain.TimesheetRepository,
 	timesheetService *timesheetSvc.TimesheetService,
 	assetRepo domain.AssetRepository,
 	fileStorage storage.FileStorage,
-	db *gorm.DB,
+	transactionManager domain.TransactionManager,
 	redisClient *redis.Client,
 	employeeService *employee.EmployeeService,
 	employeeUserService *employee.EmployeeUserService,
 ) *BCCImportService {
 	return &BCCImportService{
-		projectEmpRepo:      projectEmpRepo,
 		payrateRepo:         payrateRepo,
 		timesheetRepo:       timesheetRepo,
 		timesheetService:    timesheetService,
 		assetRepo:           assetRepo,
 		fileStorage:         fileStorage,
-		db:                  db,
+		transactionManager:  transactionManager,
 		redis:               redisClient,
 		employeeService:     employeeService,
 		employeeUserService: employeeUserService,
@@ -244,143 +239,146 @@ func (s *BCCImportService) ProcessUpload(
 			"count", len(stkRows), "position", position)
 
 		// Cache bank name → ID to avoid redundant DB queries per row.
-		bankCache := make(map[string]*uint)
+		// Wrap STK auto-creation in a transaction to prevent orphaned records.
+		stkErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+			bankCache := make(map[string]*uint)
 
-		for _, row := range stkRows {
-			cccd := row.CCCD
-			fullName := row.FullName
-			if cccd == "" || fullName == "" {
-				continue
-			}
-
-			// 1. Resolve Bank ID (cached)
-			var bankID *uint
-			if row.BankName != "" {
-				if cached, ok := bankCache[row.BankName]; ok {
-					bankID = cached
-				} else {
-					bankID = s.resolveBankID(ctx, row.BankName)
-					bankCache[row.BankName] = bankID
+			for _, row := range stkRows {
+				cccd := row.CCCD
+				fullName := row.FullName
+				if cccd == "" || fullName == "" {
+					continue
 				}
-			}
 
-			// 2. Check if employee already exists by CCCD
-			existingEmp, empErr := s.employeeService.EmployeeRepo.GetByCCCD(ctx, cccd)
-			if empErr != nil && !domain.IsNotFoundError(empErr) {
-				// Real DB error — don't conflate with "not found".
-				slog.Error("BCCImport: DB error looking up employee by CCCD",
-					"cccd", cccd, "error", empErr)
-				importErrors = append(importErrors, domain.ImportError{
-					Employee: fullName,
-					Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
-				})
-				continue
-			}
-
-			var emp *domain.Employee
-			if existingEmp == nil {
-				// Create new employee
-				emp = &domain.Employee{
-					Fullname:          fullName,
-					CCCD:              cccd,
-					BankAccountNumber: row.BankAccount,
-					BankAccountName:   strings.ToUpper(fullName),
-					BankID:            bankID,
-					CreatedBy:         uploaderID,
+				// 1. Resolve Bank ID (cached)
+				var bankID *uint
+				if row.BankName != "" {
+					if cached, ok := bankCache[row.BankName]; ok {
+						bankID = cached
+					} else {
+						bankID = s.employeeService.ResolveBankID(txCtx, row.BankName)
+						bankCache[row.BankName] = bankID
+					}
 				}
-				createdEmp, createErr := s.employeeService.CreateEmployee(ctx, emp, uploaderID)
-				if createErr != nil {
-					slog.Error("BCCImport: failed to auto-create employee",
-						"cccd", cccd, "name", fullName, "error", createErr)
+
+				// 2. Check if employee already exists by CCCD
+				existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, cccd)
+				if empErr != nil && !domain.IsNotFoundError(empErr) {
+					// Real DB error — don't conflate with "not found".
+					slog.Error("BCCImport: DB error looking up employee by CCCD",
+						"cccd", cccd, "error", empErr)
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: fullName,
-						Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
+						Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
 					})
 					continue
 				}
-				emp = createdEmp
-				slog.Info("BCCImport: auto-created employee profile and user account",
-					"cccd", cccd, "employee_id", emp.ID)
-			} else {
-				emp = existingEmp
 
-				// Fill missing bank info from STK (targeted update to avoid full-record Save)
-				if row.BankAccount != "" && emp.BankAccountNumber == "" {
-					bankUpdates := map[string]any{
-						"bank_account_number": row.BankAccount,
-						"bank_account_name":   strings.ToUpper(fullName),
+				var emp *domain.Employee
+				if existingEmp == nil {
+					// Create new employee
+					emp = &domain.Employee{
+						Fullname:          fullName,
+						CCCD:              cccd,
+						BankAccountNumber: row.BankAccount,
+						BankAccountName:   strings.ToUpper(fullName),
+						BankID:            bankID,
+						CreatedBy:         uploaderID,
 					}
-					if bankID != nil {
-						bankUpdates["bank_id"] = *bankID
+					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+					if createErr != nil {
+						slog.Error("BCCImport: failed to auto-create employee",
+							"cccd", cccd, "name", fullName, "error", createErr)
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: fullName,
+							Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
+						})
+						continue
 					}
-					if updateErr := s.db.Model(new(domain.Employee)).
-						Where("id = ?", emp.ID).
-						Updates(bankUpdates).Error; updateErr != nil {
-						slog.Error("BCCImport: failed to fill bank info for employee",
-							"employee_id", emp.ID, "error", updateErr)
-					} else {
-						slog.Info("BCCImport: filled bank info for existing employee",
-							"employee_id", emp.ID, "cccd", cccd)
-					}
-				}
+					emp = createdEmp
+					slog.Info("BCCImport: auto-created employee profile and user account",
+						"cccd", cccd, "employee_id", emp.ID)
+				} else {
+					emp = existingEmp
 
-				// If employee exists but has no user account, create one
-				if emp.UserID == nil && s.employeeUserService != nil {
-					baseUsername := utils.GenerateUsername(emp.Fullname)
-					if baseUsername != "" {
-						username := s.employeeUserService.EnsureUniqueUsername(ctx, baseUsername)
-						userID, userErr := s.employeeUserService.CreateUserForEmployee(ctx, emp, username)
-						if userErr != nil {
-							slog.Error("BCCImport: failed to create user for existing employee",
-								"employee_id", emp.ID, "cccd", cccd, "error", userErr)
+					// Fill missing bank info from STK (targeted update to avoid full-record Save)
+					if row.BankAccount != "" && emp.BankAccountNumber == "" {
+						bankUpdates := map[string]any{
+							"bank_account_number": row.BankAccount,
+							"bank_account_name":   strings.ToUpper(fullName),
+						}
+						if bankID != nil {
+							bankUpdates["bank_id"] = *bankID
+						}
+						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
+							slog.Error("BCCImport: failed to fill bank info for employee",
+								"employee_id", emp.ID, "error", updateErr)
 						} else {
-							// Targeted update: only set user_id to avoid full-record Save overwriting concurrent changes.
-							if updateErr := s.db.Model(new(domain.Employee)).
-								Where("id = ?", emp.ID).
-								Update("user_id", userID).Error; updateErr != nil {
-								slog.Error("BCCImport: failed to update employee with user_id",
-									"employee_id", emp.ID, "user_id", userID, "error", updateErr)
+							slog.Info("BCCImport: filled bank info for existing employee",
+								"employee_id", emp.ID, "cccd", cccd)
+						}
+					}
+
+					// If employee exists but has no user account, create one
+					if emp.UserID == nil && s.employeeUserService != nil {
+						baseUsername := utils.GenerateUsername(emp.Fullname)
+						if baseUsername != "" {
+							username := s.employeeUserService.EnsureUniqueUsername(txCtx, baseUsername)
+							userID, userErr := s.employeeUserService.CreateUserForEmployee(txCtx, emp, username)
+							if userErr != nil {
+								slog.Error("BCCImport: failed to create user for existing employee",
+									"employee_id", emp.ID, "cccd", cccd, "error", userErr)
 							} else {
-								slog.Info("BCCImport: created user account for existing employee",
-									"employee_id", emp.ID, "cccd", cccd, "username", username)
+								// Targeted update: only set user_id to avoid full-record Save overwriting concurrent changes.
+								if updateErr := s.employeeService.UpdateUserLink(txCtx, emp.ID, userID); updateErr != nil {
+									slog.Error("BCCImport: failed to update employee with user_id",
+										"employee_id", emp.ID, "user_id", userID, "error", updateErr)
+								} else {
+									slog.Info("BCCImport: created user account for existing employee",
+										"employee_id", emp.ID, "cccd", cccd, "username", username)
+								}
 							}
 						}
 					}
 				}
-			}
 
-			// 3. Ensure employee is assigned to the project
-			existingAssignment, assignErr := s.projectEmpRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, emp.ID)
-			if assignErr != nil || existingAssignment == nil {
-				assignment := &domain.ProjectEmployee{
-					ProjectID:       projectID,
-					EmployeeID:      emp.ID,
-					EmployeeName:    emp.Fullname,
-					EmployeeCCCD:    emp.CCCD,
-					Position:        position,
-					StartDate:       monthStartDate,
-					PaymentSchedule: string(domain.PaymentScheduleWeekly),
-					CreatedBy:       uploaderID,
-				}
+				// 3. Ensure employee is assigned to the project
+				existingAssignment, assignErr := s.employeeService.GetActiveAssignment(txCtx, projectID, emp.ID)
+				if assignErr != nil || existingAssignment == nil {
+					assignment := &domain.ProjectEmployee{
+						ProjectID:       projectID,
+						EmployeeID:      emp.ID,
+						EmployeeName:    emp.Fullname,
+						EmployeeCCCD:    emp.CCCD,
+						Position:        position,
+						StartDate:       monthStartDate,
+						PaymentSchedule: string(domain.PaymentScheduleWeekly),
+						CreatedBy:       uploaderID,
+					}
 
-				if createErr := s.projectEmpRepo.Create(ctx, assignment); createErr != nil {
-					slog.Error("BCCImport: failed to auto-assign employee to project",
-						"employee_id", emp.ID, "project_id", projectID, "error", createErr)
-					importErrors = append(importErrors, domain.ImportError{
-						Employee: fullName,
-						Reason:   fmt.Sprintf("không thể phân công nhân viên %s vào dự án: %v", fullName, createErr),
-					})
-				} else {
-					slog.Info("BCCImport: auto-assigned employee to project",
-						"employee_id", emp.ID, "project_id", projectID,
-						"position", position, "start_date", monthStartDate.Format("2006-01-02"))
+					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
+						slog.Error("BCCImport: failed to auto-assign employee to project",
+							"employee_id", emp.ID, "project_id", projectID, "error", createErr)
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: fullName,
+							Reason:   fmt.Sprintf("không thể phân công nhân viên %s vào dự án: %v", fullName, createErr),
+						})
+					} else {
+						slog.Info("BCCImport: auto-assigned employee to project",
+							"employee_id", emp.ID, "project_id", projectID,
+							"position", position, "start_date", monthStartDate.Format("2006-01-02"))
+					}
 				}
 			}
+			return nil
+		})
+		if stkErr != nil {
+			slog.Error("BCCImport: STK auto-creation transaction failed", "error", stkErr)
 		}
 	}
 
 	// 7. Load all active project employees, build lookup maps.
-	assignments, err := s.projectEmpRepo.GetActiveAssignments(ctx, projectID)
+	assignments, err := s.employeeService.GetActiveAssignments(ctx, projectID)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tải danh sách nhân viên: %v", err))
 	}
@@ -727,20 +725,4 @@ func deducePosition(flatRates map[string]int, shiftRates map[string]int64) strin
 		}
 	}
 	return best
-}
-
-func (s *BCCImportService) resolveBankID(ctx context.Context, bankName string) *uint {
-	if bankName == "" {
-		return nil
-	}
-	mappedName := bankpkg.MapName(bankName)
-	if mappedName == "" {
-		return nil
-	}
-	banks, err := s.employeeService.BankRepo.SearchByBranchName(ctx, mappedName, 1)
-	if err != nil || len(banks) == 0 {
-		slog.Warn("BCCImport: bank not found for branch search", "original", bankName, "mapped", mappedName)
-		return nil
-	}
-	return &banks[0].ID
 }

@@ -180,3 +180,8 @@ func (r *EmployeeRepository) BulkCreate(ctx context.Context, employees []*domain
 
 	return r.DB.WithContext(ctx).CreateInBatches(employees, 100).Error
 }
+
+// UpdateColumns performs a targeted update of specific columns for an employee.
+func (r *EmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {
+	return r.DB.WithContext(ctx).Model(&domain.Employee{}).Where("id = ?", id).Updates(columns).Error
+}

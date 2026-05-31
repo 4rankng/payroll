@@ -30,6 +30,7 @@ type Config struct {
 	AssetRepo                   domain.AssetRepository
 	CacheService                domain.CacheServiceUseCase
 	EmployeeUserService         *employee.EmployeeUserService
+	EmployeeService             *employee.EmployeeService
 	LedgerRepo                  domain.LedgerEntryRepository
 	EmployeeNotifier            notification.EmployeeNotifier
 	FeeResolver                 FeeResolver
