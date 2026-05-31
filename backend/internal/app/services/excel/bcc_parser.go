@@ -77,7 +77,9 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 	currentDay := 0
 	stopCol := 200
 
-	// Dynamically detect where the timesheet dates start by scanning from Column E (index 4) onwards
+	// Dynamically detect where the timesheet dates start by scanning from Column E (index 4) onwards.
+	// Only accept values in the valid day-of-month range (1-31) to avoid false positives
+	// from non-day numeric cells (e.g. year "2026", counts, or rate amounts).
 	startColIdx := -1
 	for colIdx := 4; colIdx <= 200; colIdx++ {
 		cn, err := excelize.CoordinatesToCellName(colIdx+1, dataRow)
@@ -90,13 +92,13 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 		}
 		val = strings.TrimSpace(val)
 		if val != "" {
-			isDay := false
-			if _, err2 := strconv.Atoi(val); err2 == nil {
-				isDay = true
-			} else if serial, err3 := strconv.ParseFloat(val, 64); err3 == nil && serial >= 1 {
-				isDay = true
+			dayNum := 0
+			if n, err2 := strconv.Atoi(val); err2 == nil {
+				dayNum = n
+			} else if serial, err3 := strconv.ParseFloat(val, 64); err3 == nil {
+				dayNum = int(serial)
 			}
-			if isDay {
+			if dayNum >= 1 && dayNum <= 31 {
 				startColIdx = colIdx
 				break
 			}

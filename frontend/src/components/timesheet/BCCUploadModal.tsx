@@ -354,7 +354,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-[548px] p-0 gap-0 overflow-hidden rounded-[14px]"
+        className="sm:max-w-[548px] p-0 gap-0 overflow-visible rounded-[14px]"
         hideCloseButton
       >
         {/* ── Navy Header ─────────────────────────────────────────────────── */}
