@@ -170,11 +170,8 @@ func (s *BCCImportService) ProcessUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
-	// 5. Use the frontend-supplied month (not the Excel-parsed one).
+	// 5. Use the frontend-supplied month.
 	effectiveMonth = forMonth
-	if effectiveMonth == "" {
-		effectiveMonth = parsed.ForMonth
-	}
 	loc := clock.Now().Location()
 	year, month, err := parseForMonth(effectiveMonth)
 	if err != nil {

@@ -22,13 +22,6 @@ func openBCCTestData(t *testing.T) *BCCImportData {
 	return data
 }
 
-func TestParseBCCFile_ForMonth(t *testing.T) {
-	data := openBCCTestData(t)
-	if data.ForMonth != "2026-05" {
-		t.Errorf("ForMonth = %q, want %q", data.ForMonth, "2026-05")
-	}
-}
-
 func TestParseBCCFile_EmployeeCount(t *testing.T) {
 	data := openBCCTestData(t)
 	if len(data.Employees) != 32 {

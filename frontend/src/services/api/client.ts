@@ -293,19 +293,22 @@ class ApiClient {
   async download(url: string, filename?: string): Promise<void> {
     const response = await this.client.get(url, {
       responseType: 'blob',
-    }).catch(async (error: AxiosError) => {
-      // When responseType is 'blob', error.response.data is a Blob — parse it back to JSON
-      // so the error message from the backend is not lost
-      if (error.response?.data instanceof Blob && error.response.data.type === 'application/json') {
+    }).catch(async (error: unknown) => {
+      // The response interceptor unwraps AxiosError → error.response.data (a Blob for blob requests).
+      // So `error` here is already the Blob, not an AxiosError. Handle both cases.
+      const blob = error instanceof Blob
+        ? error
+        : (error as AxiosError)?.response?.data;
+      if (blob instanceof Blob && blob.type === 'application/json') {
         try {
-          const text = await error.response.data.text();
+          const text = await blob.text();
           const parsed = JSON.parse(text);
           return Promise.reject(parsed);
         } catch {
           // fall through to original rejection
         }
       }
-      return Promise.reject(error.response?.data || error);
+      return Promise.reject(error);
     });
 
     // Try to extract filename from Content-Disposition header first
@@ -333,17 +336,20 @@ class ApiClient {
   async downloadPost(url: string, data?: unknown, filename?: string): Promise<void> {
     const response = await this.client.post(url, data, {
       responseType: 'blob',
-    }).catch(async (error: AxiosError) => {
-      if (error.response?.data instanceof Blob && error.response.data.type === 'application/json') {
+    }).catch(async (error: unknown) => {
+      const blob = error instanceof Blob
+        ? error
+        : (error as AxiosError)?.response?.data;
+      if (blob instanceof Blob && blob.type === 'application/json') {
         try {
-          const text = await error.response.data.text();
+          const text = await blob.text();
           const parsed = JSON.parse(text);
           return Promise.reject(parsed);
         } catch {
           // fall through
         }
       }
-      return Promise.reject(error.response?.data || error);
+      return Promise.reject(error);
     });
 
     // Try to extract filename from Content-Disposition header first

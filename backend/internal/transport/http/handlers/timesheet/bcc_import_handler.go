@@ -3,6 +3,7 @@ package timesheet
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"strconv"
 	"time"
 
@@ -77,10 +78,11 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 	}
 	projectID := uint(projectID64)
 
-	// Optional override: if the client passes for_month=YYYY-MM, the importer
-	// will use it instead of the month parsed from row 6 of the Excel. The
-	// month determines which calendar dates the row-8 day numbers fall on.
-	forMonthOverride := c.PostForm("for_month")
+	forMonth := c.PostForm("for_month")
+	if forMonth == "" {
+		response.BadRequest(c, "for_month là bắt buộc (YYYY-MM)")
+		return
+	}
 
 	// Partner users must have write access to the target project.
 	if userRole == string(domain.RolePartner) {
@@ -110,7 +112,7 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		projectID,
 		userID,
 		userRole,
-		forMonthOverride,
+		forMonth,
 	)
 	if err != nil && result == nil {
 		response.InternalServerError(c, err.Error())
@@ -288,7 +290,7 @@ func (h *BCCImportHandler) DownloadPartnerImport(c *gin.Context) {
 	}
 
 	fullPath := h.fileStorage.GetFilePath(asset.FilePath)
-	if !h.fileStorage.Exists(fullPath) {
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		response.NotFound(c, "File không còn tồn tại trên server")
 		return
 	}

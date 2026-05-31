@@ -2,7 +2,6 @@ package excel
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -10,8 +9,8 @@ import (
 )
 
 // BCCImportData holds all parsed data from a BCC Excel attendance file.
+// ForMonth is NOT parsed from the file — it comes from the frontend upload request.
 type BCCImportData struct {
-	ForMonth   string           // "YYYY-MM"
 	ShiftRates map[string]int64 // shift label → VND rate (from row 10, first occurrence wins)
 	Employees  []BCCEmployeeData
 }
@@ -32,17 +31,10 @@ type BCCEntryData struct {
 	Hours      float64
 }
 
-var bccMonthRe = regexp.MustCompile(`(?i)tháng\s+(\d{1,2})/(\d{4})`)
-
 // ParseBCCFile parses a BCC monthly attendance Excel file.
 // The sheet named "BCC" is used; if absent the first sheet is used.
 func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	sheet := resolveBCCSheet(f)
-
-	forMonth, err := parseBCCMonth(f, sheet)
-	if err != nil {
-		return nil, fmt.Errorf("ParseBCCFile: %w", err)
-	}
 
 	colToDayNum, stopCol, err := buildDayColMap(f, sheet)
 	if err != nil {
@@ -54,7 +46,6 @@ func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	employees := parseEmployees(f, sheet, colToDayNum, colToShift, stopCol)
 
 	return &BCCImportData{
-		ForMonth:   forMonth,
 		ShiftRates: shiftRates,
 		Employees:  employees,
 	}, nil
@@ -71,32 +62,6 @@ func resolveBCCSheet(f *excelize.File) string {
 		return sheets[0]
 	}
 	return ""
-}
-
-// parseBCCMonth scans row 6 across all columns for "Tháng MM/YYYY".
-func parseBCCMonth(f *excelize.File, sheet string) (string, error) {
-	const row = 6
-	for col := 1; col <= 200; col++ {
-		cn, err := excelize.CoordinatesToCellName(col, row)
-		if err != nil {
-			break
-		}
-		val, err := f.GetCellValue(sheet, cn)
-		if err != nil || val == "" {
-			continue
-		}
-		m := bccMonthRe.FindStringSubmatch(val)
-		if len(m) != 3 {
-			continue
-		}
-		month, e1 := strconv.Atoi(m[1])
-		year, e2 := strconv.Atoi(m[2])
-		if e1 != nil || e2 != nil {
-			continue
-		}
-		return fmt.Sprintf("%04d-%02d", year, month), nil
-	}
-	return "", fmt.Errorf("parseBCCMonth: no \"Tháng MM/YYYY\" found in row %d", row)
 }
 
 // buildDayColMap reads row 8 from col index 7 onward.
