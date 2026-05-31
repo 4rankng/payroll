@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet } from 'lucide-react';
+import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp } from 'lucide-react';
 
 interface TimesheetPageHeaderMobileProps {
   onAddTimesheet: () => void;
@@ -146,7 +146,7 @@ export function TimesheetPageHeaderMobile({
                   className="w-full justify-start h-auto px-2 py-3"
                   onClick={() => { onBccUpload(); close(); }}
                 >
-                  <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <FileUp className="h-5 w-5 text-muted-foreground shrink-0" />
                   <span className="text-sm font-medium">Tải lên BCC</span>
                 </Button>
               )}

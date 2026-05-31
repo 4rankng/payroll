@@ -345,12 +345,31 @@ func (s *BCCImportService) ProcessUpload(
 				// 3. Ensure employee is assigned to the project
 				existingAssignment, assignErr := s.employeeService.GetActiveAssignment(txCtx, projectID, emp.ID)
 				if assignErr != nil || existingAssignment == nil {
+					// Deduce position specifically for this employee based on their timesheet entries
+					empPosition := position
+					var matchedParsedEmp *excelparser.BCCEmployeeData
+					for idx := range parsed.Employees {
+						if parsed.Employees[idx].CCCD == cccd {
+							matchedParsedEmp = &parsed.Employees[idx]
+							break
+						}
+					}
+					if matchedParsedEmp != nil && len(matchedParsedEmp.Entries) > 0 {
+						empRates := make(map[string]int64)
+						for _, entry := range matchedParsedEmp.Entries {
+							if rate, ok := parsed.ShiftRates[entry.ShiftLabel]; ok {
+								empRates[entry.ShiftLabel] = rate
+							}
+						}
+						empPosition = deducePosition(flatRates, empRates)
+					}
+
 					assignment := &domain.ProjectEmployee{
 						ProjectID:       projectID,
 						EmployeeID:      emp.ID,
 						EmployeeName:    emp.Fullname,
 						EmployeeCCCD:    emp.CCCD,
-						Position:        position,
+						Position:        empPosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
 						CreatedBy:       uploaderID,
@@ -366,7 +385,7 @@ func (s *BCCImportService) ProcessUpload(
 					} else {
 						slog.Info("BCCImport: auto-assigned employee to project",
 							"employee_id", emp.ID, "project_id", projectID,
-							"position", position, "start_date", monthStartDate.Format("2006-01-02"))
+							"position", empPosition, "start_date", monthStartDate.Format("2006-01-02"))
 					}
 				}
 			}
@@ -477,18 +496,22 @@ func (s *BCCImportService) ProcessUpload(
 
 		blocked := make(map[dk]string)
 		var staleIDs []uint
+		isAdmin := uploaderRole == string(domain.RoleAdmin)
 		for _, ts := range existingTS {
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
 			if !importDates[k] {
 				continue
 			}
+
+			isPaid := ts.PaymentStatus == domain.PaymentStatusPaid ||
+				ts.PaymentStatus == domain.PaymentStatusFailed ||
+				ts.PaymentStatus == domain.PaymentStatusCancelled
+
 			switch {
-			case ts.Status == domain.TimesheetStatusApproved:
-				blocked[k] = "đã được phê duyệt"
-			case ts.PaymentStatus == domain.PaymentStatusPaid,
-				ts.PaymentStatus == domain.PaymentStatusFailed,
-				ts.PaymentStatus == domain.PaymentStatusCancelled:
+			case isPaid:
 				blocked[k] = "đã thanh toán"
+			case ts.Status == domain.TimesheetStatusApproved && !isAdmin:
+				blocked[k] = "đã được phê duyệt"
 			default:
 				staleIDs = append(staleIDs, ts.ID)
 			}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useUploadBCCTimesheet } from '@/hooks/timesheet/useUploadBCCTimesheet';
 import { parseImportErrors } from '@/utils/import-errors';
 import type { PartnerImportFile, ImportError } from '@/types/api/timesheet.types';
@@ -115,6 +115,13 @@ export function useBCCUploadModal({
     projectId > 0 ? String(projectId) : '',
   );
   const [isDragging, setIsDragging] = useState(false);
+
+  // Sync selectedProjectId when parent changes projectId (e.g. user switches project filter)
+  const prevProjectIdRef = useRef(projectId);
+  if (prevProjectIdRef.current !== projectId) {
+    prevProjectIdRef.current = projectId;
+    setSelectedProjectId(projectId > 0 ? String(projectId) : '');
+  }
 
   // Default: current month as "YYYY-MM"
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {

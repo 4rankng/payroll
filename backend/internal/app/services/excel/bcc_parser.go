@@ -36,14 +36,14 @@ type BCCEntryData struct {
 func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	sheet := resolveBCCSheet(f)
 
-	colToDayNum, stopCol, err := buildDayColMap(f, sheet)
+	startCol, colToDayNum, stopCol, err := buildDayColMap(f, sheet)
 	if err != nil {
 		return nil, fmt.Errorf("ParseBCCFile: %w", err)
 	}
 
-	colToShift := buildShiftColMap(f, sheet, stopCol)
-	shiftRates := buildShiftRates(f, sheet, colToShift, stopCol)
-	employees := parseEmployees(f, sheet, colToDayNum, colToShift, stopCol)
+	colToShift := buildShiftColMap(f, sheet, startCol, stopCol)
+	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol)
+	employees := parseEmployees(f, sheet, colToDayNum, colToShift, startCol, stopCol)
 
 	return &BCCImportData{
 		ShiftRates: shiftRates,
@@ -64,20 +64,50 @@ func resolveBCCSheet(f *excelize.File) string {
 	return ""
 }
 
-// buildDayColMap reads row 8 from col index 7 onward.
+// buildDayColMap reads row 8 from col index 4 (Column E) onward.
 // Day numbers appear every 4 columns; the number is propagated to all sub-columns
-// of that day group. Returns colIndex→dayNum map and the stop column index.
+// of that day group. Returns start column index, colIndex→dayNum map and the stop column index.
 //
 // Row 8 cells store the day-of-month as an Excel date serial with format "dd".
 // We read raw (unformatted) values so that serial 22 → "22" (the correct day),
 // rather than letting excelize apply its epoch offset and produce "21".
-func buildDayColMap(f *excelize.File, sheet string) (map[int]int, int, error) {
+func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, error) {
 	const dataRow = 8
 	colToDayNum := make(map[int]int)
 	currentDay := 0
 	stopCol := 200
 
-	for colIdx := 7; colIdx <= 200; colIdx++ {
+	// Dynamically detect where the timesheet dates start by scanning from Column E (index 4) onwards
+	startColIdx := -1
+	for colIdx := 4; colIdx <= 200; colIdx++ {
+		cn, err := excelize.CoordinatesToCellName(colIdx+1, dataRow)
+		if err != nil {
+			break
+		}
+		val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
+		if err != nil {
+			continue
+		}
+		val = strings.TrimSpace(val)
+		if val != "" {
+			isDay := false
+			if _, err2 := strconv.Atoi(val); err2 == nil {
+				isDay = true
+			} else if serial, err3 := strconv.ParseFloat(val, 64); err3 == nil && serial >= 1 {
+				isDay = true
+			}
+			if isDay {
+				startColIdx = colIdx
+				break
+			}
+		}
+	}
+
+	if startColIdx == -1 {
+		startColIdx = 7 // fallback to original behavior (Column H)
+	}
+
+	for colIdx := startColIdx; colIdx <= 200; colIdx++ {
 		cn, err := excelize.CoordinatesToCellName(colIdx+1, dataRow)
 		if err != nil {
 			break
@@ -106,15 +136,15 @@ func buildDayColMap(f *excelize.File, sheet string) (map[int]int, int, error) {
 		}
 	}
 	if len(colToDayNum) == 0 {
-		return nil, 0, fmt.Errorf("buildDayColMap: no day columns found in row %d", dataRow)
+		return 0, nil, 0, fmt.Errorf("buildDayColMap: no day columns found in row %d", dataRow)
 	}
-	return colToDayNum, stopCol, nil
+	return startColIdx, colToDayNum, stopCol, nil
 }
 
 // buildShiftColMap reads row 11 up to stopCol.
-func buildShiftColMap(f *excelize.File, sheet string, stopCol int) map[int]string {
+func buildShiftColMap(f *excelize.File, sheet string, startCol, stopCol int) map[int]string {
 	colToShift := make(map[int]string)
-	for colIdx := 7; colIdx < stopCol; colIdx++ {
+	for colIdx := startCol; colIdx < stopCol; colIdx++ {
 		cn, err := excelize.CoordinatesToCellName(colIdx+1, 11)
 		if err != nil {
 			continue
@@ -129,9 +159,9 @@ func buildShiftColMap(f *excelize.File, sheet string, stopCol int) map[int]strin
 }
 
 // buildShiftRates reads row 10: first occurrence of each shift label wins.
-func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, stopCol int) map[string]int64 {
+func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, startCol, stopCol int) map[string]int64 {
 	rates := make(map[string]int64)
-	for colIdx := 7; colIdx < stopCol; colIdx++ {
+	for colIdx := startCol; colIdx < stopCol; colIdx++ {
 		label, ok := colToShift[colIdx]
 		if !ok || label == "" {
 			continue
@@ -158,28 +188,30 @@ func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, 
 	return rates
 }
 
-// parseEmployees reads rows 12+ until col A is non-numeric.
-func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, colToShift map[int]string, stopCol int) []BCCEmployeeData {
+// parseEmployees reads rows 12+ until CCCD and name are empty.
+func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, colToShift map[int]string, startCol, stopCol int) []BCCEmployeeData {
 	var employees []BCCEmployeeData
 	for row := 12; ; row++ {
-		sttCN, _ := excelize.CoordinatesToCellName(1, row)
-		sttVal, _ := f.GetCellValue(sheet, sttCN)
-		sttVal = strings.TrimSpace(sttVal)
-		if sttVal == "" {
+		stt := bccCell(f, sheet, 1, row)  // col A
+		cccd := bccCell(f, sheet, 3, row) // col C
+		name := bccCell(f, sheet, 4, row) // col D
+
+		// Stop when both CCCD and Name are empty (e.g. end of active rows, or a summary row)
+		if cccd == "" && name == "" {
 			break
 		}
-		if _, err := strconv.ParseFloat(sttVal, 64); err != nil {
+		if strings.Contains(strings.ToLower(name), "tổng cộng") || strings.Contains(strings.ToLower(cccd), "tổng cộng") {
 			break
 		}
 
 		emp := BCCEmployeeData{
 			EmployeeCode: bccCell(f, sheet, 2, row), // col B
-			CCCD:         bccCell(f, sheet, 3, row), // col C
-			FullName:     bccCell(f, sheet, 4, row), // col D
+			CCCD:         cccd,
+			FullName:     name,
 			Department:   bccCell(f, sheet, 7, row), // col G
 		}
 
-		for colIdx := 7; colIdx < stopCol; colIdx++ {
+		for colIdx := startCol; colIdx < stopCol; colIdx++ {
 			dayNum, hasDayNum := colToDayNum[colIdx]
 			if !hasDayNum {
 				continue
@@ -206,6 +238,12 @@ func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, col
 				Hours:      hours,
 			})
 		}
+
+		// Skip rows that have blank STT AND have zero entries (filters out draft rows while keeping active employees with blank STT)
+		if stt == "" && len(emp.Entries) == 0 {
+			continue
+		}
+
 		employees = append(employees, emp)
 	}
 	return employees

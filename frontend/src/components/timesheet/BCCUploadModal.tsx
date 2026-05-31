@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import {
   Check,
   X,
   FileText,
+  Search,
 } from 'lucide-react';
 import {
   useBCCUploadModal,
@@ -46,9 +47,140 @@ interface BCCUploadModalProps {
   open: boolean;
   onClose: () => void;
   projectId: number;
-  projectName?: string;
   projects?: ProjectOption[];
 }
+
+// ─── Searchable Project Combobox ──────────────────────────────────────────────
+
+const EMPTY_PROJECTS: ProjectOption[] = [];
+
+interface ProjectComboboxProps {
+  projects: ProjectOption[];
+  value: string;
+  onChange: (value: string) => void;
+  hasProject: boolean;
+}
+
+const ProjectCombobox = memo(function ProjectCombobox({
+  projects,
+  value,
+  onChange,
+  hasProject,
+}: ProjectComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return projects;
+    const q = search.toLowerCase();
+    return projects.filter((p) => p.name.toLowerCase().includes(q));
+  }, [projects, search]);
+
+  const selectedName = useMemo(
+    () => projects.find((p) => String(p.id) === value)?.name,
+    [projects, value],
+  );
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Focus input when opened
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 0);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center justify-between h-auto min-h-[46px] rounded-[10px] border-[1.5px] bg-[#fbfcfe] px-[15px] py-[13px] text-[14.5px] font-medium transition-all text-left
+          ${hasProject
+            ? 'border-[#bfe0cc] bg-white'
+            : !value
+              ? 'border-[#e4e8ef] text-[#7a8398]'
+              : 'border-[#e4e8ef]'
+          }
+          ${open ? 'border-[#005A2D] shadow-[0_0_0_3px_rgba(0,90,45,.1)] bg-white' : ''}
+        `}
+      >
+        <span className={selectedName ? 'text-[#16223a]' : 'text-[#7a8398]'}>
+          {selectedName ?? 'Chọn dự án...'}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[#7a8398] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 mt-1.5 w-full rounded-[10px] border border-[#e4e8ef] bg-white shadow-[0_8px_24px_-4px_rgba(14,32,56,.14)] overflow-hidden">
+          {/* Search input */}
+          <div className="flex items-center gap-2 border-b border-[#e4e8ef] px-3 py-2.5">
+            <Search className="h-3.5 w-3.5 shrink-0 text-[#7a8398]" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm dự án..."
+              className="flex-1 bg-transparent text-[13.5px] font-medium text-[#16223a] placeholder:text-[#aab2c0] outline-none"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="text-[#aab2c0] hover:text-[#475067]">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="max-h-[220px] overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className="px-4 py-3 text-[13px] text-[#7a8398]">Không tìm thấy dự án.</p>
+            ) : (
+              filtered.map((p) => {
+                const isSelected = String(p.id) === value;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      onChange(String(p.id));
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                    className={`flex w-full items-center justify-between px-4 py-2.5 text-[13.5px] font-medium transition-colors text-left
+                      ${isSelected
+                        ? 'bg-[#e8f3ec] text-[#005A2D]'
+                        : 'text-[#16223a] hover:bg-[#f5f7fa]'
+                      }
+                    `}
+                  >
+                    <span>{p.name}</span>
+                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
 
 // ─── Result Sub-components (UI only) ──────────────────────────────────────────
 
@@ -264,28 +396,12 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       </span>
                     )}
                   </div>
-                  <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                    <SelectTrigger
-                      className={`h-auto min-h-[46px] rounded-[10px] border-[1.5px] bg-[#fbfcfe] px-[15px] py-[13px] text-[14.5px] font-medium transition-all
-                        ${hasProject
-                          ? 'border-[#bfe0cc] bg-white'
-                          : !selectedProjectId
-                            ? 'border-[#e4e8ef] text-[#7a8398]'
-                            : 'border-[#e4e8ef]'
-                        }
-                        focus:ring-0 focus:ring-offset-0 focus:border-[#005A2D] focus:shadow-[0_0_0_3px_rgba(0,90,45,.1)] focus:bg-white
-                      `}
-                    >
-                      <SelectValue placeholder="Chọn dự án..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects?.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ProjectCombobox
+                    projects={projects ?? EMPTY_PROJECTS}
+                    value={selectedProjectId}
+                    onChange={setSelectedProjectId}
+                    hasProject={hasProject}
+                  />
                 </div>
               )}
 
@@ -419,10 +535,8 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           {result &&
             (result.status === 'completed' ? (
               <ResultSuccess result={result} />
-            ) : result.status === 'failed' ? (
-              <ResultFailure result={result} />
             ) : (
-              <ResultProcessing result={result} />
+              <ResultFailure result={result} />
             ))}
         </div>
 
