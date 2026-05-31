@@ -528,6 +528,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		)
 	}
 
+	employeeService := employee.NewEmployeeService(employeeConfig)
+
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
@@ -536,7 +538,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Dashboard:                         dashboardService,
 		Project:                           project.NewProjectService(repos.Project, repos.Employee, repos.ProjectEmployee, repos.Timesheet, eventBus, cacheService, logger),
 		ProjectPermission:                 projectPermissionService,
-		Employee:                          employee.NewEmployeeService(employeeConfig),
+		Employee:                          employeeService,
 		EmployeePermission:                employeePermissionService,
 		EmployeeUser:                      employeeUserService,
 		EmployeeProfile:                   employeeProfileService,
@@ -599,6 +601,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			fileStorage,
 			db.DB,
 			redis.Client,
+			employeeService,
+			employeeUserService,
 		),
 		Attendance: attendanceService,
 	}

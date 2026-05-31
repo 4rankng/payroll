@@ -488,9 +488,9 @@ func (s *MetricService) GetOSGroupedStats(ctx context.Context, since time.Time) 
 		actions int
 	}
 
-	familyUsers := make(map[string]map[uint]struct{})   // family → unique users
-	familyActions := make(map[string]int)                // family → total actions
-	versionData := make(map[versionKey]*versionEntry)    // (family, version) → entry
+	familyUsers := make(map[string]map[uint]struct{}) // family → unique users
+	familyActions := make(map[string]int)             // family → total actions
+	versionData := make(map[versionKey]*versionEntry) // (family, version) → entry
 
 	for _, log := range logs {
 		p := derefStr(log.Platform)
