@@ -4,7 +4,7 @@ import { API_CONFIG, RETRY_CONFIG } from '@/config/api.config';
 import { ERROR_MESSAGES } from '@/config/constants';
 import { toast } from '@/components/ui/sonner';
 import { getErrorMessage } from '@/utils/error-handler';
-import { extractFilenameFromHeaders } from '@/utils/file-download';
+import { extractFilenameFromHeaders, triggerBlobDownload } from '@/utils/file-download';
 
 // API Response types
 export interface ApiResponse<T = unknown> {
@@ -196,10 +196,6 @@ class ApiClient {
 
           const delayMs = this.calculateRetryDelay(originalRequest._retryCount - 1);
 
-          if (import.meta.env.DEV) {
-            // dev retry logging removed
-          }
-
           await this.delay(delayMs);
           return this.client(originalRequest);
         }
@@ -214,58 +210,44 @@ class ApiClient {
           return Promise.reject(networkError);
         }
 
-
         // Handle other errors
-        return Promise.reject(error.response.data || error);
+        return Promise.reject(error.response?.data || error);
       }
     );
   }
 
   // HTTP Methods
-  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.get<ApiResponse<T>>(url, config);
+  private normalizePayload<T>(response: { data: ApiResponse<T>; status: number }): ApiResponse<T> {
     const payload = response.data as ApiResponse<T>;
-    // Normalize http_status for consistent downstream handling
     if (payload && typeof payload === 'object' && payload.http_status === undefined) {
       payload.http_status = response.status;
     }
     return payload;
+  }
+
+  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.client.get<ApiResponse<T>>(url, config);
+    return this.normalizePayload(response);
   }
 
   async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(url, data, config);
-    const payload = response.data as ApiResponse<T>;
-    if (payload && typeof payload === 'object' && payload.http_status === undefined) {
-      payload.http_status = response.status;
-    }
-    return payload;
+    return this.normalizePayload(response);
   }
 
   async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const response = await this.client.put<ApiResponse<T>>(url, data, config);
-    const payload = response.data as ApiResponse<T>;
-    if (payload && typeof payload === 'object' && payload.http_status === undefined) {
-      payload.http_status = response.status;
-    }
-    return payload;
+    return this.normalizePayload(response);
   }
 
   async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const response = await this.client.patch<ApiResponse<T>>(url, data, config);
-    const payload = response.data as ApiResponse<T>;
-    if (payload && typeof payload === 'object' && payload.http_status === undefined) {
-      payload.http_status = response.status;
-    }
-    return payload;
+    return this.normalizePayload(response);
   }
 
   async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const response = await this.client.delete<ApiResponse<T>>(url, config);
-    const payload = response.data as ApiResponse<T>;
-    if (payload && typeof payload === 'object' && payload.http_status === undefined) {
-      payload.http_status = response.status;
-    }
-    return payload;
+    return this.normalizePayload(response);
   }
 
   // File upload
@@ -281,22 +263,17 @@ class ApiClient {
         }
       },
     });
-    const payload = response.data as ApiResponse<T>;
-    if (payload && typeof payload === 'object' && payload.http_status === undefined) {
-      payload.http_status = response.status;
-    }
-    return payload;
+    return this.normalizePayload(response);
   }
 
   // File download
-  // BUG-009 fix: Use try/finally to ensure ObjectURL is always revoked
   async download(url: string, filename?: string): Promise<void> {
     const response = await this.client.get(url, {
       responseType: 'blob',
     }).catch(this.handleBlobError.bind(this));
 
     const headerFilename = extractFilenameFromHeaders(response.headers);
-    this.triggerBlobDownload(response.data, headerFilename || filename || 'download');
+    triggerBlobDownload(response.data, headerFilename || filename || 'download');
   }
 
   // File download via POST request
@@ -306,14 +283,14 @@ class ApiClient {
     }).catch(this.handleBlobError.bind(this));
 
     const headerFilename = extractFilenameFromHeaders(response.headers);
-    this.triggerBlobDownload(response.data, headerFilename || filename || 'download');
+    triggerBlobDownload(response.data, headerFilename || filename || 'download');
   }
 
   // Raw blob download for external use
   async downloadBlob(url: string): Promise<Blob> {
     const response = await this.client.get(url, {
       responseType: 'blob',
-    });
+    }).catch(this.handleBlobError.bind(this));
     return response.data;
   }
 
@@ -335,7 +312,7 @@ class ApiClient {
     const blob = error instanceof Blob
       ? error
       : (error as AxiosError)?.response?.data;
-    if (blob instanceof Blob && blob.type === 'application/json') {
+    if (blob instanceof Blob && blob.type.includes('application/json')) {
       try {
         const text = await blob.text();
         const parsed = JSON.parse(text);
@@ -345,24 +322,6 @@ class ApiClient {
       }
     }
     return Promise.reject(error);
-  }
-
-  /** Trigger browser file download via an invisible anchor element. */
-  private triggerBlobDownload(blobData: BlobPart, filename: string): void {
-    const blob = new Blob([blobData]);
-    const downloadUrl = window.URL.createObjectURL(blob);
-    try {
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      if (link.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-    } finally {
-      window.URL.revokeObjectURL(downloadUrl);
-    }
   }
 }
 
@@ -376,8 +335,6 @@ export const handleApiError = (error: unknown): string => {
 
 // Helper function to build query string
 export const buildQueryString = (params: Record<string, unknown>): string => {
-
-
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -394,8 +351,6 @@ export const buildQueryString = (params: Record<string, unknown>): string => {
       }
     }
   });
-
   const queryString = query.toString();
-
   return queryString ? `?${queryString}` : '';
 };

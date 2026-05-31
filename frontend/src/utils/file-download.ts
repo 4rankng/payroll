@@ -2,6 +2,27 @@ import { assetService } from '@/services/api/asset.service';
 import { showErrorNotification } from '@/utils/error-handler';
 
 /**
+ * Trigger browser file download via an invisible anchor element.
+ * Uses try/finally to guarantee the ObjectURL is always revoked.
+ */
+export const triggerBlobDownload = (blobData: BlobPart, filename: string): void => {
+  const blob = blobData instanceof Blob ? blobData : new Blob([blobData]);
+  const url = window.URL.createObjectURL(blob);
+  try {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    if (link.parentNode) {
+      link.parentNode.removeChild(link);
+    }
+  } finally {
+    window.URL.revokeObjectURL(url);
+  }
+};
+
+/**
  * Download asset file from server and trigger browser download
  */
 export const downloadAssetFile = async (
@@ -10,20 +31,7 @@ export const downloadAssetFile = async (
 ): Promise<void> => {
   try {
     const blob = await assetService.downloadAsset(assetId);
-
-    // Create blob URL
-    const url = window.URL.createObjectURL(blob);
-
-    // Create download link and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    triggerBlobDownload(blob, filename);
   } catch (error) {
     console.error('Error downloading file:', error);
     showErrorNotification('Lỗi tải file', 'Không thể tải file xuống. Vui lòng thử lại.');
