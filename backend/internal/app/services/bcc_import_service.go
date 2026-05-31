@@ -10,12 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"api-server/internal/app/services/employee"
 	excelparser "api-server/internal/app/services/excel"
 	timesheetSvc "api-server/internal/app/services/timesheet"
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/infra/storage"
+	bankpkg "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/utils"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
@@ -59,14 +62,16 @@ func buildResult(stats BCCImportStats, id, uploaderID uint, createdAt time.Time)
 }
 
 type BCCImportService struct {
-	projectEmpRepo   domain.ProjectEmployeeRepository
-	payrateRepo      domain.PayrateRepository
-	timesheetRepo    domain.TimesheetRepository
-	timesheetService *timesheetSvc.TimesheetService
-	assetRepo        domain.AssetRepository
-	fileStorage      storage.FileStorage
-	db               *gorm.DB
-	redis            *redis.Client
+	projectEmpRepo      domain.ProjectEmployeeRepository
+	payrateRepo         domain.PayrateRepository
+	timesheetRepo       domain.TimesheetRepository
+	timesheetService    *timesheetSvc.TimesheetService
+	assetRepo           domain.AssetRepository
+	fileStorage         storage.FileStorage
+	db                  *gorm.DB
+	redis               *redis.Client
+	employeeService     *employee.EmployeeService
+	employeeUserService *employee.EmployeeUserService
 }
 
 func NewBCCImportService(
@@ -78,16 +83,20 @@ func NewBCCImportService(
 	fileStorage storage.FileStorage,
 	db *gorm.DB,
 	redisClient *redis.Client,
+	employeeService *employee.EmployeeService,
+	employeeUserService *employee.EmployeeUserService,
 ) *BCCImportService {
 	return &BCCImportService{
-		projectEmpRepo:   projectEmpRepo,
-		payrateRepo:      payrateRepo,
-		timesheetRepo:    timesheetRepo,
-		timesheetService: timesheetService,
-		assetRepo:        assetRepo,
-		fileStorage:      fileStorage,
-		db:               db,
-		redis:            redisClient,
+		projectEmpRepo:      projectEmpRepo,
+		payrateRepo:         payrateRepo,
+		timesheetRepo:       timesheetRepo,
+		timesheetService:    timesheetService,
+		assetRepo:           assetRepo,
+		fileStorage:         fileStorage,
+		db:                  db,
+		redis:               redisClient,
+		employeeService:     employeeService,
+		employeeUserService: employeeUserService,
 	}
 }
 
@@ -134,8 +143,7 @@ func (s *BCCImportService) ProcessUpload(
 	}
 
 	// effectiveMonth is captured by the fail() closure.
-	var effectiveMonth string
-	effectiveMonth = forMonth
+	effectiveMonth := forMonth
 
 	// Helper to update asset metadata and return result.
 	fail := func(status, reason string) (*BCCImportResult, error) {
@@ -220,6 +228,157 @@ func (s *BCCImportService) ProcessUpload(
 		}
 	}
 
+	// 6.5 Auto-create and assign employees from STK sheet if it exists.
+	// Deduce the best position from payrate rates matching BCC shift rates.
+	position := deducePosition(flatRates, parsed.ShiftRates)
+	monthStartDate := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+
+	// Pre-declare importErrors so STK auto-creation failures are surfaced to the user.
+	var importErrors []domain.ImportError
+
+	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
+	if stkErr != nil {
+		slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
+	} else if len(stkRows) > 0 {
+		slog.Info("BCCImport: found STK sheet, processing employee auto-creation",
+			"count", len(stkRows), "position", position)
+
+		// Cache bank name → ID to avoid redundant DB queries per row.
+		bankCache := make(map[string]*uint)
+
+		for _, row := range stkRows {
+			cccd := row.CCCD
+			fullName := row.FullName
+			if cccd == "" || fullName == "" {
+				continue
+			}
+
+			// 1. Resolve Bank ID (cached)
+			var bankID *uint
+			if row.BankName != "" {
+				if cached, ok := bankCache[row.BankName]; ok {
+					bankID = cached
+				} else {
+					bankID = s.resolveBankID(ctx, row.BankName)
+					bankCache[row.BankName] = bankID
+				}
+			}
+
+			// 2. Check if employee already exists by CCCD
+			existingEmp, empErr := s.employeeService.EmployeeRepo.GetByCCCD(ctx, cccd)
+			if empErr != nil && !domain.IsNotFoundError(empErr) {
+				// Real DB error — don't conflate with "not found".
+				slog.Error("BCCImport: DB error looking up employee by CCCD",
+					"cccd", cccd, "error", empErr)
+				importErrors = append(importErrors, domain.ImportError{
+					Employee: fullName,
+					Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
+				})
+				continue
+			}
+
+			var emp *domain.Employee
+			if existingEmp == nil {
+				// Create new employee
+				emp = &domain.Employee{
+					Fullname:          fullName,
+					CCCD:              cccd,
+					BankAccountNumber: row.BankAccount,
+					BankAccountName:   strings.ToUpper(fullName),
+					BankID:            bankID,
+					CreatedBy:         uploaderID,
+				}
+				createdEmp, createErr := s.employeeService.CreateEmployee(ctx, emp, uploaderID)
+				if createErr != nil {
+					slog.Error("BCCImport: failed to auto-create employee",
+						"cccd", cccd, "name", fullName, "error", createErr)
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
+					})
+					continue
+				}
+				emp = createdEmp
+				slog.Info("BCCImport: auto-created employee profile and user account",
+					"cccd", cccd, "employee_id", emp.ID)
+			} else {
+				emp = existingEmp
+
+				// Fill missing bank info from STK (targeted update to avoid full-record Save)
+				if row.BankAccount != "" && emp.BankAccountNumber == "" {
+					bankUpdates := map[string]any{
+						"bank_account_number": row.BankAccount,
+						"bank_account_name":   strings.ToUpper(fullName),
+					}
+					if bankID != nil {
+						bankUpdates["bank_id"] = *bankID
+					}
+					if updateErr := s.db.Model(new(domain.Employee)).
+						Where("id = ?", emp.ID).
+						Updates(bankUpdates).Error; updateErr != nil {
+						slog.Error("BCCImport: failed to fill bank info for employee",
+							"employee_id", emp.ID, "error", updateErr)
+					} else {
+						slog.Info("BCCImport: filled bank info for existing employee",
+							"employee_id", emp.ID, "cccd", cccd)
+					}
+				}
+
+				// If employee exists but has no user account, create one
+				if emp.UserID == nil && s.employeeUserService != nil {
+					baseUsername := utils.GenerateUsername(emp.Fullname)
+					if baseUsername != "" {
+						username := s.employeeUserService.EnsureUniqueUsername(ctx, baseUsername)
+						userID, userErr := s.employeeUserService.CreateUserForEmployee(ctx, emp, username)
+						if userErr != nil {
+							slog.Error("BCCImport: failed to create user for existing employee",
+								"employee_id", emp.ID, "cccd", cccd, "error", userErr)
+						} else {
+							// Targeted update: only set user_id to avoid full-record Save overwriting concurrent changes.
+							if updateErr := s.db.Model(new(domain.Employee)).
+								Where("id = ?", emp.ID).
+								Update("user_id", userID).Error; updateErr != nil {
+								slog.Error("BCCImport: failed to update employee with user_id",
+									"employee_id", emp.ID, "user_id", userID, "error", updateErr)
+							} else {
+								slog.Info("BCCImport: created user account for existing employee",
+									"employee_id", emp.ID, "cccd", cccd, "username", username)
+							}
+						}
+					}
+				}
+			}
+
+			// 3. Ensure employee is assigned to the project
+			existingAssignment, assignErr := s.projectEmpRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, emp.ID)
+			if assignErr != nil || existingAssignment == nil {
+				assignment := &domain.ProjectEmployee{
+					ProjectID:       projectID,
+					EmployeeID:      emp.ID,
+					EmployeeName:    emp.Fullname,
+					EmployeeCCCD:    emp.CCCD,
+					Position:        position,
+					StartDate:       monthStartDate,
+					PaymentSchedule: string(domain.PaymentScheduleWeekly),
+					CreatedBy:       uploaderID,
+				}
+
+				if createErr := s.projectEmpRepo.Create(ctx, assignment); createErr != nil {
+					slog.Error("BCCImport: failed to auto-assign employee to project",
+						"employee_id", emp.ID, "project_id", projectID, "error", createErr)
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("không thể phân công nhân viên %s vào dự án: %v", fullName, createErr),
+					})
+				} else {
+					slog.Info("BCCImport: auto-assigned employee to project",
+						"employee_id", emp.ID, "project_id", projectID,
+						"position", position, "start_date", monthStartDate.Format("2006-01-02"))
+				}
+			}
+		}
+	}
+
 	// 7. Load all active project employees, build lookup maps.
 	assignments, err := s.projectEmpRepo.GetActiveAssignments(ctx, projectID)
 	if err != nil {
@@ -238,9 +397,8 @@ func (s *BCCImportService) ProcessUpload(
 
 	// 8. Build timesheet entries, collecting employee errors.
 	var (
-		importErrors []domain.ImportError
-		entries      []domainservices.BulkCreateTimesheetEntry
-		rowNum       = 12
+		entries []domainservices.BulkCreateTimesheetEntry
+		rowNum  = 12
 	)
 
 	for _, emp := range parsed.Employees {
@@ -517,4 +675,72 @@ func parseForMonth(forMonth string) (int, time.Month, error) {
 		return 0, 0, fmt.Errorf("năm không hợp lệ: %d", t.Year())
 	}
 	return t.Year(), t.Month(), nil
+}
+
+// deducePosition determines the best position for auto-created employees by matching
+// BCC shift rates against the project's payrate configuration.
+// Payrate paths are "position.dayType.hourType" → rate. We find which position
+// has the most matching rates with the BCC shift rates.
+func deducePosition(flatRates map[string]int, shiftRates map[string]int64) string {
+	if len(flatRates) == 0 || len(shiftRates) == 0 {
+		return "phổ thông"
+	}
+
+	// Collect unique BCC rate values (the VND amounts from row 10 of BCC sheet).
+	bccRates := make(map[int]bool, len(shiftRates))
+	for _, r := range shiftRates {
+		if r > 0 {
+			bccRates[int(r)] = true
+		}
+	}
+	if len(bccRates) == 0 {
+		return "phổ thông"
+	}
+
+	// For each position, count how many of its payrate values match BCC rates.
+	positionHits := make(map[string]int)
+	for path, rate := range flatRates {
+		if rate == 0 {
+			continue
+		}
+		if !bccRates[rate] {
+			continue
+		}
+		parts := strings.Split(path, ".")
+		if len(parts) < 1 || parts[0] == "" {
+			continue
+		}
+		positionHits[parts[0]]++
+	}
+
+	if len(positionHits) == 0 {
+		return "phổ thông"
+	}
+
+	// Pick the position with the most matching rates.
+	best := "phổ thông"
+	bestCount := 0
+	for pos, count := range positionHits {
+		if count > bestCount {
+			bestCount = count
+			best = pos
+		}
+	}
+	return best
+}
+
+func (s *BCCImportService) resolveBankID(ctx context.Context, bankName string) *uint {
+	if bankName == "" {
+		return nil
+	}
+	mappedName := bankpkg.MapName(bankName)
+	if mappedName == "" {
+		return nil
+	}
+	banks, err := s.employeeService.BankRepo.SearchByBranchName(ctx, mappedName, 1)
+	if err != nil || len(banks) == 0 {
+		slog.Warn("BCCImport: bank not found for branch search", "original", bankName, "mapped", mappedName)
+		return nil
+	}
+	return &banks[0].ID
 }
