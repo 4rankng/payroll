@@ -3,7 +3,6 @@ package timesheet
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"strconv"
 	"time"
 
@@ -289,11 +288,11 @@ func (h *BCCImportHandler) DownloadPartnerImport(c *gin.Context) {
 		return
 	}
 
-	fullPath := h.fileStorage.GetFilePath(asset.FilePath)
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+	if !h.fileStorage.Exists(asset.FilePath) {
 		response.NotFound(c, "File không còn tồn tại trên server")
 		return
 	}
+	fullPath := h.fileStorage.GetFilePath(asset.FilePath)
 
 	// Use original name from metadata if available.
 	originalName := asset.Filename

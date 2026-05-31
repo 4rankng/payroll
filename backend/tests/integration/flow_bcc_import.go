@@ -54,7 +54,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 	var importID uint
 	reporter.RunTest(flowBCC, "Upload valid BCC file", func() error {
 		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", bccFile,
-			map[string]string{"project_id": projectIDStr})
+			map[string]string{"project_id": projectIDStr, "for_month": "2026-05"})
 		if err != nil {
 			return fmt.Errorf("request failed: %w", err)
 		}
@@ -139,7 +139,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 	reporter.RunTest(flowBCC, "Re-upload after timesheet approval is rejected", func() error {
 		// First upload to get some timesheets.
 		apiResp1, _, err := partnerClient.UploadFile(endpoint, "file", bccFile,
-			map[string]string{"project_id": projectIDStr})
+			map[string]string{"project_id": projectIDStr, "for_month": "2026-05"})
 		if err != nil {
 			return fmt.Errorf("first upload: %w", err)
 		}
@@ -157,7 +157,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 
 		// Re-upload — must be rejected.
 		apiResp2, _, err2 := partnerClient.UploadFile(endpoint, "file", bccFile,
-			map[string]string{"project_id": projectIDStr})
+			map[string]string{"project_id": projectIDStr, "for_month": "2026-05"})
 		if err2 != nil {
 			return fmt.Errorf("second upload: %w", err2)
 		}

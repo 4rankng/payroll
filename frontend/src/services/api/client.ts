@@ -293,85 +293,20 @@ class ApiClient {
   async download(url: string, filename?: string): Promise<void> {
     const response = await this.client.get(url, {
       responseType: 'blob',
-    }).catch(async (error: unknown) => {
-      // The response interceptor unwraps AxiosError → error.response.data (a Blob for blob requests).
-      // So `error` here is already the Blob, not an AxiosError. Handle both cases.
-      const blob = error instanceof Blob
-        ? error
-        : (error as AxiosError)?.response?.data;
-      if (blob instanceof Blob && blob.type === 'application/json') {
-        try {
-          const text = await blob.text();
-          const parsed = JSON.parse(text);
-          return Promise.reject(parsed);
-        } catch {
-          // fall through to original rejection
-        }
-      }
-      return Promise.reject(error);
-    });
+    }).catch(this.handleBlobError.bind(this));
 
-    // Try to extract filename from Content-Disposition header first
     const headerFilename = extractFilenameFromHeaders(response.headers);
-    const finalFilename = headerFilename || filename || 'download';
-
-    const blob = new Blob([response.data]);
-    const downloadUrl = window.URL.createObjectURL(blob);
-    try {
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = finalFilename;
-      document.body.appendChild(link);
-      link.click();
-      // Safely remove the link
-      if (link.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-    } finally {
-      window.URL.revokeObjectURL(downloadUrl);
-    }
+    this.triggerBlobDownload(response.data, headerFilename || filename || 'download');
   }
 
   // File download via POST request
   async downloadPost(url: string, data?: unknown, filename?: string): Promise<void> {
     const response = await this.client.post(url, data, {
       responseType: 'blob',
-    }).catch(async (error: unknown) => {
-      const blob = error instanceof Blob
-        ? error
-        : (error as AxiosError)?.response?.data;
-      if (blob instanceof Blob && blob.type === 'application/json') {
-        try {
-          const text = await blob.text();
-          const parsed = JSON.parse(text);
-          return Promise.reject(parsed);
-        } catch {
-          // fall through
-        }
-      }
-      return Promise.reject(error);
-    });
+    }).catch(this.handleBlobError.bind(this));
 
-    // Try to extract filename from Content-Disposition header first
     const headerFilename = extractFilenameFromHeaders(response.headers);
-    const finalFilename = headerFilename || filename || 'download';
-
-    // BUG-009 fix: Use try/finally to ensure ObjectURL is always revoked
-    const blob = new Blob([response.data]);
-    const downloadUrl = window.URL.createObjectURL(blob);
-    try {
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = finalFilename;
-      document.body.appendChild(link);
-      link.click();
-      // Safely remove the link
-      if (link.parentNode) {
-        link.parentNode.removeChild(link);
-      }
-    } finally {
-      window.URL.revokeObjectURL(downloadUrl);
-    }
+    this.triggerBlobDownload(response.data, headerFilename || filename || 'download');
   }
 
   // Raw blob download for external use
@@ -386,6 +321,48 @@ class ApiClient {
   async rawRequest<T = unknown>(config: AxiosRequestConfig): Promise<T> {
     const response = await this.client.request<T>(config);
     return response.data;
+  }
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+  /**
+   * Error handler for blob requests. The response interceptor unwraps
+   * AxiosError → error.response.data (which is a Blob for responseType:'blob').
+   * Some interceptor paths (429, network errors) reject with non-Blob values,
+   * so both cases must be handled.
+   */
+  private async handleBlobError(error: unknown): Promise<never> {
+    const blob = error instanceof Blob
+      ? error
+      : (error as AxiosError)?.response?.data;
+    if (blob instanceof Blob && blob.type === 'application/json') {
+      try {
+        const text = await blob.text();
+        const parsed = JSON.parse(text);
+        return Promise.reject(parsed);
+      } catch {
+        // fall through to original rejection
+      }
+    }
+    return Promise.reject(error);
+  }
+
+  /** Trigger browser file download via an invisible anchor element. */
+  private triggerBlobDownload(blobData: BlobPart, filename: string): void {
+    const blob = new Blob([blobData]);
+    const downloadUrl = window.URL.createObjectURL(blob);
+    try {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    } finally {
+      window.URL.revokeObjectURL(downloadUrl);
+    }
   }
 }
 

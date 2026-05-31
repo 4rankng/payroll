@@ -9,7 +9,7 @@ import (
 )
 
 // BCCImportData holds all parsed data from a BCC Excel attendance file.
-// ForMonth is NOT parsed from the file — it comes from the frontend upload request.
+// Month (YYYY-MM) is supplied by the caller, not parsed from the file.
 type BCCImportData struct {
 	ShiftRates map[string]int64 // shift label → VND rate (from row 10, first occurrence wins)
 	Employees  []BCCEmployeeData

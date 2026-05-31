@@ -133,9 +133,9 @@ func (s *BCCImportService) ProcessUpload(
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: create asset: %w", err)
 	}
 
-	// effectiveMonth is captured by the fail() closure; set before first use of fail()
-	// to ensure early failures still include the month when available.
+	// effectiveMonth is captured by the fail() closure.
 	var effectiveMonth string
+	effectiveMonth = forMonth
 
 	// Helper to update asset metadata and return result.
 	fail := func(status, reason string) (*BCCImportResult, error) {
@@ -170,8 +170,7 @@ func (s *BCCImportService) ProcessUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
-	// 5. Use the frontend-supplied month.
-	effectiveMonth = forMonth
+	// 5. Use the frontend-supplied month (set above for fail() closure).
 	loc := clock.Now().Location()
 	year, month, err := parseForMonth(effectiveMonth)
 	if err != nil {
