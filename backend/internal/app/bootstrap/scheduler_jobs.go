@@ -269,7 +269,7 @@ func registerSchedulerJobs(
 				TotalNetAmount:     formatCurrencyVN(int64(totalNetAmount)) + " đ",
 			}
 
-			recipients := []string{"frankng.sg@gmail.com", "haianh211vn@gmail.com"}
+			recipients := []string{"frankng.sg@gmail.com", "anhbh@vfic.com.vn"}
 			if _, err := emailService.SendAdvancePaymentReminder(ctx, data, recipients); err != nil {
 				logger.Error("Failed to send advance payment reminder email", "error", err)
 			} else {
@@ -381,7 +381,7 @@ func registerSchedulerJobs(
 			htmlBody, textBody := flex_pay.BuildSaoKeEmailBodies(forMonth, dueDate, totalCollect)
 
 			// Send email
-			recipients := []string{"frankng.sg@gmail.com", "haianh211vn@gmail.com"}
+			recipients := []string{"frankng.sg@gmail.com", "anhbh@vfic.com.vn"}
 			emailID, err := emailService.SendAdvancePaymentReconciliationEmail(ctx, &notification.ReconciliationEmailParams{
 				ForMonth:   forMonth,
 				Recipients: recipients,

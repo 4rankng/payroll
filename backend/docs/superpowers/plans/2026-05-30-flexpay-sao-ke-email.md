@@ -262,7 +262,7 @@ Trân trọng,
 Dịch vụ thanh toán TingTing`, forMonth, dueDate, totalCollect)
 
 			// Send email
-			recipients := []string{"frankng.sg@gmail.com", "haianh211vn@gmail.com"}
+			recipients := []string{"frankng.sg@gmail.com", "anhbh@vfic.com.vn"}
 			emailID, err := emailService.SendAdvancePaymentReconciliationEmail(ctx, &notification.ReconciliationEmailParams{
 				ForMonth:   forMonth,
 				Recipients: recipients,

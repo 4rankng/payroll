@@ -43,7 +43,7 @@ Two cron jobs in `scheduler_jobs.go` that reuse the exact same service calls as 
 
 ### Recipients
 
-Fixed list: `frankng.sg@gmail.com`, `haianh211vn@gmail.com`
+Fixed list: `frankng.sg@gmail.com`, `anhbh@vfic.com.vn`
 
 ### Email Content
 
