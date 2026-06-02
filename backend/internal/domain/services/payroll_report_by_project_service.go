@@ -55,6 +55,22 @@ type EmployeeReportData struct {
 	TotalPaid    int64
 }
 
+// isProjectEligibleOnDay returns true if a project should be included in a sao ke export
+// on a given day-of-month. The rules mirror the primary project filter logic and must be
+// applied consistently to both the primary loop and the safety-net loop so that projects
+// like salary_period_to=25 (exported early-next-month) are never pulled into a mid-month export.
+func isProjectEligibleOnDay(day, salaryPeriodTo int) bool {
+	if day >= 24 {
+		// Mid/late month: cycles that end by the 21st (and end-of-month cycles).
+		return salaryPeriodTo == 0 || (salaryPeriodTo > 0 && salaryPeriodTo <= 21)
+	}
+	if day <= 10 {
+		// Early month: end-of-month cycles (previous month just closed) and late-ending cycles (≥22).
+		return salaryPeriodTo == 0 || salaryPeriodTo >= 22
+	}
+	return false
+}
+
 // GetProjectsForPayrollReport gets projects based on atDate and their salary periods
 func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.Context, atDate time.Time) ([]*ProjectReportData, error) {
 	// Get all active projects
@@ -76,23 +92,10 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 	var filteredProjects []*domain.Project
 	day := atDate.Day()
 
-	if day >= 24 {
-		// Find projects with salary_period_to > 0 AND salary_period_to <= 21,
-		// plus end-of-month projects (salary_period_to == 0) whose previous month is always complete.
-		for _, project := range projects {
-			if (project.SalaryPeriodTo > 0 && project.SalaryPeriodTo <= 21) || project.SalaryPeriodTo == 0 {
-				filteredProjects = append(filteredProjects, project)
-			}
+	for _, project := range projects {
+		if isProjectEligibleOnDay(day, project.SalaryPeriodTo) {
+			filteredProjects = append(filteredProjects, project)
 		}
-
-	} else if day <= 10 {
-		// Find projects with salary_period_to = 0 OR salary_period_to >= 22
-		for _, project := range projects {
-			if project.SalaryPeriodTo == 0 || project.SalaryPeriodTo >= 22 {
-				filteredProjects = append(filteredProjects, project)
-			}
-		}
-
 	}
 	if len(filteredProjects) == 0 {
 		s.logger.Warn("No projects selected for payroll report", "day", day)
@@ -232,6 +235,12 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 
 	for _, project := range projects {
 		if processedProjectIDs[project.ID] {
+			continue
+		}
+		// Skip projects that are not eligible on this day — the same rule as the primary filter.
+		// Without this guard, projects like salary_period_to=25 (intended for early-next-month export)
+		// would bleed into mid-month sao ke files through the safety net.
+		if !isProjectEligibleOnDay(day, project.SalaryPeriodTo) {
 			continue
 		}
 

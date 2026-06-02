@@ -323,15 +323,19 @@ func (l *SettlementTimesheetLinker) ValidateInternalSheetWithDedup(
 		if unpaidIDSet[ts.ID] {
 			continue
 		}
-		unpaidIDSet[ts.ID] = true
-		unpaidTimesheetIDs = append(unpaidTimesheetIDs, ts.ID)
 
 		if ts.TransactionID == nil {
-			return nil, nil, domain.NewValidationError(
-				fmt.Sprintf("Timesheet ID %d chưa được liên kết với giao dịch nào. "+
-					"Vui lòng chạy endpoint /api/v1/debug/link-timesheet-transaction-id trước.",
-					ts.ID))
+			// Timesheet was paid but never linked to a revenue transaction
+			// (e.g. excluded from the original bulk-transfer export batch).
+			// Skip it so the rest of the file can be settled; it will remain
+			// revenue_paid=false and appear in subsequent sao ke exports until
+			// an admin links it to a transaction.
+			skippedIDs = append(skippedIDs, ts.ID)
+			continue
 		}
+
+		unpaidIDSet[ts.ID] = true
+		unpaidTimesheetIDs = append(unpaidTimesheetIDs, ts.ID)
 
 		txnID := *ts.TransactionID
 		transactionToTimesheets[txnID] = append(transactionToTimesheets[txnID], ts.ID)

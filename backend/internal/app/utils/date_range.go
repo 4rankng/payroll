@@ -5,17 +5,15 @@ import "time"
 // CalculateDateRange determines the start and end dates of a salary period
 // based on a reference date (atDate) and cycle configuration.
 func CalculateDateRange(atDate time.Time, salaryPeriodFrom int, salaryPeriodTo int) (time.Time, time.Time) {
-	// 1. Determine Anchor Month
-	// For end-of-month periods (salaryPeriodTo == 0), always anchor to the
-	// previous month since you export the completed month, never the current one.
-	// Otherwise, use the day-of-month heuristic.
+	// 1. Determine Anchor Month using day-of-month heuristic.
+	// Early month (day ≤ 15): anchor to previous month (previous cycle just ended).
+	// Late month (day > 15): anchor to current month (current cycle is running/complete).
+	// This applies uniformly to all period types including weekly (salaryPeriodTo == 0).
 	var anchorDate time.Time
-	if salaryPeriodTo == 0 {
+	if atDate.Day() <= 15 {
 		anchorDate = atDate.AddDate(0, -1, 0)
-	} else if atDate.Day() <= 15 {
-		anchorDate = atDate.AddDate(0, -1, 0) // Go back one month
 	} else {
-		anchorDate = atDate // Stay in current month
+		anchorDate = atDate
 	}
 
 	// 2. Calculate fromDate

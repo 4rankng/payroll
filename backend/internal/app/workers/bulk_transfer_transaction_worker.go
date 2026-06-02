@@ -164,8 +164,8 @@ func (w *BulkTransferTransactionWorker) handleBulkTransferResultParsed(ctx conte
 			return nil
 		}
 		if state == infrastructure.StateProcessing {
-			w.logger.Info("⚠️ [TRACE] Transaction already being created (idempotency key processing)", "bulk_file_id", event.BulkFileID, "key", idempotencyKey)
-			return nil
+			w.logger.Info("⚠️ [TRACE] Transaction already being created (idempotency key processing), will retry", "bulk_file_id", event.BulkFileID, "key", idempotencyKey)
+			return fmt.Errorf("transaction creation in progress for key %s, retry after lock TTL", idempotencyKey)
 		}
 	}
 
