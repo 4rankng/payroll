@@ -427,6 +427,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) GetByIDs(ctx, ids interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockTimesheetRepository)(nil).GetByIDs), ctx, ids)
 }
 
+// GetByTransactionID mocks base method.
+func (m *MockTimesheetRepository) GetByTransactionID(ctx context.Context, transactionID uint) ([]*domain.Timesheet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByTransactionID", ctx, transactionID)
+	ret0, _ := ret[0].([]*domain.Timesheet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByTransactionID indicates an expected call of GetByTransactionID.
+func (mr *MockTimesheetRepositoryMockRecorder) GetByTransactionID(ctx, transactionID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTransactionID", reflect.TypeOf((*MockTimesheetRepository)(nil).GetByTransactionID), ctx, transactionID)
+}
+
 // GetByIDsWithoutRelations mocks base method.
 func (m *MockTimesheetRepository) GetByIDsWithoutRelations(ctx context.Context, ids []uint) ([]*domain.Timesheet, error) {
 	m.ctrl.T.Helper()

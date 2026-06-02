@@ -52,6 +52,15 @@ func (r *TimesheetRepository) GetByIDsWithoutRelations(ctx context.Context, ids 
 	return r.queryRepo.GetByIDsWithoutRelations(ctx, ids)
 }
 
+func (r *TimesheetRepository) GetByTransactionID(ctx context.Context, transactionID uint) ([]*domain.Timesheet, error) {
+	var timesheets []*domain.Timesheet
+	db := r.getDB(ctx)
+	if err := db.Where("transaction_id = ?", transactionID).Find(&timesheets).Error; err != nil {
+		return nil, err
+	}
+	return timesheets, nil
+}
+
 func (r *TimesheetRepository) Update(ctx context.Context, timesheet *domain.Timesheet) error {
 	return r.commandRepo.Update(ctx, timesheet)
 }
@@ -733,7 +742,7 @@ func (r *TimesheetRepository) BulkUpdateRevenuePaid(ctx context.Context, timeshe
 		}
 
 		batch := timesheetIDs[i:end]
-		if err := r.DB.WithContext(ctx).
+		if err := r.getDB(ctx).
 			Model(&domain.Timesheet{}).
 			Where("id IN ?", batch).
 			Update("revenue_paid", true).Error; err != nil {

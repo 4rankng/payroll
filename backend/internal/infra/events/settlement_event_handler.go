@@ -349,6 +349,10 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 				logger.Info("Marked timesheets as revenue paid",
 					"settlement_id", settlement.ID,
 					"timesheet_count", len(event.TimesheetIDs))
+			} else {
+				logger.Warn("No timesheets to mark as revenue paid for settlement",
+					"settlement_id", settlement.ID,
+					"transaction_id", event.TransactionID)
 			}
 
 			return nil

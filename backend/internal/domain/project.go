@@ -35,8 +35,10 @@ type Project struct {
 	Description          string         `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
 	StartDate            *time.Time     `json:"start_date" gorm:"type:date"`
 	EndDate              *time.Time     `json:"end_date" gorm:"type:date"`
-	SalaryPeriodFrom     int            `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
-	SalaryPeriodTo       int            `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
+	SalaryPeriodFrom     int            `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"` // 0-28
+	SalaryPeriodTo       int            `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`   // 0-28
+	LastSalaryPeriodFrom *int           `json:"last_salary_period_from,omitempty" gorm:"column:last_salary_from;type:int;comment:'Previous salary period start day during transition (NULL = no transition)'"`
+	LastSalaryPeriodTo   *int           `json:"last_salary_period_to,omitempty" gorm:"column:last_salary_to;type:int;comment:'Previous salary period end day during transition (NULL = no transition)'"`
 	OffDays              int            `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
 	TotalPayoutVND       float64        `json:"total_payout_vnd" gorm:"type:decimal(15,2);not null;default:0;comment:'Total paid to employees to date'"`
 	PendingPayableVND    float64        `json:"pending_payable_vnd" gorm:"type:decimal(15,2);not null;default:0;comment:'Pending payment to employees to date'"`

@@ -71,6 +71,7 @@ type TimesheetRepository interface {
 	BulkUpdateRevenuePaid(ctx context.Context, timesheetIDs []uint) error
 	BulkUpdateRevenueReceivable(ctx context.Context, updates map[uint]int64) error
 	BulkUpdateTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
+	GetByTransactionID(ctx context.Context, transactionID uint) ([]*Timesheet, error)
 
 	// Optimized aggregation methods for employee summaries
 	GetEmployeeTimesheetSummaryAggregated(ctx context.Context, employeeID uint) (*TimesheetSummaryAggregated, error)
