@@ -16,10 +16,10 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────────
-  # Job 1: Build & Lint
+  # Job 1: Backend Lint
   # ──────────────────────────────────────────────────────────
-  build:
-    name: Build & Lint
+  backend-lint:
+    name: ⚙️ Backend Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,13 +29,35 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: backend/go.sum
 
+      - name: Check Go formatting
+        working-directory: backend
+        run: |
+          UNFORMATTED=$(gofmt -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "::error::Unformatted files:$UNFORMATTED"
+            echo "$UNFORMATTED"
+            exit 1
+          fi
+
       - name: Go vet
         working-directory: backend
         run: go vet ./...
 
-      - name: Check Go formatting
-        working-directory: backend
-        run: test -z $(gofmt -l .)
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.0
+          working-directory: backend
+          args: --timeout=5m
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Frontend Lint
+  # ──────────────────────────────────────────────────────────
+  frontend-lint:
+    name: 🎨 Frontend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -43,24 +65,39 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: frontend/yarn.lock
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         working-directory: frontend
         run: yarn install --frozen-lockfile
 
-      - name: Typecheck frontend
+      - name: ESLint
+        working-directory: frontend
+        run: npx eslint . --max-warnings=0
+
+      # -b checks all referenced projects (tsconfig.app.json + tsconfig.node.json)
+      - name: Typecheck
         working-directory: frontend
         run: npx tsc -b
-        continue-on-error: true
 
-      - name: Build frontend
+      - name: Build
         working-directory: frontend
         run: npx vite build
 
+      - name: Check bundle size
+        working-directory: frontend
+        run: |
+          DIST_SIZE=$(du -sb dist/ | cut -f1)
+          MAX_SIZE=$((5 * 1024 * 1024))
+          echo "Bundle size: $(numfmt --to=iec $DIST_SIZE)"
+          if [ "$DIST_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "::error::Bundle size exceeds 5MB limit"
+            exit 1
+          fi
+
   # ──────────────────────────────────────────────────────────
-  # Job 2: Tests
+  # Job 3: Backend Unit Tests
   # ──────────────────────────────────────────────────────────
-  test:
-    name: Tests
+  backend-test:
+    name: 🧪 Backend Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +107,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: backend/go.sum
 
-      - name: Backend unit tests
+      - name: Run unit tests with coverage
         working-directory: backend
         run: |
           PACKAGES=$(go list ./... | grep -v \
@@ -78,7 +115,33 @@ jobs:
             -e 'internal/infra/disbursement/ninepay' \
             -e 'internal/infra/events' \
             -e 'internal/infra/persistence')
-          go test -race $PACKAGES
+          go test -race -coverprofile=coverage.out -covermode=atomic $PACKAGES
+
+      - name: Check coverage threshold
+        working-directory: backend
+        run: |
+          TOTAL=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${TOTAL}%"
+          if awk "BEGIN {exit !($TOTAL < 30)}"; then
+            echo "::warning::Coverage ${TOTAL}% is below 30% threshold"
+          fi
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.out
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # Job 4: Frontend Unit Tests
+  # ──────────────────────────────────────────────────────────
+  frontend-test:
+    name: 🧪 Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -86,23 +149,83 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: frontend/yarn.lock
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         working-directory: frontend
         run: yarn install --frozen-lockfile
 
-      - name: Frontend unit tests
+      - name: Run unit tests with coverage
         working-directory: frontend
-        run: yarn test:run
-        continue-on-error: true
+        run: npx vitest run --coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 7
 
   # ──────────────────────────────────────────────────────────
-  # Job 3: Docker Build & Push (Backend)
+  # Job 5: Security Scan
+  # ──────────────────────────────────────────────────────────
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      # gosec is a Docker action — working-directory is ignored for `uses` steps.
+      # Path must be passed via args instead.
+      - name: Run gosec
+        uses: securego/gosec@v2.22.3
+        with:
+          args: '-no-fail -fmt sarif -out gosec-results.sarif ./backend/...'
+        continue-on-error: true
+
+      - name: Upload gosec results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gosec-results.sarif
+          category: gosec
+        continue-on-error: true
+
+      # govulncheck blocks on confirmed high-severity vulns
+      - name: Go vulnerability check
+        working-directory: backend
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies (for audit)
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: npm audit (production deps only)
+        working-directory: frontend
+        run: npm audit --audit-level=high --omit=dev || true
+
+  # ──────────────────────────────────────────────────────────
+  # Job 6: Docker Build & Push (Backend)
   # ──────────────────────────────────────────────────────────
   docker-backend:
-    name: Docker Push (backend)
-    needs: [build, test]
+    name: 🐳 Docker Push (backend)
+    needs: [backend-lint, backend-test, frontend-lint, frontend-test, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.sha.outputs.short }}
     steps:
       - uses: actions/checkout@v4
 
@@ -131,13 +254,15 @@ jobs:
           build-args: BUILDKIT_INLINE_CACHE=1
 
   # ──────────────────────────────────────────────────────────
-  # Job 4: Docker Build & Push (Frontend)
+  # Job 7: Docker Build & Push (Frontend)
   # ──────────────────────────────────────────────────────────
   docker-frontend:
-    name: Docker Push (frontend)
-    needs: [build, test]
+    name: 🐳 Docker Push (frontend)
+    needs: [backend-lint, backend-test, frontend-lint, frontend-test, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.sha.outputs.short }}
     steps:
       - uses: actions/checkout@v4
 
@@ -171,13 +296,15 @@ jobs:
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
   # ──────────────────────────────────────────────────────────
-  # Job 5: Deploy to Production
+  # Job 8: Deploy to Production
   # ──────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to Production
+    name: 🚀 Deploy to Production
     needs: [docker-backend, docker-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Uncomment to require approval before deploying:
+    # environment: production
 
     steps:
       - name: Deploy via SSH
@@ -186,34 +313,52 @@ jobs:
           host: pay.1stop.app
           username: root
           key: ${{ secrets.PROD_SSH_KEY }}
+          script_stop: true
+          command_timeout: 5m
           script: |
-            set -e
-            echo "=== Deploying Payroll ==="
+            set -euo pipefail
 
+            echo "=== Deploying Payroll ==="
             cd /opt/payroll
 
             echo "Pulling latest images..."
             docker compose pull frontend backend
 
+            # --- Deploy Backend ---
             echo "Restarting backend..."
             docker compose up -d --force-recreate --no-deps backend
 
-            echo "Waiting for backend to start..."
-            for i in $(seq 1 20); do
+            echo "Waiting for backend health check..."
+            for i in $(seq 1 30); do
               if curl -sf http://localhost:8080/api/healthz >/dev/null 2>&1; then
-                echo "Backend is healthy after ${i}s"
+                echo "✅ Backend healthy after ${i}s"
                 break
               fi
-              if [ "$i" -eq 20 ]; then
-                echo "ERROR: Backend failed to start within 20s"
-                docker compose logs --tail=30 backend
+              if [ "$i" -eq 30 ]; then
+                echo "❌ Backend failed to start within 30s"
+                docker compose logs --tail=50 backend
                 exit 1
               fi
               sleep 1
             done
 
+            # --- Deploy Frontend ---
             echo "Restarting frontend..."
             docker compose up -d --force-recreate --no-deps frontend
+
+            echo "Waiting for frontend health check..."
+            for i in $(seq 1 15); do
+              if curl -sf http://localhost:3000 >/dev/null 2>&1; then
+                echo "✅ Frontend healthy after ${i}s"
+                break
+              fi
+              if [ "$i" -eq 15 ]; then
+                echo "❌ Frontend failed to start within 15s"
+                docker compose logs --tail=50 frontend
+                exit 1
+              fi
+              sleep 1
+            done
 
             echo "Cleaning up unused images..."
             docker image prune -f
