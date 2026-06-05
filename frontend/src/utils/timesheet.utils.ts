@@ -65,6 +65,8 @@ export function getAmountDisplayText(
     rate?: number;
     hours_worked?: number;
     amount?: number;
+    calculatedRate?: number;
+    employeeId?: number;
   },
   locale: string = 'vi-VN'
 ): AmountDisplayResult {

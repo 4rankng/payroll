@@ -46,7 +46,7 @@ export const getTimesheetDisplayData = (record: Timesheet | EmployeeTimesheetEnt
     date: formatTimesheetDate(rec.date),
     hours: formatTimesheetHours(rec.hours_worked),
     paytype: rec.paytype,
-    rate: formatTimesheetRate(rec.payrate),
+    rate: formatTimesheetRate(rec.rate),
     hourType: rec.hour_type,
     dayType: rec.day_type,
     status: rec.status

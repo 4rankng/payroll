@@ -102,7 +102,7 @@ export const usePartnerTimesheetData = () => {
         if (Array.isArray(timesheetsResponse.data)) {
           setTimesheetData(timesheetsResponse.data);
         } else if ((timesheetsResponse.data as { timesheets?: unknown }).timesheets) {
-          setTimesheetData((timesheetsResponse.data as { timesheets: unknown[] }).timesheets);
+          setTimesheetData((timesheetsResponse.data as { timesheets: Timesheet[] }).timesheets);
         } else {
           setTimesheetData([]);
         }
