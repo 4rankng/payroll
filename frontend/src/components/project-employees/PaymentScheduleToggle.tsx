@@ -30,14 +30,14 @@ interface PaymentScheduleToggleProps {
 
 export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleToggleProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState<'weekly' | 'monthly'>(
+  const [selectedSchedule, setSelectedSchedule] = useState<'weekly' | 'monthly' | 'flexible'>(
     assignment.payment_schedule || 'weekly'
   );
 
   const changeScheduleMutation = useChangePaymentSchedule();
   const cancelScheduleMutation = useCancelScheduleChange();
 
-  const currentSchedule = assignment.payment_schedule || 'weekly';
+  const currentSchedule: 'weekly' | 'monthly' | 'flexible' = assignment.payment_schedule || 'weekly';
   const hasPendingChange = !!assignment.pending_payment_schedule;
   const effectiveFrom = assignment.schedule_effective_from;
 
@@ -63,11 +63,11 @@ export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleT
     });
   };
 
-  const getScheduleLabel = (schedule: 'weekly' | 'monthly') => {
-    return VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule[schedule];
+  const getScheduleLabel = (schedule: 'weekly' | 'monthly' | 'flexible') => {
+    return schedule === 'flexible' ? 'Linh hoạt' : VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule[schedule];
   };
 
-  const getScheduleBadgeVariant = (schedule: 'weekly' | 'monthly') => {
+  const getScheduleBadgeVariant = (schedule: 'weekly' | 'monthly' | 'flexible') => {
     return schedule === 'monthly' ? 'default' : 'secondary';
   };
 
@@ -137,7 +137,7 @@ export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleT
 
             <div className="space-y-2">
               <Label htmlFor="new-schedule">Chu kỳ thanh toán mới</Label>
-              <Select value={selectedSchedule} onValueChange={(value) => setSelectedSchedule(value as 'weekly' | 'monthly')}>
+              <Select value={selectedSchedule} onValueChange={(value) => setSelectedSchedule(value as 'weekly' | 'monthly' | 'flexible')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -152,6 +152,12 @@ export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleT
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       {getScheduleLabel('monthly')}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="flexible">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      {getScheduleLabel('flexible')}
                     </div>
                   </SelectItem>
                 </SelectContent>

@@ -50,10 +50,10 @@ class AssetService {
     // We need to extract the asset data properly
     if (responseData && responseData.data && responseData.data.id) {
       // Wrapped format: { status: "success", data: { asset }, message: "..." }
-      return { ...response, data: responseData.data };
-    } else if (responseData && responseData.id) {
+      return { ...response, data: responseData.data } as ApiResponse<Asset>;
+    } else if (responseData && (responseData as unknown as Asset).id) {
       // Direct format: { id: 2, filename: "...", ... } (without status wrapper)
-      return { ...response, data: responseData };
+      return { ...response, data: responseData as unknown as Asset } as ApiResponse<Asset>;
     } else {
       throw new Error('Invalid upload response structure');
     }
@@ -110,7 +110,7 @@ class AssetService {
    */
   async deleteAsset(id: number): Promise<ApiResponse<void>> {
     const response = await apiClient.delete(API_ENDPOINTS.assets.byId(id));
-    return response;
+    return response as ApiResponse<void>;
   }
 
   /**

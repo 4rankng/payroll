@@ -104,7 +104,7 @@ export const DateTimeSection = memo(
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
               Đang tải...
             </div>
-          ) : !payRateData?.data ? (
+          ) : !payRateData?.rates ? (
             <div className="p-2 border rounded-xl text-muted-foreground text-sm">
               Chưa có cấu hình lương
             </div>

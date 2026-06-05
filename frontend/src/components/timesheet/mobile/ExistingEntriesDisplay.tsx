@@ -96,7 +96,12 @@ export function ExistingEntriesDisplay({
   }
 
   // Group entries by employee
-  const entriesByEmployee = existingTimesheets.reduce((acc, entry) => {
+  const entriesByEmployee = existingTimesheets.reduce<Record<string, {
+    employee_id: number;
+    employee_name: string;
+    employee_code: string;
+    entries: TimesheetEntry[];
+  }>>((acc, entry) => {
     const key = `${entry.employee_id}-${entry.employee_name || 'Unknown'}`;
     if (!acc[key]) {
       acc[key] = {
@@ -108,7 +113,7 @@ export function ExistingEntriesDisplay({
     }
     acc[key].entries.push(entry);
     return acc;
-  }, {} as Record<string, unknown>);
+  }, {});
 
   const employeeGroups = Object.values(entriesByEmployee);
 

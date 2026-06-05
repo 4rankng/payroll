@@ -17,6 +17,7 @@ interface EmployeeSelectorProps {
   includeAvailableOnly?: boolean;
   excludeEmployeeIds?: number[];
   showAllOption?: boolean; // New prop to control showing "All Employees" option
+  pillStyle?: boolean;
 }
 
 export function EmployeeSelector({

@@ -9,9 +9,9 @@ interface EmployeeSummaryCardsProps {
 
 // Watermark tokens — small inline icon + large faint icon decoration.
 const cards = [
-  { key: 'total_employees',          label: 'Tổng nhân viên',    icon: Users,     iconText: 'text-sky-600',     watermark: 'text-sky-500/15' },
-  { key: 'total_working_employees',  label: 'Đang làm việc',     icon: UserCheck, iconText: 'text-emerald-600', watermark: 'text-emerald-500/15' },
-  { key: 'employees_hired_this_month', label: 'Tuyển tháng này', icon: UserPlus,  iconText: 'text-amber-600',   watermark: 'text-amber-500/15' },
+  { key: 'total_employees',          label: 'Tổng nhân viên',    icon: Users,     iconText: 'text-sky-600',     watermark: 'text-sky-500/15', isCurrency: false },
+  { key: 'total_working_employees',  label: 'Đang làm việc',     icon: UserCheck, iconText: 'text-emerald-600', watermark: 'text-emerald-500/15', isCurrency: false },
+  { key: 'employees_hired_this_month', label: 'Tuyển tháng này', icon: UserPlus,  iconText: 'text-amber-600',   watermark: 'text-amber-500/15', isCurrency: false },
   { key: 'salary_month_to_date',     label: 'Lương tháng này',   icon: DollarSign, iconText: 'text-violet-600', watermark: 'text-violet-500/15', isCurrency: true },
 ] as const;
 

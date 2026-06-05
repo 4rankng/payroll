@@ -61,7 +61,7 @@ class EmployeePortalService {
       API_ENDPOINTS.employee.updatePassword,
       data
     );
-    return response;
+    return response as ApiResponse<void>;
   }
 
   /**
@@ -74,7 +74,7 @@ class EmployeePortalService {
       `${API_ENDPOINTS.employee.timesheets}${queryString}`
     );
     // The API returns the full response structure
-    return response as EmployeeTimesheetResponse;
+    return response as unknown as EmployeeTimesheetResponse;
   }
 
   /**
@@ -86,7 +86,7 @@ class EmployeePortalService {
     const response = await apiClient.get<EmployeeSummaryResponse>(
       `${API_ENDPOINTS.employee.summary}${queryString}`
     );
-    return response as EmployeeSummaryResponse;
+    return response as unknown as EmployeeSummaryResponse;
   }
 }
 

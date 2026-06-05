@@ -40,24 +40,24 @@ export function createPartnerEmployeeColumns({
       accessorKey: "name",
       header: "Nhân viên",
       cell: ({ row }) => {
-        const employee = row.original;
+        const employee = row.original as Employee & { name?: string; avatar?: string; employee_code?: string };
         return (
           <div
             className="flex items-center gap-3 cursor-pointer group max-w-xs"
             onClick={() => onRowClick?.(employee)}
           >
             <UserAvatar
-              name={employee.name}
+              name={employee.name ?? employee.fullname}
               email={employee.email}
               src={employee.avatar}
               size="lg"
             />
             <div className="min-w-0 flex-1">
               <div className="typography-body-medium font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                {employee.name}
+                {employee.name ?? employee.fullname}
               </div>
               <div className="typography-body-small text-muted-foreground line-clamp-1">
-                #{employee.employee_code}
+                #{employee.employee_code ?? employee.id}
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@ export function createPartnerEmployeeColumns({
       accessorKey: "position",
       header: "Vị trí",
       cell: ({ row }) => {
-        const employee = row.original;
+        const employee = row.original as Employee & { department?: string };
         return (
           <div className="space-y-1">
             <div className="typography-body-medium text-foreground line-clamp-1">
@@ -215,8 +215,8 @@ export function createPartnerEmployeeColumns({
       accessorKey: "base_salary",
       header: "Lương cơ bản",
       cell: ({ row }) => {
-        const salary = row.getValue("salary") as number;
-        if (!salary)
+        const salary = row.getValue("salary") as number | undefined;
+        if (salary == null)
           return (
             <span className="typography-body-small text-muted-foreground">
               Chưa thiết lập

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PayratePreview } from './PayratePreview';
 import { ExistingEntriesDisplay } from './ExistingEntriesDisplay';
-import { useProjectPayRates } from '@/hooks/api/usePayRates';
+import { useProjectPayRates, useCurrentPayRate } from '@/hooks/api/usePayRates';
 import { useProjectEmployees } from '@/hooks/api/useProjectEmployees';
 import { useTimesheetsByProjectAndDate } from '@/hooks/api/useTimesheets';
 import { timesheetService } from '@/services/api/timesheet.service';
@@ -73,7 +73,7 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
     position: assignment.position
   }));
 
-  const payrateConfig = payRateData?.data?.rates;
+  const payrateConfig = payRateData?.rates;
 
   // Auto-determine day type when date changes
   useEffect(() => {

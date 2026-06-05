@@ -172,6 +172,7 @@ export interface AdvancePaymentFilters {
   toDate?: string;
   forMonth?: string;
   search?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -271,6 +272,7 @@ export interface FlexPayEmployeeFilters {
   search?: string;
   sortBy?: string;
   sortOrder?: "ASC" | "DESC";
+  [key: string]: unknown;
 }
 
 /**

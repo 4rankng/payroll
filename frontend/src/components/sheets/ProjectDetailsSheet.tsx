@@ -28,6 +28,8 @@ interface ProjectDetailsSheetProps {
   onClose: () => void;
   id?: string;
   onProjectDeleted?: (deletedProjectId: number) => void;
+  initialTab?: string;
+  tab?: string;
 }
 
 function ProjectDetailsSheet({

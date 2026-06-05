@@ -14,7 +14,7 @@ export const PartnerTimesheetListMobile = ({ timesheetData, isLoading }: Partner
   const { openTimesheetDetails } = useTimesheetModals();
 
   const handleTimesheetClick = (timesheet: Timesheet) => {
-    openTimesheetDetails(timesheet.id);
+    openTimesheetDetails(String(timesheet.id));
   };
 
   const getStatusColor = (status: string) => {

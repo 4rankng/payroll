@@ -11,6 +11,7 @@ import { extractFilenameFromHeaders } from '@/utils/file-download';
 import type {
   Timesheet,
   TimesheetSummary,
+  EmployeeTimesheetSummary,
   UpdateTimesheetData,
   TimesheetFilters,
   BulkApproveData,
@@ -523,12 +524,12 @@ class TimesheetService {
       fromDate?: string;
       toDate?: string;
     }
-  ) {
+  ): Promise<EmployeeTimesheetSummary> {
     const queryString = params ? buildQueryString(params) : '';
-    const response = await apiClient.get(
+    const response = await apiClient.get<EmployeeTimesheetSummary>(
       `${API_ENDPOINTS.employees.timesheetSummary(employeeId)}${queryString}`
     );
-    return response.data;
+    return response.data!;
   }
 
   /**

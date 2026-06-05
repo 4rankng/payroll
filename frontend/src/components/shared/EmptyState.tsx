@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description?: string;
   action?: {
@@ -41,12 +41,14 @@ export const EmptyState = memo(function EmptyState({
           size === 'default' ? 'h-14 w-14' : 'h-10 w-10',
         )}
       >
-        <Icon
-          className={cn(
-            'text-muted-foreground/50',
-            size === 'default' ? 'h-7 w-7' : 'h-5 w-5',
-          )}
-        />
+        {Icon && (
+          <Icon
+            className={cn(
+              'text-muted-foreground/50',
+              size === 'default' ? 'h-7 w-7' : 'h-5 w-5',
+            )}
+          />
+        )}
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-foreground">{title}</p>

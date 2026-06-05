@@ -75,7 +75,7 @@ export function GroupBulkRejectDialog({
       onConfirm={handleConfirm}
       confirmVariant="destructive"
       disabled={!rejectionReason.trim() || isLoading}
-      isLoading={isLoading}
+      loading={isLoading}
     />
   );
 }

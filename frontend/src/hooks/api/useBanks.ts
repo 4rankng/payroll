@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { bankService } from '@/services/api/bank.service';
 import { QueryKeys } from '@/lib/queryKeys';
-import { showSuccessNotification } from '@/utils/error-handler';
 import type { Bank, BankFilters, CreateBankRequest } from '@/types/api/bank.types';
 import type { ApiError } from '@/types/api.types';
 
@@ -51,14 +50,13 @@ export const useBank = (id: number, options?: UseBankOptions) => {
 export const useCreateBank = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<Bank, ApiError, CreateBankRequest>({
     mutationFn: (data: CreateBankRequest) => bankService.createBank(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.banks.all });
-
-      if (response.message) {
-        showSuccessNotification(response.message);
-      }
+    },
+    meta: {
+      successMessage: 'Tạo ngân hàng thành công',
     },
   });
 };

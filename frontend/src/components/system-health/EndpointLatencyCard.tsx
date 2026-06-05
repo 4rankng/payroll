@@ -5,6 +5,7 @@ import type { SlowestEndpoint } from "@/types/api/system-health.types";
 
 interface Props {
   endpoint: SlowestEndpoint;
+  days?: number;
 }
 
 export function EndpointLatencyCard({ endpoint }: Props) {

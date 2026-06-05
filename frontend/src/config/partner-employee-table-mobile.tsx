@@ -36,6 +36,13 @@ export interface PartnerEmployeeMobileFieldConfig {
   render?: (value: unknown, row: Employee, index?: number) => React.ReactNode;
 }
 
+const renderUnknown = (value: unknown): React.ReactNode => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (React.isValidElement(value)) return value;
+  return String(value);
+};
+
 export interface PartnerEmployeeMobileConfigDeps {
   onRowClick: (employee: Employee) => void;
 }
@@ -59,7 +66,7 @@ export const createPartnerEmployeeMobileConfig = (
       key: "fullname",
       label: "Họ và tên",
       render: (value) => (
-        <span className="typography-body-medium font-medium">{value}</span>
+        <span className="typography-body-medium font-medium">{renderUnknown(value)}</span>
       ),
     },
     {
@@ -67,7 +74,7 @@ export const createPartnerEmployeeMobileConfig = (
       label: "Email",
       render: (value) => (
         <span className="typography-body-medium text-muted-foreground truncate">
-          {value || "-"}
+          {value ? String(value) : "-"}
         </span>
       ),
     },
@@ -75,7 +82,7 @@ export const createPartnerEmployeeMobileConfig = (
       key: "mobile",
       label: "Điện thoại",
       render: (value) => (
-        <span className="typography-body-medium">{value || "-"}</span>
+        <span className="typography-body-medium">{value ? String(value) : "-"}</span>
       ),
     },
     {
@@ -192,25 +199,24 @@ export const createPartnerEmployeeMobileConfig = (
       key: "status",
       label: "Trạng thái",
       render: (value) => {
-        const statusLabels = {
+        const statusLabels: Record<string, string> = {
           active: "Đang dùng",
           inactive: "Ngừng hoạt động",
           pending: "Chờ xử lý",
         };
 
-        const statusColors = {
-          active:
-            "bg-green-100 text-green-800",
+        const statusColors: Record<string, string> = {
+          active: "bg-green-100 text-green-800",
           inactive: "bg-red-100 text-red-800",
-          pending:
-            "bg-yellow-100 text-yellow-800",
+          pending: "bg-yellow-100 text-yellow-800",
         };
 
+        const key = typeof value === "string" ? value : "";
         return (
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[value as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}`}
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[key] || "bg-gray-100 text-gray-800"}`}
           >
-            {statusLabels[value as keyof typeof statusLabels] || value}
+            {statusLabels[key] || (key || "")}
           </span>
         );
       },

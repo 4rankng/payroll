@@ -29,6 +29,19 @@ const INSIDE_THRESHOLD = 15;
 
 // ── custom plugin: inside + outside labels with polyline connectors ────────────
 function createLabelPlugin(banks: BankSlice[]) {
+  // Chart.js's chart.getDatasetMeta(0).data is typed as the generic Element
+  // class, but for a doughnut chart the runtime instances are ArcElement with
+  // startAngle/endAngle/outerRadius/innerRadius. Cast locally to a minimal
+  // structural type so we don't need to reach for `any`.
+  type ArcLike = {
+    startAngle: number;
+    endAngle: number;
+    outerRadius: number;
+    innerRadius: number;
+    options: { offset?: number };
+  };
+  const asArc = (e: unknown) => e as ArcLike;
+
   return {
     id: 'sliceLabels',
     afterDraw(chart: Chart) {
@@ -39,7 +52,8 @@ function createLabelPlugin(banks: BankSlice[]) {
       const cy = top + height / 2;
 
       // Inside labels for large slices
-      meta.data.forEach((arc, i) => {
+      meta.data.forEach((raw, i) => {
+        const arc = asArc(raw);
         const b = banks[i];
         if (!b || b.pct < INSIDE_THRESHOLD) return;
         const mid = (arc.startAngle + arc.endAngle) / 2;
@@ -64,11 +78,12 @@ function createLabelPlugin(banks: BankSlice[]) {
         b: BankSlice; edgeX: number; edgeY: number;
         elbowX: number; elbowY: number; x: number; y: number;
       }> = [];
-      meta.data.forEach((arc, i) => {
+      meta.data.forEach((raw, i) => {
+        const arc = asArc(raw);
         const b = banks[i];
         if (!b || b.pct >= INSIDE_THRESHOLD) return;
         const mid = (arc.startAngle + arc.endAngle) / 2;
-        const sliceOff = (arc.options as { offset?: number })?.offset ?? 0;
+        const sliceOff = arc.options?.offset ?? 0;
         const totalR = arc.outerRadius + sliceOff;
         const edgeX = cx + Math.cos(mid) * totalR;
         const edgeY = cy + Math.sin(mid) * totalR;

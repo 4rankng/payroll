@@ -144,6 +144,7 @@ export interface EmployeePayrollFilters {
   project_id?: number;
   fromDate?: string;
   toDate?: string;
+  [key: string]: unknown;
 }
 
 export interface EmployeePayrollResponse {
@@ -211,6 +212,7 @@ export interface EmployeeTimesheetFilters {
   sortOrder?: "asc" | "desc";
   project_id?: number;
   status?:
+    | "draft"
     | "pending_approval"
     | "approved"
     | "rejected"
@@ -220,6 +222,7 @@ export interface EmployeeTimesheetFilters {
     | "cancelled";
   fromDate?: string;
   toDate?: string;
+  [key: string]: unknown;
 }
 
 export interface EmployeeTimesheetResponse {
@@ -345,6 +348,7 @@ export interface CurrentProjectWithTimesheets {
 export interface EmployeeCurrentProjectsFilters {
   fromDate?: string;
   toDate?: string;
+  [key: string]: unknown;
 }
 
 export interface EmployeeCurrentProjectsResponse {

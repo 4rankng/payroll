@@ -30,6 +30,15 @@ const buttonVariants = cva(
         info:
           "bg-sky-600 text-white font-semibold hover:bg-sky-500 active:bg-sky-700",
 
+        warning:
+          "bg-amber-500 text-white font-semibold hover:bg-amber-400 active:bg-amber-600",
+
+        monochrome:
+          "bg-slate-700 text-slate-100 font-semibold hover:bg-slate-600 active:bg-slate-800 border border-slate-700",
+
+        "monochrome-outline":
+          "border border-slate-700 bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200",
+
         link:
           "text-primary underline-offset-4 hover:underline font-normal px-0 h-auto",
       },

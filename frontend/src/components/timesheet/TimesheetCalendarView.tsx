@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, HandCoins } from 'lucide-react';
 import { showErrorNotification } from '@/utils/error-handler';
-import { Timesheet, type EmployeeTimesheetFilters } from '@/types/api/timesheet.types';
+import { Timesheet, type EmployeeTimesheetEntry } from '@/types/api/timesheet.types';
+import type { EmployeeTimesheetFilters } from '@/types/api/employee.types';
 import {
   createEmployeeCalendarData,
   formatCurrency,
@@ -159,8 +160,16 @@ export function TimesheetCalendarView({
         ? projects.filter(p => p.id.toString() === selectedProject)
         : projects;
 
+      const mappedTimesheets: Timesheet[] = timesheetData.data.map((entry) => {
+        const { ...rest } = entry;
+        return {
+          ...rest,
+          status: entry.status,
+          payment_status: entry.payment_status,
+        } as unknown as Timesheet;
+      });
       return createEmployeeCalendarData(
-        timesheetData.data,
+        mappedTimesheets,
         currentYear,
         currentMonth,
         selectedEmployeeInfo,

@@ -28,6 +28,7 @@ interface UserDetailsSheetProps {
   onDelete: (user: User) => void;
   onResetPassword?: (userId: number, password: string) => void;
   loading?: boolean;
+  initialTab?: string;
 }
 
 function UserDetailsSheet({

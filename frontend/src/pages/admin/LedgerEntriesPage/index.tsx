@@ -19,7 +19,7 @@ import { useProjects } from '@/hooks/api/useProjects';
 import { useUsersByIds } from '@/hooks/api/useUsers';
 import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { dateToString } from '@/utils/dateHelpers';
-import type { LedgerFilters as FiltersType, LedgerEntry } from '@/types/api/financial.types';
+import type { LedgerFilters as FiltersType, LedgerEntry, AccountMetadata } from '@/types/api/financial.types';
 import { getInitialDateRange, getCurrentMonthRange } from './utils';
 
 const LedgerEntriesPage = () => {
@@ -125,7 +125,7 @@ const LedgerEntriesPage = () => {
 
   const users = useMemo(() => {
     if (!userMap) return [];
-    return Array.from(userMap.values()).map(user => ({
+    return Object.values(userMap).map(user => ({
       id: user.id,
       full_name: user.fullname,
       email: user.email
@@ -233,7 +233,7 @@ const LedgerEntriesPage = () => {
         onClearFilters={handleClearFilters}
         hasFilters={hasFilters}
         totalResults={pagination?.totalRecords}
-        accountMetadata={accountMetadata ?? []}
+        accountMetadata={(accountMetadata ?? []) as AccountMetadata[]}
         isLoadingAccountMetadata={isLoadingAccountMetadata}
       />
       {!isLoadingAccountMetadata && accountMetadata && accountMetadata.length > 0 ? (
@@ -243,7 +243,7 @@ const LedgerEntriesPage = () => {
           onReverse={handleReverseEntry}
           onRowClick={handleRowClick}
           projects={projects}
-          accountMetadata={accountMetadata}
+          accountMetadata={accountMetadata as AccountMetadata[]}
           pagination={pagination}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

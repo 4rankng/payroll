@@ -6,10 +6,8 @@ import { formatCurrency } from "@/utils/formatters";
 import { TimesheetPageHeaderMobile } from "@/components/timesheet/mobile/TimesheetPageHeaderMobile";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { TimesheetDisplaySection } from "@/components/timesheet/TimesheetDisplaySection";
-import {
-  BulkTransferExportDialog,
-  BulkTransferExportParams,
-} from "@/components/timesheet/BulkTransferExportDialog";
+import { BulkTransferExportDialog } from "@/components/timesheet/BulkTransferExportDialog";
+import type { BulkTransferExportParams } from "@/services/api/bulk-transfer.service";
 import {
   PayrollReportExportDialog,
   PayrollReportExportParams,

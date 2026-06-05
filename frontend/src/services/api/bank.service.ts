@@ -78,8 +78,8 @@ class BankService {
   /**
    * Create new bank (ADMIN only)
    */
-  async createBank(data: CreateBankRequest) {
-    const response = await apiClient.post(
+  async createBank(data: CreateBankRequest): Promise<Bank> {
+    const response = await apiClient.post<Bank>(
       API_ENDPOINTS.banks.base,
       data
     );
@@ -93,7 +93,7 @@ class BankService {
    * Update bank (ADMIN only)
    */
   async updateBank(id: number, data: UpdateBankRequest): Promise<Bank> {
-    const response = await apiClient.put(
+    const response = await apiClient.put<Bank>(
       API_ENDPOINTS.banks.byId(id),
       data
     );

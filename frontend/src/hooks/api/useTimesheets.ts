@@ -16,6 +16,7 @@ import type {
   Timesheet,
   TimesheetListResponse,
   TimesheetSummaryResponse,
+  EmployeeTimesheetSummary,
   ListGroupedTimesheetsResponse,
 } from '@/types/api/timesheet.types';
 import { addItemToList, updateItemInList, removeItemFromList, updateSummaryCount, batchUpdateItemsInList } from '@/utils/cacheUpdates';
@@ -588,7 +589,7 @@ export const useEmployeeTimesheetSummary = (
   },
   enabled = true
 ) => {
-  return useQuery({
+  return useQuery<EmployeeTimesheetSummary>({
     queryKey: QueryKeys.timesheets.employeeSummary(employeeId, normalizeFilters(params)),
     queryFn: () => timesheetService.getEmployeeTimesheetSummary(employeeId, params),
     enabled,

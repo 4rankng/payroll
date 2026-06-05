@@ -2,7 +2,6 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { UserPageHeader } from "@/components/users/UserPageHeader";
 import { UserStatsCards } from "@/components/users/UserStatsCards";
 import { UserFiltersBar } from "@/components/users/UserFiltersBar";
-import { AddUserSheet } from "@/components/sheets/AddUserSheet";
 import { useUserDataInfinite } from "@/hooks/users/useUserDataInfinite";
 import { useUserModals } from "@/hooks/useModalNavigation";
 import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";

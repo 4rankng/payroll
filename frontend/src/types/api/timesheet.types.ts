@@ -296,17 +296,6 @@ export interface EmployeeTimesheetEntry {
   employeeEmail?: string;
 }
 
-export interface EmployeeTimesheetResponse {
-  status: string;
-  data: EmployeeTimesheetEntry[];
-  message: string;
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    totalRecords: number;
-  };
-}
 
 // API Response Wrapper Types (matching actual API response structure)
 export interface ApiResponse<T> {
@@ -334,7 +323,6 @@ export interface TimesheetResponse extends ApiResponse<Timesheet> {}
 export interface PendingApprovalsResponse extends ApiResponse<Timesheet[]> {}
 export interface BulkApproveResponse extends ApiResponse<BulkApproveResult> {}
 export interface BulkRejectResponse extends ApiResponse<BulkRejectResult> {}
-export interface EmployeeTimesheetResponse extends ApiListResponse<Timesheet> {}
 export interface EmployeeTimesheetSummaryResponse extends ApiResponse<EmployeeTimesheetSummary> {}
 
 // Type alias for employee-specific timesheet filters
@@ -489,3 +477,18 @@ export interface PartnerImportListParams {
   page?: number;
   page_size?: number;
 }
+
+export type TimesheetStatus =
+  | 'approved'
+  | 'pending_approval'
+  | 'rejected'
+  | 'draft'
+  | 'paid'
+  | 'failed'
+  | 'cancelled'
+  | 'pending';
+
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'processing' | 'overdue';
+
+// Re-export from employee.types to maintain backwards compatibility with existing imports
+export type { EmployeeTimesheetResponse } from './employee.types';

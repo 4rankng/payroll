@@ -18,7 +18,7 @@ import { useSendReconciliationEmail } from '@/hooks/api/useAdvancePaymentReconci
 import { useProjects } from '@/hooks/api/useProjects';
 import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { dateToString } from '@/utils/dateHelpers';
-import type { LedgerFilters as FiltersType, LedgerEntry } from '@/types/api/financial.types';
+import type { LedgerFilters as FiltersType, LedgerEntry , AccountMetadata} from '@/types/api/financial.types';
 
 const LedgerEntriesPageMobile = () => {
   const [searchParams] = useSearchParams();
@@ -234,7 +234,7 @@ const LedgerEntriesPageMobile = () => {
         onClearFilters={handleClearFilters}
         hasFilters={hasFilters}
         totalResults={pagination?.totalRecords}
-        accountMetadata={accountMetadata ?? []}
+        accountMetadata={(accountMetadata ?? []) as AccountMetadata[]}
         isLoadingAccountMetadata={isLoadingAccountMetadata}
       />
 
@@ -244,7 +244,7 @@ const LedgerEntriesPageMobile = () => {
           isLoading={isLoadingEntries}
           onRowClick={handleRowClick}
           projects={projects}
-          accountMetadata={accountMetadata}
+          accountMetadata={accountMetadata as AccountMetadata[]}
           pagination={pagination}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

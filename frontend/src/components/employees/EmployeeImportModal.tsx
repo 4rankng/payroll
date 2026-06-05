@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { employeeService } from '@/services/api/employee.service';
+import { getXLSX } from '@/lib/xlsx-loader';
 
 interface EmployeeImportModalProps {
   isOpen: boolean;
@@ -207,7 +208,7 @@ export function EmployeeImportModal({
       ];
 
       // Create workbook and worksheet
-      const XLSX = await import('xlsx');
+      const XLSX = await getXLSX();
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.aoa_to_sheet(templateData);
 

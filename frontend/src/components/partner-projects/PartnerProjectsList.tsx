@@ -15,7 +15,7 @@ export const PartnerProjectsList = ({ projects, isLoading }: PartnerProjectsList
   const { openPartnerProjectDetails } = useProjectModals();
 
   const handleProjectClick = (project: Project) => {
-    openPartnerProjectDetails(project.id);
+    openPartnerProjectDetails(String(project.id));
   };
 
   if (isLoading) {

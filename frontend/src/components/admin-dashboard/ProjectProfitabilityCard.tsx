@@ -2,6 +2,7 @@ import { memo, useState, useCallback, useMemo, useRef } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
+  type MouseHandlerDataParam,
 } from 'recharts';
 import { TrendingUp, TrendingDown, BarChart2, Eye, Users } from 'lucide-react';
 import { format } from 'date-fns';
@@ -317,8 +318,14 @@ export const ProjectProfitabilityCard = memo(() => {
                 data={chartData}
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                 onMouseMove={(e) => {
-                  if (e?.activePayload?.length) {
-                    const name = e.activePayload[0]?.name;
+                  // Recharts 3.x removed `activePayload` from the public
+                  // MouseHandlerDataParam type, but the runtime still passes it.
+                  // Augment the type locally so we don't need `any`.
+                  const state = e as MouseHandlerDataParam & {
+                    activePayload?: Array<{ name?: string }>;
+                  };
+                  if (state?.activePayload?.length) {
+                    const name = state.activePayload[0]?.name;
                     if (name) {
                       const id = nameToId.get(name);
                       if (id !== undefined && id !== hoveredProjectId) setHoveredProjectId(id);

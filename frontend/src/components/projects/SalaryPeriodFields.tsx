@@ -9,6 +9,7 @@ interface SalaryPeriodFieldsProps {
   onSalaryPeriodFromChange: (value: number | null) => void;
   onSalaryPeriodToChange: (value: number | null) => void;
   disabled?: boolean;
+  variant?: 'detailed' | 'compact';
 }
 
 export function SalaryPeriodFields({
@@ -18,7 +19,7 @@ export function SalaryPeriodFields({
   onSalaryPeriodToChange,
   disabled = false,
   variant = 'detailed'
-}: Omit<SalaryPeriodFieldsProps, 'variant'>) {
+}: SalaryPeriodFieldsProps) {
   const handleFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '') {

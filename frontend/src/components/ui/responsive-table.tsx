@@ -5,7 +5,7 @@ import { MobileTable, type MobileField, type RowAction } from "@/components/ui/m
 import { ColumnDef, SortingState, OnChangeFn } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 
-interface ResponsiveTableProps<TData = unknown> {
+interface ResponsiveTableProps<TData = any> {
   // Common props
   data: TData[];
   className?: string;
@@ -53,7 +53,7 @@ interface ResponsiveTableProps<TData = unknown> {
   breakpoint?: "sm" | "md" | "lg" | "xl";
 }
 
-export function ResponsiveTable<TData = unknown>({
+export function ResponsiveTable<TData = any>({
   data,
   className,
   columns,
@@ -112,13 +112,13 @@ export function ResponsiveTable<TData = unknown>({
   return (
     <div className={cn("w-full", className)}>
       <MobileTable
-        data={data}
-        fields={mobileFields}
-        rowTitle={rowTitle}
-        rowSubtitle={rowSubtitle}
-        rowActions={rowActions}
-        getRowId={getRowId}
-        onRowClick={onRowClick}
+        data={data as unknown as Record<string, unknown>[]}
+        fields={mobileFields as unknown as MobileField<Record<string, unknown>>[]}
+        rowTitle={rowTitle as unknown as (row: Record<string, unknown>) => React.ReactNode}
+        rowSubtitle={rowSubtitle as unknown as (row: Record<string, unknown>) => React.ReactNode}
+        rowActions={rowActions as unknown as RowAction<Record<string, unknown>>[]}
+        getRowId={getRowId as unknown as (row: Record<string, unknown>) => string}
+        onRowClick={onRowClick as unknown as (row: Record<string, unknown>) => void}
         emptyState={emptyState}
         accordionType={accordionType}
         pagination={pagination}
@@ -130,26 +130,31 @@ export function ResponsiveTable<TData = unknown>({
 }
 
 // Helper function to convert table columns to mobile fields
-export function columnsToMobileFields<TData extends Record<string, unknown>>(
+export function columnsToMobileFields<TData extends Record<string, unknown> = Record<string, unknown>>(
   columns: ColumnDef<TData>[],
   priorities?: Record<string, number>
 ): MobileField<TData>[] {
   return columns
     .filter((col) => col.id !== "select" && col.id !== "actions") // Skip selection and action columns
     .map((col) => {
-      const columnId = col.id || (col as unknown).accessorKey || "";
+      const colAny = col as unknown as { id?: string; accessorKey?: string; header?: unknown; cell?: unknown };
+      const columnId = colAny.id || colAny.accessorKey || "";
+      const header = colAny.header;
+      const cell = colAny.cell;
       return {
         key: columnId,
-        label: (col as unknown).header || columnId,
+        label: (header as string | undefined) || columnId,
         priority: priorities?.[columnId] || 2,
-        render: (col as unknown).cell ? (row: TData) => {
-          const cellContext = {
-            row: { original: row, getValue: (key: string) => row[key] },
-            getValue: () => row[columnId],
-          };
-          return (col as unknown).cell(cellContext);
-        } : undefined,
-      };
+        render: cell
+          ? (row: TData) => {
+              const cellContext = {
+                row: { original: row, getValue: (key: string) => row[key] },
+                getValue: () => row[columnId],
+              };
+              return (cell as (ctx: typeof cellContext) => React.ReactNode)(cellContext);
+            }
+          : undefined,
+      } as MobileField<TData>;
     });
 }
 

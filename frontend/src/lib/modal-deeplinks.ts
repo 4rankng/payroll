@@ -1,5 +1,5 @@
 import type { ModalId, ModalParams } from '@/types/modal-config.types';
-import { getModalConfig } from './modal-registry';
+import { getModalConfig } from './modal-registry-auto';
 
 /**
  * Deeplink Utilities for Type-Safe URL Building

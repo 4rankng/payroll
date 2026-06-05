@@ -37,14 +37,12 @@ export function DeleteEmployeeModal({
 
   // Calculate if employee has any timesheet entries
   const hasTimesheets = useMemo(() => {
-    // The API returns data directly in timesheetSummary, not in timesheetSummary.data
-    const summary = timesheetSummary?.data || timesheetSummary;
-    if (!summary) {
+    if (!timesheetSummary) {
       return false;
     }
 
-    const totalHours = Object.values(summary.totalHours || {}).reduce((sum, hours) => sum + hours, 0);
-    const result = totalHours > 0 || summary.workingDays > 0 || summary.pendingEntries > 0;
+    const totalHours = Object.values(timesheetSummary.totalHours || {}).reduce<number>((sum, hours) => sum + hours, 0);
+    const result = totalHours > 0 || timesheetSummary.workingDays > 0 || timesheetSummary.pendingEntries > 0;
 
     return result;
   }, [timesheetSummary]);
@@ -56,9 +54,8 @@ export function DeleteEmployeeModal({
 
   if (!employee) return null;
 
-  const summary = timesheetSummary?.data || timesheetSummary;
-  const totalHours = summary
-    ? Object.values(summary.totalHours || {}).reduce((sum, hours) => sum + hours, 0)
+  const totalHours = timesheetSummary
+    ? Object.values(timesheetSummary.totalHours || {}).reduce<number>((sum, hours) => sum + hours, 0)
     : 0;
 
   return (
@@ -104,10 +101,10 @@ export function DeleteEmployeeModal({
                       <Building className="h-3 w-3" />
                       <span><strong>{currentProjects.length}</strong> dự án đang tham gia</span>
                     </div>
-                    {summary?.workingDays > 0 && (
+                    {timesheetSummary?.workingDays !== undefined && timesheetSummary.workingDays > 0 && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
-                        <span><strong>{summary.workingDays}</strong> ngày chấm công</span>
+                        <span><strong>{timesheetSummary.workingDays}</strong> ngày chấm công</span>
                       </div>
                     )}
                   </div>

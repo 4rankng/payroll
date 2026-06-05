@@ -14,7 +14,7 @@ export const PartnerTimesheetList = ({ timesheetData, isLoading }: PartnerTimesh
   const { openTimesheetDetails } = useTimesheetModals();
 
   const handleTimesheetClick = (timesheet: Timesheet) => {
-    openTimesheetDetails(timesheet.id);
+    openTimesheetDetails(String(timesheet.id));
   };
 
   const getStatusColor = (status: string) => {

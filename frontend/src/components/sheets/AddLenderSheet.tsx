@@ -237,7 +237,7 @@ export function AddLenderSheet({ isOpen, onClose }: AddLenderSheetProps) {
               value={selectedBank}
               onSelect={(bank) => {
                 setSelectedBank(bank);
-                handleInputChange('bank_id', bank?.id);
+                handleInputChange('bank_id', bank?.id != null ? String(bank.id) : '');
               }}
               className={errors.bank_id ? 'border-red-500' : ''}
               canCreateBank={isAdmin}

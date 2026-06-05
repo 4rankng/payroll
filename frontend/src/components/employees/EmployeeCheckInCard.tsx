@@ -76,9 +76,9 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       }
     } catch (error: any) {
       if (error.code === 1) { // PERMISSION_DENIED
-        toast.error("Vui lòng cấp quyền truy cập vị trí để sử dụng tính năng này");
+        toast({ title: "Vui lòng cấp quyền truy cập vị trí để sử dụng tính năng này", variant: "destructive" });
       } else {
-        toast.error(error.message || "Không thể lấy vị trí hiện tại");
+        toast({ title: error.message || "Không thể lấy vị trí hiện tại", variant: "destructive" });
       }
     } finally {
       setIsLocating(false);

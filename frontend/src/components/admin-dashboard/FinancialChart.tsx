@@ -12,7 +12,25 @@ const PERIOD_OPTIONS = [
   { value: 'month', label: 'Tháng', description: '2 năm gần đây' },
 ] as const;
 
-const CHART_GROUPS = [
+// All possible line names used by the chart. Defined as a single union so
+// downstream switches can be exhaustive and don't get narrowed to a single
+// group's first-element literal type by the `as const` tuple below.
+type LineName =
+  | 'Doanh thu'
+  | 'Chi phí'
+  | 'Lợi nhuận'
+  | 'Tiền mặt'
+  | 'Công nợ phải thu'
+  | 'Công nợ phải trả'
+  | 'NV làm việc';
+
+const CHART_GROUPS: ReadonlyArray<{
+  value: string;
+  label: string;
+  description: string;
+  lines: ReadonlyArray<LineName>;
+  color: string;
+}> = [
   {
     value: 'revenue',
     label: 'Lợi nhuận',
@@ -34,7 +52,7 @@ const CHART_GROUPS = [
     lines: ['NV làm việc', 'Doanh thu', 'Công nợ phải thu'],
     color: 'hsl(270 60% 50%)'
   },
-] as const;
+];
 
 interface FinancialChartProps {
   className?: string;
@@ -94,7 +112,8 @@ export function FinancialChart({ className }: FinancialChartProps) {
 
     if (!activeGroupData) return [];
 
-    return activeGroupData.lines.map(lineName => {
+    return activeGroupData.lines.map((rawLine) => {
+      const lineName = rawLine as LineName;
       let value = 0;
       let color = '';
 
@@ -146,9 +165,8 @@ export function FinancialChart({ className }: FinancialChartProps) {
     if (!data || data.length < 2) return 'stable' as const;
 
     const activeGroupData = CHART_GROUPS.find(g => g.value === activeGroup);
-    if (!activeGroupData || activeGroupData.lines.length === 0) return 'stable';
-
-    const firstLineName = activeGroupData.lines[0];
+    const firstLineName = activeGroupData?.lines[0] as LineName | undefined;
+    if (!activeGroupData || !firstLineName) return 'stable';
     const recent = data[data.length - 1];
     const previous = data[data.length - 2];
 

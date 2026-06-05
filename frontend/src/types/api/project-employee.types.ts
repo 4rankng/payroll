@@ -241,7 +241,7 @@ export interface AssignmentValidationRules {
 
 // Payment schedule management types
 export interface ChangePaymentScheduleRequest {
-  new_schedule: "weekly" | "monthly";
+  new_schedule: "weekly" | "monthly" | "flexible";
   effective_date?: string;
 }
 

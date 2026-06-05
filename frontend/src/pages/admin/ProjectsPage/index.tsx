@@ -4,7 +4,6 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { ProjectPageHeader } from "@/components/projects/ProjectPageHeader";
 import { ProjectFilters } from "@/components/projects/ProjectFilters";
 import { AddProjectSheet } from "@/components/sheets/AddProjectSheet";
-import { ProjectDetailsSheet } from "@/components/sheets/ProjectDetailsSheet";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";

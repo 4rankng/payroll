@@ -12,6 +12,7 @@ export interface SlideSheetTemplateProps {
   onClose: () => void;
   title?: string;
   description?: string;
+  subtitle?: string;
   avatar?: SlideSheetTemplateAvatar;
   children: ReactNode;
   footer?: ReactNode;

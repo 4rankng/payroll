@@ -14,7 +14,7 @@ class EmailService {
   async sendCustomEmail(data: SendEmailData): Promise<SendEmailResponse> {
     // If no attachments, use regular JSON post
     if (!data.attachments || data.attachments.length === 0) {
-      return apiClient.post(API_ENDPOINTS.email.send, data);
+      return apiClient.post(API_ENDPOINTS.email.send, data) as unknown as Promise<SendEmailResponse>;
     }
 
     // Build FormData for multipart/form-data request
@@ -68,7 +68,7 @@ class EmailService {
     });
 
     // Use the upload method for multipart/form-data
-    return apiClient.upload(API_ENDPOINTS.email.send, formData);
+    return apiClient.upload(API_ENDPOINTS.email.send, formData) as unknown as Promise<SendEmailResponse>;
   }
   async settleFromEmailHistory(id: number): Promise<void> {
     await apiClient.post(API_ENDPOINTS.email.settleHistory(id), {});
@@ -77,7 +77,7 @@ class EmailService {
   async uploadSettlement(id: number, file: File): Promise<UploadSettlementResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    return apiClient.upload(API_ENDPOINTS.email.uploadSettlement(id), formData);
+    return apiClient.upload(API_ENDPOINTS.email.uploadSettlement(id), formData) as unknown as Promise<UploadSettlementResponse>;
   }
 
   async uploadStandaloneSettlement(file: File): Promise<unknown> {

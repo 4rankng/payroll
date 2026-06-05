@@ -50,6 +50,7 @@ export interface LenderFilters {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
+  [key: string]: unknown;
 }
 
 export interface CreateLenderRequest {
@@ -125,6 +126,7 @@ export interface LoanFilters {
   sortOrder?: 'asc' | 'desc';
   lender_id?: number;
   status?: LoanStatus;
+  [key: string]: unknown;
 }
 
 export interface CreateLoanRequest {

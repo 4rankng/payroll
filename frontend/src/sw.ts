@@ -1,5 +1,11 @@
+/// <reference lib="webworker" />
+
 // Custom Service Worker for TingTing PWA
 // Combines Workbox precaching with push notification handling
+
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: (string | { url: string; revision: string })[];
+};
 
 // Precache manifest injected by VitePWA injectManifest
 const PRECACHE_MANIFEST = self.__WB_MANIFEST;
@@ -8,7 +14,7 @@ const PRECACHE_MANIFEST = self.__WB_MANIFEST;
 const CACHE_NAME = 'tingting-cache-v2';
 
 // Install event — precache assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (event: ExtendableEvent) => {
   const precacheUrls = PRECACHE_MANIFEST.map((entry) =>
     typeof entry === 'string' ? entry : entry.url
   );
@@ -19,7 +25,7 @@ self.addEventListener('install', (event) => {
 });
 
 // Activate event — clean old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.keys().then((names) =>
       Promise.all(
@@ -31,7 +37,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch event — network first for API, cache first for assets
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
   const url = new URL(event.request.url);
 
   // Only handle same-origin requests; let cross-origin (dev server HMR, etc.) pass through
@@ -69,7 +75,7 @@ function stripHtml(str: string): string {
     .trim();
 }
 
-self.addEventListener('push', (event) => {
+self.addEventListener('push', (event: PushEvent) => {
   if (!event.data) return;
 
   let data;
@@ -113,7 +119,7 @@ self.addEventListener('push', (event) => {
 });
 
 // Handle notification click — open/focus the app
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
 
   const urlToOpen = event.notification.data?.url || '/';

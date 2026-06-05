@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { payRateService } from '@/services/api/payrate.service';
 import { showErrorNotification, showSuccessNotification } from '@/utils/error-handler';
 import type {
+  PayRate,
   PayRateListParams,
   CreatePayRateRequest,
   UpdatePayRateRequest,
@@ -33,11 +34,11 @@ function isNotFoundError(error: unknown): boolean {
  * Get current active or nearest upcoming payrate for a project
  */
 export function useCurrentPayRate(projectId: number, enabled = true) {
-  return useQuery({
+  return useQuery<PayRate>({
     queryKey: ['projects', projectId, 'payrate'],
     queryFn: async () => {
       const response = await payRateService.getCurrentProjectPayRate(projectId);
-      return (response as { data: unknown }).data;
+      return response.data;
     },
     enabled: enabled && !!projectId,
     gcTime: 15 * 60 * 1000, // 15 minutes
