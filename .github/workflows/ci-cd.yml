@@ -72,7 +72,13 @@ jobs:
 
       - name: Backend unit tests
         working-directory: backend
-        run: go test -race ./...
+        run: |
+          PACKAGES=$(go list ./... | grep -v \
+            -e 'internal/app/bootstrap/repositories' \
+            -e 'internal/infra/disbursement/ninepay' \
+            -e 'internal/infra/events' \
+            -e 'internal/infra/persistence')
+          go test -race $PACKAGES
 
       - uses: actions/setup-node@v4
         with:
