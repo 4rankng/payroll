@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -115,10 +116,19 @@ func (c *Client) InquiryFundsTransfer(ctx context.Context, fundsTransferID strin
 }
 
 // GetBalance fetches the outgoing-account balance.
+// OnePay returns code 39 (NO_DATA_FOUND) when the account has no balance
+// record — this is equivalent to a zero balance, not an error.
 func (c *Client) GetBalance(ctx context.Context) (*BalanceResponse, error) {
 	path := fmt.Sprintf(pathBalance, c.cfg.AccountID)
 	var out BalanceResponse
 	if err := c.doSigned(ctx, http.MethodGet, path, nil, nil, &out); err != nil {
+		var apiErr *APIError
+		if errors.As(err, &apiErr) && apiErr.ResponseCode == "39" {
+			c.logger.Info("onepay balance: no data found, returning zero balance",
+				"account_id", c.cfg.AccountID,
+			)
+			return &BalanceResponse{AccountID: c.cfg.AccountID, Balance: json.Number("0")}, nil
+		}
 		return nil, err
 	}
 	return &out, nil

@@ -303,6 +303,34 @@ func TestClient_GetBalance_ReturnsBalance(t *testing.T) {
 	}
 }
 
+func TestClient_GetBalance_NoDataFound_ReturnsZero(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"response_code": "39",
+			"name": "NO_DATA_FOUND",
+			"message": "No data found"
+		}`))
+	}))
+	defer srv.Close()
+
+	c := testClient(t, srv.URL, fixedTime)
+	resp, err := c.GetBalance(context.Background())
+	if err != nil {
+		t.Fatalf("GetBalance with NO_DATA_FOUND: %v", err)
+	}
+	bal, _ := resp.Balance.Int64()
+	if bal != 0 {
+		t.Errorf("Balance = %d, want 0 for NO_DATA_FOUND", bal)
+	}
+	if resp.AccountID != testAccountID {
+		t.Errorf("AccountID = %q, want %q", resp.AccountID, testAccountID)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // API error decoding
 // ---------------------------------------------------------------------------
