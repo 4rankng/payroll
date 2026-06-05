@@ -200,8 +200,7 @@ jobs:
 
             echo "Waiting for backend to start..."
             for i in $(seq 1 20); do
-              if docker compose exec -T backend \
-                 wget -q --spider http://localhost:8080/api/healthz 2>/dev/null; then
+              if curl -sf http://localhost:8080/api/healthz >/dev/null 2>&1; then
                 echo "Backend is healthy after ${i}s"
                 break
               fi
