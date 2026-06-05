@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"api-server/internal/infra/observability"
+	"api-server/internal/transport/http/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -110,9 +111,16 @@ func setupClockRoutes(v1 *gin.RouterGroup, container *Container) {
 // Routes are unauthenticated — providers post here without JWTs and
 // authenticity is enforced via the provider's signature verification.
 //
-// Mounted when any disbursement provider is enabled (9pay or onepay).
-// The generic /:provider path allows the handler to dispatch to the
-// correct provider via Registry.ByName().
+// Each provider gets a static path (e.g. /webhooks/disbursement/9pay)
+// rather than a generic /:provider catch-all. This is intentional: it lets
+// us attach per-provider middleware (e.g. IP whitelist for OnePay) and
+// keeps the surface area bounded — adding a new provider requires editing
+// this function, not silently adding a new route via the registry.
+//
+// OnePay publishes a stable set of egress IPs we can filter on, so it
+// gets the IP-whitelist middleware. 9pay does not, so the 9pay route is
+// gated only by signature verification; add a symmetric AllowedIPs field
+// on NinepayConfig if/when that changes.
 func setupDisbursementWebhookRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container == nil || container.Handlers == nil || container.Handlers.DisbursementWebhook == nil {
 		return
@@ -125,9 +133,27 @@ func setupDisbursementWebhookRoutes(v1 *gin.RouterGroup, container *Container) {
 	if !hasProvider {
 		return
 	}
+
 	webhooks := v1.Group("/webhooks/disbursement")
-	{
-		webhooks.PUT("/:provider", container.Handlers.DisbursementWebhook.Receive)
+
+	if cfg.Disbursement.Ninepay.Enabled {
+		webhooks.PUT("/9pay", container.Handlers.DisbursementWebhook.ReceiveFrom("9pay"))
+	}
+
+	if cfg.Disbursement.Onepay.Enabled {
+		var ipOpts []middleware.Option
+		if cfg.Disbursement.Onepay.AllowedIPsUseRemoteAddr {
+			ipOpts = append(ipOpts, middleware.UseRemoteAddr())
+		}
+		webhooks.PUT(
+			"/1pay",
+			middleware.IPWhitelist(cfg.Disbursement.Onepay.AllowedIPs, ipOpts...),
+			container.Handlers.DisbursementWebhook.ReceiveFrom("1pay"),
+		)
+		observability.GetLogger().Info("OnePay webhook IP whitelist enabled",
+			"allowed_ips", len(cfg.Disbursement.Onepay.AllowedIPs),
+			"use_remote_addr", cfg.Disbursement.Onepay.AllowedIPsUseRemoteAddr,
+		)
 	}
 }
 

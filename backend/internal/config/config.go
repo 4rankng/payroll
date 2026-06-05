@@ -232,6 +232,13 @@ type OnepayConfig struct {
 	HTTPTimeout            time.Duration
 	TPS                    int
 	QueueBuffer            int
+	AllowedIPs             []string
+	// AllowedIPsUseRemoteAddr, when true, makes the IP-whitelist middleware
+	// read the client IP from the raw TCP socket (c.Request.RemoteAddr)
+	// instead of c.ClientIP(). Required when running behind a reverse
+	// proxy that is not in TRUSTED_PROXIES, or when you do not want
+	// client-supplied X-Forwarded-For to influence the allow/deny decision.
+	AllowedIPsUseRemoteAddr bool
 }
 
 func Load() (*Config, error) {
@@ -432,17 +439,19 @@ func newOnepayConfig(env string) OnepayConfig {
 	}
 
 	return OnepayConfig{
-		Enabled:                parseBool(onepayEnabled),
-		EnabledForEmployee:     parseBool(getEnv("ENABLE_ONEPAY_FOR_EMPLOYEE", defaultEnabledForEmployee)),
-		EnabledForBulkTransfer: parseBool(getEnv("ENABLE_ONEPAY_FOR_BULK_TRANSFER", "false")),
-		PartnerID:              getEnv("ONEPAY_PARTNER_ID", ""),
-		PartnerKey:             getEnv("ONEPAY_PARTNER_KEY", ""),
-		AccountID:              getEnv("ONEPAY_ACCOUNT_ID", ""),
-		Endpoint:               getEnv("ONEPAY_BASE_URL", defaultEndpoint),
-		RequestExpirySeconds:   parseInt(getEnv("ONEPAY_REQUEST_EXPIRY_SECONDS", "3600")),
-		HTTPTimeout:            parseDuration(getEnv("ONEPAY_HTTP_TIMEOUT", "30s")),
-		TPS:                    parseInt(getEnv("ONEPAY_TPS", "3")),
-		QueueBuffer:            parseInt(getEnv("ONEPAY_QUEUE_BUFFER", "100")),
+		Enabled:                 parseBool(onepayEnabled),
+		EnabledForEmployee:      parseBool(getEnv("ENABLE_ONEPAY_FOR_EMPLOYEE", defaultEnabledForEmployee)),
+		EnabledForBulkTransfer:  parseBool(getEnv("ENABLE_ONEPAY_FOR_BULK_TRANSFER", "false")),
+		PartnerID:               getEnv("ONEPAY_PARTNER_ID", ""),
+		PartnerKey:              getEnv("ONEPAY_PARTNER_KEY", ""),
+		AccountID:               getEnv("ONEPAY_ACCOUNT_ID", ""),
+		Endpoint:                getEnv("ONEPAY_BASE_URL", defaultEndpoint),
+		RequestExpirySeconds:    parseInt(getEnv("ONEPAY_REQUEST_EXPIRY_SECONDS", "3600")),
+		HTTPTimeout:             parseDuration(getEnv("ONEPAY_HTTP_TIMEOUT", "30s")),
+		TPS:                     parseInt(getEnv("ONEPAY_TPS", "3")),
+		QueueBuffer:             parseInt(getEnv("ONEPAY_QUEUE_BUFFER", "100")),
+		AllowedIPs:              parseStringSlice(getEnv("ONEPAY_ALLOWED_IPS", "202.9.84.102,202.9.84.103,116.97.110.81,116.97.110.82,116.97.110.83,116.97.110.84,116.97.110.85,116.97.110.86")),
+		AllowedIPsUseRemoteAddr: parseBool(getEnv("ONEPAY_ALLOWED_IPS_USE_REMOTE_ADDR", "false")),
 	}
 }
 

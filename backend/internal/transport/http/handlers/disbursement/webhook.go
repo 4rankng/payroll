@@ -53,9 +53,30 @@ func (h *WebhookHandler) logProviderEvent(level slog.Level, msg string, args ...
 	}
 }
 
-// Receive handles PUT /api/v1/webhooks/disbursement/:provider.
+// providerCtxKey is the gin.Context key used to pass the provider name from
+// per-provider route registration (ReceiveFrom) into the shared Receive handler.
+const providerCtxKey = "disbursement_provider"
+
+// ReceiveFrom returns a gin.HandlerFunc bound to a specific provider name.
+// Used for per-provider route registration (e.g. PUT /9pay, PUT /1pay) where
+// the route path is a literal segment rather than a :provider parameter.
+func (h *WebhookHandler) ReceiveFrom(providerName string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(providerCtxKey, providerName)
+		h.Receive(c)
+	}
+}
+
+// Receive handles inbound disbursement webhook callbacks. The provider name
+// is resolved from the gin context (set by ReceiveFrom) or the :provider
+// path parameter (backward compat).
 func (h *WebhookHandler) Receive(c *gin.Context) {
 	providerName := c.Param("provider")
+	if providerName == "" {
+		if v, ok := c.Get(providerCtxKey); ok {
+			providerName = v.(string)
+		}
+	}
 	if providerName == "" {
 		response.BadRequest(c, "provider path parameter is required")
 		return
