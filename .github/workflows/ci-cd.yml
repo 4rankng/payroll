@@ -1,0 +1,216 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GO_VERSION: '1.26'
+  NODE_VERSION: '20'
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Job 1: Build & Lint
+  # ──────────────────────────────────────────────────────────
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Go vet
+        working-directory: backend
+        run: go vet ./...
+
+      - name: Check Go formatting
+        working-directory: backend
+        run: test -z $(gofmt -l .)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npx tsc -b
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npx vite build
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Tests
+  # ──────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: go test -race ./...
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: Frontend unit tests
+        working-directory: frontend
+        run: yarn test:run
+
+  # ──────────────────────────────────────────────────────────
+  # Job 3: Docker Build & Push (Backend)
+  # ──────────────────────────────────────────────────────────
+  docker-backend:
+    name: Docker Push (backend)
+    needs: [build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Generate short SHA tag
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            franknguyenvd/payroll-backend:latest
+            franknguyenvd/payroll-backend:${{ steps.sha.outputs.short }}
+          cache-from: type=registry,ref=franknguyenvd/payroll-backend:latest
+          build-args: BUILDKIT_INLINE_CACHE=1
+
+  # ──────────────────────────────────────────────────────────
+  # Job 4: Docker Build & Push (Frontend)
+  # ──────────────────────────────────────────────────────────
+  docker-frontend:
+    name: Docker Push (frontend)
+    needs: [build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Generate short SHA tag
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            franknguyenvd/payroll-frontend:latest
+            franknguyenvd/payroll-frontend:${{ steps.sha.outputs.short }}
+          cache-from: type=registry,ref=franknguyenvd/payroll-frontend:latest
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            VITE_API_BASE_URL=https://tingting.vip
+            VITE_API_VERSION=/api/v1
+            VITE_API_TIMEOUT=30000
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+  # ──────────────────────────────────────────────────────────
+  # Job 5: Deploy to Production
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production
+    needs: [docker-backend, docker-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: pay.1stop.app
+          username: root
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e
+            echo "=== Deploying Payroll ==="
+
+            cd /opt/payroll
+
+            echo "Pulling latest images..."
+            docker compose pull frontend backend
+
+            echo "Restarting backend..."
+            docker compose up -d --force-recreate --no-deps backend
+
+            echo "Waiting for backend to start..."
+            for i in $(seq 1 20); do
+              if docker compose exec -T backend \
+                 wget -q --spider http://localhost:8080/api/healthz 2>/dev/null; then
+                echo "Backend is healthy after ${i}s"
+                break
+              fi
+              if [ "$i" -eq 20 ]; then
+                echo "ERROR: Backend failed to start within 20s"
+                docker compose logs --tail=30 backend
+                exit 1
+              fi
+              sleep 1
+            done
+
+            echo "Restarting frontend..."
+            docker compose up -d --force-recreate --no-deps frontend
+
+            echo "Cleaning up unused images..."
+            docker image prune -f
+
+            echo "=== Deployment complete! ==="
+            echo "App: https://pay.1stop.app"
+            echo "API: https://pay.1stop.app/api/healthz"
