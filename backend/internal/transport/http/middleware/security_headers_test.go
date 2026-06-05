@@ -28,7 +28,7 @@ func TestSecurityHeaders(t *testing.T) {
 				"X-XSS-Protection":        "1; mode=block",
 				"Referrer-Policy":         "strict-origin-when-cross-origin",
 				"Permissions-Policy":      "geolocation=(), microphone=(), camera=()",
-				"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com; frame-ancestors 'none'",
+				"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func TestSecurityHeaders(t *testing.T) {
 				"X-XSS-Protection":          "1; mode=block",
 				"Referrer-Policy":           "strict-origin-when-cross-origin",
 				"Permissions-Policy":        "geolocation=(), microphone=(), camera=()",
-				"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com; frame-ancestors 'none'",
+				"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
 				"Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
 			},
 		},
