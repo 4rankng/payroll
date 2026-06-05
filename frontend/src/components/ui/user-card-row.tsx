@@ -151,7 +151,12 @@ export function UserCardRow({ user, onEdit, onDelete }: UserCardRowProps) {
                   <Clock className="w-4 h-4" />
                   <span className="typography-body-medium">Đăng nhập cuối:</span>
                 </div>
-                <span className="typography-body-medium">{user.lastLogin}</span>
+                <span className="typography-body-medium">
+                  {user.last_login ? (() => {
+                    const d = new Date(user.last_login);
+                    return isNaN(d.getTime()) ? user.last_login : d.toLocaleString('vi-VN');
+                  })() : "Chưa đăng nhập"}
+                </span>
               </div>
               
               {/* Created Date */}
@@ -160,7 +165,12 @@ export function UserCardRow({ user, onEdit, onDelete }: UserCardRowProps) {
                   <Calendar className="w-4 h-4" />
                   <span className="typography-body-medium">Ngày tạo:</span>
                 </div>
-                <span className="typography-body-medium">{user.createdAt}</span>
+                <span className="typography-body-medium">
+                  {user.created_at ? (() => {
+                    const d = new Date(user.created_at);
+                    return isNaN(d.getTime()) ? user.created_at : d.toLocaleDateString('vi-VN');
+                  })() : ""}
+                </span>
               </div>
               
               {/* Quick Actions */}

@@ -2,7 +2,7 @@ import type { PdfMake } from 'pdfmake/build/pdfmake';
 
 // Type definitions for pdfMake with VFS support
 interface PdfMakeWithVfs extends PdfMake {
-  vfs?: Record<string, string>;
+  vfs: Record<string, string>;
 }
 
 interface WindowWithPdfMake extends Window {

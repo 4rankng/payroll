@@ -25,6 +25,7 @@ import type {
 } from '@/types/api/project-employee.types';
 import type { PayRateListParams } from '@/types/api/payrate.types';
 import type { UserFilters } from '@/services/api/user.service';
+import type { AssetFilters } from '@/types/api/financial.types';
 
 // Generic filter interfaces for query parameters
 interface ReportParams {
@@ -34,16 +35,6 @@ interface ReportParams {
   employee_id?: number;
   status?: string;
   [key: string]: unknown;
-}
-
-interface AssetFilters {
-  status?: 'active' | 'inactive';
-  category?: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
 }
 
 interface NotificationFilters {
@@ -371,7 +362,7 @@ export const QueryKeyUtils = {
   /**
    * Get all query keys for a specific entity
    */
-  getEntityKeys: (entity: keyof typeof QueryKeys) => QueryKeys[entity].all,
+  getEntityKeys: (entity: keyof typeof QueryKeys) => (QueryKeys[entity] as any).all,
 
   /**
    * Check if a query key matches a pattern

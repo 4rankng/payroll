@@ -17,12 +17,12 @@ export function calculateScheduleSummary(form: FormState) {
 
   const totalInterest = totalRepayment - principal;
   
-  // Use the provided interest rate from the form for auto_interest and amortization loans
+  // Use the provided interest rate from the form for bullet_loan and amortization loans
   // since that's the rate the user entered and expects to see
   let effectiveAnnualRate = 0;
   const providedRate = Number(form.interest_rate_percent);
   
-  if ((form.loan_type === 'auto_interest' || form.loan_type === 'amortization') && 
+  if ((form.loan_type === 'bullet_loan' || form.loan_type === 'amortization') && 
       !isNaN(providedRate) && providedRate > 0) {
     effectiveAnnualRate = providedRate;
   } else {

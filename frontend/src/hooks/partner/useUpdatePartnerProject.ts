@@ -16,7 +16,8 @@ export const useUpdatePartnerProject = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ projectId, data }: UpdateProjectInput): Promise<Project> => {
-      return await projectService.updateProject(projectId, data);
+      const response = await projectService.updateProject(projectId, data);
+      return response.data;
     },
     onMutate: async ({ projectId, data }) => {
       setIsSubmitting(true);
@@ -43,7 +44,7 @@ export const useUpdatePartnerProject = () => {
       queryClient.setQueryData(['project', projectId], updatedProject);
 
       // Update project in all relevant lists using server response
-      updateItemInList(queryClient, ['projects'], updatedProject);
+      updateItemInList(queryClient, ['projects'], updatedProject as any);
 
       // Invalidate summary data to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['projects', 'partner-summary'] });
@@ -63,7 +64,8 @@ export const useUpdatePartnerProject = () => {
   // Status update mutation
   const statusUpdateMutation = useMutation({
     mutationFn: async ({ projectId, status }: { projectId: number; status: UpdateProjectStatusData }): Promise<Project> => {
-      return await projectService.updateProjectStatus(projectId, status);
+      const response = await projectService.updateProjectStatus(projectId, status);
+      return response.data;
     },
     onMutate: async ({ projectId }) => {
       setIsSubmitting(true);
@@ -91,7 +93,7 @@ export const useUpdatePartnerProject = () => {
       queryClient.setQueryData(['project', projectId], updatedProject);
 
       // Update project in all relevant lists using server response
-      updateItemInList(queryClient, ['projects'], updatedProject);
+      updateItemInList(queryClient, ['projects'], updatedProject as any);
 
       // Refresh summary data with server state
       queryClient.invalidateQueries({ queryKey: ['projects', 'partner-summary'] });

@@ -86,7 +86,7 @@ export async function exportBulkTransferHistoryToExcel(
   const fileName = `lich_su_chuyen_tien_${cleanFilename}.xls`;
 
   // Export to Excel
-  await exportToXLSWithMapping(data, columns, {
+  await exportToXLSWithMapping(data as unknown as Record<string, unknown>[], columns, {
     fileName,
     sheetName: 'Lịch sử chuyển tiền',
   });

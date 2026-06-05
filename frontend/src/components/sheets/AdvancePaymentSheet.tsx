@@ -146,7 +146,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
     const validationError = validateAdvancePaymentAmount(numericAmount, info.remainingAmount);
     if (validationError) { setError(validationError); return; }
     try {
-      await requestMutation.mutateAsync({ amount: numericAmount });
+      await requestMutation.mutateAsync({ amount: numericAmount, forMonth: info.forMonth });
       setAmount(""); setIsTouched(false); setServerFeeDetails(null);
       refetchInfo();
     } catch { /* handled */ }

@@ -12,9 +12,7 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
       queryClient.invalidateQueries({ queryKey: ['ledger-summary'] });
 
-      if (response?.message) {
-        showSuccessNotification(response.message);
-      }
+      showSuccessNotification('Tạo giao dịch thành công');
     },
     onError: (error: unknown) => {
       showErrorNotification(error, 'Không thể tạo giao dịch');

@@ -7,7 +7,7 @@
 
 import { TimesheetStatus, PaymentStatus } from '@/types/api/timesheet.types';
 
-export type AggregatedStatus = TimesheetStatus | PaymentStatus | 'mixed';
+export type AggregatedStatus = TimesheetStatus | PaymentStatus | 'mixed' | 'none';
 
 /**
  * Color configuration for different status types
@@ -42,7 +42,7 @@ export interface StripColors {
  * - Approved: Green - Successfully reviewed
  * - Rejected: Red - Needs revision
  */
-export const TIMESHEET_STATUS_COLORS: Record<TimesheetStatus, StatusColors> = {
+export const TIMESHEET_STATUS_COLORS: Partial<Record<TimesheetStatus, StatusColors>> = {
   draft: {
     bg: 'bg-muted',
     text: 'text-foreground',
@@ -78,7 +78,7 @@ export const TIMESHEET_STATUS_COLORS: Record<TimesheetStatus, StatusColors> = {
  * - Failed: Red - Payment error
  * - Cancelled: Gray - Payment cancelled
  */
-export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, StatusColors> = {
+export const PAYMENT_STATUS_COLORS: Partial<Record<PaymentStatus, StatusColors>> = {
   pending: {
     bg: 'bg-orange-50',
     text: 'text-orange-700',
@@ -118,7 +118,7 @@ export const MIXED_STATUS_COLORS: StatusColors = {
 /**
  * Strip/indicator colors for table rows and legends
  */
-export const TIMESHEET_STRIP_COLORS: Record<TimesheetStatus, StripColors> = {
+export const TIMESHEET_STRIP_COLORS: Partial<Record<TimesheetStatus, StripColors>> = {
   draft: {
     bg: 'bg-muted/500',
     indicator: 'before:bg-muted/500',
@@ -137,7 +137,7 @@ export const TIMESHEET_STRIP_COLORS: Record<TimesheetStatus, StripColors> = {
   },
 };
 
-export const PAYMENT_STRIP_COLORS: Record<PaymentStatus, StripColors> = {
+export const PAYMENT_STRIP_COLORS: Partial<Record<PaymentStatus, StripColors>> = {
   pending: {
     bg: 'bg-orange-500',
     indicator: 'before:bg-orange-500',

@@ -191,7 +191,7 @@ export type NextPaymentInfo = {
  */
 export function getDisbursementDate(loan: Loan): string | null {
   if (!loan) return null;
-  return loan.disbursement_date ?? loan.disbursed_at ?? loan.start_date ?? null;
+  return loan.disbursement_date ?? (loan as any).disbursed_at ?? (loan as any).start_date ?? null;
 }
 
 /**

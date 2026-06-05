@@ -281,11 +281,11 @@ class AdvancePaymentService {
    */
   async getFlexPayEmployees(
     filters?: FlexPayEmployeeFilters,
-  ): Promise<ApiResponse<FlexPayEmployeeListItem[], FlexPayEmployeeListMeta>> {
+  ): Promise<ApiResponse<FlexPayEmployeeListItem[]>> {
     const queryString = filters
       ? buildQueryString(filters as Record<string, unknown>)
       : "";
-    return apiClient.get<FlexPayEmployeeListItem[], FlexPayEmployeeListMeta>(
+    return apiClient.get<FlexPayEmployeeListItem[]>(
       `${API_ENDPOINTS.advancePayments.employees}${queryString}`,
     );
   }

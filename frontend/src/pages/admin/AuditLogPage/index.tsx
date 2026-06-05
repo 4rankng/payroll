@@ -37,7 +37,7 @@ export default function AuditLogPage() {
   const { observerRef } = useInfiniteScroll({
     hasMore: hasNextPage ?? false,
     isLoading: isFetchingNextPage,
-    onLoadMore: fetchNextPage,
+    onLoadMore: () => { fetchNextPage(); },
     rootMargin: '300px',
     threshold: 0.1,
   });

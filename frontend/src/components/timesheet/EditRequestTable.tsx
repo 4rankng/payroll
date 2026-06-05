@@ -171,11 +171,11 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { sortBy, sortOrder } = useMemo(() => {
-    if (sorting.length === 0) return { sortBy: 'created_at', sortOrder: 'desc' as const };
+    if (sorting.length === 0) return { sortBy: 'created_at', sortOrder: 'desc' as 'desc' | 'asc' };
     const col = sorting[0];
     return {
       sortBy: SORT_FIELD_MAP[col.id] ?? col.id,
-      sortOrder: (col.desc ? 'desc' : 'asc') as const,
+      sortOrder: (col.desc ? 'desc' : 'asc') as 'desc' | 'asc',
     };
   }, [sorting]);
 

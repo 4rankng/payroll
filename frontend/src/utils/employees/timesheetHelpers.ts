@@ -20,16 +20,17 @@ export const formatTimesheetRate = (rate: number): string => {
 };
 
 export const getTimesheetDisplayData = (record: Timesheet | EmployeeTimesheetEntry) => {
+  const rec = record as any;
   return {
-    id: record.id,
-    amount: formatTimesheetCurrency(record.amount),
-    projectName: 'projectName' in record ? record.projectName : `Project ${record.project_id}`,
-    date: formatTimesheetDate(record.date),
-    hours: formatTimesheetHours(record.hours_worked),
-    paytype: record.paytype,
-    rate: formatTimesheetRate(record.payrate),
-    hourType: record.hour_type,
-    dayType: record.day_type,
-    status: record.status
+    id: rec.id,
+    amount: formatTimesheetCurrency(rec.amount),
+    projectName: rec.projectName || rec.project?.name || `Project ${rec.project_id || rec.project?.id || ''}`,
+    date: formatTimesheetDate(rec.date),
+    hours: formatTimesheetHours(rec.hours_worked),
+    paytype: rec.paytype,
+    rate: formatTimesheetRate(rec.payrate),
+    hourType: rec.hour_type,
+    dayType: rec.day_type,
+    status: rec.status
   };
 };

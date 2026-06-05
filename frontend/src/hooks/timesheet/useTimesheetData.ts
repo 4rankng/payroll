@@ -38,7 +38,7 @@ export const useTimesheetData = (filters?: TimesheetFilters) => {
   };
 
   const handleBulkApprove = async (timesheetIds: number[]): Promise<void> => {
-    await bulkApproveMutation.mutateAsync({ timesheetIds });
+    await bulkApproveMutation.mutateAsync({ timesheet_ids: timesheetIds });
     refetch();
   };
 

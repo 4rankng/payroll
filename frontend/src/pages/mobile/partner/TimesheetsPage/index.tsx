@@ -251,8 +251,6 @@ export default function TimesheetsPageMobile() {
         onDelete={handleDelete}
         onAddTimesheet={() => openTimesheetEntry()}
         bulkTransferPercentage={bulkTransferPercentage}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onRequestEdit={handleRequestEdit}
         requestingTimesheetId={requestingTimesheetId}
         showEditRequestTable={true}

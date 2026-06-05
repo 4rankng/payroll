@@ -417,10 +417,20 @@ const AdvancePaymentsPage = () => {
                 </div>
               )}
               getRowId={(row: AdminAttendanceResponse) => row.id.toString()}
-              pagination={attendancePage.pagination}
+              pagination={attendancePage.pagination ? {
+                page: attendancePage.pagination.page,
+                pageSize: attendancePage.pagination.limit,
+                totalPages: attendancePage.pagination.totalPages,
+                totalRecords: attendancePage.pagination.totalRecords,
+              } : undefined}
               onPageChange={attendancePage.handlePageChange}
               onPageSizeChange={attendancePage.handlePageSizeChange}
-              emptyState={attendanceEmptyState}
+              emptyState={
+                <div className="text-center py-12">
+                  <h3 className="mt-4 text-lg font-semibold">{attendanceEmptyState.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{attendanceEmptyState.description}</p>
+                </div>
+              }
             />
           )}
         </section>

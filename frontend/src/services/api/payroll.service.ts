@@ -20,7 +20,7 @@ class PayrollService {
     const response = await apiClient.get<PaymentHistoryListResponse>(
       `${API_ENDPOINTS.payrolls.histories}${queryString}`
     );
-    return response as PaymentHistoryListResponse;
+    return response as unknown as PaymentHistoryListResponse;
   }
 
   /**

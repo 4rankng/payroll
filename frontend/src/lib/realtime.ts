@@ -179,7 +179,7 @@ class RealtimeService {
 
   send(type: string, action: string, payload: unknown): void {
     const event: RealtimeEvent = {
-      type: type as unknown,
+      type: type as RealtimeEvent['type'],
       action,
       payload,
       timestamp: new Date().toISOString()
@@ -203,7 +203,7 @@ class RealtimeService {
 
   emit(type: string, action: string, payload: unknown): void {
     const event: RealtimeEvent = {
-      type: type as unknown,
+      type: type as RealtimeEvent['type'],
       action,
       payload,
       timestamp: new Date().toISOString()
@@ -283,7 +283,7 @@ export function useRealtimeEvent<T = unknown>(
 ) {
   useEffect(() => {
     const unsubscribe = realtimeService.on(eventType, (event) => {
-      handler(event.payload);
+      handler(event.payload as T);
     });
 
     return unsubscribe;

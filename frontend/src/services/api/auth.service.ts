@@ -76,7 +76,7 @@ class AuthService {
   async logout(): Promise<ApiResponse<void>> {
     try {
       const response = await apiClient.post(API_ENDPOINTS.auth.logout);
-      return response;
+      return response as ApiResponse<void>;
     } finally {
       // Clear local storage even if API call fails
       authManager.removeToken();
@@ -107,7 +107,7 @@ class AuthService {
    */
   async changePassword(data: ChangePasswordData | ChangePasswordRequest): Promise<ApiResponse<void>> {
     const response = await apiClient.post(API_ENDPOINTS.auth.changePassword, data);
-    return response;
+    return response as ApiResponse<void>;
   }
 
   /**

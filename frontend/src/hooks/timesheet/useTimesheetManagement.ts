@@ -69,7 +69,7 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
       ...(sorting.length > 0
         ? {
             sortBy: SORT_FIELD_MAP[sorting[0].id] ?? sorting[0].id,
-            sortOrder: (sorting[0].desc ? 'desc' : 'asc') as const,
+            sortOrder: (sorting[0].desc ? 'desc' : 'asc') as 'desc' | 'asc',
           }
         : {
             sortBy: userRole === 'partner' ? 'date' : 'created_at',

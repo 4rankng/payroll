@@ -37,7 +37,7 @@ const UsersPage = () => {
   const { openUserDetails, openAddUser } = useUserModals();
 
   const handleResetPassword = (userId: number, password: string) => {
-    resetPasswordMutation.mutate({ id: userId, data: { password } });
+    resetPasswordMutation.mutate({ id: userId, password });
   };
 
   const handleRoleSelect = useCallback(

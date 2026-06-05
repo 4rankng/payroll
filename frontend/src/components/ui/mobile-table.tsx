@@ -87,7 +87,7 @@ export function MobileTable<T extends Record<string, unknown>>({
   }
 
   // Get field value from row
-  const getFieldValue = (row: T, field: MobileField<T>) => {
+  const getFieldValue = (row: T, field: MobileField<T>): React.ReactNode => {
     if (field.render) {
       return field.render(row);
     }
@@ -99,7 +99,7 @@ export function MobileTable<T extends Record<string, unknown>>({
       if ('id' in value && value.id) return String(value.id);
       return JSON.stringify(value);
     }
-    return value;
+    return value as any;
   };
 
   // Generate row ID - ensure uniqueness by combining with index as fallback

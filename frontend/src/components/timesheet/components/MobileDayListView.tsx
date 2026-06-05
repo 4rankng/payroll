@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale';
 import { Plus, Clock, Banknote, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Timesheet } from '@/types/api/timesheet.types';
-import { formatCurrency, getAggregatedStatus } from '../utils/timesheetCalendarHelpers';
+import { formatCurrency, getAggregatedStatus, type CalendarTimesheetEntry } from '../utils/timesheetCalendarHelpers';
 import type { ProjectCalendarData } from '../utils/timesheetCalendarHelpers';
 
 interface MobileDayListViewProps {
@@ -12,7 +12,7 @@ interface MobileDayListViewProps {
   year: number;
   month: number;
   bulkTransferPercentage?: number;
-  onDayClick: (date: Date, entries: Timesheet[]) => void;
+  onDayClick: (date: Date, entries: CalendarTimesheetEntry[]) => void;
 }
 
 const WEEKDAY_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -59,7 +59,7 @@ export function MobileDayListView({
 
   // Build a lookup from date string → entries
   const entriesByDate = useMemo(() => {
-    const map: Record<string, Timesheet[]> = {};
+    const map: Record<string, CalendarTimesheetEntry[]> = {};
     project.calendarDays.flat().forEach((day) => {
       if (day.isCurrentMonth && day.entries.length > 0) {
         const key = format(day.date, 'yyyy-MM-dd');

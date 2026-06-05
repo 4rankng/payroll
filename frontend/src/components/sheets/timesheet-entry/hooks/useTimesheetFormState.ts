@@ -57,6 +57,7 @@ export const useTimesheetFormState = ({
       cccd: assignment.employee_cccd,
       email: '',
       position: assignment.position,
+      current_projects: [],
       assignment
     }));
   }, [projectEmployeesData?.data]);

@@ -42,8 +42,8 @@ export const useSenderProfiles = (
   const combinedProfiles = useMemo(() => {
     const merged = new Map<number, UserSummary>();
     if (cachedProfiles) {
-      cachedProfiles.forEach((value, key) => {
-        merged.set(key, value);
+      Object.entries(cachedProfiles).forEach(([key, value]) => {
+        merged.set(Number(key), value);
       });
     }
     extraProfiles.forEach((value, key) => {

@@ -21,7 +21,7 @@ export const useEmailHistory = (options: UseEmailHistoryOptions = {}) => {
     queryKey: emailQueryKeys.historyList(pageSize),
     queryFn: async ({ pageParam = 1 }) => {
       const filters: EmailHistoryFilters = {
-        page: pageParam,
+        page: pageParam as number,
         pageSize,
       };
       return emailService.getEmailHistory(filters);

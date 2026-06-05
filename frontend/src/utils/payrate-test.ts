@@ -100,7 +100,7 @@ export const testApiResponseParsing = (apiResponse: unknown): PayRate => {
     }
   };
 
-  return expectedResponse.data;
+  return expectedResponse.data as unknown as PayRate;
 };
 
 // Helper function to extract rates for specific time periods

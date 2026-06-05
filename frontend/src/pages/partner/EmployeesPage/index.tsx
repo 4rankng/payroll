@@ -89,7 +89,7 @@ const EmployeesPage = () => {
   const { data: projectsData } = useAssignableProjects();
   const { exportEmployees, isExporting } = useEmployeeExport();
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const { openEmployeeDetails, openAddEmployee, openTimesheetEntry } = useEmployeeModals();
+  const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
 
   const handleEmployeeClick = useCallback(
     (employee: Employee) => openEmployeeDetails(employee.id.toString()),

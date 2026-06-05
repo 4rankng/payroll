@@ -65,7 +65,7 @@ export const PartnerEmployeesListMobile = ({ employees, isLoading }: PartnerEmpl
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="space-y-1">
                   <h3 className="typography-headline-small text-foreground">
-                    {employee.name}
+                    {employee.fullname}
                   </h3>
                   <p className="typography-body-small text-muted-foreground">
                     {employee.position || 'Nhân viên'}
@@ -79,10 +79,10 @@ export const PartnerEmployeesListMobile = ({ employees, isLoading }: PartnerEmpl
                       <span className="line-clamp-1">{employee.email}</span>
                     </div>
                   )}
-                  {employee.phone && (
+                  {employee.mobile && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-3.5 w-3.5" />
-                      <span>{employee.phone}</span>
+                      <span>{employee.mobile}</span>
                     </div>
                   )}
                 </div>

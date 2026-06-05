@@ -39,14 +39,12 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   // Update PWA badge count (Android/iOS home screen icon)
   const updateBadge = useCallback(async (count: number) => {
     try {
-      // @ts-expect-error - setAppBadge is not yet in all TS lib defs
-      if ('setAppBadge' in navigator) {
+      const nav = navigator as any;
+      if ('setAppBadge' in nav) {
         if (count > 0) {
-          // @ts-expect-error
-          await navigator.setAppBadge(count);
+          await nav.setAppBadge(count);
         } else {
-          // @ts-expect-error
-          await navigator.clearAppBadge();
+          await nav.clearAppBadge();
         }
       }
     } catch {

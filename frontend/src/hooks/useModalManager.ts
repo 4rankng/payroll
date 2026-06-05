@@ -45,7 +45,7 @@ export function useModalManager() {
   }, [params]);
 
   const setModalParam = useCallback((paramName: string, value: unknown) => {
-    updateParams({ [paramName]: value });
+    updateParams({ [paramName]: value as any });
   }, [updateParams]);
 
   return {

@@ -131,7 +131,7 @@ export const TimesheetFilters = () => {
                   value={selectedEmployee} onChange={onEmployeeChange}
                   selectedProject={selectedProject} placeholder="Tất cả nhân viên"
                   className="w-full"
-                  availableEmployees={shouldUseProjectEmployees ? projectEmployees : []}
+                  availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as any}
                   includeAvailableOnly={shouldUseProjectEmployees}
                 />
               </div>
@@ -190,7 +190,7 @@ export const TimesheetFilters = () => {
         selectedProject={selectedProject}
         placeholder="Nhân viên"
         className="inline-flex items-center gap-1 h-7 px-2.5 py-0 rounded-xl text-xs font-medium whitespace-nowrap border border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40 transition-colors duration-100 [&>svg]:h-3 [&>svg]:w-3"
-        availableEmployees={shouldUseProjectEmployees ? projectEmployees : []}
+        availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as any}
         includeAvailableOnly={shouldUseProjectEmployees}
         pillStyle
       />

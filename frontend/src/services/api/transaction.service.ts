@@ -280,7 +280,7 @@ class TransactionService {
     );
     // API returns { status: "success", data: {...}, message: "..." }
     // apiClient.get returns axios response, so we need response.data.data
-    return response.data || { transaction_types: [], statuses: [] };
+    return response.data as unknown as TransactionMetadata || { transaction_types: [], statuses: [] };
   }
 
   /**

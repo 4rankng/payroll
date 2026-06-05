@@ -130,26 +130,26 @@ export class InvalidationService {
     patterns: InvalidationPattern[],
     context: InvalidationContext
   ): readonly unknown[][] {
-    const resolvedKeys: readonly unknown[][] = [];
+    const resolvedKeys: unknown[][] = [];
 
     for (const pattern of patterns) {
       if (typeof pattern === 'string') {
         // Group reference
         const groupKeys = resolveGroupReference(pattern, context);
-        resolvedKeys.push(...groupKeys);
+        resolvedKeys.push(...(groupKeys as unknown[][]));
       } else if (typeof pattern === 'function') {
         // Dynamic pattern
         const result = pattern(context);
         if (Array.isArray(result[0])) {
           // Multiple keys
-          resolvedKeys.push(...(result as readonly unknown[][]));
+          resolvedKeys.push(...(result as unknown[][]));
         } else {
           // Single key
-          resolvedKeys.push(result as readonly unknown[]);
+          resolvedKeys.push(result as unknown[]);
         }
       } else {
         // Static pattern
-        resolvedKeys.push(pattern);
+        resolvedKeys.push(pattern as unknown[]);
       }
     }
 
@@ -161,7 +161,7 @@ export class InvalidationService {
    */
   private deduplicateKeys(keys: readonly unknown[][]): readonly unknown[][] {
     const seen = new Set<string>();
-    const unique: readonly unknown[][] = [];
+    const unique: unknown[][] = [];
 
     for (const key of keys) {
       const keyString = JSON.stringify(key);

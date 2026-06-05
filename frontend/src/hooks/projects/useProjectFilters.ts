@@ -12,7 +12,7 @@ export const useProjectFilters = ({
   const [searchTerm, setSearchTerm] = useState(initialFilters.search || "");
   const [statusFilter, setStatusFilter] = useState<Project['status'][] | 'all'>(
     Array.isArray(initialFilters.status) ? initialFilters.status :
-    initialFilters.status && initialFilters.status !== 'all' ? [initialFilters.status] : 'all'
+    initialFilters.status && (initialFilters.status as any) !== 'all' ? [initialFilters.status] as Project['status'][] : 'all'
   );
   const [monthFilter, setMonthFilter] = useState<string | undefined>(initialFilters.month);
   const [sortBy, setSortBy] = useState<string>(initialFilters.sortBy || 'created_at');

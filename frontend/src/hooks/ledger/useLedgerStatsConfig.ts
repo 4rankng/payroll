@@ -75,7 +75,7 @@ export const useLedgerStatsConfig = ({ summary, isLoading }: UseLedgerStatsConfi
       // All values now use the intuitive GetUserBalance calculation
       // Positive means: more cash, more spending, more income, owe more, owed more
       const getValueWithSign = () => {
-        return ledgerService.formatCurrencyShort(accountData.net);
+        return ledgerService.formatCurrencyShort(accountData.net_amount);
       };
 
       return {

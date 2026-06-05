@@ -22,6 +22,7 @@ import type {
   GrantEmployeeAccessData,
 } from "@/types/api/employee.types";
 import type { Bank } from "@/types/api/bank.types";
+import type { EmployeeProjectListParams } from "@/types/api/project-employee.types";
 import {
   addItemToList,
   updateItemInList,
@@ -149,7 +150,7 @@ export const useEmployeeProjects = (
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: QueryKeys.employees.projects(id, params),
+    queryKey: QueryKeys.employees.projects(id, params as EmployeeProjectListParams),
     queryFn: () => employeeService.getEmployeeProjects(id, params),
     enabled,
   });
@@ -334,7 +335,7 @@ export const useImportEmployees = () => {
     }: {
       file: File;
       onProgress?: (progress: number) => void;
-    }) => employeeService.importEmployees(file, onProgress),
+    }) => employeeService.importEmployees(file),
     onSuccess: (result) => {
       // Invalidate all employee queries
       queryClient.invalidateQueries({ queryKey: QueryKeys.employees.all });

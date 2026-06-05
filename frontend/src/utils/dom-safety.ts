@@ -98,7 +98,7 @@ export function isIncognitoMode(): Promise<boolean> {
   return new Promise((resolve) => {
     try {
       // Try to detect incognito mode using storage quota
-      navigator.webkitTemporaryStorage?.queryUsageAndQuota(
+      (navigator as any).webkitTemporaryStorage?.queryUsageAndQuota(
         (usage, quota) => {
           // In incognito mode, quota is typically much smaller
           resolve(quota < 120000000); // 120MB threshold

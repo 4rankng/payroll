@@ -53,7 +53,7 @@ export const groupTimesheetsByProject = (
 
   // Compute unique day counts and daily aggregates per group
   for (const group of Object.values(groups)) {
-    const dailyMap: Record<string, AggregatedDay> = {};
+    const dailyMap: Record<string, AggregatedDay & { _paid: number; _unpaid: number; _pending: number; _total: number; _hasForcePayroll: boolean }> = {};
     for (const entry of group.entries) {
       const day = normalizeToDate(entry.date);
       if (!dailyMap[day]) {
@@ -62,15 +62,34 @@ export const groupTimesheetsByProject = (
           totalHours: 0,
           totalAmount: 0,
           totalPaidAmount: 0,
+          paymentStatus: 'unpaid',
+          _paid: 0,
+          _unpaid: 0,
+          _pending: 0,
+          _total: 0,
+          _hasForcePayroll: false,
         };
       }
       dailyMap[day].totalHours += entry.hours_worked;
       dailyMap[day].totalAmount += entry.amount;
       dailyMap[day].totalPaidAmount += entry.paid_amount;
+      dailyMap[day]._total += 1;
+      if (entry.payment_status === 'paid') dailyMap[day]._paid += 1;
+      else if (entry.payment_status === 'pending') dailyMap[day]._pending += 1;
+      else dailyMap[day]._unpaid += 1;
+      if (entry.force_payroll) dailyMap[day]._hasForcePayroll = true;
     }
     group.uniqueDayCount = Object.keys(dailyMap).length;
-    // Keep days sorted descending by date
-    group.dailyAggregates = Object.values(dailyMap).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    // Map internal aggregates back to AggregatedDay, setting paymentStatus and hasForcePayroll
+    group.dailyAggregates = Object.values(dailyMap).map(d => {
+      let paymentStatus: AggregatedPaymentStatus = 'unpaid';
+      if (d._total > 0 && d._paid === d._total) paymentStatus = 'paid';
+      else if (d._total > 0 && d._paid === 0 && d._pending > 0) paymentStatus = 'pending';
+      else if (d._total > 0 && d._paid > 0) paymentStatus = 'partial';
+      else paymentStatus = 'unpaid';
+      const { _paid, _unpaid, _pending, _total, _hasForcePayroll, ...rest } = d;
+      return { ...rest, paymentStatus, hasForcePayroll: _hasForcePayroll } as AggregatedDay;
+    }).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   }
 
   return Object.values(groups);
@@ -127,9 +146,9 @@ export const groupTimesheetsByDay = (
   }
   const days = Object.values(map).map(d => {
     let paymentStatus: AggregatedPaymentStatus = 'unpaid';
-    if (d._paid === d._total) paymentStatus = 'paid';
-    else if (d._paid === 0 && d._pending > 0) paymentStatus = 'pending';
-    else if (d._paid > 0) paymentStatus = 'partial';
+    if (d._total > 0 && d._paid === d._total) paymentStatus = 'paid';
+    else if (d._total > 0 && d._paid === 0 && d._pending > 0) paymentStatus = 'pending';
+    else if (d._total > 0 && d._paid > 0) paymentStatus = 'partial';
     else paymentStatus = 'unpaid';
     const { _paid, _unpaid, _pending, _total, _hasForcePayroll, ...rest } = d;
     return { ...rest, paymentStatus, hasForcePayroll: _hasForcePayroll } as AggregatedDay;

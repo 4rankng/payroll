@@ -199,7 +199,7 @@ const EmployeesPageMobile = () => {
             variant="outline"
             size="sm"
             className="h-9 px-3"
-            onClick={() => exportEmployees()}
+            onClick={() => exportEmployees([])}
             disabled={isExporting}
           >
             <Download className="h-3.5 w-3.5" />

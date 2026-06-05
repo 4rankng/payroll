@@ -94,7 +94,7 @@ const TransactionsPage = () => {
 
   const { sorting, onSortingChange } = useTableSorting(
     filters.sortBy,
-    filters.sortOrder,
+    filters.sortOrder as 'desc' | 'asc',
     useCallback((sortBy, sortOrder) => {
       setFilters(prev => ({ ...prev, sortBy, sortOrder }));
     }, []),

@@ -5,7 +5,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { employeeService } from '@/services/api/employee.service';
 import { cn } from '@/lib/utils';
 import { Users } from 'lucide-react';
-import type { Employee } from '@/types/api/employee.types';
+import type { Employee, EmployeeFilters } from '@/types/api/employee.types';
 
 interface EmployeeSelectorProps {
   value?: Employee | null;
@@ -49,12 +49,12 @@ export function EmployeeSelector({
         return { data: availableEmployees, pagination: null };
       }
 
-      const filters = {
+      const filters: EmployeeFilters = {
         page: pageParam,
         pageSize: 20,
         status: 'working',
         sortBy: 'fullname',
-        sortOrder: 'asc' as const,
+        sortOrder: 'asc',
         ...(debouncedSearchValue.length >= 3 && { search: debouncedSearchValue })
       };
 
@@ -88,9 +88,10 @@ export function EmployeeSelector({
         cccd: '',
         email: '',
         username: '',
-        status: 'working',
+        status: 'active',
         created_at: '',
-        updated_at: ''
+        updated_at: '',
+        current_projects: []
       };
       return [allEmployeesOption, ...employeeList];
     }

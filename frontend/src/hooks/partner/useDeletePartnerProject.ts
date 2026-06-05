@@ -10,7 +10,7 @@ export const useDeletePartnerProject = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (projectId: number): Promise<void> => {
-      return await projectService.deleteProject(projectId);
+      await projectService.deleteProject(projectId);
     },
     onMutate: async (projectId) => {
       setIsDeleting(true);

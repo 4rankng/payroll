@@ -10,7 +10,7 @@ import { FileText, Calendar, User } from 'lucide-react';
 
 interface SettlementCardProps {
   settlement: Settlement;
-  userMap?: Map<number, UserListResponse['data'][0]>;
+  userMap?: Map<number, UserListResponse['data'][0]> | Record<number, UserListResponse['data'][0]>;
 }
 
 export function SettlementCard({ settlement, userMap }: SettlementCardProps) {

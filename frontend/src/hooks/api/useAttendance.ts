@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { attendanceService } from "@/services/attendance";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export const ATTENDANCE_QUERY_KEYS = {
   all: ["attendance"] as const,

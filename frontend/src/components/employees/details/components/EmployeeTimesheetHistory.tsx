@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { getMergedStatusBadge } from "@/components/timesheet/utils/timesheetHelpers";
-import type { EmployeeTimesheetResponse, EmployeeTimesheetEntry } from "@/types/api/timesheet.types";
+import type { EmployeeTimesheetResponse } from "@/types/api/timesheet.types";
+import type { EmployeeTimesheetEntry } from "@/types/api/employee.types";
 import type { EmployeeTimesheetFilters } from "@/types/api/employee.types";
 import type { SortingState, OnChangeFn } from "@tanstack/react-table";
 

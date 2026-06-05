@@ -7,7 +7,7 @@ interface EmployeeMultiSelectorProps {
   onChange: (employeeIds: number[]) => void;
   employees: Array<{
     id: number;
-    employee_code: string;
+    employee_code?: string;
     fullname: string;
     cccd?: string | null;
     date_of_birth?: string | null;
@@ -27,8 +27,8 @@ export function EmployeeMultiSelector({
     () =>
       employees.map((e) => ({
         value: String(e.id),
-        label: `${e.employee_code} - ${e.fullname}`,
-        searchText: `${e.employee_code} ${e.fullname} ${e.cccd || ''} ${e.date_of_birth || ''}`,
+        label: e.employee_code ? `${e.employee_code} - ${e.fullname}` : e.fullname,
+        searchText: `${e.employee_code || ''} ${e.fullname} ${e.cccd || ''} ${e.date_of_birth || ''}`,
       })),
     [employees],
   );

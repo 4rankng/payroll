@@ -73,7 +73,8 @@ export function setupQueryPersistence(queryClient: QueryClient): void {
     queryClient,
     persister,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    // Only persist queries that are not in the exclusion list
-    filter: (query) => shouldPersist(query.queryKey),
-  });
+    dehydrateOptions: {
+      shouldDehydrateQuery: (query) => shouldPersist(query.queryKey),
+    },
+  } as any);
 }

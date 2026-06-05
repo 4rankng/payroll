@@ -60,7 +60,7 @@ const ProjectsPageMobile = () => {
       setSearchParams(p, { replace: true });
     }
     const status = searchParams.get("status");
-    if (status === "active") filterControls.setStatusFilter("active");
+    if (status === "active") filterControls.setStatusFilter(["active"]);
   }, [searchParams, setSearchParams, filterControls]);
 
   const paginatedProjects = projects.slice(0, displayCount);

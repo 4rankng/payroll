@@ -76,10 +76,10 @@ function MobileCardRow<TData>({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const primaryCols = columns.filter((col) =>
-    primaryColumns.includes((col as unknown).accessorKey || col.id || "")
+    primaryColumns.includes((col as any).accessorKey || col.id || "")
   );
   const secondaryCols = columns.filter((col) =>
-    !primaryColumns.includes((col as unknown).accessorKey || col.id || "")
+    !primaryColumns.includes((col as any).accessorKey || col.id || "")
   );
 
   return (

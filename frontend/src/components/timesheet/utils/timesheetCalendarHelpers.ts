@@ -20,7 +20,7 @@ export interface CalendarTimesheetEntry {
   hours_worked: number;
   amount: number;
   paid_amount?: number;
-  status: 'approved' | 'pending_approval' | 'rejected' | 'draft';
+  status: 'approved' | 'pending_approval' | 'rejected' | 'draft' | 'paid';
   payment_status?: 'pending' | 'paid' | 'failed' | 'cancelled';
   force_payroll?: boolean;
   projectName: string;
@@ -331,7 +331,7 @@ export function createEmployeeCalendarDataFromTimesheets(
   monthlyStats: ProjectCalendarData['monthlyStats'];
 } {
   // Filter to only show approved timesheets
-  const approvedTimesheets = timesheets.filter((entry) => entry.timesheet_status === 'approved');
+  const approvedTimesheets = timesheets.filter((entry) => entry.status === 'approved');
 
   // Convert EmployeeTimesheetEntry to CalendarTimesheetEntry for calendar compatibility
   // Map payment_status to status field for visual display
@@ -340,9 +340,9 @@ export function createEmployeeCalendarDataFromTimesheets(
     employee_id: 0, // Not needed for employee view
     employeeName: '',
     employeeCode: '',
-    project_id: entry.project.id,
-    projectName: entry.project.name,
-    projectCode: entry.project.code,
+    project_id: entry.project_id,
+    projectName: entry.projectName || '',
+    projectCode: (entry as any).projectCode || '',
     date: entry.date,
     hours_worked: entry.hours_worked,
     amount: entry.amount,

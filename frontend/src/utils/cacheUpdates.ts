@@ -169,22 +169,21 @@ export function updateSummaryCount(
   queryClient.setQueryData(queryKey, (old: ApiResponse<unknown> | Record<string, unknown> | unknown) => {
     if (!old) return old;
 
-    // Handle ApiResponse format
-    if ('data' in old && typeof old.data === 'object') {
-      return {
-        ...old,
-        data: {
-          ...old.data,
-          [field]: Math.max(0, (old.data[field] || 0) + delta)
-        }
-      };
-    }
+    if (old && typeof old === 'object') {
+      const record = old as Record<string, any>;
+      if ('data' in record && record.data && typeof record.data === 'object') {
+        return {
+          ...record,
+          data: {
+            ...record.data,
+            [field]: Math.max(0, (record.data[field] || 0) + delta)
+          }
+        };
+      }
 
-    // Handle direct object format
-    if (typeof old === 'object') {
       return {
-        ...old,
-        [field]: Math.max(0, (old[field] || 0) + delta)
+        ...record,
+        [field]: Math.max(0, (record[field] || 0) + delta)
       };
     }
 
@@ -239,14 +238,14 @@ export function batchRemoveItemsFromList<T extends Record<string, unknown>>(
 
     // Handle array format
     if (Array.isArray(old)) {
-      return old.filter(item => !idsToRemove.has(item[idField]));
+      return old.filter(item => !idsToRemove.has(item[idField] as unknown as string | number));
     }
 
     // Handle ListResponse format
     if ('data' in old && Array.isArray(old.data)) {
       return {
         ...old,
-        data: old.data.filter(item => !idsToRemove.has(item[idField]))
+        data: old.data.filter(item => !idsToRemove.has(item[idField] as unknown as string | number))
       };
     }
 
@@ -300,21 +299,20 @@ export function updateSummaryFields(
       updatedFields[field] = Math.max(0, currentValue + delta);
     });
 
-    // Handle ApiResponse format
-    if ('data' in old && typeof old.data === 'object') {
-      return {
-        ...old,
-        data: {
-          ...old.data,
-          ...updatedFields
-        }
-      };
-    }
+    if (old && typeof old === 'object') {
+      const record = old as Record<string, any>;
+      if ('data' in record && record.data && typeof record.data === 'object') {
+        return {
+          ...record,
+          data: {
+            ...record.data,
+            ...updatedFields
+          }
+        };
+      }
 
-    // Handle direct object format
-    if (typeof old === 'object') {
       return {
-        ...old,
+        ...record,
         ...updatedFields
       };
     }

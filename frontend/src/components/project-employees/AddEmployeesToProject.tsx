@@ -54,11 +54,11 @@ export function AddEmployeesToProject({
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { sortBy, sortOrder } = useMemo(() => {
-    if (sorting.length === 0) return { sortBy: undefined, sortOrder: undefined as string | undefined };
+    if (sorting.length === 0) return { sortBy: undefined, sortOrder: undefined as 'desc' | 'asc' | undefined };
     const col = sorting[0];
     return {
       sortBy: col.id,
-      sortOrder: (col.desc ? 'desc' : 'asc') as const,
+      sortOrder: col.desc ? ('desc' as const) : ('asc' as const),
     };
   }, [sorting]);
 
@@ -244,7 +244,7 @@ export function AddEmployeesToProject({
       id: "fullname",
       header: "Tên nhân viên",
       accessorKey: "fullname",
-      minWidth: "200px",
+      size: 200,
       cell: ({ row }) => (
         <div className="flex items-center h-8">
           <span className="font-medium">
@@ -257,7 +257,7 @@ export function AddEmployeesToProject({
       id: "cccd",
       header: "CCCD",
       accessorKey: "cccd",
-      minWidth: "140px",
+      size: 140,
       cell: ({ row }) => (
         <div className="flex items-center h-8">
           <span className="font-mono typography-body-medium">
@@ -270,7 +270,7 @@ export function AddEmployeesToProject({
       id: "position",
       header: "Vị trí",
       enableSorting: true,
-      minWidth: "120px",
+      size: 120,
       cell: ({ row }) => {
         const employeeId = row.original.id;
         const position = employeePositions.get(employeeId);
@@ -287,7 +287,7 @@ export function AddEmployeesToProject({
       id: "actions",
       header: "Trạng thái",
       enableSorting: true,
-      minWidth: "80px",
+      size: 80,
       cell: ({ row }) => {
         const employeeId = row.original.id;
         const isAdded = recentlyAddedIds.has(employeeId);
@@ -350,7 +350,6 @@ export function AddEmployeesToProject({
               sorting={sorting}
               onSortingChange={setSorting}
               showPagination={availableEmployees.length > 15}
-              pageSize={15}
               primaryColumns={["fullname", "cccd"]}
               caption="Danh sách nhân viên khả dụng để thêm vào dự án"
               className="h-full"

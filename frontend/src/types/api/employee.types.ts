@@ -44,6 +44,7 @@ export interface PayrollSummary {
 export interface Employee {
   id: number;
   username?: string;
+  employee_code?: string;
   fullname: string;
   email?: string;
   cccd: string;
@@ -95,6 +96,7 @@ export interface EmployeeFilters {
   status?: "working" | "unassigned";
   search?: string;
   projectId?: number;
+  projectIds?: string;
   include_inactive?: boolean;
   month?: string;
   fromDate?: string;

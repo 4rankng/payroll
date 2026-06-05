@@ -37,7 +37,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     const status = searchParams.get('status');
     if (status === 'active') {
-      filterControls.setStatusFilter('active');
+      filterControls.setStatusFilter(['active']);
     }
   }, [searchParams, filterControls]);
 

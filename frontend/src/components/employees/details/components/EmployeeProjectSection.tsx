@@ -21,7 +21,7 @@ import type { CurrentProject } from "@/types/api/employee.types";
 type ProjectChange = {
   position?: string;
   start_date?: string;
-  payment_schedule?: 'weekly' | 'monthly';
+  payment_schedule?: 'weekly' | 'monthly' | 'flexible';
   assignmentId?: number;
 };
 
@@ -51,12 +51,12 @@ interface ProjectCardProps {
 
 interface ProjectPaymentScheduleControlProps {
   assignmentId?: number;
-  currentSchedule?: 'weekly' | 'monthly';
-  pendingSchedule?: 'weekly' | 'monthly' | null;
+  currentSchedule?: 'weekly' | 'monthly' | 'flexible';
+  pendingSchedule?: 'weekly' | 'monthly' | 'flexible' | null;
   effectiveFrom?: string | null;
-  draftSchedule?: 'weekly' | 'monthly';
+  draftSchedule?: 'weekly' | 'monthly' | 'flexible';
   isEditing?: boolean;
-  onScheduleChange?: (schedule: 'weekly' | 'monthly') => void;
+  onScheduleChange?: (schedule: 'weekly' | 'monthly' | 'flexible') => void;
 }
 
 function ProjectPaymentScheduleControl({
@@ -82,6 +82,11 @@ function ProjectPaymentScheduleControl({
         value: 'monthly' as const,
         label: VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.monthly,
         icon: Calendar
+      },
+      {
+        value: 'flexible' as const,
+        label: VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.flexible,
+        icon: Clock
       }
     ],
     []
@@ -95,7 +100,7 @@ function ProjectPaymentScheduleControl({
       if (!value || !isEditing) {
         return;
       }
-      onScheduleChange?.(value as 'weekly' | 'monthly');
+      onScheduleChange?.(value as 'weekly' | 'monthly' | 'flexible');
     },
     [isEditing, onScheduleChange]
   );
@@ -237,7 +242,7 @@ function ProjectCard({
     updateProjectChanges({ start_date: e.target.value });
   };
 
-  const handleScheduleDraftChange = (schedule: 'weekly' | 'monthly') => {
+  const handleScheduleDraftChange = (schedule: 'weekly' | 'monthly' | 'flexible') => {
     if (schedule === baselineSchedule) {
       updateProjectChanges({ payment_schedule: undefined });
       return;

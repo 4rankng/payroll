@@ -18,7 +18,7 @@ export const usePartnerProject = (projectId: string) => {
       ]);
       
       setProject(projectResponse);
-      if (employeesResponse.success && employeesResponse.data) {
+      if (employeesResponse.status === 'success' && employeesResponse.data) {
         setEmployees(employeesResponse.data);
       }
     } catch (error) {

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { ledgerService } from '@/services/api/ledger.service';
 import type { AccountMetadata } from '@/types/api/financial.types';
 import { authManager } from '@/lib/auth';
@@ -10,10 +10,10 @@ import { authManager } from '@/lib/auth';
 export const useLedgerMetadata = () => {
   const role = authManager.getUserRole();
   const enabled = authManager.isTokenValid() && role === 'admin';
-  return useQuery<AccountMetadata[]>({
+  return useQuery({
     queryKey: ['ledger-accounts-metadata'],
     queryFn: () => ledgerService.getAccountMetadata(),
-    cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: 3,
     refetchOnWindowFocus: false,
     enabled,

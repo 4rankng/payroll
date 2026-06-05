@@ -23,6 +23,7 @@ interface SearchableDropdownProps {
   allOption?: {
     value: string;
     label: string;
+    subtitle?: string;
   };
   /** Render as a compact filter pill instead of a full-height button */
   pillStyle?: boolean;

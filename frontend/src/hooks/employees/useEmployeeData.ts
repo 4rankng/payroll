@@ -155,9 +155,8 @@ export const useEmployeeData = (): UseEmployeeDataReturn => {
     await createMutation.mutateAsync(employeeData);
   }, [createMutation]);
 
-  const updateEmployee = useCallback(async (employeeId: number, employeeData: UpdateEmployeeData, bankObject?: Bank | null) => {
-    const result = await updateMutation.mutateAsync({ id: employeeId, data: employeeData, bank: bankObject });
-    return result;
+  const updateEmployee = useCallback(async (employeeId: number, employeeData: UpdateEmployeeData, bankObject?: Bank | null): Promise<void> => {
+    await updateMutation.mutateAsync({ id: employeeId, data: employeeData, bank: bankObject });
   }, [updateMutation]);
 
   const refreshData = useCallback(() => {

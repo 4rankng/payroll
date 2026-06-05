@@ -36,9 +36,9 @@ export function useTimesheetActions() {
     }
   };
 
-  const handleReject = async (timesheet: Timesheet) => {
+  const handleReject = async (timesheet: Timesheet, reason: string = 'Từ chối bởi partner') => {
     try {
-      await rejectTimesheetMutation.mutateAsync(timesheet.id);
+      await rejectTimesheetMutation.mutateAsync({ id: timesheet.id, data: { rejection_reason: reason } });
       toast({
         title: 'Loại thành công',
         description: `Đã loại bảng công cho ${timesheet.employeeName}.`,
@@ -54,7 +54,7 @@ export function useTimesheetActions() {
 
   const handleBulkApprove = async (timesheetIds: number[]) => {
     try {
-      await bulkApproveMutation.mutateAsync(timesheetIds);
+      await bulkApproveMutation.mutateAsync({ timesheet_ids: timesheetIds });
       toast({
         title: 'Duyệt hàng loạt thành công',
         description: `Đã duyệt ${timesheetIds.length} bảng công.`,

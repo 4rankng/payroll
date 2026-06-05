@@ -264,8 +264,8 @@ export function useTimesheetEntryForm({
     try {
       await resetTimesheetMutation.mutateAsync({
         id: existingEntry.id,
-        employee_id: existingEntry.employeeId || existingEntry.employee_id,
-        project_id: existingEntry.projectId || existingEntry.project_id,
+        employee_id: existingEntry.employee_id,
+        project_id: existingEntry.project_id,
       });
       if (onSuccess) await onSuccess();
       onClose();

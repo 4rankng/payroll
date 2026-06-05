@@ -34,7 +34,7 @@ export const useEmployeeDetails = ({ employee, onRefetch }: UseEmployeeDetailsPr
     setTimesheetFilters(prev => ({
       ...prev,
       sortBy: col.id,
-      sortOrder: (col.desc ? 'desc' : 'asc') as const,
+      sortOrder: (col.desc ? 'desc' : 'asc') as 'desc' | 'asc',
       page: 1,
     }));
   }, [timesheetSorting]);

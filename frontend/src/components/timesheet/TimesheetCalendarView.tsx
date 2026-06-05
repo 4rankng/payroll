@@ -203,20 +203,24 @@ export function TimesheetCalendarView({
     } else if (day.entries.length === 1) {
       // Single entry - open entry modal for editing (if not approved) or viewing
       const entry = day.entries[0];
+      const fullEntry = timesheets.find(t => t.id === entry.id);
       setEntryModalData({
         projectId: entry.project_id,
         projectName: entry.projectName,
         employeeId: entry.employee_id,
         employeeName: entry.employeeName,
         date: new Date(entry.date),
-        existingEntry: entry
+        existingEntry: fullEntry || null
       });
       setIsEntryModalOpen(true);
     } else if (day.entries.length > 1) {
       // Multiple entries - open list modal to show all entries
+      const fullEntries = day.entries
+        .map(entry => timesheets.find(t => t.id === entry.id))
+        .filter((t): t is Timesheet => !!t);
       setDayEntriesModalData({
         date: day.date,
-        entries: day.entries
+        entries: fullEntries
       });
       setIsDayEntriesModalOpen(true);
     }
@@ -406,7 +410,7 @@ function ProjectCalendar({ project, year, month, onDayClick, onEntryClick, bulkT
   const isMobile = useMediaQuery('(max-width: 767px)');
 
   // Mobile: handle day click from MobileDayListView
-  const handleMobileDayClick = (date: Date, entries: Timesheet[]) => {
+  const handleMobileDayClick = (date: Date, entries: CalendarTimesheetEntry[]) => {
     // Find the matching CalendarDay from the grid
     const dateKey = date.toISOString().slice(0, 10);
     const flatDays = project.calendarDays.flat();

@@ -170,7 +170,7 @@ function SearchBar({ value, onChange, inputRef }: SearchBarProps) {
 
 // ─── Trigger button ──────────────────────────────────────────────────────────
 
-interface TriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface TriggerProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'value'> {
   value?: Bank | null;
   placeholder: string;
   disabled: boolean;

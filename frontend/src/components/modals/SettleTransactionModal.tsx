@@ -155,7 +155,7 @@ function SettleTransactionModalComponent({
               upload_type: 'ledger_evidence',
             }
           });
-          proofAssetId = uploadResult.id;
+          proofAssetId = uploadResult.data.id;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           setFileUploadError(`Không thể tải lên file: ${errorMessage}`);

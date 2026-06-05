@@ -22,9 +22,10 @@ export const Typography = React.forwardRef<
   color = "primary", 
   className,
   responsive = true,
-  as: Component = "p",
+  as = "p",
   ...props 
 }, ref) => {
+  const Component = as as any;
   const typographyClasses = getTypographyClasses({
     variant,
     color,
@@ -34,7 +35,7 @@ export const Typography = React.forwardRef<
 
   return (
     <Component
-      ref={ref as React.Ref<HTMLElement>}
+      ref={ref}
       className={typographyClasses}
       {...props}
     >

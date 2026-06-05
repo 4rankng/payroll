@@ -56,7 +56,7 @@ export function calculateAmountDisplay(
 }
 
 export function getAmountDisplayText(
-  entry: TimesheetEntry,
+  entry: any,
   locale: string = 'vi-VN'
 ): AmountDisplayResult {
   return calculateAmountDisplay({

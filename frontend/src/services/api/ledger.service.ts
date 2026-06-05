@@ -163,7 +163,7 @@ class LedgerService {
       `${API_ENDPOINTS.ledger.cashFlow}${queryString}`
     );
 
-    return response.data || {
+    return ((response.data as unknown as CashFlowSummary) || {
       start_date: fromDate,
       end_date: toDate,
       total_inflow: 0,
@@ -173,7 +173,7 @@ class LedgerService {
       closing_balance: 0,
       by_account: {},
       by_project: {}
-    };
+    }) as CashFlowSummary;
   }
 
   /**
@@ -270,7 +270,7 @@ class LedgerService {
     );
     // API returns { status: "success", data: [...], message: "..." }
     // apiClient.get returns axios response, so we need response.data.data
-    return response.data || [];
+    return (response.data as unknown as AccountMetadata[]) || [];
   }
 
   /**

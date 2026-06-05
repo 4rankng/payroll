@@ -220,8 +220,8 @@ const TimesheetPageMobile = () => {
   const handleEditTimesheet = useCallback(
     (timesheet: Timesheet) => {
       openModal(MODAL_IDS.TIMESHEET_ENTRY, {
-        projectId: timesheet.projectId?.toString(),
-        employeeId: timesheet.employeeId?.toString(),
+        projectId: timesheet.project_id?.toString(),
+        employeeId: timesheet.employee_id?.toString(),
         entryId: timesheet.id?.toString(),
       });
     },
@@ -413,7 +413,6 @@ const TimesheetPageMobile = () => {
         onDelete={timesheetManagement.handleDelete}
         onAddTimesheet={handleAddTimesheet}
         onBulkApprove={() => setBulkApproveDialogOpen(true)}
-        onProjectBulkApprove={handleProjectBulkApprove}
         bulkTransferPercentage={bulkTransferPercentage}
         showEditRequestTable={true}
         userRole="admin"

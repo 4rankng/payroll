@@ -93,6 +93,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
     totalPaid, totalPending, totalFailed, totalCancelled,
     totalRequests, totalPaidAmount, totalPendingAmount,
     totalFailedAmount, totalCancelledAmount,
+    successRate,
   };
 
   return (

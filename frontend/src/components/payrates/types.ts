@@ -361,7 +361,7 @@ export function ratesToMatrix(rates: PayrateStructure): MatrixCell[] {
           position,
           dayType: dayType as DayType,
           hourType,
-          rate,
+          rate: rate as number,
           path: `${position}.${dayType}.${hourType}`
         });
       });

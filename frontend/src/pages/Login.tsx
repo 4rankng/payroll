@@ -149,10 +149,10 @@ const Login = () => {
                 <AlertCircle className="h-4 w-4 text-red-500" />
                 <AlertDescription className="font-medium text-sm">
                   {loginMutation.error
-                    ? ((loginMutation.error as ApiError)?.http_status === 429
-                      ? ((loginMutation.error as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
+                    ? (((loginMutation.error as unknown) as ApiError)?.http_status === 429
+                      ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
                       : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")
-                    : ((googleLoginMutation.error as ApiError)?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.")}
+                    : (((googleLoginMutation.error as unknown) as ApiError)?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.")}
                 </AlertDescription>
               </Alert>
             </div>

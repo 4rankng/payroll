@@ -106,7 +106,7 @@ export function TimesheetProvider({
 
     return {
     state: {
-      timesheets: management.timesheets,
+      timesheets: management.timesheets as any,
       isLoading: management.isLoading,
       error: management.error,
       pagination: management.paginationInfo,
@@ -141,7 +141,7 @@ export function TimesheetProvider({
       statusFilter: management.statusFilter,
       onStatusChange: management.setStatusFilter,
       projects: management.projects,
-      projectEmployees: management.projectEmployees,
+      projectEmployees: management.projectEmployees as any,
       searchTerm: management.searchTerm,
       onSearchChange: management.setSearchTerm,
       userRole,

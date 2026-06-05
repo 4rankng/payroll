@@ -151,10 +151,11 @@ export function usePayrateValidation() {
 }
 
 // Helper function to flatten rates
-function flattenRates(category: Record<string, number | Record<string, unknown>>): number[] {
+function flattenRates(category: any): number[] {
   const rates: number[] = [];
 
-  function traverse(obj: unknown): void {
+  function traverse(obj: any): void {
+    if (!obj) return;
     Object.values(obj).forEach(value => {
       if (typeof value === 'number') {
         rates.push(value);

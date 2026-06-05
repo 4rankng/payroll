@@ -90,7 +90,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const getVAPIDKey = async (): Promise<string | null> => {
     try {
       const response = await apiClient.get<{ publicKey: string }>(API_ENDPOINTS.push.vapidKey);
-      return response.publicKey;
+      return response.data.publicKey;
     } catch {
       console.error('Failed to fetch VAPID public key');
       return null;
@@ -129,7 +129,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
       });
 
       const subData = subscription.toJSON() as unknown as PushSubscriptionData;

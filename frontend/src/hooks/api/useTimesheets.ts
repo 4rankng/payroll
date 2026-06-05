@@ -247,8 +247,8 @@ export const useDeleteTimesheet = () => {
       invalidateCache('timesheet:delete', {
         timesheetId: deletedId,
         data: context?.timesheet ? {
-          employee_id: context.timesheet.employeeId || context.timesheet.employee_id,
-          project_id: context.timesheet.projectId || context.timesheet.project_id,
+          employee_id: context.timesheet.employee_id,
+          project_id: context.timesheet.project_id,
         } : {},
       });
 

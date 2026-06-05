@@ -83,8 +83,8 @@ export function useTimesheetEntry() {
       // Get the most recent active payrate from the list
       const today = new Date().toISOString().split('T')[0];
       const activePayrate = payRateData.data.find(payrate => {
-        const fromDate = payrate.from_date;
-        const toDate = payrate.to_date;
+        const fromDate = payrate.fromDate;
+        const toDate = payrate.toDate;
         return fromDate <= today && (!toDate || toDate >= today);
       });
 

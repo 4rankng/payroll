@@ -18,7 +18,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
 }
 
 export function ErrorByEndpointTable() {
-  const { data: summaryData, isLoading } = useAPISummary("error_total");
+  const { data: summaryData, isLoading } = useAPISummary(1, "error_total");
   const [sortKey, setSortKey] = useState<SortKey>("errorTotal");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 

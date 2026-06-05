@@ -36,7 +36,7 @@ export const calculateTimesheetStats = (timesheets: TimesheetItem[]) => {
     return sum + (isNaN(overtime) ? 0 : overtime);
   }, 0);
 
-  const pendingApproval = timesheets.filter(item => item?.status === "Chờ duyệt").length;
+  const pendingApproval = timesheets.filter(item => item?.status === "pending_approval").length;
 
   // Calculate efficiency based on actual vs expected work days
   const expectedDays = timesheets.reduce((sum, item) => {

@@ -12,7 +12,7 @@ interface BulkTransferFiltersSectionProps {
   projects: Array<{ id: number; code: string; name: string }>;
   employees: Array<{
     id: number;
-    employee_code: string;
+    employee_code?: string;
     fullname: string;
     cccd?: string | null;
     date_of_birth?: string | null;

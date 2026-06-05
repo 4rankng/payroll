@@ -50,7 +50,7 @@ const PaymentHistoryPage = () => {
     setFilters((prev) => ({
       ...prev,
       sortBy: apiSortBy,
-      sortOrder: (col.desc ? "desc" : "asc") as const,
+      sortOrder: col.desc ? ("desc" as const) : ("asc" as const),
     }));
   }, [sorting]);
 
@@ -154,7 +154,7 @@ const PaymentHistoryPage = () => {
       {/* Infinite scroll list */}
       <div className="flex-1 px-4 pb-2">
         <InfiniteScrollContainer
-          onLoadMore={() => fetchNextPage()}
+          onLoadMore={() => { fetchNextPage(); }}
           hasMore={!!hasNextPage}
           isLoading={isFetchingNextPage}
           className="space-y-3"

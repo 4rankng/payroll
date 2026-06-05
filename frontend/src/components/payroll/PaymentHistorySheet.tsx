@@ -66,7 +66,7 @@ export function PaymentHistorySheet({ isOpen, onClose }: PaymentHistorySheetProp
     setFilters(prev => ({
       ...prev,
       sortBy: apiSortBy,
-      sortOrder: (col.desc ? 'desc' : 'asc') as const,
+      sortOrder: col.desc ? 'desc' : 'asc',
     }));
     setCurrentPage(1);
   }, [sorting, sortByMap]);

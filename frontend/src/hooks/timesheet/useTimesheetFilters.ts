@@ -20,7 +20,7 @@ export const useTimesheetFilters = (timesheets: Timesheet[]) => {
       const matchesSearch =
         (timesheet.employeeName && vietnameseIncludes(timesheet.employeeName, searchTerm)) ||
         (timesheet.projectName && vietnameseIncludes(timesheet.projectName, searchTerm)) ||
-        (timesheet.description && vietnameseIncludes(timesheet.description, searchTerm));
+        (timesheet.notes && vietnameseIncludes(timesheet.notes, searchTerm));
 
       const matchesMonth = selectedMonth === "all" || timesheet.date.startsWith(selectedMonth);
       const matchesProject = selectedProject === "all" || timesheet.projectName === selectedProject;

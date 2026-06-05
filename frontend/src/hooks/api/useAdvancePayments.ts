@@ -377,11 +377,11 @@ export function useFlexPayEmployees(
 export function useFlexPayEmployeesInfinite(
   filters?: Omit<FlexPayEmployeeFilters, "page">,
 ) {
-  const pageSize = filters?.pageSize || 50;
+  const pageSize = (filters?.pageSize as number) || 50;
   return useInfiniteQuery({
     queryKey: QueryKeys.advancePayments.admin.flexPayEmployees({ ...filters, infinite: true } as Record<string, unknown>),
     queryFn: ({ pageParam = 1 }) =>
-      advancePaymentService.getFlexPayEmployees({ ...filters, page: pageParam, pageSize }),
+      advancePaymentService.getFlexPayEmployees({ ...filters, page: pageParam as number, pageSize }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const p = lastPage.pagination;

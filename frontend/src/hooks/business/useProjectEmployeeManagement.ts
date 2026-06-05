@@ -40,7 +40,7 @@ export function useProjectEmployeeManagement({
     const col = sorting[0];
     return {
       sortBy: col.id,
-      sortOrder: (col.desc ? 'desc' : 'asc') as const,
+      sortOrder: (col.desc ? 'desc' : 'asc') as 'desc' | 'asc',
     };
   }, [sorting]);
 

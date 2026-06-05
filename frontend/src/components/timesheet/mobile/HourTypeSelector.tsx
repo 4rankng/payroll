@@ -53,7 +53,7 @@ export function HourTypeSelector({
 
   const availableHourTypes = getAvailableHourTypes();
 
-  const getHourTypeIcon = (IconComponent: unknown) => {
+  const getHourTypeIcon = (IconComponent: any) => {
     return <IconComponent className="h-4 w-4" />;
   };
 
