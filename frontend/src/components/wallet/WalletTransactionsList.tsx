@@ -394,7 +394,7 @@ function TopupDetail({ topup, tx }: { topup: WalletTopup; tx: UnifiedTransaction
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WalletTransactionsList(
-  {}: WalletTransactionsListProps,
+  _props: WalletTransactionsListProps,
 ) {
   const isMobile = useIsMobile();
   const [page, setPage] = useState(1);

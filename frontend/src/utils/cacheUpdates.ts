@@ -170,13 +170,13 @@ export function updateSummaryCount(
     if (!old) return old;
 
     if (old && typeof old === 'object') {
-      const record = old as Record<string, any>;
+      const record = old as Record<string, unknown>;
       if ('data' in record && record.data && typeof record.data === 'object') {
         return {
           ...record,
           data: {
-            ...record.data,
-            [field]: Math.max(0, (record.data[field] || 0) + delta)
+            ...(record.data as Record<string, unknown>),
+            [field]: Math.max(0, ((record.data as Record<string, number>)[field] || 0) + delta)
           }
         };
       }
@@ -300,7 +300,7 @@ export function updateSummaryFields(
     });
 
     if (old && typeof old === 'object') {
-      const record = old as Record<string, any>;
+      const record = old as Record<string, unknown>;
       if ('data' in record && record.data && typeof record.data === 'object') {
         return {
           ...record,

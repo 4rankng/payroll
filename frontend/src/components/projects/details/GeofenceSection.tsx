@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, MapPin, Pencil, Check, X } from "lucide-react";
@@ -17,7 +17,7 @@ interface EditingGate {
 
 export function GeofenceSection({ project }: GeofenceSectionProps) {
   const updateMutation = useUpdateProject();
-  const gates = project.geofence_gates ?? [];
+  const gates = useMemo(() => project.geofence_gates ?? [], [project.geofence_gates]);
   const radius = project.geofence_radius_meters ?? 100;
   const [adding, setAdding] = useState(false);
   const [newGate, setNewGate] = useState<EditingGate>({ name: "", lat: "", lng: "" });

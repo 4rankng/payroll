@@ -44,7 +44,7 @@ export const useUpdatePartnerProject = () => {
       queryClient.setQueryData(['project', projectId], updatedProject);
 
       // Update project in all relevant lists using server response
-      updateItemInList(queryClient, ['projects'], updatedProject as any);
+      updateItemInList(queryClient, ['projects'], updatedProject as Record<string, unknown>);
 
       // Invalidate summary data to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['projects', 'partner-summary'] });
@@ -93,7 +93,7 @@ export const useUpdatePartnerProject = () => {
       queryClient.setQueryData(['project', projectId], updatedProject);
 
       // Update project in all relevant lists using server response
-      updateItemInList(queryClient, ['projects'], updatedProject as any);
+      updateItemInList(queryClient, ['projects'], updatedProject as Record<string, unknown>);
 
       // Refresh summary data with server state
       queryClient.invalidateQueries({ queryKey: ['projects', 'partner-summary'] });

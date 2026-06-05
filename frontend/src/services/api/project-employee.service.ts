@@ -224,7 +224,7 @@ export class ProjectEmployeeService {
       employee_code: options.employee_code,
       start_date: options.start_date,
       end_date: options.end_date
-    } as any);
+    } as Record<string, unknown>);
   }
 
 

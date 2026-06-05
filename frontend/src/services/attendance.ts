@@ -47,13 +47,13 @@ export const attendanceService = {
   },
 
   // Admin APIs
-  adminList: async (params?: Record<string, any>) => {
-    const { data } = await apiClient.get<{ data: any }>(API_ENDPOINTS.attendance.admin.list, { params });
+  adminList: async (params?: Record<string, unknown>) => {
+    const { data } = await apiClient.get(API_ENDPOINTS.attendance.admin.list, { params });
     return data;
   },
 
   adminGetById: async (id: number) => {
-    const { data } = await apiClient.get<{ data: any }>(API_ENDPOINTS.attendance.admin.byId(id));
+    const { data } = await apiClient.get(API_ENDPOINTS.attendance.admin.byId(id));
     return data;
   }
 };

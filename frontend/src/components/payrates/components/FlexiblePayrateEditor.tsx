@@ -31,7 +31,7 @@ function repairShift(raw: string): string | null {
   if (parts.length !== 2) return null;
   const fix = (seg: string) => {
     const [h,m=''] = seg.split(':');
-    let hh = parseInt(h,10), mm = parseInt(m||'0',10);
+    const hh = parseInt(h,10), mm = parseInt(m||'0',10);
     if (isNaN(hh)||isNaN(mm)) return null;
     return `${String(Math.min(23,Math.max(0,hh))).padStart(2,'0')}:${String(Math.min(59,Math.max(0,mm))).padStart(2,'0')}`;
   };
@@ -176,7 +176,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
     setRateMap(next);
     emit(positions, shifts, next);
   };
-  const getRate = (pos: string, s: Shift) => rateMap[pos]?.[shiftKey(s.start,s.end)] ?? 0;
+  const getRate = useCallback((pos: string, s: Shift) => rateMap[pos]?.[shiftKey(s.start,s.end)] ?? 0, [rateMap]);
 
   /* ── quick fill ── */
   const fillEmpty = () => {
@@ -207,7 +207,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
   const total  = positions.length * shifts.length;
   const filled = useMemo(() => positions.reduce((acc,pos) =>
     acc + shifts.filter(s=>getRate(pos,s)>0).length, 0
-  ), [positions, shifts, rateMap]);
+  ), [positions, shifts, getRate]);
   const pct    = total ? Math.round(filled/total*100) : 0;
   const valid  = positions.length>0 && shifts.length>0 && filled>0;
   const showTable = positions.length>0 && shifts.length>0;

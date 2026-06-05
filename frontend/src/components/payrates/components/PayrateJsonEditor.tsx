@@ -31,8 +31,8 @@ export function PayrateJsonEditor({ rates, onChange, readOnly = false }: Payrate
       }
       setError(null);
       onChange(parsed as PayrateStructure);
-    } catch (err: any) {
-      setError(err.message || "Invalid JSON");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Invalid JSON");
     }
   };
 

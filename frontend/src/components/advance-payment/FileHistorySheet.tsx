@@ -26,7 +26,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { data: fileHistory, isLoading } = useAdvancePaymentFileHistory({ enabled: open });
 
-  const allFiles = fileHistory?.data ?? [];
+  const allFiles = useMemo(() => fileHistory?.data ?? [], [fileHistory?.data]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');

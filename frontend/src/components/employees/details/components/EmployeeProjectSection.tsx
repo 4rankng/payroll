@@ -8,6 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Building, Link, Unlink, Plus, Calendar, Clock, AlertCircle, X, Pencil, Check } from "lucide-react";
 import { useProjectModals } from "@/hooks/useModalNavigation";
 import { getEmployeeProjects, getEmployeeProjectCount } from "@/types/api/employee.types";
+import type { ProjectEmployeeAssignment } from "@/types/api/project-employee.types";
 import { useCurrentPayRate } from "@/hooks/api/usePayRates";
 import { extractPositionsFromPayrates } from "@/types/api/payrate.types";
 import { useCancelScheduleChange } from "@/hooks/api/useProjectEmployees";
@@ -381,7 +382,7 @@ function ProjectCard({
                 project_id: project.project_id,
                 employee_id: employeeId ?? 0,
                 check_in_enabled: project.check_in_enabled,
-              } as any}
+              } as ProjectEmployeeAssignment}
             />
           </div>
         )}

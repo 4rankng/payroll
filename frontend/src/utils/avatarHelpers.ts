@@ -19,7 +19,7 @@ export function generateAvatarUrl(seed: string): string {
     clothingColor: ['000000'],
     accessoriesColor: ['000000'],
     glassesColor: ['000000'],
-  } as any);
+  } as Record<string, string[]>);
 
   const dataUrl = avatar.toDataUri();
   avatarDataUrlCache.set(cleanSeed, dataUrl);

@@ -20,7 +20,7 @@ export const formatTimesheetRate = (rate: number): string => {
 };
 
 export const getTimesheetDisplayData = (record: Timesheet | EmployeeTimesheetEntry) => {
-  const rec = record as any;
+  const rec = record as Record<string, unknown>;
   return {
     id: rec.id,
     amount: formatTimesheetCurrency(rec.amount),

@@ -56,7 +56,7 @@ export function calculateAmountDisplay(
 }
 
 export function getAmountDisplayText(
-  entry: any,
+  entry: Record<string, unknown>,
   locale: string = 'vi-VN'
 ): AmountDisplayResult {
   return calculateAmountDisplay({

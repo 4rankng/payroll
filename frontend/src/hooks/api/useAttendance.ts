@@ -27,8 +27,9 @@ export function useCheckIn() {
       toast.success("Check-in thành công");
       queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi check-in");
+    onError: (error: unknown) => {
+      const e = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(e?.response?.data?.message || "Lỗi khi check-in");
     },
   });
 }
@@ -44,8 +45,9 @@ export function useCheckOut() {
       // Invalidate advance payment info to refresh quota
       queryClient.invalidateQueries({ queryKey: ["advance-payment", "info"] });
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Lỗi khi check-out");
+    onError: (error: unknown) => {
+      const e = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(e?.response?.data?.message || "Lỗi khi check-out");
     },
   });
 }

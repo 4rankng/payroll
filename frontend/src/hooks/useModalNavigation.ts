@@ -274,7 +274,7 @@ export function useTimesheetModals() {
     }, [openModal]),
 
     openSaturdayDayType: useCallback((date: string, projectId?: string) => {
-      openModal('saturday_day_type' as any, { date, ...(projectId && { projectId }) });
+      openModal('saturday_day_type' as string, { date, ...(projectId && { projectId }) });
     }, [openModal])
   };
 }

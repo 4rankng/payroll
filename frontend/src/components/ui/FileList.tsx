@@ -142,12 +142,12 @@ export function FileList({
                 </p>
                 
                 {/* Status badge */}
-                {(asset as any).status && (
-                  <Badge 
-                    variant={(asset as any).status === 'active' ? 'default' : 'secondary'}
+                {(asset as { status?: string }).status && (
+                  <Badge
+                    variant={(asset as { status: string }).status === 'active' ? 'default' : 'secondary'}
                     className="typography-body-small"
                   >
-                    {(asset as any).status === 'active' ? 'Đang dùng' : (asset as any).status}
+                    {(asset as { status: string }).status === 'active' ? 'Đang dùng' : (asset as { status: string }).status}
                   </Badge>
                 )}
               </div>
@@ -163,7 +163,7 @@ export function FileList({
                       {format(new Date(asset.created_at), 'dd/MM/yyyy')}
                     </p>
                     
-                    {(asset as any).is_public && (
+                    {(asset as { is_public?: boolean }).is_public && (
                       <div className="flex items-center gap-1">
                         <ExternalLink className="w-3 h-3 text-gray-400" />
                         <span className="typography-body-small text-gray-400">Công khai</span>

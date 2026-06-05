@@ -262,7 +262,7 @@ const ProjectsPage = () => {
 
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
 
-  const allProjects = response?.data || [];
+  const allProjects = useMemo(() => response?.data || [], [response?.data]);
   // Client-side status filter (on top of search/server pagination)
   const projects = useMemo(() => {
     if (statusFilter === 'all') return allProjects;

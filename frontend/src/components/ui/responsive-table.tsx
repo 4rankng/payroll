@@ -5,7 +5,7 @@ import { MobileTable, type MobileField, type RowAction } from "@/components/ui/m
 import { ColumnDef, SortingState, OnChangeFn } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 
-interface ResponsiveTableProps<TData = any> {
+interface ResponsiveTableProps<TData = Record<string, unknown>> {
   // Common props
   data: TData[];
   className?: string;
@@ -53,7 +53,7 @@ interface ResponsiveTableProps<TData = any> {
   breakpoint?: "sm" | "md" | "lg" | "xl";
 }
 
-export function ResponsiveTable<TData = any>({
+export function ResponsiveTable<TData = Record<string, unknown>>({
   data,
   className,
   columns,

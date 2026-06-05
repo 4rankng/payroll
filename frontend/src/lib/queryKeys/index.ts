@@ -362,7 +362,7 @@ export const QueryKeyUtils = {
   /**
    * Get all query keys for a specific entity
    */
-  getEntityKeys: (entity: keyof typeof QueryKeys) => (QueryKeys[entity] as any).all,
+  getEntityKeys: (entity: keyof typeof QueryKeys) => (QueryKeys[entity] as { all: unknown }).all,
 
   /**
    * Check if a query key matches a pattern

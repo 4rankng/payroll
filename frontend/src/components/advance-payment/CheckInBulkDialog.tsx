@@ -60,7 +60,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     [projectsData]
   );
 
-  const allEmployees = employeesData?.data ?? [];
+  const allEmployees = useMemo(() => employeesData?.data ?? [], [employeesData?.data]);
 
   const filteredEmployees = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -82,7 +82,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
   const toggle = (id: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -118,11 +118,12 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
             queryKey: projectEmployeesKey(selectedProjectId, employeeParams),
           });
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
           // Surface backend validation errors (e.g. no payrate) inside the dialog
+          const e = err as { response?: { data?: { message?: string } }; message?: string };
           const msg =
-            err?.response?.data?.message ||
-            err?.message ||
+            e?.response?.data?.message ||
+            e?.message ||
             "Có lỗi xảy ra. Vui lòng thử lại.";
           setErrorMsg(msg);
         },

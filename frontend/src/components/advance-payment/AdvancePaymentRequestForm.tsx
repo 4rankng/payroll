@@ -38,7 +38,7 @@ export function AdvancePaymentRequestForm({
   const [error, setError] = useState<string | null>(null);
   
   // Default to the oldest available month with quota
-  const availableQuotas = info.quotas || [];
+  const availableQuotas = useMemo(() => info.quotas || [], [info.quotas]);
   const sortedQuotas = useMemo(
     () => [...availableQuotas].sort((a, b) => a.forMonth.localeCompare(b.forMonth)),
     [availableQuotas]

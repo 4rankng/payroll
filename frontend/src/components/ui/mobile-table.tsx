@@ -99,7 +99,7 @@ export function MobileTable<T extends Record<string, unknown>>({
       if ('id' in value && value.id) return String(value.id);
       return JSON.stringify(value);
     }
-    return value as any;
+    return value as unknown as string;
   };
 
   // Generate row ID - ensure uniqueness by combining with index as fallback

@@ -41,8 +41,8 @@ export const usePartnerTimesheetData = () => {
             setTimesheetData(timesheetsResponse.data);
           }
           // If response has a nested data structure
-          else if ((timesheetsResponse.data as any).timesheets) {
-            setTimesheetData((timesheetsResponse.data as any).timesheets);
+          else if ((timesheetsResponse.data as { timesheets?: unknown }).timesheets) {
+            setTimesheetData((timesheetsResponse.data as { timesheets: unknown[] }).timesheets);
           }
           // If response data itself is the timesheet array
           else {
@@ -101,8 +101,8 @@ export const usePartnerTimesheetData = () => {
       if (timesheetsResponse?.data) {
         if (Array.isArray(timesheetsResponse.data)) {
           setTimesheetData(timesheetsResponse.data);
-        } else if ((timesheetsResponse.data as any).timesheets) {
-          setTimesheetData((timesheetsResponse.data as any).timesheets);
+        } else if ((timesheetsResponse.data as { timesheets?: unknown }).timesheets) {
+          setTimesheetData((timesheetsResponse.data as { timesheets: unknown[] }).timesheets);
         } else {
           setTimesheetData([]);
         }

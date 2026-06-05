@@ -342,7 +342,7 @@ export function createEmployeeCalendarDataFromTimesheets(
     employeeCode: '',
     project_id: entry.project_id,
     projectName: entry.projectName || '',
-    projectCode: (entry as any).projectCode || '',
+    projectCode: (entry as { projectCode?: string }).projectCode || '',
     date: entry.date,
     hours_worked: entry.hours_worked,
     amount: entry.amount,

@@ -39,7 +39,7 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
   // Update PWA badge count (Android/iOS home screen icon)
   const updateBadge = useCallback(async (count: number) => {
     try {
-      const nav = navigator as any;
+      const nav = navigator as { setAppBadge?: (count: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
       if ('setAppBadge' in nav) {
         if (count > 0) {
           await nav.setAppBadge(count);

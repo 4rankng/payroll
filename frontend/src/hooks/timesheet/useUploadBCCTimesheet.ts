@@ -20,9 +20,10 @@ export function useUploadBCCTimesheet() {
       queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
       queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const e = error as { response?: { data?: { message?: string } }; message?: string };
       showErrorNotification(
-        error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi tải lên file BCC'
+        e?.response?.data?.message || e?.message || 'Có lỗi xảy ra khi tải lên file BCC'
       );
     },
   });

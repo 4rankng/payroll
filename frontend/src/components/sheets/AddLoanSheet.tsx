@@ -119,9 +119,9 @@ export function AddLoanSheet({ isOpen, onClose }: AddLoanSheetProps) {
     const result = generateCustomSchedules(form);
     if (!result.success) {
       setErrors(prev => {
-        const nextErrors = { ...prev, schedules: (result as any).error };
-        if ((result as any).fieldErrors) {
-          for (const [key, message] of Object.entries((result as any).fieldErrors)) {
+        const nextErrors = { ...prev, schedules: (result as { error?: string }).error };
+        if ((result as { fieldErrors?: Record<string, string> }).fieldErrors) {
+          for (const [key, message] of Object.entries((result as { fieldErrors: Record<string, string> }).fieldErrors)) {
             if (message) {
               nextErrors[key] = message;
             }
@@ -138,9 +138,9 @@ export function AddLoanSheet({ isOpen, onClose }: AddLoanSheetProps) {
     const result = generateAutoInterestSchedules(form);
     if (!result.success) {
       setErrors(prev => {
-        const nextErrors = { ...prev, schedules: (result as any).error };
-        if ((result as any).fieldErrors) {
-          for (const [key, message] of Object.entries((result as any).fieldErrors)) {
+        const nextErrors = { ...prev, schedules: (result as { error?: string }).error };
+        if ((result as { fieldErrors?: Record<string, string> }).fieldErrors) {
+          for (const [key, message] of Object.entries((result as { fieldErrors: Record<string, string> }).fieldErrors)) {
             if (message) {
               nextErrors[key] = message;
             }
@@ -157,9 +157,9 @@ export function AddLoanSheet({ isOpen, onClose }: AddLoanSheetProps) {
     const result = generateAmortizationSchedules(form);
     if (!result.success) {
       setErrors(prev => {
-        const nextErrors = { ...prev, schedules: (result as any).error };
-        if ((result as any).fieldErrors) {
-          for (const [key, message] of Object.entries((result as any).fieldErrors)) {
+        const nextErrors = { ...prev, schedules: (result as { error?: string }).error };
+        if ((result as { fieldErrors?: Record<string, string> }).fieldErrors) {
+          for (const [key, message] of Object.entries((result as { fieldErrors: Record<string, string> }).fieldErrors)) {
             if (message) {
               nextErrors[key] = message;
             }
@@ -207,13 +207,13 @@ export function AddLoanSheet({ isOpen, onClose }: AddLoanSheetProps) {
     if (form.loan_type === 'bullet_loan' && form.schedules.length === 0) {
       const result = generateAutoInterestSchedules(form);
       if (!result.success) {
-        setSubmitError((result as any).error || 'Vui lòng tạo lịch trả trước khi tạo khoản vay');
+        setSubmitError((result as { error?: string }).error || 'Vui lòng tạo lịch trả trước khi tạo khoản vay');
         return;
       }
     } else if (form.loan_type === 'amortization' && form.schedules.length === 0) {
       const result = generateAmortizationSchedules(form);
       if (!result.success) {
-        setSubmitError((result as any).error || 'Vui lòng tạo lịch trả trước khi tạo khoản vay');
+        setSubmitError((result as { error?: string }).error || 'Vui lòng tạo lịch trả trước khi tạo khoản vay');
         return;
       }
     } else if (form.loan_type === 'custom_schedule' && form.schedules.length === 0) {

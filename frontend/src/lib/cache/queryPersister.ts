@@ -76,5 +76,5 @@ export function setupQueryPersistence(queryClient: QueryClient): void {
     dehydrateOptions: {
       shouldDehydrateQuery: (query) => shouldPersist(query.queryKey),
     },
-  } as any);
+  } as Parameters<typeof persistQueryClient>[0]);
 }

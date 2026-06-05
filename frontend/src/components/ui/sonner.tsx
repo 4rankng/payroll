@@ -60,7 +60,7 @@ const toast = (arg: unknown, opts?: { duration?: number; className?: string; [ke
     finalOpts.className = [className, opts?.className, variantClass].filter(Boolean).join(' ') || undefined
     return baseToast(normalizedTitle as React.ReactNode, finalOpts)
   }
-  return baseToast(arg as any, opts)
+  return baseToast(arg as string, opts)
 }
 
 export { Toaster, toast }

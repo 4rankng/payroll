@@ -74,11 +74,12 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       } else {
         await checkOutMutation.mutateAsync(payload);
       }
-    } catch (error: any) {
-      if (error.code === 1) { // PERMISSION_DENIED
+    } catch (error: unknown) {
+      const e = error as { code?: number; message?: string };
+      if (e.code === 1) { // PERMISSION_DENIED
         toast({ title: "Vui lòng cấp quyền truy cập vị trí để sử dụng tính năng này", variant: "destructive" });
       } else {
-        toast({ title: error.message || "Không thể lấy vị trí hiện tại", variant: "destructive" });
+        toast({ title: e.message || "Không thể lấy vị trí hiện tại", variant: "destructive" });
       }
     } finally {
       setIsLocating(false);
