@@ -127,7 +127,8 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
 
       // Add dayType for Saturdays
       if (isSaturdayRequiringDayType(formattedDate)) {
-        entry.dayType = dayType === 'ngày thường' ? 'Ngày thường' : 'Ngày nghỉ';
+        entry.dayType = dayType === 'ngày lễ' ? 'Ngày lễ'
+          : dayType === 'ngày thường' ? 'Ngày thường' : 'Ngày nghỉ';
       }
 
       await timesheetService.createTimesheets([entry]);

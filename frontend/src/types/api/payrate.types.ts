@@ -2,7 +2,7 @@
 // Structure: Position → Day Type → Hour Type → Rate
 
 // Core payrate structure based on API documentation
-export type DayType = 'weekday' | 'weekend' | 'holiday';
+export type DayType = 'weekday' | 'weekend' | 'holiday' | 'ngày thường' | 'ngày nghỉ' | 'ngày lễ';
 export type PayrateStatus = 'active' | 'inactive';
 export type HourRange = string; // e.g., "08:00-17:00", "17:00-22:00"
 

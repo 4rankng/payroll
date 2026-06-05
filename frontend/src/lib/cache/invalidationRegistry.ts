@@ -396,7 +396,7 @@ export const InvalidationRegistry = {
   ],
 
   'payrate:update': (context: InvalidationContext) => [
-    QueryKeys.payrates.detail(context.data?.id),
+    QueryKeys.payrates.detail(context.data?.id as number),
     QueryKeys.payrates.lists(),
     QueryKeys.payrates.byProject(context.projectId!),
     QueryKeys.payrates.byEmployee(context.employeeId!),
@@ -433,18 +433,18 @@ export const InvalidationRegistry = {
   // ========== ASSET MUTATIONS ==========
   'asset:create': (context: InvalidationContext) => [
     QueryKeys.assets.lists(),
-    QueryKeys.assets.byReference(context.data?.reference_type, context.data?.reference_id),
+    QueryKeys.assets.byReference(context.data?.reference_type as string, context.data?.reference_id as number),
   ],
 
   'asset:update': (context: InvalidationContext) => [
     QueryKeys.assets.detail(context.assetId!),
     QueryKeys.assets.lists(),
-    QueryKeys.assets.byReference(context.data?.reference_type, context.data?.reference_id),
+    QueryKeys.assets.byReference(context.data?.reference_type as string, context.data?.reference_id as number),
   ],
 
   'asset:delete': (context: InvalidationContext) => [
     QueryKeys.assets.lists(),
-    QueryKeys.assets.byReference(context.data?.reference_type, context.data?.reference_id),
+    QueryKeys.assets.byReference(context.data?.reference_type as string, context.data?.reference_id as number),
   ],
 
   // ========== BANK MUTATIONS ==========
@@ -490,16 +490,16 @@ export function getInvalidationPatterns(
   const patterns = InvalidationRegistry[mutationType];
 
   if (typeof patterns === 'function') {
-    return patterns(context);
+    return (patterns as (ctx: InvalidationContext) => InvalidationPattern[])(context);
   }
 
-  return patterns as InvalidationPattern[];
+  return patterns as unknown as InvalidationPattern[];
 }
 
 /**
  * Resolve group references to actual query keys
  */
-export function resolveGroupReference(groupName: string, context: InvalidationContext = {}): readonly unknown[][] {
+export function resolveGroupReference(groupName: string, context: InvalidationContext = {}): readonly unknown[] {
   switch (groupName) {
     case 'PROJECT_CONTEXT':
       return context.projectId ? InvalidationGroups.PROJECT_CONTEXT(context.projectId) : [];

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
-import { Project, ProjectFormData } from "@/types/api/project.types";
+import { Project, ProjectFormData, ProjectPriority } from "@/types/api/project.types";
 import { X } from "lucide-react";
 
 export const modalConfig = {
@@ -47,8 +47,9 @@ export function ProjectEditModal({
         start_date: project.start_date || project.startDate || "",
         end_date: project.end_date || project.endDate || "",
         budget: project.budget,
-        priority: project.priority?.toLowerCase() === "cao" ? "high" :
-                 project.priority?.toLowerCase() === "trung bình" ? "medium" : "low",
+        priority: ["cao", "high"].includes(project.priority?.toLowerCase() || "") ? "high" :
+                 ["trung bình", "medium"].includes(project.priority?.toLowerCase() || "") ? "medium" :
+                 ["thấp", "low"].includes(project.priority?.toLowerCase() || "") ? "low" : "medium",
         description: project.description || "",
       });
     }

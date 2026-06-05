@@ -1,3 +1,4 @@
+import type { UserRole } from '@/types/modal-config.types';
 import { userModals, USER_MODAL_IDS, userModalSchemas } from './users';
 import { projectModals, PROJECT_MODAL_IDS, projectModalSchemas } from './projects';
 import { employeeModals, EMPLOYEE_MODAL_IDS, employeeModalSchemas } from './employees';
@@ -58,7 +59,6 @@ export const getModalSchema = (schemaKey: ModalSchemaKey) => {
   return MODAL_SCHEMAS[schemaKey] || null;
 };
 
-export { MODAL_SCHEMAS };
 
 export const isValidModalId = (id: string): id is ModalId => {
   return Object.values(MODAL_IDS).includes(id as ModalId);
@@ -68,7 +68,7 @@ export const getModalsByCategory = (category: string) => {
   return Object.values(MODAL_REGISTRY).filter(modal => modal.category === category);
 };
 
-export const getModalsByRole = (role: string) => {
+export const getModalsByRole = (role: UserRole) => {
   return Object.values(MODAL_REGISTRY).filter(modal => modal.roles.includes(role));
 };
 
@@ -105,13 +105,7 @@ export {
 };
 
 // Re-export types for external use
-export type {
-  UserModalId,
-  ProjectModalId,
-  EmployeeModalId,
-  TimesheetModalId,
-  GeneralModalId,
-} from './users';
+export type { UserModalId } from './users';
 export type { ProjectModalId } from './projects';
 export type { EmployeeModalId } from './employees';
 export type { TimesheetModalId } from './timesheets';

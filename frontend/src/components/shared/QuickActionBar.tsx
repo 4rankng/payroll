@@ -23,7 +23,7 @@ interface QuickAction {
   icon: LucideIcon;
   action: () => void;
   variant?: 'default' | 'secondary' | 'outline';
-  roles?: ('admin' | 'partner')[];
+  roles?: ('admin' | 'partner' | 'employee' | 'adv_partner')[];
 }
 
 interface QuickActionBarProps {

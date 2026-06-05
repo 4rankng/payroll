@@ -5,7 +5,6 @@ import type {
   PayRateListParams,
   CreatePayRateRequest,
   UpdatePayRateRequest,
-  RejectPayRateRequest,
   RateCategory
 } from '@/types/api/payrate.types';
 
@@ -38,10 +37,7 @@ export function useCurrentPayRate(projectId: number, enabled = true) {
     queryKey: ['projects', projectId, 'payrate'],
     queryFn: async () => {
       const response = await payRateService.getCurrentProjectPayRate(projectId);
-
-      // The API returns the current payrate directly, not an array
-      // So we can return the response as-is since it's already in the correct format
-      return response.data;
+      return (response as { data: unknown }).data;
     },
     enabled: enabled && !!projectId,
     gcTime: 15 * 60 * 1000, // 15 minutes
@@ -119,7 +115,7 @@ export function useCreatePayRate() {
     mutationFn: (data: CreatePayRateRequest) =>
       payRateService.createPayRate(data),
     onSuccess: (result) => {
-      const projectId = result.data.project_id;
+      const projectId = (result as { data: { project_id: number } }).data.project_id;
 
       // Invalidate and refetch all payrate queries to get fresh data from server
       // This ensures current/upcoming payrates are correctly determined
@@ -153,7 +149,7 @@ export function useCreateProjectPayRate() {
     mutationFn: ({ projectId, data }: { projectId: number; data: CreatePayRateRequest }) =>
       payRateService.createProjectPayRate(projectId, data),
     onSuccess: (result) => {
-      const projectId = result.data.project_id;
+      const projectId = (result as { data: { project_id: number } }).data.project_id;
 
       // Invalidate and refetch all payrate queries to get fresh data from server
       // This ensures current/upcoming payrates are correctly determined
@@ -187,8 +183,8 @@ export function useUpdatePayRate() {
     mutationFn: ({ payRateId, data }: { payRateId: number; data: UpdatePayRateRequest }) =>
       payRateService.updatePayRate(payRateId, data),
     onSuccess: (result) => {
-      const payRateId = result.data.id;
-      const projectId = result.data.project_id;
+      const payRateId = (result as { data: { id: number; project_id: number } }).data.id;
+      const projectId = (result as { data: { id: number; project_id: number } }).data.project_id;
 
       // Invalidate and refetch all payrate queries to get fresh data from server
       // This ensures current/upcoming payrates are correctly determined after update
@@ -257,7 +253,7 @@ export function useValidatePayRate() {
       effective_from: string;
       effective_to: string;
       exclude_rate_id?: number;
-    }) => payRateService.validatePayRate(data),
+    }) => (payRateService as unknown as { validatePayRate: (d: unknown) => Promise<{ data: { valid: boolean; errors: string[]; warnings: string[] } }> }).validatePayRate(data),
   });
 }
 
@@ -285,7 +281,7 @@ export function useCopyPayRate() {
       };
     }) => payRateService.copyPayRate(sourceRateId, targetProjectId, options),
     onSuccess: (result) => {
-      const projectId = result.data.project_id;
+      const projectId = (result as { data: { project_id: number } }).data.project_id;
       queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'payrates'] });
     },
   });
@@ -311,17 +307,17 @@ export function usePayRateManager(projectId: number) {
     // Validate first
     const validation = await validateMutation.mutateAsync({
       project_id: projectId,
-      rates: data.rates,
+      rates: data.rates as unknown as Record<string, RateCategory>,
       effective_from: data.effective_from,
       effective_to: data.effective_to || null,
     });
 
-    if (!validation.data.valid) {
-      throw new Error(`Validation failed: ${validation.data.errors.join(', ')}`);
+    if (!(validation as { data: { valid: boolean; errors: string[] } }).data.valid) {
+      throw new Error(`Validation failed: ${(validation as { data: { errors: string[] } }).data.errors.join(', ')}`);
     }
 
-    if (validation.data.warnings.length > 0) {
-      console.warn('Pay rate warnings:', validation.data.warnings);
+    if ((validation as { data: { warnings: string[] } }).data.warnings.length > 0) {
+      console.warn('Pay rate warnings:', (validation as { data: { warnings: string[] } }).data.warnings);
     }
 
     return createMutation.mutateAsync({ projectId, data });
@@ -353,7 +349,7 @@ export function usePayRateValidation() {
   }) => {
     try {
       const result = await validateMutation.mutateAsync(data);
-      return result.data;
+      return (result as { data: unknown }).data;
     } catch (error) {
       return {
         valid: false,
@@ -367,6 +363,6 @@ export function usePayRateValidation() {
   return {
     validateInRealTime,
     isValidating: validateMutation.isPending,
-    lastValidation: validateMutation.data,
+    lastValidation: validateMutation.data as unknown,
   };
 }

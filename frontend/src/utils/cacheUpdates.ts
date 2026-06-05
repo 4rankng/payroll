@@ -87,7 +87,7 @@ export function updateItemInList<T extends Record<string, unknown>>(
     // Handle array format
     if (Array.isArray(old)) {
       return old.map(item =>
-        item[idField] === updatedItem[idField] ? updatedItem : item
+        (item[idField] as unknown) === (updatedItem[idField] as unknown) ? updatedItem : item
       );
     }
 
@@ -166,7 +166,7 @@ export function updateSummaryCount(
   field: string,
   delta: number
 ): void {
-  queryClient.setQueryData(queryKey, (old: ApiResponse<unknown> | unknown) => {
+  queryClient.setQueryData(queryKey, (old: ApiResponse<unknown> | Record<string, unknown> | unknown) => {
     if (!old) return old;
 
     // Handle ApiResponse format
@@ -290,12 +290,13 @@ export function updateSummaryFields(
   queryKey: QueryKey,
   updates: Record<string, number>
 ): void {
-  queryClient.setQueryData(queryKey, (old: ApiResponse<unknown> | unknown) => {
+  queryClient.setQueryData(queryKey, (old: ApiResponse<unknown> | Record<string, unknown> | unknown) => {
     if (!old) return old;
 
     const updatedFields: Record<string, number> = {};
     Object.entries(updates).forEach(([field, delta]) => {
-      const currentValue = old.data?.[field] || old[field] || 0;
+      const oldObj = old as { data?: Record<string, number> } & Record<string, unknown>;
+      const currentValue = (oldObj.data?.[field] as number) || (oldObj[field] as number) || 0;
       updatedFields[field] = Math.max(0, currentValue + delta);
     });
 

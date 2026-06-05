@@ -19,9 +19,9 @@ import type {
 // ========== AUDIT SUMMARY ==========
 
 export function useAuditSummary(params: AuditSummaryParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'summary', params],
-    queryFn: () => auditService.getSummary(params),
+  return useQuery<Awaited<ReturnType<typeof auditService.getSummary>>['data']>({
+    queryKey: ['audit', 'summary', params] as const,
+    queryFn: async () => (await auditService.getSummary(params)).data,
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
@@ -29,17 +29,17 @@ export function useAuditSummary(params: AuditSummaryParams = {}) {
 // ========== AUDIT LOGS ==========
 
 export function useAuditLogs(params: AuditLogsParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'logs', params],
-    queryFn: () => auditService.getLogs(params),
-    keepPreviousData: true,
+  return useQuery<Awaited<ReturnType<typeof auditService.getLogs>>['data']>({
+    queryKey: ['audit', 'logs', params] as const,
+    queryFn: async () => (await auditService.getLogs(params)).data,
+    placeholderData: (prev) => prev,
   });
 }
 
 export function useAuditLogDetails(id: number, enabled = true) {
-  return useQuery({
-    queryKey: ['audit', 'logs', id],
-    queryFn: () => auditService.getLogDetails(id),
+  return useQuery<Awaited<ReturnType<typeof auditService.getLogDetails>>['data']>({
+    queryKey: ['audit', 'logs', id] as const,
+    queryFn: async () => (await auditService.getLogDetails(id)).data,
     enabled,
   });
 }
@@ -47,29 +47,29 @@ export function useAuditLogDetails(id: number, enabled = true) {
 // ========== USER ACTIVITY ==========
 
 export function useUserActivity(userId: number, params: UserActivityParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'users', userId, 'activity', params],
-    queryFn: () => auditService.getUserActivity(userId, params),
-    keepPreviousData: true,
+  return useQuery<Awaited<ReturnType<typeof auditService.getUserActivity>>['data']>({
+    queryKey: ['audit', 'users', userId, 'activity', params] as const,
+    queryFn: async () => (await auditService.getUserActivity(userId, params)).data,
+    placeholderData: (prev) => prev,
   });
 }
 
 // ========== BLACKLISTED TOKENS ==========
 
 export function useBlacklistedTokens(params: BlacklistedTokensParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'blacklisted-tokens', params],
-    queryFn: () => auditService.getBlacklistedTokens(params),
-    keepPreviousData: true,
+  return useQuery<Awaited<ReturnType<typeof auditService.getBlacklistedTokens>>['data']>({
+    queryKey: ['audit', 'blacklisted-tokens', params] as const,
+    queryFn: async () => (await auditService.getBlacklistedTokens(params)).data,
+    placeholderData: (prev) => prev,
   });
 }
 
 // ========== SECURITY REPORT ==========
 
 export function useSecurityReport(params: SecurityReportParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'security-report', params],
-    queryFn: () => auditService.getSecurityReport(params),
+  return useQuery<Awaited<ReturnType<typeof auditService.getSecurityReport>>['data']>({
+    queryKey: ['audit', 'security-report', params] as const,
+    queryFn: async () => (await auditService.getSecurityReport(params)).data,
     gcTime: 30 * 60 * 1000, // 30 minutes
   });
 }
@@ -77,10 +77,10 @@ export function useSecurityReport(params: SecurityReportParams = {}) {
 // ========== LOGIN HISTORY ==========
 
 export function useLoginHistory(params: LoginHistoryParams = {}) {
-  return useQuery({
-    queryKey: ['audit', 'login-history', params],
-    queryFn: () => auditService.getLoginHistory(params),
-    keepPreviousData: true,
+  return useQuery<Awaited<ReturnType<typeof auditService.getLoginHistory>>['data']>({
+    queryKey: ['audit', 'login-history', params] as const,
+    queryFn: async () => (await auditService.getLoginHistory(params)).data,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -93,7 +93,7 @@ export function useDataLineage(
 ) {
   return useQuery({
     queryKey: ['audit', 'data-lineage', entityType, entityId],
-    queryFn: () => auditService.getDataLineage(entityType, entityId),
+    queryFn: async () => (await auditService.getDataLineage(entityType, entityId)).data,
     enabled,
     gcTime: 60 * 60 * 1000, // 1 hour
   });
@@ -241,7 +241,6 @@ export function useCurrentUserActivity() {
     }
   }, []);
 
-  return useUserActivity(userId!, { page: 1, pageSize: 10 }, { 
-    enabled: !!userId 
-  });
+  return useUserActivity(userId!, { page: 1, pageSize: 10 });
+  // enabled is handled by queryFn only running when userId is set
 }

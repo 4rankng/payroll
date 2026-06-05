@@ -11,7 +11,7 @@ interface NavigationTarget {
 const SAFE_ROUTES = {
   admin: [
     '/admin/timesheet',
-    '/admin/approvals', 
+    '/admin/approvals',
     '/admin/employees',
     '/admin/projects',
     '/admin/settings',
@@ -20,7 +20,13 @@ const SAFE_ROUTES = {
     '/partner/timesheet',
     '/partner/employees',
     '/partner/project',
-  ]
+  ],
+  employee: [
+    '/employee/timesheet',
+  ],
+  adv_partner: [
+    '/adv-partner/advance-payments',
+  ],
 } as const;
 
 export const getNotificationNavigation = (notification: Notification): NavigationTarget | null => {
@@ -75,6 +81,7 @@ export const getNotificationNavigation = (notification: Notification): Navigatio
 
 export const validateNavigationPath = (path: string, userRole: string): boolean => {
   const allowedRoutes = SAFE_ROUTES[userRole as keyof typeof SAFE_ROUTES];
+  if (!allowedRoutes) return false;
   return allowedRoutes.some(route => path.startsWith(route));
 };
 
@@ -97,5 +104,11 @@ export const buildNavigationUrl = (target: NavigationTarget): string => {
 };
 
 export const getFallbackPath = (userRole: string): string => {
-  return userRole === 'admin' ? '/admin/notifications' : '/partner/notifications';
+  switch (userRole) {
+    case 'admin': return '/admin/notifications';
+    case 'partner': return '/partner/notifications';
+    case 'employee': return '/employee/timesheet';
+    case 'adv_partner': return '/adv-partner/advance-payments';
+    default: return '/';
+  }
 };

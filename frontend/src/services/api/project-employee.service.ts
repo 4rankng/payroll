@@ -33,9 +33,10 @@ export class ProjectEmployeeService {
     params: ProjectEmployeeListParams = {}
   ): Promise<ProjectEmployeeListResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<ProjectEmployeeListResponse>(
+    const response = await apiClient.get<ProjectEmployeeListResponse>(
       `/projects/${projectId}/employees${queryString}`
     );
+    return response.data!;
   }
 
   /**
@@ -45,10 +46,11 @@ export class ProjectEmployeeService {
     projectId: number,
     data: AssignEmployeeRequest
   ): Promise<AssignEmployeeResponse> {
-    return apiClient.post<AssignEmployeeResponse>(
+    const response = await apiClient.post<AssignEmployeeResponse>(
       `/projects/${projectId}/employees`,
       [data]
     );
+    return response.data!;
   }
 
   /**
@@ -66,10 +68,11 @@ export class ProjectEmployeeService {
     projectId: number,
     data: RemoveEmployeeRequest[]
   ): Promise<RemoveEmployeeResponse> {
-    return apiClient.post<RemoveEmployeeResponse>(
+    const response = await apiClient.post<RemoveEmployeeResponse>(
       `/projects/${projectId}/employees/remove`,
       data
     );
+    return response.data!;
   }
 
   // ========== EMPLOYEE-BASED OPERATIONS ==========
@@ -82,9 +85,10 @@ export class ProjectEmployeeService {
     params: EmployeeProjectListParams = {}
   ): Promise<EmployeeProjectListResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<EmployeeProjectListResponse>(
+    const response = await apiClient.get<EmployeeProjectListResponse>(
       `/employees/${employeeId}/projects${queryString}`
     );
+    return response.data!;
   }
 
   /**
@@ -99,10 +103,11 @@ export class ProjectEmployeeService {
       end_date?: string | null;
     }
   ): Promise<UpdateAssignmentResponse> {
-    return apiClient.put<UpdateAssignmentResponse>(
+    const response = await apiClient.put<UpdateAssignmentResponse>(
       `/employees/${employeeId}/projects`,
       data
     );
+    return response.data!;
   }
 
   // ========== ASSIGNMENT-BASED OPERATIONS ==========
@@ -117,10 +122,11 @@ export class ProjectEmployeeService {
     assignmentId: number,
     data: ChangePaymentScheduleRequest
   ): Promise<ChangePaymentScheduleResponse> {
-    return apiClient.post<ChangePaymentScheduleResponse>(
+    const response = await apiClient.post<ChangePaymentScheduleResponse>(
       `${this.baseUrl}/${assignmentId}/payment-schedule`,
       data
     );
+    return response.data!;
   }
 
   /**
@@ -128,9 +134,10 @@ export class ProjectEmployeeService {
    * DELETE /api/v1/project-employees/:id/payment-schedule
    */
   async cancelScheduleChange(assignmentId: number): Promise<CancelScheduleChangeResponse> {
-    return apiClient.delete<CancelScheduleChangeResponse>(
+    const response = await apiClient.delete<CancelScheduleChangeResponse>(
       `${this.baseUrl}/${assignmentId}/payment-schedule`
     );
+    return response.data!;
   }
 
   /**
@@ -138,9 +145,10 @@ export class ProjectEmployeeService {
    * GET /api/v1/project-employees/pending-schedule-changes
    */
   async getPendingScheduleChanges(): Promise<PendingScheduleChangesResponse> {
-    return apiClient.get<PendingScheduleChangesResponse>(
+    const response = await apiClient.get<PendingScheduleChangesResponse>(
       `${this.baseUrl}/pending-schedule-changes`
     );
+    return response.data!;
   }
 
   // ========== CONVENIENCE METHODS ==========
@@ -232,7 +240,16 @@ export class ProjectEmployeeService {
       average_assignment_duration: number;
     };
   }> {
-    return apiClient.get(API_ENDPOINTS.projects.assignmentStats(projectId));
+    const response = await apiClient.get(API_ENDPOINTS.projects.assignmentStats(projectId));
+    return response.data! as {
+      data: {
+        total_assignments: number;
+        active_assignments: number;
+        ended_assignments: number;
+        unique_employees: number;
+        average_assignment_duration: number;
+      };
+    };
   }
 
   /**
@@ -248,7 +265,17 @@ export class ProjectEmployeeService {
       average_assignment_duration: number;
     };
   }> {
-    return apiClient.get(API_ENDPOINTS.employees.assignmentStats(employeeId));
+    const response = await apiClient.get(API_ENDPOINTS.employees.assignmentStats(employeeId));
+    return response.data! as {
+      data: {
+        total_assignments: number;
+        active_assignments: number;
+        ended_assignments: number;
+        unique_projects: number;
+        total_working_days: number;
+        average_assignment_duration: number;
+      };
+    };
   }
 
   /**
@@ -259,10 +286,11 @@ export class ProjectEmployeeService {
     employeeId: number,
     enabled: boolean
   ): Promise<{ status: "success"; message: string }> {
-    return apiClient.patch(
+    const response = await apiClient.patch<{ status: "success"; message: string }>(
       `/projects/${projectId}/employees/${employeeId}/checkin-enabled`,
       { check_in_enabled: enabled }
     );
+    return response.data!;
   }
 
   /**
@@ -273,10 +301,11 @@ export class ProjectEmployeeService {
     employeeIds: number[],
     enabled: boolean
   ): Promise<{ status: "success"; message: string }> {
-    return apiClient.patch(
+    const response = await apiClient.patch<{ status: "success"; message: string }>(
       `/projects/${projectId}/employees/checkin-enabled/bulk`,
       { employee_ids: employeeIds, check_in_enabled: enabled }
     );
+    return response.data!;
   }
 }
 

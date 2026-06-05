@@ -247,7 +247,8 @@ export function useTimesheetEntry() {
 
             // Add dayType only for Saturdays
             if (isSaturdayRequiringDayType(dateStr)) {
-              newEntry.dayType = dayType === 'ngày thường' ? 'Ngày thường' : 'Ngày nghỉ';
+              newEntry.dayType = dayType === 'ngày lễ' ? 'Ngày lễ'
+                : dayType === 'ngày thường' ? 'Ngày thường' : 'Ngày nghỉ';
             }
 
             newTimesheetEntries.push(newEntry);

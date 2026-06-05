@@ -1,10 +1,12 @@
 import { jwtDecode } from 'jwt-decode';
 
+export type AppRole = 'admin' | 'partner' | 'employee' | 'adv_partner';
+
 interface TokenPayload {
   exp: number;
   user_id: number;
   username: string;
-  role: 'admin' | 'partner' | 'employee';
+  role: AppRole;
   sub: string;
   nbf: number;
   iat: number;
@@ -76,7 +78,7 @@ class AuthManager {
     }
   }
 
-  getUserRole(): 'admin' | 'partner' | 'employee' | null {
+  getUserRole(): AppRole | null {
     const payload = this.getTokenPayload();
 
     return payload?.role || null;
@@ -149,13 +151,13 @@ class AuthManager {
   }
 
   // Check if user has required role
-  hasRole(requiredRole: 'admin' | 'partner' | 'employee'): boolean {
+  hasRole(requiredRole: AppRole): boolean {
     const userRole = this.getUserRole();
     return userRole === requiredRole;
   }
 
   // Check if user has unknown of the required roles
-  hasAnyRole(roles: ('admin' | 'partner' | 'employee')[]): boolean {
+  hasAnyRole(roles: AppRole[]): boolean {
     const userRole = this.getUserRole();
     return userRole !== null && roles.includes(userRole);
   }

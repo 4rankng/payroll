@@ -35,6 +35,7 @@ export interface Timesheet {
   projectName: string;
   employeeName: string;
   employeeCode: string;
+  notes?: string;
   employeeCCCD?: string;
   employeeEmail?: string;
   projectCode?: string;
@@ -224,6 +225,7 @@ export interface BulkCreateTimesheetResult {
     }> | null;
     total_created: number;
     total_failed: number;
+    total_success?: number;
   };
 }
 

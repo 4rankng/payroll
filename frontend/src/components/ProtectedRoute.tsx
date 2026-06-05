@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 
 const hasRequiredRole = (userRole: string, requiredRole: ProtectedRouteProps["requiredRole"]): boolean => {
   if (!requiredRole) return true;
-  if (Array.isArray(requiredRole)) return requiredRole.includes(userRole as string);
+  if (Array.isArray(requiredRole)) return requiredRole.includes(userRole as ProtectedRouteProps["requiredRole"] extends Array<infer R> ? R : never);
   return userRole === requiredRole;
 };
 

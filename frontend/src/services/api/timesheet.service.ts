@@ -136,6 +136,7 @@ class TimesheetService {
       failed: Array<{ employeeId: number; error: string; details?: string; }> | null;
       total_created: number;
       total_failed: number;
+      total_success?: number;
     }>(
       API_ENDPOINTS.timesheets.base,
       entries
@@ -637,7 +638,7 @@ class TimesheetService {
       API_ENDPOINTS.timesheets.requestEdit(timesheetId),
       {}
     );
-    return response as TimesheetEditRequestResponse;
+    return response.data!;
   }
 
   /**
@@ -645,10 +646,10 @@ class TimesheetService {
    */
   async getEditRequests(filters?: TimesheetEditRequestFilters): Promise<TimesheetEditRequestListResponse> {
     const queryString = filters ? buildQueryString(filters) : '';
-    const response = await apiClient.get<unknown>(
+    const response = await apiClient.get<TimesheetEditRequestListResponse>(
       `${API_ENDPOINTS.timesheets.editRequests}${queryString}`
     );
-    return response.data as TimesheetEditRequestListResponse;
+    return response.data!;
   }
 
   /**
@@ -658,7 +659,7 @@ class TimesheetService {
     const response = await apiClient.get<TimesheetEditRequestResponse>(
       API_ENDPOINTS.timesheets.editRequestById(id)
     );
-    return response as TimesheetEditRequestResponse;
+    return response.data!;
   }
 
   /**
@@ -669,7 +670,7 @@ class TimesheetService {
       API_ENDPOINTS.timesheets.approveEditRequest(id),
       {}
     );
-    return response as TimesheetEditRequestResponse;
+    return response.data!;
   }
 
   /**
@@ -680,7 +681,7 @@ class TimesheetService {
       API_ENDPOINTS.timesheets.rejectEditRequest(id),
       {}
     );
-    return response as TimesheetEditRequestResponse;
+    return response.data!;
   }
 
   /**

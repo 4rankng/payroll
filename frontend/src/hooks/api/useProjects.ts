@@ -131,9 +131,9 @@ export const useProjectEmployeesSimple = (projectId: number, enabled = true) => 
     queryFn: () => projectService.getProjectEmployees(projectId, { pageSize: 100 }),
     enabled: enabled && !!projectId && projectId !== 0,
     select: (data) => {
-      // Transform to Employee format for EmployeeSelector
       if (!data?.data) return [];
-      return data.data.map(emp => ({
+      const items = Array.isArray(data.data) ? data.data : (data.data as { data?: unknown[] })?.data || [];
+      return (items as import('@/types/api/project.types').ProjectEmployee[]).map(emp => ({
         id: emp.employee_id,
         fullname: emp.employee_name,
         cccd: emp.employee_cccd,
@@ -171,7 +171,7 @@ export const useCreateProject = () => {
               data: [newProject, ...oldData.data], // Add new project at the beginning
               pagination: oldData.pagination ? {
                 ...oldData.pagination,
-                totalRecords: oldData.pagination.totalRecords + 1
+                totalRecords: ((oldData.pagination as unknown as { totalRecords?: number }).totalRecords ?? oldData.pagination.total ?? 0) + 1
               } : undefined
             };
           }
@@ -209,7 +209,7 @@ export const useUpdateProject = () => {
       // Use new invalidation service for related cache updates
       await invalidateCache('project:update', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
 
       if (response.message) {
@@ -228,18 +228,14 @@ export const useStartProject = () => {
     mutationFn: (id: number) => projectService.startProject(id),
     onSuccess: async (response) => {
       const updatedProject = response.data!;
-      // Optimistically update the project detail first
       queryClient.setQueryData(
         QueryKeys.projects.detail(updatedProject.id),
         updatedProject
       );
-
-      // Use new invalidation service for related cache updates
       await invalidateCache('project:start', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
-
       if (response.message) {
         showSuccessNotification(response.message);
       }
@@ -265,7 +261,7 @@ export const useCompleteProject = () => {
       // Use new invalidation service for related cache updates
       await invalidateCache('project:complete', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
 
       if (response.message) {
@@ -293,7 +289,7 @@ export const usePauseProject = () => {
       // Use new invalidation service for related cache updates
       await invalidateCache('project:update', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
 
       if (response.message) {
@@ -321,7 +317,7 @@ export const useResumeProject = () => {
       // Use new invalidation service for related cache updates
       await invalidateCache('project:update', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
 
       if (response.message) {
@@ -349,7 +345,7 @@ export const useCancelProject = () => {
       // Use new invalidation service for related cache updates
       await invalidateCache('project:cancel', {
         projectId: updatedProject.id,
-        data: updatedProject,
+        data: updatedProject as unknown as { employee_id?: number; project_id?: number; [key: string]: unknown },
       });
 
       if (response.message) {
@@ -399,8 +395,8 @@ export const useAssignEmployee = () => {
       const employeeId = data.employee_id;
 
       // The API returns the created assignment(s)
-      if (response.data && response.data.length > 0) {
-        const assignment = response.data[0];
+      if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        const assignment = (response.data as { data: import('@/types/api/project.types').ProjectAssignmentItem[] }).data[0];
 
         // Create new project entry for current_projects array
         const newCurrentProject = {

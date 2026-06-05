@@ -35,10 +35,10 @@ export function useCreateEditRequest() {
     mutationFn: (timesheetId: number) => timesheetService.createEditRequest(timesheetId),
     onSuccess: async (_data, timesheetId) => {
       await invalidateEditRequestCaches(queryClient, { timesheetId });
-      toast.success('Yêu cầu chỉnh sửa đã được gửi thành công');
+      toast('Thành công', { description: 'Yêu cầu chỉnh sửa đã được gửi thành công' });
     },
     onError: (error: unknown) => {
-      toast.error(`Không thể tạo yêu cầu: ${getErrorMessage(error)}`);
+      toast('Lỗi', { description: `Không thể tạo yêu cầu: ${getErrorMessage(error)}`, variant: 'destructive' });
     },
   });
 }
@@ -83,10 +83,10 @@ export function useApproveEditRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timesheetEditRequests'] });
       queryClient.invalidateQueries({ queryKey: ['timesheets'] });
-      toast.success('Yêu cầu đã được phê duyệt');
+      toast('Thành công', { description: 'Yêu cầu đã được phê duyệt' });
     },
     onError: (error: unknown) => {
-      toast.error(`Không thể phê duyệt: ${getErrorMessage(error)}`);
+      toast('Lỗi', { description: `Không thể phê duyệt: ${getErrorMessage(error)}`, variant: 'destructive' });
     },
   });
 }
@@ -99,10 +99,10 @@ export function useRejectEditRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timesheetEditRequests'] });
       queryClient.invalidateQueries({ queryKey: ['timesheets'] });
-      toast.success('Yêu cầu đã bị từ chối');
+      toast('Thành công', { description: 'Yêu cầu đã bị từ chối' });
     },
     onError: (error: unknown) => {
-      toast.error(`Không thể từ chối: ${getErrorMessage(error)}`);
+      toast('Lỗi', { description: `Không thể từ chối: ${getErrorMessage(error)}`, variant: 'destructive' });
     },
   });
 }

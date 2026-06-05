@@ -158,6 +158,7 @@ export interface LedgerFilters {
   fromDate?: string;
   toDate?: string;
   has_evidence?: boolean; // Filter entries with or without evidence
+  project_id?: number;
 }
 
 // New API response interfaces

@@ -202,21 +202,21 @@ class AuthService {
   /**
    * Get user role from stored token
    */
-  getUserRole(): 'admin' | 'partner' | 'employee' | null {
+  getUserRole(): 'admin' | 'partner' | 'employee' | 'adv_partner' | null {
     return authManager.getUserRole();
   }
 
   /**
    * Check if user has required role
    */
-  hasRole(role: 'admin' | 'partner' | 'employee'): boolean {
+  hasRole(role: 'admin' | 'partner' | 'employee' | 'adv_partner'): boolean {
     return authManager.hasRole(role);
   }
 
   /**
    * Check if user has any of the required roles
    */
-  hasAnyRole(roles: ('admin' | 'partner' | 'employee')[]): boolean {
+  hasAnyRole(roles: ('admin' | 'partner' | 'employee' | 'adv_partner')[]): boolean {
     return authManager.hasAnyRole(roles);
   }
 

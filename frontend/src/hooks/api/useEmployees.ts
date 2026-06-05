@@ -163,7 +163,7 @@ export const useEmployeeCurrentProjects = (
 ) => {
   return useQuery({
     queryKey: QueryKeys.employees.currentProjects(id, filters),
-    queryFn: () => employeeService.getEmployeeCurrentProjects(id, filters),
+    queryFn: () => employeeService.getEmployeeCurrentProjects(id, filters as unknown as Record<string, unknown>),
     enabled,
   });
 };
@@ -176,7 +176,7 @@ export const useEmployeePayroll = (
 ) => {
   return useQuery({
     queryKey: QueryKeys.employees.payroll(id, filters),
-    queryFn: () => employeeService.getEmployeePayroll(id, filters),
+    queryFn: () => employeeService.getEmployeePayroll(id, filters as unknown as Record<string, unknown>),
     enabled,
   });
 };
@@ -189,7 +189,7 @@ export const useEmployeeTimesheet = (
 ) => {
   return useQuery({
     queryKey: QueryKeys.employees.timesheet(id, filters),
-    queryFn: () => employeeService.getEmployeeTimesheet(id, filters),
+    queryFn: () => employeeService.getEmployeeTimesheet(id, filters as unknown as Record<string, unknown>),
     enabled,
   });
 };
@@ -386,8 +386,8 @@ export const useEmployeeByCCCD = (cccd: string, enabled = true) => {
 // Change employee password (Admin/Partner only)
 export const useChangeEmployeePassword = () => {
   return useMutation({
-    mutationFn: ({ id, password }: { id: number; password: string }) =>
-      employeeService.changeEmployeePassword(id, { new_password: password }),
+    mutationFn: (vars: { id: number; password: string }) =>
+      employeeService.changeEmployeePassword(vars.id, { new_password: vars.password }),
     onSuccess: (response) => {
       if (response.message) {
         showSuccessNotification(response.message);

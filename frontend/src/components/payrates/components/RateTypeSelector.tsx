@@ -2,12 +2,12 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Tag } from 'lucide-react';
-import { RateType, POSITION_RATE_TEMPLATES } from '../types';
+import { PayrateStructureType, POSITION_RATE_TEMPLATES } from '../types';
 import { COMMON_HOUR_TYPES } from '@/types/api/payrate.types';
 
 interface RateTypeSelectorProps {
-  value: RateType;
-  onChange: (value: RateType) => void;
+  value: PayrateStructureType;
+  onChange: (value: PayrateStructureType) => void;
   disabled?: boolean;
 }
 
@@ -23,7 +23,7 @@ export function RateTypeSelector({ value, onChange, disabled }: RateTypeSelector
 
       <RadioGroup
         value={value}
-        onValueChange={(value) => onChange(value as RateType)}
+        onValueChange={(value) => onChange(value as PayrateStructureType)}
         disabled={disabled}
         className="grid gap-4"
       >

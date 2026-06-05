@@ -9,14 +9,18 @@ import type {
   EmployeesResponse,
   EmployeePayrollResponse,
   EmployeePayrollFilters,
+  EmployeeProjectAssignment,
   EmployeeProjectsResponse,
   EmployeeIndividualSummary,
   EmployeeTimesheetResponse,
   EmployeeTimesheetFilters,
+  EmployeeTimesheetEntry,
   EmployeeImportStatus,
   EmployeeImportResponse,
+  CurrentProjectWithTimesheets,
   EmployeeCurrentProjectsResponse,
   EmployeeCurrentProjectsFilters,
+  EmployeeUser,
   EmployeeUsersResponse,
   GrantEmployeeAccessData
 } from '@/types/api/employee.types';
@@ -51,21 +55,23 @@ class EmployeeService {
       };
     }
 
-    const queryString = apiFilters ? buildQueryString(apiFilters as Record<string, unknown>) : '';
-    const response = await apiClient.get(
+    const queryString = apiFilters ? buildQueryString(apiFilters) : '';
+    const response = await apiClient.get<Employee[]>(
       `${API_ENDPOINTS.employees.base}${queryString}`
     );
 
     // The API client returns the full response with status, data, message, pagination
     // We need to extract just the data and pagination for our interface
     return {
+      status: 'success' as const,
       data: (response.data as Employee[]) || [],
       pagination: response.pagination || {
         page: 1,
         pageSize: 100,
         totalPages: 1,
         totalRecords: 0
-      }
+      },
+      message: response.message || '',
     };
   }
 
@@ -86,18 +92,20 @@ class EmployeeService {
     }
 
     const queryString = apiFilters ? buildQueryString(apiFilters as Record<string, unknown>) : '';
-    const response = await apiClient.get(
+    const response = await apiClient.get<Employee[]>(
       `${API_ENDPOINTS.employees.missingBankDetails}${queryString}`
     );
 
     return {
+      status: 'success' as const,
       data: (response.data as Employee[]) || [],
       pagination: response.pagination || {
         page: 1,
         pageSize: 100,
         totalPages: 1,
         totalRecords: 0
-      }
+      },
+      message: response.message || '',
     };
   }
 
@@ -137,18 +145,20 @@ class EmployeeService {
     }
 
     const queryString = buildQueryString(apiParams);
-    const response = await apiClient.get(
+    const response = await apiClient.get<Employee[]>(
       `${API_ENDPOINTS.employees.base}${queryString}`
     );
 
     return {
+      status: 'success' as const,
       data: response.data || [],
       pagination: response.pagination || {
         page: 1,
         pageSize: params.pageSize || 50,
         totalPages: 1,
         totalRecords: response.data?.length || 0
-      }
+      },
+      message: response.message || '',
     };
   }
 
@@ -217,7 +227,7 @@ class EmployeeService {
    * Mark employee as inactive (soft delete)
    */
   async deleteEmployee(id: number): Promise<ApiResponse<void>> {
-    const response = await apiClient.delete(API_ENDPOINTS.employees.byId(id));
+    const response = await apiClient.delete<void>(API_ENDPOINTS.employees.byId(id));
     return response;
   }
 
@@ -230,12 +240,12 @@ class EmployeeService {
     pageSize?: number;
   }): Promise<EmployeeProjectsResponse> {
     const queryString = params ? buildQueryString(params) : '';
-    const response = await apiClient.get<EmployeeProjectsResponse>(
+    const response = await apiClient.get<EmployeeProjectAssignment[]>(
       `${API_ENDPOINTS.employees.projects(id)}${queryString}`
     );
 
     return {
-      data: response.data || [],
+      data: (response.data as EmployeeProjectAssignment[]) || [],
       pagination: response.pagination || {
         page: 1,
         pageSize: 20,
@@ -253,12 +263,12 @@ class EmployeeService {
     filters?: EmployeeCurrentProjectsFilters
   ): Promise<EmployeeCurrentProjectsResponse> {
     const queryString = filters ? buildQueryString(filters) : '';
-    const response = await apiClient.get<EmployeeCurrentProjectsResponse>(
+    const response = await apiClient.get<CurrentProjectWithTimesheets[]>(
       `${API_ENDPOINTS.employees.currentProjects(id)}${queryString}`
     );
 
     return {
-      data: response.data || []
+      data: (response.data as CurrentProjectWithTimesheets[]) || []
     };
   }
 
@@ -324,11 +334,11 @@ class EmployeeService {
     }
 
     const queryString = apiFilters ? buildQueryString(apiFilters) : '';
-    const response = await apiClient.download(
+    await apiClient.download(
       `${API_ENDPOINTS.employees.export}${queryString}`,
       `employees_export_${new Date().toISOString().split('T')[0]}.xlsx`
     );
-    return response;
+    return { status: 'success' as const, message: 'Export started' };
   }
 
   /**
@@ -347,10 +357,10 @@ class EmployeeService {
    */
   async validateCCCD(cccd: string, excludeId?: number): Promise<boolean> {
     try {
-      const response = await apiClient.get(
+      const response = await apiClient.get<boolean>(
         `${API_ENDPOINTS.employees.base}/validate-cccd?cccd=${cccd}${excludeId ? `&exclude=${excludeId}` : ''}`
       );
-      return response.data || false;
+      return response.data === true;
     } catch (error) {
       return false;
     }
@@ -361,10 +371,10 @@ class EmployeeService {
    */
   async validateEmail(email: string, excludeId?: number): Promise<boolean> {
     try {
-      const response = await apiClient.get(
+      const response = await apiClient.get<boolean>(
         `${API_ENDPOINTS.employees.base}/validate-email?email=${email}${excludeId ? `&exclude=${excludeId}` : ''}`
       );
-      return response.data || false;
+      return response.data === true;
     } catch (error) {
       return false;
     }
@@ -389,17 +399,19 @@ class EmployeeService {
    */
   async getEmployeeTimesheet(id: number, filters?: EmployeeTimesheetFilters): Promise<EmployeeTimesheetResponse> {
     const queryString = filters ? buildQueryString(filters) : '';
-    const response = await apiClient.get<EmployeeTimesheetResponse>(
+    const response = await apiClient.get<EmployeeTimesheetEntry[]>(
       `${API_ENDPOINTS.employees.timesheet(id)}${queryString}`
     );
     return {
-      data: response.data || [],
+      status: 'success' as const,
+      data: (response.data as EmployeeTimesheetEntry[]) || [],
       pagination: response.pagination || {
         page: 1,
         pageSize: 100,
         totalPages: 1,
         totalRecords: 0
-      }
+      },
+      message: response.message || '',
     };
   }
 
@@ -456,7 +468,7 @@ class EmployeeService {
     id: number,
     data: { new_password: string }
   ): Promise<ApiResponse<void>> {
-    const response = await apiClient.put(
+    const response = await apiClient.put<void>(
       API_ENDPOINTS.employees.changePassword(id),
       data
     );
@@ -492,11 +504,13 @@ class EmployeeService {
    * Get users who have access to an employee
    */
   async getEmployeeUsers(employeeId: number): Promise<EmployeeUsersResponse> {
-    const response = await apiClient.get<EmployeeUsersResponse>(
+    const response = await apiClient.get<EmployeeUser[]>(
       API_ENDPOINTS.employees.users(employeeId)
     );
     return {
-      data: response.data || []
+      status: 'success' as const,
+      data: (response.data as EmployeeUser[]) || [],
+      message: response.message || '',
     };
   }
 
@@ -507,7 +521,7 @@ class EmployeeService {
     employeeId: number,
     data: GrantEmployeeAccessData
   ): Promise<ApiResponse<void>> {
-    const response = await apiClient.post(
+    const response = await apiClient.post<void>(
       API_ENDPOINTS.employees.users(employeeId),
       data
     );
@@ -521,7 +535,7 @@ class EmployeeService {
     employeeId: number,
     userId: number
   ): Promise<ApiResponse<void>> {
-    const response = await apiClient.delete(
+    const response = await apiClient.delete<void>(
       API_ENDPOINTS.employees.userAccess(employeeId, userId)
     );
     return response;

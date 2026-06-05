@@ -334,10 +334,10 @@ export const handleApiError = (error: unknown): string => {
 };
 
 // Helper function to build query string
-export const buildQueryString = (params: Record<string, unknown>): string => {
+export const buildQueryString = <T extends object>(params: T): string => {
   const query = new URLSearchParams();
 
-  Object.entries(params).forEach(([key, value]) => {
+  Object.entries(params as Record<string, unknown>).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       // Handle arrays by adding multiple query parameters
       if (Array.isArray(value)) {

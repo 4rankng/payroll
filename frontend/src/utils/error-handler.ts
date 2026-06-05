@@ -84,7 +84,10 @@ export const ERROR_MESSAGES_BY_CONTEXT = {
     UPDATE_FAILED: 'Không thể cập nhật thông tin phân công',
     FETCH_FAILED: 'Không thể tải danh sách nhân viên',
     VALIDATION_FAILED: 'Dữ liệu không hợp lệ',
+    VALIDATION_ERROR: 'Dữ liệu không hợp lệ',
     NETWORK_ERROR: 'Lỗi kết nối mạng',
+    SERVER_ERROR: 'Lỗi máy chủ',
+    UNKNOWN_ERROR: 'Có lỗi không xác định xảy ra',
     PERMISSION_DENIED: 'Bạn không có quyền thực hiện thao tác này',
   },
   GENERAL: {
@@ -145,7 +148,7 @@ export function createAppError(error: unknown): AppError {
  * Maps HTTP status codes to user-friendly messages with context awareness
  */
 export function getErrorMessageByStatusCode(statusCode: number, context: ErrorContext = 'GENERAL'): string {
-  const messages = ERROR_MESSAGES_BY_CONTEXT[context] || ERROR_MESSAGES_BY_CONTEXT.GENERAL;
+  const messages = (ERROR_MESSAGES_BY_CONTEXT[context] || ERROR_MESSAGES_BY_CONTEXT.GENERAL) as typeof ERROR_MESSAGES_BY_CONTEXT.GENERAL;
 
   switch (statusCode) {
     case 400:
@@ -199,15 +202,15 @@ export function createErrorMessage(
   if (appError.code) {
     switch (appError.code) {
       case 'NETWORK_ERROR':
-        return ERROR_MESSAGES_BY_CONTEXT[context]?.NETWORK_ERROR || ERROR_MESSAGES_BY_CONTEXT.GENERAL.NETWORK_ERROR;
+        return (ERROR_MESSAGES_BY_CONTEXT[context] as typeof ERROR_MESSAGES_BY_CONTEXT.GENERAL | undefined)?.NETWORK_ERROR || ERROR_MESSAGES_BY_CONTEXT.GENERAL.NETWORK_ERROR;
       case 'VALIDATION_ERROR':
-        return ERROR_MESSAGES_BY_CONTEXT[context]?.VALIDATION_FAILED || ERROR_MESSAGES_BY_CONTEXT.GENERAL.VALIDATION_ERROR;
+        return (ERROR_MESSAGES_BY_CONTEXT[context] as typeof ERROR_MESSAGES_BY_CONTEXT.GENERAL | undefined)?.VALIDATION_FAILED || ERROR_MESSAGES_BY_CONTEXT.GENERAL.VALIDATION_ERROR;
       default:
         break;
     }
   }
 
-  return fallbackMessage || ERROR_MESSAGES_BY_CONTEXT[context]?.UNKNOWN_ERROR || ERROR_MESSAGES_BY_CONTEXT.GENERAL.UNKNOWN_ERROR;
+  return fallbackMessage || (ERROR_MESSAGES_BY_CONTEXT[context] as typeof ERROR_MESSAGES_BY_CONTEXT.GENERAL | undefined)?.UNKNOWN_ERROR || ERROR_MESSAGES_BY_CONTEXT.GENERAL.UNKNOWN_ERROR;
 }
 
 /**

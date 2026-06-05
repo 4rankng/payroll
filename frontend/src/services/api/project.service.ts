@@ -158,7 +158,7 @@ class ProjectService {
    * Mark project as inactive (soft delete)
    */
   async deleteProject(id: number): Promise<ApiResponse<void>> {
-    const response = await apiClient.delete(API_ENDPOINTS.projects.byId(id));
+    const response = await apiClient.delete<void>(API_ENDPOINTS.projects.byId(id));
     return response;
   }
 
@@ -200,7 +200,7 @@ class ProjectService {
       ...(lastDate && { last_date: lastDate })
     }];
 
-    const response = await apiClient.post(
+    const response = await apiClient.post<void>(
       API_ENDPOINTS.projects.employeesRemove(projectId),
       payload
     );
@@ -368,18 +368,17 @@ class ProjectService {
    */
   async getProjectUsers(projectId: number): Promise<ProjectUser[]> {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.projects.users(projectId));
+      const response = await apiClient.get<unknown>(API_ENDPOINTS.projects.users(projectId));
 
-
-      // Handle the response based on what we actually get
-      if (response && response.data && Array.isArray(response.data)) {
-
-        return response.data;
-      } else if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      } else {
-        return [];
+      // Handle the response - backend may return either array directly or wrapped in {data: [...]}
+      const data = response.data as unknown;
+      if (Array.isArray(data)) {
+        return data as ProjectUser[];
       }
+      if (data && typeof data === 'object' && Array.isArray((data as { data?: unknown }).data)) {
+        return (data as { data: ProjectUser[] }).data;
+      }
+      return [];
     } catch {
       return [];
     }

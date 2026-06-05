@@ -38,7 +38,8 @@ export class ImportExportService {
    */
   async getImportSummary(params: ImportSummaryParams = {}): Promise<ImportSummaryResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<ImportSummaryResponse>(`${API_ENDPOINTS.imports.summary}${queryString}`);
+    const response = await apiClient.get<ImportSummaryResponse>(`${API_ENDPOINTS.imports.summary}${queryString}`);
+    return response.data!;
   }
 
   /**
@@ -46,14 +47,16 @@ export class ImportExportService {
    */
   async getImportBatches(params: ImportListParams = {}): Promise<ImportListResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<ImportListResponse>(`${API_ENDPOINTS.imports.base}${queryString}`);
+    const response = await apiClient.get<ImportListResponse>(`${API_ENDPOINTS.imports.base}${queryString}`);
+    return response.data!;
   }
 
   /**
    * Get detailed information about an import batch
    */
   async getImportBatch(batchId: string): Promise<ImportBatchResponse> {
-    return apiClient.get<ImportBatchResponse>(API_ENDPOINTS.imports.byBatchId(batchId));
+    const response = await apiClient.get<ImportBatchResponse>(API_ENDPOINTS.imports.byBatchId(batchId));
+    return response.data!;
   }
 
   /**
@@ -64,7 +67,8 @@ export class ImportExportService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return apiClient.upload<ImportCreateResponse>(API_ENDPOINTS.imports.employees, formData);
+    const response = await apiClient.upload<ImportCreateResponse>(API_ENDPOINTS.imports.employees, formData);
+    return response.data!;
   }
 
   /**
@@ -77,7 +81,8 @@ export class ImportExportService {
     formData.append('file', file);
     formData.append('project_id', projectId.toString());
 
-    return apiClient.upload<ImportCreateResponse>(API_ENDPOINTS.imports.timesheets, formData);
+    const response = await apiClient.upload<ImportCreateResponse>(API_ENDPOINTS.imports.timesheets, formData);
+    return response.data!;
   }
 
 
@@ -85,28 +90,32 @@ export class ImportExportService {
    * Cancel a processing import batch
    */
   async cancelImport(batchId: string): Promise<ImportCancelResponse> {
-    return apiClient.post<ImportCancelResponse>(API_ENDPOINTS.imports.cancel(batchId));
+    const response = await apiClient.post<ImportCancelResponse>(API_ENDPOINTS.imports.cancel(batchId));
+    return response.data!;
   }
 
   /**
    * Retry processing failed records from an import batch
    */
   async retryImport(batchId: string): Promise<ImportRetryResponse> {
-    return apiClient.post<ImportRetryResponse>(API_ENDPOINTS.imports.retry(batchId));
+    const response = await apiClient.post<ImportRetryResponse>(API_ENDPOINTS.imports.retry(batchId));
+    return response.data!;
   }
 
   /**
    * Bulk retry multiple failed import batches
    */
   async bulkRetryImports(data: BulkRetryRequest): Promise<BulkRetryResponse> {
-    return apiClient.post<BulkRetryResponse>(`${API_ENDPOINTS.imports.base}/bulk-retry`, data);
+    const response = await apiClient.post<BulkRetryResponse>(`${API_ENDPOINTS.imports.base}/bulk-retry`, data);
+    return response.data!;
   }
 
   /**
    * Download import template for specific type
    */
   async getImportTemplate(templateType: TemplateType): Promise<ImportTemplateResponse> {
-    return apiClient.get<ImportTemplateResponse>(API_ENDPOINTS.imports.templates(templateType));
+    const response = await apiClient.get<ImportTemplateResponse>(API_ENDPOINTS.imports.templates(templateType));
+    return response.data!;
   }
 
   /**
@@ -132,16 +141,18 @@ export class ImportExportService {
       formData.append('project_id', projectId.toString());
     }
 
-    return apiClient.upload<FileValidationResponse>(`${API_ENDPOINTS.imports.base}/validate-file`, formData);
+    const response = await apiClient.upload<FileValidationResponse>(`${API_ENDPOINTS.imports.base}/validate-file`, formData);
+    return response.data!;
   }
 
   /**
    * Get real-time batch processing status
    */
   async getBatchStatus(batchId: string): Promise<BatchStatusResponse> {
-    return apiClient.get<BatchStatusResponse>(`${API_ENDPOINTS.imports.base}/batch-status-tracking`, {
+    const response = await apiClient.get<BatchStatusResponse>(`${API_ENDPOINTS.imports.base}/batch-status-tracking`, {
       params: { batch_id: batchId }
     });
+    return response.data!;
   }
 
   /**
@@ -157,7 +168,17 @@ export class ImportExportService {
       expiresAt: string;
     };
   }> {
-    return apiClient.get(`${API_ENDPOINTS.imports.byBatchId(batchId)}/error-report`);
+    const response = await apiClient.get(`${API_ENDPOINTS.imports.byBatchId(batchId)}/error-report`);
+    return response.data! as {
+      data: {
+        batchId: string;
+        errorReportUrl: string;
+        filename: string;
+        totalErrors: number;
+        generatedAt: string;
+        expiresAt: string;
+      };
+    };
   }
 
   // ========== EXPORT OPERATIONS ==========
@@ -169,14 +190,16 @@ export class ImportExportService {
     exportType: ExportType,
     data: ExportDataRequest
   ): Promise<ExportCreateResponse> {
-    return apiClient.post<ExportCreateResponse>(API_ENDPOINTS.exports.byType(exportType), data);
+    const response = await apiClient.post<ExportCreateResponse>(API_ENDPOINTS.exports.byType(exportType), data);
+    return response.data!;
   }
 
   /**
    * Get export job status and details
    */
   async getExportJob(exportId: string): Promise<ExportJobResponse> {
-    return apiClient.get<ExportJobResponse>(API_ENDPOINTS.exports.byId(exportId));
+    const response = await apiClient.get<ExportJobResponse>(API_ENDPOINTS.exports.byId(exportId));
+    return response.data!;
   }
 
   /**
@@ -184,7 +207,8 @@ export class ImportExportService {
    */
   async getExportHistory(params: ExportListParams = {}): Promise<ExportListResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<ExportListResponse>(`${API_ENDPOINTS.exports.base}${queryString}`);
+    const response = await apiClient.get<ExportListResponse>(`${API_ENDPOINTS.exports.base}${queryString}`);
+    return response.data!;
   }
 
   /**
@@ -204,7 +228,14 @@ export class ImportExportService {
       cancelledAt: string;
     };
   }> {
-    return apiClient.post(`${API_ENDPOINTS.exports.byId(exportId)}/cancel`);
+    const response = await apiClient.post(`${API_ENDPOINTS.exports.byId(exportId)}/cancel`);
+    return response.data! as {
+      data: {
+        exportId: string;
+        status: 'cancelled';
+        cancelledAt: string;
+      };
+    };
   }
 
   // ========== CONVENIENCE METHODS ==========
@@ -276,12 +307,13 @@ export class ImportExportService {
       toDate: new Date(filters.toDate).toISOString(),
     };
 
-    return apiClient.post<ExportCreateResponse>(API_ENDPOINTS.payrolls.exportBulkTransfer, {
+    const response = await apiClient.post<ExportCreateResponse>(API_ENDPOINTS.payrolls.exportBulkTransfer, {
       filters: utcFilters,
       format: 'excel',
       includeHeaders: true,
       timezone: 'UTC'
     });
+    return response.data!;
   }
 
   /**

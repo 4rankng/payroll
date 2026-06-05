@@ -28,10 +28,12 @@ function buildAuditQueryString(params: AuditLogsQueryParams & { page?: number })
 export function useInfiniteAuditLogs(filters: Omit<AuditLogsQueryParams, 'page' | 'pageSize'> = {}) {
   return useInfiniteQuery<BackendAuditLogsResponse>({
     queryKey: QueryKeys.audit.logs({ ...filters, infinite: true } as Record<string, unknown>),
-    queryFn: ({ pageParam = 1 }) =>
-      apiClient.get<BackendAuditLogsResponse>(
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await apiClient.get<BackendAuditLogsResponse>(
         `${BASE}/logs${buildAuditQueryString({ ...filters, page: pageParam as number, pageSize: PAGE_SIZE })}`
-      ),
+      );
+      return response.data!;
+    },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const { page, totalPages } = lastPage.pagination;
@@ -43,8 +45,10 @@ export function useInfiniteAuditLogs(filters: Omit<AuditLogsQueryParams, 'page' 
 export function useAuditLogDetail(id: number | null) {
   return useQuery({
     queryKey: QueryKeys.audit.logDetail(id ?? 0),
-    queryFn: () =>
-      apiClient.get<BackendAuditLogDetailResponse>(`${BASE}/logs/${id}`),
+    queryFn: async () => {
+      const response = await apiClient.get<BackendAuditLogDetailResponse>(`${BASE}/logs/${id}`);
+      return response.data!;
+    },
     enabled: id !== null && id > 0,
   });
 }

@@ -71,12 +71,16 @@ class DashboardService {
    * Returns financial data for charts based on period (day/week/month/quarter/year)
    */
   async getFinancialChart(params: FinancialChartParams): Promise<FinancialChartResponse> {
-    const queryString = buildQueryString(params as Record<string, unknown>);
-    const response = await apiClient.get<FinancialChartDataPoint[]>(`${API_ENDPOINTS.dashboard.financial}${queryString}`);
+    const queryString = buildQueryString(params);
+    const response = await apiClient.get<FinancialChartResponse>(`${API_ENDPOINTS.dashboard.financial}${queryString}`);
+    if (!response.data) {
+      return { status: 'success' as const, data: [], message: 'No data' };
+    }
+    const data = response.data;
     return {
-      status: response.status || 'success',
-      data: response.data || [],
-      message: response.message || 'Financial chart data retrieved successfully'
+      status: (data.status as 'success' | 'error') || 'success',
+      data: data.data || [],
+      message: data.message || response.message || 'Financial chart data retrieved successfully'
     };
   }
 
@@ -85,19 +89,17 @@ class DashboardService {
    * Returns feed of recent system activities
    */
   async getRecentActivities(params?: RecentActivitiesParams): Promise<RecentActivitiesResponse> {
-    const queryString = params ? buildQueryString(params as Record<string, unknown>) : '';
-    const response = await apiClient.get<{ data: RecentActivitiesResponse['data'], pagination: RecentActivitiesResponse['pagination'] }>(`${API_ENDPOINTS.dashboard.recentActivities}${queryString}`);
+    const queryString = buildQueryString(params);
+    const response = await apiClient.get<RecentActivitiesResponse>(`${API_ENDPOINTS.dashboard.recentActivities}${queryString}`);
     if (!response.data) {
       throw new Error('API response missing expected data');
     }
-    if (!response.pagination) {
-      throw new Error('API response missing expected data');
-    }
+    const data = response.data;
     return {
-      status: response.status || 'success',
-      data: response.data,
-      pagination: response.pagination,
-      message: response.message || 'Recent activities retrieved successfully'
+      status: (data.status as 'success' | 'error') || 'success',
+      data: data.data,
+      pagination: data.pagination,
+      message: data.message || response.message || 'Recent activities retrieved successfully'
     };
   }
 
@@ -106,19 +108,17 @@ class DashboardService {
    * Returns recently added employees
    */
   async getNewEmployees(params?: NewEmployeesParams): Promise<NewEmployeesResponse> {
-    const queryString = params ? buildQueryString(params as Record<string, unknown>) : '';
-    const response = await apiClient.get<{ data: NewEmployeesResponse['data'], pagination: NewEmployeesResponse['pagination'] }>(`${API_ENDPOINTS.dashboard.newEmployees}${queryString}`);
+    const queryString = buildQueryString(params);
+    const response = await apiClient.get<NewEmployeesResponse>(`${API_ENDPOINTS.dashboard.newEmployees}${queryString}`);
     if (!response.data) {
       throw new Error('API response missing expected data');
     }
-    if (!response.pagination) {
-      throw new Error('API response missing expected data');
-    }
+    const data = response.data;
     return {
-      status: response.status || 'success',
-      data: response.data,
-      pagination: response.pagination,
-      message: response.message || 'New employees retrieved successfully'
+      status: (data.status as 'success' | 'error') || 'success',
+      data: data.data,
+      pagination: data.pagination,
+      message: data.message || response.message || 'New employees retrieved successfully'
     };
   }
 
@@ -142,16 +142,15 @@ class DashboardService {
    * Returns historical data for employees, payroll, capital, revenue, and profit
    */
   async getHistorical(): Promise<HistoricalResponse> {
-    const response = await apiClient.get<HistoricalResponseData>(
-      API_ENDPOINTS.dashboard.historical
-    );
+    const response = await apiClient.get<HistoricalResponse>(API_ENDPOINTS.dashboard.historical);
     if (!response.data) {
       throw new Error('API response missing expected data');
     }
+    const data = response.data;
     return {
-      status: response.status || 'success',
-      data: response.data,
-      message: response.message || 'Lấy dữ liệu lịch sử thành công'
+      status: (data.status as 'success' | 'error') || 'success',
+      data: data.data,
+      message: data.message || response.message || 'Lấy dữ liệu lịch sử thành công'
     };
   }
 
@@ -230,7 +229,7 @@ class DashboardService {
   }
 
   async getPartnerEmployeeList(params: PartnerEmployeeListParams): Promise<PartnerEmployeeListResponse> {
-    const queryString = buildQueryString(params as Record<string, unknown>);
+    const queryString = buildQueryString(params);
     const response = await apiClient.get<PartnerEmployeeListResponse>(
       `${API_ENDPOINTS.dashboard.partnerEmployeeList}${queryString}`
     );

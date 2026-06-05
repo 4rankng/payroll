@@ -24,7 +24,7 @@ export interface Action {
   href?: string;
   onClick?: () => void;
   category: 'navigation' | 'creation' | 'data' | 'management';
-  permissions?: ('admin' | 'partner')[];
+  permissions?: ('admin' | 'partner' | 'employee' | 'adv_partner')[];
 }
 
 // Define all available actions
@@ -204,13 +204,13 @@ export const allActions: Action[] = [
 ];
 
 // Helper functions to get actions by role
-export const getActionsByRole = (role: 'admin' | 'partner'): Action[] => {
+export const getActionsByRole = (role: 'admin' | 'partner' | 'employee' | 'adv_partner'): Action[] => {
   return allActions.filter(action =>
     action.permissions?.includes(role) || !action.permissions
   );
 };
 
-export const getActionsByCategory = (category: Action['category'], role?: 'admin' | 'partner'): Action[] => {
+export const getActionsByCategory = (category: Action['category'], role?: 'admin' | 'partner' | 'employee' | 'adv_partner'): Action[] => {
   let actions = allActions.filter(action => action.category === category);
 
   if (role) {
@@ -222,7 +222,7 @@ export const getActionsByCategory = (category: Action['category'], role?: 'admin
   return actions;
 };
 
-export const getQuickActions = (role: 'admin' | 'partner', limit: number = 6): Action[] => {
+export const getQuickActions = (role: 'admin' | 'partner' | 'employee' | 'adv_partner', limit: number = 6): Action[] => {
   // Fixed list of priority quick actions: add new project, add new employee, add new timesheet entry
   const priorityActionIds = [
     'create-project',
@@ -253,7 +253,7 @@ export const getActionById = (id: string): Action | undefined => {
 };
 
 // Search actions
-export const searchActions = (query: string, role?: 'admin' | 'partner'): Action[] => {
+export const searchActions = (query: string, role?: 'admin' | 'partner' | 'employee' | 'adv_partner'): Action[] => {
   const normalizedQuery = query.trim();
 
   const actions = role ? getActionsByRole(role) : allActions;

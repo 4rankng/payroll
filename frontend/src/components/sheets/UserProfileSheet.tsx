@@ -160,11 +160,13 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
     );
   }
 
-  const getRoleText = (role: 'admin' | 'partner'): string => {
-    return role === 'admin' ? 'Quản trị viên' : 'Quản lý';
+  const getRoleText = (role: 'admin' | 'partner' | 'employee' | 'adv_partner'): string => {
+    if (role === 'admin') return 'Quản trị viên';
+    if (role === 'partner' || role === 'adv_partner') return 'Quản lý';
+    return 'Nhân viên';
   };
 
-  const getRoleBadgeVariant = (role: 'admin' | 'partner') => {
+  const getRoleBadgeVariant = (role: 'admin' | 'partner' | 'employee' | 'adv_partner') => {
     return role === 'admin' ? 'default' : 'secondary';
   };
 

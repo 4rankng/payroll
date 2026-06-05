@@ -27,8 +27,10 @@ export const UserAvatarDropdown = ({ className }: UserAvatarDropdownProps) => {
 
   if (!user) return null;
 
-  const getRoleText = (role: 'admin' | 'partner'): string => {
-    return role === 'admin' ? 'Quản trị viên' : 'Quản lý';
+  const getRoleText = (role: 'admin' | 'partner' | 'employee' | 'adv_partner'): string => {
+    if (role === 'admin') return 'Quản trị viên';
+    if (role === 'partner' || role === 'adv_partner') return 'Quản lý';
+    return 'Nhân viên';
   };
 
   const handleViewProfile = () => {

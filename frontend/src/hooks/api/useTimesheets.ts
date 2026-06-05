@@ -96,7 +96,7 @@ export const useCreateTimesheet = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateTimesheetData) => timesheetService.createTimesheet(data),
+    mutationFn: (data: CreateTimesheetData) => timesheetService.createTimesheet(data as unknown as { projectId: number; employeeId: number; date: string; hoursWorked: number; paytype: string; description?: string }),
     onSuccess: (newTimesheet) => {
       // Set the new timesheet in cache for detail views first
       queryClient.setQueryData(QueryKeys.timesheets.detail(newTimesheet.id), newTimesheet);
@@ -106,8 +106,8 @@ export const useCreateTimesheet = () => {
       invalidateCache('timesheet:create', {
         timesheetId: newTimesheet.id,
         data: {
-          employee_id: newTimesheet.employeeId || newTimesheet.employee_id,
-          project_id: newTimesheet.projectId || newTimesheet.project_id,
+          employee_id: newTimesheet.employee_id,
+          project_id: newTimesheet.project_id,
         },
       });
 
@@ -187,10 +187,10 @@ export const useCreateTimesheets = () => {
         });
 
 
-        showSuccessNotification(result?.message || `Đã lưu ${result?.data?.total_success ?? 0} bản ghi`);
+        showSuccessNotification(result?.message || `Đã lưu ${result?.data?.total_created ?? 0} bản ghi`);
       } catch (error) {
         console.error('❌ Primary cache invalidation failed:', error);
-        showSuccessNotification(result?.message || `Đã lưu ${result?.data?.total_success ?? 0} bản ghi`);
+        showSuccessNotification(result?.message || `Đã lưu ${result?.data?.total_created ?? 0} bản ghi`);
       }
     },
     // Error handling is now done globally in React Query - will display response.message from backend
@@ -206,15 +206,15 @@ export const useUpdateTimesheet = () => {
       timesheetService.updateTimesheet(id, data),
     onSuccess: (updatedTimesheet, { id }) => {
       // Optimistically update caches with server response
-      updateItemInList(queryClient, QueryKeys.timesheets.lists(), updatedTimesheet);
+      updateItemInList(queryClient, QueryKeys.timesheets.lists(), updatedTimesheet as unknown as Record<string, unknown>);
       queryClient.setQueryData(QueryKeys.timesheets.detail(id), updatedTimesheet);
 
       // Use centralized invalidation service
       invalidateCache('timesheet:update', {
         timesheetId: id,
         data: {
-          employee_id: updatedTimesheet.employeeId || updatedTimesheet.employee_id,
-          project_id: updatedTimesheet.projectId || updatedTimesheet.project_id,
+          employee_id: updatedTimesheet.employee_id,
+          project_id: updatedTimesheet.project_id,
         },
       });
 
@@ -266,15 +266,15 @@ export const useApproveTimesheet = () => {
     mutationFn: (id: number) => timesheetService.approveTimesheet(id),
     onSuccess: (approvedTimesheet) => {
       // Optimistically update caches with server response
-      updateItemInList(queryClient, QueryKeys.timesheets.lists(), approvedTimesheet);
+      updateItemInList(queryClient, QueryKeys.timesheets.lists(), approvedTimesheet as unknown as Record<string, unknown>);
       queryClient.setQueryData(QueryKeys.timesheets.detail(approvedTimesheet.id), approvedTimesheet);
 
       // Use centralized invalidation service
       invalidateCache('timesheet:approve', {
         timesheetId: approvedTimesheet.id,
         data: {
-          employee_id: approvedTimesheet.employeeId || approvedTimesheet.employee_id,
-          project_id: approvedTimesheet.projectId || approvedTimesheet.project_id,
+          employee_id: approvedTimesheet.employee_id,
+          project_id: approvedTimesheet.project_id,
         },
       });
 
@@ -313,15 +313,15 @@ export const useRejectTimesheet = () => {
       timesheetService.rejectTimesheet(id, data),
     onSuccess: (rejectedTimesheet) => {
       // Optimistically update caches with server response
-      updateItemInList(queryClient, QueryKeys.timesheets.lists(), rejectedTimesheet);
+      updateItemInList(queryClient, QueryKeys.timesheets.lists(), rejectedTimesheet as unknown as Record<string, unknown>);
       queryClient.setQueryData(QueryKeys.timesheets.detail(rejectedTimesheet.id), rejectedTimesheet);
 
       // Use centralized invalidation service
       invalidateCache('timesheet:reject', {
         timesheetId: rejectedTimesheet.id,
         data: {
-          employee_id: rejectedTimesheet.employeeId || rejectedTimesheet.employee_id,
-          project_id: rejectedTimesheet.projectId || rejectedTimesheet.project_id,
+          employee_id: rejectedTimesheet.employee_id,
+          project_id: rejectedTimesheet.project_id,
         },
       });
 
@@ -477,7 +477,7 @@ export const useImportTimesheets = () => {
       const mappedResult = {
         total_created: result.successful_records || 0,
         total_failed: result.failed_records || 0,
-        errors: result.errors || []
+        errors: (result.errors || []).map((e: { row: number; field: string; message: string }) => `${e.field}: ${e.message}`)
       };
       showBulkOperationNotification(mappedResult, 'import');
     },
@@ -505,11 +505,7 @@ export const useUploadEntriesExcel = () => {
       const mappedResult = {
         total_created: result.created_count || 0,
         total_failed: result.error_count || 0,
-        errors: result.failed_entries?.map((entry) => ({
-          row: entry.Index,
-          field: 'entry',
-          message: entry.Error
-        })) || []
+        errors: (result.failed_entries || []).map((entry) => `${entry.Error}`)
       };
       showBulkOperationNotification(mappedResult, 'import');
     },
@@ -528,10 +524,7 @@ export const useExportTimesheets = () => {
       if (result.download_url && result.filename) {
         timesheetService.downloadExport(result.download_url, result.filename);
       }
-
-      if (result?.message) {
-        showSuccessNotification(result.message);
-      }
+      showSuccessNotification('Export thành công');
     },
     // Error handling is now done globally in React Query - will display response.message from backend
   });
@@ -547,10 +540,8 @@ export const useExportTimesheetsExcel = () => {
       employeeId?: number; // Using camelCase to match API
       status?: string;
     }) => timesheetService.exportTimesheetsExcel(params),
-    onSuccess: (response) => {
-      if (response?.message) {
-        showSuccessNotification(response.message);
-      }
+    onSuccess: () => {
+      showSuccessNotification('Export thành công');
     },
     // Error handling is now done globally in React Query - will display response.message from backend
   });
@@ -604,10 +595,11 @@ export const useEmployeeTimesheetSummary = (
   });
 };
 
-export const useUploadHistory = (params?: { project_id?: number; limit?: number; offset?: number }) => {
-  return useQuery({
-    queryKey: ['timesheet-upload-history', params],
-    queryFn: () => timesheetService.getUploadHistory(params),
-    placeholderData: keepPreviousData,
-  });
-};
+// getUploadHistory is not yet implemented on TimesheetService
+// export const useUploadHistory = (params?: { project_id?: number; limit?: number; offset?: number }) => {
+//   return useQuery({
+//     queryKey: ['timesheet-upload-history', params],
+//     queryFn: () => timesheetService.getUploadHistory(params),
+//     placeholderData: keepPreviousData,
+//   });
+// };

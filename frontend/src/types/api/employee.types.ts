@@ -461,13 +461,6 @@ export interface EmployeeImportResponse {
   message: string;
 }
 
-// Re-export timesheet types from timesheet.types.ts to avoid duplication
-export type {
-  EmployeeTimesheetEntry,
-  EmployeeTimesheetFilters,
-  EmployeeTimesheetResponse,
-} from "./timesheet.types";
-
 // Vietnamese translations
 export const VIETNAMESE_EMPLOYEE_LABELS = {
   statuses: {

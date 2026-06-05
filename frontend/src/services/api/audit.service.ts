@@ -39,7 +39,8 @@ export class AuditService {
    */
   async getSummary(params: AuditSummaryParams = {}): Promise<AuditSummaryResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<AuditSummaryResponse>(`${API_ENDPOINTS.audit.summary}${queryString}`);
+    const response = await apiClient.get<AuditSummaryResponse>(`${API_ENDPOINTS.audit.summary}${queryString}`);
+    return response.data!;
   }
 
   /**
@@ -47,27 +48,30 @@ export class AuditService {
    */
   async getLogs(params: AuditLogsParams = {}): Promise<AuditLogsResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<AuditLogsResponse>(`${API_ENDPOINTS.audit.logs}${queryString}`);
+    const response = await apiClient.get<AuditLogsResponse>(`${API_ENDPOINTS.audit.logs}${queryString}`);
+    return response.data!;
   }
 
   /**
    * Get detailed audit log entry
    */
   async getLogDetails(id: number): Promise<AuditLogDetailsResponse> {
-    return apiClient.get<AuditLogDetailsResponse>(API_ENDPOINTS.audit.logById(id));
+    const response = await apiClient.get<AuditLogDetailsResponse>(API_ENDPOINTS.audit.logById(id));
+    return response.data!;
   }
 
   /**
    * Get user activity history
    */
   async getUserActivity(
-    userId: number, 
+    userId: number,
     params: UserActivityParams = {}
   ): Promise<UserActivityResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<UserActivityResponse>(
+    const response = await apiClient.get<UserActivityResponse>(
       `${API_ENDPOINTS.audit.userActivity(userId)}${queryString}`
     );
+    return response.data!;
   }
 
   /**
@@ -75,7 +79,8 @@ export class AuditService {
    */
   async exportLogs(params: AuditExportParams = {}): Promise<AuditExportResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<AuditExportResponse>(`${API_ENDPOINTS.audit.export}${queryString}`);
+    const response = await apiClient.get<AuditExportResponse>(`${API_ENDPOINTS.audit.export}${queryString}`);
+    return response.data!;
   }
 
   /**
@@ -85,22 +90,24 @@ export class AuditService {
     params: BlacklistedTokensParams = {}
   ): Promise<BlacklistedTokensResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<BlacklistedTokensResponse>(
+    const response = await apiClient.get<BlacklistedTokensResponse>(
       `${API_ENDPOINTS.audit.blacklistedTokens}${queryString}`
     );
+    return response.data!;
   }
 
   /**
    * Revoke user tokens
    */
   async revokeUserTokens(
-    userId: number, 
+    userId: number,
     data: RevokeTokensRequest
   ): Promise<RevokeTokensResponse> {
-    return apiClient.post<RevokeTokensResponse>(
+    const response = await apiClient.post<RevokeTokensResponse>(
       API_ENDPOINTS.audit.revokeUserTokens(userId),
       data
     );
+    return response.data!;
   }
 
   /**
@@ -110,9 +117,10 @@ export class AuditService {
     params: SecurityReportParams = {}
   ): Promise<SecurityReportResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<SecurityReportResponse>(
+    const response = await apiClient.get<SecurityReportResponse>(
       `${API_ENDPOINTS.audit.securityReport}${queryString}`
     );
+    return response.data!;
   }
 
   /**
@@ -122,16 +130,18 @@ export class AuditService {
     params: LoginHistoryParams = {}
   ): Promise<LoginHistoryResponse> {
     const queryString = buildQueryString(params);
-    return apiClient.get<LoginHistoryResponse>(
+    const response = await apiClient.get<LoginHistoryResponse>(
       `${API_ENDPOINTS.audit.loginHistory}${queryString}`
     );
+    return response.data!;
   }
 
   /**
    * Track custom event
    */
   async trackEvent(data: TrackEventRequest): Promise<TrackEventResponse> {
-    return apiClient.post<TrackEventResponse>(API_ENDPOINTS.audit.trackEvent, data);
+    const response = await apiClient.post<TrackEventResponse>(API_ENDPOINTS.audit.trackEvent, data);
+    return response.data!;
   }
 
   /**
@@ -140,21 +150,23 @@ export class AuditService {
   async generateComplianceReport(
     data: ComplianceReportRequest
   ): Promise<ComplianceReportResponse> {
-    return apiClient.get<ComplianceReportResponse>(
+    const response = await apiClient.get<ComplianceReportResponse>(
       `${API_ENDPOINTS.audit.complianceReport}${buildQueryString(data)}`
     );
+    return response.data!;
   }
 
   /**
    * Get data lineage for entity
    */
   async getDataLineage(
-    entityType: EntityType, 
+    entityType: EntityType,
     entityId: number
   ): Promise<DataLineageResponse> {
-    return apiClient.get<DataLineageResponse>(
+    const response = await apiClient.get<DataLineageResponse>(
       API_ENDPOINTS.audit.dataLineage(entityType, entityId)
     );
+    return response.data!;
   }
 
   /**
@@ -163,10 +175,11 @@ export class AuditService {
   async performIntegrityCheck(
     data: IntegrityCheckRequest
   ): Promise<IntegrityCheckResponse> {
-    return apiClient.post<IntegrityCheckResponse>(
+    const response = await apiClient.post<IntegrityCheckResponse>(
       API_ENDPOINTS.audit.integrityCheck,
       data
     );
+    return response.data!;
   }
 
   /**
@@ -190,7 +203,20 @@ export class AuditService {
       scheduled_at: string;
     };
   }> {
-    return apiClient.post(API_ENDPOINTS.audit.dataRetentionCleanup, data);
+    const response = await apiClient.post(API_ENDPOINTS.audit.dataRetentionCleanup, data);
+    return response.data! as {
+      data: {
+        cleanup_id: string;
+        mode: string;
+        retention_cutoff_date: string;
+        records_to_cleanup: Record<string, number>;
+        estimated_space_freed: string;
+        compliance_impact: string;
+        warnings: string[];
+        next_steps: string[];
+        scheduled_at: string;
+      };
+    };
   }
 
   /**

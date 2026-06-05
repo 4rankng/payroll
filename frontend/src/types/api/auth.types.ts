@@ -5,7 +5,7 @@ export interface User {
   email: string;
   username: string;
   fullname: string;
-  role: "admin" | "partner" | "employee";
+  role: "admin" | "partner" | "employee" | "adv_partner";
   cccd?: string;
   mobile?: string;
   last_login?: string;
@@ -16,7 +16,7 @@ export interface User {
 export interface BasicUserProfile {
   id: number;
   username: string;
-  role: "admin" | "partner" | "employee";
+  role: "admin" | "partner" | "employee" | "adv_partner";
 }
 
 export interface LoginCredentials {

@@ -5,21 +5,40 @@
 import type {
   PayrateStructure,
   DayType,
-  HourConfiguration,
-  DayConfiguration,
-  PayrateStatus
+  PayrateStatus,
+  RateCategory
 } from '@/types/api/payrate.types';
+import { DEFAULT_POSITIONS } from '@/types/api/payrate.types';
 
 // Re-export core types for component use
 export type {
   PayrateStructure,
   DayType,
-  HourConfiguration,
-  DayConfiguration,
-  PayrateStatus
+  PayrateStatus,
+  RateCategory
 } from '@/types/api/payrate.types';
 
+// Component-level structure-type discriminator
+export type PayrateStructureType = 'hourly' | 'category';
 
+// Hour/day configuration shapes used by components
+export interface HourConfiguration {
+  [hourType: string]: number;
+}
+
+export interface DayConfiguration {
+  [dayType: string]: HourConfiguration;
+}
+
+// Position -> DayConfiguration map (used by templateGenerator)
+export type PayrateConfiguration = Record<string, DayConfiguration>;
+
+// Configuration for a single position selected in the UI
+export interface PositionConfig {
+  positions: string[];
+  rateType: PayrateStructureType;
+  rates: PayrateConfiguration;
+}
 
 export function getCategoryTree(rates: PayrateStructure) {
   return Object.keys(rates);
@@ -34,12 +53,6 @@ export interface CategoryTreeNode {
 
 export interface FlexiblePayrateConfig extends PayrateConfig {
   flexible?: boolean;
-}
-
-export interface PayrateConfiguration {
-  id: number;
-  name: string;
-  config: PayrateConfig;
 }
 
 export type EditorMode = 'create' | 'edit';
@@ -170,7 +183,6 @@ export function getAllHourTypes(rates: PayrateStructure): string[] {
   return Array.from(hourTypes).sort();
 }
 
-// ── Shared time-range utilities ─────────────────────────────────────────────
 // Strict HH:MM-HH:MM validation (24-hour clock)
 export const TIME_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -179,7 +191,6 @@ export function isTimeRange(key: string): boolean {
 }
 
 // Try to suggest a corrected value from a partial/invalid time-range input.
-// Parses "H:MM-HH:MM" and "HH:MM-H:MM" correctly — not by stripping digits.
 export function suggestTimeRange(raw: string): string | null {
   const parts = raw.split('-');
   if (parts.length !== 2) return null;
@@ -198,9 +209,71 @@ export function suggestTimeRange(raw: string): string | null {
   return TIME_RANGE_RE.test(result) ? result : null;
 }
 
-// ── Centralized day-type constants ──────────────────────────────────────────
+// Centralized day-type constants
 export const ALL_DAY_TYPES: DayType[] = ['ngày thường', 'ngày nghỉ', 'ngày lễ'];
 export const FLEXIBLE_DAY_TYPES: DayType[] = ['ngày thường'];
+
+// Common positions (re-export of API default positions)
+export const COMMON_POSITIONS: readonly string[] = DEFAULT_POSITIONS;
+
+// Position rate templates
+export interface PositionRateTemplate {
+  type: PayrateStructureType;
+  name: string;
+  description: string;
+  baseStructure: DayConfiguration;
+}
+
+const HOURLY_BASE_STRUCTURE: DayConfiguration = {
+  'ngày thường': {
+    'ca ngày': 30000,
+    'ca đêm': 39000,
+    'tăng ca': 45000,
+  },
+  'ngày nghỉ': {
+    'ca ngày': 60000,
+    'ca đêm': 78000,
+    'tăng ca': 90000,
+  },
+  'ngày lễ': {
+    'ca ngày': 90000,
+    'ca đêm': 117000,
+    'tăng ca': 135000,
+  },
+};
+
+const CATEGORY_BASE_STRUCTURE: DayConfiguration = {
+  'ngày thường': {
+    'phổ thông': 30000,
+    'kinh nghiệm': 40000,
+    'chuyên gia': 60000,
+  },
+  'ngày nghỉ': {
+    'phổ thông': 50000,
+    'kinh nghiệm': 65000,
+    'chuyên gia': 90000,
+  },
+  'ngày lễ': {
+    'phổ thông': 75000,
+    'kinh nghiệm': 100000,
+    'chuyên gia': 150000,
+  },
+};
+
+export const POSITION_RATE_TEMPLATES: PositionRateTemplate[] = [
+  {
+    type: 'hourly',
+    name: 'Theo khung giờ',
+    description: 'Cấu hình lương theo từng ca làm việc (ca ngày, ca đêm, tăng ca).',
+    baseStructure: HOURLY_BASE_STRUCTURE,
+  },
+  {
+    type: 'category',
+    name: 'Theo danh mục',
+    description: 'Cấu hình lương theo cấp bậc / danh mục công việc.',
+    baseStructure: CATEGORY_BASE_STRUCTURE,
+  },
+];
 
 // Create empty day configuration with default hour types
 export function createEmptyDayConfiguration(hourTypes: string[]): DayConfiguration {
@@ -299,8 +372,6 @@ export function ratesToMatrix(rates: PayrateStructure): MatrixCell[] {
 }
 
 // Create empty payrate structure for new flexible projects.
-// Flexible projects only use 'ngày thường' and time-range shifts (HH:MM-HH:MM).
-// No shifts are pre-filled — user adds them via FlexibleShiftManager.
 export function createFlexiblePayrateStructure(): PayrateStructure {
   return {
     'phổ thông': {
@@ -311,7 +382,7 @@ export function createFlexiblePayrateStructure(): PayrateStructure {
 
 // Create default payrate structure for new projects
 export function createDefaultPayrateStructure(): PayrateStructure {
-  const defaultPosition = 'phổ thông'; // Use string literal instead of importing
+  const defaultPosition = 'phổ thông';
   const structure: PayrateStructure = {};
 
   structure[defaultPosition] = {
@@ -335,7 +406,7 @@ export function createDefaultPayrateStructure(): PayrateStructure {
   return structure;
 }
 
-// Validation for flexible projects — only validates 'ngày thường', requires at least one time-range shift
+// Validation for flexible projects
 export function validateFlexiblePayrateStructure(rates: PayrateStructure): ValidationResult {
   const errors: string[] = [];
 
@@ -412,7 +483,6 @@ export function validatePayrateStructure(rates: PayrateStructure): ValidationRes
         errors.push(`"${dayType}" của vị trí "${position}" phải có ít nhất một khung giờ`);
       }
 
-      // Validate rate values
       for (const hourType of hourTypes) {
         const rate = hourConfig[hourType];
         if (typeof rate !== 'number' || rate < 0) {

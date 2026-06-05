@@ -44,12 +44,14 @@ export function UserCardRow({ user, onEdit, onDelete }: UserCardRowProps) {
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case "Admin":
+      case "admin":
         return <Badge variant="admin" className="typography-body-small">Admin</Badge>;
-      case "Partner":
+      case "partner":
         return <Badge variant="partner" className="typography-body-small">Partner</Badge>;
-      case "Manager":
+      case "adv_partner":
         return <Badge variant="manager" className="typography-body-small">Manager</Badge>;
+      case "employee":
+        return <Badge variant="role" className="typography-body-small">Nhân viên</Badge>;
       default:
         return <Badge variant="role" className="typography-body-small">{role}</Badge>;
     }

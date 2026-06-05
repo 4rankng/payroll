@@ -324,6 +324,19 @@ export interface BackendAuditLogDetailResponse {
   status: string;
   message: string;
   data: BackendAuditLog;
+  // Flattened convenience accessors — components may read these directly
+  id?: number;
+  action?: string;
+  entity_type?: string;
+  entity_id?: number | null;
+  user_id?: number;
+  user_username?: string;
+  user_fullname?: string;
+  platform?: string | null;
+  browser?: string | null;
+  ip_address?: string | null;
+  metadata?: string | null;
+  created_at?: string;
 }
 
 export interface AuditLogsQueryParams {

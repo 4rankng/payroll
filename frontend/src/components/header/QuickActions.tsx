@@ -41,7 +41,7 @@ interface FixedAction {
   icon: typeof Briefcase | React.ComponentType<{ className?: string }>;
   href?: string;
   onClick?: () => void;
-  permissions: ('admin' | 'partner')[];
+  permissions: ('admin' | 'partner' | 'employee' | 'adv_partner')[];
 }
 
 interface QuickActionsProps {

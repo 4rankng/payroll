@@ -39,7 +39,7 @@ export const EmployeeSummaryCards = ({ summary, formatCurrency }: EmployeeSummar
             </span>
           </div>
           <p className="mt-1 text-[15px] font-semibold tabular-nums text-slate-800 leading-tight truncate">
-            {isCurrency ? formatCurrency(summary[key] as number) : (summary[key] as number).toLocaleString('vi-VN')}
+            {isCurrency ? formatCurrency(summary[key]) : summary[key].toLocaleString('vi-VN')}
           </p>
         </div>
       </div>

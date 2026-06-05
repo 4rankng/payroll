@@ -50,6 +50,13 @@ export interface Project {
   startDate?: string;
   endDate?: string;
   employee_assignments?: EmployeeAssignments;
+  // Optional finance / management fields (may not be returned by backend)
+  budget?: number;
+  priority?: string;
+  manager?: string;
+  total_payout_vnd?: number;
+  spent?: number;
+  progress?: number;
 }
 
 export interface ProjectSummary {
@@ -206,6 +213,8 @@ export interface CreatePayRateData {
 }
 
 // Missing types for backwards compatibility
+export type ProjectPriority = "high" | "medium" | "low";
+
 export interface ProjectFormData {
   name: string;
   description?: string;
@@ -213,6 +222,9 @@ export interface ProjectFormData {
   code?: string;
   start_date: string;
   end_date: string;
+  manager?: string;
+  budget?: number;
+  priority?: "high" | "medium" | "low";
 }
 
 export interface PaginationData {
