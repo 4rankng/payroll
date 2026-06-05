@@ -8,7 +8,7 @@ const PAGE_SIZE = 20;
 async function fetchAllNewEmployees(params?: Omit<NewEmployeesParams, 'page'>) {
   // Fetch first page to get total
   const first = await dashboardService.getNewEmployees({ ...params, page: 1, pageSize: PAGE_SIZE });
-  const totalPages = first.pagination.totalPages;
+  const totalPages = first.pagination?.totalPages ?? 1;
   const allEmployees = [...first.data];
 
   // Fetch remaining pages in parallel

@@ -22,6 +22,7 @@ export const useActivitiesPagination = (params?: Omit<RecentActivitiesParams, 'p
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage.pagination) return undefined;
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },

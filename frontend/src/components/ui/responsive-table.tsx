@@ -128,35 +128,5 @@ export function ResponsiveTable<TData = any>({
     </div>
   );
 }
-
-// Helper function to convert table columns to mobile fields
-export function columnsToMobileFields<TData extends Record<string, unknown> = Record<string, unknown>>(
-  columns: ColumnDef<TData>[],
-  priorities?: Record<string, number>
-): MobileField<TData>[] {
-  return columns
-    .filter((col) => col.id !== "select" && col.id !== "actions") // Skip selection and action columns
-    .map((col) => {
-      const colAny = col as unknown as { id?: string; accessorKey?: string; header?: unknown; cell?: unknown };
-      const columnId = colAny.id || colAny.accessorKey || "";
-      const header = colAny.header;
-      const cell = colAny.cell;
-      return {
-        key: columnId,
-        label: (header as string | undefined) || columnId,
-        priority: priorities?.[columnId] || 2,
-        render: cell
-          ? (row: TData) => {
-              const cellContext = {
-                row: { original: row, getValue: (key: string) => row[key] },
-                getValue: () => row[columnId],
-              };
-              return (cell as (ctx: typeof cellContext) => React.ReactNode)(cellContext);
-            }
-          : undefined,
-      } as MobileField<TData>;
-    });
-}
-
 // Re-export types for convenience
 export type { MobileField, RowAction } from "@/components/ui/mobile-table";

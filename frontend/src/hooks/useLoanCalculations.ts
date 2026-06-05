@@ -48,11 +48,9 @@ const createDueDate = (startDate: string, offsetMonths: number, paymentDay: numb
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
-type ScheduleGenerationResult = {
-  success: boolean;
-  error?: string;
-  fieldErrors?: FieldErrors;
-};
+type ScheduleGenerationResult =
+  | { success: true }
+  | { success: false; error: string; fieldErrors?: FieldErrors };
 
 type UpdateField = <K extends keyof FormState>(key: K, value: FormState[K]) => void;
 

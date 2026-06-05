@@ -90,16 +90,15 @@ class DashboardService {
    */
   async getRecentActivities(params?: RecentActivitiesParams): Promise<RecentActivitiesResponse> {
     const queryString = buildQueryString(params);
-    const response = await apiClient.get<RecentActivitiesResponse>(`${API_ENDPOINTS.dashboard.recentActivities}${queryString}`);
+    const response = await apiClient.get<RecentActivity[]>(`${API_ENDPOINTS.dashboard.recentActivities}${queryString}`);
     if (!response.data) {
       throw new Error('API response missing expected data');
     }
-    const data = response.data;
     return {
-      status: (data.status as 'success' | 'error') || 'success',
-      data: data.data,
-      pagination: data.pagination,
-      message: data.message || response.message || 'Recent activities retrieved successfully'
+      status: response.status || 'success',
+      data: response.data,
+      pagination: response.pagination!,
+      message: response.message || 'Recent activities retrieved successfully'
     };
   }
 
@@ -109,16 +108,15 @@ class DashboardService {
    */
   async getNewEmployees(params?: NewEmployeesParams): Promise<NewEmployeesResponse> {
     const queryString = buildQueryString(params);
-    const response = await apiClient.get<NewEmployeesResponse>(`${API_ENDPOINTS.dashboard.newEmployees}${queryString}`);
+    const response = await apiClient.get<NewEmployee[]>(`${API_ENDPOINTS.dashboard.newEmployees}${queryString}`);
     if (!response.data) {
       throw new Error('API response missing expected data');
     }
-    const data = response.data;
     return {
-      status: (data.status as 'success' | 'error') || 'success',
-      data: data.data,
-      pagination: data.pagination,
-      message: data.message || response.message || 'New employees retrieved successfully'
+      status: response.status || 'success',
+      data: response.data,
+      pagination: response.pagination!,
+      message: response.message || 'New employees retrieved successfully'
     };
   }
 

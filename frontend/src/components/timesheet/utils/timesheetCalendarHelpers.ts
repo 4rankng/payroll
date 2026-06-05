@@ -1,4 +1,4 @@
-import { Timesheet, type EmployeeTimesheetEntry } from '@/types/api/timesheet.types';
+import { type EmployeeTimesheetEntry } from '@/types/api/timesheet.types';
 import {
   startOfMonth,
   endOfMonth,
@@ -11,12 +11,30 @@ import {
 } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
+/** Narrowed timesheet type with only the fields the calendar actually reads. */
+export interface CalendarTimesheetEntry {
+  id: number;
+  project_id: number;
+  employee_id: number;
+  date: string;
+  hours_worked: number;
+  amount: number;
+  paid_amount?: number;
+  status: 'approved' | 'pending_approval' | 'rejected' | 'draft';
+  payment_status?: 'pending' | 'paid' | 'failed' | 'cancelled';
+  force_payroll?: boolean;
+  projectName: string;
+  projectCode?: string;
+  employeeName: string;
+  employeeCode: string;
+}
+
 export interface CalendarDay {
   date: Date;
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
-  entries: Timesheet[];
+  entries: CalendarTimesheetEntry[];
   totalHours: number;
   totalAmount: number;
   totalPaidAmount: number;
@@ -53,7 +71,7 @@ export interface EmployeeCalendarData {
 /**
  * Groups timesheets by project for calendar display
  */
-export function groupTimesheetsByProject(timesheets: Timesheet[]): Record<number, Timesheet[]> {
+export function groupTimesheetsByProject(timesheets: CalendarTimesheetEntry[]): Record<number, CalendarTimesheetEntry[]> {
   return timesheets.reduce((acc, timesheet) => {
     const projectId = timesheet.project_id;
     if (!acc[projectId]) {
@@ -61,14 +79,14 @@ export function groupTimesheetsByProject(timesheets: Timesheet[]): Record<number
     }
     acc[projectId].push(timesheet);
     return acc;
-  }, {} as Record<number, Timesheet[]>);
+  }, {} as Record<number, CalendarTimesheetEntry[]>);
 }
 
 /**
  * Determines the aggregated status for multiple entries on the same day
  * Priority: paid > approval status
  */
-export function getAggregatedStatus(entries: Timesheet[]): CalendarDay['aggregatedStatus'] {
+export function getAggregatedStatus(entries: CalendarTimesheetEntry[]): CalendarDay['aggregatedStatus'] {
   if (entries.length === 0) return 'none';
 
   // Priority 1: Check payment status first (paid takes highest priority)
@@ -103,7 +121,7 @@ export function getAggregatedStatus(entries: Timesheet[]): CalendarDay['aggregat
 export function createCalendarGrid(
   year: number,
   month: number,
-  projectTimesheets: Timesheet[]
+  projectTimesheets: CalendarTimesheetEntry[]
 ): CalendarDay[][] {
   const monthStart = startOfMonth(new Date(year, month - 1));
   const monthEnd = endOfMonth(monthStart);
@@ -125,7 +143,7 @@ export function createCalendarGrid(
     }
     acc[dateKey].push(timesheet);
     return acc;
-  }, {} as Record<string, Timesheet[]>);
+  }, {} as Record<string, CalendarTimesheetEntry[]>);
 
   // Create calendar days
   const calendarDays = allDays.map(date => {
@@ -162,7 +180,7 @@ export function createCalendarGrid(
 /**
  * Calculates monthly statistics for a project
  */
-export function calculateMonthlyStats(projectTimesheets: Timesheet[]) {
+export function calculateMonthlyStats(projectTimesheets: CalendarTimesheetEntry[]) {
   const totalHours = projectTimesheets.reduce((sum, t) => sum + t.hours_worked, 0);
   const totalAmount = projectTimesheets.reduce((sum, t) => sum + t.amount, 0);
 
@@ -188,7 +206,7 @@ export function calculateMonthlyStats(projectTimesheets: Timesheet[]) {
  * Creates complete calendar data for an employee
  */
 export function createEmployeeCalendarData(
-  timesheets: Timesheet[],
+  timesheets: CalendarTimesheetEntry[],
   year: number,
   month: number,
   employee?: { id: number; name: string; subtitle?: string },
@@ -315,9 +333,9 @@ export function createEmployeeCalendarDataFromTimesheets(
   // Filter to only show approved timesheets
   const approvedTimesheets = timesheets.filter((entry) => entry.timesheet_status === 'approved');
 
-  // Convert EmployeeTimesheetEntry to Timesheet format for calendar compatibility
+  // Convert EmployeeTimesheetEntry to CalendarTimesheetEntry for calendar compatibility
   // Map payment_status to status field for visual display
-  const convertedTimesheets: Timesheet[] = approvedTimesheets.map((entry) => ({
+  const convertedTimesheets: CalendarTimesheetEntry[] = approvedTimesheets.map((entry) => ({
     id: entry.id,
     employee_id: 0, // Not needed for employee view
     employeeName: '',
@@ -327,20 +345,12 @@ export function createEmployeeCalendarDataFromTimesheets(
     projectCode: entry.project.code,
     date: entry.date,
     hours_worked: entry.hours_worked,
-    paytype: '', // Not provided in employee portal data
-    hour_type: '', // Not provided in employee portal data
-    day_type: '', // Not provided in employee portal data
-    payrate: 0,
     amount: entry.amount,
     // Use payment status as the visual status for employee view
     // 'paid' stays as 'paid', 'unpaid'/'pending' mapped to 'approved' (gray background)
     status: entry.payment_status === 'paid' ? 'paid' : 'approved',
     payment_status: entry.payment_status,
     paid_amount: entry.paid_amount || 0,
-    approved_at: entry.approved_at,
-    rejection_reason: null,
-    created_at: entry.created_at,
-    updated_at: entry.created_at,
   }));
 
   const calendarDays = createCalendarGrid(year, month, convertedTimesheets);
