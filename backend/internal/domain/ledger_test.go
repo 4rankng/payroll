@@ -2,21 +2,22 @@ package domain
 
 import (
 	"testing"
-	"time"
+
+	"api-server/internal/pkg/clock"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLedger_ValidateDate(t *testing.T) {
 	l := &LedgerEntry{
-		Date: time.Now(),
+		Date: clock.Now(),
 	}
 
 	err := l.ValidateDate()
 	assert.NoError(t, err)
 
 	// Test date in the future
-	l.Date = time.Now().AddDate(0, 0, 1) // tomorrow
+	l.Date = clock.Now().AddDate(0, 0, 1) // tomorrow
 	err = l.ValidateDate()
 	assert.Error(t, err)
 }
@@ -81,7 +82,7 @@ func TestLedger_ValidateAmounts(t *testing.T) {
 
 func TestLedger_IsValid(t *testing.T) {
 	l := &LedgerEntry{
-		Date:    time.Now().AddDate(0, 0, -1), // yesterday
+		Date:    clock.Now().AddDate(0, 0, -1), // yesterday
 		Account: AccountCash,
 		Debit:   100,
 		Credit:  0,
@@ -93,7 +94,7 @@ func TestLedger_IsValid(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test invalid ledger entry
-	l.Date = time.Now().AddDate(0, 0, 1) // tomorrow
+	l.Date = clock.Now().AddDate(0, 0, 1) // tomorrow
 	err = l.IsValid()
 	assert.Error(t, err)
 }

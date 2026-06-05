@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"api-server/internal/pkg/clock"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,14 +39,14 @@ func TestTimesheet_ValidateEmployeeID(t *testing.T) {
 
 func TestTimesheet_ValidateDate(t *testing.T) {
 	ts := &Timesheet{
-		Date: time.Now(),
+		Date: clock.Now(),
 	}
 
 	err := ts.ValidateDate()
 	assert.NoError(t, err)
 
 	// Test date in the future
-	ts.Date = time.Now().AddDate(0, 0, 1) // tomorrow
+	ts.Date = clock.Now().AddDate(0, 0, 1) // tomorrow
 	err = ts.ValidateDate()
 	assert.Error(t, err)
 }
@@ -102,7 +104,7 @@ func TestTimesheet_IsValid(t *testing.T) {
 		ProjectID:   1,
 		EmployeeID:  1,
 		PayrateID:   1,
-		Date:        time.Now().AddDate(0, 0, -1), // yesterday
+		Date:        clock.Now().AddDate(0, 0, -1), // yesterday
 		HoursWorked: 8.0,
 		PayType:     "regular",
 		PayRate:     100000,

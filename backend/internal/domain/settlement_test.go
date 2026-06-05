@@ -2,13 +2,14 @@ package domain
 
 import (
 	"testing"
-	"time"
+
+	"api-server/internal/pkg/clock"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSettlement_Validate(t *testing.T) {
-	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterday := clock.Now().AddDate(0, 0, -1)
 
 	tests := []struct {
 		name       string
@@ -68,7 +69,7 @@ func TestSettlement_Validate(t *testing.T) {
 			settlement: Settlement{
 				TransactionID:  1,
 				Amount:         100000,
-				SettlementDate: time.Now().AddDate(0, 0, 1),
+				SettlementDate: clock.Now().AddDate(0, 0, 1),
 				CreatedBy:      1,
 			},
 			wantErr: true,
