@@ -160,7 +160,7 @@ function flattenRates(category: Record<string, unknown>): number[] {
       if (typeof value === 'number') {
         rates.push(value);
       } else if (typeof value === 'object' && value !== null) {
-        traverse(value);
+        traverse(value as Record<string, unknown>);
       }
     });
   }

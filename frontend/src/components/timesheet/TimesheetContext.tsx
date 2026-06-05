@@ -1,6 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { Timesheet } from '@/types/api/timesheet.types';
-import type { ProjectEmployeeAssignment } from '@/types/api/project-employee.types';
 import type { SortingState, OnChangeFn } from '@tanstack/react-table';
 import type { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
 
@@ -107,7 +106,7 @@ export function TimesheetProvider({
 
     return {
     state: {
-      timesheets: management.timesheets as Timesheet[],
+      timesheets: management.timesheets as unknown as Timesheet[],
       isLoading: management.isLoading,
       error: management.error,
       pagination: management.paginationInfo,
@@ -142,7 +141,7 @@ export function TimesheetProvider({
       statusFilter: management.statusFilter,
       onStatusChange: management.setStatusFilter,
       projects: management.projects,
-      projectEmployees: management.projectEmployees as ProjectEmployeeAssignment[],
+      projectEmployees: management.projectEmployees as unknown as NonNullable<TimesheetContextValue['filters']['projectEmployees']>,
       searchTerm: management.searchTerm,
       onSearchChange: management.setSearchTerm,
       userRole,

@@ -142,12 +142,12 @@ export function FileList({
                 </p>
                 
                 {/* Status badge */}
-                {(asset as { status?: string }).status && (
+                {(asset as unknown as { status?: string }).status && (
                   <Badge
-                    variant={(asset as { status: string }).status === 'active' ? 'default' : 'secondary'}
+                    variant={(asset as unknown as { status: string }).status === 'active' ? 'default' : 'secondary'}
                     className="typography-body-small"
                   >
-                    {(asset as { status: string }).status === 'active' ? 'Đang dùng' : (asset as { status: string }).status}
+                    {(asset as unknown as { status: string }).status === 'active' ? 'Đang dùng' : (asset as unknown as { status: string }).status}
                   </Badge>
                 )}
               </div>
@@ -163,7 +163,7 @@ export function FileList({
                       {format(new Date(asset.created_at), 'dd/MM/yyyy')}
                     </p>
                     
-                    {(asset as { is_public?: boolean }).is_public && (
+                    {(asset as unknown as { is_public?: boolean }).is_public && (
                       <div className="flex items-center gap-1">
                         <ExternalLink className="w-3 h-3 text-gray-400" />
                         <span className="typography-body-small text-gray-400">Công khai</span>

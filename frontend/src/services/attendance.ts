@@ -47,7 +47,8 @@ export const attendanceService = {
   },
 
   // Admin APIs
-  adminList: async (params?: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adminList: async (params?: Record<string, any>) => {
     const { data } = await apiClient.get(API_ENDPOINTS.attendance.admin.list, { params });
     return data;
   },

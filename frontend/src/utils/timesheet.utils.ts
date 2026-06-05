@@ -56,7 +56,16 @@ export function calculateAmountDisplay(
 }
 
 export function getAmountDisplayText(
-  entry: Record<string, unknown>,
+  entry: {
+    calculatedAmount?: number;
+    hoursWorked?: number;
+    position?: string;
+    hourType?: string;
+    dayType?: string;
+    rate?: number;
+    hours_worked?: number;
+    amount?: number;
+  },
   locale: string = 'vi-VN'
 ): AmountDisplayResult {
   return calculateAmountDisplay({

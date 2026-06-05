@@ -25,7 +25,7 @@ export const Typography = React.forwardRef<
   as = "p",
   ...props 
 }, ref) => {
-  const Component = as as keyof React.JSX.IntrinsicElements;
+  const Component = as as unknown as React.ElementType;
   const typographyClasses = getTypographyClasses({
     variant,
     color,

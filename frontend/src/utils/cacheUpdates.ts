@@ -183,7 +183,7 @@ export function updateSummaryCount(
 
       return {
         ...record,
-        [field]: Math.max(0, (record[field] || 0) + delta)
+        [field]: Math.max(0, ((record[field] as number) || 0) + delta)
       };
     }
 

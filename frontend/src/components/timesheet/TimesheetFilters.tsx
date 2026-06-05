@@ -3,7 +3,7 @@ import { FilterPill } from '@/components/shared/FilterPill';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { SearchableDropdown } from '@/components/ui/searchable-dropdown';
 import { EmployeeDropdownAdapter } from '@/components/timesheet/EmployeeDropdownAdapter';
-import type { ProjectEmployeeAssignment } from '@/types/api/project-employee.types';
+import type { Employee } from '@/types/api/employee.types';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
@@ -132,7 +132,7 @@ export const TimesheetFilters = () => {
                   value={selectedEmployee} onChange={onEmployeeChange}
                   selectedProject={selectedProject} placeholder="Tất cả nhân viên"
                   className="w-full"
-                  availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as ProjectEmployeeAssignment[]}
+                  availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as unknown as Employee[]}
                   includeAvailableOnly={shouldUseProjectEmployees}
                 />
               </div>
@@ -191,7 +191,7 @@ export const TimesheetFilters = () => {
         selectedProject={selectedProject}
         placeholder="Nhân viên"
         className="inline-flex items-center gap-1 h-7 px-2.5 py-0 rounded-xl text-xs font-medium whitespace-nowrap border border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40 transition-colors duration-100 [&>svg]:h-3 [&>svg]:w-3"
-        availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as ProjectEmployeeAssignment[]}
+        availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as unknown as Employee[]}
         includeAvailableOnly={shouldUseProjectEmployees}
         pillStyle
       />

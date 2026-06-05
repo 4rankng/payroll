@@ -42,7 +42,7 @@ export const usePartnerTimesheetData = () => {
           }
           // If response has a nested data structure
           else if ((timesheetsResponse.data as { timesheets?: unknown }).timesheets) {
-            setTimesheetData((timesheetsResponse.data as { timesheets: unknown[] }).timesheets);
+            setTimesheetData((timesheetsResponse.data as unknown as { timesheets: Timesheet[] }).timesheets);
           }
           // If response data itself is the timesheet array
           else {
