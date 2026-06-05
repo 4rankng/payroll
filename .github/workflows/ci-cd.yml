@@ -184,7 +184,7 @@ jobs:
       - name: Run gosec
         uses: securego/gosec@v2.22.3
         with:
-          args: '-no-fail -fmt sarif -out gosec-results.sarif ./backend/...'
+          args: '-quiet -no-fail -fmt sarif -out gosec-results.sarif ./backend/...'
         continue-on-error: true
 
       - name: Upload gosec results
