@@ -41,6 +41,7 @@ type DisbursementPollerWorker struct {
 	walletSvc             wallet.WalletService
 	userRepo              domain.UserRepository
 	emailSvc              *notification.EmailService
+	notifications         *notification.NotificationService
 	logger                *slog.Logger
 }
 
@@ -54,6 +55,7 @@ func NewDisbursementPollerWorker(
 	walletSvc wallet.WalletService,
 	userRepo domain.UserRepository,
 	emailSvc *notification.EmailService,
+	notifications *notification.NotificationService,
 	logger *slog.Logger,
 ) *DisbursementPollerWorker {
 	return &DisbursementPollerWorker{
@@ -66,6 +68,7 @@ func NewDisbursementPollerWorker(
 		walletSvc:             walletSvc,
 		userRepo:              userRepo,
 		emailSvc:              emailSvc,
+		notifications:         notifications,
 		logger:                logger,
 	}
 }
@@ -238,9 +241,27 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 	return nil
 }
 
-// notifyInsufficientBalance sends an email to all admin users when the
-// disbursement poller skips a batch due to insufficient wallet balance.
+// notifyInsufficientBalance sends an email and push notification to all admin
+// users when the disbursement poller skips a batch due to insufficient wallet balance.
 func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context, available, needed int64, count int) {
+	title := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu đang chờ", count)
+	body := fmt.Sprintf(
+		"Số dư ví không đủ để xử lý các yêu cầu ứng lương.\n\n"+
+			"Số dư khả dụng: %d VND\n"+
+			"Tổng cần thanh toán: %d VND\n"+
+			"Số yêu cầu bị tạm hoãn: %d\n\n"+
+			"Vui lòng nạp thêm tiền vào ví để hệ thống tự động xử lý.",
+		available, needed, count,
+	)
+
+	// Push notification to all admins
+	if w.notifications != nil {
+		if err := w.notifications.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, body); err != nil {
+			w.logger.Error("disbursement poller: failed to send insufficient balance push notification", "error", err)
+		}
+	}
+
+	// Email to all admins
 	if w.userRepo == nil || w.emailSvc == nil {
 		w.logger.Warn("disbursement poller: cannot send insufficient balance email — missing userRepo or emailSvc")
 		return
@@ -259,24 +280,14 @@ func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context
 		}
 	}
 	if len(recipients) == 0 {
-		w.logger.Warn("disbursement poller: no admin emails found, skipping notification")
+		w.logger.Warn("disbursement poller: no admin emails found, skipping email")
 		return
 	}
 
-	subject := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu đang chờ", count)
-	textBody := fmt.Sprintf(
-		"Số dư ví không đủ để xử lý các yêu cầu ứng lương.\n\n"+
-			"Số dư khả dụng: %d VND\n"+
-			"Tổng cần thanh toán: %d VND\n"+
-			"Số yêu cầu bị tạm hoãn: %d\n\n"+
-			"Vui lòng nạp thêm tiền vào ví để hệ thống tự động xử lý.",
-		available, needed, count,
-	)
-
 	if _, emailErr := w.emailSvc.SendGenericEmail(ctx, &dto.SendEmailRequest{
 		Recipients: recipients,
-		Subject:    subject,
-		TextBody:   textBody,
+		Subject:    title,
+		TextBody:   body,
 	}); emailErr != nil {
 		w.logger.Error("disbursement poller: failed to send insufficient balance email",
 			"error", emailErr, "recipients", recipients)

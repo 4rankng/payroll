@@ -172,6 +172,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.Wallet,
 			repos.User,
 			services.Email,
+			services.Notification,
 			infra.Logger,
 		)
 		disbursementExecuteWorker = workers.NewDisbursementExecuteWorker(
