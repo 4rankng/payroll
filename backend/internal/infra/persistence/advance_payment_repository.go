@@ -199,7 +199,7 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 	// Build base query using project_employees as the base table for flexible payment schedule.
 	// Deduplicate via subquery to avoid row multiplication from duplicate entries.
 	query := r.DB.WithContext(ctx).
-		Table("(SELECT employee_id, MIN(project_id) as project_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
+		Table("(SELECT employee_id, MIN(project_id) as project_id, MAX(id) as project_employee_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
 		Select(`
 			e.id as employee_id,
 			e.fullname,
@@ -226,7 +226,7 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 			pe_detail.check_in_enabled
 		`).
 		Joins("JOIN employees e ON pe.employee_id = e.id").
-		Joins("JOIN project_employees pe_detail ON pe_detail.employee_id = pe.employee_id AND pe_detail.project_id = pe.project_id AND pe_detail.deleted_at IS NULL AND pe_detail.payment_schedule = 'flexible'").
+		Joins("JOIN project_employees pe_detail ON pe_detail.id = pe.project_employee_id").
 		Joins("JOIN projects p ON pe.project_id = p.id").
 		Joins("LEFT JOIN banks b ON e.bank_id = b.id").
 		Joins("LEFT JOIN users u ON e.user_id = u.id").
@@ -278,9 +278,9 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 
 	// Count total using a separate query
 	countQuery := r.DB.WithContext(ctx).
-		Table("(SELECT employee_id, MIN(project_id) as project_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
+		Table("(SELECT employee_id, MIN(project_id) as project_id, MAX(id) as project_employee_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
 		Joins("JOIN employees e ON pe.employee_id = e.id").
-		Joins("JOIN project_employees pe_detail ON pe_detail.employee_id = pe.employee_id AND pe_detail.project_id = pe.project_id AND pe_detail.deleted_at IS NULL AND pe_detail.payment_schedule = 'flexible'").
+		Joins("JOIN project_employees pe_detail ON pe_detail.id = pe.project_employee_id").
 		Joins("JOIN projects p ON pe.project_id = p.id")
 	if filters.ForMonth != nil {
 		countQuery = countQuery.Joins(`JOIN (
