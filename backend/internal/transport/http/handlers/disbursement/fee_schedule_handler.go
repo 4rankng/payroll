@@ -36,13 +36,13 @@ func (h *FeeScheduleHandler) List(c *gin.Context) {
 	}
 
 	now := h.clock.Now()
-	active, _ := h.service.ActiveEntry(c.Request.Context())
 	today := now.Format(domain.DisbursementFeeScheduleDateLayout)
 
 	out := make([]dto.DisbursementFeeScheduleEntryResponse, 0, len(entries))
 	for i := range entries {
 		e := entries[i]
-		isActive := active != nil && active.ID == e.ID
+		providerActive := domain.ActiveDisbursementFeeScheduleAt(entries, e.Provider, now)
+		isActive := providerActive != nil && providerActive.ID == e.ID
 		isPending := e.EffectiveDate > today
 		out = append(out, toFeeScheduleResponse(e, isActive, isPending))
 	}
