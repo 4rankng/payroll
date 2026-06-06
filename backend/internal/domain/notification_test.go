@@ -20,7 +20,7 @@ func TestNotificationTypes(t *testing.T) {
 }
 
 func TestNotificationPriority(t *testing.T) {
-	assert.Equal(t, "", NotifyTypeImportant)
+	assert.Equal(t, "⚠️ ", NotifyTypeImportant)
 }
 
 func TestNotificationChannels(t *testing.T) {
