@@ -84,6 +84,41 @@ func (r *AdvancePaymentRequestRepository) CountPending(ctx context.Context) (int
 	return count, nil
 }
 
+func (r *AdvancePaymentRequestRepository) GetPendingSummary(ctx context.Context, forMonth string) (int64, int64, uint64, error) {
+	type summaryResult struct {
+		RequestCount  int64
+		EmployeeCount int64
+		TotalAmount   uint64
+	}
+	var result summaryResult
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Select("COUNT(*) as request_count, COUNT(DISTINCT employee_id) as employee_count, COALESCE(SUM(request_amount), 0) as total_amount").
+		Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
+		Where("advance_payment_requests.status IN (?, ?)", domain.AdvancePaymentStatusPending, domain.AdvancePaymentStatusApproved).
+		Where("ap.for_month = ?", forMonth).
+		Scan(&result).Error
+	if err != nil {
+		return 0, 0, 0, r.errorHandler.HandleGetError(err, "advance_payment_request", nil)
+	}
+	return result.RequestCount, result.EmployeeCount, result.TotalAmount, nil
+}
+
+func (r *AdvancePaymentRequestRepository) CountCompletedProjectsByMonth(ctx context.Context, forMonth string) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Select("COUNT(DISTINCT project_id)").
+		Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
+		Where("advance_payment_requests.status = ?", domain.AdvancePaymentStatusCompleted).
+		Where("ap.for_month = ?", forMonth).
+		Scan(&count).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", nil)
+	}
+	return count, nil
+}
+
 func (r *AdvancePaymentRequestRepository) GetPendingByDateRange(ctx context.Context, fromDate, toDate time.Time) ([]*domain.AdvancePaymentRequest, error) {
 	var requests []*domain.AdvancePaymentRequest
 

@@ -202,38 +202,24 @@ func registerSchedulerJobs(
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()
-			logger.Info("Starting advance payment reminder check")
-
 			now := clock.Now()
 			currentMonth := advance_payment.GetCurrentMonthFromTime(now)
 
-			grouped, err := advancePaymentReqRepo.GetPendingGroupedByEmployee(ctx, currentMonth)
+			requestCount, employeeCount, totalAmount, err := advancePaymentReqRepo.GetPendingSummary(ctx, currentMonth)
 			if err != nil {
-				logger.Error("Failed to get pending advance payment requests grouped by employee", "error", err)
+				logger.Error("Failed to get pending advance payment summary", "error", err)
 				return
 			}
-
-			if len(grouped) == 0 {
+			if requestCount == 0 {
 				logger.Info("No pending advance payment requests for current month, skipping reminder")
 				return
 			}
 
-			var totalAmount uint64
-			employeeSet := make(map[uint64]struct{})
-			for _, g := range grouped {
-				totalAmount += g.TotalAmount
-				employeeSet[g.EmployeeID] = struct{}{}
-			}
-
 			title := fmt.Sprintf("%s Nhắc nhở ứng lương", domain.NotifyTypeImportant)
 			message := fmt.Sprintf("Có %d yêu cầu ứng lương đang chờ từ %d nhân viên (tháng %s), tổng số tiền: %s đ",
-				len(grouped), len(employeeSet), currentMonth, utils.FormatNumber(int64(totalAmount)))
+				requestCount, employeeCount, currentMonth, utils.FormatNumber(int64(totalAmount)))
 
 			sendAdminNotification(ctx, title, message)
-			logger.Info("Advance payment reminder push notification sent",
-				"request_count", len(grouped),
-				"employee_count", len(employeeSet),
-			)
 		},
 	})
 
@@ -303,29 +289,20 @@ func registerSchedulerJobs(
 			prevMonth := now.AddDate(0, -1, 0)
 			forMonth := prevMonth.Format("2006-01")
 
-			logger.Info("Starting FlexPay sao ke reminder",
-				"previous_month", forMonth)
-
-			reportData, err := flexPayReconciliationService.GetCompletedRequestsByMonth(ctx, forMonth)
+			projectCount, err := advancePaymentReqRepo.CountCompletedProjectsByMonth(ctx, forMonth)
 			if err != nil {
-				logger.Error("Failed to get completed requests for sao ke",
-					"month", forMonth, "error", err)
+				logger.Error("Failed to count completed projects for sao ke", "month", forMonth, "error", err)
 				return
 			}
-
-			if len(reportData) == 0 {
-				logger.Info("No completed flexible requests for previous month, skipping sao ke reminder",
-					"month", forMonth)
+			if projectCount == 0 {
+				logger.Info("No completed flexible requests for previous month, skipping sao ke reminder", "month", forMonth)
 				return
 			}
 
 			title := fmt.Sprintf("%s Nhắc nhở gửi sao kê ứng lương", domain.NotifyTypeImportant)
-			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, len(reportData))
+			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, projectCount)
 
 			sendAdminNotification(ctx, title, message)
-			logger.Info("FlexPay sao ke reminder push notification sent",
-				"month", forMonth,
-				"project_count", len(reportData))
 		},
 	})
 

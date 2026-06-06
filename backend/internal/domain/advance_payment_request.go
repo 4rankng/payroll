@@ -137,6 +137,12 @@ type AdvancePaymentRequestRepository interface {
 	UpdateSettlementTransactionID(ctx context.Context, ids []uint64, transactionID uint) error
 	// CountPending returns the total number of pending advance payment requests
 	CountPending(ctx context.Context) (int64, error)
+	// GetPendingSummary returns aggregate counts for PENDING+APPROVED requests in a given month.
+	// Returns requestCount, employeeCount, totalAmount.
+	GetPendingSummary(ctx context.Context, forMonth string) (int64, int64, uint64, error)
+	// CountCompletedProjectsByMonth returns the number of distinct projects
+	// with at least one COMPLETED advance payment request for the given month.
+	CountCompletedProjectsByMonth(ctx context.Context, forMonth string) (int64, error)
 	// ClaimPendingForDisbursement atomically locks PENDING requests and sets
 	// them to APPROVED within a single transaction using FOR UPDATE SKIP LOCKED.
 	// Returns the claimed requests with Employee and Bank preloaded.
