@@ -8,9 +8,12 @@ import (
 
 	asynqlib "github.com/hibiken/asynq"
 
+	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/disbursement"
+	"api-server/internal/app/services/notification"
 	"api-server/internal/domain"
+	"api-server/internal/domain/wallet"
 )
 
 const (
@@ -35,6 +38,9 @@ type DisbursementPollerWorker struct {
 	walletPaymentService  *disbursement.WalletPaymentService
 	registry              *disbursement.Registry
 	asynqClient           *asynqlib.Client
+	walletSvc             wallet.WalletService
+	userRepo              domain.UserRepository
+	emailSvc              *notification.EmailService
 	logger                *slog.Logger
 }
 
@@ -45,6 +51,9 @@ func NewDisbursementPollerWorker(
 	walletPaymentService *disbursement.WalletPaymentService,
 	registry *disbursement.Registry,
 	asynqClient *asynqlib.Client,
+	walletSvc wallet.WalletService,
+	userRepo domain.UserRepository,
+	emailSvc *notification.EmailService,
 	logger *slog.Logger,
 ) *DisbursementPollerWorker {
 	return &DisbursementPollerWorker{
@@ -54,6 +63,9 @@ func NewDisbursementPollerWorker(
 		walletPaymentService:  walletPaymentService,
 		registry:              registry,
 		asynqClient:           asynqClient,
+		walletSvc:             walletSvc,
+		userRepo:              userRepo,
+		emailSvc:              emailSvc,
 		logger:                logger,
 	}
 }
@@ -70,6 +82,37 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 	claimed, err := w.advancePaymentReqRepo.ClaimPendingForDisbursement(ctx, pollerBatchSize)
 	if err != nil {
 		return fmt.Errorf("disbursement poller: claim: %w", err)
+	}
+
+	// Step 1.5: All-or-nothing balance gate
+	if len(claimed) > 0 && w.walletSvc != nil {
+		balance, balErr := w.walletSvc.GetBalance(ctx)
+		if balErr != nil {
+			w.logger.Warn("disbursement poller: failed to get balance, proceeding without check", "error", balErr)
+		} else {
+			var totalAmount int64
+			for _, req := range claimed {
+				totalAmount += int64(req.NetAmount)
+			}
+			if balance.Available < totalAmount {
+				w.logger.Warn("disbursement poller: skipping batch — wallet balance insufficient",
+					"available", balance.Available, "needed", totalAmount, "claimed", len(claimed))
+
+				// Release all claimed requests back to PENDING
+				ids := make([]uint64, len(claimed))
+				for i, req := range claimed {
+					ids[i] = uint64(req.ID)
+				}
+				if resetErr := w.advancePaymentReqRepo.ResetToPending(ctx, ids); resetErr != nil {
+					w.logger.Error("disbursement poller: failed to reset claimed requests to pending", "error", resetErr)
+				}
+
+				// Notify admins via email
+				w.notifyInsufficientBalance(ctx, balance.Available, totalAmount, len(claimed))
+
+				claimed = nil // skip budget validation loop below
+			}
+		}
 	}
 
 	// Step 2: Revalidate budget for each claimed request before enqueue
@@ -193,4 +236,49 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 	}
 
 	return nil
+}
+
+// notifyInsufficientBalance sends an email to all admin users when the
+// disbursement poller skips a batch due to insufficient wallet balance.
+func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context, available, needed int64, count int) {
+	if w.userRepo == nil || w.emailSvc == nil {
+		w.logger.Warn("disbursement poller: cannot send insufficient balance email — missing userRepo or emailSvc")
+		return
+	}
+
+	admins, err := w.userRepo.ListByRole(ctx, domain.RoleAdmin)
+	if err != nil {
+		w.logger.Error("disbursement poller: failed to list admin users for email", "error", err)
+		return
+	}
+
+	recipients := make([]string, 0, len(admins))
+	for _, admin := range admins {
+		if admin.Email != nil && *admin.Email != "" {
+			recipients = append(recipients, *admin.Email)
+		}
+	}
+	if len(recipients) == 0 {
+		w.logger.Warn("disbursement poller: no admin emails found, skipping notification")
+		return
+	}
+
+	subject := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu đang chờ", count)
+	textBody := fmt.Sprintf(
+		"Số dư ví không đủ để xử lý các yêu cầu ứng lương.\n\n"+
+			"Số dư khả dụng: %d VND\n"+
+			"Tổng cần thanh toán: %d VND\n"+
+			"Số yêu cầu bị tạm hoãn: %d\n\n"+
+			"Vui lòng nạp thêm tiền vào ví để hệ thống tự động xử lý.",
+		available, needed, count,
+	)
+
+	if _, emailErr := w.emailSvc.SendGenericEmail(ctx, &dto.SendEmailRequest{
+		Recipients: recipients,
+		Subject:    subject,
+		TextBody:   textBody,
+	}); emailErr != nil {
+		w.logger.Error("disbursement poller: failed to send insufficient balance email",
+			"error", emailErr, "recipients", recipients)
+	}
 }
