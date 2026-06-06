@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"log/slog"
-	"time"
 
 	bootstrapInfra "api-server/internal/app/bootstrap/infrastructure"
 	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
@@ -11,7 +10,6 @@ import (
 	"api-server/internal/app/services/cleanup"
 	dbExportSvc "api-server/internal/app/services/db_export"
 	"api-server/internal/app/services/employee"
-	"api-server/internal/app/services/flex_pay"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
@@ -51,17 +49,11 @@ type Container struct {
 	TenantQueueManager *tenantqueue.Manager
 	AsynqClient        *asynqinfra.Client
 	AsynqServer        *asynqinfra.Server
-	stopCh             chan struct{}
 
 	Repos      *bootstrapRepos.Repositories
 	Services   *bootstrapServices.Services
 	Handlers   *Handlers
 	Middleware *Middleware
-}
-
-// Stop signals background goroutines to terminate.
-func (c *Container) Stop() {
-	close(c.stopCh)
 }
 
 type Handlers struct {
@@ -152,7 +144,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 
 	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk)
 	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, repos.APIMetric, cfg)
-	sched := initScheduler(services.Notification, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, services.Email, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, cfg, infra.Logger)
+	sched := initScheduler(services.Notification, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, cfg, infra.Logger)
 	sched.SetRepo(repos.CronJobStatus)
 	h.Cron = handlers.NewCronHandler(repos.CronJobStatus, sched)
 	// init tenant queue manager for per-tenant background workers
@@ -272,27 +264,6 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		}
 	}
 
-	stopCh := make(chan struct{})
-
-	// Start periodic DB stats logging for observability
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		obsLogger := observability.GetLogger()
-		for {
-			select {
-			case <-stopCh:
-				return
-			case <-ticker.C:
-				if infra.DB == nil {
-					continue
-				}
-				stats := infra.DB.Stats()
-				obsLogger.Info("db_stats", "open", stats["OpenConnections"], "in_use", stats["InUse"], "idle", stats["Idle"], "max_open", stats["MaxOpenConnections"])
-			}
-		}
-	}()
-
 	return &Container{
 		Config:             cfg,
 		Logger:             infra.Logger,
@@ -302,7 +273,6 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		TenantQueueManager: tqm,
 		AsynqClient:        asynqClient,
 		AsynqServer:        asynqServer,
-		stopCh:             stopCh,
 		Repos:              repos,
 		Services:           services,
 		Handlers:           h,
@@ -419,7 +389,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 }
 
-func initScheduler(notificationService *notification.NotificationService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, emailService *notification.EmailService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, flexPayReconciliationExporter *flex_pay.FlexPayReconciliationExporter, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
+func initScheduler(notificationService *notification.NotificationService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
 	s := scheduler.NewScheduler(
 		logger,
 		cfg.Scheduler.Timezone,
@@ -432,12 +402,10 @@ func initScheduler(notificationService *notification.NotificationService, projec
 		projectEmployeeService,
 		apiMetricCleanupService,
 		reconcileService,
-		emailService,
 		apiMetricRepo,
 		advancePaymentReqRepo,
 		walletSvc,
 		flexPayReconciliationSvc,
-		flexPayReconciliationExporter,
 		logger,
 	)
 

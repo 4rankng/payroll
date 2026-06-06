@@ -7,8 +7,8 @@ import "time"
 // server-side against time.Now(): exactly one entry is active at any moment.
 type DisbursementFeeScheduleEntryResponse struct {
 	ID                string    `json:"id"`
-	Provider          string    `json:"provider"`          // "9pay" | "1pay"
-	EffectiveDate     string    `json:"effectiveDate"`     // YYYY-MM-DD
+	Provider          string    `json:"provider"`      // "9pay" | "1pay"
+	EffectiveDate     string    `json:"effectiveDate"` // YYYY-MM-DD
 	FeeVND            int64     `json:"feeVnd"`
 	Notes             string    `json:"notes,omitempty"`
 	CreatedAt         time.Time `json:"createdAt"`
