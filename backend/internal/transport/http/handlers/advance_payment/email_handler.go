@@ -6,6 +6,7 @@ import (
 	"api-server/internal/app/services/notification"
 	"api-server/internal/constants"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/utils"
 	"api-server/internal/transport/http/response"
 	"fmt"
 	"time"
@@ -76,7 +77,7 @@ func (h *AdvancePaymentHandler) SendReconciliationEmail(c *gin.Context) {
 	// Generate email body - due date is end of the NEXT month (e.g. April advance → due end of May)
 	endOfNextMonth := time.Date(parsedMonth.Year(), parsedMonth.Month()+2, 0, 0, 0, 0, 0, time.UTC)
 	dueDate := endOfNextMonth.Format("02/01/2006")
-	totalCollect := formatCurrencyVN(summary.TotalWithFee) + " đ"
+	totalCollect := utils.FormatNumber(summary.TotalWithFee) + " đ"
 
 	htmlBody, textBody := flex_pay.BuildSaoKeEmailBodies(req.ForMonth, dueDate, totalCollect)
 

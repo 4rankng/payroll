@@ -1,9 +1,6 @@
 package advance_payment
 
 import (
-	"fmt"
-	"strings"
-
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/flex_pay"
 	"api-server/internal/app/services/infrastructure"
@@ -71,26 +68,4 @@ func calculatePercentage(totalRows, processedRows int) int {
 	}
 	percentage := float64(processedRows) / float64(totalRows) * 100
 	return int(percentage)
-}
-
-// formatCurrencyVN formats a number with Vietnamese currency format (dots as thousands separator)
-func formatCurrencyVN(amount int64) string {
-	s := fmt.Sprintf("%d", amount)
-	negative := false
-	if len(s) > 0 && s[0] == '-' {
-		negative = true
-		s = s[1:]
-	}
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && (len(s)-i)%3 == 0 {
-			result.WriteString(".")
-		}
-		result.WriteRune(r)
-	}
-	value := result.String()
-	if negative {
-		value = "-" + value
-	}
-	return value
 }

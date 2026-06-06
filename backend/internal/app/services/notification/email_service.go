@@ -2,6 +2,7 @@ package notification
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -539,9 +540,9 @@ func (s *EmailService) buildPayrollReportMessage(payload *dto.SendPayrollReportE
 		totalWithFee = totalAmount + feeAmountValue
 	}
 
-	totalPaid := formatCurrencyVN(totalAmount) + " đ"
-	feeAmount := formatCurrencyVN(feeAmountValue) + " đ"
-	totalCollect := formatCurrencyVN(totalWithFee) + " đ"
+	totalPaid := utils.FormatNumber(totalAmount) + " đ"
+	feeAmount := utils.FormatNumber(feeAmountValue) + " đ"
+	totalCollect := utils.FormatNumber(totalWithFee) + " đ"
 
 	htmlBody, err := renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect)
 	if err != nil {
@@ -711,25 +712,4 @@ func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string) (
 	}
 
 	return builder.String(), nil
-}
-
-func formatCurrencyVN(amount int64) string {
-	s := fmt.Sprintf("%d", amount)
-	negative := false
-	if len(s) > 0 && s[0] == '-' {
-		negative = true
-		s = s[1:]
-	}
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && (len(s)-i)%3 == 0 {
-			result.WriteString(".")
-		}
-		result.WriteRune(r)
-	}
-	value := result.String()
-	if negative {
-		value = "-" + value
-	}
-	return value
 }

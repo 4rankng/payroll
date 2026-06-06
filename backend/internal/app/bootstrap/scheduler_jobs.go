@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/cleanup"
-	"api-server/internal/app/services/flex_pay"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/scheduler"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/utils"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/domain/wallet"
 )
@@ -27,12 +27,10 @@ func registerSchedulerJobs(
 	projectEmployeeService *project.ProjectEmployeeService,
 	apiMetricCleanupService *cleanup.APIMetricCleanupService,
 	reconcileService *ledger.ReconcileService,
-	emailService *notification.EmailService,
 	apiMetricRepo domain.APIMetricRepository,
 	advancePaymentReqRepo domain.AdvancePaymentRequestRepository,
 	walletSyncService wallet.WalletService,
 	flexPayReconciliationService *domainServices.FlexPayReconciliationService,
-	flexPayReconciliationExporter *flex_pay.FlexPayReconciliationExporter,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -49,6 +47,13 @@ func registerSchedulerJobs(
 			result = strings.ReplaceAll(result, key, value)
 		}
 		return result
+	}
+
+	// Helper for sending push notification to admin (user ID 1)
+	sendAdminNotification := func(ctx context.Context, title, message string) {
+		if err := notificationService.CreateCustomNotification(ctx, constants.SystemUserID, 1, title, message, domain.NotificationContentTypePlainText); err != nil {
+			logger.Error("Failed to send admin notification", "title", title, "error", err)
+		}
 	}
 
 	// 1. Apply pending payment schedule changes
@@ -185,25 +190,8 @@ func registerSchedulerJobs(
 			message := sb.String()
 			title := fmt.Sprintf("%s High Error Rate Alert", domain.NotifyTypeImportant)
 
-			// 1. Send in-app notification to admin (ID 1)
-			if err := notificationService.CreateCustomNotification(ctx, 1, 1, title, message, domain.NotificationContentTypePlainText); err != nil {
-				logger.Error("Failed to send high error rate notification to admin", "error", err)
-			} else {
-				logger.Info("High error rate notification sent to admin")
-			}
-
-			// 2. Send email to frank.nguyen.vd@gmail.com
-			emailReq := &dto.SendEmailRequest{
-				Recipients: []string{"frank.nguyen.vd@gmail.com"},
-				Subject:    title,
-				TextBody:   message,
-			}
-
-			if _, err := emailService.SendGenericEmail(ctx, emailReq); err != nil {
-				logger.Error("Failed to send high error rate email", "error", err)
-			} else {
-				logger.Info("High error rate email sent to frank.nguyen.vd@gmail.com")
-			}
+			sendAdminNotification(ctx, title, message)
+			logger.Info("High error rate notification sent to admin")
 		},
 	})
 
@@ -216,17 +204,6 @@ func registerSchedulerJobs(
 			ctx := context.Background()
 			logger.Info("Starting advance payment reminder check")
 
-			count, err := advancePaymentReqRepo.CountPending(ctx)
-			if err != nil {
-				logger.Error("Failed to count pending advance payment requests", "error", err)
-				return
-			}
-
-			if count == 0 {
-				logger.Info("No pending advance payment requests, skipping reminder")
-				return
-			}
-
 			now := clock.Now()
 			currentMonth := advance_payment.GetCurrentMonthFromTime(now)
 
@@ -237,47 +214,26 @@ func registerSchedulerJobs(
 			}
 
 			if len(grouped) == 0 {
-				logger.Info("No grouped pending requests for current month, skipping reminder")
+				logger.Info("No pending advance payment requests for current month, skipping reminder")
 				return
 			}
 
-			var totalAmount, totalFee, totalNetAmount uint64
-			requests := make([]notification.AdvancePaymentReminderRequest, 0, len(grouped))
-			for i, g := range grouped {
+			var totalAmount uint64
+			employeeSet := make(map[uint64]struct{})
+			for _, g := range grouped {
 				totalAmount += g.TotalAmount
-				totalFee += g.TotalFee
-				totalNetAmount += g.NetAmount
-				requests = append(requests, notification.AdvancePaymentReminderRequest{
-					STT:           i + 1,
-					EmployeeCCCD:  g.EmployeeCCCD,
-					EmployeeName:  g.EmployeeName,
-					ProjectCode:   g.ProjectCode,
-					RequestAmount: formatCurrencyVN(int64(g.TotalAmount)) + " đ",
-					Fee:           formatCurrencyVN(int64(g.TotalFee)) + " đ",
-					NetAmount:     formatCurrencyVN(int64(g.NetAmount)) + " đ",
-				})
+				employeeSet[g.EmployeeID] = struct{}{}
 			}
 
-			data := &notification.AdvancePaymentReminderData{
-				Date:               now.Format("02/01/2006"),
-				TotalRequests:      fmt.Sprintf("%d", count),
-				TotalEmployees:     fmt.Sprintf("%d", len(grouped)),
-				TotalAmount:        formatCurrencyVN(int64(totalAmount)) + " đ",
-				Requests:           requests,
-				TotalRequestAmount: formatCurrencyVN(int64(totalAmount)) + " đ",
-				TotalFee:           formatCurrencyVN(int64(totalFee)) + " đ",
-				TotalNetAmount:     formatCurrencyVN(int64(totalNetAmount)) + " đ",
-			}
+			title := fmt.Sprintf("%s Nhắc nhở ứng lương", domain.NotifyTypeImportant)
+			message := fmt.Sprintf("Có %d yêu cầu ứng lương đang chờ từ %d nhân viên (tháng %s), tổng số tiền: %s đ",
+				len(grouped), len(employeeSet), currentMonth, utils.FormatNumber(int64(totalAmount)))
 
-			recipients := []string{"frankng.sg@gmail.com", "anhbh@vfic.com.vn"}
-			if _, err := emailService.SendAdvancePaymentReminder(ctx, data, recipients); err != nil {
-				logger.Error("Failed to send advance payment reminder email", "error", err)
-			} else {
-				logger.Info("Advance payment reminder email sent successfully",
-					"pending_count", count,
-					"employee_count", len(grouped),
-				)
-			}
+			sendAdminNotification(ctx, title, message)
+			logger.Info("Advance payment reminder push notification sent",
+				"request_count", len(grouped),
+				"employee_count", len(employeeSet),
+			)
 		},
 	})
 
@@ -336,9 +292,9 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 10. Send FlexPay sao ke email for previous month - 9th at 9:00 AM
+	// 10. FlexPay sao ke reminder - 9th at 9:00 AM
 	s.AddJob(scheduler.Job{
-		Name:    "send_flexible_sao_ke_email",
+		Name:    "send_flexible_sao_ke_reminder",
 		Cron:    "0 9 9 * *",
 		Enabled: true,
 		Handler: func() {
@@ -346,12 +302,10 @@ func registerSchedulerJobs(
 			now := clock.Now()
 			prevMonth := now.AddDate(0, -1, 0)
 			forMonth := prevMonth.Format("2006-01")
-			atDate := time.Date(prevMonth.Year(), prevMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
 
-			logger.Info("Starting FlexPay sao ke email generation",
+			logger.Info("Starting FlexPay sao ke reminder",
 				"previous_month", forMonth)
 
-			// Get completed requests for the previous month
 			reportData, err := flexPayReconciliationService.GetCompletedRequestsByMonth(ctx, forMonth)
 			if err != nil {
 				logger.Error("Failed to get completed requests for sao ke",
@@ -360,69 +314,19 @@ func registerSchedulerJobs(
 			}
 
 			if len(reportData) == 0 {
-				logger.Info("No completed flexible requests for previous month, skipping sao ke email",
+				logger.Info("No completed flexible requests for previous month, skipping sao ke reminder",
 					"month", forMonth)
 				return
 			}
 
-			// Generate Excel file
-			excelBytes, summary, err := flexPayReconciliationExporter.GenerateExcel(reportData, atDate)
-			if err != nil {
-				logger.Error("Failed to generate FlexPay sao ke Excel",
-					"month", forMonth, "error", err)
-				return
-			}
+			title := fmt.Sprintf("%s Nhắc nhở gửi sao kê ứng lương", domain.NotifyTypeImportant)
+			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, len(reportData))
 
-			// Build email content - due date is end of the NEXT month (e.g. April advance → due end of May)
-			endOfNextMonth := time.Date(prevMonth.Year(), prevMonth.Month()+2, 0, 0, 0, 0, 0, time.UTC)
-			dueDate := endOfNextMonth.Format("02/01/2006")
-			totalCollect := formatCurrencyVN(summary.TotalWithFee) + " đ"
-
-			htmlBody, textBody := flex_pay.BuildSaoKeEmailBodies(forMonth, dueDate, totalCollect)
-
-			// Send email
-			recipients := []string{"frankng.sg@gmail.com", "anhbh@vfic.com.vn"}
-			emailID, err := emailService.SendAdvancePaymentReconciliationEmail(ctx, &notification.ReconciliationEmailParams{
-				ForMonth:   forMonth,
-				Recipients: recipients,
-				ExcelBytes: excelBytes,
-				HTMLBody:   htmlBody,
-				TextBody:   textBody,
-				Subject:    fmt.Sprintf("Sao kê thanh toán ứng lương - %s", forMonth),
-				Summary:    summary,
-			})
-			if err != nil {
-				logger.Error("Failed to send FlexPay sao ke email",
-					"month", forMonth, "error", err)
-				return
-			}
-
-			logger.Info("FlexPay sao ke email sent successfully",
+			sendAdminNotification(ctx, title, message)
+			logger.Info("FlexPay sao ke reminder push notification sent",
 				"month", forMonth,
-				"email_id", emailID,
-				"project_count", len(reportData),
-				"recipients", recipients)
+				"project_count", len(reportData))
 		},
 	})
 
-}
-
-func formatCurrencyVN(amount int64) string {
-	s := fmt.Sprintf("%d", amount)
-	negative := false
-	if len(s) > 0 && s[0] == '-' {
-		negative = true
-		s = s[1:]
-	}
-	var result strings.Builder
-	if negative {
-		result.WriteByte('-')
-	}
-	for i, r := range s {
-		if i > 0 && (len(s)-i)%3 == 0 {
-			result.WriteString(".")
-		}
-		result.WriteRune(r)
-	}
-	return result.String()
 }
