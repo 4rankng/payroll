@@ -122,16 +122,7 @@ type InitiateInput struct {
 // whether to call the provider again or simply observe the in-flight
 // state.
 func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (*domaintx.WalletPayment, error) {
-	// Duplicate guard: prevent simultaneous payments to the same recipient.
-	// Both the auto-poller and manual admin disbursement can target the same
-	// employee — this check blocks the second path before creating a wallet_payment.
-	hasPending, dupErr := s.repo.HasPendingForRecipient(ctx, in.RecipientAccountNo, in.RecipientBank)
-	if dupErr != nil {
-		s.logger.Warn("provider_transactions: duplicate check failed, proceeding", "error", dupErr)
-	} else if hasPending {
-		return nil, ErrDuplicatePaymentInProgress
-	}
-
+	// Resolve provider name (needed for fee stamp, duplicate guard, and row storage).
 	var fee int64
 	var providerName string
 	if s.registry != nil {
@@ -146,14 +137,34 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 			"request_id", in.RequestID)
 	}
 
-	// Resolve bank code → SWIFT code for storage.
+	// Resolve bank code → SWIFT code early.
 	// Callers pass bank code (e.g. "MB"); we persist the SWIFT code
 	// (e.g. "MBVNVNVN") so recipient_bank is always a SWIFT code.
+	// Resolution must happen BEFORE the duplicate guard so the guard
+	// queries with the same SWIFT code stored in the DB.
 	recipientBank := in.RecipientBank
 	if s.bankRepo != nil && recipientBank != "" {
 		if bank, err := s.bankRepo.FindByBankCode(ctx, recipientBank); err == nil && bank != nil && bank.SwiftCode != "" {
 			recipientBank = bank.SwiftCode
 		}
+	}
+
+	// Duplicate guard: prevent simultaneous payments to the same recipient
+	// for the same provider. Both the auto-poller and manual admin
+	// disbursement can target the same employee — this check blocks the
+	// second path before creating a wallet_payment.
+	//
+	// NOTE: This is an application-level guard, not a DB constraint. A
+	// narrow TOCTOU window exists between this SELECT and the subsequent
+	// INSERT. A future migration should add a unique index on
+	// (recipient_account_no, recipient_bank, provider) filtered to
+	// non-terminal statuses for watertight protection.
+	hasPending, dupErr := s.repo.HasPendingForRecipient(ctx, in.RecipientAccountNo, recipientBank, providerName)
+	if dupErr != nil {
+		return nil, fmt.Errorf("provider_transactions: duplicate check: %w", dupErr)
+	}
+	if hasPending {
+		return nil, ErrDuplicatePaymentInProgress
 	}
 
 	var description *string

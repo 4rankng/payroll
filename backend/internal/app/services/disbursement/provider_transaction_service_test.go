@@ -120,9 +120,10 @@ func (r *fakeProviderTxRepo) ListStaleAuthorised(_ context.Context, provider str
 	return nil, nil
 }
 
-func (r *fakeProviderTxRepo) HasPendingForRecipient(_ context.Context, accountNo, bank string) (bool, error) {
+func (r *fakeProviderTxRepo) HasPendingForRecipient(_ context.Context, accountNo, bank, provider string) (bool, error) {
 	_ = accountNo
 	_ = bank
+	_ = provider
 	return false, nil
 }
 

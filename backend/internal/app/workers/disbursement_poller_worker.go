@@ -129,11 +129,13 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 	// are reset to PENDING so they can be retried in the next cycle.
 	enqueued := 0
 	skippedIDs := make([]uint64, 0, len(claimed))
+	var totalSkipped int64
 
 	for _, req := range claimed {
 		// Check wallet balance for this specific request (skip check if balance unknown)
 		if remainingBalance >= 0 && int64(req.NetAmount) > remainingBalance {
 			skippedIDs = append(skippedIDs, uint64(req.ID))
+			totalSkipped += int64(req.NetAmount)
 			continue
 		}
 
@@ -151,6 +153,7 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 			w.logger.Error("disbursement poller: failed to enqueue request",
 				"advance_request_id", req.ID, "error", err)
 			skippedIDs = append(skippedIDs, uint64(req.ID))
+			totalSkipped += int64(req.NetAmount)
 		} else {
 			enqueued++
 			if remainingBalance >= 0 {
@@ -171,15 +174,6 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 
 	// Notify admins if any requests were skipped due to insufficient balance
 	if len(skippedIDs) > 0 && remainingBalance >= 0 && w.walletSvc != nil {
-		var totalSkipped int64
-		for _, id := range skippedIDs {
-			for _, req := range claimed {
-				if uint64(req.ID) == id {
-					totalSkipped += int64(req.NetAmount)
-					break
-				}
-			}
-		}
 		w.notifyInsufficientBalanceSkipped(ctx, remainingBalance, totalSkipped, len(skippedIDs))
 	}
 
