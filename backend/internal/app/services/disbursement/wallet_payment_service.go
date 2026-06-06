@@ -48,6 +48,7 @@ type WalletPaymentService struct {
 	repo               domaintx.WalletPaymentRepository
 	advancePaymentReqs domain.AdvancePaymentRequestRepository
 	employees          domain.EmployeeRepository
+	bankRepo           domain.BankRepository
 	notifications      *notification.NotificationService
 	feeProvider        DisbursementFeeProvider
 	errorTranslator    infrastructure.ErrorTranslator
@@ -66,6 +67,7 @@ func NewWalletPaymentService(
 	repo domaintx.WalletPaymentRepository,
 	advancePaymentReqs domain.AdvancePaymentRequestRepository,
 	employees domain.EmployeeRepository,
+	bankRepo domain.BankRepository,
 	notifications *notification.NotificationService,
 	feeProvider DisbursementFeeProvider,
 	errorTranslator infrastructure.ErrorTranslator,
@@ -79,6 +81,7 @@ func NewWalletPaymentService(
 		repo:               repo,
 		advancePaymentReqs: advancePaymentReqs,
 		employees:          employees,
+		bankRepo:           bankRepo,
 		notifications:      notifications,
 		feeProvider:        feeProvider,
 		errorTranslator:    errorTranslator,
@@ -133,6 +136,16 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 			"request_id", in.RequestID)
 	}
 
+	// Resolve bank code → SWIFT code for storage.
+	// Callers pass bank code (e.g. "MB"); we persist the SWIFT code
+	// (e.g. "MBVNVNVN") so recipient_bank is always a SWIFT code.
+	recipientBank := in.RecipientBank
+	if s.bankRepo != nil && recipientBank != "" {
+		if bank, err := s.bankRepo.FindByBankCode(ctx, recipientBank); err == nil && bank != nil && bank.SwiftCode != "" {
+			recipientBank = bank.SwiftCode
+		}
+	}
+
 	var description *string
 	if in.Description != "" {
 		description = &in.Description
@@ -147,7 +160,7 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 		Fee:                fee,
 		RecipientName:      in.RecipientName,
 		RecipientAccountNo: in.RecipientAccountNo,
-		RecipientBank:      in.RecipientBank,
+		RecipientBank:      recipientBank,
 		Description:        description,
 		Status:             domaintx.StatePending,
 		EntityID:           in.EntityID,

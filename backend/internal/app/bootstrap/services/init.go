@@ -437,6 +437,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		repos.TxWalletPayment,
 		repos.AdvancePaymentRequest,
 		repos.Employee,
+		repos.Bank,
 		notificationService,
 		disbursementFeeScheduleService,
 		disbursementErrorTranslator,
