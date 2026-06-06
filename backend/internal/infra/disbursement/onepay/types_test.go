@@ -248,7 +248,7 @@ func TestErrorResponse_Unmarshal(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestBalanceResponse_JSONNumber(t *testing.T) {
-	body := `{"account_id":"ACC01","partner_id":"PARTNER01","amount":150000000,"partner_name":"Test","state":"active","create_time":"2026-01-01T00:00:00Z"}`
+	body := `{"account_id":"ACC01","partner_id":"PARTNER01","balance":150000000,"partner_name":"Test","state":"active","create_time":"2026-01-01T00:00:00Z"}`
 	var bal BalanceResponse
 	if err := json.Unmarshal([]byte(body), &bal); err != nil {
 		t.Fatalf("Unmarshal: %v", err)
@@ -266,7 +266,7 @@ func TestBalanceResponse_JSONNumber(t *testing.T) {
 }
 
 func TestBalanceResponse_LargeNumber(t *testing.T) {
-	body := `{"amount":999999999999}`
+	body := `{"balance":999999999999}`
 	var bal BalanceResponse
 	if err := json.Unmarshal([]byte(body), &bal); err != nil {
 		t.Fatalf("Unmarshal: %v", err)
