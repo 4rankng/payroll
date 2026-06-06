@@ -7,6 +7,7 @@ import {
   TrendingDown,
   Wallet as WalletIcon,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 import {
@@ -140,6 +141,12 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
             )}
           </button>
         </div>
+        {balance && balance.limbo > 0 && (
+          <div className="mt-2.5 flex items-center gap-1.5 text-[11.5px] text-amber-600 bg-amber-50/80 rounded-md px-2 py-1">
+            <AlertCircle className="h-3 w-3 shrink-0" />
+            <span>Chờ xác nhận: {formatVND(balance.limbo)}</span>
+          </div>
+        )}
       </div>
     </section>
   );
