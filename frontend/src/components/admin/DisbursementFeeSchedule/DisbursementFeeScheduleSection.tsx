@@ -26,6 +26,7 @@ import {
   useDisbursementFeeSchedules,
 } from "@/hooks/api/useDisbursementFeeSchedules";
 import type { DisbursementFeeScheduleEntry } from "@/types/api/disbursement-fee-schedule.types";
+import { PROVIDER_LABELS, type DisbursementProvider } from "@/types/api/disbursement-fee-schedule.types";
 
 import { DisbursementFeeDeleteDialog } from "./DisbursementFeeDeleteDialog";
 import { DisbursementFeeFormDialog } from "./DisbursementFeeFormDialog";
@@ -106,7 +107,7 @@ export const DisbursementFeeScheduleSection = () => {
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Phí cố định cho mỗi giao dịch chi tạm ứng qua nhà cung cấp dịch vụ
-            chi hộ (9pay). Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có
+            chi hộ. Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có
             cấu hình mới thay thế.
           </p>
         </div>
@@ -153,6 +154,7 @@ export const DisbursementFeeScheduleSection = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nhà cung cấp</TableHead>
                   <TableHead>Ngày hiệu lực</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Mức phí</TableHead>
@@ -167,6 +169,9 @@ export const DisbursementFeeScheduleSection = () => {
               <TableBody>
                 {sorted.map((entry) => (
                     <TableRow key={entry.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {PROVIDER_LABELS[entry.provider as DisbursementProvider] ?? entry.provider}
+                      </TableCell>
                       <TableCell className="font-medium whitespace-nowrap">
                         {formatVietnameseDate(entry.effectiveDate)}
                       </TableCell>

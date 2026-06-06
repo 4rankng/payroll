@@ -4,6 +4,7 @@
 
 export interface DisbursementFeeScheduleEntry {
   id: string;
+  provider: string;               // "9pay" | "1pay"
   effectiveDate: string;          // YYYY-MM-DD
   feeVnd: number;                 // flat per-transfer fee in VND
   notes?: string;
@@ -19,10 +20,19 @@ export interface DisbursementFeeScheduleListResponse {
 }
 
 export interface CreateDisbursementFeeScheduleRequest {
+  provider: string;               // "9pay" | "1pay"
   effectiveDate: string;
   feeVnd: number;
   notes?: string;
 }
+
+export const DISBURSEMENT_PROVIDERS = ["9pay", "1pay"] as const;
+export type DisbursementProvider = (typeof DISBURSEMENT_PROVIDERS)[number];
+
+export const PROVIDER_LABELS: Record<DisbursementProvider, string> = {
+  "9pay": "9Pay",
+  "1pay": "OnePay",
+};
 
 export type UpdateDisbursementFeeScheduleRequest =
   CreateDisbursementFeeScheduleRequest;
