@@ -157,6 +157,11 @@ export const DisbursementFeeScheduleSection = () => {
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Mức phí</TableHead>
                   <TableHead>Ghi chú</TableHead>
+                  {sorted.some((e) => e.isPending) && (
+                    <TableHead className="w-[80px] text-right">
+                      Hành động
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -180,6 +185,30 @@ export const DisbursementFeeScheduleSection = () => {
                       <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                         {entry.notes ?? ""}
                       </TableCell>
+                      {sorted.some((e) => e.isPending) && (
+                        <TableCell className="text-right">
+                          {entry.isPending && (
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Sửa"
+                                onClick={() => handleEdit(entry)}
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Xóa"
+                                onClick={() => handleDelete(entry)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
               </TableBody>

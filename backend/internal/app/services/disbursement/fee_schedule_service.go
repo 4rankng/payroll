@@ -128,6 +128,9 @@ func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, acto
 
 	provider := input.Provider
 	if provider == "" {
+		if s.registry == nil {
+			panic("FeeScheduleService: registry not set (fail-fast: cannot resolve provider)")
+		}
 		resolved, err := s.registry.ActiveProviderName(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("fee: resolve active provider for new schedule: %w", err)
