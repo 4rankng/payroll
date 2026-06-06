@@ -1,8 +1,6 @@
 import { useMemo } from "react";
-import { Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -17,20 +15,14 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import type { FeeScheduleEntry } from "@/types/api/advance-payment-fee-schedule.types";
 
-import { isEntryEditable } from "./form-helpers";
-
 interface Props {
   entries: FeeScheduleEntry[];
   isLoading: boolean;
-  onEdit: (entry: FeeScheduleEntry) => void;
-  onDelete: (entry: FeeScheduleEntry) => void;
 }
 
 export const FeeScheduleList = ({
   entries,
   isLoading,
-  onEdit,
-  onDelete,
 }: Props) => {
   const sorted = useMemo(
     () =>
@@ -69,13 +61,10 @@ export const FeeScheduleList = ({
             <TableHead>Cấu trúc phí</TableHead>
             <TableHead>Phí tối thiểu</TableHead>
             <TableHead>Ghi chú</TableHead>
-            <TableHead className="w-[120px] text-right">Hành động</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((entry) => {
-            const editable = isEntryEditable(entry);
-            return (
+          {sorted.map((entry) => (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium whitespace-nowrap">
                   {formatDate(entry.effectiveDate)}
@@ -98,31 +87,9 @@ export const FeeScheduleList = ({
                 <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                   {entry.notes ?? ""}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Sửa"
-                      disabled={!editable}
-                      onClick={() => onEdit(entry)}
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Xóa"
-                      disabled={!editable}
-                      onClick={() => onDelete(entry)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </TableCell>
               </TableRow>
-            );
-          })}
+            ))}
+
         </TableBody>
       </Table>
     </div>

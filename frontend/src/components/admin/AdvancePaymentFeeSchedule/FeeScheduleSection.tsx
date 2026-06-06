@@ -96,8 +96,6 @@ export const FeeScheduleSection = () => {
         <FeeScheduleList
           entries={entries}
           isLoading={isLoading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
         />
       </div>
 
