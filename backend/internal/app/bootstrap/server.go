@@ -130,9 +130,6 @@ func (s *Server) cleanup() {
 		}
 	}
 
-	// Signal background goroutines to stop
-	s.container.Stop()
-
 	// Close provider resources (e.g. ninepay queued provider goroutine)
 	if s.container.Services != nil && s.container.Services.NinepayCloser != nil {
 		if err := s.container.Services.NinepayCloser.Close(); err != nil {

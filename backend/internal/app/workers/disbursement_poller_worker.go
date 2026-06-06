@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	asynqlib "github.com/hibiken/asynq"
 
@@ -23,6 +25,11 @@ const (
 	TaskDisbursementExecute = "disbursement:execute"
 
 	pollerBatchSize = 50
+
+	// insufficientBalanceCooldown is the minimum interval between consecutive
+	// "insufficient wallet balance" notifications. Prevents notification spam
+	// when the poller reclaims the same pending requests every ~20s cycle.
+	insufficientBalanceCooldown = 24 * time.Hour
 )
 
 // DisbursementPollerWorker is a periodic task that claims PENDING advance
@@ -43,6 +50,11 @@ type DisbursementPollerWorker struct {
 	emailSvc              *notification.EmailService
 	notifications         *notification.NotificationService
 	logger                *slog.Logger
+
+	// Circuit breaker: prevents notification spam when wallet stays insufficient
+	// across multiple poller cycles (~20s each).
+	insufficientBalanceMu    sync.Mutex
+	insufficientBalanceNotif time.Time // last time an insufficient-balance notification was sent
 }
 
 func NewDisbursementPollerWorker(
@@ -243,7 +255,21 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 
 // notifyInsufficientBalance sends an email and push notification to all admin
 // users when the disbursement poller skips a batch due to insufficient wallet balance.
+// It includes a circuit breaker that suppresses duplicate notifications within
+// a configurable cooldown window (insufficientBalanceCooldown).
 func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context, available, needed int64, count int) {
+	// Circuit breaker: skip if we already notified within the cooldown window.
+	w.insufficientBalanceMu.Lock()
+	lastNotif := w.insufficientBalanceNotif
+	w.insufficientBalanceMu.Unlock()
+
+	if !lastNotif.IsZero() && time.Since(lastNotif) < insufficientBalanceCooldown {
+		w.logger.Info("disbursement poller: suppressing duplicate insufficient-balance notification",
+			"last_notif_ago", time.Since(lastNotif).Round(time.Second),
+			"cooldown", insufficientBalanceCooldown)
+		return
+	}
+
 	title := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu đang chờ", count)
 	body := fmt.Sprintf(
 		"Số dư ví không đủ để xử lý các yêu cầu ứng lương.\n\n"+
@@ -292,4 +318,10 @@ func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context
 		w.logger.Error("disbursement poller: failed to send insufficient balance email",
 			"error", emailErr, "recipients", recipients)
 	}
+
+	// Stamp the cooldown after successful send (even if email partially fails,
+	// we still don't want to spam push notifications every 20s).
+	w.insufficientBalanceMu.Lock()
+	w.insufficientBalanceNotif = time.Now()
+	w.insufficientBalanceMu.Unlock()
 }
