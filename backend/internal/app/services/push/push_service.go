@@ -92,7 +92,7 @@ func (s *PushService) SendToUser(ctx context.Context, userID uint, title, body s
 			VAPIDPublicKey:  vapidPublicKey,
 			VAPIDPrivateKey: vapidPrivateKey,
 			Subscriber:      vapidSubject,
-			TTL:             30,
+			TTL:             86400, // 24 hours — survive device sleep / network gaps
 			Urgency:         webpush.UrgencyHigh,
 		})
 
@@ -105,11 +105,26 @@ func (s *PushService) SendToUser(ctx context.Context, userID uint, title, body s
 		}
 		_ = resp.Body.Close()
 
-		if resp.StatusCode == 410 || resp.StatusCode == 404 {
-			// Subscription expired, remove it
+		switch {
+		case resp.StatusCode >= 200 && resp.StatusCode < 300:
+			s.logger.Info("Push notification sent",
+				"user_id", userID,
+				"device", sub.DeviceType,
+				"status", resp.StatusCode)
+		case resp.StatusCode == 410 || resp.StatusCode == 404:
 			s.logger.Info("Push subscription expired, removing",
 				"user_id", userID,
-				"endpoint", sub.Endpoint)
+				"endpoint", sub.Endpoint,
+				"status", resp.StatusCode)
+			_ = s.subRepo.DeleteByEndpoint(ctx, userID, sub.Endpoint)
+		default:
+			// 401 (VAPID mismatch), 400 (bad payload), 429 (rate-limited), etc.
+			s.logger.Warn("Push notification rejected by push service",
+				"user_id", userID,
+				"device", sub.DeviceType,
+				"endpoint", sub.Endpoint,
+				"status", resp.StatusCode)
+			// Remove invalid subscriptions so they get re-created on next visit
 			_ = s.subRepo.DeleteByEndpoint(ctx, userID, sub.Endpoint)
 		}
 	}
