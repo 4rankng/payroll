@@ -174,7 +174,7 @@ type InquiryResponse struct {
 type BalanceResponse struct {
 	AccountID   string      `json:"account_id"`
 	PartnerID   string      `json:"partner_id"`
-	Balance     json.Number `json:"amount"`
+	Balance     json.Number `json:"balance"`
 	PartnerName string      `json:"partner_name"`
 	State       string      `json:"state"`
 	CreateTime  string      `json:"create_time"`
