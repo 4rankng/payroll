@@ -349,11 +349,12 @@ func (r *TxWalletPaymentRepository) ListStaleAuthorised(ctx context.Context, pro
 	return rows, nil
 }
 
-func (r *TxWalletPaymentRepository) HasPendingForRecipient(ctx context.Context, accountNo, bank string) (bool, error) {
+func (r *TxWalletPaymentRepository) HasPendingForRecipient(ctx context.Context, accountNo, bank, provider string) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).Model(&domaintx.WalletPayment{}).
-		Where("recipient_account_no = ? AND recipient_bank = ? AND status IN ?",
-			accountNo, bank, []domaintx.State{domaintx.StatePending, domaintx.StateAuthorised}).
+		Where("recipient_account_no = ? AND recipient_bank = ? AND provider = ? AND status IN ?",
+			accountNo, bank, provider, []domaintx.State{domaintx.StatePending, domaintx.StateAuthorised}).
+		Limit(1).
 		Count(&count).Error
 	if err != nil {
 		return false, fmt.Errorf("wallet_payments: check pending for recipient: %w", err)
