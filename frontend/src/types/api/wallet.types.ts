@@ -4,6 +4,7 @@ export interface WalletBalance {
   available: number;
   pending_in: number;
   pending_out: number;
+  limbo: number;
   currency: string;
   as_of: string;
 }

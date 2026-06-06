@@ -71,17 +71,19 @@ func (s *walletService) GetBalance(ctx context.Context) (*wallet.WalletBalance, 
 		return nil, fmt.Errorf("failed to get pending payments total: %w", err)
 	}
 
-	// Unreconciled failed payments are in limbo — money might still have
-	// gone through. Include them in pending_out and subtract from available.
+	// Unreconciled failed payments — provider reported failure but
+	// reconciliation has not yet confirmed. Shown as Limbo for transparency;
+	// NOT deducted from Available (funds returned immediately on failure).
 	unreconciledFailed, err := s.paymentRepo.SumUnreconciledByStatuses(ctx, []string{"failed"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unreconciled failed payments total: %w", err)
 	}
 
 	return &wallet.WalletBalance{
-		Available:  topupTotal - completedPayments - unreconciledFailed,
+		Available:  topupTotal - completedPayments,
 		PendingIn:  0, // topups are confirmed on insert
-		PendingOut: pendingPayments + unreconciledFailed,
+		PendingOut: pendingPayments,
+		Limbo:      unreconciledFailed,
 		Currency:   "VND",
 		AsOf:       clock.Now().Format(time.RFC3339),
 	}, nil

@@ -5,6 +5,7 @@ type WalletBalance struct {
 	Available  int64  `json:"available"`
 	PendingIn  int64  `json:"pending_in"`
 	PendingOut int64  `json:"pending_out"`
+	Limbo      int64  `json:"limbo"` // unreconciled failed — visible but not deducted from Available
 	Currency   string `json:"currency"`
 	AsOf       string `json:"as_of"`
 }
