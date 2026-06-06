@@ -4,6 +4,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { NotificationItem } from './NotificationItem';
 import { NotificationDetailModal } from './NotificationDetailModal';
+import { PushNotificationToggle } from './PushNotificationToggle';
 import {
   useInfiniteNotifications,
   useUnreadNotifications,
@@ -186,6 +187,11 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           {/* Content */}
           <div className="flex-1 min-h-0 overflow-y-auto bg-white">
             {renderContent()}
+          </div>
+
+          {/* Push notification toggle — pinned footer */}
+          <div className="border-t bg-white px-3 py-2">
+            <PushNotificationToggle />
           </div>
 
         </SheetContent>
