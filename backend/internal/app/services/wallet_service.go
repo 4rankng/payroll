@@ -79,8 +79,15 @@ func (s *walletService) GetBalance(ctx context.Context) (*wallet.WalletBalance, 
 		return nil, fmt.Errorf("failed to get unreconciled failed payments total: %w", err)
 	}
 
+	// Available deducts completed AND in-flight (pending + authorised) payments.
+	// In-flight payments represent committed funds — the provider has already
+	// reserved them from our balance.  If we only deduct completed, the
+	// SyncBalance cron sees a gap between local and provider balances and
+	// creates a corrective topup.  When those in-flight payments later fail,
+	// the topup remains but the payment is gone from completedPayments —
+	// causing permanent balance inflation (phantom money).
 	return &wallet.WalletBalance{
-		Available:  topupTotal - completedPayments,
+		Available:  topupTotal - completedPayments - pendingPayments,
 		PendingIn:  0, // topups are confirmed on insert
 		PendingOut: pendingPayments,
 		Limbo:      unreconciledFailed,
@@ -114,6 +121,30 @@ func (s *walletService) SyncBalance(ctx context.Context, userID uint64) (*wallet
 	result := &wallet.SyncBalanceResult{
 		ProviderBalance: providerBalance,
 		LocalBalance:    localBalance.Available,
+	}
+
+	// Guard: don't auto-adjust when payments are in flight or have
+	// unreconciled failures. The provider balance is transient during
+	// these states — creating topups would double-count when payments
+	// reach terminal status (completed → Available adjusts via
+	// completedPayments, but the stale SYNC topup remains).
+	inFlight, err := s.paymentRepo.SumByStatuses(ctx, []string{"pending", "authorised"})
+	if err != nil {
+		return nil, fmt.Errorf("lỗi kiểm tra giao dịch đang xử lý: %w", err)
+	}
+	unreconciledFailed, err := s.paymentRepo.SumUnreconciledByStatuses(ctx, []string{"failed"})
+	if err != nil {
+		return nil, fmt.Errorf("lỗi kiểm tra giao dịch thất bại chưa đối soát: %w", err)
+	}
+
+	if inFlight > 0 || unreconciledFailed > 0 {
+		s.logger.Info("wallet balance sync skipped: payments in flight or unreconciled failures",
+			"in_flight", inFlight,
+			"unreconciled_failed", unreconciledFailed,
+			"provider_balance", providerBalance,
+			"local_balance", localBalance.Available,
+		)
+		return result, nil
 	}
 
 	diff := providerBalance - localBalance.Available
@@ -227,10 +258,7 @@ func (s *walletService) GetTransactions(ctx context.Context, filter wallet.Trans
 	if start >= len(all) {
 		return []*wallet.UnifiedTransaction{}, total, nil
 	}
-	end := start + filter.PageSize
-	if end > len(all) {
-		end = len(all)
-	}
+	end := min(start+filter.PageSize, len(all))
 
 	return all[start:end], total, nil
 }
