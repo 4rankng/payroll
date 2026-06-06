@@ -104,8 +104,15 @@ func (s *Scheduler) Start() error {
 }
 
 func (s *Scheduler) Stop() {
-	s.cron.Stop()
-	s.logger.Info("Scheduler stopped")
+	ctx := s.cron.Stop()
+	s.logger.Info("Scheduler stopping, waiting for running jobs...")
+
+	select {
+	case <-ctx.Done():
+		s.logger.Info("Scheduler stopped, all jobs completed")
+	case <-time.After(5 * time.Second):
+		s.logger.Warn("Scheduler stop timed out, some jobs may still be running")
+	}
 }
 
 // RunJobOnce manually triggers a registered job by name and runs its handler
