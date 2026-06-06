@@ -89,8 +89,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
   const getVAPIDKey = async (): Promise<string | null> => {
     try {
-      const response = await apiClient.get<{ publicKey: string }>(API_ENDPOINTS.push.vapidKey);
-      return response.data.publicKey;
+      // VAPID endpoint returns raw {publicKey: "..."}, not the standard {status, data} envelope
+      const response = await apiClient.rawRequest<{ publicKey: string }>({
+        method: 'GET',
+        url: API_ENDPOINTS.push.vapidKey,
+      });
+      return response.publicKey;
     } catch {
       console.error('Failed to fetch VAPID public key');
       return null;
