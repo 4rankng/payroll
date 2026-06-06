@@ -105,6 +105,14 @@ function formatAmount(amount: number): string {
   return `−${formatted}`;
 }
 
+// Provider success codes — "00" (OnePay), "000"/"0" (9Pay) — must not be shown as errors.
+const PROVIDER_SUCCESS_CODES = new Set(["00", "0", "000", ""]);
+
+function isRealErrorCode(code: string | null | undefined): boolean {
+  if (!code) return false;
+  return !PROVIDER_SUCCESS_CODES.has(code.trim());
+}
+
 function formatDateTime(value: string): string {
   try {
     return format(new Date(value), "dd/MM/yyyy HH:mm", { locale: vi });
@@ -352,7 +360,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
           copyable={payment.invoice_no}
         />
       )}
-      {payment.error_code && (
+      {payment.error_code && isRealErrorCode(payment.error_code) && (
         <DetailRow
           label="Mã lỗi"
           value={
@@ -360,6 +368,17 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
               <Ban className="h-3.5 w-3.5 shrink-0" />
               {payment.error_code}
               {payment.error_message ? ` — ${payment.error_message}` : ""}
+            </span>
+          }
+        />
+      )}
+      {payment.error_code && !isRealErrorCode(payment.error_code) && payment.error_message && (
+        <DetailRow
+          label="Mã phản hồi"
+          value={
+            <span className="inline-flex items-center gap-1.5 text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              {payment.error_code} — {payment.error_message}
             </span>
           }
         />
