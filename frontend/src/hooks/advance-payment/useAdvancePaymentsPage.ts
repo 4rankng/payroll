@@ -17,15 +17,22 @@ import type {
   FlexPayEmployeeFilters,
 } from "@/types/api/advance-payment.types";
 
+const getDefaultMonth = () => {
+  const now = new Date();
+  if (now.getDate() <= 10) {
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return format(prevMonth, "yyyy-MM");
+  }
+  return format(now, "yyyy-MM");
+};
+
 export function useAdvancePaymentsPage(options?: { employeesTabActive?: boolean }) {
   const employeesTabActive = options?.employeesTabActive ?? false;
   const [filters, setFilters] = useState<AdvancePaymentFilters>({
     page: 1,
     pageSize: 20,
   });
-  const [selectedMonth, setSelectedMonth] = useState<string>(
-    format(new Date(), "yyyy-MM"),
-  );
+  const [selectedMonth, setSelectedMonth] = useState<string>(getDefaultMonth());
   const [flexPayFilters, setFlexPayFilters] = useState<FlexPayEmployeeFilters>({
     page: 1,
     pageSize: 20,
