@@ -120,6 +120,12 @@ func (r *fakeProviderTxRepo) ListStaleAuthorised(_ context.Context, provider str
 	return nil, nil
 }
 
+func (r *fakeProviderTxRepo) HasPendingForRecipient(_ context.Context, accountNo, bank string) (bool, error) {
+	_ = accountNo
+	_ = bank
+	return false, nil
+}
+
 // fakeFee is a stub DisbursementFeeProvider that always returns the
 // fixed VND amount it was constructed with. Lets tests assert the
 // fee landed on the row without spinning up the settings stack.

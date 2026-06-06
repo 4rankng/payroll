@@ -42,6 +42,12 @@ type WalletPaymentRepository interface {
 	// given provider, ordered oldest-first. Used by the status inquiry poller
 	// to resolve stuck payments when IPN has not arrived.
 	ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*WalletPayment, error)
+
+	// HasPendingForRecipient checks whether a non-terminal (pending or authorised)
+	// wallet payment already exists for the given recipient. Used to prevent
+	// double disbursement when both auto-poller and manual admin flows target
+	// the same employee simultaneously.
+	HasPendingForRecipient(ctx context.Context, accountNo, bank string) (bool, error)
 }
 
 // UpdatePatch captures the mutable fields of a WalletPayment.

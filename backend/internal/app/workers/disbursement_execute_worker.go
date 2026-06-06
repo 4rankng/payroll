@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -105,6 +106,11 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		EntityID:           &p.AdvanceRequestID,
 	})
 	if err != nil {
+		if errors.Is(err, disbursement.ErrDuplicatePaymentInProgress) {
+			logger.Info("disbursement execute: skipping — duplicate payment already in progress for this recipient",
+				"account_no", p.RecipientAccountNo, "bank", p.RecipientBank)
+			return nil // terminal — don't retry; admin or another worker is handling it
+		}
 		return fmt.Errorf("initiate wallet_payment: %w", err)
 	}
 

@@ -207,6 +207,19 @@ func (r *walletPaymentRepository) SumUnreconciledByStatuses(ctx context.Context,
 	return total, nil
 }
 
+func (r *walletPaymentRepository) HasPendingForRecipient(ctx context.Context, accountNo, bank string) (bool, error) {
+	var count int64
+	err := r.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM wallet_payments
+		 WHERE recipient_account_no = ? AND recipient_bank = ? AND status IN ('pending', 'authorised')`,
+		accountNo, bank,
+	).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("failed to check pending payments for recipient: %w", err)
+	}
+	return count > 0, nil
+}
+
 func (r *walletPaymentRepository) buildWhereClause(filter wallet.WalletPaymentFilter) (string, []any) {
 	var conditions []string
 	var args []any
