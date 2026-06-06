@@ -157,15 +157,10 @@ export const DisbursementFeeScheduleSection = () => {
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Mức phí</TableHead>
                   <TableHead>Ghi chú</TableHead>
-                  <TableHead className="w-[120px] text-right">
-                    Hành động
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sorted.map((entry) => {
-                  const editable = isEntryEditable(entry);
-                  return (
+                {sorted.map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell className="font-medium whitespace-nowrap">
                         {formatVietnameseDate(entry.effectiveDate)}
@@ -185,31 +180,8 @@ export const DisbursementFeeScheduleSection = () => {
                       <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                         {entry.notes ?? ""}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Sửa"
-                            disabled={!editable}
-                            onClick={() => handleEdit(entry)}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Xóa"
-                            disabled={!editable}
-                            onClick={() => handleDelete(entry)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
                     </TableRow>
-                  );
-                })}
+                  ))}
               </TableBody>
             </Table>
           </div>

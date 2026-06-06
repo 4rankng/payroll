@@ -126,9 +126,18 @@ func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, acto
 		return nil, err
 	}
 
+	provider := input.Provider
+	if provider == "" {
+		resolved, err := s.registry.ActiveProviderName(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("fee: resolve active provider for new schedule: %w", err)
+		}
+		provider = resolved
+	}
+
 	entry := domain.DisbursementFeeScheduleEntry{
 		ID:              uuid.NewString(),
-		Provider:        input.Provider,
+		Provider:        provider,
 		EffectiveDate:   input.EffectiveDate,
 		FeeVND:          input.FeeVND,
 		Notes:           strings.TrimSpace(input.Notes),
