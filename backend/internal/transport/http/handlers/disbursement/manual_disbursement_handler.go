@@ -265,6 +265,12 @@ func (h *ManualDisbursementHandler) Initiate(c *gin.Context) {
 		CreatedBy:          &uid,
 	})
 	if err != nil {
+		if errors.Is(err, disbursement.ErrDuplicatePaymentInProgress) {
+			h.logger.Warn("manual disbursement: rejected — duplicate payment in progress",
+				"account_no", body.AccountNo, "bank", body.BankCode)
+			response.BadRequest(c, "Đã có giao dịch đang xử lý cho người nhận này. Vui lòng đợi giao dịch trước hoàn tất.")
+			return
+		}
 		h.logger.Error("manual disbursement: initiate failed",
 			"request_id", requestID, "error", err)
 		response.InternalServerError(c, "failed to record transaction: "+err.Error())

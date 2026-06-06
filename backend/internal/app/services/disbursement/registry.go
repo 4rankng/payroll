@@ -27,6 +27,12 @@ var ErrNoActiveProvider = errors.New("disbursement: no active provider configure
 // provider does not implement the BalanceReporter interface.
 var ErrBalanceNotSupported = errors.New("disbursement: active provider does not support balance reporting")
 
+// ErrDuplicatePaymentInProgress is returned by Initiate when a pending or
+// authorised wallet_payment already exists for the same recipient. Prevents
+// double disbursement when both auto-poller and manual admin flows target
+// the same employee simultaneously.
+var ErrDuplicatePaymentInProgress = errors.New("disbursement: a payment to this recipient is already in progress")
+
 // Registry holds all built disbursement providers and exposes the
 // active one. With env-gated registration, "active" reduces to "the
 // provider bootstrap chose to register" — there is exactly one in

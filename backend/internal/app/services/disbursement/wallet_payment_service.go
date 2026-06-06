@@ -122,6 +122,16 @@ type InitiateInput struct {
 // whether to call the provider again or simply observe the in-flight
 // state.
 func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (*domaintx.WalletPayment, error) {
+	// Duplicate guard: prevent simultaneous payments to the same recipient.
+	// Both the auto-poller and manual admin disbursement can target the same
+	// employee — this check blocks the second path before creating a wallet_payment.
+	hasPending, dupErr := s.repo.HasPendingForRecipient(ctx, in.RecipientAccountNo, in.RecipientBank)
+	if dupErr != nil {
+		s.logger.Warn("provider_transactions: duplicate check failed, proceeding", "error", dupErr)
+	} else if hasPending {
+		return nil, ErrDuplicatePaymentInProgress
+	}
+
 	var fee int64
 	var providerName string
 	if s.registry != nil {
