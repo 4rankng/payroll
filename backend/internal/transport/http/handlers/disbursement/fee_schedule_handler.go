@@ -38,11 +38,27 @@ func (h *FeeScheduleHandler) List(c *gin.Context) {
 	now := h.clock.Now()
 	today := now.Format(domain.DisbursementFeeScheduleDateLayout)
 
+	// Pre-compute the active entry per provider — O(n) instead of O(n²).
+	activeByProvider := make(map[string]string) // provider → active entry ID
+	{
+		seen := map[string]bool{}
+		for i := range entries {
+			p := entries[i].Provider
+			if seen[p] {
+				continue
+			}
+			seen[p] = true
+			a := domain.ActiveDisbursementFeeScheduleAt(entries, p, now)
+			if a != nil {
+				activeByProvider[p] = a.ID
+			}
+		}
+	}
+
 	out := make([]dto.DisbursementFeeScheduleEntryResponse, 0, len(entries))
 	for i := range entries {
 		e := entries[i]
-		providerActive := domain.ActiveDisbursementFeeScheduleAt(entries, e.Provider, now)
-		isActive := providerActive != nil && providerActive.ID == e.ID
+		isActive := activeByProvider[e.Provider] == e.ID
 		isPending := e.EffectiveDate > today
 		out = append(out, toFeeScheduleResponse(e, isActive, isPending))
 	}
@@ -106,7 +122,8 @@ func (h *FeeScheduleHandler) Update(c *gin.Context) {
 	now := h.clock.Now()
 	today := now.Format(domain.DisbursementFeeScheduleDateLayout)
 	isPending := updated.EffectiveDate > today
-	response.Success(c, toFeeScheduleResponse(*updated, false, isPending), "Cập nhật cấu hình phí giao dịch chi hộ thành công")
+	isActive := !isPending // not pending ⇒ must be active for its provider (dedup prevents same-provider same-date)
+	response.Success(c, toFeeScheduleResponse(*updated, isActive, isPending), "Cập nhật cấu hình phí giao dịch chi hộ thành công")
 }
 
 // Delete removes a future-dated entry. The active and historical entries
