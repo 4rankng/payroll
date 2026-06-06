@@ -153,6 +153,10 @@ type AdvancePaymentRequestRepository interface {
 	// CreateWithBudgetCheck atomically creates a request only if the employee's
 	// budget is not exceeded. Uses SELECT FOR UPDATE to prevent TOCTOU races.
 	CreateWithBudgetCheck(ctx context.Context, req *AdvancePaymentRequest, employeeID uint64, forMonth string) error
+	// ResetToPending atomically resets APPROVED requests back to PENDING.
+	// Used by the poller when wallet balance is insufficient to process claimed requests.
+	// Only resets requests that are still APPROVED (idempotent, safe for concurrent pollers).
+	ResetToPending(ctx context.Context, ids []uint64) error
 }
 
 type AdvancePaymentStatsSummary struct {

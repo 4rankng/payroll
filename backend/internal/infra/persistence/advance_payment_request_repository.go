@@ -147,7 +147,12 @@ func (r *AdvancePaymentRequestRepository) GetPendingGroupedByEmployee(ctx contex
 			LEFT JOIN banks b ON e.bank_id = b.id
 			WHERE apr.status IN (?, ?)
 				AND ap.for_month = ?
-				AND NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = apr.id)
+				AND COALESCE((
+						SELECT wp.status FROM wallet_payments wp
+						WHERE wp.entity_id = apr.id
+						ORDER BY wp.created_at DESC
+						LIMIT 1
+					), '') IN ('', 'failed', 'reversed')
 			GROUP BY e.id, p.id
 			ORDER BY e.fullname ASC
 		`, domain.AdvancePaymentStatusPending, domain.AdvancePaymentStatusApproved, forMonth).
@@ -594,6 +599,23 @@ func (r *AdvancePaymentRequestRepository) GetTotalFeeEarned(ctx context.Context)
 		Where("status = ?", domain.AdvancePaymentStatusCompleted).
 		Scan(&total).Error
 	return total, err
+}
+
+// ResetToPending atomically resets APPROVED requests back to PENDING.
+// Used by the poller when wallet balance is insufficient to process claimed requests.
+// Only resets requests that are still APPROVED (idempotent, safe for concurrent pollers).
+func (r *AdvancePaymentRequestRepository) ResetToPending(ctx context.Context, ids []uint64) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Where("id IN ? AND status = ?", ids, domain.AdvancePaymentStatusApproved).
+		Updates(map[string]any{
+			"status":     domain.AdvancePaymentStatusPending,
+			"updated_at": clock.Now(),
+		}).Error
 }
 
 // CreateWithBudgetCheck atomically creates an advance payment request only if the

@@ -134,7 +134,7 @@ func (f fakeFee) GetDisbursementFeeVND(_ context.Context, _ string) int64 { retu
 func TestInitiate_PersistsRequestIDFromCaller(t *testing.T) {
 	t.Parallel()
 	repo := newFakeRepo()
-	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
 
 	in := disbursement.InitiateInput{
 		RequestID:          "tt" + uuid.New().String()[:14],
@@ -167,7 +167,7 @@ func TestInitiate_PersistsRequestIDFromCaller(t *testing.T) {
 func TestInitiate_IsIdempotentOnDuplicateRequestID(t *testing.T) {
 	t.Parallel()
 	repo := newFakeRepo()
-	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
 
 	requestID := "tt" + uuid.New().String()[:14]
 	first, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
@@ -218,7 +218,7 @@ func TestInitiate_NonDuplicateErrorPropagates(t *testing.T) {
 	t.Parallel()
 	repo := newFakeRepo()
 	repo.createErr = errors.New("connection refused")
-	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
 
 	_, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
 		RequestID:          "tingtingabcdef",
@@ -298,7 +298,7 @@ func TestRecordIPN_ReversedTransition(t *testing.T) {
 	t.Parallel()
 
 	repo := newFakeRepoWithUpdate()
-	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
 
 	// Create a row in completed state (simulating a settled payment).
 	txnID := uuid.New()
