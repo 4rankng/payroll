@@ -21,8 +21,14 @@ export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },
+  esbuild: {
+    target: 'esnext',
+  },
   optimizeDeps: {
     exclude: ['chunk-SFLVWKAX', 'chunk-YV7AFGPB'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
   plugins: [
     react(),
