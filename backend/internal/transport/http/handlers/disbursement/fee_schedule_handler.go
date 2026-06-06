@@ -77,6 +77,7 @@ func (h *FeeScheduleHandler) Create(c *gin.Context) {
 
 	actorID := actorUserID(c)
 	created, err := h.service.Create(c.Request.Context(), disbursement.CreateInput{
+		Provider:      req.Provider,
 		EffectiveDate: req.EffectiveDate,
 		FeeVND:        req.FeeVND,
 		Notes:         req.Notes,
@@ -146,6 +147,7 @@ func (h *FeeScheduleHandler) Delete(c *gin.Context) {
 func toFeeScheduleResponse(e domain.DisbursementFeeScheduleEntry, isActive, isPending bool) dto.DisbursementFeeScheduleEntryResponse {
 	return dto.DisbursementFeeScheduleEntryResponse{
 		ID:                e.ID,
+		Provider:          e.Provider,
 		EffectiveDate:     e.EffectiveDate,
 		FeeVND:            e.FeeVND,
 		Notes:             e.Notes,

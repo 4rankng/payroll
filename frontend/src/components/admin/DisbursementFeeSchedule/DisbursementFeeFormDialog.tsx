@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   useCreateDisbursementFeeSchedule,
@@ -26,6 +33,11 @@ import {
   type DisbursementFeeFormMode,
   type DisbursementFeeFormState,
 } from "./helpers";
+import {
+  DISBURSEMENT_PROVIDERS,
+  PROVIDER_LABELS,
+  type DisbursementProvider,
+} from "@/types/api/disbursement-fee-schedule.types";
 
 interface Props {
   open: boolean;
@@ -88,6 +100,34 @@ export const DisbursementFeeFormDialog = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="dfs-provider">Nhà cung cấp</Label>
+            <Select
+              value={state.provider}
+              onValueChange={(v) =>
+                setState((s) => ({
+                  ...s,
+                  provider: v as DisbursementProvider,
+                }))
+              }
+              disabled={isSaving || isEdit}
+            >
+              <SelectTrigger id="dfs-provider">
+                <SelectValue placeholder="Chọn nhà cung cấp" />
+              </SelectTrigger>
+              <SelectContent>
+                {DISBURSEMENT_PROVIDERS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {PROVIDER_LABELS[p]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Chọn nhà cung cấp dịch vụ chi hộ áp dụng mức phí này.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="dfs-effective-date">Áp dụng từ ngày</Label>
             <Input
               id="dfs-effective-date"
@@ -121,7 +161,7 @@ export const DisbursementFeeFormDialog = ({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Mức phí cố định cho mỗi giao dịch chi hộ qua nhà cung cấp (9pay).
+              Mức phí cố định cho mỗi giao dịch chi hộ qua nhà cung cấp đã chọn.
             </p>
           </div>
 

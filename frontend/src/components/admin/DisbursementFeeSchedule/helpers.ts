@@ -4,9 +4,11 @@
 import type {
   CreateDisbursementFeeScheduleRequest,
   DisbursementFeeScheduleEntry,
+  DisbursementProvider,
 } from "@/types/api/disbursement-fee-schedule.types";
 
 export interface DisbursementFeeFormState {
+  provider: DisbursementProvider;
   effectiveDate: string;
   feeVnd: number;
   notes: string;
@@ -43,12 +45,14 @@ export function buildInitialFormState(
   if (mode.kind === "edit") {
     const e = mode.entry;
     return {
+      provider: e.provider as DisbursementProvider,
       effectiveDate: e.effectiveDate,
       feeVnd: e.feeVnd,
       notes: e.notes ?? "",
     };
   }
   return {
+    provider: "9pay",
     effectiveDate: tomorrowISO(),
     feeVnd: DEFAULT_FEE_VND,
     notes: "",
@@ -74,6 +78,7 @@ export function toCreateRequest(
   state: DisbursementFeeFormState,
 ): CreateDisbursementFeeScheduleRequest {
   return {
+    provider: state.provider,
     effectiveDate: state.effectiveDate,
     feeVnd: state.feeVnd,
     notes: state.notes.trim() || undefined,
