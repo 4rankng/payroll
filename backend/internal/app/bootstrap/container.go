@@ -162,21 +162,25 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	var disbursementPollerWorker *workers.DisbursementPollerWorker
 	var disbursementExecuteWorker *workers.DisbursementExecuteWorker
 	if cfg.Disbursement.EmployeeDisbursementEnabled() {
-		disbursementPollerWorker = workers.NewDisbursementPollerWorker(
-			repos.AdvancePaymentRequest,
-			repos.AdvancePayment,
-			repos.Employee,
-			services.ProviderTransactions,
-			services.DisbursementRegistry,
-			asynqClient.AsynqClient(),
-			infra.Logger,
-		)
-		disbursementExecuteWorker = workers.NewDisbursementExecuteWorker(
-			services.ProviderTransactions,
-			services.DisbursementRegistry,
-			repos.Bank,
-			infra.Logger,
-		)
+			disbursementPollerWorker = workers.NewDisbursementPollerWorker(
+				repos.AdvancePaymentRequest,
+				repos.AdvancePayment,
+				repos.Employee,
+				services.ProviderTransactions,
+				services.DisbursementRegistry,
+				asynqClient.AsynqClient(),
+				services.Wallet,
+				repos.User,
+				services.Email,
+				infra.Logger,
+			)
+			disbursementExecuteWorker = workers.NewDisbursementExecuteWorker(
+				services.ProviderTransactions,
+				services.DisbursementRegistry,
+				repos.Bank,
+				services.Wallet,
+				infra.Logger,
+			)
 		infra.Logger.Info("disbursement poller: enabled")
 	} else {
 		infra.Logger.Info("disbursement poller: disabled (no provider has EnabledForEmployee)")

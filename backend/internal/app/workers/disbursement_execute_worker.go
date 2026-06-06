@@ -12,6 +12,7 @@ import (
 	"api-server/internal/domain"
 	"api-server/internal/domain/ports/infrastructure"
 	domaintx "api-server/internal/domain/transactions"
+	"api-server/internal/domain/wallet"
 )
 
 // DisbursementExecutePayload is the wire format for disbursement:execute tasks.
@@ -31,6 +32,7 @@ type DisbursementExecuteWorker struct {
 	walletPaymentService *disbursement.WalletPaymentService
 	registry             *disbursement.Registry
 	bankRepo             domain.BankRepository
+	walletSvc            wallet.WalletService
 	logger               *slog.Logger
 }
 
@@ -38,12 +40,14 @@ func NewDisbursementExecuteWorker(
 	walletPaymentService *disbursement.WalletPaymentService,
 	registry *disbursement.Registry,
 	bankRepo domain.BankRepository,
+	walletSvc wallet.WalletService,
 	logger *slog.Logger,
 ) *DisbursementExecuteWorker {
 	return &DisbursementExecuteWorker{
 		walletPaymentService: walletPaymentService,
 		registry:             registry,
 		bankRepo:             bankRepo,
+		walletSvc:            walletSvc,
 		logger:               logger,
 	}
 }
@@ -76,6 +80,20 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		"advance_request_id", p.AdvanceRequestID,
 		"request_id", p.RequestID,
 	)
+
+	// Step 0: Pre-flight balance check (safety net for races between poller and execute)
+	if w.walletSvc != nil {
+		balance, balErr := w.walletSvc.GetBalance(ctx)
+		if balErr != nil {
+			logger.Warn("disbursement execute: balance check failed, proceeding", "error", balErr)
+		} else if balance.Available < p.RequestedAmount {
+			logger.Info("disbursement execute: skipping — insufficient balance",
+				"available", balance.Available, "requested", p.RequestedAmount)
+			// Do NOT create wallet_payment row. Return nil so asynq doesn't retry.
+			// The orphan recovery in the poller will re-enqueue after balance is topped up.
+			return nil
+		}
+	}
 
 	// Step 1: Initiate wallet_payment (idempotent — returns existing row if retry)
 	row, err := w.walletPaymentService.Initiate(ctx, disbursement.InitiateInput{
