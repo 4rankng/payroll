@@ -88,41 +88,27 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 3. Bank statement reminder - Day 2
-	s.AddJob(scheduler.Job{
-		Name:    "bank_statement_reminder_day_2",
-		Cron:    "0 9 2 * *",
-		Enabled: true,
-		Handler: func() {
-			ctx := context.Background()
-			title := renderTemplate(domain.NotifyTypeImportant + " Gửi sao kê cho đối tác")
-			message := renderTemplate("Nhắc nhở gửi sao kê ngân hàng cho công ty thanh toán vào ngày {day}/{month}/{year}")
-
-			if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
-				logger.Error("Failed to send notification", "name", "bank_statement_reminder_day_2", "error", err)
-			} else {
-				logger.Info("Notification sent successfully", "name", "bank_statement_reminder_day_2")
-			}
-		},
-	})
-
-	// 4. Bank statement reminder - Day 25
-	s.AddJob(scheduler.Job{
-		Name:    "bank_statement_reminder_day_25",
-		Cron:    "0 9 25 * *",
-		Enabled: true,
-		Handler: func() {
-			ctx := context.Background()
-			title := renderTemplate(domain.NotifyTypeImportant + " Gửi sao kê cho đối tác")
-			message := renderTemplate("Nhắc nhở gửi sao kê ngân hàng cho công ty thanh toán vào ngày {day}/{month}/{year}")
-
-			if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
-				logger.Error("Failed to send notification", "name", "bank_statement_reminder_day_25", "error", err)
-			} else {
-				logger.Info("Notification sent successfully", "name", "bank_statement_reminder_day_25")
-			}
-		},
-	})
+		// 3. Bank statement reminder - Day 2
+		// 4. Bank statement reminder - Day 25
+		addBankStatementReminder := func(name, cronExpr string) {
+			s.AddJob(scheduler.Job{
+				Name:    name,
+				Cron:    cronExpr,
+				Enabled: true,
+				Handler: func() {
+					ctx := context.Background()
+					title := renderTemplate(domain.NotifyTypeImportant + "Gửi sao kê cho đối tác")
+					message := renderTemplate("Nhắc nhở gửi sao kê ngân hàng cho công ty thanh toán vào ngày {day}/{month}/{year}")
+					if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
+						logger.Error("Failed to send notification", "name", name, "error", err)
+					} else {
+						logger.Info("Notification sent successfully", "name", name)
+					}
+				},
+			})
+		}
+		addBankStatementReminder("bank_statement_reminder_day_2", "0 9 2 * *")
+		addBankStatementReminder("bank_statement_reminder_day_25", "0 9 25 * *")
 
 	// 5. Daily receivable reconciliation
 	s.AddJob(scheduler.Job{
@@ -134,7 +120,7 @@ func registerSchedulerJobs(
 			logger.Info("Starting daily receivable reconciliation")
 
 			// Use admin user ID (1) for system operations
-			adminUserID := uint(1)
+			adminUserID := uint(constants.AdminUserID)
 
 			result, err := reconcileService.ReconcileReceivableAccount(ctx, &ledger.ReconcileRequest{}, adminUserID)
 			if err != nil {
@@ -232,7 +218,7 @@ func registerSchedulerJobs(
 			ctx := context.Background()
 			logger.Info("Starting wallet balance sync with provider")
 
-			result, err := walletSyncService.SyncBalance(ctx, 1) // system user ID
+			result, err := walletSyncService.SyncBalance(ctx, uint64(constants.AdminUserID)) // system user ID
 			if err != nil {
 				logger.Error("Wallet balance sync failed", "error", err)
 				return
