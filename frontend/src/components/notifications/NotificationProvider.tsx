@@ -64,17 +64,13 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
     if (!isSupported || !isAuthenticated) return;
 
     const handleMessage = async (event: MessageEvent) => {
-      // Foreground push notification — show native notification
+      // Foreground push notification — the service worker already shows the
+      // native notification via self.registration.showNotification(). No need
+      // to create a duplicate here. Keeping this handler for future in-app
+      // toasts / badge updates if needed.
       if (event.data?.type === 'PUSH_NOTIFICATION') {
-        const { title, body } = event.data.payload || {};
-        if (title && Notification.permission === 'granted') {
-          new Notification(title, {
-            body: body || '',
-            icon: '/favicon.png',
-            badge: '/favicon.png',
-            tag: 'tingting-foreground',
-          });
-        }
+        // Intentionally empty — SW handles native notification display.
+        // This message is received for in-app awareness only (badge count, etc.)
       }
       // Notification click from SW — app is already focused, navigate
       if (event.data?.type === 'NOTIFICATION_CLICK') {

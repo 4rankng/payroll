@@ -118,14 +118,12 @@ func (s *PushService) SendToUser(ctx context.Context, userID uint, title, body s
 				"status", resp.StatusCode)
 			_ = s.subRepo.DeleteByEndpoint(ctx, userID, sub.Endpoint)
 		default:
-			// 401 (VAPID mismatch), 400 (bad payload), 429 (rate-limited), etc.
+			// 401/403 (VAPID auth), 400 (bad payload), 429 (rate-limited), etc.
+			// Do NOT delete subscription — these are sender-side issues, not invalid subs.
 			s.logger.Warn("Push notification rejected by push service",
 				"user_id", userID,
 				"device", sub.DeviceType,
-				"endpoint", sub.Endpoint,
 				"status", resp.StatusCode)
-			// Remove invalid subscriptions so they get re-created on next visit
-			_ = s.subRepo.DeleteByEndpoint(ctx, userID, sub.Endpoint)
 		}
 	}
 
