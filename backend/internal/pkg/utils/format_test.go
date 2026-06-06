@@ -140,3 +140,29 @@ func TestFormatVND(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatNumber(t *testing.T) {
+	tests := []struct {
+		name   string
+		amount int64
+		want   string
+	}{
+		{name: "zero", amount: 0, want: "0"},
+		{name: "small positive", amount: 100, want: "100"},
+		{name: "thousand", amount: 1000, want: "1.000"},
+		{name: "million", amount: 1000000, want: "1.000.000"},
+		{name: "five million", amount: 5000000, want: "5.000.000"},
+		{name: "irregular", amount: 12345678, want: "12.345.678"},
+		{name: "negative million", amount: -5000000, want: "-5.000.000"},
+		{name: "one", amount: 1, want: "1"},
+		{name: "999", amount: 999, want: "999"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FormatNumber(tt.amount)
+			if got != tt.want {
+				t.Errorf("FormatNumber(%v) = %v, want %v", tt.amount, got, tt.want)
+			}
+		})
+	}
+}

@@ -54,3 +54,38 @@ func FormatVND(amount int64) string {
 	}
 	return out
 }
+
+// FormatNumber formats an integer with period thousand separators, no currency symbol.
+// Example: 5000000 -> "5.000.000"; negatives preserved as "-5.000.000".
+func FormatNumber(amount int64) string {
+	if amount == 0 {
+		return "0"
+	}
+	neg := amount < 0
+	if neg {
+		amount = -amount
+	}
+	s := fmt.Sprintf("%d", amount)
+	n := len(s)
+	if n <= 3 {
+		if neg {
+			return "-" + s
+		}
+		return s
+	}
+	var b strings.Builder
+	pre := n % 3
+	if pre == 0 {
+		pre = 3
+	}
+	b.WriteString(s[:pre])
+	for i := pre; i < n; i += 3 {
+		b.WriteString(".")
+		b.WriteString(s[i : i+3])
+	}
+	out := b.String()
+	if neg {
+		out = "-" + out
+	}
+	return out
+}
