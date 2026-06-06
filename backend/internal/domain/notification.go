@@ -27,7 +27,7 @@ const (
 
 // NotificationPriority represents notification priority prefixes
 const (
-	NotifyTypeImportant = ""
+	NotifyTypeImportant = "⚠️ "
 )
 
 // NotificationChannel represents delivery channels (extensible to email)
