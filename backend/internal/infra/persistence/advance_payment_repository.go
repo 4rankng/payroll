@@ -297,7 +297,11 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 	}
 
 	// Apply sorting using filterBuilder, then add deterministic tiebreaker for stable pagination
-	query = r.filterBuilder.ApplySorting(query, filters.SortBy, filters.SortOrder, "e.fullname")
+	sortBy := filters.SortBy
+	if sortBy == "available_amount" {
+		sortBy = "GREATEST(0, CAST(COALESCE(ap.max_adv_amount, 0) AS SIGNED) - CAST(COALESCE(completed_stats.utilized_amount, 0) AS SIGNED) - CAST(COALESCE(pending_stats.pending_amount, 0) AS SIGNED))"
+	}
+	query = r.filterBuilder.ApplySorting(query, sortBy, filters.SortOrder, "e.fullname")
 	query = query.Order("e.id ASC")
 	query = r.filterBuilder.ApplyPagination(query, filters.Limit, filters.Offset)
 
