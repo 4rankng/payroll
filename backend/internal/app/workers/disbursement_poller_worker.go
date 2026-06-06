@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sort"
 	"sync"
 	"time"
 
@@ -99,42 +100,43 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 		return fmt.Errorf("disbursement poller: claim: %w", err)
 	}
 
-	// Step 1.5: All-or-nothing balance gate
+	// Step 1.5: Greedy balance optimization — sort by amount ascending so we pay
+	// as many requests as possible with the available wallet balance.
+	var remainingBalance int64
 	if len(claimed) > 0 && w.walletSvc != nil {
 		balance, balErr := w.walletSvc.GetBalance(ctx)
 		if balErr != nil {
 			w.logger.Warn("disbursement poller: failed to get balance, proceeding without check", "error", balErr)
+			remainingBalance = -1 // sentinel: skip balance check below
 		} else {
-			var totalAmount int64
-			for _, req := range claimed {
-				totalAmount += int64(req.NetAmount)
-			}
-			if balance.Available < totalAmount {
-				w.logger.Warn("disbursement poller: skipping batch — wallet balance insufficient",
-					"available", balance.Available, "needed", totalAmount, "claimed", len(claimed))
-
-				// Release all claimed requests back to PENDING
-				ids := make([]uint64, len(claimed))
-				for i, req := range claimed {
-					ids[i] = uint64(req.ID)
-				}
-				if resetErr := w.advancePaymentReqRepo.ResetToPending(ctx, ids); resetErr != nil {
-					w.logger.Error("disbursement poller: failed to reset claimed requests to pending", "error", resetErr)
-				}
-
-				// Notify admins via email
-				w.notifyInsufficientBalance(ctx, balance.Available, totalAmount, len(claimed))
-
-				claimed = nil // skip budget validation loop below
+			remainingBalance = balance.Available
+			if balance.Available <= 0 {
+				w.logger.Warn("disbursement poller: wallet balance zero or negative — will reset all claimed",
+					"available", balance.Available, "claimed", len(claimed))
 			}
 		}
 	}
 
-	// Step 2: Revalidate budget for each claimed request before enqueue
-	// This catches race conditions where multiple requests passed CreateRequest
-	// validation but together exceed the limit.
+	// Sort claimed by NetAmount ascending (greedy: smallest first maximizes payment count)
+	if len(claimed) > 1 {
+		sort.Slice(claimed, func(i, j int) bool {
+			return claimed[i].NetAmount < claimed[j].NetAmount
+		})
+	}
+
+	// Step 2: Revalidate budget for each claimed request and enqueue if wallet
+	// balance allows. Requests that fail budget check or exceed remaining balance
+	// are reset to PENDING so they can be retried in the next cycle.
 	enqueued := 0
+	skippedIDs := make([]uint64, 0, len(claimed))
+
 	for _, req := range claimed {
+		// Check wallet balance for this specific request (skip check if balance unknown)
+		if remainingBalance >= 0 && int64(req.NetAmount) > remainingBalance {
+			skippedIDs = append(skippedIDs, uint64(req.ID))
+			continue
+		}
+
 		if err := w.validateBudget(ctx, req); err != nil {
 			w.logger.Warn("disbursement poller: rejecting request — budget exceeded",
 				"advance_request_id", req.ID, "employee_id", req.EmployeeID, "error", err)
@@ -148,9 +150,37 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 		if err := w.enqueueRequest(ctx, req); err != nil {
 			w.logger.Error("disbursement poller: failed to enqueue request",
 				"advance_request_id", req.ID, "error", err)
+			skippedIDs = append(skippedIDs, uint64(req.ID))
 		} else {
 			enqueued++
+			if remainingBalance >= 0 {
+				remainingBalance -= int64(req.NetAmount)
+			}
 		}
+	}
+
+	// Reset skipped/unpaid requests back to PENDING for next cycle
+	if len(skippedIDs) > 0 {
+		if resetErr := w.advancePaymentReqRepo.ResetToPending(ctx, skippedIDs); resetErr != nil {
+			w.logger.Error("disbursement poller: failed to reset skipped requests to pending", "error", resetErr)
+		} else {
+			w.logger.Info("disbursement poller: reset skipped requests to pending",
+				"count", len(skippedIDs))
+		}
+	}
+
+	// Notify admins if any requests were skipped due to insufficient balance
+	if len(skippedIDs) > 0 && remainingBalance >= 0 && w.walletSvc != nil {
+		var totalSkipped int64
+		for _, id := range skippedIDs {
+			for _, req := range claimed {
+				if uint64(req.ID) == id {
+					totalSkipped += int64(req.NetAmount)
+					break
+				}
+			}
+		}
+		w.notifyInsufficientBalanceSkipped(ctx, remainingBalance, totalSkipped, len(skippedIDs))
 	}
 
 	// Step 2: Orphan recovery
@@ -253,49 +283,41 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 	return nil
 }
 
-// notifyInsufficientBalance sends an email and push notification to all admin
-// users when the disbursement poller skips a batch due to insufficient wallet balance.
+// notifyInsufficientBalanceSkipped sends an email and push notification to all
+// admin users when requests were skipped due to insufficient wallet balance.
 // It includes a circuit breaker that suppresses duplicate notifications within
 // a configurable cooldown window (insufficientBalanceCooldown).
-func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context, available, needed int64, count int) {
-	// Circuit breaker: skip if we already notified within the cooldown window.
+func (w *DisbursementPollerWorker) notifyInsufficientBalanceSkipped(ctx context.Context, remainingBalance, skippedAmount int64, skippedCount int) {
 	w.insufficientBalanceMu.Lock()
 	lastNotif := w.insufficientBalanceNotif
 	w.insufficientBalanceMu.Unlock()
 
 	if !lastNotif.IsZero() && time.Since(lastNotif) < insufficientBalanceCooldown {
-		w.logger.Info("disbursement poller: suppressing duplicate insufficient-balance notification",
-			"last_notif_ago", time.Since(lastNotif).Round(time.Second),
-			"cooldown", insufficientBalanceCooldown)
 		return
 	}
 
-	title := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu đang chờ", count)
+	title := fmt.Sprintf("[TingTing] Cảnh báo: Số dư ví không đủ — %d yêu cầu bị bỏ qua", skippedCount)
 	body := fmt.Sprintf(
-		"Số dư ví không đủ để xử lý các yêu cầu ứng lương.\n\n"+
-			"Số dư khả dụng: %d VND\n"+
-			"Tổng cần thanh toán: %d VND\n"+
-			"Số yêu cầu bị tạm hoãn: %d\n\n"+
-			"Vui lòng nạp thêm tiền vào ví để hệ thống tự động xử lý.",
-		available, needed, count,
+		"Số dư ví không đủ thanh toán tất cả các yêu cầu ứng lương.\n\n"+
+			"Số dư còn lại: %d VND\n"+
+			"Tổng số tiền bị bỏ qua: %d VND\n"+
+			"Số yêu cầu bị bỏ qua: %d\n\n"+
+			"Vui lòng nạp thêm tiền vào ví để hệ thống tự động xử lý các yêu cầu còn lại.",
+		remainingBalance, skippedAmount, skippedCount,
 	)
 
-	// Push notification to all admins
 	if w.notifications != nil {
 		if err := w.notifications.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, body); err != nil {
-			w.logger.Error("disbursement poller: failed to send insufficient balance push notification", "error", err)
+			w.logger.Error("disbursement poller: failed to send push notification for skipped requests", "error", err)
 		}
 	}
 
-	// Email to all admins
 	if w.userRepo == nil || w.emailSvc == nil {
-		w.logger.Warn("disbursement poller: cannot send insufficient balance email — missing userRepo or emailSvc")
 		return
 	}
 
 	admins, err := w.userRepo.ListByRole(ctx, domain.RoleAdmin)
 	if err != nil {
-		w.logger.Error("disbursement poller: failed to list admin users for email", "error", err)
 		return
 	}
 
@@ -306,7 +328,6 @@ func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context
 		}
 	}
 	if len(recipients) == 0 {
-		w.logger.Warn("disbursement poller: no admin emails found, skipping email")
 		return
 	}
 
@@ -315,8 +336,7 @@ func (w *DisbursementPollerWorker) notifyInsufficientBalance(ctx context.Context
 		Subject:    title,
 		TextBody:   body,
 	}); emailErr != nil {
-		w.logger.Error("disbursement poller: failed to send insufficient balance email",
-			"error", emailErr, "recipients", recipients)
+		w.logger.Error("disbursement poller: failed to send email for skipped requests", "error", emailErr)
 	}
 
 	// Stamp the cooldown after successful send (even if email partially fails,
