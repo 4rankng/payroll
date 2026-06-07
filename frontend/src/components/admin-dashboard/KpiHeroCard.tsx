@@ -125,24 +125,24 @@ export const KpiHeroCard = memo(function KpiHeroCard({
         /* Mobile (<sm): stacked layout for 2-col grid. sm+: horizontal compact layout */
         <div className="relative px-3 py-3 sm:px-4">
           {/* Mobile stacked */}
-          <div className="flex flex-col gap-1.5 sm:hidden">
+          <div className="flex flex-col gap-1 sm:hidden">
             <div className="flex items-center gap-1.5">
               <Icon className={cn('h-3 w-3 shrink-0', c.iconText)} strokeWidth={2.2} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">
                 {label}
               </span>
             </div>
-            <p className="font-display font-extrabold tabular-nums leading-tight tracking-tight text-foreground text-xl">
+            <p className="font-display font-extrabold tabular-nums leading-none tracking-tight text-foreground text-[22px]">
               {displayValue}
             </p>
             {sublabel && (
-              <p className="text-[10px] text-muted-foreground leading-snug">{sublabel}</p>
+              <p className="text-[11px] font-medium text-muted-foreground leading-snug">{sublabel}</p>
             )}
             {(trend || badge) && (
               <div className="flex items-center gap-2 flex-wrap">
                 {trend && (
                   <div className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
                     trend.positive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
                   )}>
                     <span>{trend.positive ? '↑' : '↓'}</span>
@@ -151,7 +151,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
                 )}
                 {badge && (
                   <span className={cn(
-                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap',
+                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
                     BADGE_STYLES[badge.variant],
                   )}>
                     {badge.label}
