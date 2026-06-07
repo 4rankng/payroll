@@ -458,29 +458,6 @@ export default function PayrateEditPage() {
               ratesLocked ? "border-muted" : "border-border",
               sf?.rates?.status === 'error' && "border-red-300 ring-2 ring-red-100",
             )}>
-              <div className="px-4 py-3 border-b border-border/60 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                    Bảng mức lương
-                  </p>
-                  {ratesLocked && (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                      <Lock className="h-3 w-3" />
-                      Bị khóa
-                      {sf?.rates.timesheet_count ? ` — ${sf.rates.timesheet_count} bảng công liên kết` : ' — có bảng công liên kết'}
-                    </span>
-                  )}
-                </div>
-                {!ratesLocked && editorMode === 'edit' && (
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-400 inline-block" />Mới thêm</span>
-                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-amber-400 inline-block" />Đã sửa</span>
-                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-red-400 inline-block" />Đã xóa</span>
-                    <span className="hidden sm:inline text-border">·</span>
-                    <span className="hidden sm:inline">Click tên cột / vị trí để đổi tên</span>
-                  </div>
-                )}
-              </div>
 
               {/* Rates field feedback — shown inside the section */}
               {sf?.rates.status === 'error' && sf.rates.message && !fromDateIsActionable && (
