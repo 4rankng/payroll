@@ -94,6 +94,7 @@ export interface ProjectEmployeeListParams {
   status?: AssignmentStatus;
   start_date?: string;
   end_date?: string;
+  check_in_enabled?: boolean;
   page?: number;
   pageSize?: number;
   sortBy?: string;

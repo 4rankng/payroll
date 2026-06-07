@@ -78,6 +78,12 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 		filters.Status = status
 	}
 
+	// Add check-in enabled filter
+	if checkIn := c.Query("check_in_enabled"); checkIn != "" {
+		val := checkIn == "true" || checkIn == "1"
+		filters.CheckInEnabled = &val
+	}
+
 	// For partner users, check if they have limited employee-based access
 	userRole := c.GetString(constants.CtxUserRole)
 	var accessibleEmployeeIDs map[uint]bool // Use map for O(1) lookup
