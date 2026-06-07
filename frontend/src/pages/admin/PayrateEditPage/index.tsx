@@ -327,8 +327,8 @@ export default function PayrateEditPage() {
               </div>
             )}
 
-            {/* ── Effective period ── */}
-            <section className={cn(
+            {/* ── Effective period (hidden for flexible — edits take effect immediately) ── */}
+            {!isFlexible && (<section className={cn(
               "rounded-xl border bg-card p-4 transition-all",
               (toDateIsActionable || fromDateIsActionable) ? "border-amber-400 ring-2 ring-amber-200" : "border-border",
             )}>
@@ -433,7 +433,7 @@ export default function PayrateEditPage() {
                   />
                 </div>
               </div>
-            </section>
+            </section>)}
 
             {/* ── Client-side validation — only shown after first save attempt ── */}
             {hasAttemptedSave && !clientValidation.valid && (

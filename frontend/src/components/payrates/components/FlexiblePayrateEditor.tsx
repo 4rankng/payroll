@@ -104,6 +104,11 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
   const [shifts, setShifts]       = useState<Shift[]>(parsed.shifts);
   const [rateMap, setRateMap]      = useState<RateMap>(parsed.rateMap);
   const [focusKey, setFocusKey]    = useState<string|null>(null);
+  // Inline editing states for shift headers and position names
+  const [editingShiftIdx, setEditingShiftIdx] = useState<number|null>(null);
+  const [editingShiftValue, setEditingShiftValue] = useState('');
+  const [editingPositionName, setEditingPositionName] = useState<string|null>(null);
+  const [editingPositionValue, setEditingPositionValue] = useState('');
 
   // Track emitted rates to avoid re-syncing from our own updates
   const lastEmittedRef = useRef<PayrateStructure>(rates);
@@ -166,6 +171,68 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
     }
     const fixed = repairShift(v);
     setShiftErr(fixed ? {fix:fixed} : true);
+  };
+
+  /* ── inline shift header editing ── */
+  const startShiftEdit = (idx: number) => {
+    if (readOnly) return;
+    const s = shifts[idx];
+    setEditingShiftIdx(idx);
+    setEditingShiftValue(`${s.start}-${s.end}`);
+  };
+  const cancelShiftEdit = () => { setEditingShiftIdx(null); setEditingShiftValue(''); };
+  const saveShiftEdit = () => {
+    if (editingShiftIdx === null) return;
+    const val = editingShiftValue.trim();
+    const fixed = repairShift(val) || (SHIFT_RE.test(val) ? val : null);
+    if (!fixed) { cancelShiftEdit(); return; }
+    const [newStart, newEnd] = fixed.split('-');
+    const oldShift = shifts[editingShiftIdx];
+    const oldKey = shiftKey(oldShift.start, oldShift.end);
+    const newKey = shiftKey(newStart, newEnd);
+    if (oldKey === newKey) { cancelShiftEdit(); return; }
+    if (shifts.some((s, i) => i !== editingShiftIdx && shiftKey(s.start, s.end) === newKey)) { cancelShiftEdit(); return; }
+    const preset = PRESET_SHIFTS.find(p => shiftKey(p.start, p.end) === newKey);
+    const newShift: Shift = { start: newStart, end: newEnd, label: preset?.label ?? (isON(newStart, newEnd) ? 'Qua đêm' : '') };
+    const newShifts = shifts.map((s, i) => i === editingShiftIdx ? newShift : s);
+    const newRateMap = { ...rateMap };
+    positions.forEach(pos => {
+      if (newRateMap[pos] && oldKey in newRateMap[pos]) {
+        const v = newRateMap[pos][oldKey];
+        const updated = { ...newRateMap[pos] };
+        delete updated[oldKey];
+        updated[newKey] = v;
+        newRateMap[pos] = updated;
+      }
+    });
+    setShifts(newShifts);
+    setRateMap(newRateMap);
+    emit(positions, newShifts, newRateMap);
+    cancelShiftEdit();
+  };
+
+  /* ── inline position name editing ── */
+  const startPositionEdit = (pos: string) => {
+    if (readOnly) return;
+    setEditingPositionName(pos);
+    setEditingPositionValue(pos);
+  };
+  const cancelPositionEdit = () => { setEditingPositionName(null); setEditingPositionValue(''); };
+  const savePositionEdit = () => {
+    const newName = editingPositionValue.trim();
+    const oldName = editingPositionName;
+    if (!newName || !oldName || newName === oldName) { cancelPositionEdit(); return; }
+    if (positions.includes(newName)) { cancelPositionEdit(); return; }
+    const newPositions = positions.map(p => p === oldName ? newName : p);
+    const newRateMap: RateMap = {};
+    positions.forEach(p => {
+      const key = p === oldName ? newName : p;
+      newRateMap[key] = rateMap[p] ?? {};
+    });
+    setPositions(newPositions);
+    setRateMap(newRateMap);
+    emit(newPositions, shifts, newRateMap);
+    cancelPositionEdit();
   };
 
   /* ── rates ── */
@@ -288,7 +355,27 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         <th key={i} style={{ position:'sticky', top:0, zIndex:3, background:'#fff', borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #cbd5e1', padding:'10px 12px', width:152, minWidth:152, textAlign:'left', verticalAlign:'top' }}>
                           <div className="flex flex-col gap-0.5">
                             <div className="flex items-center justify-between gap-1.5">
-                              <span className="fpe-mono text-sm font-bold tracking-tight">{s.start}–{s.end}</span>
+                              {editingShiftIdx === i ? (
+                                <input
+                                  className="fpe-mono text-sm font-bold tracking-tight w-[100px] h-6 px-1.5 rounded border border-indigo-400 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                                  value={editingShiftValue}
+                                  onChange={e => setEditingShiftValue(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') { e.stopPropagation(); saveShiftEdit(); }
+                                    if (e.key === 'Escape') { e.stopPropagation(); cancelShiftEdit(); }
+                                  }}
+                                  onBlur={() => saveShiftEdit()}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className={`fpe-mono text-sm font-bold tracking-tight ${!readOnly ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                                  onClick={() => startShiftEdit(i)}
+                                  title={readOnly ? undefined : 'Nhấn để đổi thời gian ca'}
+                                >
+                                  {s.start}–{s.end}
+                                </span>
+                              )}
                               {!readOnly && (
                                 <button onClick={()=>removeShift(s)} className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors text-base leading-none">×</button>
                               )}
@@ -326,7 +413,27 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       {/* position cell */}
                       <th style={{ position:'sticky', left:0, zIndex:2, borderRight:'1px solid #cbd5e1', borderBottom:'1px solid #e2e8f0', padding:'8px 14px', textAlign:'left', background: ri%2?'#fafbfe':'#fff' }}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-bold">{pos}</span>
+                          {editingPositionName === pos ? (
+                            <input
+                              className="text-sm font-bold h-6 px-1.5 rounded border border-indigo-400 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200 w-full max-w-[120px]"
+                              value={editingPositionValue}
+                              onChange={e => setEditingPositionValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') { e.stopPropagation(); savePositionEdit(); }
+                                if (e.key === 'Escape') { e.stopPropagation(); cancelPositionEdit(); }
+                              }}
+                              onBlur={() => savePositionEdit()}
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                              onClick={() => startPositionEdit(pos)}
+                              title={readOnly ? undefined : 'Nhấn để đổi tên vị trí'}
+                            >
+                              {pos}
+                            </span>
+                          )}
                           {!readOnly && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="w-5 h-5 flex items-center justify-center rounded border border-border bg-white text-muted-foreground hover:border-indigo-400 hover:text-indigo-600 transition-colors text-xs">→</button>
