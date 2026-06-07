@@ -394,6 +394,13 @@ func (h *Handler) CreateProject(c *gin.Context) {
 		endDate = &parsedDate
 	}
 
+	// Only admin can set salary period
+	userRole := c.GetString(constants.CtxUserRole)
+	if userRole != string(domain.RoleAdmin) {
+		response.Forbidden(c, "Chỉ quản trị viên mới được thiết lập kỳ lương")
+		return
+	}
+
 	if err := validateSalaryPeriodDay("salary_period_from", req.SalaryPeriodFrom); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -762,6 +769,15 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 	if req.Status != nil {
 		project.ProjectStatus = domain.ProjectStatus(*req.Status)
 	}
+	// Only admin can change salary period
+	if req.SalaryPeriodFrom != nil || req.SalaryPeriodTo != nil {
+		userRole := c.GetString(constants.CtxUserRole)
+		if userRole != string(domain.RoleAdmin) {
+			response.Forbidden(c, "Chỉ quản trị viên mới được thay đổi kỳ lương")
+			return
+		}
+	}
+
 	if req.SalaryPeriodFrom != nil {
 		if err := validateSalaryPeriodDay("salary_period_from", req.SalaryPeriodFrom); err != nil {
 			response.BadRequest(c, err.Error())

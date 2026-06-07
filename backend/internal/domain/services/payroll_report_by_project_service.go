@@ -101,64 +101,18 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 		s.logger.Warn("No projects selected for payroll report", "day", day)
 	}
 
-	// Handle salary period transitions: projects with last_salary_from/last_salary_to set
-	// are included on day-26 exports so their stranded old-cycle timesheets get flushed.
-	if day >= 24 {
-		for _, project := range projects {
-			// Skip if already in filteredProjects or not in transition
-			if project.LastSalaryPeriodFrom == nil || project.LastSalaryPeriodTo == nil {
-				continue
-			}
-			// Check if already added (avoid duplicates)
-			alreadyAdded := false
-			for _, fp := range filteredProjects {
-				if fp.ID == project.ID {
-					alreadyAdded = true
-					break
-				}
-			}
-			if alreadyAdded {
-				continue
-			}
-
-			s.logger.Info("Transition project: including to flush all unsettled timesheets",
-				"projectID", project.ID,
-				"projectName", project.Name,
-				"oldPeriodFrom", *project.LastSalaryPeriodFrom,
-				"oldPeriodTo", *project.LastSalaryPeriodTo,
-				"currentPeriodFrom", project.SalaryPeriodFrom,
-				"currentPeriodTo", project.SalaryPeriodTo)
-
-			filteredProjects = append(filteredProjects, project)
-		}
-	}
-
 	// Process each project and get timesheet data
 	var reportData []*ProjectReportData
 
 	for _, project := range filteredProjects {
-		isTransition := day >= 24 && project.LastSalaryPeriodFrom != nil && project.LastSalaryPeriodTo != nil
-
-		// For transition projects on day-26, settle the WHOLE previous calendar month of
-		// unsettled timesheets (e.g. May 26 export → April 1 → April 30). This recovers all
-		// timesheets stranded by the salary-period change; current-month timesheets settle
-		// later via the new schedule's own export window.
 		var fromDate, toDate time.Time
-		if isTransition {
-			prevMonth := atDate.AddDate(0, -1, 0)
-			fromDate = time.Date(prevMonth.Year(), prevMonth.Month(), 1, 0, 0, 0, 0, atDate.Location())
-			nextMonth := prevMonth.AddDate(0, 1, 0)
-			toDate = time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, atDate.Location()).AddDate(0, 0, -1)
-		} else {
-			fromDate, toDate = utils.CalculateDateRange(atDate, project.SalaryPeriodFrom, project.SalaryPeriodTo)
-		}
+		fromDate, toDate = utils.CalculateDateRange(atDate, project.SalaryPeriodFrom, project.SalaryPeriodTo)
 
 		s.logger.Info("Processing project",
 			"projectID", project.ID,
 			"projectName", project.Name,
 			"salaryPeriodFrom", project.SalaryPeriodFrom,
 			"salaryPeriodTo", project.SalaryPeriodTo,
-			"isTransition", isTransition,
 			"calculatedFromDate", fromDate.Format("2006-01-02 15:04:05 -0700"),
 			"calculatedToDate", toDate.Format("2006-01-02 15:04:05 -0700"),
 			"atDateTZ", atDate.Location().String())
@@ -286,24 +240,12 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 		// Skip projects that are not eligible on this day — the same rule as the primary filter.
 		// Without this guard, projects like salary_period_to=25 (intended for early-next-month export)
 		// would bleed into mid-month sao ke files through the safety net.
-		// Exception: transition projects (last_salary_from/last_salary_to set) are allowed on day-26.
-		isEligible := isProjectEligibleOnDay(day, project.SalaryPeriodTo)
-		isTransition := day >= 24 && project.LastSalaryPeriodFrom != nil && project.LastSalaryPeriodTo != nil
-		if !isEligible && !isTransition {
+		if !isProjectEligibleOnDay(day, project.SalaryPeriodTo) {
 			continue
 		}
 
-		// For transition projects on day-26, settle the WHOLE previous calendar month —
-		// same rule as the primary loop.
 		var fromDate, toDate time.Time
-		if isTransition {
-			prevMonth := atDate.AddDate(0, -1, 0)
-			fromDate = time.Date(prevMonth.Year(), prevMonth.Month(), 1, 0, 0, 0, 0, atDate.Location())
-			nextMonth := prevMonth.AddDate(0, 1, 0)
-			toDate = time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, atDate.Location()).AddDate(0, 0, -1)
-		} else {
-			fromDate, toDate = utils.CalculateDateRange(atDate, project.SalaryPeriodFrom, project.SalaryPeriodTo)
-		}
+		fromDate, toDate = utils.CalculateDateRange(atDate, project.SalaryPeriodFrom, project.SalaryPeriodTo)
 		timesheets, err := s.getPaidTimesheetsWithoutRevenue(ctx, project.ID, fromDate, toDate)
 		if err != nil {
 			s.logger.Warn("Safety net: failed to check project for unsettled timesheets",
@@ -570,13 +512,8 @@ func (s *PayrollReportByProjectService) getPaidTimesheetsWithoutRevenue(ctx cont
 		SortOrder:     "asc",
 	}
 
-	// Only apply date filters when dates are provided (non-zero)
-	if !fromDate.IsZero() {
-		filters.FromDate = &fromDate
-	}
-	if !toDate.IsZero() {
-		filters.ToDate = &toDate
-	}
+	filters.FromDate = &fromDate
+	filters.ToDate = &toDate
 
 	// Get all paid timesheets
 	timesheets, err := s.timesheetRepo.List(ctx, filters)

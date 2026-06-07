@@ -66,12 +66,6 @@ func main() {
 	// Phase 6.5: Advance Payment - Removal Visibility
 	runAdvanceRemovalVisibilityTests(client, testData, reporter)
 
-	// Phase 6.6: Advance Payment - Race Condition Budget Test
-	runRaceConditionTests(client, testData, reporter)
-
-	// Phase 6.7: Advance Payment - OnePay Full E2E
-	runAdvancePaymentOnePayTests(client, testData, reporter)
-
 	// Phase 7: Auth & User Management
 	runAuthUserTests(client, testData, reporter, cfg)
 

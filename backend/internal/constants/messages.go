@@ -175,7 +175,6 @@ const (
 	MsgNoProjectsFoundVN                       = "Không tìm thấy dự án nào"
 	MsgPageOfProjectsRetrievedVN               = "Trang %d của danh sách dự án được lấy thành công"
 	MsgCannotModifyProjectWithStatusVN         = "Không thể sửa đổi dự án với trạng thái"
-	MsgCannotChangeSalaryPeriodWithUnsettledVN = "Không thể thay đổi kỳ lương khi còn bảng chấm công đã thanh toán chưa quyết toán. Vui lòng xuất sao kê và quyết toán trước khi thay đổi."
 	MsgFailedToListProjectsVN                  = "Không thể liệt kê dự án"
 	MsgFailedToCountProjectsVN                 = "Không thể đếm dự án"
 	MsgFailedToGetUpdatedProjectVN             = "Không thể lấy dự án đã cập nhật"

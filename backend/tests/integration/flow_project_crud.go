@@ -464,49 +464,40 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return AssertEqual("salary_period_to", 25, resp.SalaryPeriodTo)
 	})
 
-	reporter.RunTest(flowProject, "Salary period change blocked with unsettled timesheets", func() error {
-		// The integration test DB gets rebuilt each run, so we may not have
-		// unsettled paid timesheets in all test runs. Check via DB.
-		// If no project with unsettled timesheets exists, skip gracefully.
+	reporter.RunTest(flowProject, "Admin can change salary period", func() error {
 		projects := data.Projects
 		if len(projects) == 0 {
 			fmt.Printf("    No projects available — skipping\n")
 			return nil
 		}
 
-		// Try each project until we find one that blocks (has unsettled timesheets)
-		for _, p := range projects {
-			var current ProjectResponse
-			if _, err := admin.GetInto(fmt.Sprintf("/api/v1/projects/%d", p.ID), &current); err != nil {
-				continue
-			}
-			// Save current salary period for restoration
-			origFrom := current.SalaryPeriodFrom
-			origTo := current.SalaryPeriodTo
+		p := projects[0]
+		var current ProjectResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/projects/%d", p.ID), &current); err != nil {
+			return err
+		}
+		origFrom := current.SalaryPeriodFrom
+		origTo := current.SalaryPeriodTo
 
-			// Try changing to a different salary period
-			newFrom := origFrom + 1
-			if newFrom > 28 {
-				newFrom = 0
-			}
-			_, statusCode, _ := admin.PutExpectError(fmt.Sprintf("/api/v1/projects/%d", p.ID), UpdateProjectRequest{
-				SalaryPeriodFrom: &newFrom,
-			})
-
-			if statusCode == 400 {
-				fmt.Printf("    Correctly blocked salary period change for project %d (HTTP %d)\n", p.ID, statusCode)
-				return nil
-			}
-			// If it succeeded (no unsettled), restore the original value
-			if statusCode == 200 {
-				_, _, _ = admin.Put(fmt.Sprintf("/api/v1/projects/%d", p.ID), UpdateProjectRequest{
-					SalaryPeriodFrom: &origFrom,
-					SalaryPeriodTo:   &origTo,
-				})
-			}
+		newFrom := origFrom + 1
+		if newFrom > 28 {
+			newFrom = 0
 		}
 
-		fmt.Printf("    No project with unsettled timesheets found — skip (guard validated via unit tests)\n")
+		var updated ProjectResponse
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/projects/%d", p.ID), UpdateProjectRequest{
+			SalaryPeriodFrom: &newFrom,
+		}, &updated); err != nil {
+			return fmt.Errorf("admin should be able to change salary period: %w", err)
+		}
+
+		// Restore original value
+		_, _, _ = admin.Put(fmt.Sprintf("/api/v1/projects/%d", p.ID), UpdateProjectRequest{
+			SalaryPeriodFrom: &origFrom,
+			SalaryPeriodTo:   &origTo,
+		})
+
+		fmt.Printf("    Admin correctly changed salary period for project %d\n", p.ID)
 		return nil
 	})
 }

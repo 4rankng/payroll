@@ -12,6 +12,7 @@ import type { ModalConfig } from "@/types/modal-config.types";
 import { ProjectStatus } from "@/components/projects/ProjectStatusBadge";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { OffDaysPicker } from "@/components/projects/OffDaysPicker";
+import { authManager } from "@/lib/auth";
 
 interface ProjectEditSheetProps {
   project: Project | null;
@@ -48,6 +49,7 @@ function ProjectEditSheet({
   onProjectUpdated
 }: ProjectEditSheetProps) {
   const updateProjectMutation = useUpdateProject();
+  const isAdmin = authManager.hasRole("admin");
 
   const [formData, setFormData] = useState<ProjectFormData>({
     name: "",
@@ -330,6 +332,7 @@ function ProjectEditSheet({
                     onChange={(e) => handleInputChange('salary_period_from', e.target.value === '' ? null : Number(e.target.value))}
                     className="h-8 text-sm"
                     placeholder="Từ ngày"
+                    disabled={!isAdmin}
                   />
                   <p className="text-[10px] text-muted-foreground">Tháng trước (0 = ngày 01)</p>
                 </div>
@@ -340,6 +343,7 @@ function ProjectEditSheet({
                     onChange={(e) => handleInputChange('salary_period_to', e.target.value === '' ? null : Number(e.target.value))}
                     className="h-8 text-sm"
                     placeholder="Đến ngày"
+                    disabled={!isAdmin}
                   />
                   <p className="text-[10px] text-muted-foreground">Tháng này (0 = cuối tháng)</p>
                 </div>
