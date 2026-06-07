@@ -159,7 +159,7 @@ function StatusBadge({ status, size = "sm" }: { status: string; size?: "sm" | "l
     );
   }
   return (
-    <Badge variant="secondary" className={`${cls} font-medium border-transparent`}>
+    <Badge variant="secondary" className={`${cls} font-semibold border-transparent tracking-wide`}>
       {label}
     </Badge>
   );
@@ -458,9 +458,9 @@ export default function WalletTransactionsList(
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-slate-800">Lịch sử giao dịch</h2>
+              <h2 className="text-[15px] font-semibold text-slate-800 tracking-tight">Lịch sử giao dịch</h2>
               {total > 0 && (
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-semibold text-slate-600 tabular-nums">
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold text-slate-600 tabular-nums tracking-wide">
                   {total.toLocaleString("vi-VN")}
                 </span>
               )}
@@ -470,7 +470,7 @@ export default function WalletTransactionsList(
               size="sm"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="h-8 px-2.5 text-xs text-slate-500 hover:text-slate-800"
+              className="h-8 px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide"
             >
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
               Làm mới
@@ -680,24 +680,24 @@ function CardList({
             {/* Icon */}
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isInflow ? "bg-emerald-50 ring-1 ring-emerald-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
               {isInflow
-                ? <ArrowDownLeft className="h-4.5 w-4.5 text-emerald-600" />
-                : <ArrowUpRight className="h-4.5 w-4.5 text-slate-500" />
+                ? <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
+                : <ArrowUpRight className="h-4 w-4 text-slate-500" />
               }
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                <span className="text-sm text-slate-800 font-medium truncate">{cpName}</span>
+                <span className="text-[13.5px] text-slate-800 font-semibold tracking-tight truncate">{cpName}</span>
                 <StatusBadge status={tx.status} />
               </div>
-              {cpDetail && <div className="text-xs text-slate-400 truncate">{cpDetail}</div>}
-              <div className="text-[11px] text-slate-400 mt-0.5">{formatDateTime(tx.occurred_at)}</div>
+              {cpDetail && <div className="text-xs text-slate-500 truncate leading-snug">{cpDetail}</div>}
+              <div className="text-[11px] text-slate-400 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
             </div>
 
             {/* Amount + chevron */}
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`text-sm font-semibold tabular-nums ${isInflow ? "text-emerald-700" : "text-slate-800"}`}>
+              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-emerald-700" : "text-slate-800"}`}>
                 {formatAmount(tx.amount)}
               </span>
               <ChevronRight className="h-4 w-4 text-slate-300" />

@@ -91,8 +91,8 @@ input[type="number"] {
        TYPOGRAPHY SYSTEM - Distinctive Fonts, Breaking Anti-Patterns
        ======================================================================== */
     --font-family-display: "Manrope", "ui-sans-serif", "system-ui", "sans-serif";
-    --font-family-sans: "Source Sans Pro", "ui-sans-serif", "system-ui", "sans-serif";
-    --font-family-financial: "DM Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace";
+    --font-family-sans: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
+    --font-family-financial: "JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace";
 
     /* Typography Scale - Data-Dense, Professional */
     --text-xs: 0.6875rem;     /* 11px - labels, badges */
@@ -317,7 +317,7 @@ input[type="number"] {
     letter-spacing: var(--tracking-tight);
   }
 
-  /* Title — Source Sans Pro (body font), for card titles and list items */
+  /* Title — Inter (body font), for card titles and list items */
   .typography-title-large {
     font-family: var(--font-family-sans);
     font-size: var(--text-lg);
@@ -340,7 +340,7 @@ input[type="number"] {
     letter-spacing: var(--tracking-normal);
   }
 
-  /* Body — Source Sans Pro, for content text */
+  /* Body — Inter, for content text */
   .typography-body-large {
     font-family: var(--font-family-sans);
     font-size: var(--text-base);
@@ -363,7 +363,7 @@ input[type="number"] {
     letter-spacing: var(--tracking-normal);
   }
 
-  /* Label — Source Sans Pro, for badges, tags, and metadata */
+  /* Label — Inter, for badges, tags, and metadata */
   .typography-label-large {
     font-family: var(--font-family-sans);
     font-size: var(--text-sm);

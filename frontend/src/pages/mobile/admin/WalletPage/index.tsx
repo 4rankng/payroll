@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, TrendingDown, TrendingUp, RefreshCw, Wallet as WalletIcon, Loader2 } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -16,7 +16,18 @@ import { toast } from 'sonner';
 const BALANCE_QUERY_KEY = ['wallet', 'balance'] as const;
 
 function formatVND(value: number): string {
-  return new Intl.NumberFormat('vi-VN').format(value) + ' đ';
+  return new Intl.NumberFormat('vi-VN').format(value) + '\u00a0đ';
+}
+
+function BalanceFigure({ value }: { value: number | undefined }) {
+  if (value == null) return <span>—</span>;
+  const formatted = new Intl.NumberFormat('vi-VN').format(value);
+  return (
+    <>
+      {formatted}
+      <span className="text-2xl font-semibold text-slate-400 ml-1">đ</span>
+    </>
+  );
 }
 
 export default function WalletPageMobile() {
@@ -77,7 +88,7 @@ export default function WalletPageMobile() {
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <WalletIcon className="h-5 w-5 text-slate-400" />
-            <h1 className="text-base font-semibold text-slate-200">Ví điện tử</h1>
+            <h1 className="text-[17px] font-semibold text-slate-100 tracking-tight">Ví điện tử</h1>
           </div>
           <button
             type="button"
@@ -90,32 +101,11 @@ export default function WalletPageMobile() {
           </button>
         </div>
 
-        <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">SỐ DƯ KHẢ DỤNG</p>
-        <p className="text-3xl font-bold text-white tabular-nums leading-tight mb-1">
-          {balance ? formatVND(balance.available) : '—'}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-2">Số dư khả dụng</p>
+        <p className="text-[34px] font-bold text-white tabular-nums leading-none mb-2 tracking-tight">
+          <BalanceFigure value={balance?.available} />
         </p>
-        {asOf && <p className="text-[11px] text-slate-600 mb-5">Cập nhật: {asOf}</p>}
-
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="rounded-2xl bg-white/5 border border-white/[0.06] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Đang nhận</p>
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-            </div>
-            <p className="text-lg font-bold text-emerald-400 tabular-nums">
-              {balance ? formatVND(balance.pending_in) : '—'}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white/5 border border-white/[0.06] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Đang xử lý</p>
-              <TrendingDown className="h-3.5 w-3.5 text-amber-400" />
-            </div>
-            <p className="text-lg font-bold text-amber-400 tabular-nums">
-              {balance ? formatVND(balance.pending_out) : '—'}
-            </p>
-          </div>
-        </div>
+        {asOf && <p className="text-xs text-slate-400 mb-5 tabular-nums tracking-wide">Cập nhật {asOf}</p>}
 
         <button
           type="button"

@@ -29,8 +29,8 @@ export default {
 			fontFamily: {
 				// INDUSTRIAL LUXURY Typography - Breaking Anti-Patterns
 				display: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-				sans: ['Source Sans Pro', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-				financial: ['DM Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+				sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				financial: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
