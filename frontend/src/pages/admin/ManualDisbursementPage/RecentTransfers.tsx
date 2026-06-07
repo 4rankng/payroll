@@ -92,8 +92,8 @@ export function RecentTransfers({ limit = 20 }: Props) {
                   )}
                 </span>
                 {isRealErrorCode(r.error_code) && (
-                  <span className="text-xs text-destructive font-mono truncate" title={r.error_message ?? undefined}>
-                    {r.error_code}
+                  <span className="text-xs text-destructive truncate" title={r.error_message ?? undefined}>
+                    {r.error_message || "Thất bại"}
                   </span>
                 )}
               </div>

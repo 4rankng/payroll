@@ -663,9 +663,17 @@ func (s *WalletPaymentService) ipnPatch(r IPNResult, _ domaintx.Trigger) domaint
 // when one is wired and a known code is in play; falls back to whatever
 // raw provider message we got. The raw English message is kept for
 // diagnostics in logs but not surfaced to employees.
+//
+// Provider translators return a generic "Lỗi không xác định (mã: X)"
+// fallback for codes outside their map (e.g. preflight validation codes
+// like "amount_below_min"). In those cases the raw message is already
+// Vietnamese and preferable to the generic fallback.
 func (s *WalletPaymentService) translateMessage(code, raw string) string {
 	if s.errorTranslator != nil {
 		if vi := s.errorTranslator.TranslateError(code); vi != "" && vi != code {
+			if strings.HasPrefix(vi, "Lỗi không xác định") {
+				return raw
+			}
 			return vi
 		}
 	}

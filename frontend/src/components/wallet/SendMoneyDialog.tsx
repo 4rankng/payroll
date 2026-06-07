@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDisbursementFeeSchedules } from '@/hooks/api/useDisbursementFeeSchedules';
 import {
   useInitiateManualDisbursement,
@@ -28,6 +29,8 @@ interface Props {
 }
 
 export function SendMoneyDialog({ open, onOpenChange }: Props) {
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<ManualDisbursementFormState>(initialFormState);
   const [verified, setVerified] = useState<VerifiedAccount | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -74,6 +77,8 @@ export function SendMoneyDialog({ open, onOpenChange }: Props) {
     setForm(initialFormState);
     setVerified(null);
     setActiveTxnId(null);
+    queryClient.removeQueries({ queryKey: ['manual-disbursement', 'detail'] });
+    scrollRef.current?.scrollTo(0, 0);
   };
 
   const inProgressRow = statusQuery.data ?? null;
@@ -85,6 +90,7 @@ export function SendMoneyDialog({ open, onOpenChange }: Props) {
           <DialogHeader>
             <DialogTitle>Chuyển tiền</DialogTitle>
           </DialogHeader>
+          <div ref={scrollRef} className="overflow-y-auto">
           {inProgressRow ? (
             <TransactionStatusPanel row={inProgressRow} onReset={reset} />
           ) : (
@@ -99,6 +105,7 @@ export function SendMoneyDialog({ open, onOpenChange }: Props) {
               disabled={initiateMutation.isPending}
             />
           )}
+          </div>
         </DialogContent>
       </Dialog>
 

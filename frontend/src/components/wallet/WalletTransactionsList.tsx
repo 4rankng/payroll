@@ -362,12 +362,11 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
       )}
       {payment.error_code && isRealErrorCode(payment.error_code) && (
         <DetailRow
-          label="Mã lỗi"
+          label="Lỗi"
           value={
             <span className="inline-flex items-center gap-1.5 text-rose-600">
               <Ban className="h-3.5 w-3.5 shrink-0" />
-              {payment.error_code}
-              {payment.error_message ? ` — ${payment.error_message}` : ""}
+              {payment.error_message || "Giao dịch thất bại"}
             </span>
           }
         />
