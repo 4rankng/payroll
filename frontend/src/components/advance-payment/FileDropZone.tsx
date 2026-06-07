@@ -96,7 +96,7 @@ export const FileDropZone = ({
       <input ref={inputRef} id={inputId} type="file" accept={accept} onChange={handleInputChange} className="hidden" />
       <div className="flex flex-col items-center gap-2">
         <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
-          <UploadCloud className="w-4.5 h-4.5 text-muted-foreground" />
+          <UploadCloud className="w-[18px] h-[18px] text-muted-foreground" />
         </div>
         <div className="space-y-0.5">
           <p className="text-sm font-medium">

@@ -37,7 +37,7 @@ export function StatusPill({ label, value, sub, status, icon: Icon, className }:
       className,
     )}>
       <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", iconBg[status])}>
-        <Icon className="h-4.5 w-4.5" strokeWidth={2} />
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1.5">
