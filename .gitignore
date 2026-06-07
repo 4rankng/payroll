@@ -69,6 +69,8 @@ graphify-out/
 .opencode/
 .superpowers/
 .agents/
+.omc/
+screenshot.mjs
 
 # === Database volumes ===
 mysql_data/
