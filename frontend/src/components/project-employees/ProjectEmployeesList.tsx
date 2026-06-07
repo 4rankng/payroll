@@ -1,6 +1,4 @@
-import { format } from "date-fns";
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,18 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Unlink, User, Calendar } from "lucide-react";
+import { Unlink, User, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Project } from "@/types/api/project.types";
-import { ProjectEmployeeAssignment } from "@/types/api/project-employee.types";
-import { DataTable } from "@/components/ui/data-table";
+import { ProjectEmployeeAssignment, ProjectEmployeeListParams } from "@/types/api/project-employee.types";
+import { FilterPill } from "@/components/shared/FilterPill";
 import { useProjectEmployeeManagement } from "@/hooks/business/useProjectEmployeeManagement";
-import { PaymentScheduleToggle } from "./PaymentScheduleToggle";
 import { CheckInToggle } from "./CheckInToggle";
-
-interface AssignmentMeta {
-  canRemove: boolean;
-  canCancel: boolean;
-}
 
 interface ProjectEmployeesListProps {
   project: Project;
@@ -45,23 +37,33 @@ export function ProjectEmployeesList({
     useState<ProjectEmployeeAssignment | null>(null);
   const [lastDate, setLastDate] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(20);
+  const [checkInFilter, setCheckInFilter] = useState<string>("all");
+
+  // Build API params — all pagination & filtering handled by backend
+  const apiParams = useMemo<ProjectEmployeeListParams>(() => {
+    const params: ProjectEmployeeListParams = { page: currentPage, pageSize };
+    if (checkInFilter !== "all") {
+      params.check_in_enabled = checkInFilter === "on";
+    }
+    return params;
+  }, [currentPage, pageSize, checkInFilter]);
 
   // Business logic
   const {
     employees,
     totalCount: apiTotalCount,
+    totalPages: apiTotalPages,
     isLoading,
     isRemoving,
     error,
     errorMessage,
     removeEmployee,
-    canAddEmployees,
     isEmpty,
-    sorting,
-    setSorting,
+    getAssignmentMeta,
   } = useProjectEmployeeManagement({
     project,
+    params: apiParams,
     onEmployeeRemoved,
   });
 
@@ -108,128 +110,9 @@ export function ProjectEmployeesList({
     setLastDate("");
   }, []);
 
-  // Handle row click
-  const handleRowClick = useCallback(
-    (employee: ProjectEmployeeAssignment & { meta: AssignmentMeta }) => {
-      const { meta } = employee;
-
-      // Only trigger removal dialog for employees that can be removed
-      if (meta.canRemove) {
-        openRemoveDialog(employee);
-      } else if (meta.canCancel) {
-        // For employees that can be cancelled (upcoming assignments), handle immediately
-        handleRemoveEmployee(employee);
-      }
-    },
-    [openRemoveDialog, handleRemoveEmployee],
-  );
-
-  // Memoized columns definition
-  const columns: ColumnDef<
-    ProjectEmployeeAssignment & { meta: AssignmentMeta }
-  >[] = useMemo(
-    () => {
-      const cols: ColumnDef<ProjectEmployeeAssignment & { meta: AssignmentMeta }>[] = [
-      // STT column removed for mobile card simplicity
-      {
-        id: "employee_info",
-        header: "Thông tin nhân viên",
-        enableSorting: true,
-        cell: ({ row }) => (
-          <div className="space-y-1">
-            <div className="font-medium">
-              {row.original.employee_name || row.original.employee_code || "-"}
-            </div>
-            <div className="font-mono typography-body-small text-muted-foreground">
-              CCCD: {row.original.employee_cccd || "-"}
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "employee_code",
-        header: "Mã NV",
-        accessorKey: "employee_code",
-        cell: ({ row }) => (
-          <div className="font-mono typography-body-medium">
-            {row.original.employee_code || "-"}
-          </div>
-        ),
-      },
-      {
-        id: "dates",
-        header: "Thời gian làm việc",
-        enableSorting: true,
-        cell: ({ row }) => (
-          <div className="space-y-1">
-            <div className="typography-body-medium">
-              <span className="text-muted-foreground">BĐ:</span>{" "}
-              {row.original.start_date
-                ? format(new Date(row.original.start_date), 'dd/MM/yyyy')
-                : "-"}
-            </div>
-            <div className="typography-body-medium">
-              <span className="text-muted-foreground">KT:</span>{" "}
-              {row.original.last_date
-                ? format(new Date(row.original.last_date), 'dd/MM/yyyy')
-                : "-"}
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "position",
-        header: "Vị trí",
-        accessorKey: "position",
-        cell: ({ row }) => (
-          <div className="typography-body-medium">
-            {row.original.position || "-"}
-          </div>
-        ),
-      },
-      {
-        id: "payment_schedule",
-        header: "Chu kỳ thanh toán",
-        enableSorting: true,
-        cell: ({ row }) => (
-          <PaymentScheduleToggle
-            assignment={row.original}
-            disabled={project.status !== "active"}
-          />
-        ),
-      },
-    ];
-
-    if (project.is_flexible) {
-      cols.push({
-        id: "check_in_enabled",
-        header: "Điểm danh",
-        cell: ({ row }) => (
-          <CheckInToggle
-            assignment={row.original}
-            disabled={project.status !== "active"}
-          />
-        ),
-      });
-    }
-
-    return cols;
-  }, [project.status, project.is_flexible]);
-
-  // Pagination logic
-  const totalRecords = apiTotalCount;
-  const totalPages = Math.ceil(totalRecords / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedEmployees = employees.slice(startIndex, endIndex);
-
-  // Pagination handlers
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
-
-  const handlePageSizeChange = useCallback((newPageSize: number) => {
-    setPageSize(newPageSize);
+  // Reset to page 1 when filter changes
+  const handleCheckInFilterChange = useCallback((value: string) => {
+    setCheckInFilter(value);
     setCurrentPage(1);
   }, []);
 
@@ -259,7 +142,6 @@ export function ProjectEmployeesList({
   if (isEmpty) {
     return (
       <div className="h-full flex flex-col">
-        {/* Empty State */}
         <div className="flex-1 flex flex-col items-center justify-center space-y-4">
           <User className="w-12 h-12 text-muted-foreground" />
           <div className="text-center space-y-2">
@@ -275,43 +157,119 @@ export function ProjectEmployeesList({
     );
   }
 
+  const totalPages = apiTotalPages || Math.max(1, Math.ceil(apiTotalCount / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* DataTable */}
+      {/* Filter row */}
+      {project.is_flexible && (
+        <div className="flex items-center gap-2 px-4 pt-2 pb-1">
+          <FilterPill
+            value={checkInFilter}
+            onChange={handleCheckInFilterChange}
+            placeholder="Điểm danh"
+            options={[
+              { value: "on", label: "Bật" },
+              { value: "off", label: "Tắt" },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Employee Card Grid */}
       <div className="flex-1 overflow-auto p-4 pt-2">
-        <DataTable
-          columns={columns}
-          data={paginatedEmployees}
-          sorting={sorting}
-          onSortingChange={setSorting}
-          pagination={{
-            page: currentPage,
-            pageSize: pageSize,
-            totalPages: totalPages,
-            totalRecords: totalRecords,
-          }}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          onRowClick={handleRowClick}
-          getRowClassName={(employee) => {
-            const { meta } = employee;
-            // Add cursor pointer for removable/cancellable employees
-            return meta.canRemove || meta.canCancel
-              ? "cursor-pointer hover:bg-muted/50"
-              : "";
-          }}
-          primaryColumns={[
-            "employee_info",
-            "employee_code",
-            "dates",
-            "position",
-            "payment_schedule",
-          ]}
-          caption="Danh sách nhân viên dự án"
-        />
+        {employees.length === 0 ? (
+          <div className="flex items-center justify-center h-32 text-muted-foreground typography-body-medium">
+            Không tìm thấy nhân viên
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {employees.map((employee) => {
+              return (
+                <div
+                  key={employee.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-card px-3 py-2"
+                >
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate text-sm">
+                      {employee.employee_name || employee.employee_code || "-"}
+                    </div>
+                    <div className="font-mono text-xs text-muted-foreground truncate">
+                      CCCD: {employee.employee_cccd || "-"}
+                    </div>
+                  </div>
+
+                  {/* Toggle */}
+                  {project.is_flexible && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <CheckInToggle
+                        assignment={employee}
+                        disabled={project.status !== "active"}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Remove Employee Dialog with Date Selection */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t border-border/40">
+          <span className="text-xs text-muted-foreground">
+            {startIndex + 1}–{Math.min(startIndex + pageSize, apiTotalCount)}/{apiTotalCount}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let page: number;
+              if (totalPages <= 5) {
+                page = i + 1;
+              } else if (currentPage <= 3) {
+                page = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                page = totalPages - 4 + i;
+              } else {
+                page = currentPage - 2 + i;
+              }
+              return (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? "outline" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7 text-xs"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              );
+            })}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Employee Dialog */}
       <Dialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

@@ -307,6 +307,15 @@ func (r *ProjectEmployeeRepository) applyFilters(query *gorm.DB, filters domain.
 		query = query.Where("payment_schedule = ?", string(*filters.PaymentSchedule))
 	}
 
+	// Filter by check-in enabled
+	if filters.CheckInEnabled != nil {
+		if *filters.CheckInEnabled {
+			query = query.Where("check_in_enabled = 1")
+		} else {
+			query = query.Where("check_in_enabled = 0")
+		}
+	}
+
 	return query
 }
 
@@ -544,6 +553,15 @@ func (r *ProjectEmployeeRepository) getDistinctProjectEmployees(ctx context.Cont
 		subQuery = subQuery.Where("last_date IS NULL OR last_date > ?", today)
 	}
 
+	// Filter by check-in enabled
+	if filters.CheckInEnabled != nil {
+		if *filters.CheckInEnabled {
+			subQuery = subQuery.Where("check_in_enabled = 1")
+		} else {
+			subQuery = subQuery.Where("check_in_enabled = 0")
+		}
+	}
+
 	// Main query joins with the subquery to get only the top-ranked assignment per employee
 	var assignments []*domain.ProjectEmployee
 	query := r.DB.WithContext(ctx).
@@ -602,6 +620,15 @@ func (r *ProjectEmployeeRepository) countDistinctProjectEmployees(ctx context.Co
 	default:
 		// Default: exclude ended assignments (last_date <= today)
 		query = query.Where("last_date IS NULL OR last_date > ?", today)
+	}
+
+	// Filter by check-in enabled
+	if filters.CheckInEnabled != nil {
+		if *filters.CheckInEnabled {
+			query = query.Where("check_in_enabled = 1")
+		} else {
+			query = query.Where("check_in_enabled = 0")
+		}
 	}
 
 	var count int64

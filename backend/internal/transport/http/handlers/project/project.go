@@ -178,7 +178,13 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 				positionCounts := make(map[string]int)
 				var recentEmployees []dto.ProjectRecentEmployee
 
+				// Deduplicate by employee — count position only from latest assignment
+				seenEmployees := make(map[uint]bool)
 				for i, assignment := range assignments {
+					if seenEmployees[assignment.EmployeeID] {
+						continue
+					}
+					seenEmployees[assignment.EmployeeID] = true
 					positionCounts[assignment.Position]++
 
 					if i < 5 {

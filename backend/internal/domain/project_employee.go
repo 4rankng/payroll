@@ -92,6 +92,7 @@ type ProjectEmployeeFilters struct {
 	ActiveOnly      bool // Show only active assignments (LastDate is null)
 	Status          string
 	PaymentSchedule *PaymentSchedule // Filter by payment schedule (weekly/monthly)
+	CheckInEnabled  *bool            // Filter by check-in enabled status
 	Limit           int
 	Offset          int
 	SortBy          string

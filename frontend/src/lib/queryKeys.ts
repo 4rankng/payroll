@@ -23,6 +23,7 @@ export function projectEmployeesKey(projectId: number, params: ProjectEmployeeLi
     page: params.page ?? 1,
     pageSize: params.pageSize ?? 20,
     status: params.status ?? undefined,
+    check_in_enabled: params.check_in_enabled ?? undefined,
     sortBy: params.sortBy ?? undefined,
     sortOrder: params.sortOrder ?? undefined,
   };

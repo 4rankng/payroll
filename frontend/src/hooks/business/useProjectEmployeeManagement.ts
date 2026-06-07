@@ -155,6 +155,8 @@ export function useProjectEmployeeManagement({
     employees: processedEmployees,
     totalCount:
       employeesData?.pagination?.totalRecords ?? processedEmployees.length,
+    totalPages:
+      employeesData?.pagination?.totalPages ?? 0,
 
     // Sorting
     sorting,
