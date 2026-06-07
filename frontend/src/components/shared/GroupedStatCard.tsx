@@ -58,7 +58,7 @@ export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, 
     >
       <div className="flex items-center gap-1.5 px-0.5">
         {Icon && <Icon className="h-3 w-3 text-primary shrink-0" />}
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="font-display text-[13px] font-bold tracking-tight text-muted-foreground">
           {title}
         </span>
       </div>
@@ -97,7 +97,7 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
       )}>
         {formatted}{stat.unit}
       </span>
-      <span className="text-xs text-muted-foreground leading-none text-center truncate w-full px-1 mt-0.5">
+      <span className="text-[11px] font-medium text-muted-foreground leading-none text-center truncate w-full px-1 mt-0.5">
         {stat.label}
       </span>
     </div>
