@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,8 @@ export default function CreateManualDisbursementDialog({
   onOpenChange,
   onSuccess,
 }: CreateManualDisbursementDialogProps) {
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<ManualDisbursementFormState>(initialFormState);
   const [verified, setVerified] = useState<VerifiedAccount | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -80,6 +83,8 @@ export default function CreateManualDisbursementDialog({
     setForm(initialFormState);
     setVerified(null);
     setActiveTxnId(null);
+    queryClient.removeQueries({ queryKey: ["manual-disbursement", "detail"] });
+    scrollRef.current?.scrollTo(0, 0);
   };
 
   // Reset form when dialog closes
@@ -113,7 +118,7 @@ export default function CreateManualDisbursementDialog({
             description="Khởi tạo giao dịch chuyển tiền thủ công"
           />
 
-          <div className="overflow-y-auto px-5 py-4 max-h-[calc(100vh-10rem)]">
+          <div ref={scrollRef} className="overflow-y-auto px-5 py-4 max-h-[calc(100vh-10rem)]">
             {inProgressRow ? (
               <TransactionStatusPanel row={inProgressRow} onReset={reset} />
             ) : (

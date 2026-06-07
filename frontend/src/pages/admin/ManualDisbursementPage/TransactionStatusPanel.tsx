@@ -89,12 +89,9 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
         )}
       </div>
 
-      {isRealErrorCode(row.error_code) ? (
+      {isRealErrorCode(row.error_code) && row.error_message ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <p className="text-xs">
-            Mã lỗi: <span className="font-mono">{row.error_code}</span>
-          </p>
-          {row.error_message && <p className="mt-1">{row.error_message}</p>}
+          <p>{row.error_message}</p>
         </div>
       ) : null}
 
