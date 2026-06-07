@@ -25,7 +25,7 @@ func NewAdvancePaymentRepository(db *Database) domain.AdvancePaymentRepository {
 }
 
 func (r *AdvancePaymentRepository) Create(ctx context.Context, ap *domain.AdvancePayment) error {
-	return r.DB.WithContext(ctx).Create(ap).Error
+	return r.getDB(ctx).Create(ap).Error
 }
 
 func (r *AdvancePaymentRepository) Upsert(ctx context.Context, ap *domain.AdvancePayment) error {
@@ -55,7 +55,7 @@ func (r *AdvancePaymentRepository) GetByID(ctx context.Context, id uint64) (*dom
 
 func (r *AdvancePaymentRepository) GetByEmployeeAndMonth(ctx context.Context, employeeID uint64, forMonth string) ([]*domain.AdvancePayment, error) {
 	var aps []*domain.AdvancePayment
-	err := r.DB.WithContext(ctx).
+	err := r.getDB(ctx).
 		Where("employee_id = ? AND for_month = ?", employeeID, forMonth).
 		Preload("Project").
 		Find(&aps).Error

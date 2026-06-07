@@ -6,7 +6,9 @@ import (
 
 	"api-server/internal/domain"
 	"api-server/internal/pkg/clock"
+
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type attendanceRepository struct {
@@ -38,6 +40,7 @@ func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.At
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
 	err := r.getDB(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("employee_id = ? AND date = ?", employeeID, date).
 		First(&att).Error
 

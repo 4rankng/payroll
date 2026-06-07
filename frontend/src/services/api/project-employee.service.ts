@@ -1,6 +1,7 @@
 import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import type {
+  ProjectEmployeeAssignment,
   ProjectEmployeeListResponse,
   ProjectEmployeeListParams,
   EmployeeProjectListResponse,
@@ -33,10 +34,15 @@ export class ProjectEmployeeService {
     params: ProjectEmployeeListParams = {}
   ): Promise<ProjectEmployeeListResponse> {
     const queryString = buildQueryString(params);
-    const response = await apiClient.get<ProjectEmployeeListResponse>(
+    const response = await apiClient.get<ProjectEmployeeAssignment[]>(
       `/projects/${projectId}/employees${queryString}`
     );
-    return response.data!;
+    return {
+      status: "success",
+      data: response.data ?? [],
+      pagination: response.pagination ?? { page: 1, pageSize: 50, totalPages: 0, totalRecords: 0 },
+      message: response.message ?? "",
+    };
   }
 
   /**
@@ -85,10 +91,14 @@ export class ProjectEmployeeService {
     params: EmployeeProjectListParams = {}
   ): Promise<EmployeeProjectListResponse> {
     const queryString = buildQueryString(params);
-    const response = await apiClient.get<EmployeeProjectListResponse>(
+    const response = await apiClient.get<ProjectEmployeeAssignment[]>(
       `/employees/${employeeId}/projects${queryString}`
     );
-    return response.data!;
+    return {
+      status: "success",
+      data: response.data ?? [],
+      message: response.message ?? "",
+    };
   }
 
   /**

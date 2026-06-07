@@ -99,12 +99,19 @@ function ProjectDetailsSheet({
     return project.status !== 'completed' && !hasApprovedTimesheets;
   }, [project, hasApprovedTimesheets]);
 
-  // Get employee stats from backend data (already calculated by API)
-  const activeEmployeesCount = project?.employee_assignments?.total_employees || 0;
+  // Track employee count from the list API's pagination response (accurate total)
+  const [listEmployeeCount, setListEmployeeCount] = useState(0);
+
+  // Fallback to backend data for positions until list loads
   const activePositions = useMemo(
     () => project?.employee_assignments?.positions || [],
     [project?.employee_assignments?.positions]
   );
+
+  // Use list count when available (from pagination totalRecords), fallback to project data
+  const activeEmployeesCount = listEmployeeCount > 0
+    ? listEmployeeCount
+    : (project?.employee_assignments?.total_employees || 0);
 
   // Memoize stats configuration to prevent recreating on every render
   const statsConfig = useMemo(() => [
@@ -340,6 +347,7 @@ function ProjectDetailsSheet({
               project={project}
               onEmployeeRemoved={() => {}}
               onAddEmployees={() => setIsAddEmployeeOpen(true)}
+              onTotalCountChange={setListEmployeeCount}
             />
           </div>
 
