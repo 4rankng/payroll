@@ -518,7 +518,7 @@ func (s *LoanService) CreateTransactionsForDueSchedules(ctx context.Context, asO
 
 	if len(notifications) > 0 && s.notification != nil {
 		for _, payload := range notifications {
-			title := fmt.Sprintf("%s Khoản vay %s đến hạn trả", domain.NotifyTypeImportant, payload.loanCode)
+			title := fmt.Sprintf("Khoản vay %s đến hạn trả", payload.loanCode)
 			message := fmt.Sprintf(
 				"Kỳ #%d của khoản vay %s đến hạn ngày %s với số tiền %s. Giao dịch #%d đã được tạo và chờ thanh toán.",
 				payload.period,

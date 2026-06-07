@@ -20,7 +20,7 @@ func TestNotificationTypes(t *testing.T) {
 }
 
 func TestNotificationPriority(t *testing.T) {
-	assert.Equal(t, "⚠️ ", NotifyTypeImportant)
+	// Emoji prefixes removed — titles are plain text, styling is frontend-driven.
 }
 
 func TestNotificationChannels(t *testing.T) {

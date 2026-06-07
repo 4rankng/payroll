@@ -545,7 +545,7 @@ type notificationMessage struct {
 
 func completedMessage(row *domaintx.WalletPayment) notificationMessage {
 	return notificationMessage{
-		Title: fmt.Sprintf("%s Tạm ứng đã được chuyển", domain.NotifyTypeImportant),
+		Title: "Tạm ứng đã được chuyển",
 		Body:  fmt.Sprintf("Tạm ứng %s đã được chuyển vào tài khoản của bạn.", utils.FormatVND(row.RequestedAmount)),
 	}
 }
@@ -579,14 +579,14 @@ func failedMessage(row *domaintx.WalletPayment) notificationMessage {
 		body = fmt.Sprintf("Tạm ứng %s thất bại. Lý do: %s.", utils.FormatVND(row.RequestedAmount), reason)
 	}
 	return notificationMessage{
-		Title: fmt.Sprintf("%s Chuyển tạm ứng thất bại", domain.NotifyTypeImportant),
+		Title: "Chuyển tạm ứng thất bại",
 		Body:  body,
 	}
 }
 
 func initiatorCompletedMessage(row *domaintx.WalletPayment) notificationMessage {
 	return notificationMessage{
-		Title: fmt.Sprintf("%s Chuyển tiền thành công", domain.NotifyTypeImportant),
+		Title: "Chuyển tiền thành công",
 		Body:  fmt.Sprintf("Chuyển tiền %s đến %s (%s) đã thành công.", utils.FormatVND(row.RequestedAmount), row.RecipientName, row.RecipientAccountNo),
 	}
 }
@@ -598,7 +598,7 @@ func initiatorFailedMessage(row *domaintx.WalletPayment) notificationMessage {
 		body = fmt.Sprintf("%s Lý do: %s.", body, reason)
 	}
 	return notificationMessage{
-		Title: fmt.Sprintf("%s Chuyển tiền thất bại", domain.NotifyTypeImportant),
+		Title: "Chuyển tiền thất bại",
 		Body:  body,
 	}
 }
