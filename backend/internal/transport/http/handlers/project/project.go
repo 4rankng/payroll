@@ -154,58 +154,58 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 		UpdatedAt: project.UpdatedAt,
 	}
 
-	// Get employee assignments if service is available
-	if h.projectEmployeeService != nil {
-		filters := domain.ProjectEmployeeFilters{
-			ProjectID: &project.ID,
-			Limit:     100, // Get all assignments for counting
-			Offset:    0,
-			SortBy:    "created_at",
-			SortOrder: "desc",
-		}
+		// Get employee assignments if service is available
+		if h.projectEmployeeService != nil {
+			activeFilters := domain.ProjectEmployeeFilters{
+				ProjectID:  &project.ID,
+				ActiveOnly: true,
+			}
 
-		if assignments, err := h.projectEmployeeService.ListAssignments(ctx, filters); err == nil {
-			activeEmployees := 0
-			positionCounts := make(map[string]int)
-			var recentEmployees []dto.ProjectRecentEmployee
+			// Use CountAssignments for accurate total (no Limit cap)
+			activeEmployees, countErr := h.projectEmployeeService.CountAssignments(ctx, activeFilters)
 
-			for i, assignment := range assignments {
-				// Only include currently working employees (active and no end date)
-				isCurrentlyWorking := assignment.LastDate == nil // Active assignment means LastDate is nil
+			// Fetch assignments for position counts and recent employees
+			listFilters := domain.ProjectEmployeeFilters{
+				ProjectID:  &project.ID,
+				ActiveOnly: true,
+				Limit:      1000,
+				Offset:     0,
+				SortBy:     "created_at",
+				SortOrder:  "desc",
+			}
 
-				if isCurrentlyWorking {
-					activeEmployees++
-					// Only count positions for currently working employees
+			if assignments, err := h.projectEmployeeService.ListAssignments(ctx, listFilters); err == nil && countErr == nil {
+				positionCounts := make(map[string]int)
+				var recentEmployees []dto.ProjectRecentEmployee
+
+				for i, assignment := range assignments {
 					positionCounts[assignment.Position]++
+
+					if i < 5 {
+						recentEmployees = append(recentEmployees, dto.ProjectRecentEmployee{
+							EmployeeID: assignment.EmployeeID,
+							FullName:   assignment.EmployeeName,
+							Position:   assignment.Position,
+							StartDate:  assignment.StartDate.Format("2006-01-02"),
+						})
+					}
 				}
 
-				// Add to recent employees list (first 5, but prioritize currently working ones)
-				if i < 5 {
-					recentEmployees = append(recentEmployees, dto.ProjectRecentEmployee{
-						EmployeeID: assignment.EmployeeID,
-						FullName:   assignment.EmployeeName,
-						Position:   assignment.Position,
-						StartDate:  assignment.StartDate.Format("2006-01-02"),
+				var positions []dto.ProjectPositionCount
+				for position, count := range positionCounts {
+					positions = append(positions, dto.ProjectPositionCount{
+						Position: position,
+						Count:    count,
 					})
 				}
-			}
 
-			// Convert position counts to slice
-			var positions []dto.ProjectPositionCount
-			for position, count := range positionCounts {
-				positions = append(positions, dto.ProjectPositionCount{
-					Position: position,
-					Count:    count,
-				})
-			}
-
-			response.EmployeeAssignments = &dto.ProjectEmployeeAssignments{
-				TotalEmployees:  activeEmployees, // Now only shows currently working employees
-				Positions:       positions,
-				RecentEmployees: recentEmployees,
+				response.EmployeeAssignments = &dto.ProjectEmployeeAssignments{
+					TotalEmployees:  int(activeEmployees),
+					Positions:       positions,
+					RecentEmployees: recentEmployees,
+				}
 			}
 		}
-	}
 
 	// Get current payrate if service is available
 	if h.payrateService != nil {

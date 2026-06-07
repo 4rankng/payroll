@@ -213,6 +213,9 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		if err != nil {
 			return err
 		}
+		if !assignment.CheckInEnabled {
+			return domain.NewValidationError("Chấm công đã bị vô hiệu hóa. Vui lòng liên hệ quản lý.")
+		}
 
 		payrate, err := s.payrateRepo.GetActiveByProjectAndDate(txCtx, attendance.ProjectID, attendance.Date)
 		if err != nil {
