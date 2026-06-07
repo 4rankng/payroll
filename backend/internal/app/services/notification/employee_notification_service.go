@@ -65,7 +65,7 @@ func (s *EmployeeNotificationService) NotifyTimesheetPaid(ctx context.Context, t
 			continue
 		}
 
-		title := fmt.Sprintf("%s Tiền công đã được thanh toán", domain.NotifyTypeImportant)
+		title := "Tiền công đã được thanh toán"
 		message := fmt.Sprintf("Bạn đã nhận được %s tiền công.", utils.FormatVND(e.amount))
 
 		if err := s.notificationService.CreateNotification(ctx, *e.userID, domain.NotificationTypeTimesheetPaid, title, message); err != nil {
@@ -92,10 +92,10 @@ func (s *EmployeeNotificationService) NotifyAdvancePaymentStatusChanged(ctx cont
 
 	switch status {
 	case domain.AdvancePaymentStatusCompleted:
-		title = fmt.Sprintf("%s Tiền ứng lương đã được chuyển", domain.NotifyTypeImportant)
+		title = "Tiền ứng lương đã được chuyển"
 		message = fmt.Sprintf("Số tiền ứng %s đã được chuyển vào tài khoản của bạn.", amountStr)
 	case domain.AdvancePaymentStatusFailed:
-		title = fmt.Sprintf("%s Chuyển tiền ứng lương thất bại", domain.NotifyTypeImportant)
+		title = "Chuyển tiền ứng lương thất bại"
 		message = fmt.Sprintf("Việc chuyển số tiền ứng %s đã thất bại. Vui lòng liên hệ quản lý.", amountStr)
 	case domain.AdvancePaymentStatusCancelled:
 		title = "Yêu cầu ứng lương đã bị hủy"

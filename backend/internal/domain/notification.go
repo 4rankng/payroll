@@ -25,10 +25,8 @@ const (
 	NotificationTypeCustom                       NotificationType = "custom"
 )
 
-// NotificationPriority represents notification priority prefixes
-const (
-	NotifyTypeImportant = "⚠️ "
-)
+// Notification titles use plain text — no emoji prefixes.
+// Visual differentiation (accent colors, icons) is handled by the frontend.
 
 // NotificationChannel represents delivery channels (extensible to email)
 type NotificationChannel string

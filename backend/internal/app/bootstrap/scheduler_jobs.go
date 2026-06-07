@@ -97,7 +97,7 @@ func registerSchedulerJobs(
 			Enabled: true,
 			Handler: func() {
 				ctx := context.Background()
-				title := renderTemplate(domain.NotifyTypeImportant + "Gửi sao kê cho đối tác")
+				title := renderTemplate("Gửi sao kê cho đối tác")
 				message := renderTemplate("Nhắc nhở gửi sao kê ngân hàng cho công ty thanh toán vào ngày {day}/{month}/{year}")
 				if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
 					logger.Error("Failed to send notification", "name", name, "error", err)
@@ -165,7 +165,7 @@ func registerSchedulerJobs(
 
 			// Construct message
 			var sb strings.Builder
-			fmt.Fprintf(&sb, "%s High Error Rate Alert\n\n", domain.NotifyTypeImportant)
+			fmt.Fprintf(&sb, "High Error Rate Alert\n\n")
 			sb.WriteString("The following endpoints have error rate > 10% in the last 24 hours:\n\n")
 
 			for _, ep := range endpoints {
@@ -174,7 +174,7 @@ func registerSchedulerJobs(
 			}
 
 			message := sb.String()
-			title := fmt.Sprintf("%s High Error Rate Alert", domain.NotifyTypeImportant)
+			title := "High Error Rate Alert"
 
 			sendAdminNotification(ctx, title, message)
 			logger.Info("High error rate notification sent to admin")
@@ -201,7 +201,7 @@ func registerSchedulerJobs(
 				return
 			}
 
-			title := fmt.Sprintf("%s Nhắc nhở ứng lương", domain.NotifyTypeImportant)
+			title := "Nhắc nhở ứng lương"
 			message := fmt.Sprintf("Có %d yêu cầu ứng lương đang chờ từ %d nhân viên (tháng %s), tổng số tiền: %s đ",
 				requestCount, employeeCount, currentMonth, utils.FormatNumber(int64(totalAmount)))
 
@@ -285,7 +285,7 @@ func registerSchedulerJobs(
 				return
 			}
 
-			title := fmt.Sprintf("%s Nhắc nhở gửi sao kê ứng lương", domain.NotifyTypeImportant)
+			title := "Nhắc nhở gửi sao kê ứng lương"
 			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, projectCount)
 
 			sendAdminNotification(ctx, title, message)
