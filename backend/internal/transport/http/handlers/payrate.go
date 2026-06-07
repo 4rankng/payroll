@@ -89,6 +89,12 @@ func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 		return
 	}
 
+	// Auto-resolve overlapping shifts (wider shift wins)
+	resolved, err := payrate.Payrate.ResolveFlexibleOverlaps()
+	if err == nil {
+		payrate.Payrate = resolved
+	}
+
 	// Parse from date string to time.Time for database
 	fromDate, err := time.Parse("2006-01-02", req.EffectiveFrom)
 	if err != nil {
@@ -359,6 +365,12 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 			"error", err)
 		response.BadRequest(c, err.Error())
 		return
+	}
+
+	// Auto-resolve overlapping shifts (wider shift wins)
+	resolved, resolveErr := updatedPayrate.Payrate.ResolveFlexibleOverlaps()
+	if resolveErr == nil {
+		updatedPayrate.Payrate = resolved
 	}
 
 	logger.Info("Payrate validation passed successfully",

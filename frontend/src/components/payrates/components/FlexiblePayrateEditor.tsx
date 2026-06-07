@@ -122,7 +122,6 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
     setShifts(p.shifts);
     setRateMap(p.rateMap);
   }, [rates]);
-  const [bulkVal, setBulkVal]      = useState('');
   const [customShift, setCustomShift] = useState('');
   const [shiftErr, setShiftErr]    = useState<{fix:string}|true|null>(null);
   const [shiftHighlight, setShiftHighlight] = useState(false);
@@ -245,22 +244,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
   };
   const getRate = useCallback((pos: string, s: Shift) => rateMap[pos]?.[shiftKey(s.start,s.end)] ?? 0, [rateMap]);
 
-  /* ── quick fill ── */
-  const fillEmpty = () => {
-    const n = parseInt(bulkVal.replace(/\D/g,''),10);
-    if (!n) return;
-    const next = { ...rateMap };
-    positions.forEach(pos => {
-      next[pos] = { ...next[pos] };
-      shifts.forEach(s => {
-        const k = shiftKey(s.start,s.end);
-        if (!next[pos][k]) next[pos][k] = n;
-      });
-    });
-    setRateMap(next);
-    emit(positions, shifts, next);
-  };
-  const clearAll = () => { setRateMap({}); emit(positions, shifts, {}); };
+  /* ── row copy ── */
   const copyRow = (pos: string) => {
     const first = shifts.map(s=>getRate(pos,s)).find(v=>v>0);
     if (!first) return;
@@ -299,41 +283,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
       <div className="fpe flex flex-col gap-4">
 
         {/* ── Salary table card ── */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden">
-
-          {/* card header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
-            <span className="text-[11px] font-bold tracking-[.11em] text-muted-foreground uppercase">Bảng mức lương</span>
-            {total > 0 && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-28 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-300"
-                    style={{ width:`${pct}%`, background: pct===100 ? '#059669' : '#4f46e5' }} />
-                </div>
-                <span className="fpe-mono text-xs font-semibold text-muted-foreground">{filled}/{total}</span>
-              </div>
-            )}
-          </div>
-
-          {/* quick-fill toolbar */}
-          {showTable && !readOnly && (
-            <div className="flex items-center gap-2.5 flex-wrap px-6 py-3 border-b border-border/40 bg-muted/20">
-              <span className="text-xs font-semibold text-muted-foreground">Điền nhanh</span>
-              <div className="relative">
-                <input
-                  className="fpe-mono w-32 h-8 pl-3 pr-6 rounded-lg border border-border bg-white text-sm text-right"
-                  inputMode="numeric" placeholder="50.000"
-                  value={bulkVal ? fmtVND(parseInt(bulkVal.replace(/\D/g,'')||'0',10)) : ''}
-                  onChange={e => setBulkVal(e.target.value)}
-                  onKeyDown={e => e.key==='Enter' && fillEmpty()}
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60">₫</span>
-              </div>
-              <button onClick={fillEmpty} className="h-8 px-3 text-xs font-semibold rounded-lg border border-border bg-white hover:bg-muted/50 transition-colors">Điền ô trống</button>
-              <button onClick={clearAll}  className="h-8 px-3 text-xs font-semibold rounded-lg border border-border bg-white text-muted-foreground hover:bg-muted/50 transition-colors">Xoá hết</button>
-              <span className="text-xs text-muted-foreground/60 ml-auto hidden sm:block">Di chuột vào hàng → sao chép mức lương</span>
-            </div>
-          )}
+        <div className="flex flex-col gap-4">
 
           {/* table */}
           {showTable ? (
@@ -597,28 +547,6 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
           )}
         </div>
 
-        {/* ── Footer stats bar ── */}
-        <div className="rounded-2xl border border-border bg-card px-5 py-3.5 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-            <span><b className="fpe-mono font-bold text-foreground">{positions.length}</b> vị trí</span>
-            <span className="text-border">·</span>
-            <span><b className="fpe-mono font-bold text-foreground">{shifts.length}</b> ca làm việc</span>
-            <span className="text-border">·</span>
-            <span><b className="fpe-mono font-bold text-foreground">{filled}</b> / {total} ô có mức lương</span>
-          </div>
-          <div className="ml-auto">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
-              style={{
-                background: valid ? '#f0fdf6' : '#fff7ed',
-                color:      valid ? '#047857' : '#b45309',
-                border:     `1px solid ${valid ? '#bdeccf' : '#fed7aa'}`,
-              }}>
-              {valid
-                ? <><svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg> Sẵn sàng lưu</>
-                : '⚠ Cần thêm mức lương'}
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );

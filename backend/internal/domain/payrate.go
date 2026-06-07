@@ -214,6 +214,115 @@ func shiftsOverlap(a, b payrateShift) bool {
 	return false
 }
 
+// ResolveFlexibleOverlaps detects overlapping shifts in flexible payrate configurations
+// and auto-resolves them: the wider shift wins, the contained (narrower) shift is removed.
+// This is the "new config wins" policy — the user's latest save is authoritative.
+func (p PayrateConfiguration) ResolveFlexibleOverlaps() (PayrateConfiguration, error) {
+	if len(p) == 0 {
+		return p, nil
+	}
+
+	flattened, err := p.Flatten()
+	if err != nil {
+		return p, err
+	}
+
+	type shiftEntry struct {
+		flatKey string
+		start   time.Time
+		end     time.Time
+	}
+
+	positionShifts := make(map[string][]shiftEntry)
+
+	for key := range flattened {
+		parts := strings.Split(key, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		timeRange := parts[len(parts)-1]
+		timeParts := strings.Split(timeRange, "-")
+		if len(timeParts) != 2 {
+			continue
+		}
+
+		layout := "15:04"
+		start, err := time.Parse(layout, timeParts[0])
+		if err != nil {
+			continue
+		}
+		end, err := time.Parse(layout, timeParts[1])
+		if err != nil {
+			continue
+		}
+		if !end.After(start) {
+			end = end.Add(24 * time.Hour)
+		}
+
+		positionAndDay := strings.Join(parts[:len(parts)-1], ".")
+		positionShifts[positionAndDay] = append(positionShifts[positionAndDay], shiftEntry{
+			flatKey: key,
+			start:   start,
+			end:     end,
+		})
+	}
+
+	// Find narrower (contained) shifts to remove
+	removeKeys := make(map[string]bool)
+	for _, shifts := range positionShifts {
+		for i := 0; i < len(shifts); i++ {
+			for j := i + 1; j < len(shifts); j++ {
+				a, b := shifts[i], shifts[j]
+				if shiftsOverlap(payrateShift{Start: a.start, End: a.end}, payrateShift{Start: b.start, End: b.end}) {
+					aDur := a.end.Sub(a.start)
+					bDur := b.end.Sub(b.start)
+					if aDur >= bDur {
+						removeKeys[b.flatKey] = true
+					} else {
+						removeKeys[a.flatKey] = true
+					}
+				}
+			}
+		}
+	}
+
+	if len(removeKeys) == 0 {
+		return p, nil
+	}
+
+	// Remove keys from the nested JSON structure
+	var nested map[string]interface{}
+	if err := json.Unmarshal(p, &nested); err != nil {
+		return p, err
+	}
+
+	for key := range removeKeys {
+		removeNestedKey(nested, strings.Split(key, "."))
+	}
+
+	result, err := json.Marshal(nested)
+	if err != nil {
+		return p, err
+	}
+	return PayrateConfiguration(result), nil
+}
+
+// removeNestedKey deletes a key at the given dot-separated path from a nested map.
+func removeNestedKey(m map[string]interface{}, path []string) {
+	if len(path) == 0 {
+		return
+	}
+	if len(path) == 1 {
+		delete(m, path[0])
+		return
+	}
+	next, ok := m[path[0]].(map[string]interface{})
+	if !ok {
+		return
+	}
+	removeNestedKey(next, path[1:])
+}
+
 // Parse returns the original nested structure for JSON responses
 func (p PayrateConfiguration) Parse() (map[string]interface{}, error) {
 	var parsed map[string]interface{}
