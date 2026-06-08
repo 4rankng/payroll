@@ -37,66 +37,47 @@ function formatVND(value: number): string {
    ─────────────────────────────────────────────── */
 
 function MonthNavigator({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const isAll = value === ALL_VALUE;
-  const currentIdx = monthOptions.findIndex((o) => o.value === value);
+  // If value is "all", default back to current month for navigation
+  const effectiveValue = value === ALL_VALUE ? format(startOfMonth(new Date()), 'yyyy-MM') : value;
+  const monthOnlyOptions = generateMonthOptions(12).map((o) => ({
+    value: o.value,
+    label: `T${o.value.split('-')[1]}/${o.value.split('-')[0]}`,
+  }));
+  const currentIdx = monthOnlyOptions.findIndex((o) => o.value === effectiveValue);
 
   const goPrev = useCallback(() => {
-    if (isAll) return;
-    const idx = Math.max(1, currentIdx - 1); // skip past "Tất cả"
-    onChange(monthOptions[idx].value);
-  }, [currentIdx, isAll, onChange]);
+    const idx = Math.max(0, currentIdx - 1);
+    onChange(monthOnlyOptions[idx].value);
+  }, [currentIdx, onChange]);
 
   const goNext = useCallback(() => {
-    if (isAll) return;
-    const idx = Math.min(monthOptions.length - 1, currentIdx + 1);
-    onChange(monthOptions[idx].value);
-  }, [currentIdx, isAll, onChange]);
+    const idx = Math.min(monthOnlyOptions.length - 1, currentIdx + 1);
+    onChange(monthOnlyOptions[idx].value);
+  }, [currentIdx, onChange]);
 
-  const toggleAll = useCallback(() => {
-    onChange(isAll ? monthOptions[1].value : ALL_VALUE);
-  }, [isAll, onChange]);
-
-  // Format display label: "T06/2026" → "Tháng 6, 2026"
   const displayLabel = useMemo(() => {
-    if (isAll) return 'Tất cả';
-    const opt = monthOptions.find((o) => o.value === value);
-    return opt?.label ?? value;
-  }, [value, isAll]);
+    const opt = monthOnlyOptions.find((o) => o.value === effectiveValue);
+    return opt?.label ?? effectiveValue;
+  }, [effectiveValue]);
 
   return (
     <div className="flex items-center justify-between gap-2">
-      {/* Prev */}
       <button
         onClick={goPrev}
-        disabled={isAll || currentIdx <= 1}
+        disabled={currentIdx <= 0}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
         aria-label="Tháng trước"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
 
-      {/* Center: current month + "Tất cả" chip */}
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm font-semibold text-foreground truncate">
-          {displayLabel}
-        </span>
-        <button
-          onClick={toggleAll}
-          className={cn(
-            'px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors shrink-0',
-            isAll
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground',
-          )}
-        >
-          Tất cả
-        </button>
-      </div>
+      <span className="text-sm font-semibold text-foreground tabular-nums">
+        {displayLabel}
+      </span>
 
-      {/* Next */}
       <button
         onClick={goNext}
-        disabled={isAll || currentIdx >= monthOptions.length - 1}
+        disabled={currentIdx >= monthOnlyOptions.length - 1}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
         aria-label="Tháng sau"
       >
