@@ -6,21 +6,32 @@ import type {
 } from "@/types/api/advance-payment.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, X } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { format, differenceInMinutes } from "date-fns";
 import { vi } from "date-fns/locale";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   getVietnameseAdvancePaymentStatus,
   getAdvancePaymentStatusColor,
 } from "@/utils/advancePaymentHelpers";
 
-export interface CancelContext {
+export interface ActionContext {
   onCancel: (id: number) => void;
+  onRetry?: (id: number) => void;
+  isRetrying?: boolean;
+  retryingId?: number;
+  /** Set of request IDs currently polling for disbursement status */
+  pollingIds?: Set<number>;
 }
 
 export function getAdvancePaymentColumns(
-  ctx: CancelContext,
+  ctx: ActionContext,
 ): ColumnDef<AdvancePaymentListItem>[] {
   return [
     {
@@ -75,22 +86,14 @@ export function getAdvancePaymentColumns(
       size: 120,
       cell: ({ row }) => {
         const status = row.original.status;
-        const isCancellable =
-          status === "PENDING" || status === "APPROVED";
+        const isPolling = ctx.pollingIds?.has(row.original.id);
         return (
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-1.5">
             <Badge variant="outline" className={`${getAdvancePaymentStatusColor(status)} text-xs px-1.5 py-0 h-5 whitespace-nowrap`}>
               {getVietnameseAdvancePaymentStatus(status)}
             </Badge>
-            {isCancellable && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => ctx.onCancel(row.original.id)}
-                className="h-5 px-1.5 text-[10px] shrink-0 text-muted-foreground hover:text-red-600 hover:bg-red-50"
-              >
-                Hủy
-              </Button>
+            {isPolling && (
+              <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
             )}
           </div>
         );
@@ -143,6 +146,53 @@ export function getAdvancePaymentColumns(
           })}
         </div>
       ),
+    },
+    {
+      id: "actions",
+      header: "",
+      size: 40,
+      cell: ({ row }) => {
+        const { status, id } = row.original;
+        const isCancellable = status === "PENDING" || status === "APPROVED";
+        const isRetryable = status === "APPROVED" || status === "FAILED";
+        const hasActions = isCancellable || (isRetryable && ctx.onRetry);
+        if (!hasActions) return null;
+
+        const isRetrying = ctx.isRetrying && ctx.retryingId === id;
+
+        return (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {isRetryable && ctx.onRetry && (
+                  <DropdownMenuItem
+                    onClick={() => ctx.onRetry!(id)}
+                    disabled={isRetrying}
+                    className="text-blue-600 focus:text-blue-700"
+                  >
+                    <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                    {isRetrying ? "Đang gửi..." : "Thử lại"}
+                  </DropdownMenuItem>
+                )}
+                {isCancellable && (
+                  <DropdownMenuItem
+                    onClick={() => ctx.onCancel(id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <X className="mr-2 h-3.5 w-3.5" />
+                    Hủy yêu cầu
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
     },
   ];
 }

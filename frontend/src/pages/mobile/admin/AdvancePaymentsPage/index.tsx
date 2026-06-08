@@ -195,6 +195,10 @@ const AdvancePaymentsPageMobile = () => {
           isCancelling={page.cancelMutation.isPending}
           cancellingId={page.cancelMutation.variables ?? undefined}
           onCancel={(id) => page.cancelMutation.mutate(id)}
+          onRetry={(id) => page.retryMutation.mutate(id)}
+          isRetrying={page.retryMutation.isPending}
+          retryingId={page.retryMutation.variables ?? undefined}
+          pollingIds={page.pollingIds}
           pagination={page.pagination}
           onPageChange={page.handlePageChange}
         />

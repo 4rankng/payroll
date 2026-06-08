@@ -379,6 +379,8 @@ export const API_ENDPOINTS = {
     downloadTemplate: '/advance-payments/template',
     transferHistoryDownload: (id: number) => `/advance-payments/transfer-histories/${id}/download`,
     cancel: (id: number) => `/advance-payments/${id}/cancel`,
+    retryDisbursement: (id: number) => `/advance-payments/${id}/retry-disbursement`,
+    disbursementStatus: (id: number) => `/advance-payments/${id}/disbursement-status`,
     employees: '/advance-payments/employees',
     exportEmployees: '/advance-payments/employees/export',
     availableMonths: '/advance-payments/available-months',

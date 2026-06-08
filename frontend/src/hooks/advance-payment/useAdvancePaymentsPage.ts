@@ -4,6 +4,7 @@ import {
   useAdvancePayments,
   useAdvancePaymentSummary,
   useAdminCancelAdvancePayment,
+  useRetryDisbursement,
   useFlexPayEmployees,
   useExportFlexPayEmployees,
   useAvailableMonths,
@@ -102,6 +103,17 @@ export function useAdvancePaymentsPage(options?: { employeesTabActive?: boolean 
   }, [selectedMonth]);
 
   const cancelMutation = useAdminCancelAdvancePayment();
+  const [pollingIds, setPollingIds] = useState<Set<number>>(new Set());
+  const retryMutation = useRetryDisbursement({
+    onPollingChange: (id, isPolling) => {
+      setPollingIds((prev) => {
+        const next = new Set(prev);
+        if (isPolling) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    },
+  });
   const exportFlexPayMutation = useExportFlexPayEmployees();
 
   const statusCounts = useMemo(() => {
@@ -274,6 +286,8 @@ export function useAdvancePaymentsPage(options?: { employeesTabActive?: boolean 
     providerFees,
     cancelMutation,
     cancelConfirmId,
+    retryMutation,
+    pollingIds,
     exportFlexPayMutation,
     handleCancelRequest,
     confirmCancelRequest,
