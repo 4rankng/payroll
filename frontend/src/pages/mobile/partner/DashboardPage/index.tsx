@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, startOfMonth } from 'date-fns';
 import { Users, UserCheck, UserX, Banknote, Trophy, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,106 +33,75 @@ function formatVND(value: number): string {
 }
 
 /* ───────────────────────────────────────────────
-   MonthSelector — iOS-style snap-scroll strip
+   MonthNavigator — clean ← Month Year → control
    ─────────────────────────────────────────────── */
 
-function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+function MonthNavigator({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const isAll = value === ALL_VALUE;
+  const currentIdx = monthOptions.findIndex((o) => o.value === value);
 
-  const checkScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  }, []);
+  const goPrev = useCallback(() => {
+    if (isAll) return;
+    const idx = Math.max(1, currentIdx - 1); // skip past "Tất cả"
+    onChange(monthOptions[idx].value);
+  }, [currentIdx, isAll, onChange]);
 
-  useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
-    if (el) el.addEventListener('scroll', checkScroll, { passive: true });
-    return () => { el?.removeEventListener('scroll', checkScroll); };
-  }, [checkScroll]);
+  const goNext = useCallback(() => {
+    if (isAll) return;
+    const idx = Math.min(monthOptions.length - 1, currentIdx + 1);
+    onChange(monthOptions[idx].value);
+  }, [currentIdx, isAll, onChange]);
 
-  // Auto-scroll to selected pill
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const idx = monthOptions.findIndex((o) => o.value === value);
-    if (idx < 0) return;
-    const pills = el.querySelectorAll('[data-month-pill]');
-    const target = pills[idx] as HTMLElement;
-    if (target) {
-      el.scrollTo({
-        left: target.offsetLeft - el.clientWidth / 2 + target.clientWidth / 2,
-        behavior: 'smooth',
-      });
-    }
-  }, [value]);
+  const toggleAll = useCallback(() => {
+    onChange(isAll ? monthOptions[1].value : ALL_VALUE);
+  }, [isAll, onChange]);
 
-  const scrollBy = useCallback((dir: -1 | 1) => {
-    scrollRef.current?.scrollBy({ left: dir * 140, behavior: 'smooth' });
-  }, []);
+  // Format display label: "T06/2026" → "Tháng 6, 2026"
+  const displayLabel = useMemo(() => {
+    if (isAll) return 'Tất cả';
+    const opt = monthOptions.find((o) => o.value === value);
+    return opt?.label ?? value;
+  }, [value, isAll]);
 
   return (
-    <div className="relative -mx-4 px-4">
-      {/* Fade edges */}
-      {canScrollLeft && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-      )}
-      {canScrollRight && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-      )}
+    <div className="flex items-center justify-between gap-2">
+      {/* Prev */}
+      <button
+        onClick={goPrev}
+        disabled={isAll || currentIdx <= 1}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        aria-label="Tháng trước"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
 
-      <div className="flex items-center gap-1">
-        {/* Left arrow */}
-        {canScrollLeft && (
-          <button
-            onClick={() => scrollBy(-1)}
-            className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-            aria-label="Tháng trước"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </button>
-        )}
-
-        {/* Scrollable pills */}
-        <div
-          ref={scrollRef}
-          className="flex items-center gap-1.5 overflow-x-auto scrollbar-none scroll-smooth snap-x snap-mandatory flex-1 py-0.5"
+      {/* Center: current month + "Tất cả" chip */}
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-sm font-semibold text-foreground truncate">
+          {displayLabel}
+        </span>
+        <button
+          onClick={toggleAll}
+          className={cn(
+            'px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors shrink-0',
+            isAll
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground',
+          )}
         >
-          {monthOptions.map((opt) => {
-            const isActive = value === opt.value;
-            return (
-              <button
-                key={opt.value}
-                data-month-pill
-                onClick={() => onChange(opt.value)}
-                className={cn(
-                  'px-3.5 py-[7px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0 snap-center transition-all duration-200',
-                  isActive
-                    ? 'bg-primary text-primary-foreground shadow-sm scale-105'
-                    : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right arrow */}
-        {canScrollRight && (
-          <button
-            onClick={() => scrollBy(1)}
-            className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
-            aria-label="Tháng sau"
-          >
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        )}
+          Tất cả
+        </button>
       </div>
+
+      {/* Next */}
+      <button
+        onClick={goNext}
+        disabled={isAll || currentIdx >= monthOptions.length - 1}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        aria-label="Tháng sau"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -251,7 +220,7 @@ const PartnerDashboardMobile = () => {
 
       {/* Month selector strip */}
       <div className="px-4">
-        <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
+        <MonthNavigator value={selectedMonth} onChange={handleMonthChange} />
       </div>
 
       {/* KPI Grid */}
