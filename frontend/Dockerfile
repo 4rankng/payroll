@@ -2,7 +2,7 @@
 # Multi-stage build for React frontend with BuildKit optimizations
 
 # Dependencies stage - caches node_modules separately
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Configure yarn for better performance
@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/yarn-cache \
     yarn install --frozen-lockfile --network-timeout 600000
 
 # Builder stage - handles source code and build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Build arguments for environment variables
@@ -45,7 +45,7 @@ RUN --mount=type=cache,target=/app/.vite \
     yarn build
 
 # Production stage - static files only
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Create app directory
 WORKDIR /app

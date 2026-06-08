@@ -7,6 +7,7 @@ import (
 	"api-server/internal/app/services/notification"
 	"api-server/internal/domain"
 	"api-server/internal/domain/services"
+	"api-server/internal/domain/wallet"
 	asynqinfra "api-server/internal/infra/asynq"
 	"api-server/internal/infra/storage"
 	"api-server/internal/pkg/clock"
@@ -25,6 +26,7 @@ type AdvancePaymentHandler struct {
 	emailService                  *notification.EmailService
 	auditService                  *infrastructure.AuditService
 	notificationRepo              domain.NotificationRepository
+	walletPaymentRepo             wallet.WalletPaymentRepository
 	clock                         clock.Clock
 }
 
@@ -41,6 +43,7 @@ func NewAdvancePaymentHandler(
 	emailService *notification.EmailService,
 	auditService *infrastructure.AuditService,
 	notificationRepo domain.NotificationRepository,
+	walletPaymentRepo wallet.WalletPaymentRepository,
 	clk clock.Clock,
 ) *AdvancePaymentHandler {
 	if clk == nil {
@@ -58,6 +61,7 @@ func NewAdvancePaymentHandler(
 		emailService:                  emailService,
 		auditService:                  auditService,
 		notificationRepo:              notificationRepo,
+		walletPaymentRepo:             walletPaymentRepo,
 		clock:                         clk,
 	}
 }
