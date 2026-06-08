@@ -154,64 +154,64 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 		UpdatedAt: project.UpdatedAt,
 	}
 
-		// Get employee assignments if service is available
-		if h.projectEmployeeService != nil {
-			activeFilters := domain.ProjectEmployeeFilters{
-				ProjectID:  &project.ID,
-				ActiveOnly: true,
-			}
+	// Get employee assignments if service is available
+	if h.projectEmployeeService != nil {
+		activeFilters := domain.ProjectEmployeeFilters{
+			ProjectID:  &project.ID,
+			ActiveOnly: true,
+		}
 
-			// Use CountAssignments for accurate total (no Limit cap)
-			activeEmployees, countErr := h.projectEmployeeService.CountAssignments(ctx, activeFilters)
+		// Use CountAssignments for accurate total (no Limit cap)
+		activeEmployees, countErr := h.projectEmployeeService.CountAssignments(ctx, activeFilters)
 
-			// Fetch assignments for position counts and recent employees
-			listFilters := domain.ProjectEmployeeFilters{
-				ProjectID:  &project.ID,
-				ActiveOnly: true,
-				Limit:      1000,
-				Offset:     0,
-				SortBy:     "created_at",
-				SortOrder:  "desc",
-			}
+		// Fetch assignments for position counts and recent employees
+		listFilters := domain.ProjectEmployeeFilters{
+			ProjectID:  &project.ID,
+			ActiveOnly: true,
+			Limit:      1000,
+			Offset:     0,
+			SortBy:     "created_at",
+			SortOrder:  "desc",
+		}
 
-			if assignments, err := h.projectEmployeeService.ListAssignments(ctx, listFilters); err == nil && countErr == nil {
-				positionCounts := make(map[string]int)
-				var recentEmployees []dto.ProjectRecentEmployee
+		if assignments, err := h.projectEmployeeService.ListAssignments(ctx, listFilters); err == nil && countErr == nil {
+			positionCounts := make(map[string]int)
+			var recentEmployees []dto.ProjectRecentEmployee
 
-				// Deduplicate by employee — count position only from latest assignment
-				seenEmployees := make(map[uint]bool)
-				for i, assignment := range assignments {
-					if seenEmployees[assignment.EmployeeID] {
-						continue
-					}
-					seenEmployees[assignment.EmployeeID] = true
-					positionCounts[assignment.Position]++
-
-					if i < 5 {
-						recentEmployees = append(recentEmployees, dto.ProjectRecentEmployee{
-							EmployeeID: assignment.EmployeeID,
-							FullName:   assignment.EmployeeName,
-							Position:   assignment.Position,
-							StartDate:  assignment.StartDate.Format("2006-01-02"),
-						})
-					}
+			// Deduplicate by employee — count position only from latest assignment
+			seenEmployees := make(map[uint]bool)
+			for i, assignment := range assignments {
+				if seenEmployees[assignment.EmployeeID] {
+					continue
 				}
+				seenEmployees[assignment.EmployeeID] = true
+				positionCounts[assignment.Position]++
 
-				var positions []dto.ProjectPositionCount
-				for position, count := range positionCounts {
-					positions = append(positions, dto.ProjectPositionCount{
-						Position: position,
-						Count:    count,
+				if i < 5 {
+					recentEmployees = append(recentEmployees, dto.ProjectRecentEmployee{
+						EmployeeID: assignment.EmployeeID,
+						FullName:   assignment.EmployeeName,
+						Position:   assignment.Position,
+						StartDate:  assignment.StartDate.Format("2006-01-02"),
 					})
 				}
+			}
 
-				response.EmployeeAssignments = &dto.ProjectEmployeeAssignments{
-					TotalEmployees:  int(activeEmployees),
-					Positions:       positions,
-					RecentEmployees: recentEmployees,
-				}
+			var positions []dto.ProjectPositionCount
+			for position, count := range positionCounts {
+				positions = append(positions, dto.ProjectPositionCount{
+					Position: position,
+					Count:    count,
+				})
+			}
+
+			response.EmployeeAssignments = &dto.ProjectEmployeeAssignments{
+				TotalEmployees:  int(activeEmployees),
+				Positions:       positions,
+				RecentEmployees: recentEmployees,
 			}
 		}
+	}
 
 	// Get current payrate if service is available
 	if h.payrateService != nil {
