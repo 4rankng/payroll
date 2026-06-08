@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useCallback } from "react";
-import { Bell, UserCircle, Key, LogOut } from "lucide-react";
+import { Bell, UserCircle, Key, LogOut, MoreVertical } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -38,13 +38,15 @@ export interface NavGroup {
 
 interface MobileBottomNavProps {
   groups: NavGroup[];
+  moreItems?: NavLeaf[];
 }
 
-export const MobileBottomNav = ({ groups }: MobileBottomNavProps) => {
+export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
   const [openGroup, setOpenGroup] = useState<NavGroup | null>(null);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -196,6 +198,17 @@ export const MobileBottomNav = ({ groups }: MobileBottomNavProps) => {
               Tài khoản
             </span>
           </button>
+
+          {/* More menu — compact ⋮ button */}
+          {moreItems && moreItems.length > 0 && (
+            <button
+              className="w-11 flex flex-col items-center justify-center gap-0.5 touch-manipulation"
+              onClick={() => setIsMoreOpen(true)}
+              aria-label="Thêm"
+            >
+              <MoreVertical className="w-5 h-5 text-muted-foreground" />
+            </button>
+          )}
         </div>
       </nav>
 
@@ -334,6 +347,55 @@ export const MobileBottomNav = ({ groups }: MobileBottomNavProps) => {
               })}
             </div>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* More menu sheet */}
+      <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+        <SheetContent side="bottom" className="h-auto pb-safe">
+          <SheetHeader className="pb-3">
+            <SheetTitle className="text-base font-semibold text-left">
+              Thêm
+            </SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-3 gap-2 pb-2">
+            {moreItems?.map((item) => {
+              const isActive = item.path
+                ? location.pathname.startsWith(item.path)
+                : false;
+              return (
+                <button
+                  key={item.title}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation",
+                    isActive
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "hover:bg-accent text-foreground border border-transparent",
+                  )}
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    if (item.onClick) {
+                      item.onClick();
+                    } else if (item.path) {
+                      navigate(item.path);
+                    }
+                  }}
+                >
+                  <item.icon
+                    className={cn("w-5 h-5", isActive && "text-primary")}
+                  />
+                  <span
+                    className={cn(
+                      "text-xs font-medium leading-none",
+                      isActive ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {item.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </SheetContent>
       </Sheet>
 

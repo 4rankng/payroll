@@ -35,22 +35,22 @@ export const MobileSheetHeader = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-4 pt-5 pb-3 border-b shrink-0',
+        'flex items-center justify-between px-4 pt-3 pb-3 border-b shrink-0',
         className,
       )}
     >
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
         {Icon && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/8 shrink-0">
-            <Icon className="h-[16px] w-[16px] text-primary/70" strokeWidth={2} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+            <Icon className="h-[18px] w-[18px] text-primary/70" strokeWidth={2} />
           </div>
         )}
         <div className="min-w-0">
-          <SheetTitle className="text-base font-display font-bold leading-tight truncate">
+          <SheetTitle className="text-base font-semibold leading-tight truncate">
             {title}
           </SheetTitle>
           {description && (
-            <SheetDescription className="text-xs mt-0.5">
+            <SheetDescription className="text-xs text-muted-foreground mt-0.5">
               {description}
             </SheetDescription>
           )}
@@ -59,7 +59,7 @@ export const MobileSheetHeader = ({
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 shrink-0"
+        className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
         onClick={onClose}
         aria-label="Đóng"
       >
