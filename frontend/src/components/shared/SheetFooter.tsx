@@ -20,7 +20,7 @@ export const SheetFooter = memo(function SheetFooter({
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-6 py-3 border-t bg-background flex-shrink-0',
+        'flex items-center justify-between px-4 sm:px-6 py-3 border-t bg-background flex-shrink-0',
         className,
       )}
     >
@@ -33,7 +33,7 @@ export const SheetFooter = memo(function SheetFooter({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-3">{actions}</div>
+      <div className="flex items-center gap-2 sm:gap-3">{actions}</div>
     </div>
   );
 });

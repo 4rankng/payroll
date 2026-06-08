@@ -53,17 +53,23 @@ export function SlideSheetTemplate({
         side={isMobile ? "bottom" : "right"}
         className={cn(
           "p-0 flex flex-col h-full",
-          isMobile && "rounded-t-2xl max-h-[94dvh]",
+          isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]",
           className || getSizeClasses()
         )}
       >
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
+
         {/* Header Section */}
         <SheetHeader
           className={cn(
             'space-y-0 flex-shrink-0 border-b',
             compact ? 'px-4 py-2.5' : 'px-4 sm:px-5 py-3'
           )}
-          style={{ paddingTop: `max(${compact ? '10px' : '12px'}, calc(${compact ? '10px' : '12px'} + env(safe-area-inset-top)))` }}
         >
           {avatar?.custom ? (
             <div className="flex items-center gap-2">
@@ -132,7 +138,8 @@ export function SlideSheetTemplate({
         {/* Content Section */}
         <div className="flex-1 overflow-hidden">
           <div className={cn(
-            'h-full overflow-y-auto',
+            'h-full overflow-y-auto overscroll-contain',
+            isMobile && 'bg-muted/30',
             compact ? 'px-4 py-3' : 'px-4 sm:px-6 py-4 sm:py-6'
           )}>
             {children}
@@ -142,8 +149,10 @@ export function SlideSheetTemplate({
         {/* Footer Section */}
         {footer && (
           <div
-            className="flex-shrink-0 px-4 sm:px-6 py-2 border-t bg-background"
-            style={{ paddingBottom: `max(8px, calc(8px + env(safe-area-inset-bottom)))` }}
+            className={cn(
+              'flex-shrink-0 px-4 sm:px-6 py-2.5 border-t bg-background',
+              isMobile && 'pb-[max(10px,calc(10px+env(safe-area-inset-bottom)))]'
+            )}
           >
             {footer}
           </div>

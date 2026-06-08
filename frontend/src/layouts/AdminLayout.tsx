@@ -22,7 +22,7 @@ import {
   Clock,
   ClipboardList,
 } from "lucide-react";
-import type { NavGroup } from "@/components/MobileBottomNav";
+import type { NavGroup, NavLeaf } from "@/components/MobileBottomNav";
 
 const ADV_PARTNER_NAV_GROUPS: NavGroup[] = [
   { title: "Ứng lương", icon: Wallet, path: "/adv-partner/advance-payments" },
@@ -31,37 +31,22 @@ const ADV_PARTNER_NAV_GROUPS: NavGroup[] = [
 
 const ADMIN_NAV_GROUPS: NavGroup[] = [
   { title: "Tổng quan", icon: Home, path: "/admin", end: true },
-  {
-    title: "Quản lý",
-    icon: Users,
-    submenu: [
-      { title: "Người dùng", icon: UserCog, path: "/admin/users" },
-      { title: "Dự án", icon: Briefcase, path: "/admin/projects" },
-      { title: "Nhân viên", icon: Users, path: "/admin/employees" },
-      { title: "Bảng công", icon: Calendar, path: "/admin/timesheet" },
-    ],
-  },
-  {
-    title: "Tài chính",
-    icon: BookOpen,
-    submenu: [
-      { title: "Sổ cái", icon: BookOpen, path: "/admin/transactions" },
-      { title: "Khoản vay", icon: Landmark, path: "/admin/loans" },
-      { title: "Ứng lương", icon: Wallet, path: "/admin/advance-payments" },
-      { title: "Ví", icon: Wallet, path: "/admin/wallet" },
-    ],
-  },
-  {
-    title: "Hệ thống",
-    icon: Settings,
-    submenu: [
-      { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health" },
-      { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health" },
-      { title: "Nhật ký", icon: ClipboardList, path: "/admin/audit-log" },
-      { title: "Cài đặt", icon: Settings, path: "/admin/settings" },
-      { title: "Gửi thông báo", icon: Bell, path: "/admin/send-notification" },
-    ],
-  },
+  { title: "Chấm công", icon: Clock, path: "/admin/timesheet" },
+  { title: "Ứng lương", icon: Wallet, path: "/admin/advance-payments" },
+];
+
+const ADMIN_MORE_ITEMS: NavLeaf[] = [
+  { title: "Nhật ký", icon: ClipboardList, path: "/admin/audit-log" },
+  { title: "API", icon: Activity, path: "/admin/system-health" },
+  { title: "Người dùng", icon: UserCog, path: "/admin/users" },
+  { title: "Dự án", icon: Briefcase, path: "/admin/projects" },
+  { title: "Nhân viên", icon: Users, path: "/admin/employees" },
+  { title: "Sổ cái", icon: BookOpen, path: "/admin/transactions" },
+  { title: "Khoản vay", icon: Landmark, path: "/admin/loans" },
+  { title: "Ví", icon: Wallet, path: "/admin/wallet" },
+  { title: "Lịch CV", icon: Calendar, path: "/admin/cron-health" },
+  { title: "Cài đặt", icon: Settings, path: "/admin/settings" },
+  { title: "Gửi thông báo", icon: Bell, path: "/admin/send-notification" },
 ];
 
 const AdminLayoutInner = () => {
@@ -88,13 +73,15 @@ const AdminLayoutInner = () => {
 const AdminLayout = () => {
   const { user } = useAuth();
   const isAdvPartner = user?.role === 'adv_partner';
-  const navGroups = isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS;
 
   return (
     <ProtectedRoute requiredRole={["admin", "adv_partner"]}>
       <SidebarProvider defaultOpen={true}>
         <AdminLayoutInner />
-        <MobileBottomNav groups={navGroups} />
+        <MobileBottomNav
+          groups={isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS}
+          moreItems={isAdvPartner ? undefined : ADMIN_MORE_ITEMS}
+        />
         <NotificationFAB />
       </SidebarProvider>
     </ProtectedRoute>
