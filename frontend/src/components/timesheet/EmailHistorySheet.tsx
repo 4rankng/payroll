@@ -5,6 +5,7 @@ import { vi } from 'date-fns/locale';
 import { Mail, Users, Loader2, AlertCircle, X, Clock, User, Send } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -338,10 +339,16 @@ export const EmailHistorySheet = memo(function EmailHistorySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="flex h-full w-full flex-col bg-muted/50 p-0 sm:max-w-[760px]"
+        className={cn("flex h-full w-full flex-col bg-muted/50 p-0 sm:max-w-[760px]", isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]")}
         aria-label="Lịch sử email đã gửi"
       >
-        <div className="flex items-center justify-between border-b bg-card px-4 py-4 sm:px-6" style={{ paddingTop: "max(16px, calc(16px + env(safe-area-inset-top)))" }}>
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
+        <div className="flex items-center justify-between border-b bg-card px-4 py-4 sm:px-6">
           <SheetHeader className="text-left">
             <SheetTitle className="typography-headline-small">
               Lịch sử email

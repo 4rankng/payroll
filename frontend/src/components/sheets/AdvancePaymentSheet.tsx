@@ -165,8 +165,12 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="bottom"
-        className="h-[92vh] rounded-t-2xl p-0 flex flex-col overflow-hidden bg-primary/5"
+        className="h-[92vh] rounded-t-2xl p-0 flex flex-col overflow-hidden bg-primary/5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
       >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+          <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+        </div>
         {/* Header */}
         <div className="px-5 pt-5 pb-4 border-b border-border" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)" }}>
           <div className="flex items-center justify-between">

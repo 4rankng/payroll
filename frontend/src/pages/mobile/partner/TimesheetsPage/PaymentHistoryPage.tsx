@@ -104,7 +104,7 @@ const PaymentHistoryPage = () => {
   }, [filters.fromDate, filters.toDate, exportPaymentHistories]);
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full pb-24">
       <MobilePageHeader
         title="Lịch sử thanh toán"
         subtitle="Danh sách các lần thanh toán lương"
@@ -117,7 +117,7 @@ const PaymentHistoryPage = () => {
               size="sm"
               onClick={handleExport}
               disabled={exportPaymentHistories.isPending}
-              className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs shrink-0"
+              className="h-8 px-3 text-xs shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
               Xuất

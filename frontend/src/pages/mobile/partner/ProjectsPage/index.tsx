@@ -137,7 +137,7 @@ const ProjectsPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full pb-24">
       {/* ── Header ── */}
       <MobilePageHeader
         title="Dự án"
@@ -161,16 +161,16 @@ const ProjectsPageMobile = () => {
         <div className="px-4 pb-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
             {[
-              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
-              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-violet-600", bg: "bg-violet-50" },
-              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-amber-600", bg: "bg-amber-50" },
+              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-primary/10" },
+              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
+              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-violet-600", bg: "bg-violet-500/10" },
+              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-amber-600", bg: "bg-amber-500/10" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border border-border bg-card shrink-0 min-w-[68px] active:scale-95 transition-transform card-lift"
+                  className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border border-border bg-card shrink-0 min-w-[68px] active:scale-95 transition-all duration-200 card-lift"
                 >
                   <div className={`p-1.5 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3 w-3 ${stat.color}`} />
@@ -219,11 +219,11 @@ const ProjectsPageMobile = () => {
 
       {/* ── Active filter chips ── */}
       {activeFilterCount > 0 && (
-        <div className="px-4 pb-3 flex gap-2 flex-wrap">
+        <div className="px-4 pb-3 flex gap-2 flex-wrap items-center">
           {currentStatusLabel && (
             <Badge
               variant="secondary"
-              className="gap-1 cursor-pointer"
+              className="gap-1 cursor-pointer rounded-xl"
               onClick={() => filterControls.setStatusFilter("all")}
             >
               {currentStatusLabel}
@@ -233,7 +233,7 @@ const ProjectsPageMobile = () => {
           {currentMonthLabel && (
             <Badge
               variant="secondary"
-              className="gap-1 cursor-pointer"
+              className="gap-1 cursor-pointer rounded-xl"
               onClick={() => filterControls.setMonthFilter(undefined)}
             >
               {currentMonthLabel}
@@ -285,15 +285,16 @@ const ProjectsPageMobile = () => {
 
       {/* ── Filter sheet ── */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe">
-          <SheetHeader className="pb-4">
-            <SheetTitle>Bộ lọc</SheetTitle>
+        <SheetContent side="bottom" className="rounded-t-2xl px-5 pt-2 pb-6">
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/20" />
+          <SheetHeader className="pb-3">
+            <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>
 
           <div className="space-y-4">
             {/* Status */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Trạng thái</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Trạng thái</label>
               <Select
                 value={
                   filterControls.statusFilter === "all" || !Array.isArray(filterControls.statusFilter) || filterControls.statusFilter.length === 0
@@ -304,7 +305,7 @@ const ProjectsPageMobile = () => {
                   filterControls.setStatusFilter(v === "all" ? "all" : [v as Project["status"]])
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,14 +321,14 @@ const ProjectsPageMobile = () => {
 
             {/* Month */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Tháng</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tháng</label>
               <Select
                 value={filterControls.monthFilter ?? "all"}
                 onValueChange={(v) =>
                   filterControls.setMonthFilter(v === "all" ? undefined : v)
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Tất cả tháng" />
                 </SelectTrigger>
                 <SelectContent>
@@ -342,10 +343,10 @@ const ProjectsPageMobile = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4 pb-safe">
               <Button
                 variant="outline"
-                className="flex-1 h-11"
+                className="flex-1 h-11 rounded-xl"
                 onClick={() => {
                   filterControls.clearFilters();
                   setFilterSheetOpen(false);
@@ -354,7 +355,7 @@ const ProjectsPageMobile = () => {
                 Xóa bộ lọc
               </Button>
               <Button
-                className="flex-1 h-11 btn-partner-primary"
+                className="flex-1 h-11 rounded-xl btn-partner-primary"
                 onClick={() => setFilterSheetOpen(false)}
               >
                 Áp dụng

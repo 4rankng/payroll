@@ -116,8 +116,8 @@ const EmployeesPageMobile = () => {
           label: "Tổng",
           value: employeesSummary.total_employees,
           icon: Users,
-          color: "text-blue-600",
-          bg: "bg-blue-50",
+          color: "text-primary",
+          bg: "bg-primary/10",
           filter: null as "working" | "unassigned" | null,
         },
         {
@@ -125,7 +125,7 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.total_working_employees,
           icon: UserCheck,
           color: "text-emerald-600",
-          bg: "bg-emerald-50",
+          bg: "bg-emerald-500/10",
           filter: "working" as const,
         },
         {
@@ -135,7 +135,7 @@ const EmployeesPageMobile = () => {
             employeesSummary.total_working_employees,
           icon: UserX,
           color: "text-amber-600",
-          bg: "bg-amber-50",
+          bg: "bg-amber-500/10",
           filter: "unassigned" as const,
         },
         {
@@ -143,7 +143,7 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.employees_hired_this_month,
           icon: UserPlus,
           color: "text-violet-600",
-          bg: "bg-violet-50",
+          bg: "bg-violet-500/10",
           filter: null as "working" | "unassigned" | null,
         },
       ];
@@ -180,7 +180,7 @@ const EmployeesPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full pb-24">
       {/* ── Header ── */}
       <MobilePageHeader
         title="Nhân viên"
@@ -230,7 +230,7 @@ const EmployeesPageMobile = () => {
                       updateStatusFilter(stat.filter);
                     }
                   }}
-                  className={`flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border shrink-0 min-w-[68px] transition-all card-lift ${
+                  className={`flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border shrink-0 min-w-[68px] transition-all duration-200 card-lift ${
                     isActive
                       ? "border-primary/40 bg-primary/5"
                       : "border-border bg-card"
@@ -289,11 +289,11 @@ const EmployeesPageMobile = () => {
 
       {/* ── Active filter chips ── */}
       {activeFilterCount > 0 && (
-        <div className="px-4 pb-3 flex gap-2 flex-wrap">
+        <div className="px-4 pb-3 flex gap-2 flex-wrap items-center">
           {statusFilter && (
             <Badge
               variant="secondary"
-              className="gap-1 cursor-pointer"
+              className="gap-1 cursor-pointer rounded-xl"
               onClick={() => updateStatusFilter(undefined)}
             >
               {statusFilter === "working" ? "Đang làm việc" : "Chưa phân công"}
@@ -303,7 +303,7 @@ const EmployeesPageMobile = () => {
           {month && (
             <Badge
               variant="secondary"
-              className="gap-1 cursor-pointer"
+              className="gap-1 cursor-pointer rounded-xl"
               onClick={() => updateMonth(undefined)}
             >
               {monthOptions.find((m) => m.value === month)?.label ?? month}
@@ -313,7 +313,7 @@ const EmployeesPageMobile = () => {
           {projectId && (
             <Badge
               variant="secondary"
-              className="gap-1 cursor-pointer"
+              className="gap-1 cursor-pointer rounded-xl"
               onClick={() => filterByProject(null)}
             >
               {projects.find((p) => p.id === projectId)?.name ?? "Dự án"}
@@ -359,15 +359,16 @@ const EmployeesPageMobile = () => {
 
       {/* ── Filter sheet ── */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe">
-          <SheetHeader className="pb-4">
-            <SheetTitle>Bộ lọc</SheetTitle>
+        <SheetContent side="bottom" className="rounded-t-2xl px-5 pt-2 pb-6">
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/20" />
+          <SheetHeader className="pb-3">
+            <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>
 
           <div className="space-y-4">
             {/* Status */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Trạng thái
               </label>
               <Select
@@ -378,7 +379,7 @@ const EmployeesPageMobile = () => {
                   )
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
@@ -391,7 +392,7 @@ const EmployeesPageMobile = () => {
 
             {/* Month */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Tháng
               </label>
               <Select
@@ -400,7 +401,7 @@ const EmployeesPageMobile = () => {
                   updateMonth(v === "all" ? undefined : v)
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Tất cả tháng" />
                 </SelectTrigger>
                 <SelectContent>
@@ -417,7 +418,7 @@ const EmployeesPageMobile = () => {
             {/* Project */}
             {projects.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Dự án
                 </label>
                 <Select
@@ -426,7 +427,7 @@ const EmployeesPageMobile = () => {
                     filterByProject(v === "all" ? null : parseInt(v))
                   }
                 >
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-11 rounded-xl">
                     <SelectValue placeholder="Tất cả dự án" />
                   </SelectTrigger>
                   <SelectContent>
@@ -442,10 +443,10 @@ const EmployeesPageMobile = () => {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4 pb-safe">
               <Button
                 variant="outline"
-                className="flex-1 h-11"
+                className="flex-1 h-11 rounded-xl"
                 onClick={() => {
                   clearAllFilters();
                   setFilterSheetOpen(false);
@@ -454,7 +455,7 @@ const EmployeesPageMobile = () => {
                 Xóa bộ lọc
               </Button>
               <Button
-                className="flex-1 h-11 btn-partner-primary"
+                className="flex-1 h-11 rounded-xl btn-partner-primary"
                 onClick={() => setFilterSheetOpen(false)}
               >
                 Áp dụng

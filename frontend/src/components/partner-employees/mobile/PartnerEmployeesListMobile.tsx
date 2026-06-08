@@ -38,13 +38,13 @@ export const PartnerEmployeesListMobile = ({ employees, isLoading }: PartnerEmpl
 
   if (employees.length === 0) {
     return (
-      <Card className="text-center py-8">
+      <Card className="text-center py-12">
         <CardContent>
-          <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="typography-headline-small text-foreground mb-2">
+          <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-foreground mb-2">
             Chưa có nhân viên
           </h3>
-          <p className="typography-body-small text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Hiện tại chưa có nhân viên nào
           </p>
         </CardContent>
@@ -55,24 +55,24 @@ export const PartnerEmployeesListMobile = ({ employees, isLoading }: PartnerEmpl
   return (
     <div className="space-y-3">
       {employees.map((employee) => (
-        <Card 
+        <Card
           key={employee.id}
-          className="cursor-pointer active:bg-muted/50 transition-colors"
+          className="cursor-pointer active:bg-muted/50 transition-colors overflow-hidden"
           onClick={() => handleEmployeeClick(employee)}
         >
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="space-y-1">
-                  <h3 className="typography-headline-small text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {employee.fullname}
                   </h3>
-                  <p className="typography-body-small text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {employee.position || 'Nhân viên'}
                   </p>
                 </div>
                 
-                <div className="space-y-1 typography-body-small text-muted-foreground">
+                <div className="space-y-1 text-sm text-muted-foreground">
                   {employee.email && (
                     <div className="flex items-center gap-2">
                       <Mail className="h-3.5 w-3.5" />
@@ -90,17 +90,17 @@ export const PartnerEmployeesListMobile = ({ employees, isLoading }: PartnerEmpl
                 <div className="flex items-center justify-between">
                   <Badge 
                     variant="secondary"
-                    className={`${getEmployeeStatusColor(employee.status || 'active')} typography-label-small`}
+                    className={`${getEmployeeStatusColor(employee.status || 'active')} text-xs font-medium text-muted-foreground`}
                   >
                     {employee.status || 'Đang dùng'}
                   </Badge>
-                  <span className="typography-label-small text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground">
                     #{employee.employee_code}
                   </span>
                 </div>
               </div>
               
-              <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>
