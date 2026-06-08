@@ -295,7 +295,7 @@ export function DataTable<TData, TValue>({
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                       className={cn(
-                        "hover:bg-muted/50 border-b",
+                        "group hover:bg-muted/50 border-b",
                         onRowClick && "cursor-pointer hover:bg-accent/50"
                       )}
                       onClick={(e) => {

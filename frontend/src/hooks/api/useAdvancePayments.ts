@@ -360,6 +360,59 @@ export function useAdminCancelAdvancePayment() {
 }
 
 /**
+ * Retry disbursement for an APPROVED or FAILED advance payment request (admin)
+ * After retry, polls the status endpoint until the request reaches a terminal state.
+ */
+export function useRetryDisbursement(options?: {
+  onPollingChange?: (id: number, isPolling: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await advancePaymentService.retryDisbursement(id);
+      // Start polling for status
+      options?.onPollingChange?.(id, true);
+      pollDisbursementStatus(id, queryClient, () => options?.onPollingChange?.(id, false));
+      return result;
+    },
+    onSuccess: (response) => {
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+  });
+}
+
+/**
+ * Polls the disbursement status endpoint every 3 seconds until terminal state.
+ * Invalidates the admin list on completion and calls the onDone callback.
+ */
+function pollDisbursementStatus(
+  id: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  queryClient: any,
+  onDone: () => void,
+) {
+  let attempts = 0;
+  const maxAttempts = 60; // 3 minutes max
+
+  const interval = setInterval(async () => {
+    attempts++;
+    try {
+      const res = await advancePaymentService.getDisbursementStatus(id);
+      if (res.data?.isTerminal || attempts >= maxAttempts) {
+        clearInterval(interval);
+        queryClient.invalidateQueries({ queryKey: ["admin", "advance-payments"] });
+        onDone();
+      }
+    } catch {
+      // On error, keep polling — network blips shouldn't stop us
+    }
+  }, 3000);
+}
+
+/**
  * Get flex pay employee list
  * Returns employees from the latest imported flex pay month
  */

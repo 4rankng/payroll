@@ -276,6 +276,34 @@ class AdvancePaymentService {
   }
 
   /**
+   * Retry disbursement for an APPROVED or FAILED advance payment request (admin)
+   * Re-enqueues a disbursement task to the payment provider
+   */
+  async retryDisbursement(
+    id: number,
+  ): Promise<ApiResponse<{ requestId: number; disbursementTaskId: string; message: string }>> {
+    return apiClient.post<{
+      requestId: number; disbursementTaskId: string; message: string
+    }>(
+      API_ENDPOINTS.advancePayments.retryDisbursement(id),
+    );
+  }
+
+  /**
+   * Get disbursement status for an advance payment request (admin)
+   * Used for polling progress after retry
+   */
+  async getDisbursementStatus(
+    id: number,
+  ): Promise<ApiResponse<{ requestId: number; requestStatus: string; isTerminal: boolean; paymentRef?: string | null; paidAt?: string | null }>> {
+    return apiClient.get<{
+      requestId: number; requestStatus: string; isTerminal: boolean; paymentRef?: string | null; paidAt?: string | null
+    }>(
+      API_ENDPOINTS.advancePayments.disbursementStatus(id),
+    );
+  }
+
+  /**
    * Get flex pay employee list
    * Returns employees from the latest imported flex pay month
    */

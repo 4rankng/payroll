@@ -30,12 +30,19 @@ const RequestCard = memo(function RequestCard({
   item,
   onCancel,
   isCancelling,
+  onRetry,
+  isRetrying,
+  isPolling,
 }: {
   item: AdvancePaymentListItem;
   onCancel: (id: number) => void;
   isCancelling: boolean;
+  onRetry?: (id: number) => void;
+  isRetrying?: boolean;
+  isPolling?: boolean;
 }) {
   const isCancellable = item.status === "PENDING" || item.status === "APPROVED";
+  const isRetryable = item.status === "APPROVED" || item.status === "FAILED";
   const [showConfirm, setShowConfirm] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,15 +83,20 @@ const RequestCard = memo(function RequestCard({
               {item.employeeCCCD}
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              getAdvancePaymentStatusColor(item.status),
-              "shrink-0 text-xs",
+          <div className="flex items-center gap-1.5">
+            {isPolling && (
+              <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
             )}
-          >
-            {getVietnameseAdvancePaymentStatus(item.status)}
-          </Badge>
+            <Badge
+              variant="outline"
+              className={cn(
+                getAdvancePaymentStatusColor(item.status),
+                "shrink-0 text-xs",
+              )}
+            >
+              {getVietnameseAdvancePaymentStatus(item.status)}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
@@ -127,16 +139,40 @@ const RequestCard = memo(function RequestCard({
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={handleCancelClick}
-                disabled={isCancelling}
-              >
-                Hủy
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleCancelClick}
+                  disabled={isCancelling}
+                >
+                  Hủy
+                </Button>
+                {isRetryable && onRetry && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => onRetry(item.id)}
+                    disabled={isRetrying}
+                  >
+                    {isRetrying ? "Đang gửi..." : "Thử lại"}
+                  </Button>
+                )}
+              </div>
             )
+          )}
+          {!isCancellable && isRetryable && onRetry && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              onClick={() => onRetry(item.id)}
+              disabled={isRetrying}
+            >
+              {isRetrying ? "Đang gửi..." : "Thử lại"}
+            </Button>
           )}
         </div>
       </div>
@@ -149,6 +185,10 @@ interface AdvancePaymentMobileListProps {
   isCancelling: boolean;
   cancellingId?: number;
   onCancel: (id: number) => void;
+  onRetry?: (id: number) => void;
+  isRetrying?: boolean;
+  retryingId?: number;
+  pollingIds?: Set<number>;
   pagination?: PaginationInfo | null;
   onPageChange?: (page: number) => void;
   /** @deprecated — confirm state is now managed locally inside each card */
@@ -160,6 +200,10 @@ export function AdvancePaymentMobileList({
   isCancelling,
   cancellingId,
   onCancel,
+  onRetry,
+  isRetrying,
+  retryingId,
+  pollingIds,
   pagination,
   onPageChange,
 }: AdvancePaymentMobileListProps) {
@@ -182,6 +226,9 @@ export function AdvancePaymentMobileList({
             item={item}
             onCancel={onCancel}
             isCancelling={isCancelling && cancellingId === item.id}
+            onRetry={onRetry}
+            isRetrying={isRetrying && retryingId === item.id}
+            isPolling={pollingIds?.has(item.id)}
           />
         ))}
       </div>

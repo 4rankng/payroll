@@ -140,8 +140,14 @@ const AdvancePaymentsPage = () => {
   );
 
   const columns = useMemo(
-    () => getAdvancePaymentColumns({ onCancel: page.handleCancelRequest }),
-    [page.handleCancelRequest],
+    () => getAdvancePaymentColumns({
+      onCancel: page.handleCancelRequest,
+      onRetry: (id: number) => page.retryMutation.mutate(id),
+      isRetrying: page.retryMutation.isPending,
+      retryingId: page.retryMutation.variables ?? undefined,
+      pollingIds: page.pollingIds,
+    }),
+    [page.handleCancelRequest, page.retryMutation, page.pollingIds],
   );
 
   const flexPayColumns = useMemo(
