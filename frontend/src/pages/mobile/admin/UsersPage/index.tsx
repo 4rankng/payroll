@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -129,21 +130,24 @@ const UsersPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-4 pb-3 flex items-center justify-between gap-3 border-b border-border/40">
-        <h1 className="text-xl font-bold text-foreground">Người dùng</h1>
-        {!isAdvPartner && (
-          <Button
-            size="sm"
-            className="h-9 px-4 btn-admin-primary shrink-0"
-            onClick={() => openAddUser()}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Thêm
-          </Button>
-        )}
-      </div>
+      <MobilePageHeader
+        title="Người dùng"
+        icon={Users}
+        actions={
+          !isAdvPartner ? (
+            <Button
+              size="sm"
+              className="h-9 px-4 btn-admin-primary shrink-0"
+              onClick={() => openAddUser()}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Thêm
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Stats strip */}
       {!isAdvPartner && !summaryLoading && stats.length > 0 && (

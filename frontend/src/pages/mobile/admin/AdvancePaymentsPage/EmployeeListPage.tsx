@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Download, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import {
   Select,
@@ -32,33 +33,18 @@ const EmployeeListPage = () => {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      {/* Sticky header with back button */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 shrink-0">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 -ml-1"
-            onClick={() => navigate(-1)}
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="h-5 w-5" />
+      <MobilePageHeader
+        title="Danh sách nhân viên"
+        subtitle="Hạn mức ứng lương theo tháng"
+        icon={Users}
+        sticky={false}
+        bordered={false}
+        actions={
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-foreground leading-tight">
-                Danh sách nhân viên
-              </h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                Hạn mức ứng lương theo tháng
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Content */}
       <div className="flex-1 px-4 py-3 space-y-3">

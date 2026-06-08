@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -181,29 +182,34 @@ const EmployeesPageMobile = () => {
   return (
     <div className="flex flex-col min-h-full pb-20">
       {/* ── Header ── */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-foreground">Nhân viên</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-3 shrink-0"
-            onClick={() => setExportModalOpen(true)}
-            disabled={isExporting}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            {isExporting ? "..." : "Xuất"}
-          </Button>
-          <Button
-            size="sm"
-            className="h-9 px-4 btn-partner-primary shrink-0"
-            onClick={() => openAddEmployee()}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Thêm
-          </Button>
-        </div>
-      </div>
+      <MobilePageHeader
+        title="Nhân viên"
+        icon={Users}
+        sticky={false}
+        bordered={false}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-3 shrink-0"
+              onClick={() => setExportModalOpen(true)}
+              disabled={isExporting}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              {isExporting ? "..." : "Xuất"}
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 px-4 btn-partner-primary shrink-0"
+              onClick={() => openAddEmployee()}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Thêm
+            </Button>
+          </div>
+        }
+      />
 
       {/* ── Stats strip ── */}
       {!summaryLoading && stats.length > 0 && (

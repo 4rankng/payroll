@@ -28,11 +28,11 @@ export default function AuditLogPage() {
   } = useInfiniteAuditLogs(filters);
 
   const logs = useMemo<BackendAuditLog[]>(
-    () => data?.pages.flatMap((p) => p.data) ?? [],
+    () => data?.pages.flatMap((p) => p.data ?? []) ?? [],
     [data]
   );
 
-  const totalRecords = data?.pages[0]?.pagination.totalRecords ?? 0;
+  const totalRecords = data?.pages[0]?.pagination?.totalRecords ?? 0;
 
   const { observerRef } = useInfiniteScroll({
     hasMore: hasNextPage ?? false,

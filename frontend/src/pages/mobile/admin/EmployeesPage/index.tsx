@@ -20,6 +20,7 @@ import {
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { useEmployeeDataInfinite } from "@/hooks/employees/useEmployeeDataInfinite";
 import { useEmployeesSummary } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
@@ -192,28 +193,30 @@ const EmployeesPageMobile = () => {
   return (
     <div className="flex flex-col min-h-full pb-20">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-foreground">Nhân viên</h1>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 px-3"
-            onClick={() => exportEmployees([])}
-            disabled={isExporting}
-          >
-            <Download className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            className="h-9 px-3 btn-admin-primary"
-            onClick={() => openAddEmployee()}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Thêm
-          </Button>
-        </div>
-      </div>
+      <MobilePageHeader
+        title="Nhân viên"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 px-3"
+              onClick={() => exportEmployees([])}
+              disabled={isExporting}
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 px-3 btn-admin-primary"
+              onClick={() => openAddEmployee()}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Thêm
+            </Button>
+          </>
+        }
+      />
 
       {/* Stats strip */}
       {!summaryLoading && stats.length > 0 && (

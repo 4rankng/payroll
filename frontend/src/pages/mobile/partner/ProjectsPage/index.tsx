@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -138,17 +139,22 @@ const ProjectsPageMobile = () => {
   return (
     <div className="flex flex-col min-h-full pb-20">
       {/* ── Header ── */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-foreground">Dự án</h1>
-        <Button
-          size="sm"
-          className="h-9 px-4 btn-partner-primary shrink-0"
-          onClick={() => openCreateProject()}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Thêm
-        </Button>
-      </div>
+      <MobilePageHeader
+        title="Dự án"
+        icon={Briefcase}
+        sticky={false}
+        bordered={false}
+        actions={
+          <Button
+            size="sm"
+            className="h-9 px-4 btn-partner-primary shrink-0"
+            onClick={() => openCreateProject()}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Thêm
+          </Button>
+        }
+      />
 
       {/* ── Stats strip ── */}
       {!summaryLoading && summary && (

@@ -49,7 +49,16 @@ function createPersister() {
     serialize: (data) => JSON.stringify(data),
     deserialize: (str) => {
       try {
-        return JSON.parse(str);
+        const parsed = JSON.parse(str);
+        // Strip stale promise references from cached queries.
+        // Promises cannot survive JSON serialization — they become plain objects
+        // and cause "promise.then is not a function" errors on cache restore.
+        if (parsed?.clientState?.queries) {
+          for (const query of parsed.clientState.queries) {
+            if (query?.state) delete query.state.promise;
+          }
+        }
+        return parsed;
       } catch {
         // Corrupted cache — clear and start fresh
         sessionStorage.removeItem('payroll-query-cache');
@@ -74,7 +83,11 @@ export function setupQueryPersistence(queryClient: QueryClient): void {
     persister,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     dehydrateOptions: {
-      shouldDehydrateQuery: (query) => shouldPersist(query.queryKey),
+      shouldDehydrateQuery: (query) => {
+        // Never persist pending queries — their promise field breaks on restore
+        if (query.state.status === 'pending') return false;
+        return shouldPersist(query.queryKey);
+      },
     },
   } as Parameters<typeof persistQueryClient>[0]);
 }

@@ -18,6 +18,7 @@ import {
   initialFormState,
   validateForm,
 } from "@/pages/admin/ManualDisbursementPage/helpers";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 
 const ManualDisbursementPageMobile = () => {
   const [form, setForm] = useState<ManualDisbursementFormState>(initialFormState);
@@ -67,42 +68,38 @@ const ManualDisbursementPageMobile = () => {
   };
 
   return (
-    <div className="px-3 pb-24 pt-3 space-y-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-          <Send className="h-4 w-4 text-primary" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-base font-semibold tracking-tight">Chuyển tiền</h1>
-          <p className="text-xs text-muted-foreground">
-            Khởi tạo giao dịch chuyển tiền
-          </p>
-        </div>
-      </div>
+    <div className="pb-20">
+      <MobilePageHeader
+        title="Chuyển tiền"
+        icon={Send}
+        subtitle="Khởi tạo giao dịch chuyển tiền"
+      />
 
-      <div className="rounded-lg border bg-card p-3">
-        <ManualDisbursementForm
-          banks={banks}
-          state={form}
-          onChange={setForm}
-          onSubmit={handleSubmit}
-          verified={verified}
-          onVerified={setVerified}
-          disabled={initiateMutation.isPending}
-        />
-      </div>
+      <div className="p-4 space-y-4">
+        <div className="rounded-xl border border-border/40 shadow-soft bg-card p-3">
+          <ManualDisbursementForm
+            banks={banks}
+            state={form}
+            onChange={setForm}
+            onSubmit={handleSubmit}
+            verified={verified}
+            onVerified={setVerified}
+            disabled={initiateMutation.isPending}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Button
-          type="button"
-          variant="ghost"
-          className="w-full justify-between"
-          onClick={() => setRecentExpanded((v) => !v)}
-        >
-          <span>Xem giao dịch gần đây</span>
-          {recentExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
-        {recentExpanded && <RecentTransfers limit={20} />}
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-between"
+            onClick={() => setRecentExpanded((v) => !v)}
+          >
+            <span>Xem giao dịch gần đây</span>
+            {recentExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          {recentExpanded && <RecentTransfers limit={20} />}
+        </div>
       </div>
 
       <ConfirmManualDisbursementDialog

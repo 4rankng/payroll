@@ -1,14 +1,11 @@
 import React, { useMemo } from "react";
-import { useAppState } from "@/contexts";
 import { Loader2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useCronJobs, useToggleCronJob } from "@/hooks/api/useCronHealth";
 import { CronJobCard, computeCronSummary } from "@/components/cron-health";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 
 export default function CronHealthPageMobile() {
-  const { setPageTitle } = useAppState();
-  React.useEffect(() => { setPageTitle("Tác vụ định kỳ"); }, [setPageTitle]);
-
   const { data: jobs, isLoading } = useCronJobs();
   const toggleMutation = useToggleCronJob();
 
@@ -27,15 +24,12 @@ export default function CronHealthPageMobile() {
 
   return (
     <div className="min-h-full pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 pt-4 pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-foreground flex items-center gap-2 shrink-0">
-            <Clock className="h-5 w-5 text-primary" />
-            Tác vụ định kỳ
-          </h1>
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            <Badge variant="outline" className="text-xs font-normal text-gray-500">
+      <MobilePageHeader
+        title="Tác vụ định kỳ"
+        icon={Clock}
+        subtitle={
+          <span className="inline-flex items-center gap-1.5 flex-wrap">
+            <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
               {summary.total} jobs
             </Badge>
             <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-200 bg-emerald-50">
@@ -46,12 +40,11 @@ export default function CronHealthPageMobile() {
                 {summary.failed} lỗi
               </Badge>
             )}
-          </div>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
-      {/* Job list */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 flex flex-col gap-3">
         {jobs?.map((job) => (
           <CronJobCard
             key={job.name}

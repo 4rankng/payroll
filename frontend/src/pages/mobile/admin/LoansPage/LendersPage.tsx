@@ -1,8 +1,10 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Users2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Users2, ChevronLeft, ChevronRight, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { LenderCard } from "@/components/lenders/LenderCard";
 import { AddLenderSheet } from "@/components/sheets/AddLenderSheet";
 import { EditLenderSheet } from "@/components/sheets/EditLenderSheet";
@@ -46,41 +48,28 @@ const LendersPage = () => {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      {/* Sticky header with back button */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 shrink-0">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 -ml-1"
-            onClick={() => navigate(-1)}
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-              <Users2 className="h-4 w-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-foreground leading-tight">
-                Quản lý chủ nợ
-              </h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                Danh sách chủ nợ và thông tin liên quan
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            className="btn-admin-primary shrink-0"
-            onClick={() => setShowAddSheet(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Thêm
-          </Button>
-        </div>
-      </div>
+      <MobilePageHeader
+        icon={HandCoins}
+        title="Người cho vay"
+        subtitle="Danh sách chủ nợ và thông tin liên quan"
+        sticky={false}
+        bordered={false}
+        actions={
+          <>
+            <Button
+              size="sm"
+              className="btn-admin-primary shrink-0"
+              onClick={() => setShowAddSheet(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Thêm
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </>
+        }
+      />
 
       {/* Search */}
       <div className="px-4 pt-3 pb-2">
@@ -99,17 +88,12 @@ const LendersPage = () => {
             <div className="text-sm text-muted-foreground">Đang tải...</div>
           </div>
         ) : lenders.length === 0 ? (
-          <div className="text-center py-12">
-            <Users2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mt-4 text-base font-semibold">Chưa có chủ nợ nào</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Thêm chủ nợ đầu tiên để bắt đầu quản lý khoản vay.
-            </p>
-            <Button onClick={() => setShowAddSheet(true)} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm chủ nợ
-            </Button>
-          </div>
+          <EmptyState
+            icon={Users2}
+            title="Chưa có chủ nợ nào"
+            description="Thêm chủ nợ đầu tiên để bắt đầu quản lý khoản vay."
+            action={{ label: "Thêm chủ nợ", onClick: () => setShowAddSheet(true) }}
+          />
         ) : (
           <>
             <div className="grid grid-cols-1 gap-3">

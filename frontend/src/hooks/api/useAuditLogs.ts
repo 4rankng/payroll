@@ -2,8 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/client';
 import { QueryKeys } from '@/lib/queryKeys';
 import type {
-  BackendAuditLogsResponse,
-  BackendAuditLogDetailResponse,
+  BackendAuditLog,
   AuditLogsQueryParams,
 } from '@/types/api/audit.types';
 
@@ -26,16 +25,17 @@ function buildAuditQueryString(params: AuditLogsQueryParams & { page?: number })
 }
 
 export function useInfiniteAuditLogs(filters: Omit<AuditLogsQueryParams, 'page' | 'pageSize'> = {}) {
-  return useInfiniteQuery<BackendAuditLogsResponse>({
+  return useInfiniteQuery({
     queryKey: QueryKeys.audit.logs({ ...filters, infinite: true } as Record<string, unknown>),
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await apiClient.get<BackendAuditLogsResponse>(
+      const response = await apiClient.get<BackendAuditLog[]>(
         `${BASE}/logs${buildAuditQueryString({ ...filters, page: pageParam as number, pageSize: PAGE_SIZE })}`
       );
-      return response.data!;
+      return response;
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return undefined;
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },
@@ -46,7 +46,7 @@ export function useAuditLogDetail(id: number | null) {
   return useQuery({
     queryKey: QueryKeys.audit.logDetail(id ?? 0),
     queryFn: async () => {
-      const response = await apiClient.get<BackendAuditLogDetailResponse>(`${BASE}/logs/${id}`);
+      const response = await apiClient.get<BackendAuditLog>(`${BASE}/logs/${id}`);
       return response.data!;
     },
     enabled: id !== null && id > 0,

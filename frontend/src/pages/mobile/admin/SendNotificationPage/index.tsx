@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSendNotification } from '@/hooks/api/useNotifications';
 import { NotificationDialogHeader } from '@/components/settings/send-notification-dialog/NotificationDialogHeader';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { cn } from '@/lib/utils';
 
 export default function SendNotificationPageMobile() {
@@ -73,59 +74,62 @@ export default function SendNotificationPageMobile() {
   }, []);
 
   return (
-    <div className="p-4 pb-20 space-y-6">
-      <div className="flex items-center gap-2">
-        <Bell className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold text-foreground">Gửi thông báo</h1>
-      </div>
-
-      <NotificationDialogHeader
-        recipientIds={recipientIds}
-        quickSelect={quickSelect}
-        recipientError={recipientError}
-        onRecipientsChange={handleRecipientsChange}
-        onQuickSelectChange={handleQuickSelectChange}
-        onClearRecipientError={() => setRecipientError('')}
-        title={title}
-        titleError={titleError}
-        onTitleChange={handleTitleChange}
+    <div className="pb-20">
+      <MobilePageHeader
+        title="Gửi thông báo"
+        icon={Bell}
+        subtitle="Tạo và gửi thông báo đến người dùng"
       />
 
-      <section aria-labelledby="message-label">
-        <span id="message-label" className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 block">
-          Nội dung
-        </span>
-        <div className="space-y-1.5">
-          <Label htmlFor="notif-message" className="sr-only">Nội dung thông báo</Label>
-          <Textarea
-            id="notif-message"
-            placeholder="Nhập nội dung thông báo..."
-            rows={5}
-            value={message}
-            onChange={handleMessageChange}
-            className={cn(messageError && 'border-red-500 focus-visible:ring-red-500')}
-          />
-          {messageError && (
-            <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>{messageError}</span>
-            </div>
-          )}
-        </div>
-      </section>
+      <div className="p-4 space-y-6">
+        <NotificationDialogHeader
+          recipientIds={recipientIds}
+          quickSelect={quickSelect}
+          recipientError={recipientError}
+          onRecipientsChange={handleRecipientsChange}
+          onQuickSelectChange={handleQuickSelectChange}
+          onClearRecipientError={() => setRecipientError('')}
+          title={title}
+          titleError={titleError}
+          onTitleChange={handleTitleChange}
+        />
 
-      <Button
-        type="button"
-        className="w-full h-12 font-semibold text-base"
-        onClick={handleSend}
-        disabled={!canSend || isPending}
-      >
-        {isPending ? (
-          <><Loader2 className="w-4 w-4 mr-2 animate-spin" />Đang gửi...</>
-        ) : (
-          <><Bell className="w-4 h-4 mr-2" />Gửi thông báo</>
-        )}
-      </Button>
+        <section aria-labelledby="message-label">
+          <span id="message-label" className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 block">
+            Nội dung
+          </span>
+          <div className="space-y-1.5">
+            <Label htmlFor="notif-message" className="sr-only">Nội dung thông báo</Label>
+            <Textarea
+              id="notif-message"
+              placeholder="Nhập nội dung thông báo..."
+              rows={5}
+              value={message}
+              onChange={handleMessageChange}
+              className={cn(messageError && 'border-red-500 focus-visible:ring-red-500')}
+            />
+            {messageError && (
+              <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{messageError}</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <Button
+          type="button"
+          className="w-full h-12 font-semibold text-base"
+          onClick={handleSend}
+          disabled={!canSend || isPending}
+        >
+          {isPending ? (
+            <><Loader2 className="w-4 w-4 mr-2 animate-spin" />Đang gửi...</>
+          ) : (
+            <><Bell className="w-4 h-4 mr-2" />Gửi thông báo</>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -79,6 +79,7 @@ export function useEmployeeTimesheetsInfinite(
     queryFn: ({ pageParam }) =>
       employeePortalService.getMyTimesheets({ ...(filters || {}), page: pageParam as number, pageSize }),
     getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return undefined;
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },

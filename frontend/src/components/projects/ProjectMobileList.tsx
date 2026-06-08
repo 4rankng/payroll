@@ -101,7 +101,7 @@ export function ProjectMobileList({
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full flex flex-col gap-3">
       {projects.map((project) => (
         <ProjectCard key={project.id} project={project} onRowClick={onRowClick} />
       ))}

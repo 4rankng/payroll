@@ -356,7 +356,7 @@ const TimesheetPageMobile = () => {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="p-4 space-y-4">
+      <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-1 gap-3">
           {Array.from({ length: 2 }).map((_, i) => (

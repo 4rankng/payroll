@@ -5,6 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetadataRenderer } from './MetadataRenderer';
@@ -47,8 +48,8 @@ function DetailRow({
 }
 
 export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps) {
-  const { data, isLoading } = useAuditLogDetail(logId);
-  const log = data?.data;
+  const { data: log, isLoading } = useAuditLogDetail(logId);
+  const isMobile = useIsMobile();
   const variant = log ? getActionVariant(log.action) : 'gray';
 
   const location = log ? extractLocation(log.metadata) : null;
@@ -56,7 +57,7 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
 
   return (
     <Sheet open={logId !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">
             Chi tiết Audit Log

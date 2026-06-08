@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { format, startOfMonth } from 'date-fns';
-import { Users, UserCheck, UserX, Banknote, Trophy } from 'lucide-react';
+import { Users, UserCheck, UserX, Banknote, Trophy, BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { generateMonthOptions } from '@/utils/dateHelpers';
@@ -132,10 +133,13 @@ const PartnerDashboardMobile = () => {
 
   return (
     <div className="p-4 pb-20 space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Tổng quan</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Theo dõi nhân viên và thanh toán</p>
-      </div>
+      <MobilePageHeader
+        title="Tổng quan"
+        subtitle="Theo dõi nhân viên và thanh toán"
+        icon={BarChart3}
+        sticky={false}
+        bordered={false}
+      />
 
       <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
 

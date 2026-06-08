@@ -128,7 +128,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
           <div className="flex flex-col gap-1 sm:hidden">
             <div className="flex items-center gap-1.5">
               <Icon className={cn('h-3 w-3 shrink-0', c.iconText)} strokeWidth={2.2} />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground leading-tight line-clamp-2">
                 {label}
               </span>
             </div>

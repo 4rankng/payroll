@@ -14,6 +14,7 @@ import {
 } from "@/utils/advancePaymentHelpers";
 import { formatCurrency } from "@/utils/formatters";
 import { useAdvancePayments } from "@/hooks/api/useAdvancePayments";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type {
   AdvancePaymentListItem,
   FlexPayEmployeeListItem,
@@ -32,6 +33,7 @@ export const EmployeeAdvancePaymentDetailSheet = ({
   employee,
   onClose,
 }: EmployeeAdvancePaymentDetailSheetProps) => {
+  const isMobile = useIsMobile();
   const { data: employeeRequests } = useAdvancePayments(
     { search: employee?.cccd, pageSize: 50 },
     { enabled: employee !== null },
@@ -45,7 +47,7 @@ export const EmployeeAdvancePaymentDetailSheet = ({
       }}
     >
       <SheetContent
-        side="right"
+        side={isMobile ? "bottom" : "right"}
         className="w-full sm:max-w-[420px] p-0 flex flex-col bg-[#f7f8fa]"
       >
         {employee && (

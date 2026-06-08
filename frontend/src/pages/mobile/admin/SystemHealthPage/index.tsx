@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Activity, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +14,7 @@ import {
   type TimeRange,
 } from "@/components/system-health";
 import { useAPISummary, useRecentErrors } from "@/hooks/api/useSystemHealth";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 
 type HealthLevel = "healthy" | "degraded" | "critical";
 
@@ -56,21 +57,24 @@ export default function SystemHealthPage() {
 
   return (
     <div className="space-y-3 pb-20">
-
-      {/* Sticky header — single row */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2.5 flex items-center gap-2 border-b border-border/40">
-        <h1 className="min-w-0 flex-1 text-base font-bold text-foreground leading-none truncate">Tình trạng API</h1>
-        <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
-        {healthMeta && (
-          <div className={cn(
-            "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border shrink-0",
-            healthMeta.pill,
-          )}>
-            <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", healthMeta.dot)} />
-            {healthMeta.label}
+      <MobilePageHeader
+        title="Tình trạng API"
+        icon={Activity}
+        actions={
+          <div className="flex items-center gap-1.5">
+            <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
+            {healthMeta && (
+              <div className={cn(
+                "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border shrink-0",
+                healthMeta.pill,
+              )}>
+                <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", healthMeta.dot)} />
+                {healthMeta.label}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        }
+      />
 
       {/* Summary pills */}
       <div className="px-4">

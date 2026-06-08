@@ -63,7 +63,7 @@ const UserGridCard = React.memo(function UserGridCard({
       </div>
       <div className="w-full min-w-0">
         <p className={`text-xs font-semibold leading-tight truncate ${cfg.name}`}>{user.fullname}</p>
-        <p className={`text-[10px] truncate mt-0.5 ${cfg.sub}`}>@{user.username}</p>
+        <p className={`text-[11px] truncate mt-0.5 ${cfg.sub}`}>@{user.username}</p>
       </div>
     </button>
   );

@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SortingState } from "@tanstack/react-table";
-import { ArrowLeft, FileSpreadsheet, History } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, History, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { PaymentHistoryFilters } from "@/components/payroll/PaymentHistoryFilters";
 import { PaymentHistoryMobileList } from "@/components/payroll/mobile/PaymentHistoryMobileList";
 import { InfiniteScrollContainer } from "@/components/ui/infinite-scroll-container";
@@ -104,42 +105,29 @@ const PaymentHistoryPage = () => {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      {/* Sticky header with back button */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 shrink-0">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 -ml-1"
-            onClick={() => navigate(-1)}
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-              <History className="h-4 w-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-foreground leading-tight">
-                Lịch sử trả lương
-              </h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                Danh sách các lần thanh toán lương
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleExport}
-            disabled={exportPaymentHistories.isPending}
-            className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs shrink-0"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
-            Xuất
-          </Button>
-        </div>
-      </div>
+      <MobilePageHeader
+        title="Lịch sử thanh toán"
+        subtitle="Danh sách các lần thanh toán lương"
+        icon={Receipt}
+        sticky={false}
+        bordered={false}
+        actions={
+          <>
+            <Button
+              size="sm"
+              onClick={handleExport}
+              disabled={exportPaymentHistories.isPending}
+              className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs shrink-0"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
+              Xuất
+            </Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="px-4 pt-3 pb-2">

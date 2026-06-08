@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Loader2, CheckCheck, Bell, X, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { NotificationItem } from './NotificationItem';
 import { NotificationDetailModal } from './NotificationDetailModal';
@@ -40,6 +41,7 @@ interface NotificationSheetProps {
 }
 
 export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: NotificationSheetProps) => {
+  const isMobile = useIsMobile();
   const theme = THEME[variant];
   const [activeView, setActiveView] = useState<NotificationView>('unread');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -126,7 +128,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="right" className="!w-full sm:!w-[420px] p-0 flex flex-col h-full bg-gray-50">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="!w-full sm:!w-[420px] p-0 flex flex-col h-full bg-gray-50">
 
           {/* Header */}
           <div className="text-white px-4 pb-4" style={{ background: theme.headerBg, paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
