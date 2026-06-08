@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp } from 'lucide-react';
+import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon } from 'lucide-react';
 
 interface TimesheetPageHeaderMobileProps {
   onAddTimesheet: () => void;
@@ -44,149 +45,151 @@ export function TimesheetPageHeaderMobile({
     : 'Theo dõi và duyệt bảng công';
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="min-w-0">
-        <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">Bảng công</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-      </div>
+    <MobilePageHeader
+      title="Bảng công"
+      subtitle={description}
+      icon={TableIcon}
+      sticky={false}
+      bordered={false}
+      actions={
+        <div className="flex items-center gap-2 shrink-0">
+          <Button onClick={onAddTimesheet} className="touch-manipulation h-9">
+            <Plus className="h-4 w-4 mr-1" />
+            Nhập
+          </Button>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <Button onClick={onAddTimesheet} className="touch-manipulation">
-          <Plus />
-          Nhập
-        </Button>
-
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="touch-manipulation" aria-label="Thêm tùy chọn">
-              <MoreHorizontal />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto">
-            <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
-            <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>
-
-              {/* Exports */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-auto px-2 py-3"
-                onClick={() => { onApprovedTimesheetsExport(); close(); }}
-                disabled={isApprovedExportPending}
-              >
-                <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium">{isApprovedExportPending ? 'Đang xuất...' : 'Xuất bảng công đã duyệt'}</span>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="touch-manipulation h-9 w-9" aria-label="Thêm tùy chọn">
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-auto">
+              <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
+              <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-auto px-2 py-3"
-                onClick={() => { onPayrollReportExport(); close(); }}
-                disabled={isPayrollReportPending}
-              >
-                <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                <span className="text-sm font-medium">{isPayrollReportPending ? 'Đang xuất...' : 'Xuất sao kê lương'}</span>
-              </Button>
-
-              {onBulkTransferExport && (
+                {/* Exports */}
                 <Button
                   variant="ghost"
                   className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onBulkTransferExport(); close(); }}
+                  onClick={() => { onApprovedTimesheetsExport(); close(); }}
+                  disabled={isApprovedExportPending}
                 >
-                  <ArrowRightLeft className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Xuất file chuyển lô</span>
+                  <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">{isApprovedExportPending ? 'Đang xuất...' : 'Xuất bảng công đã duyệt'}</span>
                 </Button>
-              )}
 
-              {/* Imports / uploads */}
-              {onBulkTransferResultUpload && (
-                <>
-                  <div className="h-px bg-border mx-1 my-1" />
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-auto px-2 py-3"
+                  onClick={() => { onPayrollReportExport(); close(); }}
+                  disabled={isPayrollReportPending}
+                >
+                  <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">{isPayrollReportPending ? 'Đang xuất...' : 'Xuất sao kê lương'}</span>
+                </Button>
+
+                {onBulkTransferExport && (
                   <Button
                     variant="ghost"
                     className="w-full justify-start h-auto px-2 py-3"
-                    onClick={() => { onBulkTransferResultUpload(); close(); }}
+                    onClick={() => { onBulkTransferExport(); close(); }}
                   >
-                    <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">Nhập KQ chuyển lô</span>
+                    <ArrowRightLeft className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Xuất file chuyển lô</span>
                   </Button>
-                </>
-              )}
+                )}
 
-              {/* Actions */}
-              {(onBulkApprove || onBulkTransferHistory || onPaymentHistory) && (
+                {/* Imports / uploads */}
+                {onBulkTransferResultUpload && (
+                  <>
+                    <div className="h-px bg-border mx-1 my-1" />
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-auto px-2 py-3"
+                      onClick={() => { onBulkTransferResultUpload(); close(); }}
+                    >
+                      <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium">Nhập KQ chuyển lô</span>
+                    </Button>
+                  </>
+                )}
+
+                {/* Actions */}
+                {(onBulkApprove || onBulkTransferHistory || onPaymentHistory) && (
+                  <div className="h-px bg-border mx-1 my-1" />
+                )}
+
+                {onBulkApprove && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-auto px-2 py-3"
+                    onClick={() => { onBulkApprove(); close(); }}
+                  >
+                    <CheckSquare className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Duyệt hết</span>
+                  </Button>
+                )}
+
+                {onBulkTransferHistory && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-auto px-2 py-3"
+                    onClick={() => { onBulkTransferHistory(); close(); }}
+                  >
+                    <History className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Lịch sử chuyển lô</span>
+                  </Button>
+                )}
+
+                {onBccUpload && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-auto px-2 py-3"
+                    onClick={() => { onBccUpload(); close(); }}
+                  >
+                    <FileUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Tải lên BCC</span>
+                  </Button>
+                )}
+
+                {onBccHistory && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-auto px-2 py-3"
+                    onClick={() => { onBccHistory(); close(); }}
+                  >
+                    <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Lịch sử BCC</span>
+                  </Button>
+                )}
+
+                {onPaymentHistory && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-auto px-2 py-3"
+                    onClick={() => { onPaymentHistory(); close(); }}
+                  >
+                    <History className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Lịch sử trả lương</span>
+                  </Button>
+                )}
+
+                {/* Close button at bottom */}
                 <div className="h-px bg-border mx-1 my-1" />
-              )}
-
-              {onBulkApprove && (
                 <Button
                   variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onBulkApprove(); close(); }}
+                  className="w-full justify-start h-auto px-2 py-3 text-muted-foreground"
+                  onClick={close}
                 >
-                  <CheckSquare className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Duyệt hết</span>
+                  <X className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-medium">Đóng</span>
                 </Button>
-              )}
-
-              {onBulkTransferHistory && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onBulkTransferHistory(); close(); }}
-                >
-                  <History className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Lịch sử chuyển lô</span>
-                </Button>
-              )}
-
-              {onBccUpload && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onBccUpload(); close(); }}
-                >
-                  <FileUp className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Tải lên BCC</span>
-                </Button>
-              )}
-
-              {onBccHistory && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onBccHistory(); close(); }}
-                >
-                  <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Lịch sử BCC</span>
-                </Button>
-              )}
-
-              {onPaymentHistory && (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
-                  onClick={() => { onPaymentHistory(); close(); }}
-                >
-                  <History className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">Lịch sử trả lương</span>
-                </Button>
-              )}
-
-              {/* Close button at bottom */}
-              <div className="h-px bg-border mx-1 my-1" />
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-auto px-2 py-3 text-muted-foreground"
-                onClick={close}
-              >
-                <X className="h-5 w-5 shrink-0" />
-                <span className="text-sm font-medium">Đóng</span>
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      }
+    />
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -121,15 +122,18 @@ const ProjectsPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex flex-col min-h-full pb-24">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-foreground">Dự án</h1>
-        <Button className="btn-admin-primary shrink-0" onClick={() => openCreateProject()}>
-          <Plus />
-          Tạo dự án
-        </Button>
-      </div>
+      <MobilePageHeader
+        title="Dự án"
+        icon={Briefcase}
+        actions={
+          <Button className="btn-admin-primary shrink-0" onClick={() => openCreateProject()}>
+            <Plus className="h-4 w-4 mr-1" />
+            Tạo dự án
+          </Button>
+        }
+      />
 
       {/* Search + filter */}
       <div className="px-4 pb-3 flex gap-2">

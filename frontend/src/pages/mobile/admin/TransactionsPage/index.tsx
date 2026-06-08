@@ -95,7 +95,7 @@ const TransactionsPageMobile = () => {
   );
 
   return (
-    <div className="p-4 space-y-4 max-w-full overflow-hidden pb-20">
+    <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
       <TransactionPageHeaderMobile
         onAddTransaction={() => openAddLedgerEntry()}
         onImportTransactions={() => setShowImportDialog(true)}

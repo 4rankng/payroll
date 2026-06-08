@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Mail, Users, Loader2, AlertCircle, X, Clock, User, Send } from 'lucide-react';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -35,6 +36,7 @@ export const EmailHistorySheet = memo(function EmailHistorySheet({
   open,
   onOpenChange,
 }: EmailHistorySheetProps) {
+  const isMobile = useIsMobile();
   const [expandedEmailIds, setExpandedEmailIds] = useState<Set<EmailHistoryRecord['id']>>(
     () => new Set()
   );
@@ -335,7 +337,7 @@ export const EmailHistorySheet = memo(function EmailHistorySheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="right"
+        side={isMobile ? "bottom" : "right"}
         className="flex h-full w-full flex-col bg-muted/50 p-0 sm:max-w-[760px]"
         aria-label="Lịch sử email đã gửi"
       >

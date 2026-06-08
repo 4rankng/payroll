@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -134,18 +135,21 @@ const LoansPageMobile = () => {
   return (
     <div className="flex flex-col min-h-full pb-20">
       {/* Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-foreground">Khoản vay</h1>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" onClick={() => navigate('lenders')}>
-            Chủ nợ
-          </Button>
-          <Button className="btn-admin-primary" onClick={() => setIsAddLoanOpen(true)}>
-            <Plus />
-            Tạo vay
-          </Button>
-        </div>
-      </div>
+      <MobilePageHeader
+        title="Khoản vay"
+        icon={Landmark}
+        actions={
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate('lenders')}>
+              Chủ nợ
+            </Button>
+            <Button className="btn-admin-primary h-9" onClick={() => setIsAddLoanOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Tạo vay
+            </Button>
+          </div>
+        }
+      />
 
       {/* Stats strip */}
       <div className="px-4 pb-3">

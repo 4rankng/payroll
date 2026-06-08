@@ -28,6 +28,8 @@ import { useBankUsageAllProjects } from '@/hooks/api/useDashboard';
 import { useTimesheetModals } from '@/hooks/useModalNavigation';
 import { useEmployeeModals } from '@/hooks/useModalNavigation';
 import { cn } from '@/lib/utils';
+import { MobileSectionHeader as SectionHeader } from '@/components/shared/MobileSectionHeader';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function formatVND(value: number): string {
@@ -37,25 +39,6 @@ function formatVND(value: number): string {
   if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M đ`;
   if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K đ`;
   return `${sign}${abs.toLocaleString('vi-VN')} đ`;
-}
-
-// ── Section header — consistent typography across all dashboard sections ─────
-function SectionHeader({ icon: Icon, title, children }: {
-  icon: React.ElementType;
-  title: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5">
-        <Icon className="h-3.5 w-3.5 text-primary/70" strokeWidth={2} />
-      </div>
-      <h2 className="font-display text-[13px] font-bold text-foreground tracking-tight leading-tight">
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
 }
 
 const AdminDashboardMobile = () => {
@@ -137,63 +120,58 @@ const AdminDashboardMobile = () => {
   return (
     <div className="pb-20">
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80 border-b border-border/30">
-        <div className="px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="font-display text-[22px] font-extrabold text-foreground tracking-tight leading-tight">
-                Tổng quan
-              </h1>
-              <p className="text-xs font-medium text-muted-foreground mt-1">
-                {format(new Date(), 'EEEE, dd/MM', { locale: vi })}
-              </p>
-            </div>
-            {pendingApprovals > 0 && (
-              <button
-                onClick={dashboardNav.navigateToPendingApprovals}
-                className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold active:scale-95 transition-transform"
-              >
-                <AlertCircle className="h-3.5 w-3.5" />
-                {pendingApprovals} chờ duyệt
-              </button>
-            )}
-          </div>
+      <MobilePageHeader
+        title="Tổng quan"
+        subtitle={format(new Date(), 'EEEE, dd/MM', { locale: vi })}
+        icon={BarChart3}
+        actions={
+          pendingApprovals > 0 ? (
+            <button
+              onClick={dashboardNav.navigateToPendingApprovals}
+              className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold active:scale-95 transition-transform"
+            >
+              <AlertCircle className="h-3.5 w-3.5" />
+              {pendingApprovals} chờ duyệt
+            </button>
+          ) : undefined
+        }
+      />
 
-          {/* Compact month picker */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setSelectedMonth('all')}
-              className={cn(
-                'h-9 px-3.5 rounded-lg text-xs font-semibold transition-colors',
-                selectedMonth === 'all'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted/60 text-muted-foreground',
-              )}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
-              className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
-              aria-label="Tháng trước"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <div className={cn(
-              'flex items-center gap-1.5 h-9 px-3 rounded-lg bg-muted/60 text-xs font-semibold text-foreground',
-              selectedMonth === 'all' && 'opacity-50',
-            )}>
-              <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-              {selectedMonth === 'all' ? 'Tất cả' : format(selectedDate, 'MM/yyyy', { locale: vi })}
-            </div>
-            <button
-              onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
-              className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
-              aria-label="Tháng sau"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+      {/* ── Compact month picker ── */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setSelectedMonth('all')}
+            className={cn(
+              'h-9 px-3.5 rounded-lg text-xs font-semibold transition-colors',
+              selectedMonth === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted/60 text-muted-foreground',
+            )}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
+            className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
+            aria-label="Tháng trước"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className={cn(
+            'flex items-center gap-1.5 h-9 px-3 rounded-lg bg-muted/60 text-xs font-semibold text-foreground',
+            selectedMonth === 'all' && 'opacity-50',
+          )}>
+            <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+            {selectedMonth === 'all' ? 'Tất cả' : format(selectedDate, 'MM/yyyy', { locale: vi })}
           </div>
+          <button
+            onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
+            className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
+            aria-label="Tháng sau"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
 

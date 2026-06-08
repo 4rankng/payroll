@@ -3,9 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, User, Activity } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { EmployeeDetailsSheet } from "@/components/employees/details/EmployeeDetailsSheet";
 import { useActiveEmployeesBySchedule } from "@/hooks/api/useDashboard";
 import { useEmployee, useUpdateEmployee, useDeleteEmployee } from "@/hooks/api/useEmployees";
@@ -73,33 +75,18 @@ const ActivityUsersPage = () => {
 
   return (
     <div className="flex flex-col min-h-full pb-20">
-      {/* Sticky header with back button */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 shrink-0">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 -ml-1"
-            onClick={() => navigate(-1)}
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="h-5 w-5" />
+      <MobilePageHeader
+        icon={Activity}
+        title={title}
+        subtitle={subtitle}
+        sticky={false}
+        bordered={false}
+        actions={
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-              <Activity className="h-4 w-4 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-foreground leading-tight">
-                {title}
-              </h1>
-              <p className="text-xs text-muted-foreground leading-tight">
-                {subtitle}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Content */}
       <div className="flex-1 px-4 py-3">
@@ -119,10 +106,10 @@ const ActivityUsersPage = () => {
             ))}
           </div>
         ) : !users || users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
-            <User className="h-8 w-8 opacity-30" />
-            <span>Không có nhân viên nào đăng nhập</span>
-          </div>
+          <EmptyState
+            icon={User}
+            title="Không có nhân viên nào đăng nhập"
+          />
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {users.map((user) => (

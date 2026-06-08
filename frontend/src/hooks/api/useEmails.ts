@@ -29,9 +29,9 @@ export const useEmailHistory = (options: UseEmailHistoryOptions = {}) => {
     enabled,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const pagination = lastPage.pagination;
-      const nextPage = pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
-      return nextPage;
+      if (!lastPage?.pagination) return undefined;
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
     },
     refetchOnWindowFocus: enabled,
   });

@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { Plus, RotateCcw, BarChart3, MoreHorizontal, TrendingUp, GitMerge, Mail, History, Loader2 } from 'lucide-react';
+import { BookOpen, Plus, RotateCcw, BarChart3, MoreHorizontal, TrendingUp, GitMerge, Mail, History, Loader2 } from 'lucide-react';
 import { CashFlowChart } from '../CashFlowChart';
 import { cn } from '@/lib/utils';
 
@@ -46,97 +47,100 @@ export function LedgerPageHeaderMobile({
   return (
     <div className="space-y-3">
       {/* Header row */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">Sổ Cái</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Quản lý sổ cái và giao dịch</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button onClick={onAddEntry} className="touch-manipulation">
-            <Plus />
-            Thêm
-          </Button>
-          <Sheet open={showActionsSheet} onOpenChange={setShowActionsSheet}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="touch-manipulation">
-                <MoreHorizontal />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto">
-              <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
-              <div className="space-y-2 mt-4 pb-4">
-                {onAddDoubleEntry && (
-                  <Button
-                    onClick={() => { onAddDoubleEntry(); setShowActionsSheet(false); }}
-                    variant="outline"
-                    className="w-full justify-start h-12 gap-3"
-                  >
-                    <GitMerge className="h-5 w-5 text-muted-foreground" />
-                    Nhập bút toán kép
-                  </Button>
-                )}
-                {onRecalculateBalance && (
-                  <Button
-                    onClick={() => { onRecalculateBalance(); setShowActionsSheet(false); }}
-                    variant="outline"
-                    disabled={isRecalculating}
-                    className="w-full justify-start h-12 gap-3"
-                  >
-                    <RotateCcw className={cn("h-5 w-5 text-muted-foreground", isRecalculating && "animate-spin")} />
-                    {isRecalculating ? 'Đang tính...' : 'Tính lại số dư'}
-                  </Button>
-                )}
-                <Button
-                  onClick={() => { setShowChart(!showChart); setShowActionsSheet(false); }}
-                  variant="outline"
-                  className="w-full justify-start h-12 gap-3"
-                >
-                  <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                  {showChart ? 'Ẩn biểu đồ' : 'Xem biểu đồ'}
+      <MobilePageHeader
+        title="Sổ Cái"
+        subtitle="Quản lý sổ cái và giao dịch"
+        icon={BookOpen}
+        sticky={false}
+        bordered={false}
+        actions={
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={onAddEntry} size="sm" className="h-9 btn-admin-primary touch-manipulation">
+              <Plus className="h-4 w-4 mr-1" />
+              Thêm
+            </Button>
+            <Sheet open={showActionsSheet} onOpenChange={setShowActionsSheet}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9 touch-manipulation">
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
-                {onSendSaoKePayroll && (
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-auto">
+                <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
+                <div className="space-y-2 mt-4 pb-4">
+                  {onAddDoubleEntry && (
+                    <Button
+                      onClick={() => { onAddDoubleEntry(); setShowActionsSheet(false); }}
+                      variant="outline"
+                      className="w-full justify-start h-12 gap-3"
+                    >
+                      <GitMerge className="h-5 w-5 text-muted-foreground" />
+                      Nhập bút toán kép
+                    </Button>
+                  )}
+                  {onRecalculateBalance && (
+                    <Button
+                      onClick={() => { onRecalculateBalance(); setShowActionsSheet(false); }}
+                      variant="outline"
+                      disabled={isRecalculating}
+                      className="w-full justify-start h-12 gap-3"
+                    >
+                      <RotateCcw className={cn("h-5 w-5 text-muted-foreground", isRecalculating && "animate-spin")} />
+                      {isRecalculating ? 'Đang tính...' : 'Tính lại số dư'}
+                    </Button>
+                  )}
                   <Button
-                    onClick={() => { onSendSaoKePayroll(); setShowActionsSheet(false); }}
-                    variant="outline"
-                    disabled={isSendingSaoKe}
-                    className="w-full justify-start h-12 gap-3"
-                  >
-                    {isSendingSaoKe
-                      ? <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-                      : <Mail className="h-5 w-5 text-muted-foreground" />
-                    }
-                    Email sao kê lương
-                  </Button>
-                )}
-                {onSendSaoKeAdvance && (
-                  <Button
-                    onClick={() => { onSendSaoKeAdvance(); setShowActionsSheet(false); }}
-                    variant="outline"
-                    disabled={isSendingSaoKe}
-                    className="w-full justify-start h-12 gap-3"
-                  >
-                    {isSendingSaoKe
-                      ? <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-                      : <Mail className="h-5 w-5 text-muted-foreground" />
-                    }
-                    Email sao kê ứng lương
-                  </Button>
-                )}
-                {onViewSaoKeHistory && (
-                  <Button
-                    onClick={() => { onViewSaoKeHistory(); setShowActionsSheet(false); }}
+                    onClick={() => { setShowChart(!showChart); setShowActionsSheet(false); }}
                     variant="outline"
                     className="w-full justify-start h-12 gap-3"
                   >
-                    <History className="h-5 w-5 text-muted-foreground" />
-                    Lịch sử sao kê
+                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                    {showChart ? 'Ẩn biểu đồ' : 'Xem biểu đồ'}
                   </Button>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+                  {onSendSaoKePayroll && (
+                    <Button
+                      onClick={() => { onSendSaoKePayroll(); setShowActionsSheet(false); }}
+                      variant="outline"
+                      disabled={isSendingSaoKe}
+                      className="w-full justify-start h-12 gap-3"
+                    >
+                      {isSendingSaoKe
+                        ? <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                        : <Mail className="h-5 w-5 text-muted-foreground" />
+                      }
+                      Email sao kê lương
+                    </Button>
+                  )}
+                  {onSendSaoKeAdvance && (
+                    <Button
+                      onClick={() => { onSendSaoKeAdvance(); setShowActionsSheet(false); }}
+                      variant="outline"
+                      disabled={isSendingSaoKe}
+                      className="w-full justify-start h-12 gap-3"
+                    >
+                      {isSendingSaoKe
+                        ? <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                        : <Mail className="h-5 w-5 text-muted-foreground" />
+                      }
+                      Email sao kê ứng lương
+                    </Button>
+                  )}
+                  {onViewSaoKeHistory && (
+                    <Button
+                      onClick={() => { onViewSaoKeHistory(); setShowActionsSheet(false); }}
+                      variant="outline"
+                      className="w-full justify-start h-12 gap-3"
+                    >
+                      <History className="h-5 w-5 text-muted-foreground" />
+                      Lịch sử sao kê
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        }
+      />
 
       {/* Balance cards */}
       <div className="grid grid-cols-2 gap-3">

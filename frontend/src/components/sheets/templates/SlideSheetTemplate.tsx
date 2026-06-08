@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { SlideSheetTemplateProps } from "./types";
 
 export function SlideSheetTemplate({
@@ -19,7 +20,10 @@ export function SlideSheetTemplate({
   className,
   compact = false
 }: SlideSheetTemplateProps) {
+  const isMobile = useIsMobile();
+
   const getSizeClasses = () => {
+    if (isMobile) return "w-full";
     switch (size) {
       case 'large':
         return "w-full sm:w-[600px] md:w-[700px] lg:w-[800px] xl:w-[900px]";
@@ -46,9 +50,10 @@ export function SlideSheetTemplate({
       }
     }}>
       <SheetContent
-        side="right"
+        side={isMobile ? "bottom" : "right"}
         className={cn(
           "p-0 flex flex-col h-full",
+          isMobile && "rounded-t-2xl max-h-[94dvh]",
           className || getSizeClasses()
         )}
       >

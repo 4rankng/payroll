@@ -41,6 +41,7 @@ export const useUsersInfinite = (filters?: Omit<UserFilters, 'page'>) => {
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) return undefined;
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },

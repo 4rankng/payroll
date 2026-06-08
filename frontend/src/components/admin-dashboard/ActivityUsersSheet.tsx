@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { X, User } from 'lucide-react';
@@ -42,6 +43,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
 
   const { data: users, isLoading } = useActiveEmployeesBySchedule(schedule, month);
+  const isMobile = useIsMobile();
   const { data: selectedEmployee } = useEmployee(selectedEmployeeId ?? 0, !!selectedEmployeeId);
   const updateEmployeeMutation = useUpdateEmployee();
   const deleteEmployeeMutation = useDeleteEmployee();
@@ -59,7 +61,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
   return (
     <>
       <Sheet open={!!schedule} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <SheetContent side="right" className="w-full sm:w-[480px] p-0 flex flex-col">
+        <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:w-[480px] p-0 flex flex-col">
           <SheetHeader className="px-4 py-3 border-b flex-shrink-0">
             <div className="flex items-center justify-between">
               <SheetTitle className="text-sm font-semibold">

@@ -80,7 +80,7 @@ const AdvancePaymentsPageMobile = () => {
 
   if (page.summaryLoading && page.requests.length === 0) {
     return (
-      <div className="p-4 space-y-4">
+      <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-2 gap-px">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -102,7 +102,7 @@ const AdvancePaymentsPageMobile = () => {
   }
 
   return (
-    <div className="p-4 pb-20 space-y-4 max-w-full">
+    <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
 
       {/* Header + actions */}
       <AdvancePaymentPageHeaderMobile

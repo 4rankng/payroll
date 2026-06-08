@@ -164,6 +164,7 @@ export default function EditAdvPartnerUserSheet({
   username: initialUsername,
   onClose,
 }: EditAdvPartnerUserSheetProps) {
+  const isMobile = useIsMobile();
   const [form, setForm] = useState<FormData>({
     fullname: initialName || "",
     email: "",
@@ -296,7 +297,7 @@ export default function EditAdvPartnerUserSheet({
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        side="right"
+        side={isMobile ? "bottom" : "right"}
         className="w-full sm:w-[480px] md:w-[520px] p-0 flex flex-col h-full"
       >
         {/* Header */}

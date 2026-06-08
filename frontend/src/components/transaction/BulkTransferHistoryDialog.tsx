@@ -5,6 +5,7 @@ import { FileSpreadsheet, Clock, User, X, Calendar as CalendarIcon, CheckCircle2
 import { useBulkTransferUploadHistories } from '@/hooks/api/usePayrolls';
 import type { BulkTransferUploadHistory } from '@/services/api/bulk-transfer.service';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -128,6 +129,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
   onSelectHistory,
   shouldFetchHistories,
 }: BulkTransferHistoryDialogProps) {
+  const isMobile = useIsMobile();
   const shouldFetchData = open && shouldFetchHistories;
   const yearToDate = useMemo(() => getYearToDateDefaults(), []);
 
@@ -184,7 +186,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-[540px] p-0 flex flex-col h-full gap-0">
+      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:w-[540px] sm:max-w-[540px] p-0 flex flex-col h-full gap-0">
 
         {/* Header */}
         <div className="shrink-0 px-4 pt-4 pb-3 border-b">

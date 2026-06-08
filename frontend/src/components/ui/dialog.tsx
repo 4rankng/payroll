@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const Dialog = DialogPrimitive.Root
 
@@ -14,12 +15,13 @@ const DialogClose = DialogPrimitive.Close
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & { mobileOverlay?: boolean }
+>(({ className, mobileOverlay, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      mobileOverlay ? "bg-black/40" : "bg-black/80",
       className
     )}
     {...props}
@@ -36,32 +38,40 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, title, description, hideCloseButton, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 flex flex-col gap-4 w-[calc(100%-2rem)] sm:w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border bg-background shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-2xl max-h-[calc(100vh-2rem)] overflow-hidden p-6",
-        className
-      )}
-    {...props}
-    >
-    {/* Provide visually-hidden fallbacks for title/description so DialogContent is accessible
-      even when callers omit DialogTitle/DialogDescription. Callers who include visible
-      DialogTitle/DialogDescription can ignore these fallbacks. */}
-    <DialogPrimitive.Title className="sr-only">{title ?? 'Dialog'}</DialogPrimitive.Title>
-    <DialogPrimitive.Description className="sr-only">{description ?? ''}</DialogPrimitive.Description>
-    {children}
-      {!hideCloseButton && (
-        <DialogPrimitive.Close className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors outline-none focus:ring-2 focus:ring-white/30 z-10">
-          <X className="w-4 h-4 text-white" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+>(({ className, children, title, description, hideCloseButton, ...props }, ref) => {
+  const isMobile = useIsMobile();
+
+  return (
+    <DialogPortal>
+      <DialogOverlay mobileOverlay={isMobile} />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed z-50 flex flex-col gap-4 border bg-background shadow-2xl overflow-hidden p-6",
+          isMobile
+            ? /* Mobile: bottom sheet */
+              "inset-x-0 bottom-0 w-full max-h-[92dvh] rounded-t-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300 data-[state=closed]:duration-200"
+            : /* Desktop: centered modal */
+              "left-[50%] top-[50%] w-[calc(100%-2rem)] sm:w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-2xl max-h-[calc(100vh-2rem)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+          className
+        )}
+        {...props}
+      >
+        {/* Provide visually-hidden fallbacks for title/description so DialogContent is accessible
+          even when callers omit DialogTitle/DialogDescription. */}
+        <DialogPrimitive.Title className="sr-only">{title ?? 'Dialog'}</DialogPrimitive.Title>
+        <DialogPrimitive.Description className="sr-only">{description ?? ''}</DialogPrimitive.Description>
+        {children}
+        {!hideCloseButton && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors outline-none focus:ring-2 focus:ring-white/30 z-10">
+            <X className="w-4 h-4 text-white" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 type DialogNavyHeaderProps = {

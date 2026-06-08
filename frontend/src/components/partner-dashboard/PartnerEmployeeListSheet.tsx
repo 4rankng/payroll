@@ -1,5 +1,6 @@
 import { memo, useState, useMemo, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -120,6 +121,7 @@ interface PartnerEmployeeListSheetProps {
 }
 
 export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmployeeListSheetProps) {
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
   const { data, isLoading } = usePartnerEmployeeList(
     type ? { type, month } : null
@@ -156,7 +158,7 @@ export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmploy
 
   return (
     <Sheet open={!!type} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[440px] p-0 flex flex-col">
+      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:w-[440px] p-0 flex flex-col">
         {/* Header */}
         <SheetHeader className="px-4 py-3 border-b flex-shrink-0" style={{ paddingTop: "max(12px, calc(12px + env(safe-area-inset-top)))" }}>
           <div className="flex items-center justify-between gap-2">
