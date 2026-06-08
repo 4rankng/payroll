@@ -325,7 +325,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Settlement:           handlers.NewSettlementHandler(services.SettlementUpload, repos.Notification, clk),
 		Metric:               handlers.NewMetricHandler(services.Metric, services.Cache, eventBus, clk),
 		Audit:                handlers.NewAuditHandler(repos.AuditLog),
-		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, clk),
+		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, repos.WalletPayment, clk),
 		AdvancePaymentFee:    advancePaymentHandlers.NewFeeScheduleHandler(services.AdvancePaymentFeeSchedule, clk),
 		EmployeeImport:       employeeImportHandler,
 		DBExport:             handlers.NewDBExportHandler(dbExportSvc.NewDBExportService(db, services.CacheService, cfg.Asset.StoragePath), services.Audit),

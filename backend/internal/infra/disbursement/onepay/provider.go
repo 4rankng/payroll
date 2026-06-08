@@ -6,8 +6,14 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"api-server/internal/domain/ports/infrastructure"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Provider implements infrastructure.DisbursementProvider on top of
@@ -66,7 +72,7 @@ func (p *Provider) InitiateTransfer(ctx context.Context, req infrastructure.Tran
 		FundsTransferID:   req.RequestID,
 		SwiftCode:         swiftCode,
 		AccountNumber:     req.AccountNo,
-		HolderName:        req.AccountName,
+		HolderName:        toASCII(req.AccountName),
 		Amount:            strconv.FormatInt(req.Amount, 10),
 		Currency:          "VND",
 		FundsTransferInfo: req.RequestID,
@@ -257,6 +263,18 @@ func translateState(state, responseCode string) infrastructure.TransferStatus {
 	default:
 		return infrastructure.TransferStatusUnknown
 	}
+}
+
+// toASCII strips diacritical marks and converts to plain ASCII.
+// OnePay rejects holder names with Vietnamese diacritical characters
+// (e.g. "Phàn Phủ Nghị" → "Phan Phu Nghi").
+func toASCII(s string) string {
+	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+	result, _, err := transform.String(t, s)
+	if err != nil {
+		return strings.ToValidUTF8(s, "")
+	}
+	return strings.ToUpper(result)
 }
 
 // OnePay spec amount limits (shared by preflightValidate and validateTransferRequest).
