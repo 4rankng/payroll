@@ -1,6 +1,7 @@
 import { memo, useState, useMemo, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -158,9 +159,15 @@ export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmploy
 
   return (
     <Sheet open={!!type} onOpenChange={handleOpenChange}>
-      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:w-[440px] p-0 flex flex-col">
+      <SheetContent side={isMobile ? "bottom" : "right"} className={cn("w-full sm:w-[440px] p-0 flex flex-col", isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]")}>
+        {/* Mobile drag handle */}
+        {isMobile && (
+          <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
+        )}
         {/* Header */}
-        <SheetHeader className="px-4 py-3 border-b flex-shrink-0" style={{ paddingTop: "max(12px, calc(12px + env(safe-area-inset-top)))" }}>
+        <SheetHeader className="px-4 py-3 border-b flex-shrink-0">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <SheetTitle className="text-sm font-semibold truncate">

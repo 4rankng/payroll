@@ -38,10 +38,10 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap shrink-0 ${
             value === opt.value
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted text-muted-foreground ring-1 ring-border/40 hover:bg-muted/80'
           }`}
         >
           {opt.label}
@@ -50,7 +50,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
       <select
         value={monthOptions.slice(5).some((o) => o.value === value) ? value : ''}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="px-2 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border-0 outline-none cursor-pointer shrink-0"
+        className="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground ring-1 ring-border/40 cursor-pointer shrink-0"
       >
         <option value="">Khác…</option>
         {monthOptions.slice(5).map((opt) => (
@@ -88,7 +88,7 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
           )}
         </div>
         <div className="mt-1.5 h-1.5 rounded-full bg-muted/60 overflow-hidden">
-          <div className="h-full rounded-full bg-primary/70 transition-all duration-500" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-primary/50 to-primary transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
       </div>
       <span className="text-sm font-semibold tabular-nums text-foreground shrink-0">
@@ -132,7 +132,7 @@ const PartnerDashboardMobile = () => {
   }, [data?.mom_paid_amount, periodLabel, selectedMonth]);
 
   return (
-    <div className="p-4 pb-20 space-y-4">
+    <div className="p-4 pb-24 space-y-5">
       <MobilePageHeader
         title="Tổng quan"
         subtitle="Theo dõi nhân viên và thanh toán"
@@ -164,13 +164,13 @@ const PartnerDashboardMobile = () => {
 
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/5 border border-primary/10">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/5 border border-primary/10">
             <Trophy className="h-3.5 w-3.5 text-primary/70" />
           </div>
           <h2 className="text-sm font-semibold text-foreground">Top nhân viên — {periodLabel}</h2>
         </div>
-        <Card>
-          <CardContent className="pt-0 px-4">
+        <Card className="overflow-hidden shadow-soft">
+          <CardContent className="p-4">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-3 border-b border-border/40 last:border-0">
@@ -184,8 +184,8 @@ const PartnerDashboardMobile = () => {
                 </div>
               ))
             ) : topEmployees.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <Trophy className="w-9 h-9 text-muted-foreground/30 mb-3" />
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Trophy className="w-10 h-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm font-semibold">Chưa có dữ liệu thanh toán</p>
                 <p className="text-xs text-muted-foreground mt-1">Chọn tháng khác để xem</p>
               </div>

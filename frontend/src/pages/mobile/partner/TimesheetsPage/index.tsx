@@ -171,7 +171,7 @@ export default function TimesheetsPageMobile() {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="p-4 pb-20 space-y-3">
+      <div className="p-4 pb-24 space-y-3">
         {/* Mobile header skeleton */}
         <div className="flex justify-between gap-2">
           <div className="space-y-1 flex-1">
@@ -194,7 +194,7 @@ export default function TimesheetsPageMobile() {
   }
 
   return (
-    <div className="p-3 pb-20 space-y-2.5 max-w-full overflow-hidden">
+    <div className="p-3 pb-24 space-y-2.5 max-w-full overflow-hidden">
       <TimesheetPageHeaderMobile
         onAddTimesheet={() => openTimesheetEntry()}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}

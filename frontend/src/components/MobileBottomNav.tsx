@@ -217,17 +217,21 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         open={!!openGroup}
         onOpenChange={(open) => !open && setOpenGroup(null)}
       >
-        <SheetContent side="bottom" className="h-auto pb-safe">
-          <SheetHeader className="pb-3">
+        <SheetContent side="bottom" className="h-auto pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
+          <SheetHeader className="px-5 pb-4">
             <SheetTitle className="text-base font-semibold text-left">
               {openGroup?.title}
             </SheetTitle>
           </SheetHeader>
 
           {openGroup === ACCOUNT_GROUP ? (
-            <div className="pb-2">
+            <div className="px-5 pb-4">
               {user && (
-                <div className="flex items-center gap-3 px-3 pb-3">
+                <div className="flex items-center gap-3 pb-3">
                   <UserAvatar
                     email={user.email}
                     name={user.name}
@@ -308,7 +312,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 pb-2">
+            <div className="grid grid-cols-2 gap-2 px-5 pb-4">
               {openGroup?.submenu?.map((item) => {
                 const isActive = item.path
                   ? location.pathname.startsWith(item.path)
@@ -352,7 +356,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
       {/* More menu sheet */}
       <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-        <SheetContent side="bottom" className="h-auto pb-safe">
+        <SheetContent side="bottom" className="h-auto rounded-t-2xl pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-2.5 pb-1">
+            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-left">
               Thêm

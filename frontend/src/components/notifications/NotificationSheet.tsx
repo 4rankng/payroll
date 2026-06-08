@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Loader2, CheckCheck, Bell, X, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { NotificationItem } from './NotificationItem';
 import { NotificationDetailModal } from './NotificationDetailModal';
@@ -128,7 +129,14 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className="!w-full sm:!w-[420px] p-0 flex flex-col h-full bg-gray-50">
+        <SheetContent side={isMobile ? "bottom" : "right"} className={cn("!w-full sm:!w-[420px] p-0 flex flex-col h-full bg-gray-50", isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]")}>
+
+          {/* Mobile drag handle */}
+          {isMobile && (
+            <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+              <div className="h-1 w-9 rounded-full bg-white/25" />
+            </div>
+          )}
 
           {/* Header */}
           <div className="text-white px-4 pb-4" style={{ background: theme.headerBg, paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>

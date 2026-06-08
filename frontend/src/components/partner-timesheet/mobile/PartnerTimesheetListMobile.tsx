@@ -51,13 +51,13 @@ export const PartnerTimesheetListMobile = ({ timesheetData, isLoading }: Partner
 
   if (timesheetData.length === 0) {
     return (
-      <Card className="text-center py-8">
+      <Card className="text-center py-12">
         <CardContent>
-          <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="typography-headline-small text-foreground mb-2">
+          <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-foreground mb-2">
             Chưa có bảng công
           </h3>
-          <p className="typography-body-small text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Chưa có bảng công nào trong tháng này
           </p>
         </CardContent>
@@ -68,24 +68,24 @@ export const PartnerTimesheetListMobile = ({ timesheetData, isLoading }: Partner
   return (
     <div className="space-y-3">
       {timesheetData.map((timesheet) => (
-        <Card 
+        <Card
           key={timesheet.id}
-          className="cursor-pointer active:bg-muted/50 transition-colors"
+          className="cursor-pointer active:bg-muted/50 transition-colors overflow-hidden"
           onClick={() => handleTimesheetClick(timesheet)}
         >
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="space-y-1">
-                  <h3 className="typography-headline-small text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {timesheet.employeeName}
                   </h3>
-                  <p className="typography-body-small text-muted-foreground line-clamp-1">
+                  <p className="text-sm text-muted-foreground line-clamp-1">
                     {timesheet.projectName}
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-4 typography-body-small text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>{timesheet.workDays} ngày</span>
@@ -99,17 +99,17 @@ export const PartnerTimesheetListMobile = ({ timesheetData, isLoading }: Partner
                 <div className="flex items-center justify-between">
                   <Badge 
                     variant="secondary"
-                    className={`${getStatusColor(timesheet.status)} typography-label-small`}
+                    className={`${getStatusColor(timesheet.status)} text-xs font-medium text-muted-foreground`}
                   >
                     {timesheet.status}
                   </Badge>
-                  <span className="typography-label-small text-muted-foreground">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {format(new Date(timesheet.date), 'dd/MM/yyyy')}
                   </span>
                 </div>
               </div>
               
-              <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
             </div>
           </CardContent>
         </Card>

@@ -31,7 +31,7 @@ const ADV_PARTNER_NAV_GROUPS: NavGroup[] = [
 
 const ADMIN_NAV_GROUPS: NavGroup[] = [
   { title: "Tổng quan", icon: Home, path: "/admin", end: true },
-  { title: "Chấm công", icon: Clock, path: "/admin/timesheet" },
+  { title: "Lương tuần", icon: Clock, path: "/admin/timesheet" },
   { title: "Ứng lương", icon: Wallet, path: "/admin/advance-payments" },
 ];
 

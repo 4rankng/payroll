@@ -30,8 +30,12 @@ export function AdvancePaymentConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[70vh] rounded-t-3xl px-5"
+        className="h-auto max-h-[70vh] rounded-t-2xl px-5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
       >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
+          <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+        </div>
         <SheetHeader className="pb-3 border-b border-gray-100">
           <SheetTitle className="text-base font-bold text-gray-900">
             Xác nhận yêu cầu ứng lương
