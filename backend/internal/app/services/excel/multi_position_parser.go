@@ -15,7 +15,7 @@ type MultiPositionImportData struct {
 
 // PositionSheetData holds parsed data from one position sheet.
 type PositionSheetData struct {
-	Position  string                  // from sheet name
+	Position  string // from sheet name
 	Employees []PositionEmployeeData
 }
 
@@ -29,7 +29,7 @@ type PositionEmployeeData struct {
 // PositionEntryData represents a single non-zero hours entry with resolved rate.
 type PositionEntryData struct {
 	DayNum  int
-	RateVND int     // resolved VND rate from row 5 (int matches Flatten() return type)
+	RateVND int // resolved VND rate from row 5 (int matches Flatten() return type)
 	Hours   float64
 }
 
@@ -304,4 +304,3 @@ func parsePositionEmployees(f *excelize.File, sheet string, hm *headerMap, rateB
 
 	return employees
 }
-

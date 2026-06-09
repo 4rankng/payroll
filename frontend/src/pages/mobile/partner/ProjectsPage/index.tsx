@@ -199,7 +199,7 @@ const ProjectsPageMobile = () => {
           value={filterControls.searchTerm}
           onSearch={filterControls.setSearchTerm}
           placeholder="Tìm kiếm dự án..."
-          className="flex-1"
+          className="w-full"
         />
         <Button
           variant="outline"

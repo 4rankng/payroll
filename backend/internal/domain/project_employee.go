@@ -55,6 +55,9 @@ type ProjectEmployeeRepository interface {
 	GetActiveAssignmentByProjectAndEmployee(ctx context.Context, projectID, employeeID uint) (*ProjectEmployee, error)
 	GetActiveAssignmentsByProjectsAndEmployees(ctx context.Context, projectIDs []uint, employeeIDs []uint) ([]*ProjectEmployee, error)
 	Update(ctx context.Context, assignment *ProjectEmployee) error
+	// UpdatePosition updates only the position column, avoiding full-row Save() that
+	// could overwrite concurrent changes to other fields (e.g., CheckInEnabled).
+	UpdatePosition(ctx context.Context, id uint, position string) error
 	Delete(ctx context.Context, id uint) error
 	DeleteByProjectID(ctx context.Context, projectID uint) error
 	DeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error

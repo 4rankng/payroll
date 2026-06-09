@@ -225,6 +225,73 @@ func (s *ProjectEmployeeService) UpdateAssignment(ctx context.Context, assignmen
 	return nil
 }
 
+// UpdateAssignmentPosition updates only the position field of an existing assignment,
+// with full cache invalidation, event emission, and conditional timesheet recalculation.
+// Uses targeted column update to avoid full-row Save() overwriting concurrent changes.
+func (s *ProjectEmployeeService) UpdateAssignmentPosition(ctx context.Context, assignmentID uint, position string, updatedBy uint) error {
+	var existing *domain.ProjectEmployee
+
+	err := s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		var err error
+		existing, err = s.projectEmployeeRepo.GetByID(ctx, assignmentID)
+		if err != nil {
+			return err
+		}
+
+		if err := s.projectEmployeeRepo.UpdatePosition(ctx, assignmentID, position); err != nil {
+			return err
+		}
+
+		// Update in-memory for event publishing
+		existing.Position = position
+
+		// Publish ProjectEmployeeUpdatedEvent
+		if s.eventBus != nil {
+			assignment := existing
+			employee, err := s.employeeRepo.GetByID(ctx, assignment.EmployeeID)
+			if err == nil {
+				assignment.Employee = *employee
+			}
+			project, err := s.projectRepo.GetByID(ctx, assignment.ProjectID)
+			if err == nil {
+				assignment.Project = *project
+			}
+
+			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
+			if err := s.eventBus.Publish(ctx, event); err != nil {
+				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (position update)", "error", err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Invalidate assignment cache so subsequent validation sees updated data
+	if s.cache != nil {
+		cacheKey := fmt.Sprintf("assignment:%d:%d", existing.ProjectID, existing.EmployeeID)
+		if err := s.cache.Delete(ctx, cacheKey); err != nil {
+			slog.Default().Warn("failed to invalidate assignment cache after position update", "error", err)
+		}
+	}
+
+	// Recalculate editable timesheets since position changed (affects payrate resolution)
+	if s.timesheetRecalculator != nil {
+		recalculator := s.timesheetRecalculator
+		assignmentCopy := *existing
+		domain.RegisterAfterCommit(ctx, func() {
+			if err := recalculator.RecalculateTimesheetsForAssignment(context.Background(), &assignmentCopy, updatedBy); err != nil {
+				slog.Default().Warn("failed to recalculate timesheets after position update", "assignmentID", assignmentCopy.ID, "error", err)
+			}
+		})
+	}
+
+	return nil
+}
+
 // EndAssignment orchestrates assignment termination
 func (s *ProjectEmployeeService) EndAssignment(ctx context.Context, assignmentID uint, endDate time.Time, endedBy uint) error {
 	return s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {

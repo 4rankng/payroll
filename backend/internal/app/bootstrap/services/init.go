@@ -532,6 +532,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		employeeImportProgressService,
 	)
 
+	projectEmployeeSvc := project.NewProjectEmployeeService(repos.ProjectEmployee, repos.Employee, repos.EmployeeUser, repos.Project, repos.Timesheet, repos.AuditLog, transactionManager, repos.AdvancePayment, repos.Payrate, notificationPort, eventBus, payCycleNotificationPublisher, timesheetService, cacheService)
+
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
@@ -544,7 +546,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmployeePermission:                employeePermissionService,
 		EmployeeUser:                      employeeUserService,
 		EmployeeProfile:                   employeeProfileService,
-		ProjectEmployee:                   project.NewProjectEmployeeService(repos.ProjectEmployee, repos.Employee, repos.EmployeeUser, repos.Project, repos.Timesheet, repos.AuditLog, transactionManager, repos.AdvancePayment, repos.Payrate, notificationPort, eventBus, payCycleNotificationPublisher, timesheetService, cacheService),
+		ProjectEmployee:                   projectEmployeeSvc,
 		Bank:                              asset.NewBankService(repos.Bank, cacheService, eventBus),
 		Payrate:                           payroll.NewPayrateService(repos.Payrate, eventBus, db.DB),
 		Timesheet:                         timesheetService,
@@ -604,6 +606,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			redis.Client,
 			employeeService,
 			employeeUserService,
+			projectEmployeeSvc,
 		),
 		Attendance: attendanceService,
 	}

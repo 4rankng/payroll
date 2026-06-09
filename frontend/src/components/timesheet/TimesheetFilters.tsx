@@ -69,15 +69,16 @@ export const TimesheetFilters = () => {
   // ── Mobile ─────────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-col gap-1.5">
         {onSearchChange && (
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={onSearchChange}
             placeholder="Tìm kiếm..."
-            className="flex-1 min-w-0"
+            className="w-full"
           />
         )}
+        <div className="flex items-center gap-1.5">
         <Select value={selectedMonth} onValueChange={onMonthChange}>
           <SelectTrigger className="h-7 w-[100px] shrink-0 text-xs border-border/60">
             <SelectValue placeholder="Tháng" />
@@ -139,6 +140,7 @@ export const TimesheetFilters = () => {
             </div>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
     );
   }
@@ -151,7 +153,7 @@ export const TimesheetFilters = () => {
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
           placeholder="Tìm nhân viên, dự án..."
-          className="w-44"
+          className="w-64"
         />
       )}
 

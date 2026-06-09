@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sort"
 	"log/slog"
+	"sort"
 	"strings"
 	"time"
 
 	"api-server/internal/app/services/employee"
 	excelparser "api-server/internal/app/services/excel"
+	"api-server/internal/app/services/project"
 	timesheetSvc "api-server/internal/app/services/timesheet"
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
@@ -70,6 +71,7 @@ type BCCImportService struct {
 	redis               *redis.Client
 	employeeService     *employee.EmployeeService
 	employeeUserService *employee.EmployeeUserService
+	projectEmployeeSvc  *project.ProjectEmployeeService
 }
 
 func NewBCCImportService(
@@ -82,6 +84,7 @@ func NewBCCImportService(
 	redisClient *redis.Client,
 	employeeService *employee.EmployeeService,
 	employeeUserService *employee.EmployeeUserService,
+	projectEmployeeSvc *project.ProjectEmployeeService,
 ) *BCCImportService {
 	return &BCCImportService{
 		payrateRepo:         payrateRepo,
@@ -93,6 +96,7 @@ func NewBCCImportService(
 		redis:               redisClient,
 		employeeService:     employeeService,
 		employeeUserService: employeeUserService,
+		projectEmployeeSvc:  projectEmployeeSvc,
 	}
 }
 
@@ -764,6 +768,19 @@ func deducePosition(flatRates map[string]int, shiftRates map[string]int64) strin
 	return best
 }
 
+// posCorrection records a pending position update to apply after the STK transaction.
+// Applying outside the transaction via ProjectEmployeeService.UpdateAssignmentPosition
+// ensures cache invalidation, event publishing, and timesheet recalculation while
+// using a targeted column update to avoid full-row Save() overwrites.
+type posCorrection struct {
+	assignmentID uint
+	projectID    uint
+	employeeID   uint
+	oldPosition  string
+	newPosition  string
+	employeeName string
+}
+
 // processMultiPositionUpload handles the new multi-position BCC format where each
 // sheet (beyond STK) represents a position. It mirrors ProcessUpload's orchestration
 // but uses the multi-position parser and position-from-sheet-name logic.
@@ -863,13 +880,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 
 	// 6. STK auto-creation with CCCD→position lookup.
+	var positionCorrections []posCorrection
 	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
 	if stkErr != nil {
 		slog.Warn("BCCImport(MP): failed to parse STK sheet", "error", stkErr)
 	} else if len(stkRows) > 0 {
 		slog.Info("BCCImport(MP): found STK sheet, processing employee auto-creation", "count", len(stkRows))
 
-			sort.Strings(availablePositions)
+		sort.Strings(availablePositions)
 
 		stkErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 			bankCache := make(map[string]*uint)
@@ -984,12 +1002,38 @@ func (s *BCCImportService) processMultiPositionUpload(
 							Reason:   fmt.Sprintf("không thể phân công nhân viên %s: %v", fullName, createErr),
 						})
 					}
+				} else if expectedPos := cccdToPosition[cccd]; expectedPos != "" && !strings.EqualFold(existingAssignment.Position, expectedPos) {
+					// Collect position correction to apply after transaction via ProjectEmployeeService
+					// (which handles cache invalidation, events, validation, and timesheet recalculation).
+					positionCorrections = append(positionCorrections, posCorrection{
+						assignmentID: existingAssignment.ID,
+						employeeID:   emp.ID,
+						oldPosition:  existingAssignment.Position,
+						newPosition:  expectedPos,
+						employeeName: fullName,
+					})
 				}
 			}
 			return nil
 		})
 		if stkErr != nil {
 			slog.Error("BCCImport(MP): STK auto-creation transaction failed", "error", stkErr)
+		}
+	}
+
+	// 6.5. Apply position corrections via ProjectEmployeeService (outside STK transaction)
+	// to get cache invalidation, event publishing, domain validation, and timesheet recalculation.
+	for _, corr := range positionCorrections {
+		if updateErr := s.projectEmployeeSvc.UpdateAssignmentPosition(ctx, corr.assignmentID, corr.newPosition, uploaderID); updateErr != nil {
+			slog.Error("BCCImport(MP): failed to update assignment position",
+				"assignment_id", corr.assignmentID, "position", corr.newPosition, "error", updateErr)
+			importErrors = append(importErrors, domain.ImportError{
+				Employee: corr.employeeName,
+				Reason:   fmt.Sprintf("lỗi cập nhật vị trí cho nhân viên %s: %v", corr.employeeName, updateErr),
+			})
+		} else {
+			slog.Info("BCCImport(MP): updated assignment position",
+				"employee_id", corr.employeeID, "old", corr.oldPosition, "new", corr.newPosition)
 		}
 	}
 
@@ -1000,9 +1044,11 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 	byCCCD := make(map[string]*domain.ProjectEmployee, len(assignments))
 	byCode := make(map[string]*domain.ProjectEmployee, len(assignments))
+	byCCCDAndPosition := make(map[string]*domain.ProjectEmployee, len(assignments))
 	empNames := make(map[uint]string, len(assignments))
 	for _, a := range assignments {
 		byCCCD[a.EmployeeCCCD] = a
+		byCCCDAndPosition[a.EmployeeCCCD+"|"+strings.ToLower(a.Position)] = a
 		if a.EmployeeCode != "" {
 			byCode[a.EmployeeCode] = a
 		}
@@ -1042,8 +1088,11 @@ func (s *BCCImportService) processMultiPositionUpload(
 		for _, emp := range sheet.Employees {
 			totalRows++
 
-			// Match by CCCD (Col B is CCCD in new template) or employee code.
-			assignment := byCCCD[emp.EmployeeCode]
+			// Match by CCCD+position first (case-insensitive), then fall back.
+			assignment := byCCCDAndPosition[emp.EmployeeCode+"|"+strings.ToLower(sheet.Position)]
+			if assignment == nil {
+				assignment = byCCCD[emp.EmployeeCode]
+			}
 			if assignment == nil {
 				assignment = byCode[emp.EmployeeCode]
 			}

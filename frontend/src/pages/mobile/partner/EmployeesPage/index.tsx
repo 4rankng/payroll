@@ -269,7 +269,7 @@ const EmployeesPageMobile = () => {
           value={searchTerm}
           onSearch={searchEmployees}
           placeholder="Tìm kiếm nhân viên..."
-          className="flex-1"
+          className="w-full"
         />
         <Button
           variant="outline"

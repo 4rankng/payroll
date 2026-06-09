@@ -357,7 +357,12 @@ const EmployeesPage = () => {
 
   const hasFilters = !!(statusFilter || month || projectId || searchTerm);
 
-  if (isLoading) {
+  // Only show full-page skeleton on initial load (no data yet).
+  // During search/refetch, keep the SearchBar & filters visible so the user
+  // doesn't see their input vanish.
+  const isInitialLoad = isLoading && employees.length === 0 && !searchTerm;
+
+  if (isInitialLoad) {
     return (
       <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5 animate-fade-in">
         <div className="space-y-2">
@@ -473,7 +478,7 @@ const EmployeesPage = () => {
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
               placeholder="Tìm nhân viên..."
-              className="w-44"
+              className="w-64"
             />
 
             <div className="h-5 w-px bg-border/50 shrink-0 hidden sm:block" />
