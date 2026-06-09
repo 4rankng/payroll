@@ -774,7 +774,6 @@ func deducePosition(flatRates map[string]int, shiftRates map[string]int64) strin
 // using a targeted column update to avoid full-row Save() overwrites.
 type posCorrection struct {
 	assignmentID uint
-	projectID    uint
 	employeeID   uint
 	oldPosition  string
 	newPosition  string
@@ -1022,7 +1021,8 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 
 	// 6.5. Apply position corrections via ProjectEmployeeService (outside STK transaction)
-	// to get cache invalidation, event publishing, domain validation, and timesheet recalculation.
+	// to get cache invalidation, event publishing, and timesheet recalculation with
+	// targeted column update (no full-row Save() overwrite risk).
 	for _, corr := range positionCorrections {
 		if updateErr := s.projectEmployeeSvc.UpdateAssignmentPosition(ctx, corr.assignmentID, corr.newPosition, uploaderID); updateErr != nil {
 			slog.Error("BCCImport(MP): failed to update assignment position",
@@ -1102,6 +1102,25 @@ func (s *BCCImportService) processMultiPositionUpload(
 					Reason:   fmt.Sprintf("không tìm thấy nhân viên với mã \"%s\" trong dự án", emp.EmployeeCode),
 				})
 				continue
+			}
+
+			// Correct position for non-STK employees whose assignment position doesn't match this sheet.
+			if !strings.EqualFold(assignment.Position, sheet.Position) {
+				oldPos := assignment.Position
+				if updateErr := s.projectEmployeeSvc.UpdateAssignmentPosition(ctx, assignment.ID, sheet.Position, uploaderID); updateErr != nil {
+					slog.Error("BCCImport(MP): failed to correct position in BCC sheet",
+						"assignment_id", assignment.ID, "position", sheet.Position, "error", updateErr)
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: emp.FullName,
+						Reason:   fmt.Sprintf("lỗi cập nhật vị trí cho nhân viên %s: %v", emp.FullName, updateErr),
+					})
+				} else {
+					slog.Info("BCCImport(MP): corrected assignment position from BCC sheet",
+						"employee_id", assignment.EmployeeID, "old", oldPos, "new", sheet.Position)
+					assignment.Position = sheet.Position
+					// Update lookup maps so subsequent sheets find the corrected position.
+					byCCCDAndPosition[assignment.EmployeeCCCD+"|"+strings.ToLower(sheet.Position)] = assignment
+				}
 			}
 
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
