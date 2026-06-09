@@ -133,6 +133,20 @@ func (r *ProjectEmployeeRepository) Update(ctx context.Context, assignment *doma
 	return nil
 }
 
+func (r *ProjectEmployeeRepository) UpdatePosition(ctx context.Context, id uint, position string) error {
+	result := r.getDB(ctx).
+		Model(&domain.ProjectEmployee{}).
+		Where("id = ?", id).
+		Update("position", position)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update assignment position: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.NewNotFoundError("phân công không tồn tại")
+	}
+	return nil
+}
+
 func (r *ProjectEmployeeRepository) Delete(ctx context.Context, id uint) error {
 	return r.SafeDelete(ctx, &domain.ProjectEmployee{}, id)
 }
