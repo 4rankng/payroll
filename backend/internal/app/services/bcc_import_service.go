@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"log/slog"
 	"strings"
 	"time"
@@ -167,6 +168,19 @@ func (s *BCCImportService) ProcessUpload(
 		return fail("failed", fmt.Sprintf("không thể mở file Excel: %v", err))
 	}
 	defer func() { _ = xf.Close() }()
+
+	// 4a. Detect format: legacy BCC vs multi-position
+	formatResult, detectErr := excelparser.DetectFormat(xf)
+	if detectErr != nil {
+		return fail("failed", fmt.Sprintf("không nhận diện được định dạng file: %v", detectErr))
+	}
+
+	switch formatResult.Format {
+	case excelparser.FormatMultiPosition:
+		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth)
+	default:
+		// FormatLegacy — continue with existing BCC parsing below
+	}
 
 	parsed, err := excelparser.ParseBCCFile(xf)
 	if err != nil {
@@ -748,4 +762,488 @@ func deducePosition(flatRates map[string]int, shiftRates map[string]int64) strin
 		}
 	}
 	return best
+}
+
+// processMultiPositionUpload handles the new multi-position BCC format where each
+// sheet (beyond STK) represents a position. It mirrors ProcessUpload's orchestration
+// but uses the multi-position parser and position-from-sheet-name logic.
+func (s *BCCImportService) processMultiPositionUpload(
+	ctx context.Context,
+	xf *excelize.File,
+	formatResult *excelparser.FormatDetectionResult,
+	filename string,
+	projectID uint,
+	uploaderID uint,
+	uploaderRole string,
+	createdAsset *domain.Asset,
+	effectiveMonth string,
+) (*BCCImportResult, error) {
+	fail := func(status, reason string) (*BCCImportResult, error) {
+		errs := []domain.ImportError{{Reason: reason}}
+		detail := marshalErrors(errs)
+		now := clock.Now()
+		stats := BCCImportStats{
+			ProjectID:    projectID,
+			OriginalName: filename,
+			ForMonth:     effectiveMonth,
+			Status:       status,
+			ErrorCount:   1,
+			ErrorDetail:  detail,
+			ProcessedAt:  &now,
+		}
+		if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
+			slog.Error("BCCImport(MP): metadata update failed in fail path", "asset_id", createdAsset.ID, "error", metaErr)
+		}
+		return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt),
+			fmt.Errorf("import failed: %s", FirstErrorReason(detail))
+	}
+
+	// 1. Parse the multi-position sheets.
+	parsed, err := excelparser.ParseMultiPositionFile(xf, formatResult.PositionSheets)
+	if err != nil {
+		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC đa vị trí: %v", err))
+	}
+
+	// 2. Parse month.
+	loc := clock.Now().Location()
+	year, month, err := parseForMonth(effectiveMonth)
+	if err != nil {
+		return fail("failed", fmt.Sprintf("tháng không hợp lệ: %v", err))
+	}
+	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+
+	// 3. Acquire distributed lock.
+	lockValue, lockErr := s.acquireImportLock(ctx, projectID, effectiveMonth)
+	if lockErr != nil {
+		return fail("failed", lockErr.Error())
+	}
+	defer s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue)
+
+	// 4. Get active payrate and build rate-to-target maps.
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
+	if err != nil {
+		return fail("failed", fmt.Sprintf("không tìm thấy bảng lương cho dự án: %v", err))
+	}
+	flatRates, err := payrate.Payrate.Flatten()
+	if err != nil {
+		return fail("failed", fmt.Sprintf("lỗi phân tích cấu hình lương: %v", err))
+	}
+
+	// Validate all sheet positions exist in payrate config.
+	availablePositions := getPositions(flatRates)
+	availableSet := make(map[string]bool, len(availablePositions))
+	for _, p := range availablePositions {
+		availableSet[strings.ToLower(p)] = true
+	}
+	for _, sheet := range parsed.Sheets {
+		if !availableSet[strings.ToLower(sheet.Position)] {
+			return fail("failed",
+				fmt.Sprintf("vị trí \"%s\" không có trong cấu hình lương. Các vị trí khả dụng: %s",
+					sheet.Position, strings.Join(availablePositions, ", ")))
+		}
+	}
+
+	// 5. Build CCCD→position map from all position sheets (for STK auto-creation).
+	cccdToPosition := make(map[string]string)
+	var importErrors []domain.ImportError
+	for _, sheet := range parsed.Sheets {
+		for _, emp := range sheet.Employees {
+			if emp.EmployeeCode == "" {
+				continue
+			}
+			if existing, dup := cccdToPosition[emp.EmployeeCode]; dup && existing != sheet.Position {
+				importErrors = append(importErrors, domain.ImportError{
+					Employee: emp.FullName,
+					Reason:   fmt.Sprintf("nhân viên \"%s\" xuất hiện ở nhiều sheet vị trí (%s, %s)", emp.FullName, existing, sheet.Position),
+				})
+				continue
+			}
+			cccdToPosition[emp.EmployeeCode] = sheet.Position
+		}
+	}
+
+	// 6. STK auto-creation with CCCD→position lookup.
+	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
+	if stkErr != nil {
+		slog.Warn("BCCImport(MP): failed to parse STK sheet", "error", stkErr)
+	} else if len(stkRows) > 0 {
+		slog.Info("BCCImport(MP): found STK sheet, processing employee auto-creation", "count", len(stkRows))
+
+			sort.Strings(availablePositions)
+
+		stkErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+			bankCache := make(map[string]*uint)
+
+			for _, row := range stkRows {
+				cccd := row.CCCD
+				fullName := row.FullName
+				if cccd == "" || fullName == "" {
+					continue
+				}
+
+				// Resolve bank ID.
+				var bankID *uint
+				if row.BankName != "" {
+					if cached, ok := bankCache[row.BankName]; ok {
+						bankID = cached
+					} else {
+						bankID = s.employeeService.ResolveBankID(txCtx, row.BankName)
+						bankCache[row.BankName] = bankID
+					}
+				}
+
+				// Check if employee exists.
+				existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, cccd)
+				if empErr != nil && !domain.IsNotFoundError(empErr) {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
+					})
+					continue
+				}
+
+				var emp *domain.Employee
+				if existingEmp == nil {
+					emp = &domain.Employee{
+						Fullname:          fullName,
+						CCCD:              cccd,
+						BankAccountNumber: row.BankAccount,
+						BankAccountName:   strings.ToUpper(fullName),
+						BankID:            bankID,
+						CreatedBy:         uploaderID,
+					}
+					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+					if createErr != nil {
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: fullName,
+							Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
+						})
+						continue
+					}
+					emp = createdEmp
+				} else {
+					emp = existingEmp
+					if row.BankAccount != "" && emp.BankAccountNumber == "" {
+						bankUpdates := map[string]any{
+							"bank_account_number": row.BankAccount,
+							"bank_account_name":   strings.ToUpper(fullName),
+						}
+						if bankID != nil {
+							bankUpdates["bank_id"] = *bankID
+						}
+						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
+							slog.Error("BCCImport(MP): failed to fill bank info for employee",
+								"employee_id", emp.ID, "error", updateErr)
+						}
+					}
+					if emp.UserID == nil && s.employeeUserService != nil {
+						baseUsername := utils.GenerateUsername(emp.Fullname)
+						if baseUsername != "" {
+							username := s.employeeUserService.EnsureUniqueUsername(txCtx, baseUsername)
+							userID, userErr := s.employeeUserService.CreateUserForEmployee(txCtx, emp, username)
+							if userErr != nil {
+								slog.Error("BCCImport(MP): failed to create user for existing employee",
+									"employee_id", emp.ID, "cccd", cccd, "error", userErr)
+							} else {
+								if linkErr := s.employeeService.UpdateUserLink(txCtx, emp.ID, userID); linkErr != nil {
+									slog.Error("BCCImport(MP): failed to update employee with user_id",
+										"employee_id", emp.ID, "user_id", userID, "error", linkErr)
+								}
+							}
+						}
+					}
+				}
+
+				// Ensure assignment with position from CCCD→position map.
+				existingAssignment, assignErr := s.employeeService.GetActiveAssignment(txCtx, projectID, emp.ID)
+				if assignErr != nil && !domain.IsNotFoundError(assignErr) {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("lỗi kiểm tra phân công nhân viên %s: %v", fullName, assignErr),
+					})
+					continue
+				}
+				if existingAssignment == nil {
+					empPosition := cccdToPosition[cccd]
+					if empPosition == "" && len(availablePositions) > 0 {
+						empPosition = availablePositions[0]
+					}
+					assignment := &domain.ProjectEmployee{
+						ProjectID:       projectID,
+						EmployeeID:      emp.ID,
+						EmployeeName:    emp.Fullname,
+						EmployeeCCCD:    emp.CCCD,
+						Position:        empPosition,
+						StartDate:       monthStart,
+						PaymentSchedule: string(domain.PaymentScheduleWeekly),
+						CreatedBy:       uploaderID,
+					}
+					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: fullName,
+							Reason:   fmt.Sprintf("không thể phân công nhân viên %s: %v", fullName, createErr),
+						})
+					}
+				}
+			}
+			return nil
+		})
+		if stkErr != nil {
+			slog.Error("BCCImport(MP): STK auto-creation transaction failed", "error", stkErr)
+		}
+	}
+
+	// 7. Load assignments.
+	assignments, err := s.employeeService.GetActiveAssignments(ctx, projectID)
+	if err != nil {
+		return fail("failed", fmt.Sprintf("lỗi tải danh sách nhân viên: %v", err))
+	}
+	byCCCD := make(map[string]*domain.ProjectEmployee, len(assignments))
+	byCode := make(map[string]*domain.ProjectEmployee, len(assignments))
+	empNames := make(map[uint]string, len(assignments))
+	for _, a := range assignments {
+		byCCCD[a.EmployeeCCCD] = a
+		if a.EmployeeCode != "" {
+			byCode[a.EmployeeCode] = a
+		}
+		empNames[a.EmployeeID] = a.EmployeeName
+	}
+
+	// 8. Build timesheet entries for each position sheet.
+	dayTypePriority := map[string]int{"ngày thường": 0, "ngày nghỉ": 1, "ngày lễ": 2}
+	type rateTarget struct{ dayType, hourType string }
+
+	var entries []domainservices.BulkCreateTimesheetEntry
+	totalRows := 0
+
+	for _, sheet := range parsed.Sheets {
+		// Build position-scoped rate-to-target map.
+		posPrefix := strings.ToLower(sheet.Position) + "."
+		rateToTarget := make(map[int]rateTarget)
+		for path, rate := range flatRates {
+			if rate == 0 || !strings.HasPrefix(strings.ToLower(path), posPrefix) {
+				continue
+			}
+			parts := strings.Split(path, ".")
+			if len(parts) != 3 {
+				continue
+			}
+			candidate := rateTarget{parts[1], parts[2]}
+			candPri, candKnown := dayTypePriority[candidate.dayType]
+			if !candKnown {
+				continue
+			}
+			existing, exists := rateToTarget[rate]
+			if !exists || candPri < dayTypePriority[existing.dayType] {
+				rateToTarget[rate] = candidate
+			}
+		}
+
+		for _, emp := range sheet.Employees {
+			totalRows++
+
+			// Match by CCCD (Col B is CCCD in new template) or employee code.
+			assignment := byCCCD[emp.EmployeeCode]
+			if assignment == nil {
+				assignment = byCode[emp.EmployeeCode]
+			}
+			if assignment == nil {
+				importErrors = append(importErrors, domain.ImportError{
+					Employee: emp.FullName,
+					Reason:   fmt.Sprintf("không tìm thấy nhân viên với mã \"%s\" trong dự án", emp.EmployeeCode),
+				})
+				continue
+			}
+
+			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
+				importErrors = append(importErrors, domain.ImportError{
+					Employee: emp.FullName,
+					Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
+				})
+				continue
+			}
+
+			for _, entry := range emp.Entries {
+				date := time.Date(year, month, entry.DayNum, 0, 0, 0, 0, loc)
+				if date.Month() != month {
+					continue
+				}
+
+				target, ok := rateToTarget[entry.RateVND]
+				if !ok || entry.RateVND == 0 {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: emp.FullName,
+						Reason:   fmt.Sprintf("không tìm thấy mức lương cho ngày %d (%d VND) ở vị trí %s", entry.DayNum, entry.RateVND, sheet.Position),
+					})
+					continue
+				}
+
+				entries = append(entries, domainservices.BulkCreateTimesheetEntry{
+					ProjectID:   projectID,
+					EmployeeID:  assignment.EmployeeID,
+					Date:        date.Format("2006-01-02"),
+					HoursWorked: entry.Hours,
+					HourType:    target.hourType,
+					DayType:     &target.dayType,
+				})
+			}
+		}
+	}
+
+	// 9. "Latest wins" overwrite (same logic as legacy path).
+	if len(entries) > 0 {
+		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
+		existingTS, terr := s.timesheetRepo.GetByProject(ctx, projectID, monthStart, monthEnd)
+		if terr != nil {
+			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
+		}
+
+		type dk struct {
+			empID uint
+			date  string
+		}
+
+		importDates := make(map[dk]bool, len(entries))
+		for _, e := range entries {
+			importDates[dk{e.EmployeeID, e.Date}] = true
+		}
+
+		blocked := make(map[dk]string)
+		var staleIDs []uint
+		isAdmin := uploaderRole == string(domain.RoleAdmin)
+		for _, ts := range existingTS {
+			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
+			if !importDates[k] {
+				continue
+			}
+
+			isPaid := ts.PaymentStatus == domain.PaymentStatusPaid ||
+				ts.PaymentStatus == domain.PaymentStatusFailed ||
+				ts.PaymentStatus == domain.PaymentStatusCancelled
+
+			switch {
+			case isPaid:
+				blocked[k] = "đã thanh toán"
+			case ts.Status == domain.TimesheetStatusApproved && !isAdmin:
+				blocked[k] = "đã được phê duyệt"
+			default:
+				staleIDs = append(staleIDs, ts.ID)
+			}
+		}
+
+		if len(blocked) > 0 {
+			warned := make(map[dk]bool, len(blocked))
+			filtered := entries[:0]
+			for _, e := range entries {
+				k := dk{e.EmployeeID, e.Date}
+				if reason, isBlocked := blocked[k]; isBlocked {
+					if !warned[k] {
+						warned[k] = true
+						name := empNames[e.EmployeeID]
+						if name == "" {
+							name = fmt.Sprintf("ID %d", e.EmployeeID)
+						}
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: name,
+							Reason:   fmt.Sprintf("ngày %s: %s, không ghi đè", e.Date, reason),
+						})
+					}
+					continue
+				}
+				filtered = append(filtered, e)
+			}
+			entries = filtered
+		}
+
+		for _, id := range staleIDs {
+			if delErr := s.timesheetRepo.HardDelete(ctx, id); delErr != nil {
+				slog.Warn("BCCImport(MP): failed to hard-delete stale timesheet", "timesheet_id", id, "error", delErr)
+			}
+		}
+		if len(staleIDs) > 0 {
+			slog.Warn("BCCImport(MP): hard-deleted stale unapproved timesheets",
+				"deleted_count", len(staleIDs), "project_id", projectID)
+		}
+	}
+
+	// 10. Bulk create or return failure.
+	if len(entries) == 0 {
+		reason := "không có dữ liệu hợp lệ để tạo bảng chấm công"
+		if len(importErrors) > 0 {
+			detail := marshalErrors(importErrors)
+			now := clock.Now()
+			stats := BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				Status:       "failed",
+				TotalRows:    totalRows,
+				ErrorCount:   len(importErrors),
+				ErrorDetail:  detail,
+				ProcessedAt:  &now,
+			}
+			if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
+				slog.Error("BCCImport(MP): metadata update failed in empty-entries path",
+					"asset_id", createdAsset.ID, "error", metaErr)
+			}
+			return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt),
+				fmt.Errorf("import failed: %s", FirstErrorReason(detail))
+		}
+		return fail("failed", reason)
+	}
+
+	result, err := s.timesheetService.BulkCreateTimesheets(ctx, entries, uploaderID, uploaderRole)
+	if err != nil {
+		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
+	}
+
+	// 11. Finalize.
+	createdCount := len(result.CreatedTimesheets)
+	skippedCount := len(result.DeletedTimesheets)
+	for _, f := range result.FailedEntries {
+		importErrors = append(importErrors, domain.ImportError{
+			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),
+			Reason:   f.Error,
+		})
+	}
+	errorCount := len(importErrors)
+
+	now := clock.Now()
+	finalStatus := "completed"
+	if createdCount == 0 && errorCount > 0 {
+		finalStatus = "failed"
+	}
+
+	errDetail := marshalErrors(importErrors)
+	stats := BCCImportStats{
+		ProjectID:    projectID,
+		OriginalName: filename,
+		ForMonth:     effectiveMonth,
+		Status:       finalStatus,
+		TotalRows:    totalRows,
+		CreatedCount: createdCount,
+		SkippedCount: skippedCount,
+		ErrorCount:   errorCount,
+		ErrorDetail:  errDetail,
+		ProcessedAt:  &now,
+	}
+	if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
+		slog.Error("BCCImport(MP): metadata update failed", "asset_id", createdAsset.ID, "error", metaErr)
+	}
+
+	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt), nil
+}
+
+// getPositions extracts unique position names from flattened payrate paths.
+func getPositions(flatRates map[string]int) []string {
+	seen := make(map[string]bool)
+	var positions []string
+	for path := range flatRates {
+		parts := strings.Split(path, ".")
+		if len(parts) >= 1 && parts[0] != "" && !seen[parts[0]] {
+			seen[parts[0]] = true
+			positions = append(positions, parts[0])
+		}
+	}
+	return positions
 }

@@ -174,7 +174,7 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		SwiftCode:   swiftCode,
 		AccountNo:   p.RecipientAccountNo,
 		AccountName: p.RecipientName,
-		Description: fmt.Sprintf("Advance payment #%d", p.AdvanceRequestID),
+		Description: p.RequestID,
 		AccountType: infrastructure.AccountTypeBankAccount,
 	})
 	if err != nil {
