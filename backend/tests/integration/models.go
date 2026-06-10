@@ -584,9 +584,11 @@ type EmployeeUserResponse struct {
 // --- Project Management (additional) ---
 
 type CreateProjectRequest struct {
-	ClientName string `json:"client_name"`
-	Name       string `json:"name"`
-	Code       string `json:"code"`
+	ClientName       string `json:"client_name"`
+	Name             string `json:"name"`
+	Code             string `json:"code"`
+	SalaryPeriodFrom *int   `json:"salary_period_from,omitempty"`
+	SalaryPeriodTo   *int   `json:"salary_period_to,omitempty"`
 }
 
 type UpdateProjectRequest struct {
