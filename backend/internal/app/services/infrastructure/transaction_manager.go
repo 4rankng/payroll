@@ -20,11 +20,28 @@ func NewTransactionManager(db *gorm.DB) *TransactionManager {
 	}
 }
 
-// ExecuteInTransaction executes multiple operations within a single transaction
+// ExecuteInTransaction executes multiple operations within a single transaction.
+// The transaction is also injected into the context via domain.WithTransactionContext so
+// that downstream repositories and domain services that read the tx from context (using
+// domain.GetTransactionFromContext) participate in the same transaction. Callbacks
+// registered via domain.RegisterAfterCommit run after the transaction commits.
 func (tm *TransactionManager) ExecuteInTransaction(ctx context.Context, operations func(tx *gorm.DB) error) error {
-	return tm.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	txCtx := &domain.TransactionContext{
+		IsTransactional: true,
+	}
+	// Bind the transaction context to ctx before opening the transaction. We mutate the
+	// shared *TransactionContext inside the closure once the tx is available so that
+	// downstream callers reading the tx from ctx see the live transaction.
+	ctxWithTx := domain.WithTransactionContext(ctx, txCtx)
+	err := tm.db.WithContext(ctxWithTx).Transaction(func(tx *gorm.DB) error {
+		txCtx.TX = tx
 		return operations(tx)
 	})
+	if err != nil {
+		return err
+	}
+	txCtx.RunAfterCommitCallbacks()
+	return nil
 }
 
 // ExecuteWithRollback executes operations and provides rollback capability
