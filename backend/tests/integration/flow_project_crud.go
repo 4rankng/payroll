@@ -590,5 +590,4 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 }
 
-
 func strPtrPtr(s string) *string { return &s }
