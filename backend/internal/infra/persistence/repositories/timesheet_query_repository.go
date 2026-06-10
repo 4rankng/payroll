@@ -127,20 +127,9 @@ func (r *TimesheetQueryRepository) List(ctx context.Context, filters domain.Time
 
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Apply default and maximum limits for performance and memory safety
-	const (
-		defaultLimit = 1000
-		maxLimit     = 10000
-	)
-
-	limit := filters.Limit
-	if limit == 0 {
-		limit = defaultLimit
-	} else if limit > maxLimit {
-		limit = maxLimit
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
 	}
-
-	query = query.Limit(limit)
 	if filters.Offset > 0 {
 		query = query.Offset(filters.Offset)
 	}
