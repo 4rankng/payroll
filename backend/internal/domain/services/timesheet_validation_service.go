@@ -130,6 +130,11 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 
 	logger.Info("ValidateTimesheet: Passed basic validations, starting concurrent validations")
 
+	// Read-only validations must NOT use the transaction connection (sql.Tx is not safe
+	// for concurrent use). Strip any transaction from the context so goroutines use the
+	// connection pool instead of sharing a single transaction connection.
+	readCtx := context.WithValue(ctx, domain.TransactionContextKey{}, nil)
+
 	// Run all validations concurrently for better performance
 	var wg sync.WaitGroup
 	errChan := make(chan error, 6)
@@ -143,7 +148,7 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 			"employee_id", timesheet.EmployeeID,
 			"project_id", timesheet.ProjectID,
 			"date", timesheet.Date.Format("2006-01-02"))
-		if err := s.ValidateEmployeeAssignment(ctx, timesheet.EmployeeID, timesheet.ProjectID, timesheet.Date); err != nil {
+		if err := s.ValidateEmployeeAssignment(readCtx, timesheet.EmployeeID, timesheet.ProjectID, timesheet.Date); err != nil {
 			logger.Error("ValidateTimesheet: Employee assignment validation failed",
 				"error", err.Error())
 			errChan <- err
@@ -160,7 +165,7 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 		logger.Info("ValidateTimesheet: Checking payrate",
 			"project_id", timesheet.ProjectID,
 			"date", timesheet.Date.Format("2006-01-02"))
-		if err := s.ValidatePayrate(ctx, timesheet.ProjectID, timesheet.Date); err != nil {
+		if err := s.ValidatePayrate(readCtx, timesheet.ProjectID, timesheet.Date); err != nil {
 			logger.Error("ValidateTimesheet: Payrate validation failed",
 				"error", err.Error())
 			errChan <- err
@@ -175,7 +180,7 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 		defer wg.Done()
 		logger := observability.GetLogger()
 		logger.Info("ValidateTimesheet: Checking total daily hours")
-		if err := s.validateTotalDailyHoursWithContext(ctx, vctx, timesheet); err != nil {
+		if err := s.validateTotalDailyHoursWithContext(readCtx, vctx, timesheet); err != nil {
 			logger.Error("ValidateTimesheet: Total daily hours validation failed",
 				"error", err.Error())
 			errChan <- err
@@ -190,7 +195,7 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 		defer wg.Done()
 		logger := observability.GetLogger()
 		logger.Info("ValidateTimesheet: Checking daytype consistency")
-		if err := s.validateDaytypeConsistencyWithContext(ctx, vctx, timesheet); err != nil {
+		if err := s.validateDaytypeConsistencyWithContext(readCtx, vctx, timesheet); err != nil {
 			logger.Error("ValidateTimesheet: Daytype consistency validation failed",
 				"error", err.Error())
 			errChan <- err
@@ -205,7 +210,7 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 		defer wg.Done()
 		logger := observability.GetLogger()
 		logger.Info("ValidateTimesheet: Checking for duplicate timesheets")
-		if err := s.ValidateDuplicateTimesheet(ctx, timesheet); err != nil {
+		if err := s.ValidateDuplicateTimesheet(readCtx, timesheet); err != nil {
 			logger.Error("ValidateTimesheet: Duplicate check validation failed",
 				"error", err.Error())
 			errChan <- err
