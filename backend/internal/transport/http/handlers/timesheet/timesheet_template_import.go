@@ -1,7 +1,9 @@
 package timesheet
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/excel"
@@ -129,7 +131,10 @@ func (h *Handler) UploadTimesheetEntries(c *gin.Context) {
 	}
 
 	// Create timesheets using bulk create service
-	result, err := h.timesheetService.BulkCreateTimesheets(c.Request.Context(), bulkRequests, userID, userRole)
+	importCtx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 5*time.Minute)
+	defer cancel()
+
+	result, err := h.timesheetService.BulkCreateTimesheets(importCtx, bulkRequests, userID, userRole)
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return
