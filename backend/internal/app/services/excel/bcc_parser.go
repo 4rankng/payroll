@@ -35,11 +35,11 @@ type BCCEntryData struct {
 
 // bccHeaderMap holds dynamically-detected column positions from header rows 7-8.
 type bccHeaderMap struct {
-	sttCol    int // column with "STT" header (used for blank-row filtering)
-	cccdCol   int // column with "CCCD" header
+	sttCol     int // column with "STT" header (used for blank-row filtering)
+	cccdCol    int // column with "CCCD" header
 	empCodeCol int // column with "Mã nhân viên" header
-	nameCol   int // column with "Họ và tên" header
-	deptCol   int // column with "Bộ phận" header
+	nameCol    int // column with "Họ và tên" header
+	deptCol    int // column with "Bộ phận" header
 }
 
 // buildBCCHeaderMap scans rows 7 and 8 to find column positions for employee data fields.
@@ -118,7 +118,14 @@ func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	shiftRow, rateRow := detectShiftRows(f, sheet, startCol, stopCol)
 	colToShift := buildShiftColMap(f, sheet, startCol, stopCol, shiftRow)
 	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol, rateRow)
-	employees := parseEmployees(f, sheet, hm, colToDayNum, colToShift, startCol, stopCol)
+
+	startRow := shiftRow
+	if rateRow > startRow {
+		startRow = rateRow
+	}
+	startRow++
+
+	employees := parseEmployees(f, sheet, hm, colToDayNum, colToShift, startCol, stopCol, startRow)
 
 	return &BCCImportData{
 		ShiftRates: shiftRates,
@@ -310,11 +317,11 @@ func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, 
 	return rates
 }
 
-// parseEmployees reads rows 12+ until CCCD and name are empty.
+// parseEmployees reads rows from startRow until CCCD and name are empty.
 // Column positions are determined dynamically from header rows via bccHeaderMap.
-func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNum map[int]int, colToShift map[int]string, startCol, stopCol int) []BCCEmployeeData {
+func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNum map[int]int, colToShift map[int]string, startCol, stopCol, startRow int) []BCCEmployeeData {
 	var employees []BCCEmployeeData
-	for row := 12; ; row++ {
+	for row := startRow; ; row++ {
 		cccd := bccCell(f, sheet, hm.cccdCol, row)
 		name := bccCell(f, sheet, hm.nameCol, row)
 
