@@ -166,3 +166,20 @@ func TestBuildResult(t *testing.T) {
 		t.Errorf("Status = %q, want completed", r.Status)
 	}
 }
+
+func TestSTKCrossCheckLooseMatch(t *testing.T) {
+	// Simulate the STK cross-check logic from ProcessUpload
+	bccName := "Lò Thị Dương"
+	stkName := "Lò Thì Dương"
+
+	bccNorm := bccNormName(bccName)
+	stkNorm := bccNormName(stkName)
+
+	if bccNorm == stkNorm {
+		t.Fatal("Expected strict normalization to fail")
+	}
+
+	if bccNormNameLoose(bccName) != bccNormNameLoose(stkName) {
+		t.Errorf("Expected loose normalization to match for %q and %q", bccName, stkName)
+	}
+}

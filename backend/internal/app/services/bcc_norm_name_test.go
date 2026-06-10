@@ -33,3 +33,33 @@ func TestBccNormName_NFD_NFC(t *testing.T) {
 		t.Errorf("NFC %q vs NFD %q should match", nfc, nfd)
 	}
 }
+
+// TestBccNormNameLoose: diacritic-stripped form of two names that differ only
+// by an accent mark (e.g. "Thì" vs "Thị") must compare equal, so the STK
+// cross-check can accept common data-entry typos. Two names that differ in
+// letters after diacritic removal (e.g. "Lò" vs "Lê") must NOT compare equal —
+// that is a real mismatch we want to surface.
+func TestBccNormNameLoose(t *testing.T) {
+	cases := []struct {
+		a, b string
+		want bool
+	}{
+		// Same letters, different diacritic — should match after stripping.
+		{"Lò Thì Dương", "Lò Thị Dương", true},
+		{"Nguyễn Văn A", "Nguyễn Văn Á", true},
+		{"Trần Thị B", "tran thi b", true}, // loose is also lowercase + trim
+
+		// Different letters — should NOT match even after stripping.
+		{"Lò Thị Dương", "Lê Thị Dương", false}, // Lò vs Lê: different base char
+		{"Lò Thị Dương", "Lò Thị Dung", false},  // Dương vs Dung: stripped differs
+
+		// Empty / whitespace.
+		{"", "", true},
+	}
+	for _, c := range cases {
+		got := bccNormNameLoose(c.a) == bccNormNameLoose(c.b)
+		if got != c.want {
+			t.Errorf("bccNormNameLoose(%q) vs bccNormNameLoose(%q) = %v, want %v", c.a, c.b, got, c.want)
+		}
+	}
+}

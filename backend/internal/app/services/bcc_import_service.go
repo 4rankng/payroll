@@ -23,7 +23,10 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
+	"unicode"
 )
 
 // BCCImportStats holds common import statistics shared between service result,
@@ -471,15 +474,24 @@ func (s *BCCImportService) ProcessUpload(
 			bccNorm := bccNormName(emp.FullName)
 			stkNorm := bccNormName(stkName)
 			if bccNorm != stkNorm {
-				cleanBCCName := strings.TrimSpace(emp.FullName)
-				cleanSTKName := strings.TrimSpace(stkName)
-				importErrors = append(importErrors, domain.ImportError{
-					Row:      rowNum,
-					Employee: cleanBCCName,
-					Reason:   fmt.Sprintf("CCCD %s thuộc về %s (theo STK), không phải %s — có thể sai CCCD", emp.CCCD, cleanSTKName, cleanBCCName),
-				})
-				rowNum++
-				continue
+				// Names differ after NFC normalization. Try a diacritic-stripped
+				// comparison before rejecting: a single accent typo (e.g. "Thì" vs
+				// "Thị") is data-entry noise, not a real CCCD mismatch. Allow the
+				// import and log a warning so the partner can correct the typo.
+				if bccNormNameLoose(emp.FullName) == bccNormNameLoose(stkName) {
+					slog.Warn("BCCImport: STK/BCC name differs only by diacritic, allowing import",
+						"cccd", emp.CCCD, "bcc_name", emp.FullName, "stk_name", stkName)
+				} else {
+					cleanBCCName := strings.TrimSpace(emp.FullName)
+					cleanSTKName := strings.TrimSpace(stkName)
+					importErrors = append(importErrors, domain.ImportError{
+						Row:      rowNum,
+						Employee: cleanBCCName,
+						Reason:   fmt.Sprintf("CCCD %s thuộc về %s (theo STK), không phải %s — có thể sai CCCD", emp.CCCD, cleanSTKName, cleanBCCName),
+					})
+					rowNum++
+					continue
+				}
 			}
 		}
 
@@ -1358,4 +1370,17 @@ func getPositions(flatRates map[string]int) []string {
 // produce false mismatches against NFC text from other tools.
 func bccNormName(s string) string {
 	return strings.ToLower(strings.TrimSpace(norm.NFC.String(s)))
+}
+
+// bccNormNameLoose normalizes a Vietnamese name the same way as bccNormName,
+// then strips diacritics (e.g. "Lò Thì Dương" → "lo thi duong"). Used to
+// detect names that differ only by an accent mark (a common data-entry typo
+// where the same person is recorded with a slightly different diacritic in
+// different sheets — STK vs BCC, or BCC vs the employee profile). Two names
+// whose loose-normalized forms are equal almost certainly refer to the
+// same person, even when the strict-normalized forms differ.
+func bccNormNameLoose(s string) string {
+	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+	stripped, _, _ := transform.String(t, bccNormName(s))
+	return stripped
 }
