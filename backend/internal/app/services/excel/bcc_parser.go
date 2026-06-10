@@ -84,14 +84,22 @@ func buildBCCHeaderMap(f *excelize.File, sheet string) *bccHeaderMap {
 		hm.empCodeCol = 2
 	}
 	if hm.cccdCol == 0 {
-		hm.cccdCol = 3
+		// Two scenarios when "CCCD" header is absent:
+		//   1) Old format: gap between empCode and name (e.g. col 2=code, col 3=CCCD, col 4=name).
+		//      In this case empCodeCol+1 < nameCol → use the gap column.
+		//   2) Compact format (e.g. EPE): no gap (e.g. col 2=code/CCCD, col 3=name).
+		//      In this case empCodeCol+1 >= nameCol → reuse the employee-code column.
+		if hm.nameCol > 0 && hm.empCodeCol+1 < hm.nameCol {
+			hm.cccdCol = hm.empCodeCol + 1
+		} else {
+			hm.cccdCol = hm.empCodeCol
+		}
 	}
 	if hm.nameCol == 0 {
 		hm.nameCol = 4
 	}
-	if hm.deptCol == 0 {
-		hm.deptCol = 7
-	}
+	// deptCol intentionally left as 0 when "Bộ phận" header is absent.
+	// bccCell handles col=0 by returning "" — the Department field will be empty.
 
 	return hm
 }
@@ -119,11 +127,7 @@ func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	colToShift := buildShiftColMap(f, sheet, startCol, stopCol, shiftRow)
 	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol, rateRow)
 
-	startRow := shiftRow
-	if rateRow > startRow {
-		startRow = rateRow
-	}
-	startRow++
+	startRow := max(shiftRow, rateRow) + 1
 
 	employees := parseEmployees(f, sheet, hm, colToDayNum, colToShift, startCol, stopCol, startRow)
 
@@ -135,7 +139,7 @@ func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 
 func resolveBCCSheet(f *excelize.File) string {
 	for _, s := range f.GetSheetList() {
-		if s == "BCC" {
+		if s == "BCC" || strings.TrimSpace(s) == "BCC" {
 			return s
 		}
 	}
@@ -225,14 +229,22 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 	return startColIdx, colToDayNum, stopCol, nil
 }
 
-// detectShiftRows scans rows 9-11 to find which row contains shift labels (e.g. "CB N", "OT N")
-// and which contains rate amounts. Returns (shiftLabelRow, rateRow).
+// weekdayAbbrs is the set of Vietnamese weekday abbreviations that appear in
+// the row above shift labels. Used by detectShiftRows to distinguish weekday
+// names from actual shift labels.
+var weekdayAbbrs = map[string]bool{
+	"T2": true, "T3": true, "T4": true, "T5": true,
+	"T6": true, "T7": true, "CN": true,
+}
+
+// detectShiftRows scans rows 9-11 to find which row contains shift labels
+// (e.g. "CB N", "OT N", "HC", "TCN") and which contains rate amounts.
+// Returns (shiftLabelRow, rateRow).
 // Some files have labels in row 10/rates in row 9; others have labels in row 11/rates in row 10.
-// Shift labels always contain a space (e.g. "CB N") — weekday abbreviations don't (e.g. "T2", "CN").
+// Shift labels are distinguished from weekday abbreviations (T2..CN) by exclusion.
 func detectShiftRows(f *excelize.File, sheet string, startCol, stopCol int) (int, int) {
 	for row := 9; row <= 11; row++ {
-		textCount := 0
-		numCount := 0
+		shiftCount := 0
 		for colIdx := startCol; colIdx < stopCol; colIdx++ {
 			cn, err := excelize.CoordinatesToCellName(colIdx+1, row)
 			if err != nil {
@@ -243,19 +255,15 @@ func detectShiftRows(f *excelize.File, sheet string, startCol, stopCol int) (int
 				continue
 			}
 			val = strings.TrimSpace(val)
-			// Shift labels contain a space (e.g. "CB N", "OT Đ", "CN N", "Tăng ca").
-			// Weekday abbreviations are single tokens ("T2", "T3", "CN") — no space.
-			if strings.ContainsAny(val, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzĐđ") && strings.Contains(val, " ") {
-				textCount++
-			} else {
-				// Numeric value (rate amount)
-				clean := strings.ReplaceAll(val, ",", "")
-				if n, err := strconv.ParseInt(clean, 10, 64); err == nil && n > 0 {
-					numCount++
+			// Treat as a shift label if it contains letters AND is not a weekday abbreviation.
+			// Handles both space-containing labels ("CB N", "OT Đ") and compact ones ("HC", "TCN", "NN").
+			if strings.ContainsAny(val, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzĐđ") {
+				if !weekdayAbbrs[strings.ToUpper(val)] {
+					shiftCount++
 				}
 			}
 		}
-		if textCount >= 2 {
+		if shiftCount >= 2 {
 			// This row has shift labels. Rate row is the row above (if it has numbers).
 			rateRow := row - 1
 			if rateRow < 9 {

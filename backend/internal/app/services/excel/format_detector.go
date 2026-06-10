@@ -49,8 +49,8 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 			continue
 		}
 
-		// Check for BCC sheet (exact match)
-		if sheetName == "BCC" {
+		// Check for BCC sheet (exact or trimmed match — some files have trailing spaces)
+		if sheetName == "BCC" || strings.TrimSpace(sheetName) == "BCC" {
 			hasBCCSheet = true
 			// Don't break — we need to check all sheets, but BCC wins as tiebreaker
 			continue
