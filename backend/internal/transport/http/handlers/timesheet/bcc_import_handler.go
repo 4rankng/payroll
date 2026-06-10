@@ -104,8 +104,11 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		return
 	}
 
+	importCtx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 5*time.Minute)
+	defer cancel()
+
 	result, err := h.bccImportService.ProcessUpload(
-		c.Request.Context(),
+		importCtx,
 		file,
 		header.Filename,
 		projectID,

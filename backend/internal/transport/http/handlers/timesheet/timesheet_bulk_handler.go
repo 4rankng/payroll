@@ -1,6 +1,7 @@
 package timesheet
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -95,7 +96,10 @@ func (h *Handler) BulkCreateTimesheets(c *gin.Context) {
 	logger.Info("BulkCreateTimesheets: Calling domain service", "entries_count", len(domainRequests))
 
 	// Call the domain service to handle bulk upsert with business logic
-	result, err := h.timesheetService.BulkCreateTimesheets(c.Request.Context(), domainRequests, userID, userRole)
+	importCtx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 5*time.Minute)
+	defer cancel()
+
+	result, err := h.timesheetService.BulkCreateTimesheets(importCtx, domainRequests, userID, userRole)
 	if err != nil {
 		logger.Error("BulkCreateTimesheets: Service failed",
 			"error", err.Error(),

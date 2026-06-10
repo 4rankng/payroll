@@ -429,13 +429,27 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		partner := client.WithToken(data.Partners[0].Token)
 
 		reporter.RunTest(flowProject, "Partner can update non-salary project fields", func() error {
-			projects := data.Projects
-			if len(projects) == 0 {
-				return fmt.Errorf("no projects available")
+			// Create a project first as the partner
+			spFrom := 26
+			spTo := 25
+			createBody := CreateProjectRequest{
+				ClientName:       prefix + " Partner Client",
+				Name:             prefix + " Partner Project to Update",
+				Code:             prefix + "PTU",
+				SalaryPeriodFrom: &spFrom,
+				SalaryPeriodTo:   &spTo,
 			}
+			var created ProjectResponse
+			if _, err := partner.PostInto("/api/v1/projects", createBody, &created); err != nil {
+				return fmt.Errorf("partner create project for update test: %w", err)
+			}
+			defer func() {
+				_, _, _ = partner.Delete(fmt.Sprintf("/api/v1/projects/%d", created.ID))
+			}()
+
 			body := UpdateProjectRequest{Name: strPtrPtr(prefix + " Partner Renamed")}
 			var resp ProjectResponse
-			_, err := partner.PutInto(fmt.Sprintf("/api/v1/projects/%d", projects[0].ID), body, &resp)
+			_, err := partner.PutInto(fmt.Sprintf("/api/v1/projects/%d", created.ID), body, &resp)
 			if err != nil {
 				return fmt.Errorf("partner update non-salary field: %w", err)
 			}
