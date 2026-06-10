@@ -2,10 +2,12 @@ package excel
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/unicode/norm"
 )
 
 // BCCImportData holds all parsed data from a BCC Excel attendance file.
@@ -31,19 +33,92 @@ type BCCEntryData struct {
 	Hours      float64
 }
 
+// bccHeaderMap holds dynamically-detected column positions from header rows 7-8.
+type bccHeaderMap struct {
+	sttCol    int // column with "STT" header (used for blank-row filtering)
+	cccdCol   int // column with "CCCD" header
+	empCodeCol int // column with "Mã nhân viên" header
+	nameCol   int // column with "Họ và tên" header
+	deptCol   int // column with "Bộ phận" header
+}
+
+// buildBCCHeaderMap scans rows 7 and 8 to find column positions for employee data fields.
+// Headers may be split across both rows (e.g. "CCCD" appears in row 8 while "Họ và tên" in row 7).
+func buildBCCHeaderMap(f *excelize.File, sheet string) *bccHeaderMap {
+	hm := &bccHeaderMap{}
+
+	for row := 7; row <= 8; row++ {
+		for col := 1; col <= 10; col++ {
+			val := bccCell(f, sheet, col, row)
+			v := normHeader(val)
+
+			if v == "stt" && hm.sttCol == 0 {
+				hm.sttCol = col
+			}
+			if v == "cccd" && hm.cccdCol == 0 {
+				hm.cccdCol = col
+			}
+			if strings.Contains(v, "mã nhân viên") && hm.empCodeCol == 0 {
+				hm.empCodeCol = col
+			}
+			if strings.Contains(v, "họ và tên") && hm.nameCol == 0 {
+				hm.nameCol = col
+			}
+			if strings.Contains(v, "bộ phận") && hm.deptCol == 0 {
+				hm.deptCol = col
+			}
+		}
+	}
+
+	// Fallback to original hardcoded positions if headers not found.
+	// Original layout: col A(1)=STT, col B(2)=EmployeeCode, col C(3)=CCCD, col D(4)=FullName, col G(7)=Department.
+	if hm.sttCol == 0 || hm.cccdCol == 0 || hm.nameCol == 0 {
+		slog.Warn("BCC parser: header row not fully detected, falling back to hardcoded layout",
+			"sttCol", hm.sttCol, "cccdCol", hm.cccdCol, "nameCol", hm.nameCol,
+			"empCodeCol", hm.empCodeCol, "deptCol", hm.deptCol)
+	}
+	if hm.sttCol == 0 {
+		hm.sttCol = 1
+	}
+	if hm.empCodeCol == 0 {
+		hm.empCodeCol = 2
+	}
+	if hm.cccdCol == 0 {
+		hm.cccdCol = 3
+	}
+	if hm.nameCol == 0 {
+		hm.nameCol = 4
+	}
+	if hm.deptCol == 0 {
+		hm.deptCol = 7
+	}
+
+	return hm
+}
+
+// normHeader normalizes a header cell for matching: trim, NFC unicode, lower-case.
+// Vietnamese text in xlsx files from macOS sometimes arrives in NFD form, so NFC
+// normalisation prevents false misses like "ho va ten" vs "họ và tên".
+func normHeader(s string) string {
+	return strings.ToLower(strings.TrimSpace(norm.NFC.String(s)))
+}
+
 // ParseBCCFile parses a BCC monthly attendance Excel file.
 // The sheet named "BCC" is used; if absent the first sheet is used.
 func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 	sheet := resolveBCCSheet(f)
+
+	hm := buildBCCHeaderMap(f, sheet)
 
 	startCol, colToDayNum, stopCol, err := buildDayColMap(f, sheet)
 	if err != nil {
 		return nil, fmt.Errorf("ParseBCCFile: %w", err)
 	}
 
-	colToShift := buildShiftColMap(f, sheet, startCol, stopCol)
-	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol)
-	employees := parseEmployees(f, sheet, colToDayNum, colToShift, startCol, stopCol)
+	shiftRow, rateRow := detectShiftRows(f, sheet, startCol, stopCol)
+	colToShift := buildShiftColMap(f, sheet, startCol, stopCol, shiftRow)
+	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol, rateRow)
+	employees := parseEmployees(f, sheet, hm, colToDayNum, colToShift, startCol, stopCol)
 
 	return &BCCImportData{
 		ShiftRates: shiftRates,
@@ -143,11 +218,56 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 	return startColIdx, colToDayNum, stopCol, nil
 }
 
-// buildShiftColMap reads row 11 up to stopCol.
-func buildShiftColMap(f *excelize.File, sheet string, startCol, stopCol int) map[int]string {
+// detectShiftRows scans rows 9-11 to find which row contains shift labels (e.g. "CB N", "OT N")
+// and which contains rate amounts. Returns (shiftLabelRow, rateRow).
+// Some files have labels in row 10/rates in row 9; others have labels in row 11/rates in row 10.
+// Shift labels always contain a space (e.g. "CB N") — weekday abbreviations don't (e.g. "T2", "CN").
+func detectShiftRows(f *excelize.File, sheet string, startCol, stopCol int) (int, int) {
+	for row := 9; row <= 11; row++ {
+		textCount := 0
+		numCount := 0
+		for colIdx := startCol; colIdx < stopCol; colIdx++ {
+			cn, err := excelize.CoordinatesToCellName(colIdx+1, row)
+			if err != nil {
+				continue
+			}
+			val, err := f.GetCellValue(sheet, cn)
+			if err != nil || val == "" {
+				continue
+			}
+			val = strings.TrimSpace(val)
+			// Shift labels contain a space (e.g. "CB N", "OT Đ", "CN N", "Tăng ca").
+			// Weekday abbreviations are single tokens ("T2", "T3", "CN") — no space.
+			if strings.ContainsAny(val, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzĐđ") && strings.Contains(val, " ") {
+				textCount++
+			} else {
+				// Numeric value (rate amount)
+				clean := strings.ReplaceAll(val, ",", "")
+				if n, err := strconv.ParseInt(clean, 10, 64); err == nil && n > 0 {
+					numCount++
+				}
+			}
+		}
+		if textCount >= 2 {
+			// This row has shift labels. Rate row is the row above (if it has numbers).
+			rateRow := row - 1
+			if rateRow < 9 {
+				rateRow = 10
+			}
+			return row, rateRow
+		}
+	}
+	// Fallback to original hardcoded positions
+	slog.Warn("BCC parser: shift-label row not detected, falling back to hardcoded rows 11/10",
+		"startCol", startCol, "stopCol", stopCol)
+	return 11, 10
+}
+
+// buildShiftColMap reads the detected shift label row up to stopCol.
+func buildShiftColMap(f *excelize.File, sheet string, startCol, stopCol, shiftRow int) map[int]string {
 	colToShift := make(map[int]string)
 	for colIdx := startCol; colIdx < stopCol; colIdx++ {
-		cn, err := excelize.CoordinatesToCellName(colIdx+1, 11)
+		cn, err := excelize.CoordinatesToCellName(colIdx+1, shiftRow)
 		if err != nil {
 			continue
 		}
@@ -160,8 +280,8 @@ func buildShiftColMap(f *excelize.File, sheet string, startCol, stopCol int) map
 	return colToShift
 }
 
-// buildShiftRates reads row 10: first occurrence of each shift label wins.
-func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, startCol, stopCol int) map[string]int64 {
+// buildShiftRates reads the detected rate row: first occurrence of each shift label wins.
+func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, startCol, stopCol, rateRow int) map[string]int64 {
 	rates := make(map[string]int64)
 	for colIdx := startCol; colIdx < stopCol; colIdx++ {
 		label, ok := colToShift[colIdx]
@@ -171,7 +291,7 @@ func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, 
 		if _, exists := rates[label]; exists {
 			continue
 		}
-		cn, err := excelize.CoordinatesToCellName(colIdx+1, 10)
+		cn, err := excelize.CoordinatesToCellName(colIdx+1, rateRow)
 		if err != nil {
 			continue
 		}
@@ -191,12 +311,12 @@ func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, 
 }
 
 // parseEmployees reads rows 12+ until CCCD and name are empty.
-func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, colToShift map[int]string, startCol, stopCol int) []BCCEmployeeData {
+// Column positions are determined dynamically from header rows via bccHeaderMap.
+func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNum map[int]int, colToShift map[int]string, startCol, stopCol int) []BCCEmployeeData {
 	var employees []BCCEmployeeData
 	for row := 12; ; row++ {
-		stt := bccCell(f, sheet, 1, row)  // col A
-		cccd := bccCell(f, sheet, 3, row) // col C
-		name := bccCell(f, sheet, 4, row) // col D
+		cccd := bccCell(f, sheet, hm.cccdCol, row)
+		name := bccCell(f, sheet, hm.nameCol, row)
 
 		// Stop when both CCCD and Name are empty (e.g. end of active rows, or a summary row)
 		if cccd == "" && name == "" {
@@ -207,10 +327,10 @@ func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, col
 		}
 
 		emp := BCCEmployeeData{
-			EmployeeCode: bccCell(f, sheet, 2, row), // col B
+			EmployeeCode: bccCell(f, sheet, hm.empCodeCol, row),
 			CCCD:         cccd,
 			FullName:     name,
-			Department:   bccCell(f, sheet, 7, row), // col G
+			Department:   bccCell(f, sheet, hm.deptCol, row),
 		}
 
 		for colIdx := startCol; colIdx < stopCol; colIdx++ {
@@ -242,6 +362,7 @@ func parseEmployees(f *excelize.File, sheet string, colToDayNum map[int]int, col
 		}
 
 		// Skip rows that have blank STT AND have zero entries (filters out draft rows while keeping active employees with blank STT)
+		stt := bccCell(f, sheet, hm.sttCol, row)
 		if stt == "" && len(emp.Entries) == 0 {
 			continue
 		}

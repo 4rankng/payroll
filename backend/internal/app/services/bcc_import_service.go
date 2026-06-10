@@ -23,6 +23,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/unicode/norm"
 )
 
 // BCCImportStats holds common import statistics shared between service result,
@@ -252,7 +253,17 @@ func (s *BCCImportService) ProcessUpload(
 	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
 	if stkErr != nil {
 		slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
-	} else if len(stkRows) > 0 {
+	}
+
+	// Build STK CCCD→Name lookup for cross-validation against BCC employee names.
+	stkNameByCCCD := make(map[string]string, len(stkRows))
+	for _, row := range stkRows {
+		if row.CCCD != "" && row.FullName != "" {
+			stkNameByCCCD[row.CCCD] = row.FullName
+		}
+	}
+
+	if len(stkRows) > 0 {
 		slog.Info("BCCImport: found STK sheet, processing employee auto-creation",
 			"count", len(stkRows), "position", position)
 
@@ -449,6 +460,27 @@ func (s *BCCImportService) ProcessUpload(
 			})
 			rowNum++
 			continue
+		}
+
+		// STK cross-check: if the same CCCD appears in STK with a different name,
+		// the BCC sheet likely has a CCCD typo (one CCCD assigned to two different people).
+		if stkName, ok := stkNameByCCCD[emp.CCCD]; ok && stkName != "" {
+			// Normalize both names for comparison: trim, NFC, lower-case. NFC is
+			// important because Excel files from macOS can ship Vietnamese text
+			// in NFD form, which would otherwise produce a spurious mismatch.
+			bccNorm := bccNormName(emp.FullName)
+			stkNorm := bccNormName(stkName)
+			if bccNorm != stkNorm {
+				cleanBCCName := strings.TrimSpace(emp.FullName)
+				cleanSTKName := strings.TrimSpace(stkName)
+				importErrors = append(importErrors, domain.ImportError{
+					Row:      rowNum,
+					Employee: cleanBCCName,
+					Reason:   fmt.Sprintf("CCCD %s thuộc về %s (theo STK), không phải %s — có thể sai CCCD", emp.CCCD, cleanSTKName, cleanBCCName),
+				})
+				rowNum++
+				continue
+			}
 		}
 
 		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
@@ -860,11 +892,12 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 
 	// 5. Build CCCD→position map from all position sheets (for STK auto-creation).
+	// Note: PositionEmployeeData.EmployeeCode holds CCCD in the multi-position template.
 	cccdToPosition := make(map[string]string)
 	var importErrors []domain.ImportError
 	for _, sheet := range parsed.Sheets {
 		for _, emp := range sheet.Employees {
-			if emp.EmployeeCode == "" {
+			if emp.EmployeeCode == "" { // EmployeeCode is CCCD in multi-position template
 				continue
 			}
 			if existing, dup := cccdToPosition[emp.EmployeeCode]; dup && existing != sheet.Position {
@@ -1088,13 +1121,16 @@ func (s *BCCImportService) processMultiPositionUpload(
 		for _, emp := range sheet.Employees {
 			totalRows++
 
-			// Match by CCCD+position first (case-insensitive), then fall back.
-			assignment := byCCCDAndPosition[emp.EmployeeCode+"|"+strings.ToLower(sheet.Position)]
+			// Match by CCCD+position first, then fall back.
+			// Note: emp.EmployeeCode holds CCCD in the multi-position template, so it matches
+			// the byCCCDAndPosition map keyed by assignment.EmployeeCCCD.
+			empLookupKey := emp.EmployeeCode // CCCD in multi-position template
+			assignment := byCCCDAndPosition[empLookupKey+"|"+strings.ToLower(sheet.Position)]
 			if assignment == nil {
-				assignment = byCCCD[emp.EmployeeCode]
+				assignment = byCCCD[empLookupKey]
 			}
 			if assignment == nil {
-				assignment = byCode[emp.EmployeeCode]
+				assignment = byCode[empLookupKey]
 			}
 			if assignment == nil {
 				importErrors = append(importErrors, domain.ImportError{
@@ -1314,4 +1350,12 @@ func getPositions(flatRates map[string]int) []string {
 		}
 	}
 	return positions
+}
+
+// bccNormName normalizes a Vietnamese name for case/whitespace/Unicode-form
+// insensitive comparison: trim, NFC, lower-case. Excel files from macOS can
+// ship Vietnamese diacritics in NFD (decomposed) form, which would otherwise
+// produce false mismatches against NFC text from other tools.
+func bccNormName(s string) string {
+	return strings.ToLower(strings.TrimSpace(norm.NFC.String(s)))
 }

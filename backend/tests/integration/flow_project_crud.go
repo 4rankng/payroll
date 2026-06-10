@@ -167,7 +167,7 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		req := []map[string]any{
 			{
 				"employee_id":      updateEmployee.ID,
-				"position":         "Ph\u1ed5 th\u00f4ng",
+				"position":         "Phổ thông",
 				"payment_schedule": "weekly",
 				"start_date":       "2026-05-01",
 			},
@@ -421,6 +421,60 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return nil
 	})
 
+	// --- Partner Project Creation ---
+
+	// --- Partner Project Update (non-salary fields) ---
+
+	if len(data.Partners) > 0 {
+		partner := client.WithToken(data.Partners[0].Token)
+
+		reporter.RunTest(flowProject, "Partner can update non-salary project fields", func() error {
+			projects := data.Projects
+			if len(projects) == 0 {
+				return fmt.Errorf("no projects available")
+			}
+			body := UpdateProjectRequest{Name: strPtrPtr(prefix + " Partner Renamed")}
+			var resp ProjectResponse
+			_, err := partner.PutInto(fmt.Sprintf("/api/v1/projects/%d", projects[0].ID), body, &resp)
+			if err != nil {
+				return fmt.Errorf("partner update non-salary field: %w", err)
+			}
+			if err := AssertEqual("name", prefix+" Partner Renamed", resp.Name); err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	if len(data.Partners) > 0 {
+		partner := client.WithToken(data.Partners[0].Token)
+
+		reporter.RunTest(flowProject, "Partner can create project with salary period", func() error {
+			spFrom := 26
+			spTo := 25
+			body := CreateProjectRequest{
+				ClientName:       prefix + " Partner Client",
+				Name:             prefix + " Partner Project",
+				Code:             prefix + "PT",
+				SalaryPeriodFrom: &spFrom,
+				SalaryPeriodTo:   &spTo,
+			}
+			var resp ProjectResponse
+			if _, err := partner.PostInto("/api/v1/projects", body, &resp); err != nil {
+				return fmt.Errorf("partner create project with salary period: %w", err)
+			}
+			fmt.Printf("    Partner created project ID %d with salary period %d-%d\n", resp.ID, resp.SalaryPeriodFrom, resp.SalaryPeriodTo)
+			// Cleanup
+			_, _, _ = partner.Delete(fmt.Sprintf("/api/v1/projects/%d", resp.ID))
+			if err := AssertEqual("salary_period_from", 26, resp.SalaryPeriodFrom); err != nil {
+				return err
+			}
+			return AssertEqual("salary_period_to", 25, resp.SalaryPeriodTo)
+		})
+	} else {
+		fmt.Printf("    No partner users available — skipping partner project creation tests\n")
+	}
+
 	// --- Salary Period Change Guard ---
 
 	// Create a dedicated project for salary period change tests
@@ -464,6 +518,26 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return AssertEqual("salary_period_to", 25, resp.SalaryPeriodTo)
 	})
 
+	// --- Partner Salary Period Update Guard (must be after salaryTestProjectID setup) ---
+
+	if len(data.Partners) > 0 {
+		partner := client.WithToken(data.Partners[0].Token)
+
+		reporter.RunTest(flowProject, "Partner cannot update salary period (admin-only)", func() error {
+			if salaryTestProjectID == 0 {
+				return fmt.Errorf("no salary test project")
+			}
+			spFrom := 15
+			body := UpdateProjectRequest{SalaryPeriodFrom: &spFrom}
+			_, statusCode, _ := partner.Put(fmt.Sprintf("/api/v1/projects/%d", salaryTestProjectID), body)
+			if err := AssertEqual("status", 403, statusCode); err != nil {
+				return fmt.Errorf("partner should be blocked from changing salary period, got HTTP %d", statusCode)
+			}
+			fmt.Printf("    Partner correctly blocked from salary period update (HTTP 403)\n")
+			return nil
+		})
+	}
+
 	reporter.RunTest(flowProject, "Admin can change salary period", func() error {
 		projects := data.Projects
 		if len(projects) == 0 {
@@ -501,3 +575,6 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return nil
 	})
 }
+
+
+func strPtrPtr(s string) *string { return &s }
