@@ -19,7 +19,8 @@ type Service struct {
 	UserRepo                  domain.UserRepository
 	ProjectRepo               domain.ProjectRepository
 	EmployeeRepo              domain.EmployeeRepository
-	TimesheetRepo             domain.TimesheetRepository
+	TimesheetDashboard        domain.TimesheetDashboardReader
+	TimesheetPayment          domain.TimesheetPaymentUpdater
 	TimesheetQueryRepo        *repositories.TimesheetQueryRepository
 	TimesheetAnalyticsRepo    *repositories.TimesheetAnalyticsRepository
 	LedgerRepo                domain.LedgerEntryRepository
@@ -56,7 +57,8 @@ func NewService(
 		UserRepo:                  userRepo,
 		ProjectRepo:               projectRepo,
 		EmployeeRepo:              employeeRepo,
-		TimesheetRepo:             timesheetRepo,
+		TimesheetDashboard:        timesheetRepo,
+		TimesheetPayment:          timesheetRepo,
 		TimesheetQueryRepo:        timesheetQueryRepo,
 		TimesheetAnalyticsRepo:    timesheetAnalyticsRepo,
 		LedgerRepo:                ledgerRepo,

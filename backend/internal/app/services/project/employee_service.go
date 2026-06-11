@@ -29,12 +29,13 @@ type TimesheetRecalculator interface {
 // ProjectEmployeeService demonstrates orchestration-only pattern
 type ProjectEmployeeService struct {
 	// Repositories for data access
-	projectEmployeeRepo domain.ProjectEmployeeRepository
-	employeeRepo        domain.EmployeeRepository
-	employeeUserRepo    domain.EmployeeUserRepository
-	projectRepo         domain.ProjectRepository
-	timesheetRepo       domain.TimesheetRepository
-	auditLogRepo        domain.AuditLogRepository
+	projectEmployeeRepo      domain.ProjectEmployeeRepository
+	employeeRepo             domain.EmployeeRepository
+	employeeUserRepo         domain.EmployeeUserRepository
+	projectRepo              domain.ProjectRepository
+	timesheetAssignmentCheck domain.TimesheetAssignmentChecker
+	timesheetReader          domain.TimesheetReader
+	auditLogRepo             domain.AuditLogRepository
 
 	// Domain services for business logic
 	assignmentService *domainServices.EmployeeAssignmentService
@@ -73,12 +74,13 @@ func NewProjectEmployeeService(
 	assignmentService := domainServices.NewEmployeeAssignmentService(projectEmployeeRepo, employeeRepo, projectRepo, timesheetRepo)
 
 	return &ProjectEmployeeService{
-		projectEmployeeRepo:    projectEmployeeRepo,
-		employeeRepo:           employeeRepo,
-		employeeUserRepo:       employeeUserRepo,
-		projectRepo:            projectRepo,
-		timesheetRepo:          timesheetRepo,
-		auditLogRepo:           auditLogRepo,
+		projectEmployeeRepo:      projectEmployeeRepo,
+		employeeRepo:             employeeRepo,
+		employeeUserRepo:         employeeUserRepo,
+		projectRepo:              projectRepo,
+		timesheetAssignmentCheck: timesheetRepo,
+		timesheetReader:          timesheetRepo,
+		auditLogRepo:             auditLogRepo,
 		assignmentService:      assignmentService,
 		timesheetRecalculator:  timesheetRecalculator,
 		transactionManager:     transactionManager,
@@ -302,7 +304,7 @@ func (s *ProjectEmployeeService) EndAssignment(ctx context.Context, assignmentID
 		}
 
 		// 2. Check if there are timesheets after the end date (business rule)
-		hasTimesheets, err := s.timesheetRepo.HasTimesheetsAfterDate(ctx, assignment.ProjectID, assignment.EmployeeID, endDate)
+		hasTimesheets, err := s.timesheetAssignmentCheck.HasTimesheetsAfterDate(ctx, assignment.ProjectID, assignment.EmployeeID, endDate)
 		if err != nil {
 			return err
 		}
@@ -498,7 +500,7 @@ func (s *ProjectEmployeeService) CleanupDuplicateAssignments(ctx context.Context
 			for _, assignment := range projectAssignments {
 				if assignment.ID != keepAssignment.ID {
 					// Check if this assignment has timesheets
-					hasTimesheets, err := s.timesheetRepo.HasTimesheetsForAssignment(ctx, assignment.ProjectID, assignment.EmployeeID)
+					hasTimesheets, err := s.timesheetAssignmentCheck.HasTimesheetsForAssignment(ctx, assignment.ProjectID, assignment.EmployeeID)
 					if err != nil {
 						continue // Skip on error
 					}
@@ -894,7 +896,7 @@ func (s *ProjectEmployeeService) hasPaidTimesheetsThisMonth(ctx context.Context,
 		ToDate:        &end,
 	}
 
-	count, err := s.timesheetRepo.Count(ctx, filters)
+	count, err := s.timesheetReader.Count(ctx, filters)
 	if err != nil {
 		return false, err
 	}
@@ -914,7 +916,7 @@ func (s *ProjectEmployeeService) projectHasPaidTimesheetsThisMonth(ctx context.C
 		ToDate:        &end,
 	}
 
-	count, err := s.timesheetRepo.Count(ctx, filters)
+	count, err := s.timesheetReader.Count(ctx, filters)
 	if err != nil {
 		return false, err
 	}

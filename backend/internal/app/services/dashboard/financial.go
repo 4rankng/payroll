@@ -181,7 +181,7 @@ func (s *Service) GetFinancialChartData(ctx context.Context, req *dto.FinancialC
 		latest := resolved[len(resolved)-1].date
 
 		var paidTimesheets []*domain.Timesheet
-		if err := s.TimesheetRepo.GetPaidTimesheetsInDateRange(ctx, earliest, latest, &paidTimesheets); err != nil {
+		if err := s.TimesheetPayment.GetPaidTimesheetsInDateRange(ctx, earliest, latest, &paidTimesheets); err != nil {
 			s.logger.Warn("Failed to query paid timesheets for active employee counts", "error", err)
 		} else {
 			// Build date → employee set map

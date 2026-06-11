@@ -15,7 +15,8 @@ import (
 
 // TimesheetValidationService handles business logic for timesheet validation
 type TimesheetValidationService struct {
-	timesheetRepo       domain.TimesheetRepository
+	timesheetReader     domain.TimesheetReader
+	timesheetValidator  domain.TimesheetValidator
 	projectEmployeeRepo domain.ProjectEmployeeRepository
 	payrateRepo         domain.PayrateRepository
 	employeeRepo        domain.EmployeeRepository
@@ -40,7 +41,8 @@ func NewTimesheetValidationService(
 	cache infrastructureports.CachePort,
 ) *TimesheetValidationService {
 	return &TimesheetValidationService{
-		timesheetRepo:       timesheetRepo,
+		timesheetReader:     timesheetRepo,
+		timesheetValidator:  timesheetRepo,
 		projectEmployeeRepo: projectEmployeeRepo,
 		payrateRepo:         payrateRepo,
 		employeeRepo:        employeeRepo,
@@ -77,7 +79,7 @@ func (s *TimesheetValidationService) getExistingTimesheets(ctx context.Context, 
 		return cached, nil
 	}
 
-	timesheets, err := s.timesheetRepo.GetByProjectEmployeeDate(ctx, projectID, employeeID, date)
+	timesheets, err := s.timesheetReader.GetByProjectEmployeeDate(ctx, projectID, employeeID, date)
 	if err != nil {
 		return nil, err
 	}

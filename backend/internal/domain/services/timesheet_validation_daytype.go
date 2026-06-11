@@ -132,7 +132,7 @@ func (s *TimesheetValidationService) ValidateBulkDaytypeConsistency(ctx context.
 		return errors
 	}
 
-	existingTimesheets, err := s.timesheetRepo.GetByEmployeeDateCombos(ctx, combos)
+	existingTimesheets, err := s.timesheetValidator.GetByEmployeeDateCombos(ctx, combos)
 	if err != nil {
 		errors = append(errors, PreviewError{
 			EmployeeID: 0,

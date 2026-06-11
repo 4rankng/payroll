@@ -10,7 +10,7 @@ import (
 
 // ValidateDuplicateTimesheet checks for duplicate timesheets
 func (s *TimesheetValidationService) ValidateDuplicateTimesheet(ctx context.Context, timesheet *domain.Timesheet) error {
-	existing, err := s.timesheetRepo.GetByProjectEmployeeDatePaytype(ctx, timesheet.ProjectID, timesheet.EmployeeID, timesheet.Date, timesheet.PayType)
+	existing, err := s.timesheetValidator.GetByProjectEmployeeDatePaytype(ctx, timesheet.ProjectID, timesheet.EmployeeID, timesheet.Date, timesheet.PayType)
 	if err != nil {
 		if !domain.IsNotFoundError(err) {
 			return domain.NewInternalError("Lỗi kiểm tra bảng chấm công trùng lặp", err)
@@ -53,7 +53,7 @@ func (s *TimesheetValidationService) ValidateDuplicateTimesheet(ctx context.Cont
 
 // CanApproveTimesheet checks if timesheet can be approved
 func (s *TimesheetValidationService) CanApproveTimesheet(ctx context.Context, timesheetID uint) error {
-	timesheet, err := s.timesheetRepo.GetByID(ctx, timesheetID)
+	timesheet, err := s.timesheetReader.GetByID(ctx, timesheetID)
 	if err != nil {
 		if domain.IsNotFoundError(err) {
 			return domain.NewNotFoundError("Không tìm thấy bảng chấm công")
@@ -70,7 +70,7 @@ func (s *TimesheetValidationService) CanApproveTimesheet(ctx context.Context, ti
 
 // CanRejectTimesheet checks if timesheet can be rejected
 func (s *TimesheetValidationService) CanRejectTimesheet(ctx context.Context, timesheetID uint) error {
-	timesheet, err := s.timesheetRepo.GetByID(ctx, timesheetID)
+	timesheet, err := s.timesheetReader.GetByID(ctx, timesheetID)
 	if err != nil {
 		if domain.IsNotFoundError(err) {
 			return domain.NewNotFoundError("Không tìm thấy bảng chấm công")
@@ -87,7 +87,7 @@ func (s *TimesheetValidationService) CanRejectTimesheet(ctx context.Context, tim
 
 // ValidateTimesheetNotPaid checks if timesheet has not been paid, failed, or cancelled
 func (s *TimesheetValidationService) ValidateTimesheetNotPaid(ctx context.Context, timesheetID uint) error {
-	timesheet, err := s.timesheetRepo.GetByID(ctx, timesheetID)
+	timesheet, err := s.timesheetReader.GetByID(ctx, timesheetID)
 	if err != nil {
 		if domain.IsNotFoundError(err) {
 			return domain.NewNotFoundError("Không tìm thấy bảng chấm công")
