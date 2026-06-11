@@ -3,19 +3,14 @@ package advance_payment
 import (
 	"api-server/internal/pkg/clock"
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"api-server/internal/app/services/infrastructure"
-	"api-server/internal/constants"
 	"api-server/internal/domain"
 )
 
@@ -29,7 +24,7 @@ import (
 // Caching: the active schedule is cached in process for ResolveFee's hot path
 // (called per advance-payment request). Writes invalidate it.
 type FeeScheduleService struct {
-	db           *gorm.DB
+	store        *infrastructure.SettingsStore[domain.FeeScheduleEntry]
 	cacheService *infrastructure.CacheService
 	eventBus     domain.EventBus
 	logger       *slog.Logger
@@ -43,7 +38,14 @@ func NewFeeScheduleService(db *gorm.DB, cacheService *infrastructure.CacheServic
 		logger = slog.Default()
 	}
 	return &FeeScheduleService{
-		db:           db,
+		store: &infrastructure.SettingsStore[domain.FeeScheduleEntry]{
+			DB:          db,
+			SettingsKey: domain.AdvancePaymentFeeScheduleSettingsKey,
+			SortFn:      domain.SortFeeScheduleEntries,
+			NotFoundMsg: "advance_payment_fee_schedules setting row missing — run migration 044",
+			EntityName:  "fee schedule",
+			DateLayout:  domain.AdvancePaymentFeeScheduleDateLayout,
+		},
 		cacheService: cacheService,
 		eventBus:     eventBus,
 		logger:       logger,
@@ -53,7 +55,7 @@ func NewFeeScheduleService(db *gorm.DB, cacheService *infrastructure.CacheServic
 // List returns all schedule entries sorted by EffectiveDate descending.
 // Used by the admin UI.
 func (s *FeeScheduleService) List(ctx context.Context) ([]domain.FeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +69,7 @@ func (s *FeeScheduleService) List(ctx context.Context) ([]domain.FeeScheduleEntr
 
 // GetByID returns a single entry by its UUID.
 func (s *FeeScheduleService) GetByID(ctx context.Context, id string) (*domain.FeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +95,7 @@ type CreateInput struct {
 // already-completed transactions, which is bad for audit. Today is allowed
 // (an admin announcing today's rate change should not be blocked).
 func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, actorUserID uint) (*domain.FeeScheduleEntry, error) {
-	if err := validateEffectiveDateNotPast(input.EffectiveDate); err != nil {
+	if err := infrastructure.ValidateEffectiveDateNotPast(s.store.DateLayout, input.EffectiveDate); err != nil {
 		return nil, err
 	}
 
@@ -104,15 +106,13 @@ func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, acto
 		MinFeeVND:       input.MinFeeVND,
 		Notes:           strings.TrimSpace(input.Notes),
 		CreatedAt:       clock.NowUTC(),
-		CreatedByUserID: nonZeroUserID(actorUserID),
+		CreatedByUserID: infrastructure.NonZeroUserID(actorUserID),
 	}
 	if err := entry.Validate(); err != nil {
 		return nil, err
 	}
 
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
-		// Disallow two entries on the same effective date — the active schedule
-		// would otherwise be ambiguous (which one wins?).
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
 		for _, e := range entries {
 			if e.EffectiveDate == entry.EffectiveDate {
 				return nil, domain.NewValidationError("a schedule with this effective date already exists")
@@ -144,20 +144,19 @@ type UpdateInput struct {
 // immutable for audit integrity — admins must add a new entry to change rates
 // going forward.
 func (s *FeeScheduleService) Update(ctx context.Context, id string, input UpdateInput) (*domain.FeeScheduleEntry, error) {
-	if err := validateEffectiveDateNotPast(input.EffectiveDate); err != nil {
+	if err := infrastructure.ValidateEffectiveDateNotPast(s.store.DateLayout, input.EffectiveDate); err != nil {
 		return nil, err
 	}
 
 	var updated domain.FeeScheduleEntry
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
-		idx := indexOfID(entries, id)
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
+		idx := infrastructure.IndexOfEntryID(entries, id, func(e domain.FeeScheduleEntry) string { return e.ID })
 		if idx < 0 {
 			return nil, domain.NewNotFoundError("fee schedule entry not found")
 		}
-		if !isFutureDate(entries[idx].EffectiveDate) {
+		if !infrastructure.IsFutureDate(s.store.DateLayout, entries[idx].EffectiveDate) {
 			return nil, domain.NewValidationError("only schedules with a future effective date can be edited")
 		}
-		// Reject collision with another entry's effective date.
 		for i, e := range entries {
 			if i == idx {
 				continue
@@ -192,12 +191,12 @@ func (s *FeeScheduleService) Update(ctx context.Context, id string, input Update
 // active right now, otherwise fee resolution would fail.
 func (s *FeeScheduleService) Delete(ctx context.Context, id string) error {
 	var removed domain.FeeScheduleEntry
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
-		idx := indexOfID(entries, id)
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error) {
+		idx := infrastructure.IndexOfEntryID(entries, id, func(e domain.FeeScheduleEntry) string { return e.ID })
 		if idx < 0 {
 			return nil, domain.NewNotFoundError("fee schedule entry not found")
 		}
-		if !isFutureDate(entries[idx].EffectiveDate) {
+		if !infrastructure.IsFutureDate(s.store.DateLayout, entries[idx].EffectiveDate) {
 			return nil, domain.NewValidationError("only schedules with a future effective date can be deleted")
 		}
 		if len(entries) <= 1 {
@@ -217,11 +216,9 @@ func (s *FeeScheduleService) Delete(ctx context.Context, id string) error {
 }
 
 // ActiveAt returns the entry that resolves fees on date `at`. Returns
-// NotFoundError if no entry's effective_date <= at — this should never happen
-// in practice once the bootstrap migration runs, but it's surfaced explicitly
-// rather than silently falling back to a hard-coded default.
+// NotFoundError if no entry's effective_date <= at.
 func (s *FeeScheduleService) ActiveAt(ctx context.Context, at time.Time) (*domain.FeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +243,7 @@ func (s *FeeScheduleService) ResolveFee(ctx context.Context, amount uint64, at t
 }
 
 // FeePercentageAt returns the headline (first-tier) percentage for backwards
-// compatibility with code paths that display a single rate to the user
-// without an amount in hand (e.g. the employee's "your fee is 2%" UI label).
+// compatibility with code paths that display a single rate to the user.
 func (s *FeeScheduleService) FeePercentageAt(ctx context.Context, at time.Time) float64 {
 	entry, err := s.ActiveAt(ctx, at)
 	if err != nil {
@@ -266,113 +262,6 @@ func (s *FeeScheduleService) MinFeeAt(ctx context.Context, at time.Time) uint64 
 		return 10000
 	}
 	return entry.MinFeeVND
-}
-
-// executeWrite runs a transaction that locks the settings row, reads the
-// current schedule list, lets `mutate` produce the new list, and writes it
-// back. mutate may return an error to abort.
-func (s *FeeScheduleService) executeWrite(ctx context.Context, mutate func(tx *gorm.DB, entries []domain.FeeScheduleEntry) ([]domain.FeeScheduleEntry, error)) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var setting domain.Settings
-		// FOR UPDATE locks the row for the rest of the transaction so concurrent
-		// admin edits serialize cleanly. If no row exists yet, the bootstrap
-		// migration hasn't run — surface that.
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("`key` = ?", domain.AdvancePaymentFeeScheduleSettingsKey).
-			First(&setting).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return domain.NewNotFoundError("advance_payment_fee_schedules setting row missing — run migration 044")
-			}
-			return fmt.Errorf("lock fee schedule settings row: %w", err)
-		}
-
-		entries, err := decodeEntries(setting.Value)
-		if err != nil {
-			return err
-		}
-
-		next, err := mutate(tx, entries)
-		if err != nil {
-			return err
-		}
-
-		domain.SortFeeScheduleEntries(next)
-		encoded, err := json.Marshal(next)
-		if err != nil {
-			return fmt.Errorf("encode fee schedule entries: %w", err)
-		}
-		val := string(encoded)
-		setting.Value = &val
-		if err := tx.Save(&setting).Error; err != nil {
-			return fmt.Errorf("save fee schedule settings row: %w", err)
-		}
-		return nil
-	})
-}
-
-// loadEntries reads and decodes the schedule list outside any transaction.
-// Callers that mutate must use executeWrite, which acquires FOR UPDATE.
-func (s *FeeScheduleService) loadEntries(ctx context.Context, db *gorm.DB) ([]domain.FeeScheduleEntry, error) {
-	var setting domain.Settings
-	err := db.WithContext(ctx).
-		Where("`key` = ?", domain.AdvancePaymentFeeScheduleSettingsKey).
-		First(&setting).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.NewNotFoundError("advance_payment_fee_schedules setting row missing — run migration 044")
-		}
-		return nil, fmt.Errorf("load fee schedule settings row: %w", err)
-	}
-	return decodeEntries(setting.Value)
-}
-
-func decodeEntries(value *string) ([]domain.FeeScheduleEntry, error) {
-	if value == nil || strings.TrimSpace(*value) == "" {
-		return nil, nil
-	}
-	var entries []domain.FeeScheduleEntry
-	if err := json.Unmarshal([]byte(*value), &entries); err != nil {
-		return nil, fmt.Errorf("decode fee schedule entries: %w", err)
-	}
-	return entries, nil
-}
-
-func indexOfID(entries []domain.FeeScheduleEntry, id string) int {
-	for i := range entries {
-		if entries[i].ID == id {
-			return i
-		}
-	}
-	return -1
-}
-
-func isFutureDate(effectiveDate string) bool {
-	d, err := time.Parse(domain.AdvancePaymentFeeScheduleDateLayout, effectiveDate)
-	if err != nil {
-		return false
-	}
-	today := clock.Now().Format(domain.AdvancePaymentFeeScheduleDateLayout)
-	return d.Format(domain.AdvancePaymentFeeScheduleDateLayout) > today
-}
-
-func validateEffectiveDateNotPast(effectiveDate string) error {
-	d, err := time.Parse(domain.AdvancePaymentFeeScheduleDateLayout, effectiveDate)
-	if err != nil {
-		return domain.NewValidationError(constants.MsgInvalidDateFormatVN)
-	}
-	today := clock.Now().Format(domain.AdvancePaymentFeeScheduleDateLayout)
-	if d.Format(domain.AdvancePaymentFeeScheduleDateLayout) < today {
-		return domain.NewValidationError("effective_date cannot be in the past")
-	}
-	return nil
-}
-
-func nonZeroUserID(id uint) *uint {
-	if id == 0 {
-		return nil
-	}
-	return &id
 }
 
 // fallbackFee is the safety-net calculation if the schedule lookup fails.

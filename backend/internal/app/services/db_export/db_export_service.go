@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	infraServices "api-server/internal/app/services/infrastructure"
@@ -14,6 +15,12 @@ import (
 
 	"github.com/xuri/excelize/v2"
 )
+
+// safeTableName matches valid MySQL table identifiers (letters, digits, underscores).
+// Used to prevent SQL injection in dynamic table queries.
+var safeTableName = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+
+const maxExportRows = 100000
 
 // ExportJobStatus represents the status of a DB export job
 type ExportJobStatus struct {
@@ -274,15 +281,19 @@ func (s *DBExportService) exportTableToSheet(ctx context.Context, f *excelize.Fi
 }
 
 func (s *DBExportService) writeTableToSheet(ctx context.Context, f *excelize.File, sheetName, table string) error {
+	if !safeTableName.MatchString(table) {
+		return fmt.Errorf("invalid table name: %q", table)
+	}
+
 	sqlDB, err := s.db.DB.DB()
 	if err != nil {
 		return err
 	}
 
-	rows, err := sqlDB.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `%s` LIMIT 100000", table))
+	rows, err := sqlDB.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `%s` LIMIT %d", table, maxExportRows))
 	if err != nil {
 		// Try without backticks (PostgreSQL)
-		rows, err = sqlDB.QueryContext(ctx, fmt.Sprintf(`SELECT * FROM "%s" LIMIT 100000`, table))
+		rows, err = sqlDB.QueryContext(ctx, fmt.Sprintf(`SELECT * FROM "%s" LIMIT %d`, table, maxExportRows))
 		if err != nil {
 			return fmt.Errorf("failed to query table %s: %w", table, err)
 		}
@@ -307,8 +318,8 @@ func (s *DBExportService) writeTableToSheet(ctx context.Context, f *excelize.Fil
 
 	// Write data rows
 	rowIdx := 2
-	vals := make([]interface{}, len(cols))
-	valPtrs := make([]interface{}, len(cols))
+	vals := make([]any, len(cols))
+	valPtrs := make([]any, len(cols))
 	for i := range vals {
 		valPtrs[i] = &vals[i]
 	}

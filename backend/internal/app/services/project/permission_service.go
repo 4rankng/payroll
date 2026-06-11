@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"api-server/internal/app/services/audit"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 )
@@ -89,15 +90,7 @@ func (s *ProjectPermissionService) GrantProjectAccess(ctx context.Context, proje
 	}
 
 	if s.eventBus != nil {
-		// Get the actor's full name for audit message
-		actorName := ""
-		if actorUser, err := s.userRepo.GetByID(ctx, grantedBy); err == nil && actorUser != nil {
-			actorName = actorUser.Fullname
-			if actorName == "" {
-				actorName = actorUser.Username
-			}
-		}
-
+		actorName := audit.GetActorFullName(ctx, s.userRepo, grantedBy)
 		event := domain.NewProjectAccessGrantedEvent(ctx, projectID, projectName, userID, targetName, string(user.Role), grantedBy, actorName)
 		_ = s.eventBus.Publish(ctx, event)
 	}
@@ -135,15 +128,7 @@ func (s *ProjectPermissionService) RevokeProjectAccess(ctx context.Context, proj
 	}
 
 	if s.eventBus != nil {
-		// Get the actor's full name for audit message
-		actorName := ""
-		if actorUser, err := s.userRepo.GetByID(ctx, revokedBy); err == nil && actorUser != nil {
-			actorName = actorUser.Fullname
-			if actorName == "" {
-				actorName = actorUser.Username
-			}
-		}
-
+		actorName := audit.GetActorFullName(ctx, s.userRepo, revokedBy)
 		event := domain.NewProjectAccessRevokedEvent(ctx, projectID, projectName, userID, targetName, revokedBy, actorName)
 		_ = s.eventBus.Publish(ctx, event)
 	}
@@ -225,32 +210,28 @@ func (s *ProjectPermissionService) CanUserAccessProject(ctx context.Context, pro
 	}
 
 	// Check if user has access to any employees assigned to this project
-	// Get all employees assigned to the project
 	projectEmployees, err := s.projectEmployeeRepo.GetByProject(ctx, projectID)
 	if err != nil {
-		// If error getting project employees, don't fail - just return no access
 		return false, nil
 	}
 
-	// Check if user has access to any of these employees
 	for _, assignment := range projectEmployees {
 		hasEmployeeAccess, err := s.employeeUserRepo.HasAccess(ctx, assignment.EmployeeID, userID)
 		if err != nil {
-			continue // Skip on error, check next employee
+			continue
 		}
 		if hasEmployeeAccess {
-			return true, nil // User has access to at least one employee in the project
+			return true, nil
 		}
 	}
 
 	return false, nil
 }
 
-// CanUserModifyProject checks if a user can modify (update/delete) a project
-// Partners can only modify if they are creator or have explicit project access
-// Employee-based access grants read-only permission
+// CanUserModifyProject checks if a user can modify (update/delete) a project.
+// Partners can only modify if they are creator or have explicit project access.
+// Employee-based access grants read-only permission.
 func (s *ProjectPermissionService) CanUserModifyProject(ctx context.Context, projectID, userID uint) (bool, error) {
-	// Check if user is creator
 	project, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
 		return false, err
@@ -260,7 +241,6 @@ func (s *ProjectPermissionService) CanUserModifyProject(ctx context.Context, pro
 		return true, nil
 	}
 
-	// Check if user has been granted explicit project access (not employee-based)
 	return s.projectUserRepo.HasAccess(ctx, projectID, userID)
 }
 
@@ -271,6 +251,5 @@ func (s *ProjectPermissionService) CanUserDeleteProject(ctx context.Context, pro
 		return false, err
 	}
 
-	// Only creator can delete
 	return project.CreatedBy == userID, nil
 }
