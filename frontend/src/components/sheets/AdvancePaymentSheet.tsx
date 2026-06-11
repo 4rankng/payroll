@@ -24,14 +24,6 @@ import { vi } from "date-fns/locale";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 
-const glassCard = {
-  background: "rgba(255,255,255,0.82)",
-  backdropFilter: "blur(20px) saturate(1.6)",
-  WebkitBackdropFilter: "blur(20px) saturate(1.6)",
-  border: "1.5px solid rgba(255,255,255,0.95)",
-  boxShadow: "0 2px 8px rgba(100,180,230,0.12), 0 8px 24px rgba(80,160,220,0.10)",
-} as React.CSSProperties;
-
 const STATUS_CONFIG = {
   PENDING:   { bar: "bg-amber-400",   icon: Clock,        badge: "bg-amber-100 text-amber-700 border-amber-200" },
   APPROVED:  { bar: "bg-emerald-500", icon: CheckCircle,  badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
@@ -58,7 +50,7 @@ const HistoryItemCard = ({ item, onCancel }: { item: AdvancePaymentHistoryItem; 
   };
 
   return (
-    <div className="rounded-xl overflow-hidden" style={glassCard}>
+    <div className="rounded-xl overflow-hidden glass-card">
       <div className="flex">
         <div className={`w-1 shrink-0 ${cfg.bar}`} />
         <div className="flex-1 min-w-0 px-3.5 py-3">
@@ -195,7 +187,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
           ) : (
             <>
               {/* Limit card */}
-              <div className="rounded-xl p-4" style={glassCard}>
+              <div className="rounded-xl p-4 glass-card">
                 <div className="flex items-center gap-2 mb-3">
                   <TrendingUp className="h-4 w-4 text-sky-600" />
                   <span className="text-sm font-bold text-slate-800">Hạn mức tháng này</span>
@@ -231,7 +223,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
 
               {/* Request form */}
               {info?.canRequest ? (
-                <div className="rounded-xl p-4" style={glassCard}>
+                <div className="rounded-xl p-4 glass-card">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign className="h-4 w-4 text-sky-600" />
                     <h3 className="text-sm font-bold text-slate-800">Yêu cầu ứng lương</h3>

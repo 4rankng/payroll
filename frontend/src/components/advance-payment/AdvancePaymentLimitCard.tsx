@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { TrendingUp, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import type { AdvancePaymentInfo, AdvancePaymentQuota } from "@/types/api/advance-payment.types";
 
 interface AdvancePaymentLimitCardProps {
@@ -29,15 +28,14 @@ export function AdvancePaymentLimitCard({
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center gap-1.5 mb-1">
           <TrendingUp
-            className="h-4 w-4"
-            style={{ color: EMPLOYEE_BRAND_COLOR }}
+            className="h-4 w-4 text-employee"
           />
           <span className="font-semibold text-gray-800 uppercase tracking-wide text-sm">
             Hạn mức ứng lương
           </span>
         </div>
         <p className="text-xs text-gray-500">
-          Tổng có thể ứng: <strong style={{ color: EMPLOYEE_BRAND_COLOR }}>{formatCurrency(info.remainingAmount)}</strong>
+          Tổng có thể ứng: <strong className="text-employee">{formatCurrency(info.remainingAmount)}</strong>
         </p>
       </div>
 
@@ -82,7 +80,7 @@ function QuotaSection({ quota, isOldest }: { quota: AdvancePaymentQuota, isOldes
         </span>
         <div className="text-right">
           <span className="text-[10px] text-gray-400 block leading-tight">Còn lại</span>
-          <span className="text-sm font-bold tabular-nums" style={{ color: EMPLOYEE_BRAND_COLOR }}>
+          <span className="text-sm font-bold tabular-nums text-employee">
             {formatCurrency(quota.remainingAmount)}
           </span>
         </div>
@@ -90,8 +88,8 @@ function QuotaSection({ quota, isOldest }: { quota: AdvancePaymentQuota, isOldes
 
       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3 flex">
         <div
-          className="h-full transition-all duration-500"
-          style={{ width: `${completedPct}%`, background: EMPLOYEE_BRAND_COLOR }}
+          className="h-full bg-employee transition-all duration-500"
+          style={{ width: `${completedPct}%` }}
         />
         <div
           className="h-full transition-all duration-500"
@@ -101,7 +99,7 @@ function QuotaSection({ quota, isOldest }: { quota: AdvancePaymentQuota, isOldes
 
       <div className="flex justify-between text-[11px]">
         <div className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: EMPLOYEE_BRAND_COLOR }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-employee" />
           <span className="text-gray-500">Đã ứng: <span className="font-semibold text-gray-700">{formatCurrency(quota.completedAmount)}</span></span>
         </div>
         <div className="flex items-center gap-1">

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertTriangle, User, IdCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/components/payrates/types';
+import { formatCurrency } from '@/utils/formatters';
 import { MobileHourEntry } from './MobileHourEntry';
 import { DEFAULT_POSITIONS } from '@/types/api/payrate.types';
 import { getPositionBadgeStyle, getItemIndex } from '@/utils/badge-styles';

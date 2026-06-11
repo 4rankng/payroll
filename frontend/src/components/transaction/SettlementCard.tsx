@@ -2,10 +2,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { transactionService } from '@/services/api/transaction.service';
 import { downloadAssetFile } from '@/utils/file-download';
 import { getUserFullName } from '@/utils/userHelpers';
+import { formatDate } from '@/utils/formatters';
 import type { Settlement } from '@/services/api/transaction.service';
 import type { UserListResponse } from '@/services/api/user.service';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { FileText, Calendar, User } from 'lucide-react';
 
 interface SettlementCardProps {
@@ -14,14 +13,6 @@ interface SettlementCardProps {
 }
 
 export function SettlementCard({ settlement, userMap }: SettlementCardProps) {
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  };
-
   const handleDownload = async () => {
     if (!settlement.proof_asset_id && !settlement.proof_url) return;
 

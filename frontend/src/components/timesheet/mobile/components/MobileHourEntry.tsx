@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Minus } from 'lucide-react';
-import { formatCurrency } from '@/components/payrates/types';
+import { formatCurrency } from '@/utils/formatters';
 
 interface MobileHourEntryProps {
   hourType: string;

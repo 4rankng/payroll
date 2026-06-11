@@ -2,7 +2,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Calendar, Clock, Building2 } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
-import { formatCurrency } from '@/utils/employeeHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { TimesheetStatusBadge, type TimesheetStatus } from '@/components/timesheet/TimesheetStatusBadge';
 import type { Timesheet } from '@/types/api/timesheet.types';
 

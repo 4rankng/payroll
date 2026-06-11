@@ -12,7 +12,7 @@ import { EmployeePageHeader } from "@/components/employees/EmployeePageHeader";
 import { EmployeeListContent } from "@/components/employees/EmployeeListContent";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
 import { useEmployeeInfiniteScroll } from "@/hooks/employees/useEmployeeInfiniteScroll";
-import { formatCurrency } from "@/utils/employeeHelpers";
+import { formatCurrency } from "@/utils/formatters";
 import { Employee, EmployeeFilters } from "@/types/api/employee.types";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";

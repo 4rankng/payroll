@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { useState, useCallback } from "react";
 import { Bell, UserCircle, Key, LogOut, MoreVertical } from "lucide-react";
 import {

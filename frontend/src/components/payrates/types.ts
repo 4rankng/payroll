@@ -140,10 +140,6 @@ export const STATUS_LABELS: Record<PayrateStatus, string> = {
 } as const;
 
 // Utility functions for components
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
-};
-
 export const parseCurrency = (value: string): number => {
   return parseInt(value.replace(/[^\d]/g, '')) || 0;
 };

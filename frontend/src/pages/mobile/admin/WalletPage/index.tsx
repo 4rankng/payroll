@@ -11,13 +11,11 @@ import { walletService } from '@/services/api/wallet.service';
 import type { WalletBalance } from '@/types/api/wallet.types';
 import { showErrorNotification } from '@/utils/error-handler';
 import { formatVietnameseDateTime } from '@/utils/vietnamese';
+import { formatCurrency as formatVND } from '@/utils/formatters';
 import { toast } from 'sonner';
 
 const BALANCE_QUERY_KEY = ['wallet', 'balance'] as const;
 
-function formatVND(value: number): string {
-  return new Intl.NumberFormat('vi-VN').format(value) + '\u00a0đ';
-}
 
 function BalanceFigure({ value }: { value: number | undefined }) {
   if (value == null) return <span>—</span>;

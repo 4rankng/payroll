@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Calendar, TrendingUp, CreditCard } from 'lucide-react';
 import { useEmployeeSummary } from '@/hooks/api/useEmployees';
-import { formatCurrency } from '@/utils/employeeHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import type { Employee } from '@/types/api/employee.types';
 
 interface EmployeeSummaryCardProps {

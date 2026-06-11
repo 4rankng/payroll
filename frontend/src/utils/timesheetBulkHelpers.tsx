@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Timesheet } from '@/types/api/timesheet.types';
-import { formatDate, formatCurrency } from '@/components/timesheet/utils/timesheetHelpers';
+import { formatDate } from '@/components/timesheet/utils/timesheetHelpers';
+import { formatCurrency } from '@/utils/formatters';
 
 export interface BulkApprovalStats {
   totalCount: number;
@@ -71,7 +72,7 @@ export function createGlobalBulkApprovalContent(
           </div>
           <div className="flex items-center gap-2">
             <span>💰</span>
-            <span>Tổng tiền: <strong>{formatCurrency(stats.totalAmount)}đ</strong></span>
+            <span>Tổng tiền: <strong>{formatCurrency(stats.totalAmount)}</strong></span>
           </div>
         </div>
       </div>
@@ -106,7 +107,7 @@ export function createProjectBulkApprovalContent(
             <div>📊 {stats.totalCount} bảng công sẽ được duyệt</div>
             <div>👥 {stats.uniqueEmployeeCount} nhân viên</div>
             <div>⏱️ {stats.totalHours} giờ làm việc</div>
-            <div>💰 {formatCurrency(stats.totalAmount)}đ</div>
+            <div>💰 {formatCurrency(stats.totalAmount)}</div>
           </div>
         </div>
       </div>
@@ -162,7 +163,7 @@ export function createGroupBulkApprovalContent(
             </div>
             <div>
               <div className="typography-body-small text-muted-foreground">Thành tiền</div>
-              <div className="font-medium">{formatCurrency(stats.totalAmount)}đ</div>
+              <div className="font-medium">{formatCurrency(stats.totalAmount)}</div>
             </div>
             <div>
               <div className="typography-body-small text-muted-foreground">Dự án</div>
@@ -216,7 +217,7 @@ export function createBulkRejectContent(
           <div>📊 {stats.totalCount} bảng công sẽ bị loại</div>
           <div>👥 {stats.uniqueEmployeeCount} nhân viên bị ảnh hưởng</div>
           <div>⏱️ {stats.totalHours} giờ làm việc</div>
-          <div>💰 {formatCurrency(stats.totalAmount)}đ</div>
+          <div>💰 {formatCurrency(stats.totalAmount)}</div>
         </div>
       </div>
 

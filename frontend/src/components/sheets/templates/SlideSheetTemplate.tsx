@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import type { SlideSheetTemplateProps } from "./types";
 
 export function SlideSheetTemplate({

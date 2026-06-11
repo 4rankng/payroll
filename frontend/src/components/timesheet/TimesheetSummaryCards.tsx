@@ -1,6 +1,6 @@
 import { Clock, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/components/payrates/types';
+import { formatCurrency } from '@/utils/formatters';
 
 interface ValidationError {
   employeeId: number;

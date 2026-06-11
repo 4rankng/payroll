@@ -1,0 +1,188 @@
+/* ============================================================================
+   CSS CUSTOM PROPERTIES — Design Tokens
+   Colors, shadows, typography, spacing, gradients
+   ============================================================================ */
+
+@layer base {
+  :root {
+    /* ========================================================================
+       NAVY & GOLD Premium Palette - Breaking Cliched Blue Territory
+       ======================================================================== */
+
+    /* Primary - Deep Navy (Authority, Trust, Professionalism) */
+    --primary: 220 90% 25%;           /* #0a2540 - Bold, commanding */
+    --primary-foreground: 0 0% 100%;  /* Pure white for contrast */
+
+    /* Success - Professional Green (Positive, Achievement, Growth) */
+    --success: 142 71% 45%;            /* Rich emerald green */
+    --success-foreground: 142 100% 10%; /* Dark green for readability */
+
+    /* Warning - Amber Warmth (Attention, Energy, Alert) */
+    --warning: 35 90% 60%;            /* #e8973b - Warm amber */
+
+    /* Info - Teal Professional (Clarity, Communication, Trust) */
+    --info: 180 70% 45%;              /* #2a9d8f - Calming teal */
+
+    /* Destructive - Confident Red (Critical Actions, Errors) */
+    --destructive: 0 84% 60%;         /* #e53e3e - Clear, urgent */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Background System - Warm, Premium Whites */
+    --background: 220 20% 98%;        /* #f7fafc - Warm white */
+    --foreground: 220 90% 15%;        /* #0a1f33 - Deep navy text */
+
+    /* Surface Colors - Subtle Depth */
+    --card: 0 0% 100%;                /* Pure white */
+    --card-foreground: 220 90% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 90% 15%;
+
+    /* Muted States - Sophisticated Grays */
+    --muted: 220 15% 92%;             /* Light gray, not blue-tinted */
+    --muted-foreground: 220 10% 45%;  /* Sophisticated gray */
+
+    /* Accents - Refined Neutrals */
+    --accent: 220 10% 94%;
+    --accent-foreground: 220 90% 15%;
+
+    /* Borders & Inputs - Crisp Definition */
+    --border: 220 10% 88%;
+    --input: 220 10% 88%;
+    --ring: 220 90% 25%;              /* Navy focus rings */
+
+    /* Secondary Actions - Neutral */
+    --secondary: 220 10% 94%;
+    --secondary-foreground: 220 90% 15%;
+
+    /* Border Radius - Confident Curves */
+    --radius: 0.75rem;                /* 12px - rounded-xl */
+
+    /* ========================================================================
+       GRADIENT SYSTEM
+       ======================================================================== */
+    --gradient-navy: linear-gradient(135deg, hsl(220 90% 25%) 0%, hsl(220 80% 35%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 15% 96%) 100%);
+
+    /* ========================================================================
+       SHADOW SYSTEM
+       ======================================================================== */
+    --shadow-xs: 0 1px 2px 0 hsl(220 90% 25% / 0.05);
+    --shadow-sm: 0 1px 3px 0 hsl(220 90% 25% / 0.1), 0 1px 2px -1px hsl(220 90% 25% / 0.1);
+    --shadow-soft: 0 1px 3px 0 hsl(220 90% 25% / 0.08), 0 1px 2px -1px hsl(220 90% 25% / 0.08);
+    --shadow-card: 0 4px 6px -1px hsl(220 90% 25% / 0.12), 0 2px 4px -2px hsl(220 90% 25% / 0.12);
+    --shadow-elevated: 0 10px 15px -3px hsl(220 90% 25% / 0.15), 0 4px 6px -4px hsl(220 90% 25% / 0.15);
+    --shadow-focus: 0 0 0 3px hsl(220 90% 25% / 0.15);
+
+    /* ========================================================================
+       TYPOGRAPHY SYSTEM - Distinctive Fonts, Breaking Anti-Patterns
+       ======================================================================== */
+    --font-family-display: "Manrope", "ui-sans-serif", "system-ui", "sans-serif";
+    --font-family-sans: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
+    --font-family-financial: "JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace";
+
+    /* Typography Scale - Data-Dense, Professional */
+    --text-xs: 0.6875rem;     /* 11px - labels, badges */
+    --text-sm: 0.75rem;       /* 12px - table data, secondary */
+    --text-base: 0.8125rem;   /* 13px - body text */
+    --text-lg: 0.875rem;      /* 14px - section headers */
+    --text-xl: 1rem;          /* 16px - card headers */
+    --text-2xl: 1.125rem;     /* 18px - page headers */
+    --text-3xl: 1.25rem;      /* 20px - key metrics */
+    --text-4xl: 1.5rem;       /* 24px - dashboard metrics */
+    --text-5xl: 1.75rem;      /* 28px - hero metrics */
+
+    /* Line Heights - Optimized for Data Density */
+    --leading-none: 1;
+    --leading-tight: 1.15;
+    --leading-snug: 1.3;
+    --leading-normal: 1.4;
+    --leading-relaxed: 1.5;
+    --leading-data: 1.3;      /* Tabular numbers */
+
+    /* Letter Spacing - Professional Polish */
+    --tracking-tighter: -0.05em;
+    --tracking-tight: -0.025em;
+    --tracking-normal: 0em;
+    --tracking-wide: 0.025em;
+    --tracking-wider: 0.05em;
+    --tracking-widest: 0.1em;
+    --tracking-data: 0.005em; /* Subtle spacing for numbers */
+
+    /* Font Weights */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+
+    /* ========================================================================
+       SIDEBAR COLORS - Deep Navy Authority
+       ======================================================================== */
+    --sidebar-background: 220 90% 12%;
+    --sidebar-foreground: 220 10% 95%;
+    --sidebar-primary: 220 90% 25%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 30% 20%;
+    --sidebar-accent-foreground: 220 10% 95%;
+    --sidebar-border: 220 30% 18%;
+    --sidebar-ring: 220 90% 50%;
+
+    /* ========================================================================
+       ROLE-BASED ACCENTS - Maintaining Functionality
+       ======================================================================== */
+    --admin-accent: 220 91% 60%;
+    --partner-accent: 266 83% 60%;
+    --manager-accent: 142 71% 45%; /* Professional green */
+  }
+
+  .dark {
+    /* Deep Navy Background - Not Pure Black */
+    --background: 220 40% 12%;
+    --foreground: 220 10% 95%;
+
+    /* Cards - Subtle Depth */
+    --card: 220 30% 15%;
+    --card-foreground: 220 10% 95%;
+    --popover: 220 30% 15%;
+    --popover-foreground: 220 10% 95%;
+
+    /* Primary - Light Navy for Dark Mode */
+    --primary: 220 50% 65%;
+    --primary-foreground: 220 90% 12%;
+
+    /* Muted States */
+    --muted: 220 30% 20%;
+    --muted-foreground: 220 10% 65%;
+
+    /* Accents */
+    --accent: 220 30% 20%;
+    --accent-foreground: 220 10% 95%;
+
+    /* Secondary */
+    --secondary: 220 30% 20%;
+    --secondary-foreground: 220 10% 95%;
+
+    /* Destructive */
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & Inputs */
+    --border: 220 30% 22%;
+    --input: 220 30% 22%;
+    --ring: 220 50% 65%;
+
+    /* Sidebar */
+    --sidebar-background: 220 50% 8%;
+    --sidebar-foreground: 220 10% 90%;
+    --sidebar-primary: 220 50% 65%;
+    --sidebar-primary-foreground: 220 90% 12%;
+    --sidebar-accent: 220 30% 18%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 30% 15%;
+    --sidebar-ring: 220 50% 65%;
+
+    /* Green stays vibrant on Dark */
+    --success: 142 60% 55%;
+    --success-foreground: 142 100% 10%;
+  }
+}

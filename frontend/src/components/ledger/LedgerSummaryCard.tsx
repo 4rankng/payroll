@@ -1,8 +1,7 @@
 import { InlineStatStrip } from '@/components/shared/InlineStatStrip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { formatDate } from '@/utils/formatters';
 import { useLedgerStatsConfig } from '@/hooks/ledger/useLedgerStatsConfig';
 import type { LedgerSummary } from '@/types/api/financial.types';
 import { cn } from '@/lib/utils';
@@ -18,14 +17,6 @@ export function LedgerSummaryCard({ summary, isLoading, className }: LedgerSumma
     summary,
     isLoading,
   });
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  };
 
   const loading = isLoading || configLoading;
 

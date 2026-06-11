@@ -35,17 +35,8 @@ import { EmployeePortalHeader } from "@/components/employees/EmployeePortalHeade
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { groupTimesheetsByDay } from "@/utils/employeePortal/timesheetGrouping";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { getDayPaymentStatus } from "@/utils/employeePortal/paymentStatus";
-
-// Shared glass card style
-const glassCard = {
-  background: "rgba(255,255,255,0.78)",
-  backdropFilter: "blur(20px) saturate(1.6)",
-  WebkitBackdropFilter: "blur(20px) saturate(1.6)",
-  border: "1.5px solid rgba(255,255,255,0.92)",
-  boxShadow: "0 2px 8px rgba(100,180,230,0.12), 0 8px 24px rgba(80,160,220,0.10)",
-} as React.CSSProperties;
 
 const EmployeePage = () => {
   const navigate = useNavigate();
@@ -92,11 +83,11 @@ const EmployeePage = () => {
 
   const timesheets = useMemo(() => infiniteData?.pages.flatMap((p) => p.data) ?? [], [infiniteData]);
   const totalRecords = useMemo(() => infiniteData?.pages?.[0]?.pagination?.totalRecords ?? 0, [infiniteData]);
-  const canLoadMore = !!hasNextPage && !isFetchingNextPage && !timesheetsLoading;
-  const handleLoadMore = useMemo(() => () => {
-    if (hasNextPage && !isFetchingNextPage && !timesheetsLoading) fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, timesheetsLoading]);
-  const sentinelRef = useInfiniteScroll(handleLoadMore, canLoadMore);
+  const { observerRef } = useInfiniteScroll({
+    hasMore: !!hasNextPage,
+    isLoading: isFetchingNextPage || timesheetsLoading,
+    onLoadMore: () => { fetchNextPage(); },
+  });
 
   const bulkTransferPercentage = bulkTransferSetting?.value ? parseFloat(bulkTransferSetting.value) : 0;
 
@@ -177,7 +168,7 @@ const EmployeePage = () => {
                 { icon: CreditCard, iconText: "text-violet-600",  watermark: "text-violet-500/15",  label: "Hạn mức trả", value: formatCurrency(totalPayable), sub: null },
                 { icon: Wallet,     iconText: "text-amber-600",   watermark: "text-amber-500/15",   label: "Đã nhận",     value: formatCurrency(totalPaid), sub: null },
               ].map(({ icon: Icon, iconText, watermark, label, value, sub }) => (
-                <div key={label} className="group relative rounded-xl p-4 overflow-hidden transition-colors" style={glassCard}>
+                <div key={label} className="group relative rounded-xl p-4 overflow-hidden transition-colors glass-card">
                   {/* Watermark — large faint icon decoration */}
                   <Icon
                     className={`absolute right-3 top-1/2 -translate-y-1/2 h-14 w-14 pointer-events-none transition-transform duration-300 group-hover:scale-105 ${watermark}`}
@@ -200,8 +191,7 @@ const EmployeePage = () => {
         {/* Bank Account Information */}
         <EmployeeBankInfoCard
           profile={profile!}
-          className="rounded-xl overflow-hidden"
-          style={glassCard}
+          className="rounded-xl overflow-hidden glass-card"
         />
 
         {/* Timesheets Section */}
@@ -259,7 +249,7 @@ const EmployeePage = () => {
                 const isPaid = status === "full";
 
                 return (
-                  <div key={day.date} className="rounded-xl overflow-hidden" style={glassCard}>
+                  <div key={day.date} className="rounded-xl overflow-hidden glass-card">
                     {/* Card header */}
                     <div className="flex items-center justify-between px-4 pt-4 pb-3">
                       <div className="flex items-center gap-2">
@@ -301,7 +291,7 @@ const EmployeePage = () => {
               Đang tải thêm...
             </div>
           )}
-          <div ref={sentinelRef} className="h-4" />
+          <div ref={observerRef} className="h-4" />
         </div>
       </div>
 

@@ -257,3 +257,44 @@ export function normalizeVietnamese(str: string): string {
     .replace(/Đ/g, 'D')
     .toLowerCase();
 }
+
+/**
+ * Find a day type from available options, preferring common variants
+ * @param availableDayTypes - Array of available day type strings
+ * @param preferredTypes - Preferred day type variants to search for (defaults to "ngày thường" variants)
+ * @returns The matched day type or the first available day type
+ */
+export const findPreferredDayType = (
+  availableDayTypes: string[],
+  preferredTypes: string[] = ['ngay thuong', 'ngày thường']
+): string => {
+  if (availableDayTypes.length === 0) {
+    return '';
+  }
+
+  // Try to find a preferred day type
+  const preferred = availableDayTypes.find(dayType => {
+    const normalized = normalizeVietnamese(dayType);
+    return preferredTypes.some(pref =>
+      normalized === normalizeVietnamese(pref)
+    );
+  });
+
+  return preferred || availableDayTypes[0];
+};
+
+/**
+ * Check if a day type matches any of the preferred variants
+ * @param dayType - The day type to check
+ * @param preferredTypes - Preferred day type variants
+ * @returns True if the day type matches any preferred variant
+ */
+export const isPreferredDayType = (
+  dayType: string,
+  preferredTypes: string[] = ['ngay thuong', 'ngày thường']
+): boolean => {
+  const normalized = normalizeVietnamese(dayType);
+  return preferredTypes.some(pref =>
+    normalized === normalizeVietnamese(pref)
+  );
+};

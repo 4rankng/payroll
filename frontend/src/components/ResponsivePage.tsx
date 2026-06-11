@@ -1,4 +1,4 @@
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface ResponsivePageProps {
   desktopComponent: React.ComponentType;

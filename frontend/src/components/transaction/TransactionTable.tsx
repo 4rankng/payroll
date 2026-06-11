@@ -1,9 +1,8 @@
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { useMetadata } from '@/contexts';
 import { transactionService, getTransactionRemainingAmount } from '@/services/api/transaction.service';
+import { formatDate, formatCurrency } from '@/utils/formatters';
 import type { Transaction } from '@/services/api/transaction.service';
 import type { MobileField, RowAction } from '@/components/ui/mobile-table';
 import { useMemo, useCallback } from 'react';
@@ -71,18 +70,6 @@ export function TransactionTable({
   onSortingChange,
 }: TransactionTableProps) {
   const { transactionMetadata } = useMetadata();
-
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  }, []);
-
-  const formatCurrency = useCallback((amount: number) => {
-    return transactionService.formatCurrency(amount);
-  }, []);
 
   const getTypeLabel = useCallback((type: string) =>
     transactionService.getTransactionTypeDisplay(type, transactionMetadata),
@@ -156,7 +143,7 @@ export function TransactionTable({
         );
       },
     },
-  ], [formatDate, formatCurrency, getTypeLabel]);
+  ], [getTypeLabel]);
 
   const mobileFields = useMemo<MobileField<Transaction>[]>(() => [
     {
@@ -212,7 +199,7 @@ export function TransactionTable({
         );
       },
     },
-  ], [formatCurrency, formatDate, getTypeLabel]);
+  ], [getTypeLabel]);
 
   const mobileRowActions = useMemo<RowAction<Transaction>[]>(() => [
     { label: 'Xem chi tiết', onClick: (row) => onRowClick?.(row) },

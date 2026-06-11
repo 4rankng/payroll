@@ -18,8 +18,6 @@ import {
   Ban,
   SlidersHorizontal,
 } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -42,8 +40,9 @@ import {
 } from "@/components/ui/sheet";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { FilterPill } from "@/components/shared/FilterPill";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { walletService } from "@/services/api/wallet.service";
+import { formatDateTime, formatCurrency as formatVND } from "@/utils/formatters";
 import type {
   UnifiedTransaction,
   UnifiedTransactionFilter,
@@ -91,16 +90,8 @@ function parseCounterparty(raw: string): { name: string; detail: string | null }
   return { name: raw.slice(0, sep), detail: raw.slice(sep + 3) };
 }
 
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(Math.abs(amount));
-}
-
 function formatAmount(amount: number): string {
-  const formatted = formatVND(amount);
+  const formatted = formatVND(Math.abs(amount));
   if (amount > 0) return `+${formatted}`;
   return `−${formatted}`;
 }
@@ -111,14 +102,6 @@ const PROVIDER_SUCCESS_CODES = new Set(["00", "0", "000", ""]);
 function isRealErrorCode(code: string | null | undefined): boolean {
   if (!code) return false;
   return !PROVIDER_SUCCESS_CODES.has(code.trim());
-}
-
-function formatDateTime(value: string): string {
-  try {
-    return format(new Date(value), "dd/MM/yyyy HH:mm", { locale: vi });
-  } catch {
-    return value;
-  }
 }
 
 // ── Copy-to-clipboard mini hook ──────────────────────────────────────────────

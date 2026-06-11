@@ -30,16 +30,9 @@ import { useEmployeeModals } from '@/hooks/useModalNavigation';
 import { cn } from '@/lib/utils';
 import { MobileSectionHeader as SectionHeader } from '@/components/shared/MobileSectionHeader';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}B đ`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M đ`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K đ`;
-  return `${sign}${abs.toLocaleString('vi-VN')} đ`;
-}
 
 const AdminDashboardMobile = () => {
   const navigate = useNavigate();

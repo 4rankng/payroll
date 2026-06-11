@@ -12,6 +12,7 @@ import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/Partner
 import { generateMonthOptions } from '@/utils/dateHelpers';
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
 
@@ -22,15 +23,6 @@ const monthOptions = [
     label: `T${o.value.split('-')[1]}/${o.value.split('-')[0]}`,
   })),
 ];
-
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}tỷ đ`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M đ`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K đ`;
-  return `${sign}${abs.toLocaleString('vi-VN')} đ`;
-}
 
 /* ───────────────────────────────────────────────
    MonthNavigator — clean ← Month Year → control
@@ -48,17 +40,17 @@ function MonthNavigator({ value, onChange }: { value: string; onChange: (v: stri
   const goPrev = useCallback(() => {
     const idx = Math.max(0, currentIdx - 1);
     onChange(monthOnlyOptions[idx].value);
-  }, [currentIdx, onChange]);
+  }, [currentIdx, monthOnlyOptions, onChange]);
 
   const goNext = useCallback(() => {
     const idx = Math.min(monthOnlyOptions.length - 1, currentIdx + 1);
     onChange(monthOnlyOptions[idx].value);
-  }, [currentIdx, onChange]);
+  }, [currentIdx, monthOnlyOptions, onChange]);
 
   const displayLabel = useMemo(() => {
     const opt = monthOnlyOptions.find((o) => o.value === effectiveValue);
     return opt?.label ?? effectiveValue;
-  }, [effectiveValue]);
+  }, [effectiveValue, monthOnlyOptions]);
 
   return (
     <div className="flex items-center justify-between gap-2">
@@ -144,7 +136,7 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
 
       {/* Amount */}
       <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0 pl-1">
-        {formatVND(item.total_paid_vnd)}
+        {formatVND(item.total_paid_vnd, { useVietnamese: true })}
       </span>
     </div>
   );
@@ -220,7 +212,7 @@ const PartnerDashboardMobile = () => {
               <KpiHeroCard label="Đang làm việc" value={data?.active_employees ?? 0} icon={UserCheck} color="emerald" sublabel="Có bảng công 14 ngày qua" onClick={() => openSheet('active')} />
               <KpiHeroCard label="Có thể nghỉ việc" value={data?.dropped_employees ?? 0} icon={UserX} color="amber" sublabel="Không bảng công 14 ngày qua" onClick={(data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined} />
               <KpiHeroCard label="Được trả lương" value={data?.paid_employees ?? 0} icon={Users} color="blue" sublabel={momEmployeesSublabel} onClick={(data?.paid_employees ?? 0) > 0 ? () => openSheet('paid') : undefined} />
-              <KpiHeroCard label="Tổng chi trả" value={data?.total_paid_vnd ?? 0} formattedValue={formatVND(data?.total_paid_vnd ?? 0)} icon={Banknote} color="violet" sublabel={momAmountSublabel} />
+              <KpiHeroCard label="Tổng chi trả" value={data?.total_paid_vnd ?? 0} formattedValue={formatVND(data?.total_paid_vnd ?? 0, { useVietnamese: true })} icon={Banknote} color="violet" sublabel={momAmountSublabel} />
             </>
           )}
         </div>

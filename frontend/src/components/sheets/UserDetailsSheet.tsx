@@ -264,7 +264,8 @@ function UserDetailsSheet({
         open={showResetPasswordModal}
         onClose={() => setShowResetPasswordModal(false)}
         onResetPassword={(_, password) => handleResetPassword(password)}
-        user={user}
+        target={user}
+        targetType="user"
         loading={loading}
       />
 

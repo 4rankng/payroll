@@ -1,5 +1,5 @@
 import type { TimesheetEntry } from '../../types/multi-timesheet.types';
-import { normalizeVietnamese } from '@/utils/vietnameseHelpers';
+import { normalizeVietnamese } from '@/utils/vietnamese';
 
 /**
  * Determine whether a timesheet entry differs from its original values.

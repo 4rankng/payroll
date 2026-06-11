@@ -4,7 +4,7 @@ import type { SortingState } from "@tanstack/react-table";
 import { memo, useMemo } from "react";
 import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
 import { EmployeeTimesheetHistory } from "./EmployeeTimesheetHistory";
-import { formatCurrency } from "@/utils/employeeHelpers";
+import { formatCurrency } from "@/utils/formatters";
 import type { EmployeeIndividualSummary, Employee, EmployeeTimesheetFilters, TimesheetSummary, PayrollSummary } from "@/types/api/employee.types";
 import type { EmployeeTimesheetResponse } from "@/types/api/timesheet.types";
 

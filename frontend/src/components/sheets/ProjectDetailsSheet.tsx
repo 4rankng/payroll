@@ -11,7 +11,7 @@ import { ProjectUserAccessTab } from "@/components/projects/details/ProjectUserA
 import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
 import ProjectEditSheet from "./ProjectEditSheet";
 import { Button } from "@/components/ui/button";
-import ConfirmationModal from "@/components/modals/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useProject, usePauseProject, useResumeProject, useStartProject, useCompleteProject, useCancelProject, useDeleteProject, useProjectApprovedTimesheets } from "@/hooks/api/useProjects";
 import { useCanEditProject, useCanManageProjectEmployees } from "@/hooks/useCanEditProject";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -431,38 +431,38 @@ function ProjectDetailsSheet({
       {isAdmin && (
         <>
           {/* Complete Confirmation Modal */}
-          <ConfirmationModal
-            isOpen={isCompleteModalOpen}
-            onClose={handleCompleteCancel}
+          <ConfirmDialog
+            open={isCompleteModalOpen}
+            onOpenChange={handleCompleteCancel}
             onConfirm={handleCompleteProject}
             title="Xác nhận hoàn thành dự án"
             description={`Bạn có chắc chắn muốn đánh dấu dự án "${project?.name}" là hoàn thành? Sau khi hoàn thành, bạn sẽ không thể thêm/xóa nhân viên hoặc tạo timesheet mới.`}
             confirmText="Hoàn thành"
             cancelText="Hủy bỏ"
-            variant="default"
-            isLoading={completeProjectMutation.isPending}
+            confirmVariant="default"
+            loading={completeProjectMutation.isPending}
           />
 
           {/* Cancel Confirmation Modal */}
-          <ConfirmationModal
-            isOpen={isCancelModalOpen}
-            onClose={handleCancelCancel}
+          <ConfirmDialog
+            open={isCancelModalOpen}
+            onOpenChange={handleCancelCancel}
             onConfirm={handleCancelProject}
             title="Xác nhận hủy dự án"
             description={`Bạn có chắc chắn muốn hủy dự án "${project?.name}"? Dự án sẽ được đánh dấu là đã hủy và không thể khôi phục.`}
             confirmText="Hủy dự án"
             cancelText="Hủy bỏ"
-            variant="destructive"
-            isLoading={cancelProjectMutation.isPending}
+            confirmVariant="destructive"
+            loading={cancelProjectMutation.isPending}
           />
 
         </>
       )}
 
       {/* Delete Confirmation Modal - Available for all users with edit permissions */}
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleDeleteCancel}
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        onOpenChange={handleDeleteCancel}
         onConfirm={canDeleteProject ? handleDeleteProject : undefined}
         title="Xác nhận xóa dự án"
         description={
@@ -511,8 +511,8 @@ function ProjectDetailsSheet({
         }
         confirmText={canDeleteProject ? "Xóa dự án" : undefined}
         cancelText={canDeleteProject ? "Hủy bỏ" : "Đóng"}
-        variant="destructive"
-        isLoading={deleteProjectMutation.isPending || isLoadingApprovedTimesheets}
+        confirmVariant="destructive"
+        loading={deleteProjectMutation.isPending || isLoadingApprovedTimesheets}
       />
     </>
   );

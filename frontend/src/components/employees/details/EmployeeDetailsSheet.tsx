@@ -3,11 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SlideSheetTemplate } from "@/components/sheets/templates/SlideSheetTemplate";
 import { RemoveEmployeeSheet } from "@/components/modals/RemoveEmployeeModal";
 import { DeleteEmployeeModal } from "./components/DeleteEmployeeModal";
-import { ResetEmployeePasswordModalContainer } from "@/components/modals/ResetEmployeePasswordModalContainer";
+import { ResetPasswordModalContainer } from "@/components/modals/ResetPasswordModalContainer";
 import { useEmployeeForm } from "@/hooks/employees/useEmployeeForm";
 import { useEmployeeDetails } from "@/hooks/employees/useEmployeeDetails";
 import { useUpdateEmployee, useDeleteEmployee } from "@/hooks/api/useEmployees";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -385,9 +385,10 @@ export function EmployeeDetailsSheet({
       />
 
       {/* Reset Employee Password Modal */}
-      <ResetEmployeePasswordModalContainer
+      <ResetPasswordModalContainer
         isOpen={isResetPasswordModalOpen}
         onClose={() => setIsResetPasswordModalOpen(false)}
+        targetType="employee"
         employeeId={employee.id.toString()}
       />
     </>

@@ -10,6 +10,7 @@ import { useTransactionMetadata } from '@/hooks/transactions/useTransactionMetad
 import { useUsersByIds } from '@/hooks/api/useUsers';
 import { getUserFullName } from '@/utils/userHelpers';
 import { transactionService } from '@/services/api/transaction.service';
+import { formatCurrency } from '@/utils/formatters';
 import { assetService } from '@/services/api/asset.service';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -102,10 +103,6 @@ function TransactionDetailsSheetComponent({
     } catch {
       return dateString;
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return transactionService.formatCurrency(amount);
   };
 
   const getTransactionTypeBadge = (type: string) => {

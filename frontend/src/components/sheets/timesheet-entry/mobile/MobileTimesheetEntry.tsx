@@ -24,8 +24,8 @@ import { useBottomNav } from "@/contexts";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { NewTimesheetEntry } from "@/types/api/timesheet.types";
 import type { TimesheetEntry } from "../types/multi-timesheet.types";
+import { formatCurrency } from "@/utils/formatters";
 import {
-  formatVND,
   getHourStatus,
   WEEKDAY,
 } from "../utils/timesheetHelpers";
@@ -607,7 +607,7 @@ export function MobileTimesheetEntry({
                       {earnings > 3500000 && (
                         <AlertTriangle className="h-3 w-3 shrink-0" />
                       )}
-                      {formatVND(earnings)}
+                      {formatCurrency(earnings)}
                     </span>
                   )}
                 </div>
@@ -798,7 +798,7 @@ export function MobileTimesheetEntry({
                         }, 0);
                         return rowEarnings > 0 ? (
                           <span className="text-xs text-emerald-600 font-semibold tabular-nums pl-0.5">
-                            {formatVND(rowEarnings)}
+                            {formatCurrency(rowEarnings)}
                           </span>
                         ) : null;
                       })()}

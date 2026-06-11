@@ -1,9 +1,8 @@
 import { useMemo, useCallback } from 'react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Receipt } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import type { ColumnDef, SortingState, OnChangeFn } from '@tanstack/react-table';
 import type { PaymentHistory } from '@/types/api/payroll.types';
 
@@ -21,21 +20,6 @@ interface PaymentHistoryTableProps {
 }
 
 export function PaymentHistoryTable({ data, isLoading, pagination, sorting, onSortingChange }: PaymentHistoryTableProps) {
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  }, []);
-
-  const formatCurrency = useCallback((amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  }, []);
-
   const columns: ColumnDef<PaymentHistory>[] = useMemo(() => [
     {
       id: 'stt',
@@ -95,10 +79,10 @@ export function PaymentHistoryTable({ data, isLoading, pagination, sorting, onSo
       header: 'Ngày thanh toán',
       size: 150,
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{formatDate(row.original.paid_date)}</span>
+        <span className="text-muted-foreground">{formatDateTime(row.original.paid_date)}</span>
       ),
     },
-  ], [formatCurrency, formatDate, pagination?.page, pagination?.pageSize]);
+  ], [pagination?.page, pagination?.pageSize]);
 
   // Loading skeleton
   if (isLoading) {

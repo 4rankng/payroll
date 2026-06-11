@@ -6,9 +6,8 @@ import { NotificationBadge } from '@/components/notifications/NotificationBadge'
 import { useUnreadNotifications } from '@/hooks/api/useNotifications';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useBellAnimation } from '@/hooks/useBellAnimation';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { authManager } from '@/lib/auth';
-import { EMPLOYEE_BRAND_COLOR } from '@/constants/branding';
 import { cn } from '@/lib/utils';
 
 export const NotificationFAB = () => {
@@ -44,7 +43,6 @@ export const NotificationFAB = () => {
             'animate-in slide-in-from-bottom-4 fade-in duration-300',
             isMobile ? 'bottom-20 h-12 w-12' : 'bottom-6 h-12 w-12'
           )}
-          style={!isAdminOrPartner ? { backgroundColor: EMPLOYEE_BRAND_COLOR } : undefined}
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >
           <img

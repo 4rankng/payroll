@@ -159,17 +159,13 @@ export const validateCurrency = (amount: number | string): { valid: boolean; err
   return { valid: true };
 };
 
-// Format currency for display
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount) + ' đ';
-};
+// Format currency for display — delegates to canonical implementation
+import { formatCurrency as _formatCurrency } from '@/utils/formatters';
+export { _formatCurrency as formatCurrency };
 
 // Format currency in full form with đ symbol
 export const formatCurrencyShort = (amount: number): string => {
-  return formatCurrency(amount);
+  return _formatCurrency(amount);
 };
 
 // Project code validation (PRJ-YYYY-XXX format)

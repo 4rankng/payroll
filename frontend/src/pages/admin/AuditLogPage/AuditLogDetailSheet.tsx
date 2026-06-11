@@ -5,7 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MetadataRenderer } from './MetadataRenderer';

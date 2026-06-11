@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
@@ -17,11 +16,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { UrlInput } from '@/components/ui/UrlInput';
+import { formatCurrency } from '@/utils/formatters';
 import { CheckCircle, X, Receipt, Calendar, DollarSign, FileText, Loader2 } from 'lucide-react';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { useUploadAsset } from '@/hooks/api/useAssets';
 import { useSettleTransaction } from '@/hooks/transactions/useSettleTransaction';
 import { transactionService, getTransactionRemainingAmount } from '@/services/api/transaction.service';
+import { formatDate } from '@/utils/formatters';
 import type { ModalConfig } from '@/types/modal-config.types';
 import type { Transaction } from '@/services/api/transaction.service';
 
@@ -189,15 +190,6 @@ function SettleTransactionModalComponent({
 
   const handleBack = () => {
     setStep('form');
-  };
-
-  const formatCurrency = (amount: number) => {
-    return transactionService.formatCurrency(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'dd/MM/yyyy');
   };
 
   const isLoading = settleTransaction.isPending || uploadAsset.isPending;

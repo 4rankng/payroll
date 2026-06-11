@@ -6,8 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, User as UserIcon, Calendar, Building, X, Hash, RotateCcw } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { formatDate, formatDateTime } from '@/utils/formatters';
 import { ledgerService } from '@/services/api/ledger.service';
 import { projectService } from '@/services/api/project.service';
 import { useLedgerEntry, useReverseLedgerEntry } from '@/hooks/ledger/useLedgerEntries';
@@ -108,28 +107,6 @@ function LedgerEntryDetailsSheetComponent({
 
     getProjectName();
   }, [entry?.project_id]);
-
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  }, []);
-
-  const formatDateTime = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  }, []);
-
-  const formatCurrency = useCallback((amount: number) => {
-    if (amount === 0) return '0 đ';
-    return ledgerService.formatCurrency(amount);
-  }, []);
-
 
   const getAccountBadge = useCallback((account: string) => {
     const variants = {

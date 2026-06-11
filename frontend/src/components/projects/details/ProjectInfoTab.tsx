@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useMemo } from "react";
 import { Project } from "@/types/api/project.types";
 import { User } from "lucide-react";
@@ -6,6 +5,7 @@ import { useUsersByIds } from "@/hooks/api/useUsers";
 import { getUserFullName } from "@/utils/userHelpers";
 import { authManager } from "@/lib/auth";
 import { isOffDay } from "@/components/projects/OffDaysPicker";
+import { formatDate } from "@/utils/formatters";
 
 const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -15,7 +15,7 @@ interface ProjectInfoTabProps {
 
 const formatDateForDisplay = (dateString: string | null | undefined): string => {
   if (!dateString) return "-";
-  return format(new Date(dateString), 'dd/MM/yyyy');
+  return formatDate(dateString);
 };
 
 function Field({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {

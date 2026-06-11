@@ -1,10 +1,3 @@
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount) + ' đ';
-};
-
 export const getInitials = (name: string) => {
   if (!name || typeof name !== 'string') {
     return '';

@@ -10,6 +10,7 @@ import { sanitizeFilename } from '@/utils/file-naming';
 import { dateToString } from '@/utils/dateHelpers';
 import { bulkTransferService } from '@/services/api/bulk-transfer.service';
 import { cn } from '@/lib/utils';
+import { formatCurrencyFromString } from '@/utils/formatters';
 
 // --- Helpers ---
 
@@ -21,12 +22,6 @@ function formatDate(dateString: string): string {
       hour: '2-digit', minute: '2-digit',
     });
   } catch { return dateString; }
-}
-
-function formatCurrency(amount: string): string {
-  if (!amount) return '0 đ';
-  const num = Number(amount.replace(/,/g, ''));
-  return isNaN(num) ? amount : `${num.toLocaleString('vi-VN')} đ`;
 }
 
 // --- Sub-components ---
@@ -82,7 +77,7 @@ function TransactionRow({ detail, isLast }: TransactionRowProps) {
 
       {/* Amount */}
       <p className="typography-body-small font-semibold text-slate-800 tabular-nums text-right whitespace-nowrap">
-        {formatCurrency(detail.amount)}
+        {formatCurrencyFromString(detail.amount)}
       </p>
     </div>
   );

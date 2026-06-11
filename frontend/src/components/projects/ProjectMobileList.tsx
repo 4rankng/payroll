@@ -4,6 +4,7 @@ import type { Project } from '@/types/api/project.types';
 import { Badge } from '@/components/ui/badge';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
 import { Briefcase } from 'lucide-react';
+import { formatDate } from '@/utils/formatters';
 
 interface ProjectMobileListProps {
   projects: Project[];
@@ -13,8 +14,7 @@ interface ProjectMobileListProps {
 
 function formatDateShort(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  return formatDate(dateStr);
 }
 
 const ProjectCard = React.memo(function ProjectCard({

@@ -6,6 +6,7 @@ import {
   UserX
 } from 'lucide-react';
 import { useEmployeesSummary } from '@/hooks/api/useEmployees';
+import { formatCurrency as formatCurrencyBase } from '@/utils/formatters';
 import type { StatCardConfig } from '@/components/shared/SummaryStatsCards';
 import type { EmployeeFilters } from '@/types/api/employee.types';
 
@@ -17,11 +18,7 @@ interface EmployeeStatsConfigProps {
 }
 
 export const useEmployeeStatsConfig = ({
-  formatCurrency = (amount: number) => new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0
-  }).format(amount),
+  formatCurrency = formatCurrencyBase,
   currentFilters = {},
   updateFilters,
   clearFilters

@@ -7,8 +7,8 @@ const DEFAULT_CURRENCY_CODE = 'VND';
  * to Intl.NumberFormat. Currently we only support VND, but we gracefully
  * map common Vietnamese currency symbols to the ISO code.
  */
-export const normalizeCurrencyCode = (currency?: string | null): string => {
-  if (!currency) return DEFAULT_CURRENCY_CODE;
+export const normalizeCurrencyCode = (currency?: string | null | number): string => {
+  if (!currency || typeof currency !== 'string') return DEFAULT_CURRENCY_CODE;
 
   const trimmed = currency.trim();
   if (!trimmed) return DEFAULT_CURRENCY_CODE;
@@ -46,6 +46,35 @@ export const formatDate = (date: string | Date, format: 'short' | 'long' = 'shor
   }
 
   return new Intl.DateTimeFormat('vi-VN').format(dateObj);
+};
+
+/**
+ * Format date with time: dd/MM/yyyy HH:mm
+ */
+export const formatDateTime = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateObj);
+};
+
+/**
+ * Format date with full time including seconds: dd/MM/yyyy HH:mm:ss
+ */
+export const formatDateTimeFull = (date: string | Date): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(dateObj);
 };
 
 export const formatDateForAPI = (date: string | Date): string => {
@@ -91,9 +120,46 @@ export const truncateText = (text: string, maxLength: number) => {
   return text.substring(0, maxLength) + '...';
 };
 
+/**
+ * Format a currency amount given as a string (e.g. from API responses).
+ * Parses the string to a number and delegates to formatCurrency.
+ */
+export const formatCurrencyFromString = (amountStr?: string | null, currency?: string): string => {
+  if (!amountStr) return '- đ';
+  const num = Number(amountStr.replace(/,/g, ''));
+  return formatCurrency(num, currency);
+};
+
 export const formatNumber = (value: number, decimals = 1) => {
   return new Intl.NumberFormat('vi-VN', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   }).format(value);
+};
+
+/**
+ * Compact currency formatter for chart axes, tooltips, legends, and small card contexts.
+ * Uses K/M/B notation with optional " đ" suffix.
+ * Replaces the old local formatVND functions that were consolidated from admin-dashboard components.
+ */
+export const formatCompactCurrency = (
+  value: number,
+  options: { showSymbol?: boolean; useVietnamese?: boolean } = {}
+): string => {
+  const { showSymbol = true, useVietnamese = false } = options;
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (abs >= 1e9) {
+    const suffix = useVietnamese ? 'tỷ' : 'B';
+    return `${sign}${(abs / 1e9).toFixed(1)}${suffix}${showSymbol ? ' đ' : ''}`;
+  }
+  if (abs >= 1e6) {
+    const suffix = useVietnamese ? 'tr' : 'M';
+    return `${sign}${(abs / 1e6).toFixed(1)}${suffix}${showSymbol ? ' đ' : ''}`;
+  }
+  if (abs >= 1e3) {
+    return `${sign}${(abs / 1e3).toFixed(0)}K${showSymbol ? ' đ' : ''}`;
+  }
+  return `${sign}${abs.toLocaleString('vi-VN')}${showSymbol ? ' đ' : ''}`;
 };

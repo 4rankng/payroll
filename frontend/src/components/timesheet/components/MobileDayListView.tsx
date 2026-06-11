@@ -4,7 +4,8 @@ import { vi } from 'date-fns/locale';
 import { Plus, Clock, Banknote, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Timesheet } from '@/types/api/timesheet.types';
-import { formatCurrency, getAggregatedStatus, type CalendarTimesheetEntry } from '../utils/timesheetCalendarHelpers';
+import { getAggregatedStatus, type CalendarTimesheetEntry } from '../utils/timesheetCalendarHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import type { ProjectCalendarData } from '../utils/timesheetCalendarHelpers';
 
 interface MobileDayListViewProps {
@@ -95,7 +96,7 @@ export function MobileDayListView({
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{project.monthlyStats.totalHours}h</span>
-          <span className="font-semibold text-foreground">{formatCurrency(project.monthlyStats.totalAmount)}đ</span>
+          <span className="font-semibold text-foreground">{formatCurrency(project.monthlyStats.totalAmount)}</span>
         </div>
       </div>
 
@@ -162,16 +163,16 @@ export function MobileDayListView({
                     </div>
                     <div className="flex items-center gap-1">
                       <Banknote className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <span className="text-xs font-semibold text-foreground tabular-nums">{formatCurrency(totalAmount)}đ</span>
+                      <span className="text-xs font-semibold text-foreground tabular-nums">{formatCurrency(totalAmount)}</span>
                     </div>
                     {bulkTransferPercentage > 0 && (
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        Mức: {formatCurrency(paymentLimit)}đ
+                        Mức: {formatCurrency(paymentLimit)}
                       </span>
                     )}
                     {totalPaid > 0 && (
                       <span className="text-xs text-amber-700 tabular-nums">
-                        Đã TT: {formatCurrency(totalPaid)}đ
+                        Đã TT: {formatCurrency(totalPaid)}
                       </span>
                     )}
                   </div>

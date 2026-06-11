@@ -6,7 +6,7 @@ import { TimesheetListTable } from "@/components/timesheet/TimesheetListTable";
 import { TimesheetMobileList } from "@/components/timesheet/TimesheetMobileList";
 import { TimesheetProvider } from "@/components/timesheet/TimesheetContext";
 import { EditRequestTable } from "@/components/timesheet/EditRequestTable";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import {
   TimesheetsExportDialog,
   TimesheetsExportParams,

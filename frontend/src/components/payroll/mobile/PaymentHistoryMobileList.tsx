@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { Receipt, Banknote, User, Briefcase, Calendar } from 'lucide-react';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { PaymentHistory } from '@/types/api/payroll.types';
 
@@ -11,21 +10,6 @@ interface PaymentHistoryMobileListProps {
 }
 
 export function PaymentHistoryMobileList({ data, isLoading }: PaymentHistoryMobileListProps) {
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-  };
-
   // Loading skeleton
   if (isLoading) {
     return (
@@ -104,7 +88,7 @@ export function PaymentHistoryMobileList({ data, isLoading }: PaymentHistoryMobi
               {/* Date */}
               <div className="typography-body-small text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
-                <span>{formatDate(payment.paid_date)}</span>
+                <span>{formatDateTime(payment.paid_date)}</span>
               </div>
             </div>
           </div>

@@ -9,13 +9,6 @@ import {
 } from "@/components/payrates/types";
 import { requiresDayType } from "@/utils/timesheetHelpers";
 
-export const formatVND = (amount: number): string =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount);
-
 export const WEEKDAY = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const;
 
 export const isWeekendDate = (s: string): boolean => {

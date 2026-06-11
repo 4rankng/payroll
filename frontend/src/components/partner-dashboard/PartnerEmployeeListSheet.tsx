@@ -1,6 +1,6 @@
 import { memo, useState, useMemo, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,27 +9,10 @@ import { Input } from '@/components/ui/input';
 import { X, Phone, Hash, Briefcase, Calendar, DollarSign, UserCheck, UserX, Search } from 'lucide-react';
 import { usePartnerEmployeeList } from '@/hooks/api/useDashboard';
 import { normalizeVietnamese } from '@/utils/vietnamese';
+import { formatDate, formatCompactCurrency as formatVND } from '@/utils/formatters';
 import type { PartnerEmployeeListType, PartnerEmployeeDetailItem } from '@/types/api/dashboard.types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1e9) return `${(abs / 1e9).toFixed(1)}tỷ đ`;
-  if (abs >= 1e6) return `${(abs / 1e6).toFixed(1)}M đ`;
-  if (abs >= 1e3) return `${(abs / 1e3).toFixed(0)}K đ`;
-  return `${abs.toLocaleString('vi-VN')} đ`;
-}
-
-function formatDate(d: string): string {
-  if (!d) return '—';
-  // Handle both YYYY-MM-DD and DD/MM/YYYY formats
-  if (d.includes('-')) {
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}/${y}`;
-  }
-  // Already in DD/MM/YYYY format
-  return d;
-}
 
 const TYPE_CONFIG: Record<PartnerEmployeeListType, {
   title: string;
@@ -107,8 +90,8 @@ const EmployeeCard = memo(function EmployeeCard({
         )}
         {item.cccd && <InfoRow icon={Hash} label="CCCD">{item.cccd}</InfoRow>}
         {item.last_paid_date && <InfoRow icon={Calendar} label="Trả gần nhất">{formatDate(item.last_paid_date)}</InfoRow>}
-        {item.last_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tiền gần nhất">{formatVND(item.last_paid_vnd)}</InfoRow>}
-        {item.total_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tổng đã trả">{formatVND(item.total_paid_vnd)}</InfoRow>}
+        {item.last_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tiền gần nhất">{formatVND(item.last_paid_vnd, { useVietnamese: true })}</InfoRow>}
+        {item.total_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tổng đã trả">{formatVND(item.total_paid_vnd, { useVietnamese: true })}</InfoRow>}
       </div>
     </div>
   );

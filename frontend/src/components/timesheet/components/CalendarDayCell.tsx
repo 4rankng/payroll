@@ -1,8 +1,6 @@
 import { cn } from '@/lib/utils';
-import {
-  CalendarDay,
-  formatCurrency
-} from '../utils/timesheetCalendarHelpers';
+import { CalendarDay } from '../utils/timesheetCalendarHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { Timesheet } from '@/types/api/timesheet.types';
 import { Star } from 'lucide-react';
 import { getCalendarCellClasses } from '../utils/timesheetStatusColors';
@@ -129,21 +127,21 @@ export function CalendarDayCell({
             {/* Lương (Salary) */}
             <div className="text-muted-foreground">
               Lương: <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(day.totalAmount || 0)}đ
+                {formatCurrency(day.totalAmount || 0)}
               </span>
             </div>
 
             {/* Hạn mức (Payment Limit) */}
             <div className="text-muted-foreground">
               Mức: <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(paymentLimit)}đ
+                {formatCurrency(paymentLimit)}
               </span>
             </div>
 
             {/* Đã trả (Paid Amount) */}
             <div className="text-muted-foreground">
               Đã trả: <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(day.totalPaidAmount || 0)}đ
+                {formatCurrency(day.totalPaidAmount || 0)}
               </span>
             </div>
           </div>
@@ -272,15 +270,15 @@ export function CalendarDayCellMobile({
             </div>
             {/* Lương */}
             <div className="text-muted-foreground">
-              L: <span className="text-foreground font-medium tabular-nums">{formatCurrency(day.totalAmount || 0)}đ</span>
+              L: <span className="text-foreground font-medium tabular-nums">{formatCurrency(day.totalAmount || 0)}</span>
             </div>
             {/* Hạn mức */}
             <div className="text-muted-foreground">
-              HM: <span className="text-foreground font-medium tabular-nums">{formatCurrency(paymentLimit)}đ</span>
+              HM: <span className="text-foreground font-medium tabular-nums">{formatCurrency(paymentLimit)}</span>
             </div>
             {/* Đã trả */}
             <div className="text-muted-foreground">
-              ĐT: <span className="text-foreground font-medium tabular-nums">{formatCurrency(day.totalPaidAmount || 0)}đ</span>
+              ĐT: <span className="text-foreground font-medium tabular-nums">{formatCurrency(day.totalPaidAmount || 0)}</span>
             </div>
           </div>
         </div>

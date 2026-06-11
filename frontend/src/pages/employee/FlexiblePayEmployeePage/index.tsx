@@ -27,7 +27,6 @@ import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 
 const cardShadow = { boxShadow: "0 1px 6px rgba(0,0,0,0.08)" } as const;
 
@@ -153,8 +152,7 @@ const FlexiblePayEmployeePage = () => {
         }}
       >
         <div
-          className="px-4 py-4 flex items-center justify-between"
-          style={{ background: EMPLOYEE_BRAND_COLOR }}
+          className="px-4 py-4 flex items-center justify-between bg-employee"
         >
           <div className="space-y-2">
             <Skeleton className="h-3 w-16" />

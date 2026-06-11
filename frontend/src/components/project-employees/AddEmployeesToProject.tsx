@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { Users, UserPlus, Building2, Link, Plus, CheckCircle2, X, Calendar, Clock } from "lucide-react";
 import { Project } from "@/types/api/project.types";
 import { useEmployees } from "@/hooks/api/useEmployees";

@@ -14,7 +14,7 @@ import {
 } from "@/utils/advancePaymentHelpers";
 import { formatCurrency } from "@/utils/formatters";
 import { useAdvancePayments } from "@/hooks/api/useAdvancePayments";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import type {
   AdvancePaymentListItem,
   FlexPayEmployeeListItem,

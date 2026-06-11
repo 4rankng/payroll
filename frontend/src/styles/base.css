@@ -1,0 +1,275 @@
+/* ============================================================================
+   BASE ELEMENT STYLES — HTML resets, body, typography classes, responsive overrides
+   ============================================================================ */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family-sans);
+    font-size: var(--text-base);
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  /* Full viewport height with PWA splash background */
+  html {
+    height: 100%;
+    background-color: hsl(220 20% 98%);
+  }
+
+  body {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
+  /* ========================================================================
+     DISTINCTIVE TYPOGRAPHY - Breaking Anti-Patterns
+     ======================================================================== */
+
+  /* Display Headers - Manrope Bold, Confident */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-display);
+    line-height: var(--leading-tight);
+    font-weight: var(--font-bold);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h1 {
+    font-size: var(--text-5xl);
+    font-weight: var(--font-extrabold);
+  }
+
+  h2 {
+    font-size: var(--text-4xl);
+  }
+
+  h3 {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-semibold);
+  }
+
+  h4 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-semibold);
+  }
+
+  /* ========================================================================
+     TYPOGRAPHY UTILITY CLASSES - Material Design 3 Scale
+     Used throughout the app for consistent text styling.
+     These explicitly set font-family so they override the h* base rules above.
+     ======================================================================== */
+
+  /* Display — Manrope, for hero metrics and page titles */
+  .typography-display-large {
+    font-family: var(--font-family-display);
+    font-size: var(--text-5xl);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .typography-display-medium {
+    font-family: var(--font-family-display);
+    font-size: var(--text-4xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .typography-display-small {
+    font-family: var(--font-family-display);
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  /* Headline — Manrope, for section headers and sheet titles */
+  .typography-headline-large {
+    font-family: var(--font-family-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
+  .typography-headline-medium {
+    font-family: var(--font-family-display);
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
+  .typography-headline-small {
+    font-family: var(--font-family-display);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  /* Title — Inter (body font), for card titles and list items */
+  .typography-title-large {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+  .typography-title-medium {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+  .typography-title-small {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  /* Body — Inter, for content text */
+  .typography-body-large {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-normal);
+  }
+  .typography-body-medium {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+  .typography-body-small {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  /* Label — Inter, for badges, tags, and metadata */
+  .typography-label-large {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wide);
+  }
+  .typography-label-medium {
+    font-family: var(--font-family-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wide);
+  }
+  .typography-label-small {
+    font-family: var(--font-family-sans);
+    font-size: 0.625rem; /* 10px */
+    font-weight: var(--font-medium);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wider);
+  }
+
+  /* Mobile typography adjustment */
+  @media (max-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+
+    h1 {
+      font-size: var(--text-3xl);
+    }
+
+    h2 {
+      font-size: var(--text-2xl);
+    }
+
+    h3 {
+      font-size: var(--text-xl);
+    }
+
+    h4 {
+      font-size: var(--text-lg);
+    }
+  }
+
+  /* ========================================================================
+     MOBILE PAGE STYLES - Touch-friendly, safe-area-aware
+     ======================================================================== */
+  .mobile-page {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-page button,
+  .mobile-page a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ========================================================================
+     SCROLLBAR STYLES - Subtle Professional Feel
+     ======================================================================== */
+
+  /* Thin scrollbar for Webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+    background-clip: content-box;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+  }
+
+  /* ========================================================================
+     FOCUS VISIBLE - Accessible, Professional
+     ======================================================================== */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ========================================================================
+     SMOOTH TRANSITIONS - Global Default
+     ======================================================================== */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}

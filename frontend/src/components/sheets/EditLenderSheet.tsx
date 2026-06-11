@@ -12,7 +12,7 @@ import { SlideSheetTemplate } from './templates/SlideSheetTemplate';
 import { authManager } from '@/lib/auth';
 import type { UpdateLenderRequest } from '@/types/api/loan.types';
 import type { Bank } from '@/types/api/bank.types';
-import { ConfirmationModal } from '@/components/modals/ConfirmationModal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface EditLenderSheetProps {
   isOpen: boolean;
@@ -381,9 +381,9 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
     </SlideSheetTemplate>
 
       {/* Xác nhận xóa người cho vay */}
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleDeleteModalClose}
+      <ConfirmDialog
+        open={isDeleteModalOpen}
+        onOpenChange={handleDeleteModalClose}
         onConfirm={handleDeleteConfirm}
         title="Xóa người cho vay"
         description={
@@ -396,8 +396,8 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
         }
         confirmText="Xóa"
         cancelText="Hủy bỏ"
-        variant="destructive"
-        isLoading={deleteLender.isPending}
+        confirmVariant="destructive"
+        loading={deleteLender.isPending}
       />
     </>
   );

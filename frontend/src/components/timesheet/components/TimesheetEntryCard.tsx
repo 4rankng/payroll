@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Clock, Banknote, CheckCircle, XCircle, Eye, Star, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { Timesheet } from '@/types/api/timesheet.types';
 import { cn } from '@/lib/utils';
-import { getPaytypeText, formatCurrency, formatDateWithWeekday } from '../utils/timesheetHelpers';
+import { getPaytypeText, formatDateWithWeekday } from '../utils/timesheetHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { getStatusColor, getStatusIcon, getStatusLabel } from '../utils/timesheetStatusHelpers';
 
 interface TimesheetEntryCardProps {
@@ -95,7 +96,7 @@ export function TimesheetEntryCard({
           {/* Amount */}
           <div className="col-span-3 flex items-center justify-end gap-1.5">
             <Banknote className="w-4 h-4 text-muted-foreground" />
-            <span className="font-semibold tabular-nums">{formatCurrency(entry.amount)}đ</span>
+            <span className="font-semibold tabular-nums">{formatCurrency(entry.amount)}</span>
           </div>
 
           {/* Actions */}
@@ -142,7 +143,7 @@ export function TimesheetEntryCard({
             <div className="flex items-center gap-1">
               <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="font-semibold tabular-nums typography-body-small">
-                {formatCurrency(entry.amount)}đ
+                {formatCurrency(entry.amount)}
               </span>
             </div>
           </div>
@@ -203,7 +204,7 @@ export function TimesheetEntryCard({
               <div>
                 <p className="typography-body-small text-muted-foreground">Thành tiền</p>
                 <p className="typography-currency font-semibold tabular-nums">
-                  {formatCurrency(entry.amount)}đ
+                  {formatCurrency(entry.amount)}
                 </p>
               </div>
             </div>
@@ -214,7 +215,7 @@ export function TimesheetEntryCard({
             <div className="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-xl">
               <span className="typography-body-small text-emerald-900">Đã tạm ứng:</span>
               <span className="typography-currency font-semibold text-emerald-700 tabular-nums">
-                {formatCurrency(entry.paid_amount)}đ
+                {formatCurrency(entry.paid_amount)}
               </span>
             </div>
           )}
@@ -311,7 +312,7 @@ export function TimesheetEntryCard({
           <div className="space-y-1">
             <p className="typography-label-medium text-muted-foreground">Đơn giá</p>
             <span className="typography-data font-medium tabular-nums">
-              {formatCurrency(entry.payrate)}đ/h
+              {formatCurrency(entry.payrate)}/h
             </span>
           </div>
           <div className="space-y-1">
@@ -319,7 +320,7 @@ export function TimesheetEntryCard({
             <div className="flex items-center gap-1.5">
               <Banknote className="w-4 h-4 text-muted-foreground" />
               <span className="typography-currency font-semibold tabular-nums">
-                {formatCurrency(entry.amount)}đ
+                {formatCurrency(entry.amount)}
               </span>
             </div>
           </div>

@@ -4,15 +4,7 @@ import { vi } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMonthlyFinancials } from '@/hooks/admin-dashboard/useMonthlyFinancials';
-
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K`;
-  return `${sign}${abs.toLocaleString()}`;
-}
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 
 function formatMonthLabel(month: string): string {
   try {
@@ -61,7 +53,7 @@ export const MonthlyFinancialTable = memo(() => {
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
               <span className="text-xs font-medium text-foreground">Lợi nhuận tích lũy</span>
               <span className="text-sm font-bold tabular-nums text-foreground">
-                {formatVND(data.total.fee_earned)} VND
+                {formatVND(data.total.fee_earned)}
               </span>
             </div>
             <table className="w-full text-xs">
