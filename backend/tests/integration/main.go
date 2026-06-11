@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api-server/internal/pkg/clock"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -374,7 +375,7 @@ func setupMonthlyData(client *APIClient, data *TestData) error {
 }
 
 func today() string {
-	return time.Now().Format("2006-01-02")
+	return clock.Now().Format("2006-01-02")
 }
 
 // discoverPayrateTypes fetches the current payrate config for the weekly project
@@ -408,7 +409,7 @@ func discoverPayrateTypes(client *APIClient, data *TestData) {
 }
 
 func weekAgo() string {
-	return time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+	return clock.Now().AddDate(0, 0, -7).Format("2006-01-02")
 }
 
 func currentMonth() string {

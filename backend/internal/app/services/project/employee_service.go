@@ -81,14 +81,14 @@ func NewProjectEmployeeService(
 		timesheetAssignmentCheck: timesheetRepo,
 		timesheetReader:          timesheetRepo,
 		auditLogRepo:             auditLogRepo,
-		assignmentService:      assignmentService,
-		timesheetRecalculator:  timesheetRecalculator,
-		transactionManager:     transactionManager,
-		advancePaymentRepo:     advancePaymentRepo,
-		payrateRepo:            payrateRepo,
-		eventBus:               eventBus,
-		notification:           notification,
-		payCycleEventPublisher: payCycleEventPublisher,
+		assignmentService:        assignmentService,
+		timesheetRecalculator:    timesheetRecalculator,
+		transactionManager:       transactionManager,
+		advancePaymentRepo:       advancePaymentRepo,
+		payrateRepo:              payrateRepo,
+		eventBus:                 eventBus,
+		notification:             notification,
+		payCycleEventPublisher:   payCycleEventPublisher,
 	}
 }
 

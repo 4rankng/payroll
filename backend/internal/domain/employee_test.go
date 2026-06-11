@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"api-server/internal/pkg/clock"
 	"testing"
 	"time"
 
@@ -104,7 +105,9 @@ func TestEmployee_HasBankingInfo(t *testing.T) {
 }
 
 func TestEmployee_GetAge(t *testing.T) {
-	dateOfBirth := time.Now().AddDate(-30, 0, 0) // 30 years ago
+	// Use clock.Now() to match GetAge() which uses clock.Now() internally.
+	// Add 1 extra day to avoid boundary issues when the birthday falls on today.
+	dateOfBirth := clock.Now().AddDate(-30, 0, -1) // 30 years and 1 day ago
 	e := &Employee{
 		DateOfBirth: &dateOfBirth,
 	}
