@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"api-server/internal/transport/http/response"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"
@@ -53,8 +55,13 @@ func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	// Create limiter instance
 	instance := limiter.New(store, rate)
 
-	// Attach middleware with explicit per-IP key getter
-	return limiterGin.NewMiddleware(instance, limiterGin.WithKeyGetter(ipKeyGetter))
+	// Attach middleware with explicit per-IP key getter and JSON rate-limit response
+	return limiterGin.NewMiddleware(instance,
+		limiterGin.WithKeyGetter(ipKeyGetter),
+		limiterGin.WithLimitReachedHandler(func(c *gin.Context) {
+			response.TooManyRequests(c, "Rate limit exceeded. Please try again later.", 60)
+		}),
+	)
 }
 
 // CreateLoginRateLimit creates a rate limiter specifically for login attempts.

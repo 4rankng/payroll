@@ -4,8 +4,8 @@ Execute an autonomous, iterative Quality Assurance (QA) and micro-fixing loop fo
 **Context Management Rule:**
 To prevent context bloat, you must operate in micro-iterations. **Never test the entire application at once.** Test one specific user flow for one specific role at a time, and fix bugs in small, isolated batches.
 
-OBJECTIVE="please go through page by page , subpages, components to ensure they looks elegant in both desktop and mobile view. For driver, only care about mobile view"
-HOST=http://localhost:5174/
+OBJECTIVE="given by user"
+HOST=http://localhost:3000/
 
 **Context & Resources:**
 - Application URL: $HOST
