@@ -71,6 +71,7 @@ graphify-out/
 .agents/
 .omc/
 screenshot.mjs
+qa-*.cjs
 
 # === Database volumes ===
 mysql_data/
