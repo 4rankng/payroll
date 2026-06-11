@@ -11,6 +11,7 @@ import (
 	"api-server/internal/domain"
 	infraports "api-server/internal/domain/ports/infrastructure"
 	serviceports "api-server/internal/domain/ports/services"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 )
 
@@ -41,7 +42,7 @@ func NewLoanService(
 	repaymentScheduleRepo domain.LoanRepaymentScheduleRepository,
 ) *LoanService {
 	return &LoanService{
-		logger:                slog.Default(),
+		logger:                observability.GetLogger(),
 		LoanRepo:              loanRepo,
 		LenderRepo:            lenderRepo,
 		LedgerRepo:            ledgerRepo,

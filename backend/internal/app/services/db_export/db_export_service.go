@@ -11,6 +11,7 @@ import (
 	"time"
 
 	infraServices "api-server/internal/app/services/infrastructure"
+	"api-server/internal/infra/observability"
 	"api-server/internal/infra/persistence"
 
 	"github.com/xuri/excelize/v2"
@@ -58,7 +59,7 @@ func NewDBExportService(
 		db:          db,
 		cache:       cache,
 		storagePath: storagePath,
-		logger:      slog.Default().With("component", "DBExportService"),
+		logger:      observability.GetLogger().With("component", "DBExportService"),
 	}
 }
 

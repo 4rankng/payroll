@@ -11,6 +11,7 @@ import (
 	"api-server/internal/app/services/excel"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
@@ -707,7 +708,7 @@ func (h *TransactionHandler) ExportTransactions(c *gin.Context) {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			fmt.Printf("Error closing Excel file: %v\n", err)
+			observability.GetLogger().Error("Error closing Excel file", "error", err)
 		}
 	}()
 

@@ -11,6 +11,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	auditctx "api-server/internal/pkg/context"
+	"api-server/internal/pkg/timeutil"
 )
 
 type ProjectService struct {
@@ -348,7 +349,7 @@ func (s *ProjectService) AutoActivateProjects(ctx context.Context) error {
 	s.logger.Info("Starting auto-activation of projects based on start date")
 
 	// Get all draft projects with start dates today or in the past
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	draftProjects, err := s.ProjectRepo.GetPendingActivatedProjects(ctx, today)
 	if err != nil {
@@ -408,7 +409,7 @@ func (s *ProjectService) AutoCompleteProjects(ctx context.Context) error {
 	s.logger.Info("Starting auto-completion of projects based on end date")
 
 	// Get all draft or active projects with end dates today or in the past
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	projects, err := s.ProjectRepo.GetPendingCompletedProjects(ctx, today)
 	if err != nil {
@@ -563,7 +564,7 @@ func (s *ProjectService) autoTerminateEmployees(ctx context.Context, project *do
 	if project.EndDate != nil {
 		terminationDate = *project.EndDate
 	} else {
-		terminationDate = clock.NowUTC().Truncate(24 * time.Hour)
+		terminationDate = timeutil.StartOfDay(clock.NowUTC())
 	}
 
 	// Collect IDs of active assignments

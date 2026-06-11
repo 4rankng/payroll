@@ -12,6 +12,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	infraports "api-server/internal/domain/ports/infrastructure"
+	"api-server/internal/infra/observability"
 )
 
 type LedgerService struct {
@@ -24,7 +25,7 @@ type LedgerService struct {
 
 func NewLedgerService(ledgerRepo domain.LedgerEntryRepository, events domain.EventBus, cache infraports.CachePort) *LedgerService {
 	return &LedgerService{
-		logger:          slog.Default(),
+		logger:          observability.GetLogger(),
 		LedgerRepo:      ledgerRepo,
 		AccountingRules: domain.NewAccountingRules(),
 		events:          events,

@@ -8,6 +8,7 @@ import (
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 
 	"gorm.io/gorm"
@@ -28,7 +29,7 @@ func NewReconcileService(
 	notificationRepo domain.NotificationRepository,
 ) *ReconcileService {
 	return &ReconcileService{
-		logger:           slog.Default().With("component", "ReconcileService"),
+		logger:           observability.GetLogger().With("component", "ReconcileService"),
 		db:               db,
 		ledgerRepo:       ledgerRepo,
 		notificationRepo: notificationRepo,

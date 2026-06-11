@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/timeutil"
 	"api-server/internal/pkg/utils"
 
 	"gorm.io/gorm"
@@ -436,7 +437,7 @@ func (b *EmployeeProjectQueryBuilder) applyFilters(query *gorm.DB, filters domai
 	}
 	if filters.ToDate != nil {
 		// Include the entire day by adding 23:59:59
-		endOfDay := filters.ToDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		endOfDay := timeutil.EndOfDay(*filters.ToDate)
 		query = query.Where("employees.created_at <= ?", endOfDay)
 	}
 

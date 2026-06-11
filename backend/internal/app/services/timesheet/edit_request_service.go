@@ -4,10 +4,10 @@ import (
 	"api-server/internal/constants"
 	"context"
 	"fmt"
-	"log/slog"
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"gorm.io/gorm"
 )
 
@@ -91,7 +91,7 @@ func (s *TimesheetEditRequestService) CreateEditRequest(ctx context.Context, tim
 			event := domain.NewTimesheetEditRequestCreatedEvent(ctx, editRequest.TimesheetID, editRequest.RequestedBy, "")
 			if err := s.eventBus.Publish(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
-				slog.Default().Warn("failed to publish TimesheetEditRequestCreatedEvent", "error", err)
+				observability.GetLogger().Warn("failed to publish TimesheetEditRequestCreatedEvent", "error", err)
 			}
 		}
 
@@ -155,7 +155,7 @@ func (s *TimesheetEditRequestService) ApproveEditRequest(ctx context.Context, re
 			event := domain.NewTimesheetEditRequestUpdatedEvent(ctx, editRequest.ID, editRequest.TimesheetID, editRequest.RequestedBy, string(editRequest.Status), "")
 			if err := s.eventBus.Publish(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
-				slog.Default().Warn("failed to publish TimesheetEditRequestUpdatedEvent (approve)", "error", err)
+				observability.GetLogger().Warn("failed to publish TimesheetEditRequestUpdatedEvent (approve)", "error", err)
 			}
 		}
 		return nil
@@ -199,7 +199,7 @@ func (s *TimesheetEditRequestService) RejectEditRequest(ctx context.Context, req
 			event := domain.NewTimesheetEditRequestUpdatedEvent(ctx, editRequest.ID, editRequest.TimesheetID, editRequest.RequestedBy, string(editRequest.Status), "")
 			if err := s.eventBus.Publish(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
-				slog.Default().Warn("failed to publish TimesheetEditRequestUpdatedEvent (reject)", "error", err)
+				observability.GetLogger().Warn("failed to publish TimesheetEditRequestUpdatedEvent (reject)", "error", err)
 			}
 		}
 
@@ -283,7 +283,7 @@ func (s *TimesheetEditRequestService) CancelEditRequest(ctx context.Context, req
 			event := domain.NewTimesheetEditRequestUpdatedEvent(ctx, editRequest.ID, editRequest.TimesheetID, editRequest.RequestedBy, string(editRequest.Status), "")
 			if err := s.eventBus.Publish(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
-				slog.Default().Warn("failed to publish TimesheetEditRequestUpdatedEvent (cancel)", "error", err)
+				observability.GetLogger().Warn("failed to publish TimesheetEditRequestUpdatedEvent (cancel)", "error", err)
 			}
 		}
 

@@ -9,6 +9,7 @@ import (
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // Cache TTL constants for settings
@@ -26,7 +27,7 @@ type SettingsService struct {
 
 func NewSettingsService(settingsRepo domain.SettingsRepository, cacheService *infrastructure.CacheService, eventBus domain.EventBus) *SettingsService {
 	return &SettingsService{
-		logger:       slog.Default(),
+		logger:       observability.GetLogger(),
 		SettingsRepo: settingsRepo,
 		CacheService: cacheService,
 		EventBus:     eventBus,
@@ -81,7 +82,7 @@ func (s *SettingsService) GetSettingByKey(ctx context.Context, key string) (*dom
 
 	// Store in cache
 	if cacheErr := s.CacheService.Set(ctx, cacheKey, setting, SettingsDetailCacheTTL); cacheErr != nil {
-		slog.Default().Warn("Failed to cache setting detail", "error", cacheErr)
+		s.logger.Warn("Failed to cache setting detail", "error", cacheErr)
 	}
 
 	return setting, nil
@@ -186,7 +187,7 @@ func (s *SettingsService) ListSettings(ctx context.Context, filters domain.Setti
 	// Store in cache
 	result := cachedResult{Settings: settings, Count: count}
 	if cacheErr := s.CacheService.Set(ctx, cacheKey, result, SettingsListCacheTTL); cacheErr != nil {
-		slog.Default().Warn("Failed to cache settings list", "error", cacheErr)
+		s.logger.Warn("Failed to cache settings list", "error", cacheErr)
 	}
 
 	return settings, count, nil
@@ -196,16 +197,16 @@ func (s *SettingsService) ListSettings(ctx context.Context, filters domain.Setti
 func (s *SettingsService) invalidateSettingsCache(ctx context.Context) {
 	// Clear all settings list cache entries
 	if err := s.CacheService.DeletePattern(ctx, "settings:list:*"); err != nil {
-		slog.Default().Warn("Failed to clear settings list cache", "error", err)
+		s.logger.Warn("Failed to clear settings list cache", "error", err)
 	}
 
 	// Clear active settings cache
 	if err := s.CacheService.DeletePattern(ctx, "settings:active:*"); err != nil {
-		slog.Default().Warn("Failed to clear active settings cache", "error", err)
+		s.logger.Warn("Failed to clear active settings cache", "error", err)
 	}
 
 	// Clear individual settings detail cache entries
 	if err := s.CacheService.DeletePattern(ctx, "settings:detail:*"); err != nil {
-		slog.Default().Warn("Failed to clear settings detail cache", "error", err)
+		s.logger.Warn("Failed to clear settings detail cache", "error", err)
 	}
 }

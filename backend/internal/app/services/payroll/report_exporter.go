@@ -3,14 +3,15 @@ package payroll
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sort"
 	"strings"
 	"time"
 
 	"api-server/internal/app/services/excel"
 	domainServices "api-server/internal/domain/services"
+	"api-server/internal/infra/observability"
 	pkgConstants "api-server/internal/pkg/constants"
+	"api-server/internal/pkg/timeutil"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -86,7 +87,7 @@ func (e *PayrollReportExporter) BuildPayrollReportData(ctx context.Context, entr
 			aggregate = &payrollAggregate{
 				name:     entry.EmployeeName,
 				cccd:     entry.EmployeeCCCD,
-				date:     entry.PaymentDate.Truncate(24 * time.Hour),
+				date:     timeutil.StartOfDay(*entry.PaymentDate),
 				projects: map[string]struct{}{},
 			}
 			aggregates[key] = aggregate
@@ -145,7 +146,7 @@ func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toD
 	}
 	defer func() {
 		if closeErr := f.Close(); closeErr != nil {
-			slog.Default().Warn("failed to close Excel file", "error", closeErr)
+			observability.GetLogger().Warn("failed to close Excel file", "error", closeErr)
 		}
 	}()
 

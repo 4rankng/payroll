@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"api-server/internal/domain/wallet"
+
+	"api-server/internal/pkg/timeutil"
 )
 
 type walletPaymentRepository struct {
@@ -323,7 +325,7 @@ func (r *walletPaymentRepository) UpdateStatus(ctx context.Context, id uint64, s
 }
 
 func (r *walletPaymentRepository) GetCompletedUnsettled(ctx context.Context, date time.Time) ([]*wallet.WalletPayment, error) {
-	start := date.Truncate(24 * time.Hour)
+	start := timeutil.StartOfDay(date)
 	end := start.AddDate(0, 0, 1)
 
 	query := `

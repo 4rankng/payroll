@@ -14,6 +14,7 @@ import (
 	"api-server/internal/domain"
 	"api-server/internal/domain/ports/infrastructure"
 	domaintx "api-server/internal/domain/transactions"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 
 	"github.com/google/uuid"
@@ -75,7 +76,7 @@ func NewWalletPaymentService(
 	logger *slog.Logger,
 ) *WalletPaymentService {
 	if logger == nil {
-		logger = slog.Default()
+		logger = observability.GetLogger()
 	}
 	return &WalletPaymentService{
 		repo:               repo,

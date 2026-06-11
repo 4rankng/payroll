@@ -137,7 +137,7 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 		}
 	}
 
-	today := h.clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(h.clock.NowUTC())
 	todayStr := today.Format(timeutil.DateFormat)
 
 	// ── Build per-field results ────────────────────────────────────────────
@@ -313,20 +313,20 @@ func (h *PayrateHandler) applyUpdateConstraints(
 	}
 
 	existingFromStr := existing.FromDate.Format(timeutil.DateFormat)
-	existingFrom := existing.FromDate.UTC().Truncate(24 * time.Hour)
+	existingFrom := timeutil.StartOfDay(existing.FromDate.UTC())
 
 	// Find earliest valid start date for a new config = latest timesheet date + 1 day
 	earliestNewStart := today
 	latestDate, latestErr := h.payrateService.GetLatestTimesheetDateForPayrate(c.Request.Context(), existing.ID)
 	if latestErr == nil && latestDate != nil {
-		earliestNewStart = latestDate.UTC().Truncate(24*time.Hour).AddDate(0, 0, 1)
+		earliestNewStart = timeutil.StartOfDay(latestDate.UTC()).AddDate(0, 0, 1)
 	}
 	earliestNewStartStr := earliestNewStart.Format(timeutil.DateFormat)
 
 	ratesChanged := strings.TrimSpace(string(existing.Payrate)) != strings.TrimSpace(string(req.Rates))
 
 	submittedFrom, _ := time.Parse(timeutil.DateFormat, req.EffectiveFrom)
-	submittedFromOnly := submittedFrom.UTC().Truncate(24 * time.Hour)
+	submittedFromOnly := timeutil.StartOfDay(submittedFrom.UTC())
 	fromDateChanged := !submittedFromOnly.Equal(existingFrom)
 
 	// Case 1: rates changed AND fromDate is on or after earliestNewStart
@@ -376,7 +376,7 @@ func (h *PayrateHandler) applyUpdateConstraints(
 	// To date in the past?
 	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
 		toDate, err := time.Parse(timeutil.DateFormat, *req.EffectiveTo)
-		if err == nil && toDate.UTC().Truncate(24*time.Hour).Before(today) {
+		if err == nil && timeutil.StartOfDay(toDate.UTC()).Before(today) {
 			toField.Status = FieldError
 			toField.Message = "Ngày kết thúc không thể là ngày trong quá khứ khi đã có bảng công liên kết."
 			toField.Hint = fmt.Sprintf("Chọn ngày từ hôm nay (%s) trở đi, hoặc để trống.", todayStr)
@@ -395,7 +395,7 @@ func (h *PayrateHandler) applyCreateConstraints(
 	today time.Time,
 	todayStr string,
 ) {
-	fromDateOnly := fromDate.UTC().Truncate(24 * time.Hour)
+	fromDateOnly := timeutil.StartOfDay(fromDate.UTC())
 	if !fromDateOnly.Before(today) {
 		return
 	}

@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -114,7 +115,7 @@ func (r *BulkTransferFileRepository) ListWithFilters(ctx context.Context, cycle 
 		query = query.Where("created_at >= ?", *fromDate)
 	}
 	if toDate != nil {
-		endOfDay := toDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		endOfDay := timeutil.EndOfDay(*toDate)
 		query = query.Where("created_at <= ?", endOfDay)
 	}
 
@@ -516,7 +517,7 @@ func (r *BulkTransferFileRepository) ListResultUploads(ctx context.Context, from
 		query = query.Where("created_at >= ?", *fromDate)
 	}
 	if toDate != nil {
-		endOfDay := toDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		endOfDay := timeutil.EndOfDay(*toDate)
 		query = query.Where("created_at <= ?", endOfDay)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/timeutil"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -163,7 +164,7 @@ func (h *AuditHandler) ListAuditLogs(c *gin.Context) {
 				return
 			}
 			// End of day for date-only input
-			t = t.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+			t = timeutil.EndOfDay(t)
 		}
 		filters.ToDate = &t
 	}

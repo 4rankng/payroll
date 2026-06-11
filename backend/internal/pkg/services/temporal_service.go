@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
+
 	"gorm.io/gorm"
 )
 
@@ -119,7 +121,7 @@ func (s *TemporalService) BuildActiveRecordQuery(db *gorm.DB, entityKeys map[str
 
 // BuildDateRangeQuery returns a query builder for finding records active on a specific date
 func (s *TemporalService) BuildDateRangeQuery(db *gorm.DB, entityKeys map[string]any, date time.Time) *gorm.DB {
-	date = date.Truncate(24 * time.Hour)
+	date = timeutil.StartOfDay(date)
 	query := db.Table(s.config.TableName)
 
 	// Apply entity key filters
@@ -135,7 +137,7 @@ func (s *TemporalService) BuildDateRangeQuery(db *gorm.DB, entityKeys map[string
 
 // EndActiveRecord manually ends the currently active record using the provided repository
 func (s *TemporalService) EndActiveRecord(ctx context.Context, repo TemporalRepository, entityKeys map[string]any, endDate time.Time) error {
-	endDate = endDate.Truncate(24 * time.Hour)
+	endDate = timeutil.StartOfDay(endDate)
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		activeRecord, err := repo.FindActiveRecord(ctx, entityKeys)

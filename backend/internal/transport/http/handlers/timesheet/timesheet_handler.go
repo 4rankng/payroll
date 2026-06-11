@@ -322,7 +322,7 @@ func (h *Handler) GetTimesheetsByProjectAndDate(c *gin.Context) {
 			response.BadRequest(c, constants.MsgInvalidDateFormatVN)
 			return
 		}
-		date = date.UTC().Truncate(24 * time.Hour)
+		date = timeutil.StartOfDay(date.UTC())
 		filters.Date = &date
 	}
 
@@ -348,7 +348,7 @@ func (h *Handler) GetTimesheetsByProjectAndDate(c *gin.Context) {
 			response.BadRequest(c, constants.MsgInvalidFromDateFormatVN)
 			return
 		}
-		fromDate = fromDate.UTC().Truncate(24 * time.Hour)
+		fromDate = timeutil.StartOfDay(fromDate.UTC())
 		filters.FromDate = &fromDate
 	}
 
@@ -358,7 +358,7 @@ func (h *Handler) GetTimesheetsByProjectAndDate(c *gin.Context) {
 			response.BadRequest(c, constants.MsgInvalidToDateFormatVN)
 			return
 		}
-		toDate = toDate.UTC().Truncate(24 * time.Hour)
+		toDate = timeutil.StartOfDay(toDate.UTC())
 		filters.ToDate = &toDate
 	}
 

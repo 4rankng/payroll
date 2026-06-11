@@ -9,6 +9,7 @@ import (
 	"api-server/internal/app/services/project"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/timeutil"
 	pkgConstants "api-server/internal/pkg/constants"
 	"api-server/internal/transport/http/response"
 
@@ -112,7 +113,7 @@ func (h *Handler) handleBatchAssignment(c *gin.Context, projectID uint, batchReq
 			}
 			startDate = parsedDate
 		} else {
-			startDate = h.clock.NowUTC().Truncate(24 * time.Hour) // Today at 00:00:00
+			startDate = timeutil.StartOfDay(h.clock.NowUTC()) // Today at 00:00:00
 		}
 
 		// Parse end date if provided

@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"time"
 
@@ -369,7 +368,7 @@ func (p *ResultProcessor) getExcelRows(fileHeader *multipart.FileHeader) ([][]st
 	defer func() {
 		if err := excelFile.Data.Close(); err != nil {
 			// Log the error but don't return it as it's not critical
-			slog.Default().Warn("error closing Excel file", "error", err)
+			observability.GetLogger().Warn("error closing Excel file", "error", err)
 		}
 	}()
 
@@ -553,7 +552,7 @@ func (p *ResultProcessor) uploadResultAsset(ctx context.Context, fileHeader *mul
 	defer func() {
 		if err := file.Close(); err != nil {
 			// Log the error but don't return it as it's not critical
-			slog.Default().Warn("error closing file", "error", err)
+			observability.GetLogger().Warn("error closing file", "error", err)
 		}
 	}()
 

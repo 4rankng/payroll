@@ -387,7 +387,7 @@ func (h *Handler) CreateProject(c *gin.Context) {
 		startDate = &parsedDate
 	} else {
 		// Default to today if start_date not provided
-		today := h.clock.NowUTC().Truncate(24 * time.Hour)
+		today := timeutil.StartOfDay(h.clock.NowUTC())
 		startDate = &today
 	}
 
@@ -619,7 +619,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 	if toDate := c.Query("toDate"); toDate != "" {
 		if parsedDate, err := time.Parse("2006-01-02", toDate); err == nil {
 			// Set to end of day for inclusive filtering
-			endOfDay := parsedDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+			endOfDay := timeutil.EndOfDay(parsedDate)
 			filters.ToDate = &endOfDay
 		}
 	}
