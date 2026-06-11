@@ -15,24 +15,6 @@ type TransactionManager interface {
 	WithTransactionResult(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error)
 }
 
-// UnitOfWork represents a unit of work pattern for coordinating multiple operations
-type UnitOfWork interface {
-	// RegisterNew registers a new entity to be created
-	RegisterNew(ctx context.Context, entity interface{}) error
-
-	// RegisterDirty registers an entity to be updated
-	RegisterDirty(ctx context.Context, entity interface{}) error
-
-	// RegisterDeleted registers an entity to be deleted
-	RegisterDeleted(ctx context.Context, entity interface{}) error
-
-	// Commit commits all registered operations in a single transaction
-	Commit(ctx context.Context) error
-
-	// Rollback rolls back all pending operations
-	Rollback(ctx context.Context) error
-}
-
 // TransactionContext represents context for transaction operations
 type TransactionContext struct {
 	// TX holds the database transaction
