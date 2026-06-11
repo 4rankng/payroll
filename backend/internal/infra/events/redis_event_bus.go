@@ -178,6 +178,7 @@ func (bus *RedisEventBus) Publish(ctx context.Context, events ...domain.DomainEv
 	bus.mu.RLock()
 	defer bus.mu.RUnlock()
 
+	var firstErr error
 	for _, event := range events {
 		eventType := event.EventType()
 
@@ -188,6 +189,9 @@ func (bus *RedisEventBus) Publish(ctx context.Context, events ...domain.DomainEv
 		eventData, err := json.Marshal(event)
 		if err != nil {
 			bus.logger.Error("Failed to marshal event", "event_type", eventType, "error", err)
+			if firstErr == nil {
+				firstErr = fmt.Errorf("marshal event %s: %w", eventType, err)
+			}
 			continue
 		}
 
@@ -217,12 +221,15 @@ func (bus *RedisEventBus) Publish(ctx context.Context, events ...domain.DomainEv
 				"event_type", eventType,
 				"error", err,
 			)
+			if firstErr == nil {
+				firstErr = fmt.Errorf("publish event %s to Redis: %w", eventType, err)
+			}
 			continue
 		}
 
 	}
 
-	return nil
+	return firstErr
 }
 
 // consumeFromRedis continuously reads events from Redis stream

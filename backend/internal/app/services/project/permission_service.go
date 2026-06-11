@@ -7,6 +7,7 @@ import (
 	"api-server/internal/app/services/audit"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // ProjectPermissionService handles project access management
@@ -92,7 +93,9 @@ func (s *ProjectPermissionService) GrantProjectAccess(ctx context.Context, proje
 	if s.eventBus != nil {
 		actorName := audit.GetActorFullName(ctx, s.userRepo, grantedBy)
 		event := domain.NewProjectAccessGrantedEvent(ctx, projectID, projectName, userID, targetName, string(user.Role), grantedBy, actorName)
-		_ = s.eventBus.Publish(ctx, event)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish ProjectAccessGrantedEvent", "error", err)
+		}
 	}
 
 	return nil
@@ -130,7 +133,9 @@ func (s *ProjectPermissionService) RevokeProjectAccess(ctx context.Context, proj
 	if s.eventBus != nil {
 		actorName := audit.GetActorFullName(ctx, s.userRepo, revokedBy)
 		event := domain.NewProjectAccessRevokedEvent(ctx, projectID, projectName, userID, targetName, revokedBy, actorName)
-		_ = s.eventBus.Publish(ctx, event)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish ProjectAccessRevokedEvent", "error", err)
+		}
 	}
 
 	return nil

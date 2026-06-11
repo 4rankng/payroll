@@ -7,6 +7,7 @@ import (
 	"api-server/internal/app/services/audit"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // EmployeePermissionService handles employee access management
@@ -90,7 +91,9 @@ func (s *EmployeePermissionService) GrantEmployeeAccess(ctx context.Context, emp
 	if s.eventBus != nil {
 		actorFullName := audit.GetActorFullName(ctx, s.userRepo, grantedBy)
 		event := domain.NewEmployeeAccessGrantedEvent(ctx, employeeID, employeeName, "", 0, string(user.Role), grantedBy, actorFullName)
-		_ = s.eventBus.Publish(ctx, event)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish EmployeeAccessGrantedEvent", "error", err)
+		}
 	}
 
 	return nil
@@ -120,7 +123,9 @@ func (s *EmployeePermissionService) RevokeEmployeeAccess(ctx context.Context, em
 	if s.eventBus != nil {
 		actorFullName := audit.GetActorFullName(ctx, s.userRepo, revokedBy)
 		event := domain.NewEmployeeAccessRevokedEvent(ctx, employeeID, employeeName, "", 0, revokedBy, actorFullName)
-		_ = s.eventBus.Publish(ctx, event)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish EmployeeAccessRevokedEvent", "error", err)
+		}
 	}
 
 	return nil
