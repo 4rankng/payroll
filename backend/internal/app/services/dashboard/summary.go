@@ -121,7 +121,7 @@ func (s *Service) GetDashboardSummary(ctx context.Context, monthParam *string) (
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		salary, err := s.TimesheetRepo.GetTotalPaidSalary(ctx)
+		salary, err := s.TimesheetDashboard.GetTotalPaidSalary(ctx)
 		if err != nil {
 			addError(domain.NewInternalError(constants.MsgFailedToGetTotalPaidSalaryVN, err))
 			return
@@ -132,7 +132,7 @@ func (s *Service) GetDashboardSummary(ctx context.Context, monthParam *string) (
 	go func() {
 		defer wg.Done()
 
-		salary, err := s.TimesheetRepo.GetPendingSalaryForMonth(ctx, startOfMonth, endOfMonth)
+		salary, err := s.TimesheetDashboard.GetPendingSalaryForMonth(ctx, startOfMonth, endOfMonth)
 		if err != nil {
 			addError(domain.NewInternalError(constants.MsgFailedToGetPendingSalaryVN, err))
 			return
@@ -146,7 +146,7 @@ func (s *Service) GetDashboardSummary(ctx context.Context, monthParam *string) (
 	go func() {
 		defer wg.Done()
 
-		salary, err := s.TimesheetRepo.GetPaidSalaryForMonth(ctx, startOfMonth, endOfMonth)
+		salary, err := s.TimesheetDashboard.GetPaidSalaryForMonth(ctx, startOfMonth, endOfMonth)
 		if err != nil {
 			addError(domain.NewInternalError(constants.MsgFailedToGetPaidSalaryVN, err))
 			return

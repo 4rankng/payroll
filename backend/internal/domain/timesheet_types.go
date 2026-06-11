@@ -89,6 +89,105 @@ type TimesheetRepository interface {
 	CountUnsettledPaidTimesheets(ctx context.Context, projectID uint) (int64, error)
 }
 
+// Narrow interfaces for interface segregation — each consumer depends only on what it needs.
+// The concrete TimesheetRepository struct implicitly satisfies all narrow interfaces (Go structural typing).
+
+// TimesheetReader provides read-only timesheet queries.
+type TimesheetReader interface {
+	GetByID(ctx context.Context, id uint) (*Timesheet, error)
+	GetByIDs(ctx context.Context, ids []uint) ([]*Timesheet, error)
+	GetByIDsWithoutRelations(ctx context.Context, ids []uint) ([]*Timesheet, error)
+	List(ctx context.Context, filters TimesheetFilters) ([]*Timesheet, error)
+	Count(ctx context.Context, filters TimesheetFilters) (int64, error)
+	GetByProjectAndEmployee(ctx context.Context, projectID, employeeID uint, fromDate, toDate time.Time) ([]*Timesheet, error)
+	GetByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) ([]*Timesheet, error)
+	GetByEmployee(ctx context.Context, employeeID uint, fromDate, toDate time.Time) ([]*Timesheet, error)
+	GetByEmployeeAndPeriod(ctx context.Context, employeeID uint, fromDate, toDate time.Time) ([]*Timesheet, error)
+	GetByProjectEmployeeDate(ctx context.Context, projectID, employeeID uint, date time.Time) ([]*Timesheet, error)
+	GetByTransactionID(ctx context.Context, transactionID uint) ([]*Timesheet, error)
+}
+
+// TimesheetWriter provides create/update/delete operations.
+type TimesheetWriter interface {
+	Create(ctx context.Context, timesheet *Timesheet) error
+	Update(ctx context.Context, timesheet *Timesheet) error
+	Delete(ctx context.Context, id uint) error
+	HardDelete(ctx context.Context, id uint) error
+	DeleteByProjectID(ctx context.Context, projectID uint) error
+	BulkCreate(ctx context.Context, timesheets []*Timesheet) error
+	BulkUpdate(ctx context.Context, timesheets []*Timesheet) error
+}
+
+// TimesheetApprover handles approval workflow operations.
+type TimesheetApprover interface {
+	Approve(ctx context.Context, id uint, approvedBy uint) error
+	BulkApprove(ctx context.Context, ids []uint, approvedBy uint) error
+	BulkReject(ctx context.Context, ids []uint, rejectionReason string) error
+	Reject(ctx context.Context, id uint, rejectionReason string) error
+	Reset(ctx context.Context, id uint) error
+}
+
+// TimesheetPaymentUpdater handles payment status transitions.
+type TimesheetPaymentUpdater interface {
+	BulkUpdatePaymentStatus(ctx context.Context, updates []PaymentStatusUpdate) error
+	BatchUpdatePaymentStatusToFailed(ctx context.Context, tx interface{}, timesheetIDs []uint) error
+	GetPaidTimesheetsInDateRange(ctx context.Context, startDate, endDate time.Time, timesheets *[]*Timesheet) error
+	GetPaymentHistories(ctx context.Context, filters PaymentHistoryFilters) ([]*PaymentHistory, int64, error)
+}
+
+// TimesheetValidator provides conflict detection for timesheet creation.
+type TimesheetValidator interface {
+	GetByProjectEmployeeDatePaytype(ctx context.Context, projectID, employeeID uint, date time.Time, paytype string) (*Timesheet, error)
+	GetByProjectEmployeeDateHourType(ctx context.Context, projectID, employeeID uint, date time.Time, hourType string) (*Timesheet, error)
+	GetByEmployeeDateCombos(ctx context.Context, combos []EmployeeDateCombo) ([]*Timesheet, error)
+	CountDistinctWorkingDays(ctx context.Context, employeeID, projectID uint, fromDate, toDate time.Time) (int, error)
+	GetProjectsForEmployeeOnDate(ctx context.Context, employeeID uint, date time.Time) ([]uint, error)
+	CountUnsettledPaidTimesheets(ctx context.Context, projectID uint) (int64, error)
+}
+
+// TimesheetAssignmentChecker detects assignment conflicts.
+type TimesheetAssignmentChecker interface {
+	GetLatestTimesheetDate(ctx context.Context, projectID, employeeID uint) (*time.Time, error)
+	CountTimesheets(ctx context.Context, projectID, employeeID uint) (int64, error)
+	CountTimesheetsByEmployeeID(ctx context.Context, employeeID uint) (int64, error)
+	HasTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
+	HasTimesheetsForAssignment(ctx context.Context, projectID, employeeID uint) (bool, error)
+	HasNonEditableTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
+}
+
+// TimesheetDashboardReader provides dashboard summary queries.
+type TimesheetDashboardReader interface {
+	GetTotalPaidSalary(ctx context.Context) (int64, error)
+	GetPendingSalaryForMonth(ctx context.Context, startDate, endDate time.Time) (int64, error)
+	GetPendingSalaryForMonthBySchedule(ctx context.Context, startDate, endDate time.Time, schedule PaymentSchedule) (int64, error)
+	GetPaidSalaryForMonth(ctx context.Context, startDate, endDate time.Time) (int64, error)
+	CountEmployeesPaidInLast30Days(ctx context.Context) (int, error)
+	GetFirstPaidTimesheetDate(ctx context.Context) (*time.Time, error)
+	GetPaidSalaryByEmployee(ctx context.Context, startDate, endDate time.Time) (map[uint]int64, error)
+	GetPendingApprovalCount(ctx context.Context, startDate, endDate time.Time) (int, error)
+	GetApprovedSalaryTotal(ctx context.Context, startDate, endDate time.Time) (int64, error)
+	CountDistinctEmployeesPaidInPeriod(ctx context.Context, startDate, endDate time.Time) (int, error)
+}
+
+// TimesheetRevenueUpdater handles revenue tracking updates.
+type TimesheetRevenueUpdater interface {
+	BulkUpdateRevenuePaid(ctx context.Context, timesheetIDs []uint) error
+	BulkUpdateRevenueReceivable(ctx context.Context, updates map[uint]int64) error
+	BulkUpdateTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
+}
+
+// TimesheetReportingReader provides reporting and aggregation queries.
+type TimesheetReportingReader interface {
+	GetSummaryByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) (*TimesheetSummary, error)
+	GetSummaryStats(ctx context.Context, filters TimesheetFilters) (*TimesheetSummaryStats, error)
+	GetEmployeeTimesheetSummaryAggregated(ctx context.Context, employeeID uint) (*TimesheetSummaryAggregated, error)
+	GetEmployeeCurrentWeekHours(ctx context.Context, employeeID uint) (float64, error)
+	GetEmployeeMonthlyPayrollSummary(ctx context.Context, employeeID uint) (*PayrollSummaryAggregated, error)
+	ListGroupedByEmployee(ctx context.Context, filters TimesheetFilters) ([]EmployeeGroupResult, []*Timesheet, int64, error)
+	CountDistinctEmployees(ctx context.Context, filters TimesheetFilters) (int64, error)
+	GetEntryTableData(ctx context.Context, projectID uint, employeeIDs []uint, fromDate, toDate time.Time) ([]*Timesheet, error)
+}
+
 // EmployeeGroupResult represents the result of employee grouping query
 type EmployeeGroupResult struct {
 	EmployeeID   uint    `json:"employee_id"`

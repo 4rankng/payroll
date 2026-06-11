@@ -14,7 +14,7 @@ type EmployeeAssignmentService struct {
 	projectEmployeeRepo domain.ProjectEmployeeRepository
 	employeeRepo        domain.EmployeeRepository
 	projectRepo         domain.ProjectRepository
-	timesheetRepo       domain.TimesheetRepository
+	timesheetChecker    domain.TimesheetAssignmentChecker
 }
 
 // NewEmployeeAssignmentService creates a new employee assignment service
@@ -22,13 +22,13 @@ func NewEmployeeAssignmentService(
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
 	employeeRepo domain.EmployeeRepository,
 	projectRepo domain.ProjectRepository,
-	timesheetRepo domain.TimesheetRepository,
+	timesheetChecker domain.TimesheetAssignmentChecker,
 ) *EmployeeAssignmentService {
 	return &EmployeeAssignmentService{
 		projectEmployeeRepo: projectEmployeeRepo,
 		employeeRepo:        employeeRepo,
 		projectRepo:         projectRepo,
-		timesheetRepo:       timesheetRepo,
+		timesheetChecker:    timesheetChecker,
 	}
 }
 
@@ -80,7 +80,7 @@ func (s *EmployeeAssignmentService) ValidateAssignmentForUpdate(ctx context.Cont
 	overlappingCounts := make(map[uint]int64)
 	for _, other := range overlapping {
 		if other.ID != assignment.ID && other.ProjectID == assignment.ProjectID {
-			count, err := s.timesheetRepo.CountTimesheets(ctx, other.ProjectID, other.EmployeeID)
+			count, err := s.timesheetChecker.CountTimesheets(ctx, other.ProjectID, other.EmployeeID)
 			if err != nil {
 				return err
 			}
@@ -89,7 +89,7 @@ func (s *EmployeeAssignmentService) ValidateAssignmentForUpdate(ctx context.Cont
 	}
 
 	// Check for non-editable timesheets
-	hasNonEditable, err := s.timesheetRepo.HasNonEditableTimesheetsAfterDate(ctx, assignment.ProjectID, assignment.EmployeeID, assignment.StartDate)
+	hasNonEditable, err := s.timesheetChecker.HasNonEditableTimesheetsAfterDate(ctx, assignment.ProjectID, assignment.EmployeeID, assignment.StartDate)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (s *EmployeeAssignmentService) ValidateDateOverlap(ctx context.Context, emp
 	for _, assignment := range overlapping {
 		if assignment.ProjectID == projectID {
 			// Check if there are any timesheets for this assignment
-			timesheetCount, err := s.timesheetRepo.CountTimesheets(ctx, assignment.ProjectID, assignment.EmployeeID)
+			timesheetCount, err := s.timesheetChecker.CountTimesheets(ctx, assignment.ProjectID, assignment.EmployeeID)
 			if err != nil {
 				return err
 			}

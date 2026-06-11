@@ -24,7 +24,7 @@ type SettlementUploadService struct {
 	assetService     *asset.AssetService
 	ledgerRepo       domain.LedgerEntryRepository
 	eventBus         domain.EventBus
-	timesheetRepo    domain.TimesheetRepository
+	timesheetReader  domain.TimesheetReader
 	advPayReqRepo    domain.AdvancePaymentRequestRepository
 	advPayRepo       domain.AdvancePaymentRepository
 	notificationRepo domain.NotificationRepository
@@ -51,7 +51,7 @@ func NewSettlementUploadService(
 		assetService:     assetService,
 		ledgerRepo:       ledgerRepo,
 		eventBus:         eventBus,
-		timesheetRepo:    timesheetRepo,
+		timesheetReader:  timesheetRepo,
 		advPayReqRepo:    advPayReqRepo,
 		advPayRepo:       advPayRepo,
 		notificationRepo: notificationRepo,
@@ -270,7 +270,7 @@ func (s *SettlementUploadService) ProcessSettlementFileWithDedup(
 	}
 
 	// Build rows from all timesheet IDs (we'll let the linker filter out paid ones)
-	timesheets, err := s.timesheetRepo.GetByIDs(ctx, fileData.TimesheetIDs)
+	timesheets, err := s.timesheetReader.GetByIDs(ctx, fileData.TimesheetIDs)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgCannotGetTimesheetInfoVN, err)
 	}
@@ -420,7 +420,7 @@ func (s *SettlementUploadService) SettleFromMetadata(ctx context.Context, timesh
 	}
 
 	// Fetch timesheets to get their transaction IDs and revenue amounts
-	timesheets, err := s.timesheetRepo.GetByIDs(ctx, timesheetIDs)
+	timesheets, err := s.timesheetReader.GetByIDs(ctx, timesheetIDs)
 	if err != nil {
 		return domain.NewInternalError(constants.MsgCannotGetTimesheetInfoVN, err)
 	}

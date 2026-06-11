@@ -56,7 +56,7 @@ func (s *TimesheetValidationService) validateTotalDailyHoursWithContext(ctx cont
 // This method is specifically for bulk operations and considers other entries in the same batch
 func (s *TimesheetValidationService) ValidateBulkDailyHours(ctx context.Context, employeeID, projectID uint, date time.Time, batchEntries []float64) error {
 	// Get all existing timesheets for this employee/project/date
-	existingTimesheets, err := s.timesheetRepo.GetByProjectEmployeeDate(ctx, projectID, employeeID, date)
+	existingTimesheets, err := s.timesheetReader.GetByProjectEmployeeDate(ctx, projectID, employeeID, date)
 	if err != nil {
 		return domain.NewInternalError("Lỗi kiểm tra tổng giờ làm việc hàng ngày", err)
 	}
@@ -127,7 +127,7 @@ func (s *TimesheetValidationService) ValidateBulkDailyHoursOptimized(ctx context
 	}
 
 	// Single query to get all existing timesheets
-	existingTimesheets, err := s.timesheetRepo.GetByEmployeeDateCombos(ctx, combos)
+	existingTimesheets, err := s.timesheetValidator.GetByEmployeeDateCombos(ctx, combos)
 	if err != nil {
 		errors = append(errors, PreviewError{
 			EmployeeID: 0,

@@ -67,7 +67,8 @@ func buildResult(stats BCCImportStats, id, uploaderID uint, createdAt time.Time)
 
 type BCCImportService struct {
 	payrateRepo         domain.PayrateRepository
-	timesheetRepo       domain.TimesheetRepository
+	timesheetReader     domain.TimesheetReader
+	timesheetWriter     domain.TimesheetWriter
 	timesheetService    *timesheetSvc.TimesheetService
 	assetRepo           domain.AssetRepository
 	fileStorage         storage.FileStorage
@@ -92,7 +93,8 @@ func NewBCCImportService(
 ) *BCCImportService {
 	return &BCCImportService{
 		payrateRepo:         payrateRepo,
-		timesheetRepo:       timesheetRepo,
+		timesheetReader:     timesheetRepo,
+		timesheetWriter:     timesheetRepo,
 		timesheetService:    timesheetService,
 		assetRepo:           assetRepo,
 		fileStorage:         fileStorage,
@@ -525,7 +527,7 @@ func (s *BCCImportService) ProcessUpload(
 	// fully replaces them. Approved or paid entries are protected.
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
-		existingTS, terr := s.timesheetRepo.GetByProject(ctx, projectID, monthStart, monthEnd)
+		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
 		if terr != nil {
 			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
 		}
@@ -588,7 +590,7 @@ func (s *BCCImportService) ProcessUpload(
 		}
 
 		for _, id := range staleIDs {
-			if delErr := s.timesheetRepo.HardDelete(ctx, id); delErr != nil {
+			if delErr := s.timesheetWriter.HardDelete(ctx, id); delErr != nil {
 				slog.Warn("BCCImport: failed to hard-delete stale timesheet for overwrite",
 					"timesheet_id", id, "error", delErr)
 			}
@@ -1223,7 +1225,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	// 9. "Latest wins" overwrite (same logic as legacy path).
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
-		existingTS, terr := s.timesheetRepo.GetByProject(ctx, projectID, monthStart, monthEnd)
+		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
 		if terr != nil {
 			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
 		}
@@ -1286,7 +1288,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 		}
 
 		for _, id := range staleIDs {
-			if delErr := s.timesheetRepo.HardDelete(ctx, id); delErr != nil {
+			if delErr := s.timesheetWriter.HardDelete(ctx, id); delErr != nil {
 				slog.Warn("BCCImport(MP): failed to hard-delete stale timesheet", "timesheet_id", id, "error", delErr)
 			}
 		}
