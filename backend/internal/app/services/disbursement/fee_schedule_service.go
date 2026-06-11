@@ -3,8 +3,6 @@ package disbursement
 import (
 	"api-server/internal/pkg/clock"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -12,9 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
-	"api-server/internal/constants"
+	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 )
 
@@ -26,7 +23,7 @@ import (
 // FeeVND value instead of a tier list. Concurrency, locking, and read paths
 // are identical.
 type FeeScheduleService struct {
-	db       *gorm.DB
+	store    *infrastructure.SettingsStore[domain.DisbursementFeeScheduleEntry]
 	eventBus domain.EventBus
 	registry feeRegistryResolver
 	logger   *slog.Logger
@@ -45,7 +42,14 @@ func NewFeeScheduleService(db *gorm.DB, eventBus domain.EventBus, logger *slog.L
 		logger = slog.Default()
 	}
 	return &FeeScheduleService{
-		db:       db,
+		store: &infrastructure.SettingsStore[domain.DisbursementFeeScheduleEntry]{
+			DB:          db,
+			SettingsKey: domain.DisbursementFeeScheduleSettingsKey,
+			SortFn:      domain.SortDisbursementFeeScheduleEntries,
+			NotFoundMsg: "disbursement_fee_schedules setting row missing — run migration 050",
+			EntityName:  "disbursement fee schedule",
+			DateLayout:  domain.DisbursementFeeScheduleDateLayout,
+		},
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -83,7 +87,7 @@ func (s *FeeScheduleService) ActiveEntry(ctx context.Context) (*domain.Disbursem
 // List returns all schedule entries sorted by EffectiveDate descending.
 // Used by the admin UI.
 func (s *FeeScheduleService) List(ctx context.Context) ([]domain.DisbursementFeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +100,7 @@ func (s *FeeScheduleService) List(ctx context.Context) ([]domain.DisbursementFee
 
 // GetByID returns a single entry by its UUID.
 func (s *FeeScheduleService) GetByID(ctx context.Context, id string) (*domain.DisbursementFeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +126,7 @@ type CreateInput struct {
 // completed transactions, which is bad for audit. Today is allowed (an admin
 // announcing today's rate change should not be blocked).
 func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, actorUserID uint) (*domain.DisbursementFeeScheduleEntry, error) {
-	if err := validateEffectiveDateNotPast(input.EffectiveDate); err != nil {
+	if err := infrastructure.ValidateEffectiveDateNotPast(s.store.DateLayout, input.EffectiveDate); err != nil {
 		return nil, err
 	}
 
@@ -145,15 +149,13 @@ func (s *FeeScheduleService) Create(ctx context.Context, input CreateInput, acto
 		FeeVND:          input.FeeVND,
 		Notes:           strings.TrimSpace(input.Notes),
 		CreatedAt:       clock.NowUTC(),
-		CreatedByUserID: nonZeroUserID(actorUserID),
+		CreatedByUserID: infrastructure.NonZeroUserID(actorUserID),
 	}
 	if err := entry.Validate(); err != nil {
 		return nil, err
 	}
 
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
-		// Disallow two entries on the same (provider, effective_date) pair —
-		// the active schedule would otherwise be ambiguous (which one wins?).
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
 		for _, e := range entries {
 			if e.Provider == entry.Provider && e.EffectiveDate == entry.EffectiveDate {
 				return nil, domain.NewValidationError("a schedule with this effective date already exists for this provider")
@@ -184,17 +186,17 @@ type UpdateInput struct {
 // immutable for audit integrity — admins must add a new entry to change rates
 // going forward.
 func (s *FeeScheduleService) Update(ctx context.Context, id string, input UpdateInput) (*domain.DisbursementFeeScheduleEntry, error) {
-	if err := validateEffectiveDateNotPast(input.EffectiveDate); err != nil {
+	if err := infrastructure.ValidateEffectiveDateNotPast(s.store.DateLayout, input.EffectiveDate); err != nil {
 		return nil, err
 	}
 
 	var updated domain.DisbursementFeeScheduleEntry
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
-		idx := indexOfID(entries, id)
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
+		idx := infrastructure.IndexOfEntryID(entries, id, func(e domain.DisbursementFeeScheduleEntry) string { return e.ID })
 		if idx < 0 {
 			return nil, domain.NewNotFoundError("disbursement fee schedule entry not found")
 		}
-		if !isFutureDate(entries[idx].EffectiveDate) {
+		if !infrastructure.IsFutureDate(s.store.DateLayout, entries[idx].EffectiveDate) {
 			return nil, domain.NewValidationError("only schedules with a future effective date can be edited")
 		}
 		for i, e := range entries {
@@ -230,12 +232,12 @@ func (s *FeeScheduleService) Update(ctx context.Context, id string, input Update
 // active right now, otherwise fee resolution would fall back to defaults.
 func (s *FeeScheduleService) Delete(ctx context.Context, id string) error {
 	var removed domain.DisbursementFeeScheduleEntry
-	err := s.executeWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
-		idx := indexOfID(entries, id)
+	err := s.store.ExecuteWrite(ctx, func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error) {
+		idx := infrastructure.IndexOfEntryID(entries, id, func(e domain.DisbursementFeeScheduleEntry) string { return e.ID })
 		if idx < 0 {
 			return nil, domain.NewNotFoundError("disbursement fee schedule entry not found")
 		}
-		if !isFutureDate(entries[idx].EffectiveDate) {
+		if !infrastructure.IsFutureDate(s.store.DateLayout, entries[idx].EffectiveDate) {
 			return nil, domain.NewValidationError("only schedules with a future effective date can be deleted")
 		}
 		if len(entries) <= 1 {
@@ -258,7 +260,7 @@ func (s *FeeScheduleService) Delete(ctx context.Context, id string) error {
 // for the given provider. Returns NotFoundError if no entry's effective_date
 // <= at for this provider.
 func (s *FeeScheduleService) ActiveAt(ctx context.Context, provider string, at time.Time) (*domain.DisbursementFeeScheduleEntry, error) {
-	entries, err := s.loadEntries(ctx, s.db)
+	entries, err := s.store.LoadEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -296,105 +298,6 @@ func fallbackFeeForProvider(provider string) int64 {
 	default:
 		return 0
 	}
-}
-
-func (s *FeeScheduleService) executeWrite(ctx context.Context, mutate func(tx *gorm.DB, entries []domain.DisbursementFeeScheduleEntry) ([]domain.DisbursementFeeScheduleEntry, error)) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var setting domain.Settings
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("`key` = ?", domain.DisbursementFeeScheduleSettingsKey).
-			First(&setting).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return domain.NewNotFoundError("disbursement_fee_schedules setting row missing — run migration 050")
-			}
-			return fmt.Errorf("lock disbursement fee schedule settings row: %w", err)
-		}
-
-		entries, err := decodeEntries(setting.Value)
-		if err != nil {
-			return err
-		}
-
-		next, err := mutate(tx, entries)
-		if err != nil {
-			return err
-		}
-
-		domain.SortDisbursementFeeScheduleEntries(next)
-		encoded, err := json.Marshal(next)
-		if err != nil {
-			return fmt.Errorf("encode disbursement fee schedule entries: %w", err)
-		}
-		val := string(encoded)
-		setting.Value = &val
-		if err := tx.Save(&setting).Error; err != nil {
-			return fmt.Errorf("save disbursement fee schedule settings row: %w", err)
-		}
-		return nil
-	})
-}
-
-func (s *FeeScheduleService) loadEntries(ctx context.Context, db *gorm.DB) ([]domain.DisbursementFeeScheduleEntry, error) {
-	var setting domain.Settings
-	err := db.WithContext(ctx).
-		Where("`key` = ?", domain.DisbursementFeeScheduleSettingsKey).
-		First(&setting).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.NewNotFoundError("disbursement_fee_schedules setting row missing — run migration 050")
-		}
-		return nil, fmt.Errorf("load disbursement fee schedule settings row: %w", err)
-	}
-	return decodeEntries(setting.Value)
-}
-
-func decodeEntries(value *string) ([]domain.DisbursementFeeScheduleEntry, error) {
-	if value == nil || strings.TrimSpace(*value) == "" {
-		return nil, nil
-	}
-	var entries []domain.DisbursementFeeScheduleEntry
-	if err := json.Unmarshal([]byte(*value), &entries); err != nil {
-		return nil, fmt.Errorf("decode disbursement fee schedule entries: %w", err)
-	}
-	return entries, nil
-}
-
-func indexOfID(entries []domain.DisbursementFeeScheduleEntry, id string) int {
-	for i := range entries {
-		if entries[i].ID == id {
-			return i
-		}
-	}
-	return -1
-}
-
-func isFutureDate(effectiveDate string) bool {
-	d, err := time.Parse(domain.DisbursementFeeScheduleDateLayout, effectiveDate)
-	if err != nil {
-		return false
-	}
-	today := clock.Now().Format(domain.DisbursementFeeScheduleDateLayout)
-	return d.Format(domain.DisbursementFeeScheduleDateLayout) > today
-}
-
-func validateEffectiveDateNotPast(effectiveDate string) error {
-	d, err := time.Parse(domain.DisbursementFeeScheduleDateLayout, effectiveDate)
-	if err != nil {
-		return domain.NewValidationError(constants.MsgInvalidDateFormatVN)
-	}
-	today := clock.Now().Format(domain.DisbursementFeeScheduleDateLayout)
-	if d.Format(domain.DisbursementFeeScheduleDateLayout) < today {
-		return domain.NewValidationError("effective_date cannot be in the past")
-	}
-	return nil
-}
-
-func nonZeroUserID(id uint) *uint {
-	if id == 0 {
-		return nil
-	}
-	return &id
 }
 
 // FormatFeeAmount renders an int64 VND amount with thousand separators (3.500.000)

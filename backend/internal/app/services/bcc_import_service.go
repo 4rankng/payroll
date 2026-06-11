@@ -195,30 +195,14 @@ func (s *BCCImportService) ProcessUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
-	// 5. Use the frontend-supplied month (set above for fail() closure).
-	loc := clock.Now().Location()
-	year, month, err := parseForMonth(effectiveMonth)
+	// 5-6. Shared setup: month parsing, lock, payrate lookup.
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
-		return fail("failed", fmt.Sprintf("tháng không hợp lệ: %v", err))
+		return fail("failed", err.Error())
 	}
-
-	// Acquire distributed lock to prevent concurrent imports for same project+month.
-	lockValue, lockErr := s.acquireImportLock(ctx, projectID, effectiveMonth)
-	if lockErr != nil {
-		return fail("failed", lockErr.Error())
-	}
-	defer s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue)
-
-	// 6. Get active payrate for the project.
-	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
-	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
-	if err != nil {
-		return fail("failed", fmt.Sprintf("không tìm thấy bảng lương cho dự án: %v", err))
-	}
-	flatRates, err := payrate.Payrate.Flatten()
-	if err != nil {
-		return fail("failed", fmt.Sprintf("lỗi phân tích cấu hình lương: %v", err))
-	}
+	defer releaseLock()
+	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	loc := monthStart.Location()
 
 	// Build rate -> (dayType, hourType) lookup from the project payrate.
 	// Rate is king: as long as the rate matches, the entry is valid.
@@ -725,6 +709,52 @@ func (s *BCCImportService) releaseImportLock(ctx context.Context, projectID uint
 	}
 }
 
+// bccImportContext holds the shared setup results for BCC import flows.
+// Both single-position and multi-position flows perform the same month parsing,
+// lock acquisition, and payrate lookup — this struct consolidates that setup.
+type bccImportContext struct {
+	year       int
+	month      time.Month
+	monthStart time.Time
+	flatRates  map[string]int
+}
+
+// prepareImportContext performs the shared setup: month parsing, distributed lock,
+// and payrate lookup. Returns the context and a cleanup function that must be
+// deferred by the caller to release the lock.
+func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string) (*bccImportContext, func(), error) {
+	loc := clock.Now().Location()
+	year, month, err := parseForMonth(effectiveMonth)
+	if err != nil {
+		return nil, nil, fmt.Errorf("tháng không hợp lệ: %v", err)
+	}
+	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+
+	lockValue, lockErr := s.acquireImportLock(ctx, projectID, effectiveMonth)
+	if lockErr != nil {
+		return nil, nil, lockErr
+	}
+	release := func() { s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue) }
+
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
+	if err != nil {
+		release()
+		return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
+	}
+	flatRates, err := payrate.Payrate.Flatten()
+	if err != nil {
+		release()
+		return nil, nil, fmt.Errorf("lỗi phân tích cấu hình lương: %v", err)
+	}
+
+	return &bccImportContext{
+		year:       year,
+		month:      month,
+		monthStart: monthStart,
+		flatRates:  flatRates,
+	}, release, nil
+}
+
 func marshalErrors(errs []domain.ImportError) *string {
 	if len(errs) == 0 {
 		return nil
@@ -864,30 +894,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC đa vị trí: %v", err))
 	}
 
-	// 2. Parse month.
-	loc := clock.Now().Location()
-	year, month, err := parseForMonth(effectiveMonth)
+	// 2-4. Shared setup: month parsing, lock, payrate lookup.
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
-		return fail("failed", fmt.Sprintf("tháng không hợp lệ: %v", err))
+		return fail("failed", err.Error())
 	}
-	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
-
-	// 3. Acquire distributed lock.
-	lockValue, lockErr := s.acquireImportLock(ctx, projectID, effectiveMonth)
-	if lockErr != nil {
-		return fail("failed", lockErr.Error())
-	}
-	defer s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue)
-
-	// 4. Get active payrate and build rate-to-target maps.
-	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
-	if err != nil {
-		return fail("failed", fmt.Sprintf("không tìm thấy bảng lương cho dự án: %v", err))
-	}
-	flatRates, err := payrate.Payrate.Flatten()
-	if err != nil {
-		return fail("failed", fmt.Sprintf("lỗi phân tích cấu hình lương: %v", err))
-	}
+	defer releaseLock()
+	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	loc := monthStart.Location()
 
 	// Validate all sheet positions exist in payrate config.
 	availablePositions := getPositions(flatRates)
