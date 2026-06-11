@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"database/sql"
 	"fmt"
@@ -869,7 +870,7 @@ func (r *TimesheetRepository) GetEmployeeMonthlyPayrollSummary(ctx context.Conte
 	now := clock.Now()
 	year, month, _ := now.Date()
 	firstDayOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, now.Location())
-	lastDayOfMonth := firstDayOfMonth.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	lastDayOfMonth := timeutil.EndOfDay(firstDayOfMonth.AddDate(0, 1, -1))
 
 	var result domain.PayrollSummaryAggregated
 

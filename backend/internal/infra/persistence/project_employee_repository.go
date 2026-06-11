@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
 	"time"
@@ -78,7 +79,7 @@ func (r *ProjectEmployeeRepository) GetByProjectAndEmployee(ctx context.Context,
 func (r *ProjectEmployeeRepository) GetActiveAssignmentByProjectAndEmployee(ctx context.Context, projectID, employeeID uint) (*domain.ProjectEmployee, error) {
 	var assignment domain.ProjectEmployee
 	// Check for active assignment: no end date OR end date is today or in the future
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	err := r.getDB(ctx).
 		Where("project_id = ? AND employee_id = ? AND (last_date IS NULL OR last_date >= ?)",
@@ -103,7 +104,7 @@ func (r *ProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmployees(c
 	}
 
 	var assignments []*domain.ProjectEmployee
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	// Fetch all active assignments for the given projects and employees, excluding deleted projects and employees
 	// This uses the composite index we created: idx_project_employees_project_employee
@@ -244,7 +245,7 @@ func (r *ProjectEmployeeRepository) GetByEmployee(ctx context.Context, employeeI
 
 func (r *ProjectEmployeeRepository) GetActiveAssignments(ctx context.Context, projectID uint) ([]*domain.ProjectEmployee, error) {
 	var assignments []*domain.ProjectEmployee
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	query := r.DB.WithContext(ctx).Where("project_id = ? AND (last_date IS NULL OR last_date >= ?)", projectID, today)
 	err := r.applyCommonPreloads(query).Find(&assignments).Error
@@ -280,7 +281,7 @@ func (r *ProjectEmployeeRepository) applyFilters(query *gorm.DB, filters domain.
 	if filters.ProjectID != nil {
 		query = query.Where("project_id = ?", *filters.ProjectID)
 
-		today := clock.NowUTC().Truncate(24 * time.Hour)
+		today := timeutil.StartOfDay(clock.NowUTC())
 		// Filter by status
 		switch filters.Status {
 		case "current":
@@ -543,7 +544,7 @@ func (r *ProjectEmployeeRepository) GetCurrentProjectsForEmployees(ctx context.C
 
 // getDistinctProjectEmployees returns unique employees for a project using window function
 func (r *ProjectEmployeeRepository) getDistinctProjectEmployees(ctx context.Context, filters domain.ProjectEmployeeFilters) ([]*domain.ProjectEmployee, error) {
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	// Subquery with window function to rank assignments per employee
 	subQuery := r.DB.WithContext(ctx).
@@ -612,7 +613,7 @@ func (r *ProjectEmployeeRepository) getDistinctProjectEmployees(ctx context.Cont
 
 // countDistinctProjectEmployees returns count of unique employees for a project
 func (r *ProjectEmployeeRepository) countDistinctProjectEmployees(ctx context.Context, filters domain.ProjectEmployeeFilters) (int64, error) {
-	today := clock.NowUTC().Truncate(24 * time.Hour)
+	today := timeutil.StartOfDay(clock.NowUTC())
 
 	query := r.DB.WithContext(ctx).
 		Model(&domain.ProjectEmployee{}).

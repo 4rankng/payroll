@@ -13,6 +13,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	infraports "api-server/internal/domain/ports/infrastructure"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 
 	"github.com/google/uuid"
@@ -45,7 +46,7 @@ func NewTransactionService(
 	events domain.EventBus,
 ) *TransactionService {
 	return &TransactionService{
-		logger:          slog.Default(),
+		logger:          observability.GetLogger(),
 		db:              db,
 		TransactionRepo: transactionRepo,
 		SettlementRepo:  settlementRepo,

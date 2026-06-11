@@ -3,6 +3,7 @@ package payroll
 import (
 	"api-server/internal/constants"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
 	"mime/multipart"
@@ -253,7 +254,7 @@ func (s *PayrollService) ExportPayrollHistories(ctx context.Context, req *dto.Ex
 	}
 
 	// Include entire end day
-	toDate = toDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	toDate = timeutil.EndOfDay(toDate)
 
 	// Build filters
 	filters := domain.PaymentHistoryFilters{

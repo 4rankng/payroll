@@ -33,7 +33,7 @@ func (f *SpecificDateFilter) Apply(ctx context.Context, c *gin.Context, filters 
 		return err
 	}
 
-	date = date.UTC().Truncate(24 * time.Hour)
+	date = timeutil.StartOfDay(date.UTC())
 	filters.Date = &date
 	return nil
 }
@@ -84,7 +84,7 @@ func (f *DateRangeFilter) Apply(ctx context.Context, c *gin.Context, filters *do
 			response.BadRequest(c, constants.MsgInvalidFromDateFormatVN)
 			return err
 		}
-		fromDate = fromDate.UTC().Truncate(24 * time.Hour)
+		fromDate = timeutil.StartOfDay(fromDate.UTC())
 		filters.FromDate = &fromDate
 	}
 
@@ -95,7 +95,7 @@ func (f *DateRangeFilter) Apply(ctx context.Context, c *gin.Context, filters *do
 			response.BadRequest(c, constants.MsgInvalidToDateFormatVN)
 			return err
 		}
-		toDate = toDate.UTC().Truncate(24 * time.Hour)
+		toDate = timeutil.StartOfDay(toDate.UTC())
 		filters.ToDate = &toDate
 	}
 

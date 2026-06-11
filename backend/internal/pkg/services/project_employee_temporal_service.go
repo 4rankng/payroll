@@ -7,6 +7,7 @@ import (
 
 	"api-server/internal/domain"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	dbhelper "api-server/internal/pkg/db"
 	"api-server/internal/pkg/retry"
 
@@ -93,7 +94,7 @@ func (s *ProjectEmployeeTemporalService) GetActiveAssignmentForEmployeeProject(c
 
 // GetActiveAssignmentOnDate retrieves the active assignment for an employee-project on a specific date
 func (s *ProjectEmployeeTemporalService) GetActiveAssignmentOnDate(ctx context.Context, employeeID, projectID uint, date time.Time) (*domain.ProjectEmployee, error) {
-	date = date.Truncate(24 * time.Hour)
+	date = timeutil.StartOfDay(date)
 
 	var assignment domain.ProjectEmployee
 	err := s.dbHelper.ExecuteWithRetry(ctx, func(db *gorm.DB) error {
@@ -116,7 +117,7 @@ func (s *ProjectEmployeeTemporalService) GetActiveAssignmentOnDate(ctx context.C
 
 // EndActiveAssignmentForEmployeeProject manually ends the currently active assignment
 func (s *ProjectEmployeeTemporalService) EndActiveAssignmentForEmployeeProject(ctx context.Context, employeeID, projectID uint, endDate time.Time) error {
-	endDate = endDate.Truncate(24 * time.Hour)
+	endDate = timeutil.StartOfDay(endDate)
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		activeAssignment, err := s.findActiveAssignmentForEmployeeProject(tx, employeeID, projectID)

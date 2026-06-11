@@ -3,12 +3,12 @@ package attendance
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/geo"
 )
@@ -224,7 +224,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 
 		earningAmount, err := s.calculateEarningAmount(payrate, assignment.Position, attendance.CheckInTime, now)
 		if err != nil {
-			slog.Default().Warn("Failed to calculate earning amount", "error", err)
+			observability.GetLogger().Warn("Failed to calculate earning amount", "error", err)
 			earningAmount = 0
 		}
 

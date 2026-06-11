@@ -13,6 +13,7 @@ import (
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // FeeScheduleService manages the JSON array of disbursement-provider fee
@@ -39,7 +40,7 @@ type feeRegistryResolver interface {
 // doesn't expose.
 func NewFeeScheduleService(db *gorm.DB, eventBus domain.EventBus, logger *slog.Logger) *FeeScheduleService {
 	if logger == nil {
-		logger = slog.Default()
+		logger = observability.GetLogger()
 	}
 	return &FeeScheduleService{
 		store: &infrastructure.SettingsStore[domain.DisbursementFeeScheduleEntry]{

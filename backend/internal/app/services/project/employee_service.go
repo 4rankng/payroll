@@ -5,13 +5,13 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	infraports "api-server/internal/domain/ports/infrastructure"
 	domainServices "api-server/internal/domain/services"
+	"api-server/internal/infra/observability"
 	auditctx "api-server/internal/pkg/context"
 	"gorm.io/gorm"
 )
@@ -141,7 +141,7 @@ func (s *ProjectEmployeeService) AssignEmployee(ctx context.Context, assignment 
 			event := domain.NewProjectEmployeeCreatedEvent(ctx, assignment, project.Name, employee.Fullname, auditctx.GetUserIDOrZero(ctx), actorFullName)
 			if err := s.eventBus.Publish(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
-				slog.Default().Warn("failed to publish ProjectEmployeeCreatedEvent", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeCreatedEvent", "error", err)
 			}
 		}
 
@@ -192,7 +192,7 @@ func (s *ProjectEmployeeService) UpdateAssignment(ctx context.Context, assignmen
 
 			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
 			if err := s.eventBus.Publish(ctx, event); err != nil {
-				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (update)", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (update)", "error", err)
 			}
 		}
 
@@ -207,7 +207,7 @@ func (s *ProjectEmployeeService) UpdateAssignment(ctx context.Context, assignmen
 	if s.cache != nil {
 		cacheKey := fmt.Sprintf("assignment:%d:%d", assignment.ProjectID, assignment.EmployeeID)
 		if err := s.cache.Delete(ctx, cacheKey); err != nil {
-			slog.Default().Warn("failed to invalidate assignment cache after update", "error", err)
+			observability.GetLogger().Warn("failed to invalidate assignment cache after update", "error", err)
 		}
 	}
 
@@ -217,7 +217,7 @@ func (s *ProjectEmployeeService) UpdateAssignment(ctx context.Context, assignmen
 		assignmentCopy := *assignment
 		domain.RegisterAfterCommit(ctx, func() {
 			if err := recalculator.RecalculateTimesheetsForAssignment(context.Background(), &assignmentCopy, updatedBy); err != nil {
-				slog.Default().Warn("failed to recalculate timesheets for assignment", "assignmentID", assignmentCopy.ID, "error", err)
+				observability.GetLogger().Warn("failed to recalculate timesheets for assignment", "assignmentID", assignmentCopy.ID, "error", err)
 			}
 		})
 	}
@@ -259,7 +259,7 @@ func (s *ProjectEmployeeService) UpdateAssignmentPosition(ctx context.Context, a
 
 			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
 			if err := s.eventBus.Publish(ctx, event); err != nil {
-				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (position update)", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (position update)", "error", err)
 			}
 		}
 
@@ -274,7 +274,7 @@ func (s *ProjectEmployeeService) UpdateAssignmentPosition(ctx context.Context, a
 	if s.cache != nil {
 		cacheKey := fmt.Sprintf("assignment:%d:%d", existing.ProjectID, existing.EmployeeID)
 		if err := s.cache.Delete(ctx, cacheKey); err != nil {
-			slog.Default().Warn("failed to invalidate assignment cache after position update", "error", err)
+			observability.GetLogger().Warn("failed to invalidate assignment cache after position update", "error", err)
 		}
 	}
 
@@ -284,7 +284,7 @@ func (s *ProjectEmployeeService) UpdateAssignmentPosition(ctx context.Context, a
 		assignmentCopy := *existing
 		domain.RegisterAfterCommit(ctx, func() {
 			if err := recalculator.RecalculateTimesheetsForAssignment(context.Background(), &assignmentCopy, updatedBy); err != nil {
-				slog.Default().Warn("failed to recalculate timesheets after position update", "assignmentID", assignmentCopy.ID, "error", err)
+				observability.GetLogger().Warn("failed to recalculate timesheets after position update", "assignmentID", assignmentCopy.ID, "error", err)
 			}
 		})
 	}
@@ -331,7 +331,7 @@ func (s *ProjectEmployeeService) EndAssignment(ctx context.Context, assignmentID
 
 				event := domain.NewProjectEmployeeUpdatedEvent(ctx, updated)
 				if err := s.eventBus.Publish(ctx, event); err != nil {
-					slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (end)", "error", err)
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (end)", "error", err)
 				}
 			}
 		}
@@ -585,7 +585,7 @@ func (s *ProjectEmployeeService) RequestPaymentScheduleChange(ctx context.Contex
 
 			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
 			if err := s.eventBus.Publish(ctx, event); err != nil {
-				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (schedule change)", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (schedule change)", "error", err)
 			}
 		}
 
@@ -622,7 +622,7 @@ func (s *ProjectEmployeeService) RequestPaymentScheduleChange(ctx context.Contex
 			if err := s.payCycleEventPublisher.PublishPayCycleChanged(ctx, event); err != nil {
 				// Log but don't fail the transaction if event publishing fails
 				// The event is for notifications and audit, not critical business logic
-				slog.Default().Warn("failed to publish payment cycle changed event", "error", err)
+				observability.GetLogger().Warn("failed to publish payment cycle changed event", "error", err)
 			}
 		}
 
@@ -667,7 +667,7 @@ func (s *ProjectEmployeeService) CancelPaymentScheduleChange(ctx context.Context
 
 			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
 			if err := s.eventBus.Publish(ctx, event); err != nil {
-				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (cancel schedule change)", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (cancel schedule change)", "error", err)
 			}
 		}
 
@@ -720,7 +720,7 @@ func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context
 
 					event := domain.NewProjectEmployeeUpdatedEvent(ctx, employee)
 					if err := s.eventBus.Publish(ctx, event); err != nil {
-						slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (apply pending schedule)", "error", err)
+						observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (apply pending schedule)", "error", err)
 					}
 				}
 
@@ -805,7 +805,7 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 		if s.eventBus != nil {
 			event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
 			if err := s.eventBus.Publish(txCtx, event); err != nil {
-				slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (toggle check-in)", "error", err)
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (toggle check-in)", "error", err)
 			}
 		}
 
@@ -852,7 +852,7 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 			if s.eventBus != nil {
 				event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
 				if err := s.eventBus.Publish(txCtx, event); err != nil {
-					slog.Default().Warn("failed to publish ProjectEmployeeUpdatedEvent (bulk toggle)", "error", err)
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (bulk toggle)", "error", err)
 				}
 			}
 		}

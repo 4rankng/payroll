@@ -80,7 +80,7 @@ func (h *Handler) ExportEmployees(c *gin.Context) {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			fmt.Printf("Error closing Excel file: %v\n", err)
+			observability.GetLogger().Error("Error closing Excel file", "error", err)
 		}
 	}()
 

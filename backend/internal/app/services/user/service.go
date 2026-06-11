@@ -2,9 +2,9 @@ package user
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"log/slog"
-	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
@@ -105,7 +105,7 @@ func (s *UserService) GetUserSummary(ctx context.Context) (*dto.UserSummaryRespo
 	}
 
 	// Get recent logins today (since start of today)
-	startOfToday := clock.NowUTC().Truncate(24 * time.Hour)
+	startOfToday := timeutil.StartOfDay(clock.NowUTC())
 	recentLoginsToday, err := s.UserRepo.CountRecentLogins(ctx, startOfToday)
 	if err != nil {
 		s.logger.Error("Failed to count recent logins", "error", err)

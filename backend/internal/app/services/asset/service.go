@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"time"
 
@@ -110,7 +109,7 @@ func (s *AssetService) UploadAsset(ctx context.Context, file multipart.File, hea
 		// Clean up file on database error only if we just stored it
 		if isNewFile {
 			if deleteErr := s.FileStorage.Delete(filePath); deleteErr != nil {
-				slog.Default().Warn("failed to clean up file on database error", "error", deleteErr)
+				observability.GetLogger().Warn("failed to clean up file on database error", "error", deleteErr)
 			}
 		}
 		return nil, fmt.Errorf("failed to create asset record: %w", err)
@@ -190,12 +189,12 @@ func (s *AssetService) CleanupOrphanedAssets(ctx context.Context, olderThan time
 		// Only delete physical file if no other assets reference it
 		count, err := s.AssetRepo.CountByFilePath(ctx, asset.FilePath)
 		if err != nil {
-			slog.Default().Warn("failed to check for other assets using file",
+			observability.GetLogger().Warn("failed to check for other assets using file",
 				"filePath", asset.FilePath, "error", err)
 		} else if count == 0 {
 			// No other assets reference this file, safe to delete
 			if err := s.FileStorage.Delete(asset.FilePath); err != nil {
-				slog.Default().Warn("failed to delete physical file",
+				observability.GetLogger().Warn("failed to delete physical file",
 					"filePath", asset.FilePath, "error", err)
 			}
 		}

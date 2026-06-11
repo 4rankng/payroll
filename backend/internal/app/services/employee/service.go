@@ -2,6 +2,7 @@ package employee
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
 	"log/slog"
@@ -610,7 +611,7 @@ func (s *EmployeeService) GetEmployeeSummary(ctx context.Context, employeeID uin
 	year, month, _ := lastPaid.Date()
 	loc := lastPaid.Location()
 	firstDayOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, loc)
-	lastDayOfMonth := firstDayOfMonth.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	lastDayOfMonth := timeutil.EndOfDay(firstDayOfMonth.AddDate(0, 1, -1))
 
 	// Aggregate totals for that month from the already-fetched slice (no second DB call).
 	var totalEarnings int64

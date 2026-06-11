@@ -41,7 +41,7 @@ func (e *PayrollReportByProjectExporter) GenerateExcel(reportData []*domainServi
 	}
 	defer func() {
 		if closeErr := f.Close(); closeErr != nil {
-			slog.Default().Warn("failed to close Excel file", "error", closeErr)
+			observability.GetLogger().Warn("failed to close Excel file", "error", closeErr)
 		}
 	}()
 
@@ -158,7 +158,7 @@ func (e *PayrollReportByProjectExporter) GenerateExcel(reportData []*domainServi
 		if err == nil && idx >= 0 {
 			if err := f.DeleteSheet(templateSheetName); err != nil {
 				// Ignore error if sheet doesn't exist
-				slog.Default().Warn("failed to delete template sheet", "error", err)
+				observability.GetLogger().Warn("failed to delete template sheet", "error", err)
 			}
 		}
 	}

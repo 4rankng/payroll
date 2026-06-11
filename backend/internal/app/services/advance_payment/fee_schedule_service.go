@@ -12,6 +12,7 @@ import (
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // FeeScheduleService manages the JSON array of advance-payment fee schedules
@@ -35,7 +36,7 @@ type FeeScheduleService struct {
 // doesn't expose.
 func NewFeeScheduleService(db *gorm.DB, cacheService *infrastructure.CacheService, eventBus domain.EventBus, logger *slog.Logger) *FeeScheduleService {
 	if logger == nil {
-		logger = slog.Default()
+		logger = observability.GetLogger()
 	}
 	return &FeeScheduleService{
 		store: &infrastructure.SettingsStore[domain.FeeScheduleEntry]{

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
 )
@@ -184,7 +185,7 @@ func applyAssetFilters(query *gorm.DB, filters domain.AssetFilters) *gorm.DB {
 		query = query.Where("created_at >= ?", *filters.FromDate)
 	}
 	if filters.ToDate != nil {
-		endOfDay := filters.ToDate.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		endOfDay := timeutil.EndOfDay(*filters.ToDate)
 		query = query.Where("created_at <= ?", endOfDay)
 	}
 

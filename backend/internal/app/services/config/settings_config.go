@@ -3,12 +3,12 @@ package config
 import (
 	"api-server/internal/pkg/clock"
 	"context"
-	"log/slog"
 	"sync"
 	"time"
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 // Setting keys for business configuration
@@ -114,19 +114,19 @@ func (s *SettingsConfigService) GetWeeklyPaymentPercentage(ctx context.Context) 
 	// Cache miss, fetch from database
 	setting, err := s.settingsService.GetSettingByKey(ctx, SettingKeyWeeklyPaymentPercentage)
 	if err != nil {
-		slog.Default().Warn("failed to get weekly payment percentage setting, using default", "key", SettingKeyWeeklyPaymentPercentage, "error", err)
+		observability.GetLogger().Warn("failed to get weekly payment percentage setting, using default", "key", SettingKeyWeeklyPaymentPercentage, "error", err)
 		return DefaultWeeklyPaymentPercentage
 	}
 
 	value, err := setting.GetFloatValue()
 	if err != nil {
-		slog.Default().Warn("failed to parse weekly payment percentage, using default", "key", SettingKeyWeeklyPaymentPercentage, "error", err)
+		observability.GetLogger().Warn("failed to parse weekly payment percentage, using default", "key", SettingKeyWeeklyPaymentPercentage, "error", err)
 		return DefaultWeeklyPaymentPercentage
 	}
 
 	// Validate range (0-1)
 	if value < 0 || value > 1 {
-		slog.Default().Warn("weekly payment percentage out of range, using default", "key", SettingKeyWeeklyPaymentPercentage, "value", value)
+		observability.GetLogger().Warn("weekly payment percentage out of range, using default", "key", SettingKeyWeeklyPaymentPercentage, "value", value)
 		return DefaultWeeklyPaymentPercentage
 	}
 
@@ -147,19 +147,19 @@ func (s *SettingsConfigService) GetMonthlyPaymentPercentage(ctx context.Context)
 	// Cache miss, fetch from database
 	setting, err := s.settingsService.GetSettingByKey(ctx, SettingKeyMonthlyPaymentPercentage)
 	if err != nil {
-		slog.Default().Warn("failed to get monthly payment percentage setting, using default", "key", SettingKeyMonthlyPaymentPercentage, "error", err)
+		observability.GetLogger().Warn("failed to get monthly payment percentage setting, using default", "key", SettingKeyMonthlyPaymentPercentage, "error", err)
 		return DefaultMonthlyPaymentPercentage
 	}
 
 	value, err := setting.GetFloatValue()
 	if err != nil {
-		slog.Default().Warn("failed to parse monthly payment percentage, using default", "key", SettingKeyMonthlyPaymentPercentage, "error", err)
+		observability.GetLogger().Warn("failed to parse monthly payment percentage, using default", "key", SettingKeyMonthlyPaymentPercentage, "error", err)
 		return DefaultMonthlyPaymentPercentage
 	}
 
 	// Validate range (0-1)
 	if value < 0 || value > 1 {
-		slog.Default().Warn("monthly payment percentage out of range, using default", "key", SettingKeyMonthlyPaymentPercentage, "value", value)
+		observability.GetLogger().Warn("monthly payment percentage out of range, using default", "key", SettingKeyMonthlyPaymentPercentage, "value", value)
 		return DefaultMonthlyPaymentPercentage
 	}
 
@@ -204,13 +204,13 @@ func (s *SettingsConfigService) GetPartnerCompany(ctx context.Context) string {
 	// Cache miss, fetch from database
 	setting, err := s.settingsService.GetSettingByKey(ctx, SettingKeyPartnerCompany)
 	if err != nil {
-		slog.Default().Warn("failed to get partner company setting, using default", "key", SettingKeyPartnerCompany, "error", err)
+		observability.GetLogger().Warn("failed to get partner company setting, using default", "key", SettingKeyPartnerCompany, "error", err)
 		return DefaultPartnerCompany
 	}
 
 	value := setting.GetStringValue()
 	if value == "" {
-		slog.Default().Warn("partner company setting is empty, using default", "key", SettingKeyPartnerCompany)
+		observability.GetLogger().Warn("partner company setting is empty, using default", "key", SettingKeyPartnerCompany)
 		return DefaultPartnerCompany
 	}
 

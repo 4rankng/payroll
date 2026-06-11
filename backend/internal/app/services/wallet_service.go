@@ -17,6 +17,7 @@ import (
 
 	"api-server/internal/app/services/disbursement"
 	"api-server/internal/domain/wallet"
+	"api-server/internal/infra/observability"
 )
 
 var (
@@ -51,7 +52,7 @@ func NewWalletService(
 		topupRepo:   topupRepo,
 		paymentRepo: paymentRepo,
 		registry:    registry,
-		logger:      slog.Default(),
+		logger:      observability.GetLogger(),
 	}
 }
 

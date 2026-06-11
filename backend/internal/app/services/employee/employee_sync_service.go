@@ -4,11 +4,11 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	auditctx "api-server/internal/pkg/context"
 	"gorm.io/gorm"
 )
@@ -127,7 +127,7 @@ func (s *EmployeeSyncService) SyncEmployeeNameToActiveAssignments(ctx context.Co
 
 		if err := s.eventBus.Publish(ctx, event); err != nil {
 			// Log but don't fail the operation if event publishing fails
-			slog.Default().Warn("failed to publish ProjectEmployeesSyncedEvent", "error", err)
+			observability.GetLogger().Warn("failed to publish ProjectEmployeesSyncedEvent", "error", err)
 		}
 	}
 

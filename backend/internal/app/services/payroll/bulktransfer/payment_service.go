@@ -3,12 +3,12 @@ package bulktransfer
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	pkgConstants "api-server/internal/pkg/constants"
 )
 
@@ -182,7 +182,7 @@ func (s *BulkPaymentService) validateTotalAmount(
 	diff := totalPaid - expectedAmount
 
 	if diff < -tolerance || diff > tolerance {
-		slog.Default().Warn("sum of paid amounts differs from file amount",
+		observability.GetLogger().Warn("sum of paid amounts differs from file amount",
 			"totalPaid", totalPaid, "expectedAmount", expectedAmount, "diff", diff)
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"api-server/internal/app/services/payroll/excel"
 	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
+	"api-server/internal/infra/observability"
 
 	"github.com/google/uuid"
 
@@ -92,7 +93,7 @@ func NewNinePayBulkTransferService(
 	logger *slog.Logger,
 ) *NinePayBulkTransferService {
 	if logger == nil {
-		logger = slog.Default()
+		logger = observability.GetLogger()
 	}
 	return &NinePayBulkTransferService{
 		exportService:       exportService,

@@ -8,6 +8,7 @@ import (
 
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 )
 
 type LenderService struct {
@@ -23,7 +24,7 @@ func NewLenderService(
 	eventBus domain.EventBus,
 ) *LenderService {
 	return &LenderService{
-		logger:       slog.Default(),
+		logger:       observability.GetLogger(),
 		LenderRepo:   lenderRepo,
 		CacheService: cacheService,
 		EventBus:     eventBus,

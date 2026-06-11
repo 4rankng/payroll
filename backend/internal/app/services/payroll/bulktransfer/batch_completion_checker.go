@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
+	"api-server/internal/infra/observability"
 )
 
 // NinePayBatchCompletionChecker detects when all transfers in a 9Pay bulk
@@ -34,7 +35,7 @@ func NewNinePayBatchCompletionChecker(
 	logger *slog.Logger,
 ) *NinePayBatchCompletionChecker {
 	if logger == nil {
-		logger = slog.Default()
+		logger = observability.GetLogger()
 	}
 	return &NinePayBatchCompletionChecker{
 		transactionCodeRepo: transactionCodeRepo,

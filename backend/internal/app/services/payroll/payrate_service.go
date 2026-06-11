@@ -3,7 +3,6 @@ package payroll
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
@@ -47,7 +46,7 @@ func (s *PayrateService) CreatePayrate(ctx context.Context, payrate *domain.Payr
 	// Publish domain event
 	event := domain.NewPayrateCreatedEvent(ctx, payrate)
 	if err := s.EventBus.Publish(ctx, event); err != nil {
-		slog.Default().Warn("failed to publish PayrateCreatedEvent", "error", err)
+		observability.GetLogger().Warn("failed to publish PayrateCreatedEvent", "error", err)
 	}
 
 	return payrate, nil
@@ -131,7 +130,7 @@ func (s *PayrateService) DeletePayrate(ctx context.Context, id uint, deletedBy u
 	// Publish domain event
 	event := domain.NewPayrateDeletedEvent(ctx, payrate)
 	if err := s.EventBus.Publish(ctx, event); err != nil {
-		slog.Default().Warn("failed to publish PayrateDeletedEvent", "error", err)
+		observability.GetLogger().Warn("failed to publish PayrateDeletedEvent", "error", err)
 	}
 
 	return nil

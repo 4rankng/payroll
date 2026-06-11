@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
 	"time"
@@ -58,7 +59,7 @@ func (r *EmployeeRepository) GetEmployeesSummary(ctx context.Context) (*domain.E
 	var err error
 	now := clock.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	endOfMonth := timeutil.EndOfDay(startOfMonth.AddDate(0, 1, -1))
 
 	// Query 1: Get employee counts and month-to-date salary/paid
 	var basicStats struct {
@@ -106,7 +107,7 @@ func (r *EmployeeRepository) GetEmployeesSummaryForCreator(ctx context.Context, 
 	var err error
 	now := clock.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	endOfMonth := timeutil.EndOfDay(startOfMonth.AddDate(0, 1, -1))
 
 	// Query 1: Get employee counts for accessible employees
 	var basicStats struct {

@@ -14,6 +14,7 @@ import (
 	"api-server/internal/app/services/notification"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
@@ -52,7 +53,7 @@ func NewReconcileService(
 	ledgerRepo domain.LedgerEntryRepository,
 ) *ReconcileService {
 	return &ReconcileService{
-		logger:                    slog.Default().With("component", "AdvancePaymentReconcileService"),
+		logger:                    observability.GetLogger().With("component", "AdvancePaymentReconcileService"),
 		db:                        db,
 		advancePaymentRepo:        advancePaymentRepo,
 		advancePaymentRequestRepo: advancePaymentRequestRepo,

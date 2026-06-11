@@ -13,6 +13,7 @@ import (
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/utils"
 )
 
@@ -43,7 +44,7 @@ func NewImportService(
 		projectEmployeeRepo: projectEmployeeRepo,
 		userService:         userService,
 		progressService:     progressService,
-		logger:              slog.Default().With("component", "EmployeeImportService"),
+		logger:              observability.GetLogger().With("component", "EmployeeImportService"),
 	}
 }
 

@@ -3,13 +3,13 @@ package excel
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/excel"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/constants"
 
 	"github.com/xuri/excelize/v2"
@@ -212,7 +212,7 @@ func (s *Service) generateMBankTransferExcel(ctx context.Context, data *BulkTran
 	}
 	defer func() {
 		if closeErr := f.Close(); closeErr != nil {
-			slog.Default().Warn("failed to close Excel file", "error", closeErr)
+			observability.GetLogger().Warn("failed to close Excel file", "error", closeErr)
 		}
 	}()
 
