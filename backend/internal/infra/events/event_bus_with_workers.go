@@ -129,6 +129,7 @@ func (bus *WorkerPoolEventBus) Publish(ctx context.Context, events ...domain.Dom
 	bus.mu.RLock()
 	defer bus.mu.RUnlock()
 
+	var dropped int
 	for _, event := range events {
 		eventType := event.EventType()
 
@@ -172,8 +173,9 @@ func (bus *WorkerPoolEventBus) Publish(ctx context.Context, events ...domain.Dom
 				// Task queued successfully
 			default:
 				// Queue is full - track dropped event
+				dropped++
 				bus.metrics.EventsDropped.Add(1)
-				bus.logger.Warn("Event queue full, dropping event",
+				bus.logger.Error("Event queue full, dropping event",
 					"event_type", eventType,
 					"queue_size", bus.queueSize,
 					"aggregate_id", event.AggregateID(),
@@ -182,6 +184,9 @@ func (bus *WorkerPoolEventBus) Publish(ctx context.Context, events ...domain.Dom
 		}
 	}
 
+	if dropped > 0 {
+		return fmt.Errorf("event bus: %d event(s) dropped due to full queue", dropped)
+	}
 	return nil
 }
 

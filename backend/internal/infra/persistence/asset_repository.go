@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
@@ -35,7 +36,9 @@ func (r *AssetRepository) Create(ctx context.Context, asset *domain.Asset) (*dom
 		event := domain.NewAssetCreatedEvent(ctx, asset)
 		// Publish in a non-blocking way
 		go func() {
-			_ = r.eventBus.Publish(context.Background(), event)
+			if err := r.eventBus.Publish(context.Background(), event); err != nil {
+				observability.GetLogger().Error("failed to publish AssetCreatedEvent", "error", err)
+			}
 		}()
 	}
 
