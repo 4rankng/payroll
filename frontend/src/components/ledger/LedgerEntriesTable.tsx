@@ -3,10 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Undo2, Download, FileText, ExternalLink, Calendar, Building } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { ledgerService } from '@/services/api/ledger.service';
+import { formatDate, formatCurrency } from '@/utils/formatters';
 import { assetService } from '@/services/api/asset.service';
 import { useDownloadAsset } from '@/hooks/api/useAssets';
 import type { LedgerEntry, AccountMetadata } from '@/types/api/financial.types';
@@ -48,19 +47,6 @@ export function LedgerEntriesTable({
 }: LedgerEntriesTableProps) {
   const isMobile = useIsMobile();
   const downloadAsset = useDownloadAsset();
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    if (amount === 0) return '0 đ';
-    return ledgerService.formatCurrency(amount);
-  };
 
   const getProjectName = (projectId?: number): string | undefined => {
     if (!projectId) return undefined;

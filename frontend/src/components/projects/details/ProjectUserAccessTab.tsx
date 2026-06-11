@@ -8,7 +8,7 @@ import { UserSelector } from '@/components/ui/user-selector';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
-import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { UserPlus, Trash2, Users, ShieldCheck } from 'lucide-react';
 import { authManager } from '@/lib/auth';
 
@@ -234,9 +234,9 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
       </div>
 
       {/* Revoke Access Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={isRevokeModalOpen}
-        onClose={() => {
+      <ConfirmDialog
+        open={isRevokeModalOpen}
+        onOpenChange={() => {
           setIsRevokeModalOpen(false);
           setUserToRevoke(null);
         }}
@@ -255,8 +255,8 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
         }
         confirmText="Thu hồi quyền"
         cancelText="Hủy bỏ"
-        variant="destructive"
-        isLoading={revokeAccessMutation.isPending}
+        confirmVariant="destructive"
+        loading={revokeAccessMutation.isPending}
       />
     </div>
   );

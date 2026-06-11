@@ -6,7 +6,8 @@ import { Timesheet } from '@/types/api/timesheet.types';
 import { TimesheetEntryModal } from './components/TimesheetEntryModal';
 import { showErrorNotification } from '@/utils/error-handler';
 import { groupTimesheetsByEmployeeDate, sortGroupedTimesheets } from './utils/timesheetGrouping';
-import { formatCurrency, formatDateWithWeekday, getMergedStatusBadge, getPaytypeText } from './utils/timesheetHelpers';
+import { formatDateWithWeekday, getMergedStatusBadge, getPaytypeText } from './utils/timesheetHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 import { AccentStripCard, type AccentColor } from '@/components/shared/AccentStripCard';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -165,7 +166,7 @@ export function TimesheetMobileList() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Banknote className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <span className="font-semibold text-foreground tabular-nums">{formatCurrency(group.totalAmount)}đ</span>
+                    <span className="font-semibold text-foreground tabular-nums">{formatCurrency(group.totalAmount)}</span>
                   </div>
                   <span className="text-muted-foreground ml-auto tabular-nums">{formatDateWithWeekday(group.date, 'short')}</span>
                 </div>
@@ -194,7 +195,7 @@ export function TimesheetMobileList() {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="text-right">
                           <p className="text-xs font-semibold text-foreground tabular-nums">{entry.hours_worked}h</p>
-                          <p className="text-xs text-muted-foreground tabular-nums">{formatCurrency(entry.amount)}đ</p>
+                          <p className="text-xs text-muted-foreground tabular-nums">{formatCurrency(entry.amount)}</p>
                         </div>
                         {getMergedStatusBadge(entry.status, entry.payment_status)}
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />

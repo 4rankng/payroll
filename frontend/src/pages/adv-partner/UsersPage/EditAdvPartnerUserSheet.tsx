@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import {
   Sheet,
   SheetContent,
@@ -165,6 +166,7 @@ export default function EditAdvPartnerUserSheet({
   onClose,
 }: EditAdvPartnerUserSheetProps) {
   const isMobile = useIsMobile();
+
   const [form, setForm] = useState<FormData>({
     fullname: initialName || "",
     email: "",

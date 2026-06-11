@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { formatCurrency } from "@/utils/employeeHelpers";
+import { formatCurrency } from "@/utils/formatters";
 import type { Timesheet } from "@/types/api/timesheet.types";
 import type { EmployeeTimesheetEntry } from "@/types/api/employee.types";
 

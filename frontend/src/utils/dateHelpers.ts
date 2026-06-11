@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDate as formatDateUtil } from '@/utils/formatters';
 import { DayType } from '@/types/api/payrate.types';
 
 /**
@@ -112,9 +112,7 @@ export function getDayTypeOrNull(date: string | Date): DayType | null {
  * Format date for display
  */
 export function formatDateForDisplay(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date + 'T00:00:00') : date;
-  
-  return format(dateObj, 'dd/MM/yyyy');
+  return formatDateUtil(date);
 }
 
 /**

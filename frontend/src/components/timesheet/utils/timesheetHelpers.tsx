@@ -92,10 +92,6 @@ export const getPaytypeText = (paytype: string) => {
   return paytype;
 };
 
-export const formatCurrency = (amount: number | undefined) => {
-  return amount?.toLocaleString('vi-VN') || '0';
-};
-
 export const getVietnameseWeekdayInfo = (dateInput: string | Date | null | undefined) => {
   if (!dateInput) return null;
 

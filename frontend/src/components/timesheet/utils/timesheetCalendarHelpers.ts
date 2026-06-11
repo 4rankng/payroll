@@ -293,13 +293,6 @@ export function createEmptyEmployeeCalendarData(
 
 
 /**
- * Formats currency for Vietnamese locale
- */
-export function formatCurrency(amount: number): string {
-  return amount.toLocaleString('vi-VN');
-}
-
-/**
  * Formats date for Vietnamese locale
  */
 export function formatVietnameseDate(date: Date, formatStr: string = 'dd/MM/yyyy'): string {

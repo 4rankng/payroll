@@ -42,14 +42,7 @@ function formatTooltipDate(label: string): string {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K`;
-  return `${sign}${abs.toLocaleString('vi-VN')}`;
-}
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 
 // ─── Rank badge ───────────────────────────────────────────────────────────────
 
@@ -348,7 +341,7 @@ export const ProjectProfitabilityCard = memo(() => {
                   fontSize={10}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={formatVND}
+                  tickFormatter={(v: number) => formatVND(v)}
                   width={48}
                 />
                 <Tooltip

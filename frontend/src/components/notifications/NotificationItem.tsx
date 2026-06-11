@@ -5,8 +5,6 @@ import { useMarkAsRead, useMarkAsReadSilent } from '@/hooks/api/useNotifications
 import { getNotificationPreview } from '@/utils/notification-helpers';
 import { getNotificationAccentColor, formatNotificationDate } from '@/utils/notification-styles';
 
-import { EMPLOYEE_BRAND_COLOR } from '@/constants/branding';
-
 interface NotificationItemProps {
   notification: Notification;
   showMarkAsRead?: boolean;
@@ -55,7 +53,7 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
           </h4>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-xs text-gray-400 tabular-nums">{formatNotificationDate(notification.created_at)}</span>
-            {isUnread && <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: EMPLOYEE_BRAND_COLOR }} />}
+            {isUnread && <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-employee" />}
           </div>
         </div>
 
@@ -70,7 +68,7 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
               disabled={markAsRead.isPending}
               aria-label="Đánh dấu đã đọc"
             >
-              <Check className="h-3.5 w-3.5" style={{ color: EMPLOYEE_BRAND_COLOR }} />
+              <Check className="h-3.5 w-3.5 text-employee" />
             </button>
           )}
         </div>

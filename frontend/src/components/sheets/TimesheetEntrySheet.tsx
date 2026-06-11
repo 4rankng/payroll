@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils/formatters';
 import { NewTimesheetEntry } from '@/types/api/timesheet.types';
 import { useCreateTimesheets } from '@/hooks/api/useTimesheets';
 import { useTimesheetProjects } from '@/hooks/api/useProjects';
@@ -385,9 +386,6 @@ function TimesheetEntrySheetComponent({
     return { employees: employeesWithHours.size, totalHours, totalPayout, newFieldCount, editedFieldCount, deletedFieldCount };
   }, [formData.entries, formData.projectId, isPayRateReady, getPayRateForEntry]);
 
-  const formatVND = (n: number) =>
-    new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) + ' đ';
-
   const saveDisabledReason = useMemo(() => {
     if (!formData.projectId) return 'Chưa chọn dự án';
     if (!isPayRateReady) return 'Chưa có cấu hình lương cho dự án này';
@@ -596,7 +594,7 @@ function TimesheetEntrySheetComponent({
                 <span>
                   <span className="font-semibold text-foreground">{footerSummary.totalHours}h</span> tổng giờ
                 </span>
-                <span className="font-semibold text-emerald-600">{formatVND(footerSummary.totalPayout)}</span>
+                <span className="font-semibold text-emerald-600">{formatCurrency(footerSummary.totalPayout)}</span>
                 {(footerSummary.newFieldCount > 0 || footerSummary.editedFieldCount > 0 || footerSummary.deletedFieldCount > 0) && (
                   <span className="flex items-center gap-2">
                     {footerSummary.newFieldCount > 0 && (

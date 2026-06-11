@@ -17,7 +17,7 @@ import { AutoInterestFields } from './AutoInterestFields';
 import { ScheduleDisplay } from './ScheduleDisplay';
 import { CustomScheduleFields } from './CustomScheduleFields';
 import { FormField } from './FormField';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 
 interface AddLoanSheetProps {
   isOpen: boolean;

@@ -1,4 +1,4 @@
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { TimesheetEntrySheet } from './TimesheetEntrySheet';
 
 interface TimesheetEntrySheetWrapperProps {

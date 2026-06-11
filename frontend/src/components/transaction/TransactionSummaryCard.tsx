@@ -1,5 +1,6 @@
 import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
 import { transactionService } from '@/services/api/transaction.service';
+import { formatCurrency } from '@/utils/formatters';
 import type { LedgerSummary } from '@/types/api/financial.types';
 import { useMemo, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -43,8 +44,6 @@ interface TransactionSummaryCardProps {
 }
 
 export function TransactionSummaryCard({ ledgerSummary, isLoading, className, renderCapitalCard }: TransactionSummaryCardProps) {
-  const formatCurrency = (amount: number) => transactionService.formatCurrency(amount);
-
   const liabilityItems = useMemo<InlineStatItem[]>(() => {
     if (!ledgerSummary) return [];
     const { by_account } = ledgerSummary;

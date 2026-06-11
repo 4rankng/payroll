@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import type { Employee } from '@/types/api/employee.types';
 
 interface UseEmployeeInfiniteScrollProps {

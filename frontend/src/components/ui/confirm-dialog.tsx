@@ -18,7 +18,7 @@ export interface ConfirmDialogProps {
   description: string | ReactNode;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void | Promise<void>;
+  onConfirm?: () => void | Promise<void>;
   onCancel?: () => void;
   confirmVariant?: "default" | "destructive";
   loading?: boolean;
@@ -40,7 +40,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    if (!onConfirm) return;
+    // Prevent Radix AlertDialogAction from auto-closing the dialog
+    e.preventDefault();
     try {
       setIsProcessing(true);
       const result = onConfirm();
@@ -48,6 +51,9 @@ export function ConfirmDialog({
       if (result instanceof Promise) {
         await result;
       }
+      onOpenChange(false);
+    } catch {
+      // Keep dialog open on error so user can retry
     } finally {
       setIsProcessing(false);
     }
@@ -56,9 +62,8 @@ export function ConfirmDialog({
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
-    } else {
-      onOpenChange(false);
     }
+    onOpenChange(false);
   };
 
   const isLoading = loading || isProcessing;
@@ -89,23 +94,25 @@ export function ConfirmDialog({
           >
             {cancelText}
           </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirm}
-            disabled={isDisabled}
-            className={cn(
-              "flex-1",
-              confirmVariant === "destructive" ? "bg-destructive hover:bg-destructive/90" : ""
-            )}
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                Đang xử lý...
-              </>
-            ) : (
-              confirmText
-            )}
-          </AlertDialogAction>
+          {onConfirm && confirmText && (
+            <AlertDialogAction
+              onClick={handleConfirm}
+              disabled={isDisabled}
+              className={cn(
+                "flex-1",
+                confirmVariant === "destructive" ? "bg-destructive hover:bg-destructive/90" : ""
+              )}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                confirmText
+              )}
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

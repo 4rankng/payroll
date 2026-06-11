@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 import { useAllBanks, useCreateBank } from '@/hooks/api/useBanks';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
 import type { Bank } from '@/types/api/bank.types';
 

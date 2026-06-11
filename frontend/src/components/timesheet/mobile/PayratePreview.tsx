@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, Calculator } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatters';
 
 interface PayratePreviewProps {
   payrate: number;
@@ -13,15 +14,6 @@ export function PayratePreview({
   hours,
   amount
 }: PayratePreviewProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
   const isHighAmount = amount > 500000; // Above 500k VND
 
   return (

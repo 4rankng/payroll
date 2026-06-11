@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface ChangePasswordSheetProps {
   open: boolean;
@@ -124,8 +123,7 @@ export function ChangePasswordSheet({
         <button
           onClick={handleSubmit}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-all active:scale-[0.97]"
-          style={{ background: EMPLOYEE_BRAND_COLOR }}
+          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-white bg-employee disabled:opacity-50 transition-all active:scale-[0.97]"
         >
           {isPending ? "Đang đổi..." : "Đổi mật khẩu"}
         </button>

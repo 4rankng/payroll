@@ -19,6 +19,7 @@ import {
 import { FILE_LIMITS } from '@/config/api.config';
 import { useUploadBankResult } from '@/hooks/api/useAdvancePayments';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatDateTime, formatCurrencyFromString } from '@/utils/formatters';
 import type { UploadBankResultResponse } from '@/types/api/advance-payment.types';
 import { generateAdvancePaymentResultPdf } from '@/utils/pdf/advance-payment-result';
 
@@ -91,21 +92,6 @@ export const AdvancePaymentResultUploadDialog = memo(
 
     const canUpload = useMemo(() => selectedFile && !uploadMutation.isPending, [selectedFile, uploadMutation.isPending]);
 
-    const formatCurrency = useCallback((amount: string) => {
-      const numValue = Number(amount?.replace(/,/g, ''));
-      return isNaN(numValue) ? amount : `${numValue.toLocaleString('vi-VN')} đ`;
-    }, []);
-
-    const formatDate = useCallback((dateString: string) => {
-      if (!dateString) return '';
-      try {
-        return new Date(dateString).toLocaleString('vi-VN', {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit',
-        });
-      } catch { return dateString; }
-    }, []);
-
     // ── Results view ──
     if (showResults && uploadResult) {
       return (
@@ -165,9 +151,9 @@ export const AdvancePaymentResultUploadDialog = memo(
                         <p className="text-xs text-muted-foreground truncate">
                           {detail.employee_bank} · {detail.employee_account_number}
                         </p>
-                        <p className="text-sm font-semibold">{formatCurrency(detail.amount)}</p>
+                        <p className="text-sm font-semibold">{formatCurrencyFromString(detail.amount)}</p>
                         {detail.paid_at && (
-                          <p className="text-xs text-muted-foreground">{formatDate(detail.paid_at)}</p>
+                          <p className="text-xs text-muted-foreground">{formatDateTime(detail.paid_at)}</p>
                         )}
                       </div>
                     );

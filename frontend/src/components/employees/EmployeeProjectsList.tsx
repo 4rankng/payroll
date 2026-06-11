@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Briefcase, Calendar, Clock, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEmployeeProjects } from '@/hooks/api/useEmployees';
-import { formatCurrency } from '@/utils/employeeHelpers';
+import { formatCurrency } from '@/utils/formatters';
+import { formatDate } from '@/utils/formatters';
 import type { Employee, EmployeeProjectAssignment } from '@/types/api/employee.types';
 
 interface EmployeeProjectsListProps {
@@ -44,10 +44,6 @@ export function EmployeeProjectsList({ employee, className }: EmployeeProjectsLi
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd/MM/yyyy');
   };
 
   if (isLoading) {

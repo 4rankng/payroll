@@ -20,7 +20,8 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { formatCurrencyFromString } from '@/utils/formatters';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useProjects } from '@/hooks/api/useProjects';
 import type { Project } from '@/types/api/project.types';
@@ -291,7 +292,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
                           {detail.employee_cccd}
                         </p>
                         <p className="typography-body-small font-semibold text-slate-800 tabular-nums text-right whitespace-nowrap">
-                          {formatCurrency(detail.amount)}
+                          {formatCurrencyFromString(detail.amount)}
                         </p>
                       </div>
                     );
@@ -517,12 +518,6 @@ interface SharedExportFormProps {
   projects: Project[];
   employees: Employee[];
   isMobile: boolean;
-}
-
-function formatCurrency(amount: string): string {
-  if (!amount) return '0 đ';
-  const num = Number(amount.replace(/,/g, ''));
-  return isNaN(num) ? amount : `${num.toLocaleString('vi-VN')} đ`;
 }
 
 function SharedExportForm({ form, projects, employees, isMobile }: SharedExportFormProps) {

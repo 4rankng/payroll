@@ -16,6 +16,7 @@ import { RotateCcw, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { useReverseTransaction } from '@/hooks/transactions/useReverseTransaction';
 import { transactionService } from '@/services/api/transaction.service';
+import { formatCurrency } from '@/utils/formatters';
 import type { ModalConfig } from '@/types/modal-config.types';
 import type { Transaction } from '@/services/api/transaction.service';
 
@@ -102,10 +103,6 @@ function ReverseTransactionModalComponent({
 
   const handleBack = () => {
     setStep('form');
-  };
-
-  const formatCurrency = (amount: number) => {
-    return transactionService.formatCurrency(amount);
   };
 
   const isLoading = reverseTransaction.isPending;

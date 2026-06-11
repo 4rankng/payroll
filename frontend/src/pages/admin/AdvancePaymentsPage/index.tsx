@@ -54,6 +54,8 @@ import { AdvPartnerMetricsStrip } from "@/components/advance-payment/AdvPartnerM
 import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { TabBarWithBadges } from "@/components/shared/TabBarWithBadges";
 import { useAuth } from "@/contexts";
+import { useIsMobile } from "@/hooks/useBreakpoint";
+import { useMobilePageAnimations } from "@/hooks/useMobilePageAnimations";
 import { cn } from "@/lib/utils";
 import type {
   AdvancePaymentListItem,
@@ -75,6 +77,8 @@ const AdvancePaymentsPage = () => {
 
   const { user } = useAuth();
   const isAdvPartner = user?.role === "adv_partner";
+  const isMobile = useIsMobile();
+  const animRoot = useMobilePageAnimations();
 
   const page = useAdvancePaymentsPage({ employeesTabActive: activeTab === "employees" });
   const attendancePage = useAdminAttendancePage({ active: activeTab === "attendances" });
@@ -168,25 +172,47 @@ const AdvancePaymentsPage = () => {
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
 
   return (
-    <div className="min-h-full animate-hero-reveal">
+    <div ref={animRoot} className="min-h-full">
       <div className="max-w-[1440px] mx-auto space-y-4 p-4 lg:p-6">
 
+        {/* ─── MOBILE: Wallet hero — full-bleed, above everything ─── */}
+        {isMobile && !isAdvPartner && (
+          <div
+            data-mobile-wallet
+            className="mobile-wallet-hero relative -mx-4 -mt-4 overflow-hidden"
+          >
+            <WalletBalanceCard
+              monthlyProviderFee={page.providerFees.monthlyProviderFee}
+              totalProviderFee={page.providerFees.totalProviderFee}
+              className="rounded-none border-0 shadow-none"
+            />
+            {/* Shimmer overlay */}
+            <div className="wallet-shimmer-bg pointer-events-none absolute inset-0" />
+          </div>
+        )}
+
         {/* ─── 1. Page header ─── */}
-        <PageHeader
-          title="Quản lý ứng lương"
-          description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
-          icon={Banknote}
-        >
-          <TimesheetMonthSelector
-            value={page.selectedMonth}
-            onChange={page.setSelectedMonth}
-          />
-        </PageHeader>
+        <div data-mobile-header>
+          <PageHeader
+            title="Quản lý ứng lương"
+            description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
+            icon={Banknote}
+          >
+            <TimesheetMonthSelector
+              value={page.selectedMonth}
+              onChange={page.setSelectedMonth}
+            />
+          </PageHeader>
+        </div>
 
         {/* ─── 2. Treasury Hero — Wallet | Flow | Fee ─── */}
         <section
           aria-label="Tổng quan kỳ ứng lương"
-          className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_0_rgba(14,23,41,0.04),0_6px_24px_rgba(14,23,41,0.06)]"
+          className={cn(
+            "overflow-hidden rounded-xl border border-border/70 bg-card",
+            "shadow-[0_1px_0_rgba(14,23,41,0.04),0_6px_24px_rgba(14,23,41,0.06)]",
+            isMobile && "mobile-section-enter",
+          )}
         >
           <div className={cn(
             "grid divide-border/50",
@@ -195,13 +221,15 @@ const AdvancePaymentsPage = () => {
               : "grid-cols-1 divide-y lg:grid-cols-[280px_1fr_300px] xl:grid-cols-[320px_1fr_340px] lg:divide-y-0 lg:divide-x",
           )}>
 
-            {/* Panel A: Wallet — admins only */}
+            {/* Panel A: Wallet — admins only (desktop only; mobile shows it above) */}
             {!isAdvPartner && (
-              <WalletBalanceCard
-                monthlyProviderFee={page.providerFees.monthlyProviderFee}
-                totalProviderFee={page.providerFees.totalProviderFee}
-                className="rounded-none border-0 shadow-none"
-              />
+              <div className={cn(isMobile && "hidden")}>
+                <WalletBalanceCard
+                  monthlyProviderFee={page.providerFees.monthlyProviderFee}
+                  totalProviderFee={page.providerFees.totalProviderFee}
+                  className="rounded-none border-0 shadow-none"
+                />
+              </div>
             )}
 
             {/* Panel B: Disbursement flow */}
@@ -220,22 +248,33 @@ const AdvancePaymentsPage = () => {
         </section>
 
         {/* ─── 3. Pipeline — status bar + cards ─── */}
-        <AdvPartnerStatusOverview
-          {...statusProps}
-          isLoading={page.summaryLoading}
-        />
+        <div data-mobile-stats>
+          <AdvPartnerStatusOverview
+            {...statusProps}
+            isLoading={page.summaryLoading}
+          />
+        </div>
 
         {/* ─── 4. Metrics strip — success rate | avg time | avg fee ─── */}
-        <AdvPartnerMetricsStrip
-          {...metricsProps}
-          isLoading={page.summaryLoading}
-        />
+        <div data-mobile-stats>
+          <AdvPartnerMetricsStrip
+            {...metricsProps}
+            isLoading={page.summaryLoading}
+          />
+        </div>
 
         {/* ─── 5. Operations — tabs + filters + table ─── */}
-        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(15,23,42,0.06)]">
+        <section
+          data-mobile-content
+          className={cn(
+            "overflow-hidden rounded-2xl border border-border/70 bg-card",
+            "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(15,23,42,0.06)]",
+            isMobile && "mobile-section-enter",
+          )}
+        >
 
           {/* Header row: tabs + actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-gradient-to-b from-muted/40 to-transparent px-3 py-3 sm:px-4">
+          <div data-mobile-tabs className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-gradient-to-b from-muted/40 to-transparent px-3 py-3 sm:px-4">
             <TabBarWithBadges
               tabs={[
                 {

@@ -2,7 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Mail, Phone, MapPin, Calendar, Building2 } from "lucide-react";
-import { formatCurrency } from "@/utils/employeeHelpers";
+import { formatCurrency } from "@/utils/formatters";
 import type { Employee } from "@/types/api/employee.types";
 
 const getPaymentScheduleBadgeConfig = (

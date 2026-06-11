@@ -29,7 +29,7 @@ import { useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
 import { useBankUsageAllProjects } from '@/hooks/api/useDashboard';
 
-import { formatVND } from './utils';
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 import { DashboardMasonryCard, type DashboardCardData } from './components/DashboardMasonryCard';
 
 const AdminDashboard = () => {

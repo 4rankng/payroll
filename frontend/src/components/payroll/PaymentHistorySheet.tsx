@@ -8,7 +8,7 @@ import { PaymentHistoryMobileList } from './mobile/PaymentHistoryMobileList';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { Button } from '@/components/ui/button';
 import { usePaymentHistories, useInfinitePaymentHistories, useExportPaymentHistories } from '@/hooks/api/usePayrolls';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { dateToString } from '@/utils/dateHelpers';
 import {
   Pagination,

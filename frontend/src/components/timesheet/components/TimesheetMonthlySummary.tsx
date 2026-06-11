@@ -1,5 +1,5 @@
 import { TrendingUp } from 'lucide-react';
-import { formatCurrency } from '../utils/timesheetHelpers.tsx';
+import { formatCurrency } from '@/utils/formatters';
 
 interface EmployeeSummaryData {
   employeeId: number;

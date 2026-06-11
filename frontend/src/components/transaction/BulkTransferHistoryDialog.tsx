@@ -5,7 +5,7 @@ import { FileSpreadsheet, Clock, User, X, Calendar as CalendarIcon, CheckCircle2
 import { useBulkTransferUploadHistories } from '@/hooks/api/usePayrolls';
 import type { BulkTransferUploadHistory } from '@/services/api/bulk-transfer.service';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

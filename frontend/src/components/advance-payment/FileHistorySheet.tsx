@@ -10,7 +10,7 @@ import { UnifiedFileCard } from './UnifiedFileCard';
 import type { AdvancePaymentFileType } from './UnifiedFileCard';
 import { useAdvancePaymentFileHistory } from '@/hooks/api/useAdvancePayments';
 import { groupFilesByDate } from '@/utils/fileGrouping';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import type { AdvancePaymentFileHistoryItem } from '@/types/api/advance-payment.types';
 
 interface FileHistorySheetProps {

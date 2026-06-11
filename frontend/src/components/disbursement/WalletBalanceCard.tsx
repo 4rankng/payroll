@@ -4,7 +4,7 @@ import { RefreshCw, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { walletService } from "@/services/api/wallet.service";
-import { formatCurrency } from "@/lib/validation";
+import { formatCurrency } from "@/utils/formatters";
 import { useDisbursementSettings } from "@/hooks/useDisbursementSettings";
 
 interface WalletBalanceCardProps {

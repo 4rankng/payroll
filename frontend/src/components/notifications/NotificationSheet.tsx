@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Loader2, CheckCheck, Bell, X, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { NotificationItem } from './NotificationItem';
@@ -14,22 +14,20 @@ import {
 } from '@/hooks/api/useNotifications';
 import type { Notification } from '@/types/api/notification.types';
 
-import { EMPLOYEE_BRAND_COLOR } from '@/constants/branding';
-
 type NotificationVariant = 'employee' | 'corporate';
 
 const THEME = {
   employee: {
-    headerBg: EMPLOYEE_BRAND_COLOR,
+    headerBg: 'bg-employee',
     activeTabText: 'text-green-700',
     activeTabCount: 'bg-green-100 text-green-700',
-    loaderColor: EMPLOYEE_BRAND_COLOR,
+    loaderColor: 'text-employee',
   },
   corporate: {
-    headerBg: 'hsl(220, 90%, 12%)',
+    headerBg: 'bg-[hsl(220,90%,12%)]',
     activeTabText: 'text-blue-700',
     activeTabCount: 'bg-blue-100 text-blue-700',
-    loaderColor: 'hsl(220, 90%, 12%)',
+    loaderColor: 'text-[hsl(220,90%,12%)]',
   },
 } as const;
 
@@ -86,7 +84,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
 
   const renderLoading = () => (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className="h-5 w-5 animate-spin" style={{ color: theme.loaderColor }} />
+      <Loader2 className={`h-5 w-5 animate-spin ${theme.loaderColor}`} />
     </div>
   );
 
@@ -139,7 +137,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           )}
 
           {/* Header */}
-          <div className="text-white px-4 pb-4" style={{ background: theme.headerBg, paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
+          <div className={`text-white px-4 pb-4 ${theme.headerBg}`} style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={onClose}

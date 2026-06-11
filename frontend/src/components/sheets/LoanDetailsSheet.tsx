@@ -18,10 +18,9 @@ import {
 import { useLoan, useLoanSchedule, useDeleteLoan } from "@/hooks/api/useLoans";
 import { DisburseLoanModal } from "@/components/modals/DisburseLoanModal";
 import { RepayScheduleModal } from "@/components/modals/RepayScheduleModal";
-import { ConfirmationModal } from "@/components/modals/ConfirmationModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MarkSchedulePaidDialog } from "@/components/dialogs/MarkSchedulePaidDialog";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { formatDate } from "@/utils/formatters";
 import type { CustomScheduleItem } from "@/types/api/loan.types";
 import {
   formatVND,
@@ -128,14 +127,6 @@ export function LoanDetailsSheet({
   const handleMarkPaidDialogClose = () => {
     setIsMarkPaidDialogOpen(false);
     setSelectedSchedule(null);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd/MM/yyyy", { locale: vi });
-    } catch {
-      return dateString;
-    }
   };
 
   const header = useMemo(() => {
@@ -441,9 +432,9 @@ export function LoanDetailsSheet({
             onClose={handleRepayScheduleModalClose}
             loan={loan}
           />
-          <ConfirmationModal
-            isOpen={isDeleteModalOpen}
-            onClose={handleDeleteModalClose}
+          <ConfirmDialog
+            open={isDeleteModalOpen}
+            onOpenChange={handleDeleteModalClose}
             onConfirm={handleDeleteConfirm}
             title="Xóa khoản vay"
             description={
@@ -457,8 +448,8 @@ export function LoanDetailsSheet({
             }
             confirmText="Xóa"
             cancelText="Hủy bỏ"
-            variant="destructive"
-            isLoading={deleteLoan.isPending}
+            confirmVariant="destructive"
+            loading={deleteLoan.isPending}
           />
           <MarkSchedulePaidDialog
             isOpen={isMarkPaidDialogOpen}

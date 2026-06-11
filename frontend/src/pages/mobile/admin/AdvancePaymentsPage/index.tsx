@@ -104,6 +104,18 @@ const AdvancePaymentsPageMobile = () => {
   return (
     <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
 
+      {/* Wallet hero — full-bleed, first thing visible */}
+      {!isAdvPartner && (
+        <div className="mobile-wallet-hero relative -mx-4 -mt-4 overflow-hidden rounded-none">
+          <WalletBalanceCard
+            monthlyProviderFee={page.providerFees.monthlyProviderFee}
+            totalProviderFee={page.providerFees.totalProviderFee}
+            className="rounded-none border-0 shadow-none"
+          />
+          <div className="wallet-shimmer-bg pointer-events-none absolute inset-0" />
+        </div>
+      )}
+
       {/* Header + actions */}
       <AdvancePaymentPageHeaderMobile
         onImportPayroll={() => setIsImportSheetOpen(true)}
@@ -160,12 +172,6 @@ const AdvancePaymentsPageMobile = () => {
       <div className="space-y-3">
         <AdvPartnerHeroStrip {...heroProps} isLoading={page.summaryLoading} />
         <AdvPartnerStatusOverview {...statusProps} isLoading={page.summaryLoading} />
-        {!isAdvPartner && (
-          <WalletBalanceCard
-            monthlyProviderFee={page.providerFees.monthlyProviderFee}
-            totalProviderFee={page.providerFees.totalProviderFee}
-          />
-        )}
       </div>
 
       {/* Requests list */}

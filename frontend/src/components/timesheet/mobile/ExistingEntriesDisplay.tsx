@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, Edit, Trash2, CheckCircle, AlertCircle, XCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { formatCurrency } from '@/utils/formatters';
 
 interface TimesheetEntry {
   id: number;
@@ -30,14 +31,6 @@ export function ExistingEntriesDisplay({
   date,
   existingTimesheets
 }: ExistingEntriesDisplayProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
 
   const getStatusInfo = (status: string) => {
     switch (status) {

@@ -6,7 +6,7 @@ import { useSendNotification } from '@/hooks/api/useNotifications';
 import { NotificationDialogHeader } from './send-notification-dialog/NotificationDialogHeader';
 import { Loader2, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface SendNotificationDialogProps {
   open: boolean;

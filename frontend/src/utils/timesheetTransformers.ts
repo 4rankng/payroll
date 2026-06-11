@@ -5,7 +5,7 @@
 import type { Employee } from '@/types/api/employee.types';
 import type { TimesheetEntry } from '../components/sheets/timesheet-entry/types/multi-timesheet.types';
 import type { NewTimesheetEntry } from '@/types/api/timesheet.types';
-import { normalizeVietnamese } from './vietnameseHelpers';
+import { normalizeVietnamese } from '@/utils/vietnamese';
 
 /**
  * Simple ID generator (using slice instead of deprecated substr)

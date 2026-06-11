@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useSendNotification } from '@/hooks/api/useNotifications';
 import { NotificationDialogHeader } from '@/components/settings/send-notification-dialog/NotificationDialogHeader';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 const SendNotificationPage = () => {
   const navigate = useNavigate();

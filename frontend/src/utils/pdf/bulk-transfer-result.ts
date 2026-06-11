@@ -1,6 +1,7 @@
 import type { BulkTransferResultResponse } from '@/services/api/bulk-transfer.service';
 import { loadPdfMake } from '@/utils/pdf/pdfmake';
 import { sanitizeFilename } from '@/utils/file-naming';
+import { formatCurrencyFromString } from '@/utils/formatters';
 
 // Generate a real PDF and trigger browser download (no print dialog)
 export async function generateBulkTransferResultPdf(
@@ -8,11 +9,6 @@ export async function generateBulkTransferResultPdf(
   options?: { fileName?: string }
 ): Promise<void> {
   const pdfMake = await loadPdfMake();
-
-  const formatCurrency = (amountStr?: string): string => {
-    const n = amountStr ? Number(String(amountStr).replace(/[,\s]/g, '')) : 0;
-    return new Intl.NumberFormat('vi-VN').format(Number.isFinite(n) ? n : 0) + ' VND';
-  };
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return '';
@@ -49,7 +45,7 @@ export async function generateBulkTransferResultPdf(
       { text: d.employee_bank || '' },
       { text: d.employee_account_number || '' },
       { text: d.employee_cccd || '' },
-      { text: formatCurrency(d.amount), alignment: 'right' },
+      { text: formatCurrencyFromString(d.amount), alignment: 'right' },
       { text: d.payment_status === 'paid' ? 'Thành công' : 'Thất bại' },
       { text: formatDate(d.paid_at) },
     ]),

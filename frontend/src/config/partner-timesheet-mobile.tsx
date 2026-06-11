@@ -1,7 +1,7 @@
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Calendar, Clock, Building2, FileText, CheckCircle, XCircle } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
-import { formatCurrency } from '@/utils/employeeHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { TimesheetStatusBadge, type TimesheetStatus, type PaymentStatus } from '@/components/timesheet/TimesheetStatusBadge';
 import type { MobileField, RowAction } from '@/components/ui/mobile-table';
 import type { Timesheet } from '@/types/api/timesheet.types';

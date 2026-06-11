@@ -1,6 +1,6 @@
 import type { Employee } from '@/types/api/employee.types';
 import { PREFERRED_DAY_TYPES } from '@/constants/timesheetConstants';
-import { normalizeVietnamese } from '@/utils/vietnameseHelpers';
+import { normalizeVietnamese } from '@/utils/vietnamese';
 import { generateId, getEmployeePosition } from '@/utils/timesheetTransformers';
 import type { TimesheetEntry } from '../../types/multi-timesheet.types';
 

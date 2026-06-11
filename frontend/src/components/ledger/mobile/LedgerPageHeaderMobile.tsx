@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { BookOpen, Plus, RotateCcw, BarChart3, MoreHorizontal, TrendingUp, GitMerge, Mail, History, Loader2 } from 'lucide-react';
 import { CashFlowChart } from '../CashFlowChart';
+import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 
 interface LedgerPageHeaderMobileProps {
@@ -38,9 +39,6 @@ export function LedgerPageHeaderMobile({
 }: LedgerPageHeaderMobileProps) {
   const [showChart, setShowChart] = useState(false);
   const [showActionsSheet, setShowActionsSheet] = useState(false);
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' đ';
 
   const isPositive = (netCashFlow ?? 0) >= 0;
 

@@ -6,7 +6,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 
 interface EmployeePortalHeaderProps {
   employeeName?: string;
@@ -24,7 +23,7 @@ export function EmployeePortalHeader({
   onLogout,
 }: EmployeePortalHeaderProps) {
   return (
-    <div style={{ background: EMPLOYEE_BRAND_COLOR }}>
+    <div className="bg-employee">
       <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium text-white/70 uppercase tracking-wider">

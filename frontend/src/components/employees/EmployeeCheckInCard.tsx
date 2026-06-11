@@ -149,9 +149,8 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       ) : (
         <Button
           size="lg"
-          className="w-full rounded-xl h-14 text-lg text-white shadow-md"
+          className="w-full rounded-xl h-14 text-lg text-white bg-employee shadow-md"
           style={{
-            backgroundColor: EMPLOYEE_BRAND_COLOR,
             boxShadow: `0 4px 14px 0 ${EMPLOYEE_BRAND_COLOR}40`,
           }}
           disabled={isPending}

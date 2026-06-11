@@ -6,7 +6,7 @@ import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { EntryRow } from './EntryRow';
 import type { TimesheetEntry } from '../types/multi-timesheet.types';
 import type { Employee } from '@/types/api/employee.types';
-import { formatVND } from '../utils/timesheetHelpers';
+import { formatCurrency as formatVND } from '@/utils/formatters';
 
 interface GroupedEntryCardProps {
   employee: Employee;

@@ -15,13 +15,13 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  RateCategory, 
-  DayConfiguration, 
-  PayrateStructureType, 
-  formatCurrency, 
-  parseCurrency 
+import {
+  RateCategory,
+  DayConfiguration,
+  PayrateStructureType,
+  parseCurrency
 } from '../types';
+import { formatCurrency } from '@/utils/formatters';
 import { CurrencyInput } from '../CurrencyInput';
 
 interface PositionRateFormProps {

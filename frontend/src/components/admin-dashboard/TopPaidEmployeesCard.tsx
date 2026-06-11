@@ -6,18 +6,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useTopPaidEmployees } from '@/hooks/api/useDashboard';
 import type { TopPaidEmployeeItem } from '@/types/api/dashboard.types';
+import { formatCompactCurrency as formatVND } from '@/utils/formatters';
 
 interface TopPaidEmployeesCardProps {
   month?: string; // YYYY-MM; if undefined shows all-time
-}
-
-function formatVND(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}B đ`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M đ`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K đ`;
-  return `${sign}${abs.toLocaleString('vi-VN')} đ`;
 }
 
 const RANK_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];

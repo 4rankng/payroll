@@ -5,7 +5,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { formatCurrency } from "@/utils/formatters";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 
 interface AdvancePaymentConfirmSheetProps {
   open: boolean;
@@ -58,8 +57,7 @@ export function AdvancePaymentConfirmSheet({
             <div className="flex justify-between pt-2 border-t border-gray-200">
               <span className="font-semibold text-gray-700">Thực nhận</span>
               <span
-                className="text-lg font-bold"
-                style={{ color: EMPLOYEE_BRAND_COLOR }}
+                className="text-lg font-bold text-employee"
               >
                 {feeDetails ? formatCurrency(feeDetails.netAmount) : "…"}
               </span>
@@ -80,8 +78,7 @@ export function AdvancePaymentConfirmSheet({
             <button
               onClick={onConfirm}
               disabled={isPending}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 active:scale-[0.97] transition-transform"
-              style={{ background: EMPLOYEE_BRAND_COLOR }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-employee disabled:opacity-50 active:scale-[0.97] transition-transform"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">

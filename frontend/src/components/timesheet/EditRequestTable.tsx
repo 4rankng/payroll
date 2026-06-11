@@ -11,8 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Check, Loader2, Calendar } from 'lucide-react';
 import { ColumnDef, SortingState } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { formatDate, formatDateTime } from '@/utils/formatters';
 import { useEditRequests, useApproveEditRequest, usePartnerTimesheetsWithEditRequests } from '@/hooks/api/useTimesheetEditRequests';
 import type { Timesheet, TimesheetEditRequest } from '@/types/api/timesheet.types';
 import { PaytypeHierarchy } from './components/PaytypeHierarchy';
@@ -307,14 +306,6 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
         const timesheet = request.timesheet;
         if (!timesheet) return <span className="text-muted-foreground">N/A</span>;
 
-        const formatDate = (dateString: string) => {
-          try {
-            return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-          } catch {
-            return dateString;
-          }
-        };
-
         return (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -399,13 +390,6 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
       header: 'Người yêu cầu',
       cell: ({ row }) => {
         const request = row.original;
-        const formatDateTime = (dateString: string) => {
-          try {
-            return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-          } catch {
-            return dateString;
-          }
-        };
 
         return (
           <div>

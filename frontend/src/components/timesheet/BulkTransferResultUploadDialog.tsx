@@ -8,6 +8,7 @@ import { Upload, Loader2, CheckCircle, XCircle, FileSpreadsheet, X, FileDown, Cl
 import { FILE_LIMITS } from '@/config/api.config';
 import { useImportBulkTransferResult } from '@/hooks/api/usePayrolls';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatDateTime, formatCurrencyFromString } from '@/utils/formatters';
 import type { BulkTransferResultResponse } from '@/services/api/bulk-transfer.service';
 import { generateBulkTransferResultPdf } from '@/utils/pdf/bulk-transfer-result';
 import { dismissPendingExport, getMostRecentPendingExport, type PendingExport } from '@/utils/timesheet/pendingExports';
@@ -132,30 +133,6 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
     return selectedFile && !importMutation.isPending;
   }, [selectedFile, importMutation.isPending]);
 
-  // Format date to Vietnamese format
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  // Format currency
-  const formatCurrency = (amount: string) => {
-    if (!amount) return '0 VND';
-    const numValue = Number(amount.replace(/,/g, ''));
-    return isNaN(numValue) ? amount : `${numValue.toLocaleString('vi-VN')} VND`;
-  };
-
   // Results display helpers
   const getStatusIcon = useCallback((status: string) => {
     return status === 'paid' ? (
@@ -227,11 +204,11 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                         <div className="text-muted-foreground">CCCD: {detail.employee_cccd}</div>
                       )}
                       <div className="font-medium text-foreground pt-1">
-                        {formatCurrency(detail.amount)}
+                        {formatCurrencyFromString(detail.amount)}
                       </div>
                       {detail.paid_at && (
                         <div className="text-muted-foreground typography-body-small">
-                          {formatDate(detail.paid_at)}
+                          {formatDateTime(detail.paid_at)}
                         </div>
                       )}
                     </div>

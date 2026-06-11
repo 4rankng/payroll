@@ -4,10 +4,10 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Trash2, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TimesheetEntry } from '../types/multi-timesheet.types';
-import { findPreferredDayType } from '@/utils/vietnameseHelpers';
+import { findPreferredDayType } from '@/utils/vietnamese';
 import { handleNumericInputKeyDown } from '@/utils/numericInput';
 import { hasEntryChangedFromOriginal } from '../hooks/utils/entryChange';
-import { formatVND } from '../utils/timesheetHelpers';
+import { formatCurrency as formatVND } from '@/utils/formatters';
 
 interface EntryRowProps {
   entry: TimesheetEntry;

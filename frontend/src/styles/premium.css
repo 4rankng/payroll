@@ -1,0 +1,337 @@
+/* ============================================================================
+   PREMIUM COMPONENTS — Card, button, badge, table, input, scrollbar,
+   gradient text, shimmer, glass, dot, masonry, mobile animations
+   ============================================================================ */
+
+@layer utilities {
+  /* Premium card elevation with gradient borders */
+  .premium-card {
+    @apply relative rounded-xl border transition-all duration-300;
+    background: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(220 10% 98%) 100%);
+    box-shadow: var(--shadow-card), 0 0 0 1px hsl(var(--border) / 0.5) inset;
+  }
+
+  .premium-card:hover {
+    box-shadow: var(--shadow-elevated), 0 0 0 1px hsl(var(--primary) / 0.1) inset;
+    transform: translateY(-2px);
+  }
+
+  /* Premium stat card with gradient background */
+  .premium-stat-card {
+    @apply relative rounded-xl border overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted) / 0.3) 100%);
+    border-color: hsl(var(--border) / 0.6);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premium-stat-card:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: var(--shadow-card);
+    transform: scale(1.02);
+  }
+
+  /* Premium button with gradient and glow */
+  .premium-button {
+    @apply relative overflow-hidden rounded-lg font-semibold transition-all duration-200;
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.3);
+  }
+
+  .premium-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .premium-button:hover::before {
+    opacity: 1;
+  }
+
+  .premium-button:active {
+    transform: scale(0.98);
+  }
+
+  /* Premium badge with gradient */
+  .premium-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%);
+    border: 1px solid hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+  }
+
+  /* Premium table row hover */
+  .premium-table-row {
+    @apply transition-colors duration-150;
+  }
+
+  .premium-table-row:hover {
+    background: linear-gradient(90deg, hsl(var(--muted) / 0.5) 0%, hsl(var(--muted) / 0.2) 100%);
+  }
+
+  /* Premium input with focus glow */
+  .premium-input {
+    @apply w-full py-3 rounded-lg border-2 transition-all duration-200;
+    border-color: hsl(var(--border));
+    background: hsl(var(--background));
+  }
+
+  .premium-input:focus {
+    border-color: hsl(var(--success));
+    box-shadow: 0 0 0 3px hsl(var(--success) / 0.1), var(--shadow-card);
+    outline: none;
+  }
+
+  /* Premium scrollbar */
+  .premium-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+  }
+
+  .premium-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .premium-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .premium-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.2);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .premium-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.3);
+    background-clip: content-box;
+  }
+
+  /* Premium gradient text */
+  .premium-gradient-text {
+    @apply font-display font-extrabold;
+    background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--primary)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Premium shimmer effect for loading */
+  .premium-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .premium-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      transparent 100%
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  /* Premium hover lift effect */
+  .premium-hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premium-hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Premium glass morphism */
+  .premium-glass {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Premium notification dot */
+  .premium-dot {
+    @apply h-2 w-2 rounded-full;
+    background: hsl(var(--success));
+    box-shadow: 0 0 0 3px hsl(var(--success) / 0.2);
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--success) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 6px hsl(var(--success) / 0);
+    }
+  }
+
+  /* ========================================================================
+     MOBILE PAGE ANIMATIONS — anime.js + CSS hybrid
+     ======================================================================== */
+
+  @keyframes mobile-wallet-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mobile-card-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mobile-section-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes mobile-stat-pop {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes wallet-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes mobile-tab-slide {
+    0% {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* Utility classes for mobile pages */
+  .mobile-wallet-hero {
+    animation: mobile-wallet-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .mobile-card-enter {
+    animation: mobile-card-reveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .mobile-section-enter {
+    animation: mobile-section-reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .mobile-stat-enter {
+    animation: mobile-stat-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .wallet-shimmer-bg {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(110, 168, 255, 0.06) 40%,
+      rgba(110, 168, 255, 0.12) 50%,
+      rgba(110, 168, 255, 0.06) 60%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: wallet-shimmer 3s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-wallet-hero,
+    .mobile-card-enter,
+    .mobile-section-enter,
+    .mobile-stat-enter,
+    .wallet-shimmer-bg {
+      animation: none !important;
+    }
+  }
+
+  /* ========================================================================
+     MASONRY LAYOUTS
+     ======================================================================== */
+
+  /* CSS Columns Masonry — for uniform items (stats, small cards) */
+  .masonry-grid {
+    column-gap: 1rem;
+    column-count: 1;
+  }
+
+  .masonry-grid > div {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    display: block;
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .masonry-grid {
+      column-count: 2;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .masonry-grid {
+      column-count: 3;
+    }
+  }
+
+  /* Flexbox Column Masonry — for mixed-size items (charts, tables, stats) */
+  .flex-masonry {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .flex-masonry > .flex-masonry-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  @media (max-width: 767px) {
+    .flex-masonry {
+      flex-direction: column;
+    }
+  }
+}

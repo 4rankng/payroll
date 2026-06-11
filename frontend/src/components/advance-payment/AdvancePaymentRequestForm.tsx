@@ -6,6 +6,8 @@ import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import type { AdvancePaymentInfo } from "@/types/api/advance-payment.types";
+
+/** Keep EMPLOYEE_BRAND_COLOR for the slider CSS custom property — cannot be expressed as a Tailwind class. */
 import {
   Select,
   SelectContent,
@@ -131,8 +133,7 @@ export function AdvancePaymentRequestForm({
     >
       <div className="flex items-center gap-1.5 mb-3">
         <span
-          className="text-sm font-bold"
-          style={{ color: EMPLOYEE_BRAND_COLOR }}
+          className="text-sm font-bold text-employee"
         >
           $
         </span>
@@ -224,8 +225,7 @@ export function AdvancePaymentRequestForm({
             <div className="flex justify-between pt-1.5 border-t border-gray-200">
               <span className="font-semibold text-gray-700">Thực nhận</span>
               <span
-                className="font-bold"
-                style={{ color: EMPLOYEE_BRAND_COLOR }}
+                className="font-bold text-employee"
               >
                 {formatCurrency(feeDetails.netAmount)}
               </span>
@@ -237,10 +237,7 @@ export function AdvancePaymentRequestForm({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]"
-          style={{
-            background: canSubmit ? EMPLOYEE_BRAND_COLOR : "#9CA3AF",
-          }}
+          className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] ${canSubmit ? 'bg-employee' : 'bg-gray-400'}`}
         >
           {isPending ? (
             <>

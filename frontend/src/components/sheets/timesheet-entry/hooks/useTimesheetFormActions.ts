@@ -1,7 +1,7 @@
 import { useCallback, Dispatch, SetStateAction, MutableRefObject } from 'react';
 import type { Employee } from '@/types/api/employee.types';
 import { getEmployeePosition } from '@/utils/timesheetTransformers';
-import { findPreferredDayType } from '@/utils/vietnameseHelpers';
+import { findPreferredDayType } from '@/utils/vietnamese';
 import { PREFERRED_DAY_TYPES } from '@/constants/timesheetConstants';
 import { generateId } from '@/utils/timesheetTransformers';
 import type { TimesheetEntry, MultiTimesheetFormData } from '../types/multi-timesheet.types';

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface InfiniteScrollContainerProps {
   children: React.ReactNode;

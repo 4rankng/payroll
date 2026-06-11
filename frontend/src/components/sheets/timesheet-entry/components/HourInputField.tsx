@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { handleNumericInputKeyDown } from "@/utils/numericInput";
-import { formatVND } from "../utils/timesheetHelpers";
+import { formatCurrency as formatVND } from "@/utils/formatters";
 
 interface HourInputFieldProps {
   hourType: string;

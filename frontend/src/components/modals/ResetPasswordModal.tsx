@@ -5,25 +5,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { Eye, EyeOff } from "lucide-react";
-import { User } from "@/types/user";
 
 export const modalConfig = {
   id: 'reset-password',
 };
 
+type TargetType = 'user' | 'employee';
+
+interface TargetInfo {
+  id: number;
+  fullname: string;
+}
+
 interface ResetPasswordModalProps {
   open: boolean;
   onClose: () => void;
-  onResetPassword: (userId: number, password: string) => void;
-  user: User | null;
+  onResetPassword: (id: number, password: string) => void;
+  target: TargetInfo | null;
+  targetType?: TargetType;
   loading?: boolean;
 }
+
+const TARGET_LABELS: Record<TargetType, { noun: string; footer: string }> = {
+  user: { noun: 'người dùng', footer: 'Người dùng sẽ phải sử dụng mật khẩu mới này để đăng nhập.' },
+  employee: { noun: 'nhân viên', footer: 'Nhân viên sẽ phải sử dụng mật khẩu mới này để đăng nhập.' },
+};
 
 export function ResetPasswordModal({
   open,
   onClose,
   onResetPassword,
-  user,
+  target,
+  targetType = 'user',
   loading = false
 }: ResetPasswordModalProps) {
   const [password, setPassword] = useState("");
@@ -64,9 +77,9 @@ export function ResetPasswordModal({
   };
 
   const handleSubmit = () => {
-    if (!validateForm() || !user) return;
+    if (!validateForm() || !target) return;
 
-    onResetPassword(user.id, password);
+    onResetPassword(target.id, password);
     handleClose();
   };
 
@@ -83,7 +96,7 @@ export function ResetPasswordModal({
         <DialogHeader>
           <DialogTitle>Đặt lại mật khẩu </DialogTitle>
           <DialogDescription>
-            Đặt lại mật khẩu cho người dùng <strong>{user?.fullname}</strong>
+            Đặt lại mật khẩu cho {TARGET_LABELS[targetType].noun} <strong>{target?.fullname}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -138,7 +151,7 @@ export function ResetPasswordModal({
               </div>
             )}
             <p className="typography-body-medium text-muted-foreground mt-2">
-              Người dùng sẽ phải sử dụng mật khẩu mới này để đăng nhập.
+              {TARGET_LABELS[targetType].footer}
             </p>
           </div>
         </div>

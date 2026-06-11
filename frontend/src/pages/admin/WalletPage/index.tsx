@@ -26,14 +26,11 @@ import { walletService } from "@/services/api/wallet.service";
 import type { WalletBalance } from "@/types/api/wallet.types";
 import { showErrorNotification } from "@/utils/error-handler";
 import { formatVietnameseDateTime } from "@/utils/vietnamese";
+import { formatCurrency as formatVND } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const BALANCE_QUERY_KEY = ["wallet", "balance"] as const;
-
-function formatVND(value: number): string {
-  return new Intl.NumberFormat("vi-VN").format(value) + " đ";
-}
 
 /* ------------------------------------------------------------------ */
 /*  Watermark stat tile — matches the design language used across the

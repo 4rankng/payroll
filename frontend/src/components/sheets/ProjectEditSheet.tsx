@@ -13,6 +13,7 @@ import { ProjectStatus } from "@/components/projects/ProjectStatusBadge";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { OffDaysPicker } from "@/components/projects/OffDaysPicker";
 import { authManager } from "@/lib/auth";
+import { formatDateForAPI } from "@/utils/formatters";
 
 interface ProjectEditSheetProps {
   project: Project | null;
@@ -39,7 +40,7 @@ interface ProjectFormData {
 // Helper function to format date for input[type="date"]
 const formatDateForInput = (dateString: string | null | undefined): string => {
   if (!dateString) return "";
-  return dateString ? dateString.split('T')[0] : "";
+  return formatDateForAPI(dateString);
 };
 
 function ProjectEditSheet({

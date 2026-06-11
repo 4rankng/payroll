@@ -10,16 +10,16 @@ import { Timesheet } from '@/types/api/timesheet.types';
 import type { EmployeeTimesheetFilters } from '@/types/api/employee.types';
 import {
   createEmployeeCalendarData,
-  formatCurrency,
   ProjectCalendarData,
   CalendarDay,
   type CalendarTimesheetEntry
 } from './utils/timesheetCalendarHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { CalendarDayCell } from './components/CalendarDayCell';
 import { MobileDayListView } from './components/MobileDayListView';
 import { TimesheetEntryModal } from './components/TimesheetEntryModal';
 import { TimesheetDayEntriesModal } from './components/TimesheetDayEntriesModal';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 
 interface Project {
   id: number;

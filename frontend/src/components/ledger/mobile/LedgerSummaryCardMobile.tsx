@@ -3,8 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { formatDate } from '@/utils/formatters';
 import { useLedgerStatsConfig } from '@/hooks/ledger/useLedgerStatsConfig';
 import type { LedgerSummary } from '@/types/api/financial.types';
 
@@ -21,14 +20,6 @@ export function LedgerSummaryCardMobile({ summary, isLoading, className }: Ledge
     summary,
     isLoading,
   });
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch {
-      return dateString;
-    }
-  };
 
   if (isLoading || configLoading) {
     return (

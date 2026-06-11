@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { History, Calendar } from "lucide-react";
+import { formatDate } from "@/utils/formatters";
 import { useAttendanceHistory } from "@/hooks/api/useAttendance";
-import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function formatTime(time: string | undefined | null, fallback = "--:--"): string {
@@ -10,15 +10,6 @@ function formatTime(time: string | undefined | null, fallback = "--:--"): string
     return format(new Date(time), "HH:mm");
   } catch {
     return fallback;
-  }
-}
-
-function formatDate(date: string | undefined | null): string {
-  if (!date) return "--/--/----";
-  try {
-    return format(new Date(date), "dd/MM/yyyy");
-  } catch {
-    return date;
   }
 }
 
@@ -34,7 +25,7 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
   return (
     <div className={className ?? "bg-white rounded-2xl p-4"} style={style}>
       <div className="flex items-center gap-1.5 mb-4">
-        <History className="h-4 w-4" style={{ color: EMPLOYEE_BRAND_COLOR }} />
+        <History className="h-4 w-4 text-employee" />
         <h3 className="font-semibold text-gray-800 uppercase tracking-wide text-sm">
           Lịch sử chấm công gần đây
         </h3>

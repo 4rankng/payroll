@@ -1,6 +1,6 @@
 import { Clock, DollarSign, Calendar, TrendingUp, CheckCircle, Clock3, AlertCircle, CreditCard, LucideIcon } from 'lucide-react';
 import { EmployeeTimesheetSummary } from '@/types/api/timesheet.types';
-import { formatCurrency } from './timesheetHelpers.tsx';
+import { formatCurrency } from '@/utils/formatters';
 
 export interface TimesheetStatsConfig {
   title: string;

@@ -1,5 +1,5 @@
 import React from "react";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { DataTable } from "@/components/ui/data-table";
 import { MobileTable, type MobileField, type RowAction } from "@/components/ui/mobile-table";
 import { ColumnDef, SortingState, OnChangeFn } from "@tanstack/react-table";

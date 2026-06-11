@@ -35,11 +35,11 @@ import {
 import {
   getStatusBadge,
   getPaytypeText,
-  formatCurrency,
   formatDate,
   formatDateWithWeekday,
   getVietnameseWeekdayInfo
 } from './utils/timesheetHelpers';
+import { formatCurrency } from '@/utils/formatters';
 import { createGroupBulkApprovalContent } from '@/utils/timesheetBulkHelpers';
 import { cn } from '@/lib/utils';
 
@@ -272,7 +272,7 @@ export function TimesheetGroupedTable({
                   <div className="text-right min-w-[140px]">
                     <div className="flex items-center justify-end gap-1.5">
                       <Banknote className="w-4 h-4 text-muted-foreground" />
-                      <span className="typography-currency font-bold tabular-nums">{formatCurrency(group.totalAmount)}đ</span>
+                      <span className="typography-currency font-bold tabular-nums">{formatCurrency(group.totalAmount)}</span>
                     </div>
                     <p className="typography-body-small text-muted-foreground mt-1">Thành tiền</p>
                   </div>
@@ -387,7 +387,7 @@ export function TimesheetGroupedTable({
                             <span className="typography-label-small text-primary">Thành tiền</span>
                           </div>
                           <p className="typography-title-medium font-bold text-primary tabular-nums">
-                            {formatCurrency(group.totalAmount)}đ
+                            {formatCurrency(group.totalAmount)}
                           </p>
                         </div>
                       </div>
