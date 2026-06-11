@@ -2,8 +2,8 @@ package domain
 
 import (
 	"api-server/internal/app/accounting"
+	"api-server/internal/pkg/clock"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +15,8 @@ func TestNewAccountingRules(t *testing.T) {
 
 func TestAccountingRules_ValidateTransactionGroup(t *testing.T) {
 	rules := NewAccountingRules()
-	now := time.Now()
+	// Use clock.Now() to match the validator which uses clock.Now() for future-date checks.
+	now := clock.Now()
 
 	tests := []struct {
 		name    string
@@ -141,7 +142,8 @@ func TestAccountingRules_ValidateTransactionGroup(t *testing.T) {
 
 func TestAccountingRules_ValidateBalancedTransaction(t *testing.T) {
 	rules := NewAccountingRules()
-	now := time.Now()
+	// Use clock.Now() to match the validator which uses clock.Now() for future-date checks.
+	now := clock.Now()
 	amount := accounting.NewMoney(1000.0)
 
 	tests := []struct {

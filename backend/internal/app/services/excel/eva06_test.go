@@ -68,15 +68,15 @@ func TestParseEva06_ColumnMapping(t *testing.T) {
 	}
 
 	first := result.Employees[0]
-	// Row 12 data: EmployeeCode=LV001116, CCCD=031205013403, FullName=Nguyễn Tuấn Quang
-	if first.EmployeeCode != "LV001116" {
-		t.Errorf("EmployeeCode: got %q, want %q", first.EmployeeCode, "LV001116")
+	// Row 11 data: EmployeeCode=LV001114, CCCD=031206017692, FullName=Phạm Trần Nhất Long
+	if first.EmployeeCode != "LV001114" {
+		t.Errorf("EmployeeCode: got %q, want %q", first.EmployeeCode, "LV001114")
 	}
-	if first.CCCD != "031205013403" {
-		t.Errorf("CCCD: got %q, want %q", first.CCCD, "031205013403")
+	if first.CCCD != "031206017692" {
+		t.Errorf("CCCD: got %q, want %q", first.CCCD, "031206017692")
 	}
-	if first.FullName != "Nguyễn Tuấn Quang" {
-		t.Errorf("FullName: got %q, want %q", first.FullName, "Nguyễn Tuấn Quang")
+	if first.FullName != "Phạm Trần Nhất Long" {
+		t.Errorf("FullName: got %q, want %q", first.FullName, "Phạm Trần Nhất Long")
 	}
 	if first.Department != "Đóng gói" {
 		t.Errorf("Department: got %q, want %q", first.Department, "Đóng gói")

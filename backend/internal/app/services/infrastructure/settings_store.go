@@ -23,12 +23,12 @@ import (
 // Type parameter T is the domain entry type stored as a JSON array in a single
 // Settings row (e.g. FeeScheduleEntry, DisbursementFeeScheduleEntry).
 type SettingsStore[T any] struct {
-	DB           *gorm.DB
-	SettingsKey  string
-	SortFn       func([]T)
-	NotFoundMsg  string // error message when settings row is missing
-	EntityName   string // human-readable name for error messages ("fee schedule entry")
-	DateLayout   string // time format for effective-date parsing
+	DB          *gorm.DB
+	SettingsKey string
+	SortFn      func([]T)
+	NotFoundMsg string // error message when settings row is missing
+	EntityName  string // human-readable name for error messages ("fee schedule entry")
+	DateLayout  string // time format for effective-date parsing
 }
 
 // ExecuteWrite runs a transaction that locks the settings row, reads the
