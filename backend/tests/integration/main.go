@@ -55,6 +55,9 @@ func main() {
 	// Phase 3.5: Partner BCC Excel import
 	runBCCImportTests(client, testData, reporter)
 
+	// Phase 3.6: Weekly BCC (BCC-<shiftType> sheet format)
+	runWeeklyBCCImportTests(client, testData, reporter)
+
 	// Phase 4: Run Flow 5 - Manual bulk transfer export & import
 	runManualBulkTransferTests(client, testData, reporter)
 
