@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 )
@@ -41,6 +42,10 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 
 	// BCC sample file shipped with the repo (path relative to backend/ working dir).
 	bccFile := "../docs/timesheets-excel/BCC LƯƠNG DỰ ÁN EVA Sample.xlsx"
+	if _, err := os.Stat(bccFile); os.IsNotExist(err) {
+		reporter.Skip(flowBCC, "All BCC file upload tests", "sample BCC Excel file not found: "+bccFile)
+		return
+	}
 
 	// ── 1. Missing project_id → 400 ──────────────────────────────────────────
 	reporter.RunTest(flowBCC, "Upload without project_id returns 400", func() error {

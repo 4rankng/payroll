@@ -22,13 +22,28 @@ p, partner, /api/v1/employees/*, *, allow
 p, partner, /api/v1/project-employees, *, allow
 p, partner, /api/v1/project-employees/*, *, allow
 
-# Timesheets - full access (admin approval endpoints omitted)
+# Timesheets - partner CRUD + read access (admin approval endpoints explicitly denied)
 p, partner, /api/v1/timesheets, GET, allow
 p, partner, /api/v1/timesheets, POST, allow
-p, partner, /api/v1/timesheets/*, *, allow
+p, partner, /api/v1/timesheets/summary, GET, allow
+p, partner, /api/v1/timesheets/grouped, GET, allow
+p, partner, /api/v1/timesheets/export, GET, allow
+p, partner, /api/v1/timesheets/preview, POST, allow
+p, partner, /api/v1/timesheets/export-entries-template, POST, allow
+p, partner, /api/v1/timesheets/upload-entries-excel, POST, allow
+p, partner, /api/v1/timesheets/partner-import, GET, allow
+p, partner, /api/v1/timesheets/partner-import, POST, allow
+p, partner, /api/v1/timesheets/partner-import/*, GET, allow
+p, partner, /api/v1/timesheets/import, POST, allow
+p, partner, /api/v1/timesheets/projects/*, GET, allow
 p, partner, /api/v1/timesheets/*/request-edit, POST, allow
 p, partner, /api/v1/timesheets/*/request-edit-cancel, POST, allow
-p, partner, /api/v1/timesheets/projects/*, GET, allow
+# Deny admin-only timesheet endpoints (defense in depth)
+p, partner, /api/v1/timesheets/bulk-approve, *, deny
+p, partner, /api/v1/timesheets/bulk-reject, *, deny
+p, partner, /api/v1/timesheets/bulk-reset, *, deny
+p, partner, /api/v1/timesheets/approve-all, *, deny
+p, partner, /api/v1/timesheets/edit-requests, *, deny
 
 # Payrates - CRUD access (approval endpoints omitted)
 p, partner, /api/v1/payrates, GET, allow
