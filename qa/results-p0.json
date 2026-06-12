@@ -1,0 +1,406 @@
+{
+  "results": [
+    {
+      "category": "SETUP",
+      "scenario": "Admin token",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "SETUP",
+      "scenario": "Partner token (thanhmai)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "SETUP",
+      "scenario": "Browser login as admin",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "F07",
+      "scenario": "Using project 70 (LGDISPLAY)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "F07",
+      "scenario": "F07-01: Create single timesheet",
+      "status": "WARN",
+      "detail": "status=400 Xác thực thất bại: Công ngày thường hc của Trần Đình Long ngày 2026-06-01 đã tồn"
+    },
+    {
+      "category": "F07",
+      "scenario": "F07-03: Future date rejected",
+      "status": "PASS",
+      "detail": "status=400"
+    },
+    {
+      "category": "F07",
+      "scenario": "F07-09: Delete paid timesheet blocked",
+      "status": "PASS",
+      "detail": "status=403"
+    },
+    {
+      "category": "F07",
+      "scenario": "F07-06: Timesheet summary",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F07",
+      "scenario": "F07-07: Grouped timesheets",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F07",
+      "scenario": "Browser: Timesheet page loads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "F08",
+      "scenario": "F08-06: Partner blocked from bulk-approve",
+      "status": "PASS",
+      "detail": "status=403 "
+    },
+    {
+      "category": "F08",
+      "scenario": "Pending timesheets found",
+      "status": "WARN",
+      "detail": "count=0"
+    },
+    {
+      "category": "F08",
+      "scenario": "F08-04: Approve-all endpoint",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F10",
+      "scenario": "Admin sees all import history",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F10",
+      "scenario": "Partner sees filtered history",
+      "status": "WARN",
+      "detail": "status=403 (Casbin reload pending)"
+    },
+    {
+      "category": "F10",
+      "scenario": "Download original file",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F11",
+      "scenario": "F11-01: Auto bulk transfer config",
+      "status": "PASS",
+      "detail": "status=200 data={\"enabled\":true}"
+    },
+    {
+      "category": "F11",
+      "scenario": "F11-02: Estimate fee (weekly)",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F11",
+      "scenario": "F11-03: Estimate fee (monthly)",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F11",
+      "scenario": "F11-07: Both forMonth+dateRange NOT rejected (potential business logic issue)",
+      "status": "WARN",
+      "detail": "status=201 — initiate accepted conflicting params"
+    },
+    {
+      "category": "F11",
+      "scenario": "F11-08: fromDate without toDate rejected",
+      "status": "PASS",
+      "detail": "status=400"
+    },
+    {
+      "category": "F12",
+      "scenario": "F12-01: Export bulk transfer Excel",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F12",
+      "scenario": "F12-02: Upload histories list",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F13",
+      "scenario": "F13-06: List pending",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F13",
+      "scenario": "F13-07: Summary",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F13",
+      "scenario": "F13-08: Available months",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F13",
+      "scenario": "F13-06b: List all",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F13",
+      "scenario": "Browser: Advance payments page",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "F15",
+      "scenario": "F15-01: Balance",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F15",
+      "scenario": "F15-03: Payments",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F15",
+      "scenario": "F15-04: Topups",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F15",
+      "scenario": "F15-02: Sync balance",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F16",
+      "scenario": "F16-01: Transaction metadata",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F16",
+      "scenario": "F16-02: Create expense transaction",
+      "status": "PASS",
+      "detail": "status=201"
+    },
+    {
+      "category": "F16",
+      "scenario": "F16-10: Zero amount rejected",
+      "status": "PASS",
+      "detail": "status=400"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-01: Accounts metadata",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-04: List entries",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-05: Cash flow",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-06: Summary",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-02: Create ledger entry",
+      "status": "PASS",
+      "detail": "status=201"
+    },
+    {
+      "category": "F18",
+      "scenario": "F18-08: Zero debit+credit rejected",
+      "status": "PASS",
+      "detail": "status=400"
+    },
+    {
+      "category": "BROWSER",
+      "scenario": "Wallet page loads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "BROWSER",
+      "scenario": "Transactions page loads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "BROWSER",
+      "scenario": "Ledger page loads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Admin accesses employees",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Partner accesses projects",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Partner blocked from loan creation",
+      "status": "PASS",
+      "detail": "status=403"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Unauthenticated blocked",
+      "status": "PASS",
+      "detail": "status=401"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Partner read-only settings (by design)",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Partner blocked from settings write",
+      "status": "PASS",
+      "detail": "status=403"
+    },
+    {
+      "category": "RBAC",
+      "scenario": "Partner blocked from ledger",
+      "status": "PASS",
+      "detail": "status=403"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Summary",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Financial overview",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Financial",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Salary distribution",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Recent activities",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Notifications",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET New employees",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Historical",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Monthly financials",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Employee activity",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Top paid",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Bank usage",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Project profitability",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "GET Project weekly profit",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "category": "DASH",
+      "scenario": "Browser: Dashboard loads",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "summary": {
+    "pass": 62,
+    "fail": 0,
+    "warn": 4,
+    "total": 66
+  }
+}
