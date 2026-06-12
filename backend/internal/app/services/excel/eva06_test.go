@@ -31,7 +31,7 @@ func openEva06(t *testing.T) *excelize.File {
 	if err != nil {
 		t.Skipf("eva06.xlsx fixture not found at %s: %v", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	stat, _ := f.Stat()
 	buf := make([]byte, stat.Size())
 	if _, err := f.Read(buf); err != nil {
