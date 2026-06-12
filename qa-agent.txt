@@ -28,6 +28,23 @@ COMPACT_EVERY=3
 **Context & Resources:**
 - Product Specifications: `PRODUCT-SPECS.md`
 - Business Flows: `docs/flows/` (numbered 00-14)
+- **QA Test Plan (all business flows):** `docs/qa/plan/` — 16 documents, 414 scenarios, 32 flows, 10 E2E journeys
+  - `00-README.md` — Overview, risk priority (P0-P3), execution phases
+  - `01-master-test-matrix.md` — Flow registry, scenario counts, cross-module dependency map
+  - `02-auth-user.md` — Auth, login, RBAC
+  - `03-employee-management.md` — Employee CRUD, self-service, auto-creation from BCC
+  - `04-project-management.md` — Project CRUD, assignments, payrates, salary periods
+  - `05-timesheet-operations.md` — Timesheet entry, approval, validation
+  - `06-bcc-import.md` — Standard BCC + Weekly BCC (BCC-\<shiftType\>)
+  - `07-bulk-transfer-payment.md` — Auto (9Pay/OnePay) + manual transfer, disbursement
+  - `08-advance-payment.md` — FlexPay lifecycle, 3-phase cutoff, fees, visibility
+  - `09-wallet-financial.md` — Wallet, transactions, settlements, ledger, double-entry
+  - `10-loan-management.md` — Loans, lenders, repayment schedules
+  - `11-saoke-statements.md` — Payroll/reconciliation email, settlement
+  - `12-dashboard-reporting.md` — All dashboard views, metrics
+  - `13-notifications-push.md` — In-app + push notifications
+  - `14-infrastructure-admin.md` — Clock, cron, settings, audit, assets, bank
+  - `15-e2e-scenarios.md` — 10 full cross-module journeys (primary revenue chain)
 - QA Checklist (prior round): `docs/qa/test-checklist.md`
 - Mobile QA Checklist: `qa/mobile-checklist.md`
 - QA scripts: `qa/scripts/*.cjs`
