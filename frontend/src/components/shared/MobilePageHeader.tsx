@@ -43,6 +43,7 @@ export const MobilePageHeader = ({
         'px-4 pt-4 pb-3',
         className,
       )}
+      style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
