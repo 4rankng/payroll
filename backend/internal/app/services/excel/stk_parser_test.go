@@ -62,6 +62,42 @@ func TestParseSTKSheet(t *testing.T) {
 	}
 }
 
+// TestParseSTKSheet_WithBCClgdFile exercises the parser against the real
+// WeeklyBCC fixture. The LGD STK sheet has a merged title on row 1, column
+// headers on row 2, and a single data row on row 3 — a layout the old
+// "data always starts at row 4" assumption silently dropped (returning 0 rows,
+// so no bank account was ever created for the employee).
+func TestParseSTKSheet_WithBCClgdFile(t *testing.T) {
+	f, err := excelize.OpenFile(weeklyBCCFixture(t))
+	if err != nil {
+		t.Fatalf("failed to open fixture: %v", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	rows, err := ParseSTKSheet(f)
+	if err != nil {
+		t.Fatalf("ParseSTKSheet returned unexpected error: %v", err)
+	}
+
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 parsed STK row from LGD fixture, got %d", len(rows))
+	}
+
+	r := rows[0]
+	if r.CCCD != "031092020742" {
+		t.Errorf("CCCD: want 031092020742, got %q", r.CCCD)
+	}
+	if r.FullName != "Trần Đăng Đức" {
+		t.Errorf("FullName: want Trần Đăng Đức, got %q", r.FullName)
+	}
+	if r.BankAccount != "02101010890101" {
+		t.Errorf("BankAccount: want 02101010890101, got %q", r.BankAccount)
+	}
+	if r.BankName != "MSB" {
+		t.Errorf("BankName: want MSB, got %q", r.BankName)
+	}
+}
+
 func TestParseSTKSheet_NoSheet(t *testing.T) {
 	f := excelize.NewFile()
 	rows, err := ParseSTKSheet(f)

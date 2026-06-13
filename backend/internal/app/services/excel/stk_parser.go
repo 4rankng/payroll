@@ -35,12 +35,49 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 		return nil, fmt.Errorf("failed to get rows from STK sheet: %w", err)
 	}
 
-	if len(rows) < 4 {
+	if len(rows) < 2 {
 		return nil, nil
 	}
 
+	// STK sheet layouts vary: some have a merged title on row 1 (so the column
+	// header lands on row 2 and data on row 3), others place the header on
+	// row 3 with data from row 4. Detect the header row by its labels rather
+	// than assuming a fixed offset, otherwise a shifted layout silently yields
+	// zero rows and no bank account is created.
+	headerRow := -1
+	scanLimit := min(len(rows), 10)
+	for i := range scanLimit {
+		row := rows[i]
+		colB, colC, colD := "", "", ""
+		if len(row) > 1 {
+			colB = normHeader(row[1])
+		}
+		if len(row) > 2 {
+			colC = normHeader(row[2])
+		}
+		if len(row) > 3 {
+			colD = normHeader(row[3])
+		}
+		// Match the identity / bank-account header labels (any Vietnamese variant).
+		isIDCol := colB == "id" || colB == "cccd" || strings.Contains(colB, "mã nhân viên")
+		isNameCol := colC == "tên" || strings.Contains(colC, "họ tên") || strings.Contains(colC, "họ và tên")
+		isSTKCol := colD == "stk" || colD == "số tk" || strings.Contains(colD, "số tài khoản") || strings.Contains(colD, "so tai khoan")
+		if isIDCol || isNameCol || isSTKCol {
+			headerRow = i
+			break
+		}
+	}
+
+	// Data starts on the row after the detected header. If no header label was
+	// found, preserve the historical assumption of 3 header rows (data from
+	// row 4) so previously-supported sheets keep parsing unchanged.
+	dataStart := 3
+	if headerRow >= 0 {
+		dataStart = headerRow + 1
+	}
+
 	var stkRows []STKRow
-	for i := 3; i < len(rows); i++ {
+	for i := dataStart; i < len(rows); i++ {
 		row := rows[i]
 		if len(row) < 3 {
 			continue
