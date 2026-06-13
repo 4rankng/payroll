@@ -43,7 +43,10 @@ p, partner, /api/v1/timesheets/bulk-approve, *, deny
 p, partner, /api/v1/timesheets/bulk-reject, *, deny
 p, partner, /api/v1/timesheets/bulk-reset, *, deny
 p, partner, /api/v1/timesheets/approve-all, *, deny
-p, partner, /api/v1/timesheets/edit-requests, *, deny
+# Edit requests: partner may list their own (handler scopes by RequestedBy);
+# detail and approve/reject remain admin-only.
+p, partner, /api/v1/timesheets/edit-requests, GET, allow
+p, partner, /api/v1/timesheets/edit-requests/*, *, deny
 
 # Payrates - CRUD access (approval endpoints omitted)
 p, partner, /api/v1/payrates, GET, allow

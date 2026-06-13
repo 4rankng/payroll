@@ -180,3 +180,45 @@ func TestExistingRoles_NotRegressed(t *testing.T) {
 	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/advance-payments/1/cancel", "POST"))
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/employees", "GET"))
 }
+
+// TestPartnerRole_EditRequests asserts the partner can list their own edit
+// requests (GET /edit-requests, scoped by the handler to RequestedBy) but
+// cannot read a specific request by id (the detail handler has no ownership
+// check, so allowing it would be an IDOR hole) or approve/reject (admin-only).
+// Regression test for the blanket deny that e7230cb added on the whole resource.
+func TestPartnerRole_EditRequests(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	// Partner can list their own edit requests (handler scopes by RequestedBy)
+	assert.True(t, svc.CanAccess("partner", "/api/v1/timesheets/edit-requests", "GET"),
+		"partner should be allowed to list edit requests (handler scopes to own)")
+
+	// Partner must NOT reach detail/approve/reject (admin-only)
+	partnerDeny := []struct {
+		path   string
+		method string
+	}{
+		{"/api/v1/timesheets/edit-requests/1", "GET"},
+		{"/api/v1/timesheets/edit-requests/1/approve", "PUT"},
+		{"/api/v1/timesheets/edit-requests/1/reject", "PUT"},
+	}
+	for _, tc := range partnerDeny {
+		assert.False(t, svc.CanAccess("partner", tc.path, tc.method),
+			"partner should be DENIED %s %s", tc.method, tc.path)
+	}
+
+	// Admin retains full access to the edit-request resource (no regression)
+	adminAllow := []struct {
+		path   string
+		method string
+	}{
+		{"/api/v1/timesheets/edit-requests", "GET"},
+		{"/api/v1/timesheets/edit-requests/1", "GET"},
+		{"/api/v1/timesheets/edit-requests/1/approve", "PUT"},
+		{"/api/v1/timesheets/edit-requests/1/reject", "PUT"},
+	}
+	for _, tc := range adminAllow {
+		assert.True(t, svc.CanAccess("admin", tc.path, tc.method),
+			"admin should be allowed %s %s", tc.method, tc.path)
+	}
+}
