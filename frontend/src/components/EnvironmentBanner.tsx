@@ -12,6 +12,7 @@ const EnvironmentBannerComponent = ({ headline, detail }: EnvironmentBannerProps
       "sticky top-0 z-50 w-full bg-amber-100/95 border-b border-amber-200",
       "shadow-soft min-h-[30px]"
     )}
+    style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     role="status"
     aria-live="polite"
     aria-label="Thông báo môi trường phát triển"
