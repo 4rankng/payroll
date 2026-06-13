@@ -10,8 +10,8 @@ declare const self: ServiceWorkerGlobalScope & {
 // Precache manifest injected by VitePWA injectManifest
 const PRECACHE_MANIFEST = self.__WB_MANIFEST;
 
-// Cache name — bump version to force SW update when push handler changes
-const CACHE_NAME = 'tingting-cache-v2';
+// Cache name — bump version to force SW update when caching strategy changes
+const CACHE_NAME = 'tingting-cache-v3';
 
 // Install event — precache assets
 self.addEventListener('install', (event: ExtendableEvent) => {
@@ -36,7 +36,9 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
   self.clients.claim();
 });
 
-// Fetch event — network first for API, cache first for assets
+// Fetch event — navigations hit network first (fresh app on every deploy);
+// immutable hashed assets are cache-first. /api is NEVER cached so live
+// timesheet/trip/payroll data is never served stale.
 self.addEventListener('fetch', (event: FetchEvent) => {
   const url = new URL(event.request.url);
 
@@ -46,7 +48,26 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // Static assets — cache first, then network
+  // Never intercept API calls — live business data must always reach the server.
+  if (url.pathname.startsWith('/api/')) return;
+
+  // App navigations (HTML documents): network-first so new deploys win, falling
+  // back to the cached app shell when the network is unavailable.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match(event.request).then(
+          (cached) =>
+            cached ??
+            caches.match('/index.html') ??
+            new Response('Offline', { status: 503, statusText: 'Service Unavailable' })
+        )
+      )
+    );
+    return;
+  }
+
+  // Static assets (Vite hashed files are immutable) — cache first, then network.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -91,8 +112,8 @@ self.addEventListener('push', (event: PushEvent) => {
   const plainBody = stripHtml(rawBody);
   const options = {
     body: plainBody,
-    icon: data.icon || '/favicon.png',
-    badge: '/favicon.png',
+    icon: data.icon || '/pwa-192x192.png',
+    badge: '/pwa-192x192.png',
     tag: 'tingting-notification',
     data: { url },
     vibrate: [100, 50, 100],

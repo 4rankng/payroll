@@ -1,12 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
-import { ensureSquareFavicon } from './lib/favicon';
 import './index.css'
 import { installConsoleFilters } from './lib/console-filter';
-
-// Ensure the favicon/touch icon are square from the provided PNG
-ensureSquareFavicon('/favicon.png');
 
 // Dev-only: filter noisy extension console errors without masking real issues
 if (import.meta.env.DEV) {
