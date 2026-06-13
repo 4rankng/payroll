@@ -95,6 +95,30 @@ func runWeeklyBCCImportTests(client *APIClient, data *TestData, reporter *Report
 		})
 	}
 
+	// ── 2.5. Verify STK bank account was auto-populated on the employee ───────
+	// Guards the STK parser header-row fix: previously ParseSTKSheet started
+	// reading one row too late, so the LGD sheet's single data row was skipped
+	// and the bank account (số tài khoản) was never created.
+	reporter.RunTest(flowWeeklyBCC, "STK bank account auto-populated on employee", func() error {
+		// Only assert when the upload actually ran. If the partner lacked
+		// project access (403 → importID stays 0), there's no fresh import to
+		// verify, and the employee lookup would read stale data from a prior run.
+		if importID == 0 {
+			fmt.Printf("    upload skipped (no import_id) — skipping STK check\n")
+			return nil
+		}
+		var emp EmployeeResponse
+		if _, err := adminClient.GetInto("/api/v1/employees/cccd/031092020742", &emp); err != nil {
+			return fmt.Errorf("get employee by CCCD: %w", err)
+		}
+		fmt.Printf("    employee %q bank_account_number=%q bank_account_name=%q\n",
+			emp.Fullname, emp.BankAccountNumber, emp.BankAccountName)
+		if err := AssertEqual("bank_account_number", "02101010890101", emp.BankAccountNumber); err != nil {
+			return err
+		}
+		return AssertEqual("bank_account_name", "TRẦN ĐĂNG ĐỨC", emp.BankAccountName)
+	})
+
 	// ── 3. Re-upload with same month → latest-wins overwrite ──────────────────
 	reporter.RunTest(flowWeeklyBCC, "Re-upload WeeklyBCC (latest wins)", func() error {
 		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", weeklyBCCFile,

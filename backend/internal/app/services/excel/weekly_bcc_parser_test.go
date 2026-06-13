@@ -73,16 +73,16 @@ func TestParseWeeklyBCCFile_WithBCClgdFile(t *testing.T) {
 	assert.True(t, shiftTypes["OT300"])
 	assert.True(t, shiftTypes["OT390"])
 
-	// Verify BCC-HC sheet (has "Dự án" column)
+	// Verify BCC-HC sheet (new fixture has no "Dự án" column — dates start at col D)
 	hcSheet := findSheetByShiftType(result.Sheets, "HC")
 	require.NotNil(t, hcSheet)
 	assert.NotEmpty(t, hcSheet.Employees)
 
-	// First employee in BCC-HC: Nguyễn Ngọc Minh
+	// First (and only) employee in BCC-HC: Trần Đăng Đức
 	firstEmp := hcSheet.Employees[0]
-	assert.Equal(t, "031086013798", firstEmp.EmployeeCode)
-	assert.Contains(t, firstEmp.FullName, "Minh")
-	assert.Equal(t, "LGD", firstEmp.Project)
+	assert.Equal(t, "031092020742", firstEmp.EmployeeCode)
+	assert.Contains(t, firstEmp.FullName, "Đức")
+	assert.Empty(t, firstEmp.Project) // new fixture has no "Dự án" column
 	assert.NotEmpty(t, firstEmp.Entries)
 
 	// Verify date entries have reasonable values
@@ -101,9 +101,9 @@ func TestParseWeeklyBCCFile_WithBCClgdFile(t *testing.T) {
 	}
 
 	// Same employee should appear in both sheets
-	otFirstEmp := findEmployeeByCode(otSheet.Employees, "031086013798")
-	require.NotNil(t, otFirstEmp, "Nguyễn Ngọc Minh should appear in OT150 sheet")
-	assert.Contains(t, otFirstEmp.FullName, "Minh")
+	otFirstEmp := findEmployeeByCode(otSheet.Employees, "031092020742")
+	require.NotNil(t, otFirstEmp, "Trần Đăng Đức should appear in OT150 sheet")
+	assert.Contains(t, otFirstEmp.FullName, "Đức")
 }
 
 func TestParseWeeklyBCCFile_DateColumns(t *testing.T) {
