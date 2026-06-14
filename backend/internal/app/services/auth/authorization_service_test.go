@@ -222,3 +222,40 @@ func TestPartnerRole_EditRequests(t *testing.T) {
 			"admin should be allowed %s %s", tc.method, tc.path)
 	}
 }
+
+// TestPartnerRole_PayrollReport asserts the partner can export the payroll
+// report by project (GET /payroll/report) — the handler explicitly allows
+// RolePartner and scopes results to the partner's own projects via
+// filterProjectsForPartner (no cross-tenant data) — but the partner must NOT
+// be able to email the report (POST /payroll/report/send-email is admin-only:
+// isAdmin gate in the email handler). Regression test for the allow-list that
+// e7230cb introduced, which omitted /payroll/report and broke the partner
+// export UI (QuickActions / ExportSaoKeDialog / mobile admin TimesheetPage).
+func TestPartnerRole_PayrollReport(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	// Partner can export the payroll report scoped to own projects (handler allows it)
+	assert.True(t, svc.CanAccess("partner", "/api/v1/timesheets/payroll/report", "GET"),
+		"partner should be allowed to export payroll report (handler scopes to own projects)")
+
+	// Partner must NOT email the payroll report (admin-only: isAdmin handler gate)
+	assert.False(t, svc.CanAccess("partner", "/api/v1/timesheets/payroll/report/send-email", "POST"),
+		"partner should be DENIED POST /payroll/report/send-email (admin-only)")
+
+	// Partner must NOT upload settlement results (admin-only financial action)
+	assert.False(t, svc.CanAccess("partner", "/api/v1/timesheets/payroll/upload-settlement-result", "POST"),
+		"partner should be DENIED POST /payroll/upload-settlement-result (admin-only)")
+
+	// Admin retains full access to the payroll-report family (no regression)
+	for _, tc := range []struct {
+		path   string
+		method string
+	}{
+		{"/api/v1/timesheets/payroll/report", "GET"},
+		{"/api/v1/timesheets/payroll/report/send-email", "POST"},
+		{"/api/v1/timesheets/payroll/upload-settlement-result", "POST"},
+	} {
+		assert.True(t, svc.CanAccess("admin", tc.path, tc.method),
+			"admin should be allowed %s %s", tc.method, tc.path)
+	}
+}
