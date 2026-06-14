@@ -28,6 +28,10 @@ p, partner, /api/v1/timesheets, POST, allow
 p, partner, /api/v1/timesheets/summary, GET, allow
 p, partner, /api/v1/timesheets/grouped, GET, allow
 p, partner, /api/v1/timesheets/export, GET, allow
+# Payroll report: partner may export their own (handler allows RolePartner and
+# scopes results to the partner's projects via filterProjectsForPartner).
+# send-email + upload-settlement-result remain admin-only (no partner rule).
+p, partner, /api/v1/timesheets/payroll/report, GET, allow
 p, partner, /api/v1/timesheets/preview, POST, allow
 p, partner, /api/v1/timesheets/export-entries-template, POST, allow
 p, partner, /api/v1/timesheets/upload-entries-excel, POST, allow
