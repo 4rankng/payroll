@@ -50,6 +50,19 @@ COMPACT_EVERY=3
 - QA scripts: `qa/scripts/*.cjs`
 - QA screenshots: `qa/screenshots/`
 
+**Orphan / Money-Loss Check (run anytime, read-only):**
+Detects PAID timesheets whose revenue will never be collected (money loss) — paid to employee but `revenue_paid=0`, and not recoverable in the next settlement cycle.
+```bash
+# Fast instant report (DB only — <1s):
+./qa/scripts/orphan-timesheet-check.sh
+
+# Full recoverability probe (also generates next-cycle exports):
+./qa/scripts/orphan-timesheet-check.sh --probe
+```
+- `TOTAL AT RISK` = paid-but-unsettled receivable (₫ already paid out, not yet collected)
+- `Structural LOST` = no `transaction_id` → cannot ever be auto-settled (manual fix needed)
+- `--probe` flags any at-risk timesheet NOT covered by the next sao kê cycle (window rolled past it = real loss)
+
 **Test Accounts (Role-Based):**
 1. Role: Admin | Username: frankng | Password: Admin123
 2. Role: Partner | Username: ketoan | Password: Admin123
