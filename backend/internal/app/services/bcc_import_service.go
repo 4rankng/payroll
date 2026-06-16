@@ -646,7 +646,12 @@ func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint
 // and payrate lookup. Returns the context and a cleanup function that must be
 // deferred by the caller to release the lock.
 func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string) (*bccImportContext, func(), error) {
-	loc := clock.Now().Location()
+	// Use time.Local so the lookup date matches the MySQL driver's location: the DSN uses
+	// loc=Local, so cfg.Loc == time.Local. clock.Now() is pinned to Asia/Ho_Chi_Minh, which
+	// diverges from time.Local in UTC containers (e.g. the scratch prod image) and shifts the
+	// day boundary by 7h — breaking `from_date <= monthStart` when the import month starts on
+	// the payrate's effective date. Same loc=Local precedent as timesheet_entry_table.go.
+	loc := time.Local
 	year, month, err := parseForMonth(effectiveMonth)
 	if err != nil {
 		return nil, nil, fmt.Errorf("tháng không hợp lệ: %v", err)

@@ -33,6 +33,13 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
+# Pin the container timezone to the application's business timezone (Asia/Ho_Chi_Minh).
+# Go's time.Local defaults to UTC in a scratch image (no /etc/localtime). Without this,
+# time.Local diverges from clock.Now() (pinned to Asia/Ho_Chi_Minh) and from the MySQL
+# driver's loc=Local, shifting DB DATE boundary comparisons by 7h in prod — e.g. BCC import
+# rejected with "no active payrate found" on the payrate's effective day.
+ENV TZ=Asia/Ho_Chi_Minh
+
 # Create non-root user
 COPY --from=builder /etc/passwd /etc/passwd
 USER nobody
