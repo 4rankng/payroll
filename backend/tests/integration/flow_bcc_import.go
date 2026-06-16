@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -85,6 +86,38 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		if result.ForMonth == "" {
 			return fmt.Errorf("for_month must not be empty")
 		}
+		return nil
+	})
+
+	// ── 2b. Boundary regression: importing a month whose day-1 equals the payrate's
+	// effective date must NOT be rejected with "no active payrate". Guards a timezone
+	// bug where monthStart was built in clock.Now().Location() (Asia/Ho_Chi_Minh) while
+	// the MySQL driver uses loc=Local (time.Local = UTC in the prod scratch image),
+	// shifting the day-1 boundary by 7h and failing `from_date <= monthStart`. The fix
+	// builds monthStart in time.Local (bcc_import_service.go) and the prod image pins
+	// TZ=Asia/Ho_Chi_Minh (Dockerfile). NOTE: the pre-fix failure only reproduces when
+	// the host runs UTC; on a +07 dev host this asserts the happy path.
+	reporter.RunTest(flowBCC, "Import not rejected on payrate effective-date boundary (TZ)", func() error {
+		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", bccFile,
+			map[string]string{"project_id": projectIDStr, "for_month": time.Now().Format("2006-01")})
+		if err != nil {
+			return fmt.Errorf("request failed: %w", err)
+		}
+		if status == 403 {
+			fmt.Printf("    Partner lacks upload access (403) — skipping boundary test\n")
+			return nil
+		}
+		if status != 200 {
+			return fmt.Errorf("expected 200, got %d", status)
+		}
+		// A payrate-boundary failure returns HTTP 200 with Status="failed" and a message
+		// carrying "không tìm thấy bảng lương ... no active payrate". Other import errors
+		// (e.g. employee mismatch) must NOT trip this assertion.
+		msg := apiResp.Message
+		if strings.Contains(msg, "no active payrate") || strings.Contains(msg, "bảng lương") {
+			return fmt.Errorf("import rejected on month/payrate boundary (TZ regression): %s", msg)
+		}
+		fmt.Printf("    boundary import ok: %s\n", msg)
 		return nil
 	})
 
