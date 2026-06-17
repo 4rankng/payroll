@@ -259,3 +259,39 @@ func TestPartnerRole_PayrollReport(t *testing.T) {
 			"admin should be allowed %s %s", tc.method, tc.path)
 	}
 }
+
+// TestPartnerRole_DeleteTimesheet asserts the partner can delete a single
+// timesheet by id (DELETE /timesheets/:id). The DeleteTimesheet handler
+// explicitly allows RolePartner and enforces that only pending_approval or
+// rejected entries are deletable (IsPaid() is rejected first), so the policy
+// must permit DELETE — otherwise the partner UI hits 403 before the handler's
+// own status guard can run. Regression for the allow-list e7230cb introduced,
+// which omitted DELETE /timesheets/:id (same gap class as /edit-requests and
+// /payroll/report). Admin-only bulk actions must remain denied.
+func TestPartnerRole_DeleteTimesheet(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	// Partner can delete a timesheet by id (handler guards: pending/rejected + not paid)
+	assert.True(t, svc.CanAccess("partner", "/api/v1/timesheets/1", "DELETE"),
+		"partner should be allowed DELETE /timesheets/:id (handler enforces status)")
+
+	// The new :id allow must NOT weaken admin-only actions — explicit deny wins (deny-overrides)
+	adminOnly := []struct {
+		path   string
+		method string
+	}{
+		{"/api/v1/timesheets/bulk-approve", "POST"},
+		{"/api/v1/timesheets/bulk-reject", "POST"},
+		{"/api/v1/timesheets/bulk-reset", "POST"},
+		{"/api/v1/timesheets/approve-all", "POST"},
+		{"/api/v1/timesheets/edit-requests/1", "DELETE"},
+	}
+	for _, tc := range adminOnly {
+		assert.False(t, svc.CanAccess("partner", tc.path, tc.method),
+			"partner should be DENIED %s %s (admin-only, deny-overrides)", tc.method, tc.path)
+	}
+
+	// Admin retains full delete access (no regression)
+	assert.True(t, svc.CanAccess("admin", "/api/v1/timesheets/1", "DELETE"),
+		"admin should be allowed DELETE /timesheets/:id")
+}
