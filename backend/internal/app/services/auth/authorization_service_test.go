@@ -295,3 +295,35 @@ func TestPartnerRole_DeleteTimesheet(t *testing.T) {
 	assert.True(t, svc.CanAccess("admin", "/api/v1/timesheets/1", "DELETE"),
 		"admin should be allowed DELETE /timesheets/:id")
 }
+
+// TestPartnerRole_GetTimesheet asserts the partner can read a single timesheet
+// by id (GET /timesheets/:id). The list rule (GET /timesheets) does not cover :id
+// under keyMatch2, so without an explicit allow the partner UI (edit-modal detail
+// fetch, delete/update pre-fetch) hits 403 — which aborts the operation before the
+// React Query cache invalidation runs, leaving stale data on screen. Same gap
+// class as DELETE /timesheets/:id. Admin-only actions must remain denied.
+func TestPartnerRole_GetTimesheet(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	// Partner can read a timesheet by id (read-only)
+	assert.True(t, svc.CanAccess("partner", "/api/v1/timesheets/1", "GET"),
+		"partner should be allowed GET /timesheets/:id")
+
+	// The :id allow must NOT weaken admin-only actions — explicit deny wins (deny-overrides).
+	// bulk-* and edit-requests/* are denied with "*" (all methods), which covers GET too.
+	adminOnlyGET := []string{
+		"/api/v1/timesheets/bulk-approve",
+		"/api/v1/timesheets/bulk-reject",
+		"/api/v1/timesheets/bulk-reset",
+		"/api/v1/timesheets/approve-all",
+		"/api/v1/timesheets/edit-requests/1",
+	}
+	for _, path := range adminOnlyGET {
+		assert.False(t, svc.CanAccess("partner", path, "GET"),
+			"partner should be DENIED GET %s (admin-only, deny-overrides)", path)
+	}
+
+	// Admin retains full read access (no regression)
+	assert.True(t, svc.CanAccess("admin", "/api/v1/timesheets/1", "GET"),
+		"admin should be allowed GET /timesheets/:id")
+}
