@@ -451,6 +451,7 @@ type WalletPaymentItem struct {
 // --- Partner / Project User ---
 
 type PartnerUser struct {
+	ID       uint
 	Username string
 	Fullname string
 	Token    string

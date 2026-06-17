@@ -19,19 +19,26 @@ import (
 )
 
 type PayrateHandler struct {
-	payrateService *payroll.PayrateService
-	projectService *project.ProjectService
-	clock          clock.Clock
+	payrateService           *payroll.PayrateService
+	projectService           *project.ProjectService
+	projectPermissionService *project.ProjectPermissionService
+	clock                    clock.Clock
 }
 
-func NewPayrateHandler(payrateService *payroll.PayrateService, projectService *project.ProjectService, clk clock.Clock) *PayrateHandler {
+func NewPayrateHandler(
+	payrateService *payroll.PayrateService,
+	projectService *project.ProjectService,
+	projectPermissionService *project.ProjectPermissionService,
+	clk clock.Clock,
+) *PayrateHandler {
 	if clk == nil {
 		clk = clock.New()
 	}
 	return &PayrateHandler{
-		payrateService: payrateService,
-		projectService: projectService,
-		clock:          clk,
+		payrateService:           payrateService,
+		projectService:           projectService,
+		projectPermissionService: projectPermissionService,
+		clock:                    clk,
 	}
 }
 
@@ -207,7 +214,11 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 		}
 	}
 
-	// Apply partner role filtering - only show resources created by the current user
+	// Partner role: payrates are project-level configuration (often created by
+	// admins), so we gate by project access rather than creator ownership.
+	// - For a specific project: require access to that project, then return all
+	//   of its payrates (no CreatedBy filter) so partners see admin-created rates.
+	// - For a global list (no project_id): fall back to payrates the partner created.
 	userRole := c.GetString(constants.CtxUserRole)
 	if userRole == string(domain.RolePartner) {
 		userID, exists := c.Get(constants.CtxUserID)
@@ -215,11 +226,26 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 			response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
 			return
 		}
-		if uid, ok := userID.(uint); ok {
-			filters.CreatedBy = &uid
-		} else {
+		uid, ok := userID.(uint)
+		if !ok {
 			response.Forbidden(c, constants.MsgInvalidUserIDVN)
 			return
+		}
+
+		if filters.ProjectID != nil {
+			canAccess, err := h.projectPermissionService.CanUserAccessProject(c.Request.Context(), *filters.ProjectID, uid)
+			if err != nil {
+				response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+				return
+			}
+			if !canAccess {
+				response.Forbidden(c, constants.MsgForbiddenVN)
+				return
+			}
+			// Access granted: return all payrates for this project.
+		} else {
+			// No project scope: only show payrates the partner created.
+			filters.CreatedBy = &uid
 		}
 	}
 
