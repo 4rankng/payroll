@@ -31,6 +31,12 @@ p, partner, /api/v1/timesheets, POST, allow
 # protected. :id matches a single segment; edit-requests/* remains deny-protected.
 # Regression: TestPartnerRole_DeleteTimesheet.
 p, partner, /api/v1/timesheets/:id, DELETE, allow
+# Partner may read a timesheet by id (edit-modal detail fetch, delete/update pre-fetch).
+# Read-only; partners obtain ids from their project-scoped list. The single-segment
+# :id does not weaken existing denies (bulk-approve/reject/reset/approve-all and
+# edit-requests/* are deny-overridden). The list rule above (/timesheets, GET) does
+# not cover :id under keyMatch2 (no prefix match), so this rule is required.
+p, partner, /api/v1/timesheets/:id, GET, allow
 p, partner, /api/v1/timesheets/summary, GET, allow
 p, partner, /api/v1/timesheets/grouped, GET, allow
 p, partner, /api/v1/timesheets/export, GET, allow

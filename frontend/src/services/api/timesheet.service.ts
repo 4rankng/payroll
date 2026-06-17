@@ -3,8 +3,6 @@ import type { PartnerImportFile, PartnerImportListParams } from '@/types/api/tim
 import { API_ENDPOINTS, API_CONFIG } from '@/config/api.config';
 import { authManager } from '@/lib/auth';
 import {
-  canPartnerEditTimesheet,
-  canDeleteTimesheet,
   canApproveTimesheet
 } from '@/lib/permissions';
 import { extractFilenameFromHeaders } from '@/utils/file-download';
@@ -201,16 +199,14 @@ class TimesheetService {
 
   /**
    * Update existing timesheet
+   *
+   * Edit eligibility (paid status, role/approval rules) is enforced by the backend
+   * (paid check + CanBeEditedByUser), which returns localized messages surfaced via
+   * the global React Query error handler. We intentionally do NOT pre-fetch via
+   * getTimesheetById: that endpoint returns 403 for partners on some timesheets,
+   * which would abort the PUT and leave the UI showing stale cached data.
    */
   async updateTimesheet(id: number, data: UpdateTimesheetData): Promise<Timesheet> {
-    // Get current timesheet to check permissions
-    const currentTimesheet = await this.getTimesheetById(id);
-
-    // Validate Partner permissions
-    if (!canPartnerEditTimesheet(currentTimesheet)) {
-      throw new Error('Partner không thể chỉnh sửa timesheet đã được phê duyệt');
-    }
-
     const response = await apiClient.put<Timesheet>(
       API_ENDPOINTS.timesheets.byId(id),
       data
@@ -222,17 +218,15 @@ class TimesheetService {
   }
 
   /**
-   * Delete timesheet (admin only)
+   * Delete timesheet (admin/partner)
+   *
+   * Deletion eligibility (paid status; partner may only delete pending/rejected) is
+   * enforced by the backend DELETE handler, which returns localized messages surfaced
+   * via the global React Query error handler. We intentionally do NOT pre-fetch via
+   * getTimesheetById: that endpoint returns 403 for partners on some timesheets, which
+   * aborts the DELETE and skips cache invalidation — leaving the deleted row visible.
    */
   async deleteTimesheet(id: number): Promise<void> {
-    // Get current timesheet to check permissions
-    const currentTimesheet = await this.getTimesheetById(id);
-
-    // Validate Partner permissions
-    if (!canDeleteTimesheet(currentTimesheet)) {
-      throw new Error('Partner không thể xóa timesheet đã được phê duyệt');
-    }
-
     await apiClient.delete(API_ENDPOINTS.timesheets.byId(id));
   }
 
