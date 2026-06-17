@@ -80,6 +80,7 @@ func main() {
 
 	// Phase 9: Domain flows
 	runPayrateCRUDTests(client, testData, reporter, cfg)
+	runPayratePartnerVisibilityTests(client, testData, reporter, cfg)
 	runSettingsTests(client, testData, reporter, cfg)
 	runAssetTests(client, testData, reporter, cfg)
 	runLoanTests(client, testData, reporter, cfg)
@@ -307,6 +308,7 @@ func findPartners(client *APIClient, data *TestData, cfg *TestConfig) {
 			continue
 		}
 		data.Partners = append(data.Partners, PartnerUser{
+			ID:       loginResp.User.ID,
 			Username: username,
 			Fullname: loginResp.User.Fullname,
 			Token:    loginResp.AccessToken,

@@ -311,7 +311,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Timesheet:            handlers.NewTimesheetHandler(services.Timesheet, services.PayrollReport, services.SettingsConfig, services.PayrollReportExporter, services.PayrollReportByProjectService, services.PayrollReportByProjectExporter, services.Project, services.ProjectEmployee, services.Payrate, services.ProjectPermission, services.EmployeePermission, services.SettlementUpload, repos.Timesheet, services.Audit, clk),
 		TimesheetEditRequest: handlers.NewTimesheetEditRequestHandler(services.TimesheetEditRequest),
 		Payroll:              handlers.NewPayrollHandler(services.Payroll, services.AutoBulkTransfer, services.Cache, repos.BulkTransferFile, repos.Asset, fileStorage, eventBus),
-		Payrate:              handlers.NewPayrateHandler(services.Payrate, services.Project, clk),
+		Payrate:              handlers.NewPayrateHandler(services.Payrate, services.Project, services.ProjectPermission, clk),
 		Ledger:               handlers.NewLedgerHandler(services.Ledger, clk),
 		Transaction:          handlers.NewTransactionHandler(services.Transaction, repos.BulkTransferFile, repos.Timesheet, services.Notification, eventBus, clk),
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
