@@ -270,7 +270,16 @@ func (r *TimesheetQueryRepository) GetByEmployeeDateCombos(ctx context.Context, 
 	query := r.db.WithContext(ctx).Model(&domain.Timesheet{})
 
 	for i, combo := range combos {
-		startOfDay := time.Date(combo.Date.Year(), combo.Date.Month(), combo.Date.Day(), 0, 0, 0, 0, time.UTC)
+		// Build day bounds in the same location dates are stored/parsed (time.Local).
+		// Using time.UTC here shifts the bounds +7h under a loc=Local DSN, so existing
+		// entries stored at local midnight fall outside [startOfDay, endOfDay) and are
+		// never matched — which silently breaks bulk upsert (update) and the
+		// hoursWorked=0 delete path (the delete becomes a no-op skip).
+		loc := combo.Date.Location()
+		if loc == time.UTC {
+			loc = time.Local
+		}
+		startOfDay := time.Date(combo.Date.Year(), combo.Date.Month(), combo.Date.Day(), 0, 0, 0, 0, loc)
 		endOfDay := startOfDay.Add(24 * time.Hour)
 		if i == 0 {
 			query = query.Where("(employee_id = ? AND project_id = ? AND date >= ? AND date < ?)",
