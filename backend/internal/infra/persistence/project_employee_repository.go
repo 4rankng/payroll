@@ -741,18 +741,30 @@ func (r *ProjectEmployeeRepository) ApplyScheduleChanges(ctx context.Context, em
 		}).Error
 }
 
-// HasAccessViaProject checks if user can access employee through project assignments
+// HasAccessViaProject checks if user can access employee through project assignments.
+//
+// Access via a project is granted if the employee is ACTIVELY assigned to a project
+// the user can access. A user "can access a project" when they are an explicit project
+// member (project_users) OR they CREATED the project. Project creators are intentionally
+// not stored in project_users — see ProjectPermissionService.CanUserAccessProject, which
+// special-cases projects.created_by, and GetProjectUsers, which synthesizes a virtual
+// owner entry. This query must mirror that rule: without the projects.created_by branch,
+// a partner cannot view employees assigned to their OWN project (regression: partner 403
+// "No access to this employee" on GET /employees/:id).
 func (r *ProjectEmployeeRepository) HasAccessViaProject(ctx context.Context, employeeID, userID uint) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).
 		Model(&domain.ProjectEmployee{}).
-		Joins("INNER JOIN project_users ON project_employees.project_id = project_users.project_id").
+		Joins("INNER JOIN projects ON projects.id = project_employees.project_id").
+		// LEFT JOIN so a project creator matches even with no project_users row.
+		Joins("LEFT JOIN project_users ON project_users.project_id = project_employees.project_id AND project_users.user_id = ? AND project_users.deleted_at IS NULL", userID).
 		Where("project_employees.employee_id = ?", employeeID).
-		Where("project_users.user_id = ?", userID).
 		Where("project_employees.deleted_at IS NULL").
-		Where("project_users.deleted_at IS NULL").
+		Where("projects.deleted_at IS NULL").
 		Where("project_employees.start_date <= NOW()").
 		Where("project_employees.last_date IS NULL OR project_employees.last_date > NOW()").
+		// Creator of the project OR explicit project member.
+		Where("projects.created_by = ? OR project_users.user_id IS NOT NULL", userID).
 		Count(&count).Error
 
 	if err != nil {
