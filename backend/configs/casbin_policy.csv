@@ -25,6 +25,12 @@ p, partner, /api/v1/project-employees/*, *, allow
 # Timesheets - partner CRUD + read access (admin approval endpoints explicitly denied)
 p, partner, /api/v1/timesheets, GET, allow
 p, partner, /api/v1/timesheets, POST, allow
+# Partner may delete a timesheet by id. The DeleteTimesheet handler enforces
+# role-specific rules: partner can only delete pending_approval or rejected
+# entries, and IsPaid() is rejected first — so approved/paid entries stay
+# protected. :id matches a single segment; edit-requests/* remains deny-protected.
+# Regression: TestPartnerRole_DeleteTimesheet.
+p, partner, /api/v1/timesheets/:id, DELETE, allow
 p, partner, /api/v1/timesheets/summary, GET, allow
 p, partner, /api/v1/timesheets/grouped, GET, allow
 p, partner, /api/v1/timesheets/export, GET, allow
