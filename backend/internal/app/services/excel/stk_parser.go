@@ -19,9 +19,14 @@ type STKRow struct {
 // ParseSTKSheet searches for and parses the STK sheet in the provided Excel file.
 // Returns a slice of STKRow. If the sheet is not found, returns (nil, nil).
 func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
+	// Match case-insensitively after trimming: partners frequently export the
+	// STK sheet with surrounding whitespace (e.g. "STK ", " stk"), which would
+	// otherwise miss the exact match and silently yield zero rows — so no
+	// employee gets created from STK and the matching BCC rows report
+	// "nhân viên không tìm thấy trong hệ thống".
 	sheetName := ""
 	for _, sheet := range f.GetSheetList() {
-		if strings.ToUpper(sheet) == "STK" {
+		if strings.EqualFold(strings.TrimSpace(sheet), "STK") {
 			sheetName = sheet
 			break
 		}

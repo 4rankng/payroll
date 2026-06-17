@@ -196,3 +196,38 @@ func TestDetectFormat_BCCTiebreaker(t *testing.T) {
 		t.Errorf("PositionSheets = %v, want empty (legacy format has none)", result.PositionSheets)
 	}
 }
+
+// TestDetectFormat_STKSheetTrailingSpace guards the STK-sheet skip against
+// surrounding whitespace: a sheet exported as "STK " must still be skipped by
+// DetectFormat (not treated as a position sheet), so a BCC+STK file is routed
+// to the legacy monthly importer.
+func TestDetectFormat_STKSheetTrailingSpace(t *testing.T) {
+	for _, stkName := range []string{"STK ", " STK", " stk ", "Stk"} {
+		t.Run(stkName, func(t *testing.T) {
+			f := excelize.NewFile()
+			idx, err := f.NewSheet("BCC")
+			if err != nil {
+				t.Fatalf("create BCC sheet: %v", err)
+			}
+			f.SetActiveSheet(idx)
+			setBCCHeaders(t, f, "BCC")
+
+			if _, err := f.NewSheet(stkName); err != nil {
+				t.Fatalf("create STK sheet %q: %v", stkName, err)
+			}
+			// Put position-like headers in the STK sheet to prove it is NOT
+			// misclassified as a position sheet.
+			_ = f.SetCellValue(stkName, "A4", "STT")
+			_ = f.SetCellValue(stkName, "B4", "Mã nhân viên")
+			_ = f.SetCellValue(stkName, "C4", "Họ và tên")
+
+			result, err := DetectFormat(f)
+			if err != nil {
+				t.Fatalf("DetectFormat: %v", err)
+			}
+			if result.Format != FormatLegacy {
+				t.Errorf("sheet %q: expected FormatLegacy, got %v", stkName, result.Format)
+			}
+		})
+	}
+}

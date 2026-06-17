@@ -61,8 +61,10 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 			continue
 		}
 
-		// Skip STK sheet (case-insensitive)
-		if strings.ToUpper(sheetName) == "STK" {
+		// Skip STK sheet (case-insensitive, whitespace-trimmed — partners export
+		// it as "STK " etc.; without the trim the sheet leaks into position-sheet
+		// detection and can misroute the upload).
+		if strings.EqualFold(strings.TrimSpace(sheetName), "STK") {
 			continue
 		}
 

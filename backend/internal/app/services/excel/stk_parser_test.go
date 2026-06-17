@@ -108,3 +108,39 @@ func TestParseSTKSheet_NoSheet(t *testing.T) {
 		t.Errorf("expected nil rows when sheet not found, got %v", rows)
 	}
 }
+
+// TestParseSTKSheet_TrailingSpaceName guards against the regression where a
+// sheet exported as "STK " (trailing/leading whitespace, any case) was missed
+// by the exact-name check, causing ParseSTKSheet to return zero rows and every
+// STK-only employee to be reported as "not found in system" on BCC upload.
+func TestParseSTKSheet_TrailingSpaceName(t *testing.T) {
+	cases := []string{"STK ", " STK", " stk ", "Stk"}
+	for _, sheetName := range cases {
+		t.Run(sheetName, func(t *testing.T) {
+			f := excelize.NewFile()
+			idx, err := f.NewSheet(sheetName)
+			if err != nil {
+				t.Fatalf("NewSheet: %v", err)
+			}
+			f.SetActiveSheet(idx)
+			_ = f.SetCellValue(sheetName, "B3", "ID")
+			_ = f.SetCellValue(sheetName, "C3", "Tên")
+			_ = f.SetCellValue(sheetName, "D3", "Stk")
+			_ = f.SetCellValue(sheetName, "B4", "011207000333")
+			_ = f.SetCellValue(sheetName, "C4", "Quàng Văn Hùng")
+			_ = f.SetCellValue(sheetName, "D4", "102885394034")
+			_ = f.SetCellValue(sheetName, "E4", "Vietinbank")
+
+			rows, err := ParseSTKSheet(f)
+			if err != nil {
+				t.Fatalf("ParseSTKSheet: %v", err)
+			}
+			if len(rows) != 1 {
+				t.Fatalf("sheet %q: expected 1 row, got %d", sheetName, len(rows))
+			}
+			if rows[0].CCCD != "011207000333" || rows[0].FullName != "Quàng Văn Hùng" {
+				t.Errorf("sheet %q: unexpected row %+v", sheetName, rows[0])
+			}
+		})
+	}
+}
