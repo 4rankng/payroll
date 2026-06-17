@@ -131,10 +131,32 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       }
 
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
-      });
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey) as BufferSource;
+
+      // Subscribe, clearing any stale subscription bound to a different applicationServerKey.
+      // Browsers throw InvalidStateError ("A subscription with a different applicationServerKey
+      // already exists") when the VAPID key changed (e.g. rotated server-side); unsubscribe the
+      // old one (locally + server-side) and retry once.
+      let subscription: PushSubscription;
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+      } catch (subscribeError) {
+        const existing = await registration.pushManager.getSubscription();
+        if (!existing) throw subscribeError;
+        await existing.unsubscribe();
+        try {
+          await apiClient.post(API_ENDPOINTS.push.unsubscribe, { endpoint: existing.endpoint });
+        } catch {
+          // Best-effort server cleanup; proceed to re-subscribe regardless.
+        }
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+      }
 
       const subData = subscription.toJSON() as unknown as PushSubscriptionData;
       await sendSubscriptionToServer(subData);

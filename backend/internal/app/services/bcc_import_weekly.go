@@ -72,18 +72,52 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
 	loc := monthStart.Location()
 
-	// 4. Validate that all shift types from sheets exist in the payrate config.
-	// Build a set of available shift types (leaf-level keys) from the flattened payrate.
-	availableShiftTypes := getShiftTypes(flatRates)
-	shiftTypeSet := make(map[string]bool, len(availableShiftTypes))
-	for _, st := range availableShiftTypes {
-		shiftTypeSet[strings.ToLower(st)] = true
+	// 4. Resolve payrates for the ACTUAL timesheet dates in the file, not monthStart.
+	// A payrate can change mid-month; a weekly BCC's visible days (e.g. June 8-14)
+	// may fall under a different payrate than the 1st of the month. Resolving at
+	// monthStart picks the wrong config (and the wrong rates), so we look the
+	// payrate up per entry date and cache it.
+	flatRatesByDate := make(map[string]map[string]int)
+	flatRatesFor := func(d time.Time) map[string]int {
+		key := d.Format("2006-01-02")
+		if fr, ok := flatRatesByDate[key]; ok {
+			return fr
+		}
+		var fr map[string]int
+		if pr, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, d); err == nil {
+			if f, ferr := pr.Payrate.Flatten(); ferr == nil {
+				fr = f
+			}
+		}
+		flatRatesByDate[key] = fr // cache (nil if no payrate covers this date)
+		return fr
 	}
+
+	// 4b. Validate that every sheet's shift type exists in the payrate config
+	//     active for the dates that sheet actually has entries on.
 	for _, sheet := range parsed.Sheets {
-		if !shiftTypeSet[strings.ToLower(sheet.ShiftType)] {
-			return fail("failed",
-				fmt.Sprintf("ca làm \"%s\" không có trong cấu hình lương. Các ca làm khả dụng: %s",
-					sheet.ShiftType, strings.Join(availableShiftTypes, ", ")))
+		checkedDates := make(map[string]bool)
+		for _, emp := range sheet.Employees {
+			for _, entry := range emp.Entries {
+				realDate := time.Date(year, month, entry.Date.Day(), 0, 0, 0, 0, loc)
+				if realDate.Month() != month {
+					continue
+				}
+				dateKey := realDate.Format("2006-01-02")
+				if checkedDates[dateKey] {
+					continue
+				}
+				checkedDates[dateKey] = true
+				fr := flatRatesFor(realDate)
+				if len(fr) == 0 {
+					return fail("failed", fmt.Sprintf("không tìm thấy cấu hình lương cho ngày %s", dateKey))
+				}
+				if !shiftInConfig(fr, sheet.ShiftType) {
+					return fail("failed",
+						fmt.Sprintf("ca làm \"%s\" không có trong cấu hình lương cho ngày %s. Các ca làm khả dụng: %s",
+							sheet.ShiftType, dateKey, strings.Join(getShiftTypes(fr), ", ")))
+				}
+			}
 		}
 	}
 
@@ -404,26 +438,17 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	for _, sheet := range parsed.Sheets {
 		shiftType := sheet.ShiftType
 
-		// Collect all flat-rate paths ending with this shift type.
-		// Group by (position, dayType) for quick lookup.
-		shiftRates := make(map[wbccRateKey]int)
-		for path, rate := range flatRates {
-			if rate == 0 {
-				continue
+		// The rate set depends on the payrate active for each entry's date
+		// (a payrate can change mid-month), so build it per date and cache it.
+		shiftRatesByDate := make(map[string]map[wbccRateKey]int)
+		shiftRatesFor := func(d time.Time) map[wbccRateKey]int {
+			k := d.Format("2006-01-02")
+			if sr, ok := shiftRatesByDate[k]; ok {
+				return sr
 			}
-			parts := strings.Split(path, ".")
-			if len(parts) < 3 {
-				continue
-			}
-			// Check if the last segment matches the shift type
-			lastPart := parts[len(parts)-1]
-			if !strings.EqualFold(lastPart, shiftType) {
-				continue
-			}
-			position := parts[0]
-			dayType := strings.Join(parts[1:len(parts)-1], ".")
-			key := wbccRateKey{position: strings.ToLower(position), dayType: strings.ToLower(dayType)}
-			shiftRates[key] = rate
+			sr := buildShiftRatesForShift(flatRatesFor(d), shiftType)
+			shiftRatesByDate[k] = sr
+			return sr
 		}
 
 		for _, emp := range sheet.Employees {
@@ -476,7 +501,9 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				// of day-of-week — the shift type already encodes the rate.
 				dayType := "ngày thường"
 
-				// Look up rate: position + dayType + shiftType
+				// Resolve the rate set for THIS date's payrate, then look up
+				// position + dayType + shiftType.
+				shiftRates := shiftRatesFor(realDate)
 				key := wbccRateKey{position: empPosition, dayType: strings.ToLower(dayType)}
 				_, found := shiftRates[key]
 				if !found {
@@ -667,6 +694,47 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	}
 
 	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt), nil
+}
+
+// shiftInConfig reports whether shiftType appears as a leaf key in the flattened
+// payrate (case-insensitive), regardless of its rate value. Used to validate that
+// a BCC sheet's shift exists in the payrate active for a given date.
+func shiftInConfig(flatRates map[string]int, shiftType string) bool {
+	if len(flatRates) == 0 {
+		return false
+	}
+	target := strings.ToLower(shiftType)
+	for path := range flatRates {
+		parts := strings.Split(path, ".")
+		if len(parts) >= 3 && strings.ToLower(parts[len(parts)-1]) == target {
+			return true
+		}
+	}
+	return false
+}
+
+// buildShiftRatesForShift collects every non-zero rate path whose leaf matches
+// shiftType (case-insensitive), grouped by (position, dayType) for quick lookup.
+func buildShiftRatesForShift(flatRates map[string]int, shiftType string) map[wbccRateKey]int {
+	shiftRates := make(map[wbccRateKey]int)
+	target := strings.ToLower(shiftType)
+	for path, rate := range flatRates {
+		if rate == 0 {
+			continue
+		}
+		parts := strings.Split(path, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		if strings.ToLower(parts[len(parts)-1]) != target {
+			continue
+		}
+		position := parts[0]
+		dayType := strings.Join(parts[1:len(parts)-1], ".")
+		key := wbccRateKey{position: strings.ToLower(position), dayType: strings.ToLower(dayType)}
+		shiftRates[key] = rate
+	}
+	return shiftRates
 }
 
 // getShiftTypes extracts unique leaf-level shift type names from flattened payrate paths.
