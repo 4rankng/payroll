@@ -395,10 +395,10 @@ const EmployeesPage = () => {
   }
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-4">
+    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+      <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
           <PageHeader
             title="Nhân viên dự án"
             description="Danh sách nhân viên trong các dự án được phân quyền"
@@ -473,7 +473,7 @@ const EmployeesPage = () => {
         </div>
 
         <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2">
+          <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-white/70 bg-white/78 backdrop-blur px-3 py-2 shadow-sm">
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
@@ -540,7 +540,7 @@ const EmployeesPage = () => {
             emptyState={
               <div className="flex flex-col items-center justify-center py-16 px-4">
                 <div className="relative mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/5 border border-primary/10">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 border border-slate-200">
                     <Users className="h-9 w-9 text-primary/30" />
                   </div>
                   <div className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-lg bg-background border shadow-sm">

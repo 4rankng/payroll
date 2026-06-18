@@ -102,7 +102,7 @@ const AdvancePaymentsPageMobile = () => {
   }
 
   return (
-    <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
+    <div className="min-h-screen max-w-full space-y-3 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_42%)] p-3 pb-20">
 
       {/* Wallet hero — full-bleed, first thing visible */}
       {!isAdvPartner && (
@@ -116,66 +116,78 @@ const AdvancePaymentsPageMobile = () => {
         </div>
       )}
 
-      {/* Header + actions */}
-      <AdvancePaymentPageHeaderMobile
-        onImportPayroll={() => setIsImportSheetOpen(true)}
-        onViewEmployees={() => navigate("employees")}
-        renderOverflowContent={(close) => (
-          <>
-            <MobileOverflowAction
-              icon={FileDown}
-              label="Chuyển lô"
-              onClick={() => { exportBatchMutation.mutate(undefined); close(); }}
-              disabled={exportBatchMutation.isPending}
-              isLoading={exportBatchMutation.isPending}
-            />
-            {!isAdvPartner && (
+      <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_42px_-34px_rgba(15,49,103,0.5)] backdrop-blur">
+        <AdvancePaymentPageHeaderMobile
+          onImportPayroll={() => setIsImportSheetOpen(true)}
+          onViewEmployees={() => navigate("employees")}
+          renderOverflowContent={(close) => (
+            <>
               <MobileOverflowAction
-                icon={ArrowRightLeft}
-                label="Nhập KQ"
-                onClick={() => { setIsResultUploadOpen(true); close(); }}
+                icon={FileDown}
+                label="Chuyển lô"
+                onClick={() => { exportBatchMutation.mutate(undefined); close(); }}
+                disabled={exportBatchMutation.isPending}
+                isLoading={exportBatchMutation.isPending}
               />
-            )}
-            <MobileOverflowAction
-              icon={FileText}
-              label="Sao kê"
-              onClick={() => { setIsStatementSheetOpen(true); close(); }}
-            />
-            <MobileOverflowAction
-              icon={Mail}
-              label="Email sao kê"
-              onClick={() => { setIsEmailDialogOpen(true); close(); }}
-              disabled={sendEmailMutation.isPending}
-              isLoading={sendEmailMutation.isPending}
-            />
-            <MobileOverflowDivider />
-            {!isAdvPartner && (
+              {!isAdvPartner && (
+                <MobileOverflowAction
+                  icon={ArrowRightLeft}
+                  label="Nhập KQ"
+                  onClick={() => { setIsResultUploadOpen(true); close(); }}
+                />
+              )}
               <MobileOverflowAction
-                icon={History}
-                label="Lịch sử file"
-                onClick={() => { setIsHistorySheetOpen(true); close(); }}
+                icon={FileText}
+                label="Sao kê"
+                onClick={() => { setIsStatementSheetOpen(true); close(); }}
               />
-            )}
-          </>
-        )}
-      />
-
-      {/* Month selector */}
-      <div className="overflow-x-auto w-full">
-        <TimesheetMonthSelector
-          value={page.selectedMonth}
-          onChange={page.setSelectedMonth}
+              <MobileOverflowAction
+                icon={Mail}
+                label="Email sao kê"
+                onClick={() => { setIsEmailDialogOpen(true); close(); }}
+                disabled={sendEmailMutation.isPending}
+                isLoading={sendEmailMutation.isPending}
+              />
+              <MobileOverflowDivider />
+              {!isAdvPartner && (
+                <MobileOverflowAction
+                  icon={History}
+                  label="Lịch sử file"
+                  onClick={() => { setIsHistorySheetOpen(true); close(); }}
+                />
+              )}
+            </>
+          )}
         />
-      </div>
+
+        <div className="mt-3 overflow-x-auto">
+          <TimesheetMonthSelector
+            value={page.selectedMonth}
+            onChange={page.setSelectedMonth}
+          />
+        </div>
+      </section>
 
       {/* Hero metrics — same components as desktop, already grid-cols-2 on mobile */}
       <div className="space-y-3">
         <AdvPartnerHeroStrip {...heroProps} isLoading={page.summaryLoading} />
-        <AdvPartnerStatusOverview {...statusProps} isLoading={page.summaryLoading} />
       </div>
 
       {/* Requests list */}
-      <div className="space-y-3">
+      <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_42px_-34px_rgba(15,49,103,0.5)]">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Yêu cầu
+            </p>
+            <h2 className="text-base font-bold text-slate-900">
+              Danh sách ứng lương
+            </h2>
+          </div>
+          <div className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-slate-600">
+            {page.statusCounts?.all ?? 0}
+          </div>
+        </div>
         <div className="space-y-2">
           <MobileSearchInput
             value={page.searchInput}
@@ -208,7 +220,9 @@ const AdvancePaymentsPageMobile = () => {
           pagination={page.pagination}
           onPageChange={page.handlePageChange}
         />
-      </div>
+      </section>
+
+      <AdvPartnerStatusOverview {...statusProps} isLoading={page.summaryLoading} />
 
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />
       <FlexibleEmployeeListUploadDialog open={isEmployeeListUploadOpen} onOpenChange={setIsEmployeeListUploadOpen} />

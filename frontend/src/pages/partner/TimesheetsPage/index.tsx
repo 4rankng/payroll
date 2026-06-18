@@ -390,33 +390,35 @@ export default function TimesheetsPage() {
   }
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-4">
+    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+      <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="text-base font-semibold text-foreground flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+              <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+                  <Clock className="h-5 w-5" />
+                </span>
                 Bảng công
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">Theo dõi và quản lý bảng công</p>
+              <p className="text-sm text-muted-foreground mt-1">Theo dõi bảng công, yêu cầu sửa và lịch sử chi trả theo tháng</p>
             </div>
-            <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-card px-1 py-1 shadow-soft">
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200/70 bg-slate-50/80 px-1 py-1 shadow-soft">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white transition-colors"
                 aria-label="Tháng trước"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="min-w-[100px] text-center text-xs font-semibold text-foreground tabular-nums px-1">
+              <span className="min-w-[118px] text-center text-sm font-semibold text-foreground tabular-nums px-1">
                 {monthLabel}
               </span>
               <button
                 onClick={handleNextMonth}
-                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white transition-colors"
                 aria-label="Tháng sau"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -442,7 +444,7 @@ export default function TimesheetsPage() {
         )}
 
         {/* Action buttons */}
-        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center">
+        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center rounded-2xl border border-white/70 bg-white/78 p-2.5 shadow-sm backdrop-blur">
           <Button
             variant="outline"
             size="sm"
@@ -519,7 +521,7 @@ export default function TimesheetsPage() {
         >
           <div className="space-y-3">
             <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-              <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2">
+              <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-white/70 bg-white/78 backdrop-blur px-3 py-2 shadow-sm">
                 <TimesheetFilters />
               </div>
             </div>

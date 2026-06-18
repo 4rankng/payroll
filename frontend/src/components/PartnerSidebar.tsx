@@ -72,7 +72,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "h-8 px-3",
+            : "h-9 px-3",
           isActive
             ? "bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--partner-accent)/0.15)]"
             : "text-white/50 hover:bg-card/10 hover:text-white/80 hover:translate-x-0.5"

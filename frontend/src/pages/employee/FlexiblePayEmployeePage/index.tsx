@@ -165,6 +165,10 @@ const FlexiblePayEmployeePage = () => {
           </div>
         </div>
         <div className="p-4 space-y-3">
+          <div className="rounded-2xl border border-white/60 bg-white/75 px-4 py-3 shadow-sm backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700">Đang tải FlexPay</p>
+            <p className="mt-1 text-sm text-slate-500">Kiểm tra hạn mức ứng lương và lịch sử gần đây.</p>
+          </div>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-32 w-full rounded-2xl" />
           ))}

@@ -41,42 +41,42 @@ export function PaginationControls({
   };
 
   return (
-    <div className={cn('flex items-center justify-between gap-3 py-2', className)}>
+    <div className={cn('flex items-center justify-between gap-3 py-2.5', className)}>
       {/* Left: record range */}
-      <p className="text-[11px] text-muted-foreground tabular-nums shrink-0 min-w-[60px]">
+      <p className="text-xs text-muted-foreground tabular-nums shrink-0 min-w-[68px]">
         <span className="font-medium text-foreground/70">{from}–{to}</span>
         <span className="mx-1 text-muted-foreground/50">/</span>
         {totalRecords.toLocaleString('vi-VN')}
       </p>
 
       {/* Center: page buttons */}
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+          className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
           onClick={() => onPageChange(1)}
           disabled={page <= 1}
           aria-label="Trang đầu"
         >
-          <ChevronsLeft className="h-3.5 w-3.5" />
+          <ChevronsLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+          className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           aria-label="Trang trước"
         >
-          <ChevronLeft className="h-3.5 w-3.5" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
 
         {getPages().map((p, i) =>
           p === '…' ? (
             <span
               key={`e${i}`}
-              className="h-7 w-7 flex items-center justify-center text-[11px] text-muted-foreground/50 select-none"
+              className="h-9 w-9 flex items-center justify-center text-xs text-muted-foreground/50 select-none"
             >
               …
             </span>
@@ -88,7 +88,7 @@ export function PaginationControls({
               aria-label={`Trang ${p}`}
               aria-current={p === page ? 'page' : undefined}
               className={cn(
-                'h-7 w-7 rounded-md text-[11px] font-medium transition-colors',
+                'h-9 w-9 rounded-lg text-xs font-medium transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 p === page
                   ? 'border border-border/80 bg-card text-foreground shadow-[0_1px_2px_0_rgb(15_23_42/0.06)] cursor-default'
@@ -103,35 +103,35 @@ export function PaginationControls({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+          className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           aria-label="Trang tiếp"
         >
-          <ChevronRight className="h-3.5 w-3.5" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
+          className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60"
           onClick={() => onPageChange(totalPages)}
           disabled={page >= totalPages}
           aria-label="Trang cuối"
         >
-          <ChevronsRight className="h-3.5 w-3.5" />
+          <ChevronsRight className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Right: page size selector */}
       <div className="flex items-center gap-1.5 shrink-0">
-        <span className="text-[11px] text-muted-foreground/70 hidden sm:inline">Hiển thị</span>
+        <span className="text-xs text-muted-foreground/70 hidden sm:inline">Hiển thị</span>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-          <SelectTrigger className="h-7 w-14 text-[11px] px-2 min-h-0">
+          <SelectTrigger className="h-9 w-16 text-xs px-2 min-h-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {[10, 20, 50, 100].map(n => (
-              <SelectItem key={n} value={String(n)} className="text-[11px] py-1">{n}</SelectItem>
+              <SelectItem key={n} value={String(n)} className="text-xs py-2">{n}</SelectItem>
             ))}
           </SelectContent>
         </Select>

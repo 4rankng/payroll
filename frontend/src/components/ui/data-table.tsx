@@ -259,7 +259,7 @@ export function DataTable<TData, TValue>({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="-ml-3 h-8 data-[state=open]:bg-accent hover:bg-accent/50"
+                              className="-ml-3 h-9 data-[state=open]:bg-accent hover:bg-accent/50"
                               onClick={() => header.column.toggleSorting(sortDirection === "asc")}
                             >
                               <span>
@@ -330,8 +330,14 @@ export function DataTable<TData, TValue>({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      Không có dữ liệu
+                    <TableCell colSpan={columns.length} className="h-40 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 py-8">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/70 ring-1 ring-border/60">
+                          <Inbox className="h-5 w-5 text-muted-foreground/70" />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">Không có dữ liệu</p>
+                        <p className="text-xs text-muted-foreground">Thử thay đổi bộ lọc hoặc tìm kiếm khác.</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -356,13 +362,16 @@ export function DataTable<TData, TValue>({
             ))}
           </div>
         ) : (
-          <Card className="mx-1">
-            <CardContent className="p-8 text-center">
+          <Card className="mx-1 rounded-2xl border-dashed bg-card/80">
+            <CardContent className="p-10 text-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center ring-1 ring-border/60">
                   <Inbox className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-muted-foreground typography-body-medium">Không có dữ liệu</p>
+                <div>
+                  <p className="text-foreground typography-body-medium font-semibold">Không có dữ liệu</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Thử đổi bộ lọc hoặc tìm kiếm khác.</p>
+                </div>
               </div>
             </CardContent>
           </Card>

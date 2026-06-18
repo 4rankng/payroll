@@ -282,21 +282,37 @@ const ProjectsPage = () => {
   const pagination = response?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
   const currentPage = pagination?.page ?? 1;
+  const activeCount = allProjects.filter((p) => p.status === 'active').length;
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1320px] mx-auto space-y-6">
-      <PageHeader
-        title="Dự án"
-        description="Quản lý và theo dõi các dự án được phân quyền"
-        actions={[
-          {
-            label: 'Thêm dự án',
-            onClick: () => openCreateProject(),
-            icon: Plus,
-            variant: 'default' as const,
-          },
-        ]}
-      />
+    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+      <div className="mx-auto max-w-[1320px] space-y-5">
+        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur">
+          <PageHeader
+            title="Dự án"
+            description="Quản lý và theo dõi các dự án được phân quyền"
+            actions={[
+              {
+                label: 'Thêm dự án',
+                onClick: () => openCreateProject(),
+                icon: Plus,
+                variant: 'default' as const,
+              },
+            ]}
+          />
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              { label: 'Tổng dự án', value: allProjects.length },
+              { label: 'Đang hoạt động', value: activeCount },
+              { label: 'Đang hiển thị', value: projects.length },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{item.label}</p>
+                <p className="mt-1 text-lg font-bold tabular-nums text-slate-900">{item.value.toLocaleString('vi-VN')}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
       {/* ── UNIFIED TOOLBAR ── */}
       <div className="rounded-2xl bg-card p-2.5 shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_6px_-2px_rgba(15,15,30,0.04)]">
@@ -353,16 +369,16 @@ const ProjectsPage = () => {
       {isLoading ? (
         <div className="space-y-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[108px] w-full rounded-2xl" />
+            <Skeleton key={i} className="h-[108px] w-full rounded-2xl bg-white/70" />
           ))}
         </div>
       ) : projects.length === 0 ? (
-        <div className="rounded-2xl bg-card py-16 px-6 text-center shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06)]">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60 mb-3">
+        <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white/78 py-20 px-6 text-center shadow-[0_18px_48px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 mb-4 ring-1 ring-slate-200">
             <Briefcase className="h-6 w-6 text-muted-foreground/50" />
           </div>
-          <p className="text-[14px] font-semibold text-foreground">Không có dự án nào</p>
-          <p className="text-[12px] text-muted-foreground mt-1 max-w-sm mx-auto">
+          <p className="text-base font-bold text-foreground">Không có dự án nào</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
             {statusFilter !== 'all' || filterControls.hasFilters
               ? 'Thử bỏ bộ lọc hoặc đổi từ khoá tìm kiếm.'
               : 'Bạn chưa được phân quyền truy cập vào dự án nào.'}
@@ -478,6 +494,7 @@ const ProjectsPage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

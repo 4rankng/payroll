@@ -75,15 +75,81 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     [location.pathname],
   );
 
+  const sheetSurfaceClass =
+    "h-auto max-h-[78dvh] overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
+
+  const renderSheetChrome = (title: string, description: string) => (
+    <>
+      <div className="flex justify-center pt-3">
+        <div className="h-1.5 w-12 rounded-full bg-slate-300" />
+      </div>
+      <SheetHeader className="px-5 pb-3 pt-4 text-left">
+        <SheetTitle className="text-xl font-bold tracking-tight text-slate-950">
+          {title}
+        </SheetTitle>
+        <p className="text-sm font-medium text-slate-500">{description}</p>
+      </SheetHeader>
+    </>
+  );
+
+  const renderNavTile = (
+    item: NavLeaf,
+    isActive: boolean,
+    onSelect: () => void,
+    tone: "default" | "danger" = "default",
+  ) => (
+    <button
+      key={item.title}
+      className={cn(
+        "group flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center transition-all touch-manipulation",
+        "active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        isActive &&
+          tone === "default" &&
+          "border-primary/30 bg-primary text-primary-foreground shadow-[0_14px_30px_-20px_hsl(var(--primary)/0.8)]",
+        !isActive &&
+          tone === "default" &&
+          "border-slate-200/80 bg-white text-slate-700 shadow-sm hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
+        tone === "danger" &&
+          "border-rose-200/80 bg-rose-50 text-rose-700 hover:bg-rose-100",
+      )}
+      onClick={onSelect}
+    >
+      <div
+        className={cn(
+          "flex h-11 w-11 items-center justify-center rounded-2xl transition-colors",
+          isActive && tone === "default"
+            ? "bg-white/18 text-white"
+            : tone === "danger"
+              ? "bg-white/70 text-rose-600"
+              : "bg-slate-100 text-slate-900 group-hover:bg-white",
+        )}
+      >
+        <item.icon className="h-5 w-5" />
+      </div>
+      <span
+        className={cn(
+          "max-w-full text-[13px] font-semibold leading-tight",
+          isActive && tone === "default"
+            ? "text-primary-foreground"
+            : tone === "danger"
+              ? "text-rose-700"
+              : "text-slate-600 group-hover:text-slate-950",
+        )}
+      >
+        {item.title}
+      </span>
+    </button>
+  );
+
   if (!isMobile) return null;
 
   if (override) {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background border-t border-border/40"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/92 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="h-14 flex items-center px-4">{override.content}</div>
+        <div className="flex min-h-[60px] items-center px-4">{override.content}</div>
       </nav>
     );
   }
@@ -91,11 +157,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background border-t border-border/40"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/92 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >
-        <div className="flex items-stretch h-14 relative px-2">
+        <div className="relative flex min-h-[60px] items-stretch px-2">
           {groups.map((group) => {
             const isActive = isGroupActive(group);
 
@@ -105,17 +171,17 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                   key={group.path}
                   to={group.path}
                   end={group.end}
-                  className="flex-1 flex flex-col items-center justify-center gap-0.5 touch-manipulation relative group transition-all duration-300"
+                  className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
                   aria-label={group.title}
                 >
                   {isActive && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-primary/90 rounded-b-full shadow-[0_4px_12px_rgba(var(--primary-rgb),0.5)] animate-in fade-in" />
+                    <span className="absolute top-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-b-full bg-primary/90 animate-in fade-in" />
                   )}
                   <div
                     className={cn(
-                      "p-1.5 rounded-full transition-all duration-300",
+                      "rounded-full p-1.5 transition-colors",
                       isActive
-                        ? "bg-primary/10 text-primary -translate-y-1"
+                        ? "bg-primary/10 text-primary"
                         : "text-muted-foreground group-hover:bg-accent",
                     )}
                   >
@@ -125,7 +191,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                   </div>
                   <span
                     className={cn(
-                      "text-[10px] font-medium leading-none transition-all duration-300",
+                      "max-w-[58px] truncate text-[10px] font-semibold leading-none transition-colors",
                       isActive
                         ? "text-primary"
                         : "text-muted-foreground opacity-80",
@@ -140,19 +206,19 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
             return (
               <button
                 key={group.title}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 touch-manipulation relative group transition-all duration-300"
+                className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
                 onClick={() => setOpenGroup(group)}
                 aria-label={group.title}
                 aria-haspopup="true"
               >
                 {isActive && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-primary/90 rounded-b-full shadow-[0_4px_12px_rgba(var(--primary-rgb),0.5)] animate-in fade-in" />
+                  <span className="absolute top-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-b-full bg-primary/90 animate-in fade-in" />
                 )}
                 <div
                   className={cn(
-                    "p-1.5 rounded-full transition-all duration-300",
+                    "rounded-full p-1.5 transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary -translate-y-1"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground group-hover:bg-accent",
                   )}
                 >
@@ -162,7 +228,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                 </div>
                 <span
                   className={cn(
-                    "text-[10px] font-medium leading-none transition-all duration-300",
+                    "max-w-[58px] truncate text-[10px] font-semibold leading-none transition-colors",
                     isActive
                       ? "text-primary"
                       : "text-muted-foreground opacity-80",
@@ -176,7 +242,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
           {/* Account button — always last slot */}
           <button
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 touch-manipulation relative group transition-all duration-300"
+            className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
             onClick={() => setOpenGroup(ACCOUNT_GROUP)}
             aria-label="Tài khoản"
             aria-haspopup="true"
@@ -194,7 +260,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                 <UserCircle className="w-5 h-5" />
               </div>
             )}
-            <span className="text-[10px] font-medium leading-none text-muted-foreground opacity-80">
+            <span className="max-w-[58px] truncate text-[10px] font-semibold leading-none text-muted-foreground opacity-80">
               Tài khoản
             </span>
           </button>
@@ -202,7 +268,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           {/* More menu — compact ⋮ button */}
           {moreItems && moreItems.length > 0 && (
             <button
-              className="w-11 flex flex-col items-center justify-center gap-0.5 touch-manipulation"
+              className="flex min-h-[56px] w-11 touch-manipulation flex-col items-center justify-center gap-0.5"
               onClick={() => setIsMoreOpen(true)}
               aria-label="Thêm"
             >
@@ -217,21 +283,16 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         open={!!openGroup}
         onOpenChange={(open) => !open && setOpenGroup(null)}
       >
-        <SheetContent side="bottom" className="h-auto pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
-          </div>
-          <SheetHeader className="px-5 pb-4">
-            <SheetTitle className="text-base font-semibold text-left">
-              {openGroup?.title}
-            </SheetTitle>
-          </SheetHeader>
+        <SheetContent side="bottom" className={sheetSurfaceClass}>
+          {renderSheetChrome(
+            openGroup?.title ?? "Điều hướng",
+            openGroup === ACCOUNT_GROUP ? "Tài khoản và cài đặt cá nhân" : "Chọn điểm đến nhanh",
+          )}
 
           {openGroup === ACCOUNT_GROUP ? (
-            <div className="px-5 pb-4">
+            <div className="overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
               {user && (
-                <div className="flex items-center gap-3 pb-3">
+                <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
                   <UserAvatar
                     email={user.email}
                     name={user.name}
@@ -240,114 +301,69 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                     className="h-10 w-10"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
+                    <p className="text-sm font-semibold text-slate-950 truncate">
                       {user.name}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-slate-500 truncate">
                       {user.email}
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation hover:bg-accent text-foreground border border-transparent"
-                  onClick={() => {
+              <div className="grid grid-cols-2 gap-2.5">
+                {renderNavTile(
+                  { title: "Thông báo", icon: Bell },
+                  false,
+                  () => {
                     setOpenGroup(null);
                     setIsNotificationSheetOpen(true);
-                  }}
-                >
-                  <div className="relative">
-                    <Bell className="w-5 h-5 text-muted-foreground" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-destructive text-[9px] text-white flex items-center justify-center font-bold">
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs font-medium leading-none text-muted-foreground">
-                    Thông báo
-                  </span>
-                </button>
+                  },
+                )}
 
-                <button
-                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation hover:bg-accent text-foreground border border-transparent"
-                  onClick={() => {
+                {renderNavTile(
+                  { title: "Hồ sơ", icon: UserCircle },
+                  false,
+                  () => {
                     setOpenGroup(null);
                     setIsProfileOpen(true);
-                  }}
-                >
-                  <UserCircle className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs font-medium leading-none text-muted-foreground">
-                    Hồ sơ
-                  </span>
-                </button>
+                  },
+                )}
 
-                <button
-                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation hover:bg-accent text-foreground border border-transparent"
-                  onClick={() => {
+                {renderNavTile(
+                  { title: "Đổi mật khẩu", icon: Key },
+                  false,
+                  () => {
                     setOpenGroup(null);
                     openModal(MODAL_IDS.CHANGE_PASSWORD);
-                  }}
-                >
-                  <Key className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs font-medium leading-none text-muted-foreground">
-                    Đổi mật khẩu
-                  </span>
-                </button>
+                  },
+                )}
 
-                <button
-                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation hover:bg-destructive/10 text-destructive border border-transparent"
-                  onClick={() => {
+                {renderNavTile(
+                  { title: "Đăng xuất", icon: LogOut },
+                  false,
+                  () => {
                     setOpenGroup(null);
                     logout();
-                  }}
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span className="text-xs font-medium leading-none">
-                    Đăng xuất
-                  </span>
-                </button>
+                  },
+                  "danger",
+                )}
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 px-5 pb-4">
+            <div className="grid grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
               {openGroup?.submenu?.map((item) => {
                 const isActive = item.path
                   ? location.pathname.startsWith(item.path)
                   : false;
-                return (
-                  <button
-                    key={item.title}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation",
-                      isActive
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "hover:bg-accent text-foreground border border-transparent",
-                    )}
-                    onClick={() => {
+                return renderNavTile(item, isActive, () => {
                       setOpenGroup(null);
                       if (item.onClick) {
                         item.onClick();
                       } else if (item.path) {
                         navigate(item.path);
                       }
-                    }}
-                  >
-                    <item.icon
-                      className={cn("w-5 h-5", isActive && "text-primary")}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-medium leading-none",
-                        isActive ? "text-primary" : "text-muted-foreground",
-                      )}
-                    >
-                      {item.title}
-                    </span>
-                  </button>
-                );
+                });
               })}
             </div>
           )}
@@ -356,52 +372,21 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
       {/* More menu sheet */}
       <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-        <SheetContent side="bottom" className="h-auto rounded-t-2xl pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-2.5 pb-1">
-            <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
-          </div>
-          <SheetHeader className="pb-3">
-            <SheetTitle className="text-base font-semibold text-left">
-              Thêm
-            </SheetTitle>
-          </SheetHeader>
-          <div className="grid grid-cols-3 gap-2 pb-2">
+        <SheetContent side="bottom" className={sheetSurfaceClass}>
+          {renderSheetChrome("Thêm", "Các mục quản trị ít dùng hơn")}
+          <div className="grid max-h-[58dvh] grid-cols-3 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             {moreItems?.map((item) => {
               const isActive = item.path
                 ? location.pathname.startsWith(item.path)
                 : false;
-              return (
-                <button
-                  key={item.title}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors touch-manipulation",
-                    isActive
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "hover:bg-accent text-foreground border border-transparent",
-                  )}
-                  onClick={() => {
+              return renderNavTile(item, isActive, () => {
                     setIsMoreOpen(false);
                     if (item.onClick) {
                       item.onClick();
                     } else if (item.path) {
                       navigate(item.path);
                     }
-                  }}
-                >
-                  <item.icon
-                    className={cn("w-5 h-5", isActive && "text-primary")}
-                  />
-                  <span
-                    className={cn(
-                      "text-xs font-medium leading-none",
-                      isActive ? "text-primary" : "text-muted-foreground",
-                    )}
-                  >
-                    {item.title}
-                  </span>
-                </button>
-              );
+              });
             })}
           </div>
         </SheetContent>
