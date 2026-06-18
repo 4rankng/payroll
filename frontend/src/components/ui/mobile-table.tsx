@@ -78,7 +78,7 @@ export function MobileTable<T extends Record<string, unknown>>({
   // Render empty state
   if (!data?.length) {
     return (
-      <div className={cn("py-8 text-center", className)}>
+      <div className={cn("rounded-2xl border border-dashed border-border/70 bg-card/80 px-5 py-12 text-center", className)}>
         <div className="typography-body-medium text-muted-foreground">
           {emptyState ?? "Không có dữ liệu"}
         </div>
@@ -184,7 +184,7 @@ export function MobileTable<T extends Record<string, unknown>>({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 touch-manipulation"
+                            className="h-10 w-10 p-0 touch-manipulation"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />

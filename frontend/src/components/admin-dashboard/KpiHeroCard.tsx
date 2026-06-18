@@ -63,8 +63,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   const stackValueBlock = (
     <div className="flex flex-col gap-0.5 items-start">
       <p
-        className="font-display font-extrabold tabular-nums leading-tight tracking-tight text-foreground"
-        style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1.5rem)' }}
+        className="font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
       >
         {displayValue}
       </p>
@@ -99,9 +98,9 @@ export const KpiHeroCard = memo(function KpiHeroCard({
     <div
       className={cn(
         'group relative overflow-hidden rounded-xl border bg-card',
-        'shadow-soft hover:shadow-card transition-all duration-300',
+        'shadow-soft transition-all duration-300',
         isActive ? 'border-primary/30 bg-primary/5' : 'border-border/40',
-        onClick && 'cursor-pointer hover:scale-[1.02] active:scale-[0.99]',
+        onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-card active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className,
       )}
       onClick={onClick}
@@ -128,11 +127,11 @@ export const KpiHeroCard = memo(function KpiHeroCard({
           <div className="flex flex-col gap-1 sm:hidden">
             <div className="flex items-center gap-1.5">
               <Icon className={cn('h-3 w-3 shrink-0', c.iconText)} strokeWidth={2.2} />
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground leading-tight line-clamp-2">
+              <span className="text-[11px] font-bold uppercase tracking-normal text-muted-foreground leading-tight line-clamp-2">
                 {label}
               </span>
             </div>
-            <p className="font-display font-extrabold tabular-nums leading-none tracking-tight text-foreground text-[22px]">
+            <p className="font-display text-[22px] font-extrabold tabular-nums leading-none tracking-normal text-foreground">
               {displayValue}
             </p>
             {sublabel && (
@@ -164,13 +163,12 @@ export const KpiHeroCard = memo(function KpiHeroCard({
           <div className="hidden sm:block pr-14">
             <div className="flex items-center gap-1.5">
               <Icon className={cn('h-3.5 w-3.5 shrink-0', c.iconText)} strokeWidth={2.2} />
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground leading-tight">
+              <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight">
                 {label}
               </span>
             </div>
             <p
-              className="mt-1 font-display font-extrabold tabular-nums leading-tight tracking-tight text-foreground whitespace-nowrap"
-              style={{ fontSize: 'clamp(0.875rem, 1.5vw, 1.5rem)' }}
+              className="mt-1 font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
             >
               {displayValue}
             </p>
@@ -204,7 +202,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
         <div className="relative px-4 py-3 space-y-1.5 pr-14">
           <div className="flex items-center gap-1.5">
             <Icon className={cn('h-3.5 w-3.5 shrink-0', c.iconText)} strokeWidth={2.2} />
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground leading-tight">
+            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight">
               {label}
             </span>
           </div>
@@ -214,6 +212,10 @@ export const KpiHeroCard = memo(function KpiHeroCard({
 
       {isActive && (
         <div className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary z-10" />
+      )}
+
+      {onClick && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 scale-x-0 bg-primary/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100" />
       )}
     </div>
   );

@@ -37,15 +37,16 @@ const ALL_VALUE = 'all';
 // ─── Month selector ────────────────────────────────────────────────────────
 function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 -mb-0.5">
+    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 -mb-0.5" aria-label="Chọn kỳ dữ liệu">
       {monthOptions.slice(0, 4).map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
           className={cn(
-            'px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0',
+            'min-h-[44px] px-3 rounded-full text-xs font-semibold transition-colors shrink-0',
             value === opt.value
-              ? 'bg-foreground text-background shadow-sm'
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
           )}
         >
@@ -53,9 +54,10 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
         </button>
       ))}
       <select
+        aria-label="Chọn tháng khác"
         value={monthOptions.slice(4).some((o) => o.value === value) ? value : ''}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="px-2.5 py-1.5 rounded-full text-xs font-medium bg-transparent text-muted-foreground border-0 outline-none cursor-pointer hover:bg-muted/60 hover:text-foreground transition-colors shrink-0"
+        className="min-h-[44px] rounded-full border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground focus:border-primary/30 shrink-0"
       >
         <option value="">Tháng khác…</option>
         {monthOptions.slice(4).map((opt) => (
@@ -148,10 +150,10 @@ function StatTile({
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        'group relative w-full text-left rounded-2xl bg-card px-4 py-4 overflow-hidden transition-all',
-        'shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_6px_-2px_rgba(15,15,30,0.04)]',
+        'group relative w-full min-h-[88px] text-left rounded-2xl border border-border/60 bg-card px-4 py-4 overflow-hidden transition-all',
+        'shadow-soft',
         onClick &&
-          'hover:shadow-[0_2px_4px_-1px_rgba(15,15,30,0.08),0_8px_16px_-6px_rgba(15,15,30,0.08)] hover:-translate-y-0.5 cursor-pointer',
+          'hover:shadow-card hover:-translate-y-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         !onClick && 'cursor-default',
       )}
     >
@@ -171,13 +173,13 @@ function StatTile({
         {/* Label row with small icon prefix */}
         <div className="flex items-center gap-1.5">
           <Icon className={cn('h-3 w-3', c.iconText)} strokeWidth={2.2} />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
             {label}
           </span>
         </div>
 
         {/* Big number */}
-        <p className="mt-1.5 text-2xl font-extrabold tabular-nums leading-none text-foreground tracking-tight">
+        <p className="mt-1.5 text-2xl font-extrabold tabular-nums leading-none text-foreground tracking-normal">
           {value.toLocaleString('vi-VN')}
         </p>
 
@@ -301,7 +303,7 @@ function WorkforceDonut({
 
   return (
     <div className="space-y-3">
-      <div className="relative h-[180px]">
+      <div className="relative h-[180px]" aria-label="Biểu đồ cơ cấu nhân sự">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -326,7 +328,7 @@ function WorkforceDonut({
           <span className="text-2xl font-extrabold tabular-nums text-foreground leading-none">
             {(active + dropped).toLocaleString('vi-VN')}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-1">
+          <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground mt-1">
             Tổng nhân viên
           </span>
         </div>
@@ -423,27 +425,24 @@ const PartnerDashboardPage = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in-up">
           {/* Left: big payout hero card */}
-          <div className="lg:col-span-3 relative overflow-hidden rounded-2xl p-6 lg:p-8 text-white shadow-[0_20px_50px_-20px_rgba(76,29,149,0.45)]">
-            {/* Background gradient + decorative blobs */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#4c1d95] to-[#6b21a8]" />
-            <div className="absolute -right-12 -top-12 h-56 w-56 rounded-full bg-fuchsia-500/30 blur-3xl pointer-events-none" />
-            <div className="absolute -left-10 bottom-0 h-44 w-44 rounded-full bg-indigo-500/25 blur-3xl pointer-events-none" />
-            <div className="absolute inset-0 opacity-[0.07] pointer-events-none [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:20px_20px]" />
+          <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-white/10 p-6 lg:p-8 text-white shadow-elevated">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--sidebar-background))_0%,hsl(var(--primary))_58%,hsl(38_92%_42%)_100%)]" />
+            <div className="absolute inset-0 opacity-[0.08] pointer-events-none [background-image:linear-gradient(90deg,white_1px,transparent_1px),linear-gradient(0deg,white_1px,transparent_1px)] [background-size:28px_28px]" />
 
             <div className="relative">
               <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-violet-200" />
-                <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-violet-100/80">
+                <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                <span className="text-[10.5px] font-bold uppercase tracking-normal text-white/75">
                   Tổng chi trả · {periodLabel}
                 </span>
               </div>
               <div className="mt-3 flex items-baseline gap-2.5 flex-wrap">
-                <span className="font-display font-extrabold tabular-nums tracking-tight leading-none text-[clamp(2rem,5vw,3.5rem)]">
+                <span className="font-display text-4xl font-extrabold tabular-nums tracking-normal leading-none sm:text-5xl">
                   {formatVND(data?.total_paid_vnd ?? 0)}
                 </span>
                 {showMomBadges && <TrendChip change={data?.mom_paid_amount} variant="on-dark" />}
               </div>
-              <p className="mt-3 text-[13px] text-violet-100/75 leading-relaxed">
+              <p className="mt-3 max-w-2xl text-[13px] text-white/75 leading-relaxed">
                 Đã thanh toán cho{' '}
                 <span className="font-semibold text-white">{data?.paid_employees ?? 0}</span> nhân viên trong{' '}
                 {periodLabel}.{' '}
@@ -460,8 +459,8 @@ const PartnerDashboardPage = () => {
 
               <div className="mt-5 flex items-center gap-4 text-[11.5px]">
                 <div className="flex items-center gap-1.5">
-                  <Banknote className="h-3.5 w-3.5 text-violet-200" />
-                  <span className="text-violet-100/70">Cập nhật theo thời gian thực</span>
+                  <Banknote className="h-3.5 w-3.5 text-amber-200" />
+                  <span className="text-white/70">Cập nhật theo thời gian thực</span>
                 </div>
               </div>
             </div>
@@ -501,7 +500,7 @@ const PartnerDashboardPage = () => {
       {/* ── ANALYTICS GRID: workforce donut + leaderboard ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Workforce donut */}
-        <div className="rounded-2xl bg-card p-5 shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_8px_-4px_rgba(15,15,30,0.05)]">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">Cơ cấu nhân sự</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5">Phân loại theo trạng thái hoạt động</p>
@@ -518,7 +517,7 @@ const PartnerDashboardPage = () => {
         </div>
 
         {/* Top employees leaderboard */}
-        <div className="lg:col-span-2 rounded-2xl bg-card p-5 shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_8px_-4px_rgba(15,15,30,0.05)]">
+        <div className="lg:col-span-2 rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">

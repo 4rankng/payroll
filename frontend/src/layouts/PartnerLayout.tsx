@@ -24,9 +24,9 @@ const PartnerLayoutInner = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <main
           id="main-content"
-          className="flex-1 overflow-auto bg-gradient-subtle"
+          className="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_30rem),linear-gradient(180deg,#f8fafc_0%,#edf4f8_100%)]"
         >
-          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1280px] mx-auto">
+          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1320px] mx-auto">
             <SectionErrorBoundary sectionName="trang đối tác">
               <Outlet />
             </SectionErrorBoundary>

@@ -172,8 +172,8 @@ const AdvancePaymentsPage = () => {
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
 
   return (
-    <div ref={animRoot} className="min-h-full">
-      <div className="max-w-[1440px] mx-auto space-y-4 p-4 lg:p-6">
+    <div ref={animRoot} className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(15,49,103,0.08),transparent_32rem),linear-gradient(180deg,rgba(248,250,252,0.96),#f8fafc_34rem)]">
+      <div className="mx-auto max-w-[1480px] space-y-4 p-4 lg:space-y-5 lg:p-6">
 
         {/* ─── MOBILE: Wallet hero — full-bleed, above everything ─── */}
         {isMobile && !isAdvPartner && (
@@ -192,7 +192,10 @@ const AdvancePaymentsPage = () => {
         )}
 
         {/* ─── 1. Page header ─── */}
-        <div data-mobile-header>
+        <div
+          data-mobile-header
+          className="rounded-2xl border border-white/80 bg-white/82 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_48px_-32px_rgba(15,49,103,0.35)] backdrop-blur sm:px-5"
+        >
           <PageHeader
             title="Quản lý ứng lương"
             description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
@@ -209,8 +212,8 @@ const AdvancePaymentsPage = () => {
         <section
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
-            "overflow-hidden rounded-xl border border-border/70 bg-card",
-            "shadow-[0_1px_0_rgba(14,23,41,0.04),0_6px_24px_rgba(14,23,41,0.06)]",
+            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_22px_60px_-42px_rgba(15,49,103,0.55)]",
             isMobile && "mobile-section-enter",
           )}
         >
@@ -247,34 +250,38 @@ const AdvancePaymentsPage = () => {
           </div>
         </section>
 
-        {/* ─── 3. Pipeline — status bar + cards ─── */}
-        <div data-mobile-stats>
+        {/* ─── 3. Pipeline + operating health ─── */}
+        <section
+          data-mobile-stats
+          aria-label="Trạng thái xử lý ứng lương"
+          className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]"
+        >
           <AdvPartnerStatusOverview
             {...statusProps}
             isLoading={page.summaryLoading}
           />
-        </div>
-
-        {/* ─── 4. Metrics strip — success rate | avg time | avg fee ─── */}
-        <div data-mobile-stats>
           <AdvPartnerMetricsStrip
             {...metricsProps}
             isLoading={page.summaryLoading}
+            className="sm:grid-cols-1"
           />
-        </div>
+        </section>
 
         {/* ─── 5. Operations — tabs + filters + table ─── */}
         <section
           data-mobile-content
           className={cn(
-            "overflow-hidden rounded-2xl border border-border/70 bg-card",
-            "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_-4px_rgba(15,23,42,0.06)]",
+            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_20px_56px_-42px_rgba(15,49,103,0.48)]",
             isMobile && "mobile-section-enter",
           )}
         >
 
           {/* Header row: tabs + actions */}
-          <div data-mobile-tabs className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 bg-gradient-to-b from-muted/40 to-transparent px-3 py-3 sm:px-4">
+          <div
+            data-mobile-tabs
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/80 px-3 py-3 sm:px-5"
+          >
             <TabBarWithBadges
               tabs={[
                 {
@@ -327,14 +334,25 @@ const AdvancePaymentsPage = () => {
           </div>
 
           {/* Filter row */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-border/40 bg-muted/20 px-3 py-2.5 sm:px-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white px-3 py-3 sm:px-5">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Bộ lọc
+              </p>
+              <p className="text-sm font-semibold text-slate-800">
+                {activeTab === "requests" && "Yêu cầu ứng lương"}
+                {activeTab === "employees" && "Nhân viên FlexPay"}
+                {activeTab === "attendances" && "Chấm công linh hoạt"}
+              </p>
+            </div>
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
             {activeTab === "requests" && (
               <>
                 <SearchBar
                   searchTerm={page.searchInput}
                   onSearchChange={page.handleSearch}
                   placeholder="Tên hoặc CCCD..."
-                  className="h-8 w-44 text-sm"
+                  className="h-9 w-full min-w-[220px] sm:w-64"
                 />
                 <StatusFilterBar
                   value={(page.filters.status as AdvancePaymentRequestStatus) || "all"}
@@ -350,13 +368,13 @@ const AdvancePaymentsPage = () => {
                   searchTerm={page.flexPaySearchInput}
                   onSearchChange={page.handleFlexPaySearch}
                   placeholder="Tên hoặc CCCD..."
-                  className="h-8 w-44 text-sm"
+                  className="h-9 w-full min-w-[220px] sm:w-64"
                 />
                 <Select
                   value={page.selectedViewMonth ?? ""}
                   onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
                 >
-                  <SelectTrigger className="h-8 w-auto min-w-36 shrink-0 text-sm">
+                  <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm">
                     <Calendar className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <SelectValue placeholder="Tháng" />
                   </SelectTrigger>
@@ -383,7 +401,7 @@ const AdvancePaymentsPage = () => {
                   value={attendancePage.filters.status || "all"}
                   onValueChange={attendancePage.handleStatusChange}
                 >
-                  <SelectTrigger className="h-8 w-auto min-w-36 shrink-0 text-sm bg-white">
+                  <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm bg-white">
                     <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
@@ -395,6 +413,7 @@ const AdvancePaymentsPage = () => {
                 </Select>
               </>
             )}
+            </div>
           </div>
 
           {/* Table */}

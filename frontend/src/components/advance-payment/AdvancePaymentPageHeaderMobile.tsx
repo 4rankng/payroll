@@ -34,6 +34,7 @@ export function AdvancePaymentPageHeaderMobile({
       icon={FileSpreadsheet}
       sticky={false}
       bordered={false}
+      className="bg-transparent px-0 pb-0 supports-[backdrop-filter]:bg-transparent"
       actions={
         <div className="flex items-center gap-1.5 shrink-0">
           <Button

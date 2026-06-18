@@ -1,4 +1,6 @@
 # === Backend (Go) ===
+.codex
+.qa/*
 *.exe
 *.exe~
 *.dll

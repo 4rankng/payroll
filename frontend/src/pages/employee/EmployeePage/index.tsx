@@ -129,6 +129,10 @@ const EmployeePage = () => {
           </div>
         </div>
         <div className="max-w-2xl mx-auto p-4 space-y-4">
+          <div className="rounded-2xl border border-white/60 bg-white/75 px-4 py-3 shadow-sm backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-sky-700">Đang tải hồ sơ</p>
+            <p className="mt-1 text-sm text-slate-500">Chuẩn bị bảng công và thông tin thanh toán của bạn.</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-card/50" />)}
           </div>

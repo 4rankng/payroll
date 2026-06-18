@@ -34,7 +34,7 @@ export const FilterPill = React.memo(function FilterPill({
     <SelectPrimitive.Root value={value} onValueChange={onChange}>
       <SelectPrimitive.Trigger
         className={cn(
-          'group inline-flex items-center gap-1 h-7 px-2.5 py-0 rounded-xl text-xs font-medium whitespace-nowrap',
+          'group inline-flex items-center gap-1.5 h-9 px-3 py-0 rounded-xl text-sm font-medium whitespace-nowrap',
           'border transition-colors duration-100 select-none outline-none',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           !isActive && 'border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40',
@@ -46,7 +46,7 @@ export const FilterPill = React.memo(function FilterPill({
         {icon && <span className="shrink-0 opacity-70">{icon}</span>}
         <span>{isActive ? activeLabel : placeholder}</span>
         <SelectPrimitive.Icon asChild>
-          <ChevronDown className="h-3 w-3 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-150" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-150" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
 
@@ -85,14 +85,14 @@ const FilterPillItem = React.memo(function FilterPillItem({
     <SelectPrimitive.Item
       value={value}
       className={cn(
-        'relative flex w-full cursor-default select-none items-center rounded-sm py-1 pl-6 pr-3 text-xs outline-none whitespace-nowrap',
+        'relative flex min-h-9 w-full cursor-default select-none items-center rounded-md py-2 pl-7 pr-3 text-sm outline-none whitespace-nowrap',
         'focus:bg-accent focus:text-accent-foreground',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       )}
     >
-      <span className="absolute left-1.5 flex h-3.5 w-3.5 items-center justify-center">
+      <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <Check className="h-3 w-3" />
+          <Check className="h-3.5 w-3.5" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{label}</SelectPrimitive.ItemText>
