@@ -10,6 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
+import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { useTimesheetManagement } from "@/hooks/timesheet/useTimesheetManagement";
 import { useTimesheetModals } from "@/hooks/useModalNavigation";
@@ -171,7 +172,7 @@ export default function TimesheetsPageMobile() {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="p-4 pb-24 space-y-3">
+      <MobilePageShell className="space-y-3">
         {/* Mobile header skeleton */}
         <div className="flex justify-between gap-2">
           <div className="space-y-1 flex-1">
@@ -189,12 +190,12 @@ export default function TimesheetsPageMobile() {
         </div>
         {/* List skeleton */}
         <Skeleton className="h-80" />
-      </div>
+      </MobilePageShell>
     );
   }
 
   return (
-    <div className="p-3 pb-24 space-y-2.5 max-w-full overflow-hidden">
+    <MobilePageShell className="space-y-3">
       <TimesheetPageHeaderMobile
         onAddTimesheet={() => openTimesheetEntry()}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}
@@ -243,26 +244,30 @@ export default function TimesheetsPageMobile() {
         </div>
       )}
 
-      <MissingBankDetailsSection />
+      <MobileSurface className="p-3">
+        <MissingBankDetailsSection />
+      </MobileSurface>
 
-      <TimesheetDisplaySection
-        timesheetManagement={timesheetManagement}
-        onEdit={timesheetManagement.handleEdit}
-        onDelete={handleDelete}
-        onAddTimesheet={() => openTimesheetEntry()}
-        bulkTransferPercentage={bulkTransferPercentage}
-        onRequestEdit={handleRequestEdit}
-        requestingTimesheetId={requestingTimesheetId}
-        showEditRequestTable={true}
-        userRole="partner"
-        onEditRequestRowClick={(timesheet) => {
-          queryClient.setQueryData(
-            ["timesheets", "detail", timesheet.id],
-            timesheet,
-          );
-          openTimesheetDetails(timesheet.id.toString());
-        }}
-      />
+      <MobileSurface className="overflow-hidden p-3">
+        <TimesheetDisplaySection
+          timesheetManagement={timesheetManagement}
+          onEdit={timesheetManagement.handleEdit}
+          onDelete={handleDelete}
+          onAddTimesheet={() => openTimesheetEntry()}
+          bulkTransferPercentage={bulkTransferPercentage}
+          onRequestEdit={handleRequestEdit}
+          requestingTimesheetId={requestingTimesheetId}
+          showEditRequestTable={true}
+          userRole="partner"
+          onEditRequestRowClick={(timesheet) => {
+            queryClient.setQueryData(
+              ["timesheets", "detail", timesheet.id],
+              timesheet,
+            );
+            openTimesheetDetails(timesheet.id.toString());
+          }}
+        />
+      </MobileSurface>
 
       <TimesheetsExportDialog
         open={approvedTimesheetsDialogOpen}
@@ -270,6 +275,6 @@ export default function TimesheetsPageMobile() {
         onExport={handleApprovedTimesheetsExportSubmit}
         isLoading={exportApprovedTimesheetsMutation.isPending}
       />
-    </div>
+    </MobilePageShell>
   );
 }

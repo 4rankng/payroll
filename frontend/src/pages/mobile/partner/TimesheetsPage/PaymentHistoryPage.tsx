@@ -4,6 +4,7 @@ import { SortingState } from "@tanstack/react-table";
 import { ArrowLeft, FileSpreadsheet, History, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { PaymentHistoryFilters } from "@/components/payroll/PaymentHistoryFilters";
 import { PaymentHistoryMobileList } from "@/components/payroll/mobile/PaymentHistoryMobileList";
 import { InfiniteScrollContainer } from "@/components/ui/infinite-scroll-container";
@@ -104,7 +105,7 @@ const PaymentHistoryPage = () => {
   }, [filters.fromDate, filters.toDate, exportPaymentHistories]);
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
+    <MobilePageShell className="space-y-3">
       <MobilePageHeader
         title="Lịch sử thanh toán"
         subtitle="Danh sách các lần thanh toán lương"
@@ -117,12 +118,12 @@ const PaymentHistoryPage = () => {
               size="sm"
               onClick={handleExport}
               disabled={exportPaymentHistories.isPending}
-              className="h-8 px-3 text-xs shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-11 px-3 text-xs shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
               Xuất
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-300 bg-white" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </>
@@ -130,17 +131,17 @@ const PaymentHistoryPage = () => {
       />
 
       {/* Filters */}
-      <div className="px-4 pt-3 pb-2">
+      <MobileSurface className="p-3">
         <PaymentHistoryFilters
           filters={{ ...filters, page: 1, pageSize: 20 }}
           onFiltersChange={handleFiltersChange}
           onClearFilters={handleClearFilters}
           hasFilters={hasFilters}
         />
-      </div>
+      </MobileSurface>
 
       {/* Infinite scroll list */}
-      <div className="flex-1 px-4 pb-2">
+      <MobileSurface className="flex-1 p-3">
         <InfiniteScrollContainer
           onLoadMore={() => { fetchNextPage(); }}
           hasMore={!!hasNextPage}
@@ -152,8 +153,8 @@ const PaymentHistoryPage = () => {
             isLoading={isLoading && payments.length === 0}
           />
         </InfiniteScrollContainer>
-      </div>
-    </div>
+      </MobileSurface>
+    </MobilePageShell>
   );
 };
 

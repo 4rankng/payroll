@@ -100,11 +100,11 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
     <section
       aria-label="Tiến độ yêu cầu"
       className={cn(
-        "rounded-xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_0_rgb(15_23_42/0.04)] sm:p-6",
+        "rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_0_rgb(15_23_42/0.04)] sm:p-4",
         className,
       )}
     >
-      <div className="mb-[18px] flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-[14px] font-bold tracking-tight text-foreground">
             Tiến độ yêu cầu
@@ -120,13 +120,13 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-9 w-full rounded-lg" />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Skeleton className="h-[68px] rounded-lg" />
-            <Skeleton className="h-[68px] rounded-lg" />
-            <Skeleton className="h-[68px] rounded-lg" />
-            <Skeleton className="h-[68px] rounded-lg" />
+        <div className="space-y-3">
+          <Skeleton className="h-7 w-full rounded-lg" />
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Skeleton className="h-[58px] rounded-lg" />
+            <Skeleton className="h-[58px] rounded-lg" />
+            <Skeleton className="h-[58px] rounded-lg" />
+            <Skeleton className="h-[58px] rounded-lg" />
           </div>
         </div>
       ) : (
@@ -138,7 +138,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                 8–18%  : icon-bubble + value, left-aligned
                 > 18%  : icon-bubble + value + label
           */}
-          <div className="flex h-9 overflow-hidden rounded-lg bg-muted shadow-[inset_0_0_0_1px_theme(colors.border)]">
+          <div className="flex h-7 overflow-hidden rounded-lg bg-muted shadow-[inset_0_0_0_1px_theme(colors.border)]">
             {CELLS.map((cell) => {
               const value = cell.getValue(props);
               const width = totalRequests > 0 ? (value / totalRequests) * 100 : 0;
@@ -155,20 +155,20 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                   title={`${cell.label}: ${value}`}
                   aria-label={`${cell.label}: ${value}`}
                   className={cn(
-                    "relative flex h-full items-center font-financial text-[13px] font-semibold text-white transition-[filter] hover:brightness-110 min-w-0",
-                    showIcon ? "px-3 sm:px-3.5" : "px-1.5 justify-center",
+                    "relative flex h-full min-w-0 items-center font-financial text-[12px] font-semibold text-white transition-[filter] hover:brightness-110",
+                    showIcon ? "px-2.5 sm:px-3" : "justify-center px-1.5",
                     cell.gradientClass,
                   )}
                   style={{ width: `${width}%` }}
                 >
                   {showIcon && (
-                    <div className="mr-2 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full bg-white/20">
+                    <div className="mr-1.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-white/20">
                       <cell.icon className="h-[11px] w-[11px]" strokeWidth={3} />
                     </div>
                   )}
-                  <span className="text-[14px] font-bold tabular-nums shrink-0">{value}</span>
+                  <span className="shrink-0 text-[13px] font-bold tabular-nums">{value}</span>
                   {showLabel && (
-                    <span className="ml-1.5 font-display text-[12.5px] font-medium opacity-90 truncate">
+                    <span className="ml-1.5 truncate font-display text-[12px] font-medium opacity-90">
                       {cell.label}
                     </span>
                   )}
@@ -181,7 +181,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
               small inline icon next to the label). Matches the dashboard
               StatTile / KpiHeroCard treatment so the visual language is
               consistent across stat cards. */}
-          <div className="mt-3.5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="mt-2.5 grid grid-cols-2 gap-2 lg:grid-cols-4">
             {CELLS.map((cell) => {
               const value = cell.getValue(props);
               const amount = cell.getAmount(props);
@@ -189,12 +189,12 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
               return (
                 <div
                   key={cell.key}
-                  className="group relative flex flex-col rounded-lg border border-border/70 bg-card p-3 overflow-hidden shadow-sm transition-colors hover:bg-muted/40"
+                  className="group relative flex min-h-[58px] flex-col overflow-hidden rounded-lg border border-border/70 bg-card p-2.5 shadow-sm transition-colors hover:bg-muted/40"
                 >
                   {/* Watermark — large faint icon bleeding right, behind text */}
                   <cell.icon
                     className={cn(
-                      "absolute right-2 top-1/2 -translate-y-1/2 h-12 w-12 pointer-events-none",
+                      "pointer-events-none absolute right-2 top-1/2 h-9 w-9 -translate-y-1/2",
                       "transition-transform duration-300 group-hover:scale-105",
                       cell.watermark,
                     )}
@@ -205,13 +205,13 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                     {/* Label row with small inline icon prefix */}
                     <div className="flex items-center gap-1.5">
                       <cell.icon className={cn("h-3 w-3 shrink-0", cell.iconText)} strokeWidth={2.2} />
-                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight">
+                      <span className="text-[10px] font-semibold uppercase leading-tight tracking-[0.06em] text-muted-foreground">
                         {cell.label}
                       </span>
                     </div>
                     {/* Big number + optional amount */}
-                    <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
-                      <span className="font-financial text-[20px] font-semibold tracking-[-0.01em] leading-none text-foreground tabular-nums">
+                    <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                      <span className="font-financial text-[18px] font-semibold leading-none tracking-[-0.01em] text-foreground tabular-nums">
                         {value}
                       </span>
                       {amount !== undefined && (

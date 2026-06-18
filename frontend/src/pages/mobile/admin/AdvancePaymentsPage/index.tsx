@@ -19,8 +19,10 @@ import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet"
 import { PayrollReportEmailDialog } from "@/components/timesheet/PayrollReportEmailDialog";
 import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHeroStrip";
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
+import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
+import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
 
@@ -52,6 +54,7 @@ const AdvancePaymentsPageMobile = () => {
       totalCancelled: summaryData?.totalCancelled ?? 0,
       avgProcessingTimeSecs: summaryData?.avgProcessingTimeSecs ?? 0,
       completedUnder30s: summaryData?.completedUnder30s ?? 0,
+      disbursementPercentage: summaryData?.disbursementPercentage ?? 0,
     }),
     [summaryData],
   );
@@ -63,7 +66,23 @@ const AdvancePaymentsPageMobile = () => {
       totalFailed: summaryData?.totalFailed ?? 0,
       totalCancelled: summaryData?.totalCancelled ?? 0,
       totalRequests: summaryData?.totalRequests ?? 0,
+      totalPaidAmount: summaryData?.totalPaidAmount ?? 0,
+      totalPendingAmount: summaryData?.totalPendingAmount ?? 0,
+      totalFailedAmount: summaryData?.totalFailedAmount ?? 0,
+      totalCancelledAmount: summaryData?.totalCancelledAmount ?? 0,
       successRate: summaryData?.successRate ?? 0,
+    }),
+    [summaryData],
+  );
+
+  const feePanelProps = useMemo(
+    () => ({
+      totalFeeEarned: summaryData?.totalFeeEarned ?? 0,
+      totalPaid: summaryData?.totalPaid ?? 0,
+      totalRequests: summaryData?.totalRequests ?? 0,
+      feePercentage: summaryData?.feePercentage ?? 0,
+      avgFeePerRequest: summaryData?.avgFeePerRequest ?? 0,
+      avgFeePerEmployee: summaryData?.avgFeePerEmployee ?? 0,
     }),
     [summaryData],
   );
@@ -102,21 +121,8 @@ const AdvancePaymentsPageMobile = () => {
   }
 
   return (
-    <div className="min-h-screen max-w-full space-y-3 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_42%)] p-3 pb-20">
-
-      {/* Wallet hero — full-bleed, first thing visible */}
-      {!isAdvPartner && (
-        <div className="mobile-wallet-hero relative -mx-4 -mt-4 overflow-hidden rounded-none">
-          <WalletBalanceCard
-            monthlyProviderFee={page.providerFees.monthlyProviderFee}
-            totalProviderFee={page.providerFees.totalProviderFee}
-            className="rounded-none border-0 shadow-none"
-          />
-          <div className="wallet-shimmer-bg pointer-events-none absolute inset-0" />
-        </div>
-      )}
-
-      <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_42px_-34px_rgba(15,49,103,0.5)] backdrop-blur">
+    <MobilePageShell className="space-y-3">
+      <MobileSurface className="p-3">
         <AdvancePaymentPageHeaderMobile
           onImportPayroll={() => setIsImportSheetOpen(true)}
           onViewEmployees={() => navigate("employees")}
@@ -160,51 +166,73 @@ const AdvancePaymentsPageMobile = () => {
           )}
         />
 
-        <div className="mt-3 overflow-x-auto">
+        <div className="mt-3 overflow-x-auto rounded-xl border border-[#D8E2EE] bg-[#F3F7FB] p-1">
           <TimesheetMonthSelector
             value={page.selectedMonth}
             onChange={page.setSelectedMonth}
+            className="min-w-max"
           />
         </div>
-      </section>
+      </MobileSurface>
 
-      {/* Hero metrics — same components as desktop, already grid-cols-2 on mobile */}
-      <div className="space-y-3">
-        <AdvPartnerHeroStrip {...heroProps} isLoading={page.summaryLoading} />
+      <div className="grid gap-3">
+        {!isAdvPartner && (
+          <WalletBalanceCard
+            compact
+            monthlyProviderFee={page.providerFees.monthlyProviderFee}
+            totalProviderFee={page.providerFees.totalProviderFee}
+            className="rounded-2xl border border-slate-900/10 shadow-[0_16px_42px_-30px_rgba(15,23,42,0.75)]"
+          />
+        )}
+
+        <div className="grid grid-cols-1 gap-3">
+          <AdvPartnerHeroStrip
+            {...heroProps}
+            compact
+            isLoading={page.summaryLoading}
+            className="rounded-2xl border-[#D8E2EE] bg-white"
+          />
+          <TreasuryFeePanel
+            {...feePanelProps}
+            compact
+            isLoading={page.summaryLoading}
+            className="rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+          />
+        </div>
       </div>
 
       {/* Requests list */}
-      <section className="space-y-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_16px_42px_-34px_rgba(15,49,103,0.5)]">
-        <div className="flex items-end justify-between gap-3">
+      <MobileSurface className="space-y-3 p-3">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
               Yêu cầu
             </p>
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-[15px] font-bold leading-tight text-slate-900">
               Danh sách ứng lương
             </h2>
           </div>
-          <div className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold tabular-nums text-slate-600">
+          <div className="grid h-8 min-w-8 place-items-center rounded-full bg-slate-100 px-2 text-xs font-semibold tabular-nums text-slate-600">
             {page.statusCounts?.all ?? 0}
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="flex items-center gap-2">
           <MobileSearchInput
             value={page.searchInput}
             onSearch={page.handleSearch}
             placeholder="Tìm tên hoặc CCCD..."
-            className="h-10"
+            className="min-w-0 flex-1"
           />
           {/* Horizontally scrollable filter bar with right-edge fade hint */}
-          <div className="relative w-full">
+          <div className="relative shrink-0">
             <div className="overflow-x-auto pb-0.5 scrollbar-none">
               <StatusFilterBar
                 value={((page.filters.status as string) || "all") as import("@/types/api/advance-payment.types").AdvancePaymentRequestStatus | "all"}
                 onChange={page.handleStatusChange}
                 counts={page.statusCounts}
+                triggerClassName="h-11 min-w-[108px] rounded-lg border-slate-200 bg-slate-50 px-3 text-[13px]"
               />
             </div>
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
           </div>
         </div>
 
@@ -220,9 +248,13 @@ const AdvancePaymentsPageMobile = () => {
           pagination={page.pagination}
           onPageChange={page.handlePageChange}
         />
-      </section>
+      </MobileSurface>
 
-      <AdvPartnerStatusOverview {...statusProps} isLoading={page.summaryLoading} />
+      <AdvPartnerStatusOverview
+        {...statusProps}
+        isLoading={page.summaryLoading}
+        className="rounded-2xl border-[#D8E2EE] bg-white"
+      />
 
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />
       <FlexibleEmployeeListUploadDialog open={isEmployeeListUploadOpen} onOpenChange={setIsEmployeeListUploadOpen} />
@@ -236,7 +268,7 @@ const AdvancePaymentsPageMobile = () => {
         onSendEmail={handleSendEmail}
         isLoading={sendEmailMutation.isPending}
       />
-    </div>
+    </MobilePageShell>
   );
 };
 

@@ -11,9 +11,10 @@ interface WalletBalanceCardProps {
   monthlyProviderFee?: number;
   totalProviderFee?: number;
   className?: string;
+  compact?: boolean;
 }
 
-export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, className }: WalletBalanceCardProps) {
+export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, className, compact = false }: WalletBalanceCardProps) {
   const queryClient = useQueryClient();
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -44,18 +45,16 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       aria-label="Ví tiền"
       className={cn(
         "relative overflow-hidden p-[22px] px-6 text-white",
-        "bg-[radial-gradient(120%_80%_at_0%_0%,rgba(29,78,216,0.06)_0%,transparent_60%),linear-gradient(180deg,#0E1729_0%,#1A2542_100%)]",
+        "bg-[#101D35]",
+        compact && "p-3.5",
         className
       )}
     >
-      {/* Glow effect top right */}
-      <div className="pointer-events-none absolute -right-10 -top-10 h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,rgba(110,168,255,0.18)_0%,transparent_70%)]" />
-      
       {/* Grid pattern overlay */}
       <div 
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(#1B2A47 1px, transparent 1px), linear-gradient(90deg, #1B2A47 1px, transparent 1px)',
           backgroundSize: '28px 28px'
         }}
       />
@@ -98,11 +97,12 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
 
               {/* Main Balance */}
               <div className={cn(
-                "mt-1.5 whitespace-nowrap font-financial text-[32px] font-semibold leading-[1.05] tracking-[-0.02em]",
+                "mt-1.5 whitespace-nowrap font-financial font-semibold leading-[1.05] tracking-[-0.02em]",
+                compact ? "text-[24px]" : "text-[32px]",
                 isLow ? "text-red-400" : "text-white"
               )}>
                 {formatCurrency(available).replace('₫', '')}
-                <span className={cn("ml-1 text-lg font-medium", isLow ? "text-red-400/80" : "text-[#6FA8FF]")}>₫</span>
+                <span className={cn("ml-1 font-medium", compact ? "text-base" : "text-lg", isLow ? "text-red-400/80" : "text-[#6FA8FF]")}>₫</span>
               </div>
 
               {hasDivergence && showProviderBalance && providerBalance && (
@@ -120,20 +120,20 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             </div>
 
             {/* Meta Grid */}
-            <div className="mt-[22px] grid grid-cols-2 gap-3.5">
+            <div className={cn("grid grid-cols-2", compact ? "mt-3 gap-2" : "mt-[22px] gap-3.5")}>
               <div>
-                <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                   Tổng phí trả
                 </div>
-                <div className="mt-1 font-financial text-[15px] font-medium text-white">
+                <div className={cn("mt-1 font-financial font-medium text-white", compact ? "text-[13px]" : "text-[15px]")}>
                   {formatCurrency(totalProviderFee ?? 0)}
                 </div>
               </div>
               <div>
-                <div className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                   Phí tháng này
                 </div>
-                <div className="mt-1 font-financial text-[15px] font-medium text-white">
+                <div className={cn("mt-1 font-financial font-medium text-white", compact ? "text-[13px]" : "text-[15px]")}>
                   {formatCurrency(monthlyProviderFee ?? 0)}
                 </div>
               </div>

@@ -35,19 +35,21 @@ interface StatusFilterBarProps {
   value: AdvancePaymentRequestStatus | "all";
   onChange: (value: string) => void;
   counts?: StatusCounts;
+  triggerClassName?: string;
 }
 
 export const StatusFilterBar = memo(function StatusFilterBar({
   value,
   onChange,
   counts,
+  triggerClassName,
 }: StatusFilterBarProps) {
   const selected = STATUS_OPTIONS.find((o) => o.value === value) ?? STATUS_OPTIONS[0];
   const selectedCount = counts?.[selected.value as keyof StatusCounts];
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 text-sm shrink-0 w-auto min-w-36 gap-1.5">
+      <SelectTrigger className={cn("h-8 w-auto min-w-36 shrink-0 gap-1.5 text-sm", triggerClassName)}>
         {selected.dotClass && (
           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", selected.dotClass)} />
         )}

@@ -263,7 +263,7 @@ const AdvancePaymentsPage = () => {
           <AdvPartnerMetricsStrip
             {...metricsProps}
             isLoading={page.summaryLoading}
-            className="sm:grid-cols-1"
+            className="sm:grid-cols-3 xl:grid-cols-1"
           />
         </section>
 

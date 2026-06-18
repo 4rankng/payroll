@@ -63,10 +63,10 @@ function MetricCard({
 }: MetricCardProps) {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border/50 bg-card p-3 sm:p-4">
-        <div className="space-y-2">
+      <div className="rounded-xl border border-border/50 bg-card p-3">
+        <div className="space-y-1.5">
           <Skeleton className="h-2.5 w-24" />
-          <Skeleton className="h-7 w-20" />
+          <Skeleton className="h-6 w-20" />
           <Skeleton className="h-3 w-36" />
         </div>
       </div>
@@ -74,35 +74,34 @@ function MetricCard({
   }
 
   return (
-    <div className="group relative rounded-xl border border-border/50 bg-card p-3 sm:p-4 overflow-hidden transition-colors hover:bg-muted/40">
+    <div className="group relative min-h-[74px] overflow-hidden rounded-xl border border-border/50 bg-card p-3 transition-colors hover:bg-muted/40">
       {/* Watermark — large faint icon decoration on the right side */}
       <Icon
         className={cn(
-          "absolute right-3 top-1/2 -translate-y-1/2 h-14 w-14 pointer-events-none",
+          "pointer-events-none absolute right-3 top-1/2 h-10 w-10 -translate-y-1/2",
           "transition-transform duration-300 group-hover:scale-105",
           watermark,
         )}
         strokeWidth={1.5}
       />
 
-      <div className="relative pr-14">
+      <div className="relative pr-11">
         {/* Label */}
         <div className="flex items-center gap-1.5">
           <Icon className={cn("h-3.5 w-3.5 shrink-0", iconText)} strokeWidth={2.2} />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] leading-tight text-muted-foreground/80">
+          <span className="text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground/80">
             {label}
           </span>
         </div>
 
-        {/* Value */}
-        <div className="mt-2 font-financial text-xl font-semibold tracking-[-0.02em] text-foreground leading-none sm:text-2xl">
-          {value}
-          {unit && <span className="ml-0.5 text-sm font-normal text-muted-foreground">{unit}</span>}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-          {footer}
+        <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+          <div className="font-financial text-[22px] font-semibold leading-none tracking-[-0.02em] text-foreground">
+            {value}
+            {unit && <span className="ml-0.5 text-sm font-normal text-muted-foreground">{unit}</span>}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pb-0.5 text-[11px] text-muted-foreground">
+            {footer}
+          </div>
         </div>
       </div>
     </div>
