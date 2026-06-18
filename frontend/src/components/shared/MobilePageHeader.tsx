@@ -19,10 +19,10 @@ interface MobilePageHeaderProps {
 }
 
 /**
- * Premium mobile page header with backdrop blur, consistent typography,
+ * Premium mobile page header with solid surfaces, consistent typography,
  * and optional icon + subtitle + action buttons.
  *
- * Design: sticky by default, backdrop-blur, subtle border-bottom.
+ * Design: sticky by default, opaque background, subtle border-bottom.
  * Typography: font-display text-[22px] font-extrabold tracking-tight.
  */
 export const MobilePageHeader = ({
@@ -37,10 +37,10 @@ export const MobilePageHeader = ({
   return (
     <div
       className={cn(
-        'z-20 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80',
-        bordered && 'border-b border-border/30',
+        'z-20 bg-white',
+        bordered && 'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)]',
         sticky && 'sticky top-0',
-        'px-4 pt-4 pb-3',
+        'px-4 pb-3 pt-4',
         className,
       )}
       style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
@@ -49,16 +49,16 @@ export const MobilePageHeader = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2.5">
             {Icon && (
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/5 shrink-0">
-                <Icon className="h-[18px] w-[18px] text-primary/70" strokeWidth={2} />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] shadow-sm">
+                <Icon className="h-[18px] w-[18px] text-primary/75" strokeWidth={2} />
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="font-display text-[22px] font-extrabold text-foreground tracking-tight leading-tight truncate">
+              <h1 className="truncate font-display text-[21px] font-extrabold leading-tight tracking-tight text-slate-950">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-xs font-medium text-muted-foreground mt-0.5 leading-normal">
+                <p className="mt-0.5 text-xs font-medium leading-normal text-slate-500">
                   {subtitle}
                 </p>
               )}

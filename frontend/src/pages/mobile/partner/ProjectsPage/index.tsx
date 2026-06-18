@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -137,7 +138,7 @@ const ProjectsPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
+    <MobilePageShell className="space-y-3">
       {/* ── Header ── */}
       <MobilePageHeader
         title="Dự án"
@@ -147,7 +148,7 @@ const ProjectsPageMobile = () => {
         actions={
           <Button
             size="sm"
-            className="h-9 px-4 btn-partner-primary shrink-0"
+            className="h-11 px-4 btn-partner-primary shrink-0 rounded-xl"
             onClick={() => openCreateProject()}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -158,19 +159,19 @@ const ProjectsPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && summary && (
-        <div className="px-4 pb-3">
+        <MobileSurface className="p-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
             {[
-              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-primary/10" },
-              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
-              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-violet-600", bg: "bg-violet-500/10" },
-              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-amber-600", bg: "bg-amber-500/10" },
+              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-[#E7EEF6]" },
+              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-emerald-700", bg: "bg-[#DDF7EC]" },
+              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-violet-700", bg: "bg-[#EEE7FF]" },
+              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-amber-700", bg: "bg-[#FFF0C2]" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border border-border bg-card shrink-0 min-w-[68px] active:scale-95 transition-all duration-200 card-lift"
+                  className="flex min-h-16 min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-2xl border border-[#D8E2EE] bg-white px-2.5 py-2 transition-all duration-200 active:scale-95"
                 >
                   <div className={`p-1.5 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3 w-3 ${stat.color}`} />
@@ -183,7 +184,7 @@ const ProjectsPageMobile = () => {
               );
             })}
           </div>
-        </div>
+        </MobileSurface>
       )}
       {summaryLoading && (
         <div className="px-4 pb-3 flex gap-2">
@@ -194,7 +195,7 @@ const ProjectsPageMobile = () => {
       )}
 
       {/* ── Search + Filter ── */}
-      <div className="px-4 pb-3 flex gap-2">
+      <MobileSurface className="flex gap-2 p-3">
         <MobileSearchInput
           value={filterControls.searchTerm}
           onSearch={filterControls.setSearchTerm}
@@ -204,7 +205,7 @@ const ProjectsPageMobile = () => {
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 rounded-2xl border-border bg-card shrink-0 relative card-lift"
+          className="h-11 w-11 rounded-2xl border-[#D8E2EE] bg-white shrink-0 relative shadow-sm"
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
@@ -215,11 +216,11 @@ const ProjectsPageMobile = () => {
             </span>
           )}
         </Button>
-      </div>
+      </MobileSurface>
 
       {/* ── Active filter chips ── */}
       {activeFilterCount > 0 && (
-        <div className="px-4 pb-3 flex gap-2 flex-wrap items-center">
+        <div className="flex flex-wrap items-center gap-2">
           {currentStatusLabel && (
             <Badge
               variant="secondary"
@@ -250,13 +251,13 @@ const ProjectsPageMobile = () => {
       )}
 
       {/* ── Project list ── */}
-      <div className="flex-1 px-4">
+      <div className="flex-1">
         <ProjectMobileList
           projects={paginatedProjects}
           onRowClick={handleProjectClick}
           emptyState={
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/60">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7EEF6]">
                 <Briefcase className="h-7 w-7 text-muted-foreground/50" />
               </div>
               <div className="text-center">
@@ -285,8 +286,8 @@ const ProjectsPageMobile = () => {
 
       {/* ── Filter sheet ── */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl px-5 pt-2 pb-6">
-          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/20" />
+        <SheetContent side="bottom" className="rounded-t-3xl border-[#D8E2EE] bg-white px-5 pt-2 pb-6">
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" />
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>
@@ -364,7 +365,7 @@ const ProjectsPageMobile = () => {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </MobilePageShell>
   );
 };
 

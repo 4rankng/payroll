@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { MobilePageShell, MobileSurface } from '@/components/shared/MobilePageShell';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { generateMonthOptions } from '@/utils/dateHelpers';
@@ -57,7 +58,7 @@ function MonthNavigator({ value, onChange }: { value: string; onChange: (v: stri
       <button
         onClick={goPrev}
         disabled={currentIdx <= 0}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E7EEF6] text-slate-600 transition-colors hover:bg-[#DCE7F2] hover:text-slate-950 disabled:pointer-events-none disabled:opacity-40"
         aria-label="Tháng trước"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -70,7 +71,7 @@ function MonthNavigator({ value, onChange }: { value: string; onChange: (v: stri
       <button
         onClick={goNext}
         disabled={currentIdx >= monthOnlyOptions.length - 1}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none shrink-0"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E7EEF6] text-slate-600 transition-colors hover:bg-[#DCE7F2] hover:text-slate-950 disabled:pointer-events-none disabled:opacity-40"
         aria-label="Tháng sau"
       >
         <ChevronRight className="h-4 w-4" />
@@ -117,16 +118,16 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-medium text-foreground truncate">{item.employee_name}</span>
           {item.is_active ? (
-            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-emerald-300 text-emerald-700 bg-emerald-50/50 shrink-0">
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-emerald-300 text-emerald-700 bg-[#DDF7EC] shrink-0">
               <UserCheck className="w-2.5 h-2.5 mr-0.5" />Đang làm
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-rose-200 text-rose-500 bg-rose-50/50 shrink-0">
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-rose-200 text-rose-600 bg-[#FFE4E6] shrink-0">
               <UserX className="w-2.5 h-2.5 mr-0.5" />Nghỉ
             </Badge>
           )}
         </div>
-        <div className="mt-1.5 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+        <div className="mt-1.5 h-1.5 rounded-full bg-[#E7EEF6] overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/80 transition-all duration-700 ease-out"
             style={{ width: `${Math.max(pct, 2)}%` }}
@@ -181,7 +182,7 @@ const PartnerDashboardMobile = () => {
   }, [data?.mom_paid_amount, periodLabel, selectedMonth]);
 
   return (
-    <div className="flex flex-col gap-5 pb-24">
+    <MobilePageShell className="space-y-3">
       {/* Header */}
       <MobilePageHeader
         title="Tổng quan"
@@ -192,16 +193,16 @@ const PartnerDashboardMobile = () => {
       />
 
       {/* Month selector strip */}
-      <div className="px-4">
+      <MobileSurface className="p-3">
         <MonthNavigator value={selectedMonth} onChange={handleMonthChange} />
-      </div>
+      </MobileSurface>
 
       {/* KPI Grid */}
-      <div className="px-4">
+      <div>
         <div className="grid grid-cols-2 gap-3">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border/40 bg-card p-4 space-y-2">
+              <div key={i} className="rounded-xl border border-[#D8E2EE] bg-white p-4 space-y-2">
                 <Skeleton className="h-7 w-7 rounded-lg" />
                 <Skeleton className="h-6 w-14" />
                 <Skeleton className="h-3 w-24" />
@@ -219,17 +220,17 @@ const PartnerDashboardMobile = () => {
       </div>
 
       {/* Top Employees Leaderboard */}
-      <div className="px-4">
+      <MobileSurface className="p-4">
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5 shrink-0">
-            <Trophy className="h-3.5 w-3.5 text-primary/60" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E7EEF6]">
+            <Trophy className="h-4 w-4 text-primary" />
           </div>
           <h2 className="text-sm font-semibold text-foreground">Top nhân viên</h2>
           <span className="text-xs text-muted-foreground">— {periodLabel}</span>
         </div>
 
-        <Card className="overflow-hidden border-border/40">
-          <CardContent className="p-4">
+        <Card className="overflow-hidden border-0 bg-white shadow-none">
+          <CardContent className="p-0">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 py-3 border-b border-border/30 last:border-0">
@@ -244,7 +245,7 @@ const PartnerDashboardMobile = () => {
               ))
             ) : topEmployees.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E7EEF6] mb-3">
                   <Trophy className="w-5 h-5 text-muted-foreground/30" />
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">Chưa có dữ liệu thanh toán</p>
@@ -257,10 +258,10 @@ const PartnerDashboardMobile = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      </MobileSurface>
 
       <PartnerEmployeeListSheet type={sheetType} month={apiMonth} onClose={closeSheet} />
-    </div>
+    </MobilePageShell>
   );
 };
 

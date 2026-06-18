@@ -53,18 +53,19 @@ export function TimesheetPageHeaderMobile({
       bordered={false}
       actions={
         <div className="flex items-center gap-2 shrink-0">
-          <Button onClick={onAddTimesheet} className="touch-manipulation h-9">
+          <Button onClick={onAddTimesheet} className="h-11 rounded-xl touch-manipulation">
             <Plus className="h-4 w-4 mr-1" />
             Nhập
           </Button>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="touch-manipulation h-9 w-9" aria-label="Thêm tùy chọn">
+              <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-300 bg-white touch-manipulation" aria-label="Thêm tùy chọn">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto">
+            <SheetContent side="bottom" className="h-auto rounded-t-3xl border-[#D8E2EE] bg-white px-4 pt-3">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
               <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
               <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>
 

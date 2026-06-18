@@ -18,6 +18,7 @@ export interface AdvPartnerHeroStripProps {
   disbursementPercentage?: number;
   isLoading?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 const AnimatedCurrency = memo(function AnimatedCurrency({
@@ -39,6 +40,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
   disbursementPercentage,
   isLoading = false,
   className,
+  compact = false,
 }: AdvPartnerHeroStripProps) {
   // Compute pct safely: prefer backend-provided value, fall back to local
   // calculation, clamp to [0,100], and guard against NaN/undefined which
@@ -55,9 +57,9 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
     <section
       aria-label="Giải ngân"
       className={cn(
-        "relative flex flex-col justify-between p-[22px] px-7",
-        "rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]",
-        "bg-[linear-gradient(to_right,rgba(29,78,216,0.025)_0%,transparent_40%,transparent_60%,rgba(14,159,110,0.025)_100%)]",
+        "relative flex flex-col justify-between",
+        compact ? "p-3.5" : "p-[22px] px-7",
+        "rounded-xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]",
         className,
       )}
     >
@@ -81,24 +83,24 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         <>
           <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <div className={cn("flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                 <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
                 Giải ngân kỳ này
               </div>
-              <div className="rounded-md bg-muted px-2 py-1 font-financial text-xs font-semibold text-foreground/70">
+              <div className={cn("rounded-md bg-muted font-financial font-semibold text-foreground/70", compact ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs")}>
                 {pct.toFixed(1)}%
               </div>
             </div>
-            <div className="mt-1.5 font-financial text-4xl font-semibold leading-none tracking-tight text-foreground">
+            <div className={cn("mt-1.5 font-financial font-semibold leading-none tracking-tight text-foreground", compact ? "text-[24px]" : "text-4xl")}>
               <AnimatedCurrency target={totalPaidAmount} />
             </div>
 
-            <div className="mt-1.5 text-[12.5px] text-muted-foreground">
+            <div className={cn("mt-1 text-muted-foreground", compact ? "text-[11px]" : "text-[12.5px]")}>
               Hạn mức <span className="font-financial font-medium text-foreground">{formatCurrency(totalAmount)}</span>
             </div>
           </div>
-          <div className="mt-[18px]">
-            <div className="relative h-2 overflow-hidden rounded-full bg-muted">
+          <div className={cn(compact ? "mt-3" : "mt-[18px]")}>
+            <div className={cn("relative overflow-hidden rounded-full bg-muted", compact ? "h-1.5" : "h-2")}>
               <div
                 className="relative h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700 ease-out"
                 style={{ width: `${pct}%` }}
@@ -106,7 +108,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
                 <div className="absolute -right-0.5 -top-[2px] h-3 w-1 rounded-full bg-white shadow-[0_0_0_1px_#10b981]" />
               </div>
             </div>
-            <div className="mt-2 flex justify-between font-financial text-[10.5px] text-muted-foreground">
+            <div className={cn("flex justify-between font-financial text-[10.5px] text-muted-foreground", compact ? "mt-1.5" : "mt-2")}>
               <span>0%</span>
               <span>100%</span>
             </div>

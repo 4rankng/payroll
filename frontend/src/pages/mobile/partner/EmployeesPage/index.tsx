@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -117,7 +118,7 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.total_employees,
           icon: Users,
           color: "text-primary",
-          bg: "bg-primary/10",
+          bg: "bg-[#E7EEF6]",
           filter: null as "working" | "unassigned" | null,
         },
         {
@@ -125,7 +126,7 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.total_working_employees,
           icon: UserCheck,
           color: "text-emerald-600",
-          bg: "bg-emerald-500/10",
+          bg: "bg-[#DDF7EC]",
           filter: "working" as const,
         },
         {
@@ -135,7 +136,7 @@ const EmployeesPageMobile = () => {
             employeesSummary.total_working_employees,
           icon: UserX,
           color: "text-amber-600",
-          bg: "bg-amber-500/10",
+          bg: "bg-[#FFF0C2]",
           filter: "unassigned" as const,
         },
         {
@@ -143,7 +144,7 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.employees_hired_this_month,
           icon: UserPlus,
           color: "text-violet-600",
-          bg: "bg-violet-500/10",
+          bg: "bg-[#EEE7FF]",
           filter: null as "working" | "unassigned" | null,
         },
       ];
@@ -180,7 +181,7 @@ const EmployeesPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
+    <MobilePageShell className="space-y-3">
       {/* ── Header ── */}
       <MobilePageHeader
         title="Nhân viên"
@@ -192,7 +193,7 @@ const EmployeesPageMobile = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-3 shrink-0"
+              className="h-11 px-3 shrink-0 rounded-xl border-slate-300 bg-white"
               onClick={() => setExportModalOpen(true)}
               disabled={isExporting}
             >
@@ -201,7 +202,7 @@ const EmployeesPageMobile = () => {
             </Button>
             <Button
               size="sm"
-              className="h-9 px-4 btn-partner-primary shrink-0"
+              className="h-11 px-4 btn-partner-primary shrink-0 rounded-xl"
               onClick={() => openAddEmployee()}
             >
               <Plus className="h-4 w-4 mr-1" />
@@ -213,7 +214,7 @@ const EmployeesPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && stats.length > 0 && (
-        <div className="px-4 pb-3">
+        <MobileSurface className="p-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
             {stats.map((stat) => {
               const Icon = stat.icon;
@@ -230,10 +231,10 @@ const EmployeesPageMobile = () => {
                       updateStatusFilter(stat.filter);
                     }
                   }}
-                  className={`flex flex-col items-center gap-1 px-2.5 py-2 rounded-2xl border shrink-0 min-w-[68px] transition-all duration-200 card-lift ${
+                  className={`flex min-h-16 min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-2xl border px-2.5 py-2 transition-all duration-200 ${
                     isActive
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border bg-card"
+                      ? "border-primary bg-[#E7EEF6]"
+                      : "border-[#D8E2EE] bg-white"
                   } ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
                 >
                   <div className={`p-1.5 rounded-xl ${stat.bg}`}>
@@ -253,7 +254,7 @@ const EmployeesPageMobile = () => {
               );
             })}
           </div>
-        </div>
+        </MobileSurface>
       )}
       {summaryLoading && (
         <div className="px-4 pb-3 flex gap-2">
@@ -264,7 +265,7 @@ const EmployeesPageMobile = () => {
       )}
 
       {/* ── Search + Filter ── */}
-      <div className="px-4 pb-3 flex gap-2">
+      <MobileSurface className="flex gap-2 p-3">
         <MobileSearchInput
           value={searchTerm}
           onSearch={searchEmployees}
@@ -274,7 +275,7 @@ const EmployeesPageMobile = () => {
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 rounded-2xl border-border bg-card shrink-0 relative card-lift"
+          className="h-11 w-11 rounded-2xl border-[#D8E2EE] bg-white shrink-0 relative shadow-sm"
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
@@ -285,11 +286,11 @@ const EmployeesPageMobile = () => {
             </span>
           )}
         </Button>
-      </div>
+      </MobileSurface>
 
       {/* ── Active filter chips ── */}
       {activeFilterCount > 0 && (
-        <div className="px-4 pb-3 flex gap-2 flex-wrap items-center">
+        <div className="flex flex-wrap items-center gap-2">
           {statusFilter && (
             <Badge
               variant="secondary"
@@ -330,7 +331,7 @@ const EmployeesPageMobile = () => {
       )}
 
       {/* ── Employee list ── */}
-      <div className="flex-1 px-4">
+      <div className="flex-1">
         <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
         {employees.length === 0 ? (
           <EmployeeEmptyStates
@@ -359,8 +360,8 @@ const EmployeesPageMobile = () => {
 
       {/* ── Filter sheet ── */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl px-5 pt-2 pb-6">
-          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/20" />
+        <SheetContent side="bottom" className="rounded-t-3xl border-[#D8E2EE] bg-white px-5 pt-2 pb-6">
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" />
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>
@@ -472,7 +473,7 @@ const EmployeesPageMobile = () => {
         projects={projects}
         isExporting={isExporting}
       />
-    </div>
+    </MobilePageShell>
   );
 };
 
