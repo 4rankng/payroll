@@ -106,17 +106,17 @@ export function formatMonthDisplay(monthString: string): string {
  * `backend/internal/app/services/advance_payment/month_resolver.go`. If the
  * backend constant changes, update this one too.
  */
-export const ADVANCE_PERIOD_CYCLE_START_DAY = 17;
+export const ADVANCE_PERIOD_CYCLE_START_DAY = 20;
 
 /**
  * Render an advance-payment period anchor (YYYY-MM) as the explicit cycle
- * range — i.e. "17/04 – 16/05/2026" instead of the bare anchor "Tháng
+ * range — i.e. "20/04 – 19/05/2026" instead of the bare anchor "Tháng
  * 4/2026". The backend's `forMonth` is the period START month, so on, e.g.,
  * May 9 it returns "2026-04" even though today is in May. Showing the
  * range removes that "but it's already May!" confusion.
  *
- * Example: "2026-04" → "17/04 – 16/05/2026"
- *          "2026-12" → "17/12/2026 – 16/01/2027" (period crosses year)
+ * Example: "2026-04" → "20/04 – 19/05/2026"
+ *          "2026-12" → "20/12/2026 – 19/01/2027" (period crosses year)
  */
 export function formatAdvancePeriodDisplay(monthString: string): string {
   if (!monthString || monthString.length !== 7) return monthString;

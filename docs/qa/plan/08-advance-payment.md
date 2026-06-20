@@ -7,8 +7,8 @@
 ### Request Window (3-Phase Cutoff)
 ```
 Day  1-10:  OPEN for previous calendar month's period
-Day 11-20:  LOCKED (inter-period gap, requests rejected)
-Day 21-31:  OPEN for current month ONLY IF admin uploaded "bang luong" for current month
+Day 11-19:  LOCKED (inter-period gap, requests rejected)
+Day 20-31:  OPEN for current month ONLY IF admin uploaded "bang luong" for current month
 ```
 
 ### Amount Validation
@@ -45,8 +45,8 @@ Advance Payment:
 
 Request Window:
 Day 1-10:  OPEN (previous month)
-Day 11-20: LOCKED
-Day 21-31: OPEN (current month, IF bang luong uploaded)
+Day 11-19: LOCKED
+Day 20-31: OPEN (current month, IF bang luong uploaded)
 ```
 
 ## Test Scenarios
@@ -76,9 +76,9 @@ Day 21-31: OPEN (current month, IF bang luong uploaded)
 | F13-15 | Calculate fee with zero | Negative | POST calculate-fee with amount = 0 | 400, validation error |
 | **Request Window** ||||
 | F13-16 | Request during Day 1-10 (OPEN) | Edge | Set clock to day 5 → create request | 201, forMonth = previous month |
-| F13-17 | Request during Day 11-20 (LOCKED) | Negative | Set clock to day 15 → create request | 400, request window locked |
-| F13-18 | Request during Day 21-31 (OPEN) | Edge | Set clock to day 25 → create request (bang luong uploaded) | 201, forMonth = current month |
-| F13-19 | Request Day 21-31 without bang luong | Negative | Set clock to day 25 (no bang luong) → create request | 400, locked until bang luong uploaded |
+| F13-17 | Request during Day 11-19 (LOCKED) | Negative | Set clock to day 15 → create request | 400, request window locked |
+| F13-18 | Request during Day 20-31 (OPEN) | Edge | Set clock to day 25 → create request (bang luong uploaded) | 201, forMonth = current month |
+| F13-19 | Request Day 20-31 without bang luong | Negative | Set clock to day 25 (no bang luong) → create request | 400, locked until bang luong uploaded |
 | **Cancellation Edge Cases** ||||
 | F13-20 | Cancel already cancelled | Negative | Cancel → cancel again | 400, already cancelled |
 | F13-21 | Cancel APPROVED request | Negative | Cancel after poller claimed | 400, cannot cancel non-PENDING |

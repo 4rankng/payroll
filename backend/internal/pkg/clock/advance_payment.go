@@ -5,9 +5,9 @@ import "time"
 // Advance payment period constants.
 const (
 	// PeriodCycleStartDay is the day of month when the advance payment period
-	// rolls over to the next month. Days 1–20 belong to the previous month's
-	// period; from the 21st onward the current month's period begins.
-	PeriodCycleStartDay = 21
+	// rolls over to the next month. Days 1–19 belong to the previous month's
+	// period; from the 20th onward the current month's period begins.
+	PeriodCycleStartDay = 20
 
 	// RequestCutoffDay is the last day of the month (in the following calendar
 	// month) through which employees may still request an advance for the
@@ -17,7 +17,7 @@ const (
 )
 
 // CurrentAdvanceMonth returns the advance payment period month for "now".
-// Period cycle: 21st of previous month to 20th of current month.
+// Period cycle: 20th of previous month to 19th of current month.
 func CurrentAdvanceMonth(c Clock) string {
 	return AdvanceMonthFromTime(c.Now())
 }
@@ -46,8 +46,8 @@ func NextAdvanceMonthFromTime(t time.Time) string {
 // EffectiveAdvanceMonth returns the month that CreateRequest would use right now,
 // accounting for the three-phase window rule:
 //   - Days 1–10  (tail of previous period): request for the previous advance month
-//   - Days 11–16 (locked gap): locked — no requests allowed
-//   - Days 21+   (new period open): request for the current advance month,
+//   - Days 11–19 (locked gap): locked unless the current month's salary data exists
+//   - Days 20+   (new period open): request for the current advance month,
 //     provided admin has already uploaded bang lương for that month
 func EffectiveAdvanceMonth(c Clock) string {
 	return EffectiveAdvanceMonthFromTime(c.Now())
@@ -73,13 +73,13 @@ func IsAfterCutoff(t time.Time) bool {
 }
 
 // IsInLockedGap returns true when the date falls in the inter-period gap
-// (after the cutoff window but before the new period starts: days 11–16).
+// (after the cutoff window but before the new period starts: days 11–19).
 func IsInLockedGap(t time.Time) bool {
 	return t.Day() > RequestCutoffDay && t.Day() < PeriodCycleStartDay
 }
 
 // IsInNewPeriod returns true when the date is on or after the new period
-// start day (days 21+), meaning the current calendar month's advance period
+// start day (days 20+), meaning the current calendar month's advance period
 // has begun.
 func IsInNewPeriod(t time.Time) bool {
 	return t.Day() >= PeriodCycleStartDay

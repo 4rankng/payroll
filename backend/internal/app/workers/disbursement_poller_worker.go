@@ -252,9 +252,9 @@ func (w *DisbursementPollerWorker) enqueueRequest(ctx context.Context, req *doma
 // this one) do not exceed the max advance limit for the current month.
 // This is the second line of defense — catches races that leaked past CreateRequest.
 func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *domain.AdvancePaymentRequest) error {
-	currentMonth := advance_payment.GetCurrentMonth()
+	budgetMonth := requestBudgetMonth(req)
 
-	maxAdv, err := w.advancePaymentRepo.SumMaxAdvByEmployeeMonth(ctx, uint64(req.EmployeeID), currentMonth)
+	maxAdv, err := w.advancePaymentRepo.SumMaxAdvByEmployeeMonth(ctx, uint64(req.EmployeeID), budgetMonth)
 	if err != nil {
 		return fmt.Errorf("validate budget: %w", err)
 	}
@@ -263,7 +263,7 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 	}
 
 	// Sum COMPLETED requests only (this request is APPROVED, others may also be APPROVED)
-	completed, err := w.advancePaymentReqRepo.SumCompletedByEmployeeMonth(ctx, uint64(req.EmployeeID), currentMonth)
+	completed, err := w.advancePaymentReqRepo.SumCompletedByEmployeeMonth(ctx, uint64(req.EmployeeID), budgetMonth)
 	if err != nil {
 		return fmt.Errorf("validate budget: sum completed: %w", err)
 	}
@@ -275,6 +275,13 @@ func (w *DisbursementPollerWorker) validateBudget(ctx context.Context, req *doma
 	}
 
 	return nil
+}
+
+func requestBudgetMonth(req *domain.AdvancePaymentRequest) string {
+	if req != nil && req.AdvancePayment != nil && req.AdvancePayment.ForMonth != "" {
+		return req.AdvancePayment.ForMonth
+	}
+	return advance_payment.GetCurrentMonth()
 }
 
 // notifyInsufficientBalanceSkipped sends an email and push notification to all
