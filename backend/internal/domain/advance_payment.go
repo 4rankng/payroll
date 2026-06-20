@@ -11,7 +11,7 @@ type AdvancePayment struct {
 	ProjectID          uint      `json:"project_id" gorm:"not null;type:bigint unsigned;index"`
 	EmployeeID         uint      `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
 	ForMonth           string    `json:"for_month" gorm:"size:7;not null;index"` // YYYY-MM
-	UploadDate         string    `json:"upload_date" gorm:"size:7;not null"`     // YYYY-MM
+	UploadDate         string    `json:"upload_date" gorm:"size:10;not null"`    // YYYY-MM-DD
 	MaxAdvAmount       uint64    `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
 	LastAppliedAssetID *uint     `json:"last_applied_asset_id,omitempty" gorm:"type:bigint unsigned"`
 	CreatedAt          time.Time `json:"created_at"`

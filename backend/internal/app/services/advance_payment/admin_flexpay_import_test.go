@@ -2,8 +2,10 @@ package advance_payment
 
 import (
 	"testing"
+	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/clock"
 )
 
 // TestDedupeAdvancePayments_LastWriteWins reproduces the flexible payroll
@@ -14,9 +16,9 @@ import (
 // BatchUpsert ends up issuing conflicting INSERTs for the same unique key
 // and the order of resolution becomes implementation-defined.
 func TestDedupeAdvancePayments_LastWriteWins(t *testing.T) {
-	first := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 638, ForMonth: "2026-04", UploadDate: "2026-04", MaxAdvAmount: 2460000}
-	second := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 638, ForMonth: "2026-04", UploadDate: "2026-04", MaxAdvAmount: 2580000}
-	other := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 444, ForMonth: "2026-04", UploadDate: "2026-04", MaxAdvAmount: 9060000}
+	first := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 638, ForMonth: "2026-04", UploadDate: "2026-04-15", MaxAdvAmount: 2460000}
+	second := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 638, ForMonth: "2026-04", UploadDate: "2026-04-15", MaxAdvAmount: 2580000}
+	other := &domain.AdvancePayment{ProjectID: 58, EmployeeID: 444, ForMonth: "2026-04", UploadDate: "2026-04-15", MaxAdvAmount: 9060000}
 
 	got := dedupeAdvancePayments([]*domain.AdvancePayment{first, second, other})
 
@@ -69,5 +71,37 @@ func TestDedupeAdvancePayments_DifferentProjectsSameEmployee(t *testing.T) {
 
 	if len(got) != 2 {
 		t.Fatalf("expected 2 records (different projects), got %d", len(got))
+	}
+}
+
+func TestResolveUploadDate_PrefersAssetCreatedAtOverFrozenClock(t *testing.T) {
+	fake := clock.NewAutoFake()
+	clock.SetGlobal(fake)
+	t.Cleanup(func() {
+		clock.SetGlobal(clock.New())
+	})
+
+	fake.Set(time.Date(2026, 6, 6, 9, 0, 0, 0, clock.DefaultLocation))
+
+	uploadedAt := time.Date(2026, 6, 20, 17, 37, 28, 0, time.FixedZone("+08", 8*60*60))
+
+	got := resolveUploadDate(uploadedAt)
+	if got != "2026-06-20" {
+		t.Fatalf("expected upload date 2026-06-20 from asset created_at, got %s", got)
+	}
+}
+
+func TestResolveUploadDate_FallsBackToBusinessClockWhenAssetTimestampMissing(t *testing.T) {
+	fake := clock.NewAutoFake()
+	clock.SetGlobal(fake)
+	t.Cleanup(func() {
+		clock.SetGlobal(clock.New())
+	})
+
+	fake.Set(time.Date(2026, 6, 6, 9, 0, 0, 0, clock.DefaultLocation))
+
+	got := resolveUploadDate(time.Time{})
+	if got != "2026-06-06" {
+		t.Fatalf("expected fallback upload date 2026-06-06, got %s", got)
 	}
 }

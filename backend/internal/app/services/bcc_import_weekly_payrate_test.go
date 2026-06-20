@@ -13,8 +13,8 @@ func TestShiftInConfig(t *testing.T) {
 		want  bool
 	}{
 		{"Com", true},
-		{"com", true},   // case-insensitive
-		{"HC", true},    // exists even where rate is 0
+		{"com", true}, // case-insensitive
+		{"HC", true},  // exists even where rate is 0
 		{"hc", true},
 		{"OT150", false},
 	}

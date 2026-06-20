@@ -233,7 +233,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 			return
 		}
 
-		if err := h.asynqClient.EnqueueImportJob(existingAsset.ID); err != nil {
+		if err := h.asynqClient.EnqueueImportJob(existingAsset.ID, forMonth); err != nil {
 			logger := observability.GetLogger()
 			logger.Error("failed to enqueue import job", "error", err, "asset_id", existingAsset.ID)
 		}
@@ -280,7 +280,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	}
 
 	// Enqueue async processing using Asynq
-	if err := h.asynqClient.EnqueueImportJob(createdAsset.ID); err != nil {
+	if err := h.asynqClient.EnqueueImportJob(createdAsset.ID, forMonth); err != nil {
 		logger := observability.GetLogger()
 		logger.Error("failed to enqueue import job", "error", err, "asset_id", createdAsset.ID)
 	}
