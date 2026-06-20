@@ -61,13 +61,13 @@ func (c *Client) EnqueueEmployeeImport(importID string) error {
 }
 
 // EnqueueImportJob enqueues an import job task (advance payment)
-func (c *Client) EnqueueImportJob(jobID uint) error {
-	payload, _ := json.Marshal(importJobPayload{JobID: jobID})
+func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
+	payload, _ := json.Marshal(importJobPayload{JobID: jobID, ForMonth: forMonth})
 
 	task := asynqlib.NewTask(TaskImportJob, payload,
 		asynqlib.Queue(QueueDefault),
 		asynqlib.MaxRetry(c.cfg.RetryMax),
-		asynqlib.TaskID(fmt.Sprintf("import-job:%d", jobID)),
+		asynqlib.TaskID(fmt.Sprintf("import-job:%d:%s", jobID, forMonth)),
 	)
 
 	info, err := c.client.Enqueue(task)
@@ -81,6 +81,7 @@ func (c *Client) EnqueueImportJob(jobID uint) error {
 	logger.Info("Enqueued import job task",
 		"task_id", info.ID,
 		"job_id", jobID,
+		"for_month", forMonth,
 		"queue", info.Queue,
 	)
 	return nil
@@ -250,5 +251,6 @@ type employeeImportPayload struct {
 }
 
 type importJobPayload struct {
-	JobID uint `json:"job_id"`
+	JobID    uint   `json:"job_id"`
+	ForMonth string `json:"for_month"`
 }

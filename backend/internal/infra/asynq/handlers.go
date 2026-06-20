@@ -147,9 +147,9 @@ func (h *Handlers) HandleImportJob(ctx context.Context, t *asynqlib.Task) error 
 		return fmt.Errorf("failed to unmarshal import job payload: %w", err)
 	}
 
-	logger.Info("Processing import job task", "job_id", p.JobID)
+	logger.Info("Processing import job task", "job_id", p.JobID, "for_month", p.ForMonth)
 
-	if err := h.importJobWorker.ProcessJob(ctx, p.JobID); err != nil {
+	if err := h.importJobWorker.ProcessJob(ctx, p.JobID, p.ForMonth); err != nil {
 		return fmt.Errorf("import job failed: %w", err)
 	}
 

@@ -61,5 +61,27 @@ func runFlexPayImportTests(client *APIClient, data *TestData, reporter *Reporter
 		reporter.Skip(flowFlexPay, "Verify employee advance info updated after import", "no employee user")
 	}
 
+	// 3.6 Regression guard: advance_payments.upload_date must be stored as the
+	// full upload day (YYYY-MM-DD), not the legacy upload month (YYYY-MM). The
+	// HTTP API does not surface upload_date, so assert the on-disk format via
+	// the payroll-mysql container. Validates both new writes and the 074
+	// migration backfill of legacy month values.
+	reporter.RunTest(flowFlexPay, "Verify advance_payments.upload_date is YYYY-MM-DD", func() error {
+		dates, err := queryAdvancePaymentUploadDates()
+		if err != nil {
+			return fmt.Errorf("read upload_date from DB: %w", err)
+		}
+		if len(dates) == 0 {
+			return fmt.Errorf("expected advance_payments rows after FlexPay import, found none")
+		}
+		for _, d := range dates {
+			if !isYYYYMMDD(d) {
+				return fmt.Errorf("upload_date %q is not YYYY-MM-DD (len=%d) — legacy month value or bad format", d, len(d))
+			}
+		}
+		fmt.Printf("    Checked %d advance_payments rows: all upload_date in YYYY-MM-DD format\n", len(dates))
+		return nil
+	})
+
 	data.FlexPayJobID = jobID
 }

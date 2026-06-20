@@ -88,15 +88,15 @@ func detectColumnOffset(rows [][]string) int {
 // ImportFlexPayFile applies one upload of the flexible payroll template.
 // One file = one round. Multiple rounds per period live as separate rows
 // keyed on (employee, project, for_month, upload_date) where upload_date
-// is the calendar month the file was uploaded — Round 1 in late April
-// gets upload_date='2026-04', Round 2 in early May gets '2026-05'. The
-// rounds sum at read time via SumMaxAdvByEmployeeMonth.
+// is the calendar DAY the file was uploaded — e.g. a late-April upload
+// gets upload_date='2026-04-28', an early-May upload gets '2026-05-02'.
+// The rounds sum at read time via SumMaxAdvByEmployeeMonth.
 //
 // The flexpay workbook has a "UL" sheet with the actual data for this
 // upload, plus auxiliary sheets ("ds" = employee directory, "UL (2)" =
 // historical reference copy from a prior round). Only "UL" feeds the
 // import — the others are ignored.
-func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, forMonth string, assetID uint, createdBy uint, progressCB ProgressCallback) (*dto.ImportFlexPayFileResult, error) {
+func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, forMonth string, assetID uint, createdBy uint, uploadedAt time.Time, progressCB ProgressCallback) (*dto.ImportFlexPayFileResult, error) {
 	sheets := file.GetSheetList()
 	if len(sheets) == 0 {
 		return nil, errors.New("no sheets found in Excel file")
@@ -106,14 +106,14 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 		ForMonth: forMonth,
 	}
 
-	// upload_date is the CALENDAR MONTH of the upload, not the period the
-	// data applies to. That's what makes Round 1 (late-month upload) and
-	// Round 2 (early-next-month upload) land in different rows for the
-	// same for_month under the (employee, project, for_month, upload_date)
+	// upload_date is the CALENDAR DAY of the upload, not the period the
+	// data applies to. That's what makes two rounds for the same for_month
+	// (even within the same calendar month, on different days) land in
+	// different rows under the (employee, project, for_month, upload_date)
 	// unique key — collapsing this to forMonth (as f3e8f33b did) was the
 	// regression that caused the ghost-duplicates bug the user originally
 	// reported.
-	uploadDate := clock.Now().Format("2006-01")
+	uploadDate := resolveUploadDate(uploadedAt)
 
 	// Detect importable sheets by header structure. Any sheet whose column B
 	// header contains "Mã nhân viên" is an importable data sheet — this covers
@@ -335,6 +335,13 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 	}
 
 	return result, nil
+}
+
+func resolveUploadDate(uploadedAt time.Time) string {
+	if uploadedAt.IsZero() {
+		return clock.Now().Format("2006-01-02")
+	}
+	return uploadedAt.In(clock.DefaultLocation).Format("2006-01-02")
 }
 
 func (s *Service) getOrCreateProject(ctx context.Context, code string, createdBy uint) (*domain.Project, bool, error) {

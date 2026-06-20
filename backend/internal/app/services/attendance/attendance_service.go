@@ -238,6 +238,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		// 6. Accumulate advance payment quota
 		if earningAmount > 0 {
 			currentMonth := now.Format("2006-01")
+			currentDate := now.Format("2006-01-02")
 
 			aps, err := s.advancePaymentRepo.GetByEmployeeAndMonth(txCtx, uint64(employeeID), currentMonth)
 			if err != nil {
@@ -257,7 +258,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 					ProjectID:    attendance.ProjectID,
 					EmployeeID:   attendance.EmployeeID,
 					ForMonth:     currentMonth,
-					UploadDate:   currentMonth,
+					UploadDate:   currentDate,
 					MaxAdvAmount: uint64(earningAmount),
 				}
 				if err := s.advancePaymentRepo.Create(txCtx, ap); err != nil {

@@ -40,18 +40,18 @@ func NewImportJobWorker(
 }
 
 // ProcessJob processes an import job (called by Asynq handler)
-func (w *ImportJobWorker) ProcessJob(ctx context.Context, jobID uint) error {
+func (w *ImportJobWorker) ProcessJob(ctx context.Context, jobID uint, forMonth string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			w.logger.Error("panic in import job processing", "job_id", jobID, "panic", r)
 		}
 	}()
 
-	w.processJob(ctx, jobID)
+	w.processJob(ctx, jobID, forMonth)
 	return nil
 }
 
-func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint) {
+func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth string) {
 
 	// Get and validate asset
 	asset, err := w.getAndValidateAsset(ctx, jobID)
@@ -59,8 +59,9 @@ func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint) {
 		return
 	}
 
-	// Auto-resolve for_month (metadata was always NULL)
-	forMonth := advance_payment.GetCurrentMonth()
+	// Use the caller-selected month when provided. Fallback keeps old
+	// behavior for legacy tasks already sitting in the queue.
+	forMonth = resolveImportForMonth(forMonth)
 	if forMonth == "" {
 		w.markJobFailed(ctx, asset, "Failed to auto-resolve for_month")
 		return
@@ -144,7 +145,7 @@ func (w *ImportJobWorker) processExcelFile(ctx context.Context, asset *domain.As
 	// Call the actual import service. asset.ID is the idempotency key —
 	// re-enqueued duplicate uploads short-circuit inside the service via
 	// advance_payment_imports.
-	result, err := w.importService.ImportFlexPayFile(ctx, xlsxFile, forMonth, asset.ID, createdBy, progressCB)
+	result, err := w.importService.ImportFlexPayFile(ctx, xlsxFile, forMonth, asset.ID, createdBy, asset.CreatedAt, progressCB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to import flex pay file: %w", err)
 	}
@@ -180,4 +181,11 @@ func (w *ImportJobWorker) logJobSuccess(jobID uint, result *dto.ImportFlexPayFil
 		"job_id", jobID,
 		"total_rows", result.TotalRows,
 		"employees_created", result.EmployeesCreated)
+}
+
+func resolveImportForMonth(selectedForMonth string) string {
+	if selectedForMonth != "" {
+		return selectedForMonth
+	}
+	return advance_payment.GetCurrentMonth()
 }
