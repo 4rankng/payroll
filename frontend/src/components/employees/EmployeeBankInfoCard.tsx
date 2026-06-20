@@ -73,7 +73,9 @@ export function EmployeeBankInfoCard({
                         {label}
                       </p>
                       <p
-                        className={`text-sm font-bold text-gray-800 truncate ${mono ? "font-mono" : ""}`}
+                        className={`mt-0.5 text-sm font-bold leading-tight text-gray-800 ${
+                          mono ? "break-all font-mono" : "whitespace-normal break-words"
+                        }`}
                       >
                         {value || "—"}
                       </p>

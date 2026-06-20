@@ -13,7 +13,7 @@ const (
 )
 
 // GetCurrentMonth determines the current month for advance payment purposes.
-// Period cycle: 21st of previous month to 20th of current month.
+// Period cycle: 20th of previous month to 19th of current month.
 func GetCurrentMonth() string {
 	return clock.AdvanceMonthFromTime(clock.Now())
 }
@@ -51,7 +51,7 @@ func IsInLockedGap(t time.Time) bool {
 }
 
 // IsInNewPeriod returns true when the date is on or after PeriodCycleStartDay
-// (day 21), meaning the current calendar month's advance period has begun.
+// (day 20), meaning the current calendar month's advance period has begun.
 func IsInNewPeriod(t time.Time) bool {
 	return clock.IsInNewPeriod(t)
 }

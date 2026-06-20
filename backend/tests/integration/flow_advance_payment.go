@@ -421,7 +421,7 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 	// Three-phase request window:
 	//   Days  1–10 (tail of previous period): open — no lock
 	//   Days 11–20 (inter-period gap):         always locked
-	//   Days 21–31 (new period):               open iff admin uploaded bang luong for current month
+	//   Days 20–31 (new period):               open iff admin uploaded bang luong for current month
 
 	{
 		defer func() { _ = ResetServerTime(adminClient) }()
@@ -552,10 +552,10 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			return nil
 		})
 
-		// Test 5: Phase 2 boundary (day 20) — last locked day
-		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 2 boundary (day 20) — still locked", func() error {
-			if err := SetServerTime(adminClient, makeTime(20)); err != nil {
-				return fmt.Errorf("set clock to day 20: %w", err)
+		// Test 5: Phase 2 boundary (day 19) — last locked day
+		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 2 boundary (day 19) — still locked", func() error {
+			if err := SetServerTime(adminClient, makeTime(19)); err != nil {
+				return fmt.Errorf("set clock to day 19: %w", err)
 			}
 
 			var p2bInfo AdvancePaymentInfoResponse
@@ -563,30 +563,30 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				return fmt.Errorf("get advance info: %w", err)
 			}
 
-			fmt.Printf("    Day 20: canRequest=%v, reason=%s\n", p2bInfo.CanRequest, p2bInfo.CanRequestReason)
+			fmt.Printf("    Day 19: canRequest=%v, reason=%s\n", p2bInfo.CanRequest, p2bInfo.CanRequestReason)
 
 			if p2bInfo.HasFlexible {
 				if err := AssertFalse("canRequest", p2bInfo.CanRequest); err != nil {
 					return err
 				}
 				if p2bInfo.CanRequestReason == "" {
-					return fmt.Errorf("expected canRequestReason on last locked day (day 20)")
+					return fmt.Errorf("expected canRequestReason on last locked day (day 19)")
 				}
 			}
 			return nil
 		})
 
-		// Test 6: Phase 2→3 transition (day 20 → day 21)
-		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 2→3 transition (day 20 → day 21)", func() error {
-			if err := SetServerTime(adminClient, makeTime(20)); err != nil {
-				return fmt.Errorf("set clock to day 20: %w", err)
+		// Test 6: Phase 2→3 transition (day 19 → day 20)
+		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 2→3 transition (day 19 → day 20)", func() error {
+			if err := SetServerTime(adminClient, makeTime(19)); err != nil {
+				return fmt.Errorf("set clock to day 19: %w", err)
 			}
 
 			var locked AdvancePaymentInfoResponse
 			if _, err := empClient.GetInto("/api/v1/me/advance-payment", &locked); err != nil {
-				return fmt.Errorf("get advance info (day 20): %w", err)
+				return fmt.Errorf("get advance info (day 19): %w", err)
 			}
-			fmt.Printf("    Day 20: canRequest=%v\n", locked.CanRequest)
+			fmt.Printf("    Day 19: canRequest=%v\n", locked.CanRequest)
 
 			if err := AdvanceServerTime(adminClient, 24*time.Hour); err != nil {
 				return fmt.Errorf("advance clock by 24h: %w", err)
@@ -594,12 +594,12 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 
 			var opened AdvancePaymentInfoResponse
 			if _, err := empClient.GetInto("/api/v1/me/advance-payment", &opened); err != nil {
-				return fmt.Errorf("get advance info (day 21): %w", err)
+				return fmt.Errorf("get advance info (day 20): %w", err)
 			}
-			fmt.Printf("    Day 21: forMonth=%s, canRequest=%v, reason=%s\n",
+			fmt.Printf("    Day 20: forMonth=%s, canRequest=%v, reason=%s\n",
 				opened.ForMonth, opened.CanRequest, opened.CanRequestReason)
 
-			// forMonth should switch to current calendar month on day 21
+			// forMonth should switch to current calendar month on day 20
 			if err := AssertEqual("forMonth", currentCalMonth, opened.ForMonth); err != nil {
 				return err
 			}

@@ -32,7 +32,7 @@ func TestResolveImportForMonth_FallsBackToCurrentAdvanceMonth(t *testing.T) {
 	fake.Set(time.Date(2026, 6, 20, 9, 0, 0, 0, clock.DefaultLocation))
 
 	got := resolveImportForMonth("")
-	if got != "2026-05" {
-		t.Fatalf("expected fallback month 2026-05 on 2026-06-20, got %s", got)
+	if got != "2026-06" {
+		t.Fatalf("expected fallback month 2026-06 on 2026-06-20, got %s", got)
 	}
 }

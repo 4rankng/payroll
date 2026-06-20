@@ -538,6 +538,7 @@ func (r *AdvancePaymentRequestRepository) ClaimPendingForDisbursement(ctx contex
 			Where("status = ?", domain.AdvancePaymentStatusPending).
 			Order("created_at ASC").
 			Limit(limit).
+			Preload("AdvancePayment").
 			Preload("Employee").
 			Preload("Employee.Bank").
 			Preload("Project").

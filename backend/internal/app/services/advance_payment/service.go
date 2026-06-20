@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -92,12 +93,11 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		validMonths = append(validMonths, prevCalMonth)
 		validMonths = append(validMonths, currentCalMonth)
 	} else if isInLockedGap {
-		// Days 11-20: Locked entirely. We can still show the current month quota, but CanRequest = false.
+		// Days 11-19: show the current month quota. Requesting stays locked
+		// only until admin uploads bang cham cong for that month.
 		validMonths = append(validMonths, currentCalMonth)
-		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(currentCalMonth))
-		info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
 	} else {
-		// Days 21-31: Can withdraw from current month
+		// Days 20-31: Can withdraw from current month
 		validMonths = append(validMonths, currentCalMonth)
 	}
 
@@ -146,7 +146,19 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		info.RemainingAmount = uint64(remTotal)
 	}
 
-	if !isInLockedGap {
+	hasCurrentMonthQuota := false
+	for _, quota := range info.Quotas {
+		if quota.ForMonth == currentCalMonth && quota.MaxAdvanceAmount > 0 {
+			hasCurrentMonthQuota = true
+			break
+		}
+	}
+
+	if isRequestWindowLocked(now, hasCurrentMonthQuota) {
+		info.CanRequest = false
+		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(currentCalMonth))
+		info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
+	} else {
 		info.CanRequest = info.RemainingAmount >= 10000
 		// When there is no quota at all (salary data not yet uploaded), provide
 		// an explanatory message so the employee understands why CanRequest=false.
@@ -154,8 +166,6 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 			info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(prevCalMonth))
 			info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
 		}
-	} else {
-		info.CanRequest = false
 	}
 
 	return info, nil
@@ -190,24 +200,10 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 
 	// Enforce the three-phase window rule for flexible employees
 	now := clock.Now()
-	isBeforeCutoff := IsBeforeCutoff(now)
-	isInLockedGap := IsInLockedGap(now)
-
-	if isInLockedGap {
-		return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
-	}
 
 	currentCalMonth := now.Format("2006-01")
-	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
-	isValidMonth := false
-	if isBeforeCutoff && (forMonth == prevCalMonth || forMonth == currentCalMonth) {
-		isValidMonth = true
-	} else if !isBeforeCutoff && forMonth == currentCalMonth {
-		isValidMonth = true
-	}
-
-	if !isValidMonth {
+	if !isRequestMonthAllowed(now, forMonth) {
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -217,6 +213,9 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		return nil, errors.Wrap(err, "failed to get advance payments")
 	}
 	if len(advPayments) == 0 {
+		if IsInLockedGap(now) && forMonth == currentCalMonth {
+			return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
+		}
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -268,6 +267,21 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 	)
 
 	return req, nil
+}
+
+func isRequestWindowLocked(now time.Time, hasCurrentMonthQuota bool) bool {
+	return IsInLockedGap(now) && !hasCurrentMonthQuota
+}
+
+func isRequestMonthAllowed(now time.Time, forMonth string) bool {
+	currentCalMonth := now.Format("2006-01")
+	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
+
+	if IsBeforeCutoff(now) {
+		return forMonth == prevCalMonth || forMonth == currentCalMonth
+	}
+
+	return forMonth == currentCalMonth
 }
 
 // GetRequestHistoryByUserID returns the request history for the authenticated user
