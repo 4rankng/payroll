@@ -13,6 +13,10 @@ import (
 	"api-server/internal/pkg/geo"
 )
 
+// minimumCheckoutDuration is the fallback earliest-checkout floor used only when
+// no payrate shift can be resolved for the employee's position (e.g. payrate not
+// yet configured). When a configured shift IS resolved, its end hour is used as
+// the earliest checkout instead — see resolveEarliestCheckout.
 const minimumCheckoutDuration = 4 * time.Hour
 
 type AttendanceService struct {
@@ -48,8 +52,11 @@ func NewAttendanceService(
 	}
 }
 
-func validateMinimumCheckoutDuration(checkInTime, checkOutTime time.Time) error {
-	earliestCheckout := checkInTime.Add(minimumCheckoutDuration)
+// validateEarliestCheckout rejects a checkout that happens before the earliest
+// allowed time. The earliest time is derived from the configured shift end hour
+// (see resolveEarliestCheckout), so the message points the employee at the real
+// end of their shift rather than a fixed check-in + N hours.
+func validateEarliestCheckout(checkInTime, earliestCheckout, checkOutTime time.Time) error {
 	if checkOutTime.Before(earliestCheckout) {
 		return domain.NewValidationError(fmt.Sprintf(
 			"Bạn mới vào làm lúc %s. Chỉ có thể tan ca sau %s",
@@ -58,6 +65,128 @@ func validateMinimumCheckoutDuration(checkInTime, checkOutTime time.Time) error 
 		))
 	}
 	return nil
+}
+
+// parsedShift is a single configured shift for a position, resolved to absolute
+// check-in-day datetimes (night-shift / cross-midnight aware) together with its rate.
+type parsedShift struct {
+	start  time.Time
+	end    time.Time
+	amount int
+}
+
+// resolveShifts parses the flattened payrate for the given position and returns:
+//   - effectivePosition: the configured position matching `position` (case- and
+//     diacritic-insensitive), falling back to the only configured position when the
+//     requested one is absent.
+//   - positionFound: whether the effective position exists in the configuration.
+//   - shifts: every parseable shift for the effective position, on the check-in day.
+//
+// The caller derives shiftFound as len(shifts) > 0.
+func resolveShifts(flattened map[string]int, position string, ci time.Time) (effectivePosition string, positionFound bool, shifts []parsedShift) {
+	configuredPositions := make(map[string]string)
+	for key := range flattened {
+		parts := strings.Split(key, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		pos := strings.Join(parts[:len(parts)-2], ".")
+		configuredPositions[strings.ToLower(pos)] = pos
+	}
+
+	effectivePosition = position
+	for _, configuredPosition := range configuredPositions {
+		if strings.EqualFold(configuredPosition, position) {
+			effectivePosition = configuredPosition
+			break
+		}
+	}
+	if !hasConfiguredPosition(configuredPositions, effectivePosition) && len(configuredPositions) == 1 {
+		for _, onlyPosition := range configuredPositions {
+			effectivePosition = onlyPosition
+		}
+	}
+	positionFound = hasConfiguredPosition(configuredPositions, effectivePosition)
+
+	for key, amount := range flattened {
+		// key is position.dayType.HH:MM-HH:MM
+		parts := strings.Split(key, ".")
+		if len(parts) < 3 {
+			continue
+		}
+
+		pos := strings.Join(parts[:len(parts)-2], ".")
+		if !strings.EqualFold(pos, effectivePosition) {
+			continue
+		}
+
+		timeRange := parts[len(parts)-1]
+		timeParts := strings.Split(timeRange, "-")
+		if len(timeParts) != 2 {
+			continue
+		}
+
+		start, startErr := time.Parse("15:04", timeParts[0])
+		end, endErr := time.Parse("15:04", timeParts[1])
+		if startErr != nil || endErr != nil {
+			continue
+		}
+
+		// Build real time equivalents for the shift on the day of check-in
+		shiftStart := time.Date(ci.Year(), ci.Month(), ci.Day(), start.Hour(), start.Minute(), 0, 0, ci.Location())
+		shiftEnd := time.Date(ci.Year(), ci.Month(), ci.Day(), end.Hour(), end.Minute(), 0, 0, ci.Location())
+
+		crossesMidnight := shiftEnd.Before(shiftStart)
+		if crossesMidnight {
+			shiftEnd = shiftEnd.Add(24 * time.Hour) // Night shift crosses midnight
+		}
+
+		// For night shifts, if check-in is before shiftStart on the check-in day,
+		// the shift started yesterday (e.g., shift 22:00-06:00, check-in at 00:30).
+		// Only apply rollback for night shifts to avoid breaking early-arrival day shifts
+		// (e.g., 07:50 arrival for 08:00-17:00 shift).
+		if crossesMidnight && ci.Before(shiftStart) {
+			shiftStart = shiftStart.Add(-24 * time.Hour)
+			shiftEnd = shiftEnd.Add(-24 * time.Hour)
+		}
+
+		shifts = append(shifts, parsedShift{start: shiftStart, end: shiftEnd, amount: amount})
+	}
+
+	return effectivePosition, positionFound, shifts
+}
+
+// closestShift returns the shift whose start is nearest to the check-in time, or
+// nil when there are no shifts. Used to report the expected shift boundaries.
+func closestShift(shifts []parsedShift, ci time.Time) *parsedShift {
+	var closest *parsedShift
+	var closestDistance time.Duration
+	for i := range shifts {
+		distance := ci.Sub(shifts[i].start).Abs()
+		if closest == nil || distance < closestDistance {
+			closest = &shifts[i]
+			closestDistance = distance
+		}
+	}
+	return closest
+}
+
+// resolveEarliestCheckout determines the earliest allowed checkout time for an
+// active attendance. When the payrate resolves a configured shift for the
+// employee's position, the configured shift end (night-shift aware) is returned.
+// Otherwise it falls back to check-in + minimumCheckoutDuration. It never errors:
+// a malformed/empty payrate simply falls back to the minimum duration so checkout
+// is not blocked by a broken rate config.
+func (s *AttendanceService) resolveEarliestCheckout(payrate *domain.Payrate, position string, checkInTime time.Time) time.Time {
+	if payrate != nil {
+		if flattened, err := payrate.Payrate.Flatten(); err == nil {
+			_, _, shifts := resolveShifts(flattened, position, checkInTime)
+			if closest := closestShift(shifts, checkInTime); closest != nil {
+				return closest.end
+			}
+		}
+	}
+	return checkInTime.Add(minimumCheckoutDuration)
 }
 
 // validateGeofence checks if coordinates are within configured gates for the given project.
@@ -205,7 +334,23 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		if attendance.GetStatus(now) == domain.AttendanceStatusOrphaned {
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
-		if err := validateMinimumCheckoutDuration(attendance.CheckInTime, now); err != nil {
+
+		// Determine the earliest allowed checkout from the configured shift end
+		// hour (payrate), falling back to a minimum duration when unconfigured.
+		// Load the assignment + payrate here so they are reused for earning below.
+		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
+		if err != nil {
+			return err
+		}
+		payrate, err := s.payrateRepo.GetActiveByProjectAndDate(txCtx, attendance.ProjectID, attendance.Date)
+		if err != nil {
+			if !domain.IsNotFoundError(err) {
+				return fmt.Errorf("failed to load payrate: %w", err)
+			}
+			payrate = nil
+		}
+		earliest := s.resolveEarliestCheckout(payrate, assignment.Position, attendance.CheckInTime)
+		if err := validateEarliestCheckout(attendance.CheckInTime, earliest, now); err != nil {
 			return err
 		}
 
@@ -240,22 +385,15 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		attendance.CheckOutLng = &lng
 		attendance.CheckOutGate = &gateName
 
-		// 4. Calculate earning_amount
-		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
-		if err != nil {
-			return err
-		}
+		// 4. Calculate earning_amount (reuses the assignment + payrate loaded for
+		// the earliest-checkout check above).
 		if !assignment.CheckInEnabled {
 			return domain.NewValidationError("Chấm công đã bị vô hiệu hóa. Vui lòng liên hệ quản lý.")
 		}
 
 		var earningAmount int64
 		var salaryRejectReason *string
-		payrate, err := s.payrateRepo.GetActiveByProjectAndDate(txCtx, attendance.ProjectID, attendance.Date)
-		if err != nil {
-			if !domain.IsNotFoundError(err) {
-				return err
-			}
+		if payrate == nil {
 			reason := "Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này."
 			salaryRejectReason = &reason
 		} else {
@@ -406,107 +544,33 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 		return 0, "Cấu hình mức lương chưa hợp lệ, chưa thể ghi lương ca này.", err
 	}
 
-	configuredPositions := make(map[string]string)
-	for key := range flattened {
-		parts := strings.Split(key, ".")
-		if len(parts) < 3 {
-			continue
-		}
-		pos := strings.Join(parts[:len(parts)-2], ".")
-		configuredPositions[strings.ToLower(pos)] = pos
-	}
+	effectivePosition, positionFound, shifts := resolveShifts(flattened, position, ci)
 
-	effectivePosition := position
-	for _, configuredPosition := range configuredPositions {
-		if strings.EqualFold(configuredPosition, position) {
-			effectivePosition = configuredPosition
-			break
-		}
-	}
-	if !hasConfiguredPosition(configuredPositions, effectivePosition) && len(configuredPositions) == 1 {
-		for _, onlyPosition := range configuredPositions {
-			effectivePosition = onlyPosition
-		}
-	}
-
-	positionFound := false
-	shiftFound := false
-	var expectedShiftStart time.Time
-	var expectedShiftEnd time.Time
-	var expectedShiftDistance time.Duration
-	for key, amount := range flattened {
-		// key is position.dayType.HH:MM-HH:MM
-		parts := strings.Split(key, ".")
-		if len(parts) < 3 {
-			continue
-		}
-
-		pos := strings.Join(parts[:len(parts)-2], ".")
-		if !strings.EqualFold(pos, effectivePosition) {
-			continue
-		}
-		positionFound = true
-
-		timeRange := parts[len(parts)-1]
-		timeParts := strings.Split(timeRange, "-")
-		if len(timeParts) != 2 {
-			continue
-		}
-
-		start, startErr := time.Parse("15:04", timeParts[0])
-		end, endErr := time.Parse("15:04", timeParts[1])
-		if startErr != nil || endErr != nil {
-			continue
-		}
-		shiftFound = true
-
-		// Build real time equivalents for the shift on the day of check-in
-		shiftStart := time.Date(ci.Year(), ci.Month(), ci.Day(), start.Hour(), start.Minute(), 0, 0, ci.Location())
-		shiftEnd := time.Date(ci.Year(), ci.Month(), ci.Day(), end.Hour(), end.Minute(), 0, 0, ci.Location())
-
-		crossesMidnight := shiftEnd.Before(shiftStart)
-		if crossesMidnight {
-			shiftEnd = shiftEnd.Add(24 * time.Hour) // Night shift crosses midnight
-		}
-
-		// For night shifts, if check-in is before shiftStart on the check-in day,
-		// the shift started yesterday (e.g., shift 22:00-06:00, check-in at 00:30).
-		// Only apply rollback for night shifts to avoid breaking early-arrival day shifts
-		// (e.g., 07:50 arrival for 08:00-17:00 shift).
-		if crossesMidnight && ci.Before(shiftStart) {
-			shiftStart = shiftStart.Add(-24 * time.Hour)
-			shiftEnd = shiftEnd.Add(-24 * time.Hour)
-		}
-
-		distance := ci.Sub(shiftStart).Abs()
-		if expectedShiftStart.IsZero() || distance < expectedShiftDistance {
-			expectedShiftStart = shiftStart
-			expectedShiftEnd = shiftEnd
-			expectedShiftDistance = distance
-		}
-
+	for i := range shifts {
+		sh := &shifts[i]
 		// Match: checkIn <= shiftStart && checkOut >= shiftEnd
-		if (ci.Before(shiftStart) || ci.Equal(shiftStart)) && (co.After(shiftEnd) || co.Equal(shiftEnd)) {
-			if amount <= 0 {
+		if (ci.Before(sh.start) || ci.Equal(sh.start)) && (co.After(sh.end) || co.Equal(sh.end)) {
+			if sh.amount <= 0 {
 				return 0, "Mức lương ca được cấu hình là 0đ. Vui lòng liên hệ quản lý.", nil
 			}
-			return int64(amount), "", nil
+			return int64(sh.amount), "", nil
 		}
 	}
 
 	if !positionFound {
 		return 0, fmt.Sprintf("Chưa có mức lương cho vị trí \"%s\".", position), nil
 	}
-	if !shiftFound {
+	if len(shifts) == 0 {
 		return 0, fmt.Sprintf("Chưa có ca làm hợp lệ trong cấu hình mức lương cho vị trí \"%s\".", effectivePosition), nil
 	}
 
+	closest := closestShift(shifts, ci)
 	return 0, fmt.Sprintf(
 		"Thời gian vào %s và tan %s không hợp lệ, bạn phải vào làm trước %s và tan ca sau %s.",
 		ci.Format("15:04"),
 		co.Format("15:04"),
-		expectedShiftStart.Format("15:04"),
-		expectedShiftEnd.Format("15:04"),
+		closest.start.Format("15:04"),
+		closest.end.Format("15:04"),
 	), nil
 }
 
