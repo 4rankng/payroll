@@ -34,7 +34,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         // Preserve the current URL (including query params) for redirect after login
         const currentUrl = `${window.location.pathname}${window.location.search}`;
         const loginUrl = `/login?redirect=${encodeURIComponent(currentUrl)}`;
-        navigate(loginUrl);
+        navigate(loginUrl, { replace: true });
       }, 100);
 
       return () => clearTimeout(timer);
@@ -50,13 +50,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         });
 
         if (user.role === "admin") {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         } else if (user.role === "partner") {
-          navigate("/partner/dashboard");
+          navigate("/partner/dashboard", { replace: true });
         } else if (user.role === "adv_partner") {
-          navigate("/adv-partner/advance-payments");
+          navigate("/adv-partner/advance-payments", { replace: true });
         } else if (user.role === "employee") {
-          navigate("/employee");
+          navigate("/employee", { replace: true });
         }
       }, 100);
 
@@ -102,7 +102,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (requiredRole && !hasRequiredRole(user.role, requiredRole)) {
-    return null;
+    return <AuthLoadingScreen />;
   }
 
   return <>{children}</>;

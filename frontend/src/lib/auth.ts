@@ -37,6 +37,7 @@ class AuthManager {
     localStorage.setItem(this.tokenKey, token);
     // Start session monitoring after setting token
     this.startSessionMonitoring();
+    this.notifyAuthChanged();
   }
 
   getToken(): string | null {
@@ -48,10 +49,12 @@ class AuthManager {
 
   removeToken(): void {
     localStorage.removeItem(this.tokenKey);
+    this.clearStoredUser();
     if (this.sessionTimeoutId) {
       clearTimeout(this.sessionTimeoutId);
       this.sessionTimeoutId = null;
     }
+    this.notifyAuthChanged();
   }
 
   isTokenValid(): boolean {
@@ -160,6 +163,31 @@ class AuthManager {
   hasAnyRole(roles: AppRole[]): boolean {
     const userRole = this.getUserRole();
     return userRole !== null && roles.includes(userRole);
+  }
+
+  private clearStoredUser(): void {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userUsername');
+    localStorage.removeItem('userStatus');
+    localStorage.removeItem('userCreatedAt');
+    localStorage.removeItem('userUpdatedAt');
+    localStorage.removeItem('userLastLogin');
+  }
+
+  private notifyAuthChanged(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.dispatchEvent(new CustomEvent('auth-changed'));
+
+    if ('BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('auth-channel');
+      channel.postMessage({ type: 'auth-changed' });
+      channel.close();
+    }
   }
 }
 
