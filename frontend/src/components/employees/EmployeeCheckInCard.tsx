@@ -197,7 +197,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
               <div className="min-w-0 flex-1">
                 <p className="text-[18px] font-bold leading-6 text-slate-950">Sẵn sàng vào làm</p>
                 <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
-                  Khi đã tới cổng dự án, bấm Vào làm để bắt đầu ca.
+                  Khi đã tới cổng nhà máy, bấm Vào làm để bắt đầu ca.
                 </p>
               </div>
             </div>

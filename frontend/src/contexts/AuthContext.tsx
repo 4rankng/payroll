@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authManager } from '@/lib/auth';
 import { generateAvatarUrl } from '@/utils/avatarHelpers';
 
@@ -31,6 +32,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,6 +60,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         authManager.startSessionMonitoring();
       } else {
         setUser(null);
+        queryClient.clear();
+        sessionStorage.removeItem('payroll-query-cache');
       }
 
       setIsLoading(false);
@@ -65,17 +69,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     initializeAuth();
 
-    // BUG-012 fix: Listen for auth changes from other tabs/windows
-    // sessionStorage doesn't trigger StorageEvent, so use a custom event via BroadcastChannel
-    const channel = new BroadcastChannel('auth-channel');
-    channel.onmessage = () => {
+    const handleAuthChanged = () => {
       initializeAuth();
     };
 
+    window.addEventListener('auth-changed', handleAuthChanged);
+
+    // BUG-012 fix: Listen for auth changes from other tabs/windows
+    // sessionStorage doesn't trigger StorageEvent, so use a custom event via BroadcastChannel
+    const channel = 'BroadcastChannel' in window ? new BroadcastChannel('auth-channel') : null;
+    if (channel) {
+      channel.onmessage = handleAuthChanged;
+    }
+
     return () => {
-      channel.close();
+      window.removeEventListener('auth-changed', handleAuthChanged);
+      channel?.close();
     };
-  }, []);
+  }, [queryClient]);
 
   const login = (token: string, userData: User) => {
     authManager.setToken(token);
@@ -85,6 +96,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     authManager.removeToken();
     setUser(null);
+    queryClient.clear();
+    sessionStorage.removeItem('payroll-query-cache');
     // Navigation is handled by ProtectedRoute's useEffect via React Router's navigate(),
     // avoiding the blank white screen that window.location.href causes between
     // setUser(null) re-render and the browser completing the hard redirect.
@@ -98,7 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const value: AuthContextValue = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && authManager.isTokenValid(),
     isLoading,
     login,
     logout,
