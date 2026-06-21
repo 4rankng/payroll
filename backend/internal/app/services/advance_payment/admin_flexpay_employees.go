@@ -277,7 +277,7 @@ func (s *Service) ImportFlexibleEmployeeList(ctx context.Context, file *excelize
 		}
 
 		// Get or create assignment
-		assignmentCreated, err := s.getOrCreateAssignment(ctx, project.ID, employee.ID, cccd, fullName, position, createdBy)
+		_, assignmentCreated, err := s.getOrCreateAssignment(ctx, project.ID, employee.ID, cccd, fullName, position, createdBy)
 		if err != nil {
 			errors = append(errors, dto.ImportRowError{
 				Row:   i + 1,

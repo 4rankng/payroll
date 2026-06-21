@@ -11,6 +11,8 @@ import {
 import {
   useAdvancePaymentInfo,
   useRequestAdvancePayment,
+  useCheckInAdvanceInfo,
+  useRequestCheckInAdvance,
   useAdvancePaymentHistory,
   useCalculateFee,
   useCancelAdvancePaymentRequest,
@@ -44,16 +46,21 @@ const FlexiblePayEmployeePage = () => {
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const { data: unreadNotifications } = useUnreadNotifications();
-  const {
-    data: infoResponse,
-    isLoading: infoLoading,
-    refetch: refetchInfo,
-  } = useAdvancePaymentInfo();
+  // Check-in-enabled employees use the dedicated /me/check-in-advance flow
+  // (70% advanceable cap, calendar-month window); others use the admin-upload flow.
+  const isCheckIn = !!profile?.check_in_enabled;
+  const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckIn });
+  const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckIn });
+  const { data: infoResponse, isLoading: infoLoading, refetch: refetchInfo } = isCheckIn
+    ? checkInInfoQuery
+    : regularInfoQuery;
   const { data: historyResponse, isLoading: historyLoading } =
     useAdvancePaymentHistory({ page: 1, pageSize: 10 });
 
   const calculateFeeMutation = useCalculateFee();
-  const requestMutation = useRequestAdvancePayment();
+  const regularRequestMutation = useRequestAdvancePayment();
+  const checkInRequestMutation = useRequestCheckInAdvance();
+  const requestMutation = isCheckIn ? checkInRequestMutation : regularRequestMutation;
   const cancelMutation = useCancelAdvancePaymentRequest();
   const updatePasswordMutation = useUpdateEmployeePassword();
 
@@ -234,7 +241,7 @@ const FlexiblePayEmployeePage = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-800 mb-0.5">
-                Tạm khóa yêu cầu ứng lương
+                {info.canRequestTitle || "Tạm khóa yêu cầu ứng lương"}
               </p>
               <p className="text-xs text-amber-700 leading-relaxed">
                 {info.canRequestReason}

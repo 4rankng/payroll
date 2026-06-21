@@ -46,6 +46,17 @@ func (h *Handler) resolveEmployeeID(c *gin.Context) (uint, bool) {
 }
 
 func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse {
+	salaryStatus := "pending"
+	salaryMessage := "Lương sẽ được ghi nhận sau khi bạn tan ca."
+	if att.CheckOutTime != nil {
+		salaryStatus = "not_recorded"
+		salaryMessage = "Chưa ghi nhận lương cho ca này. Vui lòng kiểm tra khung giờ ca làm hoặc liên hệ quản lý."
+		if att.EarningAmount != nil && *att.EarningAmount > 0 {
+			salaryStatus = "recorded"
+			salaryMessage = "Đã ghi nhận lương cho ca này. Bạn có thể yêu cầu ứng lương nếu còn hạn mức."
+		}
+	}
+
 	return &dto.AttendanceResponse{
 		ID:            att.ID,
 		ProjectID:     att.ProjectID,
@@ -56,6 +67,8 @@ func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse 
 		CheckOutTime:  att.CheckOutTime,
 		CheckOutGate:  att.CheckOutGate,
 		EarningAmount: att.EarningAmount,
+		SalaryStatus:  salaryStatus,
+		SalaryMessage: salaryMessage,
 		Status:        string(att.GetStatus(h.clk.Now())),
 	}
 }

@@ -86,6 +86,41 @@ export function useRequestAdvancePayment() {
 }
 
 /**
+ * Get self-check-in advance info for a check-in-enabled employee (dedicated
+ * /me/check-in-advance path). Polls every 30s while a pending request exists.
+ */
+export function useCheckInAdvanceInfo(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: QueryKeys.advancePayments.employee.checkInAdvanceInfo,
+    queryFn: () => advancePaymentService.getCheckInAdvanceInfo(),
+    enabled: options?.enabled !== undefined ? options.enabled : true,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => {
+      const data = query.state.data as { data?: AdvancePaymentInfo } | undefined;
+      return data?.data?.pendingAmount ? PENDING_POLL_INTERVAL : false;
+    },
+  });
+}
+
+/**
+ * Submit a new advance request under the self-check-in flow.
+ */
+export function useRequestCheckInAdvance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateAdvancePaymentRequest) =>
+      advancePaymentService.requestCheckInAdvance(data),
+    onSuccess: async (response) => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.checkInAdvanceInfo });
+      queryClient.invalidateQueries({ queryKey: ["employee", "advance-payment", "history"] });
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+  });
+}
+
+/**
  * Get advance payment history for the logged-in employee.
  * Polls every 30s while any request is PENDING and notifies on status change.
  */

@@ -25,6 +25,16 @@ type AdvancePaymentInfoResponse struct {
 	// ProviderMaxTransferAmount is the maximum amount the disbursement provider
 	// will accept for a single transfer. Zero means no limit.
 	ProviderMaxTransferAmount uint64 `json:"providerMaxTransferAmount,omitempty"`
+
+	// Salary is the total earned wages (100%) for the self-check-in flow. Populated
+	// only by the dedicated /me/check-in-advance endpoint; the admin-upload
+	// /me/advance-payment endpoint leaves it zero (omitempty).
+	Salary uint64 `json:"salary,omitempty"`
+	// Disclaimer is the in-app note for the self-check-in flow clarifying that
+	// the displayed wages exclude overtime and company allowances.
+	Disclaimer string `json:"disclaimer,omitempty"`
+	// WindowOpenDay is the day of month the self-check-in request window opens.
+	WindowOpenDay int `json:"windowOpenDay,omitempty"`
 }
 
 type AdvancePaymentQuotaResponse struct {

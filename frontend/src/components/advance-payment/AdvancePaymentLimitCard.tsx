@@ -39,6 +39,31 @@ export function AdvancePaymentLimitCard({
         </p>
       </div>
 
+      {info.salary !== undefined && (
+        <div className="px-4 py-3 bg-emerald-50/60 border-b border-gray-100 space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Tiền công thực tế</span>
+            <span className="font-semibold tabular-nums text-gray-800">
+              {formatCurrency(info.salary)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">
+              Tiền công được ứng{" "}
+              <span className="text-[10px] text-gray-400">(70%)</span>
+            </span>
+            <span className="font-bold tabular-nums text-employee">
+              {formatCurrency(info.maxAdvanceAmount)}
+            </span>
+          </div>
+          {info.disclaimer && (
+            <p className="text-[11px] text-gray-500 leading-snug pt-1.5 mt-1 border-t border-emerald-100">
+              {info.disclaimer}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="p-4 space-y-4">
         {hasQuotas ? (
           sortedQuotas.map((quota, idx) => (

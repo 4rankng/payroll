@@ -363,6 +363,9 @@ export const API_ENDPOINTS = {
     advancePaymentHistory: '/me/advance-payment/history',
     advancePaymentCalculateFee: '/me/advance-payment/calculate-fee',
     advancePaymentCancelRequest: (id: number) => `/me/advance-payment/request/${id}/cancel`,
+    // Self-check-in advance flow — dedicated path for check-in-enabled employees
+    checkInAdvance: '/me/check-in-advance',
+    checkInAdvanceRequest: '/me/check-in-advance/request',
   },
 
   // Advance Payments (Admin)

@@ -324,6 +324,7 @@ export const QueryKeys = {
   advancePayments: {
     employee: {
       info: ['employee', 'advance-payment', 'info'] as const,
+      checkInAdvanceInfo: ['employee', 'check-in-advance', 'info'] as const,
       history: (filters?: { page?: number; pageSize?: number }) =>
         ['employee', 'advance-payment', 'history', filters] as const,
     },

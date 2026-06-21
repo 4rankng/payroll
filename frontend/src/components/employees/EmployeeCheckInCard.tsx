@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BriefcaseBusiness, DoorOpen, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, BadgeCheck, BriefcaseBusiness, DoorOpen, Loader2, MapPin, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   useTodayAttendance,
@@ -9,6 +9,8 @@ import {
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
+import { formatCurrency } from "@/utils/formatters";
+import { isSalaryRecorded } from "@/utils/attendanceHelpers";
 
 function safeFormatTime(time: string | undefined | null, fallback = "--:--"): string {
   if (!time) return fallback;
@@ -84,44 +86,81 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   }
 
   const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
+  const salaryRecorded = attendance ? isSalaryRecorded(attendance) : false;
 
   return (
     <div className={`p-4 ${className}`} style={style}>
       {attendance?.status === "completed" ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm">
-              <CheckCircle2 className="h-5 w-5" />
+        <div className="space-y-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                <BadgeCheck className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-950">Đã hoàn thành ca làm việc</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-medium text-slate-600">
+                  <span className="rounded-md bg-slate-50 px-2.5 py-2">
+                    Vào {safeFormatTime(attendance.check_in_time)}
+                  </span>
+                  <span className="rounded-md bg-slate-50 px-2.5 py-2">
+                    Tan {safeFormatTime(attendance.check_out_time)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-900">Đã hoàn thành ca làm việc</p>
-              <p className="mt-1 text-xs font-medium text-emerald-700">
-                Vào làm {safeFormatTime(attendance.check_in_time)} · Tan ca {safeFormatTime(attendance.check_out_time)}
-              </p>
-              {attendance.earning_amount != null && attendance.earning_amount > 0 && (
-                <p className="mt-2 text-sm font-bold text-emerald-700">
-                  Lương: {attendance.earning_amount.toLocaleString("vi-VN")} đ
+          </div>
+
+          <div
+            className={`rounded-lg border p-4 ${
+              salaryRecorded
+                ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                : "border-amber-200 bg-amber-50 text-amber-950"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white ${
+                  salaryRecorded ? "text-emerald-700" : "text-amber-700"
+                }`}
+              >
+                {salaryRecorded ? <WalletCards className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold">
+                  {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : "Chưa ghi nhận lương ca"}
                 </p>
-              )}
+                <p className="mt-1 text-xs font-medium leading-5 opacity-80">
+                  {attendance.salary_message ||
+                    (salaryRecorded
+                      ? "Bạn có thể yêu cầu ứng lương nếu còn hạn mức."
+                      : "Vui lòng kiểm tra khung giờ ca làm hoặc liên hệ quản lý.")}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       ) : attendance?.status === "checked_in" ? (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50/80 p-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sky-600 shadow-sm">
-              <BriefcaseBusiness className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-900">Đang làm việc</p>
-              <p className="mt-1 text-xs font-medium text-sky-700">
-                Vào làm lúc {safeFormatTime(attendance.check_in_time)}
-              </p>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+                <BriefcaseBusiness className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-950">Đang làm việc</p>
+                <p className="mt-1 text-xs font-medium text-slate-600">
+                  Vào làm lúc {safeFormatTime(attendance.check_in_time)}
+                </p>
+                <p className="mt-2 text-xs font-medium leading-5 text-sky-700">
+                  Tan ca đúng giờ để hệ thống ghi nhận lương và cập nhật hạn mức ứng.
+                </p>
+              </div>
             </div>
           </div>
           <Button
             size="lg"
-            className="h-14 w-full rounded-2xl bg-slate-900 text-base font-bold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
+            className="h-14 w-full rounded-lg bg-slate-950 text-base font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
             disabled={isPending}
             onClick={() => handleAction("check_out")}
           >
@@ -134,29 +173,37 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           </Button>
         </div>
       ) : attendance?.status === "orphaned" ? (
-        <div className="flex flex-col items-center p-4 bg-red-50 rounded-xl w-full border border-red-100">
-          <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
-          <p className="text-red-800 font-medium">Ca làm việc không hợp lệ</p>
-          <p className="text-xs text-red-600 text-center mt-1">
-            Bạn đã quên tan ca trong ca làm việc này.
-          </p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-red-600">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-950">Ca làm việc không hợp lệ</p>
+              <p className="mt-1 text-xs font-medium leading-5 text-red-700">
+                Bạn đã quên tan ca trong ca làm việc này. Vui lòng liên hệ quản lý để kiểm tra lương.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-employee shadow-sm">
-              <BriefcaseBusiness className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-900">Sẵn sàng vào làm</p>
-              <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
-                Chạm nút bên dưới để xác nhận vị trí tại cổng dự án.
-              </p>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-950">Sẵn sàng vào làm</p>
+                <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                  Xác nhận vị trí tại cổng dự án để bắt đầu ca.
+                </p>
+              </div>
             </div>
           </div>
           <Button
             size="lg"
-            className="h-14 w-full rounded-2xl bg-employee text-base font-bold text-white shadow-lg hover:bg-employee-600"
+            className="h-14 w-full rounded-lg bg-employee text-base font-bold text-white shadow-lg hover:bg-employee-600"
             style={{
               boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
             }}

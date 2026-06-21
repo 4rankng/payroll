@@ -13,6 +13,15 @@ func setupAdvancePaymentRoutes(protected *gin.RouterGroup, container *Container)
 		me.POST("/calculate-fee", container.Handlers.AdvancePayment.CalculateFeePreview)
 	}
 
+	// Employee self-check-in advance endpoints — DEDICATED PATH (separate from the
+	// admin-upload /me/advance-payment flow above). 70% advanceable cap, calendar-
+	// month salary period, day-10 request window.
+	checkInMe := protected.Group("/me/check-in-advance")
+	{
+		checkInMe.GET("", container.Handlers.AdvancePayment.GetMyCheckInAdvanceInfo)
+		checkInMe.POST("/request", container.Handlers.AdvancePayment.CreateCheckInAdvanceRequest)
+	}
+
 	// Admin endpoints - for managing advance payments
 	advancePayments := protected.Group("/advance-payments")
 	{

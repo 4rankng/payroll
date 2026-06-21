@@ -235,7 +235,8 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 			return err
 		}
 
-		// 6. Accumulate advance payment quota
+		// 6. Accumulate advance payment quota (self-check-in flow): salary = 100%
+		// earned; max_adv_amount = floor(salary * SelfCheckInAdvanceablePercent / 100) = 70%.
 		if earningAmount > 0 {
 			currentMonth := now.Format("2006-01")
 			currentDate := now.Format("2006-01-02")
@@ -253,19 +254,21 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 				}
 			}
 
+			earning := uint64(earningAmount)
 			if ap == nil {
 				ap = &domain.AdvancePayment{
 					ProjectID:    attendance.ProjectID,
 					EmployeeID:   attendance.EmployeeID,
 					ForMonth:     currentMonth,
 					UploadDate:   currentDate,
-					MaxAdvAmount: uint64(earningAmount),
+					Salary:       earning,
+					MaxAdvAmount: (earning * domain.SelfCheckInAdvanceablePercent) / 100,
 				}
 				if err := s.advancePaymentRepo.Create(txCtx, ap); err != nil {
 					return err
 				}
 			} else {
-				if err := s.advancePaymentRepo.IncrementMaxAdvAmount(txCtx, uint64(ap.ID), earningAmount); err != nil {
+				if err := s.advancePaymentRepo.AccumulateSalary(txCtx, uint64(ap.ID), earningAmount); err != nil {
 					return err
 				}
 			}

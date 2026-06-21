@@ -29,6 +29,8 @@ type AttendanceResponse struct {
 	CheckOutTime  *time.Time `json:"check_out_time,omitempty"`
 	CheckOutGate  *string    `json:"check_out_gate,omitempty"`
 	EarningAmount *int64     `json:"earning_amount,omitempty"`
+	SalaryStatus  string     `json:"salary_status"`
+	SalaryMessage string     `json:"salary_message"`
 	Status        string     `json:"status"`
 }
 
