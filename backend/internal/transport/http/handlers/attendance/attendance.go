@@ -54,22 +54,25 @@ func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse 
 		if att.EarningAmount != nil && *att.EarningAmount > 0 {
 			salaryStatus = "recorded"
 			salaryMessage = "Đã ghi nhận lương cho ca này. Bạn có thể yêu cầu ứng lương nếu còn hạn mức."
+		} else if att.SalaryRejectReason != nil && *att.SalaryRejectReason != "" {
+			salaryMessage = *att.SalaryRejectReason
 		}
 	}
 
 	return &dto.AttendanceResponse{
-		ID:            att.ID,
-		ProjectID:     att.ProjectID,
-		EmployeeID:    att.EmployeeID,
-		Date:          att.Date,
-		CheckInTime:   att.CheckInTime,
-		CheckInGate:   att.CheckInGate,
-		CheckOutTime:  att.CheckOutTime,
-		CheckOutGate:  att.CheckOutGate,
-		EarningAmount: att.EarningAmount,
-		SalaryStatus:  salaryStatus,
-		SalaryMessage: salaryMessage,
-		Status:        string(att.GetStatus(h.clk.Now())),
+		ID:                 att.ID,
+		ProjectID:          att.ProjectID,
+		EmployeeID:         att.EmployeeID,
+		Date:               att.Date,
+		CheckInTime:        att.CheckInTime,
+		CheckInGate:        att.CheckInGate,
+		CheckOutTime:       att.CheckOutTime,
+		CheckOutGate:       att.CheckOutGate,
+		EarningAmount:      att.EarningAmount,
+		SalaryRejectReason: att.SalaryRejectReason,
+		SalaryStatus:       salaryStatus,
+		SalaryMessage:      salaryMessage,
+		Status:             string(att.GetStatus(h.clk.Now())),
 	}
 }
 

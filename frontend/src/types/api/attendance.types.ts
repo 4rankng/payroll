@@ -10,6 +10,7 @@ export interface AdminAttendanceResponse {
   check_out_time?: string;
   check_out_gate?: string;
   earning_amount?: number;
+  salary_reject_reason?: string;
   status: string;
 }
 

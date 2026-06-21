@@ -24,24 +24,27 @@ export function EmployeePortalHeader({
 }: EmployeePortalHeaderProps) {
   return (
     <div className="bg-employee">
-      <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+      <div
+        className="max-w-2xl mx-auto px-4 pb-4 flex items-center justify-between gap-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
+      >
         <div className="min-w-0">
-          <p className="text-xs font-medium text-white/70 uppercase tracking-wider">
+          <p className="text-[15px] font-semibold leading-5 text-white/80">
             Xin chào
           </p>
-          <h1 className="text-lg font-bold text-white truncate leading-tight">
+          <h1 className="truncate text-[22px] font-bold leading-7 text-white">
             {employeeName || "bạn"}
           </h1>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
-            className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white"
+            className="relative h-11 w-11 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5.5 w-5.5" />
             {unreadCount != null && unreadCount > 0 && (
-              <span className="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center">
+              <span className="absolute top-1.5 right-1.5 h-4 min-w-4 rounded-full bg-red-500 px-1 text-white text-[9px] font-bold flex items-center justify-center">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -49,10 +52,10 @@ export function EmployeePortalHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="rounded-full h-9 w-9 flex items-center justify-center hover:bg-white/20 transition-colors"
+                className="rounded-full h-11 w-11 flex items-center justify-center hover:bg-white/20 transition-colors"
                 aria-label="Menu tài khoản"
               >
-                <UserCircle className="h-7 w-7 text-white/80" />
+                <UserCircle className="h-8 w-8 text-white/85" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -61,18 +64,18 @@ export function EmployeePortalHeader({
             >
               <DropdownMenuItem
                 onClick={onChangePassword}
-                className="py-2 gap-2.5 rounded-lg"
+                className="gap-2.5 rounded-lg py-2.5"
               >
                 <Settings className="w-4 h-4 text-gray-400" />
-                <span className="text-sm">Đổi mật khẩu</span>
+                <span className="text-[15px]">Đổi mật khẩu</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={onLogout}
-                className="text-red-500 py-2 gap-2.5 rounded-lg"
+                className="gap-2.5 rounded-lg py-2.5 text-red-500"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-sm">Đăng xuất</span>
+                <span className="text-[15px]">Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

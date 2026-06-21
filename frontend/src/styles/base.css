@@ -273,3 +273,25 @@
     }
   }
 }
+
+@layer components {
+  @media (max-width: 640px) {
+    .employee-mobile-page {
+      font-size: 16px;
+      line-height: 1.5;
+      text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .employee-mobile-page h1,
+    .employee-mobile-page h2,
+    .employee-mobile-page h3 {
+      letter-spacing: 0;
+    }
+
+    .employee-mobile-page button,
+    .employee-mobile-page [role="button"] {
+      min-height: 44px;
+    }
+  }
+}

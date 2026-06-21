@@ -150,18 +150,18 @@ const FlexiblePayEmployeePage = () => {
   if (profileLoading || infoLoading) {
     return (
       <div
-        className="min-h-[100dvh]"
+        className="employee-mobile-page min-h-[100dvh]"
         style={{
           backgroundImage: "url('/employee-bg.avif')",
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundAttachment: "fixed",
-          paddingTop: "env(safe-area-inset-top)",
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <div
-          className="px-4 py-4 flex items-center justify-between bg-employee"
+          className="px-4 pb-4 flex items-center justify-between bg-employee"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
         >
           <div className="space-y-2">
             <Skeleton className="h-3 w-16" />
@@ -188,13 +188,12 @@ const FlexiblePayEmployeePage = () => {
 
   return (
     <div
-      className="min-h-[100dvh]"
+      className="employee-mobile-page min-h-[100dvh]"
       style={{
         backgroundImage: "linear-gradient(180deg, rgba(224, 249, 255, 0.92) 0%, rgba(241, 250, 255, 0.88) 44%, rgba(248, 250, 252, 0.96) 100%), url('/employee-bg.avif')",
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",
-        paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
@@ -240,10 +239,10 @@ const FlexiblePayEmployeePage = () => {
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-amber-800 mb-0.5">
-                {info.canRequestTitle || "Tạm khóa yêu cầu ứng lương"}
+              <p className="mb-1 text-base font-bold leading-6 text-amber-900">
+                {info.canRequestTitle || "Chưa thể ứng lương"}
               </p>
-              <p className="text-xs text-amber-700 leading-relaxed">
+              <p className="text-[15px] font-medium leading-6 text-amber-800">
                 {info.canRequestReason}
               </p>
             </div>

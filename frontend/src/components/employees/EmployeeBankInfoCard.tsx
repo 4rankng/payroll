@@ -55,25 +55,22 @@ export function EmployeeBankInfoCard({
   return (
     <div className={className} style={style} role="region" aria-label="Thông tin ngân hàng">
       {hasBankInfo ? (
-        <div className="grid grid-cols-2 divide-x divide-gray-100">
+        <div className="divide-y divide-gray-100">
           {bankFields.map(
-            ({ icon: Icon, iconBg, iconColor, label, getValue, mono }, idx) => {
+            ({ icon: Icon, iconBg, iconColor, label, getValue, mono }) => {
               const value = getValue(profile);
               return (
-                <div
-                  key={label}
-                  className={idx === 0 ? "col-span-2 border-b border-gray-100" : ""}
-                >
-                  <div className="flex items-center gap-2.5 px-4 py-3">
-                    <div className={`p-1.5 rounded-xl ${iconBg} shrink-0`}>
-                      <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
+                <div key={label}>
+                  <div className="flex items-center gap-3 px-4 py-4">
+                    <div className={`p-2 rounded-xl ${iconBg} shrink-0`}>
+                      <Icon className={`h-4 w-4 ${iconColor}`} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-gray-400 font-medium">
+                      <p className="text-[15px] font-medium leading-5 text-slate-500">
                         {label}
                       </p>
                       <p
-                        className={`mt-0.5 text-sm font-bold leading-tight text-gray-800 ${
+                        className={`text-[17px] font-bold leading-6 text-slate-900 ${
                           mono ? "break-all font-mono" : "whitespace-normal break-words"
                         }`}
                       >
@@ -91,10 +88,10 @@ export function EmployeeBankInfoCard({
           <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2.5">
             <Building2 className="h-4 w-4 text-gray-300" />
           </div>
-          <p className="text-sm font-medium text-gray-400">
+          <p className="text-base font-semibold text-gray-500">
             Chưa có thông tin ngân hàng
           </p>
-          <p className="text-xs text-gray-300 mt-0.5">
+          <p className="mt-1 text-[15px] text-gray-400">
             Liên hệ quản lý để cập nhật
           </p>
         </div>

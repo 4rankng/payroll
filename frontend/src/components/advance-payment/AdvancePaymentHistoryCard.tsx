@@ -64,20 +64,20 @@ const HistoryItemCard = ({
   };
 
   return (
-    <div className="flex items-center gap-3 py-3 px-1">
+    <div className="flex items-center gap-3 px-1 py-3.5">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-sm font-bold text-gray-900 tabular-nums">
+          <span className="text-[16px] font-bold tabular-nums text-gray-900">
             {safeFormat(item.requestAmount)}
           </span>
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${cfg.pill}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[15px] font-semibold ${cfg.pill}`}
           >
             <StatusIcon className="h-2.5 w-2.5" />
             {getVietnameseAdvancePaymentStatus(item.status)}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1.5 text-[15px] leading-5 text-gray-500">
           <span>{safeDate(item.createdAt)}</span>
           <span className="text-gray-300">·</span>
           <span>
@@ -96,13 +96,13 @@ const HistoryItemCard = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowConfirmCancel(false)}
-                className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-700"
               >
                 Không
               </button>
               <button
                 onClick={handleCancelClick}
-                className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors"
+                className="text-[15px] font-bold text-red-500 transition-colors hover:text-red-700"
               >
                 Xác nhận
               </button>
@@ -110,7 +110,7 @@ const HistoryItemCard = ({
           ) : (
             <button
               onClick={handleCancelClick}
-              className="text-xs font-semibold text-red-500 hover:text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[15px] font-semibold text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
             >
               Hủy
             </button>
@@ -141,15 +141,15 @@ export function AdvancePaymentHistoryCard({
       className={className ?? "bg-white rounded-2xl overflow-hidden"}
       style={style}
     >
-      <div className="px-4 pt-3.5 pb-1 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <History className="h-3.5 w-3.5 text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-800">
+      <div className="flex items-center justify-between px-4 pb-1 pt-4">
+        <div className="flex items-center gap-2">
+          <History className="h-4 w-4 text-gray-500" />
+          <h2 className="text-[18px] font-bold leading-6 text-gray-900">
             Lịch sử yêu cầu
           </h2>
         </div>
         {history.length > 0 && (
-          <span className="text-xs text-gray-400 flex items-center gap-0.5">
+          <span className="flex items-center gap-0.5 text-[15px] text-gray-500">
             {history.length} yêu cầu <ChevronRight className="h-3 w-3" />
           </span>
         )}
@@ -163,15 +163,15 @@ export function AdvancePaymentHistoryCard({
             ))}
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="px-4 py-8 text-center">
             <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2.5">
               <History className="h-4 w-4 text-gray-300" />
             </div>
-            <p className="text-sm font-medium text-gray-400">
-              Chưa có yêu cầu nào
+            <p className="text-[16px] font-semibold text-gray-500">
+              Chưa có lần ứng lương nào
             </p>
-            <p className="text-xs text-gray-300 mt-0.5">
-              Các yêu cầu ứng lương sẽ hiển thị ở đây
+            <p className="mt-1 text-[15px] leading-5 text-gray-400">
+              Khi bạn gửi yêu cầu, trạng thái sẽ hiện ở đây.
             </p>
           </div>
         ) : (

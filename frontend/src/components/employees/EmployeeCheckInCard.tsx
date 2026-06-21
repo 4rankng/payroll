@@ -92,14 +92,14 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
     <div className={`p-4 ${className}`} style={style}>
       {attendance?.status === "completed" ? (
         <div className="space-y-3">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                 <BadgeCheck className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-950">Đã hoàn thành ca làm việc</p>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-medium text-slate-600">
+                <p className="text-[18px] font-bold leading-6 text-slate-950">Ca hôm nay đã xong</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[16px] font-semibold text-slate-600">
                   <span className="rounded-md bg-slate-50 px-2.5 py-2">
                     Vào {safeFormatTime(attendance.check_in_time)}
                   </span>
@@ -112,7 +112,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           </div>
 
           <div
-            className={`rounded-lg border p-4 ${
+            className={`rounded-xl border p-4 ${
               salaryRecorded
                 ? "border-emerald-200 bg-emerald-50 text-emerald-950"
                 : "border-amber-200 bg-amber-50 text-amber-950"
@@ -120,18 +120,19 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           >
             <div className="flex items-start gap-3">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white ${
                   salaryRecorded ? "text-emerald-700" : "text-amber-700"
                 }`}
               >
                 {salaryRecorded ? <WalletCards className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">
-                  {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : "Chưa ghi nhận lương ca"}
+                <p className="text-[18px] font-bold leading-6">
+                  {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : "Ca này chưa tính lương"}
                 </p>
-                <p className="mt-1 text-xs font-medium leading-5 opacity-80">
-                  {attendance.salary_message ||
+                <p className="mt-1 text-[16px] font-medium leading-6 opacity-85">
+                  {attendance.salary_reject_reason ||
+                    attendance.salary_message ||
                     (salaryRecorded
                       ? "Bạn có thể yêu cầu ứng lương nếu còn hạn mức."
                       : "Vui lòng kiểm tra khung giờ ca làm hoặc liên hệ quản lý.")}
@@ -142,25 +143,25 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
         </div>
       ) : attendance?.status === "checked_in" ? (
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
                 <BriefcaseBusiness className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-950">Đang làm việc</p>
-                <p className="mt-1 text-xs font-medium text-slate-600">
+                <p className="text-[18px] font-bold leading-6 text-slate-950">Bạn đang làm việc</p>
+                <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
                   Vào làm lúc {safeFormatTime(attendance.check_in_time)}
                 </p>
-                <p className="mt-2 text-xs font-medium leading-5 text-sky-700">
-                  Tan ca đúng giờ để hệ thống ghi nhận lương và cập nhật hạn mức ứng.
+                <p className="mt-2 text-[16px] font-medium leading-6 text-sky-700">
+                  Khi hết ca, bấm Tan ca để hệ thống ghi nhận lương.
                 </p>
               </div>
             </div>
           </div>
           <Button
             size="lg"
-            className="h-14 w-full rounded-lg bg-slate-950 text-base font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
+            className="h-14 w-full rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
             disabled={isPending}
             onClick={() => handleAction("check_out")}
           >
@@ -173,37 +174,37 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           </Button>
         </div>
       ) : attendance?.status === "orphaned" ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-red-600">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-red-600">
               <AlertCircle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-red-950">Ca làm việc không hợp lệ</p>
-              <p className="mt-1 text-xs font-medium leading-5 text-red-700">
-                Bạn đã quên tan ca trong ca làm việc này. Vui lòng liên hệ quản lý để kiểm tra lương.
+              <p className="text-[18px] font-bold leading-6 text-red-950">Ca này cần quản lý kiểm tra</p>
+              <p className="mt-1 text-[16px] font-medium leading-6 text-red-700">
+                Bạn chưa bấm Tan ca cho ca trước. Hãy báo quản lý để kiểm tra lại lương.
               </p>
             </div>
           </div>
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
                 <MapPin className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-950">Sẵn sàng vào làm</p>
-                <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
-                  Xác nhận vị trí tại cổng dự án để bắt đầu ca.
+                <p className="text-[18px] font-bold leading-6 text-slate-950">Sẵn sàng vào làm</p>
+                <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                  Khi đã tới cổng dự án, bấm Vào làm để bắt đầu ca.
                 </p>
               </div>
             </div>
           </div>
           <Button
             size="lg"
-            className="h-14 w-full rounded-lg bg-employee text-base font-bold text-white shadow-lg hover:bg-employee-600"
+            className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
             style={{
               boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
             }}

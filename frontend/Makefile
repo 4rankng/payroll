@@ -15,6 +15,7 @@ DEMO_FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(DEMO_TAG)
 .PHONY: push push-demo
 push:
 	@echo "Logging in to DockerHub as $(DOCKERHUB_USERNAME)"
+	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login --username $(DOCKERHUB_USERNAME) --password-stdin
 	@echo "Building Docker image for amd64 with production environment variables: $(FULL_IMAGE_NAME)"
 	docker build --no-cache --platform linux/amd64 \
@@ -30,6 +31,7 @@ push:
 # Build & push the demo frontend image (API URL → demo.tingting.vip)
 push-demo:
 	@echo "Logging in to DockerHub as $(DOCKERHUB_USERNAME)"
+	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login --username $(DOCKERHUB_USERNAME) --password-stdin
 	@echo "Building demo Docker image for amd64: $(DEMO_FULL_IMAGE_NAME)"
 	docker build --no-cache --platform linux/amd64 \

@@ -116,9 +116,12 @@ const EmployeePage = () => {
 
   if (profileLoading || summaryLoading) {
     return (
-      <div className="min-h-[100dvh]" style={{ backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="sticky top-0 z-10 border-b border-white/30" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(20px)" }}>
-          <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <div className="employee-mobile-page min-h-[100dvh]" style={{ backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="sticky top-0 z-10 border-b border-white/30 bg-employee">
+          <div
+            className="max-w-2xl mx-auto px-4 pb-4 flex items-center justify-between"
+            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
+          >
             <div className="space-y-1.5">
               <Skeleton className="h-3 w-24 bg-sky-200/60" />
               <Skeleton className="h-5 w-36 bg-sky-200/60" />
@@ -145,8 +148,8 @@ const EmployeePage = () => {
 
   return (
     <div
-      className="min-h-[100dvh]"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", backgroundAttachment: "fixed" }}
+      className="employee-mobile-page min-h-[100dvh]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", backgroundAttachment: "fixed" }}
     >
       {/* Header */}
       <EmployeePortalHeader
@@ -181,10 +184,10 @@ const EmployeePage = () => {
                   <div className="relative pr-12">
                     <div className="flex items-center gap-1.5 mb-2">
                       <Icon className={`h-3.5 w-3.5 shrink-0 ${iconText}`} strokeWidth={2.2} />
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight truncate">{label}</span>
+                      <span className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground leading-tight truncate">{label}</span>
                     </div>
-                    <p className="text-base font-bold text-slate-800 tabular-nums truncate leading-tight">{value}</p>
-                    {sub && <p className="text-xs text-slate-400 mt-1 truncate">{sub}</p>}
+                    <p className="text-lg font-bold text-slate-800 tabular-nums truncate leading-tight">{value}</p>
+                    {sub && <p className="text-[13px] text-slate-400 mt-1 truncate">{sub}</p>}
                   </div>
                 </div>
               ))}
@@ -243,8 +246,8 @@ const EmployeePage = () => {
               <div className="w-12 h-12 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-6 h-6 text-sky-400" />
               </div>
-              <p className="text-sm font-semibold text-foreground">Chưa có bảng công</p>
-              <p className="text-xs text-slate-400 mt-1">Dữ liệu sẽ hiển thị tại đây</p>
+              <p className="text-[15px] font-semibold text-foreground">Chưa có bảng công</p>
+              <p className="text-[13px] text-slate-400 mt-1">Dữ liệu sẽ hiển thị tại đây</p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -258,11 +261,11 @@ const EmployeePage = () => {
                     <div className="flex items-center justify-between px-4 pt-4 pb-3">
                       <div className="flex items-center gap-2">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isPaid ? "bg-emerald-500" : "bg-amber-400"}`} />
-                        <span className="text-sm font-bold text-slate-800 capitalize">
+                        <span className="text-[15px] font-bold text-slate-800 capitalize">
                           {format(new Date(day.date), "EEEE, dd/MM", { locale: vi })}
                         </span>
                       </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      <span className={`text-[13px] font-semibold px-2.5 py-1 rounded-full ${
                         isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                       }`}>
                         {isPaid ? "Đã trả" : "Chưa trả"}
@@ -276,9 +279,9 @@ const EmployeePage = () => {
                         { label: "Đã nhận", value: formatCurrency(day.totalPaidAmount), unit: null, color: isPaid ? "text-emerald-600" : "text-slate-400" },
                       ].map(({ label, value, unit, color }) => (
                         <div key={label} className="px-3 py-3 text-center">
-                          <p className="text-xs text-slate-400 font-medium mb-1">{label}</p>
-                          <p className={`text-sm font-bold tabular-nums truncate ${color}`}>
-                            {value}{unit && <span className="text-xs font-normal text-slate-400 ml-0.5">{unit}</span>}
+                          <p className="text-[13px] text-slate-400 font-medium mb-1">{label}</p>
+                          <p className={`text-[15px] font-bold tabular-nums truncate ${color}`}>
+                            {value}{unit && <span className="text-[13px] font-normal text-slate-400 ml-0.5">{unit}</span>}
                           </p>
                         </div>
                       ))}

@@ -75,18 +75,19 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 	data := make([]dto.AdminAttendanceResponse, 0, len(attendances))
 	for _, att := range attendances {
 		data = append(data, dto.AdminAttendanceResponse{
-			ID:            att.ID,
-			ProjectID:     att.ProjectID,
-			ProjectName:   att.Project.Name,
-			EmployeeID:    att.EmployeeID,
-			EmployeeName:  att.Employee.Fullname,
-			Date:          att.Date,
-			CheckInTime:   att.CheckInTime,
-			CheckInGate:   att.CheckInGate,
-			CheckOutTime:  att.CheckOutTime,
-			CheckOutGate:  att.CheckOutGate,
-			EarningAmount: att.EarningAmount,
-			Status:        string(att.GetStatus(now)),
+			ID:                 att.ID,
+			ProjectID:          att.ProjectID,
+			ProjectName:        att.Project.Name,
+			EmployeeID:         att.EmployeeID,
+			EmployeeName:       att.Employee.Fullname,
+			Date:               att.Date,
+			CheckInTime:        att.CheckInTime,
+			CheckInGate:        att.CheckInGate,
+			CheckOutTime:       att.CheckOutTime,
+			CheckOutGate:       att.CheckOutGate,
+			EarningAmount:      att.EarningAmount,
+			SalaryRejectReason: att.SalaryRejectReason,
+			Status:             string(att.GetStatus(now)),
 		})
 	}
 
@@ -119,18 +120,19 @@ func (h *AttendanceHandler) Get(c *gin.Context) {
 	}
 
 	res := dto.AdminAttendanceResponse{
-		ID:            att.ID,
-		ProjectID:     att.ProjectID,
-		ProjectName:   att.Project.Name,
-		EmployeeID:    att.EmployeeID,
-		EmployeeName:  att.Employee.Fullname,
-		Date:          att.Date,
-		CheckInTime:   att.CheckInTime,
-		CheckInGate:   att.CheckInGate,
-		CheckOutTime:  att.CheckOutTime,
-		CheckOutGate:  att.CheckOutGate,
-		EarningAmount: att.EarningAmount,
-		Status:        string(att.GetStatus(h.clk.Now())),
+		ID:                 att.ID,
+		ProjectID:          att.ProjectID,
+		ProjectName:        att.Project.Name,
+		EmployeeID:         att.EmployeeID,
+		EmployeeName:       att.Employee.Fullname,
+		Date:               att.Date,
+		CheckInTime:        att.CheckInTime,
+		CheckInGate:        att.CheckInGate,
+		CheckOutTime:       att.CheckOutTime,
+		CheckOutGate:       att.CheckOutGate,
+		EarningAmount:      att.EarningAmount,
+		SalaryRejectReason: att.SalaryRejectReason,
+		Status:             string(att.GetStatus(h.clk.Now())),
 	}
 
 	response.Success(c, res, "Lấy thông tin thành công")

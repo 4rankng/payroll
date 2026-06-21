@@ -88,6 +88,7 @@ push:
 	@docker buildx use $(BUILDER)
 	@docker buildx inspect --bootstrap >/dev/null
 	@echo "🔐 Logging into DockerHub..."
+	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
 
 	@echo "🏗️  Building & pushing AMD64 image (with inline cache)..."
@@ -121,6 +122,7 @@ push-demo:
 	@docker buildx use $(BUILDER)
 	@docker buildx inspect --bootstrap >/dev/null
 	@echo "🔐 Logging into DockerHub..."
+	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
 	@echo "🏗️  Building & pushing AMD64 backend image (:$(DEMO_TAG))..."
 	docker buildx build \
