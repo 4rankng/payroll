@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { attendanceService } from "@/services/attendance";
+import { QueryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 
 export const ATTENDANCE_QUERY_KEYS = {
@@ -44,11 +45,22 @@ export function useCheckOut() {
   return useMutation({
     mutationFn: attendanceService.checkOut,
     onSuccess: (response) => {
-      toast.success("Tan ca thành công");
+      const salaryMessage = response.data?.salary_message;
+      const salaryRecorded = response.data?.salary_status === "recorded";
+      toast[salaryRecorded ? "success" : "warning"](
+        salaryRecorded ? "Đã ghi nhận lương" : "Tan ca thành công",
+        {
+          description: salaryMessage || "Vui lòng kiểm tra thông tin lương ca làm.",
+          duration: 6000,
+        }
+      );
       queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
       queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
-      // Invalidate advance payment info to refresh quota
-      queryClient.invalidateQueries({ queryKey: ["advance-payment", "info"] });
+      // Invalidate advance payment info to refresh quota. Check-in-enabled employees
+      // use the dedicated check-in-advance key (70% cap); refresh both so the just-earned
+      // quota is visible without waiting for the pending-request poll.
+      queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.info });
+      queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.checkInAdvanceInfo });
     },
     onError: (error: unknown) => {
       const e = error as { response?: { data?: { message?: string } }; message?: string };

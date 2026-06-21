@@ -257,7 +257,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 				result.EmployeesSkipped++
 			}
 
-			assignmentCreated, err := s.getOrCreateAssignment(ctx, project.ID, employee.ID, cccd, fullName, position, createdBy)
+			assignment, assignmentCreated, err := s.getOrCreateAssignment(ctx, project.ID, employee.ID, cccd, fullName, position, createdBy)
 			if err != nil {
 				s.logger.Warn("failed to get/create assignment", "project_id", project.ID, "employee_id", employee.ID, "error", err)
 				processedRows++
@@ -274,16 +274,25 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 
 			// Only create advance payment record if amount column is provided and > 0
 			if hanMuc > 0 {
-				assetIDCopy := assetID
-				ap := &domain.AdvancePayment{
-					ProjectID:          project.ID,
-					EmployeeID:         employee.ID,
-					ForMonth:           forMonth,
-					UploadDate:         uploadDate,
-					MaxAdvAmount:       hanMuc,
-					LastAppliedAssetID: &assetIDCopy,
+				// Self-check-in employees earn their advance quota from check-in/out
+				// (advance_payments.salary → max_adv_amount = 70%). Exclude them from
+				// the admin FlexPay import so BatchUpsert never overwrites their
+				// salary-derived quota. This is a SEPARATE flow (AC5).
+				if assignment.CheckInEnabled {
+					s.logger.Info("skip flexpay advance import for check-in-enabled employee",
+						"project_id", project.ID, "employee_id", employee.ID, "for_month", forMonth)
+				} else {
+					assetIDCopy := assetID
+					ap := &domain.AdvancePayment{
+						ProjectID:          project.ID,
+						EmployeeID:         employee.ID,
+						ForMonth:           forMonth,
+						UploadDate:         uploadDate,
+						MaxAdvAmount:       hanMuc,
+						LastAppliedAssetID: &assetIDCopy,
+					}
+					advancePayments = append(advancePayments, ap)
 				}
-				advancePayments = append(advancePayments, ap)
 			}
 
 			processedRows++
@@ -487,10 +496,13 @@ func parseCommaNumber(s string) (uint64, error) {
 	return result, err
 }
 
-func (s *Service) getOrCreateAssignment(ctx context.Context, projectID, employeeID uint, employeeCCCD, employeeName, position string, createdBy uint) (bool, error) {
+// getOrCreateAssignment returns the existing active assignment (creating one if
+// absent), so callers can read fields like CheckInEnabled without a second
+// lookup. The bool is true when a new assignment was created.
+func (s *Service) getOrCreateAssignment(ctx context.Context, projectID, employeeID uint, employeeCCCD, employeeName, position string, createdBy uint) (*domain.ProjectEmployee, bool, error) {
 	existing, err := s.config.ProjectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, employeeID)
 	if err == nil && existing != nil {
-		return false, nil
+		return existing, false, nil
 	}
 
 	if position == "" {
@@ -512,8 +524,8 @@ func (s *Service) getOrCreateAssignment(ctx context.Context, projectID, employee
 	}
 
 	if err := s.config.ProjectEmployeeRepo.Create(ctx, assignment); err != nil {
-		return false, err
+		return nil, false, err
 	}
 
-	return true, nil
+	return assignment, true, nil
 }

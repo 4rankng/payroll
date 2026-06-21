@@ -52,6 +52,12 @@ export interface AdvancePaymentInfo {
   providerMinTransferAmount?: number;
   /** Maximum single-transfer amount enforced by the disbursement provider (VND). 0 = no limit. */
   providerMaxTransferAmount?: number;
+  /** Self-check-in flow: total earned wages (100%). Undefined on the admin-upload flow. */
+  salary?: number;
+  /** Self-check-in flow: OT/allowance disclaimer shown in the app. */
+  disclaimer?: string;
+  /** Self-check-in flow: day of month the request window opens. */
+  windowOpenDay?: number;
 }
 
 /**

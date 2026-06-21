@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// SelfCheckInAdvanceablePercent is the percent of earned salary (from check-in/out)
+// that a self-check-in employee may take as an advance. Centralized so accumulation
+// (repo), request validation, and UI display all agree.
+// For the self-check-in flow: max_adv_amount = floor(salary * percent / 100).
+const SelfCheckInAdvanceablePercent uint64 = 70
+
 // AdvancePayment represents monthly advance payment limits from Flexible Payroll Template uploads
 type AdvancePayment struct {
 	ID                 uint      `json:"id" gorm:"primaryKey;type:bigint unsigned"`
@@ -13,6 +19,10 @@ type AdvancePayment struct {
 	ForMonth           string    `json:"for_month" gorm:"size:7;not null;index"` // YYYY-MM
 	UploadDate         string    `json:"upload_date" gorm:"size:10;not null"`    // YYYY-MM-DD
 	MaxAdvAmount       uint64    `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
+	// Salary is the total earned wages from check-in/out (100%) for the self-check-in flow.
+	// MaxAdvAmount = floor(Salary * SelfCheckInAdvanceablePercent / 100). Unused by the
+	// admin-upload (BCC) flow, which sets MaxAdvAmount directly.
+	Salary             uint64    `json:"salary" gorm:"type:bigint unsigned;not null;default:0"`
 	LastAppliedAssetID *uint     `json:"last_applied_asset_id,omitempty" gorm:"type:bigint unsigned"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
@@ -49,11 +59,13 @@ type AdvancePaymentRepository interface {
 	Upsert(ctx context.Context, ap *AdvancePayment) error
 	GetByID(ctx context.Context, id uint64) (*AdvancePayment, error)
 	GetByEmployeeAndMonth(ctx context.Context, employeeID uint64, forMonth string) ([]*AdvancePayment, error)
+	GetMonthsByEmployee(ctx context.Context, employeeID uint64) ([]string, error)
 	SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
+	SumSalaryAndMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (salary, maxAdv uint64, err error)
 	BatchCreate(ctx context.Context, aps []*AdvancePayment) error
 	BatchUpsert(ctx context.Context, aps []*AdvancePayment) error
 	Update(ctx context.Context, ap *AdvancePayment) error
-	IncrementMaxAdvAmount(ctx context.Context, id uint64, amount int64) error
+	AccumulateSalary(ctx context.Context, id uint64, earning int64) error
 	ZeroOutQuota(ctx context.Context, projectID, employeeID uint, currentMonth string) error
 	BatchZeroOutQuota(ctx context.Context, projectID uint, employeeIDs []uint, currentMonth string) error
 	GetLatestForMonth(ctx context.Context) (string, error)

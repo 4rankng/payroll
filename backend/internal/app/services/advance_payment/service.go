@@ -60,19 +60,18 @@ func (s *Service) GetEmployeeAdvanceInfoByUserID(ctx context.Context, userID uin
 
 // GetEmployeeAdvanceInfo returns advance payment information for an employee
 func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64) (*domain.EmployeeAdvanceInfo, error) {
-	// Check if employee has flexible payment schedule
-	hasFlexible, err := s.hasFlexiblePaymentSchedule(ctx, employeeID)
+	eligibility, err := s.getAdvanceEligibility(ctx, employeeID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to check payment schedule")
 	}
 
 	info := &domain.EmployeeAdvanceInfo{
 		CurrentMonth:        GetCurrentMonth(),
-		HasFlexibleSchedule: hasFlexible,
+		HasFlexibleSchedule: eligibility.hasFlexible,
 		Quotas:              make([]domain.AdvancePaymentQuota, 0),
 	}
 
-	if !hasFlexible {
+	if !eligibility.hasFlexible {
 		info.CanRequest = false
 		return info, nil
 	}
@@ -88,17 +87,28 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 
 	validMonths := []string{}
 
-	if isBeforeCutoff {
-		// Days 1-10: Can withdraw from previous month AND current month
-		validMonths = append(validMonths, prevCalMonth)
-		validMonths = append(validMonths, currentCalMonth)
-	} else if isInLockedGap {
-		// Days 11-19: show the current month quota. Requesting stays locked
-		// only until admin uploads bang cham cong for that month.
-		validMonths = append(validMonths, currentCalMonth)
+	if eligibility.hasCheckInEnabled {
+		// Check-in/out employees earn quota continuously from completed shifts,
+		// so the import/cutoff windows do not apply. Show every month with
+		// earned quota and let the remaining budget be the only request gate.
+		months, err := s.config.AdvancePaymentRepo.GetMonthsByEmployee(ctx, employeeID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get earned quota months")
+		}
+		validMonths = append(validMonths, months...)
 	} else {
-		// Days 20-31: Can withdraw from current month
-		validMonths = append(validMonths, currentCalMonth)
+		if isBeforeCutoff {
+			// Days 1-10: Can withdraw from previous month AND current month
+			validMonths = append(validMonths, prevCalMonth)
+			validMonths = append(validMonths, currentCalMonth)
+		} else if isInLockedGap {
+			// Days 11-19: show the current month quota. Requesting stays locked
+			// only until admin uploads bang cham cong for that month.
+			validMonths = append(validMonths, currentCalMonth)
+		} else {
+			// Days 20-31: Can withdraw from current month
+			validMonths = append(validMonths, currentCalMonth)
+		}
 	}
 
 	var totalMax, totalComp, totalPend uint64
@@ -154,7 +164,7 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		}
 	}
 
-	if isRequestWindowLocked(now, hasCurrentMonthQuota) {
+	if !eligibility.hasCheckInEnabled && isRequestWindowLocked(now, hasCurrentMonthQuota) {
 		info.CanRequest = false
 		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(currentCalMonth))
 		info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
@@ -182,6 +192,29 @@ func (s *Service) CreateRequestByUserID(ctx context.Context, userID uint64, requ
 	return s.CreateRequest(ctx, uint64(employee.ID), requestAmount, forMonth)
 }
 
+// validateTransferLimits checks that the disbursement net amount is within the
+// provider's min/max transfer limits. Shared by the admin and self-check-in
+// advance request flows. No-op when no limits function is configured.
+func (s *Service) validateTransferLimits(ctx context.Context, netAmount uint64) error {
+	if s.config.GetTransferLimits == nil {
+		return nil
+	}
+	limits := s.config.GetTransferLimits(ctx)
+	if limits.MinAmount > 0 && int64(netAmount) < limits.MinAmount {
+		return domain.NewValidationError(fmt.Sprintf(
+			"Số tiền thực nhận (%s) dưới mức tối thiểu chuyển tiền (%s). Vui lòng tăng số tiền yêu cầu.",
+			utils.FormatVND(int64(netAmount)), utils.FormatVND(limits.MinAmount),
+		))
+	}
+	if limits.MaxAmount > 0 && int64(netAmount) > limits.MaxAmount {
+		return domain.NewValidationError(fmt.Sprintf(
+			"Số tiền thực nhận (%s) vượt mức tối đa chuyển tiền (%s). Vui lòng giảm số tiền yêu cầu.",
+			utils.FormatVND(int64(netAmount)), utils.FormatVND(limits.MaxAmount),
+		))
+	}
+	return nil
+}
+
 // CreateRequest creates a new advance payment request
 func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestAmount uint64, forMonth string) (*domain.AdvancePaymentRequest, error) {
 	// Validate minimum amount
@@ -189,12 +222,11 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		return nil, domain.NewValidationError(constants.MsgMinAdvanceAmountVN)
 	}
 
-	// Check flexible payment schedule
-	hasFlexible, err := s.hasFlexiblePaymentSchedule(ctx, employeeID)
+	eligibility, err := s.getAdvanceEligibility(ctx, employeeID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to check payment schedule")
 	}
-	if !hasFlexible {
+	if !eligibility.hasFlexible {
 		return nil, domain.NewValidationError(constants.MsgEmployeeNoFlexiblePayScheduleVN)
 	}
 
@@ -203,7 +235,7 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 
 	currentCalMonth := now.Format("2006-01")
 
-	if !isRequestMonthAllowed(now, forMonth) {
+	if !eligibility.hasCheckInEnabled && !isRequestMonthAllowed(now, forMonth) {
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -213,7 +245,7 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		return nil, errors.Wrap(err, "failed to get advance payments")
 	}
 	if len(advPayments) == 0 {
-		if IsInLockedGap(now) && forMonth == currentCalMonth {
+		if !eligibility.hasCheckInEnabled && IsInLockedGap(now) && forMonth == currentCalMonth {
 			return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
 		}
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
@@ -226,20 +258,8 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 	fee, netAmount := s.calculator.CalculateFee(ctx, requestAmount, clock.Now())
 
 	// Validate that net amount respects disbursement provider limits.
-	if s.config.GetTransferLimits != nil {
-		limits := s.config.GetTransferLimits(ctx)
-		if limits.MinAmount > 0 && int64(netAmount) < limits.MinAmount {
-			return nil, domain.NewValidationError(fmt.Sprintf(
-				"Số tiền thực nhận (%s) dưới mức tối thiểu chuyển tiền (%s). Vui lòng tăng số tiền yêu cầu.",
-				utils.FormatVND(int64(netAmount)), utils.FormatVND(limits.MinAmount),
-			))
-		}
-		if limits.MaxAmount > 0 && int64(netAmount) > limits.MaxAmount {
-			return nil, domain.NewValidationError(fmt.Sprintf(
-				"Số tiền thực nhận (%s) vượt mức tối đa chuyển tiền (%s). Vui lòng giảm số tiền yêu cầu.",
-				utils.FormatVND(int64(netAmount)), utils.FormatVND(limits.MaxAmount),
-			))
-		}
+	if err := s.validateTransferLimits(ctx, netAmount); err != nil {
+		return nil, err
 	}
 
 	// Create request atomically with budget check (prevents TOCTOU race)
@@ -345,21 +365,29 @@ func (s *Service) CalculateFeePreview(ctx context.Context, requestAmount uint64)
 	return s.calculator.CalculateFee(ctx, requestAmount, clock.Now())
 }
 
-// hasFlexiblePaymentSchedule checks if an employee has flexible payment schedule
-func (s *Service) hasFlexiblePaymentSchedule(ctx context.Context, employeeID uint64) (bool, error) {
+type advanceEligibility struct {
+	hasFlexible       bool
+	hasCheckInEnabled bool
+}
+
+func (s *Service) getAdvanceEligibility(ctx context.Context, employeeID uint64) (advanceEligibility, error) {
 	// Get project employee assignments
 	assignments, err := s.config.ProjectEmployeeRepo.GetByEmployee(ctx, uint(employeeID))
 	if err != nil {
-		return false, err
+		return advanceEligibility{}, err
 	}
 
+	var result advanceEligibility
 	for _, assignment := range assignments {
 		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) && assignment.LastDate == nil {
-			return true, nil
+			result.hasFlexible = true
+			if assignment.CheckInEnabled {
+				result.hasCheckInEnabled = true
+			}
 		}
 	}
 
-	return false, nil
+	return result, nil
 }
 
 // GetPendingByDateRange returns pending requests within a date range

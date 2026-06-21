@@ -43,6 +43,17 @@ class AdvancePaymentService {
   }
 
   /**
+   * Get self-check-in advance info (dedicated /me/check-in-advance path for
+   * check-in-enabled employees). Same AdvancePaymentInfo shape, plus salary
+   * (100% earned), disclaimer, and windowOpenDay.
+   */
+  async getCheckInAdvanceInfo(): Promise<ApiResponse<AdvancePaymentInfo>> {
+    return apiClient.get<AdvancePaymentInfo>(
+      API_ENDPOINTS.employee.checkInAdvance,
+    );
+  }
+
+  /**
    * Submit advance payment request for employee
    */
   async requestAdvancePayment(
@@ -50,6 +61,19 @@ class AdvancePaymentService {
   ): Promise<ApiResponse<AdvancePaymentHistoryItem>> {
     return apiClient.post<AdvancePaymentHistoryItem>(
       API_ENDPOINTS.employee.advancePaymentRequest,
+      data,
+    );
+  }
+
+  /**
+   * Submit an advance request under the self-check-in flow
+   * (dedicated /me/check-in-advance/request path).
+   */
+  async requestCheckInAdvance(
+    data: CreateAdvancePaymentRequest,
+  ): Promise<ApiResponse<AdvancePaymentHistoryItem>> {
+    return apiClient.post<AdvancePaymentHistoryItem>(
+      API_ENDPOINTS.employee.checkInAdvanceRequest,
       data,
     );
   }

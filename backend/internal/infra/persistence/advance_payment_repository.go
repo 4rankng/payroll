@@ -67,6 +67,20 @@ func (r *AdvancePaymentRepository) GetByEmployeeAndMonth(ctx context.Context, em
 	return aps, nil
 }
 
+func (r *AdvancePaymentRepository) GetMonthsByEmployee(ctx context.Context, employeeID uint64) ([]string, error) {
+	var months []string
+	err := r.getDB(ctx).
+		Model(&domain.AdvancePayment{}).
+		Distinct("for_month").
+		Where("employee_id = ? AND max_adv_amount > 0", employeeID).
+		Order("for_month ASC").
+		Pluck("for_month", &months).Error
+	if err != nil {
+		return nil, r.errorHandler.HandleListError(err, "advance_payment")
+	}
+	return months, nil
+}
+
 func (r *AdvancePaymentRepository) SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error) {
 	var result struct {
 		Total uint64
@@ -78,6 +92,23 @@ func (r *AdvancePaymentRepository) SumMaxAdvByEmployeeMonth(ctx context.Context,
 		Scan(&result).Error
 
 	return result.Total, err
+}
+
+// SumSalaryAndMaxAdvByEmployeeMonth returns the salary (100% earned) and max_adv_amount
+// totals for an employee's month in a single query. Used by the polled self-check-in
+// advance path so salary + cap are fetched in one round-trip instead of two.
+func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, uint64, error) {
+	var result struct {
+		Salary uint64
+		MaxAdv uint64
+	}
+	err := r.getDB(ctx).
+		Model(&domain.AdvancePayment{}).
+		Select("COALESCE(SUM(salary), 0) as salary, COALESCE(SUM(max_adv_amount), 0) as max_adv").
+		Where("employee_id = ? AND for_month = ?", employeeID, forMonth).
+		Scan(&result).Error
+
+	return result.Salary, result.MaxAdv, err
 }
 
 func (r *AdvancePaymentRepository) BatchCreate(ctx context.Context, aps []*domain.AdvancePayment) error {
@@ -137,25 +168,39 @@ func (r *AdvancePaymentRepository) getDB(ctx context.Context) *gorm.DB {
 	return r.DB.WithContext(ctx)
 }
 
-// IncrementMaxAdvAmount atomically increments the max_adv_amount for an advance payment record.
-func (r *AdvancePaymentRepository) IncrementMaxAdvAmount(ctx context.Context, id uint64, amount int64) error {
+// AccumulateSalary atomically adds earning to salary AND recomputes max_adv_amount as
+// floor(salary * SelfCheckInAdvanceablePercent / 100) for the self-check-in flow.
+// Both expressions reference (old salary + earning) so the result is independent of
+// MySQL's left-to-right SET evaluation order. earning is always >= 0 (checkout earnings).
+func (r *AdvancePaymentRepository) AccumulateSalary(ctx context.Context, id uint64, earning int64) error {
 	return r.getDB(ctx).
 		Model(&domain.AdvancePayment{}).
 		Where("id = ?", id).
-		Update("max_adv_amount", gorm.Expr("max_adv_amount + ?", amount)).Error
+		Updates(map[string]any{
+			"salary":         gorm.Expr("salary + ?", earning),
+			"max_adv_amount": gorm.Expr("(salary + ?) * ? / 100", earning, domain.SelfCheckInAdvanceablePercent),
+		}).Error
 }
 
-// ZeroOutQuota sets max_adv_amount to 0 for all advance payments of a project-employee pair
-// from the given month onward. Used when disabling check-in to prevent future advances.
+// ZeroOutQuota sets max_adv_amount AND salary to 0 for all advance payments of a project-employee
+// pair from the given month onward. Used when disabling check-in to prevent future advances.
+// Zeroing BOTH preserves the invariant max_adv_amount = floor(ratio * salary) so that a
+// disable→re-enable within the same period does not leave a stale max_adv_amount=0 against a
+// non-zero salary (which would silently lock the employee out of advances until the next checkout).
 func (r *AdvancePaymentRepository) ZeroOutQuota(ctx context.Context, projectID, employeeID uint, currentMonth string) error {
 	return r.getDB(ctx).
 		Model(&domain.AdvancePayment{}).
 		Where("project_id = ? AND employee_id = ? AND for_month >= ?", projectID, employeeID, currentMonth).
-		Update("max_adv_amount", 0).Error
+		Updates(map[string]any{
+			"max_adv_amount": 0,
+			"salary":         0,
+		}).Error
 }
 
-// BatchZeroOutQuota sets max_adv_amount to 0 for multiple employees in a single query.
-// Used by BulkToggleCheckInEnabled to avoid N individual UPDATEs.
+// BatchZeroOutQuota sets max_adv_amount AND salary to 0 for multiple employees in a single
+// query. Used by BulkToggleCheckInEnabled to avoid N individual UPDATEs. Mirrors ZeroOutQuota:
+// zeroing both fields preserves the invariant max_adv_amount = floor(ratio * salary) on
+// disable→re-enable within the same period (see ZeroOutQuota for the full rationale).
 func (r *AdvancePaymentRepository) BatchZeroOutQuota(ctx context.Context, projectID uint, employeeIDs []uint, currentMonth string) error {
 	if len(employeeIDs) == 0 {
 		return nil
@@ -163,7 +208,10 @@ func (r *AdvancePaymentRepository) BatchZeroOutQuota(ctx context.Context, projec
 	return r.getDB(ctx).
 		Model(&domain.AdvancePayment{}).
 		Where("project_id = ? AND employee_id IN ? AND for_month >= ?", projectID, employeeIDs, currentMonth).
-		Update("max_adv_amount", 0).Error
+		Updates(map[string]any{
+			"max_adv_amount": 0,
+			"salary":         0,
+		}).Error
 }
 
 // GetLatestForMonth returns the latest for_month derived from flexible employees' created_at
