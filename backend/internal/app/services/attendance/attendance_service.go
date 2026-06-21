@@ -51,7 +51,7 @@ func NewAttendanceService(
 func (s *AttendanceService) validateGeofence(project *domain.Project, lat, lng float64) (string, error) {
 	gates := project.GeofenceGates
 	if len(gates) == 0 {
-		return "", domain.NewValidationError("Chưa cấu hình vị trí check-in cho dự án")
+		return "", domain.NewValidationError("Chưa cấu hình vị trí vào làm cho dự án")
 	}
 
 	radius := float64(project.GeofenceRadiusMeters)
@@ -99,7 +99,7 @@ func (s *AttendanceService) resolveProject(ctx context.Context, employeeID, proj
 	case 1:
 		return flexibleProjects[0], nil
 	default:
-		return nil, domain.NewValidationError("Bạn thuộc nhiều dự án linh hoạt. Vui lòng chọn dự án trước khi check-in.")
+		return nil, domain.NewValidationError("Bạn thuộc nhiều dự án linh hoạt. Vui lòng chọn dự án trước khi vào làm.")
 	}
 }
 
@@ -137,7 +137,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			return fmt.Errorf("failed to check existing attendance: %w", err)
 		}
 		if existing != nil {
-			return domain.NewValidationError("Bạn đã check-in trong ngày hôm nay rồi")
+			return domain.NewValidationError("Bạn đã vào làm trong ngày hôm nay rồi")
 		}
 
 		// 5. Create attendance record
@@ -181,15 +181,15 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 				return fmt.Errorf("failed to get yesterday's attendance: %w", err)
 			}
 			if attendance == nil {
-				return domain.NewValidationError("Không tìm thấy thông tin check-in hợp lệ")
+				return domain.NewValidationError("Không tìm thấy thông tin vào làm hợp lệ")
 			}
 		}
 
 		if attendance.IsCompleted() {
-			return domain.NewValidationError("Bạn đã check-out rồi")
+			return domain.NewValidationError("Bạn đã tan ca rồi")
 		}
 		if attendance.GetStatus(now) == domain.AttendanceStatusOrphaned {
-			return domain.NewValidationError("Ca làm việc đã quá hạn check-out")
+			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
 
 		// 2. Geofence validation

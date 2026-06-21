@@ -15,6 +15,9 @@ export function useTodayAttendance() {
       return data;
     },
     retry: false,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -23,13 +26,14 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: attendanceService.checkIn,
-    onSuccess: () => {
-      toast.success("Check-in thành công");
-      queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
+    onSuccess: (response) => {
+      toast.success("Vào làm thành công");
+      queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
     },
     onError: (error: unknown) => {
       const e = error as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(e?.response?.data?.message || "Lỗi khi check-in");
+      toast.error(e?.response?.data?.message || "Không thể vào làm");
     },
   });
 }
@@ -39,15 +43,16 @@ export function useCheckOut() {
 
   return useMutation({
     mutationFn: attendanceService.checkOut,
-    onSuccess: () => {
-      toast.success("Check-out thành công");
-      queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
+    onSuccess: (response) => {
+      toast.success("Tan ca thành công");
+      queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
       // Invalidate advance payment info to refresh quota
       queryClient.invalidateQueries({ queryKey: ["advance-payment", "info"] });
     },
     onError: (error: unknown) => {
       const e = error as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(e?.response?.data?.message || "Lỗi khi check-out");
+      toast.error(e?.response?.data?.message || "Không thể tan ca");
     },
   });
 }

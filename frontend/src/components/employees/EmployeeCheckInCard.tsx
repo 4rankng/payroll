@@ -1,5 +1,5 @@
-import { useState, useEffect, memo } from "react";
-import { Clock, MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { BriefcaseBusiness, DoorOpen, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   useTodayAttendance,
@@ -9,20 +9,6 @@ import {
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
-
-// Isolated clock — only this subtree re-renders every second
-const LiveClock = memo(function LiveClock() {
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="text-3xl font-bold tracking-tight text-slate-800 mb-6">
-      {format(time, "HH:mm:ss")}
-    </div>
-  );
-});
 
 function safeFormatTime(time: string | undefined | null, fallback = "--:--"): string {
   if (!time) return fallback;
@@ -100,42 +86,51 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
 
   return (
-    <div className={`p-5 flex flex-col items-center ${className}`} style={style}>
-      <h2 className="text-sm font-medium text-slate-500 mb-1">Thời gian hiện tại</h2>
-      <LiveClock />
-
+    <div className={`p-4 ${className}`} style={style}>
       {attendance?.status === "completed" ? (
-        <div className="flex flex-col items-center p-4 bg-green-50 rounded-xl w-full border border-green-100">
-          <CheckCircle2 className="w-8 h-8 text-green-500 mb-2" />
-          <p className="text-green-800 font-medium">Đã hoàn thành ca làm việc</p>
-          <div className="mt-2 text-sm text-green-700 flex flex-col items-center">
-            <span>Vào: {safeFormatTime(attendance.check_in_time)}</span>
-            <span>Ra: {safeFormatTime(attendance.check_out_time)}</span>
-            {attendance.earning_amount && (
-              <span className="mt-1 font-semibold text-green-800">
-                Lương: {attendance.earning_amount.toLocaleString("vi-VN")} đ
-              </span>
-            )}
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">Đã hoàn thành ca làm việc</p>
+              <p className="mt-1 text-xs font-medium text-emerald-700">
+                Vào làm {safeFormatTime(attendance.check_in_time)} · Tan ca {safeFormatTime(attendance.check_out_time)}
+              </p>
+              {attendance.earning_amount != null && attendance.earning_amount > 0 && (
+                <p className="mt-2 text-sm font-bold text-emerald-700">
+                  Lương: {attendance.earning_amount.toLocaleString("vi-VN")} đ
+                </p>
+              )}
+            </div>
           </div>
         </div>
       ) : attendance?.status === "checked_in" ? (
-        <div className="w-full flex flex-col items-center">
-          <div className="mb-4 text-sm text-blue-700 bg-blue-50 px-4 py-2 rounded-full flex items-center gap-2 border border-blue-100">
-            <Clock className="w-4 h-4" />
-            Đã vào ca lúc {safeFormatTime(attendance.check_in_time)}
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50/80 p-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sky-600 shadow-sm">
+              <BriefcaseBusiness className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">Đang làm việc</p>
+              <p className="mt-1 text-xs font-medium text-sky-700">
+                Vào làm lúc {safeFormatTime(attendance.check_in_time)}
+              </p>
+            </div>
           </div>
           <Button
             size="lg"
-            className="w-full rounded-xl h-14 text-lg bg-orange-500 hover:bg-orange-600 shadow-md shadow-orange-500/20"
+            className="h-14 w-full rounded-2xl bg-slate-900 text-base font-bold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
             disabled={isPending}
             onClick={() => handleAction("check_out")}
           >
             {isPending ? (
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
             ) : (
-              <MapPin className="w-5 h-5 mr-2" />
+              <DoorOpen className="w-5 h-5 mr-2" />
             )}
-            {isLocating ? "Đang lấy vị trí..." : "Check Out"}
+            {isLocating ? "Đang lấy vị trí..." : "Tan ca"}
           </Button>
         </div>
       ) : attendance?.status === "orphaned" ? (
@@ -143,26 +138,39 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
           <p className="text-red-800 font-medium">Ca làm việc không hợp lệ</p>
           <p className="text-xs text-red-600 text-center mt-1">
-            Bạn đã quên check-out trong ca làm việc này.
+            Bạn đã quên tan ca trong ca làm việc này.
           </p>
         </div>
       ) : (
-        <Button
-          size="lg"
-          className="w-full rounded-xl h-14 text-lg text-white bg-employee shadow-md"
-          style={{
-            boxShadow: `0 4px 14px 0 ${EMPLOYEE_BRAND_COLOR}40`,
-          }}
-          disabled={isPending}
-          onClick={() => handleAction("check_in")}
-        >
-          {isPending ? (
-            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          ) : (
-            <MapPin className="w-5 h-5 mr-2" />
-          )}
-          {isLocating ? "Đang lấy vị trí..." : "Check In"}
-        </Button>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-employee shadow-sm">
+              <BriefcaseBusiness className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">Sẵn sàng vào làm</p>
+              <p className="mt-1 text-xs font-medium leading-5 text-slate-500">
+                Chạm nút bên dưới để xác nhận vị trí tại cổng dự án.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            className="h-14 w-full rounded-2xl bg-employee text-base font-bold text-white shadow-lg hover:bg-employee-600"
+            style={{
+              boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
+            }}
+            disabled={isPending}
+            onClick={() => handleAction("check_in")}
+          >
+            {isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : (
+              <BriefcaseBusiness className="w-5 h-5 mr-2" />
+            )}
+            {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
+          </Button>
+        </div>
       )}
     </div>
   );

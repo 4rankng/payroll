@@ -16,34 +16,30 @@ export interface AttendanceRecord {
 
 export const attendanceService = {
   getToday: async () => {
-    const { data } = await apiClient.get<{ data: AttendanceRecord | null }>(
+    return apiClient.get<AttendanceRecord | null>(
       API_ENDPOINTS.attendance.mobile.today
     );
-    return data;
   },
 
   getHistory: async (params?: { limit?: number; offset?: number }) => {
-    const { data } = await apiClient.get<{ data: AttendanceRecord[] }>(
+    return apiClient.get<AttendanceRecord[]>(
       API_ENDPOINTS.attendance.mobile.history,
       { params: { limit: 20, ...params } }
     );
-    return data;
   },
 
   checkIn: async (payload: { lat: number; lng: number }) => {
-    const { data } = await apiClient.post<{ data: AttendanceRecord }>(
+    return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkIn,
       payload
     );
-    return data;
   },
 
   checkOut: async (payload: { lat: number; lng: number }) => {
-    const { data } = await apiClient.post<{ data: AttendanceRecord }>(
+    return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkOut,
       payload
     );
-    return data;
   },
 
   // Admin APIs

@@ -39,9 +39,10 @@ func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.At
 
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
+	dateOnly := date.Format("2006-01-02")
 	err := r.getDB(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
-		Where("employee_id = ? AND date = ?", employeeID, date).
+		Where("employee_id = ? AND date = ?", employeeID, dateOnly).
 		First(&att).Error
 
 	if err != nil {
