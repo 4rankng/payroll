@@ -8,33 +8,90 @@ import (
 	"api-server/internal/domain"
 )
 
-func TestValidateMinimumCheckoutDurationRejectsBeforeFourHours(t *testing.T) {
+func TestValidateEarliestCheckoutRejectsBeforeShiftEnd(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
-	checkIn := time.Date(2026, 6, 21, 11, 0, 0, 0, loc)
-	checkOut := time.Date(2026, 6, 21, 14, 59, 0, 0, loc)
+	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
+	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc) // night shift 20:00-04:00
+	checkOut := time.Date(2026, 6, 21, 23, 0, 0, 0, loc)
 
-	err := validateMinimumCheckoutDuration(checkIn, checkOut)
+	err := validateEarliestCheckout(checkIn, shiftEnd, checkOut)
 
 	if err == nil {
-		t.Fatal("expected checkout before 4 hours to be rejected")
+		t.Fatal("expected checkout before shift end to be rejected")
 	}
 	domainErr, ok := err.(*domain.DomainError)
 	if !ok || domainErr.Type != "VALIDATION_ERROR" {
 		t.Fatalf("expected validation error, got %T", err)
 	}
-	expected := "Bạn mới vào làm lúc 11:00. Chỉ có thể tan ca sau 15:00"
+	expected := "Bạn mới vào làm lúc 20:09. Chỉ có thể tan ca sau 04:00"
 	if err.Error() != expected {
 		t.Fatalf("expected %q, got %q", expected, err.Error())
 	}
 }
 
-func TestValidateMinimumCheckoutDurationAllowsAtFourHours(t *testing.T) {
+func TestValidateEarliestCheckoutAllowsAtAndAfterShiftEnd(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
-	checkIn := time.Date(2026, 6, 21, 11, 0, 0, 0, loc)
-	checkOut := time.Date(2026, 6, 21, 15, 0, 0, 0, loc)
+	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
+	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc)
 
-	if err := validateMinimumCheckoutDuration(checkIn, checkOut); err != nil {
-		t.Fatalf("expected checkout at 4 hours to be allowed, got %v", err)
+	if err := validateEarliestCheckout(checkIn, shiftEnd, shiftEnd); err != nil {
+		t.Fatalf("expected checkout exactly at shift end to be allowed, got %v", err)
+	}
+	if err := validateEarliestCheckout(checkIn, shiftEnd, shiftEnd.Add(time.Hour)); err != nil {
+		t.Fatalf("expected checkout after shift end to be allowed, got %v", err)
+	}
+}
+
+func TestResolveEarliestCheckoutUsesConfiguredNightShiftEnd(t *testing.T) {
+	service := &AttendanceService{}
+	payrate := &domain.Payrate{
+		Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"20:00-04:00":300000}}}`),
+	}
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
+
+	earliest := service.resolveEarliestCheckout(payrate, "Công nhân", checkIn)
+
+	expected := time.Date(2026, 6, 22, 4, 0, 0, 0, loc)
+	if !earliest.Equal(expected) {
+		t.Fatalf("expected earliest checkout %v, got %v", expected, earliest)
+	}
+}
+
+func TestResolveEarliestCheckoutUsesConfiguredDayShiftEnd(t *testing.T) {
+	service := &AttendanceService{}
+	payrate := &domain.Payrate{
+		Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`),
+	}
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkIn := time.Date(2026, 6, 21, 7, 55, 0, 0, loc)
+
+	earliest := service.resolveEarliestCheckout(payrate, "Công nhân", checkIn)
+
+	expected := time.Date(2026, 6, 21, 17, 0, 0, 0, loc)
+	if !earliest.Equal(expected) {
+		t.Fatalf("expected earliest checkout %v, got %v", expected, earliest)
+	}
+}
+
+func TestResolveEarliestCheckoutFallsBackToMinimumWhenUnconfigured(t *testing.T) {
+	service := &AttendanceService{}
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
+	fallback := checkIn.Add(4 * time.Hour)
+
+	// No payrate configured at all.
+	if got := service.resolveEarliestCheckout(nil, "Công nhân", checkIn); !got.Equal(fallback) {
+		t.Fatalf("nil payrate: expected %v, got %v", fallback, got)
+	}
+
+	// Payrate exists but the requested position is absent (two configured positions,
+	// so no single-position fallback) -> no resolvable shift -> minimum duration.
+	payrate := &domain.Payrate{
+		Payrate: domain.PayrateConfiguration(`{"Bảo vệ":{"ngày thường":{"20:00-04:00":300000}},"Lễ tân":{"ngày thường":{"08:00-17:00":250000}}}`),
+	}
+	if got := service.resolveEarliestCheckout(payrate, "Công nhân", checkIn); !got.Equal(fallback) {
+		t.Fatalf("missing position: expected %v, got %v", fallback, got)
 	}
 }
 
