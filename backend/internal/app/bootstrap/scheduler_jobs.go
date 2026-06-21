@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/cleanup"
 	"api-server/internal/app/services/ledger"
@@ -24,6 +25,7 @@ import (
 func registerSchedulerJobs(
 	s *scheduler.Scheduler,
 	notificationService *notification.NotificationService,
+	emailService *notification.EmailService,
 	projectEmployeeService *project.ProjectEmployeeService,
 	apiMetricCleanupService *cleanup.APIMetricCleanupService,
 	reconcileService *ledger.ReconcileService,
@@ -53,6 +55,40 @@ func registerSchedulerJobs(
 	sendAdminNotification := func(ctx context.Context, title, message string) {
 		if err := notificationService.CreateCustomNotification(ctx, constants.SystemUserID, 1, title, message, domain.NotificationContentTypePlainText); err != nil {
 			logger.Error("Failed to send admin notification", "title", title, "error", err)
+		}
+	}
+
+	// saoKeReminderRecipients are the people responsible for sending the partner sao kê
+	// (bank statement). Hardcoded per ops request (2026-06-21): VFIC + operator.
+	saoKeReminderRecipients := []string{
+		"anhbh@vfic.com.vn",
+		"frankng.sg@gmail.com",
+	}
+
+	// sendSaoKeReminder dispatches a sao kê reminder through every channel:
+	//   - in-app notification + web push to ALL admins (NotifyUsersByRole fires the push),
+	//   - email to the fixed saoKeReminderRecipients list.
+	// Used by the day 1 & 26 (weekly project) and day 9 (flexible / LG Display) reminder jobs.
+	sendSaoKeReminder := func(ctx context.Context, title, message string) {
+		if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
+			logger.Error("Failed to send sao ke reminder to admins", "title", title, "error", err)
+		} else {
+			logger.Info("Sao ke reminder notification sent to admins", "title", title)
+		}
+
+		if emailService == nil {
+			logger.Warn("Email service not configured, skipping sao ke reminder email", "title", title)
+			return
+		}
+		if _, err := emailService.SendGenericEmail(ctx, &dto.SendEmailRequest{
+			Recipients: saoKeReminderRecipients,
+			Subject:    title,
+			HTMLBody:   "<p>" + message + "</p>",
+			TextBody:   message,
+		}); err != nil {
+			logger.Error("Failed to send sao ke reminder email", "title", title, "error", err)
+		} else {
+			logger.Info("Sao ke reminder email sent", "title", title, "recipients", saoKeReminderRecipients)
 		}
 	}
 
@@ -88,8 +124,8 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 3. Bank statement reminder - Day 2
-	// 4. Bank statement reminder - Day 25
+	// 3. Bank statement (sao kê) reminder - Day 1 (weekly project cycle start)
+	// 4. Bank statement (sao kê) reminder - Day 26 (weekly project cycle end)
 	addBankStatementReminder := func(name, cronExpr string) {
 		s.AddJob(scheduler.Job{
 			Name:    name,
@@ -99,16 +135,12 @@ func registerSchedulerJobs(
 				ctx := context.Background()
 				title := renderTemplate("Gửi sao kê cho đối tác")
 				message := renderTemplate("Nhắc nhở gửi sao kê ngân hàng cho công ty thanh toán vào ngày {day}/{month}/{year}")
-				if err := notificationService.NotifyUsersByRole(ctx, domain.RoleAdmin, domain.NotificationTypeCustom, title, message); err != nil {
-					logger.Error("Failed to send notification", "name", name, "error", err)
-				} else {
-					logger.Info("Notification sent successfully", "name", name)
-				}
+				sendSaoKeReminder(ctx, title, message)
 			},
 		})
 	}
-	addBankStatementReminder("bank_statement_reminder_day_2", "0 9 2 * *")
-	addBankStatementReminder("bank_statement_reminder_day_25", "0 9 25 * *")
+	addBankStatementReminder("bank_statement_reminder_day_1", "0 9 1 * *")
+	addBankStatementReminder("bank_statement_reminder_day_26", "0 9 26 * *")
 
 	// 5. Daily receivable reconciliation
 	s.AddJob(scheduler.Job{
@@ -288,7 +320,7 @@ func registerSchedulerJobs(
 			title := "Nhắc nhở gửi sao kê ứng lương"
 			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, projectCount)
 
-			sendAdminNotification(ctx, title, message)
+			sendSaoKeReminder(ctx, title, message)
 		},
 	})
 
