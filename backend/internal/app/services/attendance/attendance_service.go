@@ -13,11 +13,14 @@ import (
 	"api-server/internal/pkg/geo"
 )
 
-// minimumCheckoutDuration is the fallback earliest-checkout floor used only when
-// no payrate shift can be resolved for the employee's position (e.g. payrate not
-// yet configured). When a configured shift IS resolved, its end hour is used as
-// the earliest checkout instead — see resolveEarliestCheckout.
-const minimumCheckoutDuration = 4 * time.Hour
+// checkInShiftWindow is the half-width of the check-in window around the
+// configured shift start T: check-in is allowed in (T - checkInShiftWindow,
+// T + checkInShiftWindow).
+const checkInShiftWindow = 1 * time.Hour
+
+// checkOutUpperGrace is how long after the configured shift end K a checkout is
+// still allowed: checkout is valid in [K, K + checkOutUpperGrace).
+const checkOutUpperGrace = 1 * time.Hour
 
 type AttendanceService struct {
 	attendanceRepo      domain.AttendanceRepository
@@ -52,23 +55,65 @@ func NewAttendanceService(
 	}
 }
 
-// validateEarliestCheckout rejects a checkout that happens before the earliest
-// allowed time. The earliest time is derived from the configured shift end hour
-// (see resolveEarliestCheckout), so the message points the employee at the real
-// end of their shift rather than a fixed check-in + N hours.
-func validateEarliestCheckout(checkInTime, earliestCheckout, checkOutTime time.Time) error {
-	if checkOutTime.Before(earliestCheckout) {
+// checkInFitsShift reports whether checkInTime lies within the allowed check-in
+// window (shift.start - checkInShiftWindow, shift.start + checkInShiftWindow).
+// Shared by the check-in gate (validateCheckInWindow) and the earning match so
+// the two cannot diverge.
+func checkInFitsShift(shift *parsedShift, checkInTime time.Time) bool {
+	return checkInTime.After(shift.start.Add(-checkInShiftWindow)) && checkInTime.Before(shift.start.Add(checkInShiftWindow))
+}
+
+// checkOutFitsShift reports whether checkOutTime lies within the allowed
+// checkout window [shift.end, shift.end + checkOutUpperGrace). Shared by the
+// checkout gate (validateCheckOutWindow) and the earning match.
+func checkOutFitsShift(shift *parsedShift, checkOutTime time.Time) bool {
+	return (checkOutTime.After(shift.end) || checkOutTime.Equal(shift.end)) && checkOutTime.Before(shift.end.Add(checkOutUpperGrace))
+}
+
+// validateCheckInWindow rejects a check-in that falls outside the allowed
+// (shift.start - checkInShiftWindow, shift.start + checkInShiftWindow) window
+// around the configured shift start T.
+func validateCheckInWindow(shift *parsedShift, checkInTime time.Time) error {
+	if checkInFitsShift(shift, checkInTime) {
+		return nil
+	}
+	earliest := shift.start.Add(-checkInShiftWindow)
+	latest := shift.start.Add(checkInShiftWindow)
+	return domain.NewValidationError(fmt.Sprintf(
+		"Giờ vào làm không hợp lệ. Bạn chỉ được vào làm từ %s đến %s.",
+		earliest.Format("15:04"),
+		latest.Format("15:04"),
+	))
+}
+
+// validateCheckOutWindow rejects a checkout that falls outside the allowed
+// [shift.end, shift.end + checkOutUpperGrace) window, where shift.end is the
+// configured shift end K. The message points the employee at the real end of
+// their shift.
+func validateCheckOutWindow(shift *parsedShift, checkInTime, checkOutTime time.Time) error {
+	earliest := shift.end
+	latest := shift.end.Add(checkOutUpperGrace)
+	if checkOutTime.Before(earliest) {
 		return domain.NewValidationError(fmt.Sprintf(
-			"Bạn mới vào làm lúc %s. Chỉ có thể tan ca sau %s",
+			"Bạn mới vào làm lúc %s. Chỉ có thể tan ca từ %s đến %s.",
 			checkInTime.Format("15:04"),
-			earliestCheckout.Format("15:04"),
+			earliest.Format("15:04"),
+			latest.Format("15:04"),
+		))
+	}
+	if !checkOutTime.Before(latest) {
+		return domain.NewValidationError(fmt.Sprintf(
+			"Đã quá giờ tan ca. Bạn chỉ được tan ca từ %s đến %s.",
+			earliest.Format("15:04"),
+			latest.Format("15:04"),
 		))
 	}
 	return nil
 }
 
 // parsedShift is a single configured shift for a position, resolved to absolute
-// check-in-day datetimes (night-shift / cross-midnight aware) together with its rate.
+// datetimes (night-shift / cross-midnight aware, anchored to the check-in day or
+// one of its ±1 neighbors) together with its rate.
 type parsedShift struct {
 	start  time.Time
 	end    time.Time
@@ -80,7 +125,9 @@ type parsedShift struct {
 //     diacritic-insensitive), falling back to the only configured position when the
 //     requested one is absent.
 //   - positionFound: whether the effective position exists in the configuration.
-//   - shifts: every parseable shift for the effective position, on the check-in day.
+//   - shifts: every parseable shift for the effective position, generated for the
+//     check-in day and its ±1 neighbors so night shifts and early arrivals anchor
+//     to the correct calendar day.
 //
 // The caller derives shiftFound as len(shifts) > 0.
 func resolveShifts(flattened map[string]int, position string, ci time.Time) (effectivePosition string, positionFound bool, shifts []parsedShift) {
@@ -132,61 +179,78 @@ func resolveShifts(flattened map[string]int, position string, ci time.Time) (eff
 			continue
 		}
 
-		// Build real time equivalents for the shift on the day of check-in
-		shiftStart := time.Date(ci.Year(), ci.Month(), ci.Day(), start.Hour(), start.Minute(), 0, 0, ci.Location())
-		shiftEnd := time.Date(ci.Year(), ci.Month(), ci.Day(), end.Hour(), end.Minute(), 0, 0, ci.Location())
-
-		crossesMidnight := shiftEnd.Before(shiftStart)
-		if crossesMidnight {
-			shiftEnd = shiftEnd.Add(24 * time.Hour) // Night shift crosses midnight
+		// Generate candidate shifts starting on the day before, the day of, and
+		// the day after check-in. Each candidate keeps absolute [start, end] with
+		// cross-midnight handled by adding 24h to end. closestShift then picks the
+		// candidate whose start is nearest the check-in, anchoring night shifts and
+		// early arrivals (e.g. 19:50 for 20:00-04:00) to the correct calendar day —
+		// replacing the old rollback hack that miscomputed K for early arrivals.
+		for dayOffset := -1; dayOffset <= 1; dayOffset++ {
+			day := ci.AddDate(0, 0, dayOffset)
+			shiftStart := time.Date(day.Year(), day.Month(), day.Day(), start.Hour(), start.Minute(), 0, 0, ci.Location())
+			shiftEnd := time.Date(day.Year(), day.Month(), day.Day(), end.Hour(), end.Minute(), 0, 0, ci.Location())
+			if shiftEnd.Before(shiftStart) {
+				shiftEnd = shiftEnd.Add(24 * time.Hour) // Night shift crosses midnight
+			}
+			shifts = append(shifts, parsedShift{start: shiftStart, end: shiftEnd, amount: amount})
 		}
-
-		// For night shifts, if check-in is before shiftStart on the check-in day,
-		// the shift started yesterday (e.g., shift 22:00-06:00, check-in at 00:30).
-		// Only apply rollback for night shifts to avoid breaking early-arrival day shifts
-		// (e.g., 07:50 arrival for 08:00-17:00 shift).
-		if crossesMidnight && ci.Before(shiftStart) {
-			shiftStart = shiftStart.Add(-24 * time.Hour)
-			shiftEnd = shiftEnd.Add(-24 * time.Hour)
-		}
-
-		shifts = append(shifts, parsedShift{start: shiftStart, end: shiftEnd, amount: amount})
 	}
 
 	return effectivePosition, positionFound, shifts
 }
 
-// closestShift returns the shift whose start is nearest to the check-in time, or
-// nil when there are no shifts. Used to report the expected shift boundaries.
+// closestShift returns the shift the check-in belongs to, or nil when there are
+// no shifts. It prefers a shift whose [start, end] actually contains the
+// check-in (the worker is mid-shift) and only falls back to nearest start when
+// none contains ci. The "contains" preference stops a short neighboring shift
+// from stealing the anchor near a long shift's end (e.g. a 04:00-05:00 shift
+// winning over a 20:00-04:00 night shift for a 03:55 check-in) and avoids
+// resolving off-hours check-ins to a future shift. Used to anchor the
+// check-in/checkout/earning windows and to report expected shift boundaries.
 func closestShift(shifts []parsedShift, ci time.Time) *parsedShift {
+	contains := func(sh *parsedShift) bool {
+		return (ci.After(sh.start) || ci.Equal(sh.start)) && (ci.Before(sh.end) || ci.Equal(sh.end))
+	}
 	var closest *parsedShift
 	var closestDistance time.Duration
 	for i := range shifts {
-		distance := ci.Sub(shifts[i].start).Abs()
-		if closest == nil || distance < closestDistance {
-			closest = &shifts[i]
-			closestDistance = distance
+		sh := &shifts[i]
+		distance := ci.Sub(sh.start).Abs()
+		switch {
+		case closest == nil:
+			closest, closestDistance = sh, distance
+		case contains(sh) && !contains(closest):
+			closest, closestDistance = sh, distance
+		case contains(sh) == contains(closest) && distance < closestDistance:
+			closest, closestDistance = sh, distance
 		}
 	}
 	return closest
 }
 
-// resolveEarliestCheckout determines the earliest allowed checkout time for an
-// active attendance. When the payrate resolves a configured shift for the
-// employee's position, the configured shift end (night-shift aware) is returned.
-// Otherwise it falls back to check-in + minimumCheckoutDuration. It never errors:
-// a malformed/empty payrate simply falls back to the minimum duration so checkout
-// is not blocked by a broken rate config.
-func (s *AttendanceService) resolveEarliestCheckout(payrate *domain.Payrate, position string, checkInTime time.Time) time.Time {
-	if payrate != nil {
-		if flattened, err := payrate.Payrate.Flatten(); err == nil {
-			_, _, shifts := resolveShifts(flattened, position, checkInTime)
-			if closest := closestShift(shifts, checkInTime); closest != nil {
-				return closest.end
-			}
-		}
+// resolveShift returns the configured shift whose start is closest to checkInTime
+// (resolved across ±1 day so night shifts and early arrivals anchor to the correct
+// calendar day), or nil when no payrate/position/shift can be resolved. Callers
+// derive the check-in/checkout windows from the returned shift:
+//   - check-in valid in (shift.start - checkInShiftWindow, shift.start + checkInShiftWindow)
+//   - checkout valid in [shift.end, shift.end + checkOutUpperGrace)
+//
+// A nil result means the project has no valid shift configuration for the position,
+// so the check-in/checkout is rejected rather than falling back to a fixed duration.
+func (s *AttendanceService) resolveShift(payrate *domain.Payrate, position string, checkInTime time.Time) *parsedShift {
+	if payrate == nil {
+		return nil
 	}
-	return checkInTime.Add(minimumCheckoutDuration)
+	flattened, err := payrate.Payrate.Flatten()
+	if err != nil {
+		// A malformed payrate is operationally distinct from "no shift configured";
+		// log it so ops can tell a broken config from a missing one (the user-facing
+		// message is the same generic "not configured" either way).
+		observability.GetLogger().Warn("failed to flatten payrate; cannot resolve shift", "error", err)
+		return nil
+	}
+	_, _, shifts := resolveShifts(flattened, position, checkInTime)
+	return closestShift(shifts, checkInTime)
 }
 
 // validateGeofence checks if coordinates are within configured gates for the given project.
@@ -283,7 +347,25 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			return domain.NewValidationError("Bạn đã vào làm trong ngày hôm nay rồi")
 		}
 
-		// 5. Create attendance record
+		// 5. Validate check-in falls within ±1h of the configured shift start (T).
+		// No resolvable shift (missing payrate/position) => reject — there is no
+		// valid attendance window for this position.
+		payrate, err := s.payrateRepo.GetActiveByProjectAndDate(txCtx, project.ID, today)
+		if err != nil {
+			if !domain.IsNotFoundError(err) {
+				return fmt.Errorf("failed to load payrate: %w", err)
+			}
+			payrate = nil
+		}
+		shift := s.resolveShift(payrate, assignment.Position, now)
+		if shift == nil {
+			return domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng liên hệ quản lý.")
+		}
+		if err := validateCheckInWindow(shift, now); err != nil {
+			return err
+		}
+
+		// 6. Create attendance record
 		attendance := &domain.Attendance{
 			EmployeeID:  employeeID,
 			ProjectID:   project.ID,
@@ -335,9 +417,9 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
 
-		// Determine the earliest allowed checkout from the configured shift end
-		// hour (payrate), falling back to a minimum duration when unconfigured.
-		// Load the assignment + payrate here so they are reused for earning below.
+		// Resolve the worked shift to derive the checkout window [K, K+1h) from the
+		// configured shift end. Load the assignment + payrate here so they are reused
+		// for earning below.
 		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
 		if err != nil {
 			return err
@@ -349,8 +431,11 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 			}
 			payrate = nil
 		}
-		earliest := s.resolveEarliestCheckout(payrate, assignment.Position, attendance.CheckInTime)
-		if err := validateEarliestCheckout(attendance.CheckInTime, earliest, now); err != nil {
+		shift := s.resolveShift(payrate, assignment.Position, attendance.CheckInTime)
+		if shift == nil {
+			return domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng liên hệ quản lý.")
+		}
+		if err := validateCheckOutWindow(shift, attendance.CheckInTime, now); err != nil {
 			return err
 		}
 
@@ -546,31 +631,45 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 
 	effectivePosition, positionFound, shifts := resolveShifts(flattened, position, ci)
 
+	// A shift earns its flat amount when the attendance fits BOTH the check-in
+	// and checkout windows — the same predicates the gates use, so a checkout the
+	// gate accepts is guaranteed to earn. Among matching shifts pick the one
+	// nearest the check-in start (tie-broken by earlier start) so the payout is
+	// deterministic regardless of map iteration order.
+	var match *parsedShift
+	var matchDistance time.Duration
 	for i := range shifts {
 		sh := &shifts[i]
-		// Match: checkIn <= shiftStart && checkOut >= shiftEnd
-		if (ci.Before(sh.start) || ci.Equal(sh.start)) && (co.After(sh.end) || co.Equal(sh.end)) {
-			if sh.amount <= 0 {
-				return 0, "Mức lương ca được cấu hình là 0đ. Vui lòng liên hệ quản lý.", nil
-			}
-			return int64(sh.amount), "", nil
+		if !checkInFitsShift(sh, ci) || !checkOutFitsShift(sh, co) {
+			continue
 		}
+		distance := ci.Sub(sh.start).Abs()
+		if match == nil || distance < matchDistance || (distance == matchDistance && sh.start.Before(match.start)) {
+			match, matchDistance = sh, distance
+		}
+	}
+	if match != nil {
+		if match.amount <= 0 {
+			return 0, "Mức lương ca được cấu hình là 0đ. Vui lòng liên hệ quản lý.", nil
+		}
+		return int64(match.amount), "", nil
 	}
 
 	if !positionFound {
 		return 0, fmt.Sprintf("Chưa có mức lương cho vị trí \"%s\".", position), nil
 	}
-	if len(shifts) == 0 {
+	closest := closestShift(shifts, ci)
+	if closest == nil {
 		return 0, fmt.Sprintf("Chưa có ca làm hợp lệ trong cấu hình mức lương cho vị trí \"%s\".", effectivePosition), nil
 	}
-
-	closest := closestShift(shifts, ci)
 	return 0, fmt.Sprintf(
-		"Thời gian vào %s và tan %s không hợp lệ, bạn phải vào làm trước %s và tan ca sau %s.",
+		"Thời gian vào %s và tan %s không hợp lệ. Bạn phải vào làm từ %s đến %s và tan ca từ %s đến %s.",
 		ci.Format("15:04"),
 		co.Format("15:04"),
-		closest.start.Format("15:04"),
+		closest.start.Add(-checkInShiftWindow).Format("15:04"),
+		closest.start.Add(checkInShiftWindow).Format("15:04"),
 		closest.end.Format("15:04"),
+		closest.end.Add(checkOutUpperGrace).Format("15:04"),
 	), nil
 }
 
