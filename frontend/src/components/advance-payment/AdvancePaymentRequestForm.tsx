@@ -131,28 +131,28 @@ export function AdvancePaymentRequestForm({
       className={className ?? "bg-white rounded-2xl p-4"}
       style={style}
     >
-      <div className="flex items-center gap-1.5 mb-3">
+      <div className="mb-3 flex items-center gap-2">
         <span
-          className="text-sm font-bold text-employee"
+          className="text-lg font-bold text-employee"
         >
           $
         </span>
-        <h2 className="text-sm font-bold text-gray-800">
-          Yêu cầu ứng lương
+        <h2 className="text-lg font-bold leading-6 text-gray-900">
+          Ứng lương
         </h2>
       </div>
       
       {availableQuotas.length > 0 && (
         <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-500 mb-1.5">Chọn kỳ ứng lương</label>
+          <label className="mb-1.5 block text-sm font-semibold text-gray-600">Chọn kỳ lương</label>
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full h-11 bg-gray-50 border-gray-200">
+            <SelectTrigger className="h-12 w-full border-gray-200 bg-gray-50 text-base">
               <SelectValue placeholder="Chọn kỳ" />
             </SelectTrigger>
             <SelectContent>
               {sortedQuotas.map(q => (
                 <SelectItem key={q.forMonth} value={q.forMonth} disabled={q.remainingAmount < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT}>
-                  Kỳ {formatAdvancePeriodDisplay(q.forMonth)} - Còn lại: {formatCurrency(q.remainingAmount)}
+                  Kỳ {formatAdvancePeriodDisplay(q.forMonth)} - Còn ứng được: {formatCurrency(q.remainingAmount)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -168,13 +168,13 @@ export function AdvancePaymentRequestForm({
             placeholder="0"
             value={formatAmountInput(amount)}
             onChange={handleAmountChange}
-            className={`w-full h-11 px-3 pr-12 text-sm font-semibold rounded-xl border bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+            className={`h-12 w-full rounded-xl border bg-gray-50 px-3 pr-12 text-lg font-bold transition-all focus:bg-white focus:outline-none focus:ring-2 ${
               (error || validationError)
                 ? "border-red-300 focus:ring-red-100"
                 : "border-gray-200 focus:border-[#00B14F] focus:ring-green-100"
             }`}
           />
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-500">
             VND
           </span>
         </div>
@@ -191,7 +191,7 @@ export function AdvancePaymentRequestForm({
                 { "--slider-thumb-color": EMPLOYEE_BRAND_COLOR } as React.CSSProperties
               }
             />
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="mt-1 flex justify-between text-sm text-gray-500">
               <span>0</span>
               <span>{formatCurrency(selectedQuotaRemaining)}</span>
             </div>
@@ -200,7 +200,7 @@ export function AdvancePaymentRequestForm({
       </div>
 
       {(error || validationError) && (
-        <p className="text-xs text-red-500 flex items-center gap-1 mb-2">
+        <p className="mb-2 flex items-center gap-1 text-sm leading-5 text-red-500">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {error || validationError}
         </p>
@@ -209,21 +209,21 @@ export function AdvancePaymentRequestForm({
       {feeDetails &&
         numericAmount >= ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT &&
         !validationError && (
-          <div className="bg-gray-50 rounded-xl px-3.5 py-2.5 space-y-1.5 text-xs mb-3 border border-gray-100">
+          <div className="mb-3 space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm">
             <div className="flex justify-between text-gray-500">
-              <span>Yêu cầu</span>
+              <span>Số tiền muốn ứng</span>
               <span className="font-semibold text-gray-700">
                 {formatCurrency(numericAmount)}
               </span>
             </div>
             <div className="flex justify-between text-gray-500">
-              <span>Phí giao dịch</span>
+              <span>Phí chuyển tiền</span>
               <span className="font-semibold text-red-500">
                 −{formatCurrency(feeDetails.fee)}
               </span>
             </div>
             <div className="flex justify-between pt-1.5 border-t border-gray-200">
-              <span className="font-semibold text-gray-700">Thực nhận</span>
+              <span className="font-semibold text-gray-700">Bạn nhận được</span>
               <span
                 className="font-bold text-employee"
               >
@@ -237,7 +237,7 @@ export function AdvancePaymentRequestForm({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97] ${canSubmit ? 'bg-employee' : 'bg-gray-400'}`}
+          className={`inline-flex min-h-12 items-center gap-1.5 rounded-xl px-5 py-2 text-base font-bold text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${canSubmit ? 'bg-employee' : 'bg-gray-400'}`}
         >
           {isPending ? (
             <>
@@ -246,7 +246,7 @@ export function AdvancePaymentRequestForm({
             </>
           ) : (
             <>
-              Gửi yêu cầu
+              Gửi yêu cầu ứng
               <ArrowRight className="h-3.5 w-3.5" />
             </>
           )}

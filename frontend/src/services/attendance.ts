@@ -11,6 +11,7 @@ export interface AttendanceRecord {
   check_out_time?: string;
   check_out_gate?: string;
   earning_amount?: number;
+  salary_reject_reason?: string;
   salary_status?: "pending" | "recorded" | "not_recorded";
   salary_message?: string;
   status: "checked_in" | "completed" | "orphaned";

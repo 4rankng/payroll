@@ -13,6 +13,8 @@ import (
 	"api-server/internal/pkg/geo"
 )
 
+const minimumCheckoutDuration = 4 * time.Hour
+
 type AttendanceService struct {
 	attendanceRepo      domain.AttendanceRepository
 	projectEmployeeRepo domain.ProjectEmployeeRepository
@@ -44,6 +46,18 @@ func NewAttendanceService(
 		transactionManager:  transactionManager,
 		clock:               clk,
 	}
+}
+
+func validateMinimumCheckoutDuration(checkInTime, checkOutTime time.Time) error {
+	earliestCheckout := checkInTime.Add(minimumCheckoutDuration)
+	if checkOutTime.Before(earliestCheckout) {
+		return domain.NewValidationError(fmt.Sprintf(
+			"Bạn mới vào làm lúc %s. Chỉ có thể tan ca sau %s",
+			checkInTime.Format("15:04"),
+			earliestCheckout.Format("15:04"),
+		))
+	}
+	return nil
 }
 
 // validateGeofence checks if coordinates are within configured gates for the given project.
@@ -191,15 +205,33 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		if attendance.GetStatus(now) == domain.AttendanceStatusOrphaned {
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
+		if err := validateMinimumCheckoutDuration(attendance.CheckInTime, now); err != nil {
+			return err
+		}
 
-		// 2. Geofence validation
+		// 2. Best-effort geofence validation for checkout.
+		// Check-in already proves the worker started from a valid gate. Do not
+		// block checkout on a second GPS read, because mobile location can drift
+		// and leave the employee stuck in an active shift.
 		project, err := s.projectRepo.GetByID(txCtx, attendance.ProjectID)
 		if err != nil {
 			return fmt.Errorf("failed to load project for geofence validation: %w", err)
 		}
 		gateName, err := s.validateGeofence(project, lat, lng)
 		if err != nil {
-			return err
+			observability.GetLogger().Warn(
+				"Checkout geofence validation failed; allowing checkout for active attendance",
+				"employee_id", employeeID,
+				"attendance_id", attendance.ID,
+				"project_id", attendance.ProjectID,
+				"lat", lat,
+				"lng", lng,
+				"error", err,
+			)
+			gateName = attendance.CheckInGate
+			if strings.TrimSpace(gateName) == "" {
+				gateName = "Không xác định"
+			}
 		}
 
 		// 3. Update CheckOutTime and coords
@@ -217,18 +249,32 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 			return domain.NewValidationError("Chấm công đã bị vô hiệu hóa. Vui lòng liên hệ quản lý.")
 		}
 
+		var earningAmount int64
+		var salaryRejectReason *string
 		payrate, err := s.payrateRepo.GetActiveByProjectAndDate(txCtx, attendance.ProjectID, attendance.Date)
 		if err != nil {
-			return err
+			if !domain.IsNotFoundError(err) {
+				return err
+			}
+			reason := "Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này."
+			salaryRejectReason = &reason
+		} else {
+			var reason string
+			earningAmount, reason, err = s.calculateEarningAmount(payrate, assignment.Position, attendance.CheckInTime, now)
+			if err != nil {
+				observability.GetLogger().Warn("Failed to calculate earning amount", "error", err)
+				reason = "Cấu hình mức lương chưa hợp lệ, chưa thể ghi lương ca này."
+				earningAmount = 0
+			}
+			if earningAmount <= 0 {
+				if reason == "" {
+					reason = "Thời gian vào/tan ca không hợp lệ. Vui lòng liên hệ quản lý."
+				}
+				salaryRejectReason = &reason
+			}
 		}
-
-		earningAmount, err := s.calculateEarningAmount(payrate, assignment.Position, attendance.CheckInTime, now)
-		if err != nil {
-			observability.GetLogger().Warn("Failed to calculate earning amount", "error", err)
-			earningAmount = 0
-		}
-
 		attendance.EarningAmount = &earningAmount
+		attendance.SalaryRejectReason = salaryRejectReason
 
 		// 5. Update attendance record
 		if err := s.attendanceRepo.Update(txCtx, attendance); err != nil {
@@ -291,13 +337,19 @@ func (s *AttendanceService) GetTodayAttendance(ctx context.Context, employeeID u
 	if err != nil {
 		return nil, err
 	}
+	s.normalizeLegacySalaryRejectReason(ctx, att)
 
 	return att, nil
 }
 
 // GetByID returns an attendance record by its ID.
 func (s *AttendanceService) GetByID(ctx context.Context, id uint) (*domain.Attendance, error) {
-	return s.attendanceRepo.GetByID(ctx, id)
+	att, err := s.attendanceRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	s.normalizeLegacySalaryRejectReason(ctx, att)
+	return att, nil
 }
 
 // List returns a list of attendance records based on filters.
@@ -305,6 +357,9 @@ func (s *AttendanceService) List(ctx context.Context, filters domain.AttendanceF
 	attendances, err := s.attendanceRepo.List(ctx, filters)
 	if err != nil {
 		return nil, 0, err
+	}
+	for _, att := range attendances {
+		s.normalizeLegacySalaryRejectReason(ctx, att)
 	}
 
 	count, err := s.attendanceRepo.Count(ctx, filters)
@@ -315,12 +370,70 @@ func (s *AttendanceService) List(ctx context.Context, filters domain.AttendanceF
 	return attendances, count, nil
 }
 
-func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, position string, ci, co time.Time) (int64, error) {
-	flattened, err := payrate.Payrate.Flatten()
-	if err != nil {
-		return 0, err
+func (s *AttendanceService) normalizeLegacySalaryRejectReason(ctx context.Context, att *domain.Attendance) {
+	if att == nil || att.SalaryRejectReason == nil || att.CheckOutTime == nil {
+		return
+	}
+	if !strings.Contains(*att.SalaryRejectReason, "không khớp trọn ca") {
+		return
 	}
 
+	assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, att.ProjectID, att.EmployeeID)
+	if err != nil {
+		observability.GetLogger().Warn("Failed to load assignment for salary reject reason normalization", "attendance_id", att.ID, "error", err)
+		return
+	}
+
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, att.ProjectID, att.Date)
+	if err != nil {
+		observability.GetLogger().Warn("Failed to load payrate for salary reject reason normalization", "attendance_id", att.ID, "error", err)
+		return
+	}
+
+	amount, reason, err := s.calculateEarningAmount(payrate, assignment.Position, att.CheckInTime, *att.CheckOutTime)
+	if err != nil {
+		observability.GetLogger().Warn("Failed to normalize salary reject reason", "attendance_id", att.ID, "error", err)
+		return
+	}
+	if amount == 0 && reason != "" {
+		att.SalaryRejectReason = &reason
+	}
+}
+
+func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, position string, ci, co time.Time) (int64, string, error) {
+	flattened, err := payrate.Payrate.Flatten()
+	if err != nil {
+		return 0, "Cấu hình mức lương chưa hợp lệ, chưa thể ghi lương ca này.", err
+	}
+
+	configuredPositions := make(map[string]string)
+	for key := range flattened {
+		parts := strings.Split(key, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		pos := strings.Join(parts[:len(parts)-2], ".")
+		configuredPositions[strings.ToLower(pos)] = pos
+	}
+
+	effectivePosition := position
+	for _, configuredPosition := range configuredPositions {
+		if strings.EqualFold(configuredPosition, position) {
+			effectivePosition = configuredPosition
+			break
+		}
+	}
+	if !hasConfiguredPosition(configuredPositions, effectivePosition) && len(configuredPositions) == 1 {
+		for _, onlyPosition := range configuredPositions {
+			effectivePosition = onlyPosition
+		}
+	}
+
+	positionFound := false
+	shiftFound := false
+	var expectedShiftStart time.Time
+	var expectedShiftEnd time.Time
+	var expectedShiftDistance time.Duration
 	for key, amount := range flattened {
 		// key is position.dayType.HH:MM-HH:MM
 		parts := strings.Split(key, ".")
@@ -329,9 +442,10 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 		}
 
 		pos := strings.Join(parts[:len(parts)-2], ".")
-		if !strings.EqualFold(pos, position) {
+		if !strings.EqualFold(pos, effectivePosition) {
 			continue
 		}
+		positionFound = true
 
 		timeRange := parts[len(parts)-1]
 		timeParts := strings.Split(timeRange, "-")
@@ -339,8 +453,12 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 			continue
 		}
 
-		start, _ := time.Parse("15:04", timeParts[0])
-		end, _ := time.Parse("15:04", timeParts[1])
+		start, startErr := time.Parse("15:04", timeParts[0])
+		end, endErr := time.Parse("15:04", timeParts[1])
+		if startErr != nil || endErr != nil {
+			continue
+		}
+		shiftFound = true
 
 		// Build real time equivalents for the shift on the day of check-in
 		shiftStart := time.Date(ci.Year(), ci.Month(), ci.Day(), start.Hour(), start.Minute(), 0, 0, ci.Location())
@@ -360,11 +478,43 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 			shiftEnd = shiftEnd.Add(-24 * time.Hour)
 		}
 
+		distance := ci.Sub(shiftStart).Abs()
+		if expectedShiftStart.IsZero() || distance < expectedShiftDistance {
+			expectedShiftStart = shiftStart
+			expectedShiftEnd = shiftEnd
+			expectedShiftDistance = distance
+		}
+
 		// Match: checkIn <= shiftStart && checkOut >= shiftEnd
 		if (ci.Before(shiftStart) || ci.Equal(shiftStart)) && (co.After(shiftEnd) || co.Equal(shiftEnd)) {
-			return int64(amount), nil
+			if amount <= 0 {
+				return 0, "Mức lương ca được cấu hình là 0đ. Vui lòng liên hệ quản lý.", nil
+			}
+			return int64(amount), "", nil
 		}
 	}
 
-	return 0, nil
+	if !positionFound {
+		return 0, fmt.Sprintf("Chưa có mức lương cho vị trí \"%s\".", position), nil
+	}
+	if !shiftFound {
+		return 0, fmt.Sprintf("Chưa có ca làm hợp lệ trong cấu hình mức lương cho vị trí \"%s\".", effectivePosition), nil
+	}
+
+	return 0, fmt.Sprintf(
+		"Thời gian vào %s và tan %s không hợp lệ, bạn phải vào làm trước %s và tan ca sau %s.",
+		ci.Format("15:04"),
+		co.Format("15:04"),
+		expectedShiftStart.Format("15:04"),
+		expectedShiftEnd.Format("15:04"),
+	), nil
+}
+
+func hasConfiguredPosition(configuredPositions map[string]string, position string) bool {
+	for _, configuredPosition := range configuredPositions {
+		if strings.EqualFold(configuredPosition, position) {
+			return true
+		}
+	}
+	return false
 }

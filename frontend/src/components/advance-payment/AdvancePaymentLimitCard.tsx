@@ -25,39 +25,39 @@ export function AdvancePaymentLimitCard({
 
   return (
     <div className={className ?? "bg-white rounded-2xl overflow-hidden"} style={style}>
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex items-center gap-1.5 mb-1">
+      <div className="border-b border-gray-100 p-4">
+        <div className="mb-1 flex items-center gap-2">
           <TrendingUp
             className="h-4 w-4 text-employee"
           />
-          <span className="font-semibold text-gray-800 uppercase tracking-wide text-sm">
-            Hạn mức ứng lương
+          <span className="text-[18px] font-bold leading-6 text-slate-900">
+            Có thể ứng ngay
           </span>
         </div>
-        <p className="text-xs text-gray-500">
-          Tổng có thể ứng: <strong className="text-employee">{formatCurrency(info.remainingAmount)}</strong>
+        <p className="text-[16px] leading-6 text-slate-600">
+          Số tiền còn ứng được: <strong className="font-bold text-employee">{formatCurrency(info.remainingAmount)}</strong>
         </p>
       </div>
 
       {info.salary !== undefined && (
         <div className="px-4 py-3 bg-emerald-50/60 border-b border-gray-100 space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Tiền công thực tế</span>
+          <div className="flex items-center justify-between text-[16px]">
+            <span className="text-gray-600">Tiền công đã tính</span>
             <span className="font-semibold tabular-nums text-gray-800">
               {formatCurrency(info.salary)}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-[16px]">
             <span className="text-gray-600">
-              Tiền công được ứng{" "}
-              <span className="text-[10px] text-gray-400">(70%)</span>
+              Được ứng tối đa{" "}
+              <span className="text-[15px] text-gray-400">(70%)</span>
             </span>
             <span className="font-bold tabular-nums text-employee">
               {formatCurrency(info.maxAdvanceAmount)}
             </span>
           </div>
           {info.disclaimer && (
-            <p className="text-[11px] text-gray-500 leading-snug pt-1.5 mt-1 border-t border-emerald-100">
+            <p className="mt-1 border-t border-emerald-100 pt-1.5 text-[15px] leading-5 text-gray-500">
               {info.disclaimer}
             </p>
           )}
@@ -91,21 +91,21 @@ function QuotaSection({ quota, isOldest }: { quota: AdvancePaymentQuota, isOldes
   const pendingPct = max > 0 ? Math.min((quota.pendingAmount / max) * 100, 100 - completedPct) : 0;
 
   return (
-    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 relative">
+    <div className="relative rounded-xl border border-gray-100 bg-gray-50 p-3.5">
       {isOldest && (
-        <div className="absolute -top-2.5 -right-2.5 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm border border-amber-200">
+        <div className="absolute -top-2.5 -right-2.5 flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[13px] font-bold text-amber-700 shadow-sm">
           <AlertCircle className="h-3 w-3" />
           Sắp hết hạn
         </div>
       )}
       
       <div className="flex justify-between items-center mb-3">
-        <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200">
+        <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[16px] font-bold text-gray-700 shadow-sm">
           Kỳ lương: {quota.forMonth ? `${quota.forMonth.slice(5, 7)}/${quota.forMonth.slice(2, 4)}` : ""}
         </span>
         <div className="text-right">
-          <span className="text-[10px] text-gray-400 block leading-tight">Còn lại</span>
-          <span className="text-sm font-bold tabular-nums text-employee">
+          <span className="block text-[15px] leading-5 text-gray-500">Còn ứng được</span>
+          <span className="text-[18px] font-bold tabular-nums text-employee">
             {formatCurrency(quota.remainingAmount)}
           </span>
         </div>
@@ -122,14 +122,14 @@ function QuotaSection({ quota, isOldest }: { quota: AdvancePaymentQuota, isOldes
         />
       </div>
 
-      <div className="flex justify-between text-[11px]">
+      <div className="flex justify-between gap-3 text-[15px]">
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-employee" />
-          <span className="text-gray-500">Đã ứng: <span className="font-semibold text-gray-700">{formatCurrency(quota.completedAmount)}</span></span>
+          <span className="text-gray-600">Đã nhận: <span className="font-bold text-gray-800">{formatCurrency(quota.completedAmount)}</span></span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-          <span className="text-gray-500">Đang chờ: <span className="font-semibold text-gray-700">{formatCurrency(quota.pendingAmount)}</span></span>
+          <span className="text-gray-600">Đang chờ: <span className="font-bold text-gray-800">{formatCurrency(quota.pendingAmount)}</span></span>
         </div>
       </div>
     </div>

@@ -16,21 +16,22 @@ const (
 
 // Attendance represents a flexi employee check-in/out record
 type Attendance struct {
-	ID            uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	EmployeeID    uint       `json:"employee_id" gorm:"not null;type:bigint unsigned"`
-	ProjectID     uint       `json:"project_id" gorm:"not null;type:bigint unsigned"`
-	Date          time.Time  `json:"date" gorm:"type:date;not null"`
-	CheckInTime   time.Time  `json:"check_in_time" gorm:"type:datetime(3);not null"`
-	CheckOutTime  *time.Time `json:"check_out_time" gorm:"type:datetime(3)"`
-	CheckInLat    float64    `json:"check_in_lat" gorm:"type:decimal(10,7);not null"`
-	CheckInLng    float64    `json:"check_in_lng" gorm:"type:decimal(10,7);not null"`
-	CheckOutLat   *float64   `json:"check_out_lat" gorm:"type:decimal(10,7)"`
-	CheckOutLng   *float64   `json:"check_out_lng" gorm:"type:decimal(10,7)"`
-	CheckInGate   string     `json:"check_in_gate" gorm:"type:varchar(50);not null"`
-	CheckOutGate  *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
-	EarningAmount *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID                 uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	EmployeeID         uint       `json:"employee_id" gorm:"not null;type:bigint unsigned"`
+	ProjectID          uint       `json:"project_id" gorm:"not null;type:bigint unsigned"`
+	Date               time.Time  `json:"date" gorm:"type:date;not null"`
+	CheckInTime        time.Time  `json:"check_in_time" gorm:"type:datetime(3);not null"`
+	CheckOutTime       *time.Time `json:"check_out_time" gorm:"type:datetime(3)"`
+	CheckInLat         float64    `json:"check_in_lat" gorm:"type:decimal(10,7);not null"`
+	CheckInLng         float64    `json:"check_in_lng" gorm:"type:decimal(10,7);not null"`
+	CheckOutLat        *float64   `json:"check_out_lat" gorm:"type:decimal(10,7)"`
+	CheckOutLng        *float64   `json:"check_out_lng" gorm:"type:decimal(10,7)"`
+	CheckInGate        string     `json:"check_in_gate" gorm:"type:varchar(50);not null"`
+	CheckOutGate       *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
+	EarningAmount      *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
+	SalaryRejectReason *string    `json:"salary_reject_reason" gorm:"type:text"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 
 	// Relationships
 	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
