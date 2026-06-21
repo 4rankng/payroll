@@ -28,7 +28,9 @@ import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 
-const cardShadow = { boxShadow: "0 1px 6px rgba(0,0,0,0.08)" } as const;
+const cardShadow = {
+  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255,255,255,0.75) inset",
+} as const;
 
 const FlexiblePayEmployeePage = () => {
   const navigate = useNavigate();
@@ -181,7 +183,7 @@ const FlexiblePayEmployeePage = () => {
     <div
       className="min-h-[100dvh]"
       style={{
-        backgroundImage: "url('/employee-bg.avif')",
+        backgroundImage: "linear-gradient(180deg, rgba(224, 249, 255, 0.92) 0%, rgba(241, 250, 255, 0.88) 44%, rgba(248, 250, 252, 0.96) 100%), url('/employee-bg.avif')",
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundAttachment: "fixed",
@@ -200,19 +202,19 @@ const FlexiblePayEmployeePage = () => {
       <div className="max-w-2xl mx-auto p-4 space-y-3 pb-24">
         <EmployeeBankInfoCard
           profile={profile!}
-          className="bg-white rounded-2xl overflow-hidden"
+          className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
           style={cardShadow}
         />
 
         {profile?.check_in_enabled && (
           <>
             <EmployeeCheckInCard
-              className="bg-white rounded-2xl overflow-hidden"
+              className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
               style={cardShadow}
             />
 
             <EmployeeAttendanceHistoryCard
-              className="bg-white rounded-2xl overflow-hidden"
+              className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
               style={cardShadow}
             />
           </>

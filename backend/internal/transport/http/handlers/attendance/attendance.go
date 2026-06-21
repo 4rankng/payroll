@@ -79,7 +79,7 @@ func (h *Handler) CheckIn(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, h.mapToResponse(att), "Check-in thành công")
+	response.Success(c, h.mapToResponse(att), "Vào làm thành công")
 }
 
 // CheckOut handles POST /api/v1/mobile/attendance/check-out
@@ -101,7 +101,7 @@ func (h *Handler) CheckOut(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, h.mapToResponse(att), "Check-out thành công")
+	response.Success(c, h.mapToResponse(att), "Tan ca thành công")
 }
 
 // GetToday handles GET /api/v1/mobile/attendance/today

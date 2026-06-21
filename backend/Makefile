@@ -1,4 +1,4 @@
-.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend onepay-sandbox onepay-sandbox-logs onepay-sandbox-rebuild onepay-topup
+.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend onepay-sandbox onepay-sandbox-logs onepay-sandbox-rebuild onepay-topup push-demo deploy-demo demo-db
 
 # Load environment variables from .env file
 include .env
@@ -6,6 +6,8 @@ export
 
 COMPOSE_FILE := docker-compose.dev.yml
 PROD_SERVER := pay.1stop.app
+DEMO_SERVER := demo.tingting.vip
+DEMO_TAG    := demo
 
 define check-docker
 	@echo "🐳 Checking Docker status..."
@@ -111,6 +113,46 @@ deploy:
 	@echo "✅ Frontend/backend deployment complete!"
 	@echo "🌐 Frontend: https://$(PROD_SERVER)"
 	@echo "🔧 Backend API: https://$(PROD_SERVER)/api"
+
+# DEMO targets — build/push :demo images, deploy to demo.tingting.vip, reload demo DB.
+# Demo stack coexists with vantai on the same host (separate compose, ports, nginx vhost).
+push-demo:
+	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
+	@docker buildx use $(BUILDER)
+	@docker buildx inspect --bootstrap >/dev/null
+	@echo "🔐 Logging into DockerHub..."
+	@echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+	@echo "🏗️  Building & pushing AMD64 backend image (:$(DEMO_TAG))..."
+	docker buildx build \
+		--platform linux/amd64 \
+		--tag $(IMAGE_NAME):$(DEMO_TAG) \
+		--push \
+		.
+	@echo "✅ Push complete: $(IMAGE_NAME):$(DEMO_TAG)"
+
+deploy-demo:
+	@echo "🚀 Deploying to $(DEMO_SERVER)..."
+	@echo "📡 Pulling :demo frontend/backend images..."
+	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose pull backend frontend"
+	@echo "🔄 Restarting demo frontend/backend services..."
+	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose up -d --force-recreate --no-deps backend frontend"
+	@echo "🧹 Cleaning up unused images..."
+	ssh root@$(DEMO_SERVER) "docker image prune -f"
+	@echo "✅ Demo deployment complete!"
+	@echo "🌐 Frontend: https://$(DEMO_SERVER)"
+	@echo "🔧 Backend API: https://$(DEMO_SERVER)/api"
+
+# Reload demo MySQL from LOCAL payroll_db (local dev DB). Overwrites demo data.
+# Does NOT touch vantai (Postgres) or demo images.
+demo-db:
+	@echo "💾 Dumping local payroll_db → restoring to demo $(DEMO_SERVER)..."
+	docker exec payroll-mysql mysqldump -u root -p'$(ROOT_PASSWORD)' --default-character-set=utf8mb4 --single-transaction --add-drop-table --routines --triggers payroll_db \
+		| ssh root@$(DEMO_SERVER) "docker exec -i payroll-mysql mysql --default-character-set=utf8mb4 -u root -p'$(DEMO_DB_ROOT_PASSWORD)' payroll_db"
+	@echo "🔐 Resetting all demo users to 'Admin123' (using app peppers)..."
+	@HASH=$$(go run ./cmd/hashpw Admin123) && \
+	printf "UPDATE users SET password='%s';" "$$HASH" \
+		| ssh root@$(DEMO_SERVER) "docker exec -i payroll-mysql mysql -u root -p'$(DEMO_DB_ROOT_PASSWORD)' payroll_db"
+	@echo "✅ Demo DB reloaded from local dev."
 
 # Backup production database
 backup:

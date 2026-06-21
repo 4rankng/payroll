@@ -26,6 +26,7 @@ const DO_NOT_PERSIST_KEYS = [
   'auth',        // auth state
   'notifications', // real-time notifications
   'me',          // current user profile
+  'attendance',  // mobile check-in/out state must always be fresh
   'audit-logs',  // audit trail
 ];
 
