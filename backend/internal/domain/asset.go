@@ -70,7 +70,36 @@ const (
 	UploadTypeAdvancePaymentSaoKeExport = "advance_payment_sao_ke_export" // sao ke reconciliation exports
 	UploadTypeAdvancePaymentSaoKeResult = "advance_payment_sao_ke_result" // uploaded sao ke settlement results
 	UploadTypePartnerBCCImport          = "partner_bcc_import"
+	UploadTypeSaoKe                     = "sao_ke"           // sao kê reminder email attachments
+	UploadTypeSettlementProof           = "settlement_proof" // settlement evidence uploads
+	UploadTypeEmployeeImports           = "employee_imports" // bulk employee import files
 )
+
+// allowedUploadTypes is the closed set of upload_type values accepted for file
+// storage. It guards against path traversal: upload_type is used as the first
+// path segment when storing files, so only these fixed (traversal-free)
+// constants are permitted.
+var allowedUploadTypes = map[string]bool{
+	UploadTypeLedgerEvidence:            true,
+	UploadTypeBulkTransferResult:        true,
+	UploadTypeAdvancePaymentResult:      true,
+	UploadTypeGeneral:                   true,
+	UploadTypeDocument:                  true,
+	UploadTypeFlexPayImport:             true,
+	UploadTypeAdvancePaymentExport:      true,
+	UploadTypeAdvancePaymentSaoKeExport: true,
+	UploadTypeAdvancePaymentSaoKeResult: true,
+	UploadTypePartnerBCCImport:          true,
+	UploadTypeSaoKe:                     true,
+	UploadTypeSettlementProof:           true,
+	UploadTypeEmployeeImports:           true,
+}
+
+// IsValidUploadType reports whether t is one of the recognized upload_type
+// constants. Unknown values (including traversal sequences) are rejected.
+func IsValidUploadType(t string) bool {
+	return allowedUploadTypes[t]
+}
 
 const (
 	// Import job types

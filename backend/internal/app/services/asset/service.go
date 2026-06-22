@@ -41,6 +41,13 @@ func NewAssetService(
 }
 
 func (s *AssetService) UploadAsset(ctx context.Context, file multipart.File, header *multipart.FileHeader, req domain.AssetUploadRequest, uploadedBy uint) (*domain.Asset, error) {
+	// Validate upload type. upload_type is used as the first path segment when
+	// storing the file, so it must be one of the fixed, traversal-free constants
+	// to prevent arbitrary file writes outside the storage root.
+	if !domain.IsValidUploadType(req.UploadType) {
+		return nil, domain.NewValidationError(constants.MsgInvalidUploadTypeVN)
+	}
+
 	// Validate file size
 	if err := storage.ValidateFileSize(header, s.MaxFileSize); err != nil {
 		return nil, domain.NewValidationError(err.Error())
@@ -127,6 +134,10 @@ func (s *AssetService) UploadAsset(ctx context.Context, file multipart.File, hea
 
 // UploadAssetFromBytes stores raw bytes as an asset record (no multipart needed).
 func (s *AssetService) UploadAssetFromBytes(ctx context.Context, data []byte, filename string, uploadType string, uploadedBy uint) (*domain.Asset, error) {
+	if !domain.IsValidUploadType(uploadType) {
+		return nil, domain.NewValidationError(constants.MsgInvalidUploadTypeVN)
+	}
+
 	storedFile, err := s.FileStorage.StoreBytes(data, filename, uploadType)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToStoreFileBytesVN, err)

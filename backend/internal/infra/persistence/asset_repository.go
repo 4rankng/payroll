@@ -8,6 +8,7 @@ import (
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/infra/persistence/common"
 	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
@@ -102,7 +103,7 @@ func (r *AssetRepository) List(ctx context.Context, filters domain.AssetFilters)
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(sortBy + " " + sortOrder)
+	query = query.Order(common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
 
 	// Default pagination
 	if filters.Limit <= 0 {

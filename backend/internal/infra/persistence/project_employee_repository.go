@@ -9,6 +9,7 @@ import (
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -196,7 +197,7 @@ func (r *ProjectEmployeeRepository) List(ctx context.Context, filters domain.Pro
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {

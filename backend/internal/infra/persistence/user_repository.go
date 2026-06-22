@@ -10,6 +10,7 @@ import (
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/infra/persistence/common"
 	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
@@ -397,14 +398,8 @@ func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserR
 		return nil, 0, domain.NewInternalError("failed to count users", err)
 	}
 
-	// Apply sorting
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-	if sortOrder == "" {
-		sortOrder = "desc"
-	}
-	orderClause := sortBy + " " + sortOrder
+	// Apply sorting (sanitize user-controlled sort fields against SQL injection)
+	orderClause := common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC")
 
 	// Apply pagination and fetch results
 	if err := query.Order(orderClause).Limit(limit).Offset(offset).Find(&users).Error; err != nil {

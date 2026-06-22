@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -400,7 +401,7 @@ func (r *transactionRepository) buildCTEQuery(ctx context.Context, filters domai
 		sortOrder = "DESC"
 	}
 
-	cteQuery += fmt.Sprintf(" ORDER BY %s %s", sortBy, sortOrder)
+	cteQuery += fmt.Sprintf(" ORDER BY %s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC"))
 
 	// Apply pagination
 	if filters.Limit > 0 {

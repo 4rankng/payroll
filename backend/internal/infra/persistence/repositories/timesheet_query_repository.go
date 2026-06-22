@@ -125,7 +125,7 @@ func (r *TimesheetQueryRepository) List(ctx context.Context, filters domain.Time
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "timesheets.date"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)
@@ -492,10 +492,7 @@ func (r *TimesheetQueryRepository) ListGroupedByEmployee(ctx context.Context, fi
 		}
 	}
 
-	sortOrder := "ASC"
-	if filters.SortOrder != "" {
-		sortOrder = filters.SortOrder
-	}
+	sortOrder := common.SanitizeSortOrder(filters.SortOrder, "ASC")
 
 	// Apply pagination
 	limit := filters.Limit

@@ -344,12 +344,17 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 		return nil, 0, r.errorHandler.HandleListError(err, "project_employees")
 	}
 
-	// Apply sorting using filterBuilder, then add deterministic tiebreaker for stable pagination
-	sortBy := filters.SortBy
-	if sortBy == "available_amount" {
-		sortBy = "GREATEST(0, CAST(COALESCE(ap.max_adv_amount, 0) AS SIGNED) - CAST(COALESCE(completed_stats.utilized_amount, 0) AS SIGNED) - CAST(COALESCE(pending_stats.pending_amount, 0) AS SIGNED))"
+	// Apply sorting, then add a deterministic tiebreaker for stable pagination.
+	// "available_amount" maps to a trusted SQL expression, which cannot go through
+	// ApplySorting (that helper enforces an identifier shape to prevent SQL
+	// injection), so apply it directly with a sanitized direction. All other
+	// sorts use the sanitized ApplySorting helper.
+	if filters.SortBy == "available_amount" {
+		expr := "GREATEST(0, CAST(COALESCE(ap.max_adv_amount, 0) AS SIGNED) - CAST(COALESCE(completed_stats.utilized_amount, 0) AS SIGNED) - CAST(COALESCE(pending_stats.pending_amount, 0) AS SIGNED))"
+		query = query.Order(expr + " " + common.SanitizeSortOrder(filters.SortOrder, "DESC"))
+	} else {
+		query = r.filterBuilder.ApplySorting(query, filters.SortBy, filters.SortOrder, "e.fullname")
 	}
-	query = r.filterBuilder.ApplySorting(query, sortBy, filters.SortOrder, "e.fullname")
 	query = query.Order("e.id ASC")
 	query = r.filterBuilder.ApplyPagination(query, filters.Limit, filters.Offset)
 

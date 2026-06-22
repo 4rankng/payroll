@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -92,7 +93,7 @@ func (r *BlacklistedTokenRepository) List(ctx context.Context, filters domain.Bl
 		}
 	}
 
-	query = query.Order(sortBy + " " + sortOrder)
+	query = query.Order(common.SanitizeSortColumn(sortBy, "blacklisted_tokens.blacklisted_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)
@@ -215,7 +216,7 @@ func (r *AuditLogRepository) List(ctx context.Context, filters domain.AuditFilte
 		}
 	}
 
-	query = query.Order(sortBy + " " + sortOrder)
+	query = query.Order(common.SanitizeSortColumn(sortBy, "audit_logs.created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)

@@ -288,6 +288,7 @@ const (
 
 	// Asset Messages - Vietnamese
 	MsgInvalidFormDataVN                   = "Dữ liệu form không hợp lệ"
+	MsgInvalidUploadTypeVN                 = "Loại tệp tải lên (upload_type) không hợp lệ"
 	MsgNoFileUploadedAssetVN               = "Chưa tải lên file nào"
 	MsgAssetUploadedSuccessfullyVN         = "Tải lên  thành công"
 	MsgAssetIDMustBeValidNumberVN          = "ID  phải là số hợp lệ"

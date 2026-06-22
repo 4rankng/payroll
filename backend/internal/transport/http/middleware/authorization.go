@@ -28,6 +28,17 @@ func NewAuthorizationMiddleware(authorizationService *authservice.AuthorizationS
 	}
 }
 
+// isScopedPartnerRole reports whether the role is an external/partner-facing
+// role that must be constrained to project- and employee-level ownership
+// scoping. Both partner and adv_partner are external roles and must pass
+// CanUserAccessProject / CanUserAccessEmployee before reaching per-record
+// endpoints; without this gate, adv_partner bypasses per-record authorization.
+// Admins are omniscient and employees reach only their own data via other
+// checks, so neither is scoped here.
+func isScopedPartnerRole(userRole string) bool {
+	return userRole == string(domain.RolePartner) || userRole == string(domain.RoleAdvPartner)
+}
+
 func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get(constants.CtxUserID)
@@ -75,8 +86,8 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 			}
 		}
 
-		// Check project-specific access for partners
-		if userRole == string(domain.RolePartner) && m.isProjectSpecificRoute(resource) && m.projectPermissionService != nil {
+		// Check project-specific access for scoped partner roles (partner + adv_partner)
+		if isScopedPartnerRole(userRole) && m.isProjectSpecificRoute(resource) && m.projectPermissionService != nil {
 			projectID := m.extractProjectID(resource)
 			if projectID != nil {
 				var hasAccess bool
@@ -106,8 +117,8 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 			}
 		}
 
-		// Check employee-specific access for partners
-		if userRole == string(domain.RolePartner) && m.isEmployeeSpecificRoute(resource) && m.employeePermissionService != nil {
+		// Check employee-specific access for scoped partner roles (partner + adv_partner)
+		if isScopedPartnerRole(userRole) && m.isEmployeeSpecificRoute(resource) && m.employeePermissionService != nil {
 			employeeID := m.extractEmployeeID(resource)
 			if employeeID != nil {
 				hasAccess, err := m.employeePermissionService.CanUserAccessEmployee(

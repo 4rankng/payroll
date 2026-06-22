@@ -150,19 +150,15 @@ func (fb *FilterBuilder) ApplyPagination(query *gorm.DB, limit, offset int) *gor
 }
 
 // ApplySorting applies sorting to the query.
-// If sortBy is empty, defaultSort is used.
-// If sortOrder is empty, "DESC" is used as default.
+// If sortBy is empty or unsafe, defaultSort is used.
+// If sortOrder is empty or unsafe, "DESC" is used as default.
+//
+// Both fields are sanitized before interpolation: sortBy is constrained to a
+// safe SQL-identifier shape and sortOrder to exactly ASC/DESC. This is the
+// SQL-injection boundary for ORDER BY clauses (column names cannot be
+// parameterized), so all callers of this method inherit injection-safe sorting.
 func (fb *FilterBuilder) ApplySorting(query *gorm.DB, sortBy, sortOrder, defaultSort string) *gorm.DB {
-	// Use default sort if none provided
-	if sortBy == "" {
-		sortBy = defaultSort
-	}
-
-	// Default to descending order if not specified
-	if sortOrder == "" {
-		sortOrder = "DESC"
-	}
-
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
-	return query
+	sortBy = SanitizeSortColumn(sortBy, defaultSort)
+	sortOrder = SanitizeSortOrder(sortOrder, "DESC")
+	return query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 }

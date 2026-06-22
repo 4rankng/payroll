@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 	"api-server/internal/pkg/clock"
 
 	"gorm.io/gorm"
@@ -95,7 +96,7 @@ func (r *attendanceRepository) List(ctx context.Context, filters domain.Attendan
 		if filters.SortOrder == "desc" || filters.SortOrder == "DESC" {
 			order = "DESC"
 		}
-		query = query.Order(filters.SortBy + " " + order)
+		query = query.Order(common.SanitizeSortColumn(filters.SortBy, "created_at") + " " + common.SanitizeSortOrder(order, "DESC"))
 	} else {
 		query = query.Order("created_at DESC")
 	}

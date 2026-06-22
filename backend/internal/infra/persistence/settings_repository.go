@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -81,7 +82,7 @@ func (r *SettingsRepository) List(ctx context.Context, filters domain.SettingsFi
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "updated_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {

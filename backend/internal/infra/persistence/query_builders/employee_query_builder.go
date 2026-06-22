@@ -270,7 +270,7 @@ func (b *EmployeeQueryBuilder) BuildUnassignedAtDateQuery(atDate time.Time, filt
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {
