@@ -1,10 +1,22 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { walletService } from "@/services/api/wallet.service";
 import { formatCurrency } from "@/utils/formatters";
+import { showErrorNotification } from "@/utils/error-handler";
 import { useDisbursementSettings } from "@/hooks/useDisbursementSettings";
 
 interface WalletBalanceCardProps {
@@ -17,6 +29,8 @@ interface WalletBalanceCardProps {
 export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, className, compact = false }: WalletBalanceCardProps) {
   const queryClient = useQueryClient();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [mismatch, setMismatch] = useState<{ provider: number; local: number } | null>(null);
+  const [adjusting, setAdjusting] = useState(false);
 
   const { data: settings, isLoading } = useDisbursementSettings();
 
@@ -29,14 +43,51 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       ? Math.abs(providerBalance.amount - available)
       : 0;
   const hasDivergence = divergence > 100_000;
+  const diff = mismatch ? mismatch.provider - mismatch.local : 0;
+
+  // Refresh this card's data source and invalidate the canonical wallet query
+  // so any concurrently-open WalletPage/tab stays consistent after a sync.
+  // Fire-and-forget with errors swallowed: a refetch failure here must not be
+  // reported as a sync/adjust failure (the mutation already succeeded).
+  const refreshBalances = () => {
+    queryClient.refetchQueries({ queryKey: ["disbursement-settings"] }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["wallet"] });
+  };
 
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await walletService.syncBalance();
-      await queryClient.refetchQueries({ queryKey: ["disbursement-settings"] });
+      const result = await walletService.syncBalance();
+      if (result.provider_balance === result.local_balance) {
+        toast.success(`Số dư khớp: ${formatCurrency(result.local_balance)}`);
+        refreshBalances();
+      } else {
+        // Backend skipped auto-adjust (e.g. in-flight payments). Surface the
+        // mismatch so the user can reconcile — mirrors the WalletPage behavior.
+        setMismatch({ provider: result.provider_balance, local: result.local_balance });
+      }
+    } catch (err) {
+      showErrorNotification(err, "Không thể đồng bộ số dư");
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleAdjust = async () => {
+    if (!mismatch) return;
+    setAdjusting(true);
+    try {
+      await walletService.adjustBalance({
+        amount: diff,
+        reason: `Số dư nhà cung cấp: ${formatCurrency(mismatch.provider)}, Hệ thống: ${formatCurrency(mismatch.local)}, Chênh lệch: ${formatCurrency(diff)}`,
+      });
+      toast.success("Đã điều chỉnh số dư thành công");
+      setMismatch(null);
+      refreshBalances();
+    } catch (err) {
+      showErrorNotification(err, "Điều chỉnh số dư thất bại");
+    } finally {
+      setAdjusting(false);
     }
   };
 
@@ -145,6 +196,92 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
           </div>
         )}
       </div>
+
+      {/* Mismatch reconciliation — mirrors WalletPage */}
+      <AlertDialog open={!!mismatch} onOpenChange={(open) => !open && setMismatch(null)}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
+                <RefreshCw className="h-3.5 w-3.5 text-amber-600" />
+              </div>
+              <AlertDialogTitle className="text-sm">Phát hiện chênh lệch số dư</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-border/60 bg-muted/40 p-2.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Nhà cung cấp</p>
+                    <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
+                      {formatCurrency(mismatch?.provider ?? 0)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 bg-muted/40 p-2.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Hệ thống</p>
+                    <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
+                      {formatCurrency(mismatch?.local ?? 0)}
+                    </p>
+                  </div>
+                  <div
+                    className={cn(
+                      "rounded-lg border p-2.5",
+                      diff > 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50",
+                    )}
+                  >
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Chênh lệch</p>
+                    <p
+                      className={cn(
+                        "mt-0.5 font-financial text-sm font-bold tabular-nums",
+                        diff > 0 ? "text-emerald-700" : "text-rose-700",
+                      )}
+                    >
+                      {diff > 0 ? "+" : ""}
+                      {formatCurrency(diff)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tạo bản ghi điều chỉnh{" "}
+                  <strong className={cn("font-semibold", diff > 0 ? "text-emerald-700" : "text-rose-700")}>
+                    {diff > 0 ? "+" : ""}
+                    {formatCurrency(diff)}
+                  </strong>{" "}
+                  để khớp số dư với nhà cung cấp?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9 text-xs" disabled={adjusting}>
+              Bỏ qua
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Prevent Radix from auto-closing the dialog on click so the
+                // in-progress spinner shows and an adjust error stays
+                // recoverable in-place. Close is driven by setMismatch(null)
+                // on success instead.
+                e.preventDefault();
+                handleAdjust();
+              }}
+              disabled={adjusting}
+              className="h-9 text-xs gap-1.5"
+            >
+              {adjusting ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3 w-3" />
+                  Điều chỉnh
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
