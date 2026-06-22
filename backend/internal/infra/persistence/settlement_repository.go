@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -127,7 +128,7 @@ func (r *settlementRepository) List(ctx context.Context, filters domain.Settleme
 		sortOrder = "DESC"
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "settlement_date"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {

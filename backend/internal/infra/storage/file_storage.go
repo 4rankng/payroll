@@ -40,6 +40,21 @@ func NewLocalFileStorage(basePath, baseURL string) FileStorage {
 	}
 }
 
+// resolveSafePath joins basePath with rel and verifies the cleaned result stays
+// within basePath, returning an error if the relative path escapes the storage
+// root (e.g. via "../" segments). This is the path-traversal confinement
+// boundary for all file operations; it complements the upload_type allowlist
+// enforced in the asset service.
+func (fs *LocalFileStorage) resolveSafePath(rel string) (string, error) {
+	cleanBase := filepath.Clean(fs.basePath)
+	full := filepath.Clean(filepath.Join(cleanBase, rel))
+	sep := string(filepath.Separator)
+	if full != cleanBase && !strings.HasPrefix(full, cleanBase+sep) {
+		return "", fmt.Errorf("file path escapes storage root")
+	}
+	return full, nil
+}
+
 func (fs *LocalFileStorage) Store(file multipart.File, header *multipart.FileHeader, uploadType string) (*StoredFile, error) {
 	// Generate unique filename
 	ext := filepath.Ext(header.Filename)
@@ -48,7 +63,10 @@ func (fs *LocalFileStorage) Store(file multipart.File, header *multipart.FileHea
 	// Create directory structure based on upload type and date
 	now := clock.Now()
 	relativePath := filepath.Join(uploadType, fmt.Sprintf("%d", now.Year()), fmt.Sprintf("%02d", now.Month()))
-	fullDir := filepath.Join(fs.basePath, relativePath)
+	fullDir, err := fs.resolveSafePath(relativePath)
+	if err != nil {
+		return nil, fmt.Errorf("invalid upload path: %w", err)
+	}
 
 	// Ensure directory exists
 	if err := os.MkdirAll(fullDir, 0755); err != nil {
@@ -100,7 +118,10 @@ func (fs *LocalFileStorage) StoreBytes(data []byte, filename string, uploadType 
 
 	now := clock.Now()
 	relativePath := filepath.Join(uploadType, fmt.Sprintf("%d", now.Year()), fmt.Sprintf("%02d", now.Month()))
-	fullDir := filepath.Join(fs.basePath, relativePath)
+	fullDir, err := fs.resolveSafePath(relativePath)
+	if err != nil {
+		return nil, fmt.Errorf("invalid upload path: %w", err)
+	}
 
 	if err := os.MkdirAll(fullDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create directory: %w", err)
@@ -123,7 +144,10 @@ func (fs *LocalFileStorage) StoreBytes(data []byte, filename string, uploadType 
 }
 
 func (fs *LocalFileStorage) Delete(filePath string) error {
-	fullPath := filepath.Join(fs.basePath, filePath)
+	fullPath, err := fs.resolveSafePath(filePath)
+	if err != nil {
+		return fmt.Errorf("invalid file path: %w", err)
+	}
 	if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -131,12 +155,21 @@ func (fs *LocalFileStorage) Delete(filePath string) error {
 }
 
 func (fs *LocalFileStorage) GetFilePath(filename string) string {
-	return filepath.Join(fs.basePath, filename)
+	full, err := fs.resolveSafePath(filename)
+	if err != nil {
+		// Escape attempt: return empty so callers cannot stat/serve a path
+		// outside the storage root.
+		return ""
+	}
+	return full
 }
 
 func (fs *LocalFileStorage) Exists(filePath string) bool {
-	fullPath := filepath.Join(fs.basePath, filePath)
-	_, err := os.Stat(fullPath)
+	fullPath, err := fs.resolveSafePath(filePath)
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(fullPath)
 	return !os.IsNotExist(err)
 }
 

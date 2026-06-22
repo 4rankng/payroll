@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -74,7 +75,7 @@ func (r *PayrateRepository) List(ctx context.Context, filters domain.PayrateFilt
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)

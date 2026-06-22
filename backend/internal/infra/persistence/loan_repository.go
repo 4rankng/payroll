@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -85,7 +86,7 @@ func (r *LoanRepository) List(ctx context.Context, filters domain.LoanFilters) (
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.PageSize > 0 {

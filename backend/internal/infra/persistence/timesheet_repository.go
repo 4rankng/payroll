@@ -500,10 +500,10 @@ func (r *TimesheetRepository) GetPaymentHistories(ctx context.Context, filters d
 	case "project_name":
 		sortBy = "p.name"
 	}
-	sortOrder := "DESC"
-	if filters.SortOrder == "asc" {
-		sortOrder = "ASC"
-	}
+	// Defensive: constrain to a safe identifier + ASC/DESC even though the
+	// switch above already maps to fixed literals.
+	sortBy = common.SanitizeSortColumn(sortBy, "paid_at")
+	sortOrder := common.SanitizeSortOrder(filters.SortOrder, "DESC")
 
 	// Fetch paginated results with employee/project names and position
 	selectQuery := r.DB.WithContext(ctx).

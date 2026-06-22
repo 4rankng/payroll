@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 	dbhelper "api-server/internal/pkg/db"
 	"api-server/internal/pkg/retry"
 
@@ -102,7 +103,7 @@ func (r *BaseRepository) SafeList(ctx context.Context, dest any, query *gorm.DB,
 		if sortOrder == "" {
 			sortOrder = "DESC"
 		}
-		query = query.Order(sortBy + " " + sortOrder)
+		query = query.Order(common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
 
 		// Apply pagination
 		if limit > 0 {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 	"api-server/internal/pkg/timeutil"
 	"api-server/internal/pkg/utils"
 
@@ -72,7 +73,7 @@ func (b *EmployeeProjectQueryBuilder) BuildListWithProjectsQuery(filters domain.
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {
@@ -270,7 +271,7 @@ func (b *EmployeeProjectQueryBuilder) BuildMissingBankDetailsQuery(filters domai
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {
@@ -318,7 +319,7 @@ func (b *EmployeeProjectQueryBuilder) BuildUnassignedAtDateQuery(atDate time.Tim
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {

@@ -361,7 +361,7 @@ func (r *ProjectRepository) ListWithEmployeeCount(ctx context.Context, filters d
 		sortOrder = filters.SortOrder
 	}
 
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "projects.created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	// Apply pagination
 	if filters.Limit > 0 {
@@ -491,7 +491,7 @@ func (r *ProjectRepository) fetchOwnedProjects(ctx context.Context, filters doma
 	if ownedFilters.SortOrder != "" {
 		sortOrder = ownedFilters.SortOrder
 	}
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "projects.created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	var results []*domain.ProjectWithEmployeeCount
 	err := query.Scan(&results).Error
@@ -539,7 +539,7 @@ func (r *ProjectRepository) fetchSharedProjects(ctx context.Context, filters dom
 	if sharedFilters.SortOrder != "" {
 		sortOrder = sharedFilters.SortOrder
 	}
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "projects.created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	var results []*domain.ProjectWithEmployeeCount
 	err := query.Scan(&results).Error
@@ -594,7 +594,7 @@ func (r *ProjectRepository) fetchEmployeeAccessibleProjects(ctx context.Context,
 	if employeeFilters.SortOrder != "" {
 		sortOrder = employeeFilters.SortOrder
 	}
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "projects.created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	var results []*domain.ProjectWithEmployeeCount
 	err := query.Scan(&results).Error

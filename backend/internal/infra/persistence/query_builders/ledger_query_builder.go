@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 	"api-server/internal/pkg/utils"
 
 	"gorm.io/gorm"
@@ -61,7 +62,7 @@ func (b *LedgerQueryBuilder) BuildListQuery(filters domain.LedgerFilters) *gorm.
 	if filters.SortOrder != "" {
 		sortOrder = filters.SortOrder
 	}
-	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "date"), common.SanitizeSortOrder(sortOrder, "DESC")))
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)

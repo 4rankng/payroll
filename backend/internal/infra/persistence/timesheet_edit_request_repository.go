@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
 )
@@ -101,7 +102,7 @@ func (r *TimesheetEditRequestRepository) List(ctx context.Context, filters domai
 	if sortOrder == "" {
 		sortOrder = "DESC"
 	}
-	query = query.Order(sortBy + " " + sortOrder)
+	query = query.Order(common.SanitizeSortColumn(sortBy, "timesheet_edit_requests.created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
 
 	// Pagination
 	if filters.Limit > 0 {
