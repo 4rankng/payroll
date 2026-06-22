@@ -14,7 +14,7 @@ export interface AttendanceRecord {
   salary_reject_reason?: string;
   salary_status?: "pending" | "recorded" | "not_recorded";
   salary_message?: string;
-  status: "checked_in" | "completed" | "orphaned";
+  status: "checked_in" | "completed" | "orphaned" | "rejected";
 }
 
 export const attendanceService = {

@@ -14,6 +14,8 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskBulkTransferTransaction, asynqlib.HandlerFunc(h.HandleBulkTransferTransaction))
 	srv.Mux().Handle(TaskBulkTransferPayment, asynqlib.HandlerFunc(h.HandleBulkTransferPayment))
 	srv.Mux().Handle(TaskAuditLogWrite, asynqlib.HandlerFunc(h.HandleAuditLogWrite))
+	srv.Mux().Handle(TaskAutoRejectCheckout, asynqlib.HandlerFunc(h.HandleAutoRejectCheckout))
+	srv.Mux().Handle(TaskAutoRejectSweep, asynqlib.HandlerFunc(h.HandleAutoRejectSweep))
 
 	if h.disbursementPollerWorker != nil {
 		srv.Mux().Handle(TaskDisbursementPoller, asynqlib.HandlerFunc(h.HandleDisbursementPoller))
@@ -35,7 +37,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	registered := []string{
 		TaskEmployeeImport, TaskImportJob, TaskIPNProcess,
 		TaskBulkTransferTransaction, TaskBulkTransferPayment,
-		TaskAuditLogWrite,
+		TaskAuditLogWrite, TaskAutoRejectCheckout, TaskAutoRejectSweep,
 	}
 	if h.disbursementPollerWorker != nil {
 		registered = append(registered, TaskDisbursementPoller, TaskDisbursementExecute)
@@ -56,6 +58,21 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 // RegisterPeriodicTasks registers periodic tasks on the scheduler
 func RegisterPeriodicTasks(srv *Server, _ *Client) error {
 	logger.Info("Registered asynq periodic tasks")
+	return nil
+}
+
+// RegisterAutoRejectSweep registers the periodic auto-reject fallback sweep.
+// Runs every 30 minutes on the low-priority queue. It is the safety net for the
+// per-attendance K+1h task: it finalizes attendance records the scheduled task
+// missed (Redis/process outage at check-in). The sweeper is idempotent.
+func RegisterAutoRejectSweep(srv *Server) error {
+	_, err := srv.Scheduler().Register("@every 30m", asynqlib.NewTask(TaskAutoRejectSweep, nil),
+		asynqlib.Queue(QueueLow),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register auto-reject sweep periodic task: %w", err)
+	}
+	logger.Info("Registered auto-reject sweep periodic task", "interval", "30m")
 	return nil
 }
 

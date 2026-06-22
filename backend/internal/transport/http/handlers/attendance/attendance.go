@@ -48,7 +48,13 @@ func (h *Handler) resolveEmployeeID(c *gin.Context) (uint, bool) {
 func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse {
 	salaryStatus := "pending"
 	salaryMessage := "Lương sẽ được ghi nhận sau khi bạn tan ca."
-	if att.CheckOutTime != nil {
+	if att.SalaryRejectReason != nil && att.CheckOutTime == nil {
+		// Auto-rejected (checkout window expired, no checkout) — salary will
+		// never be recorded. Surface the reject reason instead of the default
+		// "salary will be recorded after checkout" message, which is misleading.
+		salaryStatus = "not_recorded"
+		salaryMessage = *att.SalaryRejectReason
+	} else if att.CheckOutTime != nil {
 		salaryStatus = "not_recorded"
 		salaryMessage = "Chưa ghi nhận lương cho ca này. Vui lòng kiểm tra khung giờ ca làm hoặc liên hệ quản lý."
 		if att.EarningAmount != nil && *att.EarningAmount > 0 {

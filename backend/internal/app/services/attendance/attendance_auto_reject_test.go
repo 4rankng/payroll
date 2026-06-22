@@ -1,0 +1,338 @@
+package attendance
+
+import (
+	"context"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"api-server/internal/domain"
+	"api-server/internal/pkg/clock"
+)
+
+// This file tests the checkout-window auto-reject feature at the service level:
+//   - AutoRejectIfExpired idempotency (nil / completed / already-rejected / open)
+//   - CheckOut rejects an already-auto-rejected attendance
+//   - CheckIn enqueues the auto-reject task at the checkout deadline K+1h after commit
+//
+// The fakes below stand in for the transaction manager, repositories, clock, and
+// the asynq task enqueuer so these run without a database or Redis.
+
+// --- fakes ---
+
+// fakeTransactionManager runs fn immediately and fires after-commit callbacks
+// only after fn returns nil, mirroring a real commit.
+type fakeTransactionManager struct{}
+
+func (f *fakeTransactionManager) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	txCtx := domain.WithTransactionContext(ctx, &domain.TransactionContext{IsTransactional: true})
+	if err := fn(txCtx); err != nil {
+		return err
+	}
+	if tx, ok := domain.GetTransactionFromContext(txCtx); ok {
+		tx.RunAfterCommitCallbacks()
+	}
+	return nil
+}
+
+func (f *fakeTransactionManager) WithTransactionResult(ctx context.Context, fn func(context.Context) (any, error)) (any, error) {
+	txCtx := domain.WithTransactionContext(ctx, &domain.TransactionContext{IsTransactional: true})
+	res, err := fn(txCtx)
+	if err != nil {
+		return res, err
+	}
+	if tx, ok := domain.GetTransactionFromContext(txCtx); ok {
+		tx.RunAfterCommitCallbacks()
+	}
+	return res, nil
+}
+
+// fakeAttendanceRepo embeds the interface (nil) so only the methods overridden
+// here are usable; unexpected calls panic — which surfaces as a clear test fail.
+type fakeAttendanceRepo struct {
+	domain.AttendanceRepository
+	byID               *domain.Attendance
+	byDate             *domain.Attendance
+	created            *domain.Attendance
+	updated            *domain.Attendance
+	orphanCandidates   []*domain.Attendance
+	markedAutoRejected bool
+	markedIDs          []uint
+	nextID             uint
+}
+
+func (f *fakeAttendanceRepo) Create(_ context.Context, a *domain.Attendance) error {
+	if f.nextID == 0 {
+		f.nextID = 1
+	}
+	a.ID = f.nextID
+	f.nextID++
+	f.created = a
+	return nil
+}
+func (f *fakeAttendanceRepo) GetByID(_ context.Context, _ uint) (*domain.Attendance, error) {
+	return f.byID, nil
+}
+func (f *fakeAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, _ time.Time) (*domain.Attendance, error) {
+	return f.byDate, nil
+}
+func (f *fakeAttendanceRepo) Update(_ context.Context, a *domain.Attendance) error {
+	f.updated = a
+	return nil
+}
+
+// findByID resolves a record by id across the fake's stores (byID for the
+// single-record AutoRejectIfExpired tests, orphanCandidates for the sweep test).
+func (f *fakeAttendanceRepo) findByID(id uint) *domain.Attendance {
+	if f.byID != nil && f.byID.ID == id {
+		return f.byID
+	}
+	for _, a := range f.orphanCandidates {
+		if a.ID == id {
+			return a
+		}
+	}
+	return nil
+}
+
+// GetOrphanCandidates returns the fake's configured candidates, ignoring the
+// time bounds (the sweep test asserts on which IDs get rejected, not on time).
+func (f *fakeAttendanceRepo) GetOrphanCandidates(_ context.Context, _, _ time.Time) ([]*domain.Attendance, error) {
+	return f.orphanCandidates, nil
+}
+
+// MarkAutoRejected mirrors the SQL conditional: it acts only on an open (no
+// checkout), unrejected record matching id, mirroring the real repo's
+// WHERE check_out_time IS NULL AND salary_reject_reason IS NULL guard.
+func (f *fakeAttendanceRepo) MarkAutoRejected(_ context.Context, id uint, reason string) (bool, error) {
+	rec := f.findByID(id)
+	if rec == nil || rec.CheckOutTime != nil || rec.SalaryRejectReason != nil {
+		return false, nil
+	}
+	zero := int64(0)
+	rec.EarningAmount = &zero
+	rec.SalaryRejectReason = &reason
+	f.markedAutoRejected = true
+	f.markedIDs = append(f.markedIDs, id)
+	return true, nil
+}
+
+type fakeProjectRepo struct {
+	domain.ProjectRepository
+	p *domain.Project
+}
+
+func (f *fakeProjectRepo) GetByID(_ context.Context, _ uint) (*domain.Project, error) {
+	return f.p, nil
+}
+
+type fakeProjectEmployeeRepo struct {
+	domain.ProjectEmployeeRepository
+	assignment *domain.ProjectEmployee
+}
+
+func (f *fakeProjectEmployeeRepo) GetActiveAssignmentByProjectAndEmployee(_ context.Context, _, _ uint) (*domain.ProjectEmployee, error) {
+	return f.assignment, nil
+}
+
+type fakePayrateRepo struct {
+	domain.PayrateRepository
+	pr *domain.Payrate
+}
+
+func (f *fakePayrateRepo) GetActiveByProjectAndDate(_ context.Context, _ uint, _ time.Time) (*domain.Payrate, error) {
+	return f.pr, nil
+}
+
+type fakeEnqCall struct {
+	id uint
+	at time.Time
+}
+
+// fakeTaskEnqueuer records EnqueueAutoRejectCheckout calls and signals `done` so
+// tests can synchronize on the after-commit goroutine.
+type fakeTaskEnqueuer struct {
+	mu    sync.Mutex
+	calls []fakeEnqCall
+	done  chan struct{}
+}
+
+func (f *fakeTaskEnqueuer) EnqueueAutoRejectCheckout(id uint, at time.Time) error {
+	f.mu.Lock()
+	f.calls = append(f.calls, fakeEnqCall{id: id, at: at})
+	f.mu.Unlock()
+	if f.done != nil {
+		f.done <- struct{}{}
+	}
+	return nil
+}
+
+func (f *fakeTaskEnqueuer) snapshot() []fakeEnqCall {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	cp := make([]fakeEnqCall, len(f.calls))
+	copy(cp, f.calls)
+	return cp
+}
+
+// --- tests ---
+
+func TestAutoRejectIfExpired(t *testing.T) {
+	existingReason := "previously rejected"
+	completed := time.Date(2026, 6, 22, 17, 0, 0, 0, clock.DefaultLocation)
+
+	cases := []struct {
+		name          string
+		existing      *domain.Attendance
+		wantNoUpdate  bool
+		wantEarning   int64
+		wantReasonHas string // substring expected in the reject reason; "" => any
+	}{
+		{name: "nil attendance is no-op", existing: nil, wantNoUpdate: true},
+		{name: "completed attendance is no-op", existing: &domain.Attendance{ID: 1, CheckOutTime: &completed}, wantNoUpdate: true},
+		{name: "already rejected is no-op", existing: &domain.Attendance{ID: 1, SalaryRejectReason: &existingReason}, wantNoUpdate: true},
+		{name: "open attendance is rejected with earning 0", existing: &domain.Attendance{ID: 1}, wantNoUpdate: false, wantEarning: 0, wantReasonHas: "hết hạn"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &fakeAttendanceRepo{byID: tc.existing}
+			svc := &AttendanceService{attendanceRepo: repo}
+
+			if err := svc.AutoRejectIfExpired(context.Background(), 1); err != nil {
+				t.Fatalf("AutoRejectIfExpired returned error: %v", err)
+			}
+
+			if tc.wantNoUpdate {
+				if repo.markedAutoRejected {
+					t.Fatalf("expected NO update, but attendance was marked auto-rejected")
+				}
+				return
+			}
+			if !repo.markedAutoRejected {
+				t.Fatal("expected attendance to be marked auto-rejected, but it was not")
+			}
+			if repo.byID.EarningAmount == nil || *repo.byID.EarningAmount != tc.wantEarning {
+				t.Fatalf("expected earning %d, got %v", tc.wantEarning, repo.byID.EarningAmount)
+			}
+			if repo.byID.SalaryRejectReason == nil || !strings.Contains(*repo.byID.SalaryRejectReason, tc.wantReasonHas) {
+				t.Fatalf("expected reject reason containing %q, got %v", tc.wantReasonHas, repo.byID.SalaryRejectReason)
+			}
+		})
+	}
+}
+
+func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
+	reason := "Đã hết hạn tan ca"
+	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{ID: 7, SalaryRejectReason: &reason}}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		clock:              clock.NewFake(time.Date(2026, 6, 22, 12, 0, 0, 0, clock.DefaultLocation)),
+		transactionManager: &fakeTransactionManager{},
+	}
+
+	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0)
+	if err == nil {
+		t.Fatal("expected CheckOut to reject an auto-rejected attendance")
+	}
+	if !strings.Contains(err.Error(), "tự động từ chối") {
+		t.Fatalf("expected auto-reject validation message, got: %v", err)
+	}
+	if repo.updated != nil {
+		t.Fatalf("expected no persistence on a rejected checkout, but attendance was updated")
+	}
+}
+
+func TestCheckInEnqueuesAutoRejectAtDeadline(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 0, 0, 0, loc) // 08:00, inside (07:00, 09:00) for an 08:00 shift
+
+	payrate := &domain.Payrate{Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`)}
+	project := &domain.Project{
+		ID:                   5,
+		IsFlexible:           true,
+		GeofenceRadiusMeters: 500,
+		GeofenceGates:        []domain.GeofenceGate{{Name: "gate", Lat: 10.0, Lng: 106.0}},
+	}
+	assignment := &domain.ProjectEmployee{ProjectID: 5, Position: "Công nhân", CheckInEnabled: true}
+
+	enqueuer := &fakeTaskEnqueuer{done: make(chan struct{}, 1)}
+	repo := &fakeAttendanceRepo{byDate: nil} // no existing check-in today
+
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: assignment},
+		projectRepo:         &fakeProjectRepo{p: project},
+		payrateRepo:         &fakePayrateRepo{pr: payrate},
+		taskEnqueuer:        enqueuer,
+		clock:               clock.NewFake(checkIn),
+		transactionManager:  &fakeTransactionManager{},
+	}
+
+	if _, err := svc.CheckIn(context.Background(), 999 /*employee*/, 5 /*project*/, 10.0, 106.0); err != nil {
+		t.Fatalf("CheckIn returned error: %v", err)
+	}
+
+	// The enqueue fires from a goroutine started by RunAfterCommitCallbacks.
+	select {
+	case <-enqueuer.done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("auto-reject enqueue did not fire after commit")
+	}
+
+	calls := enqueuer.snapshot()
+	if len(calls) != 1 {
+		t.Fatalf("expected exactly 1 enqueue call, got %d", len(calls))
+	}
+	wantDeadline := time.Date(2026, 6, 22, 18, 0, 0, 0, loc) // shift end 17:00 + checkOutUpperGrace (1h)
+	if !calls[0].at.Equal(wantDeadline) {
+		t.Fatalf("expected deadline %v, got %v", wantDeadline, calls[0].at)
+	}
+	if repo.created == nil || calls[0].id != repo.created.ID {
+		t.Fatalf("expected enqueue for the created attendance, got id=%d", calls[0].id)
+	}
+}
+
+func TestAutoRejectSweep(t *testing.T) {
+	open1 := &domain.Attendance{ID: 101}
+	open2 := &domain.Attendance{ID: 102}
+	existingReason := "previously rejected"
+	alreadyRejected := &domain.Attendance{ID: 103, SalaryRejectReason: &existingReason}
+	completedAt := time.Date(2026, 6, 22, 17, 0, 0, 0, clock.DefaultLocation)
+	completed := &domain.Attendance{ID: 104, CheckOutTime: &completedAt}
+
+	repo := &fakeAttendanceRepo{orphanCandidates: []*domain.Attendance{open1, alreadyRejected, open2, completed}}
+	svc := &AttendanceService{
+		attendanceRepo: repo,
+		clock:          clock.NewFake(time.Date(2026, 6, 23, 12, 0, 0, 0, clock.DefaultLocation)),
+	}
+
+	n, err := svc.AutoRejectSweep(context.Background())
+	if err != nil {
+		t.Fatalf("AutoRejectSweep returned error: %v", err)
+	}
+	if n != 2 {
+		t.Fatalf("expected 2 records finalized, got %d (markedIDs=%v)", n, repo.markedIDs)
+	}
+	// Open records finalized with earning 0 and a reject reason containing "hết hạn".
+	for _, att := range []*domain.Attendance{open1, open2} {
+		if att.EarningAmount == nil || *att.EarningAmount != 0 {
+			t.Errorf("id %d: expected earning 0, got %v", att.ID, att.EarningAmount)
+		}
+		if att.SalaryRejectReason == nil || !strings.Contains(*att.SalaryRejectReason, "hết hạn") {
+			t.Errorf("id %d: expected reject reason, got %v", att.ID, att.SalaryRejectReason)
+		}
+	}
+	// Already-rejected record untouched (earning stays nil, reason unchanged).
+	if alreadyRejected.EarningAmount != nil {
+		t.Errorf("already-rejected id %d: expected earning nil, got %v", alreadyRejected.ID, alreadyRejected.EarningAmount)
+	}
+	if alreadyRejected.SalaryRejectReason == nil || *alreadyRejected.SalaryRejectReason != existingReason {
+		t.Errorf("already-rejected id %d: reason should be unchanged", alreadyRejected.ID)
+	}
+	// Completed record untouched (no reject reason written over a valid checkout).
+	if completed.SalaryRejectReason != nil {
+		t.Errorf("completed id %d: should not get a reject reason", completed.ID)
+	}
+}

@@ -12,6 +12,10 @@ const (
 	AttendanceStatusCheckedIn AttendanceStatus = "checked_in"
 	AttendanceStatusCompleted AttendanceStatus = "completed"
 	AttendanceStatusOrphaned  AttendanceStatus = "orphaned"
+	// AttendanceStatusRejected marks an attendance whose checkout window [K, K+1h)
+	// closed with no checkout, so it was auto-rejected by the scheduled task
+	// (earning 0, final). Derived from CheckOutTime==nil && SalaryRejectReason!=nil.
+	AttendanceStatusRejected AttendanceStatus = "rejected"
 )
 
 // Attendance represents a flexi employee check-in/out record
@@ -46,6 +50,18 @@ type AttendanceRepository interface {
 	Update(ctx context.Context, attendance *Attendance) error
 	List(ctx context.Context, filters AttendanceFilters) ([]*Attendance, error)
 	Count(ctx context.Context, filters AttendanceFilters) (int64, error)
+	// MarkAutoRejected atomically finalizes an attendance whose checkout window
+	// expired: it sets earning_amount=0 and salary_reject_reason=reason ONLY if the
+	// row still has no checkout and no existing reject reason. The conditional
+	// WHERE makes it race-free against a concurrent CheckOut (which would otherwise
+	// be clobbered by a full-row Save of a stale, no-checkout snapshot). Returns
+	// true if the row was updated, false if a checkout/prior rejection beat it
+	// (both safe no-ops) or the id does not exist.
+	MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error)
+	// GetOrphanCandidates returns open (no checkout), unrejected attendances
+	// checked in within [after, before). Used by the auto-reject fallback sweep
+	// to finalize records whose scheduled K+1h task was lost.
+	GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*Attendance, error)
 }
 
 // AttendanceFilters represents filtering options for attendance queries
@@ -72,6 +88,16 @@ func (a *Attendance) IsCompleted() bool {
 func (a *Attendance) GetStatus(now time.Time) AttendanceStatus {
 	if a.CheckOutTime != nil {
 		return AttendanceStatusCompleted
+	}
+
+	// Auto-rejected by the checkout-window task: no checkout and a persisted
+	// reject reason (set together with EarningAmount=0). Checked before the
+	// 18h orphaned fallback so a final rejection always reads as rejected.
+	// This discriminator is safe because SalaryRejectReason is only ever set on
+	// a no-checkout record by the auto-reject path — completed-but-unpaid
+	// records carry a checkout and return completed above.
+	if a.SalaryRejectReason != nil {
+		return AttendanceStatusRejected
 	}
 
 	// If check-in time is older than 18 hours, it's considered orphaned

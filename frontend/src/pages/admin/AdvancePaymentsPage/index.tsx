@@ -409,6 +409,7 @@ const AdvancePaymentsPage = () => {
                     <SelectItem value="checked_in">Đang làm</SelectItem>
                     <SelectItem value="completed">Hoàn thành</SelectItem>
                     <SelectItem value="orphaned">Thiếu check-out</SelectItem>
+                    <SelectItem value="rejected">Đã từ chối</SelectItem>
                   </SelectContent>
                 </Select>
               </>
