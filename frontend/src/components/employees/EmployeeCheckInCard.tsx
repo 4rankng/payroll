@@ -187,6 +187,21 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
             </div>
           </div>
         </div>
+      ) : attendance?.status === "rejected" ? (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-orange-600">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[18px] font-bold leading-6 text-orange-950">Ca làm việc đã bị từ chối</p>
+              <p className="mt-1 text-[16px] font-medium leading-6 text-orange-700">
+                {attendance.salary_reject_reason ||
+                  "Ca này đã hết hạn tan ca và bị từ chối tự động. Vui lòng liên hệ quản lý."}
+              </p>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

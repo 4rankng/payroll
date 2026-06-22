@@ -38,6 +38,24 @@ func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.At
 	return r.getDB(ctx).Save(attendance).Error
 }
 
+// MarkAutoRejected atomically rejects an open, unrejected attendance. The
+// conditional WHERE (check_out_time IS NULL AND salary_reject_reason IS NULL)
+// is the race guard: a concurrent CheckOut that set check_out_time, or a prior
+// rejection, makes RowsAffected=0 — a safe no-op. This avoids the lost-update
+// hazard of a full-row Save over a stale no-checkout snapshot.
+func (r *attendanceRepository) MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error) {
+	res := r.getDB(ctx).Model(&domain.Attendance{}).
+		Where("id = ? AND check_out_time IS NULL AND salary_reject_reason IS NULL", id).
+		Updates(map[string]interface{}{
+			"earning_amount":       0,
+			"salary_reject_reason": reason,
+		})
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
 	dateOnly := date.Format("2006-01-02")
@@ -55,10 +73,13 @@ func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employe
 	return &att, nil
 }
 
-func (r *attendanceRepository) GetOrphanCandidates(ctx context.Context, before time.Time) ([]*domain.Attendance, error) {
+func (r *attendanceRepository) GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*domain.Attendance, error) {
 	var attendances []*domain.Attendance
+	// Open (no checkout) AND unrejected records checked in within [after, before).
+	// salary_reject_reason IS NULL excludes already-auto-rejected records so the
+	// fallback sweep can't double-process a finalized rejection.
 	err := r.getDB(ctx).
-		Where("check_out_time IS NULL AND check_in_time < ?", before).
+		Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ? AND check_in_time < ?", after, before).
 		Find(&attendances).Error
 	return attendances, err
 }
@@ -129,10 +150,12 @@ func (r *attendanceRepository) buildFilterQuery(ctx context.Context, filters dom
 		switch *filters.Status {
 		case domain.AttendanceStatusCompleted:
 			query = query.Where("check_out_time IS NOT NULL")
+		case domain.AttendanceStatusRejected:
+			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NOT NULL")
 		case domain.AttendanceStatusCheckedIn:
-			query = query.Where("check_out_time IS NULL AND check_in_time >= ?", clock.Now().Add(-18*time.Hour))
+			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ?", clock.Now().Add(-18*time.Hour))
 		case domain.AttendanceStatusOrphaned:
-			query = query.Where("check_out_time IS NULL AND check_in_time < ?", clock.Now().Add(-18*time.Hour))
+			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ?", clock.Now().Add(-18*time.Hour))
 		}
 	}
 	return query

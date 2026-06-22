@@ -237,6 +237,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		workers.NewAuditLogWriteWorker(repos.AuditLog),
 		walletSettlementWorker,
 		statusInquiryPollerWorker,
+		workers.NewAutoRejectCheckoutWorker(services.Attendance),
+		workers.NewAutoRejectSweepWorker(services.Attendance),
 	)
 	asynqinfra.RegisterHandlers(asynqServer, asynqHandlers)
 	if err := asynqinfra.RegisterPeriodicTasks(asynqServer, asynqClient); err != nil {
@@ -262,6 +264,12 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		if err := asynqinfra.RegisterStatusInquiryPoller(asynqServer); err != nil {
 			return nil, err
 		}
+	}
+
+	// Register the auto-reject fallback sweep (always on) — finalizes attendance
+	// records whose scheduled K+1h task was lost (Redis/process outage at check-in).
+	if err := asynqinfra.RegisterAutoRejectSweep(asynqServer); err != nil {
+		return nil, err
 	}
 
 	return &Container{

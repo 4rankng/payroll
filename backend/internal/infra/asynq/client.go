@@ -241,6 +241,43 @@ func (c *Client) EnqueueAuditLogWrite(p AuditLogWritePayload) error {
 	return nil
 }
 
+// autoRejectCheckoutPayload is the asynq task payload for attendance:auto_reject.
+type autoRejectCheckoutPayload struct {
+	AttendanceID uint `json:"attendance_id"`
+}
+
+// EnqueueAutoRejectCheckout schedules a one-shot task to fire at `at` — the
+// per-attendance checkout deadline K+1h (computed at check-in from the resolved
+// shift end). The task auto-rejects the attendance if it still has no checkout
+// when it fires. Deduplicated by TaskID per attendance, so repeated enqueues for
+// the same attendance collapse to a single scheduled task.
+func (c *Client) EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) error {
+	payload, _ := json.Marshal(autoRejectCheckoutPayload{AttendanceID: attendanceID})
+
+	task := asynqlib.NewTask(TaskAutoRejectCheckout, payload,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(c.cfg.RetryMax),
+		asynqlib.ProcessAt(at),
+		asynqlib.TaskID(fmt.Sprintf("auto-reject-att:%d", attendanceID)),
+	)
+
+	info, err := c.client.Enqueue(task)
+	if err != nil {
+		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+			return nil
+		}
+		return fmt.Errorf("failed to enqueue auto-reject checkout task: %w", err)
+	}
+
+	logger.Info("Enqueued attendance auto-reject task",
+		"task_id", info.ID,
+		"attendance_id", attendanceID,
+		"fire_at", at.Format(time.RFC3339),
+		"queue", info.Queue,
+	)
+	return nil
+}
+
 // Close closes the asynq client connection
 func (c *Client) Close() error {
 	return c.client.Close()

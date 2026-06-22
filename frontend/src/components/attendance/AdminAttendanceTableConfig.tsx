@@ -94,6 +94,9 @@ export function getAdminAttendanceColumns(): ColumnDef<AdminAttendanceResponse>[
         } else if (s === "orphaned") {
           badgeClass = "bg-red-50 text-red-700 border-red-200";
           label = "Thiếu Check-out";
+        } else if (s === "rejected") {
+          badgeClass = "bg-orange-50 text-orange-700 border-orange-200";
+          label = "Đã từ chối";
         }
 
         return (

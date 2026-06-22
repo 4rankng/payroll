@@ -79,6 +79,10 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
                       <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[15px] font-bold text-emerald-700">
                         Hoàn thành
                       </span>
+                    ) : att.status === "rejected" ? (
+                      <span className="rounded-lg bg-orange-50 px-2.5 py-1.5 text-[15px] font-bold text-orange-700">
+                        Đã từ chối
+                      </span>
                     ) : att.status === "orphaned" ? (
                       <span className="rounded-lg bg-red-50 px-2.5 py-1.5 text-[15px] font-bold text-red-700">
                         Thiếu tan ca
@@ -100,6 +104,12 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
                   <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-[15px] font-semibold leading-5 text-amber-800">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>{att.salary_reject_reason || att.salary_message || "Chưa ghi nhận lương cho ca này."}</span>
+                  </div>
+                )}
+                {att.status === "rejected" && att.salary_reject_reason && (
+                  <div className="mt-3 flex items-start gap-2 rounded-lg bg-orange-50 px-3 py-2.5 text-[15px] font-semibold leading-5 text-orange-800">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{att.salary_reject_reason}</span>
                   </div>
                 )}
               </div>

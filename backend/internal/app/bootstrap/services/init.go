@@ -197,7 +197,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	employeeUserService := employee.NewEmployeeUserService(repos.Employee, userService)
 	employeeProfileService := employee.NewEmployeeProfileService(repos.Employee, repos.Timesheet, repos.ProjectEmployee, userService, eventBus)
 	lenderService := loan.NewLenderService(repos.Lender, cacheService, eventBus)
-	attendanceService := attendance.NewAttendanceService(repos.Attendance, repos.ProjectEmployee, repos.Project, repos.Payrate, repos.AdvancePayment, transactionManager, clk)
+	attendanceService := attendance.NewAttendanceService(repos.Attendance, repos.ProjectEmployee, repos.Project, repos.Payrate, repos.AdvancePayment, transactionManager, asynqClient, clk)
 
 	// Geofence gates are now DB-backed (project.geofence_gates JSON column).
 	// No in-memory registration needed.

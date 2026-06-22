@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/clock"
@@ -22,13 +21,21 @@ const checkInShiftWindow = 1 * time.Hour
 // still allowed: checkout is valid in [K, K + checkOutUpperGrace).
 const checkOutUpperGrace = 1 * time.Hour
 
+// TaskEnqueuer schedules the auto-reject checkout task for an attendance.
+// Implemented by the asynq client wrapper; fakes capture the call in tests.
+// Nil is allowed — when unset, CheckIn skips scheduling (used in lightweight tests).
+type TaskEnqueuer interface {
+	EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) error
+}
+
 type AttendanceService struct {
 	attendanceRepo      domain.AttendanceRepository
 	projectEmployeeRepo domain.ProjectEmployeeRepository
 	projectRepo         domain.ProjectRepository
 	payrateRepo         domain.PayrateRepository
 	advancePaymentRepo  domain.AdvancePaymentRepository
-	transactionManager  *infrastructure.TransactionManager
+	transactionManager  domain.TransactionManager
+	taskEnqueuer        TaskEnqueuer
 	clock               clock.Clock
 }
 
@@ -38,7 +45,8 @@ func NewAttendanceService(
 	projectRepo domain.ProjectRepository,
 	payrateRepo domain.PayrateRepository,
 	advancePaymentRepo domain.AdvancePaymentRepository,
-	transactionManager *infrastructure.TransactionManager,
+	transactionManager domain.TransactionManager,
+	taskEnqueuer TaskEnqueuer,
 	clk clock.Clock,
 ) *AttendanceService {
 	if clk == nil {
@@ -51,6 +59,7 @@ func NewAttendanceService(
 		payrateRepo:         payrateRepo,
 		advancePaymentRepo:  advancePaymentRepo,
 		transactionManager:  transactionManager,
+		taskEnqueuer:        taskEnqueuer,
 		clock:               clk,
 	}
 }
@@ -380,6 +389,22 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			return err
 		}
 
+		// 7. Schedule the auto-reject task at the checkout deadline K+1h. It fires
+		// only after this transaction commits (RegisterAfterCommit), so the
+		// attendance row is durable. When it fires, the handler rejects the record
+		// iff the employee still hasn't checked out.
+		if s.taskEnqueuer != nil {
+			attendanceID := attendance.ID
+			deadline := shift.end.Add(checkOutUpperGrace)
+			enqueuer := s.taskEnqueuer
+			domain.RegisterAfterCommit(txCtx, func() {
+				if err := enqueuer.EnqueueAutoRejectCheckout(attendanceID, deadline); err != nil {
+					observability.GetLogger().Warn("failed to enqueue auto-reject checkout task",
+						"attendance_id", attendanceID, "error", err)
+				}
+			})
+		}
+
 		result = attendance
 		return nil
 	})
@@ -412,6 +437,10 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 
 		if attendance.IsCompleted() {
 			return domain.NewValidationError("Bạn đã tan ca rồi")
+		}
+		if attendance.SalaryRejectReason != nil {
+			// Auto-rejected by the checkout-window task — the shift is final/closed.
+			return domain.NewValidationError("Ca làm việc đã bị tự động từ chối do quá giờ tan ca.")
 		}
 		if attendance.GetStatus(now) == domain.AttendanceStatusOrphaned {
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
@@ -548,6 +577,71 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 	})
 
 	return result, err
+}
+
+// autoRejectExpiredReason is the salary_reject_reason recorded when a checkout
+// window [K, K+1h) closes with no checkout. Shared by the per-attendance task
+// (AutoRejectIfExpired) and the fallback sweep (AutoRejectSweep).
+const autoRejectExpiredReason = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
+
+// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+1h)
+// has closed with no checkout: it sets earning to 0 and records a reject
+// reason, making the shift final. Idempotent — the underlying MarkAutoRejected
+// is a conditional UPDATE (WHERE check_out_time IS NULL AND
+// salary_reject_reason IS NULL), so it is a safe no-op if the employee already
+// checked out, the record was already rejected, or a concurrent CheckOut beats
+// it. Invoked by the asynq auto-reject task scheduled at K+1h at check-in.
+func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceID uint) error {
+	updated, err := s.attendanceRepo.MarkAutoRejected(ctx, attendanceID, autoRejectExpiredReason)
+	if err != nil {
+		return fmt.Errorf("failed to auto-reject attendance: %w", err)
+	}
+	if updated {
+		observability.GetLogger().Info("Auto-rejected attendance after checkout window expired",
+			"attendance_id", attendanceID)
+	}
+	return nil
+}
+
+// autoRejectSweepLookback bounds the fallback sweep to recent records so it does
+// not backfill ancient history. autoRejectSweepMinAge matches the orphan
+// threshold (18h) so only records past any plausible shift window are finalized.
+const (
+	autoRejectSweepLookback = 7 * 24 * time.Hour
+	autoRejectSweepMinAge   = 18 * time.Hour
+)
+
+// AutoRejectSweep is the safety-net backstop for AutoRejectIfExpired. It
+// finalizes attendance records whose checkout window closed with no checkout but
+// were never auto-rejected — which happens when the per-attendance task
+// scheduled at check-in was lost (Redis unavailable at commit time, or a process
+// crash between commit and the after-commit enqueue). Each finalization uses the
+// race-free MarkAutoRejected, so in-flight checkouts and prior rejections are
+// safe no-ops. Returns the count of records finalized this pass.
+func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
+	now := s.clock.Now()
+	candidates, err := s.attendanceRepo.GetOrphanCandidates(ctx, now.Add(-autoRejectSweepLookback), now.Add(-autoRejectSweepMinAge))
+	if err != nil {
+		return 0, fmt.Errorf("failed to load auto-reject sweep candidates: %w", err)
+	}
+	rejected := 0
+	for _, att := range candidates {
+		updated, err := s.attendanceRepo.MarkAutoRejected(ctx, att.ID, autoRejectExpiredReason)
+		if err != nil {
+			// One bad row must not abort the whole sweep; the next pass retries it.
+			observability.GetLogger().Warn("auto-reject sweep: failed to reject attendance",
+				"attendance_id", att.ID, "error", err)
+			continue
+		}
+		if updated {
+			rejected++
+		}
+	}
+	if rejected > 0 {
+		observability.GetLogger().Info("Auto-reject sweep finalized attendances",
+			"count", rejected, "candidates", len(candidates))
+	}
+	return rejected, nil
 }
 
 // GetTodayAttendance returns the attendance record for the employee for the current day.

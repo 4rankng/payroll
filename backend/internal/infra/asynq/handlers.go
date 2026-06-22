@@ -41,6 +41,14 @@ const (
 	// TaskAuditLogWrite is the asynq task type for persisting audit log entries.
 	// Replaces the in-process event-bus goroutine to add durable retries and bounded concurrency.
 	TaskAuditLogWrite = "audit:log:write"
+	// TaskAutoRejectCheckout is the one-shot task scheduled at an attendance's
+	// checkout deadline (K+1h) when the employee checks in. It auto-rejects the
+	// attendance if the window closes with no checkout.
+	TaskAutoRejectCheckout = "attendance:auto_reject"
+	// TaskAutoRejectSweep is the periodic safety-net task that finalizes
+	// attendances whose scheduled K+1h task was lost (Redis/process outage at
+	// check-in). Runs on a fixed schedule via the asynq scheduler.
+	TaskAutoRejectSweep = "attendance:auto_reject_sweep"
 	// TaskWalletSettlement is the asynq task type for the EOD wallet settlement cron.
 	// Re-exported from workers package.
 	TaskWalletSettlement = workers.TaskWalletSettlement
@@ -93,6 +101,8 @@ type Handlers struct {
 	auditLogWriteWorker           *workers.AuditLogWriteWorker
 	walletSettlementWorker        *workers.WalletSettlementWorker
 	statusInquiryPollerWorker     *workers.StatusInquiryPollerWorker
+	autoRejectCheckoutWorker      *workers.AutoRejectCheckoutWorker
+	autoRejectSweepWorker         *workers.AutoRejectSweepWorker
 }
 
 // NewHandlers creates a new Handlers instance
@@ -108,6 +118,8 @@ func NewHandlers(
 	auditLogWriteWorker *workers.AuditLogWriteWorker,
 	walletSettlementWorker *workers.WalletSettlementWorker,
 	statusInquiryPollerWorker *workers.StatusInquiryPollerWorker,
+	autoRejectCheckoutWorker *workers.AutoRejectCheckoutWorker,
+	autoRejectSweepWorker *workers.AutoRejectSweepWorker,
 ) *Handlers {
 	return &Handlers{
 		employeeImportWorker:          employeeImportWorker,
@@ -121,6 +133,8 @@ func NewHandlers(
 		auditLogWriteWorker:           auditLogWriteWorker,
 		walletSettlementWorker:        walletSettlementWorker,
 		statusInquiryPollerWorker:     statusInquiryPollerWorker,
+		autoRejectCheckoutWorker:      autoRejectCheckoutWorker,
+		autoRejectSweepWorker:         autoRejectSweepWorker,
 	}
 }
 
@@ -287,4 +301,33 @@ func (h *Handlers) HandleStatusInquiry(ctx context.Context, _ *asynqlib.Task) er
 		return nil
 	}
 	return h.statusInquiryPollerWorker.ProcessJob(ctx)
+}
+
+// HandleAutoRejectCheckout processes the one-shot attendance:auto_reject task
+// scheduled at an attendance's checkout deadline (K+1h). Malformed payloads are
+// dropped (SkipRetry); DB errors are retried by asynq. The worker is idempotent,
+// so duplicate or retried tasks are safe.
+func (h *Handlers) HandleAutoRejectCheckout(ctx context.Context, t *asynqlib.Task) error {
+	var p autoRejectCheckoutPayload
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		logger.Error("attendance:auto_reject unmarshal payload", "error", err)
+		return asynqlib.SkipRetry
+	}
+	if err := h.autoRejectCheckoutWorker.ProcessJob(ctx, p.AttendanceID); err != nil {
+		return fmt.Errorf("attendance:auto_reject: %w", err)
+	}
+	return nil
+}
+
+// HandleAutoRejectSweep processes the periodic attendance:auto_reject_sweep
+// task — the fallback that finalizes attendances whose scheduled K+1h task was
+// lost. The worker is idempotent, so retries and overlapping runs are safe.
+func (h *Handlers) HandleAutoRejectSweep(ctx context.Context, _ *asynqlib.Task) error {
+	if h.autoRejectSweepWorker == nil {
+		return nil
+	}
+	if err := h.autoRejectSweepWorker.ProcessJob(ctx); err != nil {
+		return fmt.Errorf("attendance:auto_reject_sweep: %w", err)
+	}
+	return nil
 }
