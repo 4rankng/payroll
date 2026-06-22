@@ -281,3 +281,14 @@ clean:
 	@echo "🧹 Cleaning up Docker resources..."
 	docker system prune -a --volumes
 	@echo "✅ Docker cleanup completed!"
+
+# Open Adminer over an SSH tunnel -> http://localhost:18081 (no internet exposure).
+# Starts the Adminer container on prod, forwards localhost:18081 -> prod loopback:8081, opens the page.
+# Ctrl-C closes the tunnel. Safer than adminer-on: never opens UFW 8081 or the public /adminer path.
+adminer:
+	@echo "🔓 Opening Adminer over SSH tunnel (private, no public exposure)..."
+	@ssh root@$(PROD_SERVER) "cd /opt/payroll && docker compose start adminer" 2>/dev/null || true
+	@echo "🌐 Adminer: http://localhost:18081   (Server: payroll-mysql ; creds from DB_DSN in /opt/payroll/.env)"
+	@echo "⏎  Press Ctrl-C to close the tunnel."
+	@(sleep 1 && (open http://localhost:18081 || xdg-open http://localhost:18081 || true)) &
+	@ssh -N -L 18081:127.0.0.1:8081 root@$(PROD_SERVER)
