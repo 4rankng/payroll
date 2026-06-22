@@ -34,3 +34,10 @@ demo:
 # Reload demo MySQL from local dev DB (does NOT touch demo images)
 demo-db:
 	$(MAKE) -C backend demo-db
+
+# Open Adminer over an SSH tunnel -> http://localhost:18081 (no internet exposure).
+# Starts the Adminer container on prod, forwards localhost:18081 -> prod loopback:8081, opens the page.
+# Ctrl-C closes the tunnel. Safer than adminer-on: never opens UFW 8081 or the public /adminer path.
+adminer:
+	@echo "=== Opening Adminer over SSH tunnel ==="
+	cd backend && make adminer
