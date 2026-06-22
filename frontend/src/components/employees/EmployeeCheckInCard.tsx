@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AlertCircle, BadgeCheck, BriefcaseBusiness, DoorOpen, Loader2, MapPin, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,12 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
   const [isLocating, setIsLocating] = useState(false);
+  // Synchronous in-flight guard. The button's `disabled` only takes effect after
+  // the next render, so a rapid double-tap (common on mobile) can fire handleAction
+  // twice before `isLocating`/`isPending` flips — sending a second request that the
+  // backend rejects with 400 ("Bạn đã vào làm/tan ca rồi"), producing a duplicate
+  // toast. This ref is set in the same call stack, closing that race.
+  const submittingRef = useRef(false);
 
   const attendance = attendanceResponse?.data;
 
@@ -49,6 +55,8 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   };
 
   const handleAction = async (type: "check_in" | "check_out") => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsLocating(true);
     try {
       const position = await getLocation();
@@ -71,6 +79,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       }
     } finally {
       setIsLocating(false);
+      submittingRef.current = false;
     }
   };
 
