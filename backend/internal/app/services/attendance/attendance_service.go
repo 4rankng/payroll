@@ -579,10 +579,70 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 	return result, err
 }
 
-// autoRejectExpiredReason is the salary_reject_reason recorded when a checkout
-// window [K, K+1h) closes with no checkout. Shared by the per-attendance task
-// (AutoRejectIfExpired) and the fallback sweep (AutoRejectSweep).
-const autoRejectExpiredReason = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
+// autoRejectExpiredReasonFallback is the salary_reject_reason recorded when the
+// configured shift cannot be resolved for an expired-checkout attendance (e.g.,
+// payrate deleted or assignment ended after check-in). The normal path uses
+// formatAutoRejectReason with the actual check-in time, configured shift end
+// (K), and grace-window upper bound (K+1h, "hạn chót").
+const autoRejectExpiredReasonFallback = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
+
+// formatAutoRejectReason builds the salary_reject_reason recorded when a
+// checkout window [K, K+1h) closes with no checkout. It points the employee at
+// their actual check-in time, the configured shift end (K), and the grace
+// deadline (K+1h) so they can see exactly when they should have ended the shift.
+func formatAutoRejectReason(checkInTime, shiftEnd time.Time) string {
+	deadline := shiftEnd.Add(checkOutUpperGrace)
+	return fmt.Sprintf(
+		"Đã hết hạn tan ca (Vào làm: %s; Tan ca: %s (hạn chót %s))",
+		checkInTime.Format("15:04"),
+		shiftEnd.Format("15:04"),
+		deadline.Format("15:04"),
+	)
+}
+
+// autoRejectReasonFor resolves the configured shift for an attendance and
+// formats the reject reason with the actual check-in / shift-end / deadline
+// times. Falls back to the generic message when the shift cannot be resolved
+// (payrate missing, assignment ended, no shift configured) so the rejection
+// is still informative. Errors from the lookup are logged and swallowed —
+// the rejection itself is more important than the reason text.
+func (s *AttendanceService) autoRejectReasonFor(ctx context.Context, att *domain.Attendance) string {
+	shift := s.resolveShiftForAttendance(ctx, att)
+	if shift == nil {
+		return autoRejectExpiredReasonFallback
+	}
+	return formatAutoRejectReason(att.CheckInTime, shift.end)
+}
+
+// resolveShiftForAttendance loads the payrate and active assignment for the
+// attendance and resolves the shift. Returns nil on any miss (payrate missing,
+// assignment ended, no shift configured) — the caller should fall back to a
+// generic reason in that case.
+func (s *AttendanceService) resolveShiftForAttendance(ctx context.Context, att *domain.Attendance) *parsedShift {
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, att.ProjectID, att.Date)
+	if err != nil {
+		if !domain.IsNotFoundError(err) {
+			observability.GetLogger().Warn("auto-reject: failed to load payrate",
+				"attendance_id", att.ID, "error", err)
+		}
+		return nil
+	}
+	if payrate == nil {
+		return nil
+	}
+	assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, att.ProjectID, att.EmployeeID)
+	if err != nil {
+		if !domain.IsNotFoundError(err) {
+			observability.GetLogger().Warn("auto-reject: failed to load assignment",
+				"attendance_id", att.ID, "error", err)
+		}
+		return nil
+	}
+	if assignment == nil {
+		return nil
+	}
+	return s.resolveShift(payrate, assignment.Position, att.CheckInTime)
+}
 
 // AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+1h)
 // has closed with no checkout: it sets earning to 0 and records a reject
@@ -592,7 +652,16 @@ const autoRejectExpiredReason = "Đã hết hạn tan ca — bạn đã quá gi�
 // checked out, the record was already rejected, or a concurrent CheckOut beats
 // it. Invoked by the asynq auto-reject task scheduled at K+1h at check-in.
 func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceID uint) error {
-	updated, err := s.attendanceRepo.MarkAutoRejected(ctx, attendanceID, autoRejectExpiredReason)
+	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
+	if err != nil {
+		return fmt.Errorf("failed to load attendance: %w", err)
+	}
+	if att == nil || att.CheckOutTime != nil || att.SalaryRejectReason != nil {
+		return nil
+	}
+
+	reason := s.autoRejectReasonFor(ctx, att)
+	updated, err := s.attendanceRepo.MarkAutoRejected(ctx, attendanceID, reason)
 	if err != nil {
 		return fmt.Errorf("failed to auto-reject attendance: %w", err)
 	}
@@ -626,7 +695,8 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 	}
 	rejected := 0
 	for _, att := range candidates {
-		updated, err := s.attendanceRepo.MarkAutoRejected(ctx, att.ID, autoRejectExpiredReason)
+		reason := s.autoRejectReasonFor(ctx, att)
+		updated, err := s.attendanceRepo.MarkAutoRejected(ctx, att.ID, reason)
 		if err != nil {
 			// One bad row must not abort the whole sweep; the next pass retries it.
 			observability.GetLogger().Warn("auto-reject sweep: failed to reject attendance",
