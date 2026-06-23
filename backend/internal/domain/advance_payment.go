@@ -13,12 +13,12 @@ const SelfCheckInAdvanceablePercent uint64 = 70
 
 // AdvancePayment represents monthly advance payment limits from Flexible Payroll Template uploads
 type AdvancePayment struct {
-	ID                 uint      `json:"id" gorm:"primaryKey;type:bigint unsigned"`
-	ProjectID          uint      `json:"project_id" gorm:"not null;type:bigint unsigned;index"`
-	EmployeeID         uint      `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
-	ForMonth           string    `json:"for_month" gorm:"size:7;not null;index"` // YYYY-MM
-	UploadDate         string    `json:"upload_date" gorm:"size:10;not null"`    // YYYY-MM-DD
-	MaxAdvAmount       uint64    `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
+	ID           uint   `json:"id" gorm:"primaryKey;type:bigint unsigned"`
+	ProjectID    uint   `json:"project_id" gorm:"not null;type:bigint unsigned;index"`
+	EmployeeID   uint   `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
+	ForMonth     string `json:"for_month" gorm:"size:7;not null;index"` // YYYY-MM
+	UploadDate   string `json:"upload_date" gorm:"size:10;not null"`    // YYYY-MM-DD
+	MaxAdvAmount uint64 `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
 	// Salary is the total earned wages from check-in/out (100%) for the self-check-in flow.
 	// MaxAdvAmount = floor(Salary * SelfCheckInAdvanceablePercent / 100). Unused by the
 	// admin-upload (BCC) flow, which sets MaxAdvAmount directly.
