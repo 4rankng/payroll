@@ -11,7 +11,7 @@ import (
 func TestValidateCheckOutWindowRejectsBeforeShiftEnd(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
 	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
-	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc) // shift end K for 20:00-04:00
+	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc)  // shift end K for 20:00-04:00
 	checkOut := time.Date(2026, 6, 21, 23, 0, 0, 0, loc) // before K
 
 	err := validateCheckOutWindow(&parsedShift{end: shiftEnd}, checkIn, checkOut)
