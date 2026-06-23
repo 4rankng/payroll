@@ -62,7 +62,15 @@ Registered in the asynq mux. Thin wrapper around `AttendanceService.AutoRejectIf
 1. Load attendance by ID.
 2. `CheckOutTime != nil` → skip (employee completed in-window).
 3. `SalaryRejectReason != nil` → skip (already rejected).
-4. Else → set `EarningAmount = ptr(int64(0))`, `SalaryRejectReason = ptr("Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý.")`, `Update`.
+4. Else → re-resolve the configured shift (payrate + active assignment + check-in time) and set:
+   - `EarningAmount = ptr(int64(0))`
+   - `SalaryRejectReason = ptr(formatAutoRejectReason(checkInTime, shift.end))` —
+     `"Đã hết hạn tan ca (Vào làm: HH:MM; Tan ca: HH:MM (hạn chót HH:MM))"`
+   - `Update`.
+
+   Falls back to the legacy generic message when the shift cannot be resolved
+   (payrate deleted, assignment ended after check-in): `"Đã hết hạn tan ca —
+   bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."`
 
 ### Representing "rejected" (no migration)
 

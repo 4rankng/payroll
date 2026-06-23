@@ -198,7 +198,11 @@ func TestAutoRejectIfExpired(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := &fakeAttendanceRepo{byID: tc.existing}
-			svc := &AttendanceService{attendanceRepo: repo}
+			svc := &AttendanceService{
+				attendanceRepo:      repo,
+				payrateRepo:         &fakePayrateRepo{},
+				projectEmployeeRepo: &fakeProjectEmployeeRepo{},
+			}
 
 			if err := svc.AutoRejectIfExpired(context.Background(), 1); err != nil {
 				t.Fatalf("AutoRejectIfExpired returned error: %v", err)
@@ -304,8 +308,10 @@ func TestAutoRejectSweep(t *testing.T) {
 
 	repo := &fakeAttendanceRepo{orphanCandidates: []*domain.Attendance{open1, alreadyRejected, open2, completed}}
 	svc := &AttendanceService{
-		attendanceRepo: repo,
-		clock:          clock.NewFake(time.Date(2026, 6, 23, 12, 0, 0, 0, clock.DefaultLocation)),
+		attendanceRepo:      repo,
+		payrateRepo:         &fakePayrateRepo{},
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{},
+		clock:               clock.NewFake(time.Date(2026, 6, 23, 12, 0, 0, 0, clock.DefaultLocation)),
 	}
 
 	n, err := svc.AutoRejectSweep(context.Background())
@@ -334,5 +340,91 @@ func TestAutoRejectSweep(t *testing.T) {
 	// Completed record untouched (no reject reason written over a valid checkout).
 	if completed.SalaryRejectReason != nil {
 		t.Errorf("completed id %d: should not get a reject reason", completed.ID)
+	}
+}
+
+// TestFormatAutoRejectReason covers the dynamic Vietnamese message built when
+// the configured shift end (K) and the grace-window upper bound (K+1h) are
+// both available. It anchors the employee-visible contract of the new format.
+func TestFormatAutoRejectReason(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 0, 0, 0, loc)
+	shiftEnd := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
+
+	got := formatAutoRejectReason(checkIn, shiftEnd)
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	if got != want {
+		t.Fatalf("formatAutoRejectReason:\n got: %q\nwant: %q", got, want)
+	}
+}
+
+// TestAutoRejectIfExpiredFormatsDynamicReason exercises the path where the
+// configured shift is resolvable at reject time, so the reason must include
+// the actual check-in / shift-end / deadline (not just the generic fallback).
+func TestAutoRejectIfExpiredFormatsDynamicReason(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 0, 0, 0, loc)
+	open := &domain.Attendance{
+		ID:          1,
+		ProjectID:   5,
+		EmployeeID:  999,
+		CheckInTime: checkIn,
+		Date:        checkIn,
+	}
+	payrate := &domain.Payrate{Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`)}
+	assignment := &domain.ProjectEmployee{ProjectID: 5, EmployeeID: 999, Position: "Công nhân"}
+
+	repo := &fakeAttendanceRepo{byID: open}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		payrateRepo:         &fakePayrateRepo{pr: payrate},
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: assignment},
+	}
+
+	if err := svc.AutoRejectIfExpired(context.Background(), 1); err != nil {
+		t.Fatalf("AutoRejectIfExpired returned error: %v", err)
+	}
+	if open.SalaryRejectReason == nil {
+		t.Fatal("expected SalaryRejectReason to be set")
+	}
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	if *open.SalaryRejectReason != want {
+		t.Fatalf("reject reason:\n got: %q\nwant: %q", *open.SalaryRejectReason, want)
+	}
+}
+
+// TestAutoRejectSweepFormatsDynamicReason exercises the same dynamic-format
+// path in the fallback sweep — each candidate must use its own check-in time
+// and the configured shift end, not a shared constant.
+func TestAutoRejectSweepFormatsDynamicReason(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 0, 0, 0, loc)
+	open := &domain.Attendance{
+		ID:          201,
+		ProjectID:   5,
+		EmployeeID:  999,
+		CheckInTime: checkIn,
+		Date:        checkIn,
+	}
+	payrate := &domain.Payrate{Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`)}
+	assignment := &domain.ProjectEmployee{ProjectID: 5, EmployeeID: 999, Position: "Công nhân"}
+
+	repo := &fakeAttendanceRepo{orphanCandidates: []*domain.Attendance{open}}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		payrateRepo:         &fakePayrateRepo{pr: payrate},
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: assignment},
+		clock:               clock.NewFake(time.Date(2026, 6, 23, 12, 0, 0, 0, loc)),
+	}
+
+	if _, err := svc.AutoRejectSweep(context.Background()); err != nil {
+		t.Fatalf("AutoRejectSweep returned error: %v", err)
+	}
+	if open.SalaryRejectReason == nil {
+		t.Fatal("expected SalaryRejectReason to be set")
+	}
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	if *open.SalaryRejectReason != want {
+		t.Fatalf("reject reason:\n got: %q\nwant: %q", *open.SalaryRejectReason, want)
 	}
 }
