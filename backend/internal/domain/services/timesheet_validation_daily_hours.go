@@ -90,9 +90,15 @@ func (s *TimesheetValidationService) ValidateBulkDailyHours(ctx context.Context,
 }
 
 // ValidateBulkDailyHoursOptimized validates total daily hours for multiple combinations in a single query.
-// dailyGroups: key "projectID-employeeID-date" → hours being added/updated (hoursWorked > 0).
+// dailyGroups:    key "projectID-employeeID-date" → hours being added/updated (hoursWorked > 0).
 // deletionGroups: same key format → hours being deleted (hoursWorked = 0 entries, used to subtract from existing total).
-func (s *TimesheetValidationService) ValidateBulkDailyHoursOptimized(ctx context.Context, dailyGroups map[string][]float64, deletionGroups map[string]float64) []PreviewError {
+// upsertDeltas:   same key format → sum of existing row hours that this batch's requests will overwrite
+//
+//	(an upsert of an existing paytype replaces that row, so its old hours must
+//	be excluded from existingTotal — otherwise an upsert reads as if the row
+//	were being added on top of itself, e.g. 2.0 + 10.5 + 12.5 = 25.0 instead of
+//	the correct 2.0 + 12.5 = 14.5).
+func (s *TimesheetValidationService) ValidateBulkDailyHoursOptimized(ctx context.Context, dailyGroups map[string][]float64, deletionGroups map[string]float64, upsertDeltas map[string]float64) []PreviewError {
 	var errors []PreviewError
 
 	if len(dailyGroups) == 0 {
@@ -155,34 +161,13 @@ func (s *TimesheetValidationService) ValidateBulkDailyHoursOptimized(ctx context
 		dateStr := strings.Join(parts[2:], "-")
 		_, _ = time.ParseInLocation("2006-01-02", dateStr, time.Local) // date (not used in validation)
 
-		// Calculate existing total hours for this combo,
-		// minus any hours that are being deleted in this same batch.
-		var existingTotal float64
-		if existingTimes, exists := existingMap[key]; exists {
-			for _, ts := range existingTimes {
-				existingTotal += ts.HoursWorked
-			}
-		}
-		if deletedHours, ok := deletionGroups[key]; ok {
-			if deletedHours < 0 {
-				// sentinel: all existing hours for this key are being deleted
-				existingTotal = 0
-			} else {
-				existingTotal -= deletedHours
-				if existingTotal < 0 {
-					existingTotal = 0
-				}
-			}
-		}
-
-		// Calculate batch total hours for this combo
-		var batchTotal float64
-		for _, hours := range batchHours {
-			batchTotal += hours
-		}
+		// Calculate post-batch daily total, treating upserts as replacements
+		// (not additions) of their existing rows. See postBatchDailyTotal.
+		deletionHours := deletionGroups[key]
+		upsertHours := upsertDeltas[key]
+		totalHours := postBatchDailyTotal(existingMap[key], batchHours, deletionHours, upsertHours)
 
 		// Check if total exceeds 24 hours
-		totalHours := existingTotal + batchTotal
 		if totalHours > 24 {
 			errors = append(errors, PreviewError{
 				EmployeeID: uint(employeeID),
@@ -193,4 +178,54 @@ func (s *TimesheetValidationService) ValidateBulkDailyHoursOptimized(ctx context
 	}
 
 	return errors
+}
+
+// postBatchDailyTotal returns the resulting daily total for one
+// (projectID, employeeID, date) combo after applying a batch's additions,
+// deletions, and upsert overwrites against the existing rows.
+//
+// Pure function — no DB, no time, no globals — so the upsert-overwrite rule
+// can be regression-tested without the SQLite-vs-MySQL driver pitfalls that
+// the day-bounds bug hit.
+//
+//   - existingTimesheets: rows currently stored for this combo (every row is
+//     summed, so the caller must have already filtered soft-deletes).
+//   - batchHours: hoursWorked of each non-deletion request in the batch for
+//     this combo (deletion requests are represented by deletionHours, not here).
+//   - deletionHours: <0 means "delete all existing rows for this combo" (sentinel);
+//     otherwise, those existing hours are subtracted from the total.
+//   - upsertHours: sum of hoursWorked of the existing rows that this batch's
+//     requests will overwrite (e.g. updating ot200 10.5 → 12.5 contributes
+//     10.5 here, so the total reads as 12.5, not 12.5 + 10.5).
+//
+// Clamped at 0 throughout — a deletion/upsert can't drive existingTotal
+// negative, only zero it out.
+func postBatchDailyTotal(existingTimesheets []*domain.Timesheet, batchHours []float64, deletionHours, upsertHours float64) float64 {
+	var existingTotal float64
+	for _, ts := range existingTimesheets {
+		existingTotal += ts.HoursWorked
+	}
+
+	if deletionHours < 0 {
+		existingTotal = 0
+	} else if deletionHours > 0 {
+		existingTotal -= deletionHours
+		if existingTotal < 0 {
+			existingTotal = 0
+		}
+	}
+
+	if upsertHours > 0 {
+		existingTotal -= upsertHours
+		if existingTotal < 0 {
+			existingTotal = 0
+		}
+	}
+
+	var batchTotal float64
+	for _, hours := range batchHours {
+		batchTotal += hours
+	}
+
+	return existingTotal + batchTotal
 }
