@@ -41,38 +41,11 @@ func (s *TimesheetDomainService) PreviewTimesheets(ctx context.Context, requests
 		}
 	}
 
-	// Validate total daily hours — only count non-deletion entries (hoursWorked=0 are deletions)
-	dailyGroups := make(map[string][]float64)
-	deletionGroups := make(map[string]float64)
-	for _, req := range requests {
-		key := fmt.Sprintf("%d-%d-%s", req.ProjectID, req.EmployeeID, req.Date)
-		if req.HoursWorked == 0 {
-			deletionGroups[key] = -1
-			continue
-		}
-		dailyGroups[key] = append(dailyGroups[key], req.HoursWorked)
-	}
-	bulkValidationErrors := s.validationService.ValidateBulkDailyHoursOptimized(ctx, dailyGroups, deletionGroups)
-	errors = append(errors, bulkValidationErrors...)
-
-	// Validate daytype consistency
-	var daytypeEntries []BulkDaytypeEntry
-	for _, req := range requests {
-		dayType := "Ngày thường"
-		if req.DayType != nil && *req.DayType != "" {
-			dayType = *req.DayType
-		}
-		daytypeEntries = append(daytypeEntries, BulkDaytypeEntry{
-			ProjectID:   req.ProjectID,
-			EmployeeID:  req.EmployeeID,
-			Date:        req.Date,
-			DayType:     dayType,
-			HoursWorked: req.HoursWorked,
-		})
-	}
-	errors = append(errors, s.validationService.ValidateBulkDaytypeConsistency(ctx, daytypeEntries)...)
-
-	// Prefetch existing timesheets for upsert detection
+	// Prefetch existing timesheets BEFORE building dailyGroups so we can compute
+	// upsert-overwrite deltas — a request that matches an existing row by paytype
+	// replaces that row's hours, not adds to them (e.g. updating ot200 10.5 → 12.5
+	// contributes the OLD 10.5 to the subtraction, so the total reads 2.0 + 12.5 =
+	// 14.5, not 2.0 + 10.5 + 12.5 = 25.0).
 	var combos []domain.EmployeeDateCombo
 	existingByPaytypeMap := make(map[string]*domain.Timesheet)
 
@@ -96,6 +69,60 @@ func (s *TimesheetDomainService) PreviewTimesheets(ctx context.Context, requests
 			}
 		}
 	}
+
+	// Validate total daily hours — only count non-deletion entries (hoursWorked=0 are deletions).
+	// For upserts (request with hoursWorked>0 that matches an existing row by paytype), accumulate
+	// the EXISTING row's hours into upsertDeltas so the validator subtracts them from existingTotal.
+	dailyGroups := make(map[string][]float64)
+	deletionGroups := make(map[string]float64)
+	upsertDeltas := make(map[string]float64)
+	for _, req := range requests {
+		key := fmt.Sprintf("%d-%d-%s", req.ProjectID, req.EmployeeID, req.Date)
+		if req.HoursWorked == 0 {
+			deletionGroups[key] = -1
+			continue
+		}
+		dailyGroups[key] = append(dailyGroups[key], req.HoursWorked)
+
+		// Upsert detection: if this request's paytype matches an existing row,
+		// record the existing row's hours to subtract (replaced by the request's hours).
+		// Use the SAME dayType default as the per-entry loop below ("Ngày thường") so the
+		// constructed paytype matches the stored row. ConstructPaytype("") would instead
+		// derive dayType from the weekday ("ngày nghỉ" on weekends) and miss the match,
+		// leaving the upsert double-count un-subtracted.
+		dayType := "Ngày thường"
+		if req.DayType != nil && *req.DayType != "" {
+			dayType = *req.DayType
+		}
+		date, err := time.ParseInLocation("2006-01-02", req.Date, time.Local)
+		if err == nil {
+			if payType, err := s.paytypeConstructionService.ConstructPaytype(ctx, req.ProjectID, req.EmployeeID, date, req.HourType, dayType); err == nil {
+				paytypeKey := fmt.Sprintf("%d-%d-%s-%s", req.ProjectID, req.EmployeeID, req.Date, payType)
+				if existing, ok := existingByPaytypeMap[paytypeKey]; ok {
+					upsertDeltas[key] += existing.HoursWorked
+				}
+			}
+		}
+	}
+	bulkValidationErrors := s.validationService.ValidateBulkDailyHoursOptimized(ctx, dailyGroups, deletionGroups, upsertDeltas)
+	errors = append(errors, bulkValidationErrors...)
+
+	// Validate daytype consistency
+	var daytypeEntries []BulkDaytypeEntry
+	for _, req := range requests {
+		dayType := "Ngày thường"
+		if req.DayType != nil && *req.DayType != "" {
+			dayType = *req.DayType
+		}
+		daytypeEntries = append(daytypeEntries, BulkDaytypeEntry{
+			ProjectID:   req.ProjectID,
+			EmployeeID:  req.EmployeeID,
+			Date:        req.Date,
+			DayType:     dayType,
+			HoursWorked: req.HoursWorked,
+		})
+	}
+	errors = append(errors, s.validationService.ValidateBulkDaytypeConsistency(ctx, daytypeEntries)...)
 
 	// Collect non-deletion entries for bulk zero-rate validation
 	var zeroRateEntries []BulkZeroRateEntry
@@ -256,7 +283,7 @@ func (s *TimesheetDomainService) ValidateBulkTimesheetEntries(ctx context.Contex
 		dailyGroups[key] = append(dailyGroups[key], req.HoursWorked)
 	}
 
-	bulkValidationErrors := s.validationService.ValidateBulkDailyHoursOptimized(ctx, dailyGroups, deletionGroups)
+	bulkValidationErrors := s.validationService.ValidateBulkDailyHoursOptimized(ctx, dailyGroups, deletionGroups, nil)
 	errors = append(errors, bulkValidationErrors...)
 
 	var daytypeEntries []BulkDaytypeEntry
