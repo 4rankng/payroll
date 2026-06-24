@@ -41,7 +41,7 @@ const ADMIN_MORE_ITEMS: NavLeaf[] = [
   { title: "Người dùng", icon: UserCog, path: "/admin/users" },
   { title: "Dự án", icon: Briefcase, path: "/admin/projects" },
   { title: "Nhân viên", icon: Users, path: "/admin/employees" },
-  { title: "Sổ cái", icon: BookOpen, path: "/admin/transactions" },
+  { title: "Sổ cái", icon: BookOpen, path: "/admin/ledger" },
   { title: "Khoản vay", icon: Landmark, path: "/admin/loans" },
   { title: "Ví", icon: Wallet, path: "/admin/wallet" },
   { title: "Lịch CV", icon: Calendar, path: "/admin/cron-health" },
