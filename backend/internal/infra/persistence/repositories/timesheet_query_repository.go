@@ -242,12 +242,33 @@ func (r *TimesheetQueryRepository) GetByProjectEmployeeDateHourType(ctx context.
 	return &timesheet, nil
 }
 
+// dayBoundsInDateLocation returns the half-open [start, end) 24-hour window for the
+// calendar day of `date`, constructed in the same location timesheet dates are
+// stored/parsed (time.Local).
+//
+// Building this window in time.UTC is a recurring bug: under a loc=Local DSN the
+// go-sql-driver converts the bound time.Time values to Local before sending, which
+// shifts the window +7h on the UTC+7 prod box — so a lookup for day D misses D's
+// own rows (stored at local midnight) and instead returns day D+1's. That broke
+// bulk upsert/delete silently (GetByEmployeeDateCombos) and made the daily 24-hour
+// validation false-reject saves (GetByProjectEmployeeDate): e.g. employee 661,
+// 2026-06-21 — UTC bounds returned 2026-06-22's 12.0h, so a 12.5h save read as
+// 12.5 + 12.0 = 24.5h and was rejected with "Tổng giờ làm việc ngày ... vượt quá
+// 24 giờ". The UTC→Local fallback keeps callers that hand in a UTC time safe.
+func dayBoundsInDateLocation(date time.Time) (time.Time, time.Time) {
+	loc := date.Location()
+	if loc == time.UTC {
+		loc = time.Local
+	}
+	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
+	return startOfDay, startOfDay.Add(24 * time.Hour)
+}
+
 // GetByProjectEmployeeDate retrieves all timesheets for a specific project, employee, and date
 func (r *TimesheetQueryRepository) GetByProjectEmployeeDate(ctx context.Context, projectID, employeeID uint, date time.Time) ([]*domain.Timesheet, error) {
 	var timesheets []*domain.Timesheet
 
-	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-	endOfDay := startOfDay.Add(24 * time.Hour)
+	startOfDay, endOfDay := dayBoundsInDateLocation(date)
 	query := r.db.WithContext(ctx).Where("project_id = ? AND employee_id = ? AND date >= ? AND date < ?", projectID, employeeID, startOfDay, endOfDay)
 
 	err := query.Find(&timesheets).Error
@@ -270,17 +291,7 @@ func (r *TimesheetQueryRepository) GetByEmployeeDateCombos(ctx context.Context, 
 	query := r.db.WithContext(ctx).Model(&domain.Timesheet{})
 
 	for i, combo := range combos {
-		// Build day bounds in the same location dates are stored/parsed (time.Local).
-		// Using time.UTC here shifts the bounds +7h under a loc=Local DSN, so existing
-		// entries stored at local midnight fall outside [startOfDay, endOfDay) and are
-		// never matched — which silently breaks bulk upsert (update) and the
-		// hoursWorked=0 delete path (the delete becomes a no-op skip).
-		loc := combo.Date.Location()
-		if loc == time.UTC {
-			loc = time.Local
-		}
-		startOfDay := time.Date(combo.Date.Year(), combo.Date.Month(), combo.Date.Day(), 0, 0, 0, 0, loc)
-		endOfDay := startOfDay.Add(24 * time.Hour)
+		startOfDay, endOfDay := dayBoundsInDateLocation(combo.Date)
 		if i == 0 {
 			query = query.Where("(employee_id = ? AND project_id = ? AND date >= ? AND date < ?)",
 				combo.EmployeeID, combo.ProjectID, startOfDay, endOfDay)
