@@ -275,7 +275,9 @@ func parsePositionEmployees(f *excelize.File, sheet string, hm *headerMap, rateB
 			if err != nil {
 				continue
 			}
-			val, err := f.GetCellValue(sheet, cn)
+			// RawCellValue bypasses the cell's number format so 7.5h with a
+			// "0" format is read as 7.5, not rounded to 8.
+			val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
 			if err != nil || val == "" || val == "0" {
 				continue
 			}
