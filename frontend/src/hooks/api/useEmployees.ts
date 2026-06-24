@@ -128,6 +128,9 @@ export const useEmployee = (id: number, enabled = true) => {
     queryKey: QueryKeys.employees.detail(id),
     queryFn: () => employeeService.getEmployeeById(id),
     enabled,
+    // Don't retry detail fetches — a 403 (partner scope gap) or 404 should
+    // surface immediately as an error state instead of silently hanging.
+    retry: false,
   });
 };
 

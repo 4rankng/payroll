@@ -11,6 +11,7 @@ import { useMediaQuery } from '@/hooks/useBreakpoint';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
+  AlertCircle,
   Calendar,
   Mail,
   Phone,
@@ -41,6 +42,9 @@ import { EmployeeUserAccessTab } from "./EmployeeUserAccessTab";
 
 interface EmployeeDetailsSheetProps {
   employee?: Employee | null;
+  // True when the detail fetch failed (e.g. partner 403 on GET /employees/:id).
+  // Lets us show a real error state instead of hanging on the loading skeleton.
+  fetchError?: boolean;
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: (employeeId: number, employeeData: Partial<Employee>, bankObject?: Bank | null) => Promise<void> | void;
@@ -50,6 +54,7 @@ interface EmployeeDetailsSheetProps {
 
 export function EmployeeDetailsSheet({
   employee: propEmployee,
+  fetchError = false,
   isOpen,
   onClose,
   onUpdate,
@@ -253,6 +258,29 @@ export function EmployeeDetailsSheet({
   }
 
   if (!employee) {
+    if (fetchError) {
+      return (
+        <SlideSheetTemplate
+          isOpen={isOpen}
+          onClose={onClose}
+          title="Không tải được"
+          size="default"
+        >
+          <div className="p-6 flex flex-col items-center justify-center text-center gap-3">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <div className="space-y-1">
+              <p className="font-medium">Không thể tải thông tin nhân viên</p>
+              <p className="text-sm text-muted-foreground">
+                Bạn không có quyền xem nhân viên này hoặc dữ liệu không tồn tại.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Đóng
+            </Button>
+          </div>
+        </SlideSheetTemplate>
+      );
+    }
     return (
       <SlideSheetTemplate
         isOpen={isOpen}

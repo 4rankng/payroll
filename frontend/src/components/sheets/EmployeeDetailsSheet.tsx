@@ -54,7 +54,7 @@ export function EmployeeDetailsSheet({
 
   const employeeId = searchParams.get('id');
 
-  const { data: fetchedEmployee } = useEmployee(
+  const { data: fetchedEmployee, isError } = useEmployee(
     employeeId ? parseInt(employeeId) : 0,
     isOpen && !!employeeId && !propEmployee
   );
@@ -75,6 +75,7 @@ export function EmployeeDetailsSheet({
   return (
     <EmployeeDetailsSheetComponent
       employee={employee}
+      fetchError={isError}
       isOpen={isOpen}
       onClose={handleClose}
       onUpdate={onUpdate}
