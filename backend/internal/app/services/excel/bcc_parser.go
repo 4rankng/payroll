@@ -361,7 +361,10 @@ func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNu
 			if err != nil {
 				continue
 			}
-			val, err := f.GetCellValue(sheet, cn)
+			// RawCellValue bypasses the cell's number format. A cell storing 7.5
+			// with format "0" would otherwise be returned as "8" (rounded) and
+			// silently lost — see the Nguyễn Trọng Thắng 7.5h→8h bug.
+			val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
 			if err != nil || val == "" || val == "0" {
 				continue
 			}
