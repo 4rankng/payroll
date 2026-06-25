@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFromString } from '@/utils/formatters';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useProjects } from '@/hooks/api/useProjects';
 import type { Project } from '@/types/api/project.types';
@@ -65,7 +65,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
   const [ninePayFileId, setNinePayFileId] = useState<number | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [markExternallyPaidOpen, setMarkExternallyPaidOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
   const { data: disbursementSettings } = useDisbursementSettings();

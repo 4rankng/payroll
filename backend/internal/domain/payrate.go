@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode"
 
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/utils"
 	"github.com/nqd/flat"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 	"gorm.io/gorm"
 )
 
@@ -337,23 +334,12 @@ func (p PayrateConfiguration) IsEmpty() bool {
 
 // normalizeVietnamese removes Vietnamese diacritics and converts to lowercase for case-insensitive comparison
 // Examples: "Ngày lễ" -> "ngay le", "TC 150%" -> "tc 150%", "Ca đêm" -> "ca dem"
+//
+// Delegates to the canonical utils.NormalizeVietnamese (unidecode-based; folds
+// Đ/đ automatically) shared across the codebase, so payrate label matching and
+// every other Vietnamese fold can never diverge.
 func normalizeVietnamese(s string) string {
-	// First convert to lowercase
-	s = strings.ToLower(s)
-
-	// Đ/đ (U+0110/U+0111) are precomposed and carry no unicode.Mn combining
-	// mark, so the NFD + Mn-removal below leaves them intact. Replace them
-	// explicitly — otherwise the documented "Ca đêm" -> "ca dem" mapping would
-	// actually yield "ca đem" and night-shift payrate lookups would miss.
-	s = strings.ReplaceAll(s, "Đ", "D")
-	s = strings.ReplaceAll(s, "đ", "d")
-
-	// Remove Vietnamese diacritical marks using Unicode normalization
-	// NFD (Canonical Decomposition) separates base characters from combining marks
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	result, _, _ := transform.String(t, s)
-
-	return result
+	return utils.NormalizeVietnamese(s)
 }
 
 // GetRate returns rate value for a flattened path with case-insensitive Vietnamese-normalized matching

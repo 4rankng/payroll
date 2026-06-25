@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 import { useAllBanks, useCreateBank } from '@/hooks/api/useBanks';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
 import type { Bank } from '@/types/api/bank.types';
 
@@ -220,7 +220,7 @@ export function BankSelector({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
 
   const handleSelect = (bank: Bank) => {
     onSelect(bank);

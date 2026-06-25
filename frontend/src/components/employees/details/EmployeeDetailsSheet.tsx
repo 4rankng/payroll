@@ -7,7 +7,7 @@ import { ResetPasswordModalContainer } from "@/components/modals/ResetPasswordMo
 import { useEmployeeForm } from "@/hooks/employees/useEmployeeForm";
 import { useEmployeeDetails } from "@/hooks/employees/useEmployeeDetails";
 import { useUpdateEmployee, useDeleteEmployee } from "@/hooks/api/useEmployees";
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,7 +69,7 @@ export function EmployeeDetailsSheet({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const isNarrowViewport = useMediaQuery("(max-width: 900px)");
+  const isNarrowViewport = useIsMobile();
 
   // Use the employee prop from container (container handles data fetching)
   const employee = propEmployee;

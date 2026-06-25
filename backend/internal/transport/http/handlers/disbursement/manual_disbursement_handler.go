@@ -25,6 +25,13 @@ import (
 // human-readable error code. The client wraps errors with a "ninepay: ..." prefix
 // so we can distinguish HTTP 5xx from timeouts, DNS failures, etc.
 func classifyTransportError(err error) string {
+	// Pre-flight validation rejections never reached the provider, so they
+	// are neither transport nor provider errors. Classify them explicitly so
+	// the stored error_code matches the disbursement worker's
+	// "preflight_validation" (kept consistent for StatsByErrorCode grouping).
+	if errors.Is(err, infrastructure.ErrPreflightValidation) {
+		return "preflight_validation"
+	}
 	msg := err.Error()
 	switch {
 	case strings.Contains(msg, "unexpected status 5"):
@@ -363,6 +370,9 @@ func (h *ManualDisbursementHandler) Initiate(c *gin.Context) {
 			Accepted:     false,
 			RawErrorCode: classifyTransportError(err),
 			RawMessage:   err.Error(),
+			// Pre-flight validation rejection → transfer endpoint never called
+			// → no fee charged → waive (zero) the stamped fee.
+			FeeWaived: errors.Is(err, infrastructure.ErrPreflightValidation),
 		}); recordErr != nil {
 			h.logger.Warn("manual disbursement: failed to record sync failure",
 				"request_id", requestID, "error", recordErr)

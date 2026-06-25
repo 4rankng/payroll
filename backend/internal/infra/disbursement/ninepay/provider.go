@@ -59,7 +59,10 @@ func (p *Provider) Name() string { return ProviderName }
 // (e.g. error 1001 / duplicate request_id 702).
 func (p *Provider) InitiateTransfer(ctx context.Context, req infrastructure.TransferRequest) (*infrastructure.TransferResult, error) {
 	if err := validateTransferRequest(req); err != nil {
-		return nil, err
+		// Rejected before calling the transfer endpoint — no provider fee is
+		// charged. Wrap so callers can errors.Is(err, ErrPreflightValidation)
+		// and waive (zero) the stamped fee, keeping SUM(fee) honest.
+		return nil, fmt.Errorf("%w: %v", infrastructure.ErrPreflightValidation, err)
 	}
 
 	resp, err := p.client.CreateDisbursement(ctx, createDisbursementRequest{

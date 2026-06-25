@@ -4,7 +4,7 @@ import { TimesheetMobileList } from '@/components/timesheet/TimesheetMobileList'
 import { EditRequestTable } from '@/components/timesheet/EditRequestTable';
 import { TimesheetEmptyState } from '@/components/timesheet/TimesheetEmptyState';
 import { TimesheetProvider, useTimesheetContext } from '@/components/timesheet/TimesheetContext';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { useTimesheetSummary } from '@/hooks/api/useTimesheets';
 import type { Timesheet } from '@/types/api/timesheet.types';
 import type { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
@@ -73,7 +73,7 @@ function TimesheetDisplayContent({
   onAddTimesheet?: () => void;
 }) {
   const { state, filters } = useTimesheetContext();
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobile();
 
   const hasActiveFilter =
     (filters.searchTerm?.trim() || '') !== '' ||

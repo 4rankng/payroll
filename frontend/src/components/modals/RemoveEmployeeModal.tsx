@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar, Clock, AlertTriangle } from "lucide-react";
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import type { Employee } from "@/types/api/employee.types";
 import type { ModalConfig } from '@/types/modal-config.types';
 
@@ -54,7 +54,7 @@ export function RemoveEmployeeSheet({
 }: RemoveEmployeeSheetProps) {
   const [removalType, setRemovalType] = useState<"immediate" | "scheduled">("immediate");
   const [lastDate, setLastDate] = useState("");
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
 
   const handleConfirm = () => {
     if (!employee?.id || !projectId) return;

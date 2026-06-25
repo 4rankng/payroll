@@ -17,7 +17,7 @@ import (
 )
 
 // newTestRepo wires the repository over an in-memory SQLite database
-// with the provider_transactions table auto-migrated. Returns the
+// with the wallet_payments table auto-migrated. Returns the
 // repository under test plus the underlying *gorm.DB so the test can
 // inspect / mutate rows directly when it wants to corner-case the
 // optimistic-locking path.
@@ -48,26 +48,30 @@ func newTestRepo(t *testing.T) (*TxWalletPaymentRepository, *gorm.DB) {
 	// KEY. Tests don't care about the column types, only the FSM
 	// behavior, so we simulate the production schema with SQLite-
 	// friendly types.
-	require.NoError(t, db.Exec(`CREATE TABLE provider_transactions (
+	require.NoError(t, db.Exec(`CREATE TABLE wallet_payments (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		txn_id TEXT NOT NULL UNIQUE,
 		request_id TEXT NOT NULL UNIQUE,
 		invoice_no TEXT,
+		provider TEXT NOT NULL DEFAULT '9pay',
 		requested_amount INTEGER NOT NULL,
 		fee INTEGER NOT NULL DEFAULT 0,
 		recipient_name TEXT NOT NULL,
 		recipient_account_no TEXT NOT NULL,
 		recipient_bank TEXT NOT NULL,
-		metadata BLOB,
-		status TEXT NOT NULL DEFAULT 'verifying',
+		description TEXT,
+		status TEXT NOT NULL DEFAULT 'pending',
 		error_code TEXT,
 		error_message TEXT,
 		entity_id INTEGER,
 		created_by INTEGER,
+		batch_id TEXT,
 		version INTEGER NOT NULL DEFAULT 0,
 		created_at DATETIME NOT NULL,
 		updated_at DATETIME NOT NULL,
-		settled_at DATETIME
+		settled_at DATETIME,
+		reconciled_at DATETIME,
+		resolution_source TEXT
 	)`).Error)
 
 	// Build the repository by hand — the public constructor takes
@@ -251,4 +255,36 @@ func TestRepository_StatsByErrorCode(t *testing.T) {
 	require.Equal(t, int64(3), rows[0].Count)
 	require.Equal(t, "1004", rows[1].ErrorCode)
 	require.Equal(t, int64(2), rows[1].Count)
+}
+
+// TestRepository_StatsByStatus_ZeroFeeOnWaive models the zero-fee-on-preflight
+// rule: of N failed transfers, only those that actually reached the transfer
+// endpoint keep their fee; pre-flight rejections get their stamped fee zeroed
+// (FeeWaived → patch.Fee = 0), so SUM(fee) is exactly the fees charged/lost.
+func TestRepository_StatsByStatus_ZeroFeeOnWaive(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+
+	failed := domaintx.StateFailed
+	zero := int64(0)
+
+	// 3 failed transfers, scheduled fee 200 each. Two reached the transfer
+	// endpoint (fee charged/lost); one was rejected at pre-flight (fee waived → 0).
+	for i := 0; i < 3; i++ {
+		row := newRow(t)
+		require.NoError(t, repo.Create(ctx, row))
+		patch := domaintx.UpdatePatch{Status: &failed}
+		if i == 2 {
+			patch.Fee = &zero // pre-flight waive
+		}
+		require.NoError(t, repo.UpdateExpected(ctx, row.ID, 0, patch))
+	}
+
+	rows, err := repo.StatsByStatus(ctx, time.Now().AddDate(0, 0, -1), time.Now().AddDate(0, 0, 1))
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Equal(t, domaintx.StateFailed, rows[0].Status)
+	require.Equal(t, int64(3), rows[0].Count)
+	require.Equal(t, int64(400), rows[0].TotalFee, "2 charged (200 each) + 1 waived (0) = 400 actually lost")
 }

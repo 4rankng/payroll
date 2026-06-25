@@ -15,10 +15,7 @@ import (
 	"api-server/internal/pkg/utils"
 
 	"github.com/xuri/excelize/v2"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
-	"unicode"
 )
 
 // processMultiPositionUpload handles the new multi-position BCC format where each
@@ -560,16 +557,10 @@ func bccNormName(s string) string {
 // different sheets — STK vs BCC, or BCC vs the employee profile). Two names
 // whose loose-normalized forms are equal almost certainly refer to the
 // same person, even when the strict-normalized forms differ.
+//
+// The diacritic fold delegates to the canonical utils.NormalizeVietnamese
+// (unidecode-based; folds Đ/đ automatically). The leading NFC guards against
+// macOS-Excel NFD input and the TrimSpace mirrors bccNormName.
 func bccNormNameLoose(s string) string {
-	// Đ/đ (U+0110/U+0111) are precomposed and carry no unicode.Mn combining
-	// mark, so the NFD + Mn-removal chain below leaves them intact. Replace
-	// them explicitly — otherwise a Đ-surname (Đặng, Đỗ, Đoàn) would never
-	// loose-match its D-spelling variant across STK/BCC sheets and the cross
-	// check would flag a false mismatch. See onepay.toASCII for the same fix.
-	base := bccNormName(s)
-	base = strings.ReplaceAll(base, "Đ", "D")
-	base = strings.ReplaceAll(base, "đ", "d")
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	stripped, _, _ := transform.String(t, base)
-	return stripped
+	return strings.TrimSpace(utils.NormalizeVietnamese(norm.NFC.String(s)))
 }

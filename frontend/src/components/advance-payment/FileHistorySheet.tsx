@@ -10,7 +10,7 @@ import { UnifiedFileCard } from './UnifiedFileCard';
 import type { AdvancePaymentFileType } from './UnifiedFileCard';
 import { useAdvancePaymentFileHistory } from '@/hooks/api/useAdvancePayments';
 import { groupFilesByDate } from '@/utils/fileGrouping';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import type { AdvancePaymentFileHistoryItem } from '@/types/api/advance-payment.types';
 
 interface FileHistorySheetProps {
@@ -23,7 +23,7 @@ type FilterValue = 'all' | AdvancePaymentFileType;
 const PAGE_SIZE = 20;
 
 export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) => {
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobile();
   const { data: fileHistory, isLoading } = useAdvancePaymentFileHistory({ enabled: open });
 
   const allFiles = useMemo(() => fileHistory?.data ?? [], [fileHistory?.data]);

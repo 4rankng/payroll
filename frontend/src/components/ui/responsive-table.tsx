@@ -49,7 +49,7 @@ interface ResponsiveTableProps<TData = Record<string, unknown>> {
    *  inner border wrapper is removed and pagination gets a flush separator. */
   embedded?: boolean;
 
-  // Breakpoint for switching (default: md = 768px)
+  // Breakpoint for switching (default: lg = 1024px)
   breakpoint?: "sm" | "md" | "lg" | "xl";
 }
 
@@ -71,7 +71,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
   emptyState,
   accordionType = "single",
   showPagination = true,
-  breakpoint = "md",
+  breakpoint = "lg",
   caption,
   getRowClassName,
   embedded = false,

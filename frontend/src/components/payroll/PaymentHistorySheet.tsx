@@ -8,7 +8,7 @@ import { PaymentHistoryMobileList } from './mobile/PaymentHistoryMobileList';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { Button } from '@/components/ui/button';
 import { usePaymentHistories, useInfinitePaymentHistories, useExportPaymentHistories } from '@/hooks/api/usePayrolls';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { dateToString } from '@/utils/dateHelpers';
 import {
   Pagination,
@@ -26,7 +26,7 @@ interface PaymentHistorySheetProps {
 }
 
 export function PaymentHistorySheet({ isOpen, onClose }: PaymentHistorySheetProps) {
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 

@@ -17,7 +17,7 @@ import { AutoInterestFields } from './AutoInterestFields';
 import { ScheduleDisplay } from './ScheduleDisplay';
 import { CustomScheduleFields } from './CustomScheduleFields';
 import { FormField } from './FormField';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface AddLoanSheetProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export function AddLoanSheet({ isOpen, onClose }: AddLoanSheetProps) {
   const lenders: Lender[] = useMemo(() => (Array.isArray(lendersResponse?.data) ? lendersResponse!.data as Lender[] : []), [lendersResponse]);
 
   const createLoan = useCreateLoan();
-  const isCompactViewport = useMediaQuery('(max-width: 1000px)');
+  const isCompactViewport = useIsMobile();
 
   const [form, setForm] = useState<FormState>({
     loan_type: 'bullet_loan',
