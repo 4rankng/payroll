@@ -7,13 +7,10 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"api-server/internal/domain/ports/infrastructure"
 
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
+	"github.com/gosimple/unidecode"
 )
 
 // Provider implements infrastructure.DisbursementProvider on top of
@@ -265,16 +262,18 @@ func translateState(state, responseCode string) infrastructure.TransferStatus {
 	}
 }
 
-// toASCII strips diacritical marks and converts to plain ASCII.
+// toASCII folds a Vietnamese holder name into plain uppercase ASCII.
 // OnePay rejects holder names with Vietnamese diacritical characters
-// (e.g. "Phàn Phủ Nghị" → "Phan Phu Nghi").
+// (e.g. "Phàn Phủ Nghị" → "PHAN PHU NGHI", "Đỗ Duy Tuyên" → "DO DUY TUYEN").
+//
+// unidecode is a complete Unicode→ASCII transliteration table and is the
+// SAME library the CheckAccount path relies on (utils.NormalizeVietnamese),
+// so the transfer and verify steps can never diverge. It also folds Đ/đ
+// (U+0110/U+0111), which the previous NFD+unicode.Mn approach missed —
+// those are precomposed, non-decomposable characters, which caused OnePay
+// to reject transfers with response_code 15 "Invalid account info".
 func toASCII(s string) string {
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	result, _, err := transform.String(t, s)
-	if err != nil {
-		return strings.ToValidUTF8(s, "")
-	}
-	return strings.ToUpper(result)
+	return strings.ToUpper(unidecode.Unidecode(s))
 }
 
 // OnePay spec amount limits (shared by preflightValidate and validateTransferRequest).

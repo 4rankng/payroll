@@ -21,6 +21,28 @@ function extractData(res) {
   return res.data?.data ?? res.data;
 }
 
+// Walk a nested payrate JSON tree and return the first leaf key as a usable
+// hour type. Payrate configs are nested maps like
+//   { "pho thong": { "ngay thuong": { "ca ngày": 30000, "tăng ca": 45000 } } }
+// Leaves are the actual hour-type names the backend accepts (e.g. "ca ngày",
+// "tăng ca"). We return the first leaf we find — good enough for the smoke
+// test that just needs *some* valid hour type for the chosen project.
+function collectHourTypes(node) {
+  if (node === null || node === undefined) return null;
+  if (typeof node !== 'object') return null;
+  const keys = Object.keys(node);
+  if (!keys.length) return null;
+  for (const k of keys) {
+    const child = node[k];
+    if (typeof child === 'number' || typeof child === 'string') {
+      return k;
+    }
+    const nested = collectHourTypes(child);
+    if (nested) return nested;
+  }
+  return null;
+}
+
 async function setup() {
   console.log('\n🔧 Setting up...');
   adminToken = await getAdminToken();
@@ -28,10 +50,19 @@ async function setup() {
   partnerToken = await getPartnerToken();
   log('SETUP', 'Partner token (thanhmai)', 'PASS');
 
-  browser = await createDesktopBrowser();
-  page = await browser.newPage();
-  const loggedIn = await loginAs(page, 'frankng');
-  log('SETUP', 'Browser login as admin', loggedIn ? 'PASS' : 'WARN', loggedIn ? '' : 'proceeding with API-only tests');
+  // Browser is optional — only used for visual checks. If the frontend isn't
+  // running (e.g. CI / API-only mode), skip browser setup entirely instead of
+  // crashing on `ERR_CONNECTION_REFUSED`.
+  try {
+    browser = await createDesktopBrowser();
+    page = await browser.newPage();
+    const loggedIn = await loginAs(page, 'frankng');
+    log('SETUP', 'Browser login as admin', loggedIn ? 'PASS' : 'WARN', loggedIn ? '' : 'proceeding with API-only tests');
+  } catch (e) {
+    log('SETUP', 'Browser unavailable — API-only mode', 'WARN', e.message);
+    browser = null;
+    page = null;
+  }
 }
 
 async function teardown() {
@@ -44,23 +75,40 @@ async function teardown() {
 async function testTimesheetEntry() {
   console.log('\n📋 F07: Timesheet Entry & Validation');
 
-  const projRes = await apiCall('GET', '/api/v1/projects?pageSize=5', null, adminToken);
+  const projRes = await apiCall('GET', '/api/v1/projects?pageSize=10', null, adminToken);
   const projects = extractData(projRes);
   const projectList = Array.isArray(projects) ? projects : projects?.items || [];
   if (!projectList.length) { log('F07', 'Setup: no projects', 'FAIL'); return; }
 
-  const project = projectList[0];
-  log('F07', `Using project ${project.id} (${project.name || project.client_name})`, 'PASS');
+  // Walk projects to find one with at least one employee assigned.
+  // Then derive a valid hourType from the project's payrate config so we don't
+  // hardcode 'HC' (some projects only have ca ngày / ca đêm / tăng ca, etc.).
+  let project = null;
+  let emp = null;
+  let empId = null;
+  let hourType = null;
+  for (const p of projectList) {
+    const empRes = await apiCall('GET', `/api/v1/projects/${p.id}/employees?pageSize=5`, null, adminToken);
+    const empData = extractData(empRes);
+    const employees = Array.isArray(empData) ? empData : empData?.items || [];
+    if (!employees.length) continue;
 
-  // Get employees for project
-  const empRes = await apiCall('GET', `/api/v1/projects/${project.id}/employees?pageSize=5`, null, adminToken);
-  const empData = extractData(empRes);
-  const employees = Array.isArray(empData) ? empData : empData?.items || [];
-  if (!employees.length) { log('F07', 'No employees assigned', 'WARN'); return; }
+    // Fetch the project's payrate config to discover valid hour types
+    const prRes = await apiCall('GET', `/api/v1/projects/${p.id}/payrate`, null, adminToken);
+    const prData = extractData(prRes);
+    const ratesJson = prData?.rates;
+    const validHourType = collectHourTypes(ratesJson);
+    if (!validHourType) continue;
 
-  // Pick employee with earliest start_date for most available test dates
-  const emp = employees.sort((a, b) => new Date(a.start_date || '2026-01-01') - new Date(b.start_date || '2026-01-01'))[0];
-  const empId = emp.employee_id || emp.id;
+    project = p;
+    emp = employees.sort((a, b) => new Date(a.start_date || '2026-01-01') - new Date(b.start_date || '2026-01-01'))[0];
+    empId = emp.employee_id || emp.id;
+    hourType = validHourType;
+    break;
+  }
+  if (!project) { log('F07', 'Setup: no project with employees + payrate', 'FAIL'); return; }
+  log('F07', `Using project ${project.id} (${project.name || project.client_name}) hourType=${hourType}`, 'PASS');
+
   // Extract date part directly from start_date string to avoid timezone issues
   // start_date format: "2026-06-01T00:00:00+08:00" → "2026-06-01"
   const startDateStr = (emp.start_date || '2026-01-01').split('T')[0];
@@ -68,7 +116,7 @@ async function testTimesheetEntry() {
 
   // F07-01: Create single timesheet (may fail if date already occupied by BCC import)
   const createRes = await apiCall('POST', '/api/v1/timesheets', [{
-    projectId: project.id, employeeId: empId, date: startDateStr, hoursWorked: 8, hourType: 'HC',
+    projectId: project.id, employeeId: empId, date: startDateStr, hoursWorked: 8, hourType,
   }], adminToken);
   if (createRes.ok) {
     log('F07', 'F07-01: Create single timesheet', 'PASS', `status=${createRes.status}`);
@@ -82,7 +130,7 @@ async function testTimesheetEntry() {
   // F07-03: Future date rejected
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const futureRes = await apiCall('POST', '/api/v1/timesheets', [{
-    projectId: project.id, employeeId: empId, date: tomorrow.toISOString().split('T')[0], hoursWorked: 8, hourType: 'HC',
+    projectId: project.id, employeeId: empId, date: tomorrow.toISOString().split('T')[0], hoursWorked: 8, hourType,
   }], adminToken);
   log('F07', 'F07-03: Future date rejected', futureRes.status === 400 ? 'PASS' : 'FAIL', `status=${futureRes.status}`);
 
@@ -106,7 +154,9 @@ async function testTimesheetEntry() {
   log('F07', 'F07-07: Grouped timesheets', grpRes.ok ? 'PASS' : 'FAIL', `status=${grpRes.status}`);
 
   // Browser check
-  try {
+  if (!page) {
+    log('F07', 'Browser: skipped (no browser)', 'WARN');
+  } else try {
     await page.goto('http://localhost:3000/admin/timesheet', { waitUntil: 'networkidle0', timeout: 15000 });
     await page.screenshot({ path: `${SCREENSHOT_DIR}/F07-timesheet.png` });
     log('F07', 'Browser: Timesheet page loads', 'PASS');
@@ -195,8 +245,12 @@ async function testBulkTransfer() {
   log('F11', 'F11-03: Estimate fee (monthly)', mFeeRes.ok ? 'PASS' : 'FAIL', `status=${mFeeRes.status}`);
 
   // F11-07: Both forMonth + date range → should error (real finding if not rejected)
+  // NOTE: DTO field is snake_case `for_month` (json:"for_month"); the frontend
+  // bulk-transfer service uses the same. Earlier bug: test sent `forMonth`
+  // (camelCase) which the JSON binder silently dropped → backend saw only the
+  // date range and accepted it as 201.
   const bothRes = await apiCall('POST', '/api/v1/payrolls/auto-bulk-transfer', {
-    forMonth: monthStr, fromDate: weekAgo.toISOString().split('T')[0], toDate: today.toISOString().split('T')[0],
+    for_month: monthStr, fromDate: weekAgo.toISOString().split('T')[0], toDate: today.toISOString().split('T')[0],
   }, adminToken);
   if (bothRes.status >= 400) {
     log('F11', 'F11-07: Both forMonth+dateRange rejected', 'PASS', `status=${bothRes.status}`);
@@ -240,7 +294,9 @@ async function testAdvancePayment() {
   }
 
   // Browser
-  try {
+  if (!page) {
+    log('F13', 'Browser: skipped (no browser)', 'WARN');
+  } else try {
     await page.goto('http://localhost:3000/admin/advance-payments', { waitUntil: 'networkidle0', timeout: 15000 });
     await page.screenshot({ path: `${SCREENSHOT_DIR}/F13-advance-payments.png` });
     log('F13', 'Browser: Advance payments page', 'PASS');
@@ -337,7 +393,9 @@ async function testWalletFinancial() {
   log('F18', 'F18-08: Zero debit+credit rejected', zeroEntryRes.status === 400 ? 'PASS' : 'FAIL', `status=${zeroEntryRes.status}`);
 
   // Browser pages
-  for (const [name, url] of [['Wallet', '/admin/wallet'], ['Transactions', '/admin/transactions'], ['Ledger', '/admin/ledger']]) {
+  if (!page) {
+    log('BROWSER', 'Wallet/Transactions/Ledger pages: skipped (no browser)', 'WARN');
+  } else for (const [name, url] of [['Wallet', '/admin/wallet'], ['Transactions', '/admin/transactions'], ['Ledger', '/admin/ledger']]) {
     try {
       await page.goto(`http://localhost:3000${url}`, { waitUntil: 'networkidle0', timeout: 15000 });
       await page.screenshot({ path: `${SCREENSHOT_DIR}/F15-18-${name.toLowerCase()}.png` });
@@ -410,7 +468,9 @@ async function testDashboard() {
     const res = await apiCall('GET', url, null, adminToken);
     log('DASH', `GET ${name}`, res.ok ? 'PASS' : 'FAIL', `status=${res.status}`);
   }
-  try {
+  if (!page) {
+    log('DASH', 'Browser: Dashboard skipped (no browser)', 'WARN');
+  } else try {
     await page.goto('http://localhost:3000/admin', { waitUntil: 'networkidle0', timeout: 15000 });
     await page.screenshot({ path: `${SCREENSHOT_DIR}/F22-dashboard.png` });
     log('DASH', 'Browser: Dashboard loads', 'PASS');

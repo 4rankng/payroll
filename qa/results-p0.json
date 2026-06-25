@@ -14,21 +14,21 @@
     },
     {
       "category": "SETUP",
-      "scenario": "Browser login as admin",
-      "status": "PASS",
-      "detail": ""
+      "scenario": "Browser unavailable — API-only mode",
+      "status": "WARN",
+      "detail": "net::ERR_CONNECTION_REFUSED at http://localhost:3000/login"
     },
     {
       "category": "F07",
-      "scenario": "Using project 70 (LGDISPLAY)",
+      "scenario": "Using project 72 (Yusen) hourType=ca ngày",
       "status": "PASS",
       "detail": ""
     },
     {
       "category": "F07",
       "scenario": "F07-01: Create single timesheet",
-      "status": "WARN",
-      "detail": "status=400 Xác thực thất bại: Công ngày thường hc của Trần Đình Long ngày 2026-06-01 đã tồn"
+      "status": "PASS",
+      "detail": "status=201"
     },
     {
       "category": "F07",
@@ -56,8 +56,8 @@
     },
     {
       "category": "F07",
-      "scenario": "Browser: Timesheet page loads",
-      "status": "PASS",
+      "scenario": "Browser: skipped (no browser)",
+      "status": "WARN",
       "detail": ""
     },
     {
@@ -87,8 +87,8 @@
     {
       "category": "F10",
       "scenario": "Partner sees filtered history",
-      "status": "WARN",
-      "detail": "status=403 (Casbin reload pending)"
+      "status": "PASS",
+      "detail": "status=200"
     },
     {
       "category": "F10",
@@ -116,9 +116,9 @@
     },
     {
       "category": "F11",
-      "scenario": "F11-07: Both forMonth+dateRange NOT rejected (potential business logic issue)",
-      "status": "WARN",
-      "detail": "status=201 — initiate accepted conflicting params"
+      "scenario": "F11-07: Both forMonth+dateRange rejected",
+      "status": "PASS",
+      "detail": "status=400"
     },
     {
       "category": "F11",
@@ -164,8 +164,8 @@
     },
     {
       "category": "F13",
-      "scenario": "Browser: Advance payments page",
-      "status": "PASS",
+      "scenario": "Browser: skipped (no browser)",
+      "status": "WARN",
       "detail": ""
     },
     {
@@ -248,20 +248,8 @@
     },
     {
       "category": "BROWSER",
-      "scenario": "Wallet page loads",
-      "status": "PASS",
-      "detail": ""
-    },
-    {
-      "category": "BROWSER",
-      "scenario": "Transactions page loads",
-      "status": "PASS",
-      "detail": ""
-    },
-    {
-      "category": "BROWSER",
-      "scenario": "Ledger page loads",
-      "status": "PASS",
+      "scenario": "Wallet/Transactions/Ledger pages: skipped (no browser)",
+      "status": "WARN",
       "detail": ""
     },
     {
@@ -392,15 +380,15 @@
     },
     {
       "category": "DASH",
-      "scenario": "Browser: Dashboard loads",
-      "status": "PASS",
+      "scenario": "Browser: Dashboard skipped (no browser)",
+      "status": "WARN",
       "detail": ""
     }
   ],
   "summary": {
-    "pass": 62,
+    "pass": 58,
     "fail": 0,
-    "warn": 4,
-    "total": 66
+    "warn": 6,
+    "total": 64
   }
 }

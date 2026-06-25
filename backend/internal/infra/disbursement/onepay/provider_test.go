@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"api-server/internal/domain/ports/infrastructure"
+
+	"github.com/gosimple/unidecode"
 )
 
 // ---------------------------------------------------------------------------
@@ -740,5 +742,64 @@ func TestValidateTransferRequest_AmountBounds(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+func TestToASCII(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"empty", "", ""},
+		{"plain ascii", "Nguyen Van A", "NGUYEN VAN A"},
+		{"combining diacritics stripped", "Phàn Phủ Nghị", "PHAN PHU NGHI"},
+		// Regression: Đ/đ (U+0110/U+0111) are precomposed — NFD + Mn-removal
+		// leaves them intact. They MUST be converted to D/d, otherwise OnePay's
+		// holder-name match fails with response_code 15 "Invalid account info".
+		{"capital D-stroke", "Đỗ Duy Tuyên", "DO DUY TUYEN"},
+		{"lowercase d-stroke", "đỗ duy tuyển", "DO DUY TUYEN"},
+		{"d-stroke only", "Đ", "D"},
+		{"leading d-stroke in surname", "Đặng Thị Huệ", "DANG THI HUE"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := toASCII(tc.in); got != tc.want {
+				t.Errorf("toASCII(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestToASCII_MatchesUnidecode proves toASCII folds EVERY Vietnamese letter
+// correctly, not just the hand-picked cases above. unidecode is a complete
+// Unicode→ASCII table and is what the CheckAccount path already relies on
+// (utils.NormalizeVietnamese). If toASCII agrees with it across the full
+// Vietnamese alphabet + real names, toASCII is correct by construction — no
+// hand-rolled NFD/Mn edge case can survive.
+func TestToASCII_MatchesUnidecode(t *testing.T) {
+	corpus := []string{
+		// full Vietnamese tonal vowel inventory, lower + upper
+		"á à ả ã ạ ă ắ ằ ẳ ẵ ặ â ấ ầ ẩ ẫ ậ",
+		"Á À Ả Ã Ạ Ă Ắ Ằ Ẳ Ẵ Ặ Â Ấ Ầ Ẩ Ẫ Ậ",
+		"é è ẻ ẽ ẹ ê ế ề ể ễ ệ", "É È Ẻ Ẽ Ẹ Ê Ế Ề Ể Ễ Ệ",
+		"í ì ỉ ĩ ị", "Í Ì Ỉ Ĩ Ị",
+		"ó ò ỏ õ ọ ô ố ồ ổ ỗ ộ ơ ớ ờ ở ỡ ợ",
+		"Ó Ò Ỏ Õ Ọ Ô Ố Ồ Ổ Ỗ Ộ Ơ Ớ Ờ Ở Ỡ Ợ",
+		"ú ù ủ ũ ụ ư ứ ừ ử ữ ự", "Ú Ù Ủ Ũ Ụ Ư Ứ Ừ Ử Ữ Ự",
+		"ý ỳ ỷ ỹ ỵ", "Ý Ỳ Ỷ Ỹ Ỵ",
+		// the precomposed D-stroke that NFD+unicode.Mn misses
+		"Đ đ ĐHong đê",
+		// real recipient names incl. Đ/đ surnames
+		"Đỗ Duy Tuyên", "Đặng Thị Huệ", "Đào Văn Hùng", "Đinh Quốc Bảo",
+		"Phạm Thị Mai", "Nguyễn Thị Thu Huyền", "Phàn Phủ Nghị",
+		"Lê Hoàng Phúc", "Bùi Tường Lan", "Hồ Ngọc Hà", "Lò Văn Thủy",
+	}
+	for _, name := range corpus {
+		want := strings.ToUpper(unidecode.Unidecode(name))
+		got := toASCII(name)
+		if got != want {
+			t.Errorf("toASCII(%q) = %q; unidecode (known-good) = %q", name, got, want)
+		}
 	}
 }

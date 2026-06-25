@@ -561,7 +561,15 @@ func bccNormName(s string) string {
 // whose loose-normalized forms are equal almost certainly refer to the
 // same person, even when the strict-normalized forms differ.
 func bccNormNameLoose(s string) string {
+	// Đ/đ (U+0110/U+0111) are precomposed and carry no unicode.Mn combining
+	// mark, so the NFD + Mn-removal chain below leaves them intact. Replace
+	// them explicitly — otherwise a Đ-surname (Đặng, Đỗ, Đoàn) would never
+	// loose-match its D-spelling variant across STK/BCC sheets and the cross
+	// check would flag a false mismatch. See onepay.toASCII for the same fix.
+	base := bccNormName(s)
+	base = strings.ReplaceAll(base, "Đ", "D")
+	base = strings.ReplaceAll(base, "đ", "d")
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	stripped, _, _ := transform.String(t, bccNormName(s))
+	stripped, _, _ := transform.String(t, base)
 	return stripped
 }
