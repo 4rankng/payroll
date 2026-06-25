@@ -124,6 +124,28 @@ func TestPayrate_CanOverlapWith(t *testing.T) {
 	assert.True(t, pr1.CanOverlapWith(pr2))
 }
 
+// TestNormalizeVietnamese: diacritic-stripping must fold Đ/đ (U+0110/U+0111)
+// to D/d. These are precomposed letters that NFD does not decompose and that
+// carry no unicode.Mn combining mark, so without an explicit replacement the
+// doc-promised "Ca đêm" -> "ca dem" mapping would actually yield "ca đem" and
+// night-shift payrate lookups would miss. Mirrors the onepay.toASCII fix.
+func TestNormalizeVietnamese(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"Ngày lễ", "ngay le"},
+		{"TC 150%", "tc 150%"},
+		{"Ca đêm", "ca dem"},
+		{"Đặng Thị Huệ", "dang thi hue"},
+		{"HĐ-001", "hd-001"},
+	}
+	for _, c := range cases {
+		if got := normalizeVietnamese(c.in); got != c.want {
+			t.Errorf("normalizeVietnamese(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
 func TestPayrate_DateRangeOverlapsWith(t *testing.T) {
 	now := time.Now()
 	toDate1 := now.AddDate(0, 1, 0) // next month

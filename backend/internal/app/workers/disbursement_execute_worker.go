@@ -127,6 +127,14 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		return fmt.Errorf("no active provider: %w", err)
 	}
 
+	// transferAccountName is the holder name sent to the provider on the
+	// transfer. It defaults to our stored recipient name; if the account
+	// check returns a bank-confirmed name, we prefer that (authoritative) so
+	// we don't re-normalize and risk a holder-name mismatch at the provider —
+	// OnePay compares the transfer's holder_name against the registered name
+	// and rejects any divergence with response_code 15 "Invalid account info".
+	transferAccountName := p.RecipientName
+
 	// Step 3: Check account (if supported)
 	if verifier, ok := provider.(infrastructure.AccountVerifier); ok {
 		swiftCode, err := w.resolveSwiftCode(ctx, p.RecipientBank)
@@ -160,6 +168,11 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 				"error_code", checkResult.RawErrorCode)
 			return nil // terminal — don't retry
 		}
+
+		// Prefer the bank-confirmed holder name for the transfer.
+		if checkResult.AccountName != "" {
+			transferAccountName = checkResult.AccountName
+		}
 	}
 
 	// Step 4: Initiate transfer
@@ -173,7 +186,7 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		BankCode:    p.RecipientBank,
 		SwiftCode:   swiftCode,
 		AccountNo:   p.RecipientAccountNo,
-		AccountName: p.RecipientName,
+		AccountName: transferAccountName,
 		Description: p.RequestID,
 		AccountType: infrastructure.AccountTypeBankAccount,
 	})

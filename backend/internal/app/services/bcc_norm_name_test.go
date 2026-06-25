@@ -49,6 +49,13 @@ func TestBccNormNameLoose(t *testing.T) {
 		{"Nguyễn Văn A", "Nguyễn Văn Á", true},
 		{"Trần Thị B", "tran thi b", true}, // loose is also lowercase + trim
 
+		// Regression: Đ/đ (U+0110/U+0111) are precomposed and carry no
+		// unicode.Mn mark, so NFD + Mn-removal leaves them intact. A Đ-surname
+		// must fold to D to loose-match its ASCII-spelling variant across STK
+		// and BCC sheets — otherwise the cross-check flags a false mismatch.
+		{"Đặng Thị Huệ", "Dang Thi Hue", true},
+		{"Đỗ Duy Tuyên", "Do Duy Tuyen", true},
+
 		// Different letters — should NOT match even after stripping.
 		{"Lò Thị Dương", "Lê Thị Dương", false}, // Lò vs Lê: different base char
 		{"Lò Thị Dương", "Lò Thị Dung", false},  // Dương vs Dung: stripped differs

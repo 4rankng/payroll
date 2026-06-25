@@ -341,6 +341,13 @@ func normalizeVietnamese(s string) string {
 	// First convert to lowercase
 	s = strings.ToLower(s)
 
+	// Đ/đ (U+0110/U+0111) are precomposed and carry no unicode.Mn combining
+	// mark, so the NFD + Mn-removal below leaves them intact. Replace them
+	// explicitly — otherwise the documented "Ca đêm" -> "ca dem" mapping would
+	// actually yield "ca đem" and night-shift payrate lookups would miss.
+	s = strings.ReplaceAll(s, "Đ", "D")
+	s = strings.ReplaceAll(s, "đ", "d")
+
 	// Remove Vietnamese diacritical marks using Unicode normalization
 	// NFD (Canonical Decomposition) separates base characters from combining marks
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
