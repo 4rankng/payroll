@@ -9,8 +9,7 @@ import (
 	"strings"
 
 	"api-server/internal/domain/ports/infrastructure"
-
-	"github.com/gosimple/unidecode"
+	"api-server/internal/pkg/utils"
 )
 
 // Provider implements infrastructure.DisbursementProvider on top of
@@ -61,7 +60,10 @@ func (p *Provider) Name() string { return ProviderName }
 // (e.g. error 07 DUPLICATE_TXN, 19 NO_BANK_PROCESS_FOUND).
 func (p *Provider) InitiateTransfer(ctx context.Context, req infrastructure.TransferRequest) (*infrastructure.TransferResult, error) {
 	if err := validateTransferRequest(req); err != nil {
-		return nil, err
+		// Rejected before calling the transfer endpoint — no provider fee is
+		// charged. Wrap so callers can errors.Is(err, ErrPreflightValidation)
+		// and waive (zero) the stamped fee, keeping SUM(fee) honest.
+		return nil, fmt.Errorf("%w: %v", infrastructure.ErrPreflightValidation, err)
 	}
 
 	swiftCode := req.SwiftCode
@@ -266,14 +268,11 @@ func translateState(state, responseCode string) infrastructure.TransferStatus {
 // OnePay rejects holder names with Vietnamese diacritical characters
 // (e.g. "Phàn Phủ Nghị" → "PHAN PHU NGHI", "Đỗ Duy Tuyên" → "DO DUY TUYEN").
 //
-// unidecode is a complete Unicode→ASCII transliteration table and is the
-// SAME library the CheckAccount path relies on (utils.NormalizeVietnamese),
-// so the transfer and verify steps can never diverge. It also folds Đ/đ
-// (U+0110/U+0111), which the previous NFD+unicode.Mn approach missed —
-// those are precomposed, non-decomposable characters, which caused OnePay
-// to reject transfers with response_code 15 "Invalid account info".
+// Built on the canonical utils.NormalizeVietnamese (unidecode-based; folds
+// Đ/đ automatically) — the SAME helper the CheckAccount path uses — then
+// uppercased, so the transfer and verify steps can never diverge.
 func toASCII(s string) string {
-	return strings.ToUpper(unidecode.Unidecode(s))
+	return strings.ToUpper(utils.NormalizeVietnamese(s))
 }
 
 // OnePay spec amount limits (shared by preflightValidate and validateTransferRequest).

@@ -296,6 +296,12 @@ type SyncResult struct {
 	InvoiceNo    string // optional; captured into row.invoice_no when non-empty
 	RawErrorCode string
 	RawMessage   string
+	// FeeWaived is true when the transfer endpoint was NEVER called (a
+	// pre-flight validation rejection), so the provider's per-transfer fee
+	// was NOT charged. syncPatch zeroes the stamped fee in that case so
+	// SUM(fee) reflects only fees actually charged. Defaults false — the
+	// common path (endpoint was called) keeps the stamped fee untouched.
+	FeeWaived bool
 }
 
 // RecordSyncResponse fires the appropriate FSM trigger for the
@@ -638,7 +644,14 @@ func (s *WalletPaymentService) basePatch(invoiceNo, rawErrorCode, errorMessage s
 
 // syncPatch builds an UpdatePatch from a synchronous provider reply.
 func (s *WalletPaymentService) syncPatch(r SyncResult) domaintx.UpdatePatch {
-	return s.basePatch(r.InvoiceNo, r.RawErrorCode, s.translateMessage(r.RawErrorCode, r.RawMessage))
+	patch := s.basePatch(r.InvoiceNo, r.RawErrorCode, s.translateMessage(r.RawErrorCode, r.RawMessage))
+	// FeeWaived (pre-flight rejection) → transfer endpoint never called →
+	// zero the stamped fee. See SyncResult.FeeWaived for the full rationale.
+	if r.FeeWaived {
+		zero := int64(0)
+		patch.Fee = &zero
+	}
+	return patch
 }
 
 // ipnPatch builds an UpdatePatch from a normalized IPN result. The

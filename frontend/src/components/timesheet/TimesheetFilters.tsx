@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SlidersHorizontal } from 'lucide-react';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import { useTimesheetContext } from '@/components/timesheet/TimesheetContext';
 
 const STATUS_OPTIONS = [
@@ -38,7 +38,7 @@ export const TimesheetFilters = () => {
     userRole = 'admin',
   } = filters;
 
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobile();
 
   const monthOptions = useMemo(() => {
     const now = new Date();

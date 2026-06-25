@@ -19,7 +19,7 @@ import { CalendarDayCell } from './components/CalendarDayCell';
 import { MobileDayListView } from './components/MobileDayListView';
 import { TimesheetEntryModal } from './components/TimesheetEntryModal';
 import { TimesheetDayEntriesModal } from './components/TimesheetDayEntriesModal';
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 
 interface Project {
   id: number;
@@ -407,7 +407,7 @@ interface ProjectCalendarProps {
 }
 
 function ProjectCalendar({ project, year, month, onDayClick, onEntryClick, bulkTransferPercentage = 0 }: ProjectCalendarProps) {
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobile();
 
   // Mobile: handle day click from MobileDayListView
   const handleMobileDayClick = (date: Date, entries: CalendarTimesheetEntry[]) => {

@@ -57,8 +57,8 @@ type UpdatePatch struct {
 	ErrorCode        *string
 	ErrorMessage     *string
 	Description      *string
-	Fee              *int64
-	ReconciledAt     *time.Time
+	Fee          *int64
+	ReconciledAt *time.Time
 	ResolutionSource *string
 }
 
@@ -72,5 +72,5 @@ type StatusStat struct {
 	Status               State
 	Count                int64
 	TotalRequestedAmount int64
-	TotalFee             int64
+	TotalFee int64
 }

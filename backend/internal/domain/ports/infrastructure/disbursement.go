@@ -2,12 +2,21 @@ package infrastructure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"api-server/internal/pkg/utils"
 )
+
+// ErrPreflightValidation is wrapped by a provider's InitiateTransfer when it
+// rejects a request via local validation BEFORE calling the transfer
+// endpoint. The per-transfer fee is charged only when the transfer endpoint
+// is actually called, so callers use errors.Is(err, ErrPreflightValidation)
+// to detect these fee-free rejections and waive (zero) the stamped fee —
+// keeping SUM(fee) equal to the fees actually charged.
+var ErrPreflightValidation = errors.New("disbursement: pre-flight validation rejected before provider call")
 
 // TransferStatus is the normalized lifecycle state of a disbursement,
 // independent of any specific provider's vocabulary.

@@ -191,10 +191,27 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		AccountType: infrastructure.AccountTypeBankAccount,
 	})
 	if err != nil {
+		// Pre-flight validation rejection: the transfer endpoint was never
+		// called, so no provider fee is charged and retrying won't help (the
+		// request is malformed). Record the failure with the fee waived and
+		// stop. Any other error is a transport failure → retry via asynq.
+		if errors.Is(err, infrastructure.ErrPreflightValidation) {
+			_, recordErr := w.walletPaymentService.RecordSyncResponse(ctx, p.RequestID, disbursement.SyncResult{
+				Accepted:     false,
+				RawErrorCode: "preflight_validation",
+				RawMessage:   err.Error(),
+				FeeWaived:    true,
+			})
+			if recordErr != nil {
+				return fmt.Errorf("record pre-flight rejection: %w", recordErr)
+			}
+			logger.Info("disbursement execute: rejected at pre-flight (fee waived)", "error", err)
+			return nil // terminal — don't retry a malformed request
+		}
 		return fmt.Errorf("initiate transfer: %w", err)
 	}
 
-	// Step 5: Record sync response
+	// Step 5: Record sync response (transfer endpoint was called → fee applies)
 	_, err = w.walletPaymentService.RecordSyncResponse(ctx, p.RequestID, disbursement.SyncResult{
 		Accepted:     result.Status == infrastructure.TransferStatusPending || result.Status == infrastructure.TransferStatusSuccess,
 		InvoiceNo:    result.ProviderRef,

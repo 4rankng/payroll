@@ -6,7 +6,7 @@ import { TimesheetListTable } from "@/components/timesheet/TimesheetListTable";
 import { TimesheetMobileList } from "@/components/timesheet/TimesheetMobileList";
 import { TimesheetProvider } from "@/components/timesheet/TimesheetContext";
 import { EditRequestTable } from "@/components/timesheet/EditRequestTable";
-import { useMediaQuery } from '@/hooks/useBreakpoint';
+import { useIsMobile } from '@/hooks/useBreakpoint';
 import {
   TimesheetsExportDialog,
   TimesheetsExportParams,
@@ -184,7 +184,7 @@ export default function TimesheetsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openTimesheetEntry, openTimesheetDetails } = useTimesheetModals();
   const queryClient = useQueryClient();
-  const isMobile = useMediaQuery("(max-width: 767px)");
+  const isMobile = useIsMobile();
 
   const createEditRequestMutation = useCreateEditRequest();
   const [requestingTimesheetId, setRequestingTimesheetId] = useState<
