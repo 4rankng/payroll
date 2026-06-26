@@ -34,12 +34,12 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'robots.txt', 'og-image.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'robots.txt', 'og-image.png', 'tingting-link-preview.png'],
       manifest: {
         // Stable app identity — survives start_url changes so an installed app
         // doesn't fragment into a duplicate home-screen entry.
         id: '/',
-        name: 'Giải pháp phần mềm Ting Ting',
+        name: 'Ting Ting',
         short_name: 'Ting Ting',
         description: 'Nền tảng quản lý nhân sự, chấm công, ứng lương và thanh toán lương cho doanh nghiệp xây dựng.',
         theme_color: '#0a2540',
