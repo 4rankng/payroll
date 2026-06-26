@@ -16,6 +16,7 @@ export function EmployeePayIllustration({
       className={cn(
         "flex shrink-0 items-center justify-center rounded-2xl bg-employee/10 text-employee",
         dimensions,
+        "employee-pay-illustration",
         className
       )}
       aria-hidden="true"
