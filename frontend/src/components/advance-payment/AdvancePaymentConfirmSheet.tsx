@@ -29,56 +29,56 @@ export function AdvancePaymentConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[70vh] rounded-t-2xl px-5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+        className="h-auto max-h-[70vh] rounded-t-3xl px-6 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
-          <div className="h-1 w-9 rounded-full bg-muted-foreground/25" />
+        <div className="flex shrink-0 justify-center pb-2 pt-3">
+          <div className="h-1.5 w-11 rounded-full bg-muted-foreground/25" />
         </div>
-        <SheetHeader className="pb-3 border-b border-gray-100">
-          <SheetTitle className="text-base font-bold text-gray-900">
+        <SheetHeader className="border-b border-gray-100 pb-4">
+          <SheetTitle className="text-[20px] font-bold leading-7 text-gray-900">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
         </SheetHeader>
-        <div className="space-y-3 mt-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
-          <div className="bg-gray-50 rounded-xl px-4 py-3 space-y-2 border border-gray-100">
-            <div className="flex justify-between text-sm">
+        <div className="mt-4 space-y-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}>
+          <div className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-4">
+            <div className="flex justify-between gap-4 text-[16px] leading-6">
               <span className="text-gray-500">Số tiền yêu cầu</span>
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-gray-800 tabular-nums">
                 {formatCurrency(amount)}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between gap-4 text-[16px] leading-6">
               <span className="text-gray-500">Phí giao dịch</span>
-              <span className="font-semibold text-red-500">
+              <span className="font-semibold text-red-500 tabular-nums">
                 −{feeDetails ? formatCurrency(feeDetails.fee) : "…"}
               </span>
             </div>
-            <div className="flex justify-between pt-2 border-t border-gray-200">
-              <span className="font-semibold text-gray-700">Thực nhận</span>
+            <div className="flex justify-between gap-4 border-t border-gray-200 pt-3">
+              <span className="text-[17px] font-semibold leading-7 text-gray-700">Thực nhận</span>
               <span
-                className="text-lg font-bold text-employee"
+                className="text-[22px] font-bold leading-7 text-employee tabular-nums"
               >
                 {feeDetails ? formatCurrency(feeDetails.netAmount) : "…"}
               </span>
             </div>
           </div>
           {bankAccountNumber && (
-            <p className="text-xs text-gray-400 text-center">
+            <p className="text-center text-[15px] leading-6 text-gray-400">
               Nhận về tài khoản {bankAccountNumber}
             </p>
           )}
           <div className="flex gap-3 pt-1">
             <button
               onClick={() => onOpenChange(false)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 active:scale-[0.97] transition-transform"
+              className="min-h-14 flex-1 rounded-xl border border-gray-200 py-3 text-[16px] font-semibold text-gray-600 transition-transform active:scale-[0.97]"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
               disabled={isPending}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-employee disabled:opacity-50 active:scale-[0.97] transition-transform"
+              className="min-h-14 flex-1 rounded-xl bg-employee py-3 text-[16px] font-semibold text-white transition-transform active:scale-[0.97] disabled:opacity-50"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">
