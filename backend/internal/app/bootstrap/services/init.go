@@ -227,6 +227,11 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	)
 	eventBus.SubscribeAll(settlementEventHandler)
 
+	// Wire the settlement event handler as the synchronous settlement applier so the
+	// upload flow settles each transaction inline (atomic + self-verifying) instead of
+	// via a fire-and-forget event that can silently drop (txn 99 / timesheet 11579 bug).
+	settlementUploadService.SetSettlementApplier(settlementEventHandler)
+
 	logger.Info("Event bus initialized with handlers",
 		"audit", true,
 		"cache_invalidation", true,

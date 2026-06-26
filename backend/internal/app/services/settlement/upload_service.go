@@ -4,6 +4,7 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"time"
 
@@ -16,18 +17,39 @@ import (
 	"gorm.io/gorm"
 )
 
+// SettlementApplier applies a settlement for a single transaction synchronously:
+// it locks the transaction, re-validates the remaining amount, creates the
+// settlement record + double-entry ledger entries, and marks the linked timesheets
+// revenue_paid=1 — all inside one DB transaction with deadlock retry.
+//
+// The settlement-upload flow calls this inline instead of publishing a
+// fire-and-forget event, so a dropped event can no longer silently strand a
+// receivable (the txn 99 / timesheet 11579 bug). Implemented by
+// *events.SettlementEventHandler.
+type SettlementApplier interface {
+	ApplySettlement(ctx context.Context, transactionID uint, amount int64, fileID uint, filename string, timesheetIDs []uint) error
+}
+
 // SettlementUploadService orchestrates the settlement upload process
 type SettlementUploadService struct {
-	db               *gorm.DB
-	excelParser      *SettlementExcelParser
-	timesheetLinker  *SettlementTimesheetLinker
-	assetService     *asset.AssetService
-	ledgerRepo       domain.LedgerEntryRepository
-	eventBus         domain.EventBus
-	timesheetReader  domain.TimesheetReader
-	advPayReqRepo    domain.AdvancePaymentRequestRepository
-	advPayRepo       domain.AdvancePaymentRepository
-	notificationRepo domain.NotificationRepository
+	db                *gorm.DB
+	excelParser       *SettlementExcelParser
+	timesheetLinker   *SettlementTimesheetLinker
+	assetService      *asset.AssetService
+	ledgerRepo        domain.LedgerEntryRepository
+	eventBus          domain.EventBus
+	timesheetReader   domain.TimesheetReader
+	advPayReqRepo     domain.AdvancePaymentRequestRepository
+	advPayRepo        domain.AdvancePaymentRepository
+	notificationRepo  domain.NotificationRepository
+	settlementApplier SettlementApplier
+}
+
+// SetSettlementApplier wires the synchronous settlement applier. Called once during
+// bootstrap after the event handler (which implements SettlementApplier) is
+// constructed. Breaking the cycle this way avoids reordering service construction.
+func (s *SettlementUploadService) SetSettlementApplier(applier SettlementApplier) {
+	s.settlementApplier = applier
 }
 
 // NewSettlementUploadService creates a new settlement upload service
@@ -313,7 +335,7 @@ func (s *SettlementUploadService) ProcessSettlementFileWithDedup(
 	}
 
 	// Emit settlement events
-	if err := s.SettleAndEmitEvents(ctx, result, effectiveAmount, asset.ID, fileHeader.Filename); err != nil {
+	if err := s.settleSynchronously(ctx, result, effectiveAmount, asset.ID, fileHeader.Filename); err != nil {
 		return nil, err
 	}
 
@@ -433,18 +455,32 @@ func (s *SettlementUploadService) SettleFromMetadata(ctx context.Context, timesh
 
 	for _, ts := range timesheets {
 		if ts.TransactionID == nil {
-			continue
+			// A timesheet with no transaction can never be settled, and leaving it in
+			// result.TimesheetIDs would trip verifyRevenuePaid AFTER some settlements
+			// have already committed (partial-success-masked-as-error). Fail fast here,
+			// before any DB write, naming the offending timesheet.
+			return domain.NewValidationError(
+				fmt.Sprintf("Bảng chấm công #%d chưa được liên kết với giao dịch nào, không thể đối soát. "+
+					"Vui lòng kiểm tra lại hoặc gỡ bảng chấm công này khỏi danh sách.", ts.ID))
 		}
 		result.Transactions[*ts.TransactionID] += ts.RevenueReceivable
 		result.TimesheetToTransaction[ts.ID] = *ts.TransactionID
 	}
 
-	return s.SettleAndEmitEvents(ctx, result, totalReceived, saoKeAssetID, "sao_ke_email")
+	return s.settleSynchronously(ctx, result, totalReceived, saoKeAssetID, "sao_ke_email")
 }
 
-// Event handlers will process the actual DB updates
-// After all settlements, records any leftover amount as miscellaneous revenue (within rounding tolerance)
-func (s *SettlementUploadService) SettleAndEmitEvents(
+// settleSynchronously settles every transaction in result inline via the
+// SettlementApplier (one DB transaction per transaction, with deadlock retry),
+// then verifies that every INTERNAL timesheet was actually flipped to revenue_paid=1.
+//
+// Unlike the previous fire-and-forget event publish, each settlement is applied
+// synchronously and any failure is returned to the caller — a dropped settlement
+// can no longer strand a receivable silently (the txn 99 / timesheet 11579 bug).
+// After success, an informational SettlementAppliedFromUploadEvent is re-published
+// per transaction for audit logging; ApplySettlement is idempotent (skips when the
+// timesheets are already revenue_paid), so the re-publish cannot double-settle.
+func (s *SettlementUploadService) settleSynchronously(
 	ctx context.Context,
 	result *SettlementValidationResult,
 	totalReceived int64,
@@ -458,10 +494,9 @@ func (s *SettlementUploadService) SettleAndEmitEvents(
 		return domain.NewValidationError(constants.MsgInvalidAssetIDVN)
 	}
 
-	// Calculate total allocated to transactions
-	var totalAllocated int64
-	for _, amount := range result.Transactions {
-		totalAllocated += amount
+	if s.settlementApplier == nil {
+		return domain.NewInternalError(constants.MsgCannotPublishSettlementEventVN,
+			fmt.Errorf("settlement applier not configured"))
 	}
 
 	// Build per-transaction timesheet ID map so revenue_paid marking is atomic with settlement creation
@@ -470,35 +505,48 @@ func (s *SettlementUploadService) SettleAndEmitEvents(
 		txnTimesheets[txnID] = append(txnTimesheets[txnID], tsID)
 	}
 
-	// Emit SettlementAppliedFromUploadEvent for each transaction.
-	// The handler marks revenue_paid=1 inside the same DB transaction as settlement creation,
-	// preventing the orphan state where timesheets are paid but the settlement record is missing.
+	// 1) Settle each transaction synchronously. A failure here is returned to the
+	//    admin instead of being lost in an async worker. Settlements are applied
+	//    per-transaction (each in its own DB tx with a row lock); if a later
+	//    transaction fails, the earlier ones stay committed and the admin can
+	//    re-upload — the dedup path skips the already-settled rows.
+	settled := 0
+	total := len(result.Transactions)
 	for transactionID, amount := range result.Transactions {
-		event := domain.NewSettlementAppliedFromUploadEvent(
-			ctx,
-			transactionID,
-			amount,
-			assetID,
-			filename,
-			txnTimesheets[transactionID],
-		)
-
-		if err := s.eventBus.Publish(ctx, event); err != nil {
-			logger.Error("Failed to publish SettlementAppliedFromUploadEvent",
+		if err := s.settlementApplier.ApplySettlement(ctx, transactionID, amount, assetID, filename, txnTimesheets[transactionID]); err != nil {
+			logger.Error("Synchronous settlement failed for transaction",
 				"transaction_id", transactionID,
 				"amount", amount,
 				"asset_id", assetID,
+				"settled_so_far", settled,
+				"total", total,
 				"error", err)
-			return domain.NewInternalError(constants.MsgCannotPublishSettlementEventVN, err)
+			return domain.NewInternalError(
+				fmt.Sprintf("Đối soát thất bại tại giao dịch #%d (đã thanh toán %d/%d giao dịch). "+
+					"Các giao dịch đã thanh toán được ghi nhận; vui lòng đối soát lại file để thanh toán phần còn lại.",
+					transactionID, settled, total), err)
 		}
-
-		logger.Info("Emitted SettlementAppliedFromUploadEvent",
+		settled++
+		logger.Info("Synchronous settlement applied",
 			"transaction_id", transactionID,
 			"amount", amount,
 			"asset_id", assetID)
 	}
 
-	// Handle leftover amount (rounding difference)
+	// 2) Double-check: every INTERNAL timesheet must now be revenue_paid=1. This is
+	//    the guarantee that a settlement upload cannot silently leave a receivable
+	//    behind (the txn 99 / 11579 class of bug).
+	if err := s.verifyRevenuePaid(ctx, result.TimesheetIDs); err != nil {
+		return err
+	}
+
+	// Calculate total allocated to transactions (for leftover/rounding below)
+	var totalAllocated int64
+	for _, amount := range result.Transactions {
+		totalAllocated += amount
+	}
+
+	// 3) Handle leftover amount (rounding difference)
 	leftover := totalReceived - totalAllocated
 	if leftover > 0 {
 		logger.Info("Leftover amount detected after settlement allocation",
@@ -559,5 +607,65 @@ func (s *SettlementUploadService) SettleAndEmitEvents(
 			"revenue_entry_id", entries[1].ID)
 	}
 
+	// 4) Informational audit events. The settlement is already applied above; the
+	//    handler's idempotency guard makes these audit-only (no double settle).
+	for transactionID, amount := range result.Transactions {
+		event := domain.NewSettlementAppliedFromUploadEvent(
+			ctx,
+			transactionID,
+			amount,
+			assetID,
+			filename,
+			txnTimesheets[transactionID],
+		)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			logger.Warn("Failed to publish informational SettlementAppliedFromUploadEvent (settlement already applied)",
+				"transaction_id", transactionID,
+				"error", err)
+		}
+	}
+
+	return nil
+}
+
+// verifyRevenuePaid re-fetches the given timesheet IDs and fails if any EXISTING
+// timesheet did not reach revenue_paid=1 after settlement. This guarantees a
+// settlement upload cannot silently leave a receivable unsettled (the txn 99 /
+// timesheet 11579 bug). Timesheets that no longer exist (concurrently deleted) are
+// not treated as failures — they cannot be settled and are only logged as a warning.
+func (s *SettlementUploadService) verifyRevenuePaid(ctx context.Context, timesheetIDs []uint) error {
+	if len(timesheetIDs) == 0 {
+		return nil
+	}
+	recheck, err := s.timesheetReader.GetByIDs(ctx, timesheetIDs)
+	if err != nil {
+		return domain.NewInternalError(constants.MsgCannotGetTimesheetInfoVN, err)
+	}
+	present := make(map[uint]*domain.Timesheet, len(recheck))
+	for _, ts := range recheck {
+		present[ts.ID] = ts
+	}
+	var notUpdated []uint
+	var missing []uint
+	for _, id := range timesheetIDs {
+		ts, ok := present[id]
+		if !ok {
+			missing = append(missing, id)
+			continue
+		}
+		if !ts.RevenuePaid {
+			notUpdated = append(notUpdated, id)
+		}
+	}
+	if len(missing) > 0 {
+		observability.GetLogger().Warn("Timesheets vanished between settlement and verification (concurrently deleted?) — not treated as failure",
+			"timesheet_ids", missing)
+	}
+	if len(notUpdated) > 0 {
+		return domain.NewValidationError(
+			fmt.Sprintf("Đối soát thất bại: %d timesheet không được đánh dấu thanh toán sau đối soát "+
+				"(IDs: %v). Vui lòng kiểm tra lại giao dịch liên kết và đối soát lại.",
+				len(notUpdated), notUpdated))
+	}
 	return nil
 }

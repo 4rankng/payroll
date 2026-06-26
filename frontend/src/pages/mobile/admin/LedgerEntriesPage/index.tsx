@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { LedgerPageHeaderMobile } from '@/components/ledger/mobile/LedgerPageHeaderMobile';
-import { LedgerSummaryCardMobile } from '@/components/ledger/mobile/LedgerSummaryCardMobile';
+import { LedgerPageHeader } from '@/components/ledger/LedgerPageHeader';
+import { LedgerSummaryCard } from '@/components/ledger/LedgerSummaryCard';
 import { LedgerMobileList } from '@/components/ledger/LedgerMobileList';
 import { LedgerFiltersMobile } from '@/components/ledger/mobile/LedgerFiltersMobile';
 import { DoubleEntryModal } from '@/components/ledger/DoubleEntryModal';
@@ -207,7 +207,7 @@ const LedgerEntriesPageMobile = () => {
 
   return (
     <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
-      <LedgerPageHeaderMobile
+      <LedgerPageHeader
         overallBalance={overallBalance}
         netCashFlow={netCashFlow}
         isLoadingBalance={isLoadingBalance}
@@ -222,7 +222,7 @@ const LedgerEntriesPageMobile = () => {
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
       />
 
-      <LedgerSummaryCardMobile
+      <LedgerSummaryCard
         summary={ledgerSummary}
         isLoading={isLoadingSummary}
       />
