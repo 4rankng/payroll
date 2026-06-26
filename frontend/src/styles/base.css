@@ -294,4 +294,56 @@
       min-height: 44px;
     }
   }
+
+  .employee-pay-illustration {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 24px rgba(0, 177, 79, 0.08);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .employee-pay-illustration {
+      animation: employee-pay-breathe 4.8s ease-in-out infinite;
+    }
+
+    .employee-portal-card-stack > * {
+      animation: employee-card-rise 420ms ease-out both;
+    }
+
+    .employee-portal-card-stack > *:nth-child(2) {
+      animation-delay: 55ms;
+    }
+
+    .employee-portal-card-stack > *:nth-child(3) {
+      animation-delay: 110ms;
+    }
+
+    .employee-portal-card-stack > *:nth-child(4) {
+      animation-delay: 165ms;
+    }
+
+    .employee-portal-card-stack > *:nth-child(5) {
+      animation-delay: 220ms;
+    }
+  }
+
+  @keyframes employee-pay-breathe {
+    0%, 100% {
+      transform: translateY(0);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 24px rgba(0, 177, 79, 0.08);
+    }
+    50% {
+      transform: translateY(-2px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 14px 28px rgba(0, 177, 79, 0.12);
+    }
+  }
+
+  @keyframes employee-card-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
