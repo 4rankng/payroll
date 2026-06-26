@@ -2,19 +2,9 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/utils/formatters";
-import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import type { AdvancePaymentInfo } from "@/types/api/advance-payment.types";
-
-/** Keep EMPLOYEE_BRAND_COLOR for the slider CSS custom property — cannot be expressed as a Tailwind class. */
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface AdvancePaymentRequestFormProps {
   info: AdvancePaymentInfo;
@@ -46,7 +36,7 @@ export function AdvancePaymentRequestForm({
     [availableQuotas]
   );
   const defaultMonth = sortedQuotas.length > 0 ? sortedQuotas[0].forMonth : info.forMonth;
-  const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonth);
+  const selectedMonth = defaultMonth;
 
   const selectedQuotaRemaining = useMemo(() => {
     if (availableQuotas.length > 0) {
@@ -142,24 +132,6 @@ export function AdvancePaymentRequestForm({
         </h2>
       </div>
       
-      {availableQuotas.length > 0 && (
-        <div className="mb-4">
-          <label className="mb-1.5 block text-sm font-semibold text-gray-600">Chọn kỳ lương</label>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="h-12 w-full border-gray-200 bg-gray-50 text-base">
-              <SelectValue placeholder="Chọn kỳ" />
-            </SelectTrigger>
-            <SelectContent>
-              {sortedQuotas.map(q => (
-                <SelectItem key={q.forMonth} value={q.forMonth} disabled={q.remainingAmount < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT}>
-                  Kỳ {formatAdvancePeriodDisplay(q.forMonth)} - Còn ứng được: {formatCurrency(q.remainingAmount)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
       <div className="flex items-center gap-3 mb-3">
         <div className="relative shrink-0 w-36">
           <input
