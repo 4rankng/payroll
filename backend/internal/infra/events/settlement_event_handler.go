@@ -2,6 +2,7 @@ package events
 
 import (
 	"api-server/internal/pkg/clock"
+	auditctx "api-server/internal/pkg/context"
 	"context"
 	"fmt"
 	"log/slog"
@@ -197,10 +198,33 @@ func (h *SettlementEventHandler) handleTimesheetMarking(ctx context.Context, eve
 	return nil
 }
 
-// handleSettlementAppliedFromUpload handles SettlementAppliedFromUploadEvent
-// This creates a settlement record and updates the transaction
-func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.Context, event domain.SettlementAppliedFromUploadEvent) error {
+// ApplySettlement creates the settlement record, the double-entry ledger pair, and
+// marks the given timesheets revenue_paid=1 for a single transaction — all inside
+// one DB transaction with deadlock retry.
+//
+// It is invoked SYNCHRONOUSLY by the settlement-upload flow (SettlementApplier),
+// so a dropped async event can never silently strand a receivable. The async event
+// path (advance-payment settlements, and informational re-publishes) still routes
+// here via handleSettlementAppliedFromUpload.
+//
+// Idempotent: if every timesheet in timesheetIDs is already revenue_paid=1 the call
+// is a no-op. This makes a post-settlement informational re-publish of
+// SettlementAppliedFromUploadEvent safe (audit-only) and protects against duplicate
+// events. The actor (CreatedBy) is read from the request context.
+func (h *SettlementEventHandler) ApplySettlement(
+	ctx context.Context,
+	transactionID uint,
+	amount int64,
+	fileID uint,
+	filename string,
+	timesheetIDs []uint,
+) error {
 	logger := observability.GetLogger()
+
+	var createdBy uint
+	if uid := auditctx.GetUserID(ctx); uid != nil {
+		createdBy = *uid
+	}
 
 	const maxRetries = 3
 	for attempt := 0; attempt < maxRetries; attempt++ {
@@ -211,34 +235,56 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 				IsTransactional: true,
 			})
 
+			// Idempotency guard: if all linked timesheets are already settled, this is a
+			// duplicate (e.g. informational re-publish after a synchronous settlement) — no-op.
+			// Advance-payment events pass nil timesheetIDs and bypass this guard.
+			if len(timesheetIDs) > 0 {
+				existing, err := h.timesheetRepo.GetByIDs(txCtx, timesheetIDs)
+				if err != nil {
+					return fmt.Errorf("failed to load timesheets for idempotency check: %w", err)
+				}
+				allPaid := len(existing) > 0
+				for _, ts := range existing {
+					if !ts.RevenuePaid {
+						allPaid = false
+						break
+					}
+				}
+				if allPaid {
+					logger.Info("Settlement already applied (timesheets already revenue_paid), skipping",
+						"transaction_id", transactionID)
+					return nil
+				}
+			}
+
 			// Get the transaction with row-level lock to prevent concurrent settlement race conditions
-			txn, err := h.transactionRepo.GetByIDForUpdate(txCtx, event.TransactionID)
+			txn, err := h.transactionRepo.GetByIDForUpdate(txCtx, transactionID)
 			if err != nil {
 				logger.Error("Failed to get transaction for settlement",
-					"transaction_id", event.TransactionID,
+					"transaction_id", transactionID,
 					"error", err)
 				return err
 			}
 
 			// Re-validate remaining amount under lock to skip duplicate settlements idempotently
 			remainingBeforeSettlement := txn.GetRemainingAmount()
-			if event.Amount > remainingBeforeSettlement+constants.RoundingTolerance {
+			if amount > remainingBeforeSettlement+constants.RoundingTolerance {
 				logger.Warn("Skipping settlement — transaction already settled",
 					"transaction_id", txn.ID,
-					"settlement_amount", event.Amount,
+					"settlement_amount", amount,
 					"remaining", remainingBeforeSettlement)
 				return nil
 			}
 
 			// Create settlement record
 			settlement := &domain.Settlement{
-				TransactionID:  event.TransactionID,
-				Amount:         event.Amount,
+				TransactionID:  transactionID,
+				Amount:         amount,
 				SettlementDate: clock.Now(),
-				ProofAssetID:   &event.FileID,
+				ProofAssetID:   &fileID,
 				PaymentMethod:  "bank_transfer",
-				Notes:          fmt.Sprintf("Settlement from upload: %s", event.Filename),
-				CreatedBy:      event.UserID(),
+				Notes:          fmt.Sprintf("Settlement from upload: %s", filename),
+				CreatedBy:      createdBy,
 			}
 
 			// Generate a settlement UUID for idempotency and ledger processing consistency
@@ -248,7 +294,7 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 			// Validate settlement
 			if err := settlement.Validate(); err != nil {
 				logger.Error("Settlement validation failed",
-					"transaction_id", event.TransactionID,
+					"transaction_id", transactionID,
 					"error", err)
 				return err
 			}
@@ -256,18 +302,18 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 			// Create settlement in database
 			if err := h.settlementRepo.Create(txCtx, settlement); err != nil {
 				logger.Error("Failed to create settlement record",
-					"transaction_id", event.TransactionID,
-					"amount", event.Amount,
+					"transaction_id", transactionID,
+					"amount", amount,
 					"error", err)
 				return err
 			}
 
 			// Recalculate settled amount from settlements (they are the source of truth)
 			// Since we just created a settlement, we need to get total settled amount
-			totalSettled, err := h.settlementRepo.GetTotalSettledAmount(txCtx, event.TransactionID)
+			totalSettled, err := h.settlementRepo.GetTotalSettledAmount(txCtx, transactionID)
 			if err != nil {
 				logger.Error("Failed to get total settled amount",
-					"transaction_id", event.TransactionID,
+					"transaction_id", transactionID,
 					"error", err)
 				return err
 			}
@@ -338,21 +384,21 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 			// Both happen in the same DB transaction — if the settlement creation deadlocks and rolls
 			// back, the revenue_paid flag is not set either. This prevents the orphan state
 			// (revenue_paid=1 but no settlement record) that previously required manual recovery.
-			if len(event.TimesheetIDs) > 0 {
-				if err := h.timesheetRepo.BulkUpdateRevenuePaid(txCtx, event.TimesheetIDs); err != nil {
+			if len(timesheetIDs) > 0 {
+				if err := h.timesheetRepo.BulkUpdateRevenuePaid(txCtx, timesheetIDs); err != nil {
 					logger.Error("Failed to mark timesheets as revenue paid",
 						"settlement_id", settlement.ID,
-						"timesheet_count", len(event.TimesheetIDs),
+						"timesheet_count", len(timesheetIDs),
 						"error", err)
 					return err
 				}
 				logger.Info("Marked timesheets as revenue paid",
 					"settlement_id", settlement.ID,
-					"timesheet_count", len(event.TimesheetIDs))
+					"timesheet_count", len(timesheetIDs))
 			} else {
 				logger.Warn("No timesheets to mark as revenue paid for settlement",
 					"settlement_id", settlement.ID,
-					"transaction_id", event.TransactionID)
+					"transaction_id", transactionID)
 			}
 
 			return nil
@@ -367,7 +413,7 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 			backoff := time.Duration(50*(1<<attempt)) * time.Millisecond
 			jitter := time.Duration(rand.Intn(50)) * time.Millisecond
 			logger.Warn("Deadlock on settlement, retrying",
-				"transaction_id", event.TransactionID,
+				"transaction_id", transactionID,
 				"attempt", attempt+1,
 				"max_retries", maxRetries,
 				"backoff_ms", (backoff + jitter).Milliseconds())
@@ -379,8 +425,16 @@ func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.C
 	}
 
 	logger.Error("Settlement failed after retries due to persistent deadlock",
-		"transaction_id", event.TransactionID)
-	return fmt.Errorf("persistent deadlock for transaction %d after %d retries", event.TransactionID, maxRetries)
+		"transaction_id", transactionID)
+	return fmt.Errorf("persistent deadlock for transaction %d after %d retries", transactionID, maxRetries)
+}
+
+// handleSettlementAppliedFromUpload handles SettlementAppliedFromUploadEvent.
+// Timesheet settlements are now applied synchronously in the upload service; this
+// async handler still serves the advance-payment flow and informational re-publishes
+// (ApplySettlement is idempotent, so a re-publish is an audit-only no-op).
+func (h *SettlementEventHandler) handleSettlementAppliedFromUpload(ctx context.Context, event domain.SettlementAppliedFromUploadEvent) error {
+	return h.ApplySettlement(ctx, event.TransactionID, event.Amount, event.FileID, event.Filename, event.TimesheetIDs)
 }
 
 // handleTimesheetsRevenuePaidFromInternal handles TimesheetsRevenuePaidFromInternalEvent
