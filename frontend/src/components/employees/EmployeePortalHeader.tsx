@@ -29,20 +29,20 @@ export function EmployeePortalHeader({
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
       >
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-5 text-white/80">
+          <p className="text-[16px] font-semibold leading-6 text-white/85">
             Xin chào
           </p>
-          <h1 className="truncate text-[22px] font-bold leading-7 text-white">
+          <h1 className="truncate text-[26px] font-bold leading-8 text-white">
             {employeeName || "bạn"}
           </h1>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <button
-            className="relative h-11 w-11 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
-            <Bell className="h-5.5 w-5.5" />
+            <Bell className="h-6 w-6" strokeWidth={2.1} />
             {unreadCount != null && unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 h-4 min-w-4 rounded-full bg-red-500 px-1 text-white text-[9px] font-bold flex items-center justify-center">
                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -52,10 +52,10 @@ export function EmployeePortalHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="rounded-full h-11 w-11 flex items-center justify-center hover:bg-white/20 transition-colors"
+                className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/15"
                 aria-label="Menu tài khoản"
               >
-                <UserCircle className="h-8 w-8 text-white/85" />
+                <UserCircle className="h-8 w-8 text-white/90" strokeWidth={2.1} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

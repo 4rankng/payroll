@@ -1,9 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import { ArrowRight, AlertCircle, DollarSign } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/utils/formatters";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
+import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
 import type { AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 
 interface AdvancePaymentRequestFormProps {
@@ -121,32 +122,34 @@ export function AdvancePaymentRequestForm({
       className={className ?? "bg-white rounded-2xl p-4"}
       style={style}
     >
-      <div className="mb-3 flex items-center gap-2">
-        <span
-          className="text-lg font-bold text-employee"
-        >
-          $
-        </span>
-        <h2 className="text-lg font-bold leading-6 text-gray-900">
-          Ứng lương
-        </h2>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[12px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
+            Tạo yêu cầu
+          </p>
+          <h2 className="mt-1 text-[18px] font-bold leading-7 text-slate-950">
+            Ứng lương
+          </h2>
+        </div>
+        <EmployeeIconFrame icon={DollarSign} />
       </div>
       
-      <div className="flex items-center gap-3 mb-3">
-        <div className="relative shrink-0 w-36">
+      <div className="mb-3 flex flex-col gap-3 xs:flex-row xs:items-center">
+        <div className="relative w-full shrink-0 xs:w-40">
           <input
             type="text"
             inputMode="numeric"
+            aria-label="Số tiền muốn ứng"
             placeholder="0"
             value={formatAmountInput(amount)}
             onChange={handleAmountChange}
-            className={`h-12 w-full rounded-xl border bg-gray-50 px-3 pr-12 text-lg font-bold transition-all focus:bg-white focus:outline-none focus:ring-2 ${
+            className={`h-14 w-full rounded-xl border bg-slate-50 px-3 pr-12 text-[24px] font-bold leading-none text-slate-950 transition-all focus:bg-white focus:outline-none focus:ring-2 ${
               (error || validationError)
                 ? "border-red-300 focus:ring-red-100"
-                : "border-gray-200 focus:border-[#00B14F] focus:ring-green-100"
+                : "border-gray-200 focus:border-employee focus:ring-green-100"
             }`}
           />
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-500">
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-2 py-1 text-sm font-semibold text-gray-500">
             VND
           </span>
         </div>
@@ -163,16 +166,16 @@ export function AdvancePaymentRequestForm({
                 { "--slider-thumb-color": EMPLOYEE_BRAND_COLOR } as React.CSSProperties
               }
             />
-            <div className="mt-1 flex justify-between text-sm text-gray-500">
+            <div className="mt-2 flex justify-between text-[14px] text-slate-500">
               <span>0</span>
-              <span>{formatCurrency(selectedQuotaRemaining)}</span>
+              <span>Tối đa</span>
             </div>
           </div>
         )}
       </div>
 
       {(error || validationError) && (
-        <p className="mb-2 flex items-center gap-1 text-sm leading-5 text-red-500">
+        <p className="mb-2 flex items-center gap-1 text-[14px] leading-6 text-red-500">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {error || validationError}
         </p>
@@ -181,23 +184,17 @@ export function AdvancePaymentRequestForm({
       {feeDetails &&
         numericAmount >= ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT &&
         !validationError && (
-          <div className="mb-3 space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm">
-            <div className="flex justify-between text-gray-500">
-              <span>Số tiền muốn ứng</span>
-              <span className="font-semibold text-gray-700">
-                {formatCurrency(numericAmount)}
-              </span>
-            </div>
-            <div className="flex justify-between text-gray-500">
+          <div className="mb-3 space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3 text-[15px]">
+            <div className="flex justify-between gap-3 text-slate-500">
               <span>Phí chuyển tiền</span>
-              <span className="font-semibold text-red-500">
+              <span className="text-[16px] font-semibold text-red-500 tabular-nums">
                 −{formatCurrency(feeDetails.fee)}
               </span>
             </div>
-            <div className="flex justify-between pt-1.5 border-t border-gray-200">
-              <span className="font-semibold text-gray-700">Bạn nhận được</span>
+            <div className="flex justify-between gap-3 border-t border-slate-200 pt-2">
+              <span className="font-semibold text-slate-700">Bạn nhận được</span>
               <span
-                className="font-bold text-employee"
+                className="text-[17px] font-bold text-employee tabular-nums"
               >
                 {formatCurrency(feeDetails.netAmount)}
               </span>
@@ -209,17 +206,17 @@ export function AdvancePaymentRequestForm({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className={`inline-flex min-h-12 items-center gap-1.5 rounded-xl px-5 py-2 text-base font-bold text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${canSubmit ? 'bg-employee' : 'bg-gray-400'}`}
+          className={`inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-xl px-5 py-2 text-[17px] font-bold text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 xs:w-auto ${canSubmit ? 'bg-employee' : 'bg-gray-400'}`}
         >
           {isPending ? (
             <>
-              <span className="animate-spin h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               Đang gửi...
             </>
           ) : (
             <>
               Gửi yêu cầu ứng
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-4 w-4" />
             </>
           )}
         </button>
