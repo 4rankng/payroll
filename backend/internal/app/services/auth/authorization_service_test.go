@@ -3,22 +3,35 @@ package auth
 import (
 	"io"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+type routeDef struct {
+	method string
+	path   string
+}
+
 // resolveConfigPaths returns absolute paths to the casbin model + policy
 // files in repo configs/, regardless of the package dir the test runs in.
-func resolveConfigPaths(t *testing.T) (model, policy string) {
+func resolveRepoRoot(t *testing.T) string {
 	t.Helper()
 	_, here, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not resolve caller for config path")
 	}
-	repoRoot := filepath.Join(filepath.Dir(here), "..", "..", "..", "..")
+	return filepath.Join(filepath.Dir(here), "..", "..", "..", "..")
+}
+
+func resolveConfigPaths(t *testing.T) (model, policy string) {
+	t.Helper()
+	repoRoot := resolveRepoRoot(t)
 	return filepath.Join(repoRoot, "configs", "casbin_model.conf"),
 		filepath.Join(repoRoot, "configs", "casbin_policy.csv")
 }
@@ -32,6 +45,96 @@ func newTestAuthorizationService(t *testing.T) *AuthorizationService {
 		t.Fatalf("NewAuthorizationService: %v", err)
 	}
 	return svc
+}
+
+func joinRoute(parts ...string) string {
+	var out []string
+	for _, part := range parts {
+		part = strings.Trim(part, "/")
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return "/" + strings.Join(out, "/")
+}
+
+func sampleRoutePath(path string) string {
+	segments := strings.Split(path, "/")
+	for i, segment := range segments {
+		if strings.HasPrefix(segment, ":") {
+			segments[i] = "1"
+		}
+	}
+	return strings.Join(segments, "/")
+}
+
+func isEmployeeSelfServicePath(path string) bool {
+	if path == "/api/v1/me" || strings.HasPrefix(path, "/api/v1/me/") {
+		return true
+	}
+	return path == "/api/v1/mobile/attendance" || strings.HasPrefix(path, "/api/v1/mobile/attendance/")
+}
+
+func discoverEmployeeSelfServiceRoutes(t *testing.T) []routeDef {
+	t.Helper()
+
+	files, err := filepath.Glob(filepath.Join(resolveRepoRoot(t), "internal", "app", "bootstrap", "routes*.go"))
+	if err != nil {
+		t.Fatalf("glob bootstrap route files: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatal("no bootstrap route files found")
+	}
+
+	groupRe := regexp.MustCompile(`^\s*(\w+)\s*:=\s*(\w+)\.Group\("([^"]*)"\)`)
+	routeRe := regexp.MustCompile(`^\s*(\w+)\.(GET|POST|PUT|PATCH|DELETE)\("([^"]*)"`)
+
+	seen := make(map[string]bool)
+	var routes []routeDef
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatalf("read route file %s: %v", file, err)
+		}
+
+		groups := map[string]string{
+			"protected": "",
+			"v1":        "",
+		}
+		for _, line := range strings.Split(string(content), "\n") {
+			if match := groupRe.FindStringSubmatch(line); match != nil {
+				name, parent, suffix := match[1], match[2], match[3]
+				if prefix, ok := groups[parent]; ok {
+					groups[name] = joinRoute(prefix, suffix)
+				}
+				continue
+			}
+
+			match := routeRe.FindStringSubmatch(line)
+			if match == nil {
+				continue
+			}
+			groupName, method, routePath := match[1], match[2], match[3]
+			prefix, ok := groups[groupName]
+			if !ok {
+				continue
+			}
+
+			fullPath := sampleRoutePath(joinRoute("/api/v1", prefix, routePath))
+			if !isEmployeeSelfServicePath(fullPath) {
+				continue
+			}
+
+			key := method + " " + fullPath
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			routes = append(routes, routeDef{method: method, path: fullPath})
+		}
+	}
+
+	return routes
 }
 
 // TestAdvPartnerRole_AllowList asserts every endpoint the adv_partner role is
@@ -169,6 +272,8 @@ func TestExistingRoles_NotRegressed(t *testing.T) {
 	// Employee keeps self-service, denied on admin surfaces
 	assert.True(t, svc.CanAccess("employee", "/api/v1/me", "GET"))
 	assert.True(t, svc.CanAccess("employee", "/api/v1/me/advance-payment", "GET"))
+	assert.True(t, svc.CanAccess("employee", "/api/v1/me/check-in-advance", "GET"))
+	assert.True(t, svc.CanAccess("employee", "/api/v1/me/check-in-advance/request", "POST"))
 	assert.False(t, svc.CanAccess("employee", "/api/v1/employees", "GET"))
 
 	// adv_partner can read/import advance payments, manage users, denied on admin/partner surfaces
@@ -179,6 +284,25 @@ func TestExistingRoles_NotRegressed(t *testing.T) {
 	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/users", "POST"))
 	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/advance-payments/1/cancel", "POST"))
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/employees", "GET"))
+}
+
+// TestEmployeeRole_AllSelfServiceRoutesAreAllowed audits Gin route registration
+// against Casbin policy for employee-owned surfaces. It catches the class of
+// regression where a new self-service route is added but the employee policy is
+// not updated, causing a 403 before the handler runs.
+func TestEmployeeRole_AllSelfServiceRoutesAreAllowed(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+	routes := discoverEmployeeSelfServiceRoutes(t)
+	if len(routes) == 0 {
+		t.Fatal("no employee self-service routes discovered")
+	}
+
+	for _, route := range routes {
+		assert.True(t,
+			svc.CanAccess("employee", route.path, route.method),
+			"employee should be allowed %s %s", route.method, route.path,
+		)
+	}
 }
 
 // TestPartnerRole_EditRequests asserts the partner can list their own edit
