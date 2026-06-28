@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { formatCurrency } from "@/utils/formatters";
-import { isSalaryRecorded } from "@/utils/attendanceHelpers";
+import { getCheckoutWindowSummary, isSalaryRecorded } from "@/utils/attendanceHelpers";
 import {
   createGeolocationError,
   getLocationPermissionIssue,
@@ -183,45 +183,69 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   const locationRecoveryText =
     actionType === "check_out" ? "Thử cấp quyền lại để tan ca" : "Thử cấp quyền lại để vào làm";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
+  const noSalaryWindow = getCheckoutWindowSummary(noSalaryReason);
 
   return (
     <div className={`p-4 ${className}`} style={style}>
       <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tan ca trước giờ hợp lệ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Kiểm tra lại giờ tan ca trước khi tiếp tục.
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-employee-100 bg-white shadow-2xl shadow-employee-900/20 sm:max-w-md">
+          <AlertDialogHeader className="bg-employee-900 px-5 pb-4 pt-5 text-left">
+            <AlertDialogTitle className="text-lg font-bold leading-snug text-white">
+              Tan ca ngoài giờ hợp lệ
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mt-1 text-sm leading-5 text-employee-100">
+              Tan ca đúng khung giờ để hệ thống ghi nhận lương.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-3 px-6 py-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700">
-                  <Clock className="h-5 w-5" />
+          <div className="space-y-3 px-5 py-4">
+            <div className="rounded-lg border border-employee-100 bg-employee-50/80 p-4">
+              <div className="flex items-center gap-2 text-employee-800">
+                <Clock className="h-5 w-5 shrink-0" />
+                <p className="text-sm font-semibold leading-5">Giờ hợp lệ</p>
+              </div>
+              {noSalaryWindow ? (
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {noSalaryWindow.checkInTime ? (
+                    <div>
+                      <p className="text-xs font-medium leading-4 text-employee-700">Vào làm</p>
+                      <p className="mt-1 text-base font-bold leading-6 text-slate-950">
+                        {noSalaryWindow.checkInTime}
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className={noSalaryWindow.checkInTime ? "" : "col-span-2"}>
+                    <p className="text-xs font-medium leading-4 text-employee-700">Tan ca</p>
+                    <p className="mt-1 text-base font-bold leading-6 text-slate-950">
+                      {noSalaryWindow.validStartTime} - {noSalaryWindow.validEndTime}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Giờ tan ca hợp lệ</p>
-                  <p className="mt-1 text-[16px] font-bold leading-6 text-slate-950">
-                    {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
-                  </p>
-                </div>
+              ) : (
+                <p className="mt-2 text-sm font-medium leading-5 text-slate-800">
+                  {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
+                </p>
+              )}
+            </div>
+            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-950">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+              <div>
+                <p className="text-base font-bold leading-6">Ca này sẽ không tính lương</p>
+                <p className="mt-1 text-sm font-medium leading-5 text-red-800">
+                  Chỉ tiếp tục nếu bạn muốn hủy ca hiện tại.
+                </p>
               </div>
             </div>
-            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-950">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-              <p className="text-[15px] font-semibold leading-6">
-                Tan ca bây giờ sẽ hủy ca hiện tại và không ghi nhận lương cho ca này.
-              </p>
-            </div>
           </div>
-          <AlertDialogFooter className="grid grid-cols-2 gap-3">
-            <AlertDialogCancel disabled={isPending} className="mt-0 w-full">
+          <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
+            <AlertDialogCancel
+              disabled={isPending}
+              className="mt-0 h-12 w-full rounded-lg border-employee-200 bg-white text-base font-bold text-employee-900 hover:bg-employee-50 hover:text-employee-900"
+            >
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              className="w-full bg-red-600 text-white hover:bg-red-700"
+              className="h-12 w-full rounded-lg bg-red-600 text-base font-bold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
               onClick={(event) => {
                 event.preventDefault();
                 handleAction("check_out", { confirmNoSalary: true });
