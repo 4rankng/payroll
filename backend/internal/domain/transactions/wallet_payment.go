@@ -19,7 +19,7 @@ type WalletPayment struct {
 	Provider  string    `gorm:"column:provider;type:varchar(16);not null;default:'9pay'"`
 
 	RequestedAmount int64 `gorm:"column:requested_amount;not null"`
-	Fee int64 `gorm:"column:fee;not null;default:0"`
+	Fee             int64 `gorm:"column:fee;not null;default:0"`
 
 	RecipientName      string `gorm:"column:recipient_name;type:varchar(255);not null"`
 	RecipientAccountNo string `gorm:"column:recipient_account_no;type:varchar(64);not null"`

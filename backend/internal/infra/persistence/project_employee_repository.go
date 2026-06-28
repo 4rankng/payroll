@@ -5,6 +5,7 @@ import (
 	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"api-server/internal/constants"
@@ -318,6 +319,15 @@ func (r *ProjectEmployeeRepository) applyFilters(query *gorm.DB, filters domain.
 		query = query.Where("last_date IS NULL")
 	}
 
+	// Free-text search across denormalized employee fields
+	if search := strings.TrimSpace(filters.Search); search != "" {
+		pattern := "%" + search + "%"
+		query = query.Where(
+			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
+			pattern, pattern, pattern,
+		)
+	}
+
 	// Filter by payment schedule
 	if filters.PaymentSchedule != nil {
 		query = query.Where("payment_schedule = ?", string(*filters.PaymentSchedule))
@@ -578,6 +588,15 @@ func (r *ProjectEmployeeRepository) getDistinctProjectEmployees(ctx context.Cont
 		}
 	}
 
+	// Free-text search across denormalized employee fields
+	if search := strings.TrimSpace(filters.Search); search != "" {
+		pattern := "%" + search + "%"
+		subQuery = subQuery.Where(
+			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
+			pattern, pattern, pattern,
+		)
+	}
+
 	// Main query joins with the subquery to get only the top-ranked assignment per employee
 	var assignments []*domain.ProjectEmployee
 	query := r.DB.WithContext(ctx).
@@ -645,6 +664,15 @@ func (r *ProjectEmployeeRepository) countDistinctProjectEmployees(ctx context.Co
 		} else {
 			query = query.Where("check_in_enabled = 0")
 		}
+	}
+
+	// Free-text search across denormalized employee fields
+	if search := strings.TrimSpace(filters.Search); search != "" {
+		pattern := "%" + search + "%"
+		query = query.Where(
+			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
+			pattern, pattern, pattern,
+		)
 	}
 
 	var count int64

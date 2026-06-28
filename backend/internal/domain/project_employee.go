@@ -94,6 +94,7 @@ type ProjectEmployeeFilters struct {
 	ToDate          *time.Time
 	ActiveOnly      bool // Show only active assignments (LastDate is null)
 	Status          string
+	Search          string           // Free-text search across employee_name, employee_cccd, employee_code
 	PaymentSchedule *PaymentSchedule // Filter by payment schedule (weekly/monthly)
 	CheckInEnabled  *bool            // Filter by check-in enabled status
 	Limit           int

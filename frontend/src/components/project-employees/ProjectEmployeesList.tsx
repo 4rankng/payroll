@@ -14,6 +14,7 @@ import { Unlink, User, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { Project } from "@/types/api/project.types";
 import { ProjectEmployeeAssignment, ProjectEmployeeListParams } from "@/types/api/project-employee.types";
 import { FilterPill } from "@/components/shared/FilterPill";
+import { SearchBar } from "@/components/shared/SearchBar";
 import { useProjectEmployeeManagement } from "@/hooks/business/useProjectEmployeeManagement";
 import { CheckInToggle } from "./CheckInToggle";
 
@@ -39,6 +40,7 @@ export function ProjectEmployeesList({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [checkInFilter, setCheckInFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Build API params — all pagination & filtering handled by backend
   const apiParams = useMemo<ProjectEmployeeListParams>(() => {
@@ -46,8 +48,12 @@ export function ProjectEmployeesList({
     if (checkInFilter !== "all") {
       params.check_in_enabled = checkInFilter === "on";
     }
+    const trimmed = searchTerm.trim();
+    if (trimmed) {
+      params.search = trimmed;
+    }
     return params;
-  }, [currentPage, pageSize, checkInFilter]);
+  }, [currentPage, pageSize, checkInFilter, searchTerm]);
 
   // Business logic
   const {
@@ -116,6 +122,12 @@ export function ProjectEmployeesList({
     setCurrentPage(1);
   }, []);
 
+  // Reset to page 1 when search changes (debounced in SearchBar)
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  }, []);
+
   // Loading state
   if (isLoading) {
     return (
@@ -140,16 +152,43 @@ export function ProjectEmployeesList({
 
   // Empty state
   if (isEmpty) {
+    const hasSearch = searchTerm.trim().length > 0;
     return (
       <div className="h-full flex flex-col">
+        {/* Filter row — still show search bar so user can clear it */}
+        <div className="flex items-center gap-2 px-4 pt-2 pb-1">
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            placeholder="Tìm theo tên, CCCD hoặc mã nhân viên"
+            className="flex-1 sm:max-w-xs"
+          />
+          {project.is_flexible && (
+            <FilterPill
+              value={checkInFilter}
+              onChange={handleCheckInFilterChange}
+              placeholder="Điểm danh"
+              options={[
+                { value: "on", label: "Bật" },
+                { value: "off", label: "Tắt" },
+              ]}
+            />
+          )}
+        </div>
         <div className="flex-1 flex flex-col items-center justify-center space-y-4">
           <User className="w-12 h-12 text-muted-foreground" />
           <div className="text-center space-y-2">
-            <h3 className="font-medium">Chưa có nhân viên nào được giao</h3>
+            <h3 className="font-medium">
+              {hasSearch
+                ? "Không tìm thấy nhân viên phù hợp"
+                : "Chưa có nhân viên nào được giao"}
+            </h3>
             <p className="typography-body-medium text-muted-foreground">
-              {project.status === "active"
-                ? 'Nhấn nút "Thêm nhân viên" ở cuối trang để giao nhân viên vào dự án này'
-                : "Chỉ có thể thêm nhân viên vào dự án đang hoạt động"}
+              {hasSearch
+                ? `Không có kết quả nào cho "${searchTerm.trim()}"`
+                : project.status === "active"
+                  ? 'Nhấn nút "Thêm nhân viên" ở cuối trang để giao nhân viên vào dự án này'
+                  : "Chỉ có thể thêm nhân viên vào dự án đang hoạt động"}
             </p>
           </div>
         </div>
@@ -163,8 +202,14 @@ export function ProjectEmployeesList({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Filter row */}
-      {project.is_flexible && (
-        <div className="flex items-center gap-2 px-4 pt-2 pb-1">
+      <div className="flex items-center gap-2 px-4 pt-2 pb-1">
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          placeholder="Tìm theo tên, CCCD hoặc mã nhân viên"
+          className="flex-1 sm:max-w-xs"
+        />
+        {project.is_flexible && (
           <FilterPill
             value={checkInFilter}
             onChange={handleCheckInFilterChange}
@@ -174,14 +219,16 @@ export function ProjectEmployeesList({
               { value: "off", label: "Tắt" },
             ]}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Employee Card Grid */}
       <div className="flex-1 overflow-auto p-4 pt-2">
         {employees.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-muted-foreground typography-body-medium">
-            Không tìm thấy nhân viên
+            {searchTerm.trim()
+              ? `Không tìm thấy nhân viên nào khớp với "${searchTerm.trim()}"`
+              : "Không tìm thấy nhân viên"}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">

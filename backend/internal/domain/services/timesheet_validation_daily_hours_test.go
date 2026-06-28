@@ -31,14 +31,14 @@ func TestPostBatchDailyTotal(t *testing.T) {
 	day := time.Date(2026, 6, 21, 0, 0, 0, 0, time.Local)
 
 	tests := []struct {
-		name         string
-		existing     []*domain.Timesheet
-		batchHours   []float64
-		deletionHrs  float64
-		upsertHrs    float64
-		wantTotal    float64
-		wantOver24h  bool
-		description  string
+		name        string
+		existing    []*domain.Timesheet
+		batchHours  []float64
+		deletionHrs float64
+		upsertHrs   float64
+		wantTotal   float64
+		wantOver24h bool
+		description string
 	}{
 		{
 			name:        "upsert replaces existing row (the user's bug)",
