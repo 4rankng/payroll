@@ -28,10 +28,10 @@ function HistoryIssueChips({ details }: { details: AttendanceIssueDetail[] }) {
   if (details.length === 0) return null;
 
   return (
-    <div className="mt-2 grid grid-cols-3 gap-2">
+    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.18fr)] gap-2">
       {details.map((detail) => (
         <div key={detail.label} className="rounded-md border border-orange-100 bg-white/80 px-2 py-1.5">
-          <p className="text-[10px] font-semibold uppercase leading-3 text-slate-500">{detail.label}</p>
+          <p className="whitespace-nowrap text-[10px] font-semibold uppercase leading-3 text-slate-500">{detail.label}</p>
           <p className="mt-0.5 text-[13px] font-bold leading-4 text-orange-950">{detail.value}</p>
         </div>
       ))}

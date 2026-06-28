@@ -80,10 +80,10 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
       : "border-amber-200 bg-white/80 text-amber-950";
 
   return (
-    <div className="mt-3 grid grid-cols-3 gap-2">
+    <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.18fr)] gap-2">
       {details.map((detail) => (
         <div key={detail.label} className={`rounded-lg border px-2.5 py-2 ${toneClass}`}>
-          <p className="text-[11px] font-semibold uppercase leading-4 text-slate-500">{detail.label}</p>
+          <p className="whitespace-nowrap text-[11px] font-semibold uppercase leading-4 text-slate-500">{detail.label}</p>
           <p className="mt-0.5 text-[15px] font-bold leading-5">{detail.value}</p>
         </div>
       ))}
