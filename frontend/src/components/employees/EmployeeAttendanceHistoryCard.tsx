@@ -1,7 +1,12 @@
 import { format } from "date-fns";
 import { AlertTriangle, Calendar, History, WalletCards } from "lucide-react";
 import { formatDate } from "@/utils/formatters";
-import { isSalaryRecorded, isSalaryMissing } from "@/utils/attendanceHelpers";
+import {
+  getAttendanceIssueSummary,
+  isSalaryRecorded,
+  isSalaryMissing,
+  type AttendanceIssueDetail,
+} from "@/utils/attendanceHelpers";
 import { useAttendanceHistory } from "@/hooks/api/useAttendance";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -17,6 +22,21 @@ function formatTime(time: string | undefined | null, fallback = "--:--"): string
 interface EmployeeAttendanceHistoryCardProps {
   className?: string;
   style?: React.CSSProperties;
+}
+
+function HistoryIssueChips({ details }: { details: AttendanceIssueDetail[] }) {
+  if (details.length === 0) return null;
+
+  return (
+    <div className="mt-2 grid grid-cols-3 gap-2">
+      {details.map((detail) => (
+        <div key={detail.label} className="rounded-md border border-orange-100 bg-white/80 px-2 py-1.5">
+          <p className="text-[10px] font-semibold uppercase leading-3 text-slate-500">{detail.label}</p>
+          <p className="mt-0.5 text-[13px] font-bold leading-4 text-orange-950">{detail.value}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAttendanceHistoryCardProps) {
@@ -56,6 +76,10 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
             history.slice(0, 5).map((att) => {
               const salaryRecorded = isSalaryRecorded(att);
               const salaryMissing = isSalaryMissing(att);
+              const issue = getAttendanceIssueSummary(
+                att.salary_reject_reason || att.salary_message,
+                "Kiểm tra lại khung giờ ca làm."
+              );
 
               return (
               <div
@@ -103,13 +127,17 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
                 {salaryMissing && (
                   <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-[15px] font-semibold leading-5 text-amber-800">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{att.salary_reject_reason || att.salary_message || "Chưa ghi nhận lương cho ca này."}</span>
+                    <span>{issue.title}</span>
                   </div>
                 )}
                 {att.status === "rejected" && att.salary_reject_reason && (
-                  <div className="mt-3 flex items-start gap-2 rounded-lg bg-orange-50 px-3 py-2.5 text-[15px] font-semibold leading-5 text-orange-800">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{att.salary_reject_reason}</span>
+                  <div className="mt-3 rounded-lg bg-orange-50 px-3 py-2.5 text-orange-800">
+                    <div className="flex items-start gap-2 text-[15px] font-semibold leading-5 text-orange-900">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{issue.title}</span>
+                    </div>
+                    <p className="mt-1 pl-6 text-[14px] font-medium leading-5 text-orange-700">{issue.description}</p>
+                    <HistoryIssueChips details={issue.details} />
                   </div>
                 )}
               </div>

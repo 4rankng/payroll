@@ -23,7 +23,12 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { formatCurrency } from "@/utils/formatters";
-import { getCheckoutWindowSummary, isSalaryRecorded } from "@/utils/attendanceHelpers";
+import {
+  getAttendanceIssueSummary,
+  getCheckoutWindowSummary,
+  isSalaryRecorded,
+  type AttendanceIssueDetail,
+} from "@/utils/attendanceHelpers";
 import {
   createGeolocationError,
   getLocationPermissionIssue,
@@ -64,6 +69,26 @@ const CONFIRMED_NO_SALARY_MARKER = "Nhân viên đã xác nhận tan ca không g
 
 function isConfirmedNoSalaryAttendance(attendance: { salary_reject_reason?: string | null } | null | undefined): boolean {
   return Boolean(attendance?.salary_reject_reason?.includes(CONFIRMED_NO_SALARY_MARKER));
+}
+
+function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[]; tone: "amber" | "orange" }) {
+  if (details.length === 0) return null;
+
+  const toneClass =
+    tone === "orange"
+      ? "border-orange-200 bg-white/80 text-orange-950"
+      : "border-amber-200 bg-white/80 text-amber-950";
+
+  return (
+    <div className="mt-3 grid grid-cols-3 gap-2">
+      {details.map((detail) => (
+        <div key={detail.label} className={`rounded-lg border px-2.5 py-2 ${toneClass}`}>
+          <p className="text-[11px] font-semibold uppercase leading-4 text-slate-500">{detail.label}</p>
+          <p className="mt-0.5 text-[15px] font-bold leading-5">{detail.value}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardProps) {
@@ -184,6 +209,11 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
     actionType === "check_out" ? "Thử cấp quyền lại để tan ca" : "Thử cấp quyền lại để vào làm";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
   const noSalaryWindow = getCheckoutWindowSummary(noSalaryReason);
+  const salaryIssue = getAttendanceIssueSummary(
+    attendance?.salary_reject_reason || attendance?.salary_message,
+    "Kiểm tra lại khung giờ ca làm."
+  );
+  const rejectedIssue = getAttendanceIssueSummary(attendance?.salary_reject_reason);
 
   return (
     <div className={`p-4 ${className}`} style={style}>
@@ -330,15 +360,12 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[18px] font-bold leading-6">
-                  {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : "Ca này chưa tính lương"}
+                  {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : salaryIssue.title}
                 </p>
                 <p className="mt-1 text-[16px] font-medium leading-6 opacity-85">
-                  {attendance.salary_reject_reason ||
-                    attendance.salary_message ||
-                    (salaryRecorded
-                      ? "Bạn có thể yêu cầu ứng lương nếu còn hạn mức."
-                      : "Vui lòng kiểm tra khung giờ ca làm hoặc liên hệ quản lý.")}
+                  {salaryRecorded ? "Bạn có thể yêu cầu ứng lương nếu còn hạn mức." : salaryIssue.description}
                 </p>
+                {!salaryRecorded ? <IssueDetailChips details={salaryIssue.details} tone="amber" /> : null}
               </div>
             </div>
           </div>
@@ -415,11 +442,13 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
               <AlertCircle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[18px] font-bold leading-6 text-orange-950">Ca làm việc đã bị từ chối</p>
-              <p className="mt-1 text-[16px] font-medium leading-6 text-orange-700">
-                {attendance.salary_reject_reason ||
-                  "Ca này đã hết hạn tan ca và bị từ chối tự động. Vui lòng liên hệ quản lý."}
+              <p className="text-[18px] font-bold leading-6 text-orange-950">
+                {rejectedIssue.title === "Cần quản lý kiểm tra" ? "Ca đã bị từ chối" : rejectedIssue.title}
               </p>
+              <p className="mt-1 text-[16px] font-medium leading-6 text-orange-700">
+                {rejectedIssue.description}
+              </p>
+              <IssueDetailChips details={rejectedIssue.details} tone="orange" />
             </div>
           </div>
         </div>
