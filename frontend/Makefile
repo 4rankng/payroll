@@ -7,6 +7,10 @@ IMAGE_NAME = payroll-frontend
 TAG ?= latest
 FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(TAG)
 
+# Buildx builder (shared with backend) — persistent docker-container builder
+# enables layer + registry caching so builds skip the slow `yarn install` step.
+BUILDER ?= bb
+
 # Demo (demo.tingting.vip) — separate image tag + API URL so demo is independent of prod
 DEMO_API_URL ?= https://demo.tingting.vip
 DEMO_TAG ?= demo
@@ -14,34 +18,46 @@ DEMO_FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(DEMO_TAG)
 
 .PHONY: push push-demo
 push:
+	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
+	@docker buildx use $(BUILDER)
+	@docker buildx inspect --bootstrap >/dev/null
 	@echo "Logging in to DockerHub as $(DOCKERHUB_USERNAME)"
 	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login --username $(DOCKERHUB_USERNAME) --password-stdin
-	@echo "Building Docker image for amd64 with production environment variables: $(FULL_IMAGE_NAME)"
-	docker build --no-cache --platform linux/amd64 \
+	@echo "Building & pushing amd64 image with production environment variables: $(FULL_IMAGE_NAME)"
+	docker buildx build \
+		--platform linux/amd64 \
+		--cache-from type=registry,ref=$(FULL_IMAGE_NAME) \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--build-arg VITE_API_BASE_URL=https://tingting.vip \
 		--build-arg VITE_API_VERSION=/api/v1 \
 		--build-arg VITE_API_TIMEOUT=30000 \
 		--build-arg VITE_GOOGLE_CLIENT_ID=$(VITE_GOOGLE_CLIENT_ID) \
-		-t $(FULL_IMAGE_NAME) .
-	@echo "Pushing Docker image: $(FULL_IMAGE_NAME)"
-	docker push $(FULL_IMAGE_NAME)
+		--tag $(FULL_IMAGE_NAME) \
+		--push \
+		.
 	@echo "Successfully pushed $(FULL_IMAGE_NAME)"
 
 # Build & push the demo frontend image (API URL → demo.tingting.vip)
 push-demo:
+	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
+	@docker buildx use $(BUILDER)
+	@docker buildx inspect --bootstrap >/dev/null
 	@echo "Logging in to DockerHub as $(DOCKERHUB_USERNAME)"
 	@docker logout >/dev/null 2>&1 || true
 	@echo "$(DOCKERHUB_PASSWORD)" | docker login --username $(DOCKERHUB_USERNAME) --password-stdin
-	@echo "Building demo Docker image for amd64: $(DEMO_FULL_IMAGE_NAME)"
-	docker build --no-cache --platform linux/amd64 \
+	@echo "Building & pushing demo Docker image for amd64: $(DEMO_FULL_IMAGE_NAME)"
+	docker buildx build \
+		--platform linux/amd64 \
+		--cache-from type=registry,ref=$(DEMO_FULL_IMAGE_NAME) \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--build-arg VITE_API_BASE_URL=$(DEMO_API_URL) \
 		--build-arg VITE_API_VERSION=/api/v1 \
 		--build-arg VITE_API_TIMEOUT=30000 \
 		--build-arg VITE_GOOGLE_CLIENT_ID=$(VITE_GOOGLE_CLIENT_ID) \
-		-t $(DEMO_FULL_IMAGE_NAME) .
-	@echo "Pushing Docker image: $(DEMO_FULL_IMAGE_NAME)"
-	docker push $(DEMO_FULL_IMAGE_NAME)
+		--tag $(DEMO_FULL_IMAGE_NAME) \
+		--push \
+		.
 	@echo "Successfully pushed $(DEMO_FULL_IMAGE_NAME)"
 
 # Deploy to production droplet

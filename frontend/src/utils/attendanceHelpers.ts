@@ -8,6 +8,17 @@ export interface CheckoutWindowSummary {
   validEndTime: string | null;
 }
 
+export interface AttendanceIssueDetail {
+  label: string;
+  value: string;
+}
+
+export interface AttendanceIssueSummary {
+  title: string;
+  description: string;
+  details: AttendanceIssueDetail[];
+}
+
 /**
  * Whether salary was recorded for a shift. Treats an explicit backend
  * salary_status of "recorded" OR a positive earning_amount as recorded,
@@ -46,4 +57,55 @@ export function getCheckoutWindowSummary(message: string | null): CheckoutWindow
   }
 
   return null;
+}
+
+function stripParentheticalDetails(message: string): string {
+  let depth = 0;
+  let result = "";
+
+  for (const char of message) {
+    if (char === "(") {
+      depth += 1;
+      continue;
+    }
+    if (char === ")") {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth === 0) {
+      result += char;
+    }
+  }
+
+  return result.replace(/\s+/g, " ").trim();
+}
+
+export function getAttendanceIssueSummary(
+  message: string | null | undefined,
+  fallbackDescription = "Kiểm tra lại khung giờ ca làm."
+): AttendanceIssueSummary {
+  const normalizedMessage = message?.trim();
+  const times = normalizedMessage
+    ? Array.from(normalizedMessage.matchAll(/\b\d{2}:\d{2}\b/g), (match) => match[0])
+    : [];
+
+  if (normalizedMessage?.includes("Đã hết hạn tan ca")) {
+    return {
+      title: "Quá hạn tan ca",
+      description: "Ca không được ghi nhận vì đã quá hạn tan ca.",
+      details: [
+        ...(times[0] ? [{ label: "Vào làm", value: times[0] }] : []),
+        ...(times[1] ? [{ label: "Tan ca", value: times[1] }] : []),
+        ...(times[2] ? [{ label: "Hạn chót", value: times[2] }] : []),
+      ],
+    };
+  }
+
+  const readableMessage = normalizedMessage ? stripParentheticalDetails(normalizedMessage) : "";
+
+  return {
+    title: readableMessage || "Cần quản lý kiểm tra",
+    description: readableMessage ? fallbackDescription : fallbackDescription,
+    details: [],
+  };
 }
