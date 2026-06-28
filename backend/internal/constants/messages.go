@@ -457,7 +457,7 @@ const (
 	MsgFailedToGetActiveSettingsVN = "Không thể lấy cài đặt đang hoạt động"
 
 	// Payment Schedule Messages - Vietnamese
-	MsgInvalidPaymentScheduleValueVN          = "Lịch thanh toán không hợp lệ. Phải là 'weekly' hoặc 'monthly'"
+	MsgInvalidPaymentScheduleValueVN          = "Lịch thanh toán không hợp lệ. Phải là 'weekly', 'monthly' hoặc 'flexible'"
 	MsgFailedToRequestScheduleChangeVN        = "Không thể yêu cầu thay đổi lịch thanh toán"
 	MsgFailedToRetrievePendingSchedulesVN     = "Không thể lấy danh sách thay đổi lịch đang chờ"
 	MsgFailedToCancelScheduleChangeVN         = "Không thể hủy yêu cầu thay đổi lịch thanh toán"

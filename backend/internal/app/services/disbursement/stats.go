@@ -47,7 +47,7 @@ type StatusGroup struct {
 	Status               domaintx.State `json:"status"`
 	Count                int64          `json:"count"`
 	TotalRequestedAmount int64          `json:"total_requested_amount"`
-	TotalFee int64 `json:"total_fee"`
+	TotalFee             int64          `json:"total_fee"`
 }
 
 // ByErrorCode returns a flat list of ErrorCodeGroup sorted by count DESC.

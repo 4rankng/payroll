@@ -84,6 +84,9 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 		filters.CheckInEnabled = &val
 	}
 
+	// Add free-text search across denormalized employee fields
+	filters.Search = c.Query("search")
+
 	// For partner users, check if they have limited employee-based access
 	userRole := c.GetString(constants.CtxUserRole)
 	var accessibleEmployeeIDs map[uint]bool // Use map for O(1) lookup
@@ -326,6 +329,8 @@ func (h *Handler) RequestPaymentScheduleChange(c *gin.Context) {
 		newSchedule = domain.PaymentScheduleWeekly
 	case string(domain.PaymentScheduleMonthly):
 		newSchedule = domain.PaymentScheduleMonthly
+	case string(domain.PaymentScheduleFlexible):
+		newSchedule = domain.PaymentScheduleFlexible
 	default:
 		response.BadRequest(c, constants.MsgInvalidPaymentScheduleValueVN)
 		return

@@ -95,6 +95,7 @@ export interface ProjectEmployeeListParams {
   start_date?: string;
   end_date?: string;
   check_in_enabled?: boolean;
+  search?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;

@@ -239,7 +239,7 @@ func (r *TxWalletPaymentRepository) StatsByStatus(ctx context.Context, from, to 
 		Status               string `gorm:"column:status"`
 		Count                int64  `gorm:"column:cnt"`
 		TotalRequestedAmount int64  `gorm:"column:total_requested"`
-		TotalFee int64 `gorm:"column:total_fee"`
+		TotalFee             int64  `gorm:"column:total_fee"`
 	}
 	var rows []row
 	err := r.DB.WithContext(ctx).
@@ -261,7 +261,7 @@ func (r *TxWalletPaymentRepository) StatsByStatus(ctx context.Context, from, to 
 			Status:               domaintx.State(r.Status),
 			Count:                r.Count,
 			TotalRequestedAmount: r.TotalRequestedAmount,
-			TotalFee: r.TotalFee,
+			TotalFee:             r.TotalFee,
 		}
 	}
 	return out, nil
