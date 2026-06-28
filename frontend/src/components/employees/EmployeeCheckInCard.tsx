@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, BadgeCheck, BriefcaseBusiness, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
+import { AlertCircle, BadgeCheck, BriefcaseBusiness, Clock, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -189,28 +189,46 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Tan ca không ghi nhận lương?</AlertDialogTitle>
+            <AlertDialogTitle>Tan ca trước giờ hợp lệ?</AlertDialogTitle>
             <AlertDialogDescription>
-              {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
+              Kiểm tra lại giờ tan ca trước khi tiếp tục.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="px-6 py-4 text-[15px] font-medium leading-6 text-slate-700">
-            Nếu tiếp tục tan ca, hệ thống sẽ đóng ca hiện tại và không ghi nhận tiền lương cho ca này. Sau đó bạn có thể vào làm lại cho ca mới.
+          <div className="space-y-3 px-6 py-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Giờ tan ca hợp lệ</p>
+                  <p className="mt-1 text-[16px] font-bold leading-6 text-slate-950">
+                    {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-950">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+              <p className="text-[15px] font-semibold leading-6">
+                Tan ca bây giờ sẽ hủy ca hiện tại và không ghi nhận lương cho ca này.
+              </p>
+            </div>
           </div>
-          <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-            <AlertDialogCancel disabled={isPending} className="mt-0">
+          <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogCancel disabled={isPending} className="mt-0 w-full">
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="w-full bg-red-600 text-white hover:bg-red-700"
               onClick={(event) => {
                 event.preventDefault();
                 handleAction("check_out", { confirmNoSalary: true });
               }}
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DoorOpen className="mr-2 h-4 w-4" />}
-              Tan ca không ghi nhận lương
+              Hủy ca
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
