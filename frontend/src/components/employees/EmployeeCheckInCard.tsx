@@ -2,10 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, BadgeCheck, BriefcaseBusiness, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ATTENDANCE_QUERY_KEYS,
   useTodayAttendance,
   useCheckIn,
   useCheckOut,
 } from "@/hooks/api/useAttendance";
+import { getErrorMessage } from "@/utils/error-handler";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
@@ -34,12 +47,34 @@ interface EmployeeCheckInCardProps {
   style?: React.CSSProperties;
 }
 
+// Returns true only for the two checkout-WINDOW violations (too early / too late),
+// which the backend lets the employee override via confirm_no_salary. The orphaned
+// ("Ca làm việc đã quá hạn tan ca") and auto-rejected ("...tự động từ chối...")
+// guards run BEFORE the override branch in CheckOut, so they are intentionally NOT
+// matched here — offering the dialog for them would dead-end (the confirmed call is
+// re-rejected with the same message).
+function canConfirmNoSalaryCheckout(message: string): boolean {
+  return (
+    message.includes("Chỉ có thể tan ca từ") ||
+    message.includes("Bạn chỉ được tan ca từ")
+  );
+}
+
+const CONFIRMED_NO_SALARY_MARKER = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương";
+
+function isConfirmedNoSalaryAttendance(attendance: { salary_reject_reason?: string | null } | null | undefined): boolean {
+  return Boolean(attendance?.salary_reject_reason?.includes(CONFIRMED_NO_SALARY_MARKER));
+}
+
 export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
+  const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
+  const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
+  const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
   // Synchronous in-flight guard. The button's `disabled` only takes effect after
   // the next render, so a rapid double-tap (common on mobile) can fire handleAction
   // twice before `isLocating`/`isPending` flips — sending a second request that the
@@ -60,7 +95,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
     return () => window.removeEventListener("focus", clearOnReturn);
   }, []);
 
-  const handleAction = async (type: "check_in" | "check_out") => {
+  const handleAction = async (type: "check_in" | "check_out", options?: { confirmNoSalary?: boolean }) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
     // Start each attempt with a clean slate so a stale banner from a previous
@@ -82,12 +117,36 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       if (type === "check_in") {
         await checkInMutation.mutateAsync(payload);
       } else {
-        await checkOutMutation.mutateAsync(payload);
+        await checkOutMutation.mutateAsync({
+          ...payload,
+          confirm_no_salary: options?.confirmNoSalary,
+        });
       }
       setLocationIssue(null);
+      setNoSalaryReason(null);
+      setShowNoSalaryConfirm(false);
     } catch (error: unknown) {
       if (!isGeolocationError(error)) {
         setLocationIssue(null);
+        if (type === "check_out") {
+          // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
+          const message = getErrorMessage(error);
+          if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
+            // First attempt outside the checkout window: show the real reason and
+            // offer the confirmed no-salary path. The dialog is the UI — no toast.
+            setNoSalaryReason(message);
+            setShowNoSalaryConfirm(true);
+          } else {
+            // A confirmed no-salary call that failed (e.g. the shift was auto-
+            // rejected while the dialog was open) or a non-overridable error:
+            // close any stale dialog, surface the message once, and refetch today's
+            // attendance so the card reflects the real (possibly rejected) state.
+            setShowNoSalaryConfirm(false);
+            setNoSalaryReason(null);
+            toast({ title: message || "Không thể tan ca", variant: "destructive" });
+            queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
+          }
+        }
         return;
       }
 
@@ -116,16 +175,46 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
 
   const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
   const salaryRecorded = attendance ? isSalaryRecorded(attendance) : false;
+  const canStartCorrectShift = attendance?.status === "completed" && isConfirmedNoSalaryAttendance(attendance);
   // The next action is fully determined by the attendance status — there is no
   // need to track the last-tapped action separately (doing so defaulted it to
   // "check_in" and could mislabel the recovery CTA on a fresh check_out).
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
   const locationRecoveryText =
     actionType === "check_out" ? "Thử cấp quyền lại để tan ca" : "Thử cấp quyền lại để vào làm";
-  const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance);
+  const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
 
   return (
     <div className={`p-4 ${className}`} style={style}>
+      <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tan ca không ghi nhận lương?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 py-4 text-[15px] font-medium leading-6 text-slate-700">
+            Nếu tiếp tục tan ca, hệ thống sẽ đóng ca hiện tại và không ghi nhận tiền lương cho ca này. Sau đó bạn có thể vào làm lại cho ca mới.
+          </div>
+          <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+            <AlertDialogCancel disabled={isPending} className="mt-0">
+              Quay lại
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={(event) => {
+                event.preventDefault();
+                handleAction("check_out", { confirmNoSalary: true });
+              }}
+            >
+              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DoorOpen className="mr-2 h-4 w-4" />}
+              Tan ca không ghi nhận lương
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {showLocationRecovery ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
           <div className="flex items-start gap-3">
@@ -211,6 +300,25 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
               </div>
             </div>
           </div>
+
+          {canStartCorrectShift ? (
+            <Button
+              size="lg"
+              className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
+              style={{
+                boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
+              }}
+              disabled={isPending}
+              onClick={() => handleAction("check_in")}
+            >
+              {isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : (
+                <BriefcaseBusiness className="w-5 h-5 mr-2" />
+              )}
+              {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
+            </Button>
+          ) : null}
         </div>
       ) : attendance?.status === "checked_in" ? (
         <div className="space-y-4">

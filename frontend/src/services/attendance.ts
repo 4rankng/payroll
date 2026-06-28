@@ -38,7 +38,7 @@ export const attendanceService = {
     );
   },
 
-  checkOut: async (payload: { lat: number; lng: number }) => {
+  checkOut: async (payload: { lat: number; lng: number; confirm_no_salary?: boolean }) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkOut,
       payload

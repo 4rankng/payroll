@@ -21,6 +21,8 @@ const checkInShiftWindow = 1 * time.Hour
 // still allowed: checkout is valid in [K, K + checkOutUpperGrace).
 const checkOutUpperGrace = 1 * time.Hour
 
+const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
+
 // TaskEnqueuer schedules the auto-reject checkout task for an attendance.
 // Implemented by the asynq client wrapper; fakes capture the call in tests.
 // Nil is allowed — when unset, CheckIn skips scheduling (used in lightweight tests).
@@ -118,6 +120,15 @@ func validateCheckOutWindow(shift *parsedShift, checkInTime, checkOutTime time.T
 		))
 	}
 	return nil
+}
+
+func isConfirmedNoSalaryCheckout(att *domain.Attendance) bool {
+	return att != nil &&
+		att.CheckOutTime != nil &&
+		att.EarningAmount != nil &&
+		*att.EarningAmount == 0 &&
+		att.SalaryRejectReason != nil &&
+		strings.Contains(*att.SalaryRejectReason, confirmedNoSalaryCheckoutReason)
 }
 
 // parsedShift is a single configured shift for a position, resolved to absolute
@@ -352,7 +363,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		if err != nil {
 			return fmt.Errorf("failed to check existing attendance: %w", err)
 		}
-		if existing != nil {
+		if existing != nil && !isConfirmedNoSalaryCheckout(existing) {
 			return domain.NewValidationError("Bạn đã vào làm trong ngày hôm nay rồi")
 		}
 
@@ -412,7 +423,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	return result, err
 }
 
-func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, lng float64) (*domain.Attendance, error) {
+func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, lng float64, confirmNoSalary bool) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -464,8 +475,24 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		if shift == nil {
 			return domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng liên hệ quản lý.")
 		}
+		var forcedNoSalaryReason *string
 		if err := validateCheckOutWindow(shift, attendance.CheckInTime, now); err != nil {
-			return err
+			if !confirmNoSalary {
+				return err
+			}
+			reason := fmt.Sprintf("%s %s", err.Error(), confirmedNoSalaryCheckoutReason)
+			forcedNoSalaryReason = &reason
+			// Salary-affecting employee self-service action: the employee explicitly
+			// accepted zero pay to close a mistaken shift outside the checkout window.
+			// Log it so the override is auditable (who/when/which shift) by ops/payroll.
+			observability.GetLogger().Info(
+				"attendance checkout override: employee confirmed no-salary checkout outside window",
+				"attendance_id", attendance.ID,
+				"employee_id", employeeID,
+				"project_id", attendance.ProjectID,
+				"check_in_time", attendance.CheckInTime,
+				"check_out_time", now,
+			)
 		}
 
 		// 2. Best-effort geofence validation for checkout.
@@ -507,7 +534,10 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 
 		var earningAmount int64
 		var salaryRejectReason *string
-		if payrate == nil {
+		if forcedNoSalaryReason != nil {
+			earningAmount = 0
+			salaryRejectReason = forcedNoSalaryReason
+		} else if payrate == nil {
 			reason := "Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này."
 			salaryRejectReason = &reason
 		} else {

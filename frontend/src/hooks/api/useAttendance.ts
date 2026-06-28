@@ -62,10 +62,12 @@ export function useCheckOut() {
       queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.info });
       queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.checkInAdvanceInfo });
     },
-    onError: (error: unknown) => {
-      const e = error as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(e?.response?.data?.message || "Không thể tan ca");
-    },
+    // onError is intentionally a no-op: EmployeeCheckInCard owns all checkout
+    // error UI — the no-salary confirm dialog for window violations, and a toast
+    // for everything else. Keeping onError defined suppresses the global
+    // MutationCache error toast (App.tsx skips notifications when a mutation has
+    // its own onError handler), which avoids a duplicate toast.
+    onError: () => {},
   });
 }
 
