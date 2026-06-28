@@ -14,8 +14,9 @@ type CheckInRequest struct {
 
 // CheckOutRequest represents the request to check out
 type CheckOutRequest struct {
-	Lat float64 `json:"lat" binding:"required"`
-	Lng float64 `json:"lng" binding:"required"`
+	Lat             float64 `json:"lat" binding:"required"`
+	Lng             float64 `json:"lng" binding:"required"`
+	ConfirmNoSalary bool    `json:"confirm_no_salary"`
 }
 
 // AttendanceResponse represents an attendance record

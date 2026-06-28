@@ -236,7 +236,7 @@ func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
 		transactionManager: &fakeTransactionManager{},
 	}
 
-	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0)
+	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, false)
 	if err == nil {
 		t.Fatal("expected CheckOut to reject an auto-rejected attendance")
 	}
@@ -245,6 +245,107 @@ func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
 	}
 	if repo.updated != nil {
 		t.Fatalf("expected no persistence on a rejected checkout, but attendance was updated")
+	}
+}
+
+func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkIn := time.Date(2026, 6, 21, 8, 35, 0, 0, loc)
+	now := time.Date(2026, 6, 21, 9, 0, 0, 0, loc)
+	att := &domain.Attendance{
+		ID:          8,
+		ProjectID:   55,
+		EmployeeID:  123,
+		Date:        checkIn,
+		CheckInTime: checkIn,
+		CheckInGate: "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDate: att}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: &domain.ProjectEmployee{Position: "Công nhân", CheckInEnabled: true}},
+		projectRepo: &fakeProjectRepo{p: &domain.Project{
+			ID:                   55,
+			GeofenceRadiusMeters: 100,
+			GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: 10.0, Lng: 106.0}},
+		}},
+		payrateRepo: &fakePayrateRepo{pr: &domain.Payrate{
+			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`),
+		}},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+
+	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, false)
+	if err == nil {
+		t.Fatal("expected unconfirmed checkout before shift end to be rejected")
+	}
+	if !strings.Contains(err.Error(), "Chỉ có thể tan ca từ 17:00 đến 18:00") {
+		t.Fatalf("expected checkout window reason, got %q", err.Error())
+	}
+	if repo.updated != nil {
+		t.Fatal("expected rejected checkout not to update attendance")
+	}
+
+	updated, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, true)
+	if err != nil {
+		t.Fatalf("expected confirmed no-salary checkout to succeed, got %v", err)
+	}
+	if updated.CheckOutTime == nil || !updated.CheckOutTime.Equal(now.In(updated.CheckOutTime.Location())) {
+		t.Fatalf("expected checkout time to be set to %v, got %v", now, updated.CheckOutTime)
+	}
+	if updated.EarningAmount == nil || *updated.EarningAmount != 0 {
+		t.Fatalf("expected zero earning, got %v", updated.EarningAmount)
+	}
+	if updated.SalaryRejectReason == nil || !strings.Contains(*updated.SalaryRejectReason, "không ghi nhận tiền lương") {
+		t.Fatalf("expected no-salary reject reason, got %v", updated.SalaryRejectReason)
+	}
+	if repo.updated != updated {
+		t.Fatal("expected attendance update to be persisted")
+	}
+}
+
+func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	now := time.Date(2026, 6, 21, 20, 5, 0, 0, loc)
+	zero := int64(0)
+	closedAt := time.Date(2026, 6, 21, 9, 0, 0, 0, loc)
+	reason := "Bạn mới vào làm lúc 08:35. Chỉ có thể tan ca từ 17:00 đến 18:00. " + confirmedNoSalaryCheckoutReason
+	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{
+		ID:                 8,
+		ProjectID:          55,
+		EmployeeID:         123,
+		Date:               time.Date(2026, 6, 21, 0, 0, 0, 0, loc),
+		CheckInTime:        time.Date(2026, 6, 21, 8, 35, 0, 0, loc),
+		CheckOutTime:       &closedAt,
+		EarningAmount:      &zero,
+		SalaryRejectReason: &reason,
+	}}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: &domain.ProjectEmployee{Position: "Công nhân", CheckInEnabled: true}},
+		projectRepo: &fakeProjectRepo{p: &domain.Project{
+			ID:                   55,
+			IsFlexible:           true,
+			GeofenceRadiusMeters: 100,
+			GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: 10.0, Lng: 106.0}},
+		}},
+		payrateRepo: &fakePayrateRepo{pr: &domain.Payrate{
+			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"20:00-04:00":350000}}}`),
+		}},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+
+	att, err := svc.CheckIn(context.Background(), 123, 55, 10.0, 106.0)
+	if err != nil {
+		t.Fatalf("expected next same-day check-in to be allowed after confirmed no-salary checkout, got %v", err)
+	}
+	if att == nil || repo.created != att {
+		t.Fatal("expected a new attendance record to be created")
+	}
+	if !att.CheckInTime.Equal(now.In(att.CheckInTime.Location())) {
+		t.Fatalf("expected new check-in time %v, got %v", now, att.CheckInTime)
 	}
 }
 

@@ -93,9 +93,11 @@ func (a *Attendance) GetStatus(now time.Time) AttendanceStatus {
 	// Auto-rejected by the checkout-window task: no checkout and a persisted
 	// reject reason (set together with EarningAmount=0). Checked before the
 	// 18h orphaned fallback so a final rejection always reads as rejected.
-	// This discriminator is safe because SalaryRejectReason is only ever set on
-	// a no-checkout record by the auto-reject path — completed-but-unpaid
-	// records carry a checkout and return completed above.
+	// SalaryRejectReason is now written by TWO paths — the auto-reject task on a
+	// no-checkout record (which reaches here), and the confirmed-no-salary
+	// checkout override (which also sets CheckOutTime, so it returns completed
+	// above and never reaches this branch). The CheckOutTime check above is what
+	// keeps the two cases distinct; do not reorder these guards.
 	if a.SalaryRejectReason != nil {
 		return AttendanceStatusRejected
 	}

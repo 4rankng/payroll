@@ -117,7 +117,7 @@ func (h *Handler) CheckOut(c *gin.Context) {
 		return
 	}
 
-	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, req.Lat, req.Lng)
+	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, req.Lat, req.Lng, req.ConfirmNoSalary)
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return

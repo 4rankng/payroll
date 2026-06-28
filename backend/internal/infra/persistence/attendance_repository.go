@@ -62,6 +62,8 @@ func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employe
 	err := r.getDB(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("employee_id = ? AND date = ?", employeeID, dateOnly).
+		Order("CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL THEN 0 ELSE 1 END").
+		Order("id DESC").
 		First(&att).Error
 
 	if err != nil {
