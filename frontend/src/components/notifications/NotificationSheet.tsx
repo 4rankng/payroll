@@ -41,6 +41,12 @@ interface NotificationSheetProps {
 
 export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: NotificationSheetProps) => {
   const isMobile = useIsMobile();
+  const isEmployeeMobile = isMobile && variant === 'employee';
+  // Employee full-screen sheet hugs the top safe-area tighter than the
+  // rounded bottom-sheet variant.
+  const headerPaddingTop = `calc(env(safe-area-inset-top, 0px) + ${
+    isEmployeeMobile ? '0.875rem' : '1.25rem'
+  })`;
   const theme = THEME[variant];
   const [activeView, setActiveView] = useState<NotificationView>('unread');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -127,31 +133,46 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className={cn("!w-full sm:!w-[420px] p-0 flex flex-col h-full bg-gray-50", isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]")}>
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          title="Thông báo"
+          description="Danh sách thông báo của bạn"
+          className={cn(
+            "!w-full sm:!w-[420px] p-0 flex flex-col bg-gray-50",
+            isMobile
+              ? isEmployeeMobile
+                ? "h-[100dvh] max-h-[100dvh] !rounded-none shadow-none"
+                : "h-full max-h-[94dvh] rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+              : "h-full"
+          )}
+        >
 
           {/* Mobile drag handle */}
-          {isMobile && (
+          {isMobile && !isEmployeeMobile && (
             <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
               <div className="h-1 w-9 rounded-full bg-white/25" />
             </div>
           )}
 
           {/* Header */}
-          <div className={`text-white px-4 pb-4 ${theme.headerBg}`} style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
+          <div
+            className={cn("text-white px-4 pb-4", theme.headerBg, isEmployeeMobile && "px-5")}
+            style={{ paddingTop: headerPaddingTop }}
+          >
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={onClose}
-                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                className="h-11 w-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
                 aria-label="Đóng"
               >
-                <ArrowLeft className="h-5 w-5 text-white" />
+                <ArrowLeft className="h-6 w-6 text-white" />
               </button>
               <h2 className="text-base font-bold text-white">Thông báo</h2>
               {activeView === 'unread' && unreadNotifications.length > 0 ? (
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="h-8 flex items-center gap-1.5 px-2 rounded-full hover:bg-white/20 transition-colors text-white/90 text-xs font-medium disabled:opacity-50"
+                  className="h-11 flex items-center gap-1.5 px-2 rounded-full hover:bg-white/20 transition-colors text-white/90 text-xs font-medium disabled:opacity-50"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -160,7 +181,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   <span>Đọc tất cả</span>
                 </button>
               ) : (
-                <div className="w-8" />
+                <div className="w-11" />
               )}
             </div>
 
@@ -173,7 +194,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 <button
                   key={tab.value}
                   onClick={() => setActiveView(tab.value)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                     activeView === tab.value
                       ? `bg-white shadow-sm ${theme.activeTabText}`
                       : 'text-white/80 hover:text-white'
@@ -198,7 +219,10 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           </div>
 
           {/* Push notification toggle — pinned footer */}
-          <div className="border-t bg-white px-3 py-2">
+          <div
+            className="border-t bg-white px-3 py-2"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+          >
             <PushNotificationToggle />
           </div>
 

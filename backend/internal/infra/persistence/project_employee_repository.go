@@ -5,7 +5,6 @@ import (
 	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"api-server/internal/constants"
@@ -17,11 +16,13 @@ import (
 
 type ProjectEmployeeRepository struct {
 	*BaseRepository
+	filterBuilder *common.FilterBuilder
 }
 
 func NewProjectEmployeeRepository(db *Database) domain.ProjectEmployeeRepository {
 	return &ProjectEmployeeRepository{
 		BaseRepository: NewBaseRepository(db),
+		filterBuilder:  common.NewFilterBuilder(db.DB),
 	}
 }
 
@@ -319,14 +320,11 @@ func (r *ProjectEmployeeRepository) applyFilters(query *gorm.DB, filters domain.
 		query = query.Where("last_date IS NULL")
 	}
 
-	// Free-text search across denormalized employee fields
-	if search := strings.TrimSpace(filters.Search); search != "" {
-		pattern := "%" + search + "%"
-		query = query.Where(
-			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
-			pattern, pattern, pattern,
-		)
-	}
+	// Free-text search across denormalized employee fields. Routed through the
+	// shared FilterBuilder.ApplyVietnameseSearch chokepoint (same as
+	// project_repository) so case/accent handling is consistent across every
+	// search surface and the OR clause is grouped safely.
+	query = r.filterBuilder.ApplyVietnameseSearch(query, &filters)
 
 	// Filter by payment schedule
 	if filters.PaymentSchedule != nil {
@@ -589,13 +587,7 @@ func (r *ProjectEmployeeRepository) getDistinctProjectEmployees(ctx context.Cont
 	}
 
 	// Free-text search across denormalized employee fields
-	if search := strings.TrimSpace(filters.Search); search != "" {
-		pattern := "%" + search + "%"
-		subQuery = subQuery.Where(
-			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
-			pattern, pattern, pattern,
-		)
-	}
+	subQuery = r.filterBuilder.ApplyVietnameseSearch(subQuery, &filters)
 
 	// Main query joins with the subquery to get only the top-ranked assignment per employee
 	var assignments []*domain.ProjectEmployee
@@ -667,13 +659,7 @@ func (r *ProjectEmployeeRepository) countDistinctProjectEmployees(ctx context.Co
 	}
 
 	// Free-text search across denormalized employee fields
-	if search := strings.TrimSpace(filters.Search); search != "" {
-		pattern := "%" + search + "%"
-		query = query.Where(
-			"employee_name LIKE ? OR employee_cccd LIKE ? OR employee_code LIKE ?",
-			pattern, pattern, pattern,
-		)
-	}
+	query = r.filterBuilder.ApplyVietnameseSearch(query, &filters)
 
 	var count int64
 	err := query.Scan(&count).Error

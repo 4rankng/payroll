@@ -131,12 +131,16 @@ export class ProjectEmployeeService {
   async changePaymentSchedule(
     assignmentId: number,
     data: ChangePaymentScheduleRequest
-  ): Promise<ChangePaymentScheduleResponse> {
+  ): Promise<ChangePaymentScheduleResponse | null> {
     const response = await apiClient.post<ChangePaymentScheduleResponse>(
       `${this.baseUrl}/${assignmentId}/payment-schedule`,
       data
     );
-    return response.data!;
+    // Backend returns data:null for this in-place mutation (handler calls
+    // response.Success(c, nil, ...)), so do not assert non-null — return the
+    // honest nullable value. Callers (useChangePaymentSchedule.onSuccess)
+    // intentionally ignore the payload and refresh via invalidateQueries.
+    return response.data ?? null;
   }
 
   /**

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"api-server/internal/pkg/clock"
@@ -101,6 +102,20 @@ type ProjectEmployeeFilters struct {
 	Offset          int
 	SortBy          string
 	SortOrder       string
+}
+
+// GetSearch implements common.SearchFilter so the persistence layer can route
+// free-text search through common.FilterBuilder.ApplyVietnameseSearch (the
+// shared chokepoint used by project_repository and others), keeping accent/
+// case handling consistent across every search surface.
+func (f ProjectEmployeeFilters) GetSearch() string {
+	return strings.TrimSpace(f.Search)
+}
+
+// GetSearchFields implements common.SearchFilter — the denormalized employee
+// columns on project_employees that the free-text search scans.
+func (f ProjectEmployeeFilters) GetSearchFields() []string {
+	return []string{"employee_name", "employee_cccd", "employee_code"}
 }
 
 // ProjectEmployeeWithDetails represents project employee with full project and employee details
