@@ -282,10 +282,11 @@ export function useChangePaymentSchedule() {
     mutationFn: ({ assignmentId, data }) =>
       projectEmployeeService.changePaymentSchedule(assignmentId, data),
 
-    onSuccess: (response, { assignmentId }) => {
-      showSuccessNotification(
-        response.data?.message || response.message || 'Cập nhật chu kỳ thanh toán thành công'
-      );
+    onSuccess: () => {
+      // Backend returns data:null for this in-place mutation; the mutationFn resolves
+      // to null, so we must not dereference it. Show a fixed success message (mirrors
+      // useCancelScheduleChange) and let the invalidations below refresh the UI.
+      showSuccessNotification('Cập nhật chu kỳ thanh toán thành công');
 
       // Invalidate all queries that might be affected by this change
       queryClient.invalidateQueries({

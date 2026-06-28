@@ -554,6 +554,15 @@ func (s *ProjectEmployeeService) RequestPaymentScheduleChange(ctx context.Contex
 			}
 			applyImmediately = !projectHasPaid
 		default:
+			// PaymentScheduleFlexible (and any unrecognized value) lands here:
+			// apply immediately unless THIS employee has been paid this month.
+			// NOTE: the Weekly branch above additionally defers when ANY project
+			// member has been paid this month (projectHasPaidTimesheetsThisMonth),
+			// because Monthly→Weekly is a finer-grained transition that can
+			// corrupt a mid-month cycle. Monthly→Flexible is the same kind of
+			// finer-grained transition — confirm whether Flexible should defer
+			// project-wide too (i.e. share the Weekly branch) before relying on
+			// this per-employee default. Tracked as a business-rule decision.
 			applyImmediately = !hasPaidThisMonth
 		}
 
