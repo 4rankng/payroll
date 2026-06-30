@@ -189,6 +189,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						BankAccountNumber: row.BankAccount,
 						BankAccountName:   strings.ToUpper(fullName),
 						BankID:            bankID,
+						Mobile:            row.Mobile,
 						CreatedBy:         uploaderID,
 					}
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
@@ -213,6 +214,14 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
 							slog.Error("BCCImport(WBCC): failed to fill bank info for employee",
 								"employee_id", emp.ID, "error", updateErr)
+						}
+					}
+
+					// Fill missing mobile from STK when employee has none.
+					if row.Mobile != "" && emp.Mobile == "" {
+						if err := s.employeeService.UpdateMobile(txCtx, emp.ID, row.Mobile); err != nil {
+							slog.Error("BCCImport(WBCC): failed to fill mobile for existing employee",
+								"employee_id", emp.ID, "error", err)
 						}
 					}
 					if emp.UserID == nil && s.employeeUserService != nil {
@@ -345,6 +354,9 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 							if stkRow.BankName != "" {
 								emp.BankID = s.employeeService.ResolveBankID(txCtx, stkRow.BankName)
 							}
+							if stkRow.Mobile != "" {
+								emp.Mobile = stkRow.Mobile
+							}
 						}
 						createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 						if createErr != nil {
@@ -388,6 +400,12 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 								if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
 									slog.Error("BCCImport(WBCC): failed to fill bank info",
 										"employee_id", emp.ID, "error", updateErr)
+								}
+							}
+							if stkRow.Mobile != "" && emp.Mobile == "" {
+								if err := s.employeeService.UpdateMobile(txCtx, emp.ID, stkRow.Mobile); err != nil {
+									slog.Error("BCCImport(WBCC): failed to fill mobile",
+										"employee_id", emp.ID, "error", err)
 								}
 							}
 						}

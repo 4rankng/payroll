@@ -150,6 +150,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 						BankAccountNumber: row.BankAccount,
 						BankAccountName:   strings.ToUpper(fullName),
 						BankID:            bankID,
+						Mobile:            row.Mobile,
 						CreatedBy:         uploaderID,
 					}
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
@@ -174,6 +175,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
 							slog.Error("BCCImport(MP): failed to fill bank info for employee",
 								"employee_id", emp.ID, "error", updateErr)
+						}
+					}
+
+					// Fill missing mobile from STK when employee has none.
+					if row.Mobile != "" && emp.Mobile == "" {
+						if err := s.employeeService.UpdateMobile(txCtx, emp.ID, row.Mobile); err != nil {
+							slog.Error("BCCImport(MP): failed to fill mobile for existing employee",
+								"employee_id", emp.ID, "error", err)
 						}
 					}
 					if emp.UserID == nil && s.employeeUserService != nil {
