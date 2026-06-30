@@ -34,3 +34,12 @@ func (s *EmployeeService) ResolveBankID(ctx context.Context, bankName string) *u
 func (s *EmployeeService) UpdateBankInfo(ctx context.Context, employeeID uint, bankUpdates map[string]any) error {
 	return s.EmployeeRepo.UpdateColumns(ctx, employeeID, bankUpdates)
 }
+
+// UpdateMobile sets the employee's mobile number (targeted update to avoid
+// full Save overwriting concurrent changes).
+func (s *EmployeeService) UpdateMobile(ctx context.Context, employeeID uint, mobile string) error {
+	if mobile == "" {
+		return nil
+	}
+	return s.EmployeeRepo.UpdateColumns(ctx, employeeID, map[string]any{"mobile": mobile})
+}

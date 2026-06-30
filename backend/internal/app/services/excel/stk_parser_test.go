@@ -1,6 +1,7 @@
 package excel
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/xuri/excelize/v2"
@@ -25,6 +26,7 @@ func TestParseSTKSheet(t *testing.T) {
 	_ = f.SetCellValue(sheetName, "D3", "Stk")
 	_ = f.SetCellValue(sheetName, "E3", "Tên Ngân hàng")
 	_ = f.SetCellValue(sheetName, "F3", "Ghi chú")
+	_ = f.SetCellValue(sheetName, "G3", "SĐT")
 
 	// Write data rows (row 4 & 5)
 	_ = f.SetCellValue(sheetName, "A4", "1")
@@ -33,6 +35,7 @@ func TestParseSTKSheet(t *testing.T) {
 	_ = f.SetCellValue(sheetName, "D4", "296608866")
 	_ = f.SetCellValue(sheetName, "E4", "MB")
 	_ = f.SetCellValue(sheetName, "F4", "")
+	_ = f.SetCellValue(sheetName, "G4", "0987654321")
 
 	_ = f.SetCellValue(sheetName, "A5", "2")
 	_ = f.SetCellValue(sheetName, "B5", "031094015626")
@@ -40,6 +43,7 @@ func TestParseSTKSheet(t *testing.T) {
 	_ = f.SetCellValue(sheetName, "D5", "0356755184")
 	_ = f.SetCellValue(sheetName, "E5", "MB")
 	_ = f.SetCellValue(sheetName, "F5", "some note")
+	_ = f.SetCellValue(sheetName, "G5", "0981 234 567")
 
 	// Parse
 	rows, err := ParseSTKSheet(f)
@@ -52,12 +56,12 @@ func TestParseSTKSheet(t *testing.T) {
 	}
 
 	row1 := rows[0]
-	if row1.CCCD != "027202000029" || row1.FullName != "Nguyễn Sỹ Hùng" || row1.BankAccount != "296608866" || row1.BankName != "MB" || row1.Note != "" {
+	if row1.CCCD != "027202000029" || row1.FullName != "Nguyễn Sỹ Hùng" || row1.BankAccount != "296608866" || row1.BankName != "MB" || row1.Note != "" || row1.Mobile != "0987654321" {
 		t.Errorf("row 1 parsed incorrectly: %+v", row1)
 	}
 
 	row2 := rows[1]
-	if row2.CCCD != "031094015626" || row2.FullName != "Phạm Văn Khương" || row2.BankAccount != "0356755184" || row2.BankName != "MB" || row2.Note != "some note" {
+	if row2.CCCD != "031094015626" || row2.FullName != "Phạm Văn Khương" || row2.BankAccount != "0356755184" || row2.BankName != "MB" || row2.Note != "some note" || row2.Mobile != "0981234567" {
 		t.Errorf("row 2 parsed incorrectly: %+v", row2)
 	}
 }
@@ -95,6 +99,9 @@ func TestParseSTKSheet_WithBCClgdFile(t *testing.T) {
 	}
 	if r.BankName != "MSB" {
 		t.Errorf("BankName: want MSB, got %q", r.BankName)
+	}
+	if r.Mobile != "" {
+		t.Errorf("Mobile: want empty (no col G in fixture), got %q", r.Mobile)
 	}
 }
 
@@ -140,6 +147,34 @@ func TestParseSTKSheet_TrailingSpaceName(t *testing.T) {
 			}
 			if rows[0].CCCD != "011207000333" || rows[0].FullName != "Quàng Văn Hùng" {
 				t.Errorf("sheet %q: unexpected row %+v", sheetName, rows[0])
+			}
+			if rows[0].Mobile != "" {
+				t.Errorf("sheet %q: Mobile: want empty (no col G), got %q", sheetName, rows[0].Mobile)
+			}
+		})
+	}
+}
+
+func TestSanitizeMobile(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"empty", "", ""},
+		{"already digits", "0987654321", "0987654321"},
+		{"spaces stripped", "0981 234 567", "0981234567"},
+		{"plus and dashes", "+84-981-234-567", "84981234567"},
+		{"parens and spaces", "(0981) 234 567", "0981234567"},
+		{"over 50 chars", strings.Repeat("1", 51), ""},
+		{"exactly 50", strings.Repeat("1", 50), strings.Repeat("1", 50)},
+		{"leading zeros preserved", "0912345678", "0912345678"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := sanitizeMobile(tc.in)
+			if got != tc.want {
+				t.Errorf("sanitizeMobile(%q) = %q, want %q", tc.in, got, tc.want)
 			}
 		})
 	}

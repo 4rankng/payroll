@@ -2,6 +2,7 @@ package excel
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
@@ -14,6 +15,7 @@ type STKRow struct {
 	BankAccount string
 	BankName    string
 	Note        string
+	Mobile      string
 }
 
 // ParseSTKSheet searches for and parses the STK sheet in the provided Excel file.
@@ -110,6 +112,10 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 		if len(row) > 5 {
 			note = strings.TrimSpace(row[5])
 		}
+		mobile := ""
+		if len(row) > 6 {
+			mobile = sanitizeMobile(row[6])
+		}
 
 		stkRows = append(stkRows, STKRow{
 			CCCD:        cccd,
@@ -117,8 +123,27 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 			BankAccount: bankAccount,
 			BankName:    bankName,
 			Note:        note,
+			Mobile:      mobile,
 		})
 	}
 
 	return stkRows, nil
+}
+
+// sanitizeMobile strips non-digit characters (spaces, +, -, parens) so the
+// value satisfies Employee.ValidateMobile (digits-only) regardless of how the
+// partner formatted the phone in column G.
+func sanitizeMobile(s string) string {
+	digitsOnly := strings.Map(func(r rune) rune {
+		if r >= '0' && r <= '9' {
+			return r
+		}
+		return -1
+	}, strings.TrimSpace(s))
+	if len(digitsOnly) > 50 {
+		slog.Warn("sanitizeMobile: phone exceeds employees.mobile varchar(50), dropping",
+			"length", len(digitsOnly), "original", s)
+		return ""
+	}
+	return digitsOnly
 }
