@@ -87,21 +87,11 @@ func (r *attendanceFailedAttemptRepository) GetCategoryCounts(ctx context.Contex
 		Model(&domain.AttendanceFailedAttempt{}).
 		Select("reason_category as category, COUNT(*) as count").
 		Where("created_at >= ? AND created_at < ?", since, until).
-		Where(checkInEnabledScope()).
+		Where(checkInFailedAttemptScope()).
 		Group("reason_category").
 		Order("count DESC").
 		Scan(&counts).Error
 	return counts, err
-}
-
-func (r *attendanceFailedAttemptRepository) GetTotalCount(ctx context.Context, since, until time.Time) (int64, error) {
-	var count int64
-	err := r.db.WithContext(ctx).
-		Model(&domain.AttendanceFailedAttempt{}).
-		Where("created_at >= ? AND created_at < ?", since, until).
-		Where(checkInEnabledScope()).
-		Count(&count).Error
-	return count, err
 }
 
 func (r *attendanceFailedAttemptRepository) GetCountByAttemptType(ctx context.Context, since, until time.Time) ([]domain.FailedAttemptTypeCount, error) {
@@ -110,17 +100,7 @@ func (r *attendanceFailedAttemptRepository) GetCountByAttemptType(ctx context.Co
 		Model(&domain.AttendanceFailedAttempt{}).
 		Select("attempt_type, COUNT(*) as count").
 		Where("created_at >= ? AND created_at < ?", since, until).
-		Where(checkInEnabledScope()).
-		Group("attempt_type").
+		Where(checkInFailedAttemptScope()).
 		Scan(&counts).Error
 	return counts, err
-}
-
-// checkInEnabledScope returns a GORM WHERE clause that restricts results to
-// employees with at least one active, check-in-enabled project assignment.
-// When project_id = 0 (e.g. check-out failures where the handler cannot resolve
-// the project), the subquery matches on employee_id alone so those rows are not
-// silently excluded.
-func checkInEnabledScope() string {
-	return `EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = attendance_failed_attempts.employee_id AND (attendance_failed_attempts.project_id = 0 OR (pe.project_id = attendance_failed_attempts.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL)) AND pe.check_in_enabled = 1)`
 }

@@ -44,11 +44,11 @@ type Attendance struct {
 
 // AttendanceHealthStats holds conditional-aggregation counts for health monitoring.
 type AttendanceHealthStats struct {
-	OpenCheckedIn         int `json:"open_checked_in" gorm:"column:open_checked_in"`
-	Orphaned              int `json:"orphaned" gorm:"column:orphaned"`
-	AutoRejected          int `json:"auto_rejected" gorm:"column:auto_rejected"`
-	CompletedZeroEarning  int `json:"completed_zero_earning" gorm:"column:completed_zero_earning"`
-	SuccessfulCheckouts   int `json:"successful_checkouts" gorm:"column:successful_checkouts"`
+	OpenCheckedIn        int `json:"open_checked_in" gorm:"column:open_checked_in"`
+	Orphaned             int `json:"orphaned" gorm:"column:orphaned"`
+	AutoRejected         int `json:"auto_rejected" gorm:"column:auto_rejected"`
+	CompletedZeroEarning int `json:"completed_zero_earning" gorm:"column:completed_zero_earning"`
+	SuccessfulCheckouts  int `json:"successful_checkouts" gorm:"column:successful_checkouts"`
 }
 
 // AttendanceRepository defines the interface for attendance persistence operations
@@ -96,15 +96,15 @@ type AttendanceFilters struct {
 // layer so the admin dashboard can surface aggregate failure counts by
 // reason category.
 type AttendanceFailedAttempt struct {
-	ID             uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	EmployeeID     uint       `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
-	AttemptType    string     `json:"attempt_type" gorm:"type:varchar(16);not null"`
-	ReasonCategory string     `json:"reason_category" gorm:"type:varchar(48);not null"`
-	ProjectID      uint       `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
-	Lat            *float64   `json:"lat" gorm:"type:decimal(10,7)"`
-	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
-	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
-	CreatedAt      time.Time  `json:"created_at"`
+	ID             uint      `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	EmployeeID     uint      `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
+	AttemptType    string    `json:"attempt_type" gorm:"type:varchar(16);not null"`
+	ReasonCategory string    `json:"reason_category" gorm:"type:varchar(48);not null"`
+	ProjectID      uint      `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
+	Lat            *float64  `json:"lat" gorm:"type:decimal(10,7)"`
+	Lng            *float64  `json:"lng" gorm:"type:decimal(10,7)"`
+	ErrorMessage   *string   `json:"error_message" gorm:"type:varchar(500)"`
+	CreatedAt      time.Time `json:"created_at"`
 	Employee       Employee  `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
 }
 
@@ -140,8 +140,6 @@ type AttendanceFailedAttemptRepository interface {
 	Count(ctx context.Context, filters FailedAttemptFilters) (int64, error)
 	// GetCategoryCounts returns counts grouped by reason_category within the window.
 	GetCategoryCounts(ctx context.Context, since, until time.Time) ([]FailedAttemptCategoryCount, error)
-	// GetTotalCount returns the total count within the window.
-	GetTotalCount(ctx context.Context, since, until time.Time) (int64, error)
 	// GetCountByAttemptType returns counts grouped by attempt_type within the window.
 	GetCountByAttemptType(ctx context.Context, since, until time.Time) ([]FailedAttemptTypeCount, error)
 }

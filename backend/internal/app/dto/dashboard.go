@@ -669,15 +669,14 @@ type PartnerEmployeeListResponse struct {
 // CheckInHealthResponse holds anomaly counts across the check-in → quota → request pipeline.
 type CheckInHealthResponse struct {
 	// A. Check-in / Check-out
-	FailedAttemptsToday        int                          `json:"failed_attempts_today"`
-	FailedAttemptsByCategory   []FailedAttemptCategoryCount `json:"failed_attempts_by_category"`
-	FailedCheckInToday         int                          `json:"failed_check_in_today"`
-	FailedCheckOutToday        int                          `json:"failed_check_out_today"`
-	OpenCheckedIn              int                          `json:"open_checked_in"`
-	Orphaned                   int                          `json:"orphaned"`
-	AutoRejectedToday          int                          `json:"auto_rejected_today"`
-	CompletedZeroEarningToday  int                          `json:"completed_zero_earning_today"`
-	SuccessfulCheckoutsToday   int                          `json:"successful_checkouts_today"`
+	FailedAttemptsByCategory  []FailedAttemptCategoryCount `json:"failed_attempts_by_category"`
+	FailedCheckInToday        int                          `json:"failed_check_in_today"`
+	FailedCheckOutToday       int                          `json:"failed_check_out_today"`
+	OpenCheckedIn             int                          `json:"open_checked_in"`
+	Orphaned                  int                          `json:"orphaned"`
+	AutoRejectedToday         int                          `json:"auto_rejected_today"`
+	CompletedZeroEarningToday int                          `json:"completed_zero_earning_today"`
+	SuccessfulCheckoutsToday  int                          `json:"successful_checkouts_today"`
 	// B. Quota
 	QuotaInvariantDrift    int   `json:"quota_invariant_drift"`
 	MissingQuotaRows       int   `json:"missing_quota_rows"`

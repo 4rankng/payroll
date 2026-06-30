@@ -500,7 +500,6 @@ export interface FailedAttemptCategoryCount {
 
 export interface CheckInHealthResponse {
   // A. Check-in / Check-out
-  failed_attempts_today: number;
   failed_attempts_by_category: FailedAttemptCategoryCount[];
   failed_check_in_today: number;
   failed_check_out_today: number;
