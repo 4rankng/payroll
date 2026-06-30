@@ -20,7 +20,7 @@ import type { CheckInHealthResponse } from '@/types/api/dashboard.types';
  * - `quota-anomaly`: list of quota rows for the given anomaly type.
  */
 export type HealthDrilldownTarget =
-  | { type: 'failed-attempts'; category?: string }
+  | { type: 'failed-attempts'; category?: string; attemptType?: 'check_in' | 'check_out' }
   | { type: 'quota-anomaly'; anomalyType: string }
   | null;
 
@@ -49,8 +49,8 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
   const closeDrilldown = useCallback(() => setDrilldown(null), []);
 
   // ── Click handlers ──────────────────────────────────────────────────────
-  const openFailedAttempts = useCallback((category?: string) => {
-    setDrilldown({ type: 'failed-attempts', category });
+  const openFailedAttempts = useCallback((category?: string, attemptType?: 'check_in' | 'check_out') => {
+    setDrilldown({ type: 'failed-attempts', category, attemptType });
   }, []);
 
   const openQuotaAnomaly = useCallback((anomalyType: string) => {
@@ -62,10 +62,11 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     data,
     isLoading,
     [
-      { key: 'failed_attempts_today', label: 'Thất bại', anomaly: true, drilldown: () => openFailedAttempts() },
+      { key: 'failed_check_in_today', label: 'Lỗi vào làm', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_in') },
+      { key: 'failed_check_out_today', label: 'Lỗi tan ca', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_out') },
       { key: 'open_checked_in', label: 'Đang chấm công', anomaly: true, drilldown: () => openFailedAttempts('open') },
       { key: 'orphaned', label: 'Thiếu dữ liệu ghép cặp', anomaly: true, drilldown: () => openFailedAttempts('orphaned') },
-      { key: 'auto_rejected_today', label: 'Tự huỷ', anomaly: true, drilldown: () => openFailedAttempts('auto_rejected') },
+      { key: 'auto_rejected_today', label: 'Tự huỷ', anomaly: true, drilldown: () => openFailedAttempts('already_auto_rejected') },
       { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openFailedAttempts('zero_earning') },
       { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false },
     ],
@@ -103,7 +104,7 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
           <ShieldCheck className="h-3.5 w-3.5 text-primary/70" />
         </div>
         <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-          Sức khoẻ chấm công / ứng lương
+          Tự chấm công
         </span>
       </div>
 
