@@ -163,6 +163,12 @@ type AdvancePaymentRequestRepository interface {
 	// Used by the poller when wallet balance is insufficient to process claimed requests.
 	// Only resets requests that are still APPROVED (idempotent, safe for concurrent pollers).
 	ResetToPending(ctx context.Context, ids []uint64) error
+	// CountStuckPending returns the number of PENDING requests older than olderThan
+	// (disbursement worker stalled — should trend to 0).
+	CountStuckPending(ctx context.Context, olderThan time.Time) (int64, error)
+	// CountByStatusSince returns request counts grouped by status for rows created
+	// within [since, now). Used by the health dashboard for today's throughput.
+	CountByStatusSince(ctx context.Context, since time.Time) (map[AdvancePaymentRequestStatus]int64, error)
 }
 
 type AdvancePaymentStatsSummary struct {

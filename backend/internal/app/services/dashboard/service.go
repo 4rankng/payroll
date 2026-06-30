@@ -29,6 +29,9 @@ type Service struct {
 	ProjectEmployeeRepo       domain.ProjectEmployeeRepository
 	BulkTransferFileRepo      domain.BulkTransferFileRepository
 	AdvancePaymentRequestRepo domain.AdvancePaymentRequestRepository
+	AdvancePaymentRepo        domain.AdvancePaymentRepository
+	AttendanceRepo            domain.AttendanceRepository
+	AttendanceFailedAttemptRepo domain.AttendanceFailedAttemptRepository
 	SettingsConfigSvc         *config.SettingsConfigService
 	CacheService              *infrastructure.CacheService
 	SalaryCalculationSvc      *services.SalaryCalculationService
@@ -48,29 +51,35 @@ func NewService(
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
 	bulkTransferFileRepo domain.BulkTransferFileRepository,
 	advancePaymentRequestRepo domain.AdvancePaymentRequestRepository,
+	advancePaymentRepo domain.AdvancePaymentRepository,
+	attendanceRepo domain.AttendanceRepository,
+	attendanceFailedAttemptRepo domain.AttendanceFailedAttemptRepository,
 	settingsConfigSvc *config.SettingsConfigService,
 	cacheSvc *infrastructure.CacheService,
 	salaryCalculationSvc *services.SalaryCalculationService,
 	logger *slog.Logger,
 ) *Service {
 	return &Service{
-		UserRepo:                  userRepo,
-		ProjectRepo:               projectRepo,
-		EmployeeRepo:              employeeRepo,
-		TimesheetDashboard:        timesheetRepo,
-		TimesheetPayment:          timesheetRepo,
-		TimesheetQueryRepo:        timesheetQueryRepo,
-		TimesheetAnalyticsRepo:    timesheetAnalyticsRepo,
-		LedgerRepo:                ledgerRepo,
-		NotificationRepo:          notificationRepo,
-		AuditLogRepo:              auditLogRepo,
-		ProjectEmployeeRepo:       projectEmployeeRepo,
-		BulkTransferFileRepo:      bulkTransferFileRepo,
-		AdvancePaymentRequestRepo: advancePaymentRequestRepo,
-		SettingsConfigSvc:         settingsConfigSvc,
-		CacheService:              cacheSvc,
-		SalaryCalculationSvc:      salaryCalculationSvc,
-		logger:                    logger,
+		UserRepo:                    userRepo,
+		ProjectRepo:                 projectRepo,
+		EmployeeRepo:                employeeRepo,
+		TimesheetDashboard:          timesheetRepo,
+		TimesheetPayment:            timesheetRepo,
+		TimesheetQueryRepo:          timesheetQueryRepo,
+		TimesheetAnalyticsRepo:      timesheetAnalyticsRepo,
+		LedgerRepo:                  ledgerRepo,
+		NotificationRepo:            notificationRepo,
+		AuditLogRepo:                auditLogRepo,
+		ProjectEmployeeRepo:         projectEmployeeRepo,
+		BulkTransferFileRepo:        bulkTransferFileRepo,
+		AdvancePaymentRequestRepo:   advancePaymentRequestRepo,
+		AdvancePaymentRepo:          advancePaymentRepo,
+		AttendanceRepo:              attendanceRepo,
+		AttendanceFailedAttemptRepo: attendanceFailedAttemptRepo,
+		SettingsConfigSvc:           settingsConfigSvc,
+		CacheService:                cacheSvc,
+		SalaryCalculationSvc:        salaryCalculationSvc,
+		logger:                      logger,
 	}
 }
 

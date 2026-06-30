@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"context"
 	"log/slog"
 	"strconv"
 	"time"
@@ -17,13 +18,15 @@ import (
 
 type AttendanceHandler struct {
 	attendanceService *attendance.AttendanceService
+	failedAttemptRepo domain.AttendanceFailedAttemptRepository
 	clk               clock.Clock
 	logger            *slog.Logger
 }
 
-func NewAttendanceHandler(attendanceService *attendance.AttendanceService, clk clock.Clock, logger *slog.Logger) *AttendanceHandler {
+func NewAttendanceHandler(attendanceService *attendance.AttendanceService, failedAttemptRepo domain.AttendanceFailedAttemptRepository, clk clock.Clock, logger *slog.Logger) *AttendanceHandler {
 	return &AttendanceHandler{
 		attendanceService: attendanceService,
+		failedAttemptRepo: failedAttemptRepo,
 		clk:               clk,
 		logger:            logger,
 	}
@@ -136,4 +139,85 @@ func (h *AttendanceHandler) Get(c *gin.Context) {
 	}
 
 	response.Success(c, res, "Lấy thông tin thành công")
+}
+
+// AdminListFailedAttempts handles GET /api/v1/admin/attendances/failed-attempts.
+// It returns the drill-down list behind the "failed attempts today" health tile.
+func (h *AttendanceHandler) AdminListFailedAttempts(c *gin.Context) {
+	var filters domain.FailedAttemptFilters
+
+	pg := helpers.ParsePagination(c, 50)
+	filters.Limit = pg.Limit
+	filters.Offset = pg.Offset
+
+	if t := c.Query("type"); t != "" {
+		filters.AttemptType = &t
+	}
+	if cat := c.Query("category"); cat != "" {
+		filters.ReasonCategory = &cat
+	}
+	if empIDStr := c.Query("employee_id"); empIDStr != "" {
+		if empID, err := strconv.ParseUint(empIDStr, 10, 32); err == nil {
+			id := uint(empID)
+			filters.EmployeeID = &id
+		}
+	}
+	loc := time.Local // business timezone — match clock.Now() and DSN loc=Local
+	if fromStr := c.Query("from"); fromStr != "" {
+		if t, err := time.ParseInLocation("2006-01-02", fromStr, loc); err == nil {
+			filters.FromDate = &t
+		}
+	}
+	if toStr := c.Query("to"); toStr != "" {
+		// Inclusive upper bound: shift to the start of the next day so the
+		// repo's created_at < ? half-open interval covers the entire "to" day.
+		if t, err := time.ParseInLocation("2006-01-02", toStr, loc); err == nil {
+			next := t.AddDate(0, 0, 1)
+			filters.ToDate = &next
+		}
+	}
+
+	attempts, total, err := h.listFailedAttempts(c.Request.Context(), filters)
+	if err != nil {
+		h.logger.Error("failed to list failed attempts", "error", err)
+		response.InternalServerError(c, "Lỗi hệ thống khi lấy danh sách lần thử thất bại")
+		return
+	}
+
+	pagination := helpers.CalculatePagination(pg.Page, pg.PageSize, total)
+	res := dto.PaginatedFailedAttemptResponse{
+		Data:  attempts,
+		Total: total,
+	}
+
+	response.SuccessWithPagination(c, res, "Lấy danh sách lần thử thất bại thành công", pagination)
+}
+
+// listFailedAttempts fetches the rows and total count and maps them to the admin DTO.
+func (h *AttendanceHandler) listFailedAttempts(ctx context.Context, filters domain.FailedAttemptFilters) ([]dto.AdminFailedAttemptResponse, int64, error) {
+	rows, err := h.failedAttemptRepo.List(ctx, filters)
+	if err != nil {
+		return nil, 0, err
+	}
+	total, err := h.failedAttemptRepo.Count(ctx, filters)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	data := make([]dto.AdminFailedAttemptResponse, 0, len(rows))
+	for _, a := range rows {
+		data = append(data, dto.AdminFailedAttemptResponse{
+			ID:             a.ID,
+			EmployeeID:     a.EmployeeID,
+			EmployeeName:   a.Employee.Fullname,
+			AttemptType:    a.AttemptType,
+			ReasonCategory: a.ReasonCategory,
+			ProjectID:      a.ProjectID,
+			Lat:            a.Lat,
+			Lng:            a.Lng,
+			ErrorMessage:   a.ErrorMessage,
+			CreatedAt:      a.CreatedAt,
+		})
+	}
+	return data, total, nil
 }

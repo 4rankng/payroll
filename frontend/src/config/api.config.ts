@@ -348,6 +348,13 @@ export const API_ENDPOINTS = {
     bankUsage: '/dashboard/bank-usage',
     bankUsageProjects: '/dashboard/bank-usage/projects',
     partnerEmployeeList: '/dashboard/partner/employees',
+    checkInHealth: '/dashboard/check-in-health',
+    quotaAnomalies: '/dashboard/quota-anomalies',
+  },
+
+  // Admin Attendances
+  adminAttendances: {
+    failedAttempts: '/admin/attendances/failed-attempts',
   },
 
   // Employee Self-Service Portal

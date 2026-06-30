@@ -1,8 +1,10 @@
 package attendance
 
 import (
+	"context"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/attendance"
@@ -17,14 +19,22 @@ import (
 type Handler struct {
 	attendanceService *attendance.AttendanceService
 	employeeRepo      domain.EmployeeRepository
+	failedAttemptRepo  domain.AttendanceFailedAttemptRepository
 	clk               clock.Clock
 	logger            *slog.Logger
 }
 
-func NewHandler(attendanceService *attendance.AttendanceService, employeeRepo domain.EmployeeRepository, clk clock.Clock, logger *slog.Logger) *Handler {
+func NewHandler(
+	attendanceService *attendance.AttendanceService,
+	employeeRepo domain.EmployeeRepository,
+	failedAttemptRepo domain.AttendanceFailedAttemptRepository,
+	clk clock.Clock,
+	logger *slog.Logger,
+) *Handler {
 	return &Handler{
 		attendanceService: attendanceService,
 		employeeRepo:      employeeRepo,
+		failedAttemptRepo:  failedAttemptRepo,
 		clk:               clk,
 		logger:            logger,
 	}
@@ -43,6 +53,41 @@ func (h *Handler) resolveEmployeeID(c *gin.Context) (uint, bool) {
 		return 0, false
 	}
 	return employee.ID, true
+}
+
+// recordFailedAttempt fire-and-forgets a failed-attempt log for a validation error.
+// It uses context.Background() with a timeout so the write never blocks the
+// request and survives the request-context cancellation after the response is sent.
+func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, category, errorMsg string, lat, lng float64) {
+	if h.failedAttemptRepo == nil {
+		return
+	}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				h.logger.Error("panic recording failed attempt", "panic", r)
+			}
+		}()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		msg := errorMsg
+		var latPtr, lngPtr *float64
+		if lat != 0 || lng != 0 {
+			latPtr, lngPtr = &lat, &lng
+		}
+		attempt := &domain.AttendanceFailedAttempt{
+			EmployeeID:     employeeID,
+			AttemptType:    attemptType,
+			ReasonCategory: category,
+			ProjectID:      projectID,
+			Lat:            latPtr,
+			Lng:            lngPtr,
+			ErrorMessage:   &msg,
+		}
+		if err := h.failedAttemptRepo.Create(ctx, attempt); err != nil {
+			h.logger.Warn("failed to log attendance failed attempt", "error", err)
+		}
+	}()
 }
 
 func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse {
@@ -97,6 +142,10 @@ func (h *Handler) CheckIn(c *gin.Context) {
 
 	att, err := h.attendanceService.CheckIn(c.Request.Context(), employeeID, req.ProjectID, req.Lat, req.Lng)
 	if err != nil {
+		if domain.IsValidationError(err) {
+			h.recordFailedAttempt(employeeID, req.ProjectID, "check_in",
+				attendance.ClassifyAttemptError(err.Error()), err.Error(), req.Lat, req.Lng)
+		}
 		response.HandleDomainError(c, err)
 		return
 	}
@@ -119,6 +168,12 @@ func (h *Handler) CheckOut(c *gin.Context) {
 
 	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, req.Lat, req.Lng, req.ConfirmNoSalary)
 	if err != nil {
+		if domain.IsValidationError(err) {
+			// CheckOut request has no projectID field; the project is resolved
+			// from the attendance record which we don't have here. Use 0.
+			h.recordFailedAttempt(employeeID, 0, "check_out",
+				attendance.ClassifyAttemptError(err.Error()), err.Error(), req.Lat, req.Lng)
+		}
 		response.HandleDomainError(c, err)
 		return
 	}

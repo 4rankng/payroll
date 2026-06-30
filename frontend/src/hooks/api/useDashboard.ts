@@ -84,3 +84,36 @@ export const usePartnerEmployeeList = (params: PartnerEmployeeListParams | null)
     enabled: !!params,
   });
 };
+
+// Get Check-in / Advance Health metrics (60s refetch matches backend cache TTL)
+export function useCheckInHealth(month?: string) {
+  return useQuery({
+    queryKey: QueryKeys.dashboard.checkInHealth(month),
+    queryFn: () => dashboardService.getCheckInHealth(month),
+    refetchInterval: 60_000,
+  });
+}
+
+// Get quota anomaly rows for drill-down
+export function useQuotaAnomalies(type?: string, month?: string) {
+  return useQuery({
+    queryKey: QueryKeys.dashboard.quotaAnomalies(type, month),
+    queryFn: () => dashboardService.getQuotaAnomalies(type ?? 'drift', month),
+    enabled: !!type,
+  });
+}
+
+// Get failed check-in/check-out attempts for drill-down (paginated)
+export function useFailedAttempts(params?: {
+  type?: string;
+  category?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  page_size?: number;
+}) {
+  return useQuery({
+    queryKey: QueryKeys.dashboard.failedAttempts(params as Record<string, unknown>),
+    queryFn: () => dashboardService.getFailedAttempts(params),
+  });
+}

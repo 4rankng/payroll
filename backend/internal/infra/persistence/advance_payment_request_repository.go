@@ -654,6 +654,44 @@ func (r *AdvancePaymentRequestRepository) ResetToPending(ctx context.Context, id
 		}).Error
 }
 
+// CountStuckPending returns the number of PENDING requests created before olderThan.
+// A non-zero count signals a stalled disbursement worker.
+func (r *AdvancePaymentRequestRepository) CountStuckPending(ctx context.Context, olderThan time.Time) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Where("status = ? AND created_at < ?", domain.AdvancePaymentStatusPending, olderThan).
+		Count(&count).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", "stuck_pending")
+	}
+	return count, nil
+}
+
+// CountByStatusSince returns request counts grouped by status for rows created in [since, ∞).
+// Only the statuses relevant to the health dashboard are populated; absent keys are zero.
+func (r *AdvancePaymentRequestRepository) CountByStatusSince(ctx context.Context, since time.Time) (map[domain.AdvancePaymentRequestStatus]int64, error) {
+	type row struct {
+		Status string `gorm:"column:status"`
+		Cnt    int64  `gorm:"column:cnt"`
+	}
+	var rows []row
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Select("status, COUNT(*) as cnt").
+		Where("created_at >= ?", since).
+		Group("status").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, r.errorHandler.HandleGetError(err, "advance_payment_request", "by_status_since")
+	}
+	out := make(map[domain.AdvancePaymentRequestStatus]int64, len(rows))
+	for _, r := range rows {
+		out[domain.AdvancePaymentRequestStatus(r.Status)] = r.Cnt
+	}
+	return out, nil
+}
+
 // CreateWithBudgetCheck atomically creates an advance payment request only if the
 // employee's total active requests (PENDING + APPROVED + COMPLETED) + the new request
 // amount do not exceed the max advance limit for the given month.

@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"strings"
+	"time"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
@@ -108,6 +109,22 @@ func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvByEmployeeMonth(ctx context
 		Where("employee_id = ? AND for_month = ?", employeeID, forMonth).
 		Scan(&result).Error
 
+	return result.Salary, result.MaxAdv, err
+}
+
+// SumSalaryAndMaxAdvForMonth returns the total salary (100% earned) and
+// max_adv_amount across all advance_payments rows for the given month. Used by
+// the health dashboard's throughput tile (B4).
+func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvForMonth(ctx context.Context, forMonth string) (uint64, uint64, error) {
+	var result struct {
+		Salary uint64
+		MaxAdv uint64
+	}
+	err := r.getDB(ctx).
+		Model(&domain.AdvancePayment{}).
+		Select("COALESCE(SUM(salary), 0) as salary, COALESCE(SUM(max_adv_amount), 0) as max_adv").
+		Where("for_month = ?", forMonth).
+		Scan(&result).Error
 	return result.Salary, result.MaxAdv, err
 }
 
@@ -407,4 +424,99 @@ func (r *AdvancePaymentRepository) HasDataForMonth(ctx context.Context, forMonth
 		return false, r.errorHandler.HandleGetError(err, "advance_payment", "has_data_for_month")
 	}
 	return count > 0, nil
+}
+
+// quotaAnomalySQL returns the Raw SQL query and bind args for each anomaly type.
+// The queries reuse the predicates documented on
+// AdvancePaymentRepository.GetQuotaAnomalies in the domain interface.
+func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string, startOfMonth, endOfNextMonth time.Time) (string, []any) {
+	switch anomalyType {
+	case "drift":
+		// max_adv_amount invariant: must equal floor(salary * 70 / 100) when salary>0.
+		return `
+			SELECT ap.employee_id, ap.project_id, ap.for_month, ap.salary, ap.max_adv_amount, 'drift' as reason
+			FROM advance_payments ap
+			WHERE ap.for_month = ? AND ap.salary > 0
+			  AND ap.max_adv_amount != FLOOR(ap.salary * ? / 100)
+		`, []any{forMonth, domain.SelfCheckInAdvanceablePercent}
+	case "missing":
+		// Earning>0 attendance this month but no advance_payments row for the pair.
+		return `
+			SELECT a.employee_id, a.project_id, ? as for_month, 0 as salary, 0 as max_adv_amount, 'missing' as reason
+			FROM (
+				SELECT DISTINCT employee_id, project_id
+				FROM attendances
+				WHERE check_out_time IS NOT NULL AND earning_amount > 0
+				  AND check_in_time >= ? AND check_in_time < ?
+			) a
+			LEFT JOIN advance_payments ap
+			  ON ap.project_id = a.project_id AND ap.employee_id = a.employee_id AND ap.for_month = ?
+			WHERE ap.id IS NULL
+		`, []any{forMonth, startOfMonth, endOfNextMonth, forMonth}
+	case "stale":
+		// salary>0 but the assignment has check_in_enabled=false (ZeroOutQuota didn't fire on toggle-off).
+		return `
+			SELECT ap.employee_id, ap.project_id, ap.for_month, ap.salary, ap.max_adv_amount, 'stale' as reason
+			FROM advance_payments ap
+			JOIN project_employees pe ON pe.employee_id = ap.employee_id AND pe.project_id = ap.project_id
+			WHERE ap.for_month = ? AND ap.salary > 0 AND pe.check_in_enabled = false
+			  AND pe.deleted_at IS NULL
+		`, []any{forMonth}
+	default:
+		return "", nil
+	}
+}
+
+// GetQuotaAnomalies returns quota rows violating the named invariant. See
+// domain.AdvancePaymentRepository.GetQuotaAnomalies for the per-type contract.
+func (r *AdvancePaymentRepository) GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) ([]domain.QuotaAnomaly, error) {
+	startOfMonth, endOfNextMonth, err := quotaAnomalyMonthBounds(forMonth)
+	if err != nil {
+		return nil, domain.NewValidationError("định dạng tháng không hợp lệ (YYYY-MM)")
+	}
+	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth)
+	if sql == "" {
+		return nil, domain.NewValidationError("loại bất thường không hợp lệ (drift|missing|stale)")
+	}
+
+	var rows []domain.QuotaAnomaly
+	err = r.DB.WithContext(ctx).Raw(sql, args...).Scan(&rows).Error
+	if err != nil {
+		return nil, r.errorHandler.HandleListError(err, "advance_payment_quota_anomalies")
+	}
+	return rows, nil
+}
+
+// CountQuotaAnomalies returns the count of rows violating the named invariant.
+func (r *AdvancePaymentRepository) CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) (int, error) {
+	startOfMonth, endOfNextMonth, err := quotaAnomalyMonthBounds(forMonth)
+	if err != nil {
+		return 0, domain.NewValidationError("định dạng tháng không hợp lệ (YYYY-MM)")
+	}
+	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth)
+	if sql == "" {
+		return 0, domain.NewValidationError("loại bất thường không hợp lệ (drift|missing|stale)")
+	}
+
+	var count int64
+	err = r.DB.WithContext(ctx).Raw("SELECT COUNT(*) FROM ("+sql+") AS sub", args...).Scan(&count).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_quota_anomalies", "count")
+	}
+	return int(count), nil
+}
+
+// quotaAnomalyMonthBounds converts a "YYYY-MM" string into the [start, end) window
+// covering that calendar month. The "missing" anomaly query uses this to bound
+// attendance lookups. The end bound is exclusive at the start of the next month.
+// Returns an error if forMonth is not a valid "YYYY-MM" value.
+func quotaAnomalyMonthBounds(forMonth string) (time.Time, time.Time, error) {
+	t, err := time.ParseInLocation("2006-01", forMonth, time.Local)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	loc := t.Location()
+	start := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, loc)
+	end := start.AddDate(0, 1, 0)
+	return start, end, nil
 }

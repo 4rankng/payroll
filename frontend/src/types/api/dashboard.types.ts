@@ -490,3 +490,64 @@ export interface PartnerEmployeeListResponse {
   type: PartnerEmployeeListType;
   total: number;
 }
+
+// ========== Check-in Health Metrics ==========
+
+export interface FailedAttemptCategoryCount {
+  category: string;
+  count: number;
+}
+
+export interface CheckInHealthResponse {
+  // A. Check-in / Check-out
+  failed_attempts_today: number;
+  failed_attempts_by_category: FailedAttemptCategoryCount[];
+  open_checked_in: number;
+  orphaned: number;
+  auto_rejected_today: number;
+  completed_zero_earning_today: number;
+  successful_checkouts_today: number;
+  // B. Quota
+  quota_invariant_drift: number;
+  missing_quota_rows: number;
+  stale_quota_after_disable: number;
+  quota_salary_this_month: number;
+  quota_max_adv_this_month: number;
+  // C. Advance requests
+  requests_stuck_pending: number;
+  requests_failed_today: number;
+  requests_completed_today: number;
+  requests_total_today: number;
+}
+
+export interface QuotaAnomalyRow {
+  employee_id: number;
+  project_id: number;
+  for_month: string;
+  salary: number;
+  max_adv_amount: number;
+  expected_max: number;
+  reason: string;
+  employee_name?: string;
+  project_name?: string;
+}
+
+// ========== Admin Failed Attempts ==========
+
+export interface AdminFailedAttempt {
+  id: number;
+  employee_id: number;
+  employee_name?: string;
+  attempt_type: string;
+  reason_category: string;
+  project_id: number;
+  lat?: number | null;
+  lng?: number | null;
+  error_message?: string | null;
+  created_at: string;
+}
+
+export interface PaginatedFailedAttemptsResponse {
+  data: AdminFailedAttempt[];
+  total: number;
+}

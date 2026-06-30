@@ -32,6 +32,9 @@ import type {
   BankUsageAllProjectsResponse,
   PartnerEmployeeListParams,
   PartnerEmployeeListResponse,
+  CheckInHealthResponse,
+  QuotaAnomalyRow,
+  PaginatedFailedAttemptsResponse,
 } from '@/types/api/dashboard.types';
 
 class DashboardService {
@@ -249,6 +252,54 @@ class DashboardService {
   async getBankUsageAllProjects(): Promise<BankUsageAllProjectsResponse> {
     const response = await apiClient.get<BankUsageAllProjectsResponse>(
       API_ENDPOINTS.dashboard.bankUsageProjects
+    );
+    if (!response.data) throw new Error('API response missing expected data');
+    return response.data;
+  }
+
+  /**
+   * Get Check-in / Advance Health metrics for the admin dashboard strip.
+   * Backend caches the response for ~60s (CheckInHealthCacheTTL).
+   */
+  async getCheckInHealth(month?: string): Promise<CheckInHealthResponse> {
+    const queryString = month ? buildQueryString({ month }) : '';
+    const response = await apiClient.get<CheckInHealthResponse>(
+      `${API_ENDPOINTS.dashboard.checkInHealth}${queryString}`
+    );
+    if (!response.data) throw new Error('API response missing expected data');
+    return response.data;
+  }
+
+  /**
+   * Get quota anomaly rows for the drill-down sheet.
+   * `type` selects the anomaly category (e.g. 'drift' | 'missing' | 'stale').
+   */
+  async getQuotaAnomalies(type: string, month?: string): Promise<QuotaAnomalyRow[]> {
+    const params: Record<string, unknown> = { type };
+    if (month) params.month = month;
+    const queryString = buildQueryString(params);
+    const response = await apiClient.get<QuotaAnomalyRow[]>(
+      `${API_ENDPOINTS.dashboard.quotaAnomalies}${queryString}`
+    );
+    if (!response.data) throw new Error('API response missing expected data');
+    return response.data;
+  }
+
+  /**
+   * Get failed check-in / check-out attempts for the drill-down sheet.
+   */
+  async getFailedAttempts(params?: {
+    type?: string;
+    category?: string;
+    employee_id?: number;
+    from?: string;
+    to?: string;
+    page?: number;
+    page_size?: number;
+  }): Promise<PaginatedFailedAttemptsResponse> {
+    const queryString = params ? buildQueryString(params as Record<string, unknown>) : '';
+    const response = await apiClient.get<PaginatedFailedAttemptsResponse>(
+      `${API_ENDPOINTS.adminAttendances.failedAttempts}${queryString}`
     );
     if (!response.data) throw new Error('API response missing expected data');
     return response.data;
