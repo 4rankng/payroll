@@ -101,6 +101,7 @@ func (r *attendanceFailedAttemptRepository) GetCountByAttemptType(ctx context.Co
 		Select("attempt_type, COUNT(*) as count").
 		Where("created_at >= ? AND created_at < ?", since, until).
 		Where(checkInFailedAttemptScope()).
+		Group("attempt_type").
 		Scan(&counts).Error
 	return counts, err
 }
