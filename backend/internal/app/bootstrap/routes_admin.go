@@ -23,6 +23,8 @@ func setupDashboardRoutes(protected *gin.RouterGroup, container *Container) {
 		dashboard.GET("/employee-activity/users", container.Handlers.Dashboard.GetActiveEmployeesBySchedule)
 		dashboard.GET("/project-profitability", container.Handlers.Dashboard.GetProjectProfitability)
 		dashboard.GET("/project-weekly-profit", container.Handlers.Dashboard.GetProjectWeeklyProfit)
+		dashboard.GET("/check-in-health", container.Handlers.Dashboard.GetCheckInHealth)
+		dashboard.GET("/quota-anomalies", container.Handlers.Dashboard.GetQuotaAnomalies)
 	}
 }
 
@@ -57,6 +59,7 @@ func setupAdminAttendanceRoutes(v1 *gin.RouterGroup, container *Container) {
 		admin.Use(container.Middleware.Authorization.Authorize())
 	}
 	admin.GET("", container.Handlers.AdminAttendance.List)
+	admin.GET("/failed-attempts", container.Handlers.AdminAttendance.AdminListFailedAttempts)
 	admin.GET("/:id", container.Handlers.AdminAttendance.Get)
 }
 

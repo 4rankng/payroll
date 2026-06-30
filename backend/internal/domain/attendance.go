@@ -42,6 +42,15 @@ type Attendance struct {
 	Project  Project  `json:"project" gorm:"foreignKey:ProjectID;references:ID"`
 }
 
+// AttendanceHealthStats holds conditional-aggregation counts for health monitoring.
+type AttendanceHealthStats struct {
+	OpenCheckedIn         int `json:"open_checked_in" gorm:"column:open_checked_in"`
+	Orphaned              int `json:"orphaned" gorm:"column:orphaned"`
+	AutoRejected          int `json:"auto_rejected" gorm:"column:auto_rejected"`
+	CompletedZeroEarning  int `json:"completed_zero_earning" gorm:"column:completed_zero_earning"`
+	SuccessfulCheckouts   int `json:"successful_checkouts" gorm:"column:successful_checkouts"`
+}
+
 // AttendanceRepository defines the interface for attendance persistence operations
 type AttendanceRepository interface {
 	Create(ctx context.Context, attendance *Attendance) error
@@ -62,19 +71,71 @@ type AttendanceRepository interface {
 	// checked in within [after, before). Used by the auto-reject fallback sweep
 	// to finalize records whose scheduled K+1h task was lost.
 	GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*Attendance, error)
+	// GetHealthStats returns conditional-aggregation counts for the admin health
+	// dashboard. The since/until window bounds check_in_time; the open/orphaned
+	// split additionally uses an 18h cutoff against the current time.
+	GetHealthStats(ctx context.Context, since, until time.Time) (*AttendanceHealthStats, error)
 }
 
 // AttendanceFilters represents filtering options for attendance queries
 type AttendanceFilters struct {
-	EmployeeID *uint
-	ProjectID  *uint
-	FromDate   *time.Time
-	ToDate     *time.Time
-	Status     *AttendanceStatus
-	Limit      int
-	Offset     int
-	SortBy     string
-	SortOrder  string
+	EmployeeID  *uint
+	ProjectID   *uint
+	FromDate    *time.Time
+	ToDate      *time.Time
+	Status      *AttendanceStatus
+	ZeroEarning *bool // when true, filter completed attendances with earning_amount = 0 or NULL
+	Limit       int
+	Offset      int
+	SortBy      string
+	SortOrder   string
+}
+
+// AttendanceFailedAttempt records a check-in or check-out attempt that
+// returned a validation error (HTTP 400). It is persisted by the handler
+// layer so the admin dashboard can surface aggregate failure counts by
+// reason category.
+type AttendanceFailedAttempt struct {
+	ID             uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	EmployeeID     uint       `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
+	AttemptType    string     `json:"attempt_type" gorm:"type:varchar(16);not null"`
+	ReasonCategory string     `json:"reason_category" gorm:"type:varchar(48);not null"`
+	ProjectID      uint       `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
+	Lat            *float64   `json:"lat" gorm:"type:decimal(10,7)"`
+	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
+	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
+	CreatedAt      time.Time  `json:"created_at"`
+	Employee       Employee  `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
+}
+
+func (AttendanceFailedAttempt) TableName() string { return "attendance_failed_attempts" }
+
+// FailedAttemptCategoryCount holds the count of failed attempts grouped by category.
+type FailedAttemptCategoryCount struct {
+	Category string `json:"category"`
+	Count    int    `json:"count"`
+}
+
+// FailedAttemptFilters represents filtering options for failed-attempt queries.
+type FailedAttemptFilters struct {
+	AttemptType    *string
+	ReasonCategory *string
+	FromDate       *time.Time
+	ToDate         *time.Time
+	EmployeeID     *uint
+	Limit          int
+	Offset         int
+}
+
+// AttendanceFailedAttemptRepository defines the interface for failed-attempt persistence.
+type AttendanceFailedAttemptRepository interface {
+	Create(ctx context.Context, attempt *AttendanceFailedAttempt) error
+	List(ctx context.Context, filters FailedAttemptFilters) ([]*AttendanceFailedAttempt, error)
+	Count(ctx context.Context, filters FailedAttemptFilters) (int64, error)
+	// GetCategoryCounts returns counts grouped by reason_category within the window.
+	GetCategoryCounts(ctx context.Context, since, until time.Time) ([]FailedAttemptCategoryCount, error)
+	// GetTotalCount returns the total count within the window.
+	GetTotalCount(ctx context.Context, since, until time.Time) (int64, error)
 }
 
 // IsCompleted returns true if the attendance record has both check-in and check-out

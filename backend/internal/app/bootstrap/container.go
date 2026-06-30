@@ -365,11 +365,11 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		ReconciliationExport: disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
 		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
 		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
-		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, clk, logger),
+		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
 		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
 		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
-		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, clk, logger),
+		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
 	}
 }
 

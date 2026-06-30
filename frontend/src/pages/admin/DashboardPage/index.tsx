@@ -19,6 +19,7 @@ import { SalaryDistributionChart } from '@/components/admin-dashboard/SalaryDist
 import { MonthlyFinancialTable } from '@/components/admin-dashboard/MonthlyFinancialTable';
 import { TopPaidEmployeesCard } from '@/components/admin-dashboard/TopPaidEmployeesCard';
 import { BankTransferBreakdownCard, ProjectSelector } from '@/components/admin-dashboard/BankTransferBreakdownCard';
+import { CheckInHealthStrip } from '@/components/admin-dashboard/CheckInHealthStrip';
 
 // Dashboard Hooks
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
@@ -249,6 +250,11 @@ const AdminDashboard = () => {
           overscanBy={Infinity}
           itemKey={data => data.id}
         />
+
+        {/* Check-in / Advance health: bottom full-width responsive row */}
+        <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+          <CheckInHealthStrip month={monthParam} />
+        </div>
       </div>
 
       <ActivityUsersSheet

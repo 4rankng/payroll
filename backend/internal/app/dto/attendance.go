@@ -58,3 +58,23 @@ type PaginatedAttendanceResponse struct {
 	Data  []AdminAttendanceResponse `json:"data"`
 	Total int64                     `json:"total"`
 }
+
+// AdminFailedAttemptResponse represents a single failed check-in/out attempt for the admin drill-down.
+type AdminFailedAttemptResponse struct {
+	ID             uint       `json:"id"`
+	EmployeeID     uint       `json:"employee_id"`
+	EmployeeName   string     `json:"employee_name,omitempty"`
+	AttemptType    string     `json:"attempt_type"`
+	ReasonCategory string     `json:"reason_category"`
+	ProjectID      uint       `json:"project_id"`
+	Lat            *float64   `json:"lat,omitempty"`
+	Lng            *float64   `json:"lng,omitempty"`
+	ErrorMessage   *string    `json:"error_message,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+}
+
+// PaginatedFailedAttemptResponse wraps a failed-attempt list with its total for pagination.
+type PaginatedFailedAttemptResponse struct {
+	Data  []AdminFailedAttemptResponse `json:"data"`
+	Total int64                        `json:"total"`
+}

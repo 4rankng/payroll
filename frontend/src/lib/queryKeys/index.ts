@@ -253,6 +253,9 @@ export const QueryKeys = {
     bankUsage: (projectId?: number) => [...QueryKeys.dashboard.all, 'bank-usage', projectId] as const,
     bankUsageAllProjects: () => [...QueryKeys.dashboard.all, 'bank-usage-projects'] as const,
     partnerEmployeeList: (type: string, month?: string) => [...QueryKeys.dashboard.all, 'partner-employee-list', type, month] as const,
+    checkInHealth: (month?: string) => [...QueryKeys.dashboard.all, 'check-in-health', month] as const,
+    quotaAnomalies: (type?: string, month?: string) => [...QueryKeys.dashboard.all, 'quota-anomalies', type, month] as const,
+    failedAttempts: (params?: Record<string, unknown>) => [...QueryKeys.dashboard.all, 'failed-attempts', params] as const,
   },
 
   // ========== AUDIT ==========

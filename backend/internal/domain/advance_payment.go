@@ -73,6 +73,26 @@ type AdvancePaymentRepository interface {
 	GetAvailableMonths(ctx context.Context) ([]*AvailableMonth, error)
 	GetEmployeeByID(ctx context.Context, employeeID uint64) (*Employee, error)
 	HasDataForMonth(ctx context.Context, forMonth string) (bool, error)
+	// GetQuotaAnomalies returns quota rows that violate the named invariant.
+	// anomalyType is one of: "drift" (max_adv != floor(salary*70/100)),
+	// "missing" (earning>0 attendance but no advance_payments row), or
+	// "stale" (salary>0 but assignment check_in_enabled=false).
+	GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) ([]QuotaAnomaly, error)
+	// CountQuotaAnomalies returns the count of rows violating the named invariant.
+	CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) (int, error)
+	// SumSalaryAndMaxAdvForMonth returns the total salary and max_adv_amount across
+	// all advance_payments rows for the given month (the throughput tile B4).
+	SumSalaryAndMaxAdvForMonth(ctx context.Context, forMonth string) (salary, maxAdv uint64, err error)
+}
+
+// QuotaAnomaly represents a quota row that violates an expected invariant.
+type QuotaAnomaly struct {
+	EmployeeID   uint   `json:"employee_id" gorm:"column:employee_id"`
+	ProjectID    uint   `json:"project_id" gorm:"column:project_id"`
+	ForMonth     string `json:"for_month" gorm:"column:for_month"`
+	Salary       int64  `json:"salary" gorm:"column:salary"`
+	MaxAdvAmount int64  `json:"max_adv_amount" gorm:"column:max_adv_amount"`
+	Reason       string `json:"reason" gorm:"column:reason"`
 }
 
 // AvailableMonth represents a month with flex pay data

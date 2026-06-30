@@ -23,6 +23,9 @@ func TestNewService(t *testing.T) {
 		nil, // ProjectEmployeeRepo
 		nil, // BulkTransferHistoryRepo
 		nil, // AdvancePaymentRequestRepo
+		nil, // AdvancePaymentRepo
+		nil, // AttendanceRepo
+		nil, // AttendanceFailedAttemptRepo
 		nil, // SettingsConfigSvc
 		nil, // CacheService
 		nil, // SalaryCalculationSvc

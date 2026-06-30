@@ -541,3 +541,58 @@ func (h *DashboardHandler) GetPartnerEmployeeList(c *gin.Context) {
 	}
 	response.Success(c, data, "Lấy danh sách nhân viên thành công")
 }
+
+// GetCheckInHealth retrieves anomaly/throughput counts for the check-in → quota →
+// request pipeline. Drives the admin health summary strip.
+// @Summary Get check-in health metrics
+// @Description Get anomaly and throughput counts across check-in/out, quota, and advance requests
+// @Tags dashboard
+// @Accept json
+// @Produce json
+// @Param month query string false "Month in yyyy-MM format (defaults to current month)"
+// @Success 200 {object} dto.CheckInHealthResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security ApiKeyAuth
+// @Router /dashboard/check-in-health [get]
+func (h *DashboardHandler) GetCheckInHealth(c *gin.Context) {
+	month := c.Query("month")
+	stats, err := h.dashboardService.GetCheckInHealth(c.Request.Context(), month)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, stats, "Lấy chỉ số sức khoẻ check-in thành công")
+}
+
+// GetQuotaAnomalies returns the drill-down rows behind a quota anomaly tile.
+// @Summary Get quota anomaly drill-down
+// @Description Get the specific quota rows violating the named invariant (drift|missing|stale)
+// @Tags dashboard
+// @Accept json
+// @Produce json
+// @Param type query string true "Anomaly type: drift | missing | stale"
+// @Param month query string false "Month in yyyy-MM format (defaults to current month)"
+// @Success 200 {array} dto.QuotaAnomalyRow
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security ApiKeyAuth
+// @Router /dashboard/quota-anomalies [get]
+func (h *DashboardHandler) GetQuotaAnomalies(c *gin.Context) {
+	anomalyType := c.Query("type")
+	if anomalyType != "drift" && anomalyType != "missing" && anomalyType != "stale" {
+		response.BadRequest(c, "type phải là drift, missing hoặc stale")
+		return
+	}
+	month := c.Query("month")
+
+	rows, err := h.dashboardService.GetQuotaAnomalies(c.Request.Context(), month, anomalyType)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, rows, "Lấy danh sách bất thường hạn mức thành công")
+}

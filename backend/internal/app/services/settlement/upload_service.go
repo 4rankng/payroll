@@ -139,13 +139,7 @@ func (s *SettlementUploadService) processAdvancePaymentSettlement(
 		return nil, 0, 0, "", err
 	}
 
-	// Mark receivable settled
-	settledAt := clock.Now()
-	if _, err := s.advPayReqRepo.MarkReceivableSettled(ctx, requestIDs, settledAt); err != nil {
-		return nil, 0, 0, "", domain.NewInternalError("Không thể đánh dấu đã thanh toán", err)
-	}
-
-	// Build result — map each request to its transaction for settlement events
+	// Build result — map each request to its transaction for settlement
 	transactionAllocations := make(map[uint]int64)
 	var settledIDs []uint
 
@@ -156,38 +150,47 @@ func (s *SettlementUploadService) processAdvancePaymentSettlement(
 		}
 	}
 
-	result := &SettlementValidationResult{
-		Transactions:      transactionAllocations,
-		TimesheetIDs:      settledIDs,
-		SettledInternally: true,
-	}
-
-	// Emit SettlementAppliedFromUploadEvent for each transaction to trigger:
-	// → settlement record creation + transaction status update (settlement_event_handler)
-	// → SettlementCreated event → ledger worker creates double-entry ledger entries
+	// Settle each transaction inline (synchronous) so settlement records,
+	// transaction status updates, and ledger entries are created atomically.
+	// Uses settlementApplier wired at bootstrap — NOT async fire-and-forget events
+	// which silently swallow errors (txn 99 / timesheet 11579 class of bug).
 	if len(transactionAllocations) > 0 {
+		if s.settlementApplier == nil {
+			return nil, 0, 0, "", domain.NewInternalError("Settlement applier not configured", nil)
+		}
 		for txnID, amount := range transactionAllocations {
-			event := domain.NewSettlementAppliedFromUploadEvent(
+			if err := s.settlementApplier.ApplySettlement(
 				ctx,
 				txnID,
 				amount,
 				assetRecord.ID,
 				fileHeader.Filename,
 				nil, // advance payments have no timesheet IDs to mark
-			)
-			if err := s.eventBus.Publish(ctx, event); err != nil {
-				observability.GetLogger().Error("Failed to publish SettlementAppliedFromUploadEvent for advance payment",
+			); err != nil {
+				observability.GetLogger().Error("Failed to apply settlement for advance payment",
 					"transaction_id", txnID,
 					"amount", amount,
 					"asset_id", assetRecord.ID,
 					"error", err)
 				return nil, 0, 0, "", domain.NewInternalError(constants.MsgCannotPublishSettlementEventVN, err)
 			}
-			observability.GetLogger().Info("Emitted SettlementAppliedFromUploadEvent for advance payment",
+			observability.GetLogger().Info("Settlement applied for advance payment",
 				"transaction_id", txnID,
 				"amount", amount,
 				"asset_id", assetRecord.ID)
 		}
+	}
+
+	// Mark receivable settled only after all settlements succeed
+	settledAt := clock.Now()
+	if _, err := s.advPayReqRepo.MarkReceivableSettled(ctx, requestIDs, settledAt); err != nil {
+		return nil, 0, 0, "", domain.NewInternalError("Không thể đánh dấu đã thanh toán", err)
+	}
+
+	result := &SettlementValidationResult{
+		Transactions:      transactionAllocations,
+		TimesheetIDs:      settledIDs,
+		SettledInternally: true,
 	}
 
 	s.createSettlementNotification(ctx, userID, fileData.SettlementAmount, assetRecord.ID, settledIDs, settledAt, true)

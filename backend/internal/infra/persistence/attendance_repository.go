@@ -158,7 +158,38 @@ func (r *attendanceRepository) buildFilterQuery(ctx context.Context, filters dom
 			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ?", clock.Now().Add(-18*time.Hour))
 		case domain.AttendanceStatusOrphaned:
 			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ?", clock.Now().Add(-18*time.Hour))
+			}
 		}
+		if filters.ZeroEarning != nil && *filters.ZeroEarning {
+			query = query.Where("check_out_time IS NOT NULL AND (earning_amount IS NULL OR earning_amount = 0)")
+		}
+		return query
+}
+
+// GetHealthStats returns conditional-aggregation counts for the admin health dashboard.
+// It uses a single query with SUM(CASE WHEN …) to compute all five metrics. The
+// since/until window bounds check_in_time; the open/orphaned split additionally uses
+// an 18h cutoff against the current time (mirroring AttendanceStatusCheckedIn/Orphaned
+// in buildFilterQuery). The query reuses the exact predicates from buildFilterQuery so
+// the dashboard counts agree with the filtered list a drill-down opens.
+func (r *attendanceRepository) GetHealthStats(ctx context.Context, since, until time.Time) (*domain.AttendanceHealthStats, error) {
+	var stats domain.AttendanceHealthStats
+	openCutoff := clock.Now().Add(-18 * time.Hour)
+
+	err := r.getDB(ctx).
+		Table("attendances").
+		Select(`
+			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ? THEN 1 ELSE 0 END) as open_checked_in,
+			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ? THEN 1 ELSE 0 END) as orphaned,
+			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NOT NULL THEN 1 ELSE 0 END) as auto_rejected,
+			SUM(CASE WHEN check_out_time IS NOT NULL AND (earning_amount IS NULL OR earning_amount = 0) THEN 1 ELSE 0 END) as completed_zero_earning,
+			SUM(CASE WHEN check_out_time IS NOT NULL AND earning_amount > 0 THEN 1 ELSE 0 END) as successful_checkouts
+		`, openCutoff, openCutoff).
+		Where("check_in_time >= ? AND check_in_time < ?", since, until).
+		Scan(&stats).Error
+	if err != nil {
+		return nil, err
 	}
-	return query
+
+	return &stats, nil
 }

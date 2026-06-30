@@ -665,3 +665,45 @@ type PartnerEmployeeListResponse struct {
 	Type      string                      `json:"type"`
 	Total     int                         `json:"total"`
 }
+
+// CheckInHealthResponse holds anomaly counts across the check-in → quota → request pipeline.
+type CheckInHealthResponse struct {
+	// A. Check-in / Check-out
+	FailedAttemptsToday        int                          `json:"failed_attempts_today"`
+	FailedAttemptsByCategory   []FailedAttemptCategoryCount `json:"failed_attempts_by_category"`
+	OpenCheckedIn              int                          `json:"open_checked_in"`
+	Orphaned                   int                          `json:"orphaned"`
+	AutoRejectedToday          int                          `json:"auto_rejected_today"`
+	CompletedZeroEarningToday  int                          `json:"completed_zero_earning_today"`
+	SuccessfulCheckoutsToday   int                          `json:"successful_checkouts_today"`
+	// B. Quota
+	QuotaInvariantDrift    int   `json:"quota_invariant_drift"`
+	MissingQuotaRows       int   `json:"missing_quota_rows"`
+	StaleQuotaAfterDisable int   `json:"stale_quota_after_disable"`
+	QuotaSalaryThisMonth   int64 `json:"quota_salary_this_month"`
+	QuotaMaxAdvThisMonth   int64 `json:"quota_max_adv_this_month"`
+	// C. Advance requests
+	RequestsStuckPending   int `json:"requests_stuck_pending"`
+	RequestsFailedToday    int `json:"requests_failed_today"`
+	RequestsCompletedToday int `json:"requests_completed_today"`
+	RequestsTotalToday     int `json:"requests_total_today"`
+}
+
+// FailedAttemptCategoryCount mirrors domain.FailedAttemptCategoryCount for the DTO layer.
+type FailedAttemptCategoryCount struct {
+	Category string `json:"category"`
+	Count    int    `json:"count"`
+}
+
+// QuotaAnomalyRow represents a single quota anomaly record for drill-down.
+type QuotaAnomalyRow struct {
+	EmployeeID   uint   `json:"employee_id"`
+	ProjectID    uint   `json:"project_id"`
+	ForMonth     string `json:"for_month"`
+	Salary       int64  `json:"salary"`
+	MaxAdvAmount int64  `json:"max_adv_amount"`
+	ExpectedMax  int64  `json:"expected_max"`
+	Reason       string `json:"reason"` // "drift" | "missing" | "stale"
+	EmployeeName string `json:"employee_name,omitempty"`
+	ProjectName  string `json:"project_name,omitempty"`
+}

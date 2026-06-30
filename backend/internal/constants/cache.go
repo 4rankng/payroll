@@ -28,6 +28,7 @@ const (
 	DashboardFinancialCacheTTL     = 60 * time.Second
 	DashboardSalaryDistributionTTL = 1 * time.Hour // Salary distribution changes less frequently
 	CashFlowSummaryCacheTTL        = 15 * time.Second
+	CheckInHealthCacheTTL          = 60 * time.Second // Health metrics need fresh data
 )
 
 // Other constants
