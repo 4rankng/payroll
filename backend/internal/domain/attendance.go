@@ -116,6 +116,12 @@ type FailedAttemptCategoryCount struct {
 	Count    int    `json:"count"`
 }
 
+// FailedAttemptTypeCount holds the count of failed attempts grouped by attempt type.
+type FailedAttemptTypeCount struct {
+	AttemptType string `json:"attempt_type"`
+	Count       int    `json:"count"`
+}
+
 // FailedAttemptFilters represents filtering options for failed-attempt queries.
 type FailedAttemptFilters struct {
 	AttemptType    *string
@@ -136,6 +142,8 @@ type AttendanceFailedAttemptRepository interface {
 	GetCategoryCounts(ctx context.Context, since, until time.Time) ([]FailedAttemptCategoryCount, error)
 	// GetTotalCount returns the total count within the window.
 	GetTotalCount(ctx context.Context, since, until time.Time) (int64, error)
+	// GetCountByAttemptType returns counts grouped by attempt_type within the window.
+	GetCountByAttemptType(ctx context.Context, since, until time.Time) ([]FailedAttemptTypeCount, error)
 }
 
 // IsCompleted returns true if the attendance record has both check-in and check-out

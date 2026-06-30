@@ -124,6 +124,7 @@ func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvForMonth(ctx context.Contex
 		Model(&domain.AdvancePayment{}).
 		Select("COALESCE(SUM(salary), 0) as salary, COALESCE(SUM(max_adv_amount), 0) as max_adv").
 		Where("for_month = ?", forMonth).
+		Where(`EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = advance_payments.employee_id AND pe.project_id = advance_payments.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)`).
 		Scan(&result).Error
 	return result.Salary, result.MaxAdv, err
 }
@@ -438,6 +439,7 @@ func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string,
 			FROM advance_payments ap
 			WHERE ap.for_month = ? AND ap.salary > 0
 			  AND ap.max_adv_amount != FLOOR(ap.salary * ? / 100)
+				  AND EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = ap.employee_id AND pe.project_id = ap.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)
 		`, []any{forMonth, domain.SelfCheckInAdvanceablePercent}
 	case "missing":
 		// Earning>0 attendance this month but no advance_payments row for the pair.
@@ -448,8 +450,9 @@ func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string,
 				FROM attendances
 				WHERE check_out_time IS NOT NULL AND earning_amount > 0
 				  AND check_in_time >= ? AND check_in_time < ?
+					  AND EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = attendances.employee_id AND pe.project_id = attendances.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)
 			) a
-			LEFT JOIN advance_payments ap
+				LEFT JOIN advance_payments ap
 			  ON ap.project_id = a.project_id AND ap.employee_id = a.employee_id AND ap.for_month = ?
 			WHERE ap.id IS NULL
 		`, []any{forMonth, startOfMonth, endOfNextMonth, forMonth}
@@ -460,7 +463,7 @@ func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string,
 			FROM advance_payments ap
 			JOIN project_employees pe ON pe.employee_id = ap.employee_id AND pe.project_id = ap.project_id
 			WHERE ap.for_month = ? AND ap.salary > 0 AND pe.check_in_enabled = false
-			  AND pe.deleted_at IS NULL
+			  AND pe.deleted_at IS NULL AND pe.last_date IS NULL
 		`, []any{forMonth}
 	default:
 		return "", nil

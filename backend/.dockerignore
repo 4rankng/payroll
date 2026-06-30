@@ -93,3 +93,4 @@ vendor
 
 # --- IMPORTANT: do NOT ignore Dockerfile/.dockerignore themselves ---
 # (They are tiny and useful for reproducible builds.)
+graphify-out

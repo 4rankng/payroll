@@ -21,16 +21,24 @@ interface HealthDrilldownSheetProps {
 }
 
 const REASON_CATEGORY_LABELS: Record<string, string> = {
-  outside_window: 'Ngoài khung giờ',
-  outside_geofence: 'Ngoài bán kính',
-  already_checked_in: 'Đã chấm rồi',
-  already_checked_out: 'Đã checkout rồi',
-  no_active_assignment: 'Không có phân công',
-  invalid_shift: 'Ca không hợp lệ',
-  rejected: 'Đã bị huỷ',
-  auto_rejected: 'Tự huỷ (hết giờ)',
+  geofence_not_configured: 'Chưa cấu hình vị trí',
+  geofence_outside: 'Ngoài khu vực chấm công',
+  check_in_not_enabled: 'Chưa cấp quyền chấm công',
+  already_checked_in: 'Đã vào làm rồi',
+  shift_not_configured: 'Chưa cấu hình ca',
+  check_in_window: 'Ngoài giờ vào làm',
+  check_out_window: 'Ngoài giờ tan ca',
+  already_checked_out: 'Đã tan ca rồi',
+  already_auto_rejected: 'Tự huỷ (hết giờ)',
+  orphaned: 'Quá hạn tan ca',
+  not_flexible_project: 'Không hỗ trợ tự chấm công',
+  no_flexible_project: 'Không thuộc dự án tự chấm công',
+  multiple_flexible: 'Thuộc nhiều dự án',
+  no_attendance: 'Không có ca hôm nay',
+  check_in_disabled: 'Chấm công bị khoá',
+  other: 'Lỗi khác',
+  // Attendance-based drilldown categories (not from attempt_classifier)
   open: 'Đang chờ checkout',
-  orphaned: 'Mồ côi',
   zero_earning: 'Ca 0 đ',
   stuck_pending: 'Yêu cầu kẹt pending',
   request_failed: 'Yêu cầu lỗi',
@@ -86,7 +94,7 @@ export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldown
 
         <div className="flex-1 overflow-y-auto p-4">
           {target?.type === 'failed-attempts' && (
-            <FailedAttemptsTable category={target.category} />
+            <FailedAttemptsTable category={target.category} attemptType={target.attemptType} />
           )}
           {target?.type === 'quota-anomaly' && (
             <QuotaAnomalyTable anomalyType={target.anomalyType} month={month} />
@@ -101,8 +109,12 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
   if (!target) return '';
   const monthSuffix = month ? ` — ${month}` : '';
   if (target.type === 'failed-attempts') {
-    const catLabel = target.category ? labelFor(REASON_CATEGORY_LABELS, target.category) : 'Tất cả';
-    return `Lần chấm thất bại — ${catLabel}${monthSuffix}`;
+    const typeLabel = target.attemptType
+      ? labelFor(ATTEMPT_TYPE_LABELS, target.attemptType)
+      : '';
+    const catLabel = target.category ? labelFor(REASON_CATEGORY_LABELS, target.category) : '';
+    const filter = [catLabel, typeLabel].filter(Boolean).join(' — ');
+    return `Lần chấm thất bại${filter ? ' — ' + filter : ''}${monthSuffix}`;
   }
   if (target.type === 'quota-anomaly') {
     const anomLabel = labelFor(ANOMALY_TYPE_LABELS, target.anomalyType);
@@ -113,10 +125,11 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
 
 // ─── Failed attempts table ────────────────────────────────────────────────
 
-function FailedAttemptsTable({ category }: { category?: string }) {
+function FailedAttemptsTable({ category, attemptType }: { category?: string; attemptType?: 'check_in' | 'check_out' }) {
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isFetching } = useFailedAttempts({
+    type: attemptType,
     category,
     page,
     page_size: PAGE_SIZE,

@@ -671,6 +671,8 @@ type CheckInHealthResponse struct {
 	// A. Check-in / Check-out
 	FailedAttemptsToday        int                          `json:"failed_attempts_today"`
 	FailedAttemptsByCategory   []FailedAttemptCategoryCount `json:"failed_attempts_by_category"`
+	FailedCheckInToday         int                          `json:"failed_check_in_today"`
+	FailedCheckOutToday        int                          `json:"failed_check_out_today"`
 	OpenCheckedIn              int                          `json:"open_checked_in"`
 	Orphaned                   int                          `json:"orphaned"`
 	AutoRejectedToday          int                          `json:"auto_rejected_today"`

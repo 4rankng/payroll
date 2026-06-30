@@ -58,3 +58,4 @@ storybook-static
 .chromatic
 .turbo
 turborepo.json
+graphify-out

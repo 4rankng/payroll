@@ -52,13 +52,14 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 
 	// Fan out the expensive queries concurrently.
 	var (
-		wg  sync.WaitGroup
-		mu  sync.Mutex
+		wg   sync.WaitGroup
+		mu   sync.Mutex
 		qErr error
 
 		failedTotal      int64
 		failedByCategory []domain.FailedAttemptCategoryCount
 		attStats         *domain.AttendanceHealthStats
+		failedByType     []domain.FailedAttemptTypeCount
 	)
 
 	setErr := func(err error) {
@@ -69,7 +70,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 		mu.Unlock()
 	}
 
-	wg.Add(3)
+	wg.Add(4)
 	go func() {
 		defer wg.Done()
 		c, err := s.AttendanceFailedAttemptRepo.GetTotalCount(ctx, todayStart, todayEnd)
@@ -101,6 +102,17 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 		}
 		mu.Lock()
 		attStats = stats
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		types, err := s.AttendanceFailedAttemptRepo.GetCountByAttemptType(ctx, todayStart, todayEnd)
+		if err != nil {
+			setErr(fmt.Errorf("failed-attempts by type: %w", err))
+			return
+		}
+		mu.Lock()
+		failedByType = types
 		mu.Unlock()
 	}()
 	wg.Wait()
@@ -142,6 +154,8 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	resp := &dto.CheckInHealthResponse{
 		FailedAttemptsToday:       int(failedTotal),
 		FailedAttemptsByCategory:  toDTOCategoryCounts(failedByCategory),
+		FailedCheckInToday:        countByType(failedByType, "check_in"),
+		FailedCheckOutToday:       countByType(failedByType, "check_out"),
 		OpenCheckedIn:             safeStats(attStats).OpenCheckedIn,
 		Orphaned:                  safeStats(attStats).Orphaned,
 		AutoRejectedToday:         safeStats(attStats).AutoRejected,
@@ -225,6 +239,17 @@ func safeStats(s *domain.AttendanceHealthStats) *domain.AttendanceHealthStats {
 		return s
 	}
 	return &domain.AttendanceHealthStats{}
+}
+
+// countByType returns the count for a given attempt_type from the grouped results,
+// returning 0 when the type is not present (safe for zero-value initialization).
+func countByType(rows []domain.FailedAttemptTypeCount, attemptType string) int {
+	for _, r := range rows {
+		if r.AttemptType == attemptType {
+			return r.Count
+		}
+	}
+	return 0
 }
 
 // totalStatusCounts sums all per-status counts into a single today total.
