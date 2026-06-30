@@ -56,7 +56,6 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 		mu   sync.Mutex
 		qErr error
 
-		failedTotal      int64
 		failedByCategory []domain.FailedAttemptCategoryCount
 		attStats         *domain.AttendanceHealthStats
 		failedByType     []domain.FailedAttemptTypeCount
@@ -70,18 +69,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 		mu.Unlock()
 	}
 
-	wg.Add(4)
-	go func() {
-		defer wg.Done()
-		c, err := s.AttendanceFailedAttemptRepo.GetTotalCount(ctx, todayStart, todayEnd)
-		if err != nil {
-			setErr(fmt.Errorf("failed-attempts total: %w", err))
-			return
-		}
-		mu.Lock()
-		failedTotal = c
-		mu.Unlock()
-	}()
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
 		cats, err := s.AttendanceFailedAttemptRepo.GetCategoryCounts(ctx, todayStart, todayEnd)
@@ -152,7 +140,6 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}
 
 	resp := &dto.CheckInHealthResponse{
-		FailedAttemptsToday:       int(failedTotal),
 		FailedAttemptsByCategory:  toDTOCategoryCounts(failedByCategory),
 		FailedCheckInToday:        countByType(failedByType, "check_in"),
 		FailedCheckOutToday:       countByType(failedByType, "check_out"),
@@ -177,7 +164,6 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}
 
 	s.logger.Info("Check-in health retrieved",
-		"failed_today", resp.FailedAttemptsToday,
 		"open_checked_in", resp.OpenCheckedIn,
 		"orphaned", resp.Orphaned,
 		"quota_drift", resp.QuotaInvariantDrift,

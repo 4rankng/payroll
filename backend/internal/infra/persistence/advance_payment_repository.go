@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -124,7 +125,7 @@ func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvForMonth(ctx context.Contex
 		Model(&domain.AdvancePayment{}).
 		Select("COALESCE(SUM(salary), 0) as salary, COALESCE(SUM(max_adv_amount), 0) as max_adv").
 		Where("for_month = ?", forMonth).
-		Where(`EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = advance_payments.employee_id AND pe.project_id = advance_payments.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)`).
+		Where(checkInEnabledScope("advance_payments")).
 		Scan(&result).Error
 	return result.Salary, result.MaxAdv, err
 }
@@ -434,28 +435,28 @@ func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string,
 	switch anomalyType {
 	case "drift":
 		// max_adv_amount invariant: must equal floor(salary * 70 / 100) when salary>0.
-		return `
+		return fmt.Sprintf(`
 			SELECT ap.employee_id, ap.project_id, ap.for_month, ap.salary, ap.max_adv_amount, 'drift' as reason
 			FROM advance_payments ap
 			WHERE ap.for_month = ? AND ap.salary > 0
 			  AND ap.max_adv_amount != FLOOR(ap.salary * ? / 100)
-				  AND EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = ap.employee_id AND pe.project_id = ap.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)
-		`, []any{forMonth, domain.SelfCheckInAdvanceablePercent}
+			  AND %s
+		`, checkInEnabledScope("ap")), []any{forMonth, domain.SelfCheckInAdvanceablePercent}
 	case "missing":
 		// Earning>0 attendance this month but no advance_payments row for the pair.
-		return `
+		return fmt.Sprintf(`
 			SELECT a.employee_id, a.project_id, ? as for_month, 0 as salary, 0 as max_adv_amount, 'missing' as reason
 			FROM (
 				SELECT DISTINCT employee_id, project_id
 				FROM attendances
 				WHERE check_out_time IS NOT NULL AND earning_amount > 0
 				  AND check_in_time >= ? AND check_in_time < ?
-					  AND EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = attendances.employee_id AND pe.project_id = attendances.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)
+				  AND %s
 			) a
 				LEFT JOIN advance_payments ap
 			  ON ap.project_id = a.project_id AND ap.employee_id = a.employee_id AND ap.for_month = ?
 			WHERE ap.id IS NULL
-		`, []any{forMonth, startOfMonth, endOfNextMonth, forMonth}
+		`, checkInEnabledScope("attendances")), []any{forMonth, startOfMonth, endOfNextMonth, forMonth}
 	case "stale":
 		// salary>0 but the assignment has check_in_enabled=false (ZeroOutQuota didn't fire on toggle-off).
 		return `

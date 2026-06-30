@@ -186,7 +186,7 @@ func (r *attendanceRepository) GetHealthStats(ctx context.Context, since, until 
 			SUM(CASE WHEN check_out_time IS NOT NULL AND earning_amount > 0 THEN 1 ELSE 0 END) as successful_checkouts
 		`, openCutoff, openCutoff).
 		Where("check_in_time >= ? AND check_in_time < ?", since, until).
-		Where(`EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = attendances.employee_id AND pe.project_id = attendances.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)`).
+		Where(checkInEnabledScope("attendances")).
 		Scan(&stats).Error
 	if err != nil {
 		return nil, err

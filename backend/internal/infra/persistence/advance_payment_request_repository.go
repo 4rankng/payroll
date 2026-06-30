@@ -662,7 +662,7 @@ func (r *AdvancePaymentRequestRepository) CountStuckPending(ctx context.Context,
 	err := r.DB.WithContext(ctx).
 		Model(&domain.AdvancePaymentRequest{}).
 		Where("status = ? AND created_at < ?", domain.AdvancePaymentStatusPending, olderThan).
-		Where(`EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = advance_payment_requests.employee_id AND pe.project_id = advance_payment_requests.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)`).
+		Where(checkInEnabledScope("advance_payment_requests")).
 		Count(&count).Error
 	if err != nil {
 		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", "stuck_pending")
@@ -682,7 +682,7 @@ func (r *AdvancePaymentRequestRepository) CountByStatusSince(ctx context.Context
 		Model(&domain.AdvancePaymentRequest{}).
 		Select("status, COUNT(*) as cnt").
 		Where("created_at >= ?", since).
-		Where(`EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = advance_payment_requests.employee_id AND pe.project_id = advance_payment_requests.project_id AND pe.deleted_at IS NULL AND pe.last_date IS NULL AND pe.check_in_enabled = 1)`).
+		Where(checkInEnabledScope("advance_payment_requests")).
 		Group("status").
 		Scan(&rows).Error
 	if err != nil {
