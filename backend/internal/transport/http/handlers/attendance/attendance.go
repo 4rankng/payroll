@@ -19,7 +19,7 @@ import (
 type Handler struct {
 	attendanceService *attendance.AttendanceService
 	employeeRepo      domain.EmployeeRepository
-	failedAttemptRepo  domain.AttendanceFailedAttemptRepository
+	failedAttemptRepo domain.AttendanceFailedAttemptRepository
 	clk               clock.Clock
 	logger            *slog.Logger
 }
@@ -34,7 +34,7 @@ func NewHandler(
 	return &Handler{
 		attendanceService: attendanceService,
 		employeeRepo:      employeeRepo,
-		failedAttemptRepo:  failedAttemptRepo,
+		failedAttemptRepo: failedAttemptRepo,
 		clk:               clk,
 		logger:            logger,
 	}
@@ -272,6 +272,17 @@ func (h *Handler) List(c *gin.Context) {
 	if offsetStr := c.Query("offset"); offsetStr != "" {
 		if off, err := strconv.Atoi(offsetStr); err == nil && off >= 0 {
 			filters.Offset = off
+		}
+	}
+	loc := time.Local // business timezone — match clock.Now() and DSN loc=Local
+	if fromStr := c.Query("from_date"); fromStr != "" {
+		if t, err := time.ParseInLocation("2006-01-02", fromStr, loc); err == nil {
+			filters.FromDate = &t
+		}
+	}
+	if toStr := c.Query("to_date"); toStr != "" {
+		if t, err := time.ParseInLocation("2006-01-02", toStr, loc); err == nil {
+			filters.ToDate = &t
 		}
 	}
 

@@ -60,8 +60,16 @@ class ApiClient {
     return delay + Math.random() * 1000;
   }
 
-  private shouldRetry(error: AxiosError, retryCount: number): boolean {
+  private shouldRetry(error: AxiosError, retryCount: number, method?: string): boolean {
     if (retryCount >= RETRY_CONFIG.maxRetries) {
+      return false;
+    }
+
+    // Only retry safe reads automatically. Retrying side-effecting requests
+    // can repeat writes if the server completed the action but the response was
+    // lost or timed out.
+    const normalizedMethod = method?.toUpperCase() || 'GET';
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(normalizedMethod)) {
       return false;
     }
 
@@ -191,7 +199,7 @@ class ApiClient {
         }
 
         // Check if we should retry this request
-        if (this.shouldRetry(error, originalRequest._retryCount)) {
+        if (this.shouldRetry(error, originalRequest._retryCount, originalRequest.method)) {
           originalRequest._retryCount++;
 
           const delayMs = this.calculateRetryDelay(originalRequest._retryCount - 1);
