@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/api/dashboard.service';
+import { attendanceService } from '@/services/attendance';
 import { QueryKeys } from '@/lib/queryKeys';
 import type { TopPaidEmployeesParams, PartnerDashboardParams, BankUsageParams, PartnerEmployeeListParams } from '@/types/api/dashboard.types';
 
@@ -115,5 +116,19 @@ export function useFailedAttempts(params?: {
   return useQuery({
     queryKey: QueryKeys.dashboard.failedAttempts(params as Record<string, unknown>),
     queryFn: () => dashboardService.getFailedAttempts(params),
+  });
+}
+
+// Get admin attendance list for drill-down (paginated)
+export function useAdminAttendances(params?: {
+  status?: string;
+  from_date?: string;
+  to_date?: string;
+  page?: number;
+  page_size?: number;
+}) {
+  return useQuery({
+    queryKey: QueryKeys.dashboard.adminAttendances(params as Record<string, unknown>),
+    queryFn: () => attendanceService.adminList(params as Record<string, unknown>),
   });
 }
