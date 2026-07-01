@@ -17,6 +17,13 @@ export interface AttendanceRecord {
   status: "checked_in" | "completed" | "orphaned" | "rejected";
 }
 
+export interface AttendanceHistoryParams {
+  limit?: number;
+  offset?: number;
+  from_date?: string;
+  to_date?: string;
+}
+
 export const attendanceService = {
   getToday: async () => {
     return apiClient.get<AttendanceRecord | null>(
@@ -24,7 +31,7 @@ export const attendanceService = {
     );
   },
 
-  getHistory: async (params?: { limit?: number; offset?: number }) => {
+  getHistory: async (params?: AttendanceHistoryParams) => {
     return apiClient.get<AttendanceRecord[]>(
       API_ENDPOINTS.attendance.mobile.history,
       { params: { limit: 20, ...params } }

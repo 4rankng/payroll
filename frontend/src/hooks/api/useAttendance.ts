@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attendanceService } from "@/services/attendance";
+import { attendanceService, type AttendanceHistoryParams } from "@/services/attendance";
 import { QueryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 
@@ -71,11 +71,11 @@ export function useCheckOut() {
   });
 }
 
-export function useAttendanceHistory() {
+export function useAttendanceHistory(params?: AttendanceHistoryParams) {
   return useQuery({
-    queryKey: [...ATTENDANCE_QUERY_KEYS.all, "history"],
+    queryKey: [...ATTENDANCE_QUERY_KEYS.all, "history", params],
     queryFn: async () => {
-      const data = await attendanceService.getHistory();
+      const data = await attendanceService.getHistory(params);
       return data;
     },
   });

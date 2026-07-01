@@ -1,5 +1,6 @@
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { AlertTriangle, Calendar, History, WalletCards } from "lucide-react";
+import { AlertTriangle, Calendar, ChevronLeft, ChevronRight, History, WalletCards } from "lucide-react";
 import { formatDate } from "@/utils/formatters";
 import {
   getAttendanceIssueSummary,
@@ -7,6 +8,11 @@ import {
   isSalaryMissing,
   type AttendanceIssueDetail,
 } from "@/utils/attendanceHelpers";
+import {
+  getAttendanceHistoryMonth,
+  getNextAttendanceHistoryMonth,
+  getPreviousAttendanceHistoryMonth,
+} from "@/utils/attendanceHistoryMonth";
 import { useAttendanceHistory } from "@/hooks/api/useAttendance";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -40,19 +46,54 @@ function HistoryIssueChips({ details }: { details: AttendanceIssueDetail[] }) {
 }
 
 export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAttendanceHistoryCardProps) {
-  const { data: historyResponse, isLoading } = useAttendanceHistory();
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date());
+  const month = useMemo(() => getAttendanceHistoryMonth(selectedMonth), [selectedMonth]);
+  const historyParams = useMemo(
+    () => ({
+      limit: 100,
+      from_date: month.fromDate,
+      to_date: month.toDate,
+    }),
+    [month.fromDate, month.toDate]
+  );
+
+  const { data: historyResponse, isLoading } = useAttendanceHistory(historyParams);
   const history = historyResponse?.data || [];
 
   return (
     <div className={className ?? "bg-white rounded-2xl p-4"} style={style}>
       <div className="p-4">
-        <div className="mb-4 flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-employee">
-            <History className="h-4 w-4" />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
+              <History className="h-4 w-4" />
+            </div>
+            <h3 className="text-[18px] font-bold leading-6 text-slate-900">
+              Lịch sử chấm công
+            </h3>
           </div>
-          <h3 className="text-[18px] font-bold leading-6 text-slate-900">
-            Lịch sử chấm công
-          </h3>
+          <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50/70 p-1">
+            <button
+              type="button"
+              aria-label="Xem tháng trước"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              onClick={() => setSelectedMonth((current) => getPreviousAttendanceHistoryMonth(current))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="min-w-[76px] px-2 text-center text-[15px] font-bold leading-5 text-slate-900">
+              {month.label}
+            </span>
+            <button
+              type="button"
+              aria-label="Xem tháng sau"
+              disabled={!month.canGoNext}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:text-slate-300"
+              onClick={() => setSelectedMonth((current) => getNextAttendanceHistoryMonth(current))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -69,11 +110,11 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
           ) : history.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center text-gray-400">
               <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-[16px] font-semibold">Chưa có ca làm nào</p>
-              <p className="mt-1 text-[15px] leading-5 text-slate-400">Sau khi bạn vào làm, ca sẽ hiện ở đây.</p>
+              <p className="text-[16px] font-semibold">Chưa có ca làm trong kỳ này</p>
+              <p className="mt-1 text-[15px] leading-5 text-slate-400">Chọn tháng khác để xem lịch sử trước đó.</p>
             </div>
           ) : (
-            history.slice(0, 5).map((att) => {
+            history.map((att) => {
               const salaryRecorded = isSalaryRecorded(att);
               const salaryMissing = isSalaryMissing(att);
               const issue = getAttendanceIssueSummary(
