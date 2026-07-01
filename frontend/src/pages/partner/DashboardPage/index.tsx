@@ -13,17 +13,12 @@ import {
   Award,
   Sparkles,
 } from 'lucide-react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
+import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
 import { cn } from '@/lib/utils';
 import type {
   TopPaidEmployeeItem,
@@ -273,81 +268,6 @@ function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: numb
   );
 }
 
-// ─── Workforce donut ──────────────────────────────────────────────────────
-function WorkforceDonut({
-  active,
-  dropped,
-  paid,
-}: {
-  active: number;
-  dropped: number;
-  paid: number;
-}) {
-  const data = useMemo(
-    () => [
-      { name: 'Đang làm', value: active, color: '#10b981' },
-      { name: 'Đã thanh toán', value: paid, color: '#3b82f6' },
-      { name: 'Có thể nghỉ', value: dropped, color: '#f59e0b' },
-    ],
-    [active, dropped, paid],
-  );
-  const total = active + dropped + paid;
-
-  if (total === 0) {
-    return (
-      <div className="flex h-[180px] items-center justify-center text-[12px] text-muted-foreground">
-        Chưa có dữ liệu
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="relative h-[180px]" aria-label="Biểu đồ cơ cấu nhân sự">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={55}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-              startAngle={90}
-              endAngle={-270}
-              stroke="none"
-            >
-              {data.map((entry) => (
-                <Cell key={entry.name} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-2xl font-extrabold tabular-nums text-foreground leading-none">
-            {(active + dropped).toLocaleString('vi-VN')}
-          </span>
-          <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground mt-1">
-            Tổng nhân viên
-          </span>
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        {data.map((d) => (
-          <div key={d.name} className="flex items-center justify-between text-[12px]">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />
-              <span className="text-foreground">{d.name}</span>
-            </div>
-            <span className="font-semibold tabular-nums text-foreground">{d.value.toLocaleString('vi-VN')}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Skeletons ────────────────────────────────────────────────────────────
 function HeroSkeleton() {
   return (
@@ -500,21 +420,12 @@ const PartnerDashboardPage = () => {
       {/* ── ANALYTICS GRID: workforce donut + leaderboard ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Workforce donut */}
-        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold text-foreground">Cơ cấu nhân sự</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Phân loại theo trạng thái hoạt động</p>
-          </div>
-          {isLoading ? (
-            <Skeleton className="h-[200px] w-full rounded-xl" />
-          ) : (
-            <WorkforceDonut
-              active={data?.active_employees ?? 0}
-              dropped={data?.dropped_employees ?? 0}
-              paid={data?.paid_employees ?? 0}
-            />
-          )}
-        </div>
+        <PartnerWorkforceOverviewCard
+          active={data?.active_employees ?? 0}
+          dropped={data?.dropped_employees ?? 0}
+          paid={data?.paid_employees ?? 0}
+          isLoading={isLoading}
+        />
 
         {/* Top employees leaderboard */}
         <div className="lg:col-span-2 rounded-2xl border border-border/60 bg-card p-5 shadow-soft">

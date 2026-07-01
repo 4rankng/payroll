@@ -668,7 +668,9 @@ type PartnerEmployeeListResponse struct {
 
 // CheckInHealthResponse holds anomaly counts across the check-in → quota → request pipeline.
 type CheckInHealthResponse struct {
-	ReportDate string `json:"report_date"`
+	ReportDate  string `json:"report_date"`
+	PeriodStart string `json:"period_start"`
+	PeriodEnd   string `json:"period_end"`
 	// A. Check-in / Check-out
 	FailedAttemptsByCategory  []FailedAttemptCategoryCount `json:"failed_attempts_by_category"`
 	FailedCheckInToday        int                          `json:"failed_check_in_today"`

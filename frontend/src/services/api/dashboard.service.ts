@@ -295,7 +295,7 @@ class DashboardService {
     from?: string;
     to?: string;
     page?: number;
-    page_size?: number;
+    pageSize?: number;
   }): Promise<PaginatedFailedAttemptsResponse> {
     const queryString = params ? buildQueryString(params as Record<string, unknown>) : '';
     const response = await apiClient.get<PaginatedFailedAttemptsResponse>(

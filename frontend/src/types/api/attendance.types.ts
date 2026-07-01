@@ -22,8 +22,10 @@ export interface AttendanceFilters {
   project_id?: number;
   from_date?: string;
   to_date?: string;
+  date_field?: "check_in_time";
   status?: string;
   successful_checkout?: boolean;
+  zero_earning?: boolean;
 }
 
 export interface PaginatedAttendanceResponse {

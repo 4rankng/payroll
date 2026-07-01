@@ -19,9 +19,19 @@ import type { CheckInHealthResponse } from '@/types/api/dashboard.types';
  * - `failed-attempts`: list of failed check-in / check-out attempts; optional category filter.
  * - `quota-anomaly`: list of quota rows for the given anomaly type.
  */
+type AttendanceListTarget = {
+  type: 'attendance-list';
+  label: string;
+  status?: 'checked_in' | 'orphaned' | 'rejected';
+  successfulCheckout?: boolean;
+  zeroEarning?: boolean;
+  emptyLabel: string;
+};
+
 export type HealthDrilldownTarget =
   | { type: 'failed-attempts'; category?: string; attemptType?: 'check_in' | 'check_out' }
   | { type: 'quota-anomaly'; anomalyType: string }
+  | AttendanceListTarget
   | { type: 'successful-checkouts' }
   | null;
 
@@ -58,9 +68,18 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     setDrilldown({ type: 'quota-anomaly', anomalyType });
   }, []);
 
-  const openSuccessfulCheckouts = useCallback(() => {
-    setDrilldown({ type: 'successful-checkouts' });
+  const openAttendanceList = useCallback((target: AttendanceListTarget) => {
+    setDrilldown(target);
   }, []);
+
+  const openSuccessfulCheckouts = useCallback(() => {
+    openAttendanceList({
+      type: 'attendance-list',
+      label: 'Chấm công ra thành công',
+      successfulCheckout: true,
+      emptyLabel: 'Không có ai chấm công ra thành công trong tháng này',
+    });
+  }, [openAttendanceList]);
 
   // ── Section A: Check-in / Check-out ─────────────────────────────────────
   const sectionA = useMemo(() => buildSectionItems(
@@ -69,13 +88,13 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     [
       { key: 'failed_check_in_today', label: 'Lỗi vào làm', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_in') },
       { key: 'failed_check_out_today', label: 'Lỗi tan ca', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_out') },
-      { key: 'open_checked_in', label: 'Đang chấm công', anomaly: true, drilldown: () => openFailedAttempts('open') },
-      { key: 'orphaned', label: 'Thiếu dữ liệu ghép cặp', anomaly: true, drilldown: () => openFailedAttempts('orphaned') },
-      { key: 'auto_rejected_today', label: 'Tự huỷ', anomaly: true, drilldown: () => openFailedAttempts('already_auto_rejected') },
-      { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openFailedAttempts('zero_earning') },
+      { key: 'open_checked_in', label: 'Đang chấm công', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Đang chấm công', status: 'checked_in', emptyLabel: 'Không có ca đang chấm công trong tháng này' }) },
+      { key: 'orphaned', label: 'Thiếu dữ liệu ghép cặp', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Thiếu dữ liệu ghép cặp', status: 'orphaned', emptyLabel: 'Không có ca thiếu dữ liệu ghép cặp trong tháng này' }) },
+      { key: 'auto_rejected_today', label: 'Tự huỷ', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Tự huỷ', status: 'rejected', emptyLabel: 'Không có ca tự huỷ trong tháng này' }) },
+      { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Ca không có lương', zeroEarning: true, emptyLabel: 'Không có ca không có lương trong tháng này' }) },
       { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false, drilldown: () => openSuccessfulCheckouts() },
     ],
-  ), [data, isLoading, openFailedAttempts, openSuccessfulCheckouts]);
+  ), [data, isLoading, openAttendanceList, openFailedAttempts, openSuccessfulCheckouts]);
 
   // ── Section B: Quota ────────────────────────────────────────────────────
   const sectionB = useMemo(() => buildSectionItems(
@@ -137,7 +156,8 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
       <HealthDrilldownSheet
         target={drilldown}
         month={month}
-        reportDate={data?.report_date}
+        periodStart={data?.period_start}
+        periodEnd={data?.period_end}
         onClose={closeDrilldown}
       />
     </div>

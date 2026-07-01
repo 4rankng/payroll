@@ -10,6 +10,7 @@ import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { MobilePageShell, MobileSurface } from '@/components/shared/MobilePageShell';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
+import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
 import { generateMonthOptions } from '@/utils/dateHelpers';
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
@@ -218,6 +219,14 @@ const PartnerDashboardMobile = () => {
           )}
         </div>
       </div>
+
+      <PartnerWorkforceOverviewCard
+        active={data?.active_employees ?? 0}
+        dropped={data?.dropped_employees ?? 0}
+        paid={data?.paid_employees ?? 0}
+        isLoading={isLoading}
+        className="shadow-none"
+      />
 
       {/* Top Employees Leaderboard */}
       <MobileSurface className="p-4">
