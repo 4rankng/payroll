@@ -1,4 +1,4 @@
-import { apiClient, buildQueryString, ApiResponse } from './client';
+import { apiClient, buildQueryString, ApiResponse, createIdempotencyKey } from './client';
 import type { PartnerImportFile, PartnerImportListParams } from '@/types/api/timesheet.types';
 import { API_ENDPOINTS, API_CONFIG } from '@/config/api.config';
 import { authManager } from '@/lib/auth';
@@ -431,7 +431,12 @@ class TimesheetService {
   }): Promise<{ status: string; message: string }> {
     const response = await apiClient.post<{ status: string; message: string }>(
       API_ENDPOINTS.timesheets.emailPayrollReport,
-      params
+      params,
+      {
+        headers: {
+          'Idempotency-Key': createIdempotencyKey('payroll-report-email'),
+        },
+      }
     );
 
     return response.data || { status: response.status, message: response.message || '' };

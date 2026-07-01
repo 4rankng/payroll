@@ -126,13 +126,14 @@ const (
 	MsgFailedToValidateBankVN                = "Không thể xác thực ngân hàng"
 
 	// Success Messages - Vietnamese
-	MsgSuccessVN                      = "Thành công"
-	MsgCreatedSuccessfullyVN          = "Tạo thành công"
-	MsgUpdatedSuccessfullyVN          = "Cập nhật thành công"
-	MsgDeletedSuccessfullyVN          = "Xóa thành công"
-	MsgEmailSentSuccessfullyVN        = "Email đã được gửi thành công"
-	MsgPayrollEmailSentSuccessfullyVN = "Báo cáo payroll đã được gửi thành công"
-	MsgEmailHistoryRetrievedVN        = "Lịch sử email đã được tải thành công"
+	MsgSuccessVN                        = "Thành công"
+	MsgCreatedSuccessfullyVN            = "Tạo thành công"
+	MsgUpdatedSuccessfullyVN            = "Cập nhật thành công"
+	MsgDeletedSuccessfullyVN            = "Xóa thành công"
+	MsgEmailSentSuccessfullyVN          = "Email đã được gửi thành công"
+	MsgPayrollEmailSentSuccessfullyVN   = "Báo cáo payroll đã được gửi thành công"
+	MsgPayrollEmailQueuedSuccessfullyVN = "Yêu cầu gửi báo cáo payroll đã được nhận và đang xử lý"
+	MsgEmailHistoryRetrievedVN          = "Lịch sử email đã được tải thành công"
 
 	// Generic Messages - Vietnamese
 	MsgInternalServerErrorVN = "Lỗi máy chủ nội bộ"

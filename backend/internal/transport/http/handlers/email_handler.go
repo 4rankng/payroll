@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"api-server/internal/app/dto"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	asynqinfra "api-server/internal/infra/asynq"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
 
@@ -21,11 +23,12 @@ import (
 // EmailHandler exposes email-related endpoints for administrators.
 type EmailHandler struct {
 	emailService *notification.EmailService
+	asynqClient  *asynqinfra.Client
 }
 
 // NewEmailHandler constructs a new EmailHandler.
-func NewEmailHandler(emailService *notification.EmailService) *EmailHandler {
-	return &EmailHandler{emailService: emailService}
+func NewEmailHandler(emailService *notification.EmailService, asynqClient *asynqinfra.Client) *EmailHandler {
+	return &EmailHandler{emailService: emailService, asynqClient: asynqClient}
 }
 
 // SendGenericEmail handles POST /email/send for manual emails with optional attachments.
@@ -155,12 +158,37 @@ func (h *EmailHandler) SendPayrollReportEmail(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.emailService.SendPayrollReportEmail(c.Request.Context(), &req); err != nil {
+	if _, err := req.ParseReportAtDate(); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	userID, ok := helpers.GetUserIDOrRespond(c)
+	if !ok {
+		return
+	}
+
+	if h.asynqClient == nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
+		return
+	}
+
+	taskID, duplicate, err := h.asynqClient.EnqueuePayrollReportEmail(req, userID, c.GetHeader("Idempotency-Key"))
+	if err != nil {
 		response.HandleDomainError(c, err)
 		return
 	}
 
-	response.Success(c, nil, constants.MsgPayrollEmailSentSuccessfullyVN)
+	c.JSON(http.StatusAccepted, response.SuccessResponse{
+		Status: "success",
+		Data: gin.H{
+			"taskId":          taskID,
+			"idempotencyKey":  taskID,
+			"alreadyQueued":   duplicate,
+			"processingAsync": true,
+		},
+		Message: constants.MsgPayrollEmailQueuedSuccessfullyVN,
+	})
 }
 
 // GetEmailHistory handles GET /email/history to provide paginated delivery logs.

@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/services/attendance"
 	"api-server/internal/domain"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/geo"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
 
@@ -19,14 +20,22 @@ import (
 type AttendanceHandler struct {
 	attendanceService *attendance.AttendanceService
 	failedAttemptRepo domain.AttendanceFailedAttemptRepository
+	projectRepo       domain.ProjectRepository
 	clk               clock.Clock
 	logger            *slog.Logger
 }
 
-func NewAttendanceHandler(attendanceService *attendance.AttendanceService, failedAttemptRepo domain.AttendanceFailedAttemptRepository, clk clock.Clock, logger *slog.Logger) *AttendanceHandler {
+func NewAttendanceHandler(
+	attendanceService *attendance.AttendanceService,
+	failedAttemptRepo domain.AttendanceFailedAttemptRepository,
+	projectRepo domain.ProjectRepository,
+	clk clock.Clock,
+	logger *slog.Logger,
+) *AttendanceHandler {
 	return &AttendanceHandler{
 		attendanceService: attendanceService,
 		failedAttemptRepo: failedAttemptRepo,
+		projectRepo:       projectRepo,
 		clk:               clk,
 		logger:            logger,
 	}
@@ -218,20 +227,106 @@ func (h *AttendanceHandler) listFailedAttempts(ctx context.Context, filters doma
 		return nil, 0, err
 	}
 
+	projectsByID := map[uint]*domain.Project{}
+	if h.projectRepo != nil {
+		ids := projectIDsForFailedAttempts(rows)
+		if len(ids) > 0 {
+			projectsByID, err = h.projectRepo.GetByIDs(ctx, ids)
+			if err != nil {
+				return nil, 0, err
+			}
+		}
+	}
+
 	data := make([]dto.AdminFailedAttemptResponse, 0, len(rows))
 	for _, a := range rows {
-		data = append(data, dto.AdminFailedAttemptResponse{
-			ID:             a.ID,
-			EmployeeID:     a.EmployeeID,
-			EmployeeName:   a.Employee.Fullname,
-			AttemptType:    a.AttemptType,
-			ReasonCategory: a.ReasonCategory,
-			ProjectID:      a.ProjectID,
-			Lat:            a.Lat,
-			Lng:            a.Lng,
-			ErrorMessage:   a.ErrorMessage,
-			CreatedAt:      a.CreatedAt,
-		})
+		data = append(data, mapFailedAttemptResponse(a, projectsByID[a.ProjectID]))
 	}
 	return data, total, nil
+}
+
+func projectIDsForFailedAttempts(rows []*domain.AttendanceFailedAttempt) []uint {
+	seen := make(map[uint]struct{})
+	ids := make([]uint, 0)
+	for _, row := range rows {
+		if row == nil || row.ProjectID == 0 || row.Lat == nil || row.Lng == nil {
+			continue
+		}
+		if _, ok := seen[row.ProjectID]; ok {
+			continue
+		}
+		seen[row.ProjectID] = struct{}{}
+		ids = append(ids, row.ProjectID)
+	}
+	return ids
+}
+
+func mapFailedAttemptResponse(a *domain.AttendanceFailedAttempt, project *domain.Project) dto.AdminFailedAttemptResponse {
+	res := dto.AdminFailedAttemptResponse{
+		ID:             a.ID,
+		EmployeeID:     a.EmployeeID,
+		EmployeeName:   a.Employee.Fullname,
+		AttemptType:    a.AttemptType,
+		ReasonCategory: a.ReasonCategory,
+		ProjectID:      a.ProjectID,
+		Lat:            a.Lat,
+		Lng:            a.Lng,
+		Accuracy:       a.Accuracy,
+		GpsAt:          a.GpsAt,
+		ErrorMessage:   a.ErrorMessage,
+		CreatedAt:      a.CreatedAt,
+	}
+
+	nearest := nearestCheckpointForAttempt(a, project)
+	if nearest == nil {
+		return res
+	}
+
+	distance := nearest.distanceMeters
+	res.NearestCheckpointDistanceMeters = &distance
+
+	if nearest.name != "" {
+		name := nearest.name
+		res.NearestCheckpointName = &name
+	}
+	if nearest.geofenceRadiusMeters > 0 {
+		radius := nearest.geofenceRadiusMeters
+		res.GeofenceRadiusMeters = &radius
+	}
+
+	return res
+}
+
+type nearestCheckpoint struct {
+	name                 string
+	distanceMeters       float64
+	geofenceRadiusMeters uint
+}
+
+func nearestCheckpointForAttempt(a *domain.AttendanceFailedAttempt, project *domain.Project) *nearestCheckpoint {
+	if a == nil || project == nil || a.Lat == nil || a.Lng == nil || len(project.GeofenceGates) == 0 {
+		return nil
+	}
+
+	nearestIndex := -1
+	nearestDistance := 0.0
+	for i := range project.GeofenceGates {
+		gate := project.GeofenceGates[i]
+		distance := geo.HaversineDistance(*a.Lat, *a.Lng, gate.Lat, gate.Lng)
+		if nearestIndex == -1 || distance < nearestDistance {
+			nearestIndex = i
+			nearestDistance = distance
+		}
+	}
+
+	if nearestIndex == -1 {
+		return nil
+	}
+
+	gate := project.GeofenceGates[nearestIndex]
+	return &nearestCheckpoint{
+		name:                 gate.Name,
+		distanceMeters:       nearestDistance,
+		geofenceRadiusMeters: project.GeofenceRadiusMeters,
+	}
 }

@@ -549,6 +549,9 @@ export interface AdminFailedAttempt {
   lng?: number | null;
   accuracy?: number | null;
   gps_at?: string | null;
+  nearest_checkpoint_name?: string | null;
+  nearest_checkpoint_distance_meters?: number | null;
+  geofence_radius_meters?: number | null;
   error_message?: string | null;
   created_at: string;
 }

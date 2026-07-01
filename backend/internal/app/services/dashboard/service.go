@@ -16,26 +16,26 @@ import (
 )
 
 type Service struct {
-	UserRepo                  domain.UserRepository
-	ProjectRepo               domain.ProjectRepository
-	EmployeeRepo              domain.EmployeeRepository
-	TimesheetDashboard        domain.TimesheetDashboardReader
-	TimesheetPayment          domain.TimesheetPaymentUpdater
-	TimesheetQueryRepo        *repositories.TimesheetQueryRepository
-	TimesheetAnalyticsRepo    *repositories.TimesheetAnalyticsRepository
-	LedgerRepo                domain.LedgerEntryRepository
-	NotificationRepo          domain.NotificationRepository
-	AuditLogRepo              domain.AuditLogRepository
-	ProjectEmployeeRepo       domain.ProjectEmployeeRepository
-	BulkTransferFileRepo      domain.BulkTransferFileRepository
-	AdvancePaymentRequestRepo domain.AdvancePaymentRequestRepository
-	AdvancePaymentRepo        domain.AdvancePaymentRepository
-	AttendanceRepo            domain.AttendanceRepository
+	UserRepo                    domain.UserRepository
+	ProjectRepo                 domain.ProjectRepository
+	EmployeeRepo                domain.EmployeeRepository
+	TimesheetDashboard          domain.TimesheetDashboardReader
+	TimesheetPayment            domain.TimesheetPaymentUpdater
+	TimesheetQueryRepo          *repositories.TimesheetQueryRepository
+	TimesheetAnalyticsRepo      *repositories.TimesheetAnalyticsRepository
+	LedgerRepo                  domain.LedgerEntryRepository
+	NotificationRepo            domain.NotificationRepository
+	AuditLogRepo                domain.AuditLogRepository
+	ProjectEmployeeRepo         domain.ProjectEmployeeRepository
+	BulkTransferFileRepo        domain.BulkTransferFileRepository
+	AdvancePaymentRequestRepo   domain.AdvancePaymentRequestRepository
+	AdvancePaymentRepo          domain.AdvancePaymentRepository
+	AttendanceRepo              domain.AttendanceRepository
 	AttendanceFailedAttemptRepo domain.AttendanceFailedAttemptRepository
-	SettingsConfigSvc         *config.SettingsConfigService
-	CacheService              *infrastructure.CacheService
-	SalaryCalculationSvc      *services.SalaryCalculationService
-	logger                    *slog.Logger
+	SettingsConfigSvc           *config.SettingsConfigService
+	CacheService                *infrastructure.CacheService
+	SalaryCalculationSvc        *services.SalaryCalculationService
+	logger                      *slog.Logger
 }
 
 func NewService(
