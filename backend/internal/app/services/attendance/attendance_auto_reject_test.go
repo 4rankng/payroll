@@ -236,7 +236,7 @@ func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
 		transactionManager: &fakeTransactionManager{},
 	}
 
-	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, false)
+	_, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: 10.0, Lng: 106.0}, false)
 	if err == nil {
 		t.Fatal("expected CheckOut to reject an auto-rejected attendance")
 	}
@@ -276,7 +276,7 @@ func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
 		clock:              clock.NewFake(now),
 	}
 
-	_, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, false)
+	_, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: 10.0, Lng: 106.0}, false)
 	if err == nil {
 		t.Fatal("expected unconfirmed checkout before shift end to be rejected")
 	}
@@ -287,7 +287,7 @@ func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
 		t.Fatal("expected rejected checkout not to update attendance")
 	}
 
-	updated, err := svc.CheckOut(context.Background(), 123, 10.0, 106.0, true)
+	updated, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: 10.0, Lng: 106.0}, true)
 	if err != nil {
 		t.Fatalf("expected confirmed no-salary checkout to succeed, got %v", err)
 	}
@@ -337,7 +337,7 @@ func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 		clock:              clock.NewFake(now),
 	}
 
-	att, err := svc.CheckIn(context.Background(), 123, 55, 10.0, 106.0)
+	att, err := svc.CheckIn(context.Background(), 123, 55, domain.GeoReading{Lat: 10.0, Lng: 106.0})
 	if err != nil {
 		t.Fatalf("expected next same-day check-in to be allowed after confirmed no-salary checkout, got %v", err)
 	}
@@ -375,7 +375,7 @@ func TestCheckInEnqueuesAutoRejectAtDeadline(t *testing.T) {
 		transactionManager:  &fakeTransactionManager{},
 	}
 
-	if _, err := svc.CheckIn(context.Background(), 999 /*employee*/, 5 /*project*/, 10.0, 106.0); err != nil {
+	if _, err := svc.CheckIn(context.Background(), 999 /*employee*/, 5 /*project*/, domain.GeoReading{Lat: 10.0, Lng: 106.0}); err != nil {
 		t.Fatalf("CheckIn returned error: %v", err)
 	}
 

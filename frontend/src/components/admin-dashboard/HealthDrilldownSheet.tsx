@@ -1,18 +1,28 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { X, Inbox } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
 import { formatCompactCurrency } from '@/utils/formatters';
+import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
 import type { HealthDrilldownTarget } from './CheckInHealthStrip';
 
 const PAGE_SIZE = 20;
+
+function formatGps(accuracy?: number | null, gpsAt?: string | null): string | null {
+  if (accuracy == null && !gpsAt) return null;
+  const parts: string[] = [];
+  if (accuracy != null && accuracy > 0) parts.push(`±${Math.round(accuracy)}m`);
+  if (gpsAt) parts.push(format(parseISO(gpsAt), 'HH:mm', { locale: vi }));
+  return parts.join(' · ') || null;
+}
 
 interface HealthDrilldownSheetProps {
   target: HealthDrilldownTarget;
@@ -70,7 +80,7 @@ export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldown
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
-          'w-full sm:w-[640px] p-0 flex flex-col',
+          'w-full p-0 flex flex-col sm:w-[min(920px,calc(100vw-2rem))]',
           isMobile && 'rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]',
         )}
       >
@@ -81,18 +91,20 @@ export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldown
           </div>
         )}
 
-        <SheetHeader className="px-4 py-3 border-b flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-sm font-semibold">{title}</SheetTitle>
+        <SheetHeader className="border-b bg-background/95 px-4 py-3 flex-shrink-0 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <SheetTitle className="text-left text-base font-semibold leading-snug text-foreground sm:text-lg">
+              {title}
+            </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full text-muted-foreground">
                 <X className="h-4 w-4" />
               </Button>
             </SheetClose>
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {target?.type === 'failed-attempts' && (
             <FailedAttemptsTable category={target.category} attemptType={target.attemptType} />
           )}
@@ -149,38 +161,60 @@ function FailedAttemptsTable({ category, attemptType }: { category?: string; att
 
   return (
     <div className="space-y-3">
-      <div className="text-xs text-muted-foreground">
-                        Tổng {total.toLocaleString('vi-VN')} bản ghi
-                        {isFetching ? ' — đang tải…' : ''}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Tổng <span className="font-medium text-foreground tabular-nums">{total.toLocaleString('vi-VN')}</span> bản ghi
+          {isFetching ? ' — đang tải…' : ''}
+        </p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-border/40">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40">
-            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-[15%]" />
+            <col className="w-[10%]" />
+            <col className="w-[16%]" />
+            <col className="w-[30%]" />
+            <col className="w-[10%]" />
+            <col className="w-[19%]" />
+          </colgroup>
+          <TableHeader className="bg-muted/35">
+            <TableRow className="hover:bg-transparent">
               <Th>Nhân viên</Th>
               <Th>Loại</Th>
               <Th>Lý do</Th>
               <Th>Thông báo lỗi</Th>
+              <Th>GPS</Th>
               <Th>Thời gian</Th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/30">
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={row.id} className="hover:bg-muted/20">
-                <Td className="font-medium">{row.employee_name ?? `#${row.employee_id}`}</Td>
+              <TableRow key={row.id} className="hover:bg-muted/25">
+                <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td>{labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}</Td>
                 <Td>{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</Td>
-                <Td className="max-w-[220px] truncate text-muted-foreground" title={row.error_message ?? ''}>
-                  {row.error_message ?? '—'}
+                <Td className="text-muted-foreground">
+                  <span className="block whitespace-normal break-words leading-relaxed">
+                    {row.error_message ?? '—'}
+                  </span>
                 </Td>
-                <Td className="whitespace-nowrap text-muted-foreground">
+                <Td className="whitespace-nowrap text-muted-foreground tabular-nums text-xs">
+                  {formatGps(row.accuracy, row.gps_at) ?? '—'}
+                </Td>
+                <Td className="whitespace-nowrap text-muted-foreground tabular-nums">
                   {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
                 </Td>
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="space-y-2 sm:hidden">
+        {rows.map((row) => (
+          <FailedAttemptCard key={row.id} row={row} />
+        ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -203,37 +237,52 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
 
   return (
     <div className="space-y-3">
-      <div className="text-xs text-muted-foreground">
-        {rows.length.toLocaleString('vi-VN')} bản ghi{isFetching ? ' — đang tải…' : ''}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        <span className="font-medium text-foreground tabular-nums">{rows.length.toLocaleString('vi-VN')}</span> bản ghi
+        {isFetching ? ' — đang tải…' : ''}
+      </p>
 
-      <div className="overflow-x-auto rounded-lg border border-border/40">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40">
-            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-[16%]" />
+            <col className="w-[20%]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[13%]" />
+            <col className="w-[25%]" />
+          </colgroup>
+          <TableHeader className="bg-muted/35">
+            <TableRow className="hover:bg-transparent">
               <Th>Nhân viên</Th>
               <Th>Dự án</Th>
               <Th>Lương</Th>
               <Th>Max adv</Th>
               <Th>Mong đợi</Th>
               <Th>Lý do</Th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/30">
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row, i) => (
-              <tr key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} className="hover:bg-muted/20">
-                <Td className="font-medium">{row.employee_name ?? `#${row.employee_id}`}</Td>
+              <TableRow key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} className="hover:bg-muted/25">
+                <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
                 <Td className="whitespace-nowrap tabular-nums">{formatCompactCurrency(row.salary)}</Td>
                 <Td className="whitespace-nowrap tabular-nums">{formatCompactCurrency(row.max_adv_amount)}</Td>
                 <Td className="whitespace-nowrap tabular-nums text-muted-foreground">{formatCompactCurrency(row.expected_max)}</Td>
-                <Td className="max-w-[200px] truncate text-muted-foreground" title={row.reason}>
-                  {row.reason}
+                <Td className="text-muted-foreground">
+                  <span className="block whitespace-normal break-words leading-relaxed">{row.reason}</span>
                 </Td>
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="space-y-2 sm:hidden">
+        {rows.map((row, i) => (
+          <QuotaAnomalyCard key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} row={row} />
+        ))}
       </div>
     </div>
   );
@@ -264,21 +313,84 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-3 py-2 font-semibold">{children}</th>;
+function Th({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <TableHead className={cn('h-auto whitespace-normal px-4 py-3 text-[11px] font-semibold uppercase tracking-wide', className)}>
+      {children}
+    </TableHead>
+  );
 }
 
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn('px-3 py-2 align-top', className)}>{children}</td>;
+function Td({ children, className }: { children: ReactNode; className?: string }) {
+  return <TableCell className={cn('px-4 py-4 align-top leading-relaxed whitespace-normal break-words', className)}>{children}</TableCell>;
+}
+
+function FailedAttemptCard({ row }: { row: AdminFailedAttempt }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+            {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+          {labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}
+        </span>
+      </div>
+      <DetailLine label="Lý do">{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</DetailLine>
+      <DetailLine label="Thông báo lỗi">{row.error_message ?? '—'}</DetailLine>
+      {formatGps(row.accuracy, row.gps_at) && (
+        <DetailLine label="GPS">{formatGps(row.accuracy, row.gps_at)!}</DetailLine>
+      )}
+    </div>
+  );
+}
+
+function QuotaAnomalyCard({ row }: { row: QuotaAnomalyRow }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+      <div className="mb-2">
+        <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2 border-y border-border/50 py-2 text-xs">
+        <Metric label="Lương" value={formatCompactCurrency(row.salary)} />
+        <Metric label="Max adv" value={formatCompactCurrency(row.max_adv_amount)} />
+        <Metric label="Mong đợi" value={formatCompactCurrency(row.expected_max)} />
+      </div>
+      <DetailLine label="Lý do">{row.reason}</DetailLine>
+    </div>
+  );
+}
+
+function DetailLine({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="mt-2 text-sm leading-relaxed">
+      <span className="font-medium text-muted-foreground">{label}: </span>
+      <span className="break-words text-foreground">{children}</span>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="mt-1 font-medium text-foreground tabular-nums">{value}</p>
+    </div>
+  );
 }
 
 function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-3 pt-1">
       <Button
         variant="outline"
         size="sm"
+        className="min-w-20"
         disabled={page <= 1}
         onClick={() => onChange(Math.max(1, page - 1))}
       >
@@ -290,6 +402,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <Button
         variant="outline"
         size="sm"
+        className="min-w-20"
         disabled={page >= totalPages}
         onClick={() => onChange(Math.min(totalPages, page + 1))}
       >
