@@ -16,12 +16,14 @@ export interface AdminAttendanceResponse {
 
 export interface AttendanceFilters {
   page?: number;
+  pageSize?: number;
   limit?: number;
   employee_id?: number;
   project_id?: number;
   from_date?: string;
   to_date?: string;
   status?: string;
+  successful_checkout?: boolean;
 }
 
 export interface PaginatedAttendanceResponse {

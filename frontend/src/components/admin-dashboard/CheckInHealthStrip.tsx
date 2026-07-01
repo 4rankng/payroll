@@ -137,6 +137,7 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
       <HealthDrilldownSheet
         target={drilldown}
         month={month}
+        reportDate={data?.report_date}
         onClose={closeDrilldown}
       />
     </div>

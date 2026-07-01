@@ -140,6 +140,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}
 
 	resp := &dto.CheckInHealthResponse{
+		ReportDate:                todayStart.Format("2006-01-02"),
 		FailedAttemptsByCategory:  toDTOCategoryCounts(failedByCategory),
 		FailedCheckInToday:        countByType(failedByType, "check_in"),
 		FailedCheckOutToday:       countByType(failedByType, "check_out"),
