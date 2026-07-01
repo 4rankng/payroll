@@ -14,6 +14,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskBulkTransferTransaction, asynqlib.HandlerFunc(h.HandleBulkTransferTransaction))
 	srv.Mux().Handle(TaskBulkTransferPayment, asynqlib.HandlerFunc(h.HandleBulkTransferPayment))
 	srv.Mux().Handle(TaskAuditLogWrite, asynqlib.HandlerFunc(h.HandleAuditLogWrite))
+	srv.Mux().Handle(TaskPayrollReportEmail, asynqlib.HandlerFunc(h.HandlePayrollReportEmail))
 	srv.Mux().Handle(TaskAutoRejectCheckout, asynqlib.HandlerFunc(h.HandleAutoRejectCheckout))
 	srv.Mux().Handle(TaskAutoRejectSweep, asynqlib.HandlerFunc(h.HandleAutoRejectSweep))
 
@@ -37,7 +38,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	registered := []string{
 		TaskEmployeeImport, TaskImportJob, TaskIPNProcess,
 		TaskBulkTransferTransaction, TaskBulkTransferPayment,
-		TaskAuditLogWrite, TaskAutoRejectCheckout, TaskAutoRejectSweep,
+		TaskAuditLogWrite, TaskPayrollReportEmail, TaskAutoRejectCheckout, TaskAutoRejectSweep,
 	}
 	if h.disbursementPollerWorker != nil {
 		registered = append(registered, TaskDisbursementPoller, TaskDisbursementExecute)

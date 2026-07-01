@@ -1,4 +1,4 @@
-import { apiClient, buildQueryString, ApiResponse } from './client';
+import { apiClient, buildQueryString, ApiResponse, createIdempotencyKey } from './client';
 import type { LedgerEntry, Asset } from '@/types/api/financial.types';
 import { API_ENDPOINTS } from '@/config/api.config';
 import { authManager } from '@/lib/auth';
@@ -248,7 +248,11 @@ class TransactionService {
    * Send payroll report email via timesheet endpoint
    */
   async sendPayrollReportEmail(payload: SendPayrollReportEmailRequest): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.timesheets.emailPayrollReport, payload);
+    await apiClient.post(API_ENDPOINTS.timesheets.emailPayrollReport, payload, {
+      headers: {
+        'Idempotency-Key': createIdempotencyKey('payroll-report-email'),
+      },
+    });
   }
 
   /**

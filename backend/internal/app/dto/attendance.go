@@ -10,16 +10,16 @@ type CheckInRequest struct {
 	ProjectID uint    `json:"project_id"`
 	Lat       float64 `json:"lat" binding:"required"`
 	Lng       float64 `json:"lng" binding:"required"`
-	Accuracy  float64 `json:"accuracy"`  // GPS accuracy in meters; 0 = unknown
-	GpsAt     int64   `json:"gps_at"`    // device GPS fix timestamp (epoch ms); 0 = unknown
+	Accuracy  float64 `json:"accuracy"` // GPS accuracy in meters; 0 = unknown
+	GpsAt     int64   `json:"gps_at"`   // device GPS fix timestamp (epoch ms); 0 = unknown
 }
 
 // CheckOutRequest represents the request to check out
 type CheckOutRequest struct {
 	Lat             float64 `json:"lat" binding:"required"`
 	Lng             float64 `json:"lng" binding:"required"`
-	Accuracy        float64 `json:"accuracy"`  // GPS accuracy in meters; 0 = unknown
-	GpsAt           int64   `json:"gps_at"`    // device GPS fix timestamp (epoch ms); 0 = unknown
+	Accuracy        float64 `json:"accuracy"` // GPS accuracy in meters; 0 = unknown
+	GpsAt           int64   `json:"gps_at"`   // device GPS fix timestamp (epoch ms); 0 = unknown
 	ConfirmNoSalary bool    `json:"confirm_no_salary"`
 }
 
@@ -73,18 +73,21 @@ type PaginatedAttendanceResponse struct {
 
 // AdminFailedAttemptResponse represents a single failed check-in/out attempt for the admin drill-down.
 type AdminFailedAttemptResponse struct {
-	ID             uint       `json:"id"`
-	EmployeeID     uint       `json:"employee_id"`
-	EmployeeName   string     `json:"employee_name,omitempty"`
-	AttemptType    string     `json:"attempt_type"`
-	ReasonCategory string     `json:"reason_category"`
-	ProjectID      uint       `json:"project_id"`
-	Lat            *float64   `json:"lat,omitempty"`
-	Lng            *float64   `json:"lng,omitempty"`
-	Accuracy       *float64   `json:"accuracy,omitempty"`
-	GpsAt          *time.Time `json:"gps_at,omitempty"`
-	ErrorMessage   *string    `json:"error_message,omitempty"`
-	CreatedAt      time.Time  `json:"created_at"`
+	ID                              uint       `json:"id"`
+	EmployeeID                      uint       `json:"employee_id"`
+	EmployeeName                    string     `json:"employee_name,omitempty"`
+	AttemptType                     string     `json:"attempt_type"`
+	ReasonCategory                  string     `json:"reason_category"`
+	ProjectID                       uint       `json:"project_id"`
+	Lat                             *float64   `json:"lat,omitempty"`
+	Lng                             *float64   `json:"lng,omitempty"`
+	Accuracy                        *float64   `json:"accuracy,omitempty"`
+	GpsAt                           *time.Time `json:"gps_at,omitempty"`
+	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
+	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
+	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
+	ErrorMessage                    *string    `json:"error_message,omitempty"`
+	CreatedAt                       time.Time  `json:"created_at"`
 }
 
 // PaginatedFailedAttemptResponse wraps a failed-attempt list with its total for pagination.

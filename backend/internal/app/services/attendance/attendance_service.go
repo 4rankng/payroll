@@ -391,8 +391,8 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			ProjectID:   project.ID,
 			Date:        today,
 			CheckInTime: now,
-			CheckInLat:      geo.Lat,
-			CheckInLng:      geo.Lng,
+			CheckInLat:  geo.Lat,
+			CheckInLng:  geo.Lng,
 			CheckInGate: gateName,
 		}
 

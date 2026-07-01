@@ -41,6 +41,8 @@ const (
 	// TaskAuditLogWrite is the asynq task type for persisting audit log entries.
 	// Replaces the in-process event-bus goroutine to add durable retries and bounded concurrency.
 	TaskAuditLogWrite = "audit:log:write"
+	// TaskPayrollReportEmail is the task type for async payroll statement emails.
+	TaskPayrollReportEmail = "email:payroll_report"
 	// TaskAutoRejectCheckout is the one-shot task scheduled at an attendance's
 	// checkout deadline (K+1h) when the employee checks in. It auto-rejects the
 	// attendance if the window closes with no checkout.
@@ -99,6 +101,7 @@ type Handlers struct {
 	bulkTransferTransactionWorker *workers.BulkTransferTransactionWorker
 	bulkTransferPaymentWorker     *workers.BulkTransferPaymentWorker
 	auditLogWriteWorker           *workers.AuditLogWriteWorker
+	payrollReportEmailWorker      *workers.PayrollReportEmailWorker
 	walletSettlementWorker        *workers.WalletSettlementWorker
 	statusInquiryPollerWorker     *workers.StatusInquiryPollerWorker
 	autoRejectCheckoutWorker      *workers.AutoRejectCheckoutWorker
@@ -116,6 +119,7 @@ func NewHandlers(
 	bulkTransferTransactionWorker *workers.BulkTransferTransactionWorker,
 	bulkTransferPaymentWorker *workers.BulkTransferPaymentWorker,
 	auditLogWriteWorker *workers.AuditLogWriteWorker,
+	payrollReportEmailWorker *workers.PayrollReportEmailWorker,
 	walletSettlementWorker *workers.WalletSettlementWorker,
 	statusInquiryPollerWorker *workers.StatusInquiryPollerWorker,
 	autoRejectCheckoutWorker *workers.AutoRejectCheckoutWorker,
@@ -131,11 +135,31 @@ func NewHandlers(
 		bulkTransferTransactionWorker: bulkTransferTransactionWorker,
 		bulkTransferPaymentWorker:     bulkTransferPaymentWorker,
 		auditLogWriteWorker:           auditLogWriteWorker,
+		payrollReportEmailWorker:      payrollReportEmailWorker,
 		walletSettlementWorker:        walletSettlementWorker,
 		statusInquiryPollerWorker:     statusInquiryPollerWorker,
 		autoRejectCheckoutWorker:      autoRejectCheckoutWorker,
 		autoRejectSweepWorker:         autoRejectSweepWorker,
 	}
+}
+
+// HandlePayrollReportEmail processes an async payroll report email task.
+// Malformed payloads are dropped. The worker itself is idempotent, so duplicate
+// tasks or replayed HTTP requests do not send duplicate emails.
+func (h *Handlers) HandlePayrollReportEmail(ctx context.Context, t *asynqlib.Task) error {
+	var p PayrollReportEmailPayload
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		logger.Error("email:payroll_report unmarshal payload", "error", err)
+		return asynqlib.SkipRetry
+	}
+	if h.payrollReportEmailWorker == nil {
+		return nil
+	}
+	return h.payrollReportEmailWorker.ProcessJob(ctx, workers.PayrollReportEmailJob{
+		Request:        p.Request,
+		InitiatedBy:    p.InitiatedBy,
+		IdempotencyKey: p.IdempotencyKey,
+	})
 }
 
 // HandleEmployeeImport processes employee import tasks

@@ -29,6 +29,14 @@ export interface ApiError {
   retry_after?: number;
 }
 
+export function createIdempotencyKey(scope: string): string {
+  const randomID =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${scope}:${randomID}`;
+}
+
 class ApiClient {
   private client: AxiosInstance;
   // BUG-005 fix: Global mutex to prevent concurrent 401 handling

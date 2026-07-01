@@ -11,19 +11,12 @@ import { vi } from 'date-fns/locale';
 
 import { useFailedAttempts, useQuotaAnomalies, useAdminAttendances } from '@/hooks/api/useDashboard';
 import { formatCompactCurrency } from '@/utils/formatters';
+import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDistance';
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
 import type { AdminAttendanceResponse } from '@/types/api/attendance.types';
 import type { HealthDrilldownTarget } from './CheckInHealthStrip';
 
 const PAGE_SIZE = 20;
-
-function formatGps(accuracy?: number | null, gpsAt?: string | null): string | null {
-  if (accuracy == null && !gpsAt) return null;
-  const parts: string[] = [];
-  if (accuracy != null && accuracy > 0) parts.push(`±${Math.round(accuracy)}m`);
-  if (gpsAt) parts.push(format(parseISO(gpsAt), 'HH:mm', { locale: vi }));
-  return parts.join(' · ') || null;
-}
 
 interface HealthDrilldownSheetProps {
   target: HealthDrilldownTarget;
@@ -225,20 +218,20 @@ function FailedAttemptsTable({
       <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
         <Table className="table-fixed">
           <colgroup>
-            <col className="w-[15%]" />
-            <col className="w-[10%]" />
             <col className="w-[16%]" />
-            <col className="w-[30%]" />
-            <col className="w-[10%]" />
+            <col className="w-[9%]" />
+            <col className="w-[26%]" />
+            <col className="w-[12%]" />
+            <col className="w-[18%]" />
             <col className="w-[19%]" />
           </colgroup>
           <TableHeader className="bg-muted/35">
             <TableRow className="hover:bg-transparent">
               <Th>Nhân viên</Th>
               <Th>Loại</Th>
+              <Th>Địa điểm</Th>
+              <Th>Khoảng cách</Th>
               <Th>Lý do</Th>
-              <Th>Thông báo lỗi</Th>
-              <Th>GPS</Th>
               <Th>Thời gian</Th>
             </TableRow>
           </TableHeader>
@@ -247,15 +240,13 @@ function FailedAttemptsTable({
               <TableRow key={row.id} className="hover:bg-muted/25">
                 <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td>{labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}</Td>
+                <Td>
+                  <CheckpointLocation row={row} />
+                </Td>
+                <Td>
+                  <CheckpointDistance row={row} />
+                </Td>
                 <Td>{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</Td>
-                <Td className="text-muted-foreground">
-                  <span className="block whitespace-normal break-words leading-relaxed">
-                    {row.error_message ?? '—'}
-                  </span>
-                </Td>
-                <Td className="whitespace-nowrap text-muted-foreground tabular-nums text-xs">
-                  {formatGps(row.accuracy, row.gps_at) ?? '—'}
-                </Td>
                 <Td className="whitespace-nowrap text-muted-foreground tabular-nums">
                   {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
                 </Td>
@@ -517,6 +508,38 @@ function Td({ children, className }: { children: ReactNode; className?: string }
   return <TableCell className={cn('px-4 py-4 align-top leading-relaxed whitespace-normal break-words', className)}>{children}</TableCell>;
 }
 
+function CheckpointLocation({ row }: { row: AdminFailedAttempt }) {
+  const checkpointName = row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất';
+  const delta = formatGeofenceDistanceDelta(row.nearest_checkpoint_distance_meters, row.geofence_radius_meters);
+
+  return (
+    <div className="min-w-0">
+      <p className="font-medium text-foreground">{checkpointName}</p>
+      {delta ? <p className="mt-1 text-xs text-muted-foreground">{delta}</p> : null}
+    </div>
+  );
+}
+
+function CheckpointDistance({ row }: { row: AdminFailedAttempt }) {
+  const distance = row.nearest_checkpoint_distance_meters;
+
+  if (distance == null) {
+    return <span className="text-sm font-medium text-muted-foreground">Chưa có khoảng cách</span>;
+  }
+
+  return <span className="font-semibold text-foreground tabular-nums">{formatDistanceMeters(distance)}</span>;
+}
+
+function checkpointDetail(row: AdminFailedAttempt): string {
+  if (row.nearest_checkpoint_distance_meters == null) {
+    return 'Thiếu tọa độ hoặc điểm chấm';
+  }
+
+  const checkpointName = row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất';
+  const delta = formatGeofenceDistanceDelta(row.nearest_checkpoint_distance_meters, row.geofence_radius_meters);
+  return delta ? `${checkpointName} · ${delta}` : checkpointName;
+}
+
 function FailedAttemptCard({ row }: { row: AdminFailedAttempt }) {
   return (
     <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
@@ -527,15 +550,16 @@ function FailedAttemptCard({ row }: { row: AdminFailedAttempt }) {
             {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-          {labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}
-        </span>
+        <div className="shrink-0 rounded-md bg-muted px-2.5 py-1.5 text-right">
+          <p className="text-sm font-semibold text-foreground tabular-nums">
+            {formatDistanceMeters(row.nearest_checkpoint_distance_meters)}
+          </p>
+          <p className="text-[11px] leading-tight text-muted-foreground">tới điểm chấm</p>
+        </div>
       </div>
+      <DetailLine label="Điểm gần nhất">{checkpointDetail(row)}</DetailLine>
       <DetailLine label="Lý do">{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</DetailLine>
-      <DetailLine label="Thông báo lỗi">{row.error_message ?? '—'}</DetailLine>
-      {formatGps(row.accuracy, row.gps_at) && (
-        <DetailLine label="GPS">{formatGps(row.accuracy, row.gps_at)!}</DetailLine>
-      )}
+      <DetailLine label="Loại">{labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}</DetailLine>
     </div>
   );
 }

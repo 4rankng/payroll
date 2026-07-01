@@ -1,12 +1,16 @@
 package asynq
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	asynqlib "github.com/hibiken/asynq"
 
+	"api-server/internal/app/dto"
 	"api-server/internal/app/services/payroll/bulktransfer"
 	"api-server/internal/config"
 )
@@ -191,6 +195,83 @@ func (c *Client) enqueueBulkTransferTask(taskType, prefix string, payload bulktr
 		"queue", info.Queue,
 	)
 	return nil
+}
+
+// PayrollReportEmailPayload is the async task payload for a payroll statement email.
+type PayrollReportEmailPayload struct {
+	Request        dto.SendPayrollReportEmailRequest `json:"request"`
+	InitiatedBy    uint                              `json:"initiated_by"`
+	IdempotencyKey string                            `json:"idempotency_key"`
+}
+
+// EnqueuePayrollReportEmail enqueues a payroll report email task and deduplicates
+// repeated requests by an idempotency key. If the client supplies an
+// Idempotency-Key header, retries of the same HTTP request share the same task;
+// otherwise an identical payload from the same user falls back to a deterministic
+// key.
+func (c *Client) EnqueuePayrollReportEmail(req dto.SendPayrollReportEmailRequest, initiatedBy uint, requestKey string) (string, bool, error) {
+	idempotencyKey := buildPayrollReportEmailIdempotencyKey(req, initiatedBy, requestKey)
+	payload := PayrollReportEmailPayload{
+		Request:        req,
+		InitiatedBy:    initiatedBy,
+		IdempotencyKey: idempotencyKey,
+	}
+	raw, _ := json.Marshal(payload)
+
+	task := asynqlib.NewTask(TaskPayrollReportEmail, raw,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(0),
+		asynqlib.Timeout(10*time.Minute),
+		asynqlib.Retention(24*time.Hour),
+		asynqlib.TaskID(idempotencyKey),
+		asynqlib.Unique(24*time.Hour),
+	)
+
+	info, err := c.client.Enqueue(task)
+	if err != nil {
+		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+			logger.Info("Payroll report email task already queued",
+				"task_id", idempotencyKey,
+				"initiated_by", initiatedBy,
+			)
+			return idempotencyKey, true, nil
+		}
+		return "", false, fmt.Errorf("failed to enqueue payroll report email task: %w", err)
+	}
+
+	logger.Info("Enqueued payroll report email task",
+		"task_id", info.ID,
+		"initiated_by", initiatedBy,
+		"queue", info.Queue,
+	)
+	return idempotencyKey, false, nil
+}
+
+func buildPayrollReportEmailIdempotencyKey(req dto.SendPayrollReportEmailRequest, initiatedBy uint, requestKey string) string {
+	seed := strings.TrimSpace(requestKey)
+	if seed == "" {
+		seed = strings.Join([]string{
+			req.ReportAtDate,
+			canonicalEmailList(req.Recipients),
+			canonicalEmailList(req.Cc),
+			canonicalEmailList(req.Bcc),
+		}, "|")
+	}
+
+	sum := sha256.Sum256([]byte(fmt.Sprintf("payroll-report-email|%d|%s", initiatedBy, seed)))
+	return fmt.Sprintf("payroll-report-email:%x", sum[:16])
+}
+
+func canonicalEmailList(values []string) string {
+	normalized := make([]string, 0, len(values))
+	for _, value := range values {
+		trimmed := strings.ToLower(strings.TrimSpace(value))
+		if trimmed != "" {
+			normalized = append(normalized, trimmed)
+		}
+	}
+	sort.Strings(normalized)
+	return strings.Join(normalized, ",")
 }
 
 // AuditEnqueuer is the minimal interface the audit event handler needs from the asynq client.
