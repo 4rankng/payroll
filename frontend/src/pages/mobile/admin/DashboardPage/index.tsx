@@ -17,6 +17,7 @@ import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { RecentEmployeesCard } from '@/components/admin-dashboard/RecentEmployeesCard';
 import { TopPaidEmployeesCard } from '@/components/admin-dashboard/TopPaidEmployeesCard';
 import { BankTransferBreakdownCard, ProjectSelector } from '@/components/admin-dashboard/BankTransferBreakdownCard';
+import { CheckInHealthStrip } from '@/components/admin-dashboard/CheckInHealthStrip';
 
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
@@ -283,6 +284,11 @@ const AdminDashboardMobile = () => {
       <div className="px-4 pt-6">
         <SectionHeader icon={TrendingUp} title="Lịch sử tài chính" />
         <MonthlyFinancialTable />
+      </div>
+
+      {/* ── Check-in / Advance Health ── */}
+      <div className="px-4 pt-6">
+        <CheckInHealthStrip month={monthParam} />
       </div>
 
       {/* ── Recent Employees ── */}

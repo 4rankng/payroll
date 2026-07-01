@@ -52,13 +52,14 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 			filters.ProjectID = &id
 		}
 	}
+	loc := time.Local // business timezone — match clock.Now() and DSN loc=Local
 	if fromStr := c.Query("from_date"); fromStr != "" {
-		if t, err := time.Parse("2006-01-02", fromStr); err == nil {
+		if t, err := time.ParseInLocation("2006-01-02", fromStr, loc); err == nil {
 			filters.FromDate = &t
 		}
 	}
 	if toStr := c.Query("to_date"); toStr != "" {
-		if t, err := time.Parse("2006-01-02", toStr); err == nil {
+		if t, err := time.ParseInLocation("2006-01-02", toStr, loc); err == nil {
 			filters.ToDate = &t
 		}
 	}
@@ -66,9 +67,17 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 		status := domain.AttendanceStatus(statusStr)
 		filters.Status = &status
 	}
+	if c.Query("date_field") == "check_in_time" {
+		filters.UseCheckInTimeWindow = true
+	}
 	if successStr := c.Query("successful_checkout"); successStr != "" {
 		if successful, err := strconv.ParseBool(successStr); err == nil {
 			filters.SuccessfulCheckout = &successful
+		}
+	}
+	if zeroStr := c.Query("zero_earning"); zeroStr != "" {
+		if zero, err := strconv.ParseBool(zeroStr); err == nil {
+			filters.ZeroEarning = &zero
 		}
 	}
 

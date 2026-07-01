@@ -101,17 +101,18 @@ type AttendanceRepository interface {
 
 // AttendanceFilters represents filtering options for attendance queries
 type AttendanceFilters struct {
-	EmployeeID         *uint
-	ProjectID          *uint
-	FromDate           *time.Time
-	ToDate             *time.Time
-	Status             *AttendanceStatus
-	SuccessfulCheckout *bool // when true, filter completed attendances with earning_amount > 0
-	ZeroEarning        *bool // when true, filter completed attendances with earning_amount = 0 or NULL
-	Limit              int
-	Offset             int
-	SortBy             string
-	SortOrder          string
+	EmployeeID           *uint
+	ProjectID            *uint
+	FromDate             *time.Time
+	ToDate               *time.Time
+	Status               *AttendanceStatus
+	SuccessfulCheckout   *bool // when true, filter completed attendances with earning_amount > 0
+	ZeroEarning          *bool // when true, filter completed attendances with earning_amount = 0 or NULL
+	UseCheckInTimeWindow bool
+	Limit                int
+	Offset               int
+	SortBy               string
+	SortOrder            string
 }
 
 // AttendanceFailedAttempt records a check-in or check-out attempt that

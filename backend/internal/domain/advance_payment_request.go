@@ -166,9 +166,12 @@ type AdvancePaymentRequestRepository interface {
 	// CountStuckPending returns the number of PENDING requests older than olderThan
 	// (disbursement worker stalled — should trend to 0).
 	CountStuckPending(ctx context.Context, olderThan time.Time) (int64, error)
-	// CountByStatusSince returns request counts grouped by status for rows created
-	// within [since, now). Used by the health dashboard for today's throughput.
-	CountByStatusSince(ctx context.Context, since time.Time) (map[AdvancePaymentRequestStatus]int64, error)
+	// CountStuckPendingInWindow returns the number of PENDING requests older than olderThan
+	// and created within [since, until).
+	CountStuckPendingInWindow(ctx context.Context, olderThan, since, until time.Time) (int64, error)
+	// CountByStatusInWindow returns request counts grouped by status for rows created
+	// within [since, until). Used by the health dashboard throughput tiles.
+	CountByStatusInWindow(ctx context.Context, since, until time.Time) (map[AdvancePaymentRequestStatus]int64, error)
 }
 
 type AdvancePaymentStatsSummary struct {

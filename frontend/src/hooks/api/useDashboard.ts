@@ -111,11 +111,12 @@ export function useFailedAttempts(params?: {
   from?: string;
   to?: string;
   page?: number;
-  page_size?: number;
+  pageSize?: number;
 }) {
   return useQuery({
     queryKey: QueryKeys.dashboard.failedAttempts(params as Record<string, unknown>),
     queryFn: () => dashboardService.getFailedAttempts(params),
+    staleTime: 0,
   });
 }
 
@@ -125,8 +126,10 @@ export function useAdminAttendances(params?: {
   successful_checkout?: boolean;
   from_date?: string;
   to_date?: string;
+  date_field?: 'check_in_time';
   page?: number;
   pageSize?: number;
+  zero_earning?: boolean;
 }) {
   return useQuery({
     queryKey: QueryKeys.dashboard.adminAttendances(params as Record<string, unknown>),

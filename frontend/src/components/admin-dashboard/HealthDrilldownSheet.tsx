@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { X, Inbox } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 import { useFailedAttempts, useQuotaAnomalies, useAdminAttendances } from '@/hooks/api/useDashboard';
@@ -28,7 +28,8 @@ function formatGps(accuracy?: number | null, gpsAt?: string | null): string | nu
 interface HealthDrilldownSheetProps {
   target: HealthDrilldownTarget;
   month?: string;
-  reportDate?: string;
+  periodStart?: string;
+  periodEnd?: string;
   onClose: () => void;
 }
 
@@ -72,7 +73,7 @@ function labelFor(map: Record<string, string>, key: string): string {
   return map[key] ?? key;
 }
 
-export function HealthDrilldownSheet({ target, month, reportDate, onClose }: HealthDrilldownSheetProps) {
+export function HealthDrilldownSheet({ target, month, periodStart, periodEnd, onClose }: HealthDrilldownSheetProps) {
   const isMobile = useIsMobile();
   const isOpen = target !== null;
   const title = deriveTitle(target, month);
@@ -108,13 +109,33 @@ export function HealthDrilldownSheet({ target, month, reportDate, onClose }: Hea
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {target?.type === 'failed-attempts' && (
-            <FailedAttemptsTable category={target.category} attemptType={target.attemptType} />
+            <FailedAttemptsTable
+              category={target.category}
+              attemptType={target.attemptType}
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+            />
           )}
           {target?.type === 'quota-anomaly' && (
             <QuotaAnomalyTable anomalyType={target.anomalyType} month={month} />
           )}
+          {target?.type === 'attendance-list' && (
+            <AttendanceRowsTable
+              status={target.status}
+              successfulCheckout={target.successfulCheckout}
+              zeroEarning={target.zeroEarning}
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+              emptyLabel={target.emptyLabel}
+            />
+          )}
           {target?.type === 'successful-checkouts' && (
-            <SuccessfulCheckoutsTable reportDate={reportDate} />
+            <AttendanceRowsTable
+              successfulCheckout
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+              emptyLabel="Không có ai chấm công ra thành công trong tháng này"
+            />
           )}
         </div>
       </SheetContent>
@@ -137,6 +158,9 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
     const anomLabel = labelFor(ANOMALY_TYPE_LABELS, target.anomalyType);
     return `Bất thường quota — ${anomLabel}${monthSuffix}`;
   }
+  if (target.type === 'attendance-list') {
+    return `${target.label}${monthSuffix}`;
+  }
   if (target.type === 'successful-checkouts') {
     return `Chấm công ra thành công${monthSuffix}`;
   }
@@ -145,14 +169,36 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
 
 // ─── Failed attempts table ────────────────────────────────────────────────
 
-function FailedAttemptsTable({ category, attemptType }: { category?: string; attemptType?: 'check_in' | 'check_out' }) {
+function inclusivePeriodEnd(periodEnd?: string): string | undefined {
+  if (!periodEnd) return undefined;
+  return format(subDays(parseISO(periodEnd), 1), 'yyyy-MM-dd');
+}
+
+function fallbackToday(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+function FailedAttemptsTable({
+  category,
+  attemptType,
+  periodStart,
+  periodEnd,
+}: {
+  category?: string;
+  attemptType?: 'check_in' | 'check_out';
+  periodStart?: string;
+  periodEnd?: string;
+}) {
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isFetching } = useFailedAttempts({
     type: attemptType,
     category,
+    from: periodStart,
+    to: inclusivePeriodEnd(periodEnd),
     page,
-    page_size: PAGE_SIZE,
+    pageSize: PAGE_SIZE,
   });
 
   const rows = data?.data ?? [];
@@ -296,19 +342,35 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
   );
 }
 
-// ─── Successful checkouts table ────────────────────────────────────────────
+// ─── Attendance rows table ─────────────────────────────────────────────────
 
-function SuccessfulCheckoutsTable({ reportDate }: { reportDate?: string }) {
+function AttendanceRowsTable({
+  status,
+  successfulCheckout,
+  zeroEarning,
+  periodStart,
+  periodEnd,
+  emptyLabel,
+}: {
+  status?: 'checked_in' | 'orphaned' | 'rejected';
+  successfulCheckout?: boolean;
+  zeroEarning?: boolean;
+  periodStart?: string;
+  periodEnd?: string;
+  emptyLabel: string;
+}) {
   const [page, setPage] = useState(1);
 
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const queryDate = reportDate ?? todayStr;
+  const queryStart = periodStart ?? fallbackToday();
+  const queryEnd = inclusivePeriodEnd(periodEnd) ?? queryStart;
 
   const { data, isLoading, isFetching } = useAdminAttendances({
-    successful_checkout: true,
-    from_date: queryDate,
-    to_date: queryDate,
+    status,
+    successful_checkout: successfulCheckout,
+    zero_earning: zeroEarning,
+    date_field: 'check_in_time',
+    from_date: queryStart,
+    to_date: queryEnd,
     page,
     pageSize: PAGE_SIZE,
   });
@@ -322,7 +384,7 @@ function SuccessfulCheckoutsTable({ reportDate }: { reportDate?: string }) {
   }
 
   if (!rows.length) {
-    return <EmptyState label="Chưa có ai chấm công ra thành công hôm nay" />;
+    return <EmptyState label={emptyLabel} />;
   }
 
   return (

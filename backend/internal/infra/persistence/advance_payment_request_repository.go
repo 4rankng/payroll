@@ -670,9 +670,24 @@ func (r *AdvancePaymentRequestRepository) CountStuckPending(ctx context.Context,
 	return count, nil
 }
 
-// CountByStatusSince returns request counts grouped by status for rows created in [since, ∞).
+// CountStuckPendingInWindow returns PENDING requests older than olderThan within [since, until).
+// Scoped to check-in-enabled employees to match the self-checkin dashboard.
+func (r *AdvancePaymentRequestRepository) CountStuckPendingInWindow(ctx context.Context, olderThan, since, until time.Time) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Where("status = ? AND created_at < ? AND created_at >= ? AND created_at < ?", domain.AdvancePaymentStatusPending, olderThan, since, until).
+		Where(checkInEnabledScope("advance_payment_requests")).
+		Count(&count).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", "stuck_pending_window")
+	}
+	return count, nil
+}
+
+// CountByStatusInWindow returns request counts grouped by status for rows created in [since, until).
 // Only the statuses relevant to the health dashboard are populated; absent keys are zero.
-func (r *AdvancePaymentRequestRepository) CountByStatusSince(ctx context.Context, since time.Time) (map[domain.AdvancePaymentRequestStatus]int64, error) {
+func (r *AdvancePaymentRequestRepository) CountByStatusInWindow(ctx context.Context, since, until time.Time) (map[domain.AdvancePaymentRequestStatus]int64, error) {
 	type row struct {
 		Status string `gorm:"column:status"`
 		Cnt    int64  `gorm:"column:cnt"`
@@ -681,12 +696,12 @@ func (r *AdvancePaymentRequestRepository) CountByStatusSince(ctx context.Context
 	err := r.DB.WithContext(ctx).
 		Model(&domain.AdvancePaymentRequest{}).
 		Select("status, COUNT(*) as cnt").
-		Where("created_at >= ?", since).
+		Where("created_at >= ? AND created_at < ?", since, until).
 		Where(checkInEnabledScope("advance_payment_requests")).
 		Group("status").
 		Scan(&rows).Error
 	if err != nil {
-		return nil, r.errorHandler.HandleGetError(err, "advance_payment_request", "by_status_since")
+		return nil, r.errorHandler.HandleGetError(err, "advance_payment_request", "by_status_window")
 	}
 	out := make(map[domain.AdvancePaymentRequestStatus]int64, len(rows))
 	for _, r := range rows {

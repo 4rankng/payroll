@@ -24,13 +24,12 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	s.logger.Info("Getting check-in health", "month", month)
 
 	now := clock.Now()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	todayEnd := todayStart.AddDate(0, 0, 1) // exclusive upper bound
 
-	// Resolve the month window for quota metrics.
+	// Resolve the selected month window. All health-strip metrics follow the
+	// dashboard month selector; until is exclusive.
 	var monthTime time.Time
 	if month != "" {
-		t, err := time.Parse("2006-01", month)
+		t, err := time.ParseInLocation("2006-01", month, now.Location())
 		if err != nil {
 			return nil, fmt.Errorf("invalid month format: %w", err)
 		}
@@ -38,12 +37,12 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	} else {
 		monthTime = now
 	}
-	monthKey := monthTime.Format("2006-01")
+	monthStart := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, now.Location())
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	monthKey := monthStart.Format("2006-01")
 	forMonth := monthKey
 
-	// Try cache first. Include today's date so that "today" tiles are not stale
-	// when the month-keyed cache survives past midnight.
-	cacheKey := s.CacheService.GenerateDashboardCacheKey("check_in_health", monthKey+":"+todayStart.Format("2006-01-02"))
+	cacheKey := s.CacheService.GenerateDashboardCacheKey("check_in_health", monthKey)
 	var cached dto.CheckInHealthResponse
 	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
 		s.logger.Info("Check-in health retrieved from cache", "month", monthKey)
@@ -72,7 +71,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		cats, err := s.AttendanceFailedAttemptRepo.GetCategoryCounts(ctx, todayStart, todayEnd)
+		cats, err := s.AttendanceFailedAttemptRepo.GetCategoryCounts(ctx, monthStart, monthEnd)
 		if err != nil {
 			setErr(fmt.Errorf("failed-attempts categories: %w", err))
 			return
@@ -83,7 +82,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}()
 	go func() {
 		defer wg.Done()
-		stats, err := s.AttendanceRepo.GetHealthStats(ctx, todayStart, todayEnd)
+		stats, err := s.AttendanceRepo.GetHealthStats(ctx, monthStart, monthEnd)
 		if err != nil {
 			setErr(fmt.Errorf("attendance health stats: %w", err))
 			return
@@ -94,7 +93,7 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}()
 	go func() {
 		defer wg.Done()
-		types, err := s.AttendanceFailedAttemptRepo.GetCountByAttemptType(ctx, todayStart, todayEnd)
+		types, err := s.AttendanceFailedAttemptRepo.GetCountByAttemptType(ctx, monthStart, monthEnd)
 		if err != nil {
 			setErr(fmt.Errorf("failed-attempts by type: %w", err))
 			return
@@ -130,17 +129,19 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}
 
 	// Advance request throughput + stuck-pending.
-	stuckPending, err := s.AdvancePaymentRequestRepo.CountStuckPending(ctx, now.Add(-24*time.Hour))
+	stuckPending, err := s.AdvancePaymentRequestRepo.CountStuckPendingInWindow(ctx, now.Add(-24*time.Hour), monthStart, monthEnd)
 	if err != nil {
 		return nil, fmt.Errorf("stuck pending: %w", err)
 	}
-	statusCounts, err := s.AdvancePaymentRequestRepo.CountByStatusSince(ctx, todayStart)
+	statusCounts, err := s.AdvancePaymentRequestRepo.CountByStatusInWindow(ctx, monthStart, monthEnd)
 	if err != nil {
 		return nil, fmt.Errorf("requests by status: %w", err)
 	}
 
 	resp := &dto.CheckInHealthResponse{
-		ReportDate:                todayStart.Format("2006-01-02"),
+		ReportDate:                monthStart.Format("2006-01-02"),
+		PeriodStart:               monthStart.Format("2006-01-02"),
+		PeriodEnd:                 monthEnd.Format("2006-01-02"),
 		FailedAttemptsByCategory:  toDTOCategoryCounts(failedByCategory),
 		FailedCheckInToday:        countByType(failedByType, "check_in"),
 		FailedCheckOutToday:       countByType(failedByType, "check_out"),

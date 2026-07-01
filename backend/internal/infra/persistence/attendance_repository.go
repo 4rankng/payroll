@@ -142,11 +142,20 @@ func (r *attendanceRepository) buildFilterQuery(ctx context.Context, filters dom
 	if filters.ProjectID != nil {
 		query = query.Where("project_id = ?", *filters.ProjectID)
 	}
+	useCheckInTimeWindow := filters.UseCheckInTimeWindow || (filters.SuccessfulCheckout != nil && *filters.SuccessfulCheckout)
 	if filters.FromDate != nil {
-		query = query.Where("date >= ?", *filters.FromDate)
+		if useCheckInTimeWindow {
+			query = query.Where("check_in_time >= ?", *filters.FromDate)
+		} else {
+			query = query.Where("date >= ?", *filters.FromDate)
+		}
 	}
 	if filters.ToDate != nil {
-		query = query.Where("date <= ?", *filters.ToDate)
+		if useCheckInTimeWindow {
+			query = query.Where("check_in_time < ?", filters.ToDate.AddDate(0, 0, 1))
+		} else {
+			query = query.Where("date <= ?", *filters.ToDate)
+		}
 	}
 	if filters.Status != nil {
 		switch *filters.Status {
