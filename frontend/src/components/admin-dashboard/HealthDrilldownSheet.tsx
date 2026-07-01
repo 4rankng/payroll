@@ -9,9 +9,10 @@ import { X, Inbox } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
+import { useFailedAttempts, useQuotaAnomalies, useAdminAttendances } from '@/hooks/api/useDashboard';
 import { formatCompactCurrency } from '@/utils/formatters';
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
+import type { AdminAttendanceResponse } from '@/types/api/attendance.types';
 import type { HealthDrilldownTarget } from './CheckInHealthStrip';
 
 const PAGE_SIZE = 20;
@@ -111,6 +112,9 @@ export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldown
           {target?.type === 'quota-anomaly' && (
             <QuotaAnomalyTable anomalyType={target.anomalyType} month={month} />
           )}
+          {target?.type === 'successful-checkouts' && (
+            <SuccessfulCheckoutsTable />
+          )}
         </div>
       </SheetContent>
     </Sheet>
@@ -131,6 +135,9 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
   if (target.type === 'quota-anomaly') {
     const anomLabel = labelFor(ANOMALY_TYPE_LABELS, target.anomalyType);
     return `Bất thường quota — ${anomLabel}${monthSuffix}`;
+  }
+  if (target.type === 'successful-checkouts') {
+    return `Chấm công ra thành công${monthSuffix}`;
   }
   return '';
 }
@@ -283,6 +290,127 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
         {rows.map((row, i) => (
           <QuotaAnomalyCard key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} row={row} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Successful checkouts table ────────────────────────────────────────────
+
+function SuccessfulCheckoutsTable() {
+  const [page, setPage] = useState(1);
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const { data, isLoading, isFetching } = useAdminAttendances({
+    status: 'completed',
+    from_date: todayStr,
+    to_date: todayStr,
+    page,
+    page_size: PAGE_SIZE,
+  });
+
+  const rows: AdminAttendanceResponse[] = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  if (isLoading) {
+    return <TableSkeleton cols={5} rows={5} />;
+  }
+
+  if (!rows.length) {
+    return <EmptyState label="Chưa có ai chấm công ra thành công hôm nay" />;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Tổng <span className="font-medium text-foreground tabular-nums">{total.toLocaleString('vi-VN')}</span> nhân viên
+          {isFetching ? ' — đang tải…' : ''}
+        </p>
+      </div>
+
+      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+        <Table className="table-fixed">
+          <colgroup>
+            <col className="w-[18%]" />
+            <col className="w-[14%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[20%]" />
+          </colgroup>
+          <TableHeader className="bg-muted/35">
+            <TableRow className="hover:bg-transparent">
+              <Th>Nhân viên</Th>
+              <Th>Dự án</Th>
+              <Th>Vào làm</Th>
+              <Th>Cổng vào</Th>
+              <Th>Tan ca</Th>
+              <Th>Cổng ra</Th>
+              <Th>Lương ca</Th>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id} className="hover:bg-muted/25">
+                <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
+                <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
+                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
+                  {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })}
+                </Td>
+                <Td className="text-muted-foreground">{row.check_in_gate || '—'}</Td>
+                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
+                  {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
+                </Td>
+                <Td className="text-muted-foreground">{row.check_out_gate || '—'}</Td>
+                <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
+                  {row.earning_amount != null && row.earning_amount > 0
+                    ? formatCompactCurrency(row.earning_amount)
+                    : '—'}
+                </Td>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="space-y-2 sm:hidden">
+        {rows.map((row) => (
+          <SuccessfulCheckoutCard key={row.id} row={row} />
+        ))}
+      </div>
+
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+    </div>
+  );
+}
+
+function SuccessfulCheckoutCard({ row }: { row: AdminAttendanceResponse }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+        </div>
+        {row.earning_amount != null && row.earning_amount > 0 && (
+          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-financial-positive">
+            {formatCompactCurrency(row.earning_amount)}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs">
+        <DetailLine label="Vào làm">
+          {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
+        </DetailLine>
+        <DetailLine label="Tan ca">
+          {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
+          {row.check_out_gate ? ` · ${row.check_out_gate}` : ''}
+        </DetailLine>
       </div>
     </div>
   );

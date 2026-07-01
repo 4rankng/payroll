@@ -22,6 +22,7 @@ import type { CheckInHealthResponse } from '@/types/api/dashboard.types';
 export type HealthDrilldownTarget =
   | { type: 'failed-attempts'; category?: string; attemptType?: 'check_in' | 'check_out' }
   | { type: 'quota-anomaly'; anomalyType: string }
+  | { type: 'successful-checkouts' }
   | null;
 
 interface CheckInHealthStripProps {
@@ -57,6 +58,10 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     setDrilldown({ type: 'quota-anomaly', anomalyType });
   }, []);
 
+  const openSuccessfulCheckouts = useCallback(() => {
+    setDrilldown({ type: 'successful-checkouts' });
+  }, []);
+
   // ── Section A: Check-in / Check-out ─────────────────────────────────────
   const sectionA = useMemo(() => buildSectionItems(
     data,
@@ -68,9 +73,9 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
       { key: 'orphaned', label: 'Thiếu dữ liệu ghép cặp', anomaly: true, drilldown: () => openFailedAttempts('orphaned') },
       { key: 'auto_rejected_today', label: 'Tự huỷ', anomaly: true, drilldown: () => openFailedAttempts('already_auto_rejected') },
       { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openFailedAttempts('zero_earning') },
-      { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false },
+      { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false, drilldown: () => openSuccessfulCheckouts() },
     ],
-  ), [data, isLoading, openFailedAttempts]);
+  ), [data, isLoading, openFailedAttempts, openSuccessfulCheckouts]);
 
   // ── Section B: Quota ────────────────────────────────────────────────────
   const sectionB = useMemo(() => buildSectionItems(

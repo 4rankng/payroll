@@ -256,6 +256,7 @@ export const QueryKeys = {
     checkInHealth: (month?: string) => [...QueryKeys.dashboard.all, 'check-in-health', month] as const,
     quotaAnomalies: (type?: string, month?: string) => [...QueryKeys.dashboard.all, 'quota-anomalies', type, month] as const,
     failedAttempts: (params?: Record<string, unknown>) => [...QueryKeys.dashboard.all, 'failed-attempts', params] as const,
+    adminAttendances: (params?: Record<string, unknown>) => [...QueryKeys.dashboard.all, 'admin-attendances', params] as const,
   },
 
   // ========== AUDIT ==========
