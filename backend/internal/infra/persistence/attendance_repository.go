@@ -160,6 +160,11 @@ func (r *attendanceRepository) buildFilterQuery(ctx context.Context, filters dom
 			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ?", clock.Now().Add(-18*time.Hour))
 		}
 	}
+	if filters.SuccessfulCheckout != nil && *filters.SuccessfulCheckout {
+		query = query.
+			Where("check_out_time IS NOT NULL AND earning_amount > 0").
+			Where(checkInEnabledScope("attendances"))
+	}
 	if filters.ZeroEarning != nil && *filters.ZeroEarning {
 		query = query.Where("check_out_time IS NOT NULL AND (earning_amount IS NULL OR earning_amount = 0)")
 	}

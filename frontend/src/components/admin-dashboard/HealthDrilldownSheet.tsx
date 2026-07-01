@@ -28,6 +28,7 @@ function formatGps(accuracy?: number | null, gpsAt?: string | null): string | nu
 interface HealthDrilldownSheetProps {
   target: HealthDrilldownTarget;
   month?: string;
+  reportDate?: string;
   onClose: () => void;
 }
 
@@ -71,7 +72,7 @@ function labelFor(map: Record<string, string>, key: string): string {
   return map[key] ?? key;
 }
 
-export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldownSheetProps) {
+export function HealthDrilldownSheet({ target, month, reportDate, onClose }: HealthDrilldownSheetProps) {
   const isMobile = useIsMobile();
   const isOpen = target !== null;
   const title = deriveTitle(target, month);
@@ -113,7 +114,7 @@ export function HealthDrilldownSheet({ target, month, onClose }: HealthDrilldown
             <QuotaAnomalyTable anomalyType={target.anomalyType} month={month} />
           )}
           {target?.type === 'successful-checkouts' && (
-            <SuccessfulCheckoutsTable />
+            <SuccessfulCheckoutsTable reportDate={reportDate} />
           )}
         </div>
       </SheetContent>
@@ -297,18 +298,19 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
 
 // ─── Successful checkouts table ────────────────────────────────────────────
 
-function SuccessfulCheckoutsTable() {
+function SuccessfulCheckoutsTable({ reportDate }: { reportDate?: string }) {
   const [page, setPage] = useState(1);
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const queryDate = reportDate ?? todayStr;
 
   const { data, isLoading, isFetching } = useAdminAttendances({
-    status: 'completed',
-    from_date: todayStr,
-    to_date: todayStr,
+    successful_checkout: true,
+    from_date: queryDate,
+    to_date: queryDate,
     page,
-    page_size: PAGE_SIZE,
+    pageSize: PAGE_SIZE,
   });
 
   const rows: AdminAttendanceResponse[] = data?.data ?? [];

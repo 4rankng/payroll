@@ -66,6 +66,11 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 		status := domain.AttendanceStatus(statusStr)
 		filters.Status = &status
 	}
+	if successStr := c.Query("successful_checkout"); successStr != "" {
+		if successful, err := strconv.ParseBool(successStr); err == nil {
+			filters.SuccessfulCheckout = &successful
+		}
+	}
 
 	attendances, total, err := h.attendanceService.List(c.Request.Context(), filters)
 	if err != nil {

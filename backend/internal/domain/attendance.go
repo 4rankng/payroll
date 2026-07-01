@@ -101,16 +101,17 @@ type AttendanceRepository interface {
 
 // AttendanceFilters represents filtering options for attendance queries
 type AttendanceFilters struct {
-	EmployeeID  *uint
-	ProjectID   *uint
-	FromDate    *time.Time
-	ToDate      *time.Time
-	Status      *AttendanceStatus
-	ZeroEarning *bool // when true, filter completed attendances with earning_amount = 0 or NULL
-	Limit       int
-	Offset      int
-	SortBy      string
-	SortOrder   string
+	EmployeeID         *uint
+	ProjectID          *uint
+	FromDate           *time.Time
+	ToDate             *time.Time
+	Status             *AttendanceStatus
+	SuccessfulCheckout *bool // when true, filter completed attendances with earning_amount > 0
+	ZeroEarning        *bool // when true, filter completed attendances with earning_amount = 0 or NULL
+	Limit              int
+	Offset             int
+	SortBy             string
+	SortOrder          string
 }
 
 // AttendanceFailedAttempt records a check-in or check-out attempt that
@@ -118,18 +119,18 @@ type AttendanceFilters struct {
 // layer so the admin dashboard can surface aggregate failure counts by
 // reason category.
 type AttendanceFailedAttempt struct {
-	ID             uint      `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	EmployeeID     uint      `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
-	AttemptType    string    `json:"attempt_type" gorm:"type:varchar(16);not null"`
-	ReasonCategory string    `json:"reason_category" gorm:"type:varchar(48);not null"`
-	ProjectID      uint      `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
+	ID             uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	EmployeeID     uint       `json:"employee_id" gorm:"not null;type:bigint unsigned;index"`
+	AttemptType    string     `json:"attempt_type" gorm:"type:varchar(16);not null"`
+	ReasonCategory string     `json:"reason_category" gorm:"type:varchar(48);not null"`
+	ProjectID      uint       `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
 	Lat            *float64   `json:"lat" gorm:"type:decimal(10,7)"`
 	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
 	Accuracy       *float64   `json:"accuracy" gorm:"type:float"`
 	GpsAt          *time.Time `json:"gps_at" gorm:"type:datetime(3)"`
 	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
-	CreatedAt      time.Time `json:"created_at"`
-	Employee       Employee  `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
+	CreatedAt      time.Time  `json:"created_at"`
+	Employee       Employee   `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
 }
 
 func (AttendanceFailedAttempt) TableName() string { return "attendance_failed_attempts" }

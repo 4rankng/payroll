@@ -122,13 +122,15 @@ export function useFailedAttempts(params?: {
 // Get admin attendance list for drill-down (paginated)
 export function useAdminAttendances(params?: {
   status?: string;
+  successful_checkout?: boolean;
   from_date?: string;
   to_date?: string;
   page?: number;
-  page_size?: number;
+  pageSize?: number;
 }) {
   return useQuery({
     queryKey: QueryKeys.dashboard.adminAttendances(params as Record<string, unknown>),
     queryFn: () => attendanceService.adminList(params as Record<string, unknown>),
+    staleTime: 0,
   });
 }
