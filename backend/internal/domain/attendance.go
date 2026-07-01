@@ -5,6 +5,24 @@ import (
 	"time"
 )
 
+// GeoReading bundles the device-reported GPS fields for a single check-in or
+// check-out attempt. Using a struct instead of positional lat/lng/accuracy
+// keeps CheckIn/CheckOut signatures stable as new fields are added.
+type GeoReading struct {
+	Lat, Lng float64
+	Accuracy float64    // meters; 0 when unknown (device had no fix)
+	GpsAt    *time.Time // device fix timestamp; nil when unknown
+}
+
+// AccuracyPtr returns a pointer to Accuracy, or nil if Accuracy <= 0.
+// Useful when the GORM column is nullable and zero means "unknown".
+func (g GeoReading) AccuracyPtr() *float64 {
+	if g.Accuracy > 0 {
+		return &g.Accuracy
+	}
+	return nil
+}
+
 // AttendanceStatus represents the status of an attendance record
 type AttendanceStatus string
 
@@ -28,8 +46,12 @@ type Attendance struct {
 	CheckOutTime       *time.Time `json:"check_out_time" gorm:"type:datetime(3)"`
 	CheckInLat         float64    `json:"check_in_lat" gorm:"type:decimal(10,7);not null"`
 	CheckInLng         float64    `json:"check_in_lng" gorm:"type:decimal(10,7);not null"`
+	CheckInAccuracy    *float64   `json:"check_in_accuracy" gorm:"type:float"`
+	CheckInGpsAt       *time.Time `json:"check_in_gps_at" gorm:"type:datetime(3)"`
 	CheckOutLat        *float64   `json:"check_out_lat" gorm:"type:decimal(10,7)"`
 	CheckOutLng        *float64   `json:"check_out_lng" gorm:"type:decimal(10,7)"`
+	CheckOutAccuracy   *float64   `json:"check_out_accuracy" gorm:"type:float"`
+	CheckOutGpsAt      *time.Time `json:"check_out_gps_at" gorm:"type:datetime(3)"`
 	CheckInGate        string     `json:"check_in_gate" gorm:"type:varchar(50);not null"`
 	CheckOutGate       *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
 	EarningAmount      *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
@@ -101,9 +123,11 @@ type AttendanceFailedAttempt struct {
 	AttemptType    string    `json:"attempt_type" gorm:"type:varchar(16);not null"`
 	ReasonCategory string    `json:"reason_category" gorm:"type:varchar(48);not null"`
 	ProjectID      uint      `json:"project_id" gorm:"not null;type:bigint unsigned;default:0"`
-	Lat            *float64  `json:"lat" gorm:"type:decimal(10,7)"`
-	Lng            *float64  `json:"lng" gorm:"type:decimal(10,7)"`
-	ErrorMessage   *string   `json:"error_message" gorm:"type:varchar(500)"`
+	Lat            *float64   `json:"lat" gorm:"type:decimal(10,7)"`
+	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
+	Accuracy       *float64   `json:"accuracy" gorm:"type:float"`
+	GpsAt          *time.Time `json:"gps_at" gorm:"type:datetime(3)"`
+	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
 	CreatedAt      time.Time `json:"created_at"`
 	Employee       Employee  `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
 }

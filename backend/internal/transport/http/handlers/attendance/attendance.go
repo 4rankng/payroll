@@ -58,7 +58,7 @@ func (h *Handler) resolveEmployeeID(c *gin.Context) (uint, bool) {
 // recordFailedAttempt fire-and-forgets a failed-attempt log for a validation error.
 // It uses context.Background() with a timeout so the write never blocks the
 // request and survives the request-context cancellation after the response is sent.
-func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, category, errorMsg string, lat, lng float64) {
+func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, category, errorMsg string, geo domain.GeoReading) {
 	if h.failedAttemptRepo == nil {
 		return
 	}
@@ -72,8 +72,12 @@ func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, c
 		defer cancel()
 		msg := errorMsg
 		var latPtr, lngPtr *float64
-		if lat != 0 || lng != 0 {
-			latPtr, lngPtr = &lat, &lng
+		if geo.Lat != 0 || geo.Lng != 0 {
+			latPtr, lngPtr = &geo.Lat, &geo.Lng
+		}
+		var accPtr *float64
+		if geo.Accuracy > 0 {
+			accPtr = &geo.Accuracy
 		}
 		attempt := &domain.AttendanceFailedAttempt{
 			EmployeeID:     employeeID,
@@ -82,12 +86,30 @@ func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, c
 			ProjectID:      projectID,
 			Lat:            latPtr,
 			Lng:            lngPtr,
+			Accuracy:       accPtr,
+			GpsAt:          geo.GpsAt,
 			ErrorMessage:   &msg,
 		}
 		if err := h.failedAttemptRepo.Create(ctx, attempt); err != nil {
 			h.logger.Warn("failed to log attendance failed attempt", "error", err)
 		}
 	}()
+}
+
+// buildGeoReading converts DTO fields into a domain.GeoReading.
+// GpsAt is an epoch-millisecond timestamp from the device; 0 means unknown.
+func buildGeoReading(lat, lng, accuracy float64, gpsAtMs int64) domain.GeoReading {
+	var gpsAt *time.Time
+	if gpsAtMs > 0 {
+		t := time.UnixMilli(gpsAtMs)
+		gpsAt = &t
+	}
+	return domain.GeoReading{
+		Lat:      lat,
+		Lng:      lng,
+		Accuracy: accuracy,
+		GpsAt:    gpsAt,
+	}
 }
 
 func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse {
@@ -140,11 +162,12 @@ func (h *Handler) CheckIn(c *gin.Context) {
 		return
 	}
 
-	att, err := h.attendanceService.CheckIn(c.Request.Context(), employeeID, req.ProjectID, req.Lat, req.Lng)
+	geo := buildGeoReading(req.Lat, req.Lng, req.Accuracy, req.GpsAt)
+	att, err := h.attendanceService.CheckIn(c.Request.Context(), employeeID, req.ProjectID, geo)
 	if err != nil {
 		if domain.IsValidationError(err) {
 			h.recordFailedAttempt(employeeID, req.ProjectID, "check_in",
-				attendance.ClassifyAttemptError(err.Error()), err.Error(), req.Lat, req.Lng)
+				attendance.ClassifyAttemptError(err.Error()), err.Error(), geo)
 		}
 		response.HandleDomainError(c, err)
 		return
@@ -166,13 +189,14 @@ func (h *Handler) CheckOut(c *gin.Context) {
 		return
 	}
 
-	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, req.Lat, req.Lng, req.ConfirmNoSalary)
+	geo := buildGeoReading(req.Lat, req.Lng, req.Accuracy, req.GpsAt)
+	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, geo, req.ConfirmNoSalary)
 	if err != nil {
 		if domain.IsValidationError(err) {
 			// CheckOut request has no projectID field; the project is resolved
 			// from the attendance record which we don't have here. Use 0.
 			h.recordFailedAttempt(employeeID, 0, "check_out",
-				attendance.ClassifyAttemptError(err.Error()), err.Error(), req.Lat, req.Lng)
+				attendance.ClassifyAttemptError(err.Error()), err.Error(), geo)
 		}
 		response.HandleDomainError(c, err)
 		return
@@ -201,6 +225,30 @@ func (h *Handler) GetToday(c *gin.Context) {
 	}
 
 	response.Success(c, h.mapToResponse(att), "Lấy thông tin chấm công thành công")
+}
+
+// LogDeviceAttempt handles POST /api/v1/mobile/attendance/attempt-log.
+// It records a device-level GPS failure (denied / timeout / unavailable /
+// unsupported) so the admin dashboard can see that the worker tried. Returns
+// 200 even if logging fails — this is a best-effort background trace.
+func (h *Handler) LogDeviceAttempt(c *gin.Context) {
+	var req dto.LogDeviceAttemptRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Success(c, nil, "")
+		return
+	}
+
+	employeeID, ok := h.resolveEmployeeID(c)
+	if !ok {
+		response.Success(c, nil, "")
+		return
+	}
+
+	reason := "gps_" + req.GpsStatus
+	msg := "GPS " + req.GpsStatus + ": device could not produce a fix"
+	h.recordFailedAttempt(employeeID, 0, req.AttemptType, reason, msg, domain.GeoReading{})
+
+	response.Success(c, nil, "")
 }
 
 // List handles GET /api/v1/mobile/attendance/history

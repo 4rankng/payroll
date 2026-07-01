@@ -330,7 +330,7 @@ func (s *AttendanceService) resolveProject(ctx context.Context, employeeID, proj
 	}
 }
 
-func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID uint, lat, lng float64) (*domain.Attendance, error) {
+func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID uint, geo domain.GeoReading) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -350,7 +350,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		}
 
 		// 3. Geofence validation
-		gateName, err := s.validateGeofence(project, lat, lng)
+		gateName, err := s.validateGeofence(project, geo.Lat, geo.Lng)
 		if err != nil {
 			return err
 		}
@@ -391,8 +391,8 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			ProjectID:   project.ID,
 			Date:        today,
 			CheckInTime: now,
-			CheckInLat:  lat,
-			CheckInLng:  lng,
+			CheckInLat:      geo.Lat,
+			CheckInLng:      geo.Lng,
 			CheckInGate: gateName,
 		}
 
@@ -423,7 +423,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	return result, err
 }
 
-func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, lng float64, confirmNoSalary bool) (*domain.Attendance, error) {
+func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo domain.GeoReading, confirmNoSalary bool) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -503,15 +503,15 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 		if err != nil {
 			return fmt.Errorf("failed to load project for geofence validation: %w", err)
 		}
-		gateName, err := s.validateGeofence(project, lat, lng)
+		gateName, err := s.validateGeofence(project, geo.Lat, geo.Lng)
 		if err != nil {
 			observability.GetLogger().Warn(
 				"Checkout geofence validation failed; allowing checkout for active attendance",
 				"employee_id", employeeID,
 				"attendance_id", attendance.ID,
 				"project_id", attendance.ProjectID,
-				"lat", lat,
-				"lng", lng,
+				"lat", geo.Lat,
+				"lng", geo.Lng,
 				"error", err,
 			)
 			gateName = attendance.CheckInGate
@@ -522,8 +522,8 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, lat, 
 
 		// 3. Update CheckOutTime and coords
 		attendance.CheckOutTime = &now
-		attendance.CheckOutLat = &lat
-		attendance.CheckOutLng = &lng
+		attendance.CheckOutLat = &geo.Lat
+		attendance.CheckOutLng = &geo.Lng
 		attendance.CheckOutGate = &gateName
 
 		// 4. Calculate earning_amount (reuses the assignment + payrate loaded for

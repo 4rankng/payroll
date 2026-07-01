@@ -544,6 +544,8 @@ export interface AdminFailedAttempt {
   project_id: number;
   lat?: number | null;
   lng?: number | null;
+  accuracy?: number | null;
+  gps_at?: string | null;
   error_message?: string | null;
   created_at: string;
 }

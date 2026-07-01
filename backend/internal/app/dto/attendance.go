@@ -10,13 +10,25 @@ type CheckInRequest struct {
 	ProjectID uint    `json:"project_id"`
 	Lat       float64 `json:"lat" binding:"required"`
 	Lng       float64 `json:"lng" binding:"required"`
+	Accuracy  float64 `json:"accuracy"`  // GPS accuracy in meters; 0 = unknown
+	GpsAt     int64   `json:"gps_at"`    // device GPS fix timestamp (epoch ms); 0 = unknown
 }
 
 // CheckOutRequest represents the request to check out
 type CheckOutRequest struct {
 	Lat             float64 `json:"lat" binding:"required"`
 	Lng             float64 `json:"lng" binding:"required"`
+	Accuracy        float64 `json:"accuracy"`  // GPS accuracy in meters; 0 = unknown
+	GpsAt           int64   `json:"gps_at"`    // device GPS fix timestamp (epoch ms); 0 = unknown
 	ConfirmNoSalary bool    `json:"confirm_no_salary"`
+}
+
+// LogDeviceAttemptRequest records a device-level GPS failure (denied / timeout /
+// unavailable / unsupported) so the admin can see that the worker tried but the
+// device couldn't produce a fix.
+type LogDeviceAttemptRequest struct {
+	AttemptType string `json:"attempt_type" binding:"required,oneof=check_in check_out"`
+	GpsStatus   string `json:"gps_status" binding:"required,oneof=denied timeout unavailable unsupported"`
 }
 
 // AttendanceResponse represents an attendance record
@@ -69,6 +81,8 @@ type AdminFailedAttemptResponse struct {
 	ProjectID      uint       `json:"project_id"`
 	Lat            *float64   `json:"lat,omitempty"`
 	Lng            *float64   `json:"lng,omitempty"`
+	Accuracy       *float64   `json:"accuracy,omitempty"`
+	GpsAt          *time.Time `json:"gps_at,omitempty"`
 	ErrorMessage   *string    `json:"error_message,omitempty"`
 	CreatedAt      time.Time  `json:"created_at"`
 }
