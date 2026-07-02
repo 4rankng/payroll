@@ -67,9 +67,9 @@ export function getLocationPermissionIssue(error: unknown): LocationPermissionIs
   if (geolocationError.code === GEOLOCATION_PERMISSION_DENIED) {
     return {
       type: "denied",
-      title: "Chưa cấp quyền vị trí",
+      title: "Bật quyền vị trí",
       description:
-        "Bấm Thử cấp quyền lại. Nếu Safari không hiện bảng hỏi quyền, hãy cho phép Vị trí cho Safari Websites rồi tải lại trang.",
+        "Bấm Thử lại. Nếu vẫn bị chặn, mở Cài đặt > Safari Websites > Vị trí.",
       canRetry: true,
       requiresSettings: true,
     };

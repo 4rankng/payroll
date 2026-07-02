@@ -11,6 +11,7 @@ import "strings"
 //
 //   - geofence_not_configured: "Chưa cấu hình vị trí vào làm cho dự án"
 //   - geofence_outside:        "Bạn đang ở ngoài khu vực chấm công"
+//   - gps_inaccurate:          "Tín hiệu GPS không đủ chính xác" (reported accuracy worse than radius)
 //   - check_in_not_enabled:   "Bạn chưa được cấp quyền chấm công"
 //   - already_checked_in:      "Bạn đã vào làm trong ngày hôm nay rồi"
 //   - shift_not_configured:   "Chưa cấu hình ca làm việc cho vị trí này"
@@ -31,6 +32,7 @@ func ClassifyAttemptError(msg string) string {
 		category string
 	}{
 		{"Chưa cấu hình vị trí vào làm", "geofence_not_configured"},
+		{"Tín hiệu GPS không đủ chính xác", "gps_inaccurate"},
 		{"ngoài khu vực chấm công", "geofence_outside"},
 		{"Bạn chưa được cấp quyền chấm công", "check_in_not_enabled"},
 		{"Bạn đã vào làm trong ngày", "already_checked_in"},

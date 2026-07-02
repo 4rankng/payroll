@@ -38,14 +38,14 @@ export const attendanceService = {
     );
   },
 
-  checkIn: async (payload: { lat: number; lng: number }) => {
+  checkIn: async (payload: { lat: number; lng: number; accuracy?: number; gps_at?: number }) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkIn,
       payload
     );
   },
 
-  checkOut: async (payload: { lat: number; lng: number; confirm_no_salary?: boolean }) => {
+  checkOut: async (payload: { lat: number; lng: number; accuracy?: number; gps_at?: number; confirm_no_salary?: boolean }) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkOut,
       payload

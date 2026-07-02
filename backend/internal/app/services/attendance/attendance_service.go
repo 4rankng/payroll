@@ -19,7 +19,7 @@ const checkInShiftWindow = 1 * time.Hour
 
 // checkOutUpperGrace is how long after the configured shift end K a checkout is
 // still allowed: checkout is valid in [K, K + checkOutUpperGrace).
-const checkOutUpperGrace = 1 * time.Hour
+const checkOutUpperGrace = 3 * time.Hour
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
 
@@ -273,17 +273,26 @@ func (s *AttendanceService) resolveShift(payrate *domain.Payrate, position strin
 	return closestShift(shifts, checkInTime)
 }
 
-// validateGeofence checks if coordinates are within configured gates for the given project.
-// Returns an error if no gates are configured.
-func (s *AttendanceService) validateGeofence(project *domain.Project, lat, lng float64) (string, error) {
+// validateGeofence checks if a GPS reading is within the configured gates for the
+// given project. It first rejects fixes whose reported accuracy is worse than the
+// geofence radius: a phone can otherwise report a coordinate inside the gate from
+// hundreds of meters away (WiFi/cell positioning, a stale fix, or a poor GNSS
+// read), which would let an off-site worker check in. accuracy == 0 (unknown, or
+// not sent by a legacy client) skips the gate so legitimate unknown-accuracy fixes
+// are not blocked. Returns an error if no gates are configured.
+func (s *AttendanceService) validateGeofence(project *domain.Project, reading domain.GeoReading) (string, error) {
 	gates := project.GeofenceGates
 	if len(gates) == 0 {
 		return "", domain.NewValidationError("Chưa cấu hình vị trí vào làm cho dự án")
 	}
 
 	radius := float64(project.GeofenceRadiusMeters)
+	if reading.Accuracy > 0 && reading.Accuracy > radius {
+		return "", domain.NewValidationError("Tín hiệu GPS không đủ chính xác. Vui lòng thử lại ngoài trời hoặc bật chế độ GPS độ chính xác cao.")
+	}
+
 	for _, gate := range gates {
-		dist := geo.HaversineDistance(lat, lng, gate.Lat, gate.Lng)
+		dist := geo.HaversineDistance(reading.Lat, reading.Lng, gate.Lat, gate.Lng)
 		if dist <= radius {
 			return gate.Name, nil
 		}
@@ -330,6 +339,20 @@ func (s *AttendanceService) resolveProject(ctx context.Context, employeeID, proj
 	}
 }
 
+// ResolveProjectID returns the project id a check-in for this employee would
+// resolve to, best-effort. The handler uses it to attribute a failed attempt to
+// the right project when project_id was omitted (auto-detected), since the
+// resolved id is otherwise trapped inside CheckIn's transaction. Returns 0 when
+// the project cannot be determined — errors are swallowed because this only
+// feeds best-effort forensic logging.
+func (s *AttendanceService) ResolveProjectID(ctx context.Context, employeeID, projectID uint) uint {
+	project, err := s.resolveProject(ctx, employeeID, projectID)
+	if err != nil || project == nil {
+		return 0
+	}
+	return project.ID
+}
+
 func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID uint, geo domain.GeoReading) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
@@ -350,7 +373,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		}
 
 		// 3. Geofence validation
-		gateName, err := s.validateGeofence(project, geo.Lat, geo.Lng)
+		gateName, err := s.validateGeofence(project, geo)
 		if err != nil {
 			return err
 		}
@@ -387,20 +410,22 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 
 		// 6. Create attendance record
 		attendance := &domain.Attendance{
-			EmployeeID:  employeeID,
-			ProjectID:   project.ID,
-			Date:        today,
-			CheckInTime: now,
-			CheckInLat:  geo.Lat,
-			CheckInLng:  geo.Lng,
-			CheckInGate: gateName,
+			EmployeeID:      employeeID,
+			ProjectID:       project.ID,
+			Date:            today,
+			CheckInTime:     now,
+			CheckInLat:      geo.Lat,
+			CheckInLng:      geo.Lng,
+			CheckInAccuracy: geo.AccuracyPtr(),
+			CheckInGpsAt:    geo.GpsAt,
+			CheckInGate:     gateName,
 		}
 
 		if err := s.attendanceRepo.Create(txCtx, attendance); err != nil {
 			return err
 		}
 
-		// 7. Schedule the auto-reject task at the checkout deadline K+1h. It fires
+		// 7. Schedule the auto-reject task at the checkout deadline K+3h. It fires
 		// only after this transaction commits (RegisterAfterCommit), so the
 		// attendance row is durable. When it fires, the handler rejects the record
 		// iff the employee still hasn't checked out.
@@ -457,7 +482,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
 
-		// Resolve the worked shift to derive the checkout window [K, K+1h) from the
+		// Resolve the worked shift to derive the checkout window [K, K+3h) from the
 		// configured shift end. Load the assignment + payrate here so they are reused
 		// for earning below.
 		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
@@ -503,7 +528,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 		if err != nil {
 			return fmt.Errorf("failed to load project for geofence validation: %w", err)
 		}
-		gateName, err := s.validateGeofence(project, geo.Lat, geo.Lng)
+		gateName, err := s.validateGeofence(project, geo)
 		if err != nil {
 			observability.GetLogger().Warn(
 				"Checkout geofence validation failed; allowing checkout for active attendance",
@@ -524,6 +549,8 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 		attendance.CheckOutTime = &now
 		attendance.CheckOutLat = &geo.Lat
 		attendance.CheckOutLng = &geo.Lng
+		attendance.CheckOutAccuracy = geo.AccuracyPtr()
+		attendance.CheckOutGpsAt = geo.GpsAt
 		attendance.CheckOutGate = &gateName
 
 		// 4. Calculate earning_amount (reuses the assignment + payrate loaded for
@@ -613,13 +640,13 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 // configured shift cannot be resolved for an expired-checkout attendance (e.g.,
 // payrate deleted or assignment ended after check-in). The normal path uses
 // formatAutoRejectReason with the actual check-in time, configured shift end
-// (K), and grace-window upper bound (K+1h, "hạn chót").
+// (K), and grace-window upper bound (K+3h, "hạn chót").
 const autoRejectExpiredReasonFallback = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
 
 // formatAutoRejectReason builds the salary_reject_reason recorded when a
-// checkout window [K, K+1h) closes with no checkout. It points the employee at
+// checkout window [K, K+3h) closes with no checkout. It points the employee at
 // their actual check-in time, the configured shift end (K), and the grace
-// deadline (K+1h) so they can see exactly when they should have ended the shift.
+// deadline (K+3h) so they can see exactly when they should have ended the shift.
 func formatAutoRejectReason(checkInTime, shiftEnd time.Time) string {
 	deadline := shiftEnd.Add(checkOutUpperGrace)
 	return fmt.Sprintf(
@@ -674,13 +701,13 @@ func (s *AttendanceService) resolveShiftForAttendance(ctx context.Context, att *
 	return s.resolveShift(payrate, assignment.Position, att.CheckInTime)
 }
 
-// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+1h)
+// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+3h)
 // has closed with no checkout: it sets earning to 0 and records a reject
 // reason, making the shift final. Idempotent — the underlying MarkAutoRejected
 // is a conditional UPDATE (WHERE check_out_time IS NULL AND
 // salary_reject_reason IS NULL), so it is a safe no-op if the employee already
 // checked out, the record was already rejected, or a concurrent CheckOut beats
-// it. Invoked by the asynq auto-reject task scheduled at K+1h at check-in.
+// it. Invoked by the asynq auto-reject task scheduled at K+3h at check-in.
 func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceID uint) error {
 	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
 	if err != nil {
@@ -744,8 +771,10 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 	return rejected, nil
 }
 
-// GetTodayAttendance returns the attendance record for the employee for the current day.
-// It returns nil if no record exists for today.
+// GetTodayAttendance returns the attendance record for the employee for the
+// current day. For night shifts checked in before midnight, it falls back to an
+// open previous-day attendance so the mobile card can still show "Tan ca" after
+// midnight. It returns nil if no current-day or open previous-day record exists.
 func (s *AttendanceService) GetTodayAttendance(ctx context.Context, employeeID uint) (*domain.Attendance, error) {
 	now := s.clock.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
@@ -754,8 +783,19 @@ func (s *AttendanceService) GetTodayAttendance(ctx context.Context, employeeID u
 	if err != nil {
 		return nil, err
 	}
-	s.normalizeLegacySalaryRejectReason(ctx, att)
+	if att != nil {
+		s.normalizeLegacySalaryRejectReason(ctx, att)
+		return att, nil
+	}
 
+	yesterday := today.AddDate(0, 0, -1)
+	att, err = s.attendanceRepo.GetByEmployeeAndDate(ctx, employeeID, yesterday)
+	if err != nil {
+		return nil, err
+	}
+	if att == nil || att.CheckOutTime != nil || att.SalaryRejectReason != nil {
+		return nil, nil
+	}
 	return att, nil
 }
 

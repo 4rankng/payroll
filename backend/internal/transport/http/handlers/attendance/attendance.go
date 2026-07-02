@@ -166,7 +166,14 @@ func (h *Handler) CheckIn(c *gin.Context) {
 	att, err := h.attendanceService.CheckIn(c.Request.Context(), employeeID, req.ProjectID, geo)
 	if err != nil {
 		if domain.IsValidationError(err) {
-			h.recordFailedAttempt(employeeID, req.ProjectID, "check_in",
+			// Attribute the attempt to the resolved project when project_id was
+			// omitted (auto-detected). req.ProjectID is 0 in that case, which would
+			// otherwise leave the failed-attempt row unattributable.
+			projectID := req.ProjectID
+			if projectID == 0 {
+				projectID = h.attendanceService.ResolveProjectID(c.Request.Context(), employeeID, 0)
+			}
+			h.recordFailedAttempt(employeeID, projectID, "check_in",
 				attendance.ClassifyAttemptError(err.Error()), err.Error(), geo)
 		}
 		response.HandleDomainError(c, err)
