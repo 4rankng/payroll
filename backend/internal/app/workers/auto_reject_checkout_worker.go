@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-// AttendanceAutoRejecter rejects an attendance whose checkout window [K, K+1h)
+// AttendanceAutoRejecter rejects an attendance whose checkout window [K, K+3h)
 // closed with no checkout. Implemented by *attendance.AttendanceService; defined
 // here (consumer-side) so the workers package does not import the service
 // package.
@@ -15,7 +15,7 @@ type AttendanceAutoRejecter interface {
 
 // AutoRejectCheckoutWorker finalizes attendances whose checkout window expired.
 // It is the bridge between the attendance:auto_reject asynq task (scheduled at
-// K+1h when the employee checks in) and the attendance service. The service's
+// K+3h when the employee checks in) and the attendance service. The service's
 // AutoRejectIfExpired is idempotent, so asynq retries are safe.
 type AutoRejectCheckoutWorker struct {
 	rejecter AttendanceAutoRejecter

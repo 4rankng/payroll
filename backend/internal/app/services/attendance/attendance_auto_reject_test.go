@@ -14,7 +14,7 @@ import (
 // This file tests the checkout-window auto-reject feature at the service level:
 //   - AutoRejectIfExpired idempotency (nil / completed / already-rejected / open)
 //   - CheckOut rejects an already-auto-rejected attendance
-//   - CheckIn enqueues the auto-reject task at the checkout deadline K+1h after commit
+//   - CheckIn enqueues the auto-reject task at the checkout deadline K+3h after commit
 //
 // The fakes below stand in for the transaction manager, repositories, clock, and
 // the asynq task enqueuer so these run without a database or Redis.
@@ -54,6 +54,7 @@ type fakeAttendanceRepo struct {
 	domain.AttendanceRepository
 	byID               *domain.Attendance
 	byDate             *domain.Attendance
+	byDateByDay        map[string]*domain.Attendance
 	created            *domain.Attendance
 	updated            *domain.Attendance
 	orphanCandidates   []*domain.Attendance
@@ -74,7 +75,10 @@ func (f *fakeAttendanceRepo) Create(_ context.Context, a *domain.Attendance) err
 func (f *fakeAttendanceRepo) GetByID(_ context.Context, _ uint) (*domain.Attendance, error) {
 	return f.byID, nil
 }
-func (f *fakeAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, _ time.Time) (*domain.Attendance, error) {
+func (f *fakeAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, date time.Time) (*domain.Attendance, error) {
+	if f.byDateByDay != nil {
+		return f.byDateByDay[date.Format("2006-01-02")], nil
+	}
 	return f.byDate, nil
 }
 func (f *fakeAttendanceRepo) Update(_ context.Context, a *domain.Attendance) error {
@@ -280,7 +284,7 @@ func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected unconfirmed checkout before shift end to be rejected")
 	}
-	if !strings.Contains(err.Error(), "Chỉ có thể tan ca từ 17:00 đến 18:00") {
+	if !strings.Contains(err.Error(), "Chỉ có thể tan ca từ 17:00 đến 20:00") {
 		t.Fatalf("expected checkout window reason, got %q", err.Error())
 	}
 	if repo.updated != nil {
@@ -310,7 +314,7 @@ func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 	now := time.Date(2026, 6, 21, 20, 5, 0, 0, loc)
 	zero := int64(0)
 	closedAt := time.Date(2026, 6, 21, 9, 0, 0, 0, loc)
-	reason := "Bạn mới vào làm lúc 08:35. Chỉ có thể tan ca từ 17:00 đến 18:00. " + confirmedNoSalaryCheckoutReason
+	reason := "Bạn mới vào làm lúc 08:35. Chỉ có thể tan ca từ 17:00 đến 20:00. " + confirmedNoSalaryCheckoutReason
 	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{
 		ID:                 8,
 		ProjectID:          55,
@@ -346,6 +350,66 @@ func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 	}
 	if !att.CheckInTime.Equal(now.In(att.CheckInTime.Location())) {
 		t.Fatalf("expected new check-in time %v, got %v", now, att.CheckInTime)
+	}
+}
+
+func TestGetTodayAttendanceReturnsOpenYesterdayNightShift(t *testing.T) {
+	loc := clock.DefaultLocation
+	today := time.Date(2026, 6, 22, 0, 0, 0, 0, loc)
+	yesterday := today.AddDate(0, 0, -1)
+	openYesterday := &domain.Attendance{
+		ID:          9,
+		ProjectID:   55,
+		EmployeeID:  123,
+		Date:        yesterday,
+		CheckInTime: time.Date(2026, 6, 21, 20, 5, 0, 0, loc),
+		CheckInGate: "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDateByDay: map[string]*domain.Attendance{
+		yesterday.Format("2006-01-02"): openYesterday,
+	}}
+	svc := &AttendanceService{
+		attendanceRepo: repo,
+		clock:          clock.NewFake(time.Date(2026, 6, 22, 6, 30, 0, 0, loc)),
+	}
+
+	got, err := svc.GetTodayAttendance(context.Background(), 123)
+	if err != nil {
+		t.Fatalf("GetTodayAttendance returned error: %v", err)
+	}
+	if got != openYesterday {
+		t.Fatalf("expected open previous-day attendance, got %+v", got)
+	}
+}
+
+func TestGetTodayAttendanceIgnoresCompletedYesterday(t *testing.T) {
+	loc := clock.DefaultLocation
+	today := time.Date(2026, 6, 22, 0, 0, 0, 0, loc)
+	yesterday := today.AddDate(0, 0, -1)
+	checkOut := time.Date(2026, 6, 22, 4, 30, 0, 0, loc)
+	completedYesterday := &domain.Attendance{
+		ID:           10,
+		ProjectID:    55,
+		EmployeeID:   123,
+		Date:         yesterday,
+		CheckInTime:  time.Date(2026, 6, 21, 20, 5, 0, 0, loc),
+		CheckOutTime: &checkOut,
+		CheckInGate:  "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDateByDay: map[string]*domain.Attendance{
+		yesterday.Format("2006-01-02"): completedYesterday,
+	}}
+	svc := &AttendanceService{
+		attendanceRepo: repo,
+		clock:          clock.NewFake(time.Date(2026, 6, 22, 6, 30, 0, 0, loc)),
+	}
+
+	got, err := svc.GetTodayAttendance(context.Background(), 123)
+	if err != nil {
+		t.Fatalf("GetTodayAttendance returned error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("expected completed previous-day attendance to be ignored, got %+v", got)
 	}
 }
 
@@ -390,7 +454,7 @@ func TestCheckInEnqueuesAutoRejectAtDeadline(t *testing.T) {
 	if len(calls) != 1 {
 		t.Fatalf("expected exactly 1 enqueue call, got %d", len(calls))
 	}
-	wantDeadline := time.Date(2026, 6, 22, 18, 0, 0, 0, loc) // shift end 17:00 + checkOutUpperGrace (1h)
+	wantDeadline := time.Date(2026, 6, 22, 20, 0, 0, 0, loc) // shift end 17:00 + checkOutUpperGrace (3h)
 	if !calls[0].at.Equal(wantDeadline) {
 		t.Fatalf("expected deadline %v, got %v", wantDeadline, calls[0].at)
 	}
@@ -445,7 +509,7 @@ func TestAutoRejectSweep(t *testing.T) {
 }
 
 // TestFormatAutoRejectReason covers the dynamic Vietnamese message built when
-// the configured shift end (K) and the grace-window upper bound (K+1h) are
+// the configured shift end (K) and the grace-window upper bound (K+3h) are
 // both available. It anchors the employee-visible contract of the new format.
 func TestFormatAutoRejectReason(t *testing.T) {
 	loc := clock.DefaultLocation
@@ -453,7 +517,7 @@ func TestFormatAutoRejectReason(t *testing.T) {
 	shiftEnd := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
 
 	got := formatAutoRejectReason(checkIn, shiftEnd)
-	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 20:00))"
 	if got != want {
 		t.Fatalf("formatAutoRejectReason:\n got: %q\nwant: %q", got, want)
 	}
@@ -488,7 +552,7 @@ func TestAutoRejectIfExpiredFormatsDynamicReason(t *testing.T) {
 	if open.SalaryRejectReason == nil {
 		t.Fatal("expected SalaryRejectReason to be set")
 	}
-	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 20:00))"
 	if *open.SalaryRejectReason != want {
 		t.Fatalf("reject reason:\n got: %q\nwant: %q", *open.SalaryRejectReason, want)
 	}
@@ -524,7 +588,7 @@ func TestAutoRejectSweepFormatsDynamicReason(t *testing.T) {
 	if open.SalaryRejectReason == nil {
 		t.Fatal("expected SalaryRejectReason to be set")
 	}
-	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 18:00))"
+	want := "Đã hết hạn tan ca (Vào làm: 08:00; Tan ca: 17:00 (hạn chót 20:00))"
 	if *open.SalaryRejectReason != want {
 		t.Fatalf("reject reason:\n got: %q\nwant: %q", *open.SalaryRejectReason, want)
 	}

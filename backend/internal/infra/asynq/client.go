@@ -328,7 +328,7 @@ type autoRejectCheckoutPayload struct {
 }
 
 // EnqueueAutoRejectCheckout schedules a one-shot task to fire at `at` — the
-// per-attendance checkout deadline K+1h (computed at check-in from the resolved
+// per-attendance checkout deadline K+3h (computed at check-in from the resolved
 // shift end). The task auto-rejects the attendance if it still has no checkout
 // when it fires. Deduplicated by TaskID per attendance, so repeated enqueues for
 // the same attendance collapse to a single scheduled task.

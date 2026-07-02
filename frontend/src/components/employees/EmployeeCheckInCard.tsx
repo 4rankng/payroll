@@ -30,9 +30,7 @@ import {
   type AttendanceIssueDetail,
 } from "@/utils/attendanceHelpers";
 import {
-  createGeolocationError,
   getLocationPermissionIssue,
-  getLocationPermissionState,
   isGeolocationError,
   requestCurrentLocation,
   type LocationPermissionIssue,
@@ -128,15 +126,21 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
     setLocationIssue(null);
     setIsLocating(true);
     try {
-      const permissionState = await getLocationPermissionState();
-      if (permissionState === "denied") {
-        throw createGeolocationError(1, "Quyền vị trí đã bị chặn");
-      }
-
+      // iOS Safari can keep navigator.permissions stale after the worker changes
+      // Settings. Always ask for a fresh position; getCurrentPosition is the
+      // authoritative permission check and either resolves or returns the real
+      // browser error for the recovery panel.
       const position = await requestCurrentLocation();
       const payload = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
+        // Send GPS accuracy + fix time so the backend can reject unreliable
+        // fixes and keep a forensic trail. Without accuracy the server trusts the
+        // reported coordinate blindly, which lets an off-site check-in through
+        // when the phone misreports (WiFi/cell positioning, stale fix, poor GNSS).
+        accuracy: position.coords.accuracy,
+        // GeolocationPosition.timestamp is epoch milliseconds.
+        gps_at: position.timestamp,
       };
 
       if (type === "check_in") {
@@ -205,8 +209,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
   // need to track the last-tapped action separately (doing so defaulted it to
   // "check_in" and could mislabel the recovery CTA on a fresh check_out).
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
-  const locationRecoveryText =
-    actionType === "check_out" ? "Thử cấp quyền lại để tan ca" : "Thử cấp quyền lại để vào làm";
+  const locationRecoveryText = "Thử lại";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
   const noSalaryWindow = getCheckoutWindowSummary(noSalaryReason);
   const salaryIssue = getAttendanceIssueSummary(
@@ -296,26 +299,21 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
             <div className="min-w-0 flex-1">
               <p className="text-[17px] font-bold leading-6">{locationIssue.title}</p>
               <p className="mt-1 text-[15px] font-medium leading-6 text-amber-800">{locationIssue.description}</p>
-              {locationIssue.requiresSettings ? (
-                <p className="mt-2 text-[14px] font-semibold leading-5 text-amber-900">
-                  iPhone Safari: vào Cài đặt &gt; Quyền riêng tư &amp; Bảo mật &gt; Dịch vụ định vị &gt; Safari Websites, chọn Hỏi lần sau hoặc Khi dùng ứng dụng, rồi tải lại trang.
-                </p>
-              ) : null}
               {locationIssue.canRetry ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="mt-3 h-11 rounded-lg border-amber-300 bg-white text-[15px] font-bold text-amber-950 hover:bg-amber-100"
+                  className="mt-3 min-h-11 w-full min-w-0 justify-center gap-2 rounded-lg border-amber-300 bg-white px-3 text-center text-[15px] font-bold leading-5 text-amber-950 hover:bg-amber-100"
                   disabled={isPending}
                   onClick={() => handleAction(actionType)}
                 >
                   {isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                   ) : (
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <RotateCcw className="h-4 w-4 shrink-0" />
                   )}
-                  {isLocating ? "Đang lấy vị trí..." : locationRecoveryText}
+                  <span className="min-w-0 truncate">{isLocating ? "Đang lấy vị trí..." : locationRecoveryText}</span>
                 </Button>
               ) : null}
             </div>

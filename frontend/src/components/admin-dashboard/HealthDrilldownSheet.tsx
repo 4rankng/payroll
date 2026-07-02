@@ -29,6 +29,7 @@ interface HealthDrilldownSheetProps {
 const REASON_CATEGORY_LABELS: Record<string, string> = {
   geofence_not_configured: 'Chưa cấu hình vị trí',
   geofence_outside: 'Ngoài khu vực chấm công',
+  gps_inaccurate: 'GPS không chính xác',
   check_in_not_enabled: 'Chưa cấp quyền chấm công',
   already_checked_in: 'Đã vào làm rồi',
   shift_not_configured: 'Chưa cấu hình ca',

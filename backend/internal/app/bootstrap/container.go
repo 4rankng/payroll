@@ -268,7 +268,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	}
 
 	// Register the auto-reject fallback sweep (always on) — finalizes attendance
-	// records whose scheduled K+1h task was lost (Redis/process outage at check-in).
+	// records whose scheduled K+3h task was lost (Redis/process outage at check-in).
 	if err := asynqinfra.RegisterAutoRejectSweep(asynqServer); err != nil {
 		return nil, err
 	}

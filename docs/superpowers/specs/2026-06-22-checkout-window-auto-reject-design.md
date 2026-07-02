@@ -7,7 +7,7 @@
 ## Problem
 
 Today, when an employee on the check-in scheme fails to check out within the valid
-window `[K, K+1h)`:
+window `[K, K+3h)`:
 
 - A late checkout attempt is blocked by `validateCheckOutWindow` ("Đã quá giờ tan ca"),
   the transaction rolls back, and **nothing is persisted** — the attendance sits open
@@ -23,14 +23,14 @@ intervention and no late-checkout escape hatch.
 
 | Decision | Choice |
 |---|---|
-| Trigger | **Async, exactly at the deadline.** asynq one-shot task scheduled for `K+1h`, enqueued when the employee checks in. |
+| Trigger | **Async, exactly at the deadline.** asynq one-shot task scheduled for `K+3h`, enqueued when the employee checks in. |
 | Outcome | **Hard reject, final.** `EarningAmount = 0`, reason recorded, no admin override. No advance quota is touched (checkout — the only place quota accrues — never happened). |
 | Legacy records | **Ignore.** New check-ins get the asynq task; pre-existing records keep falling back to the existing 18 h `orphaned` derivation. No backfill, no sweep. |
 | Migration | **None.** "Rejected" is a derived state using the existing `SalaryRejectReason` + `EarningAmount` columns. |
 
 `K` = configured shift end, resolved per-record from (payrate, position, check-in time)
 via the existing `resolveShift` (±1-day candidates, night-shift aware). The checkout
-window upper bound is `K + checkOutUpperGrace` (`checkOutUpperGrace = 1 h`).
+window upper bound is `K + checkOutUpperGrace` (`checkOutUpperGrace = 3 h`).
 
 ## Design
 
@@ -40,7 +40,7 @@ In `CheckIn`, after the shift is resolved and the check-in window validated (so 
 shift is known to be real), compute:
 
 ```go
-latestCheckout := shift.end.Add(checkOutUpperGrace) // K + 1h
+latestCheckout := shift.end.Add(checkOutUpperGrace) // K + 3h
 ```
 
 In a `domain.RegisterAfterCommit` hook (so the attendance row is durable), enqueue:
@@ -127,7 +127,7 @@ constructor; wired in bootstrap. Tests inject a fake that records the call.
 ### Edge cases
 
 - **Night shift / cross-midnight**: `resolveShift` ±1-day candidates yield the correct
-  absolute `K+1h`; `ProcessAt` takes an absolute instant.
+  absolute `K+3h`; `ProcessAt` takes an absolute instant.
 - **Employee checks out before the task fires**: handler sees `CheckOutTime != nil` → skip.
 - **asynq/server down at the deadline**: asynq persists scheduled tasks and runs
   overdue ones on recovery; `MaxRetry` covers handler failures.
@@ -141,7 +141,7 @@ constructor; wired in bootstrap. Tests inject a fake that records the call.
 - `GetStatus` rejected derivation; `buildFilterQuery` rejected/checked_in/orphaned SQL.
 - `AutoRejectIfExpired` idempotency: skip when checked out, skip when already rejected, reject when open.
 - `CheckOut` guard blocks a rejected record.
-- `CheckIn` enqueues the task at `K+1h` via a fake `AttendanceTaskEnqueuer` (capture
+- `CheckIn` enqueues the task at `K+3h` via a fake `AttendanceTaskEnqueuer` (capture
   `(attendanceID, at)`; assert after-commit ordering).
 - Night-shift deadline + window math using the existing injected `clock.Clock`.
 
