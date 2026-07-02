@@ -273,31 +273,39 @@ func (s *AttendanceService) resolveShift(payrate *domain.Payrate, position strin
 	return closestShift(shifts, checkInTime)
 }
 
-// validateGeofence checks if a GPS reading is within the configured gates for the
-// given project. It first rejects fixes whose reported accuracy is worse than the
-// geofence radius: a phone can otherwise report a coordinate inside the gate from
-// hundreds of meters away (WiFi/cell positioning, a stale fix, or a poor GNSS
-// read), which would let an off-site worker check in. accuracy == 0 (unknown, or
-// not sent by a legacy client) skips the gate so legitimate unknown-accuracy fixes
-// are not blocked. Returns an error if no gates are configured.
+// validateGeofence checks if a GPS reading is confidently inside a configured
+// gate. When accuracy is known, the entire uncertainty circle must fit inside
+// the project radius (distance_to_gate + accuracy <= radius); otherwise a phone
+// can report an on-gate coordinate while still plausibly being outside. accuracy
+// == 0 (unknown, or not sent by a legacy client) skips the uncertainty check so
+// legitimate legacy fixes are not blocked. Returns an error if no gates are
+// configured.
 func (s *AttendanceService) validateGeofence(project *domain.Project, reading domain.GeoReading) (string, error) {
 	gates := project.GeofenceGates
 	if len(gates) == 0 {
-		return "", domain.NewValidationError("Chưa cấu hình vị trí vào làm cho dự án")
+		return "", domain.NewValidationError("Dự án chưa cấu hình vị trí chấm công. Vui lòng báo quản lý.")
 	}
 
 	radius := float64(project.GeofenceRadiusMeters)
 	if reading.Accuracy > 0 && reading.Accuracy > radius {
-		return "", domain.NewValidationError("Tín hiệu GPS không đủ chính xác. Vui lòng thử lại ngoài trời hoặc bật chế độ GPS độ chính xác cao.")
+		return "", domain.NewValidationError("Tín hiệu GPS không đủ chính xác để chấm công. Hãy đứng ở nơi thoáng hơn, giữ điện thoại yên vài giây rồi thử lại.")
 	}
 
+	insideButUncertain := false
 	for _, gate := range gates {
 		dist := geo.HaversineDistance(reading.Lat, reading.Lng, gate.Lat, gate.Lng)
-		if dist <= radius {
+		if dist > radius {
+			continue
+		}
+		if reading.Accuracy <= 0 || dist+reading.Accuracy <= radius {
 			return gate.Name, nil
 		}
+		insideButUncertain = true
 	}
-	return "", domain.NewValidationError("Bạn đang ở ngoài khu vực chấm công. Vui lòng di chuyển đến gần cổng nhà máy.")
+	if insideButUncertain {
+		return "", domain.NewValidationError("Tín hiệu GPS không đủ chính xác để chấm công. Hãy đứng ở nơi thoáng hơn, giữ điện thoại yên vài giây rồi thử lại.")
+	}
+	return "", domain.NewValidationError("Bạn đang ở ngoài khu vực chấm công của dự án. Vui lòng di chuyển đến cổng hoặc khu vực đã được cấu hình.")
 }
 
 // resolveProject determines the project for a check-in request.
