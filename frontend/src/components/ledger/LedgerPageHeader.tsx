@@ -10,6 +10,7 @@ import {
   BarChart3,
   Mail,
   History,
+  ReceiptText,
   ChevronDownIcon,
   Wallet,
   GitMerge,
@@ -33,6 +34,7 @@ interface LedgerPageHeaderProps {
   onSendSaoKePayroll?: () => void;
   onSendSaoKeAdvance?: () => void;
   onViewSaoKeHistory?: () => void;
+  onImportOnePayFeeReport?: () => void;
   isSendingSaoKe?: boolean;
 }
 
@@ -48,6 +50,7 @@ export function LedgerPageHeader({
   onSendSaoKePayroll,
   onSendSaoKeAdvance,
   onViewSaoKeHistory,
+  onImportOnePayFeeReport,
   isSendingSaoKe = false,
 }: LedgerPageHeaderProps) {
   const [showChart, setShowChart] = useState(false);
@@ -96,6 +99,12 @@ export function LedgerPageHeader({
       label: 'Lịch sử sao kê',
       icon: History,
       onClick: onViewSaoKeHistory,
+    },
+    onImportOnePayFeeReport && {
+      key: 'onepay-fee',
+      label: 'Nhập phí OnePay',
+      icon: ReceiptText,
+      onClick: onImportOnePayFeeReport,
     },
   ].filter(Boolean) as Array<{ key: string; label: string; icon: typeof Plus; onClick: () => void; disabled?: boolean }>;
 
@@ -149,6 +158,16 @@ export function LedgerPageHeader({
             <History className="w-4 h-4" />
             Đối soát
           </Button>
+          {onImportOnePayFeeReport && (
+            <Button
+              variant="ghost"
+              className="rounded-none border-0 gap-1.5"
+              onClick={onImportOnePayFeeReport}
+            >
+              <ReceiptText className="w-4 h-4" />
+              Phí OnePay
+            </Button>
+          )}
         </div>
 
         {/* Mobile-only `...` Sheet for secondary actions */}

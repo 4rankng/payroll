@@ -212,6 +212,35 @@ export interface RecalculateBalanceResponse {
   message: string;
 }
 
+export interface OnePayFeeReportIssue {
+  code: string;
+  message: string;
+  row?: number;
+  reference?: string;
+}
+
+export interface OnePayFeeReportSummary {
+  merchant_id: string;
+  merchant_name: string;
+  period_label: string;
+  period_from: string;
+  period_to: string;
+  transaction_count: number;
+  fee_per_transaction: number;
+  total_fee: number;
+  detail_total_amount: number;
+  app_recorded_fee_total: number;
+  import_reference: string;
+}
+
+export interface OnePayFeeImportResponse {
+  summary: OnePayFeeReportSummary;
+  transaction_id: number;
+  transaction_code: string;
+  ledger_entry_ids: number[];
+  created_at: string;
+}
+
 // Asset types for evidence management - matching API spec
 export interface Asset {
   id: number;
