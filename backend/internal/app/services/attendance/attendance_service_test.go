@@ -23,7 +23,7 @@ func TestValidateCheckOutWindowRejectsBeforeShiftEnd(t *testing.T) {
 	if !ok || domainErr.Type != "VALIDATION_ERROR" {
 		t.Fatalf("expected validation error, got %T", err)
 	}
-	expected := "Bạn mới vào làm lúc 20:09. Chỉ có thể tan ca từ 04:00 đến 07:00."
+	expected := "Bạn mới vào làm lúc 20:09. Chỉ có thể tan ca từ 04:00 đến 08:00."
 	if err.Error() != expected {
 		t.Fatalf("expected %q, got %q", expected, err.Error())
 	}
@@ -35,31 +35,31 @@ func TestValidateCheckOutWindowAcceptsAtEarliestRejectsAtUpperBound(t *testing.T
 	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc) // K
 	shift := &parsedShift{end: shiftEnd}
 
-	// At K and within (K, K+3h) are allowed.
+	// At K and within (K, K+4h) are allowed.
 	if err := validateCheckOutWindow(shift, checkIn, shiftEnd); err != nil {
 		t.Fatalf("expected checkout exactly at K to be allowed, got %v", err)
 	}
 	if err := validateCheckOutWindow(shift, checkIn, shiftEnd.Add(2*time.Hour+30*time.Minute)); err != nil {
-		t.Fatalf("expected checkout within [K, K+3h) to be allowed, got %v", err)
+		t.Fatalf("expected checkout within [K, K+4h) to be allowed, got %v", err)
 	}
 
-	// At and beyond K+3h are rejected (upper bound is exclusive).
+	// At and beyond K+4h are rejected (upper bound is exclusive).
 	if err := validateCheckOutWindow(shift, checkIn, shiftEnd.Add(checkOutUpperGrace)); err == nil {
-		t.Fatal("expected checkout exactly at K+3h to be rejected")
+		t.Fatal("expected checkout exactly at K+4h to be rejected")
 	}
 	if err := validateCheckOutWindow(shift, checkIn, shiftEnd.Add(checkOutUpperGrace).Add(30*time.Minute)); err == nil {
-		t.Fatal("expected checkout after K+3h to be rejected")
+		t.Fatal("expected checkout after K+4h to be rejected")
 	}
 }
 
-func TestValidateCheckOutWindowAcceptsNightShiftCheckoutWithinThreeHours(t *testing.T) {
+func TestValidateCheckOutWindowAcceptsNightShiftCheckoutWithinFourHours(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
 	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
 	shiftEnd := time.Date(2026, 6, 22, 4, 0, 0, 0, loc)
 	checkOut := time.Date(2026, 6, 22, 6, 30, 0, 0, loc)
 
 	if err := validateCheckOutWindow(&parsedShift{end: shiftEnd}, checkIn, checkOut); err != nil {
-		t.Fatalf("expected 06:30 checkout for K=04:00 to be allowed within [K, K+3h), got %v", err)
+		t.Fatalf("expected 06:30 checkout for K=04:00 to be allowed within [K, K+4h), got %v", err)
 	}
 }
 
@@ -188,7 +188,7 @@ func TestResolveShiftUsesSingleConfiguredPositionAsFallback(t *testing.T) {
 // candidate fix: checking in 10m early for a 20:00-04:00 night shift must anchor
 // to TONIGHT's start (2026-06-21 20:00) and end TOMORROW (2026-06-22 04:00). The
 // old rollback hack mis-anchored this to yesterday, which would reject a valid
-// checkout once the K+3h upper bound is enforced.
+// checkout once the K+4h upper bound is enforced.
 func TestResolveShiftAnchorsNightShiftEarlyArrivalToCorrectDay(t *testing.T) {
 	service := &AttendanceService{}
 	payrate := &domain.Payrate{
@@ -283,14 +283,14 @@ func TestCalculateEarningAmountRejectReasonForMissingShift(t *testing.T) {
 	if amount != 0 {
 		t.Fatalf("expected no earning amount, got %d", amount)
 	}
-	expected := "Thời gian vào 08:00 và tan 16:30 không hợp lệ. Bạn phải vào làm từ 07:00 đến 09:00 và tan ca từ 17:00 đến 20:00."
+	expected := "Thời gian vào 08:00 và tan 16:30 không hợp lệ. Bạn phải vào làm từ 07:00 đến 09:00 và tan ca từ 17:00 đến 21:00."
 	if reason != expected {
 		t.Fatalf("expected invalid shift reason %q, got %q", expected, reason)
 	}
 }
 
 // TestCalculateEarningAmountRejectsCheckoutAfterWindow verifies earning and the
-// checkout gate agree on the upper bound: a check-out after K+3h earns nothing
+// checkout gate agree on the upper bound: a check-out after K+4h earns nothing
 // (same predicate the gate rejects on).
 func TestCalculateEarningAmountRejectsCheckoutAfterWindow(t *testing.T) {
 	service := &AttendanceService{}
@@ -299,7 +299,7 @@ func TestCalculateEarningAmountRejectsCheckoutAfterWindow(t *testing.T) {
 	}
 	loc := time.FixedZone("ICT", 7*60*60)
 	checkIn := time.Date(2026, 6, 21, 8, 0, 0, 0, loc)
-	checkOut := time.Date(2026, 6, 21, 20, 30, 0, 0, loc) // 30m after K+3h (20:00)
+	checkOut := time.Date(2026, 6, 21, 21, 30, 0, 0, loc) // 30m after K+4h (21:00)
 
 	amount, reason, err := service.calculateEarningAmount(payrate, "Công nhân", checkIn, checkOut)
 
@@ -307,9 +307,9 @@ func TestCalculateEarningAmountRejectsCheckoutAfterWindow(t *testing.T) {
 		t.Fatalf("calculateEarningAmount returned error: %v", err)
 	}
 	if amount != 0 {
-		t.Fatalf("expected no earning for checkout after K+3h, got %d", amount)
+		t.Fatalf("expected no earning for checkout after K+4h, got %d", amount)
 	}
-	if !strings.Contains(reason, "tan ca từ 17:00 đến 20:00") {
+	if !strings.Contains(reason, "tan ca từ 17:00 đến 21:00") {
 		t.Fatalf("expected reject reason to state the checkout window, got %q", reason)
 	}
 }
@@ -383,7 +383,7 @@ func TestCalculateEarningAmountRecordsConfiguredShift(t *testing.T) {
 // TestCalculateEarningAmountPaysFullShiftForLateCheckInWithinWindow verifies the
 // window-based earning rule: a check-in up to 1h AFTER shift start (within the
 // check-in window) still earns the full shift wage, as long as check-out is in
-// [K, K+3h).
+// [K, K+4h).
 func TestCalculateEarningAmountPaysFullShiftForLateCheckInWithinWindow(t *testing.T) {
 	service := &AttendanceService{}
 	payrate := &domain.Payrate{

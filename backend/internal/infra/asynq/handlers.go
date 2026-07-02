@@ -44,11 +44,11 @@ const (
 	// TaskPayrollReportEmail is the task type for async payroll statement emails.
 	TaskPayrollReportEmail = "email:payroll_report"
 	// TaskAutoRejectCheckout is the one-shot task scheduled at an attendance's
-	// checkout deadline (K+3h) when the employee checks in. It auto-rejects the
+	// checkout deadline (K+4h) when the employee checks in. It auto-rejects the
 	// attendance if the window closes with no checkout.
 	TaskAutoRejectCheckout = "attendance:auto_reject"
 	// TaskAutoRejectSweep is the periodic safety-net task that finalizes
-	// attendances whose scheduled K+3h task was lost (Redis/process outage at
+	// attendances whose scheduled K+4h task was lost (Redis/process outage at
 	// check-in). Runs on a fixed schedule via the asynq scheduler.
 	TaskAutoRejectSweep = "attendance:auto_reject_sweep"
 	// TaskWalletSettlement is the asynq task type for the EOD wallet settlement cron.
@@ -328,7 +328,7 @@ func (h *Handlers) HandleStatusInquiry(ctx context.Context, _ *asynqlib.Task) er
 }
 
 // HandleAutoRejectCheckout processes the one-shot attendance:auto_reject task
-// scheduled at an attendance's checkout deadline (K+3h). Malformed payloads are
+// scheduled at an attendance's checkout deadline (K+4h). Malformed payloads are
 // dropped (SkipRetry); DB errors are retried by asynq. The worker is idempotent,
 // so duplicate or retried tasks are safe.
 func (h *Handlers) HandleAutoRejectCheckout(ctx context.Context, t *asynqlib.Task) error {
@@ -344,7 +344,7 @@ func (h *Handlers) HandleAutoRejectCheckout(ctx context.Context, t *asynqlib.Tas
 }
 
 // HandleAutoRejectSweep processes the periodic attendance:auto_reject_sweep
-// task — the fallback that finalizes attendances whose scheduled K+3h task was
+// task — the fallback that finalizes attendances whose scheduled K+4h task was
 // lost. The worker is idempotent, so retries and overlapping runs are safe.
 func (h *Handlers) HandleAutoRejectSweep(ctx context.Context, _ *asynqlib.Task) error {
 	if h.autoRejectSweepWorker == nil {

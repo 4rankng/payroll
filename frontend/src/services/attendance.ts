@@ -24,6 +24,16 @@ export interface AttendanceHistoryParams {
   to_date?: string;
 }
 
+interface AttendanceLocationPayload {
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  gps_at?: number;
+  gps_sample_count?: number;
+  gps_best_accuracy?: number;
+  gps_elapsed_ms?: number;
+}
+
 export const attendanceService = {
   getToday: async () => {
     return apiClient.get<AttendanceRecord | null>(
@@ -38,14 +48,14 @@ export const attendanceService = {
     );
   },
 
-  checkIn: async (payload: { lat: number; lng: number; accuracy?: number; gps_at?: number }) => {
+  checkIn: async (payload: AttendanceLocationPayload) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkIn,
       payload
     );
   },
 
-  checkOut: async (payload: { lat: number; lng: number; accuracy?: number; gps_at?: number; confirm_no_salary?: boolean }) => {
+  checkOut: async (payload: AttendanceLocationPayload & { confirm_no_salary?: boolean }) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkOut,
       payload

@@ -30,9 +30,13 @@ import {
   type AttendanceIssueDetail,
 } from "@/utils/attendanceHelpers";
 import {
+  createPoorAccuracyLocationIssue,
   getLocationPermissionIssue,
   isGeolocationError,
-  requestCurrentLocation,
+  isPoorLocationAccuracyMessage,
+  requestBestCurrentLocation,
+  type LocationAcquisitionProgress,
+  type LocationAcquisitionResult,
   type LocationPermissionIssue,
 } from "@/utils/geolocation";
 
@@ -89,12 +93,35 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
   );
 }
 
+function formatAccuracy(accuracy: number | undefined): string | null {
+  if (typeof accuracy !== "number") return null;
+  return `${Math.round(accuracy)}m`;
+}
+
+function getLocationAcquisitionMessage(progress: LocationAcquisitionProgress | null): string {
+  const bestAccuracy = formatAccuracy(progress?.bestAccuracy);
+  if (!progress || progress.sampleCount === 0 || !bestAccuracy) {
+    return "Đang khởi động GPS. Vui lòng giữ điện thoại yên trong vài giây.";
+  }
+
+  if (progress.status === "excellent") {
+    return `Tín hiệu rất tốt, độ chính xác khoảng ${bestAccuracy}.`;
+  }
+
+  if (progress.status === "acceptable") {
+    return `Đang xác nhận thêm một nhịp GPS, độ chính xác tốt nhất khoảng ${bestAccuracy}.`;
+  }
+
+  return `Tín hiệu còn yếu, độ chính xác tốt nhất khoảng ${bestAccuracy}. Hãy bước ra nơi thoáng, bật vị trí chính xác và tắt tiết kiệm pin.`;
+}
+
 export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
+  const [locationProgress, setLocationProgress] = useState<LocationAcquisitionProgress | null>(null);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
@@ -124,13 +151,17 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
     // Start each attempt with a clean slate so a stale banner from a previous
     // failed attempt doesn't persist while the new one is in flight.
     setLocationIssue(null);
+    setLocationProgress(null);
     setIsLocating(true);
+    let acquisition: LocationAcquisitionResult | null = null;
     try {
       // iOS Safari can keep navigator.permissions stale after the worker changes
-      // Settings. Always ask for a fresh position; getCurrentPosition is the
+      // Settings. Always ask for a fresh position; watchPosition is the
       // authoritative permission check and either resolves or returns the real
-      // browser error for the recovery panel.
-      const position = await requestCurrentLocation();
+      // browser error for the recovery panel. We warm up GPS and use the best
+      // fresh high-accuracy sample instead of trusting the first Wi-Fi/cell fix.
+      acquisition = await requestBestCurrentLocation(setLocationProgress);
+      const position = acquisition.position;
       const payload = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
@@ -141,6 +172,9 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
         accuracy: position.coords.accuracy,
         // GeolocationPosition.timestamp is epoch milliseconds.
         gps_at: position.timestamp,
+        gps_sample_count: acquisition.sampleCount,
+        gps_best_accuracy: acquisition.bestAccuracy,
+        gps_elapsed_ms: acquisition.elapsedMs,
       };
 
       if (type === "check_in") {
@@ -160,6 +194,11 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
         if (type === "check_out") {
           // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
           const message = getErrorMessage(error);
+          if (isPoorLocationAccuracyMessage(message)) {
+            setLocationIssue(createPoorAccuracyLocationIssue(acquisition?.bestAccuracy));
+            toast({ title: "Vị trí chưa đủ chính xác", variant: "destructive" });
+            return;
+          }
           if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
             // First attempt outside the checkout window: show the real reason and
             // offer the confirmed no-salary path. The dialog is the UI — no toast.
@@ -175,6 +214,11 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
             toast({ title: message || "Không thể tan ca", variant: "destructive" });
             queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
           }
+        } else {
+          const message = getErrorMessage(error);
+          if (isPoorLocationAccuracyMessage(message)) {
+            setLocationIssue(createPoorAccuracyLocationIssue(acquisition?.bestAccuracy));
+          }
         }
         return;
       }
@@ -187,6 +231,7 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       toast({ title: issue.title, variant: "destructive" });
     } finally {
       setIsLocating(false);
+      setLocationProgress(null);
       submittingRef.current = false;
     }
   };
@@ -290,6 +335,21 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {isLocating ? (
+        <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-950">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-sky-700">
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[17px] font-bold leading-6">Đang lấy vị trí chính xác...</p>
+              <p className="mt-1 text-[15px] font-medium leading-6 text-sky-800">
+                {getLocationAcquisitionMessage(locationProgress)}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {showLocationRecovery ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
           <div className="flex items-start gap-3">

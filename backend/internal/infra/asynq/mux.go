@@ -64,7 +64,7 @@ func RegisterPeriodicTasks(srv *Server, _ *Client) error {
 
 // RegisterAutoRejectSweep registers the periodic auto-reject fallback sweep.
 // Runs every 30 minutes on the low-priority queue. It is the safety net for the
-// per-attendance K+3h task: it finalizes attendance records the scheduled task
+// per-attendance K+4h task: it finalizes attendance records the scheduled task
 // missed (Redis/process outage at check-in). The sweeper is idempotent.
 func RegisterAutoRejectSweep(srv *Server) error {
 	_, err := srv.Scheduler().Register("@every 30m", asynqlib.NewTask(TaskAutoRejectSweep, nil),

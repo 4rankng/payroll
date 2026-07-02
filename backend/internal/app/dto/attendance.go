@@ -12,6 +12,12 @@ type CheckInRequest struct {
 	Lng       float64 `json:"lng" binding:"required"`
 	Accuracy  float64 `json:"accuracy"` // GPS accuracy in meters; 0 = unknown
 	GpsAt     int64   `json:"gps_at"`   // device GPS fix timestamp (epoch ms); 0 = unknown
+	// Optional browser-side acquisition diagnostics. The service currently uses
+	// Accuracy/GpsAt for enforcement and storage; these fields make the API
+	// contract explicit for clients that warm up GPS with watchPosition.
+	GpsSampleCount  int     `json:"gps_sample_count"`
+	GpsBestAccuracy float64 `json:"gps_best_accuracy"`
+	GpsElapsedMs    int64   `json:"gps_elapsed_ms"`
 }
 
 // CheckOutRequest represents the request to check out
@@ -21,6 +27,9 @@ type CheckOutRequest struct {
 	Accuracy        float64 `json:"accuracy"` // GPS accuracy in meters; 0 = unknown
 	GpsAt           int64   `json:"gps_at"`   // device GPS fix timestamp (epoch ms); 0 = unknown
 	ConfirmNoSalary bool    `json:"confirm_no_salary"`
+	GpsSampleCount  int     `json:"gps_sample_count"`
+	GpsBestAccuracy float64 `json:"gps_best_accuracy"`
+	GpsElapsedMs    int64   `json:"gps_elapsed_ms"`
 }
 
 // LogDeviceAttemptRequest records a device-level GPS failure (denied / timeout /
