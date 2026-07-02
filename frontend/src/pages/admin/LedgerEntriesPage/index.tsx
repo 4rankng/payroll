@@ -6,6 +6,7 @@ import { LedgerEntriesTable } from '@/components/ledger/LedgerEntriesTable';
 import { LedgerFilters } from '@/components/ledger/LedgerFilters';
 import { DoubleEntryModal } from '@/components/ledger/DoubleEntryModal';
 import { ReversalDialog } from '@/components/ledger/ReversalDialog';
+import { OnePayFeeReportDialog } from '@/components/ledger/OnePayFeeReportDialog';
 import { PayrollReportEmailDialog, type PayrollReportEmailParams } from '@/components/timesheet/PayrollReportEmailDialog';
 import { AdvancePaymentEmailDialog, type AdvancePaymentEmailParams } from '@/components/advance-payment/AdvancePaymentEmailDialog';
 import { SaoKeHistoryDialog } from '@/components/transaction/SaoKeHistoryDialog';
@@ -19,7 +20,8 @@ import { useProjects } from '@/hooks/api/useProjects';
 import { useUsersByIds } from '@/hooks/api/useUsers';
 import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { dateToString } from '@/utils/dateHelpers';
-import type { LedgerFilters as FiltersType, LedgerEntry, AccountMetadata } from '@/types/api/financial.types';
+import { extractOnePayFeeIssues } from '@/utils/onepayFeeReport';
+import type { LedgerFilters as FiltersType, LedgerEntry, AccountMetadata, OnePayFeeImportResponse, OnePayFeeReportIssue } from '@/types/api/financial.types';
 import { getInitialDateRange, getCurrentMonthRange } from './utils';
 
 const LedgerEntriesPage = () => {
@@ -32,6 +34,9 @@ const LedgerEntriesPage = () => {
   const [payrollEmailDialogOpen, setPayrollEmailDialogOpen] = useState(false);
   const [advanceEmailDialogOpen, setAdvanceEmailDialogOpen] = useState(false);
   const [saoKeHistoryDialogOpen, setSaoKeHistoryDialogOpen] = useState(false);
+  const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
+  const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
+  const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
 
   const sendPayrollEmailMutation = useSendPayrollReportEmail();
   const sendAdvanceEmailMutation = useSendReconciliationEmail();
@@ -95,7 +100,14 @@ const LedgerEntriesPage = () => {
   const { data: projectsData } = useProjects();
   const { data: accountMetadata, isLoading: isLoadingAccountMetadata } = useLedgerMetadata();
 
-  const { reverseEntry: performReverse, recalculateBalances: performRecalculate, isReversing, isRecalculating } = useLedgerManagement();
+  const {
+    reverseEntry: performReverse,
+    recalculateBalances: performRecalculate,
+    importOnePayFeeReport,
+    isReversing,
+    isRecalculating,
+    isImportingOnePayFeeReport,
+  } = useLedgerManagement();
 
   const { openLedgerDetails, openAddLedgerEntry } = useGeneralModals();
 
@@ -205,6 +217,25 @@ const LedgerEntriesPage = () => {
     } catch { /* handled by mutation */ }
   }, [sendAdvanceEmailMutation]);
 
+  const handleOnePayFeeDialogOpenChange = useCallback((open: boolean) => {
+    setOnePayFeeDialogOpen(open);
+    if (open) {
+      setOnePayFeeResult(null);
+      setOnePayFeeIssues([]);
+    }
+  }, []);
+
+  const handleImportOnePayFeeReport = useCallback(async (file: File) => {
+    setOnePayFeeResult(null);
+    setOnePayFeeIssues([]);
+    try {
+      const result = await importOnePayFeeReport(file);
+      setOnePayFeeResult(result);
+    } catch (error) {
+      setOnePayFeeIssues(extractOnePayFeeIssues(error));
+    }
+  }, [importOnePayFeeReport]);
+
   return (
     <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
       <LedgerPageHeader
@@ -219,6 +250,7 @@ const LedgerEntriesPage = () => {
         onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
         onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}
         onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}
+        onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
       />
       <LedgerSummaryCard
@@ -282,6 +314,14 @@ const LedgerEntriesPage = () => {
       <SaoKeHistoryDialog
         open={saoKeHistoryDialogOpen}
         onOpenChange={setSaoKeHistoryDialogOpen}
+      />
+      <OnePayFeeReportDialog
+        open={onePayFeeDialogOpen}
+        onOpenChange={handleOnePayFeeDialogOpenChange}
+        onUpload={handleImportOnePayFeeReport}
+        isUploading={isImportingOnePayFeeReport}
+        result={onePayFeeResult}
+        issues={onePayFeeIssues}
       />
     </div>
   );

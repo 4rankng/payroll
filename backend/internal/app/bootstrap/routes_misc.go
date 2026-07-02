@@ -76,6 +76,8 @@ func setupLedgerRoutes(protected *gin.RouterGroup, container *Container) {
 		ledger.GET("/accounts/metadata", container.Handlers.Ledger.GetAccountsMetadata)
 		// Export endpoint
 		ledger.GET("/export", container.Handlers.Ledger.ExportEntries)
+		// OnePay fee report import
+		ledger.POST("/onepay-fee-reports", container.Handlers.Ledger.UploadOnePayFeeReport)
 	}
 }
 

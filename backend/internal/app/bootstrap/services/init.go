@@ -92,6 +92,7 @@ type Services struct {
 	APIMetricCleanupService           *cleanup.APIMetricCleanupService
 	Idempotency                       *infraServices.IdempotencyService
 	Reconcile                         *ledger.ReconcileService
+	OnePayFeeImport                   *settlement.OnePayFeeImportService
 	AdvancePayment                    *advance_payment.Service
 	AdvancePaymentFeeSchedule         *advance_payment.FeeScheduleService
 	ImportProgress                    *advance_payment.ImportProgressService
@@ -299,6 +300,13 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 	// Create audit service
 	auditService := infraServices.NewAuditService(eventBus)
+	onePayFeeImportService := settlement.NewOnePayFeeImportService(
+		repos.TxWalletPayment,
+		repos.Transaction,
+		transactionService,
+		auditService,
+		logger,
+	)
 
 	advancePaymentService := advance_payment.NewService(advancePaymentConfig, logger)
 
@@ -580,6 +588,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		APIMetricCleanupService:           apiMetricCleanupService,
 		Idempotency:                       idempotencyService,
 		Reconcile:                         reconcileService,
+		OnePayFeeImport:                   onePayFeeImportService,
 		AdvancePayment:                    advancePaymentService,
 		AdvancePaymentFeeSchedule:         feeScheduleService,
 		ImportProgress:                    importProgressService,

@@ -129,6 +129,7 @@ export function requestBestCurrentLocation(
     const startedAt = Date.now();
     let watchId: number | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let warmupTimerId: ReturnType<typeof setTimeout> | null = null;
     let settled = false;
     let sampleCount = 0;
     let freshSampleCount = 0;
@@ -144,6 +145,9 @@ export function requestBestCurrentLocation(
       }
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
+      }
+      if (warmupTimerId !== null) {
+        clearTimeout(warmupTimerId);
       }
       callback();
     };
@@ -163,6 +167,60 @@ export function requestBestCurrentLocation(
         status: getAccuracyStatus(bestAccuracy, options),
       });
     };
+
+    function resolveWithBestPosition() {
+      if (!bestPosition) return;
+      const bestAccuracy = bestPosition.coords.accuracy;
+      finish(() =>
+        resolve({
+          position: bestPosition as GeolocationPosition,
+          sampleCount,
+          bestAccuracy,
+          bestFreshSample: toLocationSample(bestPosition as GeolocationPosition),
+          requiredAccuracyMeters: options.requiredAccuracyMeters,
+          elapsedMs: Date.now() - startedAt,
+        })
+      );
+    }
+
+    function scheduleWarmupCheck(elapsedMs: number, bestAccuracy: number) {
+      if (warmupTimerId !== null || elapsedMs >= options.minimumWarmupMs) return;
+      if (bestAccuracy > options.requiredAccuracyMeters) return;
+
+      warmupTimerId = setTimeout(() => {
+        warmupTimerId = null;
+        if (settled) return;
+        emitProgress();
+        maybeResolveWithBestPosition();
+      }, options.minimumWarmupMs - elapsedMs);
+    }
+
+    function maybeResolveWithBestPosition() {
+      if (!bestPosition || settled) return;
+
+      const bestAccuracy = bestPosition.coords.accuracy;
+      const elapsedMs = Date.now() - startedAt;
+      const hasWarmedUp =
+        freshSampleCount >= options.minimumExcellentSamples ||
+        elapsedMs >= options.minimumWarmupMs;
+      const isExcellent =
+        bestAccuracy <= Math.min(
+          options.excellentAccuracyMeters,
+          options.requiredAccuracyMeters
+        ) &&
+        hasWarmedUp;
+      const isAcceptable =
+        bestAccuracy <= options.requiredAccuracyMeters &&
+        (freshSampleCount >= options.minimumAcceptableSamples ||
+          elapsedMs >= options.minimumWarmupMs);
+
+      if (isExcellent || isAcceptable) {
+        resolveWithBestPosition();
+        return;
+      }
+
+      scheduleWarmupCheck(elapsedMs, bestAccuracy);
+    }
 
     timeoutId = setTimeout(() => {
       finish(() => {
@@ -205,37 +263,7 @@ export function requestBestCurrentLocation(
           }
 
           emitProgress(isFresh ? position : undefined);
-
-          if (!bestPosition) return;
-
-          const bestAccuracy = bestPosition.coords.accuracy;
-          const elapsedMs = Date.now() - startedAt;
-          const hasWarmedUp =
-            freshSampleCount >= options.minimumExcellentSamples ||
-            elapsedMs >= options.minimumWarmupMs;
-          const isExcellent =
-            bestAccuracy <= Math.min(
-              options.excellentAccuracyMeters,
-              options.requiredAccuracyMeters
-            ) &&
-            hasWarmedUp;
-          const isAcceptable =
-            bestAccuracy <= options.requiredAccuracyMeters &&
-            (freshSampleCount >= options.minimumAcceptableSamples ||
-              elapsedMs >= options.minimumWarmupMs);
-
-          if (isExcellent || isAcceptable) {
-            finish(() =>
-              resolve({
-                position: bestPosition as GeolocationPosition,
-                sampleCount,
-                bestAccuracy,
-                bestFreshSample: toLocationSample(bestPosition as GeolocationPosition),
-                requiredAccuracyMeters: options.requiredAccuracyMeters,
-                elapsedMs,
-              })
-            );
-          }
+          maybeResolveWithBestPosition();
         },
         (error) => {
           if (settled) return;

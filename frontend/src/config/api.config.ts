@@ -207,6 +207,7 @@ export const API_ENDPOINTS = {
     summary: '/ledger/summary',
     accountsMetadata: '/ledger/accounts/metadata',
     export: '/ledger/export',
+    onePayFeeReports: '/ledger/onepay-fee-reports',
   },
 
   // Transactions (Revenue/Expense management)

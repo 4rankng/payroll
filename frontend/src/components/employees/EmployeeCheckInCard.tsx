@@ -384,7 +384,6 @@ export function EmployeeCheckInCard({
   const locationRecoveryText = "Thử lại";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
   const visibleLocationSample = locationProgress?.bestFreshSample ?? lastFreshSample;
-  const canShowLocationMap = Boolean(checkInTarget);
   const locationPreview = checkInTarget ? (
     <Suspense fallback={<MapFallback />}>
       <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
@@ -508,13 +507,6 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           ) : null}
-          {canShowLocationMap && checkInTarget ? (
-            <div className="mt-3">
-              <Suspense fallback={<MapFallback />}>
-                <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
-              </Suspense>
-            </div>
-          ) : null}
         </div>
       ) : null}
       {showLocationRecovery ? (
@@ -547,13 +539,6 @@ export function EmployeeCheckInCard({
                 </Button>
               ) : null}
           </div>
-          {canShowLocationMap && checkInTarget ? (
-            <div className="mt-3">
-              <Suspense fallback={<MapFallback />}>
-                <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
-              </Suspense>
-            </div>
-          ) : null}
         </div>
       ) : null}
       {attendance?.status === "completed" ? (
