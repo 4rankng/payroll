@@ -613,6 +613,7 @@ export function EmployeeCheckInCard({
         </div>
       ) : attendance?.status === "checked_in" ? (
         <div className="space-y-4">
+          {locationPreview}
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
@@ -629,7 +630,6 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           </div>
-          {locationPreview}
           <Button
             size="lg"
             className="h-14 w-full rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
@@ -677,6 +677,7 @@ export function EmployeeCheckInCard({
         </div>
       ) : (
         <div className="space-y-4">
+          {locationPreview}
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
@@ -690,7 +691,6 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           </div>
-          {locationPreview}
           <Button
             size="lg"
             className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
