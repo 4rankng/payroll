@@ -23,6 +23,30 @@ type EmployeeProfileService struct {
 	EventBus            domain.EventBus
 }
 
+type CheckInTargetStatus string
+
+const (
+	CheckInTargetReady        CheckInTargetStatus = "ready"
+	CheckInTargetUnavailable  CheckInTargetStatus = "unavailable"
+	CheckInTargetAmbiguous    CheckInTargetStatus = "ambiguous"
+	CheckInTargetMissingGates CheckInTargetStatus = "missing_gates"
+)
+
+type EmployeeScheduleInfo struct {
+	PaymentSchedule             string
+	CheckInEnabled              bool
+	CheckInTargetStatus         CheckInTargetStatus
+	CheckInTarget               *CheckInTargetInfo
+	CheckInGeofenceRadiusMeters *uint
+}
+
+type CheckInTargetInfo struct {
+	ProjectID    uint
+	ProjectName  string
+	RadiusMeters uint
+	Gates        []domain.GeofenceGate
+}
+
 func NewEmployeeProfileService(
 	employeeRepo domain.EmployeeRepository,
 	timesheetRepo domain.TimesheetRepository,
@@ -51,57 +75,110 @@ func (s *EmployeeProfileService) GetMyProfile(ctx context.Context, userID uint) 
 
 // GetEmployeePaymentSchedule gets the payment schedule for an employee from their active project assignment
 func (s *EmployeeProfileService) GetEmployeePaymentSchedule(ctx context.Context, employeeID uint) string {
-	schedule, _, _ := s.GetEmployeeScheduleInfo(ctx, employeeID)
-	return schedule
+	return s.GetEmployeeScheduleInfo(ctx, employeeID).PaymentSchedule
 }
 
 // GetEmployeeCheckInEnabled returns true if any active assignment for the employee has check-in enabled
 func (s *EmployeeProfileService) GetEmployeeCheckInEnabled(ctx context.Context, employeeID uint) bool {
-	_, enabled, _ := s.GetEmployeeScheduleInfo(ctx, employeeID)
-	return enabled
+	return s.GetEmployeeScheduleInfo(ctx, employeeID).CheckInEnabled
 }
 
-// GetEmployeeScheduleInfo returns schedule, check-in status, and the geofence
-// radius for the active check-in project from a single DB query.
-func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, employeeID uint) (paymentSchedule string, checkInEnabled bool, checkInGeofenceRadiusMeters *uint) {
+// GetEmployeeScheduleInfo returns the employee's active payment/check-in context.
+// The check-in target intentionally mirrors attendance auto-detection: if the
+// employee has multiple active flexible projects, the target is ambiguous before
+// we inspect check-in flags or gates. That prevents the app from drawing a map
+// for one project when check-in would require project selection.
+func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, employeeID uint) EmployeeScheduleInfo {
+	info := EmployeeScheduleInfo{
+		PaymentSchedule:     string(domain.PaymentScheduleWeekly),
+		CheckInTargetStatus: CheckInTargetUnavailable,
+	}
+
 	assignments, err := s.ProjectEmployeeRepo.GetByEmployee(ctx, employeeID)
 	if err != nil {
-		return string(domain.PaymentScheduleWeekly), false, nil
+		return info
 	}
 
 	// Single pass: collect both schedule and check-in from active assignments
 	for _, assignment := range assignments {
 		if assignment.LastDate == nil {
 			if assignment.CheckInEnabled {
-				checkInEnabled = true
-				if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) &&
-					assignment.Project.GeofenceRadiusMeters > 0 &&
-					checkInGeofenceRadiusMeters == nil {
-					radius := assignment.Project.GeofenceRadiusMeters
-					checkInGeofenceRadiusMeters = &radius
-				}
+				info.CheckInEnabled = true
 			}
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
-				paymentSchedule = string(domain.PaymentScheduleFlexible)
+				info.PaymentSchedule = string(domain.PaymentScheduleFlexible)
 			}
 		}
 	}
 
 	// If no flexible schedule found, use first active assignment's schedule
-	if paymentSchedule == "" {
+	if info.PaymentSchedule == string(domain.PaymentScheduleWeekly) {
 		for _, assignment := range assignments {
 			if assignment.LastDate == nil && assignment.PaymentSchedule != "" {
-				paymentSchedule = assignment.PaymentSchedule
+				info.PaymentSchedule = assignment.PaymentSchedule
 				break
 			}
 		}
 	}
 
-	if paymentSchedule == "" {
-		paymentSchedule = string(domain.PaymentScheduleWeekly)
+	s.populateCheckInTarget(ctx, employeeID, assignments, &info)
+	return info
+}
+
+func (s *EmployeeProfileService) populateCheckInTarget(ctx context.Context, employeeID uint, assignments []*domain.ProjectEmployee, info *EmployeeScheduleInfo) {
+	projects, err := s.ProjectEmployeeRepo.GetActiveProjectsForEmployee(ctx, employeeID)
+	if err != nil {
+		info.CheckInTargetStatus = CheckInTargetUnavailable
+		return
 	}
 
-	return paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters
+	var flexibleProjects []*domain.Project
+	for _, project := range projects {
+		if project != nil && project.IsFlexible {
+			flexibleProjects = append(flexibleProjects, project)
+		}
+	}
+
+	switch len(flexibleProjects) {
+	case 0:
+		info.CheckInTargetStatus = CheckInTargetUnavailable
+		return
+	case 1:
+	default:
+		info.CheckInTargetStatus = CheckInTargetAmbiguous
+		return
+	}
+
+	project := flexibleProjects[0]
+	var targetAssignment *domain.ProjectEmployee
+	for _, assignment := range assignments {
+		if assignment != nil && assignment.LastDate == nil && assignment.ProjectID == project.ID {
+			targetAssignment = assignment
+			break
+		}
+	}
+	if targetAssignment == nil ||
+		!targetAssignment.CheckInEnabled ||
+		targetAssignment.PaymentSchedule != string(domain.PaymentScheduleFlexible) ||
+		project.GeofenceRadiusMeters == 0 {
+		info.CheckInTargetStatus = CheckInTargetUnavailable
+		return
+	}
+
+	radius := project.GeofenceRadiusMeters
+	info.CheckInGeofenceRadiusMeters = &radius
+	if len(project.GeofenceGates) == 0 {
+		info.CheckInTargetStatus = CheckInTargetMissingGates
+		return
+	}
+
+	info.CheckInTargetStatus = CheckInTargetReady
+	info.CheckInTarget = &CheckInTargetInfo{
+		ProjectID:    project.ID,
+		ProjectName:  project.Name,
+		RadiusMeters: project.GeofenceRadiusMeters,
+		Gates:        project.GeofenceGates,
+	}
 }
 
 // UpdateMyProfile updates the employee's own profile (name, email, username)

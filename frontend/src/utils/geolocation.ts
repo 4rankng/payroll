@@ -8,11 +8,20 @@ export interface LocationPermissionIssue {
   requiresSettings: boolean;
 }
 
+export interface LocationSample {
+  lat: number;
+  lng: number;
+  accuracy: number;
+  timestamp: number;
+}
+
 export interface LocationAcquisitionProgress {
   sampleCount: number;
   elapsedMs: number;
   latestAccuracy?: number;
   bestAccuracy?: number;
+  latestFreshSample?: LocationSample;
+  bestFreshSample?: LocationSample;
   requiredAccuracyMeters: number;
   status: "warming" | "excellent" | "acceptable" | "weak";
 }
@@ -21,6 +30,8 @@ export interface LocationAcquisitionResult {
   position: GeolocationPosition;
   sampleCount: number;
   bestAccuracy: number;
+  bestFreshSample: LocationSample;
+  requiredAccuracyMeters: number;
   elapsedMs: number;
 }
 
@@ -94,6 +105,15 @@ function getAccuracyStatus(
   return "weak";
 }
 
+function toLocationSample(position: GeolocationPosition): LocationSample {
+  return {
+    lat: position.coords.latitude,
+    lng: position.coords.longitude,
+    accuracy: position.coords.accuracy,
+    timestamp: position.timestamp,
+  };
+}
+
 export function requestBestCurrentLocation(
   onProgress?: (progress: LocationAcquisitionProgress) => void,
   optionOverrides?: Partial<LocationAcquisitionOptions>
@@ -128,13 +148,17 @@ export function requestBestCurrentLocation(
       callback();
     };
 
-    const emitProgress = (latestPosition?: GeolocationPosition) => {
+    const emitProgress = (latestFreshPosition?: GeolocationPosition) => {
       const bestAccuracy = bestPosition?.coords.accuracy;
       onProgress?.({
         sampleCount,
         elapsedMs: Date.now() - startedAt,
-        latestAccuracy: latestPosition?.coords.accuracy,
+        latestAccuracy: latestFreshPosition?.coords.accuracy,
         bestAccuracy,
+        latestFreshSample: latestFreshPosition
+          ? toLocationSample(latestFreshPosition)
+          : undefined,
+        bestFreshSample: bestPosition ? toLocationSample(bestPosition) : undefined,
         requiredAccuracyMeters: options.requiredAccuracyMeters,
         status: getAccuracyStatus(bestAccuracy, options),
       });
@@ -149,6 +173,8 @@ export function requestBestCurrentLocation(
               position: bestPosition,
               sampleCount,
               bestAccuracy,
+              bestFreshSample: toLocationSample(bestPosition),
+              requiredAccuracyMeters: options.requiredAccuracyMeters,
               elapsedMs: Date.now() - startedAt,
             });
             return;
@@ -178,7 +204,7 @@ export function requestBestCurrentLocation(
             bestPosition = position;
           }
 
-          emitProgress(position);
+          emitProgress(isFresh ? position : undefined);
 
           if (!bestPosition) return;
 
@@ -204,6 +230,8 @@ export function requestBestCurrentLocation(
                 position: bestPosition as GeolocationPosition,
                 sampleCount,
                 bestAccuracy,
+                bestFreshSample: toLocationSample(bestPosition as GeolocationPosition),
+                requiredAccuracyMeters: options.requiredAccuracyMeters,
                 elapsedMs,
               })
             );

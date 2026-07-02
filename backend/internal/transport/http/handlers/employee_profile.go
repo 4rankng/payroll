@@ -55,38 +55,7 @@ func (h *EmployeeProfileHandler) GetMyProfile(c *gin.Context) {
 		return
 	}
 
-	// Get payment schedule and check-in status from active project assignments (single query)
-	paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
-
-	// Convert to response DTO
-	resp := &dto.EmployeeProfileResponse{
-		ID:                          employee.ID,
-		Fullname:                    employee.Fullname,
-		Email:                       employee.Email,
-		Mobile:                      employee.Mobile,
-		Address:                     employee.Address,
-		DateOfBirth:                 employee.DateOfBirth,
-		BankAccountNumber:           employee.BankAccountNumber,
-		BankAccountName:             employee.BankAccountName,
-		PaymentSchedule:             paymentSchedule,
-		CheckInEnabled:              checkInEnabled,
-		CheckInGeofenceRadiusMeters: checkInGeofenceRadiusMeters,
-		CreatedAt:                   employee.CreatedAt,
-		UpdatedAt:                   employee.UpdatedAt,
-	}
-
-	// Add username from User relationship
-	if employee.User != nil {
-		resp.Username = employee.User.Username
-	}
-
-	// Add bank info
-	if employee.Bank != nil {
-		resp.Bank = &dto.BankInfo{
-			ID:         employee.Bank.ID,
-			BranchName: employee.Bank.BranchName,
-		}
-	}
+	resp := h.mapEmployeeProfileResponse(c, employee)
 
 	response.Success(c, resp, "Profile retrieved successfully")
 }
@@ -128,10 +97,13 @@ func (h *EmployeeProfileHandler) UpdateMyProfile(c *gin.Context) {
 		return
 	}
 
-	// Get payment schedule and check-in status from active project assignment (single query)
-	paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
+	resp := h.mapEmployeeProfileResponse(c, employee)
 
-	// Convert to response DTO
+	response.Success(c, resp, "Profile updated successfully")
+}
+
+func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, employee *domain.Employee) *dto.EmployeeProfileResponse {
+	scheduleInfo := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
 	resp := &dto.EmployeeProfileResponse{
 		ID:                          employee.ID,
 		Fullname:                    employee.Fullname,
@@ -141,27 +113,44 @@ func (h *EmployeeProfileHandler) UpdateMyProfile(c *gin.Context) {
 		DateOfBirth:                 employee.DateOfBirth,
 		BankAccountNumber:           employee.BankAccountNumber,
 		BankAccountName:             employee.BankAccountName,
-		PaymentSchedule:             paymentSchedule,
-		CheckInEnabled:              checkInEnabled,
-		CheckInGeofenceRadiusMeters: checkInGeofenceRadiusMeters,
+		PaymentSchedule:             scheduleInfo.PaymentSchedule,
+		CheckInEnabled:              scheduleInfo.CheckInEnabled,
+		CheckInTargetStatus:         string(scheduleInfo.CheckInTargetStatus),
+		CheckInTarget:               mapCheckInTarget(scheduleInfo.CheckInTarget),
+		CheckInGeofenceRadiusMeters: scheduleInfo.CheckInGeofenceRadiusMeters,
 		CreatedAt:                   employee.CreatedAt,
 		UpdatedAt:                   employee.UpdatedAt,
 	}
-
-	// Add username from User relationship
 	if employee.User != nil {
 		resp.Username = employee.User.Username
 	}
-
-	// Add bank info
 	if employee.Bank != nil {
 		resp.Bank = &dto.BankInfo{
 			ID:         employee.Bank.ID,
 			BranchName: employee.Bank.BranchName,
 		}
 	}
+	return resp
+}
 
-	response.Success(c, resp, "Profile updated successfully")
+func mapCheckInTarget(target *employee.CheckInTargetInfo) *dto.CheckInTargetInfo {
+	if target == nil {
+		return nil
+	}
+	gates := make([]dto.GeofenceGateRequest, 0, len(target.Gates))
+	for _, gate := range target.Gates {
+		gates = append(gates, dto.GeofenceGateRequest{
+			Name: gate.Name,
+			Lat:  gate.Lat,
+			Lng:  gate.Lng,
+		})
+	}
+	return &dto.CheckInTargetInfo{
+		ProjectID:    target.ProjectID,
+		ProjectName:  target.ProjectName,
+		RadiusMeters: target.RadiusMeters,
+		Gates:        gates,
+	}
 }
 
 // UpdateMyPassword godoc
