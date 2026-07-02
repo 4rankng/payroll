@@ -7,9 +7,12 @@ IMAGE_NAME = payroll-frontend
 TAG ?= latest
 FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(TAG)
 
-# Buildx builder (shared with backend) — persistent docker-container builder
-# enables layer + registry caching so builds skip the slow `yarn install` step.
+# Buildx builder (shared with backend) — persistent docker-container builder.
+# The builder's own volume caches layers; BUILD_CACHE_DIR adds an on-host cache
+# export/import so builds skip the slow `yarn install` step WITHOUT a ~100s
+# registry manifest round-trip (type=registry,ref=...) on every build.
 BUILDER ?= bb
+BUILD_CACHE_DIR ?= $(HOME)/.cache/payroll-frontend-buildx
 
 # Demo (demo.tingting.vip) — separate image tag + API URL so demo is independent of prod
 DEMO_API_URL ?= https://demo.tingting.vip
@@ -27,7 +30,8 @@ push:
 	@echo "Building & pushing amd64 image with production environment variables: $(FULL_IMAGE_NAME)"
 	docker buildx build \
 		--platform linux/amd64 \
-		--cache-from type=registry,ref=$(FULL_IMAGE_NAME) \
+		--cache-from type=local,src=$(BUILD_CACHE_DIR) \
+		--cache-to type=local,dest=$(BUILD_CACHE_DIR),mode=max \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--build-arg VITE_API_BASE_URL=https://tingting.vip \
 		--build-arg VITE_API_VERSION=/api/v1 \
@@ -49,7 +53,8 @@ push-demo:
 	@echo "Building & pushing demo Docker image for amd64: $(DEMO_FULL_IMAGE_NAME)"
 	docker buildx build \
 		--platform linux/amd64 \
-		--cache-from type=registry,ref=$(DEMO_FULL_IMAGE_NAME) \
+		--cache-from type=local,src=$(BUILD_CACHE_DIR) \
+		--cache-to type=local,dest=$(BUILD_CACHE_DIR),mode=max \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--build-arg VITE_API_BASE_URL=$(DEMO_API_URL) \
 		--build-arg VITE_API_VERSION=/api/v1 \
