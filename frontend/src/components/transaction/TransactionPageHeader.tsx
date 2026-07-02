@@ -1,4 +1,4 @@
-import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download } from 'lucide-react';
+import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -10,6 +10,7 @@ interface TransactionPageHeaderProps {
   onViewSaoKeHistory: () => void;
   onExportSaoKePayroll: () => void;
   onExportSaoKeAdvance: () => void;
+  onImportOnePayFeeReport: () => void;
   isSendingSaoKe?: boolean;
 }
 
@@ -20,6 +21,7 @@ export function TransactionPageHeader({
   onViewSaoKeHistory,
   onExportSaoKePayroll,
   onExportSaoKeAdvance,
+  onImportOnePayFeeReport,
   isSendingSaoKe = false,
 }: TransactionPageHeaderProps) {
   return (
@@ -80,6 +82,10 @@ export function TransactionPageHeader({
             Đối soát
           </Button>
         </div>
+        <Button variant="outline" onClick={onImportOnePayFeeReport}>
+          <ReceiptText className="w-4 h-4" />
+          Phí OnePay
+        </Button>
         <Button onClick={onAddTransaction}>
           <Plus />
           Thêm

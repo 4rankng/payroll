@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/observability"
+	bankmapping "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/timeutil"
 
 	"github.com/gosimple/unidecode"
@@ -39,6 +41,7 @@ func (e *OnePayFeeImportValidationError) Error() string {
 
 type OnePayFeeImportService struct {
 	walletPayments     domaintx.WalletPaymentRepository
+	bankRepo           domain.BankRepository
 	transactionRepo    domain.TransactionRepository
 	transactionService *TransactionService
 	auditService       *infraServices.AuditService
@@ -67,6 +70,7 @@ type onePayFeeReportDetail struct {
 
 func NewOnePayFeeImportService(
 	walletPayments domaintx.WalletPaymentRepository,
+	bankRepo domain.BankRepository,
 	transactionRepo domain.TransactionRepository,
 	transactionService *TransactionService,
 	auditService *infraServices.AuditService,
@@ -77,6 +81,7 @@ func NewOnePayFeeImportService(
 	}
 	return &OnePayFeeImportService{
 		walletPayments:     walletPayments,
+		bankRepo:           bankRepo,
 		transactionRepo:    transactionRepo,
 		transactionService: transactionService,
 		auditService:       auditService,
@@ -201,7 +206,7 @@ func (s *OnePayFeeImportService) validateWalletPayments(ctx context.Context, rep
 		if normalizeText(row.RecipientAccountNo) != normalizeText(detail.beneficiaryAccount) {
 			issues = append(issues, issue("account_mismatch", detail.row, detail.fundTransferID, "Số tài khoản thụ hưởng không khớp"))
 		}
-		if normalizeText(row.RecipientBank) != normalizeText(detail.beneficiaryBank) {
+		if !s.bankMatches(ctx, row.RecipientBank, detail.beneficiaryBank) {
 			issues = append(issues, issue("bank_mismatch", detail.row, detail.fundTransferID, "Ngân hàng thụ hưởng không khớp"))
 		}
 		if normalizeName(row.RecipientName) != normalizeName(detail.beneficiaryAccountName) {
@@ -439,12 +444,32 @@ func mustCellInt(f *excelize.File, sheet string, row, col int) int64 {
 }
 
 func parseMoney(value string) int64 {
-	cleaned := strings.NewReplacer(",", "", ".", "", " ", "", "₫", "", "VND", "", "vnd", "").Replace(strings.TrimSpace(value))
+	cleaned := strings.NewReplacer(" ", "", "₫", "", "VND", "", "vnd", "").Replace(strings.TrimSpace(value))
 	if cleaned == "" {
 		return 0
 	}
-	n, _ := strconv.ParseInt(cleaned, 10, 64)
-	return n
+	if strings.Contains(cleaned, ".") && !strings.Contains(cleaned, ",") {
+		parts := strings.Split(cleaned, ".")
+		if len(parts[len(parts)-1]) == 3 {
+			cleaned = strings.ReplaceAll(cleaned, ".", "")
+		}
+	}
+	if strings.Contains(cleaned, ",") && !strings.Contains(cleaned, ".") {
+		parts := strings.Split(cleaned, ",")
+		if len(parts[len(parts)-1]) == 3 {
+			cleaned = strings.ReplaceAll(cleaned, ",", "")
+		} else {
+			cleaned = strings.ReplaceAll(cleaned, ",", ".")
+		}
+	}
+	if strings.Contains(cleaned, ",") && strings.Contains(cleaned, ".") {
+		cleaned = strings.ReplaceAll(cleaned, ",", "")
+	}
+	n, err := strconv.ParseFloat(cleaned, 64)
+	if err != nil {
+		return 0
+	}
+	return int64(math.Round(n))
 }
 
 func parseVietnameseDateRange(s string) (time.Time, time.Time, bool) {
@@ -479,6 +504,78 @@ func normalizeText(s string) string {
 
 func normalizeName(s string) string {
 	return normalizeText(unidecode.Unidecode(s))
+}
+
+func (s *OnePayFeeImportService) bankMatches(ctx context.Context, storedBank, reportBank string) bool {
+	storedKey := s.canonicalBankKey(ctx, storedBank)
+	reportKey := s.canonicalBankKey(ctx, reportBank)
+	return storedKey != "" && reportKey != "" && storedKey == reportKey
+}
+
+func (s *OnePayFeeImportService) canonicalBankKey(ctx context.Context, value string) string {
+	raw := strings.TrimSpace(value)
+	if raw == "" {
+		return ""
+	}
+	if s.bankRepo != nil {
+		for _, candidate := range bankLookupCandidates(raw) {
+			if bank := s.findBank(ctx, candidate); bank != nil {
+				return bankKey(bank)
+			}
+		}
+	}
+	return normalizeText(raw)
+}
+
+func bankLookupCandidates(value string) []string {
+	candidates := []string{value}
+	ascii := unidecode.Unidecode(value)
+	if normalizeText(ascii) != normalizeText(value) {
+		candidates = append(candidates, ascii)
+	}
+	for _, candidate := range append([]string{}, candidates...) {
+		mapped := bankmapping.MapName(candidate)
+		if normalizeText(mapped) != normalizeText(candidate) {
+			candidates = append(candidates, mapped)
+		}
+	}
+	return candidates
+}
+
+func (s *OnePayFeeImportService) findBank(ctx context.Context, value string) *domain.Bank {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	if bank, err := s.bankRepo.FindBySwiftCode(ctx, value); err == nil && bank != nil {
+		return bank
+	}
+	if bank, err := s.bankRepo.FindByBankCode(ctx, value); err == nil && bank != nil {
+		return bank
+	}
+	banks, err := s.bankRepo.SearchByBranchName(ctx, value, 5)
+	if err != nil {
+		return nil
+	}
+	for _, bank := range banks {
+		if normalizeName(bank.BranchName) == normalizeName(value) {
+			return bank
+		}
+	}
+	return nil
+}
+
+func bankKey(bank *domain.Bank) string {
+	if bank == nil {
+		return ""
+	}
+	if strings.TrimSpace(bank.SwiftCode) != "" {
+		return normalizeText(bank.SwiftCode)
+	}
+	if strings.TrimSpace(bank.BankCode) != "" {
+		return normalizeText(bank.BankCode)
+	}
+	return normalizeName(bank.BranchName)
 }
 
 func issue(code string, row int, reference string, message string) dto.OnePayFeeReportIssue {

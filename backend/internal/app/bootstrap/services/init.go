@@ -302,6 +302,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	auditService := infraServices.NewAuditService(eventBus)
 	onePayFeeImportService := settlement.NewOnePayFeeImportService(
 		repos.TxWalletPayment,
+		repos.Bank,
 		repos.Transaction,
 		transactionService,
 		auditService,

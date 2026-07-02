@@ -5,15 +5,13 @@
 
 ## Purpose
 
-Components for the double-entry ledger system including entry tables, detail sheets, filters, reversal dialogs, summary cards, and a cash flow chart. Supports viewing ledger entries with debit/credit amounts, account types, and reversal workflow for corrections.
+Components for the double-entry ledger system including mobile entry lists, detail sheets, filters, reversal dialogs, summary cards, and a cash flow chart. Supports viewing ledger entries with debit/credit amounts, account types, and reversal workflow for corrections.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `LedgerEntriesTable.tsx` | Main ledger entries table with sorting and filtering |
 | `LedgerEntryDetailsSheet.tsx` | Detail slide-over for individual ledger entries |
-| `LedgerFilters.tsx` | Filter bar (date range, account type, amount range, reference) |
 | `LedgerPageHeader.tsx` | Page header with export and period navigation |
 | `LedgerSummaryCard.tsx` | Summary card showing total debits, credits, and balance |
 | `LedgerMobileList.tsx` | Mobile-optimized ledger entry list |

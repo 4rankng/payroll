@@ -33,7 +33,7 @@ export function OnePayFeeReportDialog({
   const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = async () => {
-    if (!file) return;
+    if (!file || result) return;
     await onUpload(file);
   };
 
@@ -99,10 +99,12 @@ export function OnePayFeeReportDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Đóng
           </Button>
-          <Button onClick={handleSubmit} disabled={!file || isUploading}>
-            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Đối soát và tạo chi phí
-          </Button>
+          {!result && (
+            <Button onClick={handleSubmit} disabled={!file || isUploading}>
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Đối soát và tạo chi phí
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
