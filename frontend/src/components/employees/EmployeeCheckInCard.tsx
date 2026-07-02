@@ -17,6 +17,7 @@ import {
   useTodayAttendance,
   useCheckIn,
   useCheckOut,
+  useLogAttendanceDeviceAttempt,
 } from "@/hooks/api/useAttendance";
 import { getErrorMessage } from "@/utils/error-handler";
 import { format } from "date-fns";
@@ -115,10 +116,23 @@ function getLocationAcquisitionMessage(progress: LocationAcquisitionProgress | n
   return `Tín hiệu còn yếu, độ chính xác tốt nhất khoảng ${bestAccuracy}. Hãy bước ra nơi thoáng, bật vị trí chính xác và tắt tiết kiệm pin.`;
 }
 
+function getDeviceGpsStatus(issue: LocationPermissionIssue): "denied" | "timeout" | "unavailable" | "unsupported" {
+  switch (issue.type) {
+    case "denied":
+    case "timeout":
+    case "unsupported":
+      return issue.type;
+    case "unavailable":
+    default:
+      return "unavailable";
+  }
+}
+
 export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
+  const logDeviceAttemptMutation = useLogAttendanceDeviceAttempt();
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
   const [locationProgress, setLocationProgress] = useState<LocationAcquisitionProgress | null>(null);
@@ -225,6 +239,10 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
 
       const issue = getLocationPermissionIssue(error);
       setLocationIssue(issue);
+      logDeviceAttemptMutation.mutate({
+        attempt_type: type,
+        gps_status: getDeviceGpsStatus(issue),
+      });
       // The persistent amber recovery panel below renders the full title +
       // description + retry, so the toast only carries the headline (no
       // description) to avoid showing the same text twice.

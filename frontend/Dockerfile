@@ -53,7 +53,7 @@ WORKDIR /app
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy serve config into dist (adds Permissions-Policy header required for FedCM / Google Sign-In)
+# Copy serve config into dist (adds Permissions-Policy headers for geolocation and FedCM / Google Sign-In)
 COPY serve.json ./dist/serve.json
 
 # Install serve to serve static files
