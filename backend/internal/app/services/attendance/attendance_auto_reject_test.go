@@ -309,6 +309,47 @@ func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
 	}
 }
 
+func TestCheckOutRejectsOutsideGeofence(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkIn := time.Date(2026, 6, 21, 8, 35, 0, 0, loc)
+	now := time.Date(2026, 6, 21, 17, 30, 0, 0, loc)
+	att := &domain.Attendance{
+		ID:          9,
+		ProjectID:   55,
+		EmployeeID:  123,
+		Date:        checkIn,
+		CheckInTime: checkIn,
+		CheckInGate: "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDate: att}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: &domain.ProjectEmployee{Position: "Công nhân", CheckInEnabled: true}},
+		projectRepo: &fakeProjectRepo{p: &domain.Project{
+			ID:                   55,
+			GeofenceRadiusMeters: 100,
+			GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: geofenceTestGateLat, Lng: geofenceTestGateLng}},
+		}},
+		payrateRepo: &fakePayrateRepo{pr: &domain.Payrate{
+			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`),
+		}},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+
+	lat, lng := metersNorthOf(geofenceTestGateLat, geofenceTestGateLng, -800)
+	_, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: lat, Lng: lng, Accuracy: 10}, false)
+	if err == nil {
+		t.Fatal("expected outside-geofence checkout to be rejected")
+	}
+	if !strings.Contains(err.Error(), "ngoài khu vực chấm công") {
+		t.Fatalf("expected geofence rejection, got %q", err.Error())
+	}
+	if repo.updated != nil {
+		t.Fatal("expected rejected checkout not to update attendance")
+	}
+}
+
 func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
 	now := time.Date(2026, 6, 21, 20, 5, 0, 0, loc)

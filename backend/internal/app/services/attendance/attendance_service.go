@@ -528,29 +528,16 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			)
 		}
 
-		// 2. Best-effort geofence validation for checkout.
-		// Check-in already proves the worker started from a valid gate. Do not
-		// block checkout on a second GPS read, because mobile location can drift
-		// and leave the employee stuck in an active shift.
+		// 2. Enforce the project geofence for checkout using the same validation
+		// contract as check-in. A successful check-in does not grant a later
+		// checkout from outside the configured area.
 		project, err := s.projectRepo.GetByID(txCtx, attendance.ProjectID)
 		if err != nil {
 			return fmt.Errorf("failed to load project for geofence validation: %w", err)
 		}
 		gateName, err := s.validateGeofence(project, geo)
 		if err != nil {
-			observability.GetLogger().Warn(
-				"Checkout geofence validation failed; allowing checkout for active attendance",
-				"employee_id", employeeID,
-				"attendance_id", attendance.ID,
-				"project_id", attendance.ProjectID,
-				"lat", geo.Lat,
-				"lng", geo.Lng,
-				"error", err,
-			)
-			gateName = attendance.CheckInGate
-			if strings.TrimSpace(gateName) == "" {
-				gateName = "Không xác định"
-			}
+			return err
 		}
 
 		// 3. Update CheckOutTime and coords
