@@ -28,6 +28,7 @@ interface LocationAcquisitionOptions {
   freshMaxAgeMs: number;
   excellentAccuracyMeters: number;
   acceptableAccuracyMeters: number;
+  minimumExcellentSamples: number;
   minimumAcceptableSamples: number;
   minimumWarmupMs: number;
 }
@@ -42,6 +43,7 @@ const DEFAULT_LOCATION_ACQUISITION_OPTIONS: LocationAcquisitionOptions = {
   freshMaxAgeMs: 30000,
   excellentAccuracyMeters: 20,
   acceptableAccuracyMeters: 50,
+  minimumExcellentSamples: 2,
   minimumAcceptableSamples: 2,
   minimumWarmupMs: 3000,
 };
@@ -111,6 +113,7 @@ export function requestBestCurrentLocation(
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let settled = false;
     let sampleCount = 0;
+    let freshSampleCount = 0;
     let bestPosition: GeolocationPosition | null = null;
 
     const finish = (
@@ -161,6 +164,9 @@ export function requestBestCurrentLocation(
           sampleCount += 1;
           const ageMs = Date.now() - position.timestamp;
           const isFresh = ageMs <= options.freshMaxAgeMs;
+          if (isFresh) {
+            freshSampleCount += 1;
+          }
           if (
             isFresh &&
             (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy)
@@ -174,7 +180,12 @@ export function requestBestCurrentLocation(
 
           const bestAccuracy = bestPosition.coords.accuracy;
           const elapsedMs = Date.now() - startedAt;
-          const isExcellent = bestAccuracy <= options.excellentAccuracyMeters;
+          const hasWarmedUp =
+            freshSampleCount >= options.minimumExcellentSamples ||
+            elapsedMs >= options.minimumWarmupMs;
+          const isExcellent =
+            bestAccuracy <= options.excellentAccuracyMeters &&
+            hasWarmedUp;
           const isAcceptable =
             bestAccuracy <= options.acceptableAccuracyMeters &&
             (sampleCount >= options.minimumAcceptableSamples ||

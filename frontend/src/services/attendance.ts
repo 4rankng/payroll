@@ -34,6 +34,14 @@ interface AttendanceLocationPayload {
   gps_elapsed_ms?: number;
 }
 
+export type AttendanceAttemptType = "check_in" | "check_out";
+export type AttendanceDeviceGpsStatus = "denied" | "timeout" | "unavailable" | "unsupported";
+
+export interface AttendanceDeviceAttemptPayload {
+  attempt_type: AttendanceAttemptType;
+  gps_status: AttendanceDeviceGpsStatus;
+}
+
 export const attendanceService = {
   getToday: async () => {
     return apiClient.get<AttendanceRecord | null>(
@@ -58,6 +66,13 @@ export const attendanceService = {
   checkOut: async (payload: AttendanceLocationPayload & { confirm_no_salary?: boolean }) => {
     return apiClient.post<AttendanceRecord>(
       API_ENDPOINTS.attendance.mobile.checkOut,
+      payload
+    );
+  },
+
+  logDeviceAttempt: async (payload: AttendanceDeviceAttemptPayload) => {
+    return apiClient.post<null>(
+      API_ENDPOINTS.attendance.mobile.attemptLog,
       payload
     );
   },

@@ -25,7 +25,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		}
 
 		// Permissions-Policy (formerly Feature-Policy)
-		c.Header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		c.Header("Permissions-Policy", "geolocation=(self), microphone=(), camera=()")
 
 		// Content Security Policy
 		// - script-src: allow 'unsafe-eval' for pdfmake and CDN sources for xlsx/pdfmake lazy loading

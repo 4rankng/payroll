@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attendanceService, type AttendanceHistoryParams } from "@/services/attendance";
+import {
+  attendanceService,
+  type AttendanceDeviceAttemptPayload,
+  type AttendanceHistoryParams,
+} from "@/services/attendance";
 import { QueryKeys } from "@/lib/queryKeys";
 import { toast } from "sonner";
 
@@ -67,6 +71,14 @@ export function useCheckOut() {
     // for everything else. Keeping onError defined suppresses the global
     // MutationCache error toast (App.tsx skips notifications when a mutation has
     // its own onError handler), which avoids a duplicate toast.
+    onError: () => {},
+  });
+}
+
+export function useLogAttendanceDeviceAttempt() {
+  return useMutation({
+    mutationFn: (payload: AttendanceDeviceAttemptPayload) =>
+      attendanceService.logDeviceAttempt(payload),
     onError: () => {},
   });
 }

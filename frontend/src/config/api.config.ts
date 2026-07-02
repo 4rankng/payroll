@@ -188,6 +188,7 @@ export const API_ENDPOINTS = {
       today: '/mobile/attendance/today',
       checkIn: '/mobile/attendance/check-in',
       checkOut: '/mobile/attendance/check-out',
+      attemptLog: '/mobile/attendance/attempt-log',
       history: '/mobile/attendance/history',
     },
   },
