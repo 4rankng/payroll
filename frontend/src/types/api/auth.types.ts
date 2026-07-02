@@ -51,6 +51,21 @@ export interface PasswordStrengthResponse {
   isStrong: boolean;
 }
 
+export type CheckInTargetStatus = "ready" | "unavailable" | "ambiguous" | "missing_gates";
+
+export interface GeofenceGate {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export interface CheckInTarget {
+  project_id: number;
+  project_name: string;
+  radius_meters: number;
+  gates: GeofenceGate[];
+}
+
 // Employee-specific types
 export interface EmployeeProfile {
   id: number;
@@ -69,6 +84,8 @@ export interface EmployeeProfile {
   bank_account_name?: string;
   payment_schedule?: "weekly" | "monthly" | "flexible";
   check_in_enabled?: boolean;
+  check_in_target_status?: CheckInTargetStatus;
+  check_in_target?: CheckInTarget | null;
   check_in_geofence_radius_meters?: number;
   created_at: string;
   updated_at: string;

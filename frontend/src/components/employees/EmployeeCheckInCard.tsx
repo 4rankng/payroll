@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AlertCircle, BadgeCheck, BriefcaseBusiness, Clock, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,8 +38,14 @@ import {
   requestBestCurrentLocation,
   type LocationAcquisitionProgress,
   type LocationAcquisitionResult,
+  type LocationSample,
   type LocationPermissionIssue,
 } from "@/utils/geolocation";
+import type { CheckInTarget } from "@/types/api/auth.types";
+
+const EmployeeLocationMap = lazy(() =>
+  import("./EmployeeLocationMap").then((module) => ({ default: module.EmployeeLocationMap }))
+);
 
 function safeFormatTime(time: string | undefined | null, fallback = "--:--"): string {
   if (!time) return fallback;
@@ -52,6 +58,7 @@ function safeFormatTime(time: string | undefined | null, fallback = "--:--"): st
 
 interface EmployeeCheckInCardProps {
   className?: string;
+  checkInTarget?: CheckInTarget | null;
   checkInGeofenceRadiusMeters?: number | null;
   style?: React.CSSProperties;
 }
@@ -95,6 +102,14 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
   );
 }
 
+function MapFallback() {
+  return (
+    <div className="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-3 text-[13px] font-medium leading-5 text-slate-600">
+      Đang tải bản đồ vị trí...
+    </div>
+  );
+}
+
 function formatAccuracy(accuracy: number | undefined): string | null {
   if (typeof accuracy !== "number") return null;
   return `${Math.round(accuracy)}m`;
@@ -128,8 +143,23 @@ function getDeviceGpsStatus(issue: LocationPermissionIssue): "denied" | "timeout
   }
 }
 
+function isGeofenceOutsideMessage(message: string): boolean {
+  return message.includes("ngoài khu vực chấm công");
+}
+
+function createOutsideGeofenceLocationIssue(): LocationPermissionIssue {
+  return {
+    type: "unknown",
+    title: "Ngoài khu vực",
+    description: "Di chuyển vào vùng xanh rồi thử lại.",
+    canRetry: true,
+    requiresSettings: false,
+  };
+}
+
 export function EmployeeCheckInCard({
   className,
+  checkInTarget,
   checkInGeofenceRadiusMeters,
   style,
 }: EmployeeCheckInCardProps) {
@@ -140,6 +170,7 @@ export function EmployeeCheckInCard({
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
   const [locationProgress, setLocationProgress] = useState<LocationAcquisitionProgress | null>(null);
+  const [lastFreshSample, setLastFreshSample] = useState<LocationSample | null>(null);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
@@ -151,6 +182,12 @@ export function EmployeeCheckInCard({
   const submittingRef = useRef(false);
 
   const attendance = attendanceResponse?.data;
+  const canStartCorrectShift = attendance?.status === "completed" && isConfirmedNoSalaryAttendance(attendance);
+  const canPreviewCheckLocation =
+    !isLoading &&
+    Boolean(checkInTarget) &&
+    !isLocating &&
+    (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
 
   // Clear a stale location-recovery banner when the user returns to the tab.
   // useTodayAttendance refetches on window focus, so if the user fixed the OS
@@ -163,6 +200,45 @@ export function EmployeeCheckInCard({
     return () => window.removeEventListener("focus", clearOnReturn);
   }, []);
 
+  useEffect(() => {
+    if (!canPreviewCheckLocation) return;
+
+    let cancelled = false;
+
+    const locationOptions =
+      typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
+        ? {
+            requiredAccuracyMeters: checkInTarget.radius_meters,
+            timeoutMs: 12000,
+            minimumWarmupMs: 1500,
+            minimumAcceptableSamples: 1,
+          }
+        : {
+            timeoutMs: 12000,
+            minimumWarmupMs: 1500,
+            minimumAcceptableSamples: 1,
+          };
+
+    requestBestCurrentLocation((progress) => {
+      if (cancelled) return;
+      if (progress.bestFreshSample) {
+        setLastFreshSample(progress.bestFreshSample);
+      }
+    }, locationOptions)
+      .then((result) => {
+        if (cancelled) return;
+        setLastFreshSample(result.bestFreshSample);
+      })
+      .catch(() => {
+        // The always-on map can still show the configured gate/radius without a
+        // preview GPS sample. The explicit submit action owns visible GPS errors.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canPreviewCheckLocation, checkInTarget?.radius_meters]);
+
   const handleAction = async (type: "check_in" | "check_out", options?: { confirmNoSalary?: boolean }) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -170,6 +246,7 @@ export function EmployeeCheckInCard({
     // failed attempt doesn't persist while the new one is in flight.
     setLocationIssue(null);
     setLocationProgress(null);
+    setLastFreshSample(null);
     setIsLocating(true);
     let acquisition: LocationAcquisitionResult | null = null;
     try {
@@ -179,10 +256,18 @@ export function EmployeeCheckInCard({
       // browser error for the recovery panel. We warm up GPS and use the best
       // fresh high-accuracy sample instead of trusting the first Wi-Fi/cell fix.
       const locationOptions =
-        typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
-          ? { requiredAccuracyMeters: checkInGeofenceRadiusMeters }
+        typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
+          ? { requiredAccuracyMeters: checkInTarget.radius_meters }
+          : typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
+            ? { requiredAccuracyMeters: checkInGeofenceRadiusMeters }
           : undefined;
-      acquisition = await requestBestCurrentLocation(setLocationProgress, locationOptions);
+      acquisition = await requestBestCurrentLocation((progress) => {
+        setLocationProgress(progress);
+        if (progress.bestFreshSample) {
+          setLastFreshSample(progress.bestFreshSample);
+        }
+      }, locationOptions);
+      setLastFreshSample(acquisition.bestFreshSample);
       const position = acquisition.position;
       const payload = {
         lat: position.coords.latitude,
@@ -226,6 +311,11 @@ export function EmployeeCheckInCard({
             toast({ title: "Chưa thể chấm công", variant: "destructive" });
             return;
           }
+          if (isGeofenceOutsideMessage(message)) {
+            setLocationIssue(createOutsideGeofenceLocationIssue());
+            toast({ title: "Chưa thể chấm công", variant: "destructive" });
+            return;
+          }
           if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
             // First attempt outside the checkout window: show the real reason and
             // offer the confirmed no-salary path. The dialog is the UI — no toast.
@@ -250,6 +340,8 @@ export function EmployeeCheckInCard({
                 acquisition?.requiredAccuracyMeters
               )
             );
+          } else if (isGeofenceOutsideMessage(message)) {
+            setLocationIssue(createOutsideGeofenceLocationIssue());
           }
         }
         return;
@@ -285,13 +377,22 @@ export function EmployeeCheckInCard({
 
   const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
   const salaryRecorded = attendance ? isSalaryRecorded(attendance) : false;
-  const canStartCorrectShift = attendance?.status === "completed" && isConfirmedNoSalaryAttendance(attendance);
   // The next action is fully determined by the attendance status — there is no
   // need to track the last-tapped action separately (doing so defaulted it to
   // "check_in" and could mislabel the recovery CTA on a fresh check_out).
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
   const locationRecoveryText = "Thử lại";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
+  const visibleLocationSample = locationProgress?.bestFreshSample ?? lastFreshSample;
+  const canShowLocationMap = Boolean(checkInTarget);
+  const locationPreview = checkInTarget ? (
+    <Suspense fallback={<MapFallback />}>
+      <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
+    </Suspense>
+  ) : null;
+  const showRecoveryDescription =
+    Boolean(locationIssue) &&
+    (!checkInTarget || locationIssue?.requiresSettings || locationIssue?.type !== "unknown");
   const noSalaryWindow = getCheckoutWindowSummary(noSalaryReason);
   const salaryIssue = getAttendanceIssueSummary(
     attendance?.salary_reject_reason || attendance?.salary_message,
@@ -382,48 +483,58 @@ export function EmployeeCheckInCard({
               <p className="mt-1 text-[15px] font-medium leading-6 text-sky-800">
                 {getLocationAcquisitionMessage(locationProgress)}
               </p>
-              {locationProgress?.sampleCount ? (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Sai số</p>
-                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
-                      {formatAccuracy(locationProgress.bestAccuracy) || "--"}
-                    </p>
-                  </div>
-                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Yêu cầu</p>
-                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
-                      {"<= "}
-                      {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
-                    </p>
-                  </div>
-                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Lần đo</p>
-                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
-                      {locationProgress.sampleCount}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
+          {locationProgress?.sampleCount ? (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Sai số</p>
+                <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                  {formatAccuracy(locationProgress.bestAccuracy) || "--"}
+                </p>
+              </div>
+              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Cần</p>
+                <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                  {"<="}
+                  {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
+                </p>
+              </div>
+              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Lần đo</p>
+                <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                  {locationProgress.sampleCount}
+                </p>
+              </div>
+            </div>
+          ) : null}
+          {canShowLocationMap && checkInTarget ? (
+            <div className="mt-3">
+              <Suspense fallback={<MapFallback />}>
+                <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
+              </Suspense>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {showLocationRecovery ? (
-        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-950">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
               {locationIssue.requiresSettings ? <Settings className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[17px] font-bold leading-6">{locationIssue.title}</p>
-              <p className="mt-1 text-[15px] font-medium leading-6 text-amber-800">{locationIssue.description}</p>
+              <p className="truncate text-[16px] font-bold leading-6">{locationIssue.title}</p>
+              {showRecoveryDescription ? (
+                <p className="mt-0.5 text-[14px] font-medium leading-5 text-amber-800">{locationIssue.description}</p>
+              ) : null}
+            </div>
               {locationIssue.canRetry ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="mt-3 min-h-11 w-full min-w-0 justify-center gap-2 rounded-lg border-amber-300 bg-white px-3 text-center text-[15px] font-bold leading-5 text-amber-950 hover:bg-amber-100"
+                  className="h-10 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 text-[14px] font-bold leading-5 text-amber-950 hover:bg-amber-100"
                   disabled={isPending}
                   onClick={() => handleAction(actionType)}
                 >
@@ -432,11 +543,17 @@ export function EmployeeCheckInCard({
                   ) : (
                     <RotateCcw className="h-4 w-4 shrink-0" />
                   )}
-                  <span className="min-w-0 truncate">{isLocating ? "Đang lấy vị trí..." : locationRecoveryText}</span>
+                  <span>{isLocating ? "Đang..." : locationRecoveryText}</span>
                 </Button>
               ) : null}
-            </div>
           </div>
+          {canShowLocationMap && checkInTarget ? (
+            <div className="mt-3">
+              <Suspense fallback={<MapFallback />}>
+                <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
+              </Suspense>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {attendance?.status === "completed" ? (
@@ -488,22 +605,25 @@ export function EmployeeCheckInCard({
           </div>
 
           {canStartCorrectShift ? (
-            <Button
-              size="lg"
-              className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
-              style={{
-                boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
-              }}
-              disabled={isPending}
-              onClick={() => handleAction("check_in")}
-            >
-              {isPending ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : (
-                <BriefcaseBusiness className="w-5 h-5 mr-2" />
-              )}
-              {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
-            </Button>
+            <>
+              {locationPreview}
+              <Button
+                size="lg"
+                className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
+                style={{
+                  boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
+                }}
+                disabled={isPending}
+                onClick={() => handleAction("check_in")}
+              >
+                {isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                )}
+                {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
+              </Button>
+            </>
           ) : null}
         </div>
       ) : attendance?.status === "checked_in" ? (
@@ -524,6 +644,7 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           </div>
+          {locationPreview}
           <Button
             size="lg"
             className="h-14 w-full rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
@@ -584,6 +705,7 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           </div>
+          {locationPreview}
           <Button
             size="lg"
             className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
