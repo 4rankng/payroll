@@ -56,22 +56,23 @@ func (h *EmployeeProfileHandler) GetMyProfile(c *gin.Context) {
 	}
 
 	// Get payment schedule and check-in status from active project assignments (single query)
-	paymentSchedule, checkInEnabled := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
+	paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
 
 	// Convert to response DTO
 	resp := &dto.EmployeeProfileResponse{
-		ID:                employee.ID,
-		Fullname:          employee.Fullname,
-		Email:             employee.Email,
-		Mobile:            employee.Mobile,
-		Address:           employee.Address,
-		DateOfBirth:       employee.DateOfBirth,
-		BankAccountNumber: employee.BankAccountNumber,
-		BankAccountName:   employee.BankAccountName,
-		PaymentSchedule:   paymentSchedule,
-		CheckInEnabled:    checkInEnabled,
-		CreatedAt:         employee.CreatedAt,
-		UpdatedAt:         employee.UpdatedAt,
+		ID:                          employee.ID,
+		Fullname:                    employee.Fullname,
+		Email:                       employee.Email,
+		Mobile:                      employee.Mobile,
+		Address:                     employee.Address,
+		DateOfBirth:                 employee.DateOfBirth,
+		BankAccountNumber:           employee.BankAccountNumber,
+		BankAccountName:             employee.BankAccountName,
+		PaymentSchedule:             paymentSchedule,
+		CheckInEnabled:              checkInEnabled,
+		CheckInGeofenceRadiusMeters: checkInGeofenceRadiusMeters,
+		CreatedAt:                   employee.CreatedAt,
+		UpdatedAt:                   employee.UpdatedAt,
 	}
 
 	// Add username from User relationship
@@ -128,22 +129,23 @@ func (h *EmployeeProfileHandler) UpdateMyProfile(c *gin.Context) {
 	}
 
 	// Get payment schedule and check-in status from active project assignment (single query)
-	paymentSchedule, checkInEnabled := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
+	paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters := h.EmployeeProfileService.GetEmployeeScheduleInfo(c.Request.Context(), employee.ID)
 
 	// Convert to response DTO
 	resp := &dto.EmployeeProfileResponse{
-		ID:                employee.ID,
-		Fullname:          employee.Fullname,
-		Email:             employee.Email,
-		Mobile:            employee.Mobile,
-		Address:           employee.Address,
-		DateOfBirth:       employee.DateOfBirth,
-		BankAccountNumber: employee.BankAccountNumber,
-		BankAccountName:   employee.BankAccountName,
-		PaymentSchedule:   paymentSchedule,
-		CheckInEnabled:    checkInEnabled,
-		CreatedAt:         employee.CreatedAt,
-		UpdatedAt:         employee.UpdatedAt,
+		ID:                          employee.ID,
+		Fullname:                    employee.Fullname,
+		Email:                       employee.Email,
+		Mobile:                      employee.Mobile,
+		Address:                     employee.Address,
+		DateOfBirth:                 employee.DateOfBirth,
+		BankAccountNumber:           employee.BankAccountNumber,
+		BankAccountName:             employee.BankAccountName,
+		PaymentSchedule:             paymentSchedule,
+		CheckInEnabled:              checkInEnabled,
+		CheckInGeofenceRadiusMeters: checkInGeofenceRadiusMeters,
+		CreatedAt:                   employee.CreatedAt,
+		UpdatedAt:                   employee.UpdatedAt,
 	}
 
 	// Add username from User relationship

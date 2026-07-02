@@ -9,7 +9,8 @@ import { X, Inbox } from 'lucide-react';
 import { format, parseISO, subDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-import { useFailedAttempts, useQuotaAnomalies, useAdminAttendances } from '@/hooks/api/useDashboard';
+import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
+import { useAdminAttendances } from '@/hooks/api/useAdminAttendance';
 import { formatCompactCurrency } from '@/utils/formatters';
 import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDistance';
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
@@ -29,6 +30,10 @@ interface HealthDrilldownSheetProps {
 const REASON_CATEGORY_LABELS: Record<string, string> = {
   geofence_not_configured: 'Chưa cấu hình vị trí',
   geofence_outside: 'Ngoài khu vực chấm công',
+  gps_denied: 'Chưa cấp quyền GPS',
+  gps_timeout: 'GPS phản hồi chậm',
+  gps_unavailable: 'Không lấy được vị trí GPS',
+  gps_unsupported: 'Thiết bị không hỗ trợ GPS',
   gps_inaccurate: 'GPS không chính xác',
   check_in_not_enabled: 'Chưa cấp quyền chấm công',
   already_checked_in: 'Đã vào làm rồi',

@@ -51,22 +51,22 @@ func (s *EmployeeProfileService) GetMyProfile(ctx context.Context, userID uint) 
 
 // GetEmployeePaymentSchedule gets the payment schedule for an employee from their active project assignment
 func (s *EmployeeProfileService) GetEmployeePaymentSchedule(ctx context.Context, employeeID uint) string {
-	schedule, _ := s.GetEmployeeScheduleInfo(ctx, employeeID)
+	schedule, _, _ := s.GetEmployeeScheduleInfo(ctx, employeeID)
 	return schedule
 }
 
 // GetEmployeeCheckInEnabled returns true if any active assignment for the employee has check-in enabled
 func (s *EmployeeProfileService) GetEmployeeCheckInEnabled(ctx context.Context, employeeID uint) bool {
-	_, enabled := s.GetEmployeeScheduleInfo(ctx, employeeID)
+	_, enabled, _ := s.GetEmployeeScheduleInfo(ctx, employeeID)
 	return enabled
 }
 
-// GetEmployeeScheduleInfo returns both the payment schedule and check-in enabled status
-// from a single DB query, avoiding duplicate calls to GetByEmployee.
-func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, employeeID uint) (paymentSchedule string, checkInEnabled bool) {
+// GetEmployeeScheduleInfo returns schedule, check-in status, and the geofence
+// radius for the active check-in project from a single DB query.
+func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, employeeID uint) (paymentSchedule string, checkInEnabled bool, checkInGeofenceRadiusMeters *uint) {
 	assignments, err := s.ProjectEmployeeRepo.GetByEmployee(ctx, employeeID)
 	if err != nil {
-		return string(domain.PaymentScheduleWeekly), false
+		return string(domain.PaymentScheduleWeekly), false, nil
 	}
 
 	// Single pass: collect both schedule and check-in from active assignments
@@ -74,6 +74,12 @@ func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, em
 		if assignment.LastDate == nil {
 			if assignment.CheckInEnabled {
 				checkInEnabled = true
+				if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) &&
+					assignment.Project.GeofenceRadiusMeters > 0 &&
+					checkInGeofenceRadiusMeters == nil {
+					radius := assignment.Project.GeofenceRadiusMeters
+					checkInGeofenceRadiusMeters = &radius
+				}
 			}
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
 				paymentSchedule = string(domain.PaymentScheduleFlexible)
@@ -95,7 +101,7 @@ func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, em
 		paymentSchedule = string(domain.PaymentScheduleWeekly)
 	}
 
-	return paymentSchedule, checkInEnabled
+	return paymentSchedule, checkInEnabled, checkInGeofenceRadiusMeters
 }
 
 // UpdateMyProfile updates the employee's own profile (name, email, username)

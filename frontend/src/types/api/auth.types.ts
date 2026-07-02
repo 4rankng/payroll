@@ -69,6 +69,7 @@ export interface EmployeeProfile {
   bank_account_name?: string;
   payment_schedule?: "weekly" | "monthly" | "flexible";
   check_in_enabled?: boolean;
+  check_in_geofence_radius_meters?: number;
   created_at: string;
   updated_at: string;
 }

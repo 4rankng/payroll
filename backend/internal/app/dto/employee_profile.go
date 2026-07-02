@@ -4,20 +4,21 @@ import "time"
 
 // EmployeeProfileResponse represents employee's own profile data
 type EmployeeProfileResponse struct {
-	ID                uint       `json:"id"`
-	Fullname          string     `json:"fullname"`
-	Email             *string    `json:"email"`
-	Username          string     `json:"username"`
-	Mobile            string     `json:"mobile"`
-	Address           string     `json:"address"`
-	DateOfBirth       *time.Time `json:"date_of_birth"`
-	BankAccountNumber string     `json:"bank_account_number"`
-	BankAccountName   string     `json:"bank_account_name"`
-	Bank              *BankInfo  `json:"bank,omitempty"`
-	PaymentSchedule   string     `json:"payment_schedule"`
-	CheckInEnabled    bool       `json:"check_in_enabled"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                          uint       `json:"id"`
+	Fullname                    string     `json:"fullname"`
+	Email                       *string    `json:"email"`
+	Username                    string     `json:"username"`
+	Mobile                      string     `json:"mobile"`
+	Address                     string     `json:"address"`
+	DateOfBirth                 *time.Time `json:"date_of_birth"`
+	BankAccountNumber           string     `json:"bank_account_number"`
+	BankAccountName             string     `json:"bank_account_name"`
+	Bank                        *BankInfo  `json:"bank,omitempty"`
+	PaymentSchedule             string     `json:"payment_schedule"`
+	CheckInEnabled              bool       `json:"check_in_enabled"`
+	CheckInGeofenceRadiusMeters *uint      `json:"check_in_geofence_radius_meters,omitempty"`
+	CreatedAt                   time.Time  `json:"created_at"`
+	UpdatedAt                   time.Time  `json:"updated_at"`
 }
 
 type BankInfo struct {

@@ -52,6 +52,7 @@ function safeFormatTime(time: string | undefined | null, fallback = "--:--"): st
 
 interface EmployeeCheckInCardProps {
   className?: string;
+  checkInGeofenceRadiusMeters?: number | null;
   style?: React.CSSProperties;
 }
 
@@ -101,19 +102,18 @@ function formatAccuracy(accuracy: number | undefined): string | null {
 
 function getLocationAcquisitionMessage(progress: LocationAcquisitionProgress | null): string {
   const bestAccuracy = formatAccuracy(progress?.bestAccuracy);
+  const requiredAccuracy = formatAccuracy(progress?.requiredAccuracyMeters);
   if (!progress || progress.sampleCount === 0 || !bestAccuracy) {
-    return "Đang khởi động GPS. Vui lòng giữ điện thoại yên trong vài giây.";
+    return "Đang kiểm tra vị trí. Giữ điện thoại yên trong vài giây.";
   }
 
-  if (progress.status === "excellent") {
-    return `Tín hiệu rất tốt, độ chính xác khoảng ${bestAccuracy}.`;
+  if (progress.status === "excellent" || progress.status === "acceptable") {
+    return "Vị trí đã sẵn sàng. Đang gửi chấm công.";
   }
 
-  if (progress.status === "acceptable") {
-    return `Đang xác nhận thêm một nhịp GPS, độ chính xác tốt nhất khoảng ${bestAccuracy}.`;
-  }
-
-  return `Tín hiệu còn yếu, độ chính xác tốt nhất khoảng ${bestAccuracy}. Hãy bước ra nơi thoáng, bật vị trí chính xác và tắt tiết kiệm pin.`;
+  return `Chưa thể chấm công. Sai số hiện khoảng ${bestAccuracy}${
+    requiredAccuracy ? `, cần trong vòng ${requiredAccuracy}` : ""
+  }. Hãy đứng ở nơi thoáng hơn và giữ điện thoại yên vài giây.`;
 }
 
 function getDeviceGpsStatus(issue: LocationPermissionIssue): "denied" | "timeout" | "unavailable" | "unsupported" {
@@ -128,7 +128,11 @@ function getDeviceGpsStatus(issue: LocationPermissionIssue): "denied" | "timeout
   }
 }
 
-export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardProps) {
+export function EmployeeCheckInCard({
+  className,
+  checkInGeofenceRadiusMeters,
+  style,
+}: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
@@ -174,7 +178,11 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
       // authoritative permission check and either resolves or returns the real
       // browser error for the recovery panel. We warm up GPS and use the best
       // fresh high-accuracy sample instead of trusting the first Wi-Fi/cell fix.
-      acquisition = await requestBestCurrentLocation(setLocationProgress);
+      const locationOptions =
+        typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
+          ? { requiredAccuracyMeters: checkInGeofenceRadiusMeters }
+          : undefined;
+      acquisition = await requestBestCurrentLocation(setLocationProgress, locationOptions);
       const position = acquisition.position;
       const payload = {
         lat: position.coords.latitude,
@@ -209,8 +217,13 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
           // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
           const message = getErrorMessage(error);
           if (isPoorLocationAccuracyMessage(message)) {
-            setLocationIssue(createPoorAccuracyLocationIssue(acquisition?.bestAccuracy));
-            toast({ title: "Vị trí chưa đủ chính xác", variant: "destructive" });
+            setLocationIssue(
+              createPoorAccuracyLocationIssue(
+                acquisition?.bestAccuracy,
+                acquisition?.requiredAccuracyMeters
+              )
+            );
+            toast({ title: "Chưa thể chấm công", variant: "destructive" });
             return;
           }
           if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
@@ -231,7 +244,12 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
         } else {
           const message = getErrorMessage(error);
           if (isPoorLocationAccuracyMessage(message)) {
-            setLocationIssue(createPoorAccuracyLocationIssue(acquisition?.bestAccuracy));
+            setLocationIssue(
+              createPoorAccuracyLocationIssue(
+                acquisition?.bestAccuracy,
+                acquisition?.requiredAccuracyMeters
+              )
+            );
           }
         }
         return;
@@ -360,10 +378,33 @@ export function EmployeeCheckInCard({ className, style }: EmployeeCheckInCardPro
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[17px] font-bold leading-6">Đang lấy vị trí chính xác...</p>
+              <p className="text-[17px] font-bold leading-6">Đang kiểm tra vị trí...</p>
               <p className="mt-1 text-[15px] font-medium leading-6 text-sky-800">
                 {getLocationAcquisitionMessage(locationProgress)}
               </p>
+              {locationProgress?.sampleCount ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Sai số</p>
+                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                      {formatAccuracy(locationProgress.bestAccuracy) || "--"}
+                    </p>
+                  </div>
+                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Yêu cầu</p>
+                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                      {"<= "}
+                      {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
+                    </p>
+                  </div>
+                  <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
+                    <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Lần đo</p>
+                    <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">
+                      {locationProgress.sampleCount}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

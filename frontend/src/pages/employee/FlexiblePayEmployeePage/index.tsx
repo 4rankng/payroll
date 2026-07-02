@@ -216,6 +216,7 @@ const FlexiblePayEmployeePage = () => {
           <>
             <EmployeeCheckInCard
               className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
+              checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
               style={cardShadow}
             />
 

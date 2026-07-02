@@ -64,6 +64,27 @@ func TestValidateGeofenceRejectsPoorAccuracyEvenOnGate(t *testing.T) {
 	}
 }
 
+func TestValidateGeofenceRejectsWhenUncertaintyCrossesRadius(t *testing.T) {
+	// The reported point is inside the 100m geofence, but 80m from the gate with
+	// 30m accuracy means the worker could plausibly be outside the configured area.
+	lat, lng := metersNorthOf(geofenceTestGateLat, geofenceTestGateLng, 80)
+	project := &domain.Project{
+		GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng A", Lat: geofenceTestGateLat, Lng: geofenceTestGateLng}},
+		GeofenceRadiusMeters: 100,
+	}
+
+	_, err := newGeofenceTestService().validateGeofence(project, domain.GeoReading{Lat: lat, Lng: lng, Accuracy: 30})
+	if err == nil {
+		t.Fatal("expected uncertain boundary fix to be rejected, got nil")
+	}
+	if !domain.IsValidationError(err) {
+		t.Fatalf("expected validation error, got %T", err)
+	}
+	if !strings.Contains(err.Error(), "GPS không đủ chính xác") {
+		t.Fatalf("expected gps_inaccurate message, got %q", err.Error())
+	}
+}
+
 func TestValidateGeofenceSkipsAccuracyGateWhenUnknown(t *testing.T) {
 	// accuracy == 0 (unknown, or not sent by a legacy client) must not block an
 	// otherwise on-gate fix — otherwise the rollout would reject every old client.
@@ -102,7 +123,7 @@ func TestValidateGeofenceRejectsWhenNoGatesConfigured(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected no-gates project to be rejected")
 	}
-	if !strings.Contains(err.Error(), "Chưa cấu hình vị trí vào làm") {
+	if !strings.Contains(err.Error(), "chưa cấu hình vị trí chấm công") {
 		t.Fatalf("expected geofence_not_configured message, got %q", err.Error())
 	}
 }
