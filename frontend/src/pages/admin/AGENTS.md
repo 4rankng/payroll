@@ -25,10 +25,9 @@ Page-level route components for the Admin role. Admins have full access to all f
 | `TimesheetPage/` | Timesheet entry, approval, export, import |
 | `PayrateEditPage/` | Payrate editor (flexible and matrix modes) |
 | `AdvancePaymentsPage/` | Advance payment management and approval |
-| `LedgerEntriesPage/` | Double-entry ledger viewer with filters |
-| `TransactionsPage/` | Transaction history with settlement tracking |
+| `TransactionsPage/` | Transaction and desktop Sổ Cái history with settlement tracking |
 | `WalletPage/` | Wallet balance and disbursement management |
-| `ManualDisbursementPage/` | Manual disbursement creation and tracking |
+| `ManualDisbursementPage/` | Shared manual disbursement form/dialog components used by wallet flows |
 | `UsersPage/` | User management with role assignments |
 | `LoansPage/` | Loan management and repayment tracking |
 | `AuditLogPage/` | Audit log viewer with filtering |
@@ -83,17 +82,11 @@ Page-level route components for the Admin role. Admins have full access to all f
 | `index.tsx` | Advance payment list with status filters |
 | `utils.ts` | Advance payment page utilities |
 
-### LedgerEntriesPage/
-
-| File | Description |
-|------|-------------|
-| `index.tsx` | Ledger entries page with filters and detail sheets |
-
 ### TransactionsPage/
 
 | File | Description |
 |------|-------------|
-| `index.tsx` | Transaction history page |
+| `index.tsx` | Transaction history and desktop `/admin/ledger` page |
 | `constants.ts` | Transaction page constants |
 | `utils.ts` | Transaction page utility functions |
 
@@ -107,7 +100,6 @@ Page-level route components for the Admin role. Admins have full access to all f
 
 | File | Description |
 |------|-------------|
-| `index.tsx` | Manual disbursement creation page |
 | `ConfirmManualDisbursementDialog.tsx` | Confirmation dialog |
 | `ManualDisbursementForm.tsx` | Disbursement form component |
 | `RecentTransfers.tsx` | Recent transfer list |

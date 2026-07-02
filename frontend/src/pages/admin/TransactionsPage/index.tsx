@@ -5,6 +5,7 @@ import { CapitalContributionsCard } from '@/components/transaction/CapitalContri
 import { TransactionTable } from '@/components/transaction/TransactionTable';
 import { TransactionFilters } from '@/components/transaction/TransactionFilters';
 import { SettlementResultUploadDialog } from '@/components/transaction/SettlementResultUploadDialog';
+import { OnePayFeeReportDialog } from '@/components/ledger/OnePayFeeReportDialog';
 import { PayrollReportEmailDialog, type PayrollReportEmailParams } from '@/components/timesheet/PayrollReportEmailDialog';
 import { AdvancePaymentEmailDialog, type AdvancePaymentEmailParams } from '@/components/advance-payment/AdvancePaymentEmailDialog';
 import { SaoKeHistoryDialog } from '@/components/transaction/SaoKeHistoryDialog';
@@ -12,11 +13,14 @@ import { ExportSaoKeDialog } from '@/components/transaction/ExportSaoKeDialog';
 import { AdvancePaymentExportDialog } from '@/components/advance-payment/AdvancePaymentExportDialog';
 import { useTransactions } from '@/hooks/transactions/useTransactions';
 import { useLedgerSummary } from '@/hooks/ledger/useLedgerBalance';
+import { useLedgerManagement } from '@/hooks/ledger/useLedgerManagement';
 import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { useSendPayrollReportEmail } from '@/hooks/api/usePayrolls';
 import { useSendReconciliationEmail } from '@/hooks/api/useAdvancePaymentReconciliation';
 import { useTableSorting } from '@/utils/sorting';
+import { extractOnePayFeeIssues } from '@/utils/onepayFeeReport';
 import type { TransactionFilters as FiltersType, Transaction } from '@/services/api/transaction.service';
+import type { OnePayFeeImportResponse, OnePayFeeReportIssue } from '@/types/api/financial.types';
 import { getInitialDateRange } from './utils';
 import { DEFAULT_FILTERS, SORT_FIELD_MAP } from './constants';
 
@@ -38,9 +42,16 @@ const TransactionsPage = () => {
   const [saoKeHistoryDialogOpen, setSaoKeHistoryDialogOpen] = useState(false);
   const [exportSaoKeDialogOpen, setExportSaoKeDialogOpen] = useState(false);
   const [exportAdvanceDialogOpen, setExportAdvanceDialogOpen] = useState(false);
+  const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
+  const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
+  const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
 
   const sendPayrollEmailMutation = useSendPayrollReportEmail();
   const sendAdvanceEmailMutation = useSendReconciliationEmail();
+  const {
+    importOnePayFeeReport,
+    isImportingOnePayFeeReport,
+  } = useLedgerManagement();
 
   const { data: transactionsData } = useTransactions(filters);
 
@@ -115,6 +126,25 @@ const TransactionsPage = () => {
     } catch { /* handled by mutation */ }
   }, [sendAdvanceEmailMutation]);
 
+  const handleOnePayFeeDialogOpenChange = useCallback((open: boolean) => {
+    setOnePayFeeDialogOpen(open);
+    if (open) {
+      setOnePayFeeResult(null);
+      setOnePayFeeIssues([]);
+    }
+  }, []);
+
+  const handleImportOnePayFeeReport = useCallback(async (file: File) => {
+    setOnePayFeeResult(null);
+    setOnePayFeeIssues([]);
+    try {
+      const result = await importOnePayFeeReport(file);
+      setOnePayFeeResult(result);
+    } catch (error) {
+      setOnePayFeeIssues(extractOnePayFeeIssues(error));
+    }
+  }, [importOnePayFeeReport]);
+
   return (
     <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
       <TransactionPageHeader
@@ -124,6 +154,7 @@ const TransactionsPage = () => {
         onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}
         onExportSaoKePayroll={() => setExportSaoKeDialogOpen(true)}
         onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
+        onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
       />
 
@@ -184,6 +215,14 @@ const TransactionsPage = () => {
       <AdvancePaymentExportDialog
         open={exportAdvanceDialogOpen}
         onOpenChange={setExportAdvanceDialogOpen}
+      />
+      <OnePayFeeReportDialog
+        open={onePayFeeDialogOpen}
+        onOpenChange={handleOnePayFeeDialogOpenChange}
+        onUpload={handleImportOnePayFeeReport}
+        isUploading={isImportingOnePayFeeReport}
+        result={onePayFeeResult}
+        issues={onePayFeeIssues}
       />
     </div>
   );

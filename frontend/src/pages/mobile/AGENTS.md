@@ -33,7 +33,6 @@ Mobile-optimized page components for admin and partner roles. These are separate
 | `CronHealthPage/index.tsx` | Mobile cron health |
 | `LedgerEntriesPage/index.tsx` | Mobile ledger entries |
 | `LoansPage/index.tsx` | Mobile loan management |
-| `ManualDisbursementPage/index.tsx` | Mobile manual disbursement |
 | `SendNotificationPage/index.tsx` | Mobile notification sender |
 | `SettingsPage/index.tsx` | Mobile settings |
 | `SystemHealthPage/index.tsx` | Mobile system health |
