@@ -19,7 +19,7 @@ const checkInShiftWindow = 1 * time.Hour
 
 // checkOutUpperGrace is how long after the configured shift end K a checkout is
 // still allowed: checkout is valid in [K, K + checkOutUpperGrace).
-const checkOutUpperGrace = 3 * time.Hour
+const checkOutUpperGrace = 4 * time.Hour
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
 
@@ -425,7 +425,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			return err
 		}
 
-		// 7. Schedule the auto-reject task at the checkout deadline K+3h. It fires
+		// 7. Schedule the auto-reject task at the checkout deadline K+4h. It fires
 		// only after this transaction commits (RegisterAfterCommit), so the
 		// attendance row is durable. When it fires, the handler rejects the record
 		// iff the employee still hasn't checked out.
@@ -482,7 +482,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
 
-		// Resolve the worked shift to derive the checkout window [K, K+3h) from the
+		// Resolve the worked shift to derive the checkout window [K, K+4h) from the
 		// configured shift end. Load the assignment + payrate here so they are reused
 		// for earning below.
 		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
@@ -640,13 +640,13 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 // configured shift cannot be resolved for an expired-checkout attendance (e.g.,
 // payrate deleted or assignment ended after check-in). The normal path uses
 // formatAutoRejectReason with the actual check-in time, configured shift end
-// (K), and grace-window upper bound (K+3h, "hạn chót").
+// (K), and grace-window upper bound (K+4h, "hạn chót").
 const autoRejectExpiredReasonFallback = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
 
 // formatAutoRejectReason builds the salary_reject_reason recorded when a
-// checkout window [K, K+3h) closes with no checkout. It points the employee at
+// checkout window [K, K+4h) closes with no checkout. It points the employee at
 // their actual check-in time, the configured shift end (K), and the grace
-// deadline (K+3h) so they can see exactly when they should have ended the shift.
+// deadline (K+4h) so they can see exactly when they should have ended the shift.
 func formatAutoRejectReason(checkInTime, shiftEnd time.Time) string {
 	deadline := shiftEnd.Add(checkOutUpperGrace)
 	return fmt.Sprintf(
@@ -701,13 +701,13 @@ func (s *AttendanceService) resolveShiftForAttendance(ctx context.Context, att *
 	return s.resolveShift(payrate, assignment.Position, att.CheckInTime)
 }
 
-// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+3h)
+// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+4h)
 // has closed with no checkout: it sets earning to 0 and records a reject
 // reason, making the shift final. Idempotent — the underlying MarkAutoRejected
 // is a conditional UPDATE (WHERE check_out_time IS NULL AND
 // salary_reject_reason IS NULL), so it is a safe no-op if the employee already
 // checked out, the record was already rejected, or a concurrent CheckOut beats
-// it. Invoked by the asynq auto-reject task scheduled at K+3h at check-in.
+// it. Invoked by the asynq auto-reject task scheduled at K+4h at check-in.
 func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceID uint) error {
 	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
 	if err != nil {

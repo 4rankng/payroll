@@ -14,7 +14,7 @@ type AttendanceAutoRejectSweeper interface {
 
 // AutoRejectSweepWorker is the periodic backstop for the per-attendance
 // auto-reject task: it runs AutoRejectSweep on a schedule to catch records the
-// scheduled K+3h task missed. The sweeper is idempotent, so asynq retries and
+// scheduled K+4h task missed. The sweeper is idempotent, so asynq retries and
 // overlapping runs are safe.
 type AutoRejectSweepWorker struct {
 	sweeper AttendanceAutoRejectSweeper

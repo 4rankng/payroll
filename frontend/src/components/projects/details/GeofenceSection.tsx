@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, MapPin, Pencil, Check, X } from "lucide-react";
@@ -23,6 +23,16 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
   const [newGate, setNewGate] = useState<EditingGate>({ name: "", lat: "", lng: "" });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<EditingGate>({ name: "", lat: "", lng: "" });
+  const [radiusValue, setRadiusValue] = useState(String(radius));
+
+  useEffect(() => {
+    setRadiusValue(String(radius));
+  }, [radius]);
+
+  const parsedRadius = parseInt(radiusValue, 10);
+  const isRadiusValid = !isNaN(parsedRadius) && parsedRadius >= 10 && parsedRadius <= 1000;
+  const isRadiusChanged = radiusValue.trim() !== String(radius);
+  const canSaveRadius = isRadiusChanged && isRadiusValid && parsedRadius !== radius;
 
   const saveNewGate = useCallback(() => {
     const lat = parseFloat(newGate.lat);
@@ -76,12 +86,16 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
   );
 
   const updateRadius = useCallback(
-    (newRadius: number) => {
-      if (newRadius < 10 || newRadius > 1000) return;
-      updateMutation.mutate({ id: project.id, data: { geofence_radius_meters: newRadius } });
+    () => {
+      if (!canSaveRadius) return;
+      updateMutation.mutate({ id: project.id, data: { geofence_radius_meters: parsedRadius } });
     },
-    [project.id, updateMutation]
+    [canSaveRadius, parsedRadius, project.id, updateMutation]
   );
+
+  const cancelRadiusEdit = useCallback(() => {
+    setRadiusValue(String(radius));
+  }, [radius]);
 
   return (
     <div className="border-t pt-2 pb-4">
@@ -104,24 +118,56 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
 
       <div className="px-4 sm:px-6 space-y-3">
         {/* Radius */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Bán kính:</span>
-          <Input
-            type="number"
-            min={10}
-            max={1000}
-            value={radius}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (!isNaN(v)) updateRadius(v);
-            }}
-            onBlur={() => {
-              if (radius < 10) updateRadius(10);
-              if (radius > 1000) updateRadius(1000);
-            }}
-            className="h-7 w-20 text-xs"
-          />
-          <span className="text-xs text-muted-foreground">mét</span>
+        <div className="rounded-lg border bg-muted/20 px-3 py-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-medium">Bán kính chấm công</p>
+              <p className="text-[11px] text-muted-foreground">Cho phép từ 10 đến 1000 mét.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                type="number"
+                min={10}
+                max={1000}
+                value={radiusValue}
+                onChange={(e) => setRadiusValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") updateRadius();
+                  if (e.key === "Escape") cancelRadiusEdit();
+                }}
+                className="h-8 w-24 text-xs tabular-nums"
+              />
+              <span className="text-xs text-muted-foreground">mét</span>
+              {isRadiusChanged && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    disabled={updateMutation.isPending}
+                    onClick={cancelRadiusEdit}
+                  >
+                    <X className="h-3 w-3" />
+                    Hủy
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    disabled={!canSaveRadius || updateMutation.isPending}
+                    onClick={updateRadius}
+                  >
+                    <Check className="h-3 w-3" />
+                    {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          {!isRadiusValid && (
+            <p className="mt-1 text-[11px] text-destructive">
+              Bán kính phải nằm trong khoảng 10-1000 mét.
+            </p>
+          )}
         </div>
 
         {/* Gate list */}

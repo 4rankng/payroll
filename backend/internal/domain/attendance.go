@@ -30,7 +30,7 @@ const (
 	AttendanceStatusCheckedIn AttendanceStatus = "checked_in"
 	AttendanceStatusCompleted AttendanceStatus = "completed"
 	AttendanceStatusOrphaned  AttendanceStatus = "orphaned"
-	// AttendanceStatusRejected marks an attendance whose checkout window [K, K+3h)
+	// AttendanceStatusRejected marks an attendance whose checkout window [K, K+4h)
 	// closed with no checkout, so it was auto-rejected by the scheduled task
 	// (earning 0, final). Derived from CheckOutTime==nil && SalaryRejectReason!=nil.
 	AttendanceStatusRejected AttendanceStatus = "rejected"
@@ -91,7 +91,7 @@ type AttendanceRepository interface {
 	MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error)
 	// GetOrphanCandidates returns open (no checkout), unrejected attendances
 	// checked in within [after, before). Used by the auto-reject fallback sweep
-	// to finalize records whose scheduled K+3h task was lost.
+	// to finalize records whose scheduled K+4h task was lost.
 	GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*Attendance, error)
 	// GetHealthStats returns conditional-aggregation counts for the admin health
 	// dashboard. The since/until window bounds check_in_time; the open/orphaned
