@@ -335,16 +335,11 @@ const AdvancePaymentsPage = () => {
 
           {/* Filter row */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white px-3 py-3 sm:px-5">
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Bộ lọc
-              </p>
-              <p className="text-sm font-semibold text-slate-800">
-                {activeTab === "requests" && "Yêu cầu ứng lương"}
-                {activeTab === "employees" && "Nhân viên FlexPay"}
-                {activeTab === "attendances" && "Chấm công linh hoạt"}
-              </p>
-            </div>
+            <p className="text-sm font-semibold text-slate-800">
+              {activeTab === "requests" && "Yêu cầu UL"}
+              {activeTab === "employees" && "DS nhân viên"}
+              {activeTab === "attendances" && "Điểm danh"}
+            </p>
             <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
             {activeTab === "requests" && (
               <>

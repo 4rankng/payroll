@@ -13,7 +13,7 @@ export const ResponsivePage = ({ desktopComponent: Desktop, mobileComponent: Mob
   const isMobile = useIsMobile();
 
   return isMobile ? (
-    <div className="mobile-page min-h-screen overflow-x-hidden bg-slate-50 text-slate-950">
+    <div className="mobile-page min-h-screen overflow-x-hidden bg-[hsl(var(--surface-page))] text-slate-950">
       <Mobile />
     </div>
   ) : <Desktop />;

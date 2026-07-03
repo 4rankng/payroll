@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2 } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2, TrendingDown } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -80,7 +80,7 @@ export default function WalletPageMobile() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#0f172a]">
+    <div className="min-h-dvh bg-[hsl(var(--sidebar-background))]">
       {/* Dark hero zone */}
       <div className="px-4 pt-5 pb-10">
         <div className="flex items-center justify-between mb-5">
@@ -104,6 +104,22 @@ export default function WalletPageMobile() {
           <BalanceFigure value={balance?.available} />
         </p>
         {asOf && <p className="text-xs text-slate-400 mb-5 tabular-nums tracking-wide">Cập nhật {asOf}</p>}
+
+        {/* Pending-out stat tile — restores parity with desktop (was missing on mobile) */}
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3.5 py-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
+            <TrendingDown className="h-4 w-4 text-amber-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400">Đang chi trả</p>
+            <p className="font-financial text-base font-bold tabular-nums text-slate-100 leading-tight">
+              {balance ? formatVND(balance.pending_out) : '—'}
+            </p>
+          </div>
+          <span className="text-[10.5px] text-slate-500 leading-tight text-right max-w-[7rem]">
+            Chuyển khoản đang xử lý
+          </span>
+        </div>
 
         <button
           type="button"

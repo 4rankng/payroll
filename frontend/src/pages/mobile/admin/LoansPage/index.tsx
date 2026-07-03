@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { MobilePagination } from '@/components/shared/MobilePagination';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoans, useLenders } from '@/hooks/api/useLoans';
 import { formatVND, daysUntil, getPaymentUrgencyColor } from '@/utils/loanHelpers';
-import { Plus, Landmark } from 'lucide-react';
+import { Plus, Landmark, ArrowDownUp } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.types';
 import { AddLoanSheet } from '@/components/sheets/AddLoanSheet';
@@ -197,6 +198,41 @@ const LoansPageMobile = () => {
             </SelectContent>
           </Select>
         </div>
+        {/* Sort selector — restores desktop sorting capability */}
+        <div className="flex items-center gap-2">
+          <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <Select
+            value={loanFilters.sortBy ?? 'created_at'}
+            onValueChange={(v) => setLoanFilters((prev) => ({ ...prev, sortBy: v, page: 1 }))}
+          >
+            <SelectTrigger className="h-9 flex-1 text-xs">
+              <SelectValue placeholder="Sắp xếp" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Ngày tạo</SelectItem>
+              <SelectItem value="loan_code">Mã vay</SelectItem>
+              <SelectItem value="lender">Chủ nợ</SelectItem>
+              <SelectItem value="principal_amount">Tiền gốc</SelectItem>
+              <SelectItem value="interest_rate_bps">Lãi suất</SelectItem>
+              <SelectItem value="next_payment_date">Ngày đến hạn</SelectItem>
+              <SelectItem value="disbursement_date">Ngày giải ngân</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 px-3 text-xs"
+            onClick={() =>
+              setLoanFilters((prev) => ({
+                ...prev,
+                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc',
+              }))
+            }
+            aria-label="Đảo chiều sắp xếp"
+          >
+            {loanFilters.sortOrder === 'asc' ? 'Tăng' : 'Giảm'}
+          </Button>
+        </div>
       </div>
 
       {/* Loan list */}
@@ -208,11 +244,21 @@ const LoansPageMobile = () => {
             <p className="mt-2 typography-body-medium text-muted-foreground">Tạo khoản vay đầu tiên để bắt đầu quản lý.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filteredLoans.map((loan) => (
-              <LoanMobileCard key={loan.id} loan={loan} onClick={handleLoanRowClick} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-2">
+              {filteredLoans.map((loan) => (
+                <LoanMobileCard key={loan.id} loan={loan} onClick={handleLoanRowClick} />
+              ))}
+            </div>
+            {/* Pagination — restores desktop paging capability */}
+            {loansResponse?.pagination && (
+              <MobilePagination
+                pagination={loansResponse.pagination}
+                onPageChange={(page) => setLoanFilters((prev) => ({ ...prev, page }))}
+                className="pt-4"
+              />
+            )}
+          </>
         )}
       </div>
 

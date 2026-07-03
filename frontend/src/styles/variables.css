@@ -54,8 +54,19 @@
     --secondary: 220 10% 94%;
     --secondary-foreground: 220 90% 15%;
 
-    /* Border Radius - Confident Curves */
-    --radius: 0.75rem;                /* 12px - rounded-xl */
+    /* Border Radius - Confident Curves (full scale) */
+    --radius-sm: 0.5rem;              /* 8px  - rounded-lg */
+    --radius: 0.75rem;                /* 12px - rounded-xl (alias of --radius-md) */
+    --radius-md: 0.75rem;             /* 12px - rounded-xl */
+    --radius-lg: 1rem;                /* 16px - rounded-2xl */
+    --radius-xl: 1.25rem;             /* 20px - rounded-3xl */
+    --radius-2xl: 1.5rem;             /* 24px - rounded-4xl */
+
+    /* ========================================================================
+       SURFACE TOKENS - Mobile page chrome (single source of truth)
+       ======================================================================== */
+    --surface-page: 210 41% 95%;      /* #EEF3F8 - mobile admin page bg */
+    --surface-border: 212 37% 90%;    /* #DCE5EF - card/surface border */
 
     /* ========================================================================
        GRADIENT SYSTEM
@@ -72,6 +83,14 @@
     --shadow-card: 0 4px 6px -1px hsl(220 90% 25% / 0.12), 0 2px 4px -2px hsl(220 90% 25% / 0.12);
     --shadow-elevated: 0 10px 15px -3px hsl(220 90% 25% / 0.15), 0 4px 6px -4px hsl(220 90% 25% / 0.15);
     --shadow-focus: 0 0 0 3px hsl(220 90% 25% / 0.15);
+
+    /* Mobile surface shadows — aliases used by shared primitives */
+    --shadow-navy-soft: 0 1px 2px rgba(15, 23, 42, 0.05), 0 16px 36px -30px rgba(15, 49, 103, 0.55);
+
+    /* Aliases referenced by financial utilities (.card-elevated, .input-financial).
+       Previously dangling — defined here so those utilities render correctly. */
+    --shadow-card-elevated: 0 10px 15px -3px hsl(220 90% 25% / 0.12), 0 4px 6px -4px hsl(220 90% 25% / 0.12);
+    --shadow-focus-success: 0 0 0 3px hsl(var(--success) / 0.2);
 
     /* ========================================================================
        TYPOGRAPHY SYSTEM - Distinctive Fonts, Breaking Anti-Patterns
