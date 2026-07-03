@@ -59,19 +59,23 @@ type AttendanceResponse struct {
 
 // AdminAttendanceResponse represents the detailed attendance record for admin view
 type AdminAttendanceResponse struct {
-	ID                 uint       `json:"id"`
-	ProjectID          uint       `json:"project_id"`
-	ProjectName        string     `json:"project_name"`
-	EmployeeID         uint       `json:"employee_id"`
-	EmployeeName       string     `json:"employee_name"`
-	Date               time.Time  `json:"date"`
-	CheckInTime        time.Time  `json:"check_in_time"`
-	CheckInGate        string     `json:"check_in_gate"`
-	CheckOutTime       *time.Time `json:"check_out_time,omitempty"`
-	CheckOutGate       *string    `json:"check_out_gate,omitempty"`
-	EarningAmount      *int64     `json:"earning_amount,omitempty"`
-	SalaryRejectReason *string    `json:"salary_reject_reason,omitempty"`
-	Status             string     `json:"status"`
+	ID                              uint       `json:"id"`
+	ProjectID                       uint       `json:"project_id"`
+	ProjectName                     string     `json:"project_name"`
+	EmployeeID                      uint       `json:"employee_id"`
+	EmployeeName                    string     `json:"employee_name"`
+	Date                            time.Time  `json:"date"`
+	CheckInTime                     time.Time  `json:"check_in_time"`
+	CheckInGate                     string     `json:"check_in_gate"`
+	CheckOutTime                    *time.Time `json:"check_out_time,omitempty"`
+	CheckOutGate                    *string    `json:"check_out_gate,omitempty"`
+	EarningAmount                   *int64     `json:"earning_amount,omitempty"`
+	SalaryRejectReason              *string    `json:"salary_reject_reason,omitempty"`
+	RejectedAt                      *time.Time `json:"rejected_at,omitempty"`
+	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
+	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
+	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
+	Status                          string     `json:"status"`
 }
 
 // PaginatedAttendanceResponse represents a paginated list of attendances

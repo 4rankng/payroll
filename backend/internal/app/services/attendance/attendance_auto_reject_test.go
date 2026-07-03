@@ -282,9 +282,9 @@ func TestCheckOutAllowsConfirmedNoSalaryOutsideWindow(t *testing.T) {
 
 	_, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: 10.0, Lng: 106.0}, false)
 	if err == nil {
-		t.Fatal("expected unconfirmed checkout before shift end to be rejected")
+		t.Fatal("expected unconfirmed checkout before K-1h to be rejected")
 	}
-	if !strings.Contains(err.Error(), "Chỉ có thể tan ca từ 17:00 đến 21:00") {
+	if !strings.Contains(err.Error(), "Chỉ có thể tan ca từ 16:00 đến 21:00") {
 		t.Fatalf("expected checkout window reason, got %q", err.Error())
 	}
 	if repo.updated != nil {
@@ -355,7 +355,7 @@ func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 	now := time.Date(2026, 6, 21, 20, 5, 0, 0, loc)
 	zero := int64(0)
 	closedAt := time.Date(2026, 6, 21, 9, 0, 0, 0, loc)
-	reason := "Bạn mới vào làm lúc 08:35. Chỉ có thể tan ca từ 17:00 đến 21:00. " + confirmedNoSalaryCheckoutReason
+	reason := "Bạn mới vào làm lúc 08:35. Chỉ có thể tan ca từ 16:00 đến 21:00. " + confirmedNoSalaryCheckoutReason
 	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{
 		ID:                 8,
 		ProjectID:          55,

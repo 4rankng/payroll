@@ -41,7 +41,7 @@ const REASON_CATEGORY_LABELS: Record<string, string> = {
   check_in_window: 'Ngoài giờ vào làm',
   check_out_window: 'Ngoài giờ tan ca',
   already_checked_out: 'Đã tan ca rồi',
-  already_auto_rejected: 'Tự huỷ (hết giờ)',
+  already_auto_rejected: 'Tự động huỷ (hết giờ)',
   orphaned: 'Quá hạn tan ca',
   not_flexible_project: 'Không hỗ trợ tự chấm công',
   no_flexible_project: 'Không thuộc dự án tự chấm công',
@@ -357,6 +357,7 @@ function AttendanceRowsTable({
   emptyLabel: string;
 }) {
   const [page, setPage] = useState(1);
+  const isRejected = status === 'rejected';
 
   const queryStart = periodStart ?? fallbackToday();
   const queryEnd = inclusivePeriodEnd(periodEnd) ?? queryStart;
@@ -377,7 +378,7 @@ function AttendanceRowsTable({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (isLoading) {
-    return <TableSkeleton cols={5} rows={5} />;
+    return <TableSkeleton cols={7} rows={5} />;
   }
 
   if (!rows.length) {
@@ -395,24 +396,46 @@ function AttendanceRowsTable({
 
       <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
         <Table className="table-fixed">
-          <colgroup>
-            <col className="w-[18%]" />
-            <col className="w-[14%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[20%]" />
-          </colgroup>
+          {isRejected ? (
+            <colgroup>
+              <col className="w-[16%]" />
+              <col className="w-[12%]" />
+              <col className="w-[11%]" />
+              <col className="w-[11%]" />
+              <col className="w-[18%]" />
+              <col className="w-[20%]" />
+              <col className="w-[12%]" />
+            </colgroup>
+          ) : (
+            <colgroup>
+              <col className="w-[18%]" />
+              <col className="w-[14%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[20%]" />
+            </colgroup>
+          )}
           <TableHeader className="bg-muted/35">
             <TableRow className="hover:bg-transparent">
               <Th>Nhân viên</Th>
               <Th>Dự án</Th>
               <Th>Vào làm</Th>
               <Th>Cổng vào</Th>
-              <Th>Tan ca</Th>
-              <Th>Cổng ra</Th>
-              <Th>Lương ca</Th>
+              {isRejected ? (
+                <>
+                  <Th>Tự động huỷ lúc</Th>
+                  <Th>Địa điểm</Th>
+                  <Th>Khoảng cách</Th>
+                </>
+              ) : (
+                <>
+                  <Th>Tan ca</Th>
+                  <Th>Cổng ra</Th>
+                  <Th>Lương ca</Th>
+                </>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -424,15 +447,29 @@ function AttendanceRowsTable({
                   {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })}
                 </Td>
                 <Td className="text-muted-foreground">{row.check_in_gate || '—'}</Td>
-                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
-                  {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
-                </Td>
-                <Td className="text-muted-foreground">{row.check_out_gate || '—'}</Td>
-                <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
-                  {row.earning_amount != null && row.earning_amount > 0
-                    ? formatCompactCurrency(row.earning_amount)
-                    : '—'}
-                </Td>
+                {isRejected ? (
+                  <>
+                    <Td className="whitespace-nowrap text-muted-foreground tabular-nums">{formatDateTime(row.rejected_at)}</Td>
+                    <Td>
+                      <AttendanceCheckpointLocation row={row} />
+                    </Td>
+                    <Td>
+                      <AttendanceCheckpointDistance row={row} />
+                    </Td>
+                  </>
+                ) : (
+                  <>
+                    <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
+                      {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
+                    </Td>
+                    <Td className="text-muted-foreground">{row.check_out_gate || '—'}</Td>
+                    <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
+                      {row.earning_amount != null && row.earning_amount > 0
+                        ? formatCompactCurrency(row.earning_amount)
+                        : '—'}
+                    </Td>
+                  </>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -441,13 +478,18 @@ function AttendanceRowsTable({
 
       <div className="space-y-2 sm:hidden">
         {rows.map((row) => (
-          <SuccessfulCheckoutCard key={row.id} row={row} />
+          isRejected ? <RejectedAttendanceCard key={row.id} row={row} /> : <SuccessfulCheckoutCard key={row.id} row={row} />
         ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
+}
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return '—';
+  return format(parseISO(value), 'dd/MM/yyyy HH:mm', { locale: vi });
 }
 
 function SuccessfulCheckoutCard({ row }: { row: AdminAttendanceResponse }) {
@@ -473,6 +515,33 @@ function SuccessfulCheckoutCard({ row }: { row: AdminAttendanceResponse }) {
           {row.check_out_gate ? ` · ${row.check_out_gate}` : ''}
         </DetailLine>
       </div>
+    </div>
+  );
+}
+
+function RejectedAttendanceCard({ row }: { row: AdminAttendanceResponse }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+        </div>
+        <div className="shrink-0 rounded-md bg-muted px-2.5 py-1.5 text-right">
+          <p className="text-sm font-semibold text-foreground tabular-nums">
+            {formatDistanceMeters(row.nearest_checkpoint_distance_meters)}
+          </p>
+          <p className="text-[11px] leading-tight text-muted-foreground">tới điểm chấm</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs">
+        <DetailLine label="Vào làm">
+          {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
+        </DetailLine>
+        <DetailLine label="Tự động huỷ lúc">{formatDateTime(row.rejected_at)}</DetailLine>
+      </div>
+      <DetailLine label="Điểm gần nhất">{attendanceCheckpointDetail(row)}</DetailLine>
+      <DetailLine label="Lý do">{row.salary_reject_reason || 'Tự động huỷ do quá hạn tan ca'}</DetailLine>
     </div>
   );
 }
@@ -512,6 +581,38 @@ function Th({ children, className }: { children: ReactNode; className?: string }
 
 function Td({ children, className }: { children: ReactNode; className?: string }) {
   return <TableCell className={cn('px-4 py-4 align-top leading-relaxed whitespace-normal break-words', className)}>{children}</TableCell>;
+}
+
+function AttendanceCheckpointLocation({ row }: { row: AdminAttendanceResponse }) {
+  const checkpointName = row.nearest_checkpoint_name?.trim() || row.check_in_gate || 'Điểm chấm gần nhất';
+  const delta = formatGeofenceDistanceDelta(row.nearest_checkpoint_distance_meters, row.geofence_radius_meters);
+
+  return (
+    <div className="min-w-0">
+      <p className="font-medium text-foreground">{checkpointName}</p>
+      {delta ? <p className="mt-1 text-xs text-muted-foreground">{delta}</p> : null}
+    </div>
+  );
+}
+
+function AttendanceCheckpointDistance({ row }: { row: AdminAttendanceResponse }) {
+  const distance = row.nearest_checkpoint_distance_meters;
+
+  if (distance == null) {
+    return <span className="text-sm font-medium text-muted-foreground">Chưa có khoảng cách</span>;
+  }
+
+  return <span className="font-semibold text-foreground tabular-nums">{formatDistanceMeters(distance)}</span>;
+}
+
+function attendanceCheckpointDetail(row: AdminAttendanceResponse): string {
+  if (row.nearest_checkpoint_distance_meters == null) {
+    return 'Thiếu tọa độ hoặc điểm chấm';
+  }
+
+  const checkpointName = row.nearest_checkpoint_name?.trim() || row.check_in_gate || 'Điểm chấm gần nhất';
+  const delta = formatGeofenceDistanceDelta(row.nearest_checkpoint_distance_meters, row.geofence_radius_meters);
+  return delta ? `${checkpointName} · ${delta}` : checkpointName;
 }
 
 function CheckpointLocation({ row }: { row: AdminFailedAttempt }) {

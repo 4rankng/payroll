@@ -7,7 +7,7 @@
 ## Problem
 
 Today, when an employee on the check-in scheme fails to check out within the valid
-window `[K, K+4h)`:
+window `[K-1h, K+4h]`:
 
 - A late checkout attempt is blocked by `validateCheckOutWindow` ("Đã quá giờ tan ca"),
   the transaction rolls back, and **nothing is persisted** — the attendance sits open

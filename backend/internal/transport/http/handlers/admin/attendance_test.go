@@ -1,10 +1,51 @@
 package admin
 
 import (
+	"context"
 	"testing"
+	"time"
 
+	attendanceSvc "api-server/internal/app/services/attendance"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/clock"
 )
+
+type fakeFailedAttemptRepo struct {
+	domain.AttendanceFailedAttemptRepository
+	rows []*domain.AttendanceFailedAttempt
+}
+
+func (f *fakeFailedAttemptRepo) List(_ context.Context, _ domain.FailedAttemptFilters) ([]*domain.AttendanceFailedAttempt, error) {
+	return f.rows, nil
+}
+
+func (f *fakeFailedAttemptRepo) Count(_ context.Context, _ domain.FailedAttemptFilters) (int64, error) {
+	return int64(len(f.rows)), nil
+}
+
+type fakeProjectRepo struct {
+	domain.ProjectRepository
+	projects map[uint]*domain.Project
+}
+
+func (f *fakeProjectRepo) GetByIDs(_ context.Context, ids []uint) (map[uint]*domain.Project, error) {
+	out := make(map[uint]*domain.Project, len(ids))
+	for _, id := range ids {
+		if p := f.projects[id]; p != nil {
+			out[id] = p
+		}
+	}
+	return out, nil
+}
+
+type fakeAttendanceRepo struct {
+	domain.AttendanceRepository
+	byDay map[string]*domain.Attendance
+}
+
+func (f *fakeAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, date time.Time) (*domain.Attendance, error) {
+	return f.byDay[date.Format("2006-01-02")], nil
+}
 
 func TestNearestCheckpointForAttempt(t *testing.T) {
 	lat := 10.0001
@@ -68,5 +109,116 @@ func TestNearestCheckpointForAttemptMissingData(t *testing.T) {
 				t.Fatalf("nearestCheckpointForAttempt() = %#v, want nil", got)
 			}
 		})
+	}
+}
+
+func TestMapAdminAttendanceResponseRejectedIncludesRejectTimeAndNearestGate(t *testing.T) {
+	loc := clock.DefaultLocation
+	reason := "Đã hết hạn tan ca"
+	rejectedAt := time.Date(2026, 7, 2, 21, 0, 0, 0, loc)
+	att := &domain.Attendance{
+		ID:                 7,
+		EmployeeID:         123,
+		ProjectID:          55,
+		Date:               time.Date(2026, 7, 2, 0, 0, 0, 0, loc),
+		CheckInTime:        time.Date(2026, 7, 2, 20, 40, 0, 0, loc),
+		CheckInLat:         10.0001,
+		CheckInLng:         106.0001,
+		CheckInGate:        "Cổng A",
+		SalaryRejectReason: &reason,
+		UpdatedAt:          rejectedAt,
+		Employee:           domain.Employee{Fullname: "Đỗ Thị Thoa"},
+		Project: domain.Project{
+			Name:                 "LGD",
+			GeofenceRadiusMeters: 100,
+			GeofenceGates: []domain.GeofenceGate{
+				{Name: "Cổng xa", Lat: 10.01, Lng: 106.01},
+				{Name: "Cổng A", Lat: 10.0002, Lng: 106.0002},
+			},
+		},
+	}
+
+	got := mapAdminAttendanceResponse(att, rejectedAt)
+
+	if got.Status != string(domain.AttendanceStatusRejected) {
+		t.Fatalf("status = %q, want rejected", got.Status)
+	}
+	if got.RejectedAt == nil || !got.RejectedAt.Equal(rejectedAt) {
+		t.Fatalf("rejected_at = %v, want %v", got.RejectedAt, rejectedAt)
+	}
+	if got.NearestCheckpointName == nil || *got.NearestCheckpointName != "Cổng A" {
+		t.Fatalf("nearest checkpoint = %v, want Cổng A", got.NearestCheckpointName)
+	}
+	if got.NearestCheckpointDistanceMeters == nil || *got.NearestCheckpointDistanceMeters <= 0 {
+		t.Fatalf("nearest distance = %v, want > 0", got.NearestCheckpointDistanceMeters)
+	}
+	if got.GeofenceRadiusMeters == nil || *got.GeofenceRadiusMeters != 100 {
+		t.Fatalf("geofence radius = %v, want 100", got.GeofenceRadiusMeters)
+	}
+}
+
+func TestListFailedAttemptsInfersCheckoutProjectForLegacyRows(t *testing.T) {
+	loc := clock.DefaultLocation
+	createdAt := time.Date(2026, 7, 2, 23, 35, 0, 0, loc)
+	today := time.Date(2026, 7, 2, 0, 0, 0, 0, loc)
+	lat := 10.0001
+	lng := 106.0001
+
+	failedRepo := &fakeFailedAttemptRepo{rows: []*domain.AttendanceFailedAttempt{{
+		ID:             1,
+		EmployeeID:     123,
+		AttemptType:    "check_out",
+		ReasonCategory: "check_out_window",
+		ProjectID:      0,
+		Lat:            &lat,
+		Lng:            &lng,
+		CreatedAt:      createdAt,
+		Employee:       domain.Employee{Fullname: "Đỗ Thị Thoa"},
+	}}}
+	project := &domain.Project{
+		ID:                   55,
+		GeofenceRadiusMeters: 100,
+		GeofenceGates: []domain.GeofenceGate{
+			{Name: "Cổng chính", Lat: 10.0002, Lng: 106.0002},
+		},
+	}
+	svc := attendanceSvc.NewAttendanceService(
+		&fakeAttendanceRepo{byDay: map[string]*domain.Attendance{
+			today.Format("2006-01-02"): {
+				ID:         7,
+				EmployeeID: 123,
+				ProjectID:  55,
+				Date:       today,
+			},
+		}},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		clock.NewFake(createdAt),
+	)
+	handler := &AttendanceHandler{
+		attendanceService: svc,
+		failedAttemptRepo: failedRepo,
+		projectRepo:       &fakeProjectRepo{projects: map[uint]*domain.Project{55: project}},
+	}
+
+	got, total, err := handler.listFailedAttempts(context.Background(), domain.FailedAttemptFilters{})
+	if err != nil {
+		t.Fatalf("listFailedAttempts returned error: %v", err)
+	}
+	if total != 1 {
+		t.Fatalf("total = %d, want 1", total)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(response) = %d, want 1", len(got))
+	}
+	if got[0].NearestCheckpointName == nil || *got[0].NearestCheckpointName != "Cổng chính" {
+		t.Fatalf("nearest checkpoint = %v, want Cổng chính", got[0].NearestCheckpointName)
+	}
+	if got[0].NearestCheckpointDistanceMeters == nil {
+		t.Fatal("expected nearest checkpoint distance to be populated")
 	}
 }

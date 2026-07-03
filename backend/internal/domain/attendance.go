@@ -30,7 +30,7 @@ const (
 	AttendanceStatusCheckedIn AttendanceStatus = "checked_in"
 	AttendanceStatusCompleted AttendanceStatus = "completed"
 	AttendanceStatusOrphaned  AttendanceStatus = "orphaned"
-	// AttendanceStatusRejected marks an attendance whose checkout window [K, K+4h)
+	// AttendanceStatusRejected marks an attendance whose checkout window [K-1h, K+4h]
 	// closed with no checkout, so it was auto-rejected by the scheduled task
 	// (earning 0, final). Derived from CheckOutTime==nil && SalaryRejectReason!=nil.
 	AttendanceStatusRejected AttendanceStatus = "rejected"

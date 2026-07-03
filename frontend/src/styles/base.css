@@ -223,6 +223,26 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  .mobile-main-content {
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 1023px) {
+    .mobile-main-content {
+      scroll-padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+      overscroll-behavior-y: contain;
+    }
+
+    .mobile-main-content button,
+    .mobile-main-content a,
+    .mobile-main-content [role="button"] {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+
   /* ========================================================================
      SCROLLBAR STYLES - Subtle Professional Feel
      ======================================================================== */

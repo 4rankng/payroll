@@ -2,6 +2,8 @@ package persistence
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
 	"api-server/internal/domain"
@@ -31,7 +33,28 @@ func (r *attendanceRepository) getDB(ctx context.Context) *gorm.DB {
 }
 
 func (r *attendanceRepository) Create(ctx context.Context, attendance *domain.Attendance) error {
-	return r.getDB(ctx).Create(attendance).Error
+	if err := r.getDB(ctx).Create(attendance).Error; err != nil {
+		// A duplicate-key here means a concurrent check-in inserted the OPEN
+		// attendance for this employee/day first and the partial unique
+		// uq_attendances_employee_open (migration 081) rejected this one. Map it
+		// to the same friendly message the sequential dup-check in CheckIn returns.
+		if isAttendanceDuplicateKeyErr(err) {
+			return domain.NewValidationError("Bạn đã vào làm trong ngày hôm nay rồi")
+		}
+		return err
+	}
+	return nil
+}
+
+// isAttendanceDuplicateKeyErr reports whether err is a MySQL duplicate-key
+// violation, regardless of whether GORM error translation is enabled. Matches the
+// repo-layer precedent in user_repository.go.
+func isAttendanceDuplicateKeyErr(err error) bool {
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Duplicate entry") || strings.Contains(msg, "Error 1062")
 }
 
 func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.Attendance) error {
