@@ -118,6 +118,13 @@ const SEVERITY_STYLES: Record<Severity, { badge: string; text: string; dot: stri
   neutral: { badge: 'bg-muted text-muted-foreground border-border/60', text: 'text-foreground', dot: 'bg-muted-foreground/45' },
 };
 
+const SEVERITY_CARD_ACCENT: Record<Severity, string> = {
+  danger: 'border-l-rose-500',
+  warning: 'border-l-amber-500',
+  info: 'border-l-primary',
+  neutral: 'border-l-slate-300',
+};
+
 const ATTEMPT_TYPE_LABELS: Record<string, string> = {
   check_in: 'Check-in',
   check_out: 'Check-out',
@@ -279,82 +286,9 @@ function FailedAttemptsTable({
     <div className="space-y-3">
       <CountSummary total={total} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
-        <Table className="table-fixed">
-          <colgroup>
-            <col className="w-[18%]" />
-            <col className="w-[11%]" />
-            <col className="w-[22%]" />
-            <col className="w-[14%]" />
-            <col className="w-[20%]" />
-            <col className="w-[15%]" />
-          </colgroup>
-          <TableHeader className="bg-muted/40">
-            <TableRow className="hover:bg-transparent border-border/50">
-              <Th>Nhân viên</Th>
-              <Th>Loại</Th>
-              <Th>Địa điểm</Th>
-              <Th>Khoảng cách</Th>
-              <Th>Lý do</Th>
-              <Th>Thời gian</Th>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => {
-              const meta = reasonMeta(row.reason_category);
-              return (
-                <TableRow key={row.id} className="group border-border/50 transition-colors hover:bg-muted/30">
-                  <Td className="align-middle">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Monogram name={row.employee_name} />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium leading-snug text-foreground">
-                          {row.employee_name ?? `#${row.employee_id}`}
-                        </p>
-                      </div>
-                    </div>
-                  </Td>
-                  <Td className="align-middle">
-                    <AttemptTypeBadge attemptType={row.attempt_type} />
-                  </Td>
-                  <Td>
-                    <CheckpointLocation row={row} />
-                    <div className="mt-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-                        onClick={() => setMapRow(row)}
-                      >
-                        <Map className="h-3.5 w-3.5" />
-                        Xem bản đồ
-                      </Button>
-                    </div>
-                  </Td>
-                  <Td className="align-middle">
-                    <ContextualDistance row={row} />
-                  </Td>
-                  <Td className="align-middle">
-                    <SeverityBadge meta={meta} />
-                  </Td>
-                  <Td className="align-middle">
-                    <TimeCell iso={row.created_at} />
-                  </Td>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="space-y-2 sm:hidden">
+      <div className="space-y-3">
         {rows.map((row) => (
-          <FailedAttemptCard
-            key={row.id}
-            row={row}
-            onOpenMap={() => setMapRow(row)}
-          />
+          <FailedAttemptCard key={row.id} row={row} onOpenMap={() => setMapRow(row)} />
         ))}
       </div>
 
@@ -885,9 +819,9 @@ function AttemptTypeBadge({ attemptType }: { attemptType: string }) {
         ? 'bg-violet-500/10 text-violet-600 border-violet-500/20'
         : 'bg-muted text-muted-foreground border-border/60';
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-none', tone)}>
-      <Icon className="h-3 w-3" />
-      {label}
+    <span className={cn('inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-tight', tone)}>
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="min-w-0 whitespace-normal break-words">{label}</span>
     </span>
   );
 }
@@ -896,9 +830,9 @@ function SeverityBadge({ meta }: { meta: ReasonMeta }) {
   const s = SEVERITY_STYLES[meta.severity];
   const Icon = meta.icon;
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium leading-none', s.badge)}>
+    <span className={cn('inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium leading-tight', s.badge)}>
       <Icon className="h-3.5 w-3.5 shrink-0" />
-      <span className="whitespace-normal break-words">{meta.label}</span>
+      <span className="min-w-0 whitespace-normal break-words">{meta.label}</span>
     </span>
   );
 }
@@ -980,9 +914,9 @@ function CheckpointLocation({ row }: { row: AdminFailedAttempt }) {
 
   return (
     <div className="min-w-0">
-      <p className="inline-flex items-center gap-1 font-medium text-foreground">
+      <p className="flex items-start gap-1 font-medium leading-snug text-foreground">
         <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-        <span className="truncate">{checkpointName}</span>
+        <span className="min-w-0 break-words">{checkpointName}</span>
       </p>
       <p className="mt-1 pl-[18px] text-xs text-muted-foreground">{accuracy}</p>
     </div>
@@ -1009,41 +943,59 @@ function FailedAttemptCard({
   const meta = reasonMeta(row.reason_category);
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
+    <article className={cn(
+      'overflow-hidden rounded-2xl border border-l-4 border-slate-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.07)]',
+      SEVERITY_CARD_ACCENT[meta.severity],
+    )}>
+      <div className="grid gap-0 md:grid-cols-[minmax(160px,1fr)_minmax(220px,1.45fr)_minmax(120px,.72fr)_minmax(180px,1fr)_minmax(96px,.56fr)]">
+        <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
           <Monogram name={row.employee_name} />
           <div className="min-w-0">
-            <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
-            <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-              {format(parseISO(row.created_at), 'dd/MM/yyyy · HH:mm', { locale: vi })}
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Nhân viên</p>
+            <p className="break-words text-[15px] font-semibold leading-snug text-slate-950">
+              {row.employee_name ?? `#${row.employee_id}`}
             </p>
           </div>
         </div>
-        <ContextualDistance row={row} />
-      </div>
 
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <AttemptTypeBadge attemptType={row.attempt_type} />
-        <SeverityBadge meta={meta} />
-      </div>
+        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Lý do</p>
+          <div className="flex flex-wrap items-start gap-2">
+            <AttemptTypeBadge attemptType={row.attempt_type} />
+            <SeverityBadge meta={meta} />
+          </div>
+        </div>
 
-      <DetailLine label="Điểm gần nhất">{checkpointDetail(row)}</DetailLine>
-      <DetailLine label="GPS">{formatGpsAccuracy(row.accuracy)}</DetailLine>
+        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Khoảng cách</p>
+          <ContextualDistance row={row} />
+        </div>
 
-      <div className="mt-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-11 w-full gap-1.5"
-          onClick={onOpenMap}
-        >
-          <Map className="h-4 w-4" />
-          Xem bản đồ
-        </Button>
+        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Địa điểm</p>
+          <div className="space-y-2">
+            <CheckpointLocation row={row} />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-3 h-8 gap-1.5 rounded-full px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+            onClick={onOpenMap}
+          >
+            <Map className="h-3.5 w-3.5" />
+            Xem bản đồ
+          </Button>
+        </div>
+
+        <div className="flex min-w-0 items-start justify-between gap-3 p-4 md:block">
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 md:mb-3">Thời gian</p>
+            <TimeCell iso={row.created_at} />
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }
 

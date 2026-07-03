@@ -10,7 +10,7 @@ import {
   ZoomControl,
 } from 'react-leaflet';
 import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
-import { AlertTriangle, Clock, Map, MapPin, Mountain, WifiOff, X, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Clock, Map, MapPin, Satellite, WifiOff, X, type LucideIcon } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { formatDistanceMeters } from '@/utils/geoDistance';
 
 export type AttemptTone = 'blue' | 'amber' | 'slate';
 export type ReasonSeverity = 'danger' | 'warning' | 'info' | 'neutral';
-type BaseLayer = 'street' | 'terrain';
+type BaseLayer = 'street' | 'satellite';
 type MarkerTone = 'blue' | 'amber' | 'rose' | 'slate';
 
 export interface LocationMapPoint {
@@ -99,7 +99,7 @@ export function LocationMap({
   onClose,
 }: LocationMapProps) {
   const [tileFailed, setTileFailed] = useState(false);
-  const [baseLayer, setBaseLayer] = useState<BaseLayer>('terrain');
+  const [baseLayer, setBaseLayer] = useState<BaseLayer>('satellite');
 
   const switchLayer = (layer: BaseLayer) => {
     setTileFailed(false);
@@ -132,9 +132,9 @@ export function LocationMap({
             scrollWheelZoom
             dragging
           >
-            {baseLayer === 'terrain' ? (
+            {baseLayer === 'satellite' ? (
               <TileLayer
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                 maxNativeZoom={19}
                 maxZoom={19}
                 eventHandlers={{ tileerror: () => setTileFailed(true) }}
@@ -310,10 +310,10 @@ export function LocationMap({
             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
             <div className="ml-auto flex items-center gap-0.5 rounded-full bg-background/70 p-0.5 ring-1 ring-inset ring-border/50">
               <LayerButton
-                active={baseLayer === 'terrain'}
-                onClick={() => switchLayer('terrain')}
-                icon={Mountain}
-                label="Địa hình"
+                active={baseLayer === 'satellite'}
+                onClick={() => switchLayer('satellite')}
+                icon={Satellite}
+                label="Vệ tinh"
               />
               <LayerButton
                 active={baseLayer === 'street'}
