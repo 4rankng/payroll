@@ -58,7 +58,11 @@ const GEOLOCATION_UNSUPPORTED = 0;
 const GEOLOCATION_INACCURATE = 4;
 
 const DEFAULT_LOCATION_ACQUISITION_OPTIONS: LocationAcquisitionOptions = {
-  timeoutMs: 20000,
+  // High-accuracy GNSS can need 25-30s for a cold first fix (indoor / weak
+  // signal / battery saver). The browser watchPosition has no per-attempt
+  // timeout (see below), so this is the single total budget; onProgress keeps
+  // the wait feeling intentional rather than hung.
+  timeoutMs: 30000,
   freshMaxAgeMs: 30000,
   excellentAccuracyMeters: 20,
   requiredAccuracyMeters: 50,
@@ -274,8 +278,14 @@ export function requestBestCurrentLocation(
         },
         {
           enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: options.timeoutMs,
+          // Allow reusing a fix up to 15s old (e.g. the always-on preview's
+          // already-acquired sample) instead of forcing a cold fix on every
+          // tap. The accuracy gate still validates the coordinate server-side.
+          maximumAge: 15000,
+          // No per-attempt timeout: let the outer setTimeout(options.timeoutMs)
+          // alone govern total wait. A browser-side timeout equal to the outer
+          // budget pre-empted slow cold fixes (gps_timeout at exactly the cap),
+          // killing devices that would have fixed a few seconds later.
         }
       );
     } catch (error) {
