@@ -17,9 +17,14 @@ import (
 // T + checkInShiftWindow).
 const checkInShiftWindow = 1 * time.Hour
 
-// checkOutUpperGrace is how long after the configured shift end K a checkout is
-// still allowed: checkout is valid in [K, K + checkOutUpperGrace).
-const checkOutUpperGrace = 4 * time.Hour
+const (
+	// checkOutLowerGrace is how long before the configured shift end K a checkout
+	// is still allowed.
+	checkOutLowerGrace = 1 * time.Hour
+	// checkOutUpperGrace is how long after the configured shift end K a checkout is
+	// still allowed: checkout is valid in [K - checkOutLowerGrace, K + checkOutUpperGrace].
+	checkOutUpperGrace = 4 * time.Hour
+)
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
 
@@ -75,10 +80,12 @@ func checkInFitsShift(shift *parsedShift, checkInTime time.Time) bool {
 }
 
 // checkOutFitsShift reports whether checkOutTime lies within the allowed
-// checkout window [shift.end, shift.end + checkOutUpperGrace). Shared by the
-// checkout gate (validateCheckOutWindow) and the earning match.
+// checkout window [shift.end - checkOutLowerGrace, shift.end + checkOutUpperGrace].
+// Shared by the checkout gate (validateCheckOutWindow) and the earning match.
 func checkOutFitsShift(shift *parsedShift, checkOutTime time.Time) bool {
-	return (checkOutTime.After(shift.end) || checkOutTime.Equal(shift.end)) && checkOutTime.Before(shift.end.Add(checkOutUpperGrace))
+	earliest := shift.end.Add(-checkOutLowerGrace)
+	latest := shift.end.Add(checkOutUpperGrace)
+	return (checkOutTime.After(earliest) || checkOutTime.Equal(earliest)) && !checkOutTime.After(latest)
 }
 
 // validateCheckInWindow rejects a check-in that falls outside the allowed
@@ -98,11 +105,11 @@ func validateCheckInWindow(shift *parsedShift, checkInTime time.Time) error {
 }
 
 // validateCheckOutWindow rejects a checkout that falls outside the allowed
-// [shift.end, shift.end + checkOutUpperGrace) window, where shift.end is the
-// configured shift end K. The message points the employee at the real end of
-// their shift.
+// [shift.end - checkOutLowerGrace, shift.end + checkOutUpperGrace] window, where
+// shift.end is the configured shift end K. The message points the employee at
+// the allowed checkout period.
 func validateCheckOutWindow(shift *parsedShift, checkInTime, checkOutTime time.Time) error {
-	earliest := shift.end
+	earliest := shift.end.Add(-checkOutLowerGrace)
 	latest := shift.end.Add(checkOutUpperGrace)
 	if checkOutTime.Before(earliest) {
 		return domain.NewValidationError(fmt.Sprintf(
@@ -112,7 +119,7 @@ func validateCheckOutWindow(shift *parsedShift, checkInTime, checkOutTime time.T
 			latest.Format("15:04"),
 		))
 	}
-	if !checkOutTime.Before(latest) {
+	if checkOutTime.After(latest) {
 		return domain.NewValidationError(fmt.Sprintf(
 			"Đã quá giờ tan ca. Bạn chỉ được tan ca từ %s đến %s.",
 			earliest.Format("15:04"),
@@ -253,7 +260,7 @@ func closestShift(shifts []parsedShift, ci time.Time) *parsedShift {
 // calendar day), or nil when no payrate/position/shift can be resolved. Callers
 // derive the check-in/checkout windows from the returned shift:
 //   - check-in valid in (shift.start - checkInShiftWindow, shift.start + checkInShiftWindow)
-//   - checkout valid in [shift.end, shift.end + checkOutUpperGrace)
+//   - checkout valid in [shift.end - checkOutLowerGrace, shift.end + checkOutUpperGrace]
 //
 // A nil result means the project has no valid shift configuration for the position,
 // so the check-in/checkout is rejected rather than falling back to a fixed duration.
@@ -359,6 +366,41 @@ func (s *AttendanceService) ResolveProjectID(ctx context.Context, employeeID, pr
 		return 0
 	}
 	return project.ID
+}
+
+// ResolveCheckoutProjectID returns the project attached to the attendance record
+// a checkout attempt would target at attemptedAt. This is best-effort forensic
+// metadata for failed-attempt logging and dashboard enrichment; errors are
+// swallowed so the original checkout response path is never blocked.
+func (s *AttendanceService) ResolveCheckoutProjectID(ctx context.Context, employeeID uint, attemptedAt time.Time) uint {
+	if s == nil || s.attendanceRepo == nil {
+		return 0
+	}
+	if attemptedAt.IsZero() {
+		if s.clock == nil {
+			return 0
+		}
+		attemptedAt = s.clock.Now()
+	}
+
+	attemptedAt = attemptedAt.In(clock.DefaultLocation)
+	today := time.Date(attemptedAt.Year(), attemptedAt.Month(), attemptedAt.Day(), 0, 0, 0, 0, clock.DefaultLocation)
+
+	attendance, err := s.attendanceRepo.GetByEmployeeAndDate(ctx, employeeID, today)
+	if err != nil {
+		return 0
+	}
+	if attendance == nil {
+		yesterday := today.AddDate(0, 0, -1)
+		attendance, err = s.attendanceRepo.GetByEmployeeAndDate(ctx, employeeID, yesterday)
+		if err != nil {
+			return 0
+		}
+	}
+	if attendance == nil {
+		return 0
+	}
+	return attendance.ProjectID
 }
 
 func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID uint, geo domain.GeoReading) (*domain.Attendance, error) {
@@ -490,9 +532,9 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
 		}
 
-		// Resolve the worked shift to derive the checkout window [K, K+4h) from the
-		// configured shift end. Load the assignment + payrate here so they are reused
-		// for earning below.
+		// Resolve the worked shift to derive the checkout window [K-1h, K+4h] from
+		// the configured shift end. Load the assignment + payrate here so they are
+		// reused for earning below.
 		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, attendance.ProjectID, attendance.EmployeeID)
 		if err != nil {
 			return err
@@ -639,7 +681,7 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 const autoRejectExpiredReasonFallback = "Đã hết hạn tan ca — bạn đã quá giờ checkout cho ca này. Vui lòng liên hệ quản lý."
 
 // formatAutoRejectReason builds the salary_reject_reason recorded when a
-// checkout window [K, K+4h) closes with no checkout. It points the employee at
+// checkout window [K-1h, K+4h] closes with no checkout. It points the employee at
 // their actual check-in time, the configured shift end (K), and the grace
 // deadline (K+4h) so they can see exactly when they should have ended the shift.
 func formatAutoRejectReason(checkInTime, shiftEnd time.Time) string {
@@ -696,7 +738,7 @@ func (s *AttendanceService) resolveShiftForAttendance(ctx context.Context, att *
 	return s.resolveShift(payrate, assignment.Position, att.CheckInTime)
 }
 
-// AutoRejectIfExpired finalizes an attendance whose checkout window [K, K+4h)
+// AutoRejectIfExpired finalizes an attendance whose checkout window [K-1h, K+4h]
 // has closed with no checkout: it sets earning to 0 and records a reject
 // reason, making the shift final. Idempotent — the underlying MarkAutoRejected
 // is a conditional UPDATE (WHERE check_out_time IS NULL AND
@@ -897,7 +939,7 @@ func (s *AttendanceService) calculateEarningAmount(payrate *domain.Payrate, posi
 		co.Format("15:04"),
 		closest.start.Add(-checkInShiftWindow).Format("15:04"),
 		closest.start.Add(checkInShiftWindow).Format("15:04"),
-		closest.end.Format("15:04"),
+		closest.end.Add(-checkOutLowerGrace).Format("15:04"),
 		closest.end.Add(checkOutUpperGrace).Format("15:04"),
 	), nil
 }

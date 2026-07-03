@@ -200,9 +200,8 @@ func (h *Handler) CheckOut(c *gin.Context) {
 	att, err := h.attendanceService.CheckOut(c.Request.Context(), employeeID, geo, req.ConfirmNoSalary)
 	if err != nil {
 		if domain.IsValidationError(err) {
-			// CheckOut request has no projectID field; the project is resolved
-			// from the attendance record which we don't have here. Use 0.
-			h.recordFailedAttempt(employeeID, 0, "check_out",
+			projectID := h.attendanceService.ResolveCheckoutProjectID(c.Request.Context(), employeeID, h.clk.Now())
+			h.recordFailedAttempt(employeeID, projectID, "check_out",
 				attendance.ClassifyAttemptError(err.Error()), err.Error(), geo)
 		}
 		response.HandleDomainError(c, err)

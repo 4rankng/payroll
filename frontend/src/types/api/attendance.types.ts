@@ -11,6 +11,10 @@ export interface AdminAttendanceResponse {
   check_out_gate?: string;
   earning_amount?: number;
   salary_reject_reason?: string;
+  rejected_at?: string;
+  nearest_checkpoint_name?: string | null;
+  nearest_checkpoint_distance_meters?: number | null;
+  geofence_radius_meters?: number | null;
   status: string;
 }
 

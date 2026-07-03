@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-// AttendanceAutoRejecter rejects an attendance whose checkout window [K, K+4h)
+// AttendanceAutoRejecter rejects an attendance whose checkout window [K-1h, K+4h]
 // closed with no checkout. Implemented by *attendance.AttendanceService; defined
 // here (consumer-side) so the workers package does not import the service
 // package.

@@ -100,21 +100,7 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 	now := h.clk.Now()
 	data := make([]dto.AdminAttendanceResponse, 0, len(attendances))
 	for _, att := range attendances {
-		data = append(data, dto.AdminAttendanceResponse{
-			ID:                 att.ID,
-			ProjectID:          att.ProjectID,
-			ProjectName:        att.Project.Name,
-			EmployeeID:         att.EmployeeID,
-			EmployeeName:       att.Employee.Fullname,
-			Date:               att.Date,
-			CheckInTime:        att.CheckInTime,
-			CheckInGate:        att.CheckInGate,
-			CheckOutTime:       att.CheckOutTime,
-			CheckOutGate:       att.CheckOutGate,
-			EarningAmount:      att.EarningAmount,
-			SalaryRejectReason: att.SalaryRejectReason,
-			Status:             string(att.GetStatus(now)),
-		})
+		data = append(data, mapAdminAttendanceResponse(att, now))
 	}
 
 	pagination := helpers.CalculatePagination(pg.Page, pg.PageSize, total)
@@ -145,6 +131,13 @@ func (h *AttendanceHandler) Get(c *gin.Context) {
 		return
 	}
 
+	res := mapAdminAttendanceResponse(att, h.clk.Now())
+
+	response.Success(c, res, "Lấy thông tin thành công")
+}
+
+func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.AdminAttendanceResponse {
+	status := string(att.GetStatus(now))
 	res := dto.AdminAttendanceResponse{
 		ID:                 att.ID,
 		ProjectID:          att.ProjectID,
@@ -158,10 +151,30 @@ func (h *AttendanceHandler) Get(c *gin.Context) {
 		CheckOutGate:       att.CheckOutGate,
 		EarningAmount:      att.EarningAmount,
 		SalaryRejectReason: att.SalaryRejectReason,
-		Status:             string(att.GetStatus(h.clk.Now())),
+		Status:             status,
 	}
 
-	response.Success(c, res, "Lấy thông tin thành công")
+	if status == string(domain.AttendanceStatusRejected) {
+		rejectedAt := att.UpdatedAt
+		res.RejectedAt = &rejectedAt
+	}
+
+	nearest := nearestCheckpointForCoordinates(att.CheckInLat, att.CheckInLng, &att.Project)
+	if nearest == nil {
+		return res
+	}
+	distance := nearest.distanceMeters
+	res.NearestCheckpointDistanceMeters = &distance
+	if nearest.name != "" {
+		name := nearest.name
+		res.NearestCheckpointName = &name
+	}
+	if nearest.geofenceRadiusMeters > 0 {
+		radius := nearest.geofenceRadiusMeters
+		res.GeofenceRadiusMeters = &radius
+	}
+
+	return res
 }
 
 // AdminListFailedAttempts handles GET /api/v1/admin/attendances/failed-attempts.
@@ -227,6 +240,8 @@ func (h *AttendanceHandler) listFailedAttempts(ctx context.Context, filters doma
 		return nil, 0, err
 	}
 
+	h.inferCheckoutProjectIDs(ctx, rows)
+
 	projectsByID := map[uint]*domain.Project{}
 	if h.projectRepo != nil {
 		ids := projectIDsForFailedAttempts(rows)
@@ -243,6 +258,21 @@ func (h *AttendanceHandler) listFailedAttempts(ctx context.Context, filters doma
 		data = append(data, mapFailedAttemptResponse(a, projectsByID[a.ProjectID]))
 	}
 	return data, total, nil
+}
+
+func (h *AttendanceHandler) inferCheckoutProjectIDs(ctx context.Context, rows []*domain.AttendanceFailedAttempt) {
+	if h.attendanceService == nil {
+		return
+	}
+	for _, row := range rows {
+		if row == nil || row.ProjectID != 0 || row.AttemptType != "check_out" {
+			continue
+		}
+		projectID := h.attendanceService.ResolveCheckoutProjectID(ctx, row.EmployeeID, row.CreatedAt)
+		if projectID != 0 {
+			row.ProjectID = projectID
+		}
+	}
 }
 
 func projectIDsForFailedAttempts(rows []*domain.AttendanceFailedAttempt) []uint {
@@ -308,11 +338,19 @@ func nearestCheckpointForAttempt(a *domain.AttendanceFailedAttempt, project *dom
 		return nil
 	}
 
+	return nearestCheckpointForCoordinates(*a.Lat, *a.Lng, project)
+}
+
+func nearestCheckpointForCoordinates(lat, lng float64, project *domain.Project) *nearestCheckpoint {
+	if project == nil || len(project.GeofenceGates) == 0 {
+		return nil
+	}
+
 	nearestIndex := -1
 	nearestDistance := 0.0
 	for i := range project.GeofenceGates {
 		gate := project.GeofenceGates[i]
-		distance := geo.HaversineDistance(*a.Lat, *a.Lng, gate.Lat, gate.Lng)
+		distance := geo.HaversineDistance(lat, lng, gate.Lat, gate.Lng)
 		if nearestIndex == -1 || distance < nearestDistance {
 			nearestIndex = i
 			nearestDistance = distance

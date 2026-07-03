@@ -2,14 +2,13 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { useState, useCallback } from "react";
-import { Bell, UserCircle, Key, LogOut, MoreVertical } from "lucide-react";
+import { Bell, UserCircle, Key, LogOut, MoreHorizontal } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/notifications";
 import { NotificationSheet } from "@/components/notifications";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
@@ -18,7 +17,6 @@ import { useBottomNav, useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
-import { useBellAnimation } from "@/hooks/useBellAnimation";
 
 export interface NavLeaf {
   title: string;
@@ -57,7 +55,6 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
   const { data: unreadData } = useUnreadNotifications();
   const unreadCount = unreadData?.count || 0;
-  const bellIcon = useBellAnimation(unreadCount);
 
   const isGroupActive = useCallback(
     (group: NavGroup): boolean => {
@@ -75,8 +72,39 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     [location.pathname],
   );
 
+  const isMoreActive =
+    moreItems?.some((item) => item.path && location.pathname.startsWith(item.path)) ?? false;
+
+  const navSlotClass =
+    "group relative flex min-h-[64px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pt-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40";
+
+  const navIconClass = (isActive: boolean) =>
+    cn(
+      "flex h-8 w-8 items-center justify-center rounded-2xl transition-colors",
+      isActive
+        ? "bg-primary/10 text-primary"
+        : "text-muted-foreground group-hover:bg-accent group-hover:text-foreground",
+    );
+
+  const navLabelClass = (isActive: boolean) =>
+    cn(
+      "max-w-[4.5rem] truncate text-[11px] font-semibold leading-tight transition-colors",
+      isActive ? "text-primary" : "text-muted-foreground",
+    );
+
+  const renderActiveIndicator = (isActive: boolean) =>
+    isActive ? (
+      <span className="absolute left-1/2 top-0 h-1 w-10 -translate-x-1/2 rounded-b-full bg-primary/90 animate-in fade-in" />
+    ) : null;
+
   const sheetSurfaceClass =
     "h-auto max-h-[78dvh] overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
+
+  const openGroupTitle = openGroup?.title ?? "Điều hướng";
+  const openGroupDescription =
+    openGroup === ACCOUNT_GROUP ? "Tài khoản và cài đặt cá nhân" : "Chọn điểm đến nhanh";
+  const moreTitle = "Thêm";
+  const moreDescription = "Các mục quản trị ít dùng hơn";
 
   const renderSheetChrome = (title: string, description: string) => (
     <>
@@ -161,7 +189,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >
-        <div className="relative flex min-h-[60px] items-stretch px-2">
+        <div className="relative flex min-h-[64px] items-stretch px-2">
           {groups.map((group) => {
             const isActive = isGroupActive(group);
 
@@ -171,32 +199,16 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                   key={group.path}
                   to={group.path}
                   end={group.end}
-                  className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
+                  className={navSlotClass}
                   aria-label={group.title}
                 >
-                  {isActive && (
-                    <span className="absolute top-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-b-full bg-primary/90 animate-in fade-in" />
-                  )}
-                  <div
-                    className={cn(
-                      "rounded-full p-1.5 transition-colors",
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground group-hover:bg-accent",
-                    )}
-                  >
+                  {renderActiveIndicator(isActive)}
+                  <div className={navIconClass(isActive)}>
                     <group.icon
                       className={cn("w-5 h-5", isActive && "stroke-[2.5px]")}
                     />
                   </div>
-                  <span
-                    className={cn(
-                      "max-w-[58px] truncate text-[10px] font-semibold leading-none transition-colors",
-                      isActive
-                        ? "text-primary"
-                        : "text-muted-foreground opacity-80",
-                    )}
-                  >
+                  <span className={navLabelClass(isActive)}>
                     {group.title}
                   </span>
                 </NavLink>
@@ -206,34 +218,19 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
             return (
               <button
                 key={group.title}
-                className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
+                className={navSlotClass}
                 onClick={() => setOpenGroup(group)}
                 aria-label={group.title}
                 aria-haspopup="true"
+                aria-expanded={openGroup?.title === group.title}
               >
-                {isActive && (
-                  <span className="absolute top-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-b-full bg-primary/90 animate-in fade-in" />
-                )}
-                <div
-                  className={cn(
-                    "rounded-full p-1.5 transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground group-hover:bg-accent",
-                  )}
-                >
+                {renderActiveIndicator(isActive)}
+                <div className={navIconClass(isActive)}>
                   <group.icon
                     className={cn("w-5 h-5", isActive && "stroke-[2.5px]")}
                   />
                 </div>
-                <span
-                  className={cn(
-                    "max-w-[58px] truncate text-[10px] font-semibold leading-none transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground opacity-80",
-                  )}
-                >
+                <span className={navLabelClass(isActive)}>
                   {group.title}
                 </span>
               </button>
@@ -242,37 +239,58 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
           {/* Account button — always last slot */}
           <button
-            className="group relative flex min-h-[56px] flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 transition-colors"
+            className={navSlotClass}
             onClick={() => setOpenGroup(ACCOUNT_GROUP)}
             aria-label="Tài khoản"
             aria-haspopup="true"
+            aria-expanded={openGroup === ACCOUNT_GROUP}
           >
+            {renderActiveIndicator(openGroup === ACCOUNT_GROUP)}
             {user ? (
-              <UserAvatar
-                email={user.email}
-                name={user.name}
-                username={user.username}
-                size="sm"
-                className="h-6 w-6 text-[10px]"
-              />
+              <div className="relative">
+                <UserAvatar
+                  email={user.email}
+                  name={user.name}
+                  username={user.username}
+                  size="sm"
+                  className={cn(
+                    "h-8 w-8 text-[10px] ring-1 ring-border/70 transition-colors",
+                    openGroup === ACCOUNT_GROUP && "ring-primary/30",
+                  )}
+                />
+                <NotificationBadge count={unreadCount} className="-right-2 -top-1" />
+              </div>
             ) : (
-              <div className="p-1.5 rounded-full text-muted-foreground group-hover:bg-accent">
+              <div className={navIconClass(openGroup === ACCOUNT_GROUP)}>
                 <UserCircle className="w-5 h-5" />
               </div>
             )}
-            <span className="max-w-[58px] truncate text-[10px] font-semibold leading-none text-muted-foreground opacity-80">
+            <span className={navLabelClass(openGroup === ACCOUNT_GROUP)}>
               Tài khoản
             </span>
           </button>
 
-          {/* More menu — compact ⋮ button */}
+          {/* More menu */}
           {moreItems && moreItems.length > 0 && (
             <button
-              className="flex min-h-[56px] w-11 touch-manipulation flex-col items-center justify-center gap-0.5"
+              className={navSlotClass}
               onClick={() => setIsMoreOpen(true)}
               aria-label="Thêm"
+              aria-haspopup="true"
+              aria-expanded={isMoreOpen}
             >
-              <MoreVertical className="w-5 h-5 text-muted-foreground" />
+              {renderActiveIndicator(isMoreActive || isMoreOpen)}
+              <div className={navIconClass(isMoreActive || isMoreOpen)}>
+                <MoreHorizontal
+                  className={cn(
+                    "h-5 w-5",
+                    (isMoreActive || isMoreOpen) && "stroke-[2.5px]",
+                  )}
+                />
+              </div>
+              <span className={navLabelClass(isMoreActive || isMoreOpen)}>
+                Thêm
+              </span>
             </button>
           )}
         </div>
@@ -283,11 +301,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         open={!!openGroup}
         onOpenChange={(open) => !open && setOpenGroup(null)}
       >
-        <SheetContent side="bottom" className={sheetSurfaceClass}>
-          {renderSheetChrome(
-            openGroup?.title ?? "Điều hướng",
-            openGroup === ACCOUNT_GROUP ? "Tài khoản và cài đặt cá nhân" : "Chọn điểm đến nhanh",
-          )}
+        <SheetContent
+          side="bottom"
+          className={sheetSurfaceClass}
+          title={openGroupTitle}
+          description={openGroupDescription}
+        >
+          {renderSheetChrome(openGroupTitle, openGroupDescription)}
 
           {openGroup === ACCOUNT_GROUP ? (
             <div className="overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
@@ -372,8 +392,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
       {/* More menu sheet */}
       <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
-        <SheetContent side="bottom" className={sheetSurfaceClass}>
-          {renderSheetChrome("Thêm", "Các mục quản trị ít dùng hơn")}
+        <SheetContent
+          side="bottom"
+          className={sheetSurfaceClass}
+          title={moreTitle}
+          description={moreDescription}
+        >
+          {renderSheetChrome(moreTitle, moreDescription)}
           <div className="grid max-h-[58dvh] grid-cols-3 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             {moreItems?.map((item) => {
               const isActive = item.path
