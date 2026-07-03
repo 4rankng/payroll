@@ -304,6 +304,17 @@ class DashboardService {
     if (!response.data) throw new Error('API response missing expected data');
     return response.data;
   }
+
+  /**
+   * Record a check-in for an employee whose device could not acquire GPS, from a
+   * failed attempt. Restricted server-side to check_in + gps_* attempts.
+   */
+  async overrideFailedAttempt(id: number, reason: string): Promise<void> {
+    await apiClient.post(
+      API_ENDPOINTS.adminAttendances.overrideFailedAttempt(id),
+      { reason }
+    );
+  }
 }
 
 export const dashboardService = new DashboardService();

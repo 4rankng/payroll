@@ -40,6 +40,12 @@ type LogDeviceAttemptRequest struct {
 	GpsStatus   string `json:"gps_status" binding:"required,oneof=denied timeout unavailable unsupported"`
 }
 
+// OverrideFailedAttemptRequest is the admin body for recording a check-in from a
+// device-GPS-failure attempt. The reason is required for audit.
+type OverrideFailedAttemptRequest struct {
+	Reason string `json:"reason" binding:"required"`
+}
+
 // AttendanceResponse represents an attendance record
 type AttendanceResponse struct {
 	ID                 uint       `json:"id"`
@@ -112,6 +118,9 @@ type AdminFailedAttemptResponse struct {
 	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
 	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
 	ErrorMessage                    *string    `json:"error_message,omitempty"`
+	ResolvedAt                      *time.Time `json:"resolved_at,omitempty"`
+	ResolvedBy                      *uint      `json:"resolved_by,omitempty"`
+	ResolvedReason                  *string    `json:"resolved_reason,omitempty"`
 	CreatedAt                       time.Time  `json:"created_at"`
 }
 

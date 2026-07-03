@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -34,7 +35,7 @@ import {
 import { format, parseISO, subDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
+import { useFailedAttempts, useQuotaAnomalies, useOverrideFailedAttempt } from '@/hooks/api/useDashboard';
 import { useAdminAttendances } from '@/hooks/api/useAdminAttendance';
 import { formatCompactCurrency } from '@/utils/formatters';
 import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDistance';
@@ -253,6 +254,7 @@ function FailedAttemptsTable({
 }) {
   const [page, setPage] = useState(1);
   const [mapRow, setMapRow] = useState<AdminFailedAttempt | null>(null);
+  const [overrideRow, setOverrideRow] = useState<AdminFailedAttempt | null>(null);
 
   const { data, isLoading, isFetching } = useFailedAttempts({
     type: attemptType,
@@ -289,20 +291,31 @@ function FailedAttemptsTable({
         </div>
         <div className="divide-y divide-slate-100">
           {rows.map((row) => (
-            <FailedAttemptDesktopRow key={row.id} row={row} onOpenMap={() => setMapRow(row)} />
+            <FailedAttemptDesktopRow
+              key={row.id}
+              row={row}
+              onOpenMap={() => setMapRow(row)}
+              onOverride={() => setOverrideRow(row)}
+            />
           ))}
         </div>
       </div>
 
       <div className="space-y-3 sm:hidden">
         {rows.map((row) => (
-          <FailedAttemptCard key={row.id} row={row} onOpenMap={() => setMapRow(row)} />
+          <FailedAttemptCard
+            key={row.id}
+            row={row}
+            onOpenMap={() => setMapRow(row)}
+            onOverride={() => setOverrideRow(row)}
+          />
         ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
 
       <FailedAttemptMapDialog row={mapRow} onClose={() => setMapRow(null)} />
+      <OverrideAttemptDialog row={overrideRow} onClose={() => setOverrideRow(null)} />
     </div>
   );
 }
@@ -941,6 +954,117 @@ function checkpointDetail(row: AdminFailedAttempt): string {
   return delta ? `${checkpointName} · ${delta}` : checkpointName;
 }
 
+// A failed attempt is admin-overridable only when the device never produced a
+// GPS fix (reason_category gps_*). geofence_outside captured a real coordinate
+// and must never be overridden in — that guardrail also runs server-side.
+function isGpsDeviceFailure(reasonCategory: string): boolean {
+  return reasonCategory.startsWith('gps_');
+}
+
+function FailedAttemptOverrideAction({
+  row,
+  onOverride,
+}: {
+  row: AdminFailedAttempt;
+  onOverride: () => void;
+}) {
+  if (!isGpsDeviceFailure(row.reason_category)) return null;
+  if (row.resolved_at) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+        <CheckCircle2 className="h-3 w-3" />
+        Đã ghi nhận
+      </span>
+    );
+  }
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={onOverride}
+      className="h-7 gap-1.5 rounded-full border-emerald-200 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+    >
+      <CheckCircle2 className="h-3 w-3" />
+      Ghi nhận chấm công
+    </Button>
+  );
+}
+
+function OverrideAttemptDialog({
+  row,
+  onClose,
+}: {
+  row: AdminFailedAttempt | null;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const override = useOverrideFailedAttempt();
+
+  // Reset the textarea each time a new attempt is opened.
+  useEffect(() => {
+    if (row) setReason('');
+  }, [row]);
+
+  const submit = () => {
+    if (!row) return;
+    override.mutate({ id: row.id, reason: reason.trim() }, { onSuccess: () => onClose() });
+  };
+
+  return (
+    <Dialog
+      open={row !== null}
+      onOpenChange={(open) => {
+        if (!open && !override.isPending) onClose();
+      }}
+    >
+      <DialogContent title="Ghi nhận chấm công" className="max-w-md">
+        {row ? (
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed text-slate-600">
+              Ghi nhận lượt vào làm cho{' '}
+              <b className="text-slate-900">{row.employee_name ?? `#${row.employee_id}`}</b> lúc{' '}
+              {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}. Chỉ dùng khi
+              nhân viên ở đúng cổng nhưng thiết bị không lấy được GPS.
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Lý do (bắt buộc)
+              </label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="VD: Nhân viên ở cổng, điện thoại không bắt được GPS"
+                disabled={override.isPending}
+              />
+            </div>
+            {override.isError ? (
+              <p className="text-xs font-medium text-rose-600">
+                {override.error instanceof Error && override.error.message
+                  ? override.error.message
+                  : 'Không ghi nhận được, vui lòng thử lại.'}
+              </p>
+            ) : null}
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="ghost" onClick={onClose} disabled={override.isPending}>
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                onClick={submit}
+                disabled={override.isPending || reason.trim() === ''}
+              >
+                {override.isPending ? 'Đang ghi nhận…' : 'Xác nhận ghi nhận'}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function FailedAttemptHeader({ children }: { children: ReactNode }) {
   return (
     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -952,9 +1076,11 @@ function FailedAttemptHeader({ children }: { children: ReactNode }) {
 function FailedAttemptDesktopRow({
   row,
   onOpenMap,
+  onOverride,
 }: {
   row: AdminFailedAttempt;
   onOpenMap: () => void;
+  onOverride: () => void;
 }) {
   const meta = reasonMeta(row.reason_category);
 
@@ -970,6 +1096,7 @@ function FailedAttemptDesktopRow({
       <div className="flex min-w-0 flex-col items-start gap-1.5 pr-4">
         <AttemptTypeBadge attemptType={row.attempt_type} />
         <SeverityBadge meta={meta} />
+        <FailedAttemptOverrideAction row={row} onOverride={onOverride} />
       </div>
 
       <div className="min-w-0 pr-4">
@@ -1000,9 +1127,11 @@ function FailedAttemptDesktopRow({
 function FailedAttemptCard({
   row,
   onOpenMap,
+  onOverride,
 }: {
   row: AdminFailedAttempt;
   onOpenMap: () => void;
+  onOverride: () => void;
 }) {
   const meta = reasonMeta(row.reason_category);
 
@@ -1024,6 +1153,7 @@ function FailedAttemptCard({
           <div className="flex max-w-[18rem] flex-col items-start gap-2">
             <AttemptTypeBadge attemptType={row.attempt_type} />
             <SeverityBadge meta={meta} />
+            <FailedAttemptOverrideAction row={row} onOverride={onOverride} />
           </div>
         </div>
 

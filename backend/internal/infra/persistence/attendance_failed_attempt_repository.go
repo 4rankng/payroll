@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"api-server/internal/domain"
@@ -20,6 +21,22 @@ func NewAttendanceFailedAttemptRepository(db *gorm.DB) domain.AttendanceFailedAt
 
 func (r *attendanceFailedAttemptRepository) Create(ctx context.Context, attempt *domain.AttendanceFailedAttempt) error {
 	return r.db.WithContext(ctx).Create(attempt).Error
+}
+
+func (r *attendanceFailedAttemptRepository) GetByID(ctx context.Context, id uint) (*domain.AttendanceFailedAttempt, error) {
+	var attempt domain.AttendanceFailedAttempt
+	err := r.db.WithContext(ctx).Preload("Employee").First(&attempt, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, domain.NewNotFoundError("không tìm thấy lần thử thất bại")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &attempt, nil
+}
+
+func (r *attendanceFailedAttemptRepository) Update(ctx context.Context, attempt *domain.AttendanceFailedAttempt) error {
+	return r.db.WithContext(ctx).Save(attempt).Error
 }
 
 func (r *attendanceFailedAttemptRepository) List(ctx context.Context, filters domain.FailedAttemptFilters) ([]*domain.AttendanceFailedAttempt, error) {

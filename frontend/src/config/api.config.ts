@@ -357,6 +357,7 @@ export const API_ENDPOINTS = {
   // Admin Attendances
   adminAttendances: {
     failedAttempts: '/admin/attendances/failed-attempts',
+    overrideFailedAttempt: (id: number) => `/admin/attendances/failed-attempts/${id}/override`,
   },
 
   // Employee Self-Service Portal

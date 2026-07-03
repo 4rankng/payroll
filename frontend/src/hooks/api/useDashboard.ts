@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { dashboardService } from '@/services/api/dashboard.service';
 import { QueryKeys } from '@/lib/queryKeys';
 import type { TopPaidEmployeesParams, PartnerDashboardParams, BankUsageParams, PartnerEmployeeListParams } from '@/types/api/dashboard.types';
@@ -116,5 +117,25 @@ export function useFailedAttempts(params?: {
     queryKey: QueryKeys.dashboard.failedAttempts(params as Record<string, unknown>),
     queryFn: () => dashboardService.getFailedAttempts(params),
     staleTime: 0,
+  });
+}
+
+// Record a check-in from a failed device-GPS attempt (admin override).
+// Server restricts this to check_in + gps_* attempts; on success we refresh the
+// whole dashboard family so the failed-attempts list, health counts, and
+// attendance list all reflect the newly created check-in.
+export function useOverrideFailedAttempt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      dashboardService.overrideFailedAttempt(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.dashboard.all });
+      toast.success('Đã ghi nhận chấm công');
+    },
+    onError: (error: unknown) => {
+      const message = error instanceof Error && error.message ? error.message : 'Không ghi nhận được, vui lòng thử lại.';
+      toast.error(message);
+    },
   });
 }

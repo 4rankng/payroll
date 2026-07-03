@@ -129,12 +129,24 @@ type AttendanceFailedAttempt struct {
 	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
 	Accuracy       *float64   `json:"accuracy" gorm:"type:float"`
 	GpsAt          *time.Time `json:"gps_at" gorm:"type:datetime(3)"`
-	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
+	ErrorMessage *string `json:"error_message" gorm:"type:varchar(500)"`
+	// Resolution audit: populated when an admin overrides a device-GPS failure
+	// (reason_category gps_*) and records the check-in manually. Nil while the
+	// attempt is still unresolved.
+	ResolvedAt     *time.Time `json:"resolved_at" gorm:"type:datetime(3)"`
+	ResolvedBy     *uint      `json:"resolved_by" gorm:"type:bigint unsigned"`
+	ResolvedReason *string    `json:"resolved_reason" gorm:"type:varchar(255)"`
 	CreatedAt      time.Time  `json:"created_at"`
 	Employee       Employee   `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
 }
 
 func (AttendanceFailedAttempt) TableName() string { return "attendance_failed_attempts" }
+
+// IsResolved reports whether an admin has already overridden this failed
+// attempt to record the check-in manually. Used to keep the override idempotent.
+func (a AttendanceFailedAttempt) IsResolved() bool {
+	return a.ResolvedAt != nil
+}
 
 // FailedAttemptCategoryCount holds the count of failed attempts grouped by category.
 type FailedAttemptCategoryCount struct {
@@ -162,6 +174,11 @@ type FailedAttemptFilters struct {
 // AttendanceFailedAttemptRepository defines the interface for failed-attempt persistence.
 type AttendanceFailedAttemptRepository interface {
 	Create(ctx context.Context, attempt *AttendanceFailedAttempt) error
+	// GetByID loads a single failed attempt by primary key with Employee preloaded.
+	// Returns a domain NotFound error when the row does not exist.
+	GetByID(ctx context.Context, id uint) (*AttendanceFailedAttempt, error)
+	// Update saves all fields of the attempt, used to stamp resolution audit.
+	Update(ctx context.Context, attempt *AttendanceFailedAttempt) error
 	List(ctx context.Context, filters FailedAttemptFilters) ([]*AttendanceFailedAttempt, error)
 	Count(ctx context.Context, filters FailedAttemptFilters) (int64, error)
 	// GetCategoryCounts returns counts grouped by reason_category within the window.
