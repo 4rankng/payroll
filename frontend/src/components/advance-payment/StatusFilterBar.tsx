@@ -49,7 +49,7 @@ export const StatusFilterBar = memo(function StatusFilterBar({
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={cn("h-8 w-auto min-w-36 shrink-0 gap-1.5 text-sm", triggerClassName)}>
+      <SelectTrigger className={cn("min-h-11 w-auto min-w-36 shrink-0 gap-1.5 text-sm", triggerClassName)}>
         {selected.dotClass && (
           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", selected.dotClass)} />
         )}

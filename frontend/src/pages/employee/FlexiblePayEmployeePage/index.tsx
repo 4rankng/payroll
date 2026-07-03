@@ -205,7 +205,7 @@ const FlexiblePayEmployeePage = () => {
         onLogout={handleLogout}
       />
 
-      <div className="employee-portal-card-stack max-w-2xl mx-auto p-4 space-y-4 pb-24">
+      <div className="employee-portal-card-stack mx-auto max-w-2xl space-y-4 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <EmployeeBankInfoCard
           profile={profile!}
           className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"

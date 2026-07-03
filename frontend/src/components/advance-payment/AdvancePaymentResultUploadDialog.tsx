@@ -96,15 +96,15 @@ export const AdvancePaymentResultUploadDialog = memo(
     if (showResults && uploadResult) {
       return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col" hideCloseButton>
+          <DialogContent className="flex max-h-[92dvh] max-w-3xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
             <DialogNavyHeader
               title="Kết quả chuyển tiền"
               description="Chi tiết xử lý file Excel chuyển tiền ứng lương"
             />
 
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
               {/* Summary */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {[
                   { label: "Tổng giao dịch", value: uploadResult.total_txn, color: "text-foreground" },
                   { label: "Thành công", value: uploadResult.completed_txn, color: "text-emerald-600" },
@@ -130,8 +130,8 @@ export const AdvancePaymentResultUploadDialog = memo(
                         key={index}
                         className="rounded-xl border bg-background p-3 space-y-1.5"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-1.5">
                             {isPaid
                               ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                               : <XCircle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
@@ -145,13 +145,13 @@ export const AdvancePaymentResultUploadDialog = memo(
                             {isPaid ? "Thành công" : "Thất bại"}
                           </Badge>
                         </div>
-                        <p className="text-sm font-medium truncate" title={detail.employee_name}>
+                        <p className="break-words text-sm font-medium" title={detail.employee_name}>
                           {detail.employee_name}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="break-words text-xs text-muted-foreground">
                           {detail.employee_bank} · {detail.employee_account_number}
                         </p>
-                        <p className="text-sm font-semibold">{formatCurrencyFromString(detail.amount)}</p>
+                        <p className="break-words text-sm font-semibold">{formatCurrencyFromString(detail.amount)}</p>
                         {detail.paid_at && (
                           <p className="text-xs text-muted-foreground">{formatDateTime(detail.paid_at)}</p>
                         )}
@@ -162,16 +162,15 @@ export const AdvancePaymentResultUploadDialog = memo(
               </div>
             </div>
 
-            <DialogFooter className="px-5 py-4 border-t flex flex-row gap-2 flex-shrink-0">
-              <Button variant="outline" onClick={handleBackToUpload} className="flex-none">
+            <DialogFooter className="grid shrink-0 grid-cols-1 gap-2 border-t px-4 py-4 sm:grid-cols-3 sm:px-5">
+              <Button variant="outline" onClick={handleBackToUpload} className="h-11 w-full">
                 Nhập file khác
               </Button>
-              <div className="flex-1" />
-              <Button variant="outline" onClick={handleDownloadPdf} className="gap-1.5">
+              <Button variant="outline" onClick={handleDownloadPdf} className="h-11 w-full gap-1.5">
                 <FileDown className="w-4 h-4" />
                 Tải PDF
               </Button>
-              <Button onClick={handleClose}>Đóng</Button>
+              <Button onClick={handleClose} className="h-11 w-full">Đóng</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -181,13 +180,13 @@ export const AdvancePaymentResultUploadDialog = memo(
     // ── Upload view ──
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton>
+        <DialogContent className="flex max-h-[92dvh] max-w-md flex-col gap-0 overflow-hidden p-0" hideCloseButton>
           <DialogNavyHeader
             title="Kết quả chuyển tiền"
             description="Tải lên file Excel kết quả chuyển tiền để cập nhật trạng thái"
           />
 
-          <div className="px-5 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
             <FileDropZone
               file={selectedFile}
               onFileChange={setSelectedFile}
@@ -196,11 +195,11 @@ export const AdvancePaymentResultUploadDialog = memo(
             />
           </div>
 
-          <DialogFooter className="px-5 py-4 border-t flex flex-row gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={uploadMutation.isPending} className="min-w-[72px]">
+          <DialogFooter className="grid shrink-0 grid-cols-1 gap-2 border-t px-4 py-4 sm:grid-cols-[minmax(72px,auto)_1fr] sm:px-5">
+            <Button variant="outline" onClick={handleClose} disabled={uploadMutation.isPending} className="h-11 w-full">
               Đóng
             </Button>
-            <Button onClick={handleUpload} disabled={!canUpload} className="flex-1 gap-1.5">
+            <Button onClick={handleUpload} disabled={!canUpload} className="h-11 w-full gap-1.5">
               {uploadMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />

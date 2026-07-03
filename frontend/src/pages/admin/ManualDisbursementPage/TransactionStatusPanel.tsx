@@ -36,19 +36,19 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
   );
 
   return (
-    <div className="rounded-lg border bg-card p-5 space-y-4">
+    <div className="space-y-4 rounded-lg border bg-card p-4 sm:p-5">
       <div className="flex items-start gap-4">
         <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${accent}`}>
           <Icon className={`h-6 w-6 ${row.status === "pending" || (row.status === "authorised" && !providerOk) ? "animate-spin" : ""}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold">{providerOk ? "Thành công" : statusLabel(row.status)}</h2>
             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${providerOk ? "bg-success/15 text-success border border-success/30" : statusBadgeClass(row.status)}`}>
               {providerOk ? "Thành công" : statusLabel(row.status)}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="break-all text-sm text-muted-foreground">
             {row.invoice_no
               ? <>Mã giao dịch: <span className="font-mono">{row.invoice_no}</span></>
               : <>Mã yêu cầu: <span className="font-mono text-xs">{row.request_id}</span></>}
@@ -56,18 +56,18 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 rounded-md bg-muted/30 p-3 text-sm">
+      <div className="grid grid-cols-1 gap-3 rounded-md bg-muted/30 p-3 text-sm min-[420px]:grid-cols-2">
         <div>
           <p className="text-xs text-muted-foreground">Người nhận</p>
-          <p className="font-medium truncate">{row.recipient_name}</p>
+          <p className="break-words font-medium">{row.recipient_name}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Ngân hàng</p>
-          <p className="font-medium truncate">{bankLabel(row.recipient_bank, banks)}</p>
+          <p className="break-words font-medium">{bankLabel(row.recipient_bank, banks)}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Số tài khoản</p>
-          <p className="font-mono">{row.recipient_account_no}</p>
+          <p className="break-all font-mono">{row.recipient_account_no}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Số tiền</p>
@@ -82,7 +82,7 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
           <p>{formatTimestamp(row.created_at)}</p>
         </div>
         {row.settled_at && (
-          <div className="col-span-2">
+          <div className="min-[420px]:col-span-2">
             <p className="text-xs text-muted-foreground">Hoàn tất lúc</p>
             <p>{formatTimestamp(row.settled_at)}</p>
           </div>
@@ -104,7 +104,7 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
 
       {!hideResetButton && (
         <div className="flex justify-end">
-          <Button variant="outline" onClick={onReset}>
+          <Button variant="outline" onClick={onReset} className="min-h-11 w-full sm:w-auto">
             Chuyển tiền mới
           </Button>
         </div>

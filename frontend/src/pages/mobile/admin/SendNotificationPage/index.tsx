@@ -74,7 +74,7 @@ export default function SendNotificationPageMobile() {
   }, []);
 
   return (
-    <div className="pb-20">
+    <div className="pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         title="Gửi thông báo"
         icon={Bell}
@@ -106,12 +106,12 @@ export default function SendNotificationPageMobile() {
               rows={5}
               value={message}
               onChange={handleMessageChange}
-              className={cn(messageError && 'border-red-500 focus-visible:ring-red-500')}
+              className={cn('min-h-[132px]', messageError && 'border-red-500 focus-visible:ring-red-500')}
             />
             {messageError && (
-              <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{messageError}</span>
+              <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                <span className="break-words">{messageError}</span>
               </div>
             )}
           </div>
@@ -124,7 +124,7 @@ export default function SendNotificationPageMobile() {
           disabled={!canSend || isPending}
         >
           {isPending ? (
-            <><Loader2 className="w-4 w-4 mr-2 animate-spin" />Đang gửi...</>
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Đang gửi...</>
           ) : (
             <><Bell className="w-4 h-4 mr-2" />Gửi thông báo</>
           )}

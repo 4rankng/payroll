@@ -180,7 +180,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed sm:truncate">
                 Tất cả file đã tải lên — bảng lương và kết quả chuyển khoản
               </p>
             </div>
@@ -189,7 +189,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
       }}
       footer={
         filteredFiles.length > 0 ? (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs text-muted-foreground">
               Đang hiển thị <strong className="font-mono text-foreground">{Math.min(visibleCount, filteredFiles.length)}</strong>
               {' / '}
@@ -200,7 +200,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
                 variant="ghost"
                 size="sm"
                 onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-                className="h-7 text-xs font-semibold"
+                className="min-h-11 w-full text-xs font-semibold sm:w-auto"
               >
                 Tải thêm
                 <ChevronDown className="w-3 h-3 ml-1" />
@@ -218,12 +218,13 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên file hoặc người tải lên…"
-            className="h-9 pl-9 pr-8 text-sm"
+            className="min-h-11 pl-9 pr-11 text-sm"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Xóa tìm kiếm"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -233,7 +234,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
           variant="outline"
           size="sm"
           onClick={() => setSortNewest(prev => !prev)}
-          className="h-9 px-2.5 shrink-0"
+          className="min-h-11 shrink-0 px-3"
           title={sortNewest ? 'Mới nhất trước' : 'Cũ nhất trước'}
         >
           <ArrowUpDown className="w-4 h-4" />

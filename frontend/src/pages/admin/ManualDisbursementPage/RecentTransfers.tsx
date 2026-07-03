@@ -43,7 +43,7 @@ export function RecentTransfers({ limit = 20 }: Props) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full" />
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -65,34 +65,34 @@ export function RecentTransfers({ limit = 20 }: Props) {
         {rows.map((r) => (
           <div
             key={r.txn_id}
-            className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/40 transition-colors"
+            className="flex min-h-24 cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-muted/40"
             onClick={() => setSelected(r)}
           >
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="font-medium truncate">{r.recipient_name}</p>
-                <p className="text-sm font-semibold whitespace-nowrap">
+              <div className="flex flex-col gap-1 min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:justify-between min-[420px]:gap-3">
+                <p className="break-words font-medium leading-snug">{r.recipient_name}</p>
+                <p className="shrink-0 text-sm font-semibold">
                   {formatAmount(r.requested_amount)} đ
                 </p>
               </div>
-              <div className="flex items-center justify-between gap-3 mt-1 text-xs text-muted-foreground">
-                <span className="truncate">
+              <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">
+                <span className="break-words">
                   {bankLabel(r.recipient_bank, banks)} · {r.recipient_account_no}
                 </span>
-                <span className="whitespace-nowrap">{formatTimestamp(r.created_at)}</span>
+                <span className="shrink-0">{formatTimestamp(r.created_at)}</span>
               </div>
               {r.description && (
-                <p className="mt-1 text-xs text-muted-foreground truncate">{r.description}</p>
+                <p className="mt-1 break-words text-xs text-muted-foreground">{r.description}</p>
               )}
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${statusBadgeClass(r.status)}`}>
+              <div className="mt-2 flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">
+                <span className={`inline-flex min-h-7 w-fit items-center rounded-full px-2 py-1 text-xs ${statusBadgeClass(r.status)}`}>
                   {statusLabel(r.status)}
                   {(r.status === "pending" || r.status === "authorised") && (
                     <Loader2 className="ml-1 h-3 w-3 animate-spin" />
                   )}
                 </span>
                 {isRealErrorCode(r.error_code) && (
-                  <span className="text-xs text-destructive truncate" title={r.error_message ?? undefined}>
+                  <span className="break-words text-xs text-destructive" title={r.error_message ?? undefined}>
                     {r.error_message || "Thất bại"}
                   </span>
                 )}
@@ -103,7 +103,7 @@ export function RecentTransfers({ limit = 20 }: Props) {
       </div>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-lg">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Chi tiết giao dịch</DialogTitle>
           </DialogHeader>

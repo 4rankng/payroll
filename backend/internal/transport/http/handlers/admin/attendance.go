@@ -221,6 +221,70 @@ func (h *AttendanceHandler) AdminOverrideFailedAttempt(c *gin.Context) {
 	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Ghi nhận chấm công thành công")
 }
 
+// Approve handles POST /api/v1/admin/attendances/:id/approve. It recomputes the
+// earning for the full configured shift, clears any salary_reject_reason, and
+// stamps the admin review. The note is optional for approve. Returns the updated
+// record so the client can refresh the row in place.
+func (h *AttendanceHandler) Approve(c *gin.Context) {
+	id, ok := helpers.ParseIDParam(c, "id", "ID không hợp lệ")
+	if !ok {
+		return
+	}
+
+	var req dto.AdminReviewAttendanceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		// Body is optional on approve (note may be blank); tolerate empty/invalid JSON.
+		req = dto.AdminReviewAttendanceRequest{}
+	}
+
+	adminID, ok := helpers.GetUserIDOrRespond(c)
+	if !ok {
+		return
+	}
+
+	att, err := h.attendanceService.Approve(c.Request.Context(), id, adminID, strings.TrimSpace(req.Note))
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Duyệt chấm công thành công")
+}
+
+// Reject handles POST /api/v1/admin/attendances/:id/reject. It zeroes the
+// earning, stores the reason in salary_reject_reason, and stamps the admin
+// review. The note is required and returned as the reject reason.
+func (h *AttendanceHandler) Reject(c *gin.Context) {
+	id, ok := helpers.ParseIDParam(c, "id", "ID không hợp lệ")
+	if !ok {
+		return
+	}
+
+	var req dto.AdminReviewAttendanceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Dữ liệu không hợp lệ: "+err.Error())
+		return
+	}
+	note := strings.TrimSpace(req.Note)
+	if note == "" {
+		response.BadRequest(c, "Vui lòng nhập lý do từ chối")
+		return
+	}
+
+	adminID, ok := helpers.GetUserIDOrRespond(c)
+	if !ok {
+		return
+	}
+
+	att, err := h.attendanceService.Reject(c.Request.Context(), id, adminID, note)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã từ chối chấm công")
+}
+
 func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.AdminAttendanceResponse {
 	status := string(att.GetStatus(now))
 	res := dto.AdminAttendanceResponse{
@@ -244,6 +308,10 @@ func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.Admin
 		CheckOutGate:       att.CheckOutGate,
 		EarningAmount:      att.EarningAmount,
 		SalaryRejectReason: att.SalaryRejectReason,
+		ReviewAction:       att.ReviewAction,
+		ReviewNote:         att.ReviewNote,
+		ReviewedBy:         att.ReviewedBy,
+		ReviewedAt:         att.ReviewedAt,
 		Status:             status,
 	}
 

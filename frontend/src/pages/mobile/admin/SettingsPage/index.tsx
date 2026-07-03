@@ -36,8 +36,8 @@ const SettingsPageMobile = () => {
   if (form.isLoading) {
     return (
       <div className="p-4 space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-9 w-64" />
+        <Skeleton className="h-11 w-48" />
+        <Skeleton className="h-11 w-64" />
         <div className="grid grid-cols-1 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-40" />
@@ -48,7 +48,7 @@ const SettingsPageMobile = () => {
   }
 
   return (
-    <div className="pb-20 max-w-full overflow-hidden">
+    <div className="max-w-full overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         title="Cài đặt"
         icon={Settings}
@@ -57,11 +57,11 @@ const SettingsPageMobile = () => {
 
       <div className="p-4 space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
-          <TabsList className="grid w-full grid-cols-2 h-auto p-1">
-            <TabsTrigger value={TAB_GENERAL} className="px-3 py-2 typography-body-medium">
+          <TabsList className="grid h-auto w-full grid-cols-2 p-1">
+            <TabsTrigger value={TAB_GENERAL} className="typography-body-medium min-h-11 px-3 py-2">
               Trả lương
             </TabsTrigger>
-            <TabsTrigger value={TAB_FEE_CONFIG} className="px-3 py-2 typography-body-medium">
+            <TabsTrigger value={TAB_FEE_CONFIG} className="typography-body-medium min-h-11 px-3 py-2">
               Tạm ứng
             </TabsTrigger>
           </TabsList>

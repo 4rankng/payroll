@@ -40,17 +40,17 @@ export function PositionCell({
           onChange={e => setEditingPositionValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); onSavePosition(); } }}
           onBlur={onSavePosition}
-          className="h-6 text-xs border-primary bg-transparent p-1 font-semibold"
+          className="h-11 border-primary bg-transparent p-2 text-xs font-semibold"
           autoFocus
         />
       ) : (
         <div className="flex items-center gap-1">
-          <span className="text-xs font-semibold capitalize flex-1 truncate">{position}</span>
+          <span className="flex-1 break-words text-xs font-semibold capitalize">{position}</span>
           {!readOnly && (
-            <div className="flex items-center gap-0.5 opacity-0 group-hover/pos:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/pos:opacity-100">
               <button
                 onClick={() => onEditPosition(position)}
-                className="h-4 w-4 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                 title="Đổi tên"
               >
                 <Pencil className="h-2.5 w-2.5" />
@@ -58,7 +58,7 @@ export function PositionCell({
               {positions.length > 1 && (
                 <button
                   onClick={e => { e.preventDefault(); e.stopPropagation(); onRemovePosition(position); }}
-                  className="h-4 w-4 flex items-center justify-center rounded text-muted-foreground hover:text-destructive"
+                  className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   title="Xóa vị trí"
                 >
                   <X className="h-2.5 w-2.5" />
@@ -71,7 +71,7 @@ export function PositionCell({
       {!readOnly && positionIndex > 0 && firstPosition && (
         <button
           onClick={handleCopyFromFirst}
-          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+          className="flex min-h-11 items-center gap-1 rounded px-2 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
           title={`Sao chép từ ${firstPosition}`}
         >
           <Copy className="h-2.5 w-2.5" />

@@ -112,7 +112,7 @@ const AdminDashboardMobile = () => {
   }
 
   return (
-    <div className="pb-20">
+    <div className="pb-[calc(5rem+env(safe-area-inset-bottom))]">
       {/* ── Sticky Header ── */}
       <MobilePageHeader
         title="Tổng quan"
@@ -122,7 +122,7 @@ const AdminDashboardMobile = () => {
           pendingApprovals > 0 ? (
             <button
               onClick={dashboardNav.navigateToPendingApprovals}
-              className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold active:scale-95 transition-transform"
+              className="flex min-h-11 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-700 transition-transform active:scale-95"
             >
               <AlertCircle className="h-3.5 w-3.5" />
               {pendingApprovals} chờ duyệt
@@ -137,7 +137,7 @@ const AdminDashboardMobile = () => {
           <button
             onClick={() => setSelectedMonth('all')}
             className={cn(
-              'h-9 px-3.5 rounded-lg text-xs font-semibold transition-colors',
+              'min-h-11 px-3.5 rounded-lg text-xs font-semibold transition-colors',
               selectedMonth === 'all'
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted/60 text-muted-foreground',
@@ -147,13 +147,13 @@ const AdminDashboardMobile = () => {
           </button>
           <button
             onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
             aria-label="Tháng trước"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className={cn(
-            'flex items-center gap-1.5 h-9 px-3 rounded-lg bg-muted/60 text-xs font-semibold text-foreground',
+            'flex min-h-11 items-center gap-1.5 rounded-lg bg-muted/60 px-3 text-xs font-semibold text-foreground',
             selectedMonth === 'all' && 'opacity-50',
           )}>
             <CalendarIcon className="h-3 w-3 text-muted-foreground" />
@@ -161,7 +161,7 @@ const AdminDashboardMobile = () => {
           </div>
           <button
             onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="h-9 w-9 flex items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground active:bg-muted"
             aria-label="Tháng sau"
           >
             <ChevronRight className="h-4 w-4" />
@@ -171,7 +171,7 @@ const AdminDashboardMobile = () => {
 
       {/* ── KPI Hero Grid ── */}
       {data.dashboardSummary && (
-        <div className="px-4 pt-4 grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5 px-4 pt-4 min-[380px]:grid-cols-2">
           <KpiHeroCard
             label="NV đang làm"
             value={data.dashboardSummary.total_working_employees}
@@ -209,14 +209,14 @@ const AdminDashboardMobile = () => {
 
       {/* ── Quick Actions ── */}
       <div className="px-4 pt-4">
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-3">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <button
                 key={action.label}
                 onClick={action.onClick}
-                className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl bg-card border border-border/50 active:scale-[0.97] transition-transform"
+                className="flex min-h-16 flex-col items-center gap-1.5 rounded-xl border border-border/50 bg-card py-3 transition-transform active:scale-[0.97]"
               >
                 <div className={cn('p-2 rounded-xl', action.bg)}>
                   <Icon className={cn('h-4 w-4', action.color)} />

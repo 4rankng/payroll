@@ -43,7 +43,7 @@ export const SummaryStatsCards = ({
   if (isLoading) {
     return (
       <div className={cn('rounded-xl border border-border/40 bg-card shadow-soft overflow-hidden', className)}>
-        <div className={count > 4 ? 'grid grid-cols-2 sm:flex gap-px' : 'flex items-stretch gap-px'}>
+        <div className="grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex">
           {Array.from({ length: count }).map((_, i) => (
             <div key={i} className="flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0">
               <Skeleton className="h-4 w-14" />
@@ -64,11 +64,10 @@ export const SummaryStatsCards = ({
   }
 
   const renderStrip = (items: StatCardConfig[]) => {
-    const wrapItems = items.length > 4;
     return (
       <div className={cn(
         'rounded-xl border border-border/40 bg-card overflow-hidden shadow-soft',
-        wrapItems ? 'grid grid-cols-2 sm:flex gap-px' : 'flex items-stretch gap-px',
+        'grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex',
       )}>
         {items.map((stat, i) => {
           const formatted = typeof stat.value === 'number'
@@ -88,12 +87,12 @@ export const SummaryStatsCards = ({
               )}
             >
               <span className={cn(
-                'font-display font-extrabold tabular-nums leading-none tracking-tight',
+                'break-words text-center font-display font-extrabold tabular-nums leading-tight tracking-tight',
                 stat.isActive ? 'text-primary' : 'text-foreground',
               )}>
                 {formatted}
               </span>
-              <span className="text-xs text-muted-foreground leading-none text-center truncate w-full px-1 mt-0.5">
+              <span className="mt-0.5 w-full break-words px-1 text-center text-xs leading-tight text-muted-foreground">
                 {stat.title}
               </span>
               {stat.isActive && (

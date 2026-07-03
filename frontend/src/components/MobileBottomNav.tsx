@@ -98,7 +98,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     ) : null;
 
   const sheetSurfaceClass =
-    "h-auto max-h-[78dvh] overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
+    "flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
   const openGroupDescription =
@@ -310,7 +310,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           {renderSheetChrome(openGroupTitle, openGroupDescription)}
 
           {openGroup === ACCOUNT_GROUP ? (
-            <div className="overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
               {user && (
                 <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
                   <UserAvatar
@@ -371,7 +371,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
               {openGroup?.submenu?.map((item) => {
                 const isActive = item.path
                   ? location.pathname.startsWith(item.path)
@@ -399,7 +399,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           description={moreDescription}
         >
           {renderSheetChrome(moreTitle, moreDescription)}
-          <div className="grid max-h-[58dvh] grid-cols-3 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+          <div className="grid min-h-0 flex-1 grid-cols-2 gap-2.5 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] sm:grid-cols-3">
             {moreItems?.map((item) => {
               const isActive = item.path
                 ? location.pathname.startsWith(item.path)

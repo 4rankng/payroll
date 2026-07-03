@@ -78,7 +78,7 @@ export function TimesheetPageHeaderMobile({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto rounded-t-3xl border-[hsl(var(--surface-border))] bg-white px-4 pt-3">
+            <SheetContent side="bottom" className="h-auto max-h-[80dvh] overflow-y-auto rounded-t-3xl border-[hsl(var(--surface-border))] bg-white px-4 pt-3">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
               <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
               <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>
@@ -86,7 +86,7 @@ export function TimesheetPageHeaderMobile({
                 {/* Exports */}
                 <Button
                   variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
+                  className="w-full min-h-11 justify-start h-auto px-2 py-3"
                   onClick={() => { onApprovedTimesheetsExport(); close(); }}
                   disabled={isApprovedExportPending}
                 >
@@ -96,7 +96,7 @@ export function TimesheetPageHeaderMobile({
 
                 <Button
                   variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3"
+                  className="w-full min-h-11 justify-start h-auto px-2 py-3"
                   onClick={() => { onPayrollReportExport(); close(); }}
                   disabled={isPayrollReportPending}
                 >
@@ -107,7 +107,7 @@ export function TimesheetPageHeaderMobile({
                 {onBulkTransferExport && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onBulkTransferExport(); close(); }}
                   >
                     <ArrowRightLeft className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -121,7 +121,7 @@ export function TimesheetPageHeaderMobile({
                     <div className="h-px bg-border mx-1 my-1" />
                     <Button
                       variant="ghost"
-                      className="w-full justify-start h-auto px-2 py-3"
+                      className="w-full min-h-11 justify-start h-auto px-2 py-3"
                       onClick={() => { onBulkTransferResultUpload(); close(); }}
                     >
                       <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -138,7 +138,7 @@ export function TimesheetPageHeaderMobile({
                 {onBulkApprove && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onBulkApprove(); close(); }}
                   >
                     <CheckSquare className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -149,7 +149,7 @@ export function TimesheetPageHeaderMobile({
                 {onBulkTransferHistory && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onBulkTransferHistory(); close(); }}
                   >
                     <History className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -160,7 +160,7 @@ export function TimesheetPageHeaderMobile({
                 {onBccUpload && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onBccUpload(); close(); }}
                   >
                     <FileUp className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -171,7 +171,7 @@ export function TimesheetPageHeaderMobile({
                 {onBccHistory && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onBccHistory(); close(); }}
                   >
                     <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -182,7 +182,7 @@ export function TimesheetPageHeaderMobile({
                 {onPaymentHistory && (
                   <Button
                     variant="ghost"
-                    className="w-full justify-start h-auto px-2 py-3"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
                     onClick={() => { onPaymentHistory(); close(); }}
                   >
                     <History className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -194,7 +194,7 @@ export function TimesheetPageHeaderMobile({
                 <div className="h-px bg-border mx-1 my-1" />
                 <Button
                   variant="ghost"
-                  className="w-full justify-start h-auto px-2 py-3 text-muted-foreground"
+                  className="w-full min-h-11 justify-start h-auto px-2 py-3 text-muted-foreground"
                   onClick={close}
                 >
                   <X className="h-5 w-5 shrink-0" />

@@ -20,6 +20,14 @@ export const MobileFilterPill = ({
   onClick,
   className,
 }: MobileFilterPillProps) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (!onClick) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <span
       className={cn(
@@ -31,6 +39,7 @@ export const MobileFilterPill = ({
         className,
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >

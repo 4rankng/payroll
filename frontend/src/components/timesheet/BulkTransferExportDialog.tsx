@@ -69,7 +69,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-lg shadow-none"
+          className="max-h-[92dvh] overflow-y-auto sm:max-w-lg shadow-none"
           title="Chuyển lô qua nhà cung cấp"
           description="Theo dõi tiến trình chuyển tiền"
         >
@@ -83,7 +83,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           <div className="space-y-4 py-2">
             <Progress value={progressPercent} className="h-3" />
 
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-1 gap-2 text-center min-[420px]:grid-cols-3 sm:gap-3">
               <div className="rounded-lg border p-3">
                 <p className="text-2xl font-bold text-primary">{status?.total_count ?? '...'}</p>
                 <p className="text-xs text-muted-foreground">Tổng</p>
@@ -125,7 +125,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           </div>
 
           <DialogFooter className="pt-2">
-            <Button onClick={() => onOpenChange(false)} className="w-full">
+            <Button onClick={() => onOpenChange(false)} className="min-h-11 w-full">
               {isCompleted ? 'Đóng' : 'Đóng'}
             </Button>
           </DialogFooter>
@@ -161,7 +161,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
   return (
     <Dialog open={open} onOpenChange={form.handleDialogOpen}>
       <DialogContent
-        className="sm:max-w-lg shadow-none"
+        className="max-h-[92dvh] overflow-y-auto sm:max-w-lg shadow-none"
         title={isProvider ? 'Chuyển lô qua nhà cung cấp' : 'Xuất file chuyển lô'}
         description={isProvider ? 'Chọn khoảng thời gian để chuyển tiền tự động qua nhà cung cấp' : 'Chọn khoảng thời gian và bộ lọc để xuất file Excel'}
       >
@@ -224,19 +224,19 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           />
         </div>
 
-        <DialogFooter className="flex-row gap-3 pt-2">
+        <DialogFooter className="flex-col gap-2.5 pt-2 sm:flex-row sm:gap-3">
           <Button
             variant="outline"
             onClick={form.handleClose}
             disabled={isLoading}
-            className="flex-1"
+            className="min-h-11 w-full sm:flex-1"
           >
             Đóng
           </Button>
           <Button
             onClick={handleExport}
             disabled={!form.canExport || isLoading}
-            className="flex-1"
+            className="min-h-11 w-full sm:flex-1"
           >
             {isLoading ? (
               <>

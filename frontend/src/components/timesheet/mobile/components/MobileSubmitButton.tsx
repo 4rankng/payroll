@@ -13,7 +13,7 @@ export function MobileSubmitButton({
   onSubmit
 }: MobileSubmitButtonProps) {
   return (
-    <div className="fixed bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 max-w-md mx-auto">
+    <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md sm:inset-x-4 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))]">
       <Button
         onClick={onSubmit}
         disabled={!isFormValid || isSubmitting}

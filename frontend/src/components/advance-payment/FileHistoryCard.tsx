@@ -71,7 +71,7 @@ export function FileHistoryCard({ file }: { file: AdvancePaymentFileHistoryItem 
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="shrink-0 h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors disabled:opacity-50"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted disabled:opacity-50"
           aria-label="Tải xuống"
         >
           {downloading

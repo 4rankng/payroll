@@ -158,7 +158,7 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
   };
 
   return (
-    <div className="min-h-screen bg-background p-3 pb-24 sm:p-4 sm:pb-20">
+    <div className="min-h-[100dvh] overflow-x-clip bg-background p-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:p-4">
       <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
         {/* Header */}
         <MobileFormHeader />

@@ -122,7 +122,7 @@ export function LedgerFiltersMobile({
         searchTerm={filters.party || ''}
         onSearchChange={(v) => set('party', v || undefined)}
         placeholder="Tìm diễn giải, đối tượng..."
-        className="w-full h-10 text-sm"
+        className="w-full h-11 text-sm"
       />
 
       {/* Row: date + filter button + clear */}
@@ -130,15 +130,18 @@ export function LedgerFiltersMobile({
         {/* Date picker */}
         <Sheet open={showDateSheet} onOpenChange={setShowDateSheet}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="flex-1 h-10 justify-start gap-2 text-sm font-normal min-w-0">
+            <Button variant="outline" className="flex-1 h-11 justify-start gap-2 text-sm font-normal min-w-0">
               <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="truncate">{dateLabel}</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto">
+          <SheetContent
+            side="bottom"
+            className="h-auto max-h-[85dvh] overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          >
             <SheetHeader><SheetTitle>Chọn khoảng thời gian</SheetTitle></SheetHeader>
             <div className="mt-4 space-y-4 pb-6">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
                 {DATE_PRESETS.map((p) => (
                   <Button
                     key={p.value}
@@ -170,7 +173,7 @@ export function LedgerFiltersMobile({
         {/* Advanced filters */}
         <Sheet open={showFiltersSheet} onOpenChange={setShowFiltersSheet}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="h-10 px-3 gap-1.5 text-sm shrink-0 relative">
+            <Button variant="outline" className="h-11 px-3 gap-1.5 text-sm shrink-0 relative">
               <Filter className="h-4 w-4" />
               Lọc
               {activeFilterCount > 0 && (
@@ -180,7 +183,10 @@ export function LedgerFiltersMobile({
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[85vh] overflow-y-auto">
+          <SheetContent
+            side="bottom"
+            className="h-auto max-h-[85dvh] overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          >
             <SheetHeader><SheetTitle>Bộ lọc nâng cao</SheetTitle></SheetHeader>
             <div className="mt-4 space-y-4 pb-6">
               {/* Account type */}

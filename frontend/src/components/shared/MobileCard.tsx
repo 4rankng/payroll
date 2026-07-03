@@ -99,9 +99,9 @@ export const MobileInfoRow = ({
   className,
 }: MobileInfoRowProps) => {
   return (
-    <div className={cn('flex items-center justify-between gap-2', className)}>
+    <div className={cn('flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-2', className)}>
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium tabular-nums text-right">{value}</span>
+      <span className="break-words text-sm font-medium tabular-nums min-[380px]:text-right">{value}</span>
     </div>
   );
 };

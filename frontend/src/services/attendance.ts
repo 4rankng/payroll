@@ -87,5 +87,15 @@ export const attendanceService = {
   adminGetById: async (id: number) => {
     const { data } = await apiClient.get(API_ENDPOINTS.attendance.admin.byId(id));
     return data;
+  },
+
+  adminApprove: async (id: number, note?: string) => {
+    const { data } = await apiClient.post(API_ENDPOINTS.attendance.admin.approve(id), { note: note ?? "" });
+    return data;
+  },
+
+  adminReject: async (id: number, note: string) => {
+    const { data } = await apiClient.post(API_ENDPOINTS.attendance.admin.reject(id), { note });
+    return data;
   }
 };

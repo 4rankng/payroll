@@ -23,7 +23,7 @@ export default function CronHealthPageMobile() {
   }
 
   return (
-    <div className="min-h-full pb-20">
+    <div className="min-h-full pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         title="Tác vụ định kỳ"
         icon={Clock}

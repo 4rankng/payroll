@@ -46,6 +46,13 @@ type OverrideFailedAttemptRequest struct {
 	Reason string `json:"reason" binding:"required"`
 }
 
+// AdminReviewAttendanceRequest is the body for POST
+// /admin/attendances/:id/approve|reject. Note is the admin's audit reason; it is
+// required for reject (the salary_reject_reason) and optional for approve.
+type AdminReviewAttendanceRequest struct {
+	Note string `json:"note"`
+}
+
 // AttendanceResponse represents an attendance record
 type AttendanceResponse struct {
 	ID                 uint       `json:"id"`
@@ -65,27 +72,32 @@ type AttendanceResponse struct {
 
 // AdminAttendanceResponse represents the detailed attendance record for admin view
 type AdminAttendanceResponse struct {
-	ID                              uint       `json:"id"`
-	ProjectID                       uint       `json:"project_id"`
-	ProjectName                     string     `json:"project_name"`
-	EmployeeID                      uint       `json:"employee_id"`
-	EmployeeName                    string     `json:"employee_name"`
-	Date                            time.Time  `json:"date"`
-	CheckInTime                     time.Time  `json:"check_in_time"`
-	CheckInLat                      float64    `json:"check_in_lat"`
-	CheckInLng                      float64    `json:"check_in_lng"`
-	CheckInAccuracy                 *float64   `json:"check_in_accuracy,omitempty"`
-	CheckInGpsAt                    *time.Time `json:"check_in_gps_at,omitempty"`
-	CheckInGate                     string     `json:"check_in_gate"`
-	CheckOutTime                    *time.Time `json:"check_out_time,omitempty"`
-	CheckOutLat                     *float64   `json:"check_out_lat,omitempty"`
-	CheckOutLng                     *float64   `json:"check_out_lng,omitempty"`
-	CheckOutAccuracy                *float64   `json:"check_out_accuracy,omitempty"`
-	CheckOutGpsAt                   *time.Time `json:"check_out_gps_at,omitempty"`
-	CheckOutGate                    *string    `json:"check_out_gate,omitempty"`
-	EarningAmount                   *int64     `json:"earning_amount,omitempty"`
-	SalaryRejectReason              *string    `json:"salary_reject_reason,omitempty"`
-	RejectedAt                      *time.Time `json:"rejected_at,omitempty"`
+	ID                 uint       `json:"id"`
+	ProjectID          uint       `json:"project_id"`
+	ProjectName        string     `json:"project_name"`
+	EmployeeID         uint       `json:"employee_id"`
+	EmployeeName       string     `json:"employee_name"`
+	Date               time.Time  `json:"date"`
+	CheckInTime        time.Time  `json:"check_in_time"`
+	CheckInLat         float64    `json:"check_in_lat"`
+	CheckInLng         float64    `json:"check_in_lng"`
+	CheckInAccuracy    *float64   `json:"check_in_accuracy,omitempty"`
+	CheckInGpsAt       *time.Time `json:"check_in_gps_at,omitempty"`
+	CheckInGate        string     `json:"check_in_gate"`
+	CheckOutTime       *time.Time `json:"check_out_time,omitempty"`
+	CheckOutLat        *float64   `json:"check_out_lat,omitempty"`
+	CheckOutLng        *float64   `json:"check_out_lng,omitempty"`
+	CheckOutAccuracy   *float64   `json:"check_out_accuracy,omitempty"`
+	CheckOutGpsAt      *time.Time `json:"check_out_gps_at,omitempty"`
+	CheckOutGate       *string    `json:"check_out_gate,omitempty"`
+	EarningAmount      *int64     `json:"earning_amount,omitempty"`
+	SalaryRejectReason *string    `json:"salary_reject_reason,omitempty"`
+	RejectedAt         *time.Time `json:"rejected_at,omitempty"`
+	// Admin review audit (migration 083). Nil when never reviewed.
+	ReviewAction                    *string    `json:"review_action,omitempty"`
+	ReviewNote                      *string    `json:"review_note,omitempty"`
+	ReviewedBy                      *uint      `json:"reviewed_by,omitempty"`
+	ReviewedAt                      *time.Time `json:"reviewed_at,omitempty"`
 	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
 	NearestCheckpointLat            *float64   `json:"nearest_checkpoint_lat,omitempty"`
 	NearestCheckpointLng            *float64   `json:"nearest_checkpoint_lng,omitempty"`

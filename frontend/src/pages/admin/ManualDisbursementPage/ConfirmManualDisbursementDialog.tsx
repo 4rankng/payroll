@@ -45,7 +45,7 @@ export function ConfirmManualDisbursementDialog(props: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-md">
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Xác nhận chuyển tiền</DialogTitle>
           <DialogDescription>
@@ -59,18 +59,18 @@ export function ConfirmManualDisbursementDialog(props: Props) {
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Người nhận
             </p>
-            <p className="mt-1 text-2xl font-semibold leading-tight">
+            <p className="mt-1 break-words text-2xl font-semibold leading-tight">
               {recipientName}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm min-[420px]:grid-cols-2">
             <div>
               <p className="text-xs text-muted-foreground">Ngân hàng</p>
-              <p className="font-medium">{bankLabel(state.bankCode, banks)}</p>
+              <p className="break-words font-medium">{bankLabel(state.bankCode, banks)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Số tài khoản</p>
-              <p className="font-mono">{state.accountNo}</p>
+              <p className="break-all font-mono">{state.accountNo}</p>
             </div>
           </div>
           <div className="text-center border-t pt-3">
@@ -115,6 +115,7 @@ export function ConfirmManualDisbursementDialog(props: Props) {
             onClick={onClose}
             disabled={pending}
             autoFocus
+            className="min-h-11 w-full sm:w-auto"
           >
             Hủy
           </Button>
@@ -123,6 +124,7 @@ export function ConfirmManualDisbursementDialog(props: Props) {
             variant="destructive"
             onClick={onConfirm}
             disabled={!acknowledged || pending}
+            className="min-h-11 w-full sm:w-auto"
           >
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Xác nhận chuyển

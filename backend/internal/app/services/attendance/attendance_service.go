@@ -818,6 +818,109 @@ func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceI
 	return nil
 }
 
+// Approve records a manual admin approval of a disputed attendance and
+// recomputes the earning for the full configured shift. It clears any prior
+// salary_reject_reason (restoring the row to a payable state) and stamps the
+// review audit. Idempotent — re-approving an already-approved row is a no-op
+// (guard returns the current record). No transaction: a single conditional
+// UPDATE is atomic by itself, mirroring AutoRejectIfExpired.
+//
+// The earning recompute uses the configured shift end K as the effective
+// checkout. K is always inside the checkout window [K-grace, K+grace], so the
+// payrate shift-match in calculateEarningAmount resolves deterministically and
+// pays the full shift the employee was disputed out of.
+func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID uint, note string) (*domain.Attendance, error) {
+	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load attendance: %w", err)
+	}
+	if att == nil {
+		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+	if att.IsApproved() {
+		// Already in the requested state — nothing to do, return current record.
+		return att, nil
+	}
+
+	// Recompute earning for the full configured shift.
+	shift := s.resolveShiftForAttendance(ctx, att)
+	if shift == nil {
+		return nil, domain.NewValidationError("Không xác định được ca làm việc để tính lại lương. Vui lòng kiểm tra cấu hình mức lương/ca cho dự án này.")
+	}
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, att.ProjectID, att.Date)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load payrate for approve: %w", err)
+	}
+	if payrate == nil {
+		return nil, domain.NewValidationError("Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này.")
+	}
+	assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, att.ProjectID, att.EmployeeID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load assignment for approve: %w", err)
+	}
+	if assignment == nil {
+		return nil, domain.NewValidationError("Không tìm thấy phân công của nhân viên trên dự án này.")
+	}
+
+	earning, reason, err := s.calculateEarningAmount(payrate, assignment.Position, att.CheckInTime, shift.end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to recompute earning on approve: %w", err)
+	}
+	if earning <= 0 {
+		// The shift couldn't be matched even at its own configured end — surface
+		// the payrate-engine reason verbatim so the admin understands why pay
+		// can't be restored.
+		msg := reason
+		if msg == "" {
+			msg = "Không thể tính lại lương cho ca này. Vui lòng kiểm tra cấu hình ca làm việc."
+		}
+		return nil, domain.NewValidationError(msg)
+	}
+
+	updated, err := s.attendanceRepo.MarkAdminReviewed(
+		ctx, attendanceID, domain.AttendanceReviewActionApproved, note, adminID, s.clock.Now(), &earning,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark attendance approved: %w", err)
+	}
+	if !updated {
+		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+
+	// Reload with associations so the response mapper has Employee/Project.
+	return s.attendanceRepo.GetByID(ctx, attendanceID)
+}
+
+// Reject records a manual admin rejection of an attendance, zeroing the earning
+// and storing the reason in salary_reject_reason (so GetStatus stays consistent)
+// plus the review audit. Idempotent — re-rejecting an already-rejected row is a
+// no-op. note is required.
+func (s *AttendanceService) Reject(ctx context.Context, attendanceID, adminID uint, note string) (*domain.Attendance, error) {
+	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load attendance: %w", err)
+	}
+	if att == nil {
+		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+	if att.IsRejectedByAdmin() {
+		return att, nil
+	}
+
+	zero := int64(0)
+	updated, err := s.attendanceRepo.MarkAdminReviewed(
+		ctx, attendanceID, domain.AttendanceReviewActionRejected, note, adminID, s.clock.Now(), &zero,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to mark attendance rejected: %w", err)
+	}
+	if !updated {
+		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+
+	return s.attendanceRepo.GetByID(ctx, attendanceID)
+}
+
 // autoRejectSweepLookback bounds the fallback sweep to recent records so it does
 // not backfill ancient history. autoRejectSweepMinAge matches the orphan
 // threshold (18h) so only records past any plausible shift window are finalized.

@@ -53,7 +53,7 @@ export function ProjectDetailsTab({
           {!isEditing && formData.start_date && formData.end_date && (
             <div className="pt-4 border-t">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Thống kê thời gian</h4>
-              <div className="grid grid-cols-3 gap-4 typography-body-medium">
+              <div className="grid grid-cols-1 gap-3 typography-body-medium sm:grid-cols-3 sm:gap-4">
                 <div>
                   <span className="text-muted-foreground">Tổng thời gian:</span>
                   <p className="font-medium">

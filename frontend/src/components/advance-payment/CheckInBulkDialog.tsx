@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, ScanFace, Search, AlertCircle } from "lucide-react";
 import { useProjects } from "@/hooks/api/useProjects";
-import { useProjectEmployees, useBulkToggleCheckInEnabled } from "@/hooks/api/useProjectEmployees";
-import { projectEmployeesKey } from "@/lib/queryKeys";
+import {
+  useProjectEmployees,
+  useToggleCheckInEnabled,
+  useBulkToggleCheckInEnabled,
+} from "@/hooks/api/useProjectEmployees";
 
 interface CheckInBulkDialogProps {
   open: boolean;
@@ -31,11 +32,9 @@ interface CheckInBulkDialogProps {
 
 export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const queryClient = useQueryClient();
+  const [pendingEmployeeId, setPendingEmployeeId] = useState<number | null>(null);
 
   const { data: projectsData } = useProjects(
     { status: ["active"], pageSize: 200 },
@@ -53,6 +52,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     open && !!selectedProjectId
   );
 
+  const toggleCheckIn = useToggleCheckInEnabled();
   const bulkToggle = useBulkToggleCheckInEnabled();
 
   const flexibleProjects = useMemo(
@@ -72,52 +72,60 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     );
   }, [allEmployees, search]);
 
+  useEffect(() => {
+    if (!open || flexibleProjects.length === 0) return;
+    const selectedProjectExists = flexibleProjects.some(
+      (project) => project.id === selectedProjectId
+    );
+    if (selectedProjectExists) return;
+    setSelectedProjectId(flexibleProjects[0].id);
+    setSearch("");
+    setErrorMsg(null);
+  }, [flexibleProjects, open, selectedProjectId]);
+
   const handleProjectChange = (value: string) => {
     setSelectedProjectId(Number(value));
-    setSelectedIds(new Set());
     setSearch("");
     setErrorMsg(null);
   };
 
-  const toggle = (id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
-      return next;
-    });
+  const allFilteredEnabled =
+    filteredEmployees.length > 0 &&
+    filteredEmployees.every((e) => e.check_in_enabled);
+
+  const isMutating = toggleCheckIn.isPending || bulkToggle.isPending;
+
+  const handleToggleEmployee = (employeeId: number, enabled: boolean) => {
+    if (!selectedProjectId || isMutating) return;
+    setErrorMsg(null);
+    setPendingEmployeeId(employeeId);
+    toggleCheckIn.mutate(
+      { projectId: selectedProjectId, employeeId, enabled },
+      {
+        onError: (err: unknown) => {
+          const e = err as { response?: { data?: { message?: string } }; message?: string };
+          const msg =
+            e?.response?.data?.message ||
+            e?.message ||
+            "Có lỗi xảy ra. Vui lòng thử lại.";
+          setErrorMsg(msg);
+        },
+        onSettled: () => setPendingEmployeeId(null),
+      }
+    );
   };
 
-  const allFilteredSelected =
-    filteredEmployees.length > 0 &&
-    filteredEmployees.every((e) => selectedIds.has(e.employee_id));
-
-  const selectAllFiltered = () =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      filteredEmployees.forEach((e) => next.add(e.employee_id));
-      return next;
-    });
-
-  const deselectAllFiltered = () =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      filteredEmployees.forEach((e) => next.delete(e.employee_id));
-      return next;
-    });
-
-  const handleApply = (enabled: boolean) => {
-    if (!selectedProjectId || selectedIds.size === 0) return;
+  const handleBulkToggleFiltered = () => {
+    if (!selectedProjectId || filteredEmployees.length === 0 || isMutating) return;
+    const enabled = !allFilteredEnabled;
     setErrorMsg(null);
     bulkToggle.mutate(
-      { projectId: selectedProjectId, employeeIds: Array.from(selectedIds), enabled },
       {
-        onSuccess: () => {
-          setSelectedIds(new Set());
-          // Explicitly invalidate the exact query key used by this dialog
-          queryClient.invalidateQueries({
-            queryKey: projectEmployeesKey(selectedProjectId, employeeParams),
-          });
-        },
+        projectId: selectedProjectId,
+        employeeIds: filteredEmployees.map((employee) => employee.employee_id),
+        enabled,
+      },
+      {
         onError: (err: unknown) => {
           // Surface backend validation errors (e.g. no payrate) inside the dialog
           const e = err as { response?: { data?: { message?: string } }; message?: string };
@@ -133,7 +141,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-full">
+      <DialogContent className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ScanFace className="h-5 w-5" />
@@ -144,13 +152,16 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-1">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pt-1">
           {/* Top row: project selector + search */}
-          <div className="flex items-end gap-3">
-            <div className="flex-1 space-y-1.5">
-              <label className="text-sm font-medium">Dự án linh động</label>
-              <Select onValueChange={handleProjectChange}>
-                <SelectTrigger>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
+            <div className="min-w-0 space-y-1.5">
+              <label className="text-sm font-medium">Dự án</label>
+              <Select
+                value={selectedProjectId ? String(selectedProjectId) : undefined}
+                onValueChange={handleProjectChange}
+              >
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Chọn dự án..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,7 +186,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
             </div>
 
             {selectedProjectId && (
-              <div className="flex-1 space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <label className="text-sm font-medium">Tìm kiếm nhân viên</label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -183,7 +194,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tên hoặc CCCD..."
-                    className="pl-9"
+                    className="h-11 pl-9"
                   />
                 </div>
               </div>
@@ -203,23 +214,19 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
             <>
               {/* Toolbar */}
               {!loadingEmployees && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <p className="text-sm text-muted-foreground">
                     {search
                       ? `${filteredEmployees.length} / ${allEmployees.length} nhân viên`
                       : `${allEmployees.length} nhân viên`}
-                    {selectedIds.size > 0 && (
-                      <span className="ml-2 font-medium text-primary">
-                        · {selectedIds.size} đã chọn
-                      </span>
-                    )}
                   </p>
                   {filteredEmployees.length > 0 && (
                     <button
-                      onClick={allFilteredSelected ? deselectAllFiltered : selectAllFiltered}
-                      className="text-sm text-primary hover:underline"
+                      onClick={handleBulkToggleFiltered}
+                      disabled={isMutating}
+                      className="inline-flex min-h-11 w-fit items-center rounded-lg text-sm font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
                     >
-                      {allFilteredSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                      {allFilteredEnabled ? "Tắt tất cả" : "Bật tất cả"}
                     </button>
                   )}
                 </div>
@@ -235,31 +242,45 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
                   {search ? "Không tìm thấy nhân viên phù hợp" : "Dự án chưa có nhân viên"}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-y-auto pr-1">
+                <div className="grid max-h-[52dvh] grid-cols-1 gap-2 overflow-y-auto pr-1 min-[380px]:grid-cols-2 sm:grid-cols-3">
                   {filteredEmployees.map((emp) => {
-                    const checked = selectedIds.has(emp.employee_id);
+                    const checked = Boolean(emp.check_in_enabled);
+                    const isPending = pendingEmployeeId === emp.employee_id || bulkToggle.isPending;
                     return (
                       <div
+                        role="switch"
+                        tabIndex={isMutating ? -1 : 0}
                         key={emp.employee_id}
-                        onClick={() => toggle(emp.employee_id)}
+                        onClick={() => handleToggleEmployee(emp.employee_id, !checked)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleToggleEmployee(emp.employee_id, !checked);
+                          }
+                        }}
+                        aria-checked={checked}
+                        aria-disabled={isMutating}
                         className={`
-                          relative flex items-start gap-2.5 rounded-lg border p-3 cursor-pointer select-none transition-colors
+                          relative flex min-h-24 w-full items-start gap-2.5 rounded-lg border p-3 text-left select-none transition-colors
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
                           ${checked
                             ? "border-primary bg-primary/5"
                             : "border-border hover:bg-muted/40"}
+                          ${isMutating ? "cursor-not-allowed opacity-70" : "cursor-pointer"}
                         `}
                       >
                         <Checkbox
                           checked={checked}
-                          onCheckedChange={() => toggle(emp.employee_id)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-0.5 shrink-0"
+                          disabled={isMutating}
+                          aria-hidden="true"
+                          tabIndex={-1}
+                          className="mt-0.5 shrink-0 pointer-events-none"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate leading-tight">
+                          <div className="break-words text-sm font-medium leading-tight">
                             {emp.employee_name}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
+                          <div className="mt-0.5 break-all text-xs text-muted-foreground">
                             {emp.employee_cccd}
                           </div>
                           <Badge
@@ -269,31 +290,14 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
                             {emp.check_in_enabled ? "Đang bật" : "Đang tắt"}
                           </Badge>
                         </div>
+                        {isPending && (
+                          <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
                       </div>
                     );
                   })}
                 </div>
               )}
-
-              {/* Action buttons */}
-              <div className="flex gap-2 pt-1 border-t">
-                <Button
-                  className="flex-1"
-                  disabled={selectedIds.size === 0 || bulkToggle.isPending}
-                  onClick={() => handleApply(true)}
-                >
-                  {bulkToggle.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Bật điểm danh
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  disabled={selectedIds.size === 0 || bulkToggle.isPending}
-                  onClick={() => handleApply(false)}
-                >
-                  Tắt điểm danh
-                </Button>
-              </div>
             </>
           )}
         </div>

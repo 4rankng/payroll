@@ -120,7 +120,7 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
 
   return (
     <Dialog open={open} onOpenChange={(v) => !isExporting && onOpenChange(v)}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className="flex max-h-[92dvh] flex-col sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
@@ -129,9 +129,9 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
           <DialogDescription>Chọn dự án và khoảng thời gian để xuất sao kê</DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-6 py-2 min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-2 sm:flex-row sm:gap-6 sm:overflow-hidden">
           {/* Left — Date Presets + Date Inputs */}
-          <div className="space-y-3 w-44 shrink-0">
+          <div className="w-full shrink-0 space-y-3 sm:w-44">
             <Label className="text-sm font-medium">Khoảng thời gian</Label>
             <div className="flex flex-col gap-2">
               {(['this-month', 'last-month', 'this-quarter', 'last-3-months'] as const).map((p) => (
@@ -141,7 +141,7 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
                   variant="outline"
                   size="sm"
                   onClick={() => handlePresetClick(p)}
-                  className="justify-start w-full"
+                  className="min-h-11 w-full justify-start"
                 >
                   <Calendar className="h-3.5 w-3.5 mr-2" />
                   {p === 'this-month' && 'Tháng này'}
@@ -154,25 +154,25 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
             <div className="space-y-2 pt-2">
               <div className="space-y-1">
                 <Label htmlFor="fromDate" className="text-xs text-muted-foreground">Từ ngày</Label>
-                <Input id="fromDate" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 text-sm" />
+                <Input id="fromDate" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-11 text-sm" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="toDate" className="text-xs text-muted-foreground">Đến ngày</Label>
-                <Input id="toDate" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 text-sm" />
+                <Input id="toDate" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-11 text-sm" />
               </div>
             </div>
           </div>
 
           {/* Right — Project Grid */}
           <div className="flex-1 flex flex-col min-h-0 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <Label className="text-sm font-medium">Dự án</Label>
               <Button
                 type="button"
                 variant={isAllProjectsSelected ? 'default' : 'outline'}
                 size="sm"
                 onClick={handleSelectAll}
-                className="h-7 text-xs"
+                className="h-11 text-xs"
               >
                 Tất cả
               </Button>
@@ -184,12 +184,12 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
                 placeholder="Tìm dự án..."
                 value={projectSearch}
                 onChange={(e) => setProjectSearch(e.target.value)}
-                className="pl-8 h-9 text-sm"
+                className="h-11 pl-8 text-sm"
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto -mx-1 px-1 min-h-0" style={{ maxHeight: '340px' }}>
-              <div className="grid grid-cols-2 gap-1.5">
+            <div className="min-h-0 flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '340px' }}>
+              <div className="grid grid-cols-1 gap-1.5 min-[420px]:grid-cols-2">
                 {filteredProjects.length === 0 ? (
                   projectSearch && (
                     <div className="col-span-2 text-center text-muted-foreground text-xs py-6">
@@ -212,8 +212,8 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
                             : 'border-transparent',
                         )}
                       >
-                        <div className="font-medium text-xs truncate">{project.name}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">{project.code}</div>
+                        <div className="text-xs font-medium break-words">{project.name}</div>
+                        <div className="mt-0.5 break-all text-[10px] text-muted-foreground">{project.code}</div>
                       </button>
                     );
                   })
@@ -236,12 +236,12 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
 
         {error && <p className="text-xs text-destructive px-4">{error}</p>}
 
-        <DialogFooter className="grid grid-cols-2 gap-2 shrink-0">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting} className="w-full">
+        <DialogFooter className="grid grid-cols-1 gap-2 shrink-0 sm:grid-cols-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting} className="h-11 w-full">
             <X className="h-4 w-4 mr-2" />
             Hủy
           </Button>
-          <Button type="button" onClick={handleExport} disabled={!canExport} className="w-full">
+          <Button type="button" onClick={handleExport} disabled={!canExport} className="h-11 w-full">
             {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             {isExporting ? 'Đang xuất...' : 'Xuất file'}
           </Button>

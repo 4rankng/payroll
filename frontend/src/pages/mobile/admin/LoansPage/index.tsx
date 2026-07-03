@@ -38,23 +38,23 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       aria-label={`Khoản vay ${loan.loan_code}`}
     >
       {/* Line 1: code + status badge */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-sm font-semibold text-primary truncate">{loan.loan_code}</span>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <span className="min-w-0 break-all font-mono text-sm font-semibold text-primary">{loan.loan_code}</span>
         {loan.status && (
-          <Badge variant="outline" className={cn("text-[10px] h-4 px-1.5 shrink-0 border", statusConfig.className)}>
+          <Badge variant="outline" className={cn("min-h-6 shrink-0 border px-1.5 text-[10px]", statusConfig.className)}>
             {statusConfig.label}
           </Badge>
         )}
       </div>
       {/* Line 2: lender · principal · next payment */}
-      <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-        <span className="text-xs text-muted-foreground truncate">{loan.lender.name}</span>
+      <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
+        <span className="min-w-0 break-words text-xs text-muted-foreground">{loan.lender.name}</span>
         <span className="text-gray-300 shrink-0">·</span>
-        <span className="text-xs font-medium text-foreground shrink-0">{formatVND(loan.principal_amount)}</span>
+        <span className="break-words text-xs font-medium text-foreground">{formatVND(loan.principal_amount)}</span>
         {loan.next_payment_date && (
           <>
             <span className="text-gray-300 shrink-0">·</span>
-            <span className={cn("text-xs font-medium shrink-0", urgencyColor)}>{loan.next_payment_date}</span>
+            <span className={cn("break-words text-xs font-medium", urgencyColor)}>{loan.next_payment_date}</span>
           </>
         )}
       </div>
@@ -124,7 +124,7 @@ const LoansPageMobile = () => {
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-7 w-28" />
-          <div className="flex gap-2"><Skeleton className="h-9 w-20" /><Skeleton className="h-9 w-20" /></div>
+          <div className="flex gap-2"><Skeleton className="h-11 w-20" /><Skeleton className="h-11 w-20" /></div>
         </div>
         <div className="flex gap-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 w-20 shrink-0 rounded-xl" />)}</div>
         <Skeleton className="h-11 w-full rounded-xl" />
@@ -134,17 +134,17 @@ const LoansPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <MobilePageHeader
         title="Khoản vay"
         icon={Landmark}
         actions={
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" className="h-9" onClick={() => navigate('lenders')}>
+            <Button variant="outline" size="sm" className="min-h-11" onClick={() => navigate('lenders')}>
               Chủ nợ
             </Button>
-            <Button className="btn-admin-primary h-9" onClick={() => setIsAddLoanOpen(true)}>
+            <Button className="btn-admin-primary min-h-11" onClick={() => setIsAddLoanOpen(true)}>
               <Plus className="h-4 w-4 mr-1" />
               Tạo vay
             </Button>
@@ -180,7 +180,7 @@ const LoansPageMobile = () => {
         </div>
         <div className="flex gap-2">
           <Select onValueChange={handleStatusChange} defaultValue="all">
-            <SelectTrigger className="flex-1 h-10"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+            <SelectTrigger className="min-h-11 flex-1"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="active">Đang vay</SelectItem>
@@ -189,7 +189,7 @@ const LoansPageMobile = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={handleLenderChange} defaultValue="all">
-            <SelectTrigger className="flex-1 h-10"><SelectValue placeholder="Chủ nợ" /></SelectTrigger>
+            <SelectTrigger className="min-h-11 flex-1"><SelectValue placeholder="Chủ nợ" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
               {lenders.map((lender) => (
@@ -205,7 +205,7 @@ const LoansPageMobile = () => {
             value={loanFilters.sortBy ?? 'created_at'}
             onValueChange={(v) => setLoanFilters((prev) => ({ ...prev, sortBy: v, page: 1 }))}
           >
-            <SelectTrigger className="h-9 flex-1 text-xs">
+            <SelectTrigger className="min-h-11 flex-1 text-xs">
               <SelectValue placeholder="Sắp xếp" />
             </SelectTrigger>
             <SelectContent>
@@ -221,7 +221,7 @@ const LoansPageMobile = () => {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 px-3 text-xs"
+            className="min-h-11 px-3 text-xs"
             onClick={() =>
               setLoanFilters((prev) => ({
                 ...prev,

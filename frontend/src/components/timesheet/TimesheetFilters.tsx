@@ -110,7 +110,7 @@ export const TimesheetFilters = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground">Trạng thái</Label>
                 <Select value={statusFilter} onValueChange={onStatusChange}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     {STATUS_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}

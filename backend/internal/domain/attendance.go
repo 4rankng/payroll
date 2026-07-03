@@ -36,6 +36,15 @@ const (
 	AttendanceStatusRejected AttendanceStatus = "rejected"
 )
 
+// Attendance review actions set by an admin during dispute resolution.
+const (
+	AttendanceReviewActionApproved AttendanceReviewAction = "approved"
+	AttendanceReviewActionRejected AttendanceReviewAction = "rejected"
+)
+
+// AttendanceReviewAction is the value stored in Attendance.ReviewAction.
+type AttendanceReviewAction string
+
 // Attendance represents a flexi employee check-in/out record
 type Attendance struct {
 	ID                 uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
@@ -56,8 +65,17 @@ type Attendance struct {
 	CheckOutGate       *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
 	EarningAmount      *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
 	SalaryRejectReason *string    `json:"salary_reject_reason" gorm:"type:text"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
+	// Admin review audit (migration 083): populated when an admin manually
+	// approves/rejects a disputed attendance via /admin/attendances/:id/approve|reject.
+	// review_action is "approved" | "rejected"; a nil pointer means "never reviewed"
+	// and the row keeps its system-derived GetStatus(). Mirrors the resolution-columns
+	// convention on AttendanceFailedAttempt.
+	ReviewAction *string    `json:"review_action" gorm:"type:varchar(16)"`
+	ReviewNote   *string    `json:"review_note" gorm:"type:text"`
+	ReviewedBy   *uint      `json:"reviewed_by" gorm:"type:bigint unsigned"`
+	ReviewedAt   *time.Time `json:"reviewed_at" gorm:"type:datetime(3)"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 
 	// Relationships
 	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
@@ -89,6 +107,12 @@ type AttendanceRepository interface {
 	// true if the row was updated, false if a checkout/prior rejection beat it
 	// (both safe no-ops) or the id does not exist.
 	MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error)
+	// MarkAdminReviewed stamps an admin approve/reject review on an attendance
+	// and applies the earning override atomically via a conditional UPDATE
+	// (WHERE id = ?). On approve, earningAmount is set and salary_reject_reason
+	// is cleared; on reject, earning is forced to 0 and salary_reject_reason is
+	// set to note. Returns true if a row matched the id, false otherwise.
+	MarkAdminReviewed(ctx context.Context, id uint, action AttendanceReviewAction, note string, adminID uint, reviewedAt time.Time, earningAmount *int64) (bool, error)
 	// GetOrphanCandidates returns open (no checkout), unrejected attendances
 	// checked in within [after, before). Used by the auto-reject fallback sweep
 	// to finalize records whose scheduled K+4h task was lost.
@@ -129,7 +153,7 @@ type AttendanceFailedAttempt struct {
 	Lng            *float64   `json:"lng" gorm:"type:decimal(10,7)"`
 	Accuracy       *float64   `json:"accuracy" gorm:"type:float"`
 	GpsAt          *time.Time `json:"gps_at" gorm:"type:datetime(3)"`
-	ErrorMessage *string `json:"error_message" gorm:"type:varchar(500)"`
+	ErrorMessage   *string    `json:"error_message" gorm:"type:varchar(500)"`
 	// Resolution audit: populated when an admin overrides a device-GPS failure
 	// (reason_category gps_*) and records the check-in manually. Nil while the
 	// attempt is still unresolved.
@@ -190,6 +214,22 @@ type AttendanceFailedAttemptRepository interface {
 // IsCompleted returns true if the attendance record has both check-in and check-out
 func (a *Attendance) IsCompleted() bool {
 	return a.CheckOutTime != nil
+}
+
+// IsApproved reports whether an admin has manually approved this attendance.
+func (a *Attendance) IsApproved() bool {
+	return a.ReviewAction != nil && *a.ReviewAction == string(AttendanceReviewActionApproved)
+}
+
+// IsRejectedByAdmin reports whether an admin has manually rejected this attendance.
+// Named to distinguish from the system auto-reject (SalaryRejectReason) path.
+func (a *Attendance) IsRejectedByAdmin() bool {
+	return a.ReviewAction != nil && *a.ReviewAction == string(AttendanceReviewActionRejected)
+}
+
+// IsReviewed reports whether any admin review (approve or reject) has occurred.
+func (a *Attendance) IsReviewed() bool {
+	return a.ReviewAction != nil
 }
 
 // GetStatus derives the status based on fields using the provided current time.

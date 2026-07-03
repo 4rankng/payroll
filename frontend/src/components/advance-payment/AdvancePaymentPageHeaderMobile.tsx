@@ -40,7 +40,7 @@ export function AdvancePaymentPageHeaderMobile({
           <Button
             onClick={onImportPayroll}
             size="sm"
-            className="h-10 rounded-xl px-3 text-xs font-semibold shadow-sm touch-manipulation"
+            className="min-h-11 rounded-xl px-3 text-xs font-semibold shadow-sm touch-manipulation"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
             Nhập
@@ -49,7 +49,7 @@ export function AdvancePaymentPageHeaderMobile({
           <Button
             variant="outline"
             size="icon"
-            className="h-10 w-10 rounded-xl border-slate-300 bg-white shadow-sm touch-manipulation"
+            className="h-11 w-11 rounded-xl border-slate-300 bg-white shadow-sm touch-manipulation"
             onClick={onViewEmployees}
             aria-label="Danh sách nhân viên"
           >
@@ -61,7 +61,7 @@ export function AdvancePaymentPageHeaderMobile({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 rounded-xl border-slate-300 bg-white shadow-sm touch-manipulation"
+                className="h-11 w-11 rounded-xl border-slate-300 bg-white shadow-sm touch-manipulation"
                 aria-label="Tùy chọn"
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />

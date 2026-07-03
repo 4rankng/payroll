@@ -10,7 +10,7 @@ export function ExportListAction({ onClick, isLoading = false }: ExportListActio
     <button
       onClick={onClick}
       disabled={isLoading}
-      className="inline-flex items-center gap-1.5 h-9 px-4 bg-card/90 backdrop-blur-sm text-foreground text-sm font-medium whitespace-nowrap hover:bg-accent hover:text-accent-foreground transition-all border-l border-border disabled:opacity-50 disabled:pointer-events-none"
+      className="inline-flex min-h-11 items-center gap-1.5 border-l border-border bg-card/90 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition-all whitespace-nowrap hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 shrink-0 animate-spin" />

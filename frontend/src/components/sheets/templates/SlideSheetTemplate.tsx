@@ -72,7 +72,7 @@ export function SlideSheetTemplate({
           )}
         >
           {avatar?.custom ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2">
               <SheetTitle className="sr-only">Chi tiết</SheetTitle>
               <div className="flex-1 min-w-0">{avatar.custom}</div>
               {headerActions && (
@@ -84,7 +84,7 @@ export function SlideSheetTemplate({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full flex-shrink-0 self-start text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="h-11 w-11 rounded-full flex-shrink-0 self-start text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
                   aria-label="Đóng"
                 >
                   <X className="h-4 w-4" />
@@ -92,8 +92,8 @@ export function SlideSheetTemplate({
               </SheetClose>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
                 {avatar && (
                   <Avatar className="h-10 w-10 flex-shrink-0">
                     <AvatarFallback className="bg-primary/10 text-primary">
@@ -105,12 +105,12 @@ export function SlideSheetTemplate({
                 )}
                 <div className="flex-1 min-w-0">
                   {title && (
-                    <SheetTitle className="typography-headline-small truncate">
+                    <SheetTitle className="typography-headline-small break-words">
                       {title}
                     </SheetTitle>
                   )}
                   {description && (
-                    <SheetDescription className="typography-body-small text-muted-foreground mt-0.5">
+                    <SheetDescription className="typography-body-small text-muted-foreground mt-0.5 break-words">
                       {description}
                     </SheetDescription>
                   )}
@@ -125,7 +125,7 @@ export function SlideSheetTemplate({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="h-11 w-11 rounded-full flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
                   aria-label="Đóng"
                 >
                   <X className="h-4 w-4" />

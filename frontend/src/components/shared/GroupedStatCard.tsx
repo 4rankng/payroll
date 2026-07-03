@@ -22,12 +22,9 @@ export interface GroupedStatCardProps {
 }
 
 export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, className }: GroupedStatCardProps) => {
-  const shouldWrap = stats.length > 4;
-  const isFourCol = !shouldWrap && stats.length === 4;
-
   const stripCls = cn(
     'rounded-xl border border-border/40 bg-card overflow-hidden shadow-soft',
-    isFourCol || shouldWrap ? 'grid grid-cols-2 sm:flex gap-px' : 'flex items-stretch gap-px',
+    'grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex',
   );
 
   if (isLoading) {
@@ -92,12 +89,12 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
       )}
     >
       <span className={cn(
-        'font-display font-extrabold tabular-nums leading-none tracking-tight w-full text-center text-sm sm:text-base truncate',
+        'w-full break-words text-center font-display text-sm font-extrabold tabular-nums leading-tight tracking-tight sm:text-base',
         isAccent ? 'text-primary' : 'text-foreground',
       )}>
         {formatted}{stat.unit}
       </span>
-      <span className="text-[11px] font-medium text-muted-foreground leading-none text-center truncate w-full px-1 mt-0.5">
+      <span className="mt-0.5 w-full break-words px-1 text-center text-[11px] font-medium leading-tight text-muted-foreground">
         {stat.label}
       </span>
     </div>

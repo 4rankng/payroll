@@ -168,7 +168,7 @@ export function LoanDetailsSheet({
               {getLoanTypeLabel(loan.loan_type)}
             </Badge>
           </div>
-          <div className="typography-body-small text-muted-foreground truncate">
+          <div className="typography-body-small break-words text-muted-foreground">
             Chủ nợ:{" "}
             <span className="font-medium text-foreground">
               {loan.lender.name}
@@ -218,8 +218,8 @@ export function LoanDetailsSheet({
               {isPending && (
                 <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/50 transition-colors duration-200 pointer-events-none" />
               )}
-              <div className="flex items-start justify-between gap-2 relative">
-                <div className="space-y-1">
+              <div className="relative flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-start min-[380px]:justify-between">
+                <div className="min-w-0 space-y-1">
                   <p className="text-xs uppercase text-muted-foreground">
                     Đến hạn
                   </p>
@@ -229,7 +229,7 @@ export function LoanDetailsSheet({
                     {formatDate(item.due_date)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {isPending && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <Check className="h-4 w-4 text-blue-600" />
@@ -243,11 +243,11 @@ export function LoanDetailsSheet({
                   </Badge>
                 </div>
               </div>
-              <div className="flex items-center justify-between relative">
+              <div className="relative flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                 <span className="text-sm text-muted-foreground">
                   Kỳ {item.period}
                 </span>
-                <span className="typography-body-medium font-semibold">
+                <span className="typography-body-medium break-words font-semibold">
                   {formatVND(item.amount)}
                 </span>
               </div>
@@ -271,26 +271,26 @@ export function LoanDetailsSheet({
         avatar={{ custom: header }}
         className="w-full sm:w-[620px] md:w-[780px] lg:w-[960px] xl:w-[1100px]"
         footer={
-          <div className="flex items-center justify-between w-full gap-2">
-            <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-[auto_minmax(0,1fr)] min-[420px]:items-center">
+            <div className="flex flex-wrap items-center gap-2">
               {loan && !loan.disbursement_date && (
-                <Button type="button" variant="destructive" size="sm" onClick={handleDelete} className="h-9 px-3 gap-1.5">
+                <Button type="button" variant="destructive" size="sm" onClick={handleDelete} className="h-11 w-full gap-1.5 px-3 min-[420px]:w-auto">
                   <Trash2 className="w-3.5 h-3.5" />Xóa
                 </Button>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-center min-[420px]:justify-end">
               {loan && !loan.disbursement_date && (
-                <Button type="button" size="sm" onClick={handleDisburse} className="h-9 px-4 gap-1.5">
+                <Button type="button" size="sm" onClick={handleDisburse} className="h-11 w-full gap-1.5 px-4 min-[420px]:w-auto">
                   <CheckCircle className="w-3.5 h-3.5" />Giải ngân
                 </Button>
               )}
               {loan && loan.disbursement_date && isCustomSchedule && hasPendingSchedules && (
-                <Button type="button" size="sm" onClick={handleRepaySchedule} className="h-9 px-4 gap-1.5">
+                <Button type="button" size="sm" onClick={handleRepaySchedule} className="h-11 w-full gap-1.5 px-4 min-[420px]:w-auto">
                   <CreditCard className="w-3.5 h-3.5" />Thanh toán theo lịch
                 </Button>
               )}
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-9 px-4">
+              <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-11 w-full px-4 min-[420px]:w-auto">
                 Đóng
               </Button>
             </div>
@@ -404,12 +404,12 @@ export function LoanDetailsSheet({
 
             {/* Schedule */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                 <div className="typography-label-medium text-muted-foreground uppercase font-semibold">
                   Lịch trả
                 </div>
                 {loan.next_payment_date && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="break-words text-xs text-muted-foreground">
                     Kỳ tới: {formatDate(loan.next_payment_date)}
                   </div>
                 )}

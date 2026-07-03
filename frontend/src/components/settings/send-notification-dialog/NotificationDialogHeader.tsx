@@ -66,14 +66,14 @@ export const NotificationDialogHeader = memo(function NotificationDialogHeader({
             value={title}
             onChange={onTitleChange}
             className={cn(
-              'h-10',
+              'h-11',
               titleError && 'border-red-500 focus-visible:ring-red-500'
             )}
           />
           {titleError && (
-            <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>{titleError}</span>
+            <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+              <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+              <span className="break-words">{titleError}</span>
             </div>
           )}
         </div>

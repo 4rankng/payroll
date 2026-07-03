@@ -76,19 +76,19 @@ export function PaymentHistoryMobileList({ data, isLoading }: PaymentHistoryMobi
             </div>
 
             {/* Amount and Date Row */}
-            <div className="flex items-center justify-between gap-3 pt-2 border-t">
+            <div className="grid grid-cols-1 gap-2 border-t pt-2 min-[380px]:flex min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-3">
               {/* Amount with icon */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <Banknote className="w-4 h-4 shrink-0 text-muted-foreground" />
-                <span className="typography-currency typography-data-medium font-semibold text-emerald-600">
+                <span className="typography-currency typography-data-medium break-words font-semibold text-emerald-600">
                   {formatCurrency(payment.total_paid_amount)}
                 </span>
               </div>
 
               {/* Date */}
-              <div className="typography-body-small text-muted-foreground flex items-center gap-1.5">
+              <div className="typography-body-small flex min-w-0 items-center gap-1.5 text-muted-foreground min-[380px]:justify-end">
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
-                <span>{formatDateTime(payment.paid_date)}</span>
+                <span className="break-words">{formatDateTime(payment.paid_date)}</span>
               </div>
             </div>
           </div>

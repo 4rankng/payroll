@@ -122,7 +122,7 @@ const ProjectsPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
+    <div className="flex min-h-full flex-col pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <MobilePageHeader
         title="Dự án"
@@ -163,7 +163,7 @@ const ProjectsPageMobile = () => {
               {currentMonthLabel}<X className="h-3 w-3" />
             </Badge>
           )}
-          <button onClick={filterControls.clearFilters} className="text-xs text-muted-foreground underline underline-offset-2">Xóa tất cả</button>
+          <button onClick={filterControls.clearFilters} className="min-h-11 px-1 text-xs text-muted-foreground underline underline-offset-2">Xóa tất cả</button>
         </div>
       )}
 
@@ -192,7 +192,10 @@ const ProjectsPageMobile = () => {
 
       {/* Filter sheet */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe">
+        <SheetContent
+          side="bottom"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+        >
           <SheetHeader className="pb-4"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -218,7 +221,7 @@ const ProjectsPageMobile = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="grid grid-cols-1 gap-3 pt-2 min-[380px]:grid-cols-2">
               <Button variant="outline" className="flex-1 h-11" onClick={() => { filterControls.clearFilters(); setFilterSheetOpen(false); }}>Xóa bộ lọc</Button>
               <Button className="flex-1 h-11 btn-admin-primary" onClick={() => setFilterSheetOpen(false)}>Áp dụng</Button>
             </div>

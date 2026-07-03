@@ -36,7 +36,6 @@ export const InlineStatStrip = memo(function InlineStatStrip({
   items,
   isLoading = false,
   className,
-  wrap,
   variant = 'premium',
   direction = 'horizontal',
 }: InlineStatStripProps) {
@@ -68,13 +67,9 @@ export const InlineStatStrip = memo(function InlineStatStrip({
 
   // Horizontal layout (original)
   if (!isVertical) {
-    const shouldWrap = wrap ?? items.length > 4;
-    const isFourCol = !shouldWrap && items.length === 4;
-
     const containerCls = cn(
       getContainerStyles(),
-      isFourCol ? 'grid grid-cols-2 sm:flex gap-px' :
-      shouldWrap ? 'grid grid-cols-2 sm:flex gap-px' : 'flex items-stretch gap-px',
+      'grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex',
       className,
     );
 
@@ -117,7 +112,7 @@ export const InlineStatStrip = memo(function InlineStatStrip({
               } : undefined}
             >
               <span className={cn(
-                'font-display font-semibold tabular-nums tracking-tight leading-none w-full text-center transition-all',
+                'w-full break-words text-center font-display font-semibold tabular-nums leading-tight tracking-tight transition-all',
                 'text-base',
                 item.highlight ? 'text-primary' : 'text-foreground',
                 variant === 'premium' && 'group-hover:scale-105',
@@ -126,7 +121,7 @@ export const InlineStatStrip = memo(function InlineStatStrip({
                 {formatted}{item.unit}
               </span>
 
-              <span className="text-xs text-muted-foreground leading-none text-center truncate w-full px-1 mt-0.5">
+              <span className="mt-0.5 w-full break-words px-1 text-center text-xs leading-tight text-muted-foreground">
                 {item.label}
               </span>
             </div>
@@ -144,7 +139,7 @@ export const InlineStatStrip = memo(function InlineStatStrip({
   );
 
   const rowCls = cn(
-    'flex items-center justify-between px-3 py-2 bg-card transition-colors',
+    'flex flex-col gap-1 bg-card px-3 py-2 transition-colors min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between',
     variant === 'premium' && 'hover:bg-muted/30'
   );
 
@@ -195,11 +190,11 @@ const AnimatedStatRow = memo(function AnimatedStatRow({
         if (e.key === 'Enter' || e.key === ' ') item.onClick!();
       } : undefined}
     >
-      <span className="text-xs text-muted-foreground truncate">
+      <span className="min-w-0 break-words text-xs text-muted-foreground">
         {item.label}
       </span>
       <span className={cn(
-        'font-display font-semibold tabular-nums tracking-tight text-base whitespace-nowrap ml-3',
+        'break-words font-display text-base font-semibold tabular-nums tracking-tight min-[380px]:ml-3 min-[380px]:text-right',
         item.highlight ? 'text-primary' : 'text-foreground',
         item.valueClassName,
       )}>

@@ -214,8 +214,8 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
       {/* Divider */}
       <div className="border-t border-slate-100 mx-4" />
 
-      {/* 3-col breakdown */}
-      <div className="grid grid-cols-3 divide-x divide-slate-100">
+      {/* Limit breakdown */}
+      <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <LimitBreakdownCell label="Hạn mức" value={formatCurrency(emp.maxAdvanceAmount)} />
         <LimitBreakdownCell
           label="Đã dùng"

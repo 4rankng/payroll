@@ -93,12 +93,12 @@ export function TransactionMobileList({
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onRowClick?.(tx); }}
             >
               {/* Top row: description + amount */}
-              <div className="flex items-start justify-between gap-3 mb-1.5">
-                <p className="text-sm font-semibold text-foreground leading-snug line-clamp-1 flex-1">
+              <div className="mb-1.5 grid grid-cols-1 gap-1 min-[380px]:flex min-[380px]:items-start min-[380px]:justify-between min-[380px]:gap-3">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground min-[380px]:flex-1">
                   {tx.description}
                 </p>
                 <p className={cn(
-                  'text-sm font-bold tabular-nums shrink-0',
+                  'break-words text-sm font-bold tabular-nums min-[380px]:shrink-0 min-[380px]:text-right',
                   isRevenue ? 'text-emerald-700' : 'text-red-600'
                 )}>
                   {isRevenue ? '+' : '-'}{fmtCurrency(tx.amount)}
@@ -107,7 +107,7 @@ export function TransactionMobileList({
 
               {/* Bottom row: party + date + badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-muted-foreground truncate max-w-[120px]">{tx.party}</span>
+                <span className="min-w-0 max-w-full truncate text-xs text-muted-foreground min-[380px]:max-w-[120px]">{tx.party}</span>
                 <span className="text-xs text-muted-foreground">·</span>
                 <span className="text-xs text-muted-foreground shrink-0">{fmtDate(tx.created_at)}</span>
                 <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0', typeColors[tx.transaction_type] || 'bg-muted text-foreground')}>

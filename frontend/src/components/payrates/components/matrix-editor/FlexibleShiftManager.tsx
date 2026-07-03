@@ -77,7 +77,7 @@ export function FlexibleShiftManager({
   return (
     <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2.5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ca làm việc</span>
@@ -85,7 +85,7 @@ export function FlexibleShiftManager({
         {!readOnly && !showAdd && (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Plus className="h-3 w-3" />
             Thêm ca
@@ -99,7 +99,7 @@ export function FlexibleShiftManager({
           {hourTypes.map(key => (
             <div
               key={key}
-              className="group flex items-center gap-1 text-xs bg-background border border-border rounded-lg px-2 py-1"
+              className="group flex min-h-11 items-center gap-1 rounded-lg border border-border bg-background px-2 text-xs"
             >
               {isTimeRange(key) && <Clock className="h-3 w-3 text-primary shrink-0" />}
               <span className={`font-medium ${isTimeRange(key) ? 'font-mono' : ''} text-foreground`}>
@@ -108,7 +108,7 @@ export function FlexibleShiftManager({
               {!readOnly && hourTypes.length > 1 && (
                 <button
                   onClick={() => handleRemove(key)}
-                  className="ml-0.5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                  className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground opacity-100 transition-all hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                   title={`Xóa ca ${key}`}
                 >
                   <X className="h-3 w-3" />
@@ -123,13 +123,13 @@ export function FlexibleShiftManager({
       {showAdd && !readOnly && (
         <div className="space-y-2 pt-2 border-t border-border/40">
           {/* Time pickers */}
-          <div className="flex items-center gap-1.5">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 min-[380px]:grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)]">
             <span className="text-[10px] text-muted-foreground w-6 shrink-0">Từ</span>
             <Input
               type="time"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="h-7 text-xs font-mono flex-1"
+              className="h-11 text-xs font-mono"
               autoFocus
             />
             <span className="text-[10px] text-muted-foreground shrink-0">đến</span>
@@ -137,15 +137,15 @@ export function FlexibleShiftManager({
               type="time"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-              className="h-7 text-xs font-mono flex-1"
+              className="h-11 text-xs font-mono"
             />
           </div>
 
           {/* Preview + actions */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-0">
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-[minmax(0,1fr)_auto_auto] min-[380px]:items-center">
+            <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
               <span className="shrink-0">Khung giờ:</span>
-              <span className={`font-mono font-semibold truncate ${alreadyExists ? 'text-amber-600' : 'text-foreground'}`}>
+              <span className={`min-w-0 break-all font-mono font-semibold ${alreadyExists ? 'text-amber-600' : 'text-foreground'}`}>
                 {previewKey}
               </span>
               {alreadyExists && (
@@ -155,13 +155,13 @@ export function FlexibleShiftManager({
             <button
               onClick={handleAdd}
               disabled={alreadyExists || !startTime || !endTime}
-              className="h-7 px-2.5 text-xs rounded-lg bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors shrink-0"
+              className="h-11 shrink-0 rounded-lg bg-primary px-3 text-xs text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
             >
               Thêm
             </button>
             <button
               onClick={() => setShowAdd(false)}
-              className="h-7 w-7 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground"
             >
               <X className="h-3 w-3" />
             </button>
@@ -176,7 +176,7 @@ export function FlexibleShiftManager({
             <button
               key={preset.value}
               onClick={() => handlePreset(preset.value)}
-              className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors"
+              className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-background px-3 text-[10px] transition-colors hover:border-primary hover:text-primary"
             >
               <span className="font-mono">{preset.value}</span>
               <span className="text-muted-foreground/60">({preset.label})</span>

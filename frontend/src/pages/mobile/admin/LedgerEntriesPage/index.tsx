@@ -206,7 +206,7 @@ const LedgerEntriesPageMobile = () => {
   const hasFilters = !!(filters.project_id || filters.account || filters.party || filters.created_by || filters.has_evidence !== undefined);
 
   return (
-    <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
+    <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <LedgerPageHeader
         overallBalance={overallBalance}
         netCashFlow={netCashFlow}

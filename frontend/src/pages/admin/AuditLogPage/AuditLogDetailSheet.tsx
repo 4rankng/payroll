@@ -37,12 +37,12 @@ function DetailRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-border last:border-0">
-      <div className="flex items-center gap-2 w-32 shrink-0 pt-0.5">
-        <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-        <span className="text-xs text-muted-foreground font-medium">{label}</span>
+    <div className="flex flex-col gap-1.5 border-b border-border py-2.5 last:border-0 min-[380px]:flex-row min-[380px]:items-start min-[380px]:gap-3">
+      <div className="flex shrink-0 items-center gap-2 pt-0.5 min-[380px]:w-32">
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
       </div>
-      <div className="text-xs text-foreground break-all flex-1">{value ?? '—'}</div>
+      <div className="min-w-0 flex-1 break-all text-xs text-foreground">{value ?? '—'}</div>
     </div>
   );
 }
@@ -57,20 +57,26 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
 
   return (
     <Sheet open={logId !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "w-full overflow-y-auto sm:max-w-lg",
+          isMobile && "max-h-[92dvh] rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+        )}
+      >
         <SheetHeader className="pb-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">
             Chi tiết Audit Log
           </SheetTitle>
           {log && (
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
-                className={cn('text-xs font-semibold border px-2 py-0.5', VARIANT_CLASSES[variant])}
+                className={cn('border px-2 py-0.5 text-xs font-semibold', VARIANT_CLASSES[variant])}
               >
                 {getActionLabel(log.action)}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="min-w-0 break-words text-xs text-muted-foreground">
                 {getEntityLabel(log.entity_type)}
                 {log.entity_id ? ` #${log.entity_id}` : ''}
               </span>

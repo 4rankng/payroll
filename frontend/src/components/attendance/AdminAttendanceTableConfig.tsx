@@ -1,10 +1,58 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { MoreHorizontal, MapPin, Check, X } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-export function getAdminAttendanceColumns(): ColumnDef<AdminAttendanceResponse>[] {
-  return [
+/** Row-action callbacks wired by the page. Each is optional so the table can
+ * render without them (e.g. read-only contexts). */
+export interface AttendanceRowActions {
+  onViewMap: (row: AdminAttendanceResponse) => void;
+  onApprove: (row: AdminAttendanceResponse) => void;
+  onReject: (row: AdminAttendanceResponse) => void;
+}
+
+const SYSTEM_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  checked_in: { label: "Đang làm", className: "bg-blue-50 text-blue-700 border-blue-200" },
+  completed: { label: "Hoàn thành", className: "bg-green-50 text-green-700 border-green-200" },
+  orphaned: { label: "Thiếu Check-out", className: "bg-red-50 text-red-700 border-red-200" },
+  rejected: { label: "Đã từ chối", className: "bg-orange-50 text-orange-700 border-orange-200" },
+};
+
+const REVIEW_BADGE_CONFIG: Record<string, { label: string; className: string }> = {
+  approved: { label: "Đã duyệt", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  rejected: { label: "Đã huỷ", className: "bg-rose-50 text-rose-700 border-rose-200" },
+};
+
+function StatusBadges({ status, reviewAction }: { status: string; reviewAction?: string | null }) {
+  const sys = SYSTEM_STATUS_CONFIG[status] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
+  const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <div className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border", sys.className)}>
+        {sys.label}
+      </div>
+      {review && (
+        <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border", review.className)}>
+          {reviewAction === "approved" ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+          {review.label}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function getAdminAttendanceColumns(actions?: AttendanceRowActions): ColumnDef<AdminAttendanceResponse>[] {
+  const cols: ColumnDef<AdminAttendanceResponse>[] = [
     {
       accessorKey: "employee_name",
       header: "Nhân viên",
@@ -79,34 +127,69 @@ export function getAdminAttendanceColumns(): ColumnDef<AdminAttendanceResponse>[
     {
       accessorKey: "status",
       header: "Trạng thái",
-      size: 110,
-      cell: ({ row }) => {
-        const s = row.original.status;
-        let badgeClass = "bg-gray-100 text-gray-600 border-gray-200";
-        let label = "Không rõ";
-        
-        if (s === "checked_in") {
-          badgeClass = "bg-blue-50 text-blue-700 border-blue-200";
-          label = "Đang làm";
-        } else if (s === "completed") {
-          badgeClass = "bg-green-50 text-green-700 border-green-200";
-          label = "Hoàn thành";
-        } else if (s === "orphaned") {
-          badgeClass = "bg-red-50 text-red-700 border-red-200";
-          label = "Thiếu Check-out";
-        } else if (s === "rejected") {
-          badgeClass = "bg-orange-50 text-orange-700 border-orange-200";
-          label = "Đã từ chối";
-        }
+      size: 120,
+      cell: ({ row }) => (
+        <StatusBadges status={row.original.status} reviewAction={row.original.review_action} />
+      ),
+    },
+  ];
 
+  // Actions column: a kebab menu with View map (always) + Approve/Reject (gated
+  // by review_action). Omitted entirely when no callbacks are provided so the
+  // table stays read-only in contexts that don't need it.
+  if (actions) {
+    cols.push({
+      id: "actions",
+      header: "",
+      size: 48,
+      cell: ({ row }) => {
+        const att = row.original;
+        const isApproved = att.review_action === "approved";
+        const isRejected = att.review_action === "rejected";
         return (
-          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}`}>
-            {label}
+          <div className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Hành động"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuLabel>Chấm công #{att.id}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => actions.onViewMap(att)}>
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Xem bản đồ
+                </DropdownMenuItem>
+                {!isApproved && (
+                  <DropdownMenuItem onClick={() => actions.onApprove(att)}>
+                    <Check className="mr-2 h-4 w-4" />
+                    Duyệt
+                  </DropdownMenuItem>
+                )}
+                {!isRejected && (
+                  <DropdownMenuItem
+                    onClick={() => actions.onReject(att)}
+                    className="text-rose-600 focus:text-rose-700"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Từ chối
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },
-    },
-  ];
+    });
+  }
+
+  return cols;
 }
 
 export const attendanceMobileFields = [

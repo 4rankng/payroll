@@ -159,7 +159,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             className={cn("text-white px-4 pb-4", theme.headerBg, isEmployeeMobile && "px-5")}
             style={{ paddingTop: headerPaddingTop }}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
                 className="h-11 w-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
@@ -167,18 +167,18 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
               >
                 <ArrowLeft className="h-6 w-6 text-white" />
               </button>
-              <h2 className="text-base font-bold text-white">Thông báo</h2>
+              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-white">Thông báo</h2>
               {activeView === 'unread' && unreadNotifications.length > 0 ? (
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="h-11 flex items-center gap-1.5 px-2 rounded-full hover:bg-white/20 transition-colors text-white/90 text-xs font-medium disabled:opacity-50"
+                  className="flex min-h-11 max-w-[6.75rem] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-medium text-white/90 transition-colors hover:bg-white/20 disabled:opacity-50"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     : <CheckCheck className="h-3.5 w-3.5" />}
-                  <span>Đọc tất cả</span>
+                  <span className="min-w-0 truncate">Đọc tất cả</span>
                 </button>
               ) : (
                 <div className="w-11" />
@@ -194,7 +194,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 <button
                   key={tab.value}
                   onClick={() => setActiveView(tab.value)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all ${
                     activeView === tab.value
                       ? `bg-white shadow-sm ${theme.activeTabText}`
                       : 'text-white/80 hover:text-white'

@@ -323,7 +323,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                             value={watch(`entries.${index}.account`)}
                             onValueChange={(value) => setValue(`entries.${index}.account`, value)}
                           >
-                            <SelectTrigger className="h-9 typography-body-small">
+                            <SelectTrigger className="min-h-11 typography-body-small">
                               <SelectValue placeholder="Chọn tài khoản" />
                             </SelectTrigger>
                             <SelectContent>
@@ -347,14 +347,14 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                                 setValue(`entries.${index}.party`, user?.fullname || '');
                               }}
                               placeholder="Chọn người góp vốn"
-                              className="h-9 typography-body-small"
+                              className="min-h-11 typography-body-small"
                               filterRole="admin"
                             />
                           ) : (
                             <Input
                               {...register(`entries.${index}.party`, { required: 'Đối tượng là bắt buộc' })}
                               placeholder="Đối tượng"
-                              className="h-9 typography-body-small"
+                              className="min-h-11 typography-body-small"
                             />
                           )}
                         </div>
@@ -365,7 +365,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                             {...register(`entries.${index}.description`, { required: 'Diễn giải là bắt buộc' })}
                             placeholder="Diễn giải"
                             rows={1}
-                            className="min-h-9 resize-none typography-body-small"
+                            className="min-h-11 resize-none typography-body-small"
                           />
                         </div>
 
@@ -375,7 +375,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                             value={watch(`entries.${index}.debit`)}
                             onChange={(e) => handleAmountChange(index, 'debit', e.target.value)}
                             placeholder="0"
-                            className="h-9 text-right typography-body-small"
+                            className="min-h-11 text-right typography-body-small"
                           />
                         </div>
 
@@ -385,7 +385,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                             value={watch(`entries.${index}.credit`)}
                             onChange={(e) => handleAmountChange(index, 'credit', e.target.value)}
                             placeholder="0"
-                            className="h-9 text-right typography-body-small"
+                            className="min-h-11 text-right typography-body-small"
                           />
                         </div>
 
@@ -395,7 +395,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                             value={watch(`entries.${index}.project_id`)}
                             onValueChange={(value) => setValue(`entries.${index}.project_id`, value)}
                           >
-                            <SelectTrigger className="h-9 typography-body-small">
+                            <SelectTrigger className="min-h-11 typography-body-small">
                               <SelectValue placeholder="-" />
                             </SelectTrigger>
                             <SelectContent>
@@ -414,7 +414,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                               variant="ghost"
                               size="sm"
                               onClick={() => removeEntry(index)}
-                              className="h-9 w-9 p-0 text-destructive hover:text-destructive"
+                              className="h-11 w-11 p-0 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

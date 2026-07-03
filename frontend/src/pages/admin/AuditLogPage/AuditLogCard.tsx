@@ -59,24 +59,24 @@ export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
     <button
       type="button"
       onClick={() => onClick(log.id)}
-      className="w-full text-left group rounded-xl border border-border bg-card hover:bg-muted/30 hover:border-primary/20 active:bg-muted/50 transition-all duration-150 shadow-sm overflow-hidden"
+      className="group w-full overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50"
     >
       {/* Top bar: action badge + role | datetime + chevron */}
-      <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2.5 border-b border-border/60">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-col gap-2 border-b border-border/60 px-3 pb-2.5 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
           <Badge
             variant="outline"
-            className={cn('text-xs font-semibold border px-2 py-0.5 shrink-0', VARIANT_CLASSES[variant])}
+            className={cn('shrink-0 border px-2 py-0.5 text-xs font-semibold', VARIANT_CLASSES[variant])}
           >
             {getActionLabel(log.action)}
           </Badge>
-          <span className="text-xs text-muted-foreground truncate">
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
             {getRoleLabel(log.user_role)}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">{dateStr} {timeStr}</span>
-          <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0" />
+        <div className="flex min-w-0 items-center justify-between gap-1.5 min-[380px]:shrink-0 min-[380px]:justify-end">
+          <span className="min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap">{dateStr} {timeStr}</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
         </div>
       </div>
 
@@ -85,22 +85,22 @@ export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
         {/* User name + username */}
         <div>
           {fullname
-            ? <p className="text-sm font-semibold text-foreground leading-tight">{fullname}</p>
+            ? <p className="break-words text-sm font-semibold leading-tight text-foreground">{fullname}</p>
             : <p className="text-sm text-muted-foreground">#{log.user_id}</p>
           }
           {username && (
-            <p className="text-xs text-muted-foreground leading-tight">@{username}</p>
+            <p className="break-all text-xs leading-tight text-muted-foreground">@{username}</p>
           )}
         </div>
 
         {/* Message */}
-        <p className="text-sm text-foreground leading-snug">
+        <p className="break-words text-sm leading-snug text-foreground">
           {log.message}
         </p>
 
         {/* Login identifier */}
         {showLoginId && (
-          <p className="text-xs text-amber-600 font-medium">
+          <p className="break-words text-xs font-medium text-amber-600">
             Đăng nhập bằng: {loginId}
           </p>
         )}
@@ -109,9 +109,9 @@ export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
         {metaChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
             {metaChips.map((chip, i) => (
-              <span key={i} className="flex items-center gap-1 text-[11px] text-muted-foreground/70">
+              <span key={i} className="inline-flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground/70">
                 {chip.icon}
-                {chip.label}
+                <span className="min-w-0 break-all">{chip.label}</span>
               </span>
             ))}
           </div>

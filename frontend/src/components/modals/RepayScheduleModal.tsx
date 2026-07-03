@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Calendar, DollarSign, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useRepaySchedule } from '@/hooks/api/useLoans';
 import { formatVND } from '@/utils/loanHelpers';
+import { cn } from '@/lib/utils';
 import type { Loan, CustomScheduleItem } from '@/types/api/loan.types';
 
 interface RepayScheduleModalProps {
@@ -117,7 +118,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Thanh toán theo lịch</DialogTitle>
           <DialogDescription>
@@ -134,7 +135,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 value={form.schedule_id}
                 onValueChange={(v) => updateField('schedule_id', v)}
               >
-                <SelectTrigger className={errors.schedule_id ? 'border-red-500' : ''}>
+                <SelectTrigger className={cn("h-11", errors.schedule_id && 'border-red-500')}>
                   <SelectValue placeholder="Chọn kỳ thanh toán" />
                 </SelectTrigger>
                 <SelectContent>
@@ -155,10 +156,10 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 <p className="typography-body-small text-financial-negative">{errors.schedule_id}</p>
               )}
               {selectedSchedule && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mt-2">
-                  <div className="flex items-center gap-2 text-blue-800 typography-body-small font-semibold">
+                <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                  <div className="flex items-start gap-2 typography-body-small font-semibold text-blue-800">
                     <DollarSign className="h-4 w-4" />
-                    Số tiền: {formatVND(selectedSchedule.amount)}
+                    <span className="break-words">Số tiền: {formatVND(selectedSchedule.amount)}</span>
                   </div>
                 </div>
               )}
@@ -171,7 +172,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 type="date"
                 value={form.payment_date}
                 onChange={(e) => updateField('payment_date', e.target.value)}
-                className={errors.payment_date ? 'border-red-500' : ''}
+                className={cn("h-11", errors.payment_date && 'border-red-500')}
               />
               {errors.payment_date && (
                 <p className="typography-body-small text-financial-negative">{errors.payment_date}</p>
@@ -185,6 +186,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 value={form.payment_reference}
                 onChange={(e) => updateField('payment_reference', e.target.value)}
                 placeholder="Mã giao dịch hoặc số chứng từ (nếu có)"
+                className="h-11"
               />
             </div>
 
@@ -195,7 +197,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 value={form.notes}
                 onChange={(e) => updateField('notes', e.target.value)}
                 placeholder="Ghi chú thêm (nếu có)"
-                className="min-h-[80px]"
+                className="min-h-24"
               />
             </div>
           </div>
@@ -221,45 +223,45 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Kỳ thanh toán:</span>
-                  <span className="typography-body-medium font-semibold">Kỳ {selectedSchedule.period}</span>
+                  <span className="typography-body-medium font-semibold min-[380px]:text-right">Kỳ {selectedSchedule.period}</span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Ngày đáo hạn:</span>
-                  <span className="typography-body-medium">{format(new Date(selectedSchedule.due_date), 'dd/MM/yyyy')}</span>
+                  <span className="typography-body-medium min-[380px]:text-right">{format(new Date(selectedSchedule.due_date), 'dd/MM/yyyy')}</span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Số tiền:</span>
-                  <span className="typography-body-medium font-semibold text-blue-600">
+                  <span className="typography-body-medium break-words font-semibold text-blue-600 min-[380px]:text-right">
                     {formatVND(selectedSchedule.amount)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Ngày thanh toán:</span>
-                  <span className="typography-body-medium">{form.payment_date}</span>
+                  <span className="typography-body-medium min-[380px]:text-right">{form.payment_date}</span>
                 </div>
 
                 {form.payment_reference && (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                     <span className="typography-body-small text-muted-foreground">Mã tham chiếu:</span>
-                    <span className="typography-body-medium">{form.payment_reference}</span>
+                    <span className="typography-body-medium break-all min-[380px]:text-right">{form.payment_reference}</span>
                   </div>
                 )}
 
                 {form.notes && (
                   <div className="space-y-1">
                     <span className="typography-body-small text-muted-foreground">Ghi chú:</span>
-                    <p className="typography-body-small text-foreground">{form.notes}</p>
+                    <p className="typography-body-small break-words text-foreground">{form.notes}</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-2">
+            <div className="flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
               <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
               <p className="typography-body-small text-blue-800">
                 Dư nợ sau thanh toán: <span className="font-semibold">
@@ -270,19 +272,19 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {step === 1 && (
             <>
               <button
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 Hủy
               </button>
               <button
                 onClick={handleNext}
                 disabled={pendingSchedules.length === 0}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
               >
                 Tiếp tục
               </button>
@@ -293,14 +295,14 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
             <>
               <button
                 onClick={handleBack}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 Quay lại
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={repaySchedule.isPending}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
               >
                 {repaySchedule.isPending ? (
                   'Đang xử lý...'

@@ -24,7 +24,7 @@ export function TransactionSummaryCardMobile({ ledgerSummary, isLoading }: Trans
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
         </div>
         <Skeleton className="h-10 rounded-xl" />
@@ -60,11 +60,11 @@ export function TransactionSummaryCardMobile({ ledgerSummary, isLoading }: Trans
       </p>
 
       {/* Primary stats grid */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
         {primaryStats.map((stat, i) => (
           <div key={i} className="rounded-xl border border-border bg-card p-3 shadow-sm">
             <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-            <p className={`text-sm font-bold tabular-nums ${
+            <p className={`break-words text-sm font-bold tabular-nums ${
               stat.neutral ? 'text-foreground' :
               stat.positive ? 'text-emerald-700' : 'text-red-600'
             }`}>
@@ -79,18 +79,18 @@ export function TransactionSummaryCardMobile({ ledgerSummary, isLoading }: Trans
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
-            className="w-full flex items-center justify-between h-9 px-3 bg-muted/50 hover:bg-muted rounded-xl text-sm font-medium text-foreground"
+            className="flex min-h-11 w-full items-center justify-between rounded-xl bg-muted/50 px-3 text-sm font-medium text-foreground hover:bg-muted"
           >
             Công nợ & Vốn
             {showMore ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-1 gap-2 pt-2 min-[380px]:grid-cols-2">
             {secondaryStats.map((stat, i) => (
               <div key={i} className="rounded-xl border border-border bg-card p-2.5 shadow-sm">
                 <p className="text-xs text-muted-foreground mb-0.5">{stat.label}</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">{stat.value}</p>
+                <p className="break-words text-xs font-bold text-foreground tabular-nums">{stat.value}</p>
               </div>
             ))}
           </div>

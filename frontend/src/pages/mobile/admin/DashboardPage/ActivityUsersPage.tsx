@@ -74,7 +74,7 @@ const ActivityUsersPage = () => {
     : "Tất cả thời gian";
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         icon={Activity}
         title={title}
@@ -82,7 +82,7 @@ const ActivityUsersPage = () => {
         sticky={false}
         bordered={false}
         actions={
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         }
@@ -91,7 +91,7 @@ const ActivityUsersPage = () => {
       {/* Content */}
       <div className="flex-1 px-4 py-3">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="rounded-xl border p-3 space-y-2">
                 <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ const ActivityUsersPage = () => {
             title="Không có nhân viên nào đăng nhập"
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
             {users.map((user) => (
               <button
                 key={user.user_id}

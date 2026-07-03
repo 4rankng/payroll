@@ -135,15 +135,15 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full max-h-[85vh] p-0 flex flex-col gap-0 overflow-hidden" hideCloseButton>
+      <DialogContent className="flex max-h-[92dvh] w-full max-w-2xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
 
         {/* Header */}
         <div className="shrink-0 bg-slate-900 px-4 pt-4 pb-3 text-white">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             {/* Back button */}
             <button
               onClick={onBack}
-              className="shrink-0 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
               aria-label="Quay lại"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-white" />
@@ -152,16 +152,16 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
             {/* Title */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-tight">Chi tiết kết quả chuyển tiền</p>
-              <p className="text-xs text-slate-400 truncate mt-0.5" title={filename}>{filename}</p>
+              <p className="mt-0.5 break-all text-xs text-slate-400" title={filename}>{filename}</p>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="grid shrink-0 grid-cols-1 gap-1.5 min-[380px]:grid-cols-3">
               <Button
                 size="sm"
                 onClick={handleDownloadPdf}
                 disabled={!historyId || !historyDetail || isLoading}
-                className="h-7 px-2.5 text-xs gap-1 bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                className="min-h-11 px-2.5 text-xs gap-1 bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
               >
                 <FileDown className="w-3 h-3" />
                 PDF
@@ -170,14 +170,14 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                 size="sm"
                 onClick={handleDownloadExcel}
                 disabled={!historyId || isDownloadingExcel}
-                className="h-7 px-2.5 text-xs gap-1 bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                className="min-h-11 px-2.5 text-xs gap-1 bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
               >
                 {isDownloadingExcel
                   ? <Loader2 className="w-3 h-3 animate-spin" />
                   : <FileSpreadsheet className="w-3 h-3" />}
                 Excel
               </Button>
-              <DialogClose className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors outline-none">
+              <DialogClose className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 outline-none transition-colors hover:bg-white/20">
                 <X className="w-3.5 h-3.5 text-white" />
               </DialogClose>
             </div>

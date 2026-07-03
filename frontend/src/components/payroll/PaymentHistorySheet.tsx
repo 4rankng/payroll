@@ -216,7 +216,7 @@ export function PaymentHistorySheet({ isOpen, onClose }: PaymentHistorySheetProp
           size="sm"
           onClick={handleExport}
           disabled={exportPaymentHistories.isPending}
-          className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs"
+          className="min-h-11 px-3 bg-green-600 hover:bg-green-700 text-white text-xs"
         >
           <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
           Xuất Excel

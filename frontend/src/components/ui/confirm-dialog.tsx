@@ -76,7 +76,7 @@ export function ConfirmDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
         </AlertDialogHeader>
 
-        <div className="px-6 pt-4 pb-2">
+        <div className="px-4 pb-2 pt-4 sm:px-6">
           {typeof description === 'string' ? (
             <AlertDialogDescription className="text-muted-foreground">
               {description}
@@ -86,7 +86,7 @@ export function ConfirmDialog({
           )}
         </div>
 
-        <AlertDialogFooter className="!flex-row w-full gap-2">
+        <AlertDialogFooter className="w-full gap-2">
           <AlertDialogCancel
             onClick={handleCancel}
             disabled={isLoading}

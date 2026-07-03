@@ -10,8 +10,8 @@ export function MobilePageShell({ children, className }: MobilePageShellProps) {
   return (
     <div
       className={cn(
-        "min-h-screen max-w-full overflow-x-hidden bg-[hsl(var(--surface-page))]",
-        "px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3",
+        "min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]",
+        "px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))]",
         className,
       )}
     >

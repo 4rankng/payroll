@@ -105,7 +105,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
 
   return (
     <div className={cn(
-      'group grid grid-cols-[40px_1fr_auto] gap-3 items-center px-3 py-2.5 rounded-lg cursor-pointer transition-colors',
+      'group grid grid-cols-[40px_1fr] gap-3 rounded-lg px-3 py-3 transition-colors sm:grid-cols-[40px_1fr_auto] sm:items-center',
       'hover:bg-muted/50'
     )}>
       {/* Iconbox */}
@@ -115,18 +115,18 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
 
       {/* Metadata */}
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold truncate" title={file.filename}>{file.filename}</p>
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <p className="min-w-0 break-words text-sm font-semibold leading-snug sm:truncate" title={file.filename}>{file.filename}</p>
           {showNewBadge && (
             <Badge className="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0 rounded-sm font-bold shrink-0 border-0 leading-4">
               MỚI
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground truncate">
+        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground sm:truncate">
           <span className={cn('font-medium', cfg.textClass)}>{cfg.label}</span>
           <span className="text-border">·</span>
-          <span className="truncate">{file.uploadedBy}</span>
+          <span className="min-w-0 break-words sm:truncate">{file.uploadedBy}</span>
           <span className="text-border">·</span>
           <span className="font-mono text-[11px] shrink-0">
             {file.date ? format(parseISO(file.date), 'dd/MM · HH:mm', { locale: vi }) : ''}
@@ -136,7 +136,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
 
       {/* Actions */}
       <div className={cn(
-        'flex items-center gap-0.5 shrink-0',
+        'col-span-2 ml-12 flex items-center gap-1 shrink-0 sm:col-span-1 sm:ml-0',
         alwaysShowActions
           ? 'opacity-100'
           : 'opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200'
@@ -144,7 +144,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className="h-11 w-11 text-muted-foreground hover:text-foreground"
           aria-label="Xem"
         >
           <Eye className="w-4 h-4" />
@@ -152,7 +152,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-foreground hover:bg-foreground hover:text-background"
+          className="h-11 w-11 text-foreground hover:bg-foreground hover:text-background"
           onClick={handleDownload}
           disabled={downloading}
           aria-label="Tải xuống"
@@ -165,7 +165,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className="h-11 w-11 text-muted-foreground hover:text-foreground"
           aria-label="Thêm"
         >
           <MoreHorizontal className="w-4 h-4" />

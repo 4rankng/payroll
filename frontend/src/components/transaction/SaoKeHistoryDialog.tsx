@@ -254,7 +254,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[82vh] w-full max-w-xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+        <DialogContent className="flex max-h-[92dvh] w-full max-w-xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
 
           <DialogNavyHeader
             title="Lịch sử sao kê"
@@ -264,7 +264,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 gap-1.5 border-white/20 bg-white/10 text-xs text-white hover:bg-white/20 hover:text-white"
+                  className="min-h-11 gap-1.5 border-white/20 bg-white/10 text-xs text-white hover:bg-white/20 hover:text-white"
                   onClick={() => standaloneUploadRef.current?.click()}
                   disabled={standaloneUploadMutation.isPending}
                 >
@@ -293,7 +293,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <AlertCircle className="h-7 w-7 text-destructive/60" />
                   <p className="text-sm text-muted-foreground">Không thể tải dữ liệu</p>
-                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()}>
+                  <Button variant="outline" size="sm" className="min-h-11 gap-1.5" onClick={() => refetch()}>
                     <RefreshCw className="h-3.5 w-3.5" /> Thử lại
                   </Button>
                 </div>
@@ -323,7 +323,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full text-xs text-muted-foreground"
+                  className="min-h-11 w-full text-xs text-muted-foreground"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
@@ -346,11 +346,11 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={settleMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={settleMutation.isPending} className="min-h-11">Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
               disabled={settleMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="min-h-11 bg-emerald-600 hover:bg-emerald-700"
             >
               {settleMutation.isPending
                 ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Đang xử lý...</>

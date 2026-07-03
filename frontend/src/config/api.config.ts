@@ -183,6 +183,8 @@ export const API_ENDPOINTS = {
     admin: {
       list: '/admin/attendances',
       byId: (id: number) => `/admin/attendances/${id}`,
+      approve: (id: number) => `/admin/attendances/${id}/approve`,
+      reject: (id: number) => `/admin/attendances/${id}/reject`,
     },
     mobile: {
       today: '/mobile/attendance/today',

@@ -232,7 +232,7 @@ function AddUserSheet({
                         }
                       }}
                       placeholder="Nguyễn Văn A"
-                      className={errors.fullname ? 'border-red-500 h-9' : 'h-9'}
+                      className={errors.fullname ? 'border-red-500 h-11' : 'h-11'}
                     />
                     {errors.fullname && <p className="text-xs text-red-500 mt-0.5">{errors.fullname}</p>}
                   </div>
@@ -243,7 +243,7 @@ function AddUserSheet({
                       value={formData.role}
                       onValueChange={(value) => handleInputChange("role", value)}
                     >
-                      <SelectTrigger className={errors.role ? 'border-red-500 h-9' : 'h-9'}>
+                      <SelectTrigger className={errors.role ? 'border-red-500 h-11' : 'h-11'}>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
@@ -265,7 +265,7 @@ function AddUserSheet({
                       value={formData.username}
                       onChange={(e) => handleInputChange("username", e.target.value)}
                       placeholder="admin123"
-                      className={errors.username ? 'border-red-500 h-9' : 'h-9'}
+                      className={errors.username ? 'border-red-500 h-11' : 'h-11'}
                     />
                     {errors.username && <p className="text-xs text-red-500 mt-0.5">{errors.username}</p>}
                   </div>
@@ -278,7 +278,7 @@ function AddUserSheet({
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="admin@example.com"
-                      className={errors.email ? 'border-red-500 h-9' : 'h-9'}
+                      className={errors.email ? 'border-red-500 h-11' : 'h-11'}
                     />
                     {errors.email && <p className="text-xs text-red-500 mt-0.5">{errors.email}</p>}
                   </div>
@@ -293,13 +293,13 @@ function AddUserSheet({
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
                       placeholder="Nhập mật khẩu"
-                      className={errors.password ? 'border-red-500 h-9 pr-10' : 'h-9 pr-10'}
+                      className={errors.password ? 'border-red-500 h-11 pr-12' : 'h-11 pr-12'}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-9 w-9 px-0 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-11 w-11 px-0 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (

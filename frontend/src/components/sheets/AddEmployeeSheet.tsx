@@ -228,12 +228,12 @@ function AddEmployeeSheetComponent({
       title="Thêm nhân viên mới"
       description="Điền thông tin để tạo hồ sơ nhân viên"
       footer={
-        <div className="flex items-center justify-between w-full">
+        <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="h-9 px-3 text-muted-foreground hover:text-foreground gap-1.5"
+            className="min-h-11 px-3 text-muted-foreground hover:text-foreground gap-1.5"
           >
             <X className="h-3.5 w-3.5" />
             Đóng
@@ -242,7 +242,7 @@ function AddEmployeeSheetComponent({
             size="sm"
             onClick={handleSave}
             disabled={createEmployee.isPending}
-            className="h-9 px-5 gap-1.5"
+            className="min-h-11 px-5 gap-1.5"
           >
             {createEmployee.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -272,7 +272,7 @@ function AddEmployeeSheetComponent({
                     handleInputChange("fullname", formatted);
                   }
                 }}
-                className={cn("h-9 typography-body-medium", errors.fullname && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.fullname && "border-red-500")}
               />
               {errors.fullname && <p role="alert" className="typography-body-small text-financial-negative">{errors.fullname}</p>}
             </Field>
@@ -283,7 +283,7 @@ function AddEmployeeSheetComponent({
                 type="date"
                 value={formData.date_of_birth || ''}
                 onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
-                className={cn("h-9 typography-body-medium", errors.date_of_birth && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.date_of_birth && "border-red-500")}
               />
               {errors.date_of_birth && <p role="alert" className="typography-body-small text-financial-negative">{errors.date_of_birth}</p>}
             </Field>
@@ -296,7 +296,7 @@ function AddEmployeeSheetComponent({
                 placeholder="001234567890"
                 value={formData.cccd || ''}
                 onChange={(e) => handleInputChange("cccd", e.target.value)}
-                className={cn("h-9 typography-body-medium font-mono tracking-wide", errors.cccd && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono tracking-wide", errors.cccd && "border-red-500")}
               />
               {errors.cccd && <p role="alert" className="typography-body-small text-financial-negative">{errors.cccd}</p>}
             </Field>
@@ -307,7 +307,7 @@ function AddEmployeeSheetComponent({
                 placeholder="0901234567"
                 value={formData.mobile || ''}
                 onChange={(e) => handleInputChange("mobile", e.target.value)}
-                className={cn("h-9 typography-body-medium font-mono", errors.mobile && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono", errors.mobile && "border-red-500")}
               />
               {errors.mobile && <p role="alert" className="typography-body-small text-financial-negative">{errors.mobile}</p>}
             </Field>
@@ -319,7 +319,7 @@ function AddEmployeeSheetComponent({
               placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
               value={formData.address || ''}
               onChange={(e) => handleInputChange("address", e.target.value)}
-              className="h-9 typography-body-medium"
+              className="h-11 typography-body-medium"
             />
           </Field>
         </FieldGroup>
@@ -349,7 +349,7 @@ function AddEmployeeSheetComponent({
                 placeholder="190123456789"
                 value={formData.bank_account_number || ''}
                 onChange={(e) => handleInputChange("bank_account_number", e.target.value)}
-                className={cn("h-9 typography-body-medium font-mono", errors.bank_account_number && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono", errors.bank_account_number && "border-red-500")}
               />
               {errors.bank_account_number && <p role="alert" className="typography-body-small text-financial-negative">{errors.bank_account_number}</p>}
             </Field>
@@ -366,7 +366,7 @@ function AddEmployeeSheetComponent({
                     handleInputChange("bank_account_name", formatted);
                   }
                 }}
-                className={cn("h-9 typography-body-medium", errors.bank_account_name && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.bank_account_name && "border-red-500")}
               />
               {errors.bank_account_name && <p role="alert" className="typography-body-small text-financial-negative">{errors.bank_account_name}</p>}
             </Field>

@@ -49,12 +49,12 @@ export function InfoRow({
   return (
     <div
       className={cn(
-        "flex items-baseline justify-between gap-3 px-3 py-2 border-b border-border/50 last:border-0",
+        "flex flex-col gap-1 border-b border-border/50 px-3 py-2 last:border-0 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-3",
         className
       )}
     >
-      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-      <span className={cn("text-xs font-medium text-right break-all", mono && "font-mono")}>
+      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className={cn("break-words text-xs font-medium min-[380px]:text-right", mono && "font-mono")}>
         {value ?? "-"}
       </span>
     </div>
@@ -73,7 +73,7 @@ export function InfoGrid({
     <div
       className={cn(
         "grid divide-x divide-border/50",
-        cols === 2 ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-3"
+        cols === 2 ? "grid-cols-1 min-[380px]:grid-cols-2" : "grid-cols-1 sm:grid-cols-3"
       )}
     >
       {children}
@@ -112,9 +112,9 @@ export function ActionBar({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between w-full gap-2">
-      <div className="flex items-center gap-1">{left}</div>
-      <div className="flex items-center gap-2">{right}</div>
+    <div className="grid w-full grid-cols-1 gap-2 min-[380px]:flex min-[380px]:items-center min-[380px]:justify-between">
+      <div className="flex min-w-0 flex-wrap items-center gap-1">{left}</div>
+      <div className="flex min-w-0 flex-wrap items-center gap-2 min-[380px]:justify-end">{right}</div>
     </div>
   );
 }

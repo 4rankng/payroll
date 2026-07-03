@@ -149,7 +149,7 @@ export function BulkTransferDateRangeSection({
           {/* Custom Date Inputs */}
           {showCustomPicker && (
             <div className="space-y-2 pt-1">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="from-date" className="text-xs">Từ ngày</Label>
                   <Popover open={fromDateOpen} onOpenChange={setFromDateOpen}>
@@ -158,7 +158,7 @@ export function BulkTransferDateRangeSection({
                         variant="outline"
                         size="sm"
                         className={cn(
-                          "w-full justify-start text-left font-normal h-9",
+                          "min-h-11 w-full justify-start text-left font-normal",
                           !fromDate && "text-muted-foreground",
                           hasDateError && 'border-red-500 focus:ring-red-500'
                         )}
@@ -193,7 +193,7 @@ export function BulkTransferDateRangeSection({
                         variant="outline"
                         size="sm"
                         className={cn(
-                          "w-full justify-start text-left font-normal h-9",
+                          "min-h-11 w-full justify-start text-left font-normal",
                           !toDate && "text-muted-foreground",
                           hasDateError && 'border-red-500 focus:ring-red-500'
                         )}

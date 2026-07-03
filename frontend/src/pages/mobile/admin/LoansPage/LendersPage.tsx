@@ -47,7 +47,7 @@ const LendersPage = () => {
   }, [pagination]);
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         icon={HandCoins}
         title="Người cho vay"
@@ -64,7 +64,7 @@ const LendersPage = () => {
               <Plus className="h-4 w-4" />
               Thêm
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </>
@@ -77,7 +77,7 @@ const LendersPage = () => {
           value={filters.search ?? ""}
           onSearch={handleSearch}
           placeholder="Tìm kiếm chủ nợ..."
-          className="h-10"
+          className="h-11"
         />
       </div>
 
@@ -108,17 +108,18 @@ const LendersPage = () => {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 mt-2 border-t">
-                <p className="text-xs text-muted-foreground">
+              <div className="mt-2 grid grid-cols-1 gap-3 border-t pt-4 min-[380px]:grid-cols-[minmax(0,1fr)_auto] min-[380px]:items-center">
+                <p className="break-words text-xs text-muted-foreground">
                   Trang {pagination.page} / {pagination.totalPages} (
                   {pagination.totalRecords} kết quả)
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 min-[380px]:flex min-[380px]:items-center">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handlePreviousPage}
                     disabled={pagination.page === 1}
+                    className="h-11"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Trước
@@ -128,6 +129,7 @@ const LendersPage = () => {
                     size="sm"
                     onClick={handleNextPage}
                     disabled={pagination.page === pagination.totalPages}
+                    className="h-11"
                   >
                     Sau
                     <ChevronRight className="h-4 w-4 ml-1" />

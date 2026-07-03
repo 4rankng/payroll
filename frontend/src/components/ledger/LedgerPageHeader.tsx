@@ -176,7 +176,7 @@ export function LedgerPageHeader({
             <Button
               variant="outline"
               size="icon"
-              className="sm:hidden h-9 w-9 touch-manipulation shrink-0"
+              className="h-11 w-11 shrink-0 touch-manipulation sm:hidden"
               aria-label="Tùy chọn khác"
             >
               <MoreHorizontal className="h-4 w-4" />

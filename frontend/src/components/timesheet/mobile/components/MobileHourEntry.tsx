@@ -32,7 +32,7 @@ export function MobileHourEntry({
           size="sm"
           onClick={() => onHoursChange(Math.max(0, hours - 0.5))}
           disabled={hours <= 0}
-          className="h-10 w-10 rounded-full flex-shrink-0 touch-manipulation"
+          className="h-11 w-11 rounded-full flex-shrink-0 touch-manipulation"
         >
           <Minus className="h-4 w-4" />
         </Button>
@@ -44,7 +44,7 @@ export function MobileHourEntry({
           step="0.5"
           value={hours || ''}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => onHoursChange(parseFloat(e.target.value) || 0)}
-          className="text-center typography-body-large h-10 flex-1 prevent-zoom"
+          className="text-center typography-body-large h-11 flex-1 prevent-zoom"
           placeholder="0"
         />
         
@@ -53,7 +53,7 @@ export function MobileHourEntry({
           size="sm"
           onClick={() => onHoursChange(Math.min(24, hours + 0.5))}
           disabled={hours >= 24}
-          className="h-10 w-10 rounded-full flex-shrink-0 touch-manipulation"
+          className="h-11 w-11 rounded-full flex-shrink-0 touch-manipulation"
         >
           <Plus className="h-4 w-4" />
         </Button>

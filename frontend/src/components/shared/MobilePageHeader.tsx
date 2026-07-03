@@ -59,7 +59,7 @@ export const MobilePageHeader = ({
             <Button
               variant="ghost"
               size="icon"
-              className="-ml-1 h-9 w-9 shrink-0 text-slate-700"
+              className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-slate-700"
               onClick={back}
               aria-label="Quay lại"
             >
@@ -83,7 +83,7 @@ export const MobilePageHeader = ({
           </div>
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex max-w-[58%] shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
             {actions}
           </div>
         )}

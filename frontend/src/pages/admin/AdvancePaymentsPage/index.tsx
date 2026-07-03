@@ -47,6 +47,15 @@ import {
   attendanceMobileFields,
   attendanceEmptyState,
 } from "@/components/attendance/AdminAttendanceTableConfig";
+import { AttendanceMapDialog } from "@/components/attendance/AttendanceMapDialog";
+import {
+  AttendanceReviewDialogs,
+  type ReviewMode,
+} from "@/components/attendance/AttendanceReviewDialogs";
+import {
+  useApproveAttendance,
+  useRejectAttendance,
+} from "@/hooks/api/useAdminAttendance";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHeroStrip";
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
@@ -74,6 +83,13 @@ const AdvancePaymentsPage = () => {
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     useState<FlexPayEmployeeListItem | null>(null);
+  const [selectedAttendance, setSelectedAttendance] =
+    useState<AdminAttendanceResponse | null>(null);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>(null);
+  const [reviewRow, setReviewRow] = useState<AdminAttendanceResponse | null>(null);
+
+  const approveAttendanceMutation = useApproveAttendance();
+  const rejectAttendanceMutation = useRejectAttendance();
 
   const { user } = useAuth();
   const isAdvPartner = user?.role === "adv_partner";
@@ -164,9 +180,53 @@ const AdvancePaymentsPage = () => {
     [page.flexPayFilters.sortBy, page.flexPayFilters.sortOrder, page.handleFlexPaySort],
   );
 
+  const attendanceActions = useMemo(
+    () => ({
+      onViewMap: (row: AdminAttendanceResponse) => setSelectedAttendance(row),
+      onApprove: (row: AdminAttendanceResponse) => {
+        setReviewRow(row);
+        setReviewMode("approve");
+      },
+      onReject: (row: AdminAttendanceResponse) => {
+        setReviewRow(row);
+        setReviewMode("reject");
+      },
+    }),
+    [],
+  );
+
   const attendanceColumns = useMemo(
-    () => getAdminAttendanceColumns(),
-    []
+    () => getAdminAttendanceColumns(attendanceActions),
+    [attendanceActions],
+  );
+
+  const handleReviewClose = useCallback(() => {
+    setReviewMode(null);
+    setReviewRow(null);
+  }, []);
+
+  const handleApproveAttendance = useCallback(
+    (row: AdminAttendanceResponse, note: string) => {
+      approveAttendanceMutation.mutate(
+        { id: row.id, note },
+        {
+          onSuccess: () => handleReviewClose(),
+        },
+      );
+    },
+    [approveAttendanceMutation, handleReviewClose],
+  );
+
+  const handleRejectAttendance = useCallback(
+    (row: AdminAttendanceResponse, note: string) => {
+      rejectAttendanceMutation.mutate(
+        { id: row.id, note },
+        {
+          onSuccess: () => handleReviewClose(),
+        },
+      );
+    },
+    [rejectAttendanceMutation, handleReviewClose],
   );
 
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
@@ -543,6 +603,21 @@ const AdvancePaymentsPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Attendance review (approve/reject) + map dialogs */}
+        <AttendanceReviewDialogs
+          mode={reviewMode}
+          row={reviewRow}
+          onClose={handleReviewClose}
+          onApprove={handleApproveAttendance}
+          onReject={handleRejectAttendance}
+          approveLoading={approveAttendanceMutation.isPending}
+          rejectLoading={rejectAttendanceMutation.isPending}
+        />
+        <AttendanceMapDialog
+          row={selectedAttendance}
+          onClose={() => setSelectedAttendance(null)}
+        />
       </div>
     </div>
   );

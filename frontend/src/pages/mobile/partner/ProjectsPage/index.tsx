@@ -243,7 +243,7 @@ const ProjectsPageMobile = () => {
           )}
           <button
             onClick={filterControls.clearFilters}
-            className="text-xs text-muted-foreground underline underline-offset-2"
+            className="min-h-11 px-1 text-xs text-muted-foreground underline underline-offset-2"
           >
             Xóa tất cả
           </button>
@@ -286,7 +286,10 @@ const ProjectsPageMobile = () => {
 
       {/* ── Filter sheet ── */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl border-[#D8E2EE] bg-white px-5 pt-2 pb-6">
+        <SheetContent
+          side="bottom"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-[#D8E2EE] bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2"
+        >
           <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" />
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
@@ -344,7 +347,7 @@ const ProjectsPageMobile = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-4 pb-safe">
+            <div className="grid grid-cols-1 gap-3 pt-4 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"
                 className="flex-1 h-11 rounded-xl"

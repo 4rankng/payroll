@@ -135,15 +135,15 @@ export const SettlementResultUploadDialog = memo(function SettlementResultUpload
 
           {selectedFile && (
             <div className="flex flex-col gap-2 rounded-xl bg-muted/50 p-3 text-sm text-foreground">
-              <div className="flex items-center justify-between gap-4">
-                <div className="font-medium truncate">{selectedFile.name}</div>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 break-all font-medium">{selectedFile.name}</div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={handleRemoveFile}
                   disabled={uploadMutation.isPending}
-                  className="h-8 w-8 p-0 text-muted-foreground hover:bg-slate-100:bg-slate-900"
+                  className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:bg-slate-100:bg-slate-900"
                 >
                   <X className="h-4 w-4" />
                   <span className="sr-only">Xóa file</span>
@@ -154,8 +154,8 @@ export const SettlementResultUploadDialog = memo(function SettlementResultUpload
           )}
 
 
-        <DialogFooter className="space-x-2">
-          <Button type="button" variant="outline" onClick={handleClose} disabled={uploadMutation.isPending}>
+        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button type="button" variant="outline" onClick={handleClose} disabled={uploadMutation.isPending} className="min-h-11">
             Hủy
           </Button>
           <Button
@@ -163,7 +163,7 @@ export const SettlementResultUploadDialog = memo(function SettlementResultUpload
             onClick={handleUpload}
             disabled={!canUpload}
             variant="default"
-            className="gap-2"
+            className="min-h-11 gap-2"
             aria-label="Tải lên kết quả sao kê"
           >
             {uploadMutation.isPending ? (
