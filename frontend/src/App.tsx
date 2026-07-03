@@ -47,6 +47,7 @@ const CronHealthPageMobile = lazy(() => import("./pages/mobile/admin/CronHealthP
 const WalletPageMobile = lazy(() => import("./pages/mobile/admin/WalletPage"));
 const AuditLogPageMobile = lazy(() => import("./pages/mobile/admin/AuditLogPage"));
 const SendNotificationPageMobile = lazy(() => import("./pages/mobile/admin/SendNotificationPage"));
+const PayrateEditPageMobile = lazy(() => import("./pages/mobile/admin/PayrateEditPage"));
 
 // Partner Desktop Pages (lazy-loaded)
 const PartnerProjectsPage = lazy(() => import("./pages/partner/ProjectsPage"));
@@ -261,7 +262,7 @@ const AppContent = () => {
           <Route path="cron-health" element={<ResponsivePage desktopComponent={CronHealthPage} mobileComponent={CronHealthPageMobile} />} />
           <Route path="audit-log" element={<ResponsivePage desktopComponent={AuditLogPage} mobileComponent={AuditLogPageMobile} />} />
           <Route path="send-notification" element={<ResponsivePage desktopComponent={SendNotificationPage} mobileComponent={SendNotificationPageMobile} />} />
-          <Route path="projects/:projectId/payrates/:payrateId/edit" element={<PayrateEditPage />} />
+          <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -273,7 +274,7 @@ const AppContent = () => {
           <Route path="employees" element={<ResponsivePage desktopComponent={PartnerEmployeesPage} mobileComponent={PartnerEmployeesPageMobile} />} />
           <Route path="timesheet" element={<ResponsivePage desktopComponent={PartnerTimesheetsPage} mobileComponent={PartnerTimesheetsPageMobile} />} />
           <Route path="timesheet/payment-history" element={<PartnerPaymentHistoryPageMobile />} />
-          <Route path="projects/:projectId/payrates/:payrateId/edit" element={<PayrateEditPage />} />
+          <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
         </Route>
 
         {/* Employee Routes */}

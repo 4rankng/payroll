@@ -26,6 +26,23 @@ export type { InlineAlertProps, AlertSeverity } from './InlineAlert';
 export { InlineStatStrip } from './InlineStatStrip';
 export type { InlineStatStripProps, InlineStatItem } from './InlineStatStrip';
 
+// ── Mobile primitives — single import path for admin mobile chrome ──────────
+export { MobilePageShell, MobileSurface } from './MobilePageShell';
+
+export { MobilePageHeader } from './MobilePageHeader';
+
+export { MobileSubPageHeader } from './MobileSubPageHeader';
+
+export { MobileSectionHeader } from './MobileSectionHeader';
+
+export { MobileCard, MobileInfoCard, MobileInfoRow } from './MobileCard';
+
+export { MobileFilterPill } from './MobileFilterPill';
+
+export { MobileProgressBar } from './MobileProgressBar';
+
+export { MobileSheetHeader } from './MobileSheetHeader';
+
 export { MobilePagination } from './MobilePagination';
 export type { MobilePaginationProps, PaginationInfo } from './MobilePagination';
 

@@ -6,6 +6,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { TimesheetPageHeaderMobile } from "@/components/timesheet/mobile/TimesheetPageHeaderMobile";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { TimesheetDisplaySection } from "@/components/timesheet/TimesheetDisplaySection";
+import { ChuyenLoDialog } from "@/components/timesheet/ChuyenLoDialog";
 import { BulkTransferExportDialog } from "@/components/timesheet/BulkTransferExportDialog";
 import type { BulkTransferExportParams } from "@/services/api/bulk-transfer.service";
 import {
@@ -31,7 +32,10 @@ import {
   useExportPayrollReport,
   useExportApprovedTimesheets,
 } from "@/hooks/api/usePayrolls";
-import { useApproveAllTimesheets } from "@/hooks/api/useTimesheets";
+import {
+  useApproveAllTimesheets,
+  useTimesheetSummary,
+} from "@/hooks/api/useTimesheets";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -42,6 +46,7 @@ import { createProjectBulkApprovalContent } from "@/utils/timesheetBulkHelpers";
 import type { Timesheet } from "@/types/api/timesheet.types";
 
 const TimesheetPageMobile = () => {
+  const [chuyenLoDialogOpen, setChuyenLoDialogOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
   const [payrollReportDialogOpen, setPayrollReportDialogOpen] = useState(false);
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] =
@@ -212,6 +217,12 @@ const TimesheetPageMobile = () => {
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
 
+  // Global (unfiltered) summary for the "Duyệt hết" confirm — backend
+  // approveAll() ignores filters and approves system-wide, so we show the
+  // honest, unfiltered scope here. Mirrors the desktop TimesheetPage.
+  const { data: globalSummary, refetch: refetchGlobalSummary } =
+    useTimesheetSummary({});
+
   const handleAddTimesheet = useCallback(
     () => openModal(MODAL_IDS.TIMESHEET_ENTRY),
     [openModal],
@@ -247,6 +258,13 @@ const TimesheetPageMobile = () => {
       /* handled by mutation */
     }
   };
+
+  // Open the safe "Duyệt hết" flow — refresh the global summary first so the
+  // confirm dialog shows accurate, unfiltered counts (matches desktop).
+  const handleBulkApprove = useCallback(() => {
+    refetchGlobalSummary();
+    setBulkApproveDialogOpen(true);
+  }, [refetchGlobalSummary]);
 
   const handleProjectBulkApprove = useCallback(() => {
     if (timesheetManagement.projectPendingTimesheets.length === 0) {
@@ -377,7 +395,8 @@ const TimesheetPageMobile = () => {
         onBulkTransferExport={() => setBulkTransferDialogOpen(true)}
         onBulkTransferResultUpload={() => setBulkTransferResultDialogOpen(true)}
         onBulkTransferHistory={handleBulkTransferHistory}
-        onBulkApprove={() => setBulkApproveDialogOpen(true)}
+        onBulkApprove={handleBulkApprove}
+        onChuyenLo={() => setChuyenLoDialogOpen(true)}
         onBccHistory={handleBccHistory}
         onBccUpload={() => setBccUploadOpen(true)}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
@@ -412,7 +431,7 @@ const TimesheetPageMobile = () => {
         onApprove={timesheetManagement.handleApprove}
         onDelete={timesheetManagement.handleDelete}
         onAddTimesheet={handleAddTimesheet}
-        onBulkApprove={() => setBulkApproveDialogOpen(true)}
+        onBulkApprove={handleBulkApprove}
         bulkTransferPercentage={bulkTransferPercentage}
         showEditRequestTable={true}
         userRole="admin"
@@ -459,14 +478,33 @@ const TimesheetPageMobile = () => {
           setSelectedHistoryUploadedAt(null);
         }}
       />
+      {/* "Chuyển lô" — unified batch-transfer dialog (now on mobile, matching desktop) */}
+      <ChuyenLoDialog open={chuyenLoDialogOpen} onOpenChange={setChuyenLoDialogOpen} />
+
       <ConfirmDialog
         open={bulkApproveDialogOpen}
         onOpenChange={setBulkApproveDialogOpen}
         title="Duyệt hết bảng công"
-        description="Bạn có chắc chắn muốn duyệt hết bảng công đang chờ duyệt?"
+        description={
+          <div className="space-y-0 divide-y divide-border/60">
+            <div className="flex items-center justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Bảng công chờ duyệt</span>
+              <span className="font-semibold tabular-nums">
+                {globalSummary?.pendingApproval ?? 0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Số NV liên quan</span>
+              <span className="font-semibold tabular-nums">
+                {globalSummary?.pendingEmployees ?? "—"}
+              </span>
+            </div>
+          </div>
+        }
         confirmText="Duyệt hết"
         onConfirm={handleConfirmBulkApprove}
         loading={approveAllMutation.isPending}
+        disabled={(globalSummary?.pendingApproval ?? 0) === 0}
       />
       <ConfirmDialog
         open={projectBulkApproveDialogOpen}

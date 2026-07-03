@@ -2,17 +2,30 @@ import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { MobilePagination } from "@/components/shared/MobilePagination";
 import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
+import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText } from "lucide-react";
+import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
+import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { StatementDialog } from "@/components/advance-payment/StatementDialog";
 import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
@@ -23,8 +36,69 @@ import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel"
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { formatCurrency } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
+import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
+
+type AdminTab = "requests" | "attendances";
+
+const ATTENDANCE_STATUS_LABEL: Record<string, string> = {
+  checked_in: "Đang làm",
+  completed: "Hoàn thành",
+  orphaned: "Thiếu check-out",
+  rejected: "Đã từ chối",
+};
+
+/** Mobile card for a single attendance row — mirrors desktop's mobileFields. */
+function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
+  const fmtTime = (t?: string) =>
+    t ? (() => { try { return format(new Date(t), "HH:mm"); } catch { return "-"; } })() : "-";
+  const fmtDate = (d: string) => {
+    try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
+  };
+  const statusLabel = ATTENDANCE_STATUS_LABEL[row.status] ?? row.status;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">{row.employee_name}</p>
+          <p className="mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground">
+            {row.project_name || "—"}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          {statusLabel}
+        </span>
+      </div>
+      <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+        <div>
+          <p className="text-[10px] text-muted-foreground">Ngày</p>
+          <p className="font-medium tabular-nums">{fmtDate(row.date)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Vào</p>
+          <p className="font-medium tabular-nums">{fmtTime(row.check_in_time)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Ra</p>
+          <p className="font-medium tabular-nums">{fmtTime(row.check_out_time)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Thu nhập</p>
+          <p className="font-financial font-semibold tabular-nums">
+            {row.earning_amount != null ? formatCurrency(row.earning_amount) : "—"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const AdvancePaymentsPageMobile = () => {
   const navigate = useNavigate();
@@ -37,8 +111,12 @@ const AdvancePaymentsPageMobile = () => {
   const [isStatementSheetOpen, setIsStatementSheetOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<AdminTab>("requests");
+  const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
 
   const page = useAdvancePaymentsPage({ employeesTabActive: false });
+  const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
   const exportBatchMutation = useExportAdvancePayments();
   const sendEmailMutation = useSendPayrollReportEmail();
 
@@ -97,6 +175,20 @@ const AdvancePaymentsPageMobile = () => {
     [sendEmailMutation],
   );
 
+  /** Confirm-then-cancel — restores the safety guard desktop has. */
+  const handleRequestCancel = useCallback((id: number) => {
+    setCancelTargetId(id);
+  }, []);
+
+  const handleConfirmCancel = useCallback(async () => {
+    if (cancelTargetId == null) return;
+    try {
+      await page.cancelMutation.mutateAsync(cancelTargetId);
+    } catch { /* handled by mutation */ } finally {
+      setCancelTargetId(null);
+    }
+  }, [cancelTargetId, page.cancelMutation]);
+
   if (page.summaryLoading && page.requests.length === 0) {
     return (
       <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
@@ -140,6 +232,13 @@ const AdvancePaymentsPageMobile = () => {
                   icon={ArrowRightLeft}
                   label="Nhập KQ"
                   onClick={() => { setIsResultUploadOpen(true); close(); }}
+                />
+              )}
+              {!isAdvPartner && (
+                <MobileOverflowAction
+                  icon={CalendarCheck}
+                  label="Chấm công"
+                  onClick={() => { setIsCheckInDialogOpen(true); close(); }}
                 />
               )}
               <MobileOverflowAction
@@ -201,7 +300,38 @@ const AdvancePaymentsPageMobile = () => {
         </div>
       </div>
 
+      {/* Tab switcher: Yêu cầu / Chấm công — restores desktop tab parity */}
+      {!isAdvPartner && (
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1">
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
+              activeTab === "requests"
+                ? "bg-white text-primary shadow-sm"
+                : "text-muted-foreground",
+            )}
+          >
+            <Receipt className="h-3.5 w-3.5" />
+            Yêu cầu
+          </button>
+          <button
+            onClick={() => setActiveTab("attendances")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
+              activeTab === "attendances"
+                ? "bg-white text-primary shadow-sm"
+                : "text-muted-foreground",
+            )}
+          >
+            <CalendarCheck className="h-3.5 w-3.5" />
+            Chấm công
+          </button>
+        </div>
+      )}
+
       {/* Requests list */}
+      {activeTab === "requests" && (
       <MobileSurface className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -240,7 +370,7 @@ const AdvancePaymentsPageMobile = () => {
           requests={page.requests}
           isCancelling={page.cancelMutation.isPending}
           cancellingId={page.cancelMutation.variables ?? undefined}
-          onCancel={(id) => page.cancelMutation.mutate(id)}
+          onCancel={handleRequestCancel}
           onRetry={(id) => page.retryMutation.mutate(id)}
           isRetrying={page.retryMutation.isPending}
           retryingId={page.retryMutation.variables ?? undefined}
@@ -249,6 +379,77 @@ const AdvancePaymentsPageMobile = () => {
           onPageChange={page.handlePageChange}
         />
       </MobileSurface>
+      )}
+
+      {/* Attendance ("Chấm công") — restores desktop tab parity */}
+      {activeTab === "attendances" && !isAdvPartner && (
+        <MobileSurface className="space-y-3 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Chấm công
+              </p>
+              <h2 className="text-[15px] font-bold leading-tight text-slate-900">
+                Chấm công nhân viên
+              </h2>
+            </div>
+            <div className="grid h-8 min-w-8 place-items-center rounded-full bg-slate-100 px-2 text-xs font-semibold tabular-nums text-slate-600">
+              {attendance.totalRecords ?? 0}
+            </div>
+          </div>
+
+          {/* Attendance status filter */}
+          <Select
+            value={attendance.filters.status || "all"}
+            onValueChange={attendance.handleStatusChange}
+          >
+            <SelectTrigger className="h-10 w-full text-sm">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="checked_in">Đang làm</SelectItem>
+              <SelectItem value="completed">Hoàn thành</SelectItem>
+              <SelectItem value="orphaned">Thiếu check-out</SelectItem>
+              <SelectItem value="rejected">Đã từ chối</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {attendance.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 rounded-xl" />
+              ))}
+            </div>
+          ) : attendance.attendances.length === 0 ? (
+            <div className="py-12 text-center">
+              <UsersIcon className="mx-auto h-10 w-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm font-medium text-muted-foreground">
+                Không có dữ liệu chấm công
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {attendance.attendances.map((row) => (
+                  <AttendanceMobileCard key={row.id} row={row} />
+                ))}
+              </div>
+              {attendance.pagination && (
+                <MobilePagination
+                  pagination={{
+                    page: attendance.pagination.page,
+                    pageSize: attendance.pagination.limit,
+                    totalPages: attendance.pagination.totalPages,
+                    totalRecords: attendance.pagination.totalRecords,
+                  }}
+                  onPageChange={attendance.handlePageChange}
+                />
+              )}
+            </>
+          )}
+        </MobileSurface>
+      )}
 
       <AdvPartnerStatusOverview
         {...statusProps}
@@ -259,6 +460,7 @@ const AdvancePaymentsPageMobile = () => {
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />
       <FlexibleEmployeeListUploadDialog open={isEmployeeListUploadOpen} onOpenChange={setIsEmployeeListUploadOpen} />
       <AdvancePaymentResultUploadDialog open={isResultUploadOpen} onOpenChange={setIsResultUploadOpen} />
+      <CheckInBulkDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} />
       <StatementDialog open={isStatementSheetOpen} onOpenChange={setIsStatementSheetOpen} forMonth={page.flexPayMonth} />
       <FileHistorySheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen} />
 
@@ -268,6 +470,33 @@ const AdvancePaymentsPageMobile = () => {
         onSendEmail={handleSendEmail}
         isLoading={sendEmailMutation.isPending}
       />
+
+      {/* Cancel confirmation — restores desktop's safety guard */}
+      <AlertDialog
+        open={cancelTargetId !== null}
+        onOpenChange={(open) => !open && setCancelTargetId(null)}
+      >
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-sm">Hủy yêu cầu ứng lương?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              Hành động này không thể hoàn tác. Yêu cầu sẽ được chuyển sang trạng thái đã hủy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9 text-xs" disabled={page.cancelMutation.isPending}>
+              Giữ lại
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={page.cancelMutation.isPending}
+              className="h-9 gap-1.5 text-xs"
+            >
+              {page.cancelMutation.isPending ? "Đang hủy..." : "Hủy yêu cầu"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobilePageShell>
   );
 };

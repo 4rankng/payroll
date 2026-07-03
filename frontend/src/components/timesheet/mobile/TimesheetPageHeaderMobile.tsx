@@ -13,6 +13,8 @@ interface TimesheetPageHeaderMobileProps {
   onBulkTransferResultUpload?: () => void;
   onBulkTransferHistory?: () => void;
   onBulkApprove?: () => void;
+  /** Unified "Chuyển lô" batch-transfer flow — admin only. */
+  onChuyenLo?: () => void;
   onBccHistory?: () => void;
   onBccUpload?: () => void;
   // Partner-only
@@ -30,6 +32,7 @@ export function TimesheetPageHeaderMobile({
   onBulkTransferResultUpload,
   onBulkTransferHistory,
   onBulkApprove,
+  onChuyenLo,
   onBccHistory,
   onBccUpload,
   onPaymentHistory,
@@ -58,13 +61,24 @@ export function TimesheetPageHeaderMobile({
             Nhập
           </Button>
 
+          {/* Primary "Chuyển lô" action — admin only, mirrors desktop's primary button */}
+          {onChuyenLo && userRole === 'admin' && (
+            <Button
+              onClick={onChuyenLo}
+              className="h-11 rounded-xl touch-manipulation"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-1" />
+              Chuyển lô
+            </Button>
+          )}
+
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-300 bg-white touch-manipulation" aria-label="Thêm tùy chọn">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto rounded-t-3xl border-[#D8E2EE] bg-white px-4 pt-3">
+            <SheetContent side="bottom" className="h-auto rounded-t-3xl border-[hsl(var(--surface-border))] bg-white px-4 pt-3">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
               <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
               <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>

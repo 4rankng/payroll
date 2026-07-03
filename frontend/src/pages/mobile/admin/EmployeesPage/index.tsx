@@ -4,6 +4,7 @@ import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -20,12 +21,14 @@ import {
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
+import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { useEmployeeDataInfinite } from "@/hooks/employees/useEmployeeDataInfinite";
 import { useEmployeesSummary } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
+import { EMPLOYEE_SORT_FIELD_MAP } from "@/pages/admin/EmployeesPage/constants";
 import {
   Users,
   UserCheck,
@@ -35,6 +38,7 @@ import {
   Plus,
   Download,
   X,
+  ArrowDownUp,
 } from "lucide-react";
 import type { Employee } from "@/types/api/employee.types";
 
@@ -55,6 +59,7 @@ const monthOptions = getMonthOptions();
 const EmployeesPageMobile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const {
     employees,
@@ -106,14 +111,38 @@ const EmployeesPageMobile = () => {
     | undefined;
   const month = currentFilters.month as string | undefined;
   const projectId = currentFilters.projectId as number | undefined;
+  const sortBy = currentFilters.sortBy as string | undefined;
+  const sortOrder = currentFilters.sortOrder as "asc" | "desc" | undefined;
+  const fromDate = currentFilters.fromDate as string | undefined;
+  const toDate = currentFilters.toDate as string | undefined;
 
   const activeFilterCount = useMemo(() => {
     let c = 0;
     if (statusFilter) c++;
     if (month) c++;
     if (projectId) c++;
+    if (fromDate) c++;
+    if (toDate) c++;
     return c;
-  }, [statusFilter, month, projectId]);
+  }, [statusFilter, month, projectId, fromDate, toDate]);
+
+  /** Project list shared by the filter sheet and the export modal. */
+  const projectsForExport = useMemo(
+    () =>
+      projectsData?.data?.map((p) => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+      })) ?? [],
+    [projectsData],
+  );
+
+  const handleExportConfirm = useCallback(
+    (projectIds?: number[]) => {
+      exportEmployees(projectIds);
+    },
+    [exportEmployees],
+  );
 
   const projects = useMemo(
     () =>
@@ -201,7 +230,7 @@ const EmployeesPageMobile = () => {
               variant="outline"
               size="sm"
               className="h-9 px-3"
-              onClick={() => exportEmployees([])}
+              onClick={() => setExportModalOpen(true)}
               disabled={isExporting}
             >
               <Download className="h-3.5 w-3.5" />
@@ -283,6 +312,38 @@ const EmployeesPageMobile = () => {
               {activeFilterCount}
             </span>
           )}
+        </Button>
+      </div>
+
+      {/* Sort selector — restores desktop sorting capability */}
+      <div className="px-4 pb-2 flex items-center gap-2">
+        <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <Select
+          value={sortBy ?? "created_at"}
+          onValueChange={(v) => updateFilters({ sortBy: v })}
+        >
+          <SelectTrigger className="h-9 flex-1 text-xs">
+            <SelectValue placeholder="Sắp xếp" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_at">Ngày tạo</SelectItem>
+            <SelectItem value="fullname">Tên</SelectItem>
+            <SelectItem value="bank_name">Ngân hàng</SelectItem>
+            <SelectItem value="project_name">Dự án</SelectItem>
+            <SelectItem value="date_of_birth">Ngày sinh</SelectItem>
+            <SelectItem value="mobile">Số điện thoại</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 px-3 text-xs"
+          onClick={() =>
+            updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" })
+          }
+          aria-label="Đảo chiều sắp xếp"
+        >
+          {sortOrder === "asc" ? "Tăng" : "Giảm"}
         </Button>
       </div>
 
@@ -460,6 +521,33 @@ const EmployeesPageMobile = () => {
                 </Select>
               </div>
             )}
+            {/* Date-range filter — restores desktop capability */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Ngày tuyển (từ — đến)</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={fromDate ?? ""}
+                  onChange={(e) =>
+                    updateFilters({
+                      fromDate: e.target.value || undefined,
+                    })
+                  }
+                  className="h-11 flex-1 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">—</span>
+                <Input
+                  type="date"
+                  value={toDate ?? ""}
+                  onChange={(e) =>
+                    updateFilters({
+                      toDate: e.target.value || undefined,
+                    })
+                  }
+                  className="h-11 flex-1 text-sm"
+                />
+              </div>
+            </div>
             <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
@@ -482,6 +570,15 @@ const EmployeesPageMobile = () => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Export modal — matches desktop's project-selection export flow */}
+      <ExportEmployeesModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        onExport={handleExportConfirm}
+        projects={projectsForExport}
+        isExporting={isExporting}
+      />
     </div>
   );
 };
