@@ -53,7 +53,7 @@ export function TableHeader({
                   if (e.key === 'Escape') { e.stopPropagation(); onCancelEditHourType(); }
                 }}
                 onBlur={onSaveHourType}
-                className={`h-6 text-xs p-1 focus:ring-1 font-mono font-semibold ${
+                className={`h-11 p-2 text-xs font-mono font-semibold focus:ring-1 ${
                   editingHourTypeError
                     ? 'border border-destructive text-destructive bg-destructive/10 focus:ring-destructive'
                     : 'border-0 bg-transparent focus:ring-primary'
@@ -62,7 +62,7 @@ export function TableHeader({
               />
             ) : (
               <span
-                className={`text-xs font-semibold truncate ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : ''}`}
+                className={`break-words text-xs font-semibold ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : ''}`}
                 onClick={() => !readOnly && onEditHourType(hourType)}
                 title={readOnly ? hourType : `Nhấn để đổi tên: ${hourType}`}
               >
@@ -72,7 +72,7 @@ export function TableHeader({
             {!readOnly && hourTypes.length > 1 && (
               <button
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onRemoveHourType(hourType); }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto h-4 w-4 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="ml-auto flex h-11 w-11 items-center justify-center rounded text-muted-foreground opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                 title={`Xóa cột ${hourType}`}
               >
                 <X className="h-2.5 w-2.5" />

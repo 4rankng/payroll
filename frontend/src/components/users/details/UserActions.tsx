@@ -31,7 +31,7 @@ export const UserActions = memo(({
           size="sm"
           onClick={onCancel}
           disabled={loading}
-          className="flex-1 h-9 text-muted-foreground hover:text-foreground"
+          className="min-h-11 flex-1 text-muted-foreground hover:text-foreground"
         >
           <X className="w-3.5 h-3.5 mr-1.5" />
           Hủy
@@ -41,7 +41,7 @@ export const UserActions = memo(({
           size="sm"
           onClick={onSave}
           disabled={loading}
-          className="flex-1 h-9"
+          className="min-h-11 flex-1"
         >
           <Check className="w-3.5 h-3.5 mr-1.5" />
           Lưu thay đổi
@@ -61,7 +61,7 @@ export const UserActions = memo(({
               size="icon"
               onClick={onResetPassword}
               disabled={loading}
-              className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="h-11 w-11 text-muted-foreground hover:text-foreground hover:bg-muted"
               aria-label="Đổi mật khẩu"
             >
               <KeyRound className="w-4 h-4" />
@@ -77,7 +77,7 @@ export const UserActions = memo(({
               size="icon"
               onClick={onDelete}
               disabled={loading}
-              className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/8"
+              className="h-11 w-11 text-muted-foreground hover:text-destructive hover:bg-destructive/8"
               aria-label="Xóa người dùng"
             >
               <Trash2 className="w-4 h-4" />
@@ -96,7 +96,7 @@ export const UserActions = memo(({
         size="sm"
         onClick={onEdit}
         disabled={loading}
-        className="h-9 px-4"
+        className="min-h-11 px-4"
       >
         <Pencil className="w-3.5 h-3.5 mr-1.5" />
         Chỉnh sửa

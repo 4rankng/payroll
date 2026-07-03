@@ -32,12 +32,12 @@ export const MobileSearchInput = React.memo(function MobileSearchInput({
         placeholder={placeholder}
         value={localValue}
         onChange={handleChange}
-        className="pl-9 h-11 rounded-lg bg-background border-border"
+        className="h-11 rounded-lg border-border bg-background pl-9 pr-11"
       />
       {localValue && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Xóa tìm kiếm"
         >
           <X className="h-4 w-4" />

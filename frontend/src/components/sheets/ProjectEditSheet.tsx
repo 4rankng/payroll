@@ -227,14 +227,14 @@ function ProjectEditSheet({
           {hasChanges && (
             <p className="text-xs text-muted-foreground shrink-0">• Có thay đổi chưa lưu</p>
           )}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={handleClose} className="h-8 px-4 text-sm">
+          <div className="ml-auto flex flex-wrap justify-end gap-2">
+            <Button variant="outline" onClick={handleClose} className="h-11 px-4 text-sm">
               Hủy bỏ
             </Button>
             <Button
               onClick={handleSave}
               disabled={!hasChanges || updateProjectMutation.isPending}
-              className="h-8 px-4 text-sm"
+              className="h-11 px-4 text-sm"
               variant="default"
             >
               {updateProjectMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
@@ -253,7 +253,7 @@ function ProjectEditSheet({
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`h-8 text-sm ${errors.name ? "border-red-500" : ""}`}
+              className={`h-11 text-sm ${errors.name ? "border-red-500" : ""}`}
               placeholder="Tên dự án"
             />
             {errors.name && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.name}</p>}
@@ -266,7 +266,7 @@ function ProjectEditSheet({
               id="client_name"
               value={formData.client_name}
               onChange={(e) => handleInputChange('client_name', e.target.value)}
-              className={`h-8 text-sm ${errors.client_name ? "border-red-500" : ""}`}
+              className={`h-11 text-sm ${errors.client_name ? "border-red-500" : ""}`}
               placeholder="Tên khách hàng"
             />
             {errors.client_name && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.client_name}</p>}
@@ -279,7 +279,7 @@ function ProjectEditSheet({
               id="code"
               value={formData.code}
               onChange={(e) => handleInputChange('code', e.target.value)}
-              className={`h-8 text-sm font-mono ${errors.code ? "border-red-500" : ""}`}
+              className={`h-11 text-sm font-mono ${errors.code ? "border-red-500" : ""}`}
               placeholder="VD: PRJ001"
             />
             {errors.code && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.code}</p>}
@@ -292,7 +292,7 @@ function ProjectEditSheet({
               value={formData.status || 'draft'}
               onValueChange={(value: ProjectStatus) => handleInputChange('status', value)}
             >
-              <SelectTrigger className="h-8 text-sm">
+              <SelectTrigger className="h-11 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -313,11 +313,11 @@ function ProjectEditSheet({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label htmlFor="start_date" className="text-xs text-muted-foreground">Ngày bắt đầu</Label>
-                <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => handleInputChange('start_date', e.target.value)} className="h-8 text-sm" />
+                <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => handleInputChange('start_date', e.target.value)} className="h-11 text-sm" />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="end_date" className="text-xs text-muted-foreground">Ngày kết thúc</Label>
-                <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => handleInputChange('end_date', e.target.value)} className={`h-8 text-sm ${errors.end_date ? "border-red-500" : ""}`} />
+                <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => handleInputChange('end_date', e.target.value)} className={`h-11 text-sm ${errors.end_date ? "border-red-500" : ""}`} />
                 {errors.end_date && <p className="text-xs text-red-500">{errors.end_date}</p>}
               </div>
             </div>
@@ -331,7 +331,7 @@ function ProjectEditSheet({
                     type="number" min={0} max={28}
                     value={formData.salary_period_from ?? ''}
                     onChange={(e) => handleInputChange('salary_period_from', e.target.value === '' ? null : Number(e.target.value))}
-                    className="h-8 text-sm"
+                    className="h-11 text-sm"
                     placeholder="Từ ngày"
                     disabled={!isAdmin}
                   />
@@ -342,7 +342,7 @@ function ProjectEditSheet({
                     type="number" min={0} max={28}
                     value={formData.salary_period_to ?? ''}
                     onChange={(e) => handleInputChange('salary_period_to', e.target.value === '' ? null : Number(e.target.value))}
-                    className="h-8 text-sm"
+                    className="h-11 text-sm"
                     placeholder="Đến ngày"
                     disabled={!isAdmin}
                   />

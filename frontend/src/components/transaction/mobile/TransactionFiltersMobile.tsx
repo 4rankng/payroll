@@ -95,15 +95,18 @@ export function TransactionFiltersMobile({
       <div className="flex gap-2">
         <Sheet open={showDateSheet} onOpenChange={setShowDateSheet}>
           <SheetTrigger asChild>
-            <Button variant="outline" className="flex-1 h-10 justify-start gap-2 text-sm font-normal">
+            <Button variant="outline" className="flex-1 h-11 justify-start gap-2 text-sm font-normal">
               <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="truncate text-left">{dateLabel}</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto">
+          <SheetContent
+            side="bottom"
+            className="h-auto max-h-[85dvh] overflow-y-auto pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          >
             <SheetHeader><SheetTitle>Chọn khoảng thời gian</SheetTitle></SheetHeader>
             <div className="mt-4 space-y-4 pb-6">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
                 {DATE_PRESETS.map((p) => (
                   <Button
                     key={p.value}
@@ -140,7 +143,7 @@ export function TransactionFiltersMobile({
       </div>
 
       {/* Row 2: type + status */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
         {isLoadingTransactionMetadata ? (
           <>
             <Skeleton className="h-10 rounded-xl" />
@@ -152,7 +155,7 @@ export function TransactionFiltersMobile({
               value={filters.transaction_type || 'all'}
               onValueChange={(v) => set('transaction_type', v === 'all' ? undefined : v)}
             >
-              <SelectTrigger className="h-10 text-sm">
+              <SelectTrigger className="h-11 text-sm">
                 <SelectValue placeholder="Loại GD" />
               </SelectTrigger>
               <SelectContent>
@@ -167,7 +170,7 @@ export function TransactionFiltersMobile({
               value={filters.status || 'all'}
               onValueChange={(v) => set('status', v === 'all' ? undefined : v)}
             >
-              <SelectTrigger className="h-10 text-sm">
+              <SelectTrigger className="h-11 text-sm">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
               <SelectContent>

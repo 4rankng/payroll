@@ -56,7 +56,7 @@ export default function SystemHealthPage() {
   }, [summaryData, recentErrors]);
 
   return (
-    <div className="space-y-3 pb-20">
+    <div className="space-y-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         title="Tình trạng API"
         icon={Activity}
@@ -85,7 +85,7 @@ export default function SystemHealthPage() {
       <div className="px-4">
         <Collapsible defaultOpen={true}>
           <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-2 w-full py-2">
+            <button className="flex min-h-11 items-center gap-2 w-full py-2">
               <SectionLabel className="mb-0">Độ Trễ (7 ngày)</SectionLabel>
               <ChevronDown className="h-3.5 w-3.5 ml-auto text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
             </button>

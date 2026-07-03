@@ -222,13 +222,13 @@ export function ExportTransactionDialog({
           </div>
         </div>
 
-        <DialogFooter className="grid grid-cols-2 gap-2">
+        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button
             type="button"
             variant="outline"
             onClick={handleClose}
             disabled={isExporting}
-            className="w-full"
+            className="min-h-11 w-full"
           >
             <X className="h-4 w-4 mr-2" />
             Hủy
@@ -237,7 +237,7 @@ export function ExportTransactionDialog({
             type="button"
             onClick={handleExport}
             disabled={isExporting || !fromDate || !toDate}
-            className="w-full"
+            className="min-h-11 w-full"
           >
             <Download className="h-4 w-4 mr-2" />
             {isExporting ? 'Đang xuất...' : 'Xuất file'}

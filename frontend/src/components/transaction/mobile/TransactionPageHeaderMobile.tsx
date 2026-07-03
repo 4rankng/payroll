@@ -48,7 +48,7 @@ export function TransactionPageHeaderMobile({
   const close = () => setShowActionsSheet(false);
 
   const actionClass =
-    'w-full flex items-center gap-3 px-2 py-3 rounded-xl hover:bg-accent transition-colors touch-manipulation text-left disabled:opacity-50';
+    'w-full min-h-11 flex items-center gap-3 px-2 py-3 rounded-xl hover:bg-accent transition-colors touch-manipulation text-left disabled:opacity-50';
 
   return (
     <MobilePageHeader

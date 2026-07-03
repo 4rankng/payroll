@@ -91,7 +91,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
   };
 
   if (loading) {
-    return <Skeleton className="h-10 w-full" />;
+    return <Skeleton className="h-11 w-full" />;
   }
 
   return (
@@ -104,19 +104,19 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-10 w-full justify-between font-normal",
+            "min-h-11 w-full justify-between font-normal",
             !selected && "text-muted-foreground",
             hasError && "border-destructive focus-visible:ring-destructive",
           )}
         >
-          <span className="truncate">
+          <span className="min-w-0 truncate">
             {selected ? selected.label : "Chọn ngân hàng..."}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        className="w-[calc(100vw-2rem)] max-w-[420px] p-0 sm:w-[var(--radix-popover-trigger-width)]"
         align="start"
         sideOffset={4}
       >
@@ -127,7 +127,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
           }}
         >
           <CommandInput placeholder="Tìm ngân hàng..." />
-          <CommandList className="max-h-60">
+          <CommandList className="max-h-[min(18rem,60dvh)]">
             <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
               Không tìm thấy ngân hàng.
             </CommandEmpty>
@@ -137,7 +137,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
                   key={`${b.code}-${b.swiftCode}-${idx}`}
                   value={`${b.label} ${b.code} ${b.swiftCode}`}
                   onSelect={() => handleDropdownSelect(b)}
-                  className="cursor-pointer"
+                  className="min-h-12 cursor-pointer py-2.5"
                 >
                   <Check
                     className={cn(
@@ -145,7 +145,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
                       !isManualEntry && selectedCode === b.code ? "opacity-100 text-primary" : "opacity-0",
                     )}
                   />
-                  <span className="truncate">{b.label}</span>
+                  <span className="break-words leading-snug">{b.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -299,7 +299,7 @@ export function ManualDisbursementForm(props: Props) {
             placeholder="VD: VPBVVNVX"
             disabled={disabled}
             className={cn(
-              "h-10",
+              "min-h-11",
               touched && !!errors.bankCode && "border-destructive focus-visible:ring-destructive",
             )}
             maxLength={11}
@@ -323,7 +323,7 @@ export function ManualDisbursementForm(props: Props) {
             maxLength={20}
             onChange={(e) => setField("accountNo", e.target.value.replace(/[^\d]/g, ""))}
             disabled={disabled}
-            className="h-10"
+            className="min-h-11"
           />
           {touched && errors.accountNo && (
             <p className="text-xs text-destructive">{errors.accountNo}</p>
@@ -339,7 +339,7 @@ export function ManualDisbursementForm(props: Props) {
             maxLength={100}
             onChange={(e) => setField("accountName", e.target.value)}
             disabled={disabled}
-            className="h-10"
+            className="min-h-11"
           />
           {touched && errors.accountName && (
             <p className="text-xs text-destructive">{errors.accountName}</p>
@@ -353,7 +353,7 @@ export function ManualDisbursementForm(props: Props) {
       {nameMismatch && (
         <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 space-y-3 shadow-sm">
           <div className="flex items-start gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 border border-amber-200">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 border border-amber-200">
               <AlertCircle className="h-3.5 w-3.5 text-amber-700" />
             </div>
             <div className="min-w-0 flex-1">
@@ -390,7 +390,7 @@ export function ManualDisbursementForm(props: Props) {
             variant="outline"
             size="sm"
             onClick={handleAdoptVerifiedName}
-            className="h-8 text-xs gap-1.5 border-amber-300 hover:bg-amber-100 hover:border-amber-400 text-amber-900"
+            className="min-h-11 w-full gap-1.5 border-amber-300 text-xs text-amber-900 hover:bg-amber-100 hover:border-amber-400 sm:w-auto"
           >
             <Check className="h-3.5 w-3.5" />
             Dùng tên ngân hàng xác nhận
@@ -401,7 +401,7 @@ export function ManualDisbursementForm(props: Props) {
       {/* ── Row 3: Account type (pill segmented control, full width) ───── */}
       <div className="grid gap-1.5">
         <Label>Loại tài khoản</Label>
-        <div className="flex p-1 bg-slate-100 rounded-xl">
+        <div className="flex flex-col gap-1 rounded-xl bg-slate-100 p-1 min-[420px]:flex-row">
           {(["0", "1"] as const).map((opt) => (
             <button
               key={opt}
@@ -409,7 +409,7 @@ export function ManualDisbursementForm(props: Props) {
               disabled={disabled}
               onClick={() => setField("accountType", opt)}
               className={cn(
-                "flex-1 flex items-center justify-center py-2 text-xs font-semibold rounded-lg transition-all",
+                "flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold transition-all",
                 state.accountType === opt
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700",
@@ -433,7 +433,7 @@ export function ManualDisbursementForm(props: Props) {
             autoComplete="off"
             onChange={(e) => setField("amount", parseAmountInput(e.target.value))}
             disabled={disabled}
-            className="h-10 pr-14 text-right font-semibold text-lg tabular-nums"
+            className="min-h-11 pr-14 text-right text-lg font-semibold tabular-nums"
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
             VNĐ
@@ -466,7 +466,7 @@ export function ManualDisbursementForm(props: Props) {
           maxLength={100}
           onChange={(e) => setField("description", stripVietnameseDiacritics(e.target.value).replace(/[^A-Za-z0-9 ]/g, ""))}
           disabled={disabled}
-          className="resize-none min-h-0 h-[4.5rem]"
+          className="min-h-24 resize-none"
         />
         {touched && errors.description && (
           <p className="text-xs text-destructive">{errors.description}</p>
@@ -479,7 +479,7 @@ export function ManualDisbursementForm(props: Props) {
           {verificationGood ? (
             <div className="flex items-center gap-2 text-sm text-success">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span className="truncate">
+              <span className="break-words">
                 Tài khoản hợp lệ —{" "}
                 <span className="font-medium">{verified?.verifiedName}</span>
               </span>
@@ -495,13 +495,13 @@ export function ManualDisbursementForm(props: Props) {
             </p>
           )}
         </div>
-        <div className="flex shrink-0 flex-row items-center justify-end gap-2">
+        <div className="grid w-full shrink-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:w-auto">
           <Button
             type="button"
             variant="outline"
             onClick={handleVerify}
             disabled={!canVerify || disabled}
-            className="h-9 text-xs font-bold uppercase tracking-tight px-3"
+            className="min-h-11 px-3 text-xs font-bold uppercase tracking-tight"
           >
             {verifyMutation.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -513,7 +513,7 @@ export function ManualDisbursementForm(props: Props) {
           <Button
             type="submit"
             disabled={!submitReady || disabled}
-            className="h-9 bg-[#2a3b58] text-white hover:bg-[#1e293b] text-xs font-bold uppercase tracking-tight px-4"
+            className="min-h-11 bg-[#2a3b58] px-4 text-xs font-bold uppercase tracking-tight text-white hover:bg-[#1e293b]"
           >
             {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Chuyển tiền

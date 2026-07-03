@@ -70,12 +70,12 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
             </div>
           )}
           <SheetHeader className="px-4 py-3 border-b flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="text-sm font-semibold">
+            <div className="flex items-start justify-between gap-3">
+              <SheetTitle className="text-sm font-semibold break-words">
                 {schedule ? SCHEDULE_LABELS[schedule] : ''}{month ? ` — ${month}` : ''}
               </SheetTitle>
               <SheetClose asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground">
+                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground">
                   <X className="h-4 w-4" />
                 </Button>
               </SheetClose>
@@ -84,7 +84,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
 
           <div className="flex-1 overflow-y-auto p-4">
             {isLoading ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-xl border p-3 space-y-2">
                     <div className="flex items-center gap-2">
@@ -104,11 +104,11 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
                 <span>Không có nhân viên nào đăng nhập</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 {users.map((user) => (
                   <button
                     key={user.user_id}
-                    className="rounded-xl border bg-card p-3 text-left hover:bg-muted/50 transition-colors flex flex-col gap-2"
+                    className="flex min-h-24 flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50"
                     onClick={() => setSelectedEmployeeId(user.employee_id)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -119,13 +119,13 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
                         className="flex-shrink-0"
                       />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate leading-tight">{user.fullname}</p>
-                        <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                        <p className="text-sm font-medium leading-tight break-words">{user.fullname}</p>
+                        <p className="text-xs text-muted-foreground break-all">@{user.username}</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
-                      <span>{ROLE_LABELS[user.role] ?? user.role}</span>
-                      <span>{SCHEDULE_BADGE_LABELS[user.payment_schedule] ?? user.payment_schedule}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-muted-foreground">
+                      <span className="break-words">{ROLE_LABELS[user.role] ?? user.role}</span>
+                      <span className="break-words text-right">{SCHEDULE_BADGE_LABELS[user.payment_schedule] ?? user.payment_schedule}</span>
                     </div>
                     {user.last_login && (
                       <p className="text-xs text-muted-foreground/70 leading-none">

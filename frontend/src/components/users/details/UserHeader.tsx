@@ -30,17 +30,17 @@ export function UserHeader({ user, showName = true }: UserHeaderProps) {
       <div className="flex-1 min-w-0">
         {showName && (
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            <span className="text-sm font-semibold leading-tight truncate">
+            <span className="min-w-0 text-sm font-semibold leading-tight break-words">
               {user.fullname}
             </span>
-            <Badge className={cn(roleColor, "text-xs")} variant="secondary">
+            <Badge className={cn(roleColor, "text-xs shrink-0")} variant="secondary">
               {roleLabel}
             </Badge>
           </div>
         )}
-        <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+        <p className="text-xs text-muted-foreground break-all">@{user.username}</p>
         {user.email && (
-          <p className="text-xs text-muted-foreground/70 truncate hidden sm:block">{user.email}</p>
+          <p className="hidden text-xs text-muted-foreground/70 break-all sm:block">{user.email}</p>
         )}
       </div>
     </div>

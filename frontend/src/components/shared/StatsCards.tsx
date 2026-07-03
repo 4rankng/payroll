@@ -28,9 +28,9 @@ const COLOR_MAP: Record<string, 'blue' | 'emerald' | 'amber' | 'violet'> = {
 
 const gridColsMap: Record<number, string> = {
   1: 'grid-cols-1',
-  2: 'grid-cols-2',
-  3: 'grid-cols-2 sm:grid-cols-3',
-  4: 'grid-cols-2 sm:grid-cols-4',
+  2: 'grid-cols-1 min-[380px]:grid-cols-2',
+  3: 'grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3',
+  4: 'grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-4',
 };
 
 export const StatsCards = ({ stats, columns = 4 }: StatsCardsProps) => (

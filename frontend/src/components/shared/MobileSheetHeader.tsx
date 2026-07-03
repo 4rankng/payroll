@@ -59,7 +59,7 @@ export const MobileSheetHeader = ({
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+        className="h-11 w-11 shrink-0 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onClose}
         aria-label="Đóng"
       >

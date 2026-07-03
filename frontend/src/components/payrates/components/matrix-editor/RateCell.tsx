@@ -64,7 +64,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
         onChange={e => onChange(position, dayType, hourType, e.target.value)}
         placeholder="0"
         className={cn(
-          "h-8 text-right text-sm tabular-nums pr-2 pl-2 transition-colors",
+          "h-11 min-w-20 text-right text-sm tabular-nums pr-2 pl-2 transition-colors",
           hasError && "border-destructive",
           hasDiff
             ? diffClasses[diffState]

@@ -18,9 +18,9 @@ export function CapitalContributionsCardMobile({ contributions, isLoading }: Cap
           <Skeleton className="h-3 w-3" />
           <Skeleton className="h-3 w-24" />
         </div>
-        <div className="flex items-stretch gap-px rounded-xl border border-border/60 bg-border/40 overflow-hidden">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border/60 bg-border/40 min-[380px]:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 px-4 py-3 bg-card flex-1">
+            <div key={i} className="flex flex-col items-center gap-1.5 bg-card px-4 py-3">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-3 w-14" />
             </div>
@@ -44,16 +44,16 @@ export function CapitalContributionsCardMobile({ contributions, isLoading }: Cap
         <TrendingUp className="h-3 w-3 text-muted-foreground/60 shrink-0" />
         <span className="text-xs font-medium text-muted-foreground/70">Vốn chủ sở hữu</span>
       </div>
-      <div className="flex items-stretch gap-px rounded-xl border border-border/60 bg-border/40 overflow-hidden">
+      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border/60 bg-border/40 min-[380px]:grid-cols-3">
         {items.map((item, i) => (
           <div
             key={i}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0 bg-card"
+            className="flex min-w-0 flex-col items-center justify-center gap-1 bg-card px-3 py-3"
           >
-            <span className="text-base font-semibold tabular-nums leading-none tracking-tight text-foreground truncate max-w-full">
+            <span className="max-w-full break-words text-center text-base font-semibold tabular-nums leading-tight tracking-tight text-foreground">
               {item.value}
             </span>
-            <span className="text-xs text-muted-foreground leading-none text-center whitespace-nowrap truncate max-w-full">
+            <span className="max-w-full break-words text-center text-xs leading-tight text-muted-foreground">
               {item.label}
             </span>
           </div>

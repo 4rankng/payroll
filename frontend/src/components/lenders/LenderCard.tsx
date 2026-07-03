@@ -30,18 +30,18 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
       )}
     >
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-start min-[380px]:justify-between">
         <div className="flex-1 min-w-0">
-          <h3 className="typography-title-medium font-semibold truncate">
+          <h3 className="typography-title-medium break-words font-semibold">
             {lender.name}
           </h3>
           {lender.cccd && (
-            <p className="typography-body-small text-muted-foreground font-mono mt-1">
+            <p className="typography-body-small mt-1 break-all font-mono text-muted-foreground">
               CCCD: {lender.cccd}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground ml-4">
+        <div className="flex shrink-0 items-center gap-2 text-muted-foreground min-[380px]:ml-4">
           <Calendar className="w-4 h-4" />
           <span className="typography-body-small">
             {format(new Date(lender.created_at), 'dd/MM/yyyy')}
@@ -54,15 +54,15 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
         {lender.email && (
           <div className="flex items-center gap-2 min-w-0">
             <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="typography-body-small text-muted-foreground truncate">
+            <span className="typography-body-small min-w-0 break-all text-muted-foreground">
               {lender.email}
             </span>
           </div>
         )}
         {lender.mobile && (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="typography-body-small text-muted-foreground">
+            <span className="typography-body-small break-all text-muted-foreground">
               {lender.mobile}
             </span>
           </div>
@@ -77,7 +77,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
               <Building className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Ngân hàng</span>
             </div>
-            <p className="typography-body-small font-medium pl-5">
+            <p className="typography-body-small break-words pl-5 font-medium">
               {isBankLoading ? 'Đang tải...' : (bank?.branch_name || (lender.bank?.branch_name || '-'))}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
               <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Số TK</span>
             </div>
-            <p className="typography-body-small font-medium font-mono pl-5">
+            <p className="typography-body-small break-all pl-5 font-mono font-medium">
               {lender.bank_account_number || '-'}
             </p>
           </div>
@@ -95,7 +95,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
               <User className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Chủ TK</span>
             </div>
-            <p className="typography-body-small font-medium pl-5 truncate">
+            <p className="typography-body-small break-words pl-5 font-medium">
               {lender.bank_account_name || '-'}
             </p>
           </div>

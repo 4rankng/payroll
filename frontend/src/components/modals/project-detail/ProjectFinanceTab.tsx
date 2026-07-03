@@ -82,7 +82,7 @@ export function ProjectFinanceTab({
                 <Progress value={calculateBudgetUsage()} className="w-full" />
               </div>
               
-              <div className="grid grid-cols-3 gap-4 typography-body-medium">
+              <div className="grid grid-cols-1 gap-3 typography-body-medium sm:grid-cols-3 sm:gap-4">
                 <div className="text-center">
                   <p className="typography-title-large text-blue-600">
                     {formatCurrency(formData.budget)}

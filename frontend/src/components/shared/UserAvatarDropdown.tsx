@@ -52,7 +52,7 @@ export const UserAvatarDropdown = ({ className }: UserAvatarDropdownProps) => {
           <Button
             variant="ghost"
             className={cn(
-              "relative h-9 w-9 rounded-full hover:bg-accent hover:text-accent-foreground p-0",
+              "relative h-11 w-11 rounded-full hover:bg-accent hover:text-accent-foreground p-0",
               className
             )}
             aria-label="Menu người dùng"

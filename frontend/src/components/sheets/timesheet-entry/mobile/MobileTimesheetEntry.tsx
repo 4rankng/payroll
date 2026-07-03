@@ -385,7 +385,7 @@ export function MobileTimesheetEntry({
           onClick={() => handleSaveRef.current()}
           disabled={!canSave}
           className={cn(
-            "flex items-center gap-2 px-5 h-10 rounded-full text-sm font-semibold transition-all shrink-0",
+            "flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold transition-all shrink-0",
             canSave
               ? "bg-primary text-primary-foreground shadow-sm active:scale-95"
               : "bg-muted text-muted-foreground cursor-not-allowed",
@@ -488,7 +488,7 @@ export function MobileTimesheetEntry({
 
         <button
           onClick={() => setFilterOpen(false)}
-          className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity active:opacity-80"
         >
           <Check className="h-4 w-4" />
           Áp dụng
@@ -514,7 +514,7 @@ export function MobileTimesheetEntry({
       </div>
       <button
         onClick={() => setFilterOpen(true)}
-        className="px-4 h-9 rounded-full bg-primary/10 text-primary text-sm font-medium active:bg-primary/20 transition-colors"
+        className="min-h-11 rounded-full bg-primary/10 px-4 text-sm font-medium text-primary transition-colors active:bg-primary/20"
       >
         Mở bộ lọc
       </button>
@@ -697,7 +697,7 @@ export function MobileTimesheetEntry({
                             handleDayTypeChange(globalIdx, v)
                           }
                         >
-                          <SelectTrigger className="h-8 text-xs bg-muted/40 border-0 rounded-lg px-2.5 shadow-none focus:ring-1 w-auto min-w-[130px]">
+                          <SelectTrigger className="h-11 w-auto min-w-[130px] rounded-lg border-0 bg-muted/40 px-2.5 text-xs shadow-none focus:ring-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -727,7 +727,7 @@ export function MobileTimesheetEntry({
                     {activeEntry.originalValues && !isMarkedForDeletion && (
                       <button
                         onClick={() => handleDeleteEntry(globalIdx)}
-                        className="flex items-center gap-1 h-8 px-2.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        className="flex min-h-11 items-center gap-1 rounded-xl px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive hover:bg-destructive/10"
                         aria-label="Xóa chấm công ngày này"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -821,7 +821,7 @@ export function MobileTimesheetEntry({
       <div className="flex items-center gap-2 px-4 h-14 border-b bg-background shrink-0">
         <button
           onClick={handleClose}
-          className="p-1.5 -ml-1.5 rounded-xl hover:bg-muted active:bg-muted/80 transition-colors"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-muted active:bg-muted/80"
           aria-label="Quay lại"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -830,7 +830,7 @@ export function MobileTimesheetEntry({
         <button
           onClick={() => setFilterOpen((o) => !o)}
           className={cn(
-            "relative flex items-center gap-1.5 px-3 h-8 rounded-full text-sm font-medium transition-colors",
+            "relative flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
             filterOpen
               ? "bg-primary text-primary-foreground"
               : "bg-muted/70 text-foreground",

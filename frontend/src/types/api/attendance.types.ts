@@ -20,6 +20,11 @@ export interface AdminAttendanceResponse {
   earning_amount?: number;
   salary_reject_reason?: string;
   rejected_at?: string;
+  // Admin review audit (backend migration 083). Null/undefined when never reviewed.
+  review_action?: "approved" | "rejected" | null;
+  review_note?: string | null;
+  reviewed_by?: number | null;
+  reviewed_at?: string | null;
   nearest_checkpoint_name?: string | null;
   nearest_checkpoint_lat?: number | null;
   nearest_checkpoint_lng?: number | null;

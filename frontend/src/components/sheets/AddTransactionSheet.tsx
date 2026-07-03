@@ -315,13 +315,13 @@ function TransactionFormComponent({
         )
       }}
       footer={
-        <div className="grid grid-cols-2 gap-3 w-full">
+        <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={isLoading}
-            className="w-full"
+            className="min-h-11 w-full"
           >
             <X className="w-4 h-4 mr-2" />
             Đóng
@@ -331,7 +331,7 @@ function TransactionFormComponent({
             form="transaction-form"
             disabled={isLoading}
             variant="default"
-            className="w-full"
+            className="min-h-11 w-full"
           >
             {isLoading ? 'Đang xử lý...' : 'Lưu'}
           </Button>
@@ -344,7 +344,7 @@ function TransactionFormComponent({
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">Loại Giao Dịch *</Label>
               {isLoadingTransactionMetadata ? (
-                <Skeleton className="w-full h-9" />
+                <Skeleton className="h-11 w-full" />
               ) : (
                 <ButtonGroup
                 options={transactionTypeOptions}
@@ -365,7 +365,7 @@ function TransactionFormComponent({
             </div>
 
           {/* Amount and Settlement Status */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="amount" className="text-xs font-medium text-muted-foreground">Số Tiền *</Label>
               <div className="relative">
@@ -374,7 +374,7 @@ function TransactionFormComponent({
                   value={watchedAmount}
                   onChange={handleAmountChange}
                   placeholder="0"
-                  className={`pr-12 text-right h-9 ${errors.amount ? 'border-red-500' : ''}`}
+                  className={`h-11 pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
                 />
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
                   đ
@@ -388,7 +388,7 @@ function TransactionFormComponent({
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Trạng Thái *</Label>
               {isLoadingTransactionMetadata ? (
-                <Skeleton className="w-full h-9" />
+                <Skeleton className="h-11 w-full" />
               ) : (
                 <ButtonGroup
                   options={statusOptions}
@@ -420,7 +420,7 @@ function TransactionFormComponent({
                   }
                 }}
                 placeholder="Chọn người góp vốn..."
-                className="h-9"
+                className="h-11"
                 filterRole="admin"
               />
               {errors.user_id && (
@@ -438,7 +438,7 @@ function TransactionFormComponent({
                   required: 'Đối tượng là bắt buộc'
                 })}
                 placeholder={transactionType === 'expense' ? 'Tên nhà cung cấp' : 'Tên khách hàng'}
-                className={`h-9 ${errors.party ? 'border-red-500' : ''}`}
+                className={`h-11 ${errors.party ? 'border-red-500' : ''}`}
               />
               {errors.party && (
                 <p className="text-xs text-financial-negative mt-1">{errors.party.message}</p>
@@ -456,7 +456,7 @@ function TransactionFormComponent({
               })}
               placeholder="Mô tả chi tiết về giao dịch"
               rows={3}
-              className={`resize-none text-sm ${errors.description ? 'border-red-500' : ''}`}
+              className={`min-h-24 resize-none text-sm ${errors.description ? 'border-red-500' : ''}`}
             />
             {errors.description && (
               <p className="text-xs text-financial-negative mt-1">{errors.description.message}</p>
@@ -509,10 +509,10 @@ function TransactionFormComponent({
                   maxFiles={1}
                 />
               ) : (
-                <div className="flex items-center justify-between gap-2 p-3 bg-green-50 rounded border">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2 rounded border bg-green-50 p-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     <Receipt className="h-4 w-4 text-green-600" />
-                    <span className="typography-caption text-green-700">
+                    <span className="typography-caption break-all text-green-700">
                       Đã chọn: {evidenceFile.name}
                     </span>
                   </div>
@@ -521,7 +521,7 @@ function TransactionFormComponent({
                     variant="ghost"
                     size="sm"
                     onClick={handleRemoveFile}
-                    className="h-auto p-1 text-muted-foreground hover:text-red-600"
+                    className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-red-600"
                   >
                     <X className="h-4 w-4" />
                   </Button>

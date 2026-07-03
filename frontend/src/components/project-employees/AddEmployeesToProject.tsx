@@ -246,8 +246,8 @@ export function AddEmployeesToProject({
       accessorKey: "fullname",
       size: 200,
       cell: ({ row }) => (
-        <div className="flex items-center h-8">
-          <span className="font-medium">
+        <div className="flex min-h-11 items-center">
+          <span className="font-medium break-words">
             {row.original.fullname}
           </span>
         </div>
@@ -259,8 +259,8 @@ export function AddEmployeesToProject({
       accessorKey: "cccd",
       size: 140,
       cell: ({ row }) => (
-        <div className="flex items-center h-8">
-          <span className="font-mono typography-body-medium">
+        <div className="flex min-h-11 items-center">
+          <span className="break-all font-mono typography-body-medium">
             {row.original.cccd}
           </span>
         </div>
@@ -275,7 +275,7 @@ export function AddEmployeesToProject({
         const employeeId = row.original.id;
         const position = employeePositions.get(employeeId);
         return (
-          <div className="flex items-center h-8">
+          <div className="flex min-h-11 items-center">
             <span className="typography-body-medium">
               {position || '-'}
             </span>
@@ -293,7 +293,7 @@ export function AddEmployeesToProject({
         const isAdded = recentlyAddedIds.has(employeeId);
 
         return (
-          <div className="flex items-center justify-center h-8">
+          <div className="flex min-h-11 items-center justify-center">
             {isAdded ? (
               <CheckCircle2 className="w-5 h-5 text-green-600" />
             ) : assigningId === employeeId ? (
@@ -307,7 +307,7 @@ export function AddEmployeesToProject({
                   handleEmployeeClick(row.original);
                 }}
                 disabled={isAssigning}
-                className="text-primary hover:text-primary h-8 w-8 p-0"
+                className="h-11 w-11 p-0 text-primary hover:text-primary"
               >
                 <Link className="w-4 h-4" />
               </Button>
@@ -367,7 +367,7 @@ export function AddEmployeesToProject({
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full bg-gray-800 border-border text-white hover:bg-gray-700 hover:border-border"
+              className="min-h-11 w-full bg-gray-800 border-border text-white hover:bg-gray-700 hover:border-border"
             >
               Đóng
             </Button>
@@ -377,7 +377,7 @@ export function AddEmployeesToProject({
 
       {/* Confirmation Dialog with Position Selection */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -394,13 +394,13 @@ export function AddEmployeesToProject({
                 Vị trí *
               </Label>
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 min-[380px]:flex-row">
                   <Select
                     value={hasPayrates ? selectedPosition : ""}
                     onValueChange={setSelectedPosition}
                     disabled={!hasPayrates}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="h-11 w-full">
                       <SelectValue
                         placeholder={hasPayrates ? "Chọn vị trí" : "Dự án chưa có bảng lương"}
                       />
@@ -422,7 +422,7 @@ export function AddEmployeesToProject({
                         setShowConfirmDialog(false);
                         openProjectDetails(project.id.toString(), 'payrates');
                       }}
-                      className="shrink-0"
+                      className="min-h-11 shrink-0"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Thêm bảng lương
@@ -447,7 +447,7 @@ export function AddEmployeesToProject({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full"
+                className="h-11 w-full"
               />
               <p className="text-xs text-muted-foreground">
                 Để trống để có hiệu lực ngay lập tức
@@ -463,7 +463,7 @@ export function AddEmployeesToProject({
                 value={paymentSchedule}
                 onValueChange={(value) => setPaymentSchedule(value as 'weekly' | 'monthly')}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -487,12 +487,13 @@ export function AddEmployeesToProject({
             </div>
           </div>
 
-            <DialogFooter>
+            <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancelAssign}
               disabled={assigningId === selectedEmployee?.id}
+              className="min-h-11"
             >
               Đóng
             </Button>
@@ -500,6 +501,7 @@ export function AddEmployeesToProject({
               type="button"
               onClick={handleConfirmAssign}
               disabled={assigningId === selectedEmployee?.id || !selectedPosition?.trim()}
+              className="min-h-11"
             >
               {assigningId === selectedEmployee?.id ? "Đang thêm..." : "Thêm nhân viên"}
             </Button>
@@ -518,20 +520,20 @@ export function AddEmployeesToProject({
           className={`${isMobile ? "w-full" : "w-[70%] min-w-[600px] max-w-[800px]"} p-0 flex flex-col h-full`}
         >
           <SheetHeader className="space-y-0 p-6 pb-0 flex-shrink-0 border-b" style={{ paddingTop: "max(24px, calc(24px + env(safe-area-inset-top)))" }}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
                 <Building2 className="w-5 h-5 text-primary" />
               </div>
-              <div className="flex-1">
-                <SheetTitle className="typography-headline-medium leading-none tracking-tight">
+              <div className="min-w-0 flex-1">
+                <SheetTitle className="typography-headline-medium leading-tight tracking-tight">
                   Thêm nhân viên vào dự án
                 </SheetTitle>
-                <p className="typography-body-medium text-muted-foreground mt-1 font-medium">
+                <p className="typography-body-medium mt-1 break-words font-medium text-muted-foreground">
                   {project?.name}
                 </p>
               </div>
               <SheetClose asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0">
                   <X className="h-4 w-4" />
                   <span className="sr-only">Đóng</span>
                 </Button>

@@ -485,7 +485,7 @@ export function EmployeeCheckInCard({
             </div>
           </div>
           {locationProgress?.sampleCount ? (
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
                 <p className="text-[11px] font-bold uppercase leading-4 text-sky-700">Sai số</p>
                 <p className="mt-0.5 truncate text-[15px] font-extrabold leading-5 text-sky-950">

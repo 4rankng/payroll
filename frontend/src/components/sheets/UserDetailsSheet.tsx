@@ -127,7 +127,7 @@ function UserDetailsSheet({
         onClose={handleClose}
         avatar={avatar}
         footer={
-          <div className="flex items-center gap-1.5 w-full">
+          <div className="flex w-full flex-wrap items-center gap-2">
             <UserActions
               isEditing={isEditing}
               onEdit={() => setIsEditing(true)}
@@ -138,7 +138,7 @@ function UserDetailsSheet({
               loading={loading}
             />
             {!isEditing && (
-              <Button variant="default" size="sm" onClick={handleClose} className="h-9 px-5">
+              <Button variant="default" size="sm" onClick={handleClose} className="min-h-11 flex-1 px-5 min-[420px]:flex-none">
                 Đóng
               </Button>
             )}
@@ -155,23 +155,23 @@ function UserDetailsSheet({
                 </div>
                 <span className="text-xs font-semibold text-foreground">Thông tin tài khoản</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label htmlFor="fullname" className="text-xs text-muted-foreground">Họ tên</Label>
-                  <Input id="fullname" value={formData.fullname || ""} onChange={(e) => handleInputChange("fullname", e.target.value)} disabled={loading} className="h-9 text-sm" />
+                  <Input id="fullname" value={formData.fullname || ""} onChange={(e) => handleInputChange("fullname", e.target.value)} disabled={loading} className="h-11 text-sm" />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="username" className="text-xs text-muted-foreground">Tên đăng nhập</Label>
-                  <Input id="username" value={formData.username || ""} onChange={(e) => handleInputChange("username", e.target.value)} disabled={loading} className="h-9 text-sm font-mono" />
+                  <Input id="username" value={formData.username || ""} onChange={(e) => handleInputChange("username", e.target.value)} disabled={loading} className="h-11 text-sm font-mono" />
                 </div>
-                <div className="space-y-1 col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
-                  <Input id="email" type="email" value={formData.email || ""} onChange={(e) => handleInputChange("email", e.target.value)} disabled={loading} className="h-9 text-sm" />
+                  <Input id="email" type="email" value={formData.email || ""} onChange={(e) => handleInputChange("email", e.target.value)} disabled={loading} className="h-11 text-sm" />
                 </div>
-                <div className="space-y-1 col-span-2">
+                <div className="space-y-1 sm:col-span-2">
                   <Label htmlFor="role" className="text-xs text-muted-foreground">Vai trò</Label>
                   <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)} disabled={loading}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Quản trị viên</SelectItem>
                       <SelectItem value="partner">Quản lý</SelectItem>
@@ -184,19 +184,19 @@ function UserDetailsSheet({
           ) : (
             <>
               <div className="rounded-xl border bg-card">
-                <div className="flex items-baseline justify-between gap-3 px-3 py-2 border-b border-border/50">
+                <div className="flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Họ tên</span>
-                  <span className="text-xs font-medium text-right">{user.fullname || '-'}</span>
+                  <span className="text-xs font-medium break-words min-[380px]:text-right">{user.fullname || '-'}</span>
                 </div>
-                <div className="flex items-baseline justify-between gap-3 px-3 py-2 border-b border-border/50">
+                <div className="flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Tên đăng nhập</span>
-                  <span className="text-xs font-mono font-medium text-right">{user.username || '-'}</span>
+                  <span className="text-xs font-mono font-medium break-all min-[380px]:text-right">{user.username || '-'}</span>
                 </div>
-                <div className="flex items-baseline justify-between gap-3 px-3 py-2 border-b border-border/50">
+                <div className="flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Email</span>
-                  <span className="text-xs font-medium text-right">{user.email || '-'}</span>
+                  <span className="text-xs font-medium break-all min-[380px]:text-right">{user.email || '-'}</span>
                 </div>
-                <div className="flex items-baseline justify-between gap-3 px-3 py-2">
+                <div className="flex flex-col gap-1 px-3 py-2.5 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Vai trò</span>
                   <span className="text-xs font-medium text-right">
                     {user.role === 'admin' ? 'Quản trị viên' : user.role === 'partner' ? 'Quản lý' : 'Nhân viên'}
@@ -205,8 +205,8 @@ function UserDetailsSheet({
               </div>
 
               {/* Timestamps */}
-              <div className="rounded-xl border bg-card grid grid-cols-2 divide-x divide-border/50">
-                <div className="flex flex-col gap-0.5 px-3 py-2.5">
+              <div className="grid grid-cols-1 rounded-xl border bg-card min-[380px]:grid-cols-2 min-[380px]:divide-x min-[380px]:divide-border/50">
+                <div className="flex flex-col gap-0.5 px-3 py-2.5 border-b border-border/50 min-[380px]:border-b-0">
                   <span className="text-[10px] text-muted-foreground">Ngày tạo</span>
                   <span className="text-sm font-semibold">{format(new Date(user.created_at), 'dd/MM/yyyy')}</span>
                 </div>
@@ -220,18 +220,18 @@ function UserDetailsSheet({
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Hoạt động (30 ngày)</p>
                 {activityLoading ? (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className="h-12 rounded-xl bg-muted/40 animate-pulse" />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
                     <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
                       <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Đăng nhập cuối</p>
-                        <p className="text-sm font-bold truncate">
+                        <p className="text-sm font-bold break-words">
                           {activityData?.authentication?.last_login
                             ? formatDistanceToNow(new Date(activityData.authentication.last_login), { addSuffix: true, locale: vi })
                             : '—'}
@@ -242,14 +242,14 @@ function UserDetailsSheet({
                       <Activity className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Đăng nhập</p>
-                        <p className="text-sm font-bold truncate text-blue-600">{activityData?.authentication?.total_logins ?? 0}</p>
+                        <p className="text-sm font-bold text-blue-600">{activityData?.authentication?.total_logins ?? 0}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
                       <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Công</p>
-                        <p className="text-sm font-bold truncate">{activityData?.payroll_operations?.timesheets_managed ?? 0}</p>
+                        <p className="text-sm font-bold">{activityData?.payroll_operations?.timesheets_managed ?? 0}</p>
                       </div>
                     </div>
                   </div>

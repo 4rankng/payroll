@@ -129,13 +129,13 @@ export function MobileTable<T extends Record<string, unknown>>({
               key={rowId}
               role="listitem"
               className={cn(
-                "border border-border/50 rounded-xl bg-card shadow-sm hover:shadow-md hover:border-border transition-all duration-200 touch-manipulation overflow-hidden mb-2.5",
+                "mb-2.5 overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-all duration-200 touch-manipulation hover:border-border hover:shadow-md",
                 extraClass,
               )}
             >
               <AccordionTrigger
                 hideChevron
-                className="hover:no-underline px-4 py-3.5 min-h-[60px] touch-manipulation active:scale-[0.99] transition-transform"
+                className="min-h-[64px] px-4 py-3.5 transition-transform touch-manipulation hover:no-underline active:scale-[0.99]"
                 onClick={(e) => {
                   if (onRowClick) {
                     e.preventDefault();
@@ -163,7 +163,7 @@ export function MobileTable<T extends Record<string, unknown>>({
 
                   {/* Right (or Left if no title): Primary fields */}
                   {primaryFields.length > 0 && (
-                    <div className={cn("flex flex-col gap-1.5 shrink-0", (rowTitle || rowSubtitle) ? "items-end text-right" : "items-start flex-1 min-w-0 text-left")}>
+                    <div className={cn("flex min-w-0 shrink-0 flex-col gap-1.5", (rowTitle || rowSubtitle) ? "max-w-[46%] items-end text-right" : "flex-1 items-start text-left")}>
                       {primaryFields.map((field) => {
                         const value = getFieldValue(row, field);
                         if (!value) return null;
@@ -184,7 +184,7 @@ export function MobileTable<T extends Record<string, unknown>>({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-10 w-10 p-0 touch-manipulation"
+                            className="h-11 w-11 p-0 touch-manipulation"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -225,7 +225,7 @@ export function MobileTable<T extends Record<string, unknown>>({
                         return (
                           <div key={String(field.key)} className="min-w-0">
                             <dt className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.06em] mb-1">{field.label}</dt>
-                            <dd className="text-[13px] text-foreground">{value}</dd>
+                            <dd className="min-w-0 break-words text-[13px] leading-relaxed text-foreground">{value}</dd>
                           </div>
                         );
                       })}

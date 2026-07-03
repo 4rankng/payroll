@@ -53,21 +53,21 @@ export const BulkTransferFiltersSection = memo(function BulkTransferFiltersSecti
         <button
           type="button"
           className={cn(
-            "flex w-full items-center justify-between rounded-xl border border-dashed px-3 py-2 text-sm transition-colors group",
+            "group flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-dashed px-3 py-2.5 text-sm transition-colors",
             hasActiveFilters
               ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
               : "border-muted-foreground/25 text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
           )}
         >
-          <span className="flex items-center gap-2">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span className="flex min-w-0 items-center gap-2">
+            <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
             {hasActiveFilters ? (
-              <span>Đã lọc: {filterSummary}</span>
+              <span className="min-w-0 break-words text-left">Đã lọc: {filterSummary}</span>
             ) : (
               <span>Bộ lọc nâng cao</span>
             )}
           </span>
-          <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>

@@ -32,7 +32,7 @@ const EmployeeListPage = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-full pb-20">
+    <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         title="Danh sách nhân viên"
         subtitle="Hạn mức ứng lương theo tháng"
@@ -40,7 +40,7 @@ const EmployeeListPage = () => {
         sticky={false}
         bordered={false}
         actions={
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         }
@@ -54,12 +54,12 @@ const EmployeeListPage = () => {
             value={page.flexPaySearchInput}
             onSearch={page.handleFlexPaySearch}
             placeholder="Tìm tên hoặc CCCD..."
-            className="h-10"
+            className="h-11"
           />
           <Button
             variant="outline"
             size="sm"
-            className="h-10 px-3 shrink-0"
+            className="h-11 px-3 shrink-0"
             onClick={page.handleExportFlexPayEmployees}
             disabled={page.exportFlexPayMutation.isPending}
             aria-label="Xuất danh sách"
@@ -73,7 +73,7 @@ const EmployeeListPage = () => {
           value={page.selectedViewMonth ?? ""}
           onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
         >
-          <SelectTrigger className="h-10">
+          <SelectTrigger className="h-11">
             <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue placeholder="Chọn tháng" />
           </SelectTrigger>

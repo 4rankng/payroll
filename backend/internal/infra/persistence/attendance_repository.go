@@ -79,6 +79,50 @@ func (r *attendanceRepository) MarkAutoRejected(ctx context.Context, id uint, re
 	return res.RowsAffected > 0, nil
 }
 
+// MarkAdminReviewed stamps an admin review (approve/reject) on an attendance
+// and applies the earning override atomically. The update is conditional on the
+// id only — unlike MarkAutoRejected we WANT to allow reviewing an already-final
+// row (e.g. an auto-rejected record being approved to restore earning, or a
+// completed record being admin-rejected to claw back pay). The earningAmount +
+// salary_reject_reason columns are derived from the action by the service layer
+// so this method stays a faithful partial-update:
+//   - approved: earningAmount is the recomputed value, salary_reject_reason cleared
+//   - rejected: earningAmount is &zero, salary_reject_reason set to note
+//
+// Returns true if a row matched id, false if no such attendance exists.
+func (r *attendanceRepository) MarkAdminReviewed(
+	ctx context.Context,
+	id uint,
+	action domain.AttendanceReviewAction,
+	note string,
+	adminID uint,
+	reviewedAt time.Time,
+	earningAmount *int64,
+) (bool, error) {
+	updates := map[string]interface{}{
+		"review_action":  string(action),
+		"review_note":    note,
+		"reviewed_by":    adminID,
+		"reviewed_at":    reviewedAt,
+		"earning_amount": *earningAmount,
+	}
+	// Approve restores pay and clears any prior reject reason; reject zeros pay
+	// and records the reason so GetStatus() still reads as rejected consistently.
+	if action == domain.AttendanceReviewActionApproved {
+		updates["salary_reject_reason"] = nil
+	} else {
+		updates["salary_reject_reason"] = note
+	}
+
+	res := r.getDB(ctx).Model(&domain.Attendance{}).
+		Where("id = ?", id).
+		Updates(updates)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
 	dateOnly := date.Format("2006-01-02")

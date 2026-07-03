@@ -197,13 +197,13 @@ function ProjectAssignmentSheet({
       }}
       footer={
         <form onSubmit={handleSubmit}>
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+            <Button type="button" variant="outline" onClick={handleClose} className="min-h-11">
               Đóng
             </Button>
             <Button
               type="submit"
-              className="flex-1"
+              className="min-h-11"
               variant="default"
               disabled={loading || !selectedProject || !hasPayrates || !formData.position?.trim() || !canAssignEmployees}
             >
@@ -248,17 +248,17 @@ function ProjectAssignmentSheet({
             )}
 
             {selectedProject && canAssignEmployees && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="position">Vị trí *</Label>
                   <div className="space-y-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 min-[420px]:flex-row">
                       <Select
                         value={hasPayrates ? formData.position : ""}
                         onValueChange={(value) => setFormData(prev => ({ ...prev, position: value }))}
                         disabled={!hasPayrates}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="h-11 w-full">
                           <SelectValue
                             placeholder={hasPayrates ? "Chọn vị trí" : "Dự án chưa có bảng lương"}
                           />
@@ -281,7 +281,7 @@ function ProjectAssignmentSheet({
                               openProjectDetails(selectedProject.id.toString(), 'payrates');
                             }
                           }}
-                          className="shrink-0"
+                          className="min-h-11 shrink-0"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Thêm bảng lương
@@ -303,7 +303,7 @@ function ProjectAssignmentSheet({
                     value={formData.employee_code}
                     onChange={(e) => setFormData(prev => ({ ...prev, employee_code: e.target.value }))}
                     placeholder="Để trống sẽ sử dụng CCCD"
-                    className="w-full"
+                    className="h-11 w-full"
                   />
                   <p className="typography-body-small text-muted-foreground">Nếu để trống, hệ thống sẽ sử dụng số CCCD của nhân viên</p>
                 </div>
@@ -321,14 +321,14 @@ function ProjectAssignmentSheet({
                       setFormData(prev => ({ ...prev, payment_schedule: value as 'weekly' | 'monthly' }));
                     }
                   }}
-                  className="grid grid-cols-2 gap-2"
+                  className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2"
                   aria-label="Chọn chu kỳ trả lương"
                 >
                   <ToggleGroupItem
                     value="weekly"
                     aria-label={VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.weekly}
                     className={cn(
-                      "justify-start gap-2 typography-body-small",
+                      "min-h-11 justify-start gap-2 typography-body-small",
                       "data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary data-[state=on]:border-2 data-[state=on]:font-medium",
                       "data-[state=off]:bg-muted/30 data-[state=off]:text-muted-foreground data-[state=off]:border data-[state=off]:border-border"
                     )}
@@ -340,7 +340,7 @@ function ProjectAssignmentSheet({
                     value="monthly"
                     aria-label={VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.monthly}
                     className={cn(
-                      "justify-start gap-2 typography-body-small",
+                      "min-h-11 justify-start gap-2 typography-body-small",
                       "data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary data-[state=on]:border-2 data-[state=on]:font-medium",
                       "data-[state=off]:bg-muted/30 data-[state=off]:text-muted-foreground data-[state=off]:border data-[state=off]:border-border"
                     )}
@@ -352,7 +352,7 @@ function ProjectAssignmentSheet({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="start_date">Ngày bắt đầu</Label>
                 <Input
@@ -360,7 +360,7 @@ function ProjectAssignmentSheet({
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                  className="w-full"
+                  className="h-11 w-full"
                 />
                 <p className="typography-body-small text-muted-foreground">Mặc định là ngày hôm nay</p>
               </div>
@@ -372,7 +372,7 @@ function ProjectAssignmentSheet({
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                  className="w-full"
+                  className="h-11 w-full"
                 />
               </div>
             </div>

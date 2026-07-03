@@ -86,25 +86,25 @@ export function SendMoneyDialog({ open, onOpenChange }: Props) {
   return (
     <>
       <Dialog open={open && !confirmOpen} onOpenChange={(v) => { if (!v) { reset(); } onOpenChange(v); }}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-hidden sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Chuyển tiền</DialogTitle>
           </DialogHeader>
-          <div ref={scrollRef} className="overflow-y-auto">
-          {inProgressRow ? (
-            <TransactionStatusPanel row={inProgressRow} onReset={reset} />
-          ) : (
-            <ManualDisbursementForm
-              banks={banks}
-              banksLoading={banksQuery.isLoading}
-              state={form}
-              onChange={setForm}
-              onSubmit={handleSubmit}
-              verified={verified}
-              onVerified={setVerified}
-              disabled={initiateMutation.isPending}
-            />
-          )}
+          <div ref={scrollRef} className="max-h-[calc(92dvh-7rem)] overflow-y-auto pr-1">
+            {inProgressRow ? (
+              <TransactionStatusPanel row={inProgressRow} onReset={reset} />
+            ) : (
+              <ManualDisbursementForm
+                banks={banks}
+                banksLoading={banksQuery.isLoading}
+                state={form}
+                onChange={setForm}
+                onSubmit={handleSubmit}
+                verified={verified}
+                onVerified={setVerified}
+                disabled={initiateMutation.isPending}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

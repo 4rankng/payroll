@@ -39,7 +39,7 @@ export function ButtonGroup<T extends string = string>({
             type="button"
             onClick={() => onChange(option.value)}
             className={cn(
-              'relative inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium transition-all rounded-md',
+              'relative inline-flex min-h-11 items-center justify-center px-3 py-2 text-sm font-medium transition-all rounded-md',
               'focus:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               fullWidth && 'flex-1',
               isSelected

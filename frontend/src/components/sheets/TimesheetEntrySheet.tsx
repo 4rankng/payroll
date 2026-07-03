@@ -409,7 +409,7 @@ function TimesheetEntrySheetComponent({
         className="p-0 flex flex-col h-full !w-screen max-w-[1200px] mx-auto"
       >
         {/* Header — title, filters, close */}
-        <div className="flex items-center gap-3 px-4 h-11 border-b flex-shrink-0 bg-background">
+        <div className="flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-4 py-2 flex-shrink-0">
           <h1 className="text-sm font-semibold text-foreground shrink-0">Thêm chấm công</h1>
           <div className="w-px h-4 bg-border shrink-0" />
           {/* Project selector */}
@@ -419,9 +419,9 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isProjectDropdownOpen}
-                className="h-7 px-2 text-xs font-normal hover:bg-accent justify-between gap-1 border border-transparent hover:border-input"
+                className="min-h-11 max-w-full justify-between gap-1 border border-transparent px-3 text-xs font-normal hover:bg-accent hover:border-input"
               >
-                <span>
+                <span className="min-w-0 truncate">
                   {selectedProject
                     ? <><span className="font-medium">{selectedProject.name}</span>{selectedProject.code && <span className="text-muted-foreground ml-1 text-xs">{selectedProject.code}</span>}</>
                     : <span className="text-muted-foreground">Chọn dự án</span>
@@ -466,10 +466,10 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isEmployeeDropdownOpen}
-                className="h-7 px-2 text-xs font-normal hover:bg-accent justify-between gap-1 border border-transparent hover:border-input"
+                className="min-h-11 max-w-full justify-between gap-1 border border-transparent px-3 text-xs font-normal hover:bg-accent hover:border-input"
                 disabled={availableEmployees.length === 0 || !isPayRateReady}
               >
-                <span>
+                <span className="min-w-0 truncate">
                   {selectedEmployeeFilter && selectedEmployee
                     ? <span className="font-medium">{selectedEmployee.fullname}</span>
                     : <span className="text-muted-foreground">Tất cả nhân viên</span>
@@ -527,12 +527,12 @@ function TimesheetEntrySheetComponent({
             maxDate={useMemo(() => new Date(), [])}
           />
 
-          <div className="flex-1" />
+          <div className="min-w-6 flex-1" />
           <Button
             variant="ghost"
             size="icon"
             onClick={handleCloseClick}
-            className="h-7 w-7 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+            className="h-11 w-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
             aria-label="Đóng"
           >
             <X className="h-4 w-4" />
@@ -640,7 +640,7 @@ function TimesheetEntrySheetComponent({
               <Button
                 variant="outline"
                 onClick={handleCloseClick}
-                className="h-9 px-4"
+                className="min-h-11 px-4"
               >
                 Hủy
               </Button>
@@ -652,7 +652,7 @@ function TimesheetEntrySheetComponent({
                       <Button
                         onClick={handleSave}
                         disabled={!canSave}
-                        className="h-9 px-5"
+                        className="min-h-11 px-5"
                       >
                         {isLoading ? 'Đang lưu...' : 'Lưu chấm công'}
                       </Button>

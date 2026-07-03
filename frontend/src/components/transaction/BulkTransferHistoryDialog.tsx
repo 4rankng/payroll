@@ -75,7 +75,7 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
       type="button"
       onClick={() => onClick(history)}
       className={cn(
-        'w-full text-left px-4 py-3 flex items-center gap-3 transition-colors',
+        'w-full text-left px-4 py-3 flex items-start gap-3 transition-colors',
         'hover:bg-muted/50 active:bg-slate-100',
         'focus-visible:outline-none focus-visible:bg-muted/50',
         'touch-manipulation group',
@@ -83,14 +83,14 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
       )}
     >
       {/* Icon */}
-      <div className="shrink-0 w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center">
+      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
         <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-sm font-medium text-foreground truncate flex-1" title={history.filename}>
+        <div className="mb-1 flex items-start gap-2">
+          <p className="min-w-0 flex-1 break-all text-sm font-medium text-foreground" title={history.filename}>
             {history.filename}
           </p>
           {allSuccess ? (
@@ -101,19 +101,19 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2.5 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-400">
           <span className="tabular-nums">
             {history.completed_txn}/{history.total_txn} thành công
           </span>
           <span className="text-slate-200">·</span>
-          <span className="flex items-center gap-1 truncate">
+          <span className="flex items-center gap-1">
             <Clock className="w-3 h-3 shrink-0" />
             {formatDate(history.uploaded_at)}
           </span>
-          <span className="hidden sm:flex items-center gap-1 truncate">
+          <span className="hidden items-center gap-1 sm:flex">
             <span className="text-slate-200">·</span>
             <User className="w-3 h-3 shrink-0" />
-            <span className="truncate max-w-[100px]">{history.uploaded_by}</span>
+            <span className="max-w-[140px] break-words">{history.uploaded_by}</span>
           </span>
         </div>
       </div>
@@ -197,7 +197,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
 
         {/* Header */}
         <div className="shrink-0 px-4 pt-4 pb-3 border-b">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-start justify-between gap-3">
             <SheetHeader className="text-left space-y-0">
               <SheetTitle className="text-sm font-semibold">Lịch sử chuyển lô</SheetTitle>
               <SheetDescription className="text-xs text-slate-400">
@@ -208,7 +208,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               <Button
                 variant="ghost"
                 size="icon"
-                className="shrink-0 h-7 w-7 rounded-xl text-slate-400 hover:text-foreground hover:bg-slate-100"
+                className="h-11 w-11 shrink-0 rounded-xl text-slate-400 hover:text-foreground hover:bg-slate-100"
                 aria-label="Đóng"
               >
                 <X className="h-3.5 w-3.5" />
@@ -217,13 +217,13 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
           </div>
 
           {/* Date filters — calendar popovers */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
             <Popover open={fromDateOpen} onOpenChange={setFromDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal h-7 text-xs px-2",
+                    "h-11 w-full justify-start px-3 text-left text-xs font-normal",
                     !fromDate && "text-muted-foreground"
                   )}
                 >
@@ -250,7 +250,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal h-7 text-xs px-2",
+                    "h-11 w-full justify-start px-3 text-left text-xs font-normal",
                     !toDate && "text-muted-foreground"
                   )}
                 >

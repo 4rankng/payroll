@@ -48,7 +48,7 @@ export const MobileSubPageHeader = ({
         <Button
           variant="ghost"
           size="icon"
-          className="-ml-1 h-9 w-9 shrink-0 text-slate-700"
+          className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-slate-700"
           onClick={onBack}
           aria-label="Quay lại"
         >
@@ -67,7 +67,7 @@ export const MobileSubPageHeader = ({
             </p>
           )}
         </div>
-        {actions && <div className="shrink-0">{actions}</div>}
+        {actions && <div className="shrink-0 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">{actions}</div>}
       </div>
     </div>
   );

@@ -85,14 +85,14 @@ export function MultiSearchableDropdown({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between', className)}
+          className={cn('min-h-11 w-full justify-between gap-2 text-left', className)}
           disabled={disabled}
         >
-          {displayText}
+          <span className="min-w-0 truncate">{displayText}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-[calc(100vw-2rem)] max-w-[420px] p-0 sm:w-[--radix-popover-trigger-width]">
         <Command
           shouldFilter
           filter={(itemValue, search) => {
@@ -105,11 +105,11 @@ export function MultiSearchableDropdown({
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {allOption && (
-                <CommandItem onSelect={handleToggleAll} className="cursor-pointer">
+                <CommandItem onSelect={handleToggleAll} className="min-h-12 cursor-pointer py-2.5">
                   <Check
                     className={cn('mr-2 h-4 w-4', isAllSelected ? 'opacity-100' : 'opacity-0')}
                   />
-                  {allOption.label}
+                  <span className="break-words leading-snug">{allOption.label}</span>
                 </CommandItem>
               )}
               {options.map((option) => (
@@ -117,12 +117,12 @@ export function MultiSearchableDropdown({
                   key={option.value}
                   value={option.searchText ?? option.label}
                   onSelect={() => handleToggle(option.value)}
-                  className="cursor-pointer"
+                  className="min-h-12 cursor-pointer py-2.5"
                 >
                   <Check
                     className={cn('mr-2 h-4 w-4', valueSet.has(option.value) ? 'opacity-100' : 'opacity-0')}
                   />
-                  {option.label}
+                  <span className="break-words leading-snug">{option.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

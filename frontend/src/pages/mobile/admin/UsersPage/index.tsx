@@ -130,7 +130,7 @@ const UsersPageMobile = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
+    <div className="flex min-h-full flex-col pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <MobilePageHeader
         title="Người dùng"
@@ -139,7 +139,7 @@ const UsersPageMobile = () => {
           !isAdvPartner ? (
             <Button
               size="sm"
-              className="h-9 px-4 btn-admin-primary shrink-0"
+              className="h-11 px-4 btn-admin-primary shrink-0"
               onClick={() => openAddUser()}
             >
               <Plus className="h-4 w-4 mr-1" />
@@ -167,7 +167,7 @@ const UsersPageMobile = () => {
                     }
                     handleRoleSelect(isActive ? undefined : stat.role);
                   }}
-                  className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border shrink-0 min-w-[72px] transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+                  className={`flex min-h-16 flex-col items-center gap-1 px-3 py-2.5 rounded-xl border shrink-0 min-w-[72px] transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
                 >
                   <div className={`p-1 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -243,7 +243,7 @@ const UsersPageMobile = () => {
           )}
           <button
             onClick={filterState.clearFilters}
-            className="text-xs text-muted-foreground underline underline-offset-2"
+            className="min-h-11 px-1 text-xs text-muted-foreground underline underline-offset-2"
           >
             Xóa tất cả
           </button>
@@ -305,7 +305,10 @@ const UsersPageMobile = () => {
 
       {/* Filter sheet */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe">
+        <SheetContent
+          side="bottom"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+        >
           <SheetHeader className="pb-4">
             <SheetTitle>Bộ lọc</SheetTitle>
           </SheetHeader>
@@ -333,7 +336,7 @@ const UsersPageMobile = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="grid grid-cols-1 gap-3 pt-2 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"
                 className="flex-1 h-11"

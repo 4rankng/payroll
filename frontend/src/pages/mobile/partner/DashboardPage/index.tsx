@@ -200,7 +200,7 @@ const PartnerDashboardMobile = () => {
 
       {/* KPI Grid */}
       <div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="rounded-xl border border-[#D8E2EE] bg-white p-4 space-y-2">
@@ -230,8 +230,8 @@ const PartnerDashboardMobile = () => {
 
       {/* Top Employees Leaderboard */}
       <MobileSurface className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E7EEF6]">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E7EEF6]">
             <Trophy className="h-4 w-4 text-primary" />
           </div>
           <h2 className="text-sm font-semibold text-foreground">Top nhân viên</h2>

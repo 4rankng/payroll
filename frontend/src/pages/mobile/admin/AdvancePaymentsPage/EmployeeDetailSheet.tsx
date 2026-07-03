@@ -96,16 +96,16 @@ export function EmployeeDetailSheet({
                         label="Đã sử dụng"
                         displayValue={`${usedPct}%`}
                       />
-                      <div className="grid grid-cols-3 gap-2 pt-1">
-                        <div className="text-center">
+                      <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-3">
+                        <div className="rounded-lg bg-muted/40 px-2.5 py-2">
                           <p className="text-xs text-muted-foreground">Hạn mức</p>
                           <p className="text-xs font-semibold tabular-nums">{formatCurrency(emp.maxAdvanceAmount)}</p>
                         </div>
-                        <div className="text-center">
+                        <div className="rounded-lg bg-orange-50 px-2.5 py-2">
                           <p className="text-xs text-muted-foreground">Đã dùng</p>
                           <p className="text-xs font-semibold text-orange-600 tabular-nums">{formatCurrency(emp.utilizedAmount)}</p>
                         </div>
-                        <div className="text-center">
+                        <div className="rounded-lg bg-amber-50 px-2.5 py-2">
                           <p className="text-xs text-muted-foreground">Chờ xử lý</p>
                           <p className="text-xs font-semibold text-amber-600 tabular-nums">{formatCurrency(emp.pendingAmount)}</p>
                         </div>

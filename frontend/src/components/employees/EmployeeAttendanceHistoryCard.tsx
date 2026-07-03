@@ -72,11 +72,11 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
               Lịch sử chấm công
             </h3>
           </div>
-          <div className="flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50/70 p-1">
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50/70 p-1">
             <button
               type="button"
               aria-label="Xem tháng trước"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               onClick={() => setSelectedMonth((current) => getPreviousAttendanceHistoryMonth(current))}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
               type="button"
               aria-label="Xem tháng sau"
               disabled={!month.canGoNext}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:text-slate-300"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:text-slate-300"
               onClick={() => setSelectedMonth((current) => getNextAttendanceHistoryMonth(current))}
             >
               <ChevronRight className="h-4 w-4" />

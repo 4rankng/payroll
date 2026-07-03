@@ -42,7 +42,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
         <ToggleGroupItem
           value="admins"
           className={cn(
-            'h-9 text-xs gap-1.5 px-3 rounded-xl border transition-all duration-150',
+            'min-h-11 gap-1.5 rounded-xl border px-3 text-xs transition-all duration-150',
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-purple-50 data-[state=off]:hover:border-purple-200 data-[state=off]:hover:text-purple-700',
             'data-[state=on]:bg-purple-100 data-[state=on]:border-purple-300 data-[state=on]:text-purple-700',
@@ -57,7 +57,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
         <ToggleGroupItem
           value="partners"
           className={cn(
-            'h-9 text-xs gap-1.5 px-3 rounded-xl border transition-all duration-150',
+            'min-h-11 gap-1.5 rounded-xl border px-3 text-xs transition-all duration-150',
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-blue-50 data-[state=off]:hover:border-blue-200 data-[state=off]:hover:text-blue-700',
             'data-[state=on]:bg-blue-100 data-[state=on]:border-blue-300 data-[state=on]:text-blue-700',
@@ -72,7 +72,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
         <ToggleGroupItem
           value="employees"
           className={cn(
-            'h-9 text-xs gap-1.5 px-3 rounded-xl border transition-all duration-150',
+            'min-h-11 gap-1.5 rounded-xl border px-3 text-xs transition-all duration-150',
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-green-50 data-[state=off]:hover:border-green-200 data-[state=off]:hover:text-green-700',
             'data-[state=on]:bg-green-100 data-[state=on]:border-green-300 data-[state=on]:text-green-700',

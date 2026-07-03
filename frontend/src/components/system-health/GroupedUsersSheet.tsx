@@ -39,11 +39,11 @@ const ROLE_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destr
 function UserCard({ user, index }: { user: BrowserPlatformUser; index: number }) {
   return (
     <div className="rounded-lg border bg-card p-3 space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-start gap-2">
         <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">
           #{index + 1}
         </span>
-        <span className="text-sm font-semibold text-foreground truncate flex-1 min-w-0">
+        <span className="min-w-0 flex-1 break-words text-sm font-semibold text-foreground">
           {user.fullname || user.username}
         </span>
         <Badge
@@ -53,15 +53,15 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
           {ROLE_LABELS[user.role] ?? user.role}
         </Badge>
       </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="font-mono truncate">{user.username}</span>
-        <span className="flex items-center gap-1 shrink-0">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span className="min-w-0 break-all font-mono">{user.username}</span>
+        <span className="flex shrink-0 items-center gap-1">
           <Zap className="h-3 w-3" />
           {user.actions.toLocaleString()}
         </span>
-        <span className="flex items-center gap-1 shrink-0">
+        <span className="flex min-w-0 items-center gap-1">
           <Clock className="h-3 w-3" />
-          {formatTime(user.last_seen)}
+          <span className="break-words">{formatTime(user.last_seen)}</span>
         </span>
       </div>
     </div>
@@ -84,21 +84,21 @@ export function OSUsersSheet({ osFamily, days, onClose }: OSUsersSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:w-[480px] sm:max-w-[480px] flex flex-col p-0">
+      <SheetContent className="flex w-full flex-col p-0 sm:w-[480px] sm:max-w-[480px]">
         <SheetHeader
           className="flex-shrink-0 px-4 py-3 border-b"
           style={{ paddingTop: "max(12px, calc(12px + env(safe-area-inset-top)))" }}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <SheetTitle className="flex items-center gap-2">
+              <SheetTitle className="flex min-w-0 items-center gap-2">
                 <Users className="h-4 w-4 text-primary shrink-0" />
-                Người dùng · {osFamily}
+                <span className="min-w-0 break-words">Người dùng · {osFamily}</span>
               </SheetTitle>
-              <p className="text-sm text-muted-foreground mt-1">Tất cả phiên bản {osFamily}</p>
+              <p className="mt-1 break-words text-sm text-muted-foreground">Tất cả phiên bản {osFamily}</p>
             </div>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full shrink-0 text-muted-foreground hover:text-foreground" aria-label="Đóng">
+              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" aria-label="Đóng">
                 <X className="h-4 w-4" />
               </Button>
             </SheetClose>
@@ -139,21 +139,21 @@ export function BrowserUsersSheet({ browserFamily, days, onClose }: BrowserUsers
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:w-[480px] sm:max-w-[480px] flex flex-col p-0">
+      <SheetContent className="flex w-full flex-col p-0 sm:w-[480px] sm:max-w-[480px]">
         <SheetHeader
           className="flex-shrink-0 px-4 py-3 border-b"
           style={{ paddingTop: "max(12px, calc(12px + env(safe-area-inset-top)))" }}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <SheetTitle className="flex items-center gap-2">
+              <SheetTitle className="flex min-w-0 items-center gap-2">
                 <Users className="h-4 w-4 text-primary shrink-0" />
-                Người dùng · {browserFamily}
+                <span className="min-w-0 break-words">Người dùng · {browserFamily}</span>
               </SheetTitle>
-              <p className="text-sm text-muted-foreground mt-1">Tất cả phiên bản {browserFamily}</p>
+              <p className="mt-1 break-words text-sm text-muted-foreground">Tất cả phiên bản {browserFamily}</p>
             </div>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full shrink-0 text-muted-foreground hover:text-foreground" aria-label="Đóng">
+              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" aria-label="Đóng">
                 <X className="h-4 w-4" />
               </Button>
             </SheetClose>

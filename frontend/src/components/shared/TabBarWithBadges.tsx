@@ -33,7 +33,7 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
   return (
     <div
       className={cn(
-        'flex items-center gap-px p-0.5 rounded-xl bg-card border border-border/60 shrink-0',
+        'flex items-center gap-px rounded-xl border border-border/60 bg-card p-0.5 shrink-0',
         className,
       )}
     >
@@ -46,7 +46,7 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
             onClick={() => onTabChange(tab.id)}
             aria-pressed={isActive}
             className={cn(
-              'flex items-center gap-1.5 px-3 h-8 rounded text-sm font-medium transition-all whitespace-nowrap',
+              'flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-all whitespace-nowrap',
               isActive
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted',

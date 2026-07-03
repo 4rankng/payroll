@@ -348,30 +348,30 @@ function TransactionDetailsSheetComponent({
                   </Badge>
                 )}
               </div>
-                                                   <div className="flex justify-between">
+                <div className="flex flex-col gap-0.5 min-[380px]:flex-row min-[380px]:items-baseline">
                   <span className="typography-body-small">Mã giao dịch:</span>
-                  <span className="typography-title-small">&nbsp;{transaction.transaction_code}</span>
+                  <span className="typography-title-small break-all">{transaction.transaction_code}</span>
                 </div>
             </div>
           </div>
         )
       }}
       footer={
-        <div className="flex items-center justify-between w-full gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             {transaction.status === 'settled' && !transaction.reversed_transaction_id && (
-              <Button type="button" variant="destructive" size="sm" onClick={handleReverseClick} className="h-9 px-3">
+              <Button type="button" variant="destructive" size="sm" onClick={handleReverseClick} className="min-h-11 flex-1 px-3 min-[420px]:flex-none">
                 Đảo ngược
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 min-[420px]:flex min-[420px]:items-center">
             {transaction.status === 'pending' && (
-              <Button type="button" variant="success" size="sm" onClick={handleSettleClick} className="h-9 px-4">
+              <Button type="button" variant="success" size="sm" onClick={handleSettleClick} className="min-h-11 px-4">
                 Thanh toán
               </Button>
             )}
-            <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-9 px-4">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="min-h-11 px-4">
               Đóng
             </Button>
           </div>
@@ -384,7 +384,7 @@ function TransactionDetailsSheetComponent({
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span className="typography-label-medium text-muted-foreground uppercase">Số tiền</span>
           </div>
-          <div className={`typography-display-large typography-currency ${
+          <div className={`typography-display-large typography-currency break-words text-3xl sm:text-4xl ${
             transaction.transaction_type === 'revenue' ? 'text-financial-positive' :
             transaction.transaction_type === 'write_off' ? 'text-amber-600' : 'text-financial-negative'
           }`}>
@@ -393,7 +393,7 @@ function TransactionDetailsSheetComponent({
         </div>
 
         {/* Party and Description - 2 column layout */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
           <div className="space-y-2">
 
             <div className="flex items-center gap-2">
@@ -403,7 +403,7 @@ function TransactionDetailsSheetComponent({
                  transaction.transaction_type === 'revenue' ? 'Người trả' : 'Đối tượng'}
               </div>
             </div>
-            <div className="typography-body-medium text-high-contrast font-semibold">
+            <div className="typography-body-medium text-high-contrast font-semibold break-words">
               {transaction.party}
             </div>
           </div>
@@ -423,29 +423,29 @@ function TransactionDetailsSheetComponent({
 
         {/* Metadata - 2 column grid */}
         <div className="space-y-3 bg-surface-secondary rounded-xl p-4 shadow-xs border border-border">          <div className="typography-label-medium text-muted-foreground uppercase font-semibold">Thông tin khác</div>
-          <div className="grid grid-cols-2 gap-4 typography-body-small">
+          <div className="grid grid-cols-1 gap-4 typography-body-small min-[420px]:grid-cols-2">
 
             <div className="space-y-1.5">
               <div className="typography-label-small text-muted-foreground">Người tạo</div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <User className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                <span className="truncate typography-body-medium text-high-contrast font-medium">{createdByName}</span>
+                <span className="typography-body-medium text-high-contrast font-medium break-words">{createdByName}</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Ngày tạo</div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <Calendar className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                  <span className="truncate typography-body-small text-medium-contrast">{formatDate(transaction.created_at)}</span>
+                  <span className="typography-body-small text-medium-contrast break-words">{formatDate(transaction.created_at)}</span>
                 </div>
               </div>
               {transaction.status === 'settled' && (
                 <div className="space-y-1.5">
                   <div className="typography-label-small text-muted-foreground">Ngày thanh toán</div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                    <span className="truncate typography-body-small text-medium-contrast">
+                    <span className="typography-body-small text-medium-contrast break-words">
                       {formatDate(transaction.settled_at || transaction.created_at)}
                     </span>
                   </div>
@@ -456,9 +456,9 @@ function TransactionDetailsSheetComponent({
             {transaction.status === 'settled' && transaction.settled_by && (
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Người thanh toán</div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <User className="h-4 w-4 flex-shrink-0 text-slate-400" />
-                  <span className="truncate typography-body-medium text-high-contrast font-medium">{settledByName}</span>
+                  <span className="typography-body-medium text-high-contrast font-medium break-words">{settledByName}</span>
                 </div>
               </div>
             )}
@@ -466,7 +466,7 @@ function TransactionDetailsSheetComponent({
         </div>
 
         {/* Evidence section */}
-        <div className="space-y-4 bg-card rounded-xl p-4 shadow-xs border border-border">          <div className="flex items-center justify-between gap-3">
+        <div className="space-y-4 bg-card rounded-xl p-4 shadow-xs border border-border">          <div className="flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span className="typography-label-medium text-muted-foreground uppercase">Chứng từ giao dịch</span>
@@ -479,6 +479,7 @@ function TransactionDetailsSheetComponent({
                   onClick={handleDownloadEvidence}
                   disabled={downloadAsset.isPending}
                   size="icon"
+                  className="h-11 w-11"
                   title="Tải xuống chứng từ"
                 >
                   <Download className="w-4 h-4" />
@@ -489,6 +490,7 @@ function TransactionDetailsSheetComponent({
                   variant="info"
                   onClick={handleOpenEvidence}
                   size="icon"
+                  className="h-11 w-11"
                   title="Xem chứng từ"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -500,6 +502,7 @@ function TransactionDetailsSheetComponent({
                 size="icon"
                 onClick={isEditingEvidence ? handleCancelEvidenceEditing : handleStartEvidenceEditing}
                 disabled={isMutatingEvidence}
+                className="h-11 w-11"
                 title={isEditingEvidence ? 'Hủy cập nhật' : 'Cập nhật chứng từ'}
               >
                 {isEditingEvidence ? (
@@ -529,7 +532,7 @@ function TransactionDetailsSheetComponent({
                 <span className="text-medium-contrast">Chưa có link chứng từ</span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-medium-contrast">
+            <div className="flex items-start gap-2 text-sm text-medium-contrast break-all">
               <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
               {hasEvidenceAsset ? (
                 <span>{evidenceFileDisplay}</span>
@@ -560,9 +563,9 @@ function TransactionDetailsSheetComponent({
                   />
                 ) : (
                   <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/50 px-3 py-2">
-                    <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="flex min-w-0 items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm font-medium text-foreground truncate">
+                      <span className="text-sm font-medium text-foreground break-all">
                         {selectedEvidenceFile.name}
                       </span>
                     </div>
@@ -571,7 +574,7 @@ function TransactionDetailsSheetComponent({
                       variant="ghost"
                       size="sm"
                       onClick={handleRemoveSelectedFile}
-                      className="h-auto px-2 text-muted-foreground hover:text-red-600"
+                      className="h-11 w-11 shrink-0 px-0 text-muted-foreground hover:text-red-600"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -586,12 +589,13 @@ function TransactionDetailsSheetComponent({
                 <p className="text-sm text-red-600">{evidenceError}</p>
               )}
 
-              <div className="flex items-center justify-end gap-3">
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCancelEvidenceEditing}
                   disabled={isMutatingEvidence}
+                  className="min-h-11"
                 >
                   Hủy
                 </Button>
@@ -599,6 +603,7 @@ function TransactionDetailsSheetComponent({
                   type="button"
                   onClick={handleSubmitEvidence}
                   disabled={isMutatingEvidence}
+                  className="min-h-11"
                 >
                   Lưu chứng từ
                 </Button>

@@ -161,7 +161,7 @@ export function ExistingEntriesDisplay({
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 typography-body-small">
+                  <div className="grid grid-cols-1 gap-3 typography-body-small min-[380px]:grid-cols-2">
                     <div>
                       <span className="text-muted-foreground">Ca làm việc:</span>
                       <p className="font-medium">{entry.hours_worked} giờ</p>
@@ -183,11 +183,11 @@ export function ExistingEntriesDisplay({
                   {/* Actions for editable entries */}
                   {(entry.status === 'draft' || entry.status === 'rejected') && (
                     <div className="flex gap-2 mt-3">
-                      <Button variant="outline" size="sm" className="flex-1 h-8 typography-body-small">
+                      <Button variant="outline" size="sm" className="h-11 flex-1 typography-body-small">
                         <Edit className="h-3 w-3 mr-1" />
                         Sửa
                       </Button>
-                      <Button variant="outline" size="sm" className="h-8 px-2">
+                      <Button variant="outline" size="sm" className="h-11 w-11 px-2">
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
                     </div>

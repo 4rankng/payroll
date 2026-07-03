@@ -51,13 +51,13 @@ function FieldFeedback({ field, onApplySuggestion }: {
       <p className="font-medium">{field.message}</p>
       {field.hint && <p className="mt-0.5 opacity-80">{field.hint}</p>}
       {field.suggested_value && onApplySuggestion && (
-        <button
-          type="button"
-          onClick={() => onApplySuggestion(field.suggested_value!)}
-          className={cn(
-            'mt-1.5 flex items-center gap-1 text-xs font-semibold underline underline-offset-2',
-            isError ? 'hover:text-red-900' : 'hover:text-amber-900',
-          )}
+          <button
+            type="button"
+            onClick={() => onApplySuggestion(field.suggested_value!)}
+            className={cn(
+              'mt-1.5 flex min-h-11 items-center gap-1 text-xs font-semibold underline underline-offset-2',
+              isError ? 'hover:text-red-900' : 'hover:text-amber-900',
+            )}
         >
           <CornerDownRight className="h-3 w-3" />
           Dùng giá trị: {field.suggested_value}
@@ -278,7 +278,7 @@ export default function PayrateEditPageMobile() {
                   </p>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
                   {/* From date */}
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="fromDate" className={cn(
@@ -383,7 +383,7 @@ export default function PayrateEditPageMobile() {
                 type="button"
                 onClick={() => setViewMode('matrix')}
                 className={cn(
-                  'rounded-lg py-2 text-xs font-semibold transition-colors',
+                  'min-h-11 rounded-lg py-2 text-xs font-semibold transition-colors',
                   viewMode === 'matrix' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground',
                 )}
               >
@@ -393,7 +393,7 @@ export default function PayrateEditPageMobile() {
                 type="button"
                 onClick={() => setViewMode('json')}
                 className={cn(
-                  'rounded-lg py-2 text-xs font-semibold transition-colors',
+                  'min-h-11 rounded-lg py-2 text-xs font-semibold transition-colors',
                   viewMode === 'json' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground',
                 )}
               >
@@ -450,13 +450,13 @@ export default function PayrateEditPageMobile() {
 
       {/* Sticky bottom save bar — sits above the mobile nav */}
       <footer
-        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-full gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md"
+        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 mx-auto grid max-w-full grid-cols-1 gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md min-[380px]:grid-cols-2"
       >
-        <Button variant="outline" className="flex-1" onClick={goBack} disabled={isValidating || isSaving}>
+        <Button variant="outline" className="h-11 w-full" onClick={goBack} disabled={isValidating || isSaving}>
           Hủy
         </Button>
         <Button
-          className="btn-admin-primary flex-1"
+          className="btn-admin-primary h-11 w-full"
           onClick={handleValidate}
           disabled={isValidating || isSaving || !canProceed}
         >

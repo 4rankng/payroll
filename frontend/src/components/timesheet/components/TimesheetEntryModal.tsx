@@ -196,13 +196,13 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                       </button>
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
                     {f.canRequestEdit && (
-                      <Button variant="outline" size="sm" onClick={f.handleRequestEditClick} disabled={f.isRequestEditPending || f.isLoading} className="h-9">
+                      <Button variant="outline" size="sm" onClick={f.handleRequestEditClick} disabled={f.isRequestEditPending || f.isLoading} className="min-h-11">
                         {f.isRequestEditPending ? <><div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5" />Đang gửi...</> : <><FileEdit className="w-3.5 h-3.5 mr-1.5" />Yêu cầu chỉnh sửa</>}
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={onClose} disabled={f.isLoading} className="h-9 text-slate-600">Đóng</Button>
+                    <Button variant="ghost" size="sm" onClick={onClose} disabled={f.isLoading} className="min-h-11 text-slate-600">Đóng</Button>
                   </div>
                 </div>
               </div>
@@ -216,24 +216,24 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {f.user?.role === "admin" && existingEntry?.status === "pending_approval" && (
-                    <Button variant="outline" size="sm" onClick={f.handleReject} disabled={f.isLoading} className="h-9 text-slate-600">
+                    <Button variant="outline" size="sm" onClick={f.handleReject} disabled={f.isLoading} className="min-h-11 text-slate-600">
                       {f.rejectTimesheetMutation.isPending ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <><XCircle className="w-3.5 h-3.5 mr-1.5" />Loại</>}
                     </Button>
                   )}
                   {f.user?.role === "admin" && existingEntry &&
                     (existingEntry.status === "approved" || existingEntry.status === "rejected") &&
                     existingEntry.payment_status !== "paid" && (
-                    <Button variant="outline" size="sm" onClick={f.handleReset} disabled={f.isLoading} className="h-9 text-slate-600">
+                    <Button variant="outline" size="sm" onClick={f.handleReset} disabled={f.isLoading} className="min-h-11 text-slate-600">
                       {f.resetTimesheetMutation.isPending ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <><RotateCcw className="w-3.5 h-3.5 mr-1.5" />Reset</>}
                     </Button>
                   )}
                   <button type="button" onClick={onClose} disabled={f.isLoading}
-                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40">
+                    className="min-h-11 rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-40">
                     Bỏ qua
                   </button>
-                  <Button className="bg-slate-900 hover:bg-slate-800 text-white px-5 h-9 shadow-md shadow-slate-200/80 flex items-center gap-2"
+                  <Button className="flex min-h-11 items-center gap-2 bg-slate-900 px-5 text-white shadow-md shadow-slate-200/80 hover:bg-slate-800"
                     onClick={f.canSaveAndApprove ? f.handleSaveAndApprove : f.handleSave}
                     disabled={f.isLoading || f.isPayrateLoading || f.formData.hoursWorked <= 0 || !f.formData.hourType || !f.isHourTypeValid || f.availableHourTypes.length === 0 || !f.dateValidation.isValid}>
                     {f.isLoading ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Check className="w-3.5 h-3.5" />}

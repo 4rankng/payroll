@@ -70,7 +70,7 @@ export function HoursWorkedInput({
           size="sm"
           onClick={handleDecrement}
           disabled={hours <= 0}
-          className="h-10 w-10 p-0"
+          className="h-11 w-11 p-0"
         >
           <Minus className="h-4 w-4" />
         </Button>
@@ -84,7 +84,7 @@ export function HoursWorkedInput({
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder="0"
-            className="h-10 text-center typography-title-large border-2 border-border/50 hover:border-border focus:border-primary"
+            className="h-11 text-center typography-title-large border-2 border-border/50 hover:border-border focus:border-primary"
           />
         </div>
 
@@ -93,7 +93,7 @@ export function HoursWorkedInput({
           size="sm"
           onClick={handleIncrement}
           disabled={hours >= 24}
-          className="h-10 w-10 p-0"
+          className="h-11 w-11 p-0"
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -109,7 +109,7 @@ export function HoursWorkedInput({
               variant={hours === quickHour ? "default" : "outline"}
               size="sm"
               onClick={() => handleQuickSelect(quickHour)}
-              className="h-8 typography-body-small"
+              className="h-11 typography-body-small"
             >
               {quickHour}h
             </Button>

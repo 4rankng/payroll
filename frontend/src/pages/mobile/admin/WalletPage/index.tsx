@@ -92,7 +92,7 @@ export default function WalletPageMobile() {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-xs font-medium hover:bg-white/10 active:bg-white/[0.04] transition-colors"
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 active:bg-white/[0.04]"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
             Đồng bộ
@@ -132,7 +132,7 @@ export default function WalletPageMobile() {
 
       {/* Light transaction panel */}
       <div className="bg-background rounded-t-3xl -mt-4 min-h-[60dvh] shadow-[0_-8px_32px_rgba(0,0,0,0.2)]">
-        <div className="px-4 pt-5 pb-20">
+        <div className="px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <WalletTransactionsList />
         </div>
       </div>
@@ -148,7 +148,7 @@ export default function WalletPageMobile() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-sm">Phát hiện chênh lệch số dư</AlertDialogTitle>
             <AlertDialogDescription className="text-xs space-y-2">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div className="rounded-md bg-slate-50 p-2">
                   <p className="text-[10px] text-slate-500">Nhà cung cấp</p>
                   <p className="font-semibold tabular-nums text-slate-900">{formatVND(mismatch?.provider ?? 0)}</p>
@@ -168,8 +168,8 @@ export default function WalletPageMobile() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs h-9" disabled={adjusting}>Bỏ qua</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAdjust} disabled={adjusting} className="bg-[#2a3b58] hover:bg-[#1e293b] text-xs h-9">
+            <AlertDialogCancel className="min-h-11 text-xs" disabled={adjusting}>Bỏ qua</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAdjust} disabled={adjusting} className="min-h-11 bg-[#2a3b58] text-xs hover:bg-[#1e293b]">
               {adjusting ? <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Đang xử lý...</> : 'Điều chỉnh'}
             </AlertDialogAction>
           </AlertDialogFooter>

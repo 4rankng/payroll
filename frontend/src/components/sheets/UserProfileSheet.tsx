@@ -49,15 +49,14 @@ interface InfoRowProps {
   icon: React.ReactNode;
   label: string;
   value: string;
-  truncate?: boolean;
 }
 
-const InfoRow = ({ icon, label, value, truncate }: InfoRowProps) => (
-  <div className="flex items-center gap-3 py-2.5 rounded-lg px-2 -mx-2 hover:bg-muted/40 transition-colors">
+const InfoRow = ({ icon, label, value }: InfoRowProps) => (
+  <div className="flex items-start gap-3 rounded-lg px-2 py-2.5 -mx-2 hover:bg-muted/40 transition-colors">
     <span className="text-muted-foreground flex-shrink-0">{icon}</span>
-    <div className="flex-1 min-w-0 flex items-baseline justify-between gap-3">
+    <div className="flex min-w-0 flex-1 flex-col gap-1 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-3">
       <span className="text-xs text-muted-foreground flex-shrink-0">{label}</span>
-      <span className={`text-sm font-medium text-right${truncate ? ' truncate' : ''}`}>{value}</span>
+      <span className="text-sm font-medium break-all min-[380px]:text-right">{value}</span>
     </div>
   </div>
 );
@@ -208,7 +207,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               className="h-16 w-16 flex-shrink-0 ring-4 ring-background shadow-md"
             />
             <div className="flex-1 min-w-0 pb-1">
-              <h2 className="text-lg font-semibold leading-tight truncate">{displayUser.name}</h2>
+              <h2 className="text-lg font-semibold leading-tight break-words">{displayUser.name}</h2>
               <div className="mt-1.5">
                 <Badge variant={getRoleBadgeVariant(displayUser.role)} className="text-xs">
                   {getRoleText(displayUser.role)}
@@ -220,7 +219,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 size="icon"
                 variant="ghost"
                 onClick={handleEditToggle}
-                className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                className="h-11 w-11 flex-shrink-0 text-muted-foreground hover:text-foreground"
                 title="Chỉnh sửa"
               >
                 <Edit2 className="h-4 w-4" />
@@ -246,6 +245,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                           {...field}
                           placeholder="Nhập họ và tên"
                           disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
+                          className="h-11"
                         />
                       </FormControl>
                       <FormMessage />
@@ -264,6 +264,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                           type="email"
                           placeholder="Nhập email"
                           disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
+                          className="h-11"
                         />
                       </FormControl>
                       <FormMessage />
@@ -281,6 +282,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                           {...field}
                           placeholder="Nhập số CCCD"
                           disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
+                          className="h-11"
                         />
                       </FormControl>
                       <FormMessage />
@@ -298,6 +300,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                           {...field}
                           placeholder="Nhập số điện thoại"
                           disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
+                          className="h-11"
                         />
                       </FormControl>
                       <FormMessage />
@@ -313,7 +316,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Liên hệ</p>
                 <div className="space-y-1">
                   <InfoRow icon={<User2 className="h-4 w-4" />} label="Họ và tên" value={displayUser.name} />
-                  <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser.email} truncate />
+                  <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser.email} />
                   {completeUser?.cccd && (
                     <InfoRow icon={<CreditCard className="h-4 w-4" />} label="Số CCCD" value={completeUser.cccd} />
                   )}
@@ -337,14 +340,14 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
         </div>
 
         {/* Footer actions */}
-        <div className="flex-shrink-0 border-t bg-background px-6 py-4">
+        <div className="flex-shrink-0 border-t bg-background px-6 py-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))]">
           {isEditing ? (
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleEditToggle}
-                className="flex-1"
+                className="min-h-11"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 Hủy
@@ -352,7 +355,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <Button
                 type="button"
                 onClick={form.handleSubmit(handleSave)}
-                className="flex-1"
+                className="min-h-11"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 <Save className="h-4 w-4 mr-1.5" />
@@ -365,7 +368,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 type="button"
                 variant="outline"
                 onClick={handleChangePassword}
-                className="flex-1"
+                className="min-h-11 flex-1"
               >
                 <Key className="h-4 w-4 mr-1.5" />
                 Đổi mật khẩu
@@ -375,7 +378,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="h-9 w-9 text-muted-foreground"
+                className="h-11 w-11 text-muted-foreground"
                 title="Đóng"
               >
                 <X className="h-4 w-4" />

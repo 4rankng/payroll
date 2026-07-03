@@ -58,7 +58,7 @@ function FilterChipGroup({
             type="button"
             onClick={() => onToggle(opt)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation active:scale-95',
+              'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation active:scale-95',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-slate-200 bg-white text-slate-600',
@@ -126,7 +126,7 @@ export default function AuditLogPageMobile() {
   const reset = () => setFilters(EMPTY_FILTERS);
 
   return (
-    <MobilePageShell className="pb-20">
+    <MobilePageShell>
       <MobilePageHeader
         title="Nhật ký hoạt động"
         icon={ClipboardList}
@@ -139,7 +139,7 @@ export default function AuditLogPageMobile() {
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-1.5 border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"
+            className="min-h-11 gap-1.5 border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"
             onClick={() => setIsFilterOpen(true)}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -180,7 +180,7 @@ export default function AuditLogPageMobile() {
           ))}
           <button
             onClick={reset}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive active:opacity-70"
+            className="inline-flex min-h-11 items-center gap-1 px-1 text-[11px] font-semibold text-destructive active:opacity-70"
           >
             <X className="h-3 w-3" />
             Xóa lọc
@@ -226,7 +226,7 @@ export default function AuditLogPageMobile() {
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent
           side="bottom"
-          className="h-auto max-h-[85dvh] overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl"
+          className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl"
           title="Bộ lọc nhật ký"
           description="Thu hẹp kết quả theo thời gian, hành động và đối tượng"
         >
@@ -242,12 +242,12 @@ export default function AuditLogPageMobile() {
             </p>
           </SheetHeader>
 
-          <div className="overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             {/* Date range */}
             <div className="mb-5">
               <MobileSectionHeader icon={ClipboardList} title="Khoảng thời gian" />
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
+              <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
+                <div className="min-w-0">
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Từ ngày
                   </label>
@@ -264,7 +264,7 @@ export default function AuditLogPageMobile() {
                     className="h-11 w-full text-sm"
                   />
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0">
                   <label className="mb-1 block text-xs font-medium text-slate-500">
                     Đến ngày
                   </label>
@@ -308,17 +308,17 @@ export default function AuditLogPageMobile() {
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="grid grid-cols-1 gap-2 pt-2 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"
-                className="h-11 flex-1 border-slate-200"
+                className="h-11 w-full border-slate-200"
                 onClick={reset}
                 disabled={activeCount === 0}
               >
                 Xóa bộ lọc
               </Button>
               <Button
-                className="btn-admin-primary h-11 flex-1"
+                className="btn-admin-primary h-11 w-full"
                 onClick={() => setIsFilterOpen(false)}
               >
                 Xem {totalRecords > 0 ? `${totalRecords.toLocaleString('vi-VN')} kết quả` : 'kết quả'}

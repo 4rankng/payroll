@@ -357,7 +357,7 @@ const TimesheetPageMobile = () => {
 
   if (isEntryMode) {
     return (
-      <div className="h-[calc(100dvh-4rem)] flex flex-col">
+      <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-background pb-[env(safe-area-inset-bottom)]">
         <MobileTimesheetEntry
           isOpen={true}
           onClose={handleEntryClose}
@@ -374,7 +374,7 @@ const TimesheetPageMobile = () => {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
+      <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-1 gap-3">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -387,7 +387,7 @@ const TimesheetPageMobile = () => {
   }
 
   return (
-    <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
+    <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <TimesheetPageHeaderMobile
         onAddTimesheet={handleAddTimesheet}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}
@@ -487,15 +487,15 @@ const TimesheetPageMobile = () => {
         title="Duyệt hết bảng công"
         description={
           <div className="space-y-0 divide-y divide-border/60">
-            <div className="flex items-center justify-between py-2 text-sm">
+            <div className="flex flex-col gap-1 py-2 text-sm min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
               <span className="text-muted-foreground">Bảng công chờ duyệt</span>
-              <span className="font-semibold tabular-nums">
+              <span className="font-semibold tabular-nums min-[380px]:text-right">
                 {globalSummary?.pendingApproval ?? 0}
               </span>
             </div>
-            <div className="flex items-center justify-between py-2 text-sm">
+            <div className="flex flex-col gap-1 py-2 text-sm min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
               <span className="text-muted-foreground">Số NV liên quan</span>
-              <span className="font-semibold tabular-nums">
+              <span className="font-semibold tabular-nums min-[380px]:text-right">
                 {globalSummary?.pendingEmployees ?? "—"}
               </span>
             </div>

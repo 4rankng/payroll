@@ -33,16 +33,16 @@ export const InlineAlert = memo(function InlineAlert({
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-3 px-3 py-2 rounded-xl border text-xs',
+        'grid grid-cols-1 gap-2 rounded-xl border px-3 py-2 text-xs min-[380px]:flex min-[380px]:items-center min-[380px]:justify-between min-[380px]:gap-3',
         severityStyles[severity],
         className,
       )}
     >
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-        <span>{message}</span>
+        <span className="min-w-0 break-words">{message}</span>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="min-w-0 min-[380px]:shrink-0">{action}</div>}
     </div>
   );
 });

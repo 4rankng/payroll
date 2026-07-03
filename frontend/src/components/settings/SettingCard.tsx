@@ -64,7 +64,7 @@ export const SettingCard = ({
   const isInvalid = !validation.isValid;
 
   return (
-    <div className="group flex flex-col gap-3 rounded-xl border bg-card p-5 transition-all hover:border-border/80 hover:shadow-sm">
+    <div className="group flex flex-col gap-3 rounded-xl border bg-card p-4 transition-all hover:border-border/80 hover:shadow-sm sm:p-5">
       <div className="space-y-0.5">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         {description && (
@@ -80,7 +80,7 @@ export const SettingCard = ({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               className={cn(
-                'h-9 text-sm font-medium',
+                'h-11 text-sm font-medium',
                 suffix && 'pr-8',
                 isInvalid && 'border-destructive focus-visible:ring-destructive/20',
                 isDirty && !isInvalid && 'border-amber-400 focus-visible:ring-amber-400/20',
@@ -100,20 +100,20 @@ export const SettingCard = ({
         </div>
 
         {isInvalid && (
-          <div className="flex items-center gap-1.5 text-destructive animate-in fade-in duration-150">
-            <AlertCircle className="h-3 w-3 shrink-0" />
-            <span className="text-xs">{validation.errorMessage}</span>
+          <div className="flex items-start gap-1.5 text-destructive animate-in fade-in duration-150">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="break-words text-xs">{validation.errorMessage}</span>
           </div>
         )}
 
         {isDirty && (
-          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-150">
+          <div className="grid grid-cols-1 gap-2 animate-in fade-in slide-in-from-bottom-1 duration-150 min-[380px]:grid-cols-2">
             <Button
               size="sm"
               variant="ghost"
               onClick={onReset}
               disabled={isSaving}
-              className="h-7 flex-1 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              className="h-11 w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
               <X className="h-3 w-3" />
               Hủy
@@ -123,7 +123,7 @@ export const SettingCard = ({
               variant="default"
               onClick={onSave}
               disabled={isSaving || isInvalid}
-              className="h-7 flex-1 gap-1.5 bg-emerald-600 text-xs hover:bg-emerald-700 text-white"
+              className="h-11 w-full gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
             >
               <Check className="h-3 w-3" />
               Lưu

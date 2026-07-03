@@ -52,12 +52,12 @@ export function QuickActions({
     <div className={`grid gap-3 pt-1 ${isFlexible ? 'grid-cols-1 sm:grid-cols-[1fr_1.4fr]' : 'grid-cols-1 sm:grid-cols-2'}`}>
       {/* Add position */}
       <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vị trí</span>
           {!showAddPosition && (
             <button
               onClick={() => setShowAddPosition(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <Plus className="h-3 w-3" />
               Thêm
@@ -66,26 +66,26 @@ export function QuickActions({
         </div>
 
         {showAddPosition && (
-          <div className="flex gap-1.5">
+          <div className="grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-[minmax(0,1fr)_auto_auto]">
             <Input
               type="text"
               placeholder="Tên vị trí..."
               value={newPosition}
               onChange={e => setNewPosition(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); handleAddPosition(); } }}
-              className="h-7 text-xs flex-1"
+              className="h-11 text-xs"
               autoFocus
             />
             <button
               onClick={handleAddPosition}
               disabled={!newPosition.trim()}
-              className="h-7 px-2.5 text-xs rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
+              className="h-11 rounded-xl bg-primary px-3 text-xs text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
             >
               Thêm
             </button>
             <button
               onClick={() => { setShowAddPosition(false); setNewPosition(''); }}
-              className="h-7 w-7 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
             >
               <X className="h-3 w-3" />
             </button>
@@ -98,7 +98,7 @@ export function QuickActions({
               <button
                 key={pos}
                 onClick={() => handleSuggestedPosition(pos)}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors capitalize"
+                className="min-h-11 rounded-full border border-border bg-background px-3 text-[10px] capitalize transition-colors hover:border-primary hover:text-primary"
               >
                 {pos}
               </button>
@@ -117,12 +117,12 @@ export function QuickActions({
         />
       ) : (
         <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Khung giờ</span>
             {!showAddHourType && (
               <button
                 onClick={() => setShowAddHourType(true)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Plus className="h-3 w-3" />
                 Thêm
@@ -131,26 +131,26 @@ export function QuickActions({
           </div>
 
           {showAddHourType && (
-            <div className="flex gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-[minmax(0,1fr)_auto_auto]">
               <Input
                 type="text"
                 placeholder="VD: ca chiều"
                 value={newHourType}
                 onChange={e => setNewHourType(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); handleAddHourType(); } }}
-                className="h-7 text-xs flex-1"
+                className="h-11 text-xs"
                 autoFocus
               />
               <button
                 onClick={handleAddHourType}
                 disabled={!newHourType.trim()}
-                className="h-7 px-2.5 text-xs rounded-xl bg-primary text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                className="h-11 rounded-xl bg-primary px-3 text-xs text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
               >
                 Thêm
               </button>
               <button
                 onClick={() => { setShowAddHourType(false); setNewHourType(''); }}
-                className="h-7 w-7 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground transition-colors"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -163,7 +163,7 @@ export function QuickActions({
                 <button
                   key={hour}
                   onClick={() => handleSuggestedHourType(hour)}
-                  className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors"
+                  className="min-h-11 rounded-full border border-border bg-background px-3 text-[10px] transition-colors hover:border-primary hover:text-primary"
                 >
                   {hour}
                 </button>

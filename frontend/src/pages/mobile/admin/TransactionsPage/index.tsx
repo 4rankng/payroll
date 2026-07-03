@@ -137,7 +137,7 @@ const TransactionsPageMobile = () => {
   );
 
   return (
-    <div className="space-y-4 overflow-x-hidden p-4 pb-20">
+    <div className="space-y-4 overflow-x-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <TransactionPageHeaderMobile
         onAddTransaction={() => openAddLedgerEntry()}
         onImportTransactions={() => setShowImportDialog(true)}
@@ -186,7 +186,7 @@ const TransactionsPageMobile = () => {
           value={(filters.sortBy as string) ?? "created_at"}
           onValueChange={(v) => setFilters((prev) => ({ ...prev, sortBy: v, page: 1 }))}
         >
-          <SelectTrigger className="h-9 flex-1 text-xs">
+          <SelectTrigger className="min-h-11 flex-1 text-xs">
             <SelectValue placeholder="Sắp xếp" />
           </SelectTrigger>
           <SelectContent>
@@ -213,7 +213,7 @@ const TransactionsPageMobile = () => {
               page: 1,
             }))
           }
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground active:scale-95"
+          className="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground active:scale-95"
           aria-label="Đảo chiều sắp xếp"
         >
           {filters.sortOrder === "asc" ? "Tăng" : "Giảm"}
@@ -224,7 +224,7 @@ const TransactionsPageMobile = () => {
             setFilters((prev) => ({ ...prev, pageSize: Number(v), page: 1 }))
           }
         >
-          <SelectTrigger className="h-9 w-[4.5rem] text-xs">
+          <SelectTrigger className="min-h-11 w-[4.5rem] text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

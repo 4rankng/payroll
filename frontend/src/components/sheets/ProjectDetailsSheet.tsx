@@ -264,7 +264,7 @@ function ProjectDetailsSheet({
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
           </div>
@@ -300,7 +300,7 @@ function ProjectDetailsSheet({
 
           {/* ── Info section ── */}
           <div className="pb-2">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-2">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Thông tin dự án
               </p>
@@ -308,7 +308,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="min-h-11 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsEditProjectOpen(true)}
                 >
                   <Edit3 className="h-3 w-3" />
@@ -321,7 +321,7 @@ function ProjectDetailsSheet({
 
           {/* ── Employees section ── */}
           <div className="border-t pt-2 pb-4">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-2">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Nhân viên ({activeEmployeesCount})
               </p>
@@ -329,7 +329,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="min-h-11 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsAddEmployeeOpen(true)}
                 >
                   <Plus className="h-3 w-3" />
@@ -368,7 +368,7 @@ function ProjectDetailsSheet({
           {/* ── Permissions section ── */}
           {canManageProjectAccess && (
             <div className="border-t pt-2 pb-4">
-              <div className="flex items-center justify-between px-4 sm:px-6 py-2">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Phân quyền
                 </p>
@@ -387,8 +387,8 @@ function ProjectDetailsSheet({
                   Vùng nguy hiểm
                 </p>
               </div>
-              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex items-center justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-destructive">Xóa dự án</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Hành động này không thể hoàn tác</p>
                 </div>
@@ -396,7 +396,7 @@ function ProjectDetailsSheet({
                   variant="destructive"
                   size="sm"
                   onClick={() => setIsDeleteModalOpen(true)}
-                  className="shrink-0"
+                  className="min-h-11 shrink-0"
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                   Xóa

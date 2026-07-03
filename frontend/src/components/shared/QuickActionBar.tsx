@@ -68,9 +68,9 @@ export const QuickActionBar = ({
   if (!isVisible || !user) return null;
 
   const positionClasses = {
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2'
+    'bottom-right': 'bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 sm:bottom-4',
+    'bottom-left': 'bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 sm:bottom-4',
+    'bottom-center': 'bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 transform -translate-x-1/2 sm:bottom-4'
   };
 
   const maxVisibleActions = 3;
@@ -102,7 +102,7 @@ export const QuickActionBar = ({
                     size="sm"
                     onClick={action.action}
                     className={cn(
-                      'min-h-[40px] justify-start gap-2',
+                      'min-h-11 justify-start gap-2',
                       position === 'bottom-center' ? 'flex-col min-w-[80px]' : 'min-w-[140px]'
                     )}
                   >
@@ -130,7 +130,7 @@ export const QuickActionBar = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="min-h-11 px-2 text-xs text-muted-foreground hover:text-foreground"
           >
             {isExpanded ? (
               <>

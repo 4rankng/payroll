@@ -177,7 +177,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
       description={lenderData?.name || 'Đang tải...'}
       compact
       footer={
-        <div className="grid grid-cols-3 gap-3 w-full px-4">
+        <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-3">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -185,7 +185,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   variant="destructive"
                   onClick={handleDeleteOpen}
                   disabled={deleteDisabled}
-                  className="w-full"
+                  className="min-h-11 w-full"
                   aria-label="Xóa người cho vay"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -201,7 +201,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Button variant="outline" onClick={onClose} className="w-full">
+          <Button variant="outline" onClick={onClose} className="min-h-11 w-full">
             <X className="w-4 h-4 mr-2" />
             Hủy
           </Button>
@@ -209,7 +209,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
             variant="default"
             onClick={handleSave}
             disabled={updateLender.isPending || isLoading}
-            className="w-full"
+            className="min-h-11 w-full"
           >
             <Save className="w-4 h-4 mr-2" />
             {updateLender.isPending ? 'Đang lưu...' : 'Lưu'}
@@ -236,7 +236,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                     handleInputChange('name', formatted);
                   }
                 }}
-                className={`h-9 ${errors.name ? 'border-red-500' : ''}`}
+                className={`h-11 ${errors.name ? 'border-red-500' : ''}`}
                 placeholder="Nhập tên chủ nợ"
               />
               {errors.name && <p className="typography-body-small text-financial-negative mt-1">{errors.name}</p>}
@@ -248,12 +248,12 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                 id="cccd"
                 value={formData.cccd || ''}
                 onChange={(e) => handleInputChange('cccd', e.target.value)}
-                className="h-9"
+                className="h-11"
                 placeholder="Nhập số CCCD"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email" className="typography-label-medium">Email</Label>
                 <Input
@@ -261,7 +261,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   type="email"
                   value={formData.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`h-9 ${errors.email ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.email ? 'border-red-500' : ''}`}
                   placeholder="email@example.com"
                 />
                 {errors.email && <p className="typography-body-small text-financial-negative mt-1">{errors.email}</p>}
@@ -273,7 +273,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   id="mobile"
                   value={formData.mobile || ''}
                   onChange={(e) => handleInputChange('mobile', e.target.value)}
-                  className={`h-9 ${errors.mobile ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.mobile ? 'border-red-500' : ''}`}
                   placeholder="0912345678"
                 />
                 {errors.mobile && <p className="typography-body-small text-financial-negative mt-1">{errors.mobile}</p>}
@@ -286,7 +286,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                 id="notes"
                 value={formData.notes || ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
-                className="min-h-[80px]"
+                className="min-h-24"
                 placeholder="Nhập ghi chú (nếu có)"
               />
             </div>
@@ -309,14 +309,14 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
               {errors.bank_id && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_id}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="bank_account_number" className="typography-label-medium">Số tài khoản</Label>
                 <Input
                   id="bank_account_number"
                   value={formData.bank_account_number || ''}
                   onChange={(e) => handleInputChange('bank_account_number', e.target.value)}
-                  className={`h-9 ${errors.bank_account_number ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.bank_account_number ? 'border-red-500' : ''}`}
                   placeholder="1234567890"
                 />
                 {errors.bank_account_number && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_account_number}</p>}
@@ -334,7 +334,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                       handleInputChange('bank_account_name', formatted);
                     }
                   }}
-                  className={`h-9 ${errors.bank_account_name ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.bank_account_name ? 'border-red-500' : ''}`}
                   placeholder="Nguyễn Văn A"
                 />
                 {errors.bank_account_name && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_account_name}</p>}
@@ -347,7 +347,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
             {lenderData?.summary && (
               <div className="pt-4 border-t space-y-3">
                 <h3 className="typography-label-large">Thông tin tài chính</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
                   <div className="space-y-1">
                     <p className="typography-body-small text-muted-foreground">Tổng vay</p>
                     <p className="typography-body-medium font-semibold">

@@ -68,7 +68,7 @@ function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{row.employee_name}</p>
-          <p className="mt-0.5 max-w-[180px] truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 max-w-full truncate text-xs text-muted-foreground">
             {row.project_name || "—"}
           </p>
         </div>
@@ -76,26 +76,23 @@ function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
           {statusLabel}
         </span>
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
-        <div>
-          <p className="text-[10px] text-muted-foreground">Ngày</p>
-          <p className="font-medium tabular-nums">{fmtDate(row.date)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Vào</p>
-          <p className="font-medium tabular-nums">{fmtTime(row.check_in_time)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Ra</p>
-          <p className="font-medium tabular-nums">{fmtTime(row.check_out_time)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Thu nhập</p>
-          <p className="font-financial font-semibold tabular-nums">
-            {row.earning_amount != null ? formatCurrency(row.earning_amount) : "—"}
-          </p>
-        </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 text-xs min-[380px]:grid-cols-2">
+        <AttendanceMetric label="Ngày" value={fmtDate(row.date)} />
+        <AttendanceMetric label="Thu nhập" value={row.earning_amount != null ? formatCurrency(row.earning_amount) : "—"} strong />
+        <AttendanceMetric label="Vào" value={fmtTime(row.check_in_time)} />
+        <AttendanceMetric label="Ra" value={fmtTime(row.check_out_time)} />
       </div>
+    </div>
+  );
+}
+
+function AttendanceMetric({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="min-w-0 rounded-lg bg-muted/45 px-2.5 py-2">
+      <p className="text-[10px] font-medium text-muted-foreground">{label}</p>
+      <p className={cn("mt-0.5 truncate tabular-nums", strong ? "font-financial font-semibold text-foreground" : "font-medium text-foreground")}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -191,14 +188,14 @@ const AdvancePaymentsPageMobile = () => {
 
   if (page.summaryLoading && page.requests.length === 0) {
     return (
-      <div className="p-4 pb-20 space-y-4 max-w-full overflow-hidden">
+      <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Skeleton className="h-10 w-full" />
-        <div className="grid grid-cols-2 gap-px">
+        <div className="grid grid-cols-1 gap-px min-[380px]:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-none first:rounded-tl-xl [&:nth-child(2)]:rounded-tr-xl [&:nth-child(3)]:rounded-bl-xl last:rounded-br-xl" />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-px">
+        <div className="grid grid-cols-1 gap-px min-[380px]:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20" />
           ))}
@@ -306,7 +303,7 @@ const AdvancePaymentsPageMobile = () => {
           <button
             onClick={() => setActiveTab("requests")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
+              "flex min-h-11 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
               activeTab === "requests"
                 ? "bg-white text-primary shadow-sm"
                 : "text-muted-foreground",
@@ -318,7 +315,7 @@ const AdvancePaymentsPageMobile = () => {
           <button
             onClick={() => setActiveTab("attendances")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
+              "flex min-h-11 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
               activeTab === "attendances"
                 ? "bg-white text-primary shadow-sm"
                 : "text-muted-foreground",
@@ -403,7 +400,7 @@ const AdvancePaymentsPageMobile = () => {
             value={attendance.filters.status || "all"}
             onValueChange={attendance.handleStatusChange}
           >
-            <SelectTrigger className="h-10 w-full text-sm">
+            <SelectTrigger className="h-11 w-full text-sm">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent>
@@ -484,13 +481,13 @@ const AdvancePaymentsPageMobile = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-9 text-xs" disabled={page.cancelMutation.isPending}>
+            <AlertDialogCancel className="min-h-11 text-xs" disabled={page.cancelMutation.isPending}>
               Giữ lại
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmCancel}
               disabled={page.cancelMutation.isPending}
-              className="h-9 gap-1.5 text-xs"
+              className="min-h-11 gap-1.5 text-xs"
             >
               {page.cancelMutation.isPending ? "Đang hủy..." : "Hủy yêu cầu"}
             </AlertDialogAction>

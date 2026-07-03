@@ -38,6 +38,7 @@ import { vi } from 'date-fns/locale';
 import { useFailedAttempts, useQuotaAnomalies, useOverrideFailedAttempt } from '@/hooks/api/useDashboard';
 import { useAdminAttendances } from '@/hooks/api/useAdminAttendance';
 import { formatCompactCurrency } from '@/utils/formatters';
+import { getFailedAttemptOverrideViewState } from '@/utils/failedAttemptOverride';
 import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDistance';
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
 import type { AdminAttendanceResponse } from '@/types/api/attendance.types';
@@ -162,14 +163,14 @@ export function HealthDrilldownSheet({ target, month, periodStart, periodEnd, on
               {title}
             </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground">
                 <X className="h-4 w-4" />
               </Button>
             </SheetClose>
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
           {target?.type === 'failed-attempts' && (
             <FailedAttemptsTable
               category={target.category}
@@ -646,7 +647,7 @@ function MapButton({ onClick }: { onClick: () => void }) {
       type="button"
       variant="ghost"
       size="sm"
-      className="mt-2 h-7 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+      className="mt-2 min-h-11 gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-foreground"
       onClick={onClick}
     >
       <Map className="h-3.5 w-3.5" />
@@ -677,7 +678,7 @@ function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceRespon
           </span>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-2">
         <DetailLine label="Vào làm">
           {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
         </DetailLine>
@@ -689,7 +690,7 @@ function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceRespon
         <DetailLine label="GPS ra">{formatGpsAccuracy(row.check_out_accuracy)}</DetailLine>
       </div>
       <div className="mt-2">
-        <Button type="button" variant="outline" size="sm" className="h-9 w-full gap-1.5" onClick={onOpenMap}>
+        <Button type="button" variant="outline" size="sm" className="min-h-11 w-full gap-1.5" onClick={onOpenMap}>
           <Map className="h-4 w-4" />
           Xem bản đồ
         </Button>
@@ -716,7 +717,7 @@ function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceRespon
           <p className="text-[11px] leading-tight text-muted-foreground">tới điểm chấm</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-2">
         <DetailLine label="Vào làm">
           {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
         </DetailLine>
@@ -727,7 +728,7 @@ function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceRespon
       <DetailLine label="Điểm gần nhất">{attendanceCheckpointDetail(row)}</DetailLine>
       <DetailLine label="Lý do">{row.salary_reject_reason || 'Tự động huỷ do quá hạn tan ca'}</DetailLine>
       <div className="mt-2">
-        <Button type="button" variant="outline" size="sm" className="h-9 w-full gap-1.5" onClick={onOpenMap}>
+        <Button type="button" variant="outline" size="sm" className="min-h-11 w-full gap-1.5" onClick={onOpenMap}>
           <Map className="h-4 w-4" />
           Xem bản đồ
         </Button>
@@ -954,13 +955,6 @@ function checkpointDetail(row: AdminFailedAttempt): string {
   return delta ? `${checkpointName} · ${delta}` : checkpointName;
 }
 
-// A failed attempt is admin-overridable only when the device never produced a
-// GPS fix (reason_category gps_*). geofence_outside captured a real coordinate
-// and must never be overridden in — that guardrail also runs server-side.
-function isGpsDeviceFailure(reasonCategory: string): boolean {
-  return reasonCategory.startsWith('gps_');
-}
-
 function FailedAttemptOverrideAction({
   row,
   onOverride,
@@ -968,12 +962,14 @@ function FailedAttemptOverrideAction({
   row: AdminFailedAttempt;
   onOverride: () => void;
 }) {
-  if (!isGpsDeviceFailure(row.reason_category)) return null;
-  if (row.resolved_at) {
+  const state = getFailedAttemptOverrideViewState(row.reason_category, row.resolved_at);
+
+  if (!state.canOverride) return null;
+  if (state.isResolved) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
         <CheckCircle2 className="h-3 w-3" />
-        Đã ghi nhận
+        {state.resolvedLabel}
       </span>
     );
   }
@@ -983,10 +979,10 @@ function FailedAttemptOverrideAction({
       variant="outline"
       size="sm"
       onClick={onOverride}
-      className="h-7 gap-1.5 rounded-full border-emerald-200 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+      className="min-h-11 gap-1.5 rounded-full border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 hover:text-amber-800"
     >
-      <CheckCircle2 className="h-3 w-3" />
-      Ghi nhận chấm công
+      <AlertTriangle className="h-3 w-3" />
+      {state.actionLabel}
     </Button>
   );
 }
@@ -1000,6 +996,9 @@ function OverrideAttemptDialog({
 }) {
   const [reason, setReason] = useState('');
   const override = useOverrideFailedAttempt();
+  const dialogTitle = row
+    ? getFailedAttemptOverrideViewState(row.reason_category, row.resolved_at).dialogTitle
+    : 'Duyệt ghi nhận chấm công';
 
   // Reset the textarea each time a new attempt is opened.
   useEffect(() => {
@@ -1018,7 +1017,10 @@ function OverrideAttemptDialog({
         if (!open && !override.isPending) onClose();
       }}
     >
-      <DialogContent title="Ghi nhận chấm công" className="max-w-md">
+      <DialogContent
+        title={dialogTitle}
+        className="max-h-[92dvh] max-w-md overflow-y-auto pb-[calc(1rem+env(safe-area-inset-bottom))]"
+      >
         {row ? (
           <div className="space-y-4">
             <p className="text-sm leading-relaxed text-slate-600">
@@ -1035,6 +1037,7 @@ function OverrideAttemptDialog({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
+                className="min-h-[112px]"
                 placeholder="VD: Nhân viên ở cổng, điện thoại không bắt được GPS"
                 disabled={override.isPending}
               />
@@ -1046,12 +1049,19 @@ function OverrideAttemptDialog({
                   : 'Không ghi nhận được, vui lòng thử lại.'}
               </p>
             ) : null}
-            <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="ghost" onClick={onClose} disabled={override.isPending}>
+            <div className="grid grid-cols-1 gap-2 pt-1 sm:flex sm:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-11"
+                onClick={onClose}
+                disabled={override.isPending}
+              >
                 Hủy
               </Button>
               <Button
                 type="button"
+                className="min-h-11"
                 onClick={submit}
                 disabled={override.isPending || reason.trim() === ''}
               >
@@ -1109,7 +1119,7 @@ function FailedAttemptDesktopRow({
           type="button"
           variant="ghost"
           size="sm"
-          className="mt-2 h-8 gap-1.5 rounded-full px-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+          className="mt-2 min-h-11 gap-1.5 rounded-full px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950"
           onClick={onOpenMap}
         >
           <Map className="h-3.5 w-3.5" />
@@ -1136,55 +1146,56 @@ function FailedAttemptCard({
   const meta = reasonMeta(row.reason_category);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.07)]">
-      <div className="grid gap-0 md:grid-cols-[minmax(160px,1fr)_minmax(220px,1.45fr)_minmax(120px,.72fr)_minmax(180px,1fr)_minmax(96px,.56fr)]">
-        <div className="flex min-w-0 items-start gap-2.5 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
+    <article className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.07)]">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2.5">
           <Monogram name={row.employee_name} />
           <div className="min-w-0">
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">Nhân viên</p>
             <p className="break-words text-sm font-medium leading-snug text-slate-950">
               {row.employee_name ?? `#${row.employee_id}`}
             </p>
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 truncate">{row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}</span>
+            </p>
           </div>
         </div>
-
-        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Lý do</p>
-          <div className="flex max-w-[18rem] flex-col items-start gap-2">
-            <AttemptTypeBadge attemptType={row.attempt_type} />
-            <SeverityBadge meta={meta} />
-            <FailedAttemptOverrideAction row={row} onOverride={onOverride} />
-          </div>
+        <div className="shrink-0 text-right">
+          <TimeCell iso={row.created_at} />
         </div>
+      </div>
 
-        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Khoảng cách</p>
+      <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="min-w-0">
+          <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">Khoảng cách</p>
           <ContextualDistance row={row} />
         </div>
-
-        <div className="min-w-0 border-b border-slate-100 p-4 md:border-b-0 md:border-r">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">Địa điểm</p>
-          <div className="space-y-2">
-            <CheckpointLocation row={row} />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="mt-3 h-8 gap-1.5 rounded-full px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-            onClick={onOpenMap}
-          >
-            <Map className="h-3.5 w-3.5" />
-            Xem bản đồ
-          </Button>
+        <div className="min-w-0 border-t border-slate-200 pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
+          <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">Địa điểm</p>
+          <p className="break-words text-sm font-semibold text-slate-950">
+            {row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">{formatGpsAccuracy(row.accuracy)}</p>
         </div>
+      </div>
 
-        <div className="flex min-w-0 items-start justify-between gap-3 p-4 md:block">
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 md:mb-3">Thời gian</p>
-            <TimeCell iso={row.created_at} />
-          </div>
-        </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <AttemptTypeBadge attemptType={row.attempt_type} />
+        <SeverityBadge meta={meta} />
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-11 flex-1 gap-1.5 rounded-full text-xs font-semibold text-slate-700"
+          onClick={onOpenMap}
+        >
+          <Map className="h-4 w-4" />
+          Xem bản đồ
+        </Button>
+        <FailedAttemptOverrideAction row={row} onOverride={onOverride} />
       </div>
     </article>
   );
@@ -1200,7 +1211,7 @@ function QuotaAnomalyCard({ row }: { row: QuotaAnomalyRow }) {
           <p className="mt-0.5 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 border-y border-border/50 py-2 text-xs">
+      <div className="grid grid-cols-1 gap-2 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-3">
         <Metric label="Lương" value={formatCompactCurrency(row.salary)} />
         <Metric label="Max adv" value={formatCompactCurrency(row.max_adv_amount)} />
         <Metric label="Mong đợi" value={formatCompactCurrency(row.expected_max)} />
@@ -1223,7 +1234,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium text-foreground tabular-nums">{value}</p>
+      <p className="mt-1 break-words font-medium text-foreground tabular-nums">{value}</p>
     </div>
   );
 }
@@ -1235,7 +1246,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <Button
         variant="outline"
         size="sm"
-        className="h-11 min-w-[44px] sm:h-9 sm:min-w-20"
+        className="h-11 min-w-[44px] sm:min-w-20"
         disabled={page <= 1}
         onClick={() => onChange(Math.max(1, page - 1))}
       >
@@ -1247,7 +1258,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <Button
         variant="outline"
         size="sm"
-        className="h-11 min-w-[44px] sm:h-9 sm:min-w-20"
+        className="h-11 min-w-[44px] sm:min-w-20"
         disabled={page >= totalPages}
         onClick={() => onChange(Math.min(totalPages, page + 1))}
       >

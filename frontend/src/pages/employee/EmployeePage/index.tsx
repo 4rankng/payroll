@@ -161,7 +161,7 @@ const EmployeePage = () => {
       />
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto p-4 space-y-4 pb-20">
+      <div className="max-w-2xl mx-auto space-y-4 p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 gap-3">
@@ -222,7 +222,7 @@ const EmployeePage = () => {
               )}
             </div>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="h-9 text-sm font-medium w-auto inline-flex rounded-lg border-0 bg-white/60 hover:bg-white/80 transition-colors">
+              <SelectTrigger className="h-11 w-auto min-w-11 rounded-lg border-0 bg-white/60 text-sm font-medium transition-colors hover:bg-white/80">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   <SelectValue />
@@ -273,7 +273,7 @@ const EmployeePage = () => {
                     </div>
 
                     {/* Stats row */}
-                    <div className="grid grid-cols-3 divide-x divide-sky-100/60 border-t border-border">                      {[
+                    <div className="grid grid-cols-1 divide-y divide-sky-100/60 border-t border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">                      {[
                         { label: "Giờ công", value: `${day.totalHours % 1 === 0 ? day.totalHours : formatNumber(day.totalHours, 1)}`, unit: "h", color: "text-foreground" },
                         { label: "Tổng lương", value: formatCurrency(day.totalAmount), unit: null, color: "text-foreground" },
                         { label: "Đã nhận", value: formatCurrency(day.totalPaidAmount), unit: null, color: isPaid ? "text-emerald-600" : "text-slate-400" },

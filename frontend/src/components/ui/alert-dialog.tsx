@@ -34,7 +34,7 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 flex flex-col gap-0 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border bg-background shadow-sm overflow-hidden duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl",
+        "fixed left-[50%] top-[50%] z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col gap-0 overflow-hidden rounded-xl border bg-background shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:w-full",
         className
       )}
       {...props}
@@ -50,7 +50,7 @@ const AlertDialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "bg-slate-900 text-white flex flex-col space-y-2 text-center sm:text-left px-6 pt-5 pb-4",
+      "flex flex-col space-y-2 bg-slate-900 px-4 pb-4 pt-5 text-center text-white sm:px-6 sm:text-left",
       className
     )}
     style={{
@@ -69,7 +69,7 @@ const AlertDialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-row justify-end gap-2 px-6 pb-6 pt-3 border-t border-border/40",
+      "flex flex-col-reverse gap-2 border-t border-border/40 px-4 pb-5 pt-3 sm:flex-row sm:justify-end sm:px-6 sm:pb-6",
       className
     )}
     {...props}
@@ -108,7 +108,7 @@ const AlertDialogAction = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Action
     ref={ref}
-    className={cn(buttonVariants(), className)}
+    className={cn(buttonVariants(), "min-h-11", className)}
     {...props}
   />
 ))
@@ -122,6 +122,7 @@ const AlertDialogCancel = React.forwardRef<
     ref={ref}
     className={cn(
       buttonVariants({ variant: "outline" }),
+      "min-h-11",
       className
     )}
     {...props}

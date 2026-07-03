@@ -105,7 +105,7 @@ export default function CreateManualDisbursementDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-[580px] p-0 gap-0 overflow-hidden"
+          className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden p-0 sm:max-w-[580px]"
           hideCloseButton
         >
           <DialogNavyHeader
@@ -118,7 +118,7 @@ export default function CreateManualDisbursementDialog({
             description="Khởi tạo giao dịch chuyển tiền thủ công"
           />
 
-          <div ref={scrollRef} className="overflow-y-auto px-5 py-4 max-h-[calc(100vh-10rem)]">
+          <div ref={scrollRef} className="max-h-[calc(92dvh-5rem)] overflow-y-auto px-4 py-4 sm:px-5">
             {inProgressRow ? (
               <TransactionStatusPanel row={inProgressRow} onReset={reset} />
             ) : (

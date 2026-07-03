@@ -152,7 +152,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpen}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl shadow-none p-4 sm:p-5">
+      <DialogContent className="max-h-[92dvh] max-w-[95vw] overflow-y-auto p-4 shadow-none sm:max-w-3xl sm:p-5">
         <DialogHeader className="space-y-1 pb-3">
           <DialogTitle className="text-lg">Xuất bảng công</DialogTitle>
           <DialogDescription className="text-sm">
@@ -276,7 +276,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                         : 'Chọn dự án'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
+                <PopoverContent className="w-[calc(100vw-2rem)] max-w-[360px] p-0" align="start">
                   <div className="p-2 space-y-2">
                     {/* Search Input */}
                     <div className="relative">
@@ -285,7 +285,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                         placeholder="Tìm dự án theo tên hoặc mã..."
                         value={projectSearch}
                         onChange={(e) => setProjectSearch(e.target.value)}
-                        className="pl-8 h-9 text-sm"
+                        className="min-h-11 pl-8 text-sm"
                       />
                     </div>
 
@@ -297,7 +297,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                           type="button"
                           onClick={handleSelectAllProjects}
                           className={cn(
-                            "w-full text-left px-3 py-2 rounded transition-colors",
+                            "min-h-11 w-full rounded px-3 py-2.5 text-left transition-colors",
                             "hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-ring",
                             isAllProjectsSelected && "bg-primary/10 hover:bg-primary/15"
                           )}
@@ -321,12 +321,12 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                                 type="button"
                                 onClick={() => handleToggleProject(project.id)}
                                 className={cn(
-                                  "w-full text-left px-3 py-2 rounded transition-colors",
+                                  "min-h-11 w-full rounded px-3 py-2.5 text-left transition-colors",
                                   "hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-ring",
                                   isSelected && "bg-primary/10 hover:bg-primary/15"
                                 )}
                               >
-                                <div className="font-medium text-xs">{project.name}</div>
+                                <div className="break-words text-xs font-medium leading-snug">{project.name}</div>
                                 <div className="text-[10px] text-muted-foreground mt-0.5">
                                   {project.code}
                                 </div>
@@ -346,10 +346,10 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
           {!isAllProjectsSelected && selectedProjects.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Đã chọn</Label>
-              <div className="p-2 border rounded bg-muted/20 min-h-[60px] max-h-[120px] overflow-y-auto text-xs">
+              <div className="min-h-[60px] max-h-36 overflow-y-auto rounded border bg-muted/20 p-2 text-xs">
                 {selectedProjects.map((project, index) => (
-                  <div key={project.id} className="flex items-center justify-between py-1">
-                    <span>{index + 1}. {project.name}</span>
+                  <div key={project.id} className="py-1.5">
+                    <span className="break-words leading-snug">{index + 1}. {project.name}</span>
                   </div>
                 ))}
               </div>
@@ -357,7 +357,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
           )}
         </div>
 
-        <DialogFooter className="flex flex-row gap-2.5 sm:gap-3 pt-3">
+        <DialogFooter className="flex flex-col gap-2.5 pt-3 sm:flex-row sm:gap-3">
           <Button
             variant="outline"
             onClick={handleClose}

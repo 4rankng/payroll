@@ -186,7 +186,7 @@ export function UserMultiSelector({
         <Button
           variant="outline"
           className={cn(
-            'w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-left',
+            'min-h-11 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-left',
             className
           )}
           disabled={disabled}
@@ -194,13 +194,13 @@ export function UserMultiSelector({
           aria-expanded={open}
           aria-label="Chọn người nhận"
         >
-          <div className="flex w-full flex-col truncate">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 opacity-60" />
-              <span className="truncate typography-body-medium">{triggerLabel}</span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 items-center gap-2">
+              <Users className="h-4 w-4 shrink-0 opacity-60" />
+              <span className="min-w-0 truncate typography-body-medium">{triggerLabel}</span>
             </div>
             {normalizedSelectedIds.length > 0 && (
-              <span className="truncate typography-caption text-muted-foreground">
+              <span className="min-w-0 truncate typography-caption text-muted-foreground">
                 {normalizedSelectedIds.length === 1
                   ? 'Một người đã được chọn'
                   : `${normalizedSelectedIds.length} người được chọn`}
@@ -214,7 +214,7 @@ export function UserMultiSelector({
       <PopoverContent
         align="start"
         side="bottom"
-        className="w-[--radix-popover-trigger-width] max-w-[480px] p-0"
+        className="w-[calc(100vw-2rem)] max-w-[480px] p-0 sm:w-[--radix-popover-trigger-width]"
       >
         <div className="flex flex-col gap-3">
           <div className="space-y-2 border-b px-4 pt-4 pb-2">
@@ -232,14 +232,14 @@ export function UserMultiSelector({
                   <Badge
                     key={user.id}
                     variant="secondary"
-                    className="inline-flex items-center gap-1"
+                    className="inline-flex min-h-9 items-center gap-1.5 whitespace-normal rounded-full py-1"
                   >
-                    <span className="typography-body-small">{user.fullname}</span>
+                    <span className="break-words typography-body-small">{user.fullname}</span>
                     <button
                       type="button"
                       data-user-id={user.id}
                       onClick={handleRemoveSelectedUserClick}
-                      className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-muted/80"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-muted/80"
                       aria-label="Xóa người nhận"
                     >
                       <X className="h-3 w-3" />
@@ -288,6 +288,7 @@ export function UserMultiSelector({
                         key={user.id}
                         value={user.id.toString()}
                         onSelect={handleCommandItemSelect}
+                        className="min-h-12 items-start py-2.5"
                       >
                         <Check
                           className={cn(
@@ -295,9 +296,9 @@ export function UserMultiSelector({
                             isSelected ? 'opacity-100' : 'opacity-0'
                           )}
                         />
-                        <div className="flex flex-col items-start leading-tight">
-                          <span className="typography-body-medium">{user.fullname}</span>
-                          <span className="typography-caption text-muted-foreground">
+                        <div className="flex min-w-0 flex-col items-start leading-tight">
+                          <span className="break-words typography-body-medium">{user.fullname}</span>
+                          <span className="break-words typography-caption text-muted-foreground">
                             {user.email} • {getRoleLabel(user.role)}
                           </span>
                         </div>

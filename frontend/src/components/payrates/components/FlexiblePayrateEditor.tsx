@@ -307,7 +307,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             <div className="flex items-center justify-between gap-1.5">
                               {editingShiftIdx === i ? (
                                 <input
-                                  className="fpe-mono text-sm font-bold tracking-tight w-[100px] h-6 px-1.5 rounded border border-indigo-400 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                                  className="fpe-mono h-11 w-[120px] rounded border border-indigo-400 bg-white px-2 text-sm font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-indigo-200"
                                   value={editingShiftValue}
                                   onChange={e => setEditingShiftValue(e.target.value)}
                                   onKeyDown={e => {
@@ -327,7 +327,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 </span>
                               )}
                               {!readOnly && (
-                                <button onClick={()=>removeShift(s)} className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors text-base leading-none">×</button>
+                                <button onClick={()=>removeShift(s)} className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
                               )}
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -350,7 +350,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             setShiftHighlight(true);
                             setTimeout(() => setShiftHighlight(false), 1200);
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-dashed border-border text-indigo-700 text-xs font-bold hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors whitespace-nowrap">
+                          className="flex min-h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-bold text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50/50">
                           + Thêm ca
                         </button>
                       </th>
@@ -365,7 +365,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         <div className="flex items-center justify-between gap-2">
                           {editingPositionName === pos ? (
                             <input
-                              className="text-sm font-bold h-6 px-1.5 rounded border border-indigo-400 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200 w-full max-w-[120px]"
+                              className="h-11 w-full max-w-[140px] rounded border border-indigo-400 bg-white px-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-indigo-200"
                               value={editingPositionValue}
                               onChange={e => setEditingPositionValue(e.target.value)}
                               onKeyDown={e => {
@@ -386,8 +386,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           )}
                           {!readOnly && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="w-5 h-5 flex items-center justify-center rounded border border-border bg-white text-muted-foreground hover:border-indigo-400 hover:text-indigo-600 transition-colors text-xs">→</button>
-                              <button onClick={()=>togglePos(pos)} title="Xoá vị trí" className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors text-base leading-none">×</button>
+                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-indigo-400 hover:text-indigo-600">→</button>
+                              <button onClick={()=>togglePos(pos)} title="Xoá vị trí" className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
                             </div>
                           )}
                         </div>
@@ -402,7 +402,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           <td key={ci} style={{ borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #e2e8f0', padding:4, background: has ? '#f0fdf6' : 'transparent' }}>
                             <div className="relative">
                               <input
-                                className="fpe-mono w-full h-9 pl-2 pr-7 rounded-lg text-sm text-right transition-all"
+                                className="fpe-mono h-11 w-full rounded-lg pl-2 pr-7 text-right text-sm transition-all"
                                 inputMode="numeric"
                                 placeholder="0"
                                 readOnly={readOnly}
@@ -469,7 +469,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 <div className="flex flex-wrap gap-2">
                   {ALL_POSITIONS.map(name => (
                     <button key={name} onClick={()=>togglePos(name)}
-                      className="fpe-sans inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+                      className="fpe-sans inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                       style={{
                         border: `1px solid ${hasPos(name)?'#c7d0fc':'#e2e8f0'}`,
                         background: hasPos(name)?'#eef1ff':'#fff',
@@ -494,7 +494,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     const on = hasShift(p.start, p.end);
                     return (
                       <button key={p.start+p.end} onClick={()=>togglePreset(p)}
-                        className="fpe-mono inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+                        className="fpe-mono inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                         style={{
                           border:`1px solid ${on?'#c7d0fc':'#e2e8f0'}`,
                           background: on?'#eef1ff':'#fff',
@@ -510,13 +510,13 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
 
                 {/* custom shift input */}
                 <div className="mt-3.5 pt-3.5 border-t border-dashed border-border/70">
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-[minmax(0,1fr)_auto]">
                     <input ref={shiftInputRef}
                       value={customShift}
                       onChange={e => { setCustomShift(e.target.value); setShiftErr(null); setShiftHighlight(false); }}
                       onKeyDown={e => e.key==='Enter' && addCustomShift()}
                       placeholder="06:00-14:00" inputMode="numeric"
-                      className={`fpe-mono flex-1 h-9 px-3 rounded-lg text-sm border transition-colors ${shiftHighlight ? 'shift-highlight' : ''}`}
+                      className={`fpe-mono h-11 rounded-lg border px-3 text-sm transition-colors ${shiftHighlight ? 'shift-highlight' : ''}`}
                       style={{
                         border: `1px solid ${shiftErr ? '#fbcfcf' : '#e2e8f0'}`,
                         background: shiftErr ? '#fef2f2' : '#fff',
@@ -524,7 +524,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       }}
                     />
                     <button onClick={addCustomShift}
-                      className="fpe-sans h-9 px-4 rounded-lg text-sm font-bold text-white transition-colors"
+                      className="fpe-sans h-11 rounded-lg px-4 text-sm font-bold text-white transition-colors"
                       style={{ background:'#4f46e5' }}>
                       Thêm ca
                     </button>

@@ -34,7 +34,7 @@ export const FilterPill = React.memo(function FilterPill({
     <SelectPrimitive.Root value={value} onValueChange={onChange}>
       <SelectPrimitive.Trigger
         className={cn(
-          'group inline-flex items-center gap-1.5 h-9 px-3 py-0 rounded-xl text-sm font-medium whitespace-nowrap',
+          'group inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-0 text-sm font-medium whitespace-nowrap',
           'border transition-colors duration-100 select-none outline-none',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           !isActive && 'border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40',
@@ -85,7 +85,7 @@ const FilterPillItem = React.memo(function FilterPillItem({
     <SelectPrimitive.Item
       value={value}
       className={cn(
-        'relative flex min-h-9 w-full cursor-default select-none items-center rounded-md py-2 pl-7 pr-3 text-sm outline-none whitespace-nowrap',
+        'relative flex min-h-11 w-full cursor-default select-none items-center rounded-md py-2 pl-7 pr-3 text-sm outline-none whitespace-nowrap',
         'focus:bg-accent focus:text-accent-foreground',
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       )}

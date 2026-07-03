@@ -47,14 +47,14 @@ function ActionMultiSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+        <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
           Hành động
           {selected.length > 0 && (
-            <Badge className="h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground border-0">
+            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
               {selected.length}
             </Badge>
           )}
-          <ChevronDown className="w-3 h-3 text-muted-foreground" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-52 max-h-72 overflow-y-auto">
@@ -65,7 +65,7 @@ function ActionMultiSelect({
             key={action}
             checked={selected.includes(action)}
             onCheckedChange={() => toggle(action)}
-            className="text-xs"
+            className="min-h-10 text-xs"
           >
             {(VIETNAMESE_AUDIT_LABELS.actions as Record<string, string>)[action] ?? action}
           </DropdownMenuCheckboxItem>
@@ -93,14 +93,14 @@ function EntityTypeMultiSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+        <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
           Đối tượng
           {selected.length > 0 && (
-            <Badge className="h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground border-0">
+            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
               {selected.length}
             </Badge>
           )}
-          <ChevronDown className="w-3 h-3 text-muted-foreground" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-52 max-h-72 overflow-y-auto">
@@ -111,7 +111,7 @@ function EntityTypeMultiSelect({
             key={et}
             checked={selected.includes(et)}
             onCheckedChange={() => toggle(et)}
-            className="text-xs"
+            className="min-h-10 text-xs"
           >
             {(VIETNAMESE_AUDIT_LABELS.entities as Record<string, string>)[et] ?? et}
           </DropdownMenuCheckboxItem>
@@ -136,14 +136,14 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
         type="date"
         value={filters.fromDate ?? ''}
         onChange={(e) => onChange({ ...filters, fromDate: e.target.value || undefined, page: 1 })}
-        className="h-8 text-xs w-36"
+        className="h-11 w-40 text-xs"
       />
       <span className="text-muted-foreground text-xs">—</span>
       <Input
         type="date"
         value={filters.toDate ?? ''}
         onChange={(e) => onChange({ ...filters, toDate: e.target.value || undefined, page: 1 })}
-        className="h-8 text-xs w-36"
+        className="h-11 w-40 text-xs"
       />
 
       <ActionMultiSelect
@@ -161,9 +161,9 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
           variant="ghost"
           size="sm"
           onClick={reset}
-          className="h-8 text-xs text-muted-foreground gap-1"
+          className="min-h-11 gap-1 text-xs text-muted-foreground"
         >
-          <X className="w-3 h-3" />
+          <X className="h-3 w-3" />
           Xóa bộ lọc
           <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">
             {activeCount}
@@ -194,38 +194,41 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
       <div className="flex md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-              <Filter className="w-3.5 h-3.5" />
+            <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
+              <Filter className="h-3.5 w-3.5" />
               Bộ lọc
               {activeCount > 0 && (
-                <Badge className="h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground border-0">
+                <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
                   {activeCount}
                 </Badge>
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="pb-8">
+          <SheetContent
+            side="bottom"
+            className="max-h-[85dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
+          >
             <SheetHeader className="mb-4">
               <SheetTitle className="text-sm">Bộ lọc</SheetTitle>
             </SheetHeader>
             <div className="flex flex-col gap-3">
-              <div className="flex gap-2">
-                <div className="flex-1">
+              <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
+                <div className="min-w-0">
                   <label className="text-xs text-muted-foreground mb-1 block">Từ ngày</label>
                   <Input
                     type="date"
                     value={filters.fromDate ?? ''}
                     onChange={(e) => onChange({ ...filters, fromDate: e.target.value || undefined, page: 1 })}
-                    className="h-9 text-sm w-full"
+                    className="h-11 w-full text-sm"
                   />
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0">
                   <label className="text-xs text-muted-foreground mb-1 block">Đến ngày</label>
                   <Input
                     type="date"
                     value={filters.toDate ?? ''}
                     onChange={(e) => onChange({ ...filters, toDate: e.target.value || undefined, page: 1 })}
-                    className="h-9 text-sm w-full"
+                    className="h-11 w-full text-sm"
                   />
                 </div>
               </div>
@@ -244,9 +247,9 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => { onChange({ page: 1, pageSize: filters.pageSize }); setMobileOpen(false); }}
-                  className="text-xs text-muted-foreground gap-1 self-start"
+                  className="min-h-11 gap-1 self-start text-xs text-muted-foreground"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" />
                   Xóa tất cả bộ lọc
                 </Button>
               )}

@@ -283,20 +283,20 @@ function LedgerEntryDetailsSheetComponent({
             {/* Financial Info - Compact */}
             <div className="bg-muted/30 p-3 rounded-xl">
               <div className="text-xs text-muted-foreground mb-2">Thông tin tài chính</div>
-              <div className="grid grid-cols-3 gap-1 text-center">
-                <div className="bg-red-50 p-1.5 rounded text-xs">
+              <div className="grid grid-cols-1 gap-2 text-left sm:grid-cols-3 sm:text-center">
+                <div className="rounded bg-red-50 p-2 text-xs">
                   <div className="text-muted-foreground">Nợ</div>
                   <div className="font-semibold text-red-600 leading-tight">
                     {ledgerService.formatCurrencyShort(entry.debit)}
                   </div>
                 </div>
-                <div className="bg-green-50 p-1.5 rounded text-xs">
+                <div className="rounded bg-green-50 p-2 text-xs">
                   <div className="text-muted-foreground">Có</div>
                   <div className="font-semibold text-green-600 leading-tight">
                     {ledgerService.formatCurrencyShort(entry.credit)}
                   </div>
                 </div>
-                <div className="bg-blue-50 p-1.5 rounded text-xs">
+                <div className="rounded bg-blue-50 p-2 text-xs">
                   <div className="text-muted-foreground">Số dư</div>
                   <div className={`font-semibold leading-tight ${
                     entry.balance >= 0 ? 'text-blue-600' : 'text-red-600'
