@@ -155,6 +155,12 @@ func TestMapAdminAttendanceResponseRejectedIncludesRejectTimeAndNearestGate(t *t
 	if got.GeofenceRadiusMeters == nil || *got.GeofenceRadiusMeters != 100 {
 		t.Fatalf("geofence radius = %v, want 100", got.GeofenceRadiusMeters)
 	}
+	if got.CheckInAccuracy != nil {
+		t.Fatalf("check_in_accuracy = %v, want nil", got.CheckInAccuracy)
+	}
+	if got.NearestCheckpointLat == nil || got.NearestCheckpointLng == nil {
+		t.Fatalf("nearest checkpoint coordinates = (%v, %v), want non-nil", got.NearestCheckpointLat, got.NearestCheckpointLng)
+	}
 }
 
 func TestListFailedAttemptsInfersCheckoutProjectForLegacyRows(t *testing.T) {
@@ -220,5 +226,8 @@ func TestListFailedAttemptsInfersCheckoutProjectForLegacyRows(t *testing.T) {
 	}
 	if got[0].NearestCheckpointDistanceMeters == nil {
 		t.Fatal("expected nearest checkpoint distance to be populated")
+	}
+	if got[0].NearestCheckpointLat == nil || got[0].NearestCheckpointLng == nil {
+		t.Fatal("expected nearest checkpoint coordinates to be populated")
 	}
 }

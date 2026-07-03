@@ -146,8 +146,16 @@ func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.Admin
 		EmployeeName:       att.Employee.Fullname,
 		Date:               att.Date,
 		CheckInTime:        att.CheckInTime,
+		CheckInLat:         att.CheckInLat,
+		CheckInLng:         att.CheckInLng,
+		CheckInAccuracy:    att.CheckInAccuracy,
+		CheckInGpsAt:       att.CheckInGpsAt,
 		CheckInGate:        att.CheckInGate,
 		CheckOutTime:       att.CheckOutTime,
+		CheckOutLat:        att.CheckOutLat,
+		CheckOutLng:        att.CheckOutLng,
+		CheckOutAccuracy:   att.CheckOutAccuracy,
+		CheckOutGpsAt:      att.CheckOutGpsAt,
 		CheckOutGate:       att.CheckOutGate,
 		EarningAmount:      att.EarningAmount,
 		SalaryRejectReason: att.SalaryRejectReason,
@@ -169,6 +177,8 @@ func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.Admin
 		name := nearest.name
 		res.NearestCheckpointName = &name
 	}
+	res.NearestCheckpointLat = &nearest.lat
+	res.NearestCheckpointLng = &nearest.lng
 	if nearest.geofenceRadiusMeters > 0 {
 		radius := nearest.geofenceRadiusMeters
 		res.GeofenceRadiusMeters = &radius
@@ -319,6 +329,8 @@ func mapFailedAttemptResponse(a *domain.AttendanceFailedAttempt, project *domain
 		name := nearest.name
 		res.NearestCheckpointName = &name
 	}
+	res.NearestCheckpointLat = &nearest.lat
+	res.NearestCheckpointLng = &nearest.lng
 	if nearest.geofenceRadiusMeters > 0 {
 		radius := nearest.geofenceRadiusMeters
 		res.GeofenceRadiusMeters = &radius
@@ -329,6 +341,8 @@ func mapFailedAttemptResponse(a *domain.AttendanceFailedAttempt, project *domain
 
 type nearestCheckpoint struct {
 	name                 string
+	lat                  float64
+	lng                  float64
 	distanceMeters       float64
 	geofenceRadiusMeters uint
 }
@@ -364,6 +378,8 @@ func nearestCheckpointForCoordinates(lat, lng float64, project *domain.Project) 
 	gate := project.GeofenceGates[nearestIndex]
 	return &nearestCheckpoint{
 		name:                 gate.Name,
+		lat:                  gate.Lat,
+		lng:                  gate.Lng,
 		distanceMeters:       nearestDistance,
 		geofenceRadiusMeters: project.GeofenceRadiusMeters,
 	}

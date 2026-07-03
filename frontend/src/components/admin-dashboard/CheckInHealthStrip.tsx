@@ -180,7 +180,9 @@ const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoad
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center gap-2 px-0.5">
-        <Icon className="h-3.5 w-3.5 text-primary/70" />
+        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
+          <Icon className="h-3.5 w-3.5 text-primary/70" />
+        </div>
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </span>

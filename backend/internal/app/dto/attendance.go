@@ -66,13 +66,23 @@ type AdminAttendanceResponse struct {
 	EmployeeName                    string     `json:"employee_name"`
 	Date                            time.Time  `json:"date"`
 	CheckInTime                     time.Time  `json:"check_in_time"`
+	CheckInLat                      float64    `json:"check_in_lat"`
+	CheckInLng                      float64    `json:"check_in_lng"`
+	CheckInAccuracy                 *float64   `json:"check_in_accuracy,omitempty"`
+	CheckInGpsAt                    *time.Time `json:"check_in_gps_at,omitempty"`
 	CheckInGate                     string     `json:"check_in_gate"`
 	CheckOutTime                    *time.Time `json:"check_out_time,omitempty"`
+	CheckOutLat                     *float64   `json:"check_out_lat,omitempty"`
+	CheckOutLng                     *float64   `json:"check_out_lng,omitempty"`
+	CheckOutAccuracy                *float64   `json:"check_out_accuracy,omitempty"`
+	CheckOutGpsAt                   *time.Time `json:"check_out_gps_at,omitempty"`
 	CheckOutGate                    *string    `json:"check_out_gate,omitempty"`
 	EarningAmount                   *int64     `json:"earning_amount,omitempty"`
 	SalaryRejectReason              *string    `json:"salary_reject_reason,omitempty"`
 	RejectedAt                      *time.Time `json:"rejected_at,omitempty"`
 	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
+	NearestCheckpointLat            *float64   `json:"nearest_checkpoint_lat,omitempty"`
+	NearestCheckpointLng            *float64   `json:"nearest_checkpoint_lng,omitempty"`
 	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
 	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
 	Status                          string     `json:"status"`
@@ -97,6 +107,8 @@ type AdminFailedAttemptResponse struct {
 	Accuracy                        *float64   `json:"accuracy,omitempty"`
 	GpsAt                           *time.Time `json:"gps_at,omitempty"`
 	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
+	NearestCheckpointLat            *float64   `json:"nearest_checkpoint_lat,omitempty"`
+	NearestCheckpointLng            *float64   `json:"nearest_checkpoint_lng,omitempty"`
 	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
 	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
 	ErrorMessage                    *string    `json:"error_message,omitempty"`

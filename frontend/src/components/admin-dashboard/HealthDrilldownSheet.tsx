@@ -1,11 +1,36 @@
 import { useState, type ReactNode } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { X, Inbox } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  Ban,
+  Banknote,
+  CalendarClock,
+  CalendarX2,
+  CheckCircle2,
+  Clock,
+  Crosshair,
+  Hourglass,
+  Inbox,
+  Layers,
+  Lock,
+  LogIn,
+  LogOut,
+  Map,
+  MapPin,
+  MapPinOff,
+  SatelliteDish,
+  ShieldAlert,
+  Smartphone,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { format, parseISO, subDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -16,6 +41,9 @@ import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDi
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
 import type { AdminAttendanceResponse } from '@/types/api/attendance.types';
 import type { HealthDrilldownTarget } from './CheckInHealthStrip';
+import { FailedAttemptLocationMap, formatGpsAccuracy } from './FailedAttemptLocationMap';
+import { AttendanceLocationMap } from './AttendanceLocationMap';
+import type { AttemptTone, ReasonSeverity } from './LocationMap';
 
 const PAGE_SIZE = 20;
 
@@ -27,33 +55,67 @@ interface HealthDrilldownSheetProps {
   onClose: () => void;
 }
 
-const REASON_CATEGORY_LABELS: Record<string, string> = {
-  geofence_not_configured: 'Chưa cấu hình vị trí',
-  geofence_outside: 'Ngoài khu vực chấm công',
-  gps_denied: 'Chưa cấp quyền GPS',
-  gps_timeout: 'GPS phản hồi chậm',
-  gps_unavailable: 'Không lấy được vị trí GPS',
-  gps_unsupported: 'Thiết bị không hỗ trợ GPS',
-  gps_inaccurate: 'GPS không chính xác',
-  check_in_not_enabled: 'Chưa cấp quyền chấm công',
-  already_checked_in: 'Đã vào làm rồi',
-  shift_not_configured: 'Chưa cấu hình ca',
-  check_in_window: 'Ngoài giờ vào làm',
-  check_out_window: 'Ngoài giờ tan ca',
-  already_checked_out: 'Đã tan ca rồi',
-  already_auto_rejected: 'Tự động huỷ (hết giờ)',
-  orphaned: 'Quá hạn tan ca',
-  not_flexible_project: 'Không hỗ trợ tự chấm công',
-  no_flexible_project: 'Không thuộc dự án tự chấm công',
-  multiple_flexible: 'Thuộc nhiều dự án',
-  no_attendance: 'Không có ca hôm nay',
-  check_in_disabled: 'Chấm công bị khoá',
-  other: 'Lỗi khác',
+// ─── Reason severity model ────────────────────────────────────────────────
+// Each failed-attempt reason carries a severity + icon so an admin can scan a
+// long list and instantly separate dangerous geofence breaches from benign
+// GPS hiccups or process states.
+//   danger  → worker is somewhere they should not be (geofence breach)
+//   warning → tech / timing friction (GPS, shift window)
+//   info    → permission / config blocking self-attendance
+//   neutral → benign process state (already checked in, etc.)
+
+type Severity = 'danger' | 'warning' | 'info' | 'neutral';
+
+interface ReasonMeta {
+  label: string;
+  severity: Severity;
+  icon: LucideIcon;
+}
+
+const REASON_META: Record<string, ReasonMeta> = {
+  geofence_outside:        { label: 'Ngoài khu vực chấm công',      severity: 'danger',  icon: ShieldAlert },
+  geofence_not_configured: { label: 'Chưa cấu hình vị trí',         severity: 'warning', icon: MapPinOff },
+  gps_denied:              { label: 'Chưa cấp quyền GPS',           severity: 'warning', icon: Ban },
+  gps_timeout:             { label: 'GPS phản hồi chậm',            severity: 'warning', icon: SatelliteDish },
+  gps_unavailable:         { label: 'Không lấy được vị trí GPS',    severity: 'warning', icon: SatelliteDish },
+  gps_unsupported:         { label: 'Thiết bị không hỗ trợ GPS',    severity: 'warning', icon: Smartphone },
+  gps_inaccurate:          { label: 'GPS không chính xác',          severity: 'warning', icon: Crosshair },
+  check_in_not_enabled:    { label: 'Chưa cấp quyền chấm công',     severity: 'info',    icon: Lock },
+  already_checked_in:      { label: 'Đã vào làm rồi',               severity: 'neutral', icon: CheckCircle2 },
+  shift_not_configured:    { label: 'Chưa cấu hình ca',             severity: 'warning', icon: CalendarClock },
+  check_in_window:         { label: 'Ngoài giờ vào làm',             severity: 'warning', icon: CalendarClock },
+  check_out_window:        { label: 'Ngoài giờ tan ca',              severity: 'warning', icon: CalendarClock },
+  already_checked_out:     { label: 'Đã tan ca rồi',                severity: 'neutral', icon: CheckCircle2 },
+  already_auto_rejected:   { label: 'Tự động huỷ (hết giờ)',        severity: 'neutral', icon: Clock },
+  orphaned:                { label: 'Quá hạn tan ca',               severity: 'warning', icon: Hourglass },
+  not_flexible_project:    { label: 'Không hỗ trợ tự chấm công',    severity: 'info',    icon: Lock },
+  no_flexible_project:     { label: 'Không thuộc dự án tự chấm công', severity: 'info',  icon: Lock },
+  multiple_flexible:       { label: 'Thuộc nhiều dự án',            severity: 'info',    icon: Layers },
+  no_attendance:           { label: 'Không có ca hôm nay',          severity: 'neutral', icon: CalendarX2 },
+  check_in_disabled:       { label: 'Chấm công bị khoá',            severity: 'info',    icon: Lock },
+  other:                   { label: 'Lỗi khác',                     severity: 'neutral', icon: AlertCircle },
   // Attendance-based drilldown categories (not from attempt_classifier)
-  open: 'Đang chờ checkout',
-  zero_earning: 'Ca 0 đ',
-  stuck_pending: 'Yêu cầu kẹt pending',
-  request_failed: 'Yêu cầu lỗi',
+  open:                    { label: 'Đang chờ checkout',            severity: 'info',    icon: Clock },
+  zero_earning:            { label: 'Ca 0 đ',                       severity: 'warning', icon: Banknote },
+  stuck_pending:           { label: 'Yêu cầu kẹt pending',          severity: 'warning', icon: Hourglass },
+  request_failed:          { label: 'Yêu cầu lỗi',                  severity: 'danger',  icon: AlertTriangle },
+};
+
+const DEFAULT_REASON_META: ReasonMeta = { label: '', severity: 'neutral', icon: AlertCircle };
+
+function reasonMeta(category: string): ReasonMeta {
+  const meta = REASON_META[category];
+  return meta ? meta : { ...DEFAULT_REASON_META, label: category };
+}
+
+// Badge text hues are darkened (rose-700 / amber-700) so they clear WCAG AA
+// 4.5:1 against the soft tinted backgrounds — the raw --warning/--destructive
+// tokens read ~2.7:1 / ~3.9:1, which fails for small badge text.
+const SEVERITY_STYLES: Record<Severity, { badge: string; text: string; dot: string }> = {
+  danger:  { badge: 'bg-rose-50 text-rose-700 border-rose-200',       text: 'text-rose-700',  dot: 'bg-rose-500' },
+  warning: { badge: 'bg-amber-50 text-amber-700 border-amber-200',    text: 'text-amber-700', dot: 'bg-amber-500' },
+  info:    { badge: 'bg-primary/10 text-primary border-primary/20',   text: 'text-primary',   dot: 'bg-primary' },
+  neutral: { badge: 'bg-muted text-muted-foreground border-border/60', text: 'text-foreground', dot: 'bg-muted-foreground/45' },
 };
 
 const ATTEMPT_TYPE_LABELS: Record<string, string> = {
@@ -149,7 +211,7 @@ function deriveTitle(target: HealthDrilldownTarget, month?: string): string {
     const typeLabel = target.attemptType
       ? labelFor(ATTEMPT_TYPE_LABELS, target.attemptType)
       : '';
-    const catLabel = target.category ? labelFor(REASON_CATEGORY_LABELS, target.category) : '';
+    const catLabel = target.category ? reasonMeta(target.category).label : '';
     const filter = [catLabel, typeLabel].filter(Boolean).join(' — ');
     return `Lần chấm thất bại${filter ? ' — ' + filter : ''}${monthSuffix}`;
   }
@@ -190,6 +252,7 @@ function FailedAttemptsTable({
   periodEnd?: string;
 }) {
   const [page, setPage] = useState(1);
+  const [mapRow, setMapRow] = useState<AdminFailedAttempt | null>(null);
 
   const { data, isLoading, isFetching } = useFailedAttempts({
     type: attemptType,
@@ -214,25 +277,20 @@ function FailedAttemptsTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Tổng <span className="font-medium text-foreground tabular-nums">{total.toLocaleString('vi-VN')}</span> bản ghi
-          {isFetching ? ' — đang tải…' : ''}
-        </p>
-      </div>
+      <CountSummary total={total} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
         <Table className="table-fixed">
           <colgroup>
-            <col className="w-[16%]" />
-            <col className="w-[9%]" />
-            <col className="w-[26%]" />
-            <col className="w-[12%]" />
             <col className="w-[18%]" />
-            <col className="w-[19%]" />
+            <col className="w-[11%]" />
+            <col className="w-[22%]" />
+            <col className="w-[14%]" />
+            <col className="w-[20%]" />
+            <col className="w-[15%]" />
           </colgroup>
-          <TableHeader className="bg-muted/35">
-            <TableRow className="hover:bg-transparent">
+          <TableHeader className="bg-muted/40">
+            <TableRow className="hover:bg-transparent border-border/50">
               <Th>Nhân viên</Th>
               <Th>Loại</Th>
               <Th>Địa điểm</Th>
@@ -242,34 +300,92 @@ function FailedAttemptsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-muted/25">
-                <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
-                <Td>{labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}</Td>
-                <Td>
-                  <CheckpointLocation row={row} />
-                </Td>
-                <Td>
-                  <CheckpointDistance row={row} />
-                </Td>
-                <Td>{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</Td>
-                <Td className="whitespace-nowrap text-muted-foreground tabular-nums">
-                  {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                </Td>
-              </TableRow>
-            ))}
+            {rows.map((row) => {
+              const meta = reasonMeta(row.reason_category);
+              return (
+                <TableRow key={row.id} className="group border-border/50 transition-colors hover:bg-muted/30">
+                  <Td className="align-middle">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Monogram name={row.employee_name} />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium leading-snug text-foreground">
+                          {row.employee_name ?? `#${row.employee_id}`}
+                        </p>
+                      </div>
+                    </div>
+                  </Td>
+                  <Td className="align-middle">
+                    <AttemptTypeBadge attemptType={row.attempt_type} />
+                  </Td>
+                  <Td>
+                    <CheckpointLocation row={row} />
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => setMapRow(row)}
+                      >
+                        <Map className="h-3.5 w-3.5" />
+                        Xem bản đồ
+                      </Button>
+                    </div>
+                  </Td>
+                  <Td className="align-middle">
+                    <ContextualDistance row={row} />
+                  </Td>
+                  <Td className="align-middle">
+                    <SeverityBadge meta={meta} />
+                  </Td>
+                  <Td className="align-middle">
+                    <TimeCell iso={row.created_at} />
+                  </Td>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       <div className="space-y-2 sm:hidden">
         {rows.map((row) => (
-          <FailedAttemptCard key={row.id} row={row} />
+          <FailedAttemptCard
+            key={row.id}
+            row={row}
+            onOpenMap={() => setMapRow(row)}
+          />
         ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+      <FailedAttemptMapDialog row={mapRow} onClose={() => setMapRow(null)} />
     </div>
+  );
+}
+
+function FailedAttemptMapDialog({ row, onClose }: { row: AdminFailedAttempt | null; onClose: () => void }) {
+  return (
+    <Dialog open={row !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        title="Bản đồ lần chấm công"
+        hideCloseButton
+        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 p-0 gap-0"
+      >
+        {row ? (
+          <FailedAttemptLocationMap
+            key={row.id}
+            row={row}
+            attemptLabel={labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}
+            reasonLabel={reasonMeta(row.reason_category).label}
+            reasonSeverity={reasonMeta(row.reason_category).severity}
+            timeLabel={format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
+            onClose={onClose}
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -288,12 +404,9 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground tabular-nums">{rows.length.toLocaleString('vi-VN')}</span> bản ghi
-        {isFetching ? ' — đang tải…' : ''}
-      </p>
+      <CountSummary total={rows.length} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
         <Table className="table-fixed">
           <colgroup>
             <col className="w-[16%]" />
@@ -303,8 +416,8 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
             <col className="w-[13%]" />
             <col className="w-[25%]" />
           </colgroup>
-          <TableHeader className="bg-muted/35">
-            <TableRow className="hover:bg-transparent">
+          <TableHeader className="bg-muted/40">
+            <TableRow className="hover:bg-transparent border-border/50">
               <Th>Nhân viên</Th>
               <Th>Dự án</Th>
               <Th>Lương</Th>
@@ -315,7 +428,7 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
           </TableHeader>
           <TableBody>
             {rows.map((row, i) => (
-              <TableRow key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} className="hover:bg-muted/25">
+              <TableRow key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} className="border-border/50 transition-colors hover:bg-muted/30">
                 <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
                 <Td className="whitespace-nowrap tabular-nums">{formatCompactCurrency(row.salary)}</Td>
@@ -357,7 +470,15 @@ function AttendanceRowsTable({
   emptyLabel: string;
 }) {
   const [page, setPage] = useState(1);
+  const [mapRow, setMapRow] = useState<AdminAttendanceResponse | null>(null);
   const isRejected = status === 'rejected';
+  const drawerVariant: AttendanceDrawerVariant = isRejected
+    ? 'rejected'
+    : zeroEarning
+      ? 'zero'
+      : successfulCheckout
+        ? 'success'
+        : 'open';
 
   const queryStart = periodStart ?? fallbackToday();
   const queryEnd = inclusivePeriodEnd(periodEnd) ?? queryStart;
@@ -387,14 +508,9 @@ function AttendanceRowsTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Tổng <span className="font-medium text-foreground tabular-nums">{total.toLocaleString('vi-VN')}</span> nhân viên
-          {isFetching ? ' — đang tải…' : ''}
-        </p>
-      </div>
+      <CountSummary total={total} isFetching={isFetching} noun="nhân viên" />
 
-      <div className="hidden overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm sm:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
         <Table className="table-fixed">
           {isRejected ? (
             <colgroup>
@@ -417,8 +533,8 @@ function AttendanceRowsTable({
               <col className="w-[20%]" />
             </colgroup>
           )}
-          <TableHeader className="bg-muted/35">
-            <TableRow className="hover:bg-transparent">
+          <TableHeader className="bg-muted/40">
+            <TableRow className="hover:bg-transparent border-border/50">
               <Th>Nhân viên</Th>
               <Th>Dự án</Th>
               <Th>Vào làm</Th>
@@ -440,18 +556,22 @@ function AttendanceRowsTable({
           </TableHeader>
           <TableBody>
             {rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-muted/25">
+              <TableRow key={row.id} className="border-border/50 transition-colors hover:bg-muted/30">
                 <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
                 <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
                   {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })}
                 </Td>
-                <Td className="text-muted-foreground">{row.check_in_gate || '—'}</Td>
+                <Td className="text-muted-foreground">
+                  <span className="block">{row.check_in_gate || '—'}</span>
+                  <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatGpsAccuracy(row.check_in_accuracy)}</span>
+                </Td>
                 {isRejected ? (
                   <>
                     <Td className="whitespace-nowrap text-muted-foreground tabular-nums">{formatDateTime(row.rejected_at)}</Td>
                     <Td>
                       <AttendanceCheckpointLocation row={row} />
+                      <MapButton onClick={() => setMapRow(row)} />
                     </Td>
                     <Td>
                       <AttendanceCheckpointDistance row={row} />
@@ -462,7 +582,11 @@ function AttendanceRowsTable({
                     <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
                       {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
                     </Td>
-                    <Td className="text-muted-foreground">{row.check_out_gate || '—'}</Td>
+                    <Td className="text-muted-foreground">
+                      <span className="block">{row.check_out_gate || '—'}</span>
+                      <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatGpsAccuracy(row.check_out_accuracy)}</span>
+                      <MapButton onClick={() => setMapRow(row)} />
+                    </Td>
                     <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
                       {row.earning_amount != null && row.earning_amount > 0
                         ? formatCompactCurrency(row.earning_amount)
@@ -478,12 +602,101 @@ function AttendanceRowsTable({
 
       <div className="space-y-2 sm:hidden">
         {rows.map((row) => (
-          isRejected ? <RejectedAttendanceCard key={row.id} row={row} /> : <SuccessfulCheckoutCard key={row.id} row={row} />
+          isRejected ? (
+            <RejectedAttendanceCard key={row.id} row={row} onOpenMap={() => setMapRow(row)} />
+          ) : (
+            <SuccessfulCheckoutCard key={row.id} row={row} onOpenMap={() => setMapRow(row)} />
+          )
         ))}
       </div>
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+
+      <AttendanceMapDialog row={mapRow} variant={drawerVariant} onClose={() => setMapRow(null)} />
     </div>
+  );
+}
+
+type AttendanceDrawerVariant = 'success' | 'zero' | 'rejected' | 'open';
+
+function attendanceMapBadge(variant: AttendanceDrawerVariant): { label: string; tone: AttemptTone } {
+  switch (variant) {
+    case 'rejected':
+      return { label: 'Đã huỷ', tone: 'slate' };
+    case 'zero':
+      return { label: 'Ca 0 đ', tone: 'amber' };
+    case 'success':
+      return { label: 'Tan ca', tone: 'blue' };
+    default:
+      return { label: 'Đang làm', tone: 'slate' };
+  }
+}
+
+function attendanceMapReason(
+  variant: AttendanceDrawerVariant,
+  row: AdminAttendanceResponse,
+): { label: string; severity: ReasonSeverity } | null {
+  if (variant === 'rejected') {
+    return { label: row.salary_reject_reason || 'Tự động huỷ do quá hạn tan ca', severity: 'warning' };
+  }
+  if (variant === 'zero') {
+    return { label: 'Ca không có lương', severity: 'warning' };
+  }
+  return null;
+}
+
+function formatAttendanceRange(row: AdminAttendanceResponse): string {
+  const start = format(parseISO(row.check_in_time), 'dd/MM HH:mm', { locale: vi });
+  const end = row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : null;
+  return end ? `${start} → ${end}` : start;
+}
+
+function AttendanceMapDialog({
+  row,
+  variant,
+  onClose,
+}: {
+  row: AdminAttendanceResponse | null;
+  variant: AttendanceDrawerVariant;
+  onClose: () => void;
+}) {
+  const badge = attendanceMapBadge(variant);
+  const reason = row ? attendanceMapReason(variant, row) : null;
+  return (
+    <Dialog open={row !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        title="Bản đồ chấm công"
+        hideCloseButton
+        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 p-0 gap-0"
+      >
+        {row ? (
+          <AttendanceLocationMap
+            key={row.id}
+            row={row}
+            badge={badge}
+            reasonLabel={reason?.label}
+            reasonSeverity={reason?.severity}
+            timeLabel={formatAttendanceRange(row)}
+            onClose={onClose}
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MapButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="mt-2 h-7 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+      onClick={onClick}
+    >
+      <Map className="h-3.5 w-3.5" />
+      Xem bản đồ
+    </Button>
   );
 }
 
@@ -492,16 +705,19 @@ function formatDateTime(value?: string | null): string {
   return format(parseISO(value), 'dd/MM/yyyy HH:mm', { locale: vi });
 }
 
-function SuccessfulCheckoutCard({ row }: { row: AdminAttendanceResponse }) {
+function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceResponse; onOpenMap: () => void }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Monogram name={row.employee_name} />
+          <div className="min-w-0">
+            <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+          </div>
         </div>
         {row.earning_amount != null && row.earning_amount > 0 && (
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-financial-positive">
+          <span className="shrink-0 rounded-full bg-success/10 px-2 py-1 text-xs font-semibold text-financial-positive">
             {formatCompactCurrency(row.earning_amount)}
           </span>
         )}
@@ -514,18 +730,29 @@ function SuccessfulCheckoutCard({ row }: { row: AdminAttendanceResponse }) {
           {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
           {row.check_out_gate ? ` · ${row.check_out_gate}` : ''}
         </DetailLine>
+        <DetailLine label="GPS vào">{formatGpsAccuracy(row.check_in_accuracy)}</DetailLine>
+        <DetailLine label="GPS ra">{formatGpsAccuracy(row.check_out_accuracy)}</DetailLine>
+      </div>
+      <div className="mt-2">
+        <Button type="button" variant="outline" size="sm" className="h-9 w-full gap-1.5" onClick={onOpenMap}>
+          <Map className="h-4 w-4" />
+          Xem bản đồ
+        </Button>
       </div>
     </div>
   );
 }
 
-function RejectedAttendanceCard({ row }: { row: AdminAttendanceResponse }) {
+function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceResponse; onOpenMap: () => void }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Monogram name={row.employee_name} />
+          <div className="min-w-0">
+            <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+          </div>
         </div>
         <div className="shrink-0 rounded-md bg-muted px-2.5 py-1.5 text-right">
           <p className="text-sm font-semibold text-foreground tabular-nums">
@@ -539,9 +766,17 @@ function RejectedAttendanceCard({ row }: { row: AdminAttendanceResponse }) {
           {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
         </DetailLine>
         <DetailLine label="Tự động huỷ lúc">{formatDateTime(row.rejected_at)}</DetailLine>
+        <DetailLine label="GPS vào">{formatGpsAccuracy(row.check_in_accuracy)}</DetailLine>
+        <DetailLine label="GPS ra">{formatGpsAccuracy(row.check_out_accuracy)}</DetailLine>
       </div>
       <DetailLine label="Điểm gần nhất">{attendanceCheckpointDetail(row)}</DetailLine>
       <DetailLine label="Lý do">{row.salary_reject_reason || 'Tự động huỷ do quá hạn tan ca'}</DetailLine>
+      <div className="mt-2">
+        <Button type="button" variant="outline" size="sm" className="h-9 w-full gap-1.5" onClick={onOpenMap}>
+          <Map className="h-4 w-4" />
+          Xem bản đồ
+        </Button>
+      </div>
     </div>
   );
 }
@@ -564,23 +799,147 @@ function TableSkeleton({ cols, rows }: { cols: number; rows: number }) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
-      <Inbox className="h-8 w-8 opacity-30" />
-      <span>{label}</span>
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Inbox className="h-6 w-6" />
+      </span>
+      <span className="text-sm text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function CountSummary({ total, isFetching, noun }: { total: number; isFetching: boolean; noun: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 shadow-sm">
+        <span className="text-xs font-medium text-muted-foreground">Tổng</span>
+        <span className="font-display text-sm font-bold tabular-nums text-foreground">
+          {total.toLocaleString('vi-VN')}
+        </span>
+        <span className="text-xs text-muted-foreground">{noun}</span>
+      </div>
+      {isFetching ? <span className="text-xs text-muted-foreground">đang tải…</span> : null}
     </div>
   );
 }
 
 function Th({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <TableHead className={cn('h-auto whitespace-normal px-4 py-3 text-[11px] font-semibold uppercase tracking-wide', className)}>
+    <TableHead className={cn('h-auto whitespace-normal px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground', className)}>
       {children}
     </TableHead>
   );
 }
 
 function Td({ children, className }: { children: ReactNode; className?: string }) {
-  return <TableCell className={cn('px-4 py-4 align-top leading-relaxed whitespace-normal break-words', className)}>{children}</TableCell>;
+  return <TableCell className={cn('px-4 py-3.5 align-top leading-relaxed whitespace-normal break-words', className)}>{children}</TableCell>;
+}
+
+const MONOGRAM_PALETTE = [
+  'bg-blue-500/10 text-blue-600',
+  'bg-emerald-500/10 text-emerald-600',
+  'bg-amber-500/10 text-amber-600',
+  'bg-violet-500/10 text-violet-600',
+  'bg-rose-500/10 text-rose-600',
+  'bg-sky-500/10 text-sky-600',
+  'bg-slate-500/10 text-slate-600',
+];
+
+function monogramColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return MONOGRAM_PALETTE[hash % MONOGRAM_PALETTE.length];
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function Monogram({ name }: { name?: string | null }) {
+  const label = name?.trim() || '?';
+  return (
+    <span
+      className={cn(
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold uppercase',
+        monogramColor(label),
+      )}
+      aria-hidden
+    >
+      {initialsOf(label)}
+    </span>
+  );
+}
+
+function AttemptTypeBadge({ attemptType }: { attemptType: string }) {
+  const label = labelFor(ATTEMPT_TYPE_LABELS, attemptType);
+  const Icon = attemptType === 'check_in' ? LogIn : attemptType === 'check_out' ? LogOut : Clock;
+  const tone =
+    attemptType === 'check_in'
+      ? 'bg-primary/10 text-primary border-primary/20'
+      : attemptType === 'check_out'
+        ? 'bg-violet-500/10 text-violet-600 border-violet-500/20'
+        : 'bg-muted text-muted-foreground border-border/60';
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-none', tone)}>
+      <Icon className="h-3 w-3" />
+      {label}
+    </span>
+  );
+}
+
+function SeverityBadge({ meta }: { meta: ReasonMeta }) {
+  const s = SEVERITY_STYLES[meta.severity];
+  const Icon = meta.icon;
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium leading-none', s.badge)}>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="whitespace-normal break-words">{meta.label}</span>
+    </span>
+  );
+}
+
+function TimeCell({ iso }: { iso: string }) {
+  const time = format(parseISO(iso), 'HH:mm', { locale: vi });
+  const date = format(parseISO(iso), 'dd/MM/yyyy', { locale: vi });
+  return (
+    <div className="whitespace-nowrap">
+      <span className="block text-sm font-medium tabular-nums text-foreground">{time}</span>
+      <span className="block text-[11px] tabular-nums text-muted-foreground">{date}</span>
+    </div>
+  );
+}
+
+function severityForDistance(distance?: number | null, radius?: number | null): Severity {
+  if (distance == null || !Number.isFinite(distance)) return 'neutral';
+  if (distance >= 1000) return 'danger'; // ≥ 1 km from checkpoint is a serious breach
+  if (radius != null && radius > 0 && distance > radius) return 'warning';
+  return 'neutral';
+}
+
+function ContextualDistance({ row }: { row: AdminFailedAttempt }) {
+  const distance = row.nearest_checkpoint_distance_meters;
+
+  if (distance == null || !Number.isFinite(distance)) {
+    return <span className="text-xs font-medium text-muted-foreground">Chưa có khoảng cách</span>;
+  }
+
+  const severity = severityForDistance(distance, row.geofence_radius_meters);
+  const delta = formatGeofenceDistanceDelta(distance, row.geofence_radius_meters);
+  const s = SEVERITY_STYLES[severity];
+
+  return (
+    <div className="inline-flex flex-col gap-0.5">
+      <span className={cn('font-display text-base font-bold leading-none tabular-nums', s.text)}>
+        {formatDistanceMeters(distance)}
+      </span>
+      {delta ? <span className="text-[11px] leading-tight text-muted-foreground">{delta}</span> : null}
+    </div>
+  );
 }
 
 function AttendanceCheckpointLocation({ row }: { row: AdminAttendanceResponse }) {
@@ -617,24 +976,17 @@ function attendanceCheckpointDetail(row: AdminAttendanceResponse): string {
 
 function CheckpointLocation({ row }: { row: AdminFailedAttempt }) {
   const checkpointName = row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất';
-  const delta = formatGeofenceDistanceDelta(row.nearest_checkpoint_distance_meters, row.geofence_radius_meters);
+  const accuracy = formatGpsAccuracy(row.accuracy);
 
   return (
     <div className="min-w-0">
-      <p className="font-medium text-foreground">{checkpointName}</p>
-      {delta ? <p className="mt-1 text-xs text-muted-foreground">{delta}</p> : null}
+      <p className="inline-flex items-center gap-1 font-medium text-foreground">
+        <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+        <span className="truncate">{checkpointName}</span>
+      </p>
+      <p className="mt-1 pl-[18px] text-xs text-muted-foreground">{accuracy}</p>
     </div>
   );
-}
-
-function CheckpointDistance({ row }: { row: AdminFailedAttempt }) {
-  const distance = row.nearest_checkpoint_distance_meters;
-
-  if (distance == null) {
-    return <span className="text-sm font-medium text-muted-foreground">Chưa có khoảng cách</span>;
-  }
-
-  return <span className="font-semibold text-foreground tabular-nums">{formatDistanceMeters(distance)}</span>;
 }
 
 function checkpointDetail(row: AdminFailedAttempt): string {
@@ -647,36 +999,63 @@ function checkpointDetail(row: AdminFailedAttempt): string {
   return delta ? `${checkpointName} · ${delta}` : checkpointName;
 }
 
-function FailedAttemptCard({ row }: { row: AdminFailedAttempt }) {
+function FailedAttemptCard({
+  row,
+  onOpenMap,
+}: {
+  row: AdminFailedAttempt;
+  onOpenMap: () => void;
+}) {
+  const meta = reasonMeta(row.reason_category);
+
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
-          <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-            {format(parseISO(row.created_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
-          </p>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Monogram name={row.employee_name} />
+          <div className="min-w-0">
+            <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+            <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+              {format(parseISO(row.created_at), 'dd/MM/yyyy · HH:mm', { locale: vi })}
+            </p>
+          </div>
         </div>
-        <div className="shrink-0 rounded-md bg-muted px-2.5 py-1.5 text-right">
-          <p className="text-sm font-semibold text-foreground tabular-nums">
-            {formatDistanceMeters(row.nearest_checkpoint_distance_meters)}
-          </p>
-          <p className="text-[11px] leading-tight text-muted-foreground">tới điểm chấm</p>
-        </div>
+        <ContextualDistance row={row} />
       </div>
+
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        <AttemptTypeBadge attemptType={row.attempt_type} />
+        <SeverityBadge meta={meta} />
+      </div>
+
       <DetailLine label="Điểm gần nhất">{checkpointDetail(row)}</DetailLine>
-      <DetailLine label="Lý do">{labelFor(REASON_CATEGORY_LABELS, row.reason_category)}</DetailLine>
-      <DetailLine label="Loại">{labelFor(ATTEMPT_TYPE_LABELS, row.attempt_type)}</DetailLine>
+      <DetailLine label="GPS">{formatGpsAccuracy(row.accuracy)}</DetailLine>
+
+      <div className="mt-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-11 w-full gap-1.5"
+          onClick={onOpenMap}
+        >
+          <Map className="h-4 w-4" />
+          Xem bản đồ
+        </Button>
+      </div>
     </div>
   );
 }
 
 function QuotaAnomalyCard({ row }: { row: QuotaAnomalyRow }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-3 shadow-sm">
-      <div className="mb-2">
-        <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+      <div className="mb-2 flex items-center gap-2.5">
+        <Monogram name={row.employee_name} />
+        <div className="min-w-0">
+          <p className="font-medium leading-snug text-foreground">{row.employee_name ?? `#${row.employee_id}`}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</p>
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-2 border-y border-border/50 py-2 text-xs">
         <Metric label="Lương" value={formatCompactCurrency(row.salary)} />
@@ -713,7 +1092,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <Button
         variant="outline"
         size="sm"
-        className="min-w-20"
+        className="h-11 min-w-[44px] sm:h-9 sm:min-w-20"
         disabled={page <= 1}
         onClick={() => onChange(Math.max(1, page - 1))}
       >
@@ -725,7 +1104,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
       <Button
         variant="outline"
         size="sm"
-        className="min-w-20"
+        className="h-11 min-w-[44px] sm:h-9 sm:min-w-20"
         disabled={page >= totalPages}
         onClick={() => onChange(Math.min(totalPages, page + 1))}
       >
