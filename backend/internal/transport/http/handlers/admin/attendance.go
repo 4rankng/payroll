@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -134,6 +135,90 @@ func (h *AttendanceHandler) Get(c *gin.Context) {
 	res := mapAdminAttendanceResponse(att, h.clk.Now())
 
 	response.Success(c, res, "Lấy thông tin thành công")
+}
+
+// AdminOverrideFailedAttempt handles POST
+// /api/v1/admin/attendances/failed-attempts/:id/override. It records a check-in
+// for an employee whose device could not acquire GPS, using the original
+// attempt's timestamp. Restricted to check_in attempts blocked by a device-level
+// GPS failure (reason_category "gps_*"): geofence_outside captured a real
+// out-of-area coordinate and must never be overridden in, preserving the
+// no-off-site-check-in control. The source failed attempt is stamped with
+// admin/when/why for audit and the check-in is idempotent per employee/day.
+func (h *AttendanceHandler) AdminOverrideFailedAttempt(c *gin.Context) {
+	id, ok := helpers.ParseIDParam(c, "id", "ID không hợp lệ")
+	if !ok {
+		return
+	}
+
+	var req dto.OverrideFailedAttemptRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Dữ liệu không hợp lệ: "+err.Error())
+		return
+	}
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		response.BadRequest(c, "Vui lòng nhập lý do ghi nhận chấm công")
+		return
+	}
+
+	adminID, ok := helpers.GetUserIDOrRespond(c)
+	if !ok {
+		return
+	}
+
+	ctx := c.Request.Context()
+	attempt, err := h.failedAttemptRepo.GetByID(ctx, id)
+	if err != nil {
+		if domain.IsNotFoundError(err) {
+			response.NotFound(c, "Không tìm thấy lần thử thất bại")
+			return
+		}
+		h.logger.Error("failed to load failed attempt for override", "error", err, "id", id)
+		response.InternalServerError(c, "Lỗi hệ thống khi ghi nhận chấm công")
+		return
+	}
+
+	// Guardrail: only a check-in attempt that the device could not get GPS for
+	// may be overridden. geofence_outside / window / other categories either
+	// captured real evidence or are not device-GPS failures.
+	if attempt.AttemptType != "check_in" {
+		response.BadRequest(c, "Chỉ có thể ghi nhận lần vào làm thất bại do lỗi GPS.")
+		return
+	}
+	if !strings.HasPrefix(attempt.ReasonCategory, "gps_") {
+		response.BadRequest(c, "Chỉ ghi nhận cho lần chấm công thất bại do thiết bị không lấy được GPS.")
+		return
+	}
+	if attempt.IsResolved() {
+		response.Conflict(c, "Lần thử này đã được ghi nhận rồi.")
+		return
+	}
+
+	checkInTime := attempt.CreatedAt.In(clock.DefaultLocation)
+	att, err := h.attendanceService.RecordAdminCheckIn(ctx, attempt.EmployeeID, attempt.ProjectID, checkInTime)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	// Stamp the audit on the source attempt. Not in the same DB transaction as
+	// the check-in, but RecordAdminCheckIn is idempotent per employee/day, so a
+	// crash between the two leaves an honest state: attendance exists and a
+	// re-click reuses it and completes the audit.
+	now := h.clk.Now()
+	resolvedBy := adminID
+	resolvedReason := reason
+	attempt.ResolvedAt = &now
+	attempt.ResolvedBy = &resolvedBy
+	attempt.ResolvedReason = &resolvedReason
+	if err := h.failedAttemptRepo.Update(ctx, attempt); err != nil {
+		h.logger.Error("failed to mark failed attempt resolved", "error", err, "id", id)
+		response.InternalServerError(c, "Đã ghi nhận chấm công nhưng lỗi lưu ghi chú. Vui lòng kiểm tra lại.")
+		return
+	}
+
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Ghi nhận chấm công thành công")
 }
 
 func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.AdminAttendanceResponse {
@@ -314,6 +399,9 @@ func mapFailedAttemptResponse(a *domain.AttendanceFailedAttempt, project *domain
 		Accuracy:       a.Accuracy,
 		GpsAt:          a.GpsAt,
 		ErrorMessage:   a.ErrorMessage,
+		ResolvedAt:     a.ResolvedAt,
+		ResolvedBy:     a.ResolvedBy,
+		ResolvedReason: a.ResolvedReason,
 		CreatedAt:      a.CreatedAt,
 	}
 

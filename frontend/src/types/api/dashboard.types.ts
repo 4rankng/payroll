@@ -555,6 +555,11 @@ export interface AdminFailedAttempt {
   nearest_checkpoint_distance_meters?: number | null;
   geofence_radius_meters?: number | null;
   error_message?: string | null;
+  // Resolution audit, populated when an admin records the check-in manually
+  // after a device-GPS failure. Undefined/null while the attempt is unresolved.
+  resolved_at?: string | null;
+  resolved_by?: number | null;
+  resolved_reason?: string | null;
   created_at: string;
 }
 

@@ -498,6 +498,58 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	return result, err
 }
 
+// RecordAdminCheckIn creates a check-in attendance row without geofence or
+// shift-window validation, for the admin override path: an employee whose
+// device could not acquire GPS (a gps_* failed attempt) is recorded as checked
+// in at the original attempt time. Idempotent per employee/day — if a check-in
+// already exists for that day (e.g. a prior override), it is returned as-is.
+// No coordinates are stored because the device never produced a fix; the
+// CheckInGate marker makes the manual origin visible on the record.
+func (s *AttendanceService) RecordAdminCheckIn(ctx context.Context, employeeID, projectID uint, checkInTime time.Time) (*domain.Attendance, error) {
+	var result *domain.Attendance
+
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		project, err := s.resolveProject(txCtx, employeeID, projectID)
+		if err != nil {
+			return err
+		}
+
+		moment := checkInTime
+		if moment.IsZero() {
+			moment = s.clock.Now()
+		}
+		moment = moment.In(clock.DefaultLocation)
+		day := time.Date(moment.Year(), moment.Month(), moment.Day(), 0, 0, 0, 0, clock.DefaultLocation)
+
+		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, day)
+		if err != nil {
+			return fmt.Errorf("failed to check existing attendance: %w", err)
+		}
+		if existing != nil && !isConfirmedNoSalaryCheckout(existing) {
+			// A check-in already exists for this day — reuse it so a repeated
+			// override (or a crash between check-in and audit-stamp) cannot
+			// create a duplicate.
+			result = existing
+			return nil
+		}
+
+		attendance := &domain.Attendance{
+			EmployeeID:  employeeID,
+			ProjectID:   project.ID,
+			Date:        day,
+			CheckInTime: moment,
+			CheckInGate: "Quản trị ghi nhận (lỗi GPS)",
+		}
+		if err := s.attendanceRepo.Create(txCtx, attendance); err != nil {
+			return err
+		}
+		result = attendance
+		return nil
+	})
+
+	return result, err
+}
+
 func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo domain.GeoReading, confirmNoSalary bool) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
