@@ -25,10 +25,25 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  user: User;
-  access_token: string;
-  token_type: "Bearer";
-  expires_in: number;
+  // Populated on a normal (non-OTP) login:
+  user?: User;
+  access_token?: string;
+  token_type?: "Bearer";
+  expires_in?: number;
+  // Populated when the email-OTP second factor is required (admin/partner,
+  // OTP_ENABLE=true). The client must NOT treat otp_session_id as an auth
+  // token — it is a pending-session id consumed by /auth/login/verify.
+  otp_required?: boolean;
+  otp_session_id?: string;
+}
+
+export interface VerifyOTPRequest {
+  otp_session_id: string;
+  code: string;
+}
+
+export interface ResendOTPRequest {
+  otp_session_id: string;
 }
 
 export interface ChangePasswordData {

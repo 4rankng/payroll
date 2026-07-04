@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ResponsivePage } from "@/components/ResponsivePage";
 import Login from "./pages/Login";
+import OTPLogin from "./pages/OTPLogin";
 import AdminLayout from "./layouts/AdminLayout";
 import PartnerLayout from "./layouts/PartnerLayout";
 
@@ -234,6 +235,8 @@ const AppContent = () => {
 
         {/* Login Route */}
         <Route path="/login" element={<Login />} />
+        {/* OTP second-step login (admin/partner when OTP_ENABLE is on) */}
+        <Route path="/login/otp" element={<OTPLogin />} />
 
         {/* Logout */}
         <Route path="/logout" element={<LogoutRedirect />} />

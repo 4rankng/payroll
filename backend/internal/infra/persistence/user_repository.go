@@ -199,6 +199,23 @@ func (r *UserRepository) UpdateTokensInvalidBefore(ctx context.Context, userID u
 	return nil
 }
 
+// UpdateOTPLockout sets the consecutive-failed-OTP count and an optional lockout
+// expiry on the user. AuthService.Login / VerifyLoginOTP consult these to enforce
+// per-account brute-force protection. Pass lockedUntil=nil to clear a lockout.
+func (r *UserRepository) UpdateOTPLockout(ctx context.Context, userID uint, failedAttempts int, lockedUntil *time.Time) error {
+	updates := map[string]interface{}{
+		"otp_failed_attempts": failedAttempts,
+		"otp_locked_until":    lockedUntil,
+	}
+	if err := r.DB.WithContext(ctx).
+		Model(&domain.User{}).
+		Where("id = ?", userID).
+		Updates(updates).Error; err != nil {
+		return domain.NewInternalError("failed to update OTP lockout", err)
+	}
+	return nil
+}
+
 func (r *UserRepository) Delete(ctx context.Context, id uint) error {
 	result := r.DB.WithContext(ctx).Delete(&domain.User{}, id)
 	if result.Error != nil {

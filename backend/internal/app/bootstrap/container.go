@@ -390,9 +390,9 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 
 	var authorizationMiddleware *middleware.AuthorizationMiddleware
 	if authorizationService != nil {
-		authorizationMiddleware = middleware.NewAuthorizationMiddleware(authorizationService, projectPermissionService, employeePermissionService)
+		authorizationMiddleware = middleware.NewAuthorizationMiddleware(authorizationService, projectPermissionService, employeePermissionService, cfg.OTP)
 	} else {
-		authorizationMiddleware = middleware.NewAuthorizationMiddleware(nil, projectPermissionService, employeePermissionService)
+		authorizationMiddleware = middleware.NewAuthorizationMiddleware(nil, projectPermissionService, employeePermissionService, cfg.OTP)
 	}
 
 	return &Middleware{

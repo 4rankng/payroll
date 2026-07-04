@@ -31,6 +31,7 @@ const (
 	EmailKindGeneric              EmailMessageKind = "generic"
 	EmailKindPayrollReport        EmailMessageKind = "payroll_report"
 	EmailKindAdvancePaymentReport EmailMessageKind = "advance_payment_report"
+	EmailKindOTP                  EmailMessageKind = "otp"
 )
 
 // EmailAddress represents an email address with optional display name.

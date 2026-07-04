@@ -51,6 +51,9 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Set(constants.CtxUserRole, claims.Role)
 		c.Set("token_jti", claims.ID)
+		// otp_verified: propagated from the JWT claim so Authorize() can gate
+		// privileged routes on completion of the email-OTP second factor (RT-C1).
+		c.Set("otp_verified", claims.OTPVerified)
 		// Set tenant_id for tenant isolation middleware (using user_id as tenant identifier)
 		c.Set("tenant_id", claims.UserID)
 
@@ -78,6 +81,7 @@ func (m *AuthMiddleware) OptionalAuth() gin.HandlerFunc {
 				c.Set("username", claims.Username)
 				c.Set(constants.CtxUserRole, claims.Role)
 				c.Set("token_jti", claims.ID)
+				c.Set("otp_verified", claims.OTPVerified)
 				// Set tenant_id for tenant isolation middleware (using user_id as tenant identifier)
 				c.Set("tenant_id", claims.UserID)
 
