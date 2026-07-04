@@ -65,10 +65,13 @@ func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
 }
 
 // CreateLoginRateLimit creates a rate limiter specifically for login attempts.
-// Limit: 1000 attempts per minute per IP.
+// Limit: 10 attempts per minute per IP — tight enough to break credential
+// stuffing / default-password sprays, loose enough that a normal user mistyping
+// their password a few times is not blocked. Per-account lockout is a separate
+// follow-up; this IP cap is the cheap baseline that defeats automated sprays.
 func CreateLoginRateLimit(redisURL string) gin.HandlerFunc {
 	return CreateRateLimiter(RateLimitConfig{
-		Rate:     "1000-M",
+		Rate:     "10-M",
 		RedisURL: redisURL,
 	})
 }

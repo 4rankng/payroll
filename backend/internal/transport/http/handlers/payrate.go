@@ -166,6 +166,31 @@ func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 		return
 	}
 
+	// IDOR guard: partners may only read payrates for projects they own or have
+	// been granted access to. Admins bypass this check. Mirrors ListPayrates.
+	userRole := c.GetString(constants.CtxUserRole)
+	if userRole == string(domain.RolePartner) {
+		userID, exists := c.Get(constants.CtxUserID)
+		if !exists {
+			response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+			return
+		}
+		uid, ok := userID.(uint)
+		if !ok {
+			response.Forbidden(c, constants.MsgInvalidUserIDVN)
+			return
+		}
+		canAccess, err := h.projectPermissionService.CanUserAccessProject(c.Request.Context(), payrate.ProjectID, uid)
+		if err != nil {
+			response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+			return
+		}
+		if !canAccess {
+			response.Forbidden(c, constants.MsgForbiddenVN)
+			return
+		}
+	}
+
 	payrateResponse := dto.PayrateResponse{
 		ID:        payrate.ID,
 		ProjectID: payrate.ProjectID,

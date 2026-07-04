@@ -13,10 +13,11 @@ func TestSecurityHeaders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name           string
-		useTLS         bool
-		expectedHSTS   bool
-		expectedHeader map[string]string
+		name                string
+		useTLS              bool
+		forwardedProtoHTTPS bool
+		expectedHSTS        bool
+		expectedHeader      map[string]string
 	}{
 		{
 			name:         "security headers without TLS",
@@ -42,7 +43,20 @@ func TestSecurityHeaders(t *testing.T) {
 				"Referrer-Policy":           "strict-origin-when-cross-origin",
 				"Permissions-Policy":        "geolocation=(self), microphone=(), camera=()",
 				"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
-				"Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+				"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+			},
+		},
+		{
+			// Production scenario: nginx terminates TLS and proxies plain HTTP,
+			// signalling HTTPS via X-Forwarded-Proto. HSTS must still be emitted.
+			name:                "security headers behind TLS-terminating proxy",
+			useTLS:              false,
+			forwardedProtoHTTPS: true,
+			expectedHSTS:        true,
+			expectedHeader: map[string]string{
+				"X-Content-Type-Options":    "nosniff",
+				"X-Frame-Options":           "DENY",
+				"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 			},
 		},
 	}
@@ -60,6 +74,9 @@ func TestSecurityHeaders(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tt.useTLS {
 				req.TLS = &tls.ConnectionState{}
+			}
+			if tt.forwardedProtoHTTPS {
+				req.Header.Set("X-Forwarded-Proto", "https")
 			}
 
 			// Record the response

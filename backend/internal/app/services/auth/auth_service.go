@@ -216,6 +216,16 @@ func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*C
 			return nil, domain.NewUnauthorizedError(constants.MsgTokenBlacklistedVN)
 		}
 
+		// Enforce per-user token invalidation: if an admin revoked all of this
+		// user's sessions (RevokeUserTokens), any JWT issued before that instant
+		// is rejected even though its signature/expiry are still valid. This closes
+		// the gap where a stolen token would otherwise live for the full 14-day TTL.
+		if user, err := s.userService.UserRepo.GetByID(ctx, claims.UserID); err == nil && user.TokensInvalidBefore != nil {
+			if claims.IssuedAt == nil || claims.IssuedAt.Before(*user.TokensInvalidBefore) {
+				return nil, domain.NewUnauthorizedError(constants.MsgTokenBlacklistedVN)
+			}
+		}
+
 		return claims, nil
 	}
 
@@ -294,8 +304,20 @@ func (s *AuthService) GetUserFromToken(ctx context.Context, tokenString string) 
 	return s.userService.GetUser(ctx, claims.UserID)
 }
 
-// RevokeUserTokens blacklists all tokens for a specific user (admin function)
+// RevokeUserTokens invalidates all currently-issued JWTs for a user (admin
+// function). It sets tokens_invalid_before = now on the user record; every
+// existing token whose IssuedAt is older than that timestamp is then rejected by
+// ValidateToken on its next use. Tokens issued after this instant remain valid,
+// so the user can log back in immediately. The audit event is still published.
 func (s *AuthService) RevokeUserTokens(ctx context.Context, userID uint, revokedByUserID uint, reason domain.BlacklistReason, ipAddress, userAgent string) error {
+	now := clock.Now()
+
+	if err := s.userService.UserRepo.UpdateTokensInvalidBefore(ctx, userID, now); err != nil {
+		s.logger.Error("Failed to set tokens_invalid_before for user", "error", err, "user_id", userID)
+		return err
+	}
+	s.logger.Info("Revoked all user tokens via tokens_invalid_before", "user_id", userID, "revoked_by", revokedByUserID, "invalid_before", now)
+
 	// Get user for audit logging
 	user, err := s.userService.GetUser(ctx, userID)
 	if err != nil {

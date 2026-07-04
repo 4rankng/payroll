@@ -421,6 +421,7 @@ const (
 	MsgCannotEditPaidTimesheetVN                 = "Không thể chỉnh sửa bảng chấm công đã được xử lý thanh toán (đã thanh toán, thất bại, hoặc đã hủy)"
 	MsgCannotEditPaidTimesheetDetailedVN         = "Công %s %s ngày %s của %s dự án %s đã được thanh toán nên không thể thay đổi"
 	MsgOnlyAdminCanEditApprovedTimesheetVN       = "Chỉ admin mới có thể chỉnh sửa bảng chấm công đã duyệt"
+	MsgTimesheetAccessDeniedVN                   = "Bạn không có quyền truy cập bảng chấm công này"
 
 	// Payrate Configuration Messages - Vietnamese
 	MsgPayrateConfigurationRequiredVN  = "cấu hình mức lương là bắt buộc"

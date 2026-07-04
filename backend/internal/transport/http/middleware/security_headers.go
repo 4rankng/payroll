@@ -19,9 +19,15 @@ func SecurityHeaders() gin.HandlerFunc {
 		// Control referrer information
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 
-		// HSTS - force HTTPS for 1 year (only if using TLS)
-		if c.Request.TLS != nil {
-			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+		// HSTS - force HTTPS for 2 years. Emitted when the connection to this
+		// process is TLS, OR when a trusted reverse proxy (nginx) signals HTTPS
+		// via X-Forwarded-Proto. The latter is the real production path: nginx
+		// terminates TLS and proxies plain HTTP, so c.Request.TLS is nil even on
+		// the live https:// site. Keying only on c.Request.TLS (the prior
+		// behavior) silently dropped HSTS on every deployment.
+		isHTTPS := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+		if isHTTPS {
+			c.Header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
 		}
 
 		// Permissions-Policy (formerly Feature-Policy)

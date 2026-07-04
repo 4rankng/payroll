@@ -111,6 +111,44 @@ func (h *Handler) validateTimesheetID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
+// canPartnerAccessTimesheet enforces tenant isolation on single-record reads.
+// Admins always pass. Partners must own or be granted access to the timesheet's
+// project, or be assigned to its employee. Returns true when the caller may read
+// the record, false when access must be denied (403). On permission-service error
+// it fails closed (returns false) to avoid leaking data on partial outages.
+func (h *Handler) canPartnerAccessTimesheet(c *gin.Context, timesheet *domain.Timesheet) bool {
+	userRole := c.GetString(constants.CtxUserRole)
+	if userRole != string(domain.RolePartner) {
+		// Admins (and any non-partner role) are not tenant-restricted here.
+		return true
+	}
+
+	userID, ok := c.Get(constants.CtxUserID)
+	if !ok {
+		return false
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		return false
+	}
+
+	ctx := c.Request.Context()
+
+	// Primary path: project-level access (creator, explicit grant, or assigned employee).
+	canAccessProject, err := h.projectPermissionService.CanUserAccessProject(ctx, timesheet.ProjectID, uid)
+	if err == nil && canAccessProject {
+		return true
+	}
+
+	// Fallback: employee-level access (e.g. partner assigned to the employee directly).
+	canAccessEmployee, err := h.employeePermissionService.CanUserAccessEmployee(ctx, timesheet.EmployeeID, uid)
+	if err == nil && canAccessEmployee {
+		return true
+	}
+
+	return false
+}
+
 // buildTimesheetResponse builds a TimesheetResponse DTO from domain model
 func (h *Handler) buildTimesheetResponse(timesheet *domain.Timesheet) dto.TimesheetResponse {
 	return h.timesheetResponseService.BuildTimesheetResponse(timesheet)
