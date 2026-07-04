@@ -721,11 +721,21 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRe
 	// additional emailed OTP. The compensating controls that make this safe:
 	//   - Google's signature on the id_token is verified (idtoken.Validate)
 	//   - audience is bound to this app's GOOGLE_CLIENT_ID
-	//   - email_verified is required above
-	//   - the id_token's nonce is single-use (validateGoogleNonce) so a captured
-	//     token cannot be replayed
-	// Operators should ensure admin/partner Google accounts have their own 2FA
-	// enabled in Google — that is the user's responsibility, not the app's.
+	//   - issuer is pinned to accounts.google.com (above)
+	//   - email_verified is required (above)
+	//   - the id_token's nonce is single-use (nonceStore.Consume above) so a
+	//     captured token cannot be replayed
+	//
+	// RESIDUAL RISK (accepted by product decision, 2026-07-04): the id_token
+	// does not carry the user's 2SV status, the factor used, or how the Google
+	// session was established. A stolen Google session cookie (infostealer
+	// malware) bypasses Google 2SV entirely and yields a valid id_token — and
+	// therefore a valid 14-day admin/partner JWT here. No step-up auth on money
+	// routes and no shortened JWT TTL were added (deliberate UX-over-security
+	// call). Mitigation is operational, not technical: admin/partner Google
+	// accounts are expected to keep 2SV on a phishing-resistant factor (security
+	// key / passkey), and endpoint hygiene (no malware) is the user's duty.
+	// See plans/reports/2026-07-04-google-oauth-no-otp-research.md.
 	accessToken, err := s.generateAccessToken(user, true)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToGenerateTokenVN, err)
