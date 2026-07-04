@@ -44,6 +44,7 @@ type Repositories struct {
 	WalletIPN               wallet.WalletIPNRepository
 	Attendance              domain.AttendanceRepository
 	AttendanceFailedAttempt domain.AttendanceFailedAttemptRepository
+	SettlementUpload        domain.SettlementUploadRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -81,6 +82,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		TxWalletPayment:         persistence.NewTxWalletPaymentRepository(db),
 		Attendance:              persistence.NewAttendanceRepository(db.DB),
 		AttendanceFailedAttempt: persistence.NewAttendanceFailedAttemptRepository(db.DB),
+		SettlementUpload:        persistence.NewSettlementUploadRepository(db),
 	}
 
 	// Wallet repositories need *sql.DB for raw SQL queries

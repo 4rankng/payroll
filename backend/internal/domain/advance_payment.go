@@ -11,6 +11,13 @@ import (
 // For the self-check-in flow: max_adv_amount = floor(salary * percent / 100).
 const SelfCheckInAdvanceablePercent uint64 = 70
 
+// QuotaCreditHoldDuration is how long a self-check-out earning stays pending
+// before it is banked into the advance-payment quota pool. Check-out enqueues a
+// deferred credit task at checkOutTime + QuotaCreditHoldDuration; admin manual
+// approvals credit immediately and bypass this hold. Centralized alongside the
+// other self-check-in advance-policy knobs.
+const QuotaCreditHoldDuration = 24 * time.Hour
+
 // AdvancePayment represents monthly advance payment limits from Flexible Payroll Template uploads
 type AdvancePayment struct {
 	ID           uint   `json:"id" gorm:"primaryKey;type:bigint unsigned"`
@@ -62,6 +69,14 @@ type AdvancePaymentRepository interface {
 	GetMonthsByEmployee(ctx context.Context, employeeID uint64) ([]string, error)
 	SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
 	SumSalaryAndMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (salary, maxAdv uint64, err error)
+	// SumPendingEarningsByEmployeeMonth returns the total earning_amount held in
+	// the 24h credit window for the employee's month: checked-out attendances
+	// whose earning has not yet been banked into the quota pool
+	// (quota_credited_at IS NULL, earning_amount > 0), scoped by check-out month.
+	// Displayed separately from Salary (already-credited) on the self-check-in
+	// advance screen so the worker can see money is coming; it is NOT part of the
+	// 70% advanceable cap.
+	SumPendingEarningsByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
 	BatchCreate(ctx context.Context, aps []*AdvancePayment) error
 	BatchUpsert(ctx context.Context, aps []*AdvancePayment) error
 	Update(ctx context.Context, ap *AdvancePayment) error

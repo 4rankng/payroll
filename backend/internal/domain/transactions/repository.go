@@ -50,6 +50,14 @@ type WalletPaymentRepository interface {
 	// Used to prevent double disbursement when both auto-poller and manual
 	// admin flows target the same employee simultaneously.
 	HasPendingForRecipient(ctx context.Context, accountNo, bank, provider string) (bool, error)
+
+	// HasNonTerminalByEntityID reports whether any wallet_payment row linked to
+	// the given advance_payment_requests.id (column entity_id) is still in a
+	// non-terminal state (pending/verified/authorised). Used by the retry-
+	// disbursement endpoint to refuse enqueuing a second concurrent task while
+	// one is already in flight. Terminal rows (completed/failed/reversed) and
+	// rows with a NULL entity_id are ignored.
+	HasNonTerminalByEntityID(ctx context.Context, entityID uint64) (bool, error)
 }
 
 // UpdatePatch captures the mutable fields of a WalletPayment.

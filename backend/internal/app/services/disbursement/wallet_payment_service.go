@@ -364,6 +364,33 @@ func (s *WalletPaymentService) RecordIPN(ctx context.Context, result IPNResult) 
 	if result.InvoiceNo == "" {
 		lookup = lookupByRequestID(s.repo, result.RequestID)
 	}
+
+	// Amount cross-check: the IPN-claimed amount must match what we persisted at
+	// Initiate (RequestedAmount). A mismatch signals a forged/tampered callback
+	// and must never reach the FSM. Skipped when the IPN omits an amount (some
+	// provider payloads do for non-terminal statuses) — we only hard-reject on a
+	// present-and-differing amount, never break on omission.
+	if result.Amount > 0 {
+		existing, lerr := lookup(ctx)
+		switch {
+		case lerr == nil && existing != nil:
+			if existing.RequestedAmount != result.Amount {
+				s.logger.Error("provider_transactions: IPN amount mismatch — rejecting",
+					"request_id", result.RequestID,
+					"invoice_no", result.InvoiceNo,
+					"provider", result.Provider,
+					"expected", existing.RequestedAmount,
+					"reported", result.Amount)
+				return nil, fmt.Errorf("%w: expected %d, reported %d (request_id=%s)",
+					ErrIPNAmountMismatch, existing.RequestedAmount, result.Amount, result.RequestID)
+			}
+		case errors.Is(lerr, domaintx.ErrNotFound):
+			// Unknown invoice — let transition return the canonical ErrNotFound below.
+		case lerr != nil:
+			return nil, lerr
+		}
+	}
+
 	return s.transition(ctx, lookup, trigger, s.ipnPatch(result, trigger))
 }
 

@@ -28,11 +28,15 @@ const (
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
 
-// TaskEnqueuer schedules the auto-reject checkout task for an attendance.
-// Implemented by the asynq client wrapper; fakes capture the call in tests.
-// Nil is allowed — when unset, CheckIn skips scheduling (used in lightweight tests).
+// TaskEnqueuer schedules deferred attendance tasks. Implemented by the asynq
+// client wrapper; fakes capture the calls in tests. Nil is allowed — when unset,
+// CheckIn/CheckOut skip scheduling (used in lightweight tests).
 type TaskEnqueuer interface {
 	EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) error
+	// EnqueueCreditQuota schedules the deferred quota-credit task at checkOutTime +
+	// QuotaCreditHoldDuration. The task banks the earning into the quota pool only
+	// after the 24h hold; the worker is idempotent (guards on quota_credited_at).
+	EnqueueCreditQuota(attendanceID uint, at time.Time) error
 }
 
 type AttendanceService struct {
@@ -502,58 +506,6 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	return result, err
 }
 
-// RecordAdminCheckIn creates a check-in attendance row without geofence or
-// shift-window validation, for the admin override path: an employee whose
-// device could not acquire GPS (a gps_* failed attempt) is recorded as checked
-// in at the original attempt time. Idempotent per employee/day — if a check-in
-// already exists for that day (e.g. a prior override), it is returned as-is.
-// No coordinates are stored because the device never produced a fix; the
-// CheckInGate marker makes the manual origin visible on the record.
-func (s *AttendanceService) RecordAdminCheckIn(ctx context.Context, employeeID, projectID uint, checkInTime time.Time) (*domain.Attendance, error) {
-	var result *domain.Attendance
-
-	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		project, err := s.resolveProject(txCtx, employeeID, projectID)
-		if err != nil {
-			return err
-		}
-
-		moment := checkInTime
-		if moment.IsZero() {
-			moment = s.clock.Now()
-		}
-		moment = moment.In(clock.DefaultLocation)
-		day := time.Date(moment.Year(), moment.Month(), moment.Day(), 0, 0, 0, 0, clock.DefaultLocation)
-
-		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, day)
-		if err != nil {
-			return fmt.Errorf("failed to check existing attendance: %w", err)
-		}
-		if existing != nil && !isConfirmedNoSalaryCheckout(existing) {
-			// A check-in already exists for this day — reuse it so a repeated
-			// override (or a crash between check-in and audit-stamp) cannot
-			// create a duplicate.
-			result = existing
-			return nil
-		}
-
-		attendance := &domain.Attendance{
-			EmployeeID:  employeeID,
-			ProjectID:   project.ID,
-			Date:        day,
-			CheckInTime: moment,
-			CheckInGate: "Quản trị ghi nhận (lỗi GPS)",
-		}
-		if err := s.attendanceRepo.Create(txCtx, attendance); err != nil {
-			return err
-		}
-		result = attendance
-		return nil
-	})
-
-	return result, err
-}
-
 func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo domain.GeoReading, confirmNoSalary bool) (*domain.Attendance, error) {
 	var result *domain.Attendance
 
@@ -683,43 +635,24 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			return err
 		}
 
-		// 6. Accumulate advance payment quota (self-check-in flow): salary = 100%
-		// earned; max_adv_amount = floor(salary * SelfCheckInAdvanceablePercent / 100) = 70%.
-		if earningAmount > 0 {
-			currentMonth := now.Format("2006-01")
-			currentDate := now.Format("2006-01-02")
-
-			aps, err := s.advancePaymentRepo.GetByEmployeeAndMonth(txCtx, uint64(employeeID), currentMonth)
-			if err != nil {
-				return err
-			}
-
-			var ap *domain.AdvancePayment
-			for _, v := range aps {
-				if v.ProjectID == attendance.ProjectID {
-					ap = v
-					break
+		// 6. Defer the quota credit to checkOutTime + QuotaCreditHoldDuration so the
+		// earning sits in a 24h holding state before it becomes advanceable. The
+		// earning stays parked on the attendance row (earning_amount, persisted
+		// above) with quota_credited_at = NULL; the credit task banks it later via
+		// CreditAttendanceQuota, which derives forMonth from the check-out date and
+		// is idempotent on quota_credited_at. Enqueued after-commit so the task can
+		// only fire once the attendance row is durable. A lost task is recovered by
+		// the periodic CreditOverduePendingQuota sweep.
+		if earningAmount > 0 && s.taskEnqueuer != nil {
+			attendanceID := attendance.ID
+			fireAt := now.Add(domain.QuotaCreditHoldDuration)
+			enqueuer := s.taskEnqueuer
+			domain.RegisterAfterCommit(txCtx, func() {
+				if err := enqueuer.EnqueueCreditQuota(attendanceID, fireAt); err != nil {
+					observability.GetLogger().Warn("failed to enqueue quota credit task",
+						"attendance_id", attendanceID, "error", err)
 				}
-			}
-
-			earning := uint64(earningAmount)
-			if ap == nil {
-				ap = &domain.AdvancePayment{
-					ProjectID:    attendance.ProjectID,
-					EmployeeID:   attendance.EmployeeID,
-					ForMonth:     currentMonth,
-					UploadDate:   currentDate,
-					Salary:       earning,
-					MaxAdvAmount: (earning * domain.SelfCheckInAdvanceablePercent) / 100,
-				}
-				if err := s.advancePaymentRepo.Create(txCtx, ap); err != nil {
-					return err
-				}
-			} else {
-				if err := s.advancePaymentRepo.AccumulateSalary(txCtx, uint64(ap.ID), earningAmount); err != nil {
-					return err
-				}
-			}
+			})
 		}
 
 		result = attendance
@@ -842,8 +775,14 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
 	}
 	if att.IsApproved() {
-		// Already in the requested state — nothing to do, return current record.
-		return att, nil
+		// Already approved. The earning may still be un-credited if the credit
+		// step failed on a prior call (CreditAttendanceQuota is idempotent and
+		// skips already-credited rows), so re-attempt it before returning.
+		if _, err := s.CreditAttendanceQuota(ctx, attendanceID); err != nil {
+			return nil, fmt.Errorf("failed to credit quota on re-approve: %w", err)
+		}
+		// Already in the requested state — return the current record.
+		return s.attendanceRepo.GetByID(ctx, attendanceID)
 	}
 
 	// Recompute earning for the full configured shift.
@@ -889,6 +828,14 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 	}
 	if !updated {
 		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+
+	// Admin approval credits the quota immediately, bypassing the 24h hold that
+	// the self-check-out path applies. CreditAttendanceQuota is idempotent on
+	// quota_credited_at, so a re-approve (caught by the IsApproved guard above)
+	// will not double-bank the earning.
+	if _, err := s.CreditAttendanceQuota(ctx, attendanceID); err != nil {
+		return nil, fmt.Errorf("failed to credit approved attendance: %w", err)
 	}
 
 	// Reload with associations so the response mapper has Employee/Project.
@@ -965,6 +912,132 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 			"count", rejected, "candidates", len(candidates))
 	}
 	return rejected, nil
+}
+
+// CreditAttendanceQuota banks an attendance's earning into the advance-payment
+// quota pool: it bumps advance_payments.salary and recomputes max_adv_amount
+// (= floor(salary * 70 / 100)). It is the single entry point for crediting and
+// is shared by the deferred 24h task (self-check-out path), the admin Approve
+// path (immediate credit), and the safety-net sweep.
+//
+// Idempotent and race-free: it claims the credit via a conditional
+// MarkQuotaCredited (WHERE quota_credited_at IS NULL) inside a transaction, and
+// only banks the earning if the claim succeeded. Two concurrent credits for the
+// same attendance serialize on the row lock; the loser's MarkQuotaCredited
+// returns RowsAffected=0 and skips the bank, so the earning is never double-
+// counted. forMonth is derived from the check-out DATE (not credit-time now) so
+// a check-out near month-end credits to the correct month even when the 24h
+// timer crosses into the next month. Returns true when this call banked a
+// credit, false for a no-op (already credited / nothing to credit / not found).
+func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error) {
+	credited := false
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		att, err := s.attendanceRepo.GetByID(txCtx, attendanceID)
+		if err != nil {
+			return fmt.Errorf("failed to load attendance for quota credit: %w", err)
+		}
+		if att == nil {
+			return nil
+		}
+		// Nothing earnable to bank, or already banked by a concurrent credit.
+		if att.EarningAmount == nil || *att.EarningAmount <= 0 {
+			return nil
+		}
+		if att.QuotaCreditedAt != nil {
+			return nil
+		}
+
+		// Claim first — the conditional UPDATE (quota_credited_at IS NULL) is the
+		// race guard. If a concurrent credit already stamped the row this returns
+		// false and we skip the bank, avoiding a double-count.
+		claimed, err := s.attendanceRepo.MarkQuotaCredited(txCtx, attendanceID, s.clock.Now())
+		if err != nil {
+			return fmt.Errorf("failed to claim quota credit: %w", err)
+		}
+		if !claimed {
+			return nil
+		}
+
+		// Derive the salary month from the work date, not credit-time now: a
+		// 31-Jul 23:55 check-out credits ~24h later but belongs to July's quota.
+		effective := att.Date
+		if att.CheckOutTime != nil {
+			effective = *att.CheckOutTime
+		}
+		forMonth := effective.Format("2006-01")
+		uploadDate := effective.Format("2006-01-02")
+
+		aps, err := s.advancePaymentRepo.GetByEmployeeAndMonth(txCtx, uint64(att.EmployeeID), forMonth)
+		if err != nil {
+			return fmt.Errorf("failed to load advance payment row: %w", err)
+		}
+		var ap *domain.AdvancePayment
+		for _, v := range aps {
+			if v.ProjectID == att.ProjectID {
+				ap = v
+				break
+			}
+		}
+
+		earning := uint64(*att.EarningAmount)
+		if ap == nil {
+			ap = &domain.AdvancePayment{
+				ProjectID:    att.ProjectID,
+				EmployeeID:   att.EmployeeID,
+				ForMonth:     forMonth,
+				UploadDate:   uploadDate,
+				Salary:       earning,
+				MaxAdvAmount: (earning * domain.SelfCheckInAdvanceablePercent) / 100,
+			}
+			if err := s.advancePaymentRepo.Create(txCtx, ap); err != nil {
+				return fmt.Errorf("failed to create advance payment row: %w", err)
+			}
+		} else {
+			if err := s.advancePaymentRepo.AccumulateSalary(txCtx, uint64(ap.ID), *att.EarningAmount); err != nil {
+				return fmt.Errorf("failed to accumulate salary: %w", err)
+			}
+		}
+		credited = true
+		return nil
+	})
+	return credited, err
+}
+
+// quotaCreditSweepBatch caps the number of records one sweep pass finalizes, so
+// the safety net stays bounded even if a long outage leaves many pending credits.
+const quotaCreditSweepBatch = 500
+
+// CreditOverduePendingQuota is the safety-net backstop for the deferred
+// quota-credit task. It banks earnings whose 24h hold has elapsed but were never
+// credited — which happens when the per-attendance task scheduled at check-out
+// was lost (Redis unavailable at commit time, or a process crash between commit
+// and the after-commit enqueue). Each credit uses the idempotent
+// CreditAttendanceQuota, so in-flight tasks and overlapping runs are safe
+// no-ops. Returns the count of records banked this pass.
+func (s *AttendanceService) CreditOverduePendingQuota(ctx context.Context) (int, error) {
+	cutoff := s.clock.Now().Add(-domain.QuotaCreditHoldDuration)
+	ids, err := s.attendanceRepo.GetOverdueQuotaCreditCandidates(ctx, cutoff, quotaCreditSweepBatch)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load overdue quota-credit candidates: %w", err)
+	}
+	credited := 0
+	for _, id := range ids {
+		banked, err := s.CreditAttendanceQuota(ctx, id)
+		if err != nil {
+			// One bad row must not abort the whole sweep; the next pass retries it.
+			observability.GetLogger().Warn("quota-credit sweep: failed to credit attendance",
+				"attendance_id", id, "error", err)
+			continue
+		}
+		if banked {
+			credited++
+		}
+	}
+	if credited > 0 {
+		observability.GetLogger().Info("Quota-credit sweep banked pending earnings",
+			"count", credited, "candidates", len(ids))
+	}
+	return credited, nil
 }
 
 // GetTodayAttendance returns the attendance record for the employee for the

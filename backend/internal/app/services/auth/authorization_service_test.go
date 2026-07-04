@@ -165,11 +165,11 @@ func TestAdvPartnerRole_AllowList(t *testing.T) {
 		{"/api/v1/advance-payments/import/1", "GET"},
 		{"/api/v1/advance-payments/import-employee-list", "POST"},
 
-		// Users - read + update
+		// Users - read only (broad PUT removed; adv_partner edits route through
+		// /adv-partner/users/* which enforces project-scope ownership).
 		{"/api/v1/users", "GET"},
 		{"/api/v1/users/summary", "GET"},
 		{"/api/v1/users/1", "GET"},
-		{"/api/v1/users/1", "PUT"},
 
 		// Employees - read
 		{"/api/v1/employees", "GET"},
@@ -203,9 +203,11 @@ func TestAdvPartnerRole_DenyList(t *testing.T) {
 		path   string
 		method string
 	}{
-		// User management — create/delete denied
+		// User management — create/delete denied, and broad PUT denied (edits
+		// must route through /adv-partner/users/* with the ownership gate).
 		{"/api/v1/users", "POST"},
 		{"/api/v1/users/1", "DELETE"},
+		{"/api/v1/users/1", "PUT"},
 
 		// Employee data
 		{"/api/v1/employees/import", "POST"},
@@ -280,7 +282,7 @@ func TestExistingRoles_NotRegressed(t *testing.T) {
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/advance-payments", "GET"))
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/advance-payments/import", "POST"))
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/users", "GET"))
-	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/users/1", "PUT"))
+	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/users/1", "PUT"))
 	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/users", "POST"))
 	assert.False(t, svc.CanAccess("adv_partner", "/api/v1/advance-payments/1/cancel", "POST"))
 	assert.True(t, svc.CanAccess("adv_partner", "/api/v1/employees", "GET"))

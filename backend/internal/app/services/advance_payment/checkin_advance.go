@@ -46,8 +46,13 @@ const minCheckInAdvanceRequest uint64 = 10000
 // carries the canonical camelCase json tags). Do not add json tags here.
 type CheckInAdvanceInfo struct {
 	ForMonth                  string
-	Salary                    uint64 // tiền công thực tế (100% earned)
-	MaxAdvanceAmount          uint64 // tiền công được ứng (70% of salary)
+	Salary                    uint64 // tiền công thực tế (100% earned, already credited)
+	// PendingEarnings is the total earning held in the 24h credit window this
+	// month — checked-out attendances whose earning has not yet been banked into
+	// the quota pool. Shown separately so the worker sees money is coming; it is
+	// NOT part of MaxAdvanceAmount / the 70% advanceable cap.
+	PendingEarnings           uint64
+	MaxAdvanceAmount          uint64 // tiền công được ứng (70% of credited salary)
 	CompletedAmount           uint64
 	PendingAmount             uint64
 	RemainingAmount           uint64
@@ -104,6 +109,12 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get salary and max advance")
 	}
+	// Earnings still inside the 24h credit window this month — displayed
+	// separately; not part of the advanceable cap.
+	pendingEarnings, err := s.config.AdvancePaymentRepo.SumPendingEarningsByEmployeeMonth(ctx, employeeID, currentCalMonth)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get pending earnings")
+	}
 	completed, err := s.config.AdvancePaymentRequestRepo.SumCompletedByEmployeeMonth(ctx, employeeID, currentCalMonth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get completed amount")
@@ -114,6 +125,7 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	}
 
 	info.Salary = salary
+	info.PendingEarnings = pendingEarnings
 	info.MaxAdvanceAmount = maxAdv
 	info.CompletedAmount = completed
 	info.PendingAmount = pending

@@ -2,6 +2,8 @@ package advance_payment
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -64,6 +66,25 @@ func (h *AdvancePaymentHandler) RetryDisbursement(c *gin.Context) {
 		return
 	}
 
+	// Step 5.5: Refuse if a wallet_payment for this advance request is still
+	// in flight (pending/verified/authorised). The execute worker is already
+	// idempotent, so this is not a double-pay guard — it stops a second click
+	// from piling on a duplicate task while one is mid-flight. A stuck row must
+	// be cleared via reconciliation before retrying.
+	if h.txWalletPaymentRepo != nil {
+		inFlight, err := h.txWalletPaymentRepo.HasNonTerminalByEntityID(ctx, requestID)
+		if err != nil {
+			slog.Error("retry disbursement: in-flight check failed",
+				"request_id", requestID, "error", err)
+			response.InternalServerError(c, "Không thể kiểm tra trạng thái chuyển tiền. Vui lòng thử lại sau.")
+			return
+		}
+		if inFlight {
+			response.Conflict(c, "Đang có lệnh chuyển tiền đang xử lý cho yêu cầu này. Vui lòng đợi hoặc xoá khoản đang kẹt qua đối soát.")
+			return
+		}
+	}
+
 	// Step 6: Enqueue disbursement:execute task (same logic as poller's enqueueRequest)
 	disbursementRequestID := advance_payment.GenerateTransactionCode(true, true)
 
@@ -82,8 +103,23 @@ func (h *AdvancePaymentHandler) RetryDisbursement(c *gin.Context) {
 		return
 	}
 
+	// TaskID binds the in-flight task to the advance request. A second enqueue
+	// while this task is still pending/running/retrying collides at the queue
+	// (ErrTaskIDConflict) instead of spawning a duplicate. The ID is released
+	// once the task reaches a terminal state, so a later retry (after the prior
+	// task is truly done) still enqueues cleanly.
 	task := asynqlib.NewTask(workers.TaskDisbursementExecute, data)
-	if _, err := h.asynqClient.AsynqClient().Enqueue(task, asynqlib.MaxRetry(5)); err != nil {
+	taskID := fmt.Sprintf("disbursement:execute:%d", requestID)
+	if _, err := h.asynqClient.AsynqClient().Enqueue(task,
+		asynqlib.MaxRetry(5),
+		asynqlib.TaskID(taskID),
+	); err != nil {
+		if errors.Is(err, asynqlib.ErrTaskIDConflict) {
+			slog.Info("retry disbursement: task already in flight (TaskID conflict)",
+				"request_id", requestID)
+			response.Conflict(c, "Đang có lệnh chuyển tiền đang xử lý cho yêu cầu này.")
+			return
+		}
 		slog.Error("retry disbursement: failed to enqueue task",
 			"request_id", requestID, "error", err,
 		)

@@ -49,9 +49,10 @@ func (h *AdvancePaymentHandler) GetMyCheckInAdvanceInfo(c *gin.Context) {
 			PendingAmount:    info.PendingAmount,
 			RemainingAmount:  info.RemainingAmount,
 		}},
-		Salary:        info.Salary,
-		Disclaimer:    info.Disclaimer,
-		WindowOpenDay: info.WindowOpenDay,
+		Salary:          info.Salary,
+		PendingEarnings: info.PendingEarnings,
+		Disclaimer:      info.Disclaimer,
+		WindowOpenDay:   info.WindowOpenDay,
 	}
 	if cfg.GetTransferLimits != nil {
 		limits := cfg.GetTransferLimits(c.Request.Context())

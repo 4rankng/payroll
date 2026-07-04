@@ -30,6 +30,11 @@ type AdvancePaymentInfoResponse struct {
 	// only by the dedicated /me/check-in-advance endpoint; the admin-upload
 	// /me/advance-payment endpoint leaves it zero (omitempty).
 	Salary uint64 `json:"salary,omitempty"`
+	// PendingEarnings is the total earning held in the 24h credit window this
+	// month — checked-out shifts whose earning has not yet been banked into the
+	// quota pool. Displayed separately ("Đang chờ 24h"); NOT part of the
+	// advanceable cap. Self-check-in flow only (omitempty).
+	PendingEarnings uint64 `json:"pendingEarnings,omitempty"`
 	// Disclaimer is the in-app note for the self-check-in flow clarifying that
 	// the displayed wages exclude overtime and company allowances.
 	Disclaimer string `json:"disclaimer,omitempty"`

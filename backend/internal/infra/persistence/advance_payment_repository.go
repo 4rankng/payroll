@@ -113,6 +113,30 @@ func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvByEmployeeMonth(ctx context
 	return result.Salary, result.MaxAdv, err
 }
 
+// SumPendingEarningsByEmployeeMonth returns the total earning_amount held in
+// the 24h credit window for the employee's month: checked-out attendances whose
+// earning has not yet been banked into the quota pool (quota_credited_at IS NULL
+// and earning_amount > 0), scoped by check-out month. Displayed separately from
+// the already-credited Salary on the self-check-in advance screen; it is NOT
+// part of the 70% advanceable cap. Queries the attendances table directly — the
+// advance-payment repo already reads attendances for GetQuotaAnomalies, so this
+// stays within the existing cross-table precedent.
+func (r *AdvancePaymentRepository) SumPendingEarningsByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error) {
+	var result struct {
+		Total uint64
+	}
+	err := r.getDB(ctx).
+		Table("attendances").
+		Select("COALESCE(SUM(earning_amount), 0) as total").
+		Where("employee_id = ?", employeeID).
+		Where("quota_credited_at IS NULL").
+		Where("earning_amount > 0").
+		Where("check_out_time IS NOT NULL").
+		Where("DATE_FORMAT(check_out_time, '%Y-%m') = ?", forMonth).
+		Scan(&result).Error
+	return result.Total, err
+}
+
 // SumSalaryAndMaxAdvForMonth returns the total salary (100% earned) and
 // max_adv_amount across all advance_payments rows for the given month. Used by
 // the health dashboard's throughput tile (B4).

@@ -51,6 +51,15 @@ const (
 	// attendances whose scheduled K+4h task was lost (Redis/process outage at
 	// check-in). Runs on a fixed schedule via the asynq scheduler.
 	TaskAutoRejectSweep = "attendance:auto_reject_sweep"
+	// TaskCreditQuota is the one-shot task scheduled at an attendance's
+	// checkOutTime + QuotaCreditHoldDuration. It banks the earning into the
+	// advance-payment quota pool after the 24h hold; the worker is idempotent on
+	// quota_credited_at so retries/duplicates are safe.
+	TaskCreditQuota = "attendance:credit_quota"
+	// TaskCreditQuotaSweep is the periodic safety-net task that banks earnings
+	// whose scheduled credit task was lost (Redis/process outage). Runs on a
+	// fixed schedule via the asynq scheduler; idempotent.
+	TaskCreditQuotaSweep = "attendance:credit_quota_sweep"
 	// TaskWalletSettlement is the asynq task type for the EOD wallet settlement cron.
 	// Re-exported from workers package.
 	TaskWalletSettlement = workers.TaskWalletSettlement
@@ -106,6 +115,8 @@ type Handlers struct {
 	statusInquiryPollerWorker     *workers.StatusInquiryPollerWorker
 	autoRejectCheckoutWorker      *workers.AutoRejectCheckoutWorker
 	autoRejectSweepWorker         *workers.AutoRejectSweepWorker
+	creditQuotaWorker             *workers.CreditQuotaWorker
+	creditQuotaSweepWorker        *workers.CreditQuotaSweepWorker
 }
 
 // NewHandlers creates a new Handlers instance
@@ -124,6 +135,8 @@ func NewHandlers(
 	statusInquiryPollerWorker *workers.StatusInquiryPollerWorker,
 	autoRejectCheckoutWorker *workers.AutoRejectCheckoutWorker,
 	autoRejectSweepWorker *workers.AutoRejectSweepWorker,
+	creditQuotaWorker *workers.CreditQuotaWorker,
+	creditQuotaSweepWorker *workers.CreditQuotaSweepWorker,
 ) *Handlers {
 	return &Handlers{
 		employeeImportWorker:          employeeImportWorker,
@@ -140,6 +153,8 @@ func NewHandlers(
 		statusInquiryPollerWorker:     statusInquiryPollerWorker,
 		autoRejectCheckoutWorker:      autoRejectCheckoutWorker,
 		autoRejectSweepWorker:         autoRejectSweepWorker,
+		creditQuotaWorker:             creditQuotaWorker,
+		creditQuotaSweepWorker:        creditQuotaSweepWorker,
 	}
 }
 
@@ -352,6 +367,38 @@ func (h *Handlers) HandleAutoRejectSweep(ctx context.Context, _ *asynqlib.Task) 
 	}
 	if err := h.autoRejectSweepWorker.ProcessJob(ctx); err != nil {
 		return fmt.Errorf("attendance:auto_reject_sweep: %w", err)
+	}
+	return nil
+}
+
+// HandleCreditQuota processes the one-shot attendance:credit_quota task scheduled
+// at an attendance's checkOutTime + QuotaCreditHoldDuration. Malformed payloads are
+// dropped (SkipRetry); DB errors are retried by asynq. The worker is idempotent on
+// quota_credited_at, so duplicate or retried tasks are safe.
+func (h *Handlers) HandleCreditQuota(ctx context.Context, t *asynqlib.Task) error {
+	var p creditQuotaPayload
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		logger.Error("attendance:credit_quota unmarshal payload", "error", err)
+		return asynqlib.SkipRetry
+	}
+	if h.creditQuotaWorker == nil {
+		return nil
+	}
+	if err := h.creditQuotaWorker.ProcessJob(ctx, p.AttendanceID); err != nil {
+		return fmt.Errorf("attendance:credit_quota: %w", err)
+	}
+	return nil
+}
+
+// HandleCreditQuotaSweep processes the periodic attendance:credit_quota_sweep task
+// — the fallback that banks earnings whose scheduled credit task was lost. The
+// worker is idempotent, so retries and overlapping runs are safe.
+func (h *Handlers) HandleCreditQuotaSweep(ctx context.Context, _ *asynqlib.Task) error {
+	if h.creditQuotaSweepWorker == nil {
+		return nil
+	}
+	if err := h.creditQuotaSweepWorker.ProcessJob(ctx); err != nil {
+		return fmt.Errorf("attendance:credit_quota_sweep: %w", err)
 	}
 	return nil
 }

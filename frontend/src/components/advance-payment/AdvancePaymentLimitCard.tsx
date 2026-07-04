@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertCircle, CalendarDays, CheckCircle2, Clock3 } from "lucide-react";
+import { AlertCircle, CalendarDays, CheckCircle2, Clock3, Hourglass } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { EmployeePayIllustration } from "@/components/employees/EmployeePayIllustration";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
@@ -70,6 +70,20 @@ export function AdvancePaymentLimitCard({
                 {formatCurrency(info.maxAdvanceAmount)}
               </p>
             </div>
+          </div>
+        )}
+        {info.pendingEarnings !== undefined && info.pendingEarnings > 0 && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Hourglass className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium leading-5 text-slate-600">Đang chờ 24h</p>
+                <p className="text-[12px] leading-4 text-slate-500">Sẽ cộng vào hạn mức sau 24h</p>
+              </div>
+            </div>
+            <p className="text-[15px] font-bold leading-6 text-slate-950 tabular-nums">
+              {formatCurrency(info.pendingEarnings)}
+            </p>
           </div>
         )}
         {info.disclaimer && (

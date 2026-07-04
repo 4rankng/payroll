@@ -17,6 +17,8 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskPayrollReportEmail, asynqlib.HandlerFunc(h.HandlePayrollReportEmail))
 	srv.Mux().Handle(TaskAutoRejectCheckout, asynqlib.HandlerFunc(h.HandleAutoRejectCheckout))
 	srv.Mux().Handle(TaskAutoRejectSweep, asynqlib.HandlerFunc(h.HandleAutoRejectSweep))
+	srv.Mux().Handle(TaskCreditQuota, asynqlib.HandlerFunc(h.HandleCreditQuota))
+	srv.Mux().Handle(TaskCreditQuotaSweep, asynqlib.HandlerFunc(h.HandleCreditQuotaSweep))
 
 	if h.disbursementPollerWorker != nil {
 		srv.Mux().Handle(TaskDisbursementPoller, asynqlib.HandlerFunc(h.HandleDisbursementPoller))
@@ -39,6 +41,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 		TaskEmployeeImport, TaskImportJob, TaskIPNProcess,
 		TaskBulkTransferTransaction, TaskBulkTransferPayment,
 		TaskAuditLogWrite, TaskPayrollReportEmail, TaskAutoRejectCheckout, TaskAutoRejectSweep,
+		TaskCreditQuota, TaskCreditQuotaSweep,
 	}
 	if h.disbursementPollerWorker != nil {
 		registered = append(registered, TaskDisbursementPoller, TaskDisbursementExecute)
@@ -74,6 +77,22 @@ func RegisterAutoRejectSweep(srv *Server) error {
 		return fmt.Errorf("failed to register auto-reject sweep periodic task: %w", err)
 	}
 	logger.Info("Registered auto-reject sweep periodic task", "interval", "30m")
+	return nil
+}
+
+// RegisterCreditQuotaSweep registers the periodic quota-credit fallback sweep.
+// Runs every 30 minutes on the low-priority queue. It is the safety net for the
+// per-attendance 24h credit task: it banks earnings the scheduled task missed
+// (Redis/process outage at check-out). The sweeper is idempotent on
+// quota_credited_at, so retries and overlapping runs are safe.
+func RegisterCreditQuotaSweep(srv *Server) error {
+	_, err := srv.Scheduler().Register("@every 30m", asynqlib.NewTask(TaskCreditQuotaSweep, nil),
+		asynqlib.Queue(QueueLow),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register quota-credit sweep periodic task: %w", err)
+	}
+	logger.Info("Registered quota-credit sweep periodic task", "interval", "30m")
 	return nil
 }
 

@@ -119,23 +119,3 @@ export function useFailedAttempts(params?: {
     staleTime: 0,
   });
 }
-
-// Record a check-in from a failed device-GPS attempt (admin override).
-// Server restricts this to check_in + gps_* attempts; on success we refresh the
-// whole dashboard family so the failed-attempts list, health counts, and
-// attendance list all reflect the newly created check-in.
-export function useOverrideFailedAttempt() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
-      dashboardService.overrideFailedAttempt(id, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QueryKeys.dashboard.all });
-      toast.success('Đã ghi nhận chấm công');
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error && error.message ? error.message : 'Không ghi nhận được, vui lòng thử lại.';
-      toast.error(message);
-    },
-  });
-}

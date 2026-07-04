@@ -52,6 +52,22 @@ func (h *UserHandler) UpdateAdvPartnerUser(c *gin.Context) {
 	ctx := c.Request.Context()
 	employeeID := uint(id)
 
+	// Ownership gate: adv_partner may only modify employees inside their own
+	// project scope. Checked once up-front so all three mutation paths below
+	// (employee fields, username, password) are covered. A denied attempt
+	// returns NotFound so it is indistinguishable from a missing record (no
+	// enumeration). Only adv_partner reaches this scoped route (casbin), so the
+	// gate never over-denies admin/manager paths.
+	hasAccess, err := h.employeeService.EmployeeHasAccess(ctx, employeeID, userID.(uint))
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	if !hasAccess {
+		response.HandleDomainError(c, domain.ErrNotFound)
+		return
+	}
+
 	// 1. Update employee fields if any are provided
 	if hasEmployeeFields(req) {
 		emp, err := h.employeeService.GetEmployeeForUpdate(ctx, employeeID)

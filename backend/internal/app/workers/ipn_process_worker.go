@@ -116,6 +116,14 @@ func (w *IPNProcessWorker) ProcessJob(ctx context.Context, p IPNJob) (err error)
 			"status", p.Status)
 		w.markIPN(ctx, p.IPNRecordID, "ignored", nil, "wallet_payment not found")
 		return nil
+	case errors.Is(err, disbursement.ErrIPNAmountMismatch):
+		w.logger.Error("disbursement IPN rejected — amount mismatch (forged/tampered), dropping",
+			"provider", p.Provider,
+			"invoice_no", p.InvoiceNo,
+			"request_id", p.RequestID,
+			"reported_amount", p.Amount)
+		w.markIPN(ctx, p.IPNRecordID, "rejected", nil, "amount mismatch")
+		return nil
 	}
 
 	var terminalErr domaintx.TerminalStateError

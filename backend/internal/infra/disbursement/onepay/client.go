@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"api-server/internal/pkg/clock"
 )
 
 const (
@@ -81,7 +83,7 @@ func NewClient(cfg Config, logger *slog.Logger) (*Client, error) {
 		cfg:    cfg,
 		http:   &http.Client{Timeout: cfg.HTTPTimeout},
 		logger: logger,
-		now:    time.Now,
+		now:    clock.Now,
 	}, nil
 }
 

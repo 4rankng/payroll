@@ -316,10 +316,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	// Initialize FlexPay settlement service
 	flexPaySettlementService := flex_pay.NewFlexPaySettlementService(
+		db.DB,
 		repos.AdvancePaymentRequest,
 		repos.AdvancePayment,
 		repos.Ledger,
 		repos.Transaction,
+		repos.SettlementUpload,
 		settingsConfigService.GetPartnerCompany,
 	)
 

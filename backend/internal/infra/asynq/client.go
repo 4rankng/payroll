@@ -359,6 +359,44 @@ func (c *Client) EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) erro
 	return nil
 }
 
+// creditQuotaPayload is the asynq task payload for attendance:credit_quota.
+type creditQuotaPayload struct {
+	AttendanceID uint `json:"attendance_id"`
+}
+
+// EnqueueCreditQuota schedules a one-shot task to fire at `at` — the per-attendance
+// quota-credit time (checkOutTime + QuotaCreditHoldDuration). The task banks the
+// attendance's earning into the advance-payment quota pool after the 24h hold.
+// Deduplicated by TaskID per attendance, so repeated enqueues for the same
+// attendance collapse to a single scheduled task; the worker is idempotent on
+// quota_credited_at, so duplicate/retried tasks are safe.
+func (c *Client) EnqueueCreditQuota(attendanceID uint, at time.Time) error {
+	payload, _ := json.Marshal(creditQuotaPayload{AttendanceID: attendanceID})
+
+	task := asynqlib.NewTask(TaskCreditQuota, payload,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(c.cfg.RetryMax),
+		asynqlib.ProcessAt(at),
+		asynqlib.TaskID(fmt.Sprintf("credit-quota-att:%d", attendanceID)),
+	)
+
+	info, err := c.client.Enqueue(task)
+	if err != nil {
+		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+			return nil
+		}
+		return fmt.Errorf("failed to enqueue quota credit task: %w", err)
+	}
+
+	logger.Info("Enqueued attendance quota-credit task",
+		"task_id", info.ID,
+		"attendance_id", attendanceID,
+		"fire_at", at.Format(time.RFC3339),
+		"queue", info.Queue,
+	)
+	return nil
+}
+
 // Close closes the asynq client connection
 func (c *Client) Close() error {
 	return c.client.Close()
