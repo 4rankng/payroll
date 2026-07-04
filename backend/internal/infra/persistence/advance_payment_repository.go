@@ -439,6 +439,25 @@ func (r *AdvancePaymentRepository) GetEmployeeByID(ctx context.Context, employee
 	return &employee, nil
 }
 
+// GetEmployeesByIDs batch-fetches employees by id in one query, keyed by id.
+// Mirrors GetEmployeeByID (no Bank Preload — matches the existing per-row
+// behavior where Bank is left nil). Eliminates the sao-ke export N+1 flagged
+// by the ck:debug 2026-07-04 audit.
+func (r *AdvancePaymentRepository) GetEmployeesByIDs(ctx context.Context, employeeIDs []uint64) (map[uint64]*domain.Employee, error) {
+	if len(employeeIDs) == 0 {
+		return make(map[uint64]*domain.Employee), nil
+	}
+	var employees []*domain.Employee
+	if err := r.DB.WithContext(ctx).Where("id IN ?", employeeIDs).Find(&employees).Error; err != nil {
+		return nil, err
+	}
+	out := make(map[uint64]*domain.Employee, len(employees))
+	for _, e := range employees {
+		out[uint64(e.ID)] = e
+	}
+	return out, nil
+}
+
 func (r *AdvancePaymentRepository) HasDataForMonth(ctx context.Context, forMonth string) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).

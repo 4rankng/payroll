@@ -12,7 +12,6 @@ type HandlerConfig struct {
 	EmployeeService        *employee.EmployeeService
 	TimesheetService       *timesheet.TimesheetService
 	ProjectEmployeeService *project.ProjectEmployeeService
-	ResponseBuilder        *ResponseBuilder
 	Validator              *validation.RequestValidator
 }
 
