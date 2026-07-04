@@ -111,6 +111,15 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 				"account_no", p.RecipientAccountNo, "bank", p.RecipientBank)
 			return nil // terminal — don't retry; admin or another worker is handling it
 		}
+		if errors.Is(err, disbursement.ErrFeeResolution) {
+			// Missing fee schedule in fail-closed mode — a config gap, not a
+			// transient fault. Retrying won't help (the schedule/allowlist entry
+			// must be added). Surface as a terminal failure so we don't stamp a
+			// guessed fee and asynq doesn't pile on retries.
+			logger.Error("disbursement execute: fee resolution failed — terminal (config gap), not retrying",
+				"error", err, "advance_request_id", p.AdvanceRequestID, "request_id", p.RequestID)
+			return fmt.Errorf("initiate wallet_payment: fee resolution: %w", asynqlib.SkipRetry)
+		}
 		return fmt.Errorf("initiate wallet_payment: %w", err)
 	}
 

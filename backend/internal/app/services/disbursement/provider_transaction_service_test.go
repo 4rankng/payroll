@@ -137,7 +137,47 @@ func (r *fakeProviderTxRepo) HasNonTerminalByEntityID(_ context.Context, entityI
 // fee landed on the row without spinning up the settings stack.
 type fakeFee int64
 
-func (f fakeFee) GetDisbursementFeeVND(_ context.Context, _ string) int64 { return int64(f) }
+func (f fakeFee) GetDisbursementFeeVND(_ context.Context, _ string) (int64, bool, error) {
+	return int64(f), false, nil
+}
+
+// errorFee is a stub DisbursementFeeProvider whose resolution always fails.
+// Used to pin M12: a fee-resolution error must propagate out of Initiate
+// wrapped with ErrFeeResolution instead of being swallowed into fee=0 (the
+// legacy behavior that silently lost money on missing schedules).
+type errorFee struct{}
+
+func (errorFee) GetDisbursementFeeVND(_ context.Context, _ string) (int64, bool, error) {
+	return 0, false, errors.New("no active disbursement fee schedule")
+}
+
+// TestInitiate_PropagatesFeeResolutionError pins M12: when the fee provider
+// returns an error, Initiate surfaces it wrapped with ErrFeeResolution and
+// creates no wallet_payment row. The worker's errors.Is(err, ErrFeeResolution)
+// branch turns this into a terminal failure instead of stamping a guessed fee.
+func TestInitiate_PropagatesFeeResolutionError(t *testing.T) {
+	t.Parallel()
+	repo := newFakeRepo()
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, errorFee{}, nil, nil, slog.Default())
+
+	in := disbursement.InitiateInput{
+		RequestID:          "tt" + uuid.New().String()[:14],
+		RequestedAmount:    150_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+	}
+	_, err := svc.Initiate(context.Background(), in)
+	if err == nil {
+		t.Fatal("Initiate: expected fee-resolution error, got nil")
+	}
+	if !errors.Is(err, disbursement.ErrFeeResolution) {
+		t.Fatalf("Initiate error not wrapped with ErrFeeResolution: %v", err)
+	}
+	if repo.createCalls != 0 {
+		t.Fatalf("expected no row created on fee-resolution failure, got %d Create call(s)", repo.createCalls)
+	}
+}
 
 // TestInitiate_PersistsRequestIDFromCaller documents the contract
 // production employee disbursements rely on: whatever request_id the

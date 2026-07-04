@@ -40,6 +40,14 @@ var ErrDuplicatePaymentInProgress = errors.New("disbursement: a payment to this 
 // not retry it (a forgery will not self-heal on the next poll).
 var ErrIPNAmountMismatch = errors.New("disbursement: ipn amount does not match the recorded request")
 
+// ErrFeeResolution is returned by Initiate when the active fee schedule cannot
+// be resolved for the active provider in fail-closed mode
+// (DISBURSEMENT_FEE_FAIL_OPEN=false) and the provider is not on the zero-fee
+// allowlist. Terminal — retrying won't help because the gap is a missing
+// schedule/allowlist entry, not a transient fault. The worker surfaces it as a
+// terminal failure (SkipRetry) instead of stamping a guessed fee.
+var ErrFeeResolution = errors.New("disbursement: fee schedule could not be resolved")
+
 // Registry holds all built disbursement providers and exposes the
 // active one. With env-gated registration, "active" reduces to "the
 // provider bootstrap chose to register" — there is exactly one in
