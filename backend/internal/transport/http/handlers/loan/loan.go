@@ -32,8 +32,43 @@ func NewHandler(loanService *loan.LoanService, clk clock.Clock) *Handler {
 	}
 }
 
-// buildLoanResponse converts loan to response DTO
+// buildLoanResponse converts a single loan to a response DTO. It fetches the
+// loan's schedules itself (used by create/update detail paths). The list path
+// uses buildLoanResponses which batches the schedule fetch.
 func (h *Handler) buildLoanResponse(ctx context.Context, loan *domain.Loan) dto.LoanResponse {
+	var schedules []*domain.LoanRepaymentSchedule
+	if _, s, err := h.loanService.GetLoanWithSchedules(ctx, loan.ID); err == nil {
+		schedules = s
+	}
+	return h.populateLoanResponse(loan, schedules)
+}
+
+// buildLoanResponses converts a list of loans to response DTOs with a SINGLE
+// batched schedule fetch (was: one GetLoanWithSchedules — i.e. two queries —
+// per loan, an N+1 flagged by the ck:debug 2026-07-04 audit). Schedules are
+// fetched once via GetSchedulesByLoanIDs and looked up per loan.
+func (h *Handler) buildLoanResponses(ctx context.Context, loans []*domain.Loan) []dto.LoanResponse {
+	loanIDs := make([]uint, len(loans))
+	for i, l := range loans {
+		loanIDs[i] = l.ID
+	}
+	scheduleMap, err := h.loanService.GetSchedulesByLoanIDs(ctx, loanIDs)
+	if err != nil {
+		// Degrade gracefully: build responses without schedule-derived fields
+		// rather than failing the whole list. The error is logged upstream.
+		scheduleMap = map[uint][]*domain.LoanRepaymentSchedule{}
+	}
+	responses := make([]dto.LoanResponse, len(loans))
+	for i, loan := range loans {
+		responses[i] = h.populateLoanResponse(loan, scheduleMap[loan.ID])
+	}
+	return responses
+}
+
+// populateLoanResponse maps a loan + its (already-fetched) schedules to a
+// LoanResponse DTO. Shared by the single-loan and batch paths so they cannot
+// drift. The schedules slice may be nil/empty (no schedules, or fetch failed).
+func (h *Handler) populateLoanResponse(loan *domain.Loan, schedules []*domain.LoanRepaymentSchedule) dto.LoanResponse {
 	lenderBrief := dto.LenderBriefResponse{
 		ID:   loan.Lender.ID,
 		Name: loan.Lender.Name,
@@ -42,27 +77,23 @@ func (h *Handler) buildLoanResponse(ctx context.Context, loan *domain.Loan) dto.
 		lenderBrief.Email = loan.Lender.Email
 	}
 
-	// Set disbursement date pointer
 	var disbursementDatePtr *string
 	if loan.DisbursedAt != nil {
 		dateStr := loan.DisbursedAt.Format("2006-01-02")
 		disbursementDatePtr = &dateStr
 	}
 
-	// Calculate next payment date and amount for active loans that have been disbursed
+	// Next payment date/amount: first pending schedule with a future due date.
 	var nextPaymentDate *string
 	var nextPaymentAmount *int64
 	if loan.Status == domain.LoanStatusActive && loan.DisbursedAt != nil {
-		// Get next payment schedule
-		if _, schedules, err := h.loanService.GetLoanWithSchedules(ctx, loan.ID); err == nil {
-			now := h.clock.Now()
-			for _, schedule := range schedules {
-				if schedule.Status == domain.ScheduleStatusPending && schedule.DueDate.After(now) {
-					dateStr := schedule.DueDate.Format("2006-01-02")
-					nextPaymentDate = &dateStr
-					nextPaymentAmount = &schedule.Amount
-					break
-				}
+		now := h.clock.Now()
+		for _, schedule := range schedules {
+			if schedule.Status == domain.ScheduleStatusPending && schedule.DueDate.After(now) {
+				dateStr := schedule.DueDate.Format("2006-01-02")
+				nextPaymentDate = &dateStr
+				nextPaymentAmount = &schedule.Amount
+				break
 			}
 		}
 	}
@@ -321,11 +352,9 @@ func (h *Handler) ListLoans(c *gin.Context) {
 		return
 	}
 
-	// Convert to response DTOs
-	loanResponses := make([]dto.LoanResponse, len(loans))
-	for i, loan := range loans {
-		loanResponses[i] = h.buildLoanResponse(c.Request.Context(), loan)
-	}
+	// Convert to response DTOs (batched schedule fetch — one query for all loans,
+	// not N+1. See buildLoanResponses / GetSchedulesByLoanIDs.)
+	loanResponses := h.buildLoanResponses(c.Request.Context(), loans)
 
 	// Build pagination and return according to API spec
 	totalPages := int(total) / pageSize

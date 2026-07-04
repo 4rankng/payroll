@@ -355,13 +355,21 @@ func (s *PayrollReportByProjectService) GetPayrollReportForProjects(ctx context.
 	var err error
 
 	if len(projectIDs) > 0 {
+		// Batch-fetch all projects in one query (was: one GetByID per project,
+		// an N+1 flagged by the ck:debug 2026-07-04 audit). GetByIDs returns only
+		// the projects it finds, so missing IDs are silently skipped — matching
+		// the previous warn-and-continue behavior. Iterate the input slice to
+		// preserve the caller's requested order (map iteration is unordered).
+		projectMap, err := s.projectRepo.GetByIDs(ctx, projectIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to batch-fetch projects: %w", err)
+		}
 		for _, id := range projectIDs {
-			p, err := s.projectRepo.GetByID(ctx, id)
-			if err != nil {
-				s.logger.Warn("Project not found, skipping", "projectID", id, "error", err)
-				continue
+			if p, ok := projectMap[id]; ok {
+				projects = append(projects, p)
+			} else {
+				s.logger.Warn("Project not found, skipping", "projectID", id)
 			}
-			projects = append(projects, p)
 		}
 	} else {
 		projects, err = s.projectRepo.List(ctx, domain.ProjectFilters{

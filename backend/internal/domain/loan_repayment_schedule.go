@@ -33,6 +33,10 @@ type LoanRepaymentScheduleRepository interface {
 	Create(ctx context.Context, schedule *LoanRepaymentSchedule) error
 	GetByID(ctx context.Context, id uint) (*LoanRepaymentSchedule, error)
 	GetByLoanID(ctx context.Context, loanID uint) ([]*LoanRepaymentSchedule, error)
+	// GetByLoanIDs batch-fetches schedules for multiple loans in a single query,
+	// grouped by loan id. Use this in list endpoints to avoid an N+1 of
+	// GetByLoanID per loan. Loans with no schedules are absent from the map.
+	GetByLoanIDs(ctx context.Context, loanIDs []uint) (map[uint][]*LoanRepaymentSchedule, error)
 	GetByTransactionID(ctx context.Context, transactionID uint) (*LoanRepaymentSchedule, error)
 	ListByTransactionIDs(ctx context.Context, transactionIDs []uint) ([]*LoanRepaymentSchedule, error)
 	GetPendingSchedulesByLoan(ctx context.Context, loanID uint) ([]*LoanRepaymentSchedule, error)

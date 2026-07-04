@@ -47,6 +47,28 @@ func (r *LoanRepaymentScheduleRepository) GetByLoanID(ctx context.Context, loanI
 	return schedules, err
 }
 
+// GetByLoanIDs batch-fetches schedules for multiple loans in one query, grouped
+// by loan id. Mirrors GetByLoanID's ordering (period ASC) within each loan.
+// Loans with no schedules are absent from the returned map. Eliminates the
+// loan-list N+1 flagged by the ck:debug 2026-07-04 audit.
+func (r *LoanRepaymentScheduleRepository) GetByLoanIDs(ctx context.Context, loanIDs []uint) (map[uint][]*domain.LoanRepaymentSchedule, error) {
+	if len(loanIDs) == 0 {
+		return make(map[uint][]*domain.LoanRepaymentSchedule), nil
+	}
+	var schedules []*domain.LoanRepaymentSchedule
+	if err := r.DB.WithContext(ctx).
+		Where("loan_id IN ?", loanIDs).
+		Order("loan_id, period ASC").
+		Find(&schedules).Error; err != nil {
+		return nil, err
+	}
+	out := make(map[uint][]*domain.LoanRepaymentSchedule, len(loanIDs))
+	for _, s := range schedules {
+		out[s.LoanID] = append(out[s.LoanID], s)
+	}
+	return out, nil
+}
+
 func (r *LoanRepaymentScheduleRepository) GetPendingSchedulesByLoan(ctx context.Context, loanID uint) ([]*domain.LoanRepaymentSchedule, error) {
 	var schedules []*domain.LoanRepaymentSchedule
 	err := r.DB.WithContext(ctx).

@@ -336,3 +336,10 @@ func (s *LoanService) GetLoanWithSchedules(ctx context.Context, loanID uint) (*d
 
 	return loan, schedules, nil
 }
+
+// GetSchedulesByLoanIDs batch-fetches schedules for multiple loans in one query,
+// grouped by loan id. Used by list endpoints to avoid an N+1 of
+// GetLoanWithSchedules per loan. Loans with no schedules are absent from the map.
+func (s *LoanService) GetSchedulesByLoanIDs(ctx context.Context, loanIDs []uint) (map[uint][]*domain.LoanRepaymentSchedule, error) {
+	return s.RepaymentScheduleRepo.GetByLoanIDs(ctx, loanIDs)
+}
