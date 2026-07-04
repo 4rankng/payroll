@@ -372,26 +372,73 @@ func (s *ReconcileService) exportReconciliationFile(ctx context.Context, paidReq
 
 // groupPaidRequestsForExport groups paid requests by employee and project
 func (s *ReconcileService) groupPaidRequestsForExport(ctx context.Context, paidRequests []*domain.AdvancePaymentRequest) ([]*domain.EmployeePendingRequests, error) {
+	// Pre-batch the employee + assignment lookups (was: one GetEmployeeByID +
+	// one GetActiveAssignmentByProjectAndEmployee per unique (employee, project)
+	// pair — an N+1 flagged by the ck:debug 2026-07-04 audit).
+	employeeIDSet := make(map[uint64]struct{})
+	projectIDSet := make(map[uint]struct{})
+	for _, req := range paidRequests {
+		employeeIDSet[uint64(req.EmployeeID)] = struct{}{}
+		projectIDSet[req.ProjectID] = struct{}{}
+	}
+	employeeIDs := make([]uint64, 0, len(employeeIDSet))
+	for id := range employeeIDSet {
+		employeeIDs = append(employeeIDs, id)
+	}
+	projectIDs := make([]uint, 0, len(projectIDSet))
+	for id := range projectIDSet {
+		projectIDs = append(projectIDs, id)
+	}
+
+	employeeMap, err := s.advancePaymentRepo.GetEmployeesByIDs(ctx, employeeIDs)
+	if err != nil {
+		s.logger.Error("Failed to batch-fetch employees for sao-ke export", "error", err)
+		// Degrade gracefully — empty map; loop will skip unmatched employees.
+		employeeMap = make(map[uint64]*domain.Employee)
+	}
+
+	assignments, err := s.projectEmployeeRepo.GetActiveAssignmentsByProjectsAndEmployees(ctx, projectIDs, toUintSlice(employeeIDs))
+	if err != nil {
+		s.logger.Error("Failed to batch-fetch project assignments for sao-ke export", "error", err)
+		assignments = []*domain.ProjectEmployee{}
+	}
+	// Index assignments by (projectID, employeeID) for O(1) lookup.
+	assignmentMap := make(map[string]*domain.ProjectEmployee, len(assignments))
+	for _, a := range assignments {
+		assignmentMap[fmt.Sprintf("%d:%d", a.ProjectID, a.EmployeeID)] = a
+	}
 	// Group by employee and project
+	// Batch-fetch project codes (the assignment batch helper doesn't Preload
+	// Project, and the original per-row path read projectAssignment.Project.Code).
+	projectCodeMap := make(map[uint]string, len(projectIDs))
+	if len(projectIDs) > 0 {
+		var projects []*domain.Project
+		if err := s.db.WithContext(ctx).Where("id IN ?", projectIDs).Find(&projects).Error; err == nil {
+			for _, p := range projects {
+				projectCodeMap[p.ID] = p.Code
+			}
+		}
+	}
+
 	grouped := make(map[string]*domain.EmployeePendingRequests)
 
 	for _, request := range paidRequests {
 		key := fmt.Sprintf("%d:%d", request.EmployeeID, request.ProjectID)
 
 		if _, exists := grouped[key]; !exists {
-			// Get employee info
-			employee, err := s.advancePaymentRepo.GetEmployeeByID(ctx, uint64(request.EmployeeID))
-			if err != nil {
-				s.logger.Error("Failed to get employee", "employee_id", request.EmployeeID, "error", err)
+			// Map lookups (no per-iteration queries).
+			employee, ok := employeeMap[uint64(request.EmployeeID)]
+			if !ok {
+				s.logger.Warn("Employee not found in batch, skipping", "employee_id", request.EmployeeID)
 				continue
 			}
 
-			// Get project assignment
-			projectAssignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, request.ProjectID, request.EmployeeID)
-			if err != nil {
-				s.logger.Error("Failed to get project assignment", "employee_id", request.EmployeeID, "project_id", request.ProjectID, "error", err)
+			assignment, ok := assignmentMap[key]
+			if !ok {
+				s.logger.Warn("Active project assignment not found, skipping", "employee_id", request.EmployeeID, "project_id", request.ProjectID)
 				continue
 			}
+			_ = assignment // assignment existence is the gate; code comes from projectCodeMap
 
 			// Get bank name from employee's bank relationship
 			bankName := ""
@@ -404,7 +451,7 @@ func (s *ReconcileService) groupPaidRequestsForExport(ctx context.Context, paidR
 				EmployeeName:  employee.Fullname,
 				EmployeeCCCD:  employee.CCCD,
 				ProjectID:     uint64(request.ProjectID),
-				ProjectCode:   projectAssignment.Project.Code,
+				ProjectCode:   projectCodeMap[request.ProjectID],
 				AccountNumber: employee.BankAccountNumber,
 				AccountName:   employee.BankAccountName,
 				BankName:      bankName,
@@ -533,4 +580,14 @@ func calculateTransferAmount(data []dto.BulkTransferFileData) int64 {
 		total += item.Amount
 	}
 	return total
+}
+
+// toUintSlice converts []uint64 to []uint for the project-employee batch helper
+// signature. Used by the sao-ke export pre-batch path.
+func toUintSlice(ids []uint64) []uint {
+	out := make([]uint, len(ids))
+	for i, id := range ids {
+		out[i] = uint(id)
+	}
+	return out
 }

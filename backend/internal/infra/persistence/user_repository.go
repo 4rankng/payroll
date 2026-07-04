@@ -242,6 +242,11 @@ func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*domain
 	return users, nil
 }
 
+// ListByRole returns all users with the given role. Callers are internal
+// background paths (notification fan-out, disbursement poller) that genuinely
+// need every admin/partner — the role-bounded population is tiny (single
+// digits), so pagination would add ceremony without benefit. The role index
+// (idx_users_role) keeps the query cheap.
 func (r *UserRepository) ListByRole(ctx context.Context, role domain.UserRole) ([]*domain.User, error) {
 	var users []*domain.User
 	if err := r.DB.WithContext(ctx).Where("role = ?", role).Find(&users).Error; err != nil {
@@ -383,14 +388,38 @@ func (r *UserRepository) GetByMobile(ctx context.Context, mobile string) (*domai
 	return &user, nil
 }
 
-func (r *UserRepository) FindUsersWithNullLastLogin(ctx context.Context) ([]*domain.User, error) {
+// FindUsersWithNullLastLogin returns a single page of users who have never
+// logged in (last_login IS NULL). Use CountUsersWithNullLastLogin for the total
+// and iterate offset/limit to process the full set without loading every row
+// into memory at once. Backed by idx_users_last_login (migration 088).
+func (r *UserRepository) FindUsersWithNullLastLogin(ctx context.Context, limit, offset int) ([]*domain.User, error) {
+	if limit <= 0 || limit > bulkPageSizeMax {
+		limit = bulkPageSizeDefault
+	}
 	var users []*domain.User
-	if err := r.DB.WithContext(ctx).Where("last_login IS NULL").Find(&users).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Where("last_login IS NULL").Limit(limit).Offset(offset).Find(&users).Error; err != nil {
 		return nil, domain.NewInternalError("failed to find users with null last_login", err)
 	}
 
 	return users, nil
 }
+
+// CountUsersWithNullLastLogin returns the total number of users who have never
+// logged in, for paginating FindUsersWithNullLastLogin.
+func (r *UserRepository) CountUsersWithNullLastLogin(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.DB.WithContext(ctx).Model(&domain.User{}).Where("last_login IS NULL").Count(&count).Error; err != nil {
+		return 0, domain.NewInternalError("failed to count users with null last_login", err)
+	}
+	return count, nil
+}
+
+// Bulk-page sizing for the never-logged-in reset job. Large enough to amortize
+// per-page overhead, small enough to bound memory per iteration.
+const (
+	bulkPageSizeDefault = 500
+	bulkPageSizeMax     = 2000
+)
 
 func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserRole, search string, ids []uint, lastLoginToday bool, sortBy string, sortOrder string, limit, offset int) ([]*domain.User, int64, error) {
 	var users []*domain.User

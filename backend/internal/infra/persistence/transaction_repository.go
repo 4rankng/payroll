@@ -203,15 +203,16 @@ func (r *transactionRepository) Count(ctx context.Context, filters domain.Transa
 		whereClause += " AND " + strings.Join(whereConditions, " AND ")
 	}
 
-	// Build count CTE query
+	// Build count CTE query. NOT EXISTS (correlated) instead of NOT IN — lets
+	// MySQL use idx_transactions_reversed_txn_id (migration 088) and avoids
+	// materializing the inner subquery. ck:debug 2026-07-04.
 	countQuery := fmt.Sprintf(`
 		WITH filtered_transactions AS (
 			SELECT id FROM transactions
 			%s AND reversed_transaction_id IS NULL
-			AND id NOT IN (
-				SELECT reversed_transaction_id
-				FROM transactions
-				WHERE reversed_transaction_id IS NOT NULL
+			AND NOT EXISTS (
+				SELECT 1 FROM transactions r
+				WHERE r.reversed_transaction_id = transactions.id
 			)
 		)
 		SELECT COUNT(*) FROM filtered_transactions`, whereClause)
@@ -377,15 +378,15 @@ func (r *transactionRepository) buildCTEQuery(ctx context.Context, filters domai
 		whereClause += " AND " + strings.Join(whereConditions, " AND ")
 	}
 
-	// Build CTE query
+	// Build CTE query. NOT EXISTS (correlated) instead of NOT IN — uses
+	// idx_transactions_reversed_txn_id. ck:debug 2026-07-04.
 	cteQuery := fmt.Sprintf(`
 		WITH filtered_transactions AS (
 			SELECT %s FROM transactions
 			%s AND reversed_transaction_id IS NULL
-			AND id NOT IN (
-				SELECT reversed_transaction_id
-				FROM transactions
-				WHERE reversed_transaction_id IS NOT NULL
+			AND NOT EXISTS (
+				SELECT 1 FROM transactions r
+				WHERE r.reversed_transaction_id = transactions.id
 			)
 		)
 		SELECT * FROM filtered_transactions`, allFields, whereClause)

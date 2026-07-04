@@ -78,10 +78,16 @@ func (r *TimesheetQueryRepository) getByIDsInternal(ctx context.Context, ids []u
 	err := r.batchProcessor.ProcessInBatches(ctx, ids, func(batch interface{}) error {
 		batchIDs := batch.([]uint)
 		var batchTimesheets []*domain.Timesheet
-		err := r.db.WithContext(ctx).
+		query := r.db.WithContext(ctx).
 			Where("id IN ?", batchIDs).
-			Order("date DESC").
-			Find(&batchTimesheets).Error
+			Order("date DESC")
+		// When relations aren't needed (validation-only path), project only the
+		// columns the bulk-update validator reads. Avoids SELECT * on the wide
+		// timesheets row (multiple text/json/datetime columns). ck:debug 2026-07-04.
+		if !includeRelations {
+			query = query.Select("id, project_id, employee_id, date, hours_worked, timesheet_status, payment_status, amount, paid_amount, paid_at, approved_by")
+		}
+		err := query.Find(&batchTimesheets).Error
 
 		if err != nil {
 			return err

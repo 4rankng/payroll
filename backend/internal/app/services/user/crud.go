@@ -425,56 +425,74 @@ func getUnderlyingError(err error) string {
 	return err.Error()
 }
 
-// ResetFirstTimeLoginPasswords resets passwords for all users who have never logged in (last_login IS NULL)
+// ResetFirstTimeLoginPasswords resets passwords for all users who have never
+// logged in (last_login IS NULL). Processes users in pages (default 500/page)
+// so memory stays bounded regardless of how many never-logged-in users exist.
 func (s *UserService) ResetFirstTimeLoginPasswords(ctx context.Context, defaultPassword string) (*dto.ResetFirstTimeLoginPasswordResponse, error) {
 	s.logger.Info("Admin resetting passwords for first-time users (last_login IS NULL)")
 
-	// Create a new context with extended timeout for bulk operation
-	// The HTTP context may timeout, but we need enough time to process all users
+	// Extended-timeout context: the HTTP context may expire, but the bulk job
+	// needs enough time to page through every qualifying user.
 	bulkCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	// Find users with null last_login
-	users, err := s.UserRepo.FindUsersWithNullLastLogin(bulkCtx)
+	const pageSize = 500
+	totalFound, err := s.UserRepo.CountUsersWithNullLastLogin(bulkCtx)
 	if err != nil {
-		s.logger.Error("Failed to find users with null last_login", "error", err)
+		s.logger.Error("Failed to count users with null last_login", "error", err)
 		return nil, err
 	}
-
-	s.logger.Info("Found users with null last_login", "count", len(users))
+	s.logger.Info("Users with null last_login", "count", totalFound)
 
 	affectedCount := 0
 	failedCount := 0
-	updatedUsernames := make([]string, 0, len(users))
+	updatedUsernames := make([]string, 0, totalFound)
 
-	for _, user := range users {
-		// Check if context is cancelled
+	// Iterate in pages. We re-query each page rather than holding a single
+	// cursor, which is fine because the writes (Update password) mutate a column
+	// that is NOT the last_login filter — the WHERE last_login IS NULL set is
+	// stable across pages for the lifetime of this job.
+	for offset := 0; ; offset += pageSize {
 		if bulkCtx.Err() != nil {
 			s.logger.Warn("Bulk operation context cancelled", "error", bulkCtx.Err(), "affected_count", affectedCount, "processed", affectedCount+failedCount)
 			break
 		}
 
-		// Hash new password
-		hashedPassword, err := s.hashPassword(defaultPassword)
+		users, err := s.UserRepo.FindUsersWithNullLastLogin(bulkCtx, pageSize, offset)
 		if err != nil {
-			s.logger.Error("Failed to hash password for user", "error", err, "user_id", user.ID, "username", user.Username)
-			failedCount++
-			continue
+			s.logger.Error("Failed to fetch page of users with null last_login", "error", err, "offset", offset)
+			break
+		}
+		if len(users) == 0 {
+			break // exhausted
 		}
 
-		// Update user password
-		user.Password = hashedPassword
-		if err := s.UserRepo.Update(bulkCtx, user); err != nil {
-			s.logger.Error("Failed to update user password", "error", err, "user_id", user.ID, "username", user.Username, "underlying_error", getUnderlyingError(err))
-			failedCount++
-			continue
+		for _, user := range users {
+			if bulkCtx.Err() != nil {
+				break
+			}
+			hashedPassword, err := s.hashPassword(defaultPassword)
+			if err != nil {
+				s.logger.Error("Failed to hash password for user", "error", err, "user_id", user.ID, "username", user.Username)
+				failedCount++
+				continue
+			}
+			user.Password = hashedPassword
+			if err := s.UserRepo.Update(bulkCtx, user); err != nil {
+				s.logger.Error("Failed to update user password", "error", err, "user_id", user.ID, "username", user.Username, "underlying_error", getUnderlyingError(err))
+				failedCount++
+				continue
+			}
+			affectedCount++
+			updatedUsernames = append(updatedUsernames, user.Username)
 		}
 
-		affectedCount++
-		updatedUsernames = append(updatedUsernames, user.Username)
+		if len(users) < pageSize {
+			break // last page
+		}
 	}
 
-	s.logger.Info("Completed resetting first-time login passwords", "affected_count", affectedCount, "failed_count", failedCount, "total_found", len(users))
+	s.logger.Info("Completed resetting first-time login passwords", "affected_count", affectedCount, "failed_count", failedCount, "total_found", totalFound)
 
 	return &dto.ResetFirstTimeLoginPasswordResponse{
 		Total:     affectedCount,

@@ -87,6 +87,9 @@ type AdvancePaymentRepository interface {
 	GetEmployeeAdvanceStats(ctx context.Context, filters EmployeeAdvanceStatsFilters) ([]*EmployeeAdvanceStats, int64, error)
 	GetAvailableMonths(ctx context.Context) ([]*AvailableMonth, error)
 	GetEmployeeByID(ctx context.Context, employeeID uint64) (*Employee, error)
+	// GetEmployeesByIDs batch-fetches employees in one query. Used by the sao-ke
+	// export to avoid an N+1 of GetEmployeeByID per (employee, project) pair.
+	GetEmployeesByIDs(ctx context.Context, employeeIDs []uint64) (map[uint64]*Employee, error)
 	HasDataForMonth(ctx context.Context, forMonth string) (bool, error)
 	// GetQuotaAnomalies returns quota rows that violate the named invariant.
 	// anomalyType is one of: "drift" (max_adv != floor(salary*70/100)),

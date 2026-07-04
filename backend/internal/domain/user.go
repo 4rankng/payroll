@@ -91,7 +91,8 @@ type UserRepository interface {
 	CountRecentLogins(ctx context.Context, since time.Time) (int64, error)
 	CountActiveEmployeesBySchedule(ctx context.Context, since, until time.Time) (weekly, monthly, flexible int, err error)
 	GetActiveEmployeesBySchedule(ctx context.Context, since, until time.Time, schedule string) ([]*ActiveEmployeeUser, error)
-	FindUsersWithNullLastLogin(ctx context.Context) ([]*User, error)
+	FindUsersWithNullLastLogin(ctx context.Context, limit, offset int) ([]*User, error)
+	CountUsersWithNullLastLogin(ctx context.Context) (int64, error)
 }
 
 // ValidateEmail validates the user's email format

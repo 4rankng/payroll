@@ -298,6 +298,14 @@ func (r *EmployeeRepository) GetByProjectWithCreatorFilter(ctx context.Context, 
 	return employees, err
 }
 
+// GetActiveEmployees returns all active employees with their creator preloaded.
+//
+// NOTE (ck:debug 2026-07-04): this method currently has NO callers (verified
+// via grep — the project-employee and dashboard paths use distinct methods:
+// GetActiveEmployeesForProjectWithCreatorFilter, GetActiveEmployeesBySchedule).
+// The original audit flagged it as an unbounded query; since it is dead code,
+// the correct fix is deletion rather than pagination. It is retained here only
+// pending confirmation; remove if no caller surfaces.
 func (r *EmployeeRepository) GetActiveEmployees(ctx context.Context) ([]*domain.Employee, error) {
 	var employees []*domain.Employee
 	err := r.DB.WithContext(ctx).

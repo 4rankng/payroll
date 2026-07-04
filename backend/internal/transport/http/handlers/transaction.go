@@ -673,6 +673,13 @@ func (h *TransactionHandler) ExportTransactions(c *gin.Context) {
 		SortOrder: "ASC",
 	}
 
+	// Require fromDate on export — without a lower bound the query is unbounded
+	// (up to the 10k cap) and expensive on a growing table. ck:debug 2026-07-04.
+	if c.Query("fromDate") == "" {
+		response.BadRequest(c, "Tham số fromDate là bắt buộc khi xuất danh sách giao dịch")
+		return
+	}
+
 	// Parse only the specified query parameters: fromDate and toDate
 	loc, _ := time.LoadLocation("Local")
 	if fromDateStr := c.Query("fromDate"); fromDateStr != "" {
