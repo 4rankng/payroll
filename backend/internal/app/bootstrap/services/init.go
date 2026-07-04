@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"time"
 
 	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
 	"api-server/internal/app/services"
@@ -560,10 +561,13 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
 	otpService := otp.NewOTPService(otpPendingStore, repos.User, emailProvider, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
 
+	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
+	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
+
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
-		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, logger),
+		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, logger),
 		Authorization:                     authorizationService,
 		Dashboard:                         dashboardService,
 		Project:                           project.NewProjectService(repos.Project, repos.Employee, repos.ProjectEmployee, repos.Timesheet, eventBus, cacheService, logger),

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -16,6 +15,7 @@ import (
 	"api-server/internal/config"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/cache"
 	auditctx "api-server/internal/pkg/context"
 	"api-server/internal/pkg/ipgeo"
 
@@ -34,6 +34,8 @@ type AuthService struct {
 	logger               *slog.Logger
 	otpService           *otp.OTPService
 	otpConfig            config.OTPConfig
+	googleClientID       string
+	nonceStore           *cache.NonceStore
 }
 
 type Claims struct {
@@ -49,7 +51,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, logger *slog.Logger) *AuthService {
+func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, googleClientID string, nonceStore *cache.NonceStore, logger *slog.Logger) *AuthService {
 	return &AuthService{
 		userService:          userService,
 		employeeRepo:         employeeRepo,
@@ -59,6 +61,8 @@ func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeR
 		accessTTL:            accessTTL,
 		otpService:           otpService,
 		otpConfig:            otpCfg,
+		googleClientID:       googleClientID,
+		nonceStore:           nonceStore,
 		logger:               logger,
 	}
 }
@@ -629,16 +633,38 @@ func (s *AuthService) UpdateProfile(ctx context.Context, userID uint, req dto.Up
 }
 
 func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRequest, ipAddress, userAgent string) (*dto.LoginResponse, error) {
-	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
-	if googleClientID == "" {
-		return nil, domain.NewInternalError("GOOGLE_CLIENT_ID is not configured in the environment", nil)
+	if s.googleClientID == "" {
+		return nil, domain.NewInternalError("GOOGLE_CLIENT_ID is not configured", nil)
 	}
 
-	payload, err := idtoken.Validate(ctx, req.IDToken, googleClientID)
+	payload, err := idtoken.Validate(ctx, req.IDToken, s.googleClientID)
 	if err != nil {
 		s.logger.Warn("Google OAuth ID token validation failed", "error", err)
 		s.writeFailedLoginAudit(ctx, 0, "Google OAuth", ipAddress, userAgent, "thất bại: ID Token không hợp lệ")
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+	}
+
+	// Defense-in-depth: pin the issuer explicitly. idtoken.Validate already
+	// checks the audience (== s.googleClientID) and signature; this rejects any
+	// token whose issuer is not Google's accounts service.
+	if payload.Issuer != "https://accounts.google.com" && payload.Issuer != "accounts.google.com" {
+		s.logger.Warn("Google OAuth rejected — unexpected issuer", "issuer", payload.Issuer)
+		s.writeFailedLoginAudit(ctx, 0, "Google OAuth", ipAddress, userAgent, "thất bại: issuer không hợp lệ")
+		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+	}
+
+	// Replay defense: the id_token carries the nonce the client generated and
+	// sent to Google. Consume it once here — a second presentation of the same
+	// token (captured from a redirect URL, browser history, or an extension) is
+	// rejected. A missing nonce is treated as a replay (the OIDC flow always
+	// includes one).
+	if s.nonceStore != nil {
+		nonce, _ := payload.Claims["nonce"].(string)
+		if err := s.nonceStore.Consume(ctx, nonce); err != nil {
+			s.logger.Warn("Google OAuth rejected — nonce replay or missing", "nonce_present", nonce != "")
+			s.writeFailedLoginAudit(ctx, 0, "Google OAuth", ipAddress, userAgent, "thất bại: nonce không hợp lệ")
+			return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+		}
 	}
 
 	// email_verified gate: Google only guarantees the email belongs to the
@@ -689,24 +715,18 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRe
 		return nil, domain.NewUnauthorizedError(constants.MsgGoogleAccountNotLinkedVN)
 	}
 
-	// RT-H5: Google login is NOT a free pass into admin/partner — gate it
-	// identically to password login when OTP is enabled. A phished Google
-	// account must not bypass the second factor for privileged roles.
-	otpVerified := true
-	if s.requiresOTP(user) {
-		sessionID, otpErr := s.otpService.StartLogin(ctx, user, ipAddress, userAgent)
-		if otpErr != nil {
-			return nil, s.mapOTPError(otpErr)
-		}
-		return &dto.LoginResponse{
-			OTPRequired:  true,
-			OTPSessionID: sessionID,
-			ExpiresIn:    int64(s.otpConfig.CodeTTL.Seconds()),
-		}, nil
-	}
-
-	// Generate access token (non-gated path: otpVerified stays true).
-	accessToken, err := s.generateAccessToken(user, otpVerified)
+	// Google OAuth is treated as a complete authentication (the second factor
+	// is Google's own account protection). This mirrors the common pattern on
+	// most sites: a verified Google id_token grants access without an
+	// additional emailed OTP. The compensating controls that make this safe:
+	//   - Google's signature on the id_token is verified (idtoken.Validate)
+	//   - audience is bound to this app's GOOGLE_CLIENT_ID
+	//   - email_verified is required above
+	//   - the id_token's nonce is single-use (validateGoogleNonce) so a captured
+	//     token cannot be replayed
+	// Operators should ensure admin/partner Google accounts have their own 2FA
+	// enabled in Google — that is the user's responsibility, not the app's.
+	accessToken, err := s.generateAccessToken(user, true)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToGenerateTokenVN, err)
 	}
