@@ -380,3 +380,23 @@ func (r *TxWalletPaymentRepository) HasPendingForRecipient(ctx context.Context, 
 	}
 	return count > 0, nil
 }
+
+// HasNonTerminalByEntityID reports whether any wallet_payment linked to the
+// given advance_payment_requests.id (entity_id) is still in flight. The
+// terminal states (completed/failed/reversed) are excluded; everything else
+// (pending/verified/authorised) counts as in-flight, so the retry-disbursement
+// endpoint can refuse to pile a second task onto an active disbursement.
+// entity_id is indexed; NULL rows never match the equality predicate.
+func (r *TxWalletPaymentRepository) HasNonTerminalByEntityID(ctx context.Context, entityID uint64) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domaintx.WalletPayment{}).
+		Where("entity_id = ? AND status NOT IN ?",
+			entityID,
+			[]domaintx.State{domaintx.StateCompleted, domaintx.StateFailed, domaintx.StateReversed}).
+		Limit(1).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("wallet_payments: check non-terminal by entity_id: %w", err)
+	}
+	return count > 0, nil
+}

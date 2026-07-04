@@ -243,6 +243,10 @@ func (r *fakeOnePayFeeWalletPayments) HasPendingForRecipient(context.Context, st
 	return false, nil
 }
 
+func (r *fakeOnePayFeeWalletPayments) HasNonTerminalByEntityID(context.Context, uint64) (bool, error) {
+	return false, nil
+}
+
 type fakeOnePayFeeBankRepo struct {
 	banks []*domain.Bank
 }

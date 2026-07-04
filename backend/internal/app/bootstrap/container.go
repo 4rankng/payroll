@@ -240,6 +240,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		statusInquiryPollerWorker,
 		workers.NewAutoRejectCheckoutWorker(services.Attendance),
 		workers.NewAutoRejectSweepWorker(services.Attendance),
+		workers.NewCreditQuotaWorker(services.Attendance),
+		workers.NewCreditQuotaSweepWorker(services.Attendance),
 	)
 	asynqinfra.RegisterHandlers(asynqServer, asynqHandlers)
 	if err := asynqinfra.RegisterPeriodicTasks(asynqServer, asynqClient); err != nil {
@@ -270,6 +272,12 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	// Register the auto-reject fallback sweep (always on) — finalizes attendance
 	// records whose scheduled K+4h task was lost (Redis/process outage at check-in).
 	if err := asynqinfra.RegisterAutoRejectSweep(asynqServer); err != nil {
+		return nil, err
+	}
+
+	// Register the quota-credit fallback sweep (always on) — banks earnings whose
+	// scheduled 24h credit task was lost (Redis/process outage at check-out).
+	if err := asynqinfra.RegisterCreditQuotaSweep(asynqServer); err != nil {
 		return nil, err
 	}
 
@@ -334,7 +342,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Settlement:           handlers.NewSettlementHandler(services.SettlementUpload, repos.Notification, clk),
 		Metric:               handlers.NewMetricHandler(services.Metric, services.Cache, eventBus, clk),
 		Audit:                handlers.NewAuditHandler(repos.AuditLog),
-		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, repos.WalletPayment, clk),
+		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, repos.WalletPayment, repos.TxWalletPayment, clk),
 		AdvancePaymentFee:    advancePaymentHandlers.NewFeeScheduleHandler(services.AdvancePaymentFeeSchedule, clk),
 		EmployeeImport:       employeeImportHandler,
 		DBExport:             handlers.NewDBExportHandler(dbExportSvc.NewDBExportService(db, services.CacheService, cfg.Asset.StoragePath), services.Audit),
@@ -344,7 +352,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			if cfg.Disbursement.Onepay.Enabled {
 				onepayFileLogger, _ = observability.NewFileLogger("logs/payment-gateway.log")
 			}
-			return disbursementHandlers.NewWebhookHandler(services.DisbursementRegistry, services.ProviderTransactions, asynqClient, repos.WalletIPN, logger, onepayFileLogger)
+			return disbursementHandlers.NewWebhookHandler(services.DisbursementRegistry, services.ProviderTransactions, asynqClient, repos.WalletIPN, redis, logger, onepayFileLogger)
 		}(),
 		DisbursementSettings: disbursementHandlers.NewSettingsHandler(
 			services.DisbursementRegistry,

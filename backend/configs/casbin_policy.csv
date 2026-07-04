@@ -113,10 +113,10 @@ p, adv_partner, /api/v1/advance-payments/import-employee-list, POST, allow
 p, adv_partner, /api/v1/employees, GET, allow
 p, adv_partner, /api/v1/employees/*, GET, allow
 
-# Users - read + update (manage user info: bank account, email, username)
+# Users - read only (broad PUT removed: adv_partner edits route through the
+# scoped /adv-partner/users/* handler, which enforces project-scope ownership).
 p, adv_partner, /api/v1/users, GET, allow
 p, adv_partner, /api/v1/users/*, GET, allow
-p, adv_partner, /api/v1/users/*, PUT, allow
 
 # Adv partner user management
 p, adv_partner, /api/v1/adv-partner/users/*, *, allow

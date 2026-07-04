@@ -17,6 +17,15 @@ func (s *EmployeeService) GetEmployeeForUpdate(ctx context.Context, id uint) (*d
 	return s.EmployeeRepo.GetByIDForUpdate(ctx, id)
 }
 
+// EmployeeHasAccess reports whether actorUserID has project-scope access to
+// the given employee (the actor is assigned to a project that employee belongs
+// to). Used by the adv_partner scoped update path to enforce ownership before
+// any mutation. Reuses ProjectEmployeeRepo.HasAccessViaProject — the same join
+// backing the scoped list/detail access checks (see lesson_partner_403_employee_detail).
+func (s *EmployeeService) EmployeeHasAccess(ctx context.Context, employeeID, actorUserID uint) (bool, error) {
+	return s.ProjectEmployeeRepo.HasAccessViaProject(ctx, employeeID, actorUserID)
+}
+
 // GetUserByID retrieves a user by ID - helper method for employee operations
 func (s *EmployeeService) GetUserByID(ctx context.Context, userID uint) (*domain.User, error) {
 	return s.UserRepo.GetByID(ctx, userID)

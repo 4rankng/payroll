@@ -65,6 +65,12 @@ type Attendance struct {
 	CheckOutGate       *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
 	EarningAmount      *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
 	SalaryRejectReason *string    `json:"salary_reject_reason" gorm:"type:text"`
+	// QuotaCreditedAt marks when this attendance's earning was banked into the
+	// advance-payment quota pool (advance_payments.salary/max_adv_amount). NULL
+	// means the earning is held / pending its 24h credit window; non-NULL means
+	// it has been credited and must not be banked again. The deferred credit task
+	// and the safety-net sweep gate on this — it is the idempotency key.
+	QuotaCreditedAt    *time.Time `json:"quota_credited_at" gorm:"type:datetime(3)"`
 	// Admin review audit (migration 083): populated when an admin manually
 	// approves/rejects a disputed attendance via /admin/attendances/:id/approve|reject.
 	// review_action is "approved" | "rejected"; a nil pointer means "never reviewed"
@@ -121,6 +127,18 @@ type AttendanceRepository interface {
 	// dashboard. The since/until window bounds check_in_time; the open/orphaned
 	// split additionally uses an 18h cutoff against the current time.
 	GetHealthStats(ctx context.Context, since, until time.Time) (*AttendanceHealthStats, error)
+	// MarkQuotaCredited atomically stamps quota_credited_at = at on an attendance
+	// whose earning has just been banked into the quota pool. The conditional
+	// WHERE (quota_credited_at IS NULL) is the race guard that makes crediting
+	// idempotent: a concurrent credit (deferred task vs sweep vs admin-approve)
+	// that already stamped the row makes RowsAffected=0 — a safe no-op. Returns
+	// true if this call claimed the credit, false if the row was already credited.
+	MarkQuotaCredited(ctx context.Context, id uint, at time.Time) (bool, error)
+	// GetOverdueQuotaCreditCandidates returns IDs of checked-out attendances whose
+	// 24h hold has elapsed (check_out_time < before) but whose earning has not yet
+	// been banked (quota_credited_at IS NULL, earning_amount > 0). Used by the
+	// safety-net sweep to finalize credits the per-attendance deferred task missed.
+	GetOverdueQuotaCreditCandidates(ctx context.Context, before time.Time, limit int) ([]uint, error)
 }
 
 // AttendanceFilters represents filtering options for attendance queries

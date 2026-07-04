@@ -481,6 +481,29 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRe
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
 	}
 
+	// email_verified gate: Google only guarantees the email belongs to the
+	// account holder when email_verified=true. Check BEFORE email extraction so
+	// the rejection is indistinguishable from any other invalid-credential
+	// failure (avoids a user-enumeration oracle via the distinct not-linked
+	// message the email-lookup below returns). A missing claim is treated as
+	// "not verified" and audited distinctly from an explicit false.
+	verifiedVal, hasVerifiedClaim := payload.Claims["email_verified"]
+	isEmailVerified := false
+	if hasVerifiedClaim {
+		if b, ok := verifiedVal.(bool); ok {
+			isEmailVerified = b
+		}
+	}
+	if !isEmailVerified {
+		reason := "email_verified claim absent"
+		if hasVerifiedClaim {
+			reason = "email_verified=false"
+		}
+		s.logger.Warn("Google OAuth rejected — email not verified", "has_claim", hasVerifiedClaim)
+		s.writeFailedLoginAudit(ctx, 0, "Google OAuth", ipAddress, userAgent, "thất bại: "+reason)
+		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+	}
+
 	emailVal, ok := payload.Claims["email"]
 	if !ok {
 		s.writeFailedLoginAudit(ctx, 0, "Google OAuth", ipAddress, userAgent, "thất bại: email không tồn tại trong token payload")

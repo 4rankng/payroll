@@ -71,6 +71,7 @@ func newReviewService(att *domain.Attendance, payrate *domain.Payrate, assignmen
 			GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: 10.0, Lng: 106.0}},
 		}},
 		payrateRepo:        &fakePayrateRepo{pr: payrate},
+		advancePaymentRepo: &fakeAdvancePaymentRepo{},
 		transactionManager: &fakeTransactionManager{},
 		clock:              clock.NewFake(time.Date(2026, 6, 22, 18, 0, 0, 0, clock.DefaultLocation)),
 	}, repo

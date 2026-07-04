@@ -127,6 +127,11 @@ func (r *fakeProviderTxRepo) HasPendingForRecipient(_ context.Context, accountNo
 	return false, nil
 }
 
+func (r *fakeProviderTxRepo) HasNonTerminalByEntityID(_ context.Context, entityID uint64) (bool, error) {
+	_ = entityID
+	return false, nil
+}
+
 // fakeFee is a stub DisbursementFeeProvider that always returns the
 // fixed VND amount it was constructed with. Lets tests assert the
 // fee landed on the row without spinning up the settings stack.
@@ -162,6 +167,52 @@ func TestInitiate_PersistsRequestIDFromCaller(t *testing.T) {
 	}
 	if row.Fee != 200 {
 		t.Fatalf("row.Fee = %d, want 200 (stamped from fee provider at INSERT)", row.Fee)
+	}
+}
+
+// TestRecordIPN_RejectsAmountMismatch pins M8: an inbound IPN whose stated
+// amount differs from the persisted wallet_payment.RequestedAmount (the amount
+// we asked the provider to disburse) is rejected with ErrIPNAmountMismatch
+// before the FSM applies it. A matching amount is not rejected on amount
+// grounds (the FSM may still reject for other reasons, but not this one).
+func TestRecordIPN_RejectsAmountMismatch(t *testing.T) {
+	t.Parallel()
+	repo := newFakeRepo()
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+
+	row := &domaintx.WalletPayment{
+		TxnID:              uuid.New(),
+		RequestID:          "req-mismatch-" + uuid.NewString()[:8],
+		RequestedAmount:    10_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+		Status:             domaintx.StatePending,
+	}
+	if err := repo.Create(context.Background(), row); err != nil {
+		t.Fatalf("seed row: %v", err)
+	}
+
+	// Forged amount (9_999 vs requested 10_000) → rejected before the FSM.
+	_, err := svc.RecordIPN(context.Background(), disbursement.IPNResult{
+		Provider:  "9pay",
+		RequestID: row.RequestID,
+		Amount:    9_999,
+		Status:    infrastructure.TransferStatusSuccess,
+	})
+	if !errors.Is(err, disbursement.ErrIPNAmountMismatch) {
+		t.Fatalf("mismatched amount: err = %v, want ErrIPNAmountMismatch", err)
+	}
+
+	// Matching amount → not an amount-mismatch rejection.
+	_, err = svc.RecordIPN(context.Background(), disbursement.IPNResult{
+		Provider:  "9pay",
+		RequestID: row.RequestID,
+		Amount:    10_000,
+		Status:    infrastructure.TransferStatusSuccess,
+	})
+	if errors.Is(err, disbursement.ErrIPNAmountMismatch) {
+		t.Fatalf("matching amount: err = ErrIPNAmountMismatch, want none (or a non-amount error): %v", err)
 	}
 }
 

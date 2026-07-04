@@ -52,15 +52,17 @@ func (f *fakeTransactionManager) WithTransactionResult(ctx context.Context, fn f
 // here are usable; unexpected calls panic — which surfaces as a clear test fail.
 type fakeAttendanceRepo struct {
 	domain.AttendanceRepository
-	byID               *domain.Attendance
-	byDate             *domain.Attendance
-	byDateByDay        map[string]*domain.Attendance
-	created            *domain.Attendance
-	updated            *domain.Attendance
-	orphanCandidates   []*domain.Attendance
-	markedAutoRejected bool
-	markedIDs          []uint
-	nextID             uint
+	byID                  *domain.Attendance
+	byDate                *domain.Attendance
+	byDateByDay           map[string]*domain.Attendance
+	created               *domain.Attendance
+	updated               *domain.Attendance
+	orphanCandidates      []*domain.Attendance
+	markedAutoRejected    bool
+	markedIDs             []uint
+	quotaCreditedIDs      []uint
+	overdueQuotaCandidates []uint
+	nextID                uint
 }
 
 func (f *fakeAttendanceRepo) Create(_ context.Context, a *domain.Attendance) error {
@@ -122,6 +124,81 @@ func (f *fakeAttendanceRepo) MarkAutoRejected(_ context.Context, id uint, reason
 	return true, nil
 }
 
+// MarkQuotaCredited mirrors the real repo's conditional: it stamps
+// quota_credited_at only when nil, returning true the first time and false on
+// repeats (idempotent). Tracks credited IDs + the new running salary so the
+// deferred-credit and Approve-credit paths are testable in-memory. The advance
+// payment rows live on the paired fakeAdvancePaymentRepo (salaryByMonth).
+func (f *fakeAttendanceRepo) MarkQuotaCredited(_ context.Context, id uint, at time.Time) (bool, error) {
+	rec := f.findByID(id)
+	if rec == nil || rec.QuotaCreditedAt != nil {
+		return false, nil
+	}
+	rec.QuotaCreditedAt = &at
+	f.quotaCreditedIDs = append(f.quotaCreditedIDs, id)
+	return true, nil
+}
+
+// GetOverdueQuotaCreditCandidates returns the records configured as overdue
+// candidates for the sweep test. The fake ignores the time bounds — sweep tests
+// assert on which IDs get credited, not on the cutoff.
+func (f *fakeAttendanceRepo) GetOverdueQuotaCreditCandidates(_ context.Context, _ time.Time, _ int) ([]uint, error) {
+	return f.overdueQuotaCandidates, nil
+}
+
+// fakeAdvancePaymentRepo is the in-memory advance-payment repo for the credit
+// path. It tracks salary/max_adv_amount per (employee,project,month) so
+// CreditAttendanceQuota can be exercised end-to-end in service-level tests.
+// Only the methods the credit path calls are overridden; others panic via the
+// nil embedded interface (clear test failure on unexpected use).
+type fakeAdvancePaymentRepo struct {
+	domain.AdvancePaymentRepository
+	rows   []*domain.AdvancePayment
+	nextID uint
+}
+
+func (f *fakeAdvancePaymentRepo) GetByEmployeeAndMonth(_ context.Context, employeeID uint64, forMonth string) ([]*domain.AdvancePayment, error) {
+	var out []*domain.AdvancePayment
+	for _, ap := range f.rows {
+		if uint64(ap.EmployeeID) == employeeID && ap.ForMonth == forMonth {
+			out = append(out, ap)
+		}
+	}
+	return out, nil
+}
+
+func (f *fakeAdvancePaymentRepo) Create(_ context.Context, ap *domain.AdvancePayment) error {
+	if f.nextID == 0 {
+		f.nextID = 1
+	}
+	ap.ID = f.nextID
+	f.nextID++
+	f.rows = append(f.rows, ap)
+	return nil
+}
+
+func (f *fakeAdvancePaymentRepo) AccumulateSalary(_ context.Context, id uint64, earning int64) error {
+	for _, ap := range f.rows {
+		if uint64(ap.ID) == id {
+			ap.Salary = uint64(int64(ap.Salary) + earning)
+			ap.MaxAdvAmount = (ap.Salary * domain.SelfCheckInAdvanceablePercent) / 100
+			return nil
+		}
+	}
+	return nil
+}
+
+// salaryFor returns the total credited salary for an employee/month (read path).
+func (f *fakeAdvancePaymentRepo) salaryFor(employeeID uint64, forMonth string) uint64 {
+	var total uint64
+	for _, ap := range f.rows {
+		if uint64(ap.EmployeeID) == employeeID && ap.ForMonth == forMonth {
+			total += ap.Salary
+		}
+	}
+	return total
+}
+
 type fakeProjectRepo struct {
 	domain.ProjectRepository
 	p *domain.Project
@@ -157,9 +234,10 @@ type fakeEnqCall struct {
 // fakeTaskEnqueuer records EnqueueAutoRejectCheckout calls and signals `done` so
 // tests can synchronize on the after-commit goroutine.
 type fakeTaskEnqueuer struct {
-	mu    sync.Mutex
-	calls []fakeEnqCall
-	done  chan struct{}
+	mu         sync.Mutex
+	calls      []fakeEnqCall
+	creditCalls []fakeEnqCall
+	done       chan struct{}
 }
 
 func (f *fakeTaskEnqueuer) EnqueueAutoRejectCheckout(id uint, at time.Time) error {
@@ -172,11 +250,32 @@ func (f *fakeTaskEnqueuer) EnqueueAutoRejectCheckout(id uint, at time.Time) erro
 	return nil
 }
 
+// EnqueueCreditQuota records the deferred quota-credit enqueue (24h hold) so
+// CheckOut tests can assert the task is scheduled at checkOutTime + hold.
+func (f *fakeTaskEnqueuer) EnqueueCreditQuota(id uint, at time.Time) error {
+	f.mu.Lock()
+	f.creditCalls = append(f.creditCalls, fakeEnqCall{id: id, at: at})
+	f.mu.Unlock()
+	if f.done != nil {
+		f.done <- struct{}{}
+	}
+	return nil
+}
+
 func (f *fakeTaskEnqueuer) snapshot() []fakeEnqCall {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	cp := make([]fakeEnqCall, len(f.calls))
 	copy(cp, f.calls)
+	return cp
+}
+
+// creditSnapshot returns the recorded EnqueueCreditQuota calls.
+func (f *fakeTaskEnqueuer) creditSnapshot() []fakeEnqCall {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	cp := make([]fakeEnqCall, len(f.creditCalls))
+	copy(cp, f.creditCalls)
 	return cp
 }
 

@@ -33,6 +33,13 @@ var ErrBalanceNotSupported = errors.New("disbursement: active provider does not 
 // the same employee simultaneously.
 var ErrDuplicatePaymentInProgress = errors.New("disbursement: a payment to this recipient is already in progress")
 
+// ErrIPNAmountMismatch is returned by RecordIPN when an inbound IPN's stated
+// amount does not match the wallet_payment's RequestedAmount (the amount we
+// asked the provider to disburse at Initiate). A mismatch signals a forged or
+// tampered callback and must never reach the FSM. It is terminal — asynq must
+// not retry it (a forgery will not self-heal on the next poll).
+var ErrIPNAmountMismatch = errors.New("disbursement: ipn amount does not match the recorded request")
+
 // Registry holds all built disbursement providers and exposes the
 // active one. With env-gated registration, "active" reduces to "the
 // provider bootstrap chose to register" — there is exactly one in

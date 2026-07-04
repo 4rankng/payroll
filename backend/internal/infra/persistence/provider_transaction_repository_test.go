@@ -338,3 +338,65 @@ func TestRepository_StatsByStatus_ZeroFeeOnWaive(t *testing.T) {
 	require.Equal(t, int64(3), rows[0].Count)
 	require.Equal(t, int64(400), rows[0].TotalFee, "2 charged (200 each) + 1 waived (0) = 400 actually lost")
 }
+
+// TestRepository_HasNonTerminalByEntityID pins H6: the retry-disbursement
+// in-flight guard must flag only rows still mid-flight for the given advance
+// request. Terminal rows (completed/failed/reversed), rows linked to a
+// different entity_id, rows with a NULL entity_id, and the empty table must
+// all report not-in-flight; each non-terminal state must report in-flight.
+func TestRepository_HasNonTerminalByEntityID(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+
+	const entityID = uint64(42)
+	const otherEntity = uint64(99)
+
+	// Empty table → not in-flight.
+	got, err := repo.HasNonTerminalByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.False(t, got, "empty table should report not-in-flight")
+
+	// Terminal rows for this entity → still not in-flight.
+	for _, st := range []domaintx.State{domaintx.StateCompleted, domaintx.StateFailed, domaintx.StateReversed} {
+		row := newRow(t)
+		row.Status = st
+		e := entityID
+		row.EntityID = &e
+		require.NoError(t, repo.Create(ctx, row))
+	}
+	got, err = repo.HasNonTerminalByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.False(t, got, "terminal rows must not count as in-flight")
+
+	// NULL entity_id non-terminal row must not match the equality lookup.
+	nullRow := newRow(t) // EntityID left nil
+	nullRow.Status = domaintx.StatePending
+	require.NoError(t, repo.Create(ctx, nullRow))
+	got, err = repo.HasNonTerminalByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.False(t, got, "NULL entity_id row must not match")
+
+	// Non-terminal row for a different entity must not match.
+	otherRow := newRow(t)
+	otherRow.Status = domaintx.StatePending
+	other := otherEntity
+	otherRow.EntityID = &other
+	require.NoError(t, repo.Create(ctx, otherRow))
+	got, err = repo.HasNonTerminalByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.False(t, got, "non-terminal row for another entity must not match")
+
+	// Each non-terminal state for THIS entity → in-flight.
+	for _, st := range []domaintx.State{domaintx.StatePending, domaintx.StateVerified, domaintx.StateAuthorised} {
+		row := newRow(t)
+		row.Status = st
+		e := entityID
+		row.EntityID = &e
+		require.NoError(t, repo.Create(ctx, row))
+
+		got, err := repo.HasNonTerminalByEntityID(ctx, entityID)
+		require.NoError(t, err)
+		require.True(t, got, "%s row for this entity should be in-flight", st)
+	}
+}

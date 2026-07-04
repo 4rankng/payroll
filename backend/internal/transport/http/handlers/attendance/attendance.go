@@ -2,7 +2,9 @@ package attendance
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"os"
 	"strconv"
 	"time"
 
@@ -112,6 +114,49 @@ func buildGeoReading(lat, lng, accuracy float64, gpsAtMs int64) domain.GeoReadin
 	}
 }
 
+// gpsFreshnessMaxStale bounds how old a device GPS fix may be and still be
+// accepted at check-in/out. Env-configurable via ATTENDANCE_GPS_MAX_STALE_SECONDS
+// (default 300s). This is INPUT-SANITY: it catches stale cached/captured fixes,
+// NOT a live spoofer (who sends a fresh gps_at). Real anti-replay is the
+// per-employee/day check-in idempotency in the service; spoofing-defeat (device
+// attestation + payload signing) is a tracked follow-up, not this gate.
+var gpsFreshnessMaxStale = loadGpsFreshnessMaxStale()
+
+func loadGpsFreshnessMaxStale() time.Duration {
+	const defaultSec = 300
+	sec := defaultSec
+	if v := os.Getenv("ATTENDANCE_GPS_MAX_STALE_SECONDS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			sec = n
+		}
+	}
+	return time.Duration(sec) * time.Second
+}
+
+// gpsFreshnessMaxSkew tolerates a fix timestamp slightly ahead of the server
+// clock (device clock drift). Fixes further into the future are rejected.
+const gpsFreshnessMaxSkew = 60 * time.Second
+
+// validateGpsFreshness rejects a device fix whose timestamp is implausibly far
+// from the server clock (too old → likely captured/cached; too far future →
+// device clock skew or tampering). A zero gps_at (device had no fix clock) is
+// allowed through — the geofence gate still applies. Uses clock.Now() so the
+// check is controllable in tests and matches prod Asia/Ho_Chi_Minh semantics.
+func (h *Handler) validateGpsFreshness(gpsAtMs int64) error {
+	if gpsAtMs <= 0 {
+		return nil
+	}
+	fixAt := time.UnixMilli(gpsAtMs)
+	now := h.clk.Now()
+	if now.Sub(fixAt) > gpsFreshnessMaxStale {
+		return fmt.Errorf("vị trí GPS quá cũ — vui lòng mở GPS và chấm công lại")
+	}
+	if fixAt.Sub(now) > gpsFreshnessMaxSkew {
+		return fmt.Errorf("thời gian thiết bị không khớp — vui lòng đồng bộ giờ và thử lại")
+	}
+	return nil
+}
+
 func (h *Handler) mapToResponse(att *domain.Attendance) *dto.AttendanceResponse {
 	salaryStatus := "pending"
 	salaryMessage := "Lương sẽ được ghi nhận sau khi bạn tan ca."
@@ -156,6 +201,10 @@ func (h *Handler) CheckIn(c *gin.Context) {
 		response.BadRequest(c, "Dữ liệu không hợp lệ: "+err.Error())
 		return
 	}
+	if err := h.validateGpsFreshness(req.GpsAt); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
 	employeeID, ok := h.resolveEmployeeID(c)
 	if !ok {
@@ -188,6 +237,10 @@ func (h *Handler) CheckOut(c *gin.Context) {
 	var req dto.CheckOutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Dữ liệu không hợp lệ: "+err.Error())
+		return
+	}
+	if err := h.validateGpsFreshness(req.GpsAt); err != nil {
+		response.BadRequest(c, err.Error())
 		return
 	}
 

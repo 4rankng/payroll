@@ -60,7 +60,6 @@ func setupAdminAttendanceRoutes(v1 *gin.RouterGroup, container *Container) {
 	}
 	admin.GET("", container.Handlers.AdminAttendance.List)
 	admin.GET("/failed-attempts", container.Handlers.AdminAttendance.AdminListFailedAttempts)
-	admin.POST("/failed-attempts/:id/override", container.Handlers.AdminAttendance.AdminOverrideFailedAttempt)
 	admin.GET("/:id", container.Handlers.AdminAttendance.Get)
 	admin.POST("/:id/approve", container.Handlers.AdminAttendance.Approve)
 	admin.POST("/:id/reject", container.Handlers.AdminAttendance.Reject)

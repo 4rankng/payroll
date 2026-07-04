@@ -2,12 +2,14 @@ package disbursement
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/url"
 	"strings"
+	"time"
 
 	"api-server/internal/app/services/disbursement"
 	"api-server/internal/domain/ports/infrastructure"
@@ -30,15 +32,40 @@ type WebhookHandler struct {
 	providerTxs    *disbursement.WalletPaymentService
 	asynqClient    *asynqinfra.Client
 	walletIPNRepo  wallet.WalletIPNRepository
+	redisClient    *persistence.RedisClient
 	logger         *slog.Logger
 	providerLogger *slog.Logger
 }
 
-func NewWebhookHandler(registry *disbursement.Registry, providerTxs *disbursement.WalletPaymentService, asynqClient *asynqinfra.Client, walletIPNRepo wallet.WalletIPNRepository, logger *slog.Logger, providerLogger *slog.Logger) *WebhookHandler {
+func NewWebhookHandler(registry *disbursement.Registry, providerTxs *disbursement.WalletPaymentService, asynqClient *asynqinfra.Client, walletIPNRepo wallet.WalletIPNRepository, redisClient *persistence.RedisClient, logger *slog.Logger, providerLogger *slog.Logger) *WebhookHandler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &WebhookHandler{registry: registry, providerTxs: providerTxs, asynqClient: asynqClient, walletIPNRepo: walletIPNRepo, logger: logger, providerLogger: providerLogger}
+	return &WebhookHandler{registry: registry, providerTxs: providerTxs, asynqClient: asynqClient, walletIPNRepo: walletIPNRepo, redisClient: redisClient, logger: logger, providerLogger: providerLogger}
+}
+
+// ipnNonceTTL bounds the replay-detection window. A callback re-delivered
+// inside this window with the same (RequestID, ProviderRef) is treated as a
+// replay and rejected; after it expires, a repeat is allowed through (matching
+// the FSM's own terminal-state idempotency for late re-delivery).
+const ipnNonceTTL = 10 * time.Minute
+
+// checkIPNNonce returns true if this IPN is fresh (first time we see this
+// request_id/provider_ref within the TTL), false if it is a replay. On Redis
+// error it returns true (fail-open): a Redis outage must not block disbursement
+// reconcile — the FSM's terminal-state guard still makes re-application a no-op.
+func (h *WebhookHandler) checkIPNNonce(ctx context.Context, providerName, requestID, providerRef string) bool {
+	if h.redisClient == nil || requestID == "" {
+		return true
+	}
+	key := fmt.Sprintf("ipn:nonce:%s:%s:%s", providerName, requestID, providerRef)
+	ok, err := h.redisClient.SetNX(ctx, key, 1, ipnNonceTTL).Result()
+	if err != nil {
+		h.logProviderEvent(slog.LevelWarn, "disbursement: nonce check failed-open (redis error)",
+			"provider", providerName, "request_id", requestID, "error", err)
+		return true
+	}
+	return ok
 }
 
 // logProviderEvent logs a webhook event to the payment-gateway file logger.
@@ -122,6 +149,20 @@ func (h *WebhookHandler) Receive(c *gin.Context) {
 		"amount", event.Amount,
 		"raw_error_code", event.RawErrorCode,
 	)
+
+	// Replay guard: reject a re-delivered IPN inside the nonce window. Keyed on
+	// (provider, request_id, provider_ref) — the payload has no jti, so these
+	// real fields are the dedup identity. Fail-open on Redis error so a Redis
+	// outage doesn't block disbursement reconcile (the FSM still idempotently
+	// no-ops a late re-delivery into a terminal row).
+	if !h.checkIPNNonce(c.Request.Context(), providerName, event.RequestID, event.ProviderRef) {
+		h.logProviderEvent(slog.LevelWarn, "disbursement: replayed IPN rejected (nonce hit)",
+			"provider", providerName,
+			"request_id", event.RequestID,
+			"provider_ref", event.ProviderRef)
+		response.Conflict(c, "duplicate IPN within replay window")
+		return
+	}
 
 	var ipnRecordID uint64
 	if h.walletIPNRepo != nil {

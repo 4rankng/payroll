@@ -123,6 +123,44 @@ func (r *attendanceRepository) MarkAdminReviewed(
 	return res.RowsAffected > 0, nil
 }
 
+// MarkQuotaCredited atomically stamps quota_credited_at on an attendance whose
+// earning has just been banked into the quota pool. The conditional WHERE
+// (quota_credited_at IS NULL) is the race guard: a concurrent credit that already
+// stamped the row makes RowsAffected=0 — a safe no-op. The service layers the
+// actual AccumulateSalary/Create on top of a successful claim so two racing
+// credits cannot double-bank the same earning.
+func (r *attendanceRepository) MarkQuotaCredited(ctx context.Context, id uint, at time.Time) (bool, error) {
+	res := r.getDB(ctx).Model(&domain.Attendance{}).
+		Where("id = ? AND quota_credited_at IS NULL", id).
+		Update("quota_credited_at", at)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
+// GetOverdueQuotaCreditCandidates returns IDs of checked-out attendances whose
+// 24h hold has elapsed (check_out_time < before) but whose earning has not yet
+// been banked (quota_credited_at IS NULL, earning_amount > 0). Capped at limit
+// per pass so the sweep stays bounded. The per-id MarkQuotaCredited guard makes
+// overlapping runs with the per-attendance deferred task safe.
+func (r *attendanceRepository) GetOverdueQuotaCreditCandidates(ctx context.Context, before time.Time, limit int) ([]uint, error) {
+	if limit <= 0 {
+		limit = 500
+	}
+	var ids []uint
+	err := r.getDB(ctx).
+		Model(&domain.Attendance{}).
+		Where("quota_credited_at IS NULL").
+		Where("earning_amount > 0").
+		Where("check_out_time IS NOT NULL").
+		Where("check_out_time < ?", before).
+		Limit(limit).
+		Order("check_out_time ASC").
+		Pluck("id", &ids).Error
+	return ids, err
+}
+
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
 	dateOnly := date.Format("2006-01-02")
