@@ -26,6 +26,7 @@ type Config struct {
 	Scheduler    SchedulerConfig
 	Asset        AssetConfig
 	Disbursement DisbursementConfig
+	OTP          OTPConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -59,6 +60,18 @@ type DBConfig struct {
 type AuthConfig struct {
 	JWTSecret string
 	AccessTTL time.Duration
+}
+
+// OTPConfig backs the email-OTP 2FA feature gated behind OTP_ENABLE (default off).
+// When Enabled, admin/partner logins require an emailed one-time code; see
+// plans/260704-1400-otp-2fa-admin-partner/. No stored secret is required
+// (email-OTP generates codes per-login), so unlike a TOTP scheme there is no key.
+type OTPConfig struct {
+	Enabled        bool
+	CodeTTL        time.Duration // pending-session TTL (default 5m)
+	MaxAttempts    int           // per-account failed-verify cap (default 5)
+	LockDuration   time.Duration // lockout window once cap hit (default 15m)
+	ResendCooldown time.Duration // min gap between resend requests (default 30s)
 }
 
 type LogConfig struct {
@@ -342,6 +355,13 @@ func Load() (*Config, error) {
 			Ninepay: newNinepayConfig(env),
 			Onepay:  newOnepayConfig(env),
 		},
+		OTP: OTPConfig{
+			Enabled:        parseBool(getEnv("OTP_ENABLE", "false")),
+			CodeTTL:        parseDuration(getEnv("OTP_CODE_TTL", "5m")),
+			MaxAttempts:    parseInt(getEnv("OTP_MAX_ATTEMPTS", "5")),
+			LockDuration:   parseDuration(getEnv("OTP_LOCK_DURATION", "15m")),
+			ResendCooldown: parseDuration(getEnv("OTP_RESEND_COOLDOWN", "30s")),
+		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
 		TenantQueueWorkers:     parseInt(getEnv("TENANT_QUEUE_WORKERS", "5")),
@@ -466,6 +486,18 @@ func (c *Config) validate() error {
 
 	if c.Security.HashSalt == "" {
 		return fmt.Errorf("HASH_SALT must be set")
+	}
+
+	// Email-OTP 2FA fail-fast: when the feature is enabled, a working email
+	// config is mandatory (codes are delivered via Resend). Without this, an
+	// enabled-but-misconfigured deploy would silently lock out every admin/partner.
+	if c.OTP.Enabled {
+		if c.Notification.FromEmail == "" {
+			return fmt.Errorf("EMAIL_FROM must be set when OTP_ENABLE=true (needed to deliver codes)")
+		}
+		if c.Notification.ResendAPIKey == "" {
+			return fmt.Errorf("RESEND_API_KEY must be set when OTP_ENABLE=true")
+		}
 	}
 
 	// Disbursement mutual-exclusion: at most one provider may handle each

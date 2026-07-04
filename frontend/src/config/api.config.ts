@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
   // Authentication
   auth: {
     login: '/auth/login',
+    loginVerifyOtp: '/auth/login/verify',
+    loginResendOtp: '/auth/login/resend',
     logout: '/auth/logout',
     me: '/auth/me',
     updateProfile: '/auth/me',

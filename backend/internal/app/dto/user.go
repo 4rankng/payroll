@@ -42,12 +42,33 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// LoginResponse represents the login response
+// VerifyOTPRequest completes the email-OTP login step. OTPSessionID was returned
+// by /auth/login when the second factor was required; Code is the 6-digit value
+// emailed to the user.
+type VerifyOTPRequest struct {
+	OTPSessionID string `json:"otp_session_id" binding:"required"`
+	Code         string `json:"code" binding:"required"`
+}
+
+// ResendOTPRequest re-issues an OTP code for a pending session (email didn't
+// arrive). The same session id is returned; the prior code becomes invalid.
+type ResendOTPRequest struct {
+	OTPSessionID string `json:"otp_session_id" binding:"required"`
+}
+
+// LoginResponse represents the login response. For a normal login, User +
+// AccessToken are populated. When the email-OTP second factor is required
+// (admin/partner, OTP_ENABLE=true), OTPRequired + OTPSessionID are populated
+// instead and AccessToken is empty — the client must POST the code to
+// /auth/login/verify to obtain the real token.
 type LoginResponse struct {
-	User        UserResponse `json:"user"`
-	AccessToken string       `json:"access_token"`
-	TokenType   string       `json:"token_type"`
-	ExpiresIn   int64        `json:"expires_in"`
+	User        *UserResponse `json:"user,omitempty"`
+	AccessToken string        `json:"access_token,omitempty"`
+	TokenType   string        `json:"token_type,omitempty"`
+	ExpiresIn   int64         `json:"expires_in,omitempty"`
+	// OTP-step fields (present only when the second factor is required):
+	OTPRequired  bool   `json:"otp_required,omitempty"`
+	OTPSessionID string `json:"otp_session_id,omitempty"`
 }
 
 // ListUsersRequest represents the request to list users with pagination

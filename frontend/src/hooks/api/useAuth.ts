@@ -17,6 +17,15 @@ export const useLogin = () => {
     onSuccess: (response) => {
       const data = response.data!;
 
+      // RT-C3: when the email-OTP second factor is required, do NOT call
+      // login() or navigate to the dashboard. The pending session id is
+      // already stored under a distinct sessionStorage key by authService.login
+      // (NOT auth_token). Route to the OTP entry screen.
+      if (data.otp_required) {
+        navigate('/login/otp');
+        return;
+      }
+
       // Clear stale query cache from previous sessions before starting new one
       queryClient.clear();
       sessionStorage.removeItem('payroll-query-cache');
@@ -60,6 +69,13 @@ export const useGoogleLogin = () => {
     meta: { skipGlobalError: true },
     onSuccess: (response) => {
       const data = response.data!;
+
+      // RT-C3: same OTP gate as password login (RT-H5 — Google login can also
+      // require the second factor for admin/partner).
+      if (data.otp_required) {
+        navigate('/login/otp');
+        return;
+      }
 
       // Clear stale query cache from previous sessions before starting new one
       queryClient.clear();

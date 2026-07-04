@@ -3,6 +3,7 @@ package auth
 import (
 	"api-server/internal/pkg/clock"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,7 +11,9 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/audit"
+	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/user"
+	"api-server/internal/config"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	auditctx "api-server/internal/pkg/context"
@@ -29,6 +32,8 @@ type AuthService struct {
 	jwtSecret            string
 	accessTTL            time.Duration
 	logger               *slog.Logger
+	otpService           *otp.OTPService
+	otpConfig            config.OTPConfig
 }
 
 type Claims struct {
@@ -36,10 +41,15 @@ type Claims struct {
 	Username string `json:"username"`
 	Fullname string `json:"fullname"`
 	Role     string `json:"role"`
+	// OTPVerified marks that the bearer completed the email-OTP second factor.
+	// Defaults false; set true ONLY on tokens minted after a successful
+	// /auth/login/verify (or on non-gated paths — employee, or admin/partner
+	// when OTP_ENABLE=false). Enforced by the Authorize middleware (RT-C1/C2).
+	OTPVerified bool `json:"otp_verified,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, logger *slog.Logger) *AuthService {
+func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, logger *slog.Logger) *AuthService {
 	return &AuthService{
 		userService:          userService,
 		employeeRepo:         employeeRepo,
@@ -47,7 +57,109 @@ func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeR
 		eventBus:             eventBus,
 		jwtSecret:            jwtSecret,
 		accessTTL:            accessTTL,
+		otpService:           otpService,
+		otpConfig:            otpCfg,
 		logger:               logger,
+	}
+}
+
+// requiresOTP reports whether the email-OTP second factor applies to this user.
+// Gating conditions: feature flag on AND role is admin or partner. Employees
+// and adv_partner are never gated in v1 (low-value accounts, see plan).
+func (s *AuthService) requiresOTP(user *domain.User) bool {
+	if !s.otpConfig.Enabled || s.otpService == nil {
+		return false
+	}
+	return user.IsAdmin() || user.IsPartner()
+}
+
+// mapOTPError translates an OTPService error into the domain error a handler
+// will surface as an HTTP response. Missing-email and locked-account become
+// Unauthorized with a clear Vietnamese message; other errors pass through as
+// internal errors so they 500 rather than fail open.
+func (s *AuthService) mapOTPError(err error) error {
+	switch {
+	case errors.Is(err, otp.ErrOTPRequiredMissingEmail):
+		return domain.NewUnauthorizedError(constants.MsgOTPAccountMissingEmailVN)
+	case errors.Is(err, otp.ErrOTPLocked):
+		return domain.NewUnauthorizedError(constants.MsgOTPAccountLockedVN)
+	default:
+		return domain.NewInternalError(constants.MsgOTPStartFailedVN, err)
+	}
+}
+
+// VerifyLoginOTP completes the two-step login: validates the submitted code
+// against the pending session, and on success issues the real 14-day JWT with
+// otp_verified=true. On failure the per-account failed-attempt counter is
+// bumped (RT-H1) and the account may be locked (Phase 6 backoff). The IP/UA
+// must match the session binding (RT-M5).
+func (s *AuthService) VerifyLoginOTP(ctx context.Context, sessionID, code, ipAddress, userAgent string) (*dto.LoginResponse, error) {
+	user, err := s.otpService.VerifyLogin(ctx, sessionID, code, ipAddress, userAgent)
+	if err != nil {
+		return nil, s.mapVerifyError(err)
+	}
+
+	// Issue the real token, now marked as OTP-verified.
+	accessToken, err := s.generateAccessToken(user, true)
+	if err != nil {
+		return nil, domain.NewInternalError(constants.MsgFailedToGenerateTokenVN, err)
+	}
+
+	// Stamp last-login + success audit (mirrors the password-login path).
+	go func(userID uint) {
+		bgCtx := context.Background()
+		if err := s.userService.UserRepo.UpdateLastLogin(bgCtx, userID, clock.Now()); err != nil {
+			s.logger.Error("Failed to update last login after OTP verify", "error", err, "user_id", userID)
+		}
+	}(user.ID)
+
+	userResponse := dto.ToUserResponse(user)
+	return &dto.LoginResponse{
+		User:        &userResponse,
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(s.accessTTL.Seconds()),
+	}, nil
+}
+
+// mapVerifyError maps OTP verify failures to client-facing domain errors.
+// Session-not-found / binding-mismatch / invalid-code all surface as 401 with
+// a generic "invalid code or session" message to avoid leaking which failed.
+func (s *AuthService) mapVerifyError(err error) error {
+	switch {
+	case errors.Is(err, otp.ErrOTPLocked), errors.Is(err, otp.ErrUserRevokedOrDisabled):
+		return domain.NewUnauthorizedError(constants.MsgOTPAccountLockedVN)
+	case errors.Is(err, otp.ErrSessionNotFound),
+		errors.Is(err, otp.ErrSessionBindingMismatch),
+		errors.Is(err, otp.ErrInvalidCode):
+		return domain.NewUnauthorizedError(constants.MsgOTPInvalidCodeOrSessionVN)
+	default:
+		return domain.NewInternalError(constants.MsgOTPVerifyFailedVN, err)
+	}
+}
+
+// ResendOTPCode re-issues an OTP code for a pending session (email didn't
+// arrive). Respects the resend cooldown and per-account lockout. Returns the
+// session id (unchanged) and the remaining TTL in seconds.
+func (s *AuthService) ResendOTPCode(ctx context.Context, sessionID, ipAddress, userAgent string) (string, int64, error) {
+	sessionID, err := s.otpService.ResendCode(ctx, sessionID, ipAddress, userAgent)
+	if err != nil {
+		return "", 0, s.mapResendError(err)
+	}
+	return sessionID, int64(s.otpConfig.CodeTTL.Seconds()), nil
+}
+
+// mapResendError maps resend failures to client-facing domain errors.
+func (s *AuthService) mapResendError(err error) error {
+	switch {
+	case errors.Is(err, otp.ErrOTPLocked):
+		return domain.NewUnauthorizedError(constants.MsgOTPAccountLockedVN)
+	case errors.Is(err, otp.ErrSessionNotFound), errors.Is(err, otp.ErrSessionBindingMismatch):
+		return domain.NewUnauthorizedError(constants.MsgOTPSessionIDMissingVN)
+	case errors.Is(err, otp.ErrResendCooldown):
+		return domain.NewValidationError(constants.MsgOTPResendTooSoonVN)
+	default:
+		return domain.NewInternalError(constants.MsgOTPStartFailedVN, err)
 	}
 }
 
@@ -136,8 +248,25 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
 	}
 
-	// Generate access token
-	accessToken, err := s.generateAccessToken(user)
+	// Email-OTP 2FA gate (RT-C2): when the feature is enabled and the caller is
+	// an admin/partner, do NOT mint a JWT here — start the OTP second step.
+	// Employees (and any non-gated role) fall straight through to token issuance.
+	otpVerified := true
+	if s.requiresOTP(user) {
+		sessionID, otpErr := s.otpService.StartLogin(ctx, user, ipAddress, userAgent)
+		if otpErr != nil {
+			// Missing email (RT-M8) / locked account -> surface a clear VN message.
+			return nil, s.mapOTPError(otpErr)
+		}
+		return &dto.LoginResponse{
+			OTPRequired:  true,
+			OTPSessionID: sessionID,
+			ExpiresIn:    int64(s.otpConfig.CodeTTL.Seconds()),
+		}, nil
+	}
+
+	// Generate access token (non-gated path: otpVerified stays true).
+	accessToken, err := s.generateAccessToken(user, otpVerified)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToGenerateTokenVN, err)
 	}
@@ -180,8 +309,9 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 		}
 	}(user.ID, user.Username, user.Fullname)
 
+	userResponse := dto.ToUserResponse(user)
 	return &dto.LoginResponse{
-		User:        dto.ToUserResponse(user),
+		User:        &userResponse,
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(s.accessTTL.Seconds()),
@@ -232,13 +362,18 @@ func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*C
 	return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
 }
 
-func (s *AuthService) generateAccessToken(user *domain.User) (string, error) {
+// generateAccessToken mints the 14-day access JWT. otpVerified is propagated
+// into the claims so the Authorize middleware can gate privileged routes (RT-C1).
+// Callers MUST pass otpVerified=true only when the login path completed OTP (or
+// is not gated — employee, or admin/partner when OTP_ENABLE=false).
+func (s *AuthService) generateAccessToken(user *domain.User, otpVerified bool) (string, error) {
 	jti := uuid.New().String()
 	claims := Claims{
-		UserID:   user.ID,
-		Username: user.Username,
-		Fullname: user.Fullname,
-		Role:     string(user.Role),
+		UserID:       user.ID,
+		Username:     user.Username,
+		Fullname:     user.Fullname,
+		Role:         string(user.Role),
+		OTPVerified:  otpVerified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			ExpiresAt: jwt.NewNumericDate(clock.Now().Add(s.accessTTL)),
@@ -317,6 +452,16 @@ func (s *AuthService) RevokeUserTokens(ctx context.Context, userID uint, revoked
 		return err
 	}
 	s.logger.Info("Revoked all user tokens via tokens_invalid_before", "user_id", userID, "revoked_by", revokedByUserID, "invalid_before", now)
+
+	// RT-M4: also kill any in-flight OTP login session for this user, so a
+	// revocation mid-second-step cannot be completed by an attacker who later
+	// obtains the code. Best-effort: a Redis failure here must not undo the
+	// successful token revocation above.
+	if s.otpService != nil {
+		if err := s.otpService.DeleteSessionsForUser(ctx, userID); err != nil {
+			s.logger.Error("Failed to delete pending OTP sessions during revoke", "error", err, "user_id", userID)
+		}
+	}
 
 	// Get user for audit logging
 	user, err := s.userService.GetUser(ctx, userID)
@@ -469,21 +614,14 @@ func (s *AuthService) UpdateProfile(ctx context.Context, userID uint, req dto.Up
 		}
 	}
 
-	// If password is provided, handle password change separately
+	// RT-H3: password changes via UpdateProfile are REJECTED. The dedicated
+	// /auth/change-password endpoint requires the current password (re-auth);
+	// this path never did, which made it a takeover-persistence primitive — a
+	// momentary session theft (XSS, stolen token, unattended browser) let an
+	// attacker set a password they then knew, surviving the OTP gate. Force all
+	// password changes through the re-auth endpoint.
 	if req.Password != nil && *req.Password != "" {
-		if err := s.userService.ValidatePassword(*req.Password); err != nil {
-			return nil, err
-		}
-		if err := s.userService.ResetUserPassword(auditCtx, userID, *req.Password); err != nil {
-			return nil, err
-		}
-		actorFullName := audit.GetActorFullName(ctx, s.userService.UserRepo, userID)
-		passwordEvent := domain.NewPasswordChangedEvent(ctx, userID, currentUserDomain.Username, "profile_update", auditctx.GetUserIDOrZero(ctx), actorFullName)
-		if s.eventBus != nil {
-			if err := s.eventBus.Publish(ctx, passwordEvent); err != nil {
-				s.logger.Error("Failed to publish PasswordChangedEvent", "error", err, "user_id", userID)
-			}
-		}
+		return nil, domain.NewValidationError(constants.MsgPasswordChangeNotAllowedOnProfileVN)
 	}
 
 	updatedResponse := dto.ToUserResponse(user)
@@ -551,8 +689,24 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRe
 		return nil, domain.NewUnauthorizedError(constants.MsgGoogleAccountNotLinkedVN)
 	}
 
-	// Generate access token
-	accessToken, err := s.generateAccessToken(user)
+	// RT-H5: Google login is NOT a free pass into admin/partner — gate it
+	// identically to password login when OTP is enabled. A phished Google
+	// account must not bypass the second factor for privileged roles.
+	otpVerified := true
+	if s.requiresOTP(user) {
+		sessionID, otpErr := s.otpService.StartLogin(ctx, user, ipAddress, userAgent)
+		if otpErr != nil {
+			return nil, s.mapOTPError(otpErr)
+		}
+		return &dto.LoginResponse{
+			OTPRequired:  true,
+			OTPSessionID: sessionID,
+			ExpiresIn:    int64(s.otpConfig.CodeTTL.Seconds()),
+		}, nil
+	}
+
+	// Generate access token (non-gated path: otpVerified stays true).
+	accessToken, err := s.generateAccessToken(user, otpVerified)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToGenerateTokenVN, err)
 	}
@@ -592,8 +746,9 @@ func (s *AuthService) LoginWithGoogle(ctx context.Context, req dto.GoogleLoginRe
 		}
 	}(user.ID, user.Username, user.Fullname)
 
+	userResponse := dto.ToUserResponse(user)
 	return &dto.LoginResponse{
-		User:        dto.ToUserResponse(user),
+		User:        &userResponse,
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(s.accessTTL.Seconds()),

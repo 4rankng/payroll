@@ -21,6 +21,7 @@ import (
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
+	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/payroll"
 	"api-server/internal/app/services/payroll/bulktransfer"
 	"api-server/internal/app/services/project"
@@ -38,6 +39,7 @@ import (
 	"api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/email"
 	"api-server/internal/infra/events"
+	"api-server/internal/infra/cache"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/infra/persistence/repositories"
 	"api-server/internal/infra/storage"
@@ -550,10 +552,18 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	projectEmployeeSvc := project.NewProjectEmployeeService(repos.ProjectEmployee, repos.Employee, repos.EmployeeUser, repos.Project, repos.Timesheet, repos.AuditLog, transactionManager, repos.AdvancePayment, repos.Payrate, notificationPort, eventBus, payCycleNotificationPublisher, timesheetService, cacheService)
 
+	// Email-OTP 2FA: build the pending-session store (Redis) + OTP service.
+	// The email sender reuses the provider selected above (Resend in prod,
+	// sandbox in dev). When OTP_ENABLE=false the service is still constructed
+	// (cheap) but AuthService.requiresOTP() short-circuits and login behaves
+	// exactly as before.
+	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
+	otpService := otp.NewOTPService(otpPendingStore, repos.User, emailProvider, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
+
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
-		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, logger),
+		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, logger),
 		Authorization:                     authorizationService,
 		Dashboard:                         dashboardService,
 		Project:                           project.NewProjectService(repos.Project, repos.Employee, repos.ProjectEmployee, repos.Timesheet, eventBus, cacheService, logger),

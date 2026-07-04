@@ -30,6 +30,8 @@ type User struct {
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_user_cccd_deleted_at;uniqueIndex:unique_user_mobile_deleted_at"`
 	LastLogin           *time.Time     `json:"last_login" gorm:"type:datetime(3)"`
 	TokensInvalidBefore *time.Time     `json:"-" gorm:"type:datetime(3);comment:'When non-null, any JWT issued before this instant is rejected. Used by RevokeUserTokens.'"`
+	OTPFailedAttempts   int            `json:"-" gorm:"type:int;not null;default:0;comment:'consecutive failed OTP verifies; reset on success'"`
+	OTPLockedUntil      *time.Time     `json:"-" gorm:"type:datetime(3);comment:'when set, OTP-gated login is refused until this instant'"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
@@ -75,6 +77,10 @@ type UserRepository interface {
 	// UpdateTokensInvalidBefore sets the timestamp before which all of the user's
 	// JWTs are considered invalid. Passing a nil timestamp clears the field.
 	UpdateTokensInvalidBefore(ctx context.Context, userID uint, invalidBefore time.Time) error
+	// UpdateOTPLockout sets the user's consecutive failed-OTP-attempt count and
+	// the optional lockout expiry. Pass lockedUntil=nil to clear an active lockout
+	// (e.g. on successful verify, which also resets failedAttempts to 0).
+	UpdateOTPLockout(ctx context.Context, userID uint, failedAttempts int, lockedUntil *time.Time) error
 	Delete(ctx context.Context, id uint) error
 	Restore(ctx context.Context, id uint) error
 	List(ctx context.Context, limit, offset int) ([]*User, error)
