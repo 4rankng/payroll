@@ -138,6 +138,10 @@ func isConfirmedNoSalaryCheckout(att *domain.Attendance) bool {
 		strings.Contains(*att.SalaryRejectReason, confirmedNoSalaryCheckoutReason)
 }
 
+func isAutoRejectedNoCheckout(att *domain.Attendance) bool {
+	return att != nil && att.CheckOutTime == nil && att.SalaryRejectReason != nil
+}
+
 // parsedShift is a single configured shift for a position, resolved to absolute
 // datetimes (night-shift / cross-midnight aware, anchored to the check-in day or
 // one of its ±1 neighbors) together with its rate.
@@ -436,7 +440,7 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		if err != nil {
 			return fmt.Errorf("failed to check existing attendance: %w", err)
 		}
-		if existing != nil && !isConfirmedNoSalaryCheckout(existing) {
+		if existing != nil && !isConfirmedNoSalaryCheckout(existing) && !isAutoRejectedNoCheckout(existing) {
 			return domain.NewValidationError("Bạn đã vào làm trong ngày hôm nay rồi")
 		}
 
@@ -977,6 +981,9 @@ func (s *AttendanceService) GetTodayAttendance(ctx context.Context, employeeID u
 	}
 	if att != nil {
 		s.normalizeLegacySalaryRejectReason(ctx, att)
+		if isAutoRejectedNoCheckout(att) {
+			return nil, nil
+		}
 		return att, nil
 	}
 
