@@ -1,8 +1,17 @@
 # syntax=docker/dockerfile:1.4
-# Multi-stage build for React frontend with BuildKit optimizations
+# Multi-stage build for React frontend with BuildKit optimizations.
+#
+# The deps and builder stages run on $BUILDPLATFORM (native arch of the machine
+# invoking buildx). The Vite/Workbox toolchain is heavy and its output (dist/)
+# is purely static, architecture-independent files — so there is no reason to
+# run it under QEMU x86_64 emulation when targeting linux/amd64 from an arm64
+# host. Pinning these stages to $BUILDPLATFORM avoids a Node.js exit-time
+# SIGSEGV that occurs when esbuild/SWC/workbox worker threads run under QEMU.
+# Only the final production stage follows the --platform target (linux/amd64);
+# it receives dist/ via COPY, which crosses architectures safely.
 
-# Dependencies stage - caches node_modules separately
-FROM node:22-alpine AS deps
+# Dependencies stage - caches node_modules separately (native arch, no QEMU)
+FROM --platform=$BUILDPLATFORM node:22-alpine AS deps
 WORKDIR /app
 
 # Configure yarn for better performance
@@ -17,8 +26,10 @@ RUN --mount=type=cache,target=/yarn-cache \
     --mount=type=cache,target=/root/.yarn \
     yarn install --frozen-lockfile --network-timeout 600000
 
-# Builder stage - handles source code and build
-FROM node:22-alpine AS builder
+# Builder stage - runs the Vite/Workbox toolchain natively ($BUILDPLATFORM) to
+# avoid the QEMU-emulation SIGSEGV. Output (dist/) is static, copied into the
+# linux/amd64 production stage below.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 WORKDIR /app
 
 # Build arguments for environment variables
