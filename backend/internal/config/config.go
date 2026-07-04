@@ -27,6 +27,7 @@ type Config struct {
 	Asset        AssetConfig
 	Disbursement DisbursementConfig
 	OTP          OTPConfig
+	Google       GoogleConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -72,6 +73,16 @@ type OTPConfig struct {
 	MaxAttempts    int           // per-account failed-verify cap (default 5)
 	LockDuration   time.Duration // lockout window once cap hit (default 15m)
 	ResendCooldown time.Duration // min gap between resend requests (default 30s)
+}
+
+// GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
+// id_token audience; GoogleOAuthEnabled flips the "Sign in with Google" flow on
+// (when off, the endpoint 404s / errors). The client ID is public by design —
+// it is not a secret — but is fail-fast-validated at boot so a misconfigured
+// deploy fails to start rather than failing at first Google login.
+type GoogleConfig struct {
+	OAuthEnabled bool
+	ClientID     string
 }
 
 type LogConfig struct {
@@ -362,6 +373,10 @@ func Load() (*Config, error) {
 			LockDuration:   parseDuration(getEnv("OTP_LOCK_DURATION", "15m")),
 			ResendCooldown: parseDuration(getEnv("OTP_RESEND_COOLDOWN", "30s")),
 		},
+		Google: GoogleConfig{
+			OAuthEnabled: parseBool(getEnv("GOOGLE_OAUTH_ENABLED", "true")),
+			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
 		TenantQueueWorkers:     parseInt(getEnv("TENANT_QUEUE_WORKERS", "5")),
@@ -498,6 +513,13 @@ func (c *Config) validate() error {
 		if c.Notification.ResendAPIKey == "" {
 			return fmt.Errorf("RESEND_API_KEY must be set when OTP_ENABLE=true")
 		}
+	}
+
+	// Google OIDC fail-fast: when the flow is enabled, the client ID must be set
+	// (it is the audience the id_token is bound to). The ID is public, not a
+	// secret — but a missing one means Google login silently fails at runtime.
+	if c.Google.OAuthEnabled && c.Google.ClientID == "" {
+		return fmt.Errorf("GOOGLE_CLIENT_ID must be set when GOOGLE_OAUTH_ENABLED=true")
 	}
 
 	// Disbursement mutual-exclusion: at most one provider may handle each
