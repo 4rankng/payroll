@@ -28,9 +28,10 @@ type User struct {
 	Mobile    *string        `json:"mobile,omitempty" gorm:"type:varchar(15);uniqueIndex:unique_user_mobile_deleted_at"`
 	Role      UserRole       `json:"role" gorm:"type:enum('admin','partner','employee','adv_partner');not null;default:'employee'"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_user_cccd_deleted_at;uniqueIndex:unique_user_mobile_deleted_at"`
-	LastLogin *time.Time     `json:"last_login" gorm:"type:datetime(3)"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	LastLogin           *time.Time     `json:"last_login" gorm:"type:datetime(3)"`
+	TokensInvalidBefore *time.Time     `json:"-" gorm:"type:datetime(3);comment:'When non-null, any JWT issued before this instant is rejected. Used by RevokeUserTokens.'"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
 }
 
 // GetAuditEntityType implements Auditable interface
@@ -71,6 +72,9 @@ type UserRepository interface {
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
 	Update(ctx context.Context, user *User) error
 	UpdateLastLogin(ctx context.Context, userID uint, lastLogin time.Time) error
+	// UpdateTokensInvalidBefore sets the timestamp before which all of the user's
+	// JWTs are considered invalid. Passing a nil timestamp clears the field.
+	UpdateTokensInvalidBefore(ctx context.Context, userID uint, invalidBefore time.Time) error
 	Delete(ctx context.Context, id uint) error
 	Restore(ctx context.Context, id uint) error
 	List(ctx context.Context, limit, offset int) ([]*User, error)

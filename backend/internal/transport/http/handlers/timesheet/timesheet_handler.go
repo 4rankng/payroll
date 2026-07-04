@@ -39,6 +39,13 @@ func (h *Handler) GetTimesheet(c *gin.Context) {
 		return
 	}
 
+	// IDOR guard: partners may only read timesheets tied to projects/employees
+	// they own or have been granted access to. Admins bypass this check.
+	if !h.canPartnerAccessTimesheet(c, timesheet) {
+		response.Forbidden(c, constants.MsgTimesheetAccessDeniedVN)
+		return
+	}
+
 	timesheetResponse := h.buildTimesheetResponse(timesheet)
 	response.Success(c, timesheetResponse, constants.MsgTimesheetsRetrievedSuccessfullyVN)
 }

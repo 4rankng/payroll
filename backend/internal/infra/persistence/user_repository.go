@@ -186,6 +186,19 @@ func (r *UserRepository) UpdateLastLogin(ctx context.Context, userID uint, lastL
 	return nil
 }
 
+// UpdateTokensInvalidBefore records the instant at which all previously-issued
+// JWTs for this user become invalid. AuthService.ValidateToken rejects any token
+// whose IssuedAt is older than this timestamp.
+func (r *UserRepository) UpdateTokensInvalidBefore(ctx context.Context, userID uint, invalidBefore time.Time) error {
+	if err := r.DB.WithContext(ctx).
+		Model(&domain.User{}).
+		Where("id = ?", userID).
+		Update("tokens_invalid_before", invalidBefore).Error; err != nil {
+		return domain.NewInternalError("failed to update tokens_invalid_before", err)
+	}
+	return nil
+}
+
 func (r *UserRepository) Delete(ctx context.Context, id uint) error {
 	result := r.DB.WithContext(ctx).Delete(&domain.User{}, id)
 	if result.Error != nil {

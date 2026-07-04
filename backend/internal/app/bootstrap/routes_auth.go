@@ -6,7 +6,7 @@ func setupAuthRoutes(v1 *gin.RouterGroup, container *Container) {
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", container.Middleware.LoginRateLimit, container.Handlers.Auth.Login)
-		auth.POST("/google", container.Handlers.Auth.GoogleLogin)
+		auth.POST("/google", container.Middleware.LoginRateLimit, container.Handlers.Auth.GoogleLogin)
 		auth.POST("/logout", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.Logout)
 
 		auth.GET("/me", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.GetProfile)
