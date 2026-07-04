@@ -35,12 +35,11 @@ import {
   getLocationPermissionIssue,
   isGeolocationError,
   isPoorLocationAccuracyMessage,
-  requestBestCurrentLocation,
   type LocationAcquisitionProgress,
-  type LocationAcquisitionResult,
   type LocationSample,
   type LocationPermissionIssue,
 } from "@/utils/geolocation";
+import { useContinuousLocation, isAbortedSubmitError } from "@/hooks/useContinuousLocation";
 import type { CheckInTarget } from "@/types/api/auth.types";
 
 const EmployeeLocationMap = lazy(() =>
@@ -169,8 +168,6 @@ export function EmployeeCheckInCard({
   const logDeviceAttemptMutation = useLogAttendanceDeviceAttempt();
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
-  const [locationProgress, setLocationProgress] = useState<LocationAcquisitionProgress | null>(null);
-  const [lastFreshSample, setLastFreshSample] = useState<LocationSample | null>(null);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
@@ -183,11 +180,36 @@ export function EmployeeCheckInCard({
 
   const attendance = attendanceResponse?.data;
   const canStartCorrectShift = attendance?.status === "completed" && isConfirmedNoSalaryAttendance(attendance);
-  const canPreviewCheckLocation =
-    !isLoading &&
+  // The continuous GPS watch runs whenever an action is conceptually possible and
+  // STAYS running during a tap's submit-await. A fix warmed before the tap is then
+  // submitted instantly, instead of the tap cold-starting a 25-30s acquisition
+  // that times out before the phone's first GNSS fix — the dominant on-site check-
+  // in failure. (The old canPreviewCheckLocation gate toggled off during isLocating,
+  // which defeated warm reuse.) effectiveRadius keeps the legacy prop fallback.
+  // Deliberately NOT gated on `isLoading`: the card's isLoading early-return only
+  // swaps in a skeleton, but this hook still runs (hooks run before any return),
+  // so letting the watch warm during the brief load makes the first actionable
+  // tap instant. It also prevents a useTodayAttendance refetch mid-cold-tap from
+  // toggling the watch off and stalling the awaiter for the full 30s.
+  const locationEnabled =
     Boolean(checkInTarget) &&
-    !isLocating &&
     (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
+  const effectiveRadius =
+    (typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
+      ? checkInTarget.radius_meters
+      : null) ??
+    (typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
+      ? checkInGeofenceRadiusMeters
+      : null) ??
+    undefined;
+  const location = useContinuousLocation({
+    target: checkInTarget,
+    enabled: locationEnabled,
+    requiredAccuracyMeters: effectiveRadius,
+  });
+  // Aliases so the existing JSX (converging-accuracy banner, map preview) reads the
+  // continuous watch's reactive state unchanged.
+  const locationProgress: LocationAcquisitionProgress | null = location.progress;
 
   // Clear a stale location-recovery banner when the user returns to the tab.
   // useTodayAttendance refetches on window focus, so if the user fixed the OS
@@ -200,90 +222,136 @@ export function EmployeeCheckInCard({
     return () => window.removeEventListener("focus", clearOnReturn);
   }, []);
 
-  useEffect(() => {
-    if (!canPreviewCheckLocation) return;
+  // The 12s preview effect that used to live here is gone: the continuous watch
+  // (useContinuousLocation above) now warms the fix while the card is mounted, and
+  // handleAction submits the warm sample instantly or awaits the watch's next
+  // inside-gate sample. See plans/260704-1034-checkin-gps-continuous-warmup.
 
-    let cancelled = false;
-
-    const locationOptions =
-      typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
-        ? {
-            requiredAccuracyMeters: checkInTarget.radius_meters,
-            timeoutMs: 12000,
-            minimumWarmupMs: 1500,
-            minimumAcceptableSamples: 1,
-          }
-        : {
-            timeoutMs: 12000,
-            minimumWarmupMs: 1500,
-            minimumAcceptableSamples: 1,
-          };
-
-    requestBestCurrentLocation((progress) => {
-      if (cancelled) return;
-      if (progress.bestFreshSample) {
-        setLastFreshSample(progress.bestFreshSample);
-      }
-    }, locationOptions)
-      .then((result) => {
-        if (cancelled) return;
-        setLastFreshSample(result.bestFreshSample);
-      })
-      .catch(() => {
-        // The always-on map can still show the configured gate/radius without a
-        // preview GPS sample. The explicit submit action owns visible GPS errors.
-      });
-
-    return () => {
-      cancelled = true;
+  const buildPayload = (sample: LocationSample) => {
+    const p = location.progress;
+    return {
+      lat: sample.lat,
+      lng: sample.lng,
+      accuracy: sample.accuracy,
+      gps_at: sample.timestamp,
+      gps_sample_count: p?.sampleCount ?? 1,
+      gps_best_accuracy: p?.bestAccuracy ?? sample.accuracy,
+      gps_elapsed_ms: p?.elapsedMs ?? 0,
     };
-  }, [canPreviewCheckLocation, checkInTarget?.radius_meters]);
+  };
+
+  // Centralized error classification shared by the warm and cold submit paths.
+  // Geolocation errors (cold-tap timeout / inaccurate / fatal-permission) →
+  // recovery banner + failed-attempt log. Backend errors (poor accuracy, outside
+  // geofence, no-salary window) → existing classification and dialog flow. The
+  // contract is identical to the previous inline handler; only the acquisition
+  // source changed (continuous watch vs. one-shot requestBestCurrentLocation).
+  const onActionError = async (
+    error: unknown,
+    type: "check_in" | "check_out",
+    options?: { confirmNoSalary?: boolean }
+  ) => {
+    if (isAbortedSubmitError(error)) {
+      // Watch was paused/restarted or the card unmounted during the cold-tap wait.
+      // Silent cancellation: no banner, no failed-attempt log — the worker abandoned
+      // the attempt; the device did not fail.
+      return;
+    }
+    if (!isGeolocationError(error)) {
+      // Backend rejection.
+      if (type === "check_out") {
+        // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
+        const message = getErrorMessage(error);
+        if (isPoorLocationAccuracyMessage(message)) {
+          setLocationIssue(
+            createPoorAccuracyLocationIssue(
+              location.progress?.bestAccuracy,
+              location.progress?.requiredAccuracyMeters
+            )
+          );
+          toast({ title: "Chưa thể chấm công", variant: "destructive" });
+          return;
+        }
+        if (isGeofenceOutsideMessage(message)) {
+          setLocationIssue(createOutsideGeofenceLocationIssue());
+          toast({ title: "Chưa thể chấm công", variant: "destructive" });
+          return;
+        }
+        if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
+          // First attempt outside the checkout window: show the real reason and
+          // offer the confirmed no-salary path. The dialog is the UI — no toast.
+          setNoSalaryReason(message);
+          setShowNoSalaryConfirm(true);
+        } else {
+          // A confirmed no-salary call that failed (e.g. the shift was auto-
+          // rejected while the dialog was open) or a non-overridable error:
+          // close any stale dialog, surface the message once, and refetch today's
+          // attendance so the card reflects the real (possibly rejected) state.
+          setShowNoSalaryConfirm(false);
+          setNoSalaryReason(null);
+          toast({ title: message || "Không thể tan ca", variant: "destructive" });
+          queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
+        }
+      } else {
+        const message = getErrorMessage(error);
+        if (isPoorLocationAccuracyMessage(message)) {
+          setLocationIssue(
+            createPoorAccuracyLocationIssue(
+              location.progress?.bestAccuracy,
+              location.progress?.requiredAccuracyMeters
+            )
+          );
+        } else if (isGeofenceOutsideMessage(message)) {
+          setLocationIssue(createOutsideGeofenceLocationIssue());
+        }
+      }
+      return;
+    }
+
+    // Geolocation error from awaitSubmitReady rejection (timeout / inaccurate) or
+    // a fatal watch error (permission denied). Same recovery UX + failed-attempt
+    // logging as before.
+    const issue = getLocationPermissionIssue(error);
+    setLocationIssue(issue);
+    logDeviceAttemptMutation.mutate({
+      attempt_type: type,
+      gps_status: getDeviceGpsStatus(issue),
+    });
+    // The persistent amber recovery panel below renders the full title +
+    // description + retry, so the toast only carries the headline (no
+    // description) to avoid showing the same text twice.
+    toast({ title: issue.title, variant: "destructive" });
+  };
 
   const handleAction = async (type: "check_in" | "check_out", options?: { confirmNoSalary?: boolean }) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
-    // Start each attempt with a clean slate so a stale banner from a previous
-    // failed attempt doesn't persist while the new one is in flight.
+    // Clear any stale recovery banner so it doesn't linger during the new attempt.
     setLocationIssue(null);
-    setLocationProgress(null);
-    setLastFreshSample(null);
-    setIsLocating(true);
-    let acquisition: LocationAcquisitionResult | null = null;
-    try {
-      // iOS Safari can keep navigator.permissions stale after the worker changes
-      // Settings. Always ask for a fresh position; watchPosition is the
-      // authoritative permission check and either resolves or returns the real
-      // browser error for the recovery panel. We warm up GPS and use the best
-      // fresh high-accuracy sample instead of trusting the first Wi-Fi/cell fix.
-      const locationOptions =
-        typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
-          ? { requiredAccuracyMeters: checkInTarget.radius_meters }
-          : typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
-            ? { requiredAccuracyMeters: checkInGeofenceRadiusMeters }
-          : undefined;
-      acquisition = await requestBestCurrentLocation((progress) => {
-        setLocationProgress(progress);
-        if (progress.bestFreshSample) {
-          setLastFreshSample(progress.bestFreshSample);
-        }
-      }, locationOptions);
-      setLastFreshSample(acquisition.bestFreshSample);
-      const position = acquisition.position;
-      const payload = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        // Send GPS accuracy + fix time so the backend can reject unreliable
-        // fixes and keep a forensic trail. Without accuracy the server trusts the
-        // reported coordinate blindly, which lets an off-site check-in through
-        // when the phone misreports (WiFi/cell positioning, stale fix, poor GNSS).
-        accuracy: position.coords.accuracy,
-        // GeolocationPosition.timestamp is epoch milliseconds.
-        gps_at: position.timestamp,
-        gps_sample_count: acquisition.sampleCount,
-        gps_best_accuracy: acquisition.bestAccuracy,
-        gps_elapsed_ms: acquisition.elapsedMs,
-      };
 
+    // No configured gate: the watch can never produce an inside-gate sample, so
+    // surface the configuration issue immediately instead of making the worker
+    // wait 30s for a misleading "inaccurate" timeout. Mirrors the backend
+    // validateGeofence "no gates configured" message.
+    const hasValidGate =
+      !!checkInTarget &&
+      Array.isArray(checkInTarget.gates) &&
+      checkInTarget.gates.length > 0 &&
+      (checkInTarget.radius_meters ?? 0) > 0;
+    if (!hasValidGate) {
+      setLocationIssue({
+        type: "unknown",
+        title: "Chưa cấu hình vị trí chấm công",
+        description: "Dự án chưa cấu hình cổng chấm công. Vui lòng báo quản lý.",
+        canRetry: false,
+        requiresSettings: false,
+      });
+      submittingRef.current = false;
+      return;
+    }
+
+    const submit = async (sample: LocationSample) => {
+      const payload = buildPayload(sample);
       if (type === "check_in") {
         await checkInMutation.mutateAsync(payload);
       } else {
@@ -295,71 +363,34 @@ export function EmployeeCheckInCard({
       setLocationIssue(null);
       setNoSalaryReason(null);
       setShowNoSalaryConfirm(false);
-    } catch (error: unknown) {
-      if (!isGeolocationError(error)) {
-        setLocationIssue(null);
-        if (type === "check_out") {
-          // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
-          const message = getErrorMessage(error);
-          if (isPoorLocationAccuracyMessage(message)) {
-            setLocationIssue(
-              createPoorAccuracyLocationIssue(
-                acquisition?.bestAccuracy,
-                acquisition?.requiredAccuracyMeters
-              )
-            );
-            toast({ title: "Chưa thể chấm công", variant: "destructive" });
-            return;
-          }
-          if (isGeofenceOutsideMessage(message)) {
-            setLocationIssue(createOutsideGeofenceLocationIssue());
-            toast({ title: "Chưa thể chấm công", variant: "destructive" });
-            return;
-          }
-          if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
-            // First attempt outside the checkout window: show the real reason and
-            // offer the confirmed no-salary path. The dialog is the UI — no toast.
-            setNoSalaryReason(message);
-            setShowNoSalaryConfirm(true);
-          } else {
-            // A confirmed no-salary call that failed (e.g. the shift was auto-
-            // rejected while the dialog was open) or a non-overridable error:
-            // close any stale dialog, surface the message once, and refetch today's
-            // attendance so the card reflects the real (possibly rejected) state.
-            setShowNoSalaryConfirm(false);
-            setNoSalaryReason(null);
-            toast({ title: message || "Không thể tan ca", variant: "destructive" });
-            queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.today() });
-          }
-        } else {
-          const message = getErrorMessage(error);
-          if (isPoorLocationAccuracyMessage(message)) {
-            setLocationIssue(
-              createPoorAccuracyLocationIssue(
-                acquisition?.bestAccuracy,
-                acquisition?.requiredAccuracyMeters
-              )
-            );
-          } else if (isGeofenceOutsideMessage(message)) {
-            setLocationIssue(createOutsideGeofenceLocationIssue());
-          }
-        }
-        return;
-      }
+    };
 
-      const issue = getLocationPermissionIssue(error);
-      setLocationIssue(issue);
-      logDeviceAttemptMutation.mutate({
-        attempt_type: type,
-        gps_status: getDeviceGpsStatus(issue),
-      });
-      // The persistent amber recovery panel below renders the full title +
-      // description + retry, so the toast only carries the headline (no
-      // description) to avoid showing the same text twice.
-      toast({ title: issue.title, variant: "destructive" });
+    // Warm path: the continuous watch already has a fresh, gate-inside sample —
+    // submit it instantly with no spinner. This is the seamless case (worker
+    // opened the app at the gate, GPS warmed during mount, tap submits in <1s).
+    if (location.isSubmitReady && location.sample) {
+      try {
+        await submit(location.sample);
+      } catch (error: unknown) {
+        await onActionError(error, type, options);
+      } finally {
+        submittingRef.current = false;
+      }
+      return;
+    }
+
+    // Cold path: the watch has not yet produced an inside-gate sample. Wait for
+    // one (hard cap 30s, matching the prior acquire budget) while the converging-
+    // accuracy banner shows. awaitSubmitReady rejects on timeout / fatal-permission
+    // and routes through onActionError to the same recovery UX as before.
+    setIsLocating(true);
+    try {
+      const sample = await location.awaitSubmitReady();
+      await submit(sample);
+    } catch (error: unknown) {
+      await onActionError(error, type, options);
     } finally {
       setIsLocating(false);
-      setLocationProgress(null);
       submittingRef.current = false;
     }
   };
@@ -383,7 +414,7 @@ export function EmployeeCheckInCard({
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
   const locationRecoveryText = "Thử lại";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
-  const visibleLocationSample = locationProgress?.bestFreshSample ?? lastFreshSample;
+  const visibleLocationSample = location.sample;
   const locationPreview = checkInTarget ? (
     <Suspense fallback={<MapFallback />}>
       <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
@@ -528,7 +559,14 @@ export function EmployeeCheckInCard({
                   variant="outline"
                   className="h-10 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 text-[14px] font-bold leading-5 text-amber-950 hover:bg-amber-100"
                   disabled={isPending}
-                  onClick={() => handleAction(actionType)}
+                  onClick={() => {
+                    // Restart the watch (re-arms GPS, re-prompts permission if the
+                    // failure was a denial) before re-attempting, so "Thử lại"
+                    // recovers from a dead watch and not just transient errors.
+                    location.retry();
+                    setLocationIssue(null);
+                    handleAction(actionType);
+                  }}
                 >
                   {isPending ? (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin" />

@@ -7,8 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -134,9 +132,12 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
     },
   ];
 
-  // Actions column: a kebab menu with View map (always) + Approve/Reject (gated
-  // by review_action). Omitted entirely when no callbacks are provided so the
-  // table stays read-only in contexts that don't need it.
+  // Actions column: a kebab menu with View map (always) + Approve/Reject. The
+  // review actions are hidden once the attendance reaches a terminal state:
+  // "Duyệt" is hidden on Hoàn thành (completed) or Đã duyệt (approved); "Từ chối"
+  // is hidden on Đã từ chối (rejected) or Đã huỷ (review-rejected). Omitted
+  // entirely when no callbacks are provided so the table stays read-only in
+  // contexts that don't need it.
   if (actions) {
     cols.push({
       id: "actions",
@@ -144,8 +145,8 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
       size: 48,
       cell: ({ row }) => {
         const att = row.original;
-        const isApproved = att.review_action === "approved";
-        const isRejected = att.review_action === "rejected";
+        const showApprove = att.status !== "completed" && att.review_action !== "approved";
+        const showReject = att.status !== "rejected" && att.review_action !== "rejected";
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -160,19 +161,17 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuLabel>Chấm công #{att.id}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => actions.onViewMap(att)}>
                   <MapPin className="mr-2 h-4 w-4" />
                   Xem bản đồ
                 </DropdownMenuItem>
-                {!isApproved && (
+                {showApprove && (
                   <DropdownMenuItem onClick={() => actions.onApprove(att)}>
                     <Check className="mr-2 h-4 w-4" />
                     Duyệt
                   </DropdownMenuItem>
                 )}
-                {!isRejected && (
+                {showReject && (
                   <DropdownMenuItem
                     onClick={() => actions.onReject(att)}
                     className="text-rose-600 focus:text-rose-700"

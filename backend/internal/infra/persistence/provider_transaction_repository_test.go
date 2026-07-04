@@ -121,6 +121,56 @@ func TestRepository_GetByID_NotFound(t *testing.T) {
 	require.ErrorIs(t, err, domaintx.ErrNotFound)
 }
 
+// TestRepository_MarkReconciled_StatusPrecondition pins H7: MarkReconciled
+// (the FSM-bypassing reconcile path) must only override rows currently in a
+// reconcilable prior state — failed/completed/authorised/verified, sourced
+// from WalletPaymentService.ReconcilePayment's switch. A pending row must be
+// refused so the reconcile path cannot silently flip non-terminal rows.
+func TestRepository_MarkReconciled_StatusPrecondition(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+
+	reconcilable := []domaintx.State{
+		domaintx.StateFailed,
+		domaintx.StateCompleted,
+		domaintx.StateAuthorised,
+		domaintx.StateVerified,
+	}
+	for _, prior := range reconcilable {
+		t.Run("override_from_"+string(prior), func(t *testing.T) {
+			t.Parallel()
+			row := newRow(t)
+			row.Status = prior
+			require.NoError(t, repo.Create(ctx, row))
+
+			require.NoError(t, repo.MarkReconciled(ctx, row.ID, domaintx.StateCompleted, time.Now()))
+
+			got, err := repo.GetByID(ctx, row.ID)
+			require.NoError(t, err)
+			require.Equal(t, domaintx.StateCompleted, got.Status,
+				"reconcilable prior state %s should be overridden to completed", prior)
+			require.Positive(t, got.Version, "version should be bumped by the override")
+		})
+	}
+
+	// Non-reconcilable prior state must be refused (the H7 guard).
+	t.Run("block_from_pending", func(t *testing.T) {
+		t.Parallel()
+		row := newRow(t) // Status defaults to StatePending
+		require.NoError(t, repo.Create(ctx, row))
+
+		err := repo.MarkReconciled(ctx, row.ID, domaintx.StateCompleted, time.Now())
+		require.ErrorIs(t, err, domaintx.ErrNotFound,
+			"MarkReconciled must refuse to override a pending row")
+
+		got, err := repo.GetByID(ctx, row.ID)
+		require.NoError(t, err)
+		require.Equal(t, domaintx.StatePending, got.Status,
+			"pending row must be left untouched by the reconcile path")
+	})
+}
+
 func TestRepository_UpdateExpected_HappyPath(t *testing.T) {
 	t.Parallel()
 	repo, _ := newTestRepo(t)
