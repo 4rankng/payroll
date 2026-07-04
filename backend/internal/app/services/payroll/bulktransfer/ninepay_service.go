@@ -45,7 +45,7 @@ type NinePayExecutePayload struct {
 
 // DisbursementFeeProvider resolves the per-transfer disbursement fee.
 type DisbursementFeeProvider interface {
-	GetDisbursementFeeVND(ctx context.Context, provider string) int64
+	GetDisbursementFeeVND(ctx context.Context, provider string) (fee int64, waived bool, err error)
 }
 
 // NinePayBulkTransferService orchestrates bulk payroll transfers via 9Pay API.
@@ -440,11 +440,13 @@ func (s *NinePayBulkTransferService) EstimateFee(ctx context.Context, req *dto.E
 	transferCount := len(validationResult.ValidData.EmployeeProjectAmounts)
 
 	var feePerTransfer int64
-	if s.feeProvider != nil {
-		if s.providerResolver != nil {
-			if pName, err := s.providerResolver.ActiveProviderName(ctx); err == nil {
-				feePerTransfer = s.feeProvider.GetDisbursementFeeVND(ctx, pName)
+	if s.feeProvider != nil && s.providerResolver != nil {
+		if pName, err := s.providerResolver.ActiveProviderName(ctx); err == nil {
+			resolved, _, ferr := s.feeProvider.GetDisbursementFeeVND(ctx, pName)
+			if ferr != nil {
+				return nil, fmt.Errorf("estimate fee for provider %q: %w", pName, ferr)
 			}
+			feePerTransfer = resolved
 		}
 	}
 

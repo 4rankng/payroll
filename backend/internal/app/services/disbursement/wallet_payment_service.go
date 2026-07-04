@@ -33,7 +33,7 @@ const maxTransitionRetries = 3
 // scheduled fee at clock.Now() — declared as an interface here to keep
 // Initiate testable with a stub fee source.
 type DisbursementFeeProvider interface {
-	GetDisbursementFeeVND(ctx context.Context, provider string) int64
+	GetDisbursementFeeVND(ctx context.Context, provider string) (fee int64, waived bool, err error)
 }
 
 // WalletPaymentService is the use-case layer over the
@@ -132,7 +132,15 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 		}
 	}
 	if s.feeProvider != nil {
-		fee = s.feeProvider.GetDisbursementFeeVND(ctx, providerName)
+		resolved, waived, ferr := s.feeProvider.GetDisbursementFeeVND(ctx, providerName)
+		if ferr != nil {
+			return nil, fmt.Errorf("%w: provider %q: %w", ErrFeeResolution, providerName, ferr)
+		}
+		fee = resolved
+		if waived {
+			s.logger.Info("provider_transactions: fee waived (zero-fee route)",
+				"request_id", in.RequestID, "provider", providerName)
+		}
 	} else {
 		s.logger.Warn("provider_transactions: fee provider not wired; stamping fee=0",
 			"request_id", in.RequestID)

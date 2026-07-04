@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -61,9 +62,11 @@ func (s *FeeScheduleService) SetRegistry(r feeRegistryResolver) {
 	s.registry = r
 }
 
-// GetDisbursementFeeVND resolves the active provider from the registry and
-// returns the fee. Panics if registry is nil (fail-fast: no silent zero fee).
-func (s *FeeScheduleService) GetDisbursementFeeVND(ctx context.Context, provider string) int64 {
+// GetDisbursementFeeVND satisfies the DisbursementFeeProvider interface
+// (declared in wallet_payment_service.go and mirrored in bulktransfer). It
+// resolves the fee at clock.Now() for the given provider. See ResolveFee for
+// the (fee, waived, err) semantics and the fail-open / fail-closed policy.
+func (s *FeeScheduleService) GetDisbursementFeeVND(ctx context.Context, provider string) (int64, bool, error) {
 	return s.ResolveFee(ctx, provider, clock.Now())
 }
 
@@ -273,18 +276,72 @@ func (s *FeeScheduleService) ActiveAt(ctx context.Context, provider string, at t
 }
 
 // ResolveFee returns the per-transfer disbursement fee in VND for the given
-// provider on date `at`. Falls back to a per-provider default on any lookup
-// failure with a warning log — fee resolution must never hard-fail on the
-// transfer-initiate hot path.
-func (s *FeeScheduleService) ResolveFee(ctx context.Context, provider string, at time.Time) int64 {
+// provider on date `at`. Returns (fee, waived, err):
+//   - fee:    the resolved amount (0 when the route is on the zero-fee allowlist).
+//   - waived: true when the provider is on the explicit zero-fee allowlist — a
+//     legitimate free transfer, distinct from a missing-schedule bug.
+//   - err:    non-nil only in fail-closed mode when no schedule is active and the
+//     provider is not allowlisted. The money path treats this as a hard stop
+//     rather than stamping a guessed fee.
+//
+// Fail policy is env-gated so the first deploy is inert:
+//   - DISBURSEMENT_FEE_FAIL_OPEN unset/true (default, legacy behavior): a missing
+//     schedule logs a warning and returns the per-provider fallback so a config
+//     gap never blocks a live disbursement. The warning is the signal ops uses to
+//     decide when to flip to fail-closed.
+//   - DISBURSEMENT_FEE_FAIL_OPEN=false: a missing schedule for a chargeable route
+//     surfaces as an error. The zero-fee allowlist
+//     (DISBURSEMENT_FEE_ZERO_FEE_PROVIDERS, comma-separated) is the escape hatch
+//     for routes that legitimately do not charge.
+func (s *FeeScheduleService) ResolveFee(ctx context.Context, provider string, at time.Time) (int64, bool, error) {
 	entry, err := s.ActiveAt(ctx, provider, at)
-	if err != nil {
-		fb := fallbackFeeForProvider(provider)
-		s.logger.Warn("ResolveFee: no active disbursement fee schedule, falling back",
-			"provider", provider, "fallback", fb, "at", at, "error", err)
-		return fb
+	if err == nil {
+		return entry.FeeVND, false, nil
 	}
-	return entry.FeeVND
+	if zeroFeeProviders()[provider] {
+		s.logger.Info("ResolveFee: no schedule but provider is on the zero-fee allowlist",
+			"provider", provider, "at", at, "error", err)
+		return 0, true, nil
+	}
+	if feeFailOpen() {
+		fb := fallbackFeeForProvider(provider)
+		s.logger.Warn("ResolveFee: no active disbursement fee schedule, fail-open fallback "+
+			"(flip DISBURSEMENT_FEE_FAIL_OPEN=false to harden once no unexpected fallbacks remain)",
+			"provider", provider, "fallback", fb, "at", at, "error", err)
+		return fb, false, nil
+	}
+	return 0, false, fmt.Errorf("no active disbursement fee schedule for provider %q at %v: %w", provider, at, err)
+}
+
+// feeFailOpen reports whether a missing fee schedule falls back to the
+// per-provider default (legacy behavior) instead of surfacing a hard error.
+// Default is fail-OPEN on first deploy so shipping this code does not change
+// fee behavior; ops flips DISBURSEMENT_FEE_FAIL_OPEN=false to harden once the
+// warn logs confirm only expected fallbacks remain. Read per-call so tests can
+// toggle via t.Setenv.
+func feeFailOpen() bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("DISBURSEMENT_FEE_FAIL_OPEN")))
+	if v == "" {
+		return true
+	}
+	return v != "0" && v != "false" && v != "no"
+}
+
+// zeroFeeProviders parses DISBURSEMENT_FEE_ZERO_FEE_PROVIDERS (comma-separated
+// provider names) into a set. A provider here is a legitimate free route: a
+// missing schedule is not an error even in fail-closed mode. Empty when unset.
+func zeroFeeProviders() map[string]bool {
+	raw := os.Getenv("DISBURSEMENT_FEE_ZERO_FEE_PROVIDERS")
+	if raw == "" {
+		return nil
+	}
+	out := make(map[string]bool)
+	for _, p := range strings.Split(raw, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out[p] = true
+		}
+	}
+	return out
 }
 
 // GetDisbursementFeeVND satisfies the DisbursementFeeProvider interface
