@@ -23,6 +23,8 @@ type WalletPaymentRepository interface {
 
 	// MarkReconciled directly updates status and reconciled_at, bypassing
 	// the FSM. Used by reconciliation when overriding status (e.g. failed → completed).
+	// Guarded by a status precondition: only rows in a reconcilable prior state
+	// (failed/completed/authorised/verified) are updated; others return ErrNotFound.
 	MarkReconciled(ctx context.Context, id uint64, status State, reconciledAt time.Time) error
 
 	// ListByStatuses returns rows matching any of the given statuses within

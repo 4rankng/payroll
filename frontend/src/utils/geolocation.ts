@@ -385,7 +385,7 @@ export function createPoorAccuracyLocationIssue(
   };
 }
 
-function createInaccurateGeolocationError(
+export function createInaccurateGeolocationError(
   accuracy?: number,
   requiredAccuracy?: number
 ): GeolocationError {
@@ -402,4 +402,150 @@ export function createGeolocationError(code: number, message: string): Geolocati
   const error = new Error(message) as GeolocationError;
   error.code = code;
   return error;
+}
+
+// ============================================================================
+// Continuous acquisition (warm-up for instant tap-to-submit)
+// ============================================================================
+//
+// requestBestCurrentLocation above is a ONE-SHOT: it resolves/rejects on the
+// first good sample or the outer timeout. The check-in card needs a fix that is
+// already warm when the worker taps, so the tap submits instantly instead of
+// starting a cold 25-30s acquisition — the dominant cause of on-site check-in
+// failures (the phone's first GNSS fix outlasts the budget, so the request never
+// reaches the geofence).
+//
+// watchContinuousLocation keeps a single watchPosition running and exposes the
+// latest fresh sample + rolling progress until unsubscribe(). The React hook
+// (useContinuousLocation) owns start/stop and the tap-time submit decision: it
+// reuses getCheckInGeofenceGuidance to know when a sample is "inside" the gate,
+// mirroring the backend validateGeofence "certain" contract (dist+accuracy<=r).
+
+/** Freshness window for the continuous watch (15s). Matches the watchPosition
+ *  maximumAge so a browser-cached fix counts as fresh iff within this age.
+ *  Intentionally tighter than the one-shot requestBestCurrentLocation's 30s
+ *  freshMaxAgeMs: the continuous watch exposes the LATEST fresh sample (current
+ *  position), so a tighter window keeps the submit candidate honest about where
+ *  the worker is now. */
+const DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS = 15000;
+
+export interface ContinuousLocationHandle {
+  /** Stop the underlying watchPosition. Idempotent. */
+  unsubscribe: () => void;
+  /** Most recent sample within the freshness window, or null. This is the sample
+   *  a tap should submit — it reflects the worker's current position. */
+  getLatestFreshSample: () => LocationSample | null;
+  /** Most recent progress snapshot, or null before the first update. */
+  getProgress: () => LocationAcquisitionProgress | null;
+}
+
+export interface WatchContinuousLocationOptions {
+  freshMaxAgeMs?: number;
+  requiredAccuracyMeters?: number;
+  excellentAccuracyMeters?: number;
+  onUpdate?: (progress: LocationAcquisitionProgress) => void;
+  /** Geolocation error callback. The hook classifies: permission-denied is fatal
+   *  (unsubscribe + recovery banner); signal-loss/timeout are transient (ignore). */
+  onError?: (error: GeolocationPositionError) => void;
+}
+
+/** Pure freshness check (boundary-inclusive). Exported for unit testing. */
+export function isSampleFresh(
+  sample: LocationSample,
+  nowMs: number,
+  maxAgeMs: number
+): boolean {
+  return nowMs - sample.timestamp <= maxAgeMs;
+}
+
+/**
+ * Start a continuous high-accuracy watch and expose the latest fresh sample plus
+ * rolling progress. Non-terminating: keeps the watch warm until unsubscribe().
+ *
+ * Submit candidate semantics: this watch exposes the LATEST fresh sample (current
+ * position), not the lowest-accuracy reading. That is intentionally different
+ * from requestBestCurrentLocation, which resolves on the best accuracy. For a
+ * stationary worker the two converge in practice; for a moving worker, latest is
+ * positionally honest — the server-side gate is the final backstop regardless.
+ */
+export function watchContinuousLocation(
+  options?: WatchContinuousLocationOptions
+): ContinuousLocationHandle {
+  const freshMaxAgeMs = options?.freshMaxAgeMs ?? DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS;
+  const requiredAccuracyMeters =
+    options?.requiredAccuracyMeters ?? DEFAULT_LOCATION_ACQUISITION_OPTIONS.requiredAccuracyMeters;
+  const excellentAccuracyMeters =
+    options?.excellentAccuracyMeters ?? DEFAULT_LOCATION_ACQUISITION_OPTIONS.excellentAccuracyMeters;
+  const classificationOptions = { excellentAccuracyMeters, requiredAccuracyMeters };
+
+  const noopHandle: ContinuousLocationHandle = {
+    unsubscribe: () => {},
+    getLatestFreshSample: () => null,
+    getProgress: () => null,
+  };
+  if (!navigator.geolocation) {
+    return noopHandle;
+  }
+
+  const startedAt = Date.now();
+  let watchId: number | null = null;
+  let sampleCount = 0;
+  let latestFreshSample: LocationSample | null = null;
+  let bestAccuracy: number | undefined;
+  let progress: LocationAcquisitionProgress | null = null;
+
+  const emit = () => {
+    progress = {
+      sampleCount,
+      elapsedMs: Date.now() - startedAt,
+      latestAccuracy: latestFreshSample?.accuracy,
+      bestAccuracy,
+      latestFreshSample: latestFreshSample ?? undefined,
+      // "best to submit" for the continuous watch == latest fresh sample
+      // (current position). See function doc comment.
+      bestFreshSample: latestFreshSample ?? undefined,
+      requiredAccuracyMeters,
+      status: getAccuracyStatus(bestAccuracy, classificationOptions),
+    };
+    options?.onUpdate?.(progress);
+  };
+
+  try {
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        sampleCount += 1;
+        const sample = toLocationSample(position);
+        if (isSampleFresh(sample, Date.now(), freshMaxAgeMs)) {
+          latestFreshSample = sample;
+          if (bestAccuracy === undefined || sample.accuracy < bestAccuracy) {
+            bestAccuracy = sample.accuracy;
+          }
+        }
+        emit();
+      },
+      (error) => {
+        // Transient errors (momentary signal loss) are non-fatal; the watch keeps
+        // running and the next fix updates state. The hook decides what to surface
+        // — permission-denied is fatal, everything else is ignorable noise.
+        options?.onError?.(error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS,
+      }
+    );
+  } catch {
+    return noopHandle;
+  }
+
+  return {
+    unsubscribe: () => {
+      if (watchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+    },
+    getLatestFreshSample: () => latestFreshSample,
+    getProgress: () => progress,
+  };
 }

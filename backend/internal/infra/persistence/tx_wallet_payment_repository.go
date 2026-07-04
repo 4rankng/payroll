@@ -267,10 +267,29 @@ func (r *TxWalletPaymentRepository) StatsByStatus(ctx context.Context, from, to 
 	return out, nil
 }
 
+// reconcilablePriorStates are the wallet_payment statuses from which the
+// reconciliation path may override status. Sourced from
+// WalletPaymentService.ReconcilePayment's switch (failed / completed /
+// authorised / verified). Rows in any other status (pending, reversed) are
+// not reconcilable and MarkReconciled leaves them untouched.
+var reconcilablePriorStates = []domaintx.State{
+	domaintx.StateFailed,
+	domaintx.StateCompleted,
+	domaintx.StateAuthorised,
+	domaintx.StateVerified,
+}
+
 // MarkReconciled directly updates status and reconciled_at, bypassing
 // the FSM optimistic-locking path. Used by reconciliation when overriding
-// status (e.g. failed -> completed after recon contradicts IPN).
+// status (e.g. failed -> completed after recon contradicts IPN). Guards the
+// override with a status precondition: only rows currently in a reconcilable
+// prior state (see reconcilablePriorStates) are updated, so a pending/reversed
+// row cannot be silently flipped by the reconcile path.
 func (r *TxWalletPaymentRepository) MarkReconciled(ctx context.Context, id uint64, status domaintx.State, reconciledAt time.Time) error {
+	priorStates := make([]string, len(reconcilablePriorStates))
+	for i, s := range reconcilablePriorStates {
+		priorStates[i] = string(s)
+	}
 	updates := map[string]any{
 		"status":            string(status),
 		"reconciled_at":     reconciledAt,
@@ -280,7 +299,7 @@ func (r *TxWalletPaymentRepository) MarkReconciled(ctx context.Context, id uint6
 	}
 	res := r.DB.WithContext(ctx).
 		Table("wallet_payments").
-		Where("id = ?", id).
+		Where("id = ? AND status IN ?", id, priorStates).
 		Updates(updates)
 	if res.Error != nil {
 		return fmt.Errorf("wallet_payments: mark reconciled: %w", res.Error)
