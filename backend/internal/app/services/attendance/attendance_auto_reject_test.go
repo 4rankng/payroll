@@ -394,6 +394,48 @@ func TestCheckInAllowsAfterConfirmedNoSalaryCheckoutSameDay(t *testing.T) {
 	}
 }
 
+func TestCheckInAllowsAfterAutoRejectedAttendanceSameDay(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 6, 21, 20, 5, 0, 0, loc)
+	zero := int64(0)
+	reason := "Đã hết hạn tan ca (Vào làm: 08:35; Tan ca: 17:00 (hạn chót 21:00))"
+	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{
+		ID:                 8,
+		ProjectID:          55,
+		EmployeeID:         123,
+		Date:               time.Date(2026, 6, 21, 0, 0, 0, 0, loc),
+		CheckInTime:        time.Date(2026, 6, 21, 8, 35, 0, 0, loc),
+		EarningAmount:      &zero,
+		SalaryRejectReason: &reason,
+	}}
+	svc := &AttendanceService{
+		attendanceRepo:      repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: &domain.ProjectEmployee{Position: "Công nhân", CheckInEnabled: true}},
+		projectRepo: &fakeProjectRepo{p: &domain.Project{
+			ID:                   55,
+			IsFlexible:           true,
+			GeofenceRadiusMeters: 100,
+			GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: 10.0, Lng: 106.0}},
+		}},
+		payrateRepo: &fakePayrateRepo{pr: &domain.Payrate{
+			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"20:00-04:00":350000}}}`),
+		}},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+
+	att, err := svc.CheckIn(context.Background(), 123, 55, domain.GeoReading{Lat: 10.0, Lng: 106.0})
+	if err != nil {
+		t.Fatalf("expected next same-day check-in to be allowed after auto-rejected attendance, got %v", err)
+	}
+	if att == nil || repo.created != att {
+		t.Fatal("expected a new attendance record to be created")
+	}
+	if !att.CheckInTime.Equal(now.In(att.CheckInTime.Location())) {
+		t.Fatalf("expected new check-in time %v, got %v", now, att.CheckInTime)
+	}
+}
+
 func TestGetTodayAttendanceReturnsOpenYesterdayNightShift(t *testing.T) {
 	loc := clock.DefaultLocation
 	today := time.Date(2026, 6, 22, 0, 0, 0, 0, loc)
@@ -420,6 +462,38 @@ func TestGetTodayAttendanceReturnsOpenYesterdayNightShift(t *testing.T) {
 	}
 	if got != openYesterday {
 		t.Fatalf("expected open previous-day attendance, got %+v", got)
+	}
+}
+
+func TestGetTodayAttendanceIgnoresAutoRejectedToday(t *testing.T) {
+	loc := clock.DefaultLocation
+	today := time.Date(2026, 6, 22, 0, 0, 0, 0, loc)
+	zero := int64(0)
+	reason := "Đã hết hạn tan ca (Vào làm: 08:35; Tan ca: 17:00 (hạn chót 21:00))"
+	autoRejectedToday := &domain.Attendance{
+		ID:                 10,
+		ProjectID:          55,
+		EmployeeID:         123,
+		Date:               today,
+		CheckInTime:        time.Date(2026, 6, 22, 8, 35, 0, 0, loc),
+		EarningAmount:      &zero,
+		SalaryRejectReason: &reason,
+		CheckInGate:        "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDateByDay: map[string]*domain.Attendance{
+		today.Format("2006-01-02"): autoRejectedToday,
+	}}
+	svc := &AttendanceService{
+		attendanceRepo: repo,
+		clock:          clock.NewFake(time.Date(2026, 6, 22, 20, 5, 0, 0, loc)),
+	}
+
+	got, err := svc.GetTodayAttendance(context.Background(), 123)
+	if err != nil {
+		t.Fatalf("GetTodayAttendance returned error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("expected auto-rejected current-day attendance to be ignored, got %+v", got)
 	}
 }
 
