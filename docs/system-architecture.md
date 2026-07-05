@@ -193,7 +193,7 @@ Partner scoping is enforced at two levels:
 
 ## Deployment Topology
 
-### Production (pay.1stop.app)
+### Production (tingting.vip)
 
 ```
 Droplet (x86_64/amd64)

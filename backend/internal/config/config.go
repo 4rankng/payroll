@@ -334,12 +334,12 @@ func Load() (*Config, error) {
 			HashSalt:   getEnv("HASH_SALT", ""),
 		},
 		CORS: CORSConfig{
-			AllowOrigins:     parseStringSlice(getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://tingting.vip,https://www.tingting.vip,https://pay.1stop.app")),
+			AllowOrigins:     parseStringSlice(getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://tingting.vip,https://www.tingting.vip")),
 			AllowCredentials: parseBool(getEnv("CORS_ALLOW_CREDENTIALS", "true")),
 		},
 		Notification: NotificationConfig{
 			EmailEnabled:      true,
-			FromEmail:         "payroll@1stop.app",
+			FromEmail:         getEnv("EMAIL_FROM", "noreply@tingting.vip"),
 			FromName:          "TingTing",
 			DefaultRecipients: []string{},
 			DefaultCC:         []string{},

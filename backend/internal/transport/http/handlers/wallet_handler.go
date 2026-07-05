@@ -69,6 +69,7 @@ func (h *WalletHandler) SyncBalance(c *gin.Context) {
 	response.Success(c, gin.H{
 		"provider_balance": result.ProviderBalance,
 		"local_balance":    result.LocalBalance,
+		"adjusted":         result.Adjusted,
 		"currency":         "VND",
 	}, "Đồng bộ số dư thành công")
 }

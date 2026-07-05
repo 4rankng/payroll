@@ -48,11 +48,17 @@ export default function WalletPageMobile() {
     setSyncing(true);
     try {
       const result = await walletService.syncBalance();
+      await queryClient.invalidateQueries({ queryKey: ['wallet'] });
+
       if (result.provider_balance === result.local_balance) {
-        toast.success(`Số dư khớp: ${formatVND(result.local_balance)}`);
-        invalidateAll();
+        toast.success(
+          result.adjusted
+            ? `Đã đồng bộ và điều chỉnh: ${formatVND(result.local_balance)}`
+            : `Số dư khớp: ${formatVND(result.local_balance)}`,
+        );
       } else {
         setMismatch({ provider: result.provider_balance, local: result.local_balance });
+        toast.warning('Đã đồng bộ, cần xử lý chênh lệch số dư');
       }
     } catch (err) {
       showErrorNotification(err, 'Không thể đồng bộ số dư');
@@ -82,20 +88,21 @@ export default function WalletPageMobile() {
   return (
     <div className="min-h-dvh bg-[hsl(var(--sidebar-background))]">
       {/* Dark hero zone */}
-      <div className="px-4 pt-5 pb-10">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <WalletIcon className="h-5 w-5 text-slate-400" />
-            <h1 className="text-[17px] font-semibold text-slate-100 tracking-tight">Ví điện tử</h1>
+      <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-10">
+        <div className="relative z-10 flex items-start justify-between gap-3 mb-6">
+          <div className="min-w-0 flex flex-1 items-center gap-2 pt-1">
+            <WalletIcon className="h-5 w-5 shrink-0 text-slate-400" />
+            <h1 className="truncate text-[17px] font-semibold text-slate-100 tracking-tight">Ví điện tử</h1>
           </div>
           <button
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 active:bg-white/[0.04]"
+            aria-label="Đồng bộ số dư ví"
+            className="relative z-20 inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 active:bg-white/[0.04] disabled:opacity-60"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            Đồng bộ
+            <span>{syncing ? 'Đang đồng bộ' : 'Đồng bộ'}</span>
           </button>
         </div>
 

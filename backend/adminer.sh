@@ -3,7 +3,7 @@
 # Adminer Access Control Script
 # Usage: ./adminer.sh --on|--off|--status
 
-SERVER="pay.1stop.app"
+SERVER="tingting.vip"
 ADMINER_PORT="8081"
 
 show_usage() {

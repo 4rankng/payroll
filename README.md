@@ -75,7 +75,7 @@ make api-test
 ### Deployment
 
 ```bash
-make deploy          # Production (pay.1stop.app) — builds + pushes amd64 images, SSH deploy
+make deploy          # Production (tingting.vip) — builds + pushes amd64 images, SSH deploy
 make demo           # Demo (demo.tingting.vip) — separate :demo image tag + API URL
 make demo-db        # Reload demo MySQL from local dev DB (does not touch images)
 make backup          # Backup production DB to OneDrive

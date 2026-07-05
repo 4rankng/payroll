@@ -314,7 +314,7 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
-          host: pay.1stop.app
+          host: tingting.vip
           username: root
           key: ${{ secrets.PROD_SSH_KEY }}
           script_stop: true
@@ -368,5 +368,5 @@ jobs:
             docker image prune -f
 
             echo "=== Deployment complete! ==="
-            echo "App: https://pay.1stop.app"
-            echo "API: https://pay.1stop.app/api/healthz"
+            echo "App: https://tingting.vip"
+            echo "API: https://tingting.vip/api/healthz"

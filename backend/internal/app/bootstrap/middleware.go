@@ -40,7 +40,6 @@ func setupCORS(router *gin.Engine, cfg *config.Config) {
 			"http://127.0.0.1:3000",
 			"https://tingting.vip",
 			"https://www.tingting.vip",
-			"https://pay.1stop.app",
 		}
 	}
 	corsConfig.AllowCredentials = true

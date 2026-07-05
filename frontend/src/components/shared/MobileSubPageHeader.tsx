@@ -42,7 +42,7 @@ export const MobileSubPageHeader = ({
         'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)] shrink-0',
         className,
       )}
-      style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
+      style={{ paddingTop: 'var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem))' }}
     >
       <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
         <Button
