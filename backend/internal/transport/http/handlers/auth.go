@@ -54,6 +54,24 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	response.Success(c, loginResponse, "Login successful")
 }
 
+// @Summary Generate login CAPTCHA
+// @Description Generate a digit-image CAPTCHA for brute-force protection (required after N failed logins)
+// @Tags auth
+// @Produce json
+// @Success 200 {object} response.SuccessResponse
+// @Router /auth/captcha [get]
+func (h *AuthHandler) GetCaptcha(c *gin.Context) {
+	id, image, err := h.authService.GenerateCaptcha(c.Request.Context())
+	if err != nil {
+		response.InternalServerError(c, "Không thể tạo mã captcha")
+		return
+	}
+	response.Success(c, gin.H{
+		"captcha_id": id,
+		"image":      image,
+	}, "OK")
+}
+
 // @Summary Verify OTP login code
 // @Description Complete the two-step login by submitting the emailed 6-digit code
 // @Tags auth

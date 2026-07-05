@@ -28,6 +28,7 @@ type Config struct {
 	Disbursement DisbursementConfig
 	OTP          OTPConfig
 	Google       GoogleConfig
+	Captcha      CaptchaConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -83,6 +84,16 @@ type OTPConfig struct {
 type GoogleConfig struct {
 	OAuthEnabled bool
 	ClientID     string
+}
+
+// CaptchaConfig controls the self-hosted image CAPTCHA (base64Captcha + Redis).
+// When Enabled, a digit-image CAPTCHA is required after `Threshold` consecutive
+// login failures. Default off — purely additive. Gated by CAPTCHA_ENABLE.
+type CaptchaConfig struct {
+	Enabled    bool
+	Threshold  int           // failures before CAPTCHA is required (default 3)
+	CodeTTL    time.Duration // challenge lifetime (default 5m)
+	CodeLength int           // digits in the code (default 5)
 }
 
 type LogConfig struct {
@@ -376,6 +387,12 @@ func Load() (*Config, error) {
 		Google: GoogleConfig{
 			OAuthEnabled: parseBool(getEnv("GOOGLE_OAUTH_ENABLED", "true")),
 			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		},
+		Captcha: CaptchaConfig{
+			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),
+			Threshold:  parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
+			CodeTTL:    parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
+			CodeLength: parseInt(getEnv("CAPTCHA_CODE_LENGTH", "5")),
 		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
