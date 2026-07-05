@@ -62,16 +62,17 @@ func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	return limiterGin.NewMiddleware(instance,
 		limiterGin.WithKeyGetter(ipKeyGetter),
 		limiterGin.WithLimitReachedHandler(func(c *gin.Context) {
-			// ulule/limiter sets X-RateLimit-Reset (Unix timestamp) before calling
-			// this handler. Compute the actual remaining seconds so the user sees a
-			// factual "try again in Ns" — not a hardcoded 60 that overstates the wait
-			// late in the window.
+			// ulule/limiter's gin middleware writes the X-RateLimit-* headers as
+			// RESPONSE headers (c.Header → c.Writer.Header()) just before invoking
+			// this handler. NOTE: c.GetHeader() reads the REQUEST headers
+			// (c.Request.Header), so it would never see them — read the value back
+			// from the response writer instead. Reset is a Unix-seconds timestamp.
 			retryAfter := 60
-			if resetStr := c.GetHeader("X-RateLimit-Reset"); resetStr != "" {
+			if resetStr := c.Writer.Header().Get("X-RateLimit-Reset"); resetStr != "" {
 				if resetTs, err := strconv.ParseInt(resetStr, 10, 64); err == nil {
 					now := clock.Now().Unix()
-					if resetTs > now {
-						retryAfter = int(resetTs - now)
+					if delta := resetTs - now; delta > 0 {
+						retryAfter = int(delta)
 					}
 				}
 			}

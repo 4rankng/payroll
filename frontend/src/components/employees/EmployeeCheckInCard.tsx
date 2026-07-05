@@ -404,45 +404,61 @@ export function EmployeeCheckInCard({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={`p-4 ${className}`} style={style}>
-        <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
-          <div className="h-6 w-32 bg-gray-200 rounded"></div>
-          <div className="h-10 w-48 bg-gray-200 rounded-full"></div>
-        </div>
-      </div>
-    );
-  }
-
-  const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
-  const salaryRecorded = attendance ? isSalaryRecorded(attendance) : false;
-  // The next action is fully determined by the attendance status — there is no
-  // need to track the last-tapped action separately (doing so defaulted it to
-  // "check_in" and could mislabel the recovery CTA on a fresh check_out).
-  const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
-  const locationRecoveryText = "Thử lại";
-  const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
-  const visibleLocationSample = location.sample;
-
   // --- Check-in readiness gate (GPS + geofence + timing) ---
   // Combines three signals: GPS stability (useContinuousLocation.isSubmitReady),
   // geofence position (from guidance), and the shift timing window (from the
   // profile DTO — Phase 1). The button shows only when all three are green.
+  //
+  // Re-evaluates at minute resolution: the original useMemo read Date.now() but
+  // only depended on the window strings, so the result froze until those props
+  // changed — a worker parked on the "outside-window" branch just before the
+  // window opened would stay gated indefinitely. The minute tick forces a
+  // recompute so the countdown advances and the ready pop fires on the crossing.
+  // These hooks live BEFORE the isLoading early return (Rules of Hooks).
+  const gpsReady = location.isSubmitReady;
+  const gpsAcquiring = location.isWatching && !gpsReady && !location.fatalError;
+  const nowTick = useRef(Date.now());
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      nowTick.current = Date.now();
+      forceTick((n) => n + 1);
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
   const withinWindow = useMemo(() => {
     if (!checkInWindowStart || !checkInWindowEnd) return true; // no shift configured
-    const now = new Date();
+    const now = new Date(nowTick.current);
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const [sh, sm] = checkInWindowStart.split(":").map(Number);
     const [eh, em] = checkInWindowEnd.split(":").map(Number);
     if (!Number.isFinite(sh) || !Number.isFinite(eh)) return true;
     return nowMin >= sh * 60 + sm && nowMin <= eh * 60 + em;
-  }, [checkInWindowStart, checkInWindowEnd]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInWindowStart, checkInWindowEnd, nowTick.current]);
 
-  const gpsReady = location.isSubmitReady;
-  const gpsAcquiring = location.isWatching && !gpsReady && !location.fatalError;
+  // Seconds until the check-in window opens, for the outside-window hint
+  // countdown. Recomputed on the minute tick (minute precision is sufficient;
+  // showing seconds would require a 1s timer and is noisy on mobile).
+  const secondsUntilWindow = useMemo(() => {
+    if (!checkInWindowStart || withinWindow) return null;
+    const [sh, sm] = checkInWindowStart.split(":").map(Number);
+    if (!Number.isFinite(sh)) return null;
+    const now = new Date(nowTick.current);
+    const target = new Date(now);
+    target.setHours(sh, sm ?? 0, 0, 0);
+    // If the window already passed today, the gap is stale; treat as no
+    // countdown (the static window text still shows).
+    if (target.getTime() <= now.getTime()) return null;
+    return Math.round((target.getTime() - now.getTime()) / 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInWindowStart, withinWindow, nowTick.current]);
 
   // Became-ready pop: fire a one-shot CSS class when transitioning to ready.
+  // All hooks below run on every render (before the isLoading early return) to
+  // satisfy the Rules of Hooks; isPending is derived from mutation/loading flags
+  // that are all available pre-return.
+  const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
   const [showReadyPop, setShowReadyPop] = useState(false);
   const prevReadyRef = useRef(false);
   useEffect(() => {
@@ -455,6 +471,27 @@ export function EmployeeCheckInCard({
     }
     if (!ready) prevReadyRef.current = false;
   }, [withinWindow, gpsReady, isPending]);
+
+  if (isLoading) {
+    return (
+      <div className={`p-4 ${className}`} style={style}>
+        <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
+          <div className="h-6 w-32 bg-gray-200 rounded"></div>
+          <div className="h-10 w-48 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const salaryRecorded = attendance ? isSalaryRecorded(attendance) : false;
+  // The next action is fully determined by the attendance status — there is no
+  // need to track the last-tapped action separately (doing so defaulted it to
+  // "check_in" and could mislabel the recovery CTA on a fresh check_out).
+  const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
+  const locationRecoveryText = "Thử lại";
+  const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
+  const visibleLocationSample = location.sample;
+
   const locationPreview = checkInTarget ? (
     <Suspense fallback={<MapFallback />}>
       <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
@@ -772,6 +809,20 @@ export function EmployeeCheckInCard({
                       ? `Ca làm việc bắt đầu lúc ${shiftStart}. Giờ chấm công từ ${checkInWindowStart} đến ${checkInWindowEnd}.`
                       : "Chưa có ca làm việc được cấu hình."}
                   </p>
+                  {secondsUntilWindow != null && (
+                    <p className="mt-1 text-[15px] font-semibold leading-5 text-amber-700">
+                      {(() => {
+                        const m = Math.floor(secondsUntilWindow / 60);
+                        const s = secondsUntilWindow % 60;
+                        if (m >= 60) {
+                          const h = Math.floor(m / 60);
+                          return `Còn khoảng ${h} giờ ${m % 60} phút nữa.`;
+                        }
+                        if (m > 0) return `Còn khoảng ${m} phút nữa.`;
+                        return `Còn khoảng ${s} giây nữa.`;
+                      })()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -565,7 +565,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
 
 	// Self-hosted image CAPTCHA (base64Captcha + Redis). Reuses the shared
-	// Redis client. When CAPTCHA_ENABLED=false the service is still constructed
+	// Redis client. When CAPTCHA_ENABLE=false the service is still constructed
 	// (cheap) but RequiredForFailures() short-circuits.
 	captchaService := auth.NewCaptchaService(redis.Client, auth.CaptchaConfig{
 		Enabled:    cfg.Captcha.Enabled,

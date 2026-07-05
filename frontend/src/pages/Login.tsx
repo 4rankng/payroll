@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, User, Eye, EyeOff, AlertCircle, Loader2, ChevronRight } from "lucide-react";
+import { Lock, User, Eye, EyeOff, AlertCircle, Loader2, ChevronRight, RefreshCw } from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
 import { useLogin, useGoogleLogin } from "@/hooks/api/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiClient } from "@/services/api/client";
 import type { ApiError } from "@/services/api/client";
 
 const GoogleIcon = () => (
@@ -27,6 +28,7 @@ const Login = () => {
   const [captchaImage, setCaptchaImage] = useState<string | null>(null);
   const [captchaId, setCaptchaId] = useState<string | null>(null);
   const [captchaCode, setCaptchaCode] = useState("");
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
@@ -34,6 +36,33 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const needsCaptcha = failedAttempts >= 3;
+
+  // Fetch a fresh CAPTCHA challenge. The endpoint is public (no auth token
+  // required — see backend setupAuthRoutes), so it works pre-login. Goes
+  // through apiClient so the configured baseURL/proxy + headers are honored
+  // (a raw fetch("/api/v1/...") breaks when VITE_API_BASE_URL is a separate
+  // host). Synchronously guards against overlapping requests via a ref.
+  const captchaInFlightRef = useRef(false);
+  const refreshCaptcha = useCallback(async () => {
+    if (captchaInFlightRef.current) return;
+    captchaInFlightRef.current = true;
+    setCaptchaLoading(true);
+    try {
+      const res = await apiClient.get<{ captcha_id: string; image: string }>("/auth/captcha");
+      const d = res?.data;
+      if (d?.captcha_id && d?.image) {
+        setCaptchaId(d.captcha_id);
+        setCaptchaImage(d.image);
+        setCaptchaCode("");
+      }
+    } catch {
+      // Swallow: the form still submits without a captcha_id, and the server
+      // returns a clear "captcha required" error the user can act on.
+    } finally {
+      captchaInFlightRef.current = false;
+      setCaptchaLoading(false);
+    }
+  }, []);
 
   // Redirect authenticated users away from /login
   useEffect(() => {
@@ -59,23 +88,14 @@ const Login = () => {
     if (loginMutation.isSuccess) setFailedAttempts(0);
   }, [loginMutation.isError, loginMutation.isSuccess]);
 
+  // Fetch the initial challenge when the threshold is first crossed, and
+  // auto-refresh the image after each subsequent failed attempt (the prior
+  // challenge is single-use server-side). Depends on failedAttempts so a
+  // failed login with a captcha triggers a fresh image automatically.
   useEffect(() => {
     if (!needsCaptcha) return;
-    let cancelled = false;
-    fetch("/api/v1/auth/captcha")
-      .then((r) => r.json())
-      .then((body) => {
-        if (cancelled) return;
-        const d = body?.data;
-        if (d?.captcha_id && d?.image) {
-          setCaptchaId(d.captcha_id);
-          setCaptchaImage(d.image);
-          setCaptchaCode("");
-        }
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [needsCaptcha, failedAttempts]);
+    refreshCaptcha();
+  }, [needsCaptcha, failedAttempts, refreshCaptcha]);
 
   useEffect(() => {
     if (loginError) resetLogin();
@@ -283,33 +303,32 @@ const Login = () => {
               </div>
 
               {/* CAPTCHA — shown after 3 failed login attempts */}
-              {needsCaptcha && captchaImage && (
+              {needsCaptcha && (
                 <div className="space-y-1.5 animate-fade-in-up">
-                  <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  <Label htmlFor="captchaCode" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Mã xác nhận
                   </Label>
                   <div className="flex items-center gap-3">
-                    <img
-                      src={captchaImage}
-                      alt="Mã captcha"
-                      className="h-11 rounded-lg border border-gray-200 bg-white"
-                      onClick={() => {
-                        // Click image to refresh
-                        fetch("/api/v1/auth/captcha")
-                          .then((r) => r.json())
-                          .then((body) => {
-                            const d = body?.data;
-                            if (d?.captcha_id && d?.image) {
-                              setCaptchaId(d.captcha_id);
-                              setCaptchaImage(d.image);
-                              setCaptchaCode("");
-                            }
-                          })
-                          .catch(() => {});
-                      }}
-                      style={{ cursor: "pointer" }}
-                    />
+                    {/* Image + inline loading skeleton. Same h-11 + rounded-lg as
+                        the inputs so the row stays visually aligned. */}
+                    {captchaImage ? (
+                      <img
+                        src={captchaImage}
+                        alt="Hình ảnh mã xác nhận 5 chữ số — nhấn để tải hình khác"
+                        className="h-11 rounded-lg border border-gray-200 bg-white select-none"
+                        onClick={() => refreshCaptcha()}
+                        style={{ cursor: "pointer" }}
+                      />
+                    ) : (
+                      <div
+                        className="h-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
+                      </div>
+                    )}
                     <Input
+                      id="captchaCode"
                       type="text"
                       inputMode="numeric"
                       placeholder="Nhập mã"
@@ -318,8 +337,17 @@ const Login = () => {
                       className="premium-input flex-1 h-11 text-sm tracking-widest text-center bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
                       autoComplete="off"
                       required={needsCaptcha}
-                      disabled={isDisabled}
+                      disabled={isDisabled || captchaLoading}
                     />
+                    <button
+                      type="button"
+                      onClick={() => refreshCaptcha()}
+                      disabled={captchaLoading || isDisabled}
+                      aria-label="Tải hình mã xác nhận khác"
+                      className="shrink-0 h-11 w-11 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${captchaLoading ? "animate-spin" : ""}`} />
+                    </button>
                   </div>
                 </div>
               )}
