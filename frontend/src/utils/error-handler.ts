@@ -277,10 +277,17 @@ export const getErrorMessage = (error: unknown): string => {
   if (isApiErrorResponse(error)) {
     const apiError = error;
 
-    // Handle rate limiting with retry_after
+    // Handle rate limiting with retry_after — use the server's factual remaining
+    // seconds (computed from X-RateLimit-Reset, not a hardcoded 60).
     if (apiError.http_status === 429) {
       const retryAfter = apiError.retry_after || 60;
-      return `Quá nhiều yêu cầu. Vui lòng thử lại sau ${retryAfter} giây`;
+      const baseMsg = apiError.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau';
+      // If the server message already ends with "sau", append the seconds; else
+      // build the full sentence.
+      if (baseMsg.endsWith('sau')) {
+        return `${baseMsg} ${retryAfter} giây`;
+      }
+      return `${baseMsg} (thử lại sau ${retryAfter} giây)`;
     }
 
     // If no message, return based on HTTP status code

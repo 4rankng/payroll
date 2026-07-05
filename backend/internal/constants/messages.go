@@ -174,6 +174,7 @@ const (
 	MsgOTPCodeRequiredVN             = "Vui lòng nhập mã xác thực"
 	MsgOTPResendTooSoonVN            = "Vui lòng đợi một chút trước khi yêu cầu gửi lại mã"
 	MsgOTPVerificationRequiredVN     = "Cần xác thực hai bước để truy cập tài nguyên này"
+	MsgRateLimitExceededVN           = "Quá nhiều yêu cầu. Vui lòng thử lại sau"
 	MsgPasswordChangeNotAllowedOnProfileVN = "Không thể đổi mật khẩu qua cập nhật hồ sơ — vui lòng sử dụng endpoint đổi mật khẩu (yêu cầu mật khẩu hiện tại)"
 
 	// Timesheet Validation Messages - Vietnamese

@@ -2,8 +2,11 @@ package middleware
 
 import (
 	"log"
+	"strconv"
 	"time"
 
+	"api-server/internal/constants"
+	"api-server/internal/pkg/clock"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -59,7 +62,20 @@ func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	return limiterGin.NewMiddleware(instance,
 		limiterGin.WithKeyGetter(ipKeyGetter),
 		limiterGin.WithLimitReachedHandler(func(c *gin.Context) {
-			response.TooManyRequests(c, "Rate limit exceeded. Please try again later.", 60)
+			// ulule/limiter sets X-RateLimit-Reset (Unix timestamp) before calling
+			// this handler. Compute the actual remaining seconds so the user sees a
+			// factual "try again in Ns" — not a hardcoded 60 that overstates the wait
+			// late in the window.
+			retryAfter := 60
+			if resetStr := c.GetHeader("X-RateLimit-Reset"); resetStr != "" {
+				if resetTs, err := strconv.ParseInt(resetStr, 10, 64); err == nil {
+					now := clock.Now().Unix()
+					if resetTs > now {
+						retryAfter = int(resetTs - now)
+					}
+				}
+			}
+			response.TooManyRequests(c, constants.MsgRateLimitExceededVN, retryAfter)
 		}),
 	)
 }
