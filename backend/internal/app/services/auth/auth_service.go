@@ -36,6 +36,7 @@ type AuthService struct {
 	otpConfig            config.OTPConfig
 	googleClientID       string
 	nonceStore           *cache.NonceStore
+	captchaService       *CaptchaService
 }
 
 type Claims struct {
@@ -51,7 +52,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, googleClientID string, nonceStore *cache.NonceStore, logger *slog.Logger) *AuthService {
+func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, googleClientID string, nonceStore *cache.NonceStore, captchaService *CaptchaService, logger *slog.Logger) *AuthService {
 	return &AuthService{
 		userService:          userService,
 		employeeRepo:         employeeRepo,
@@ -63,6 +64,7 @@ func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeR
 		otpConfig:            otpCfg,
 		googleClientID:       googleClientID,
 		nonceStore:           nonceStore,
+		captchaService:       captchaService,
 		logger:               logger,
 	}
 }
@@ -75,6 +77,28 @@ func (s *AuthService) requiresOTP(user *domain.User) bool {
 		return false
 	}
 	return user.IsAdmin() || user.IsPartner()
+}
+
+// CaptchaRequiredForUsername checks whether a CAPTCHA is needed for the next
+// login attempt on this account (based on consecutive failures). Used by the
+// frontend to decide whether to show the CAPTCHA widget before submitting.
+func (s *AuthService) CaptchaRequiredForUsername(ctx context.Context, username string) bool {
+	if s.captchaService == nil || !s.captchaService.Enabled() {
+		return false
+	}
+	user, err := s.userService.UserRepo.GetByUsername(ctx, username)
+	if err != nil || user == nil {
+		return false
+	}
+	return s.captchaService.RequiredForFailures(user.OTPFailedAttempts)
+}
+
+// GenerateCaptcha creates a new image CAPTCHA challenge.
+func (s *AuthService) GenerateCaptcha(ctx context.Context) (id, imageBase64 string, err error) {
+	if s.captchaService == nil {
+		return "", "", domain.NewInternalError("captcha not configured", nil)
+	}
+	return s.captchaService.Generate(ctx)
 }
 
 // mapOTPError translates an OTPService error into the domain error a handler
@@ -247,9 +271,28 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 		}
 	}
 
+	// CAPTCHA gate: after `threshold` consecutive failed logins on this account,
+	// require a valid captcha code before the password is even checked. Prevents
+	// automated brute-force tools from hammering the password check. Reuses the
+	// otp_failed_attempts counter as the consecutive-failure tracker (reset on
+	// successful login below).
+	if s.captchaService != nil && s.captchaService.RequiredForFailures(user.OTPFailedAttempts) {
+		if !s.captchaService.Verify(ctx, req.CaptchaID, req.CaptchaCode) {
+			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: captcha không hợp lệ")
+			return nil, domain.NewValidationError(constants.MsgCaptchaFailedVN)
+		}
+	}
+
 	if !s.userService.VerifyPasswordHash(req.Password, user.Password) {
 		s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: sai mật khẩu")
+		// Increment consecutive failure count (used by CAPTCHA threshold + brute-force tracking).
+		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil)
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+	}
+
+	// Reset the consecutive-failure counter on successful password verification.
+	if user.OTPFailedAttempts > 0 {
+		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, 0, nil)
 	}
 
 	// Email-OTP 2FA gate (RT-C2): when the feature is enabled and the caller is

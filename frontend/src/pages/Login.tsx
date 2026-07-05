@@ -23,12 +23,17 @@ const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [captchaId, setCaptchaId] = useState<string | null>(null);
+  const [captchaCode, setCaptchaCode] = useState("");
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
   const googleLoginMutation = useGoogleLogin();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
+  const needsCaptcha = failedAttempts >= 3;
 
   // Redirect authenticated users away from /login
   useEffect(() => {
@@ -47,6 +52,30 @@ const Login = () => {
       authManager.removeToken();
     }
   }, []);
+
+  // Track login failures + fetch CAPTCHA image when threshold is reached.
+  useEffect(() => {
+    if (loginMutation.isError) setFailedAttempts((n) => n + 1);
+    if (loginMutation.isSuccess) setFailedAttempts(0);
+  }, [loginMutation.isError, loginMutation.isSuccess]);
+
+  useEffect(() => {
+    if (!needsCaptcha) return;
+    let cancelled = false;
+    fetch("/api/v1/auth/captcha")
+      .then((r) => r.json())
+      .then((body) => {
+        if (cancelled) return;
+        const d = body?.data;
+        if (d?.captcha_id && d?.image) {
+          setCaptchaId(d.captcha_id);
+          setCaptchaImage(d.image);
+          setCaptchaCode("");
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [needsCaptcha, failedAttempts]);
 
   useEffect(() => {
     if (loginError) resetLogin();
@@ -87,9 +116,15 @@ const Login = () => {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      loginMutation.mutate({ username: emailOrUsername, password });
+      loginMutation.mutate({
+        username: emailOrUsername,
+        password,
+        ...(needsCaptcha && captchaId
+          ? { captcha_id: captchaId, captcha_code: captchaCode }
+          : {}),
+      });
     },
-    [emailOrUsername, password, loginMutation]
+    [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode]
   );
 
   const togglePassword = useCallback(() => setShowPassword((v) => !v), []);
@@ -246,6 +281,48 @@ const Login = () => {
                   </button>
                 </div>
               </div>
+
+              {/* CAPTCHA — shown after 3 failed login attempts */}
+              {needsCaptcha && captchaImage && (
+                <div className="space-y-1.5 animate-fade-in-up">
+                  <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    Mã xác nhận
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={captchaImage}
+                      alt="Mã captcha"
+                      className="h-11 rounded-lg border border-gray-200 bg-white"
+                      onClick={() => {
+                        // Click image to refresh
+                        fetch("/api/v1/auth/captcha")
+                          .then((r) => r.json())
+                          .then((body) => {
+                            const d = body?.data;
+                            if (d?.captcha_id && d?.image) {
+                              setCaptchaId(d.captcha_id);
+                              setCaptchaImage(d.image);
+                              setCaptchaCode("");
+                            }
+                          })
+                          .catch(() => {});
+                      }}
+                      style={{ cursor: "pointer" }}
+                    />
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Nhập mã"
+                      value={captchaCode}
+                      onChange={(e) => setCaptchaCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                      className="premium-input flex-1 h-11 text-sm tracking-widest text-center bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
+                      autoComplete="off"
+                      required={needsCaptcha}
+                      disabled={isDisabled}
+                    />
+                  </div>
+                </div>
+              )}
 
               <Button
                 type="submit"

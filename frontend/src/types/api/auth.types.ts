@@ -22,6 +22,9 @@ export interface BasicUserProfile {
 export interface LoginCredentials {
   username: string;
   password: string;
+  /** CAPTCHA challenge response (required after N failed logins). */
+  captcha_id?: string;
+  captcha_code?: string;
 }
 
 export interface LoginResponse {

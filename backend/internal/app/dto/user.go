@@ -38,8 +38,10 @@ type UserResponse struct {
 
 // LoginRequest represents the login request
 type LoginRequest struct {
-	Username string `json:"username" binding:"required,min=1"`
-	Password string `json:"password" binding:"required"`
+	Username    string `json:"username" binding:"required,min=1"`
+	Password    string `json:"password" binding:"required"`
+	CaptchaID   string `json:"captcha_id,omitempty"`
+	CaptchaCode string `json:"captcha_code,omitempty"`
 }
 
 // VerifyOTPRequest completes the email-OTP login step. OTPSessionID was returned

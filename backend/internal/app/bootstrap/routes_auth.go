@@ -6,6 +6,7 @@ func setupAuthRoutes(v1 *gin.RouterGroup, container *Container) {
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", container.Middleware.LoginRateLimit, container.Handlers.Auth.Login)
+		auth.GET("/captcha", container.Handlers.Auth.GetCaptcha)
 		auth.POST("/login/verify", container.Middleware.LoginRateLimit, container.Handlers.Auth.VerifyLoginOTP)
 		auth.POST("/login/resend", container.Middleware.LoginRateLimit, container.Handlers.Auth.ResendOTPCode)
 		auth.POST("/google", container.Middleware.LoginRateLimit, container.Handlers.Auth.GoogleLogin)
