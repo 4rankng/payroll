@@ -51,7 +51,11 @@ export const MobilePageHeader = ({
         'px-4 pb-3 pt-4',
         className,
       )}
-      style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
+      style={{
+        paddingTop: sticky
+          ? 'var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem))'
+          : 'var(--mobile-nonsticky-header-top-padding, var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem)))',
+      }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">

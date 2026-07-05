@@ -5,7 +5,7 @@ include .env
 export
 
 COMPOSE_FILE := docker-compose.dev.yml
-PROD_SERVER := pay.1stop.app
+PROD_SERVER := tingting.vip
 DEMO_SERVER := demo.tingting.vip
 DEMO_TAG    := demo
 

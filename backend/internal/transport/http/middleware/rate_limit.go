@@ -1,8 +1,12 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/constants"
@@ -30,9 +34,30 @@ func ipKeyGetter(c *gin.Context) string {
 	return c.ClientIP()
 }
 
-// CreateRateLimiter creates a new rate limiter using ulule/limiter with Redis store.
-// Each counter is keyed per client IP (see ipKeyGetter above).
-func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
+// rateLimitReachedHandler writes the 429 response carrying the actual seconds
+// until the window resets (not a hard-coded 60). ulule/limiter's gin middleware
+// writes the X-RateLimit-* headers as RESPONSE headers (c.Header →
+// c.Writer.Header()) just before invoking this handler. NOTE: c.GetHeader()
+// reads REQUEST headers (c.Request.Header), so it would never see them — read
+// the value back from the response writer instead. Reset is a Unix-seconds
+// timestamp.
+func rateLimitReachedHandler(c *gin.Context) {
+	retryAfter := 60
+	if resetStr := c.Writer.Header().Get("X-RateLimit-Reset"); resetStr != "" {
+		if resetTs, err := strconv.ParseInt(resetStr, 10, 64); err == nil {
+			now := clock.Now().Unix()
+			if delta := resetTs - now; delta > 0 {
+				retryAfter = int(delta)
+			}
+		}
+	}
+	response.TooManyRequests(c, constants.MsgRateLimitExceededVN, retryAfter)
+}
+
+// createRateLimiterWithKey builds a ulule/limiter middleware keyed by the given
+// keyGetter. All rate limiters share this plumbing; only the key function
+// differs (per-IP, per-account, etc.).
+func createRateLimiterWithKey(config RateLimitConfig, keyGetter func(*gin.Context) string) gin.HandlerFunc {
 	// Parse rate from config
 	rate, err := limiter.NewRateFromFormatted(config.Rate)
 	if err != nil {
@@ -58,39 +83,72 @@ func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	// Create limiter instance
 	instance := limiter.New(store, rate)
 
-	// Attach middleware with explicit per-IP key getter and JSON rate-limit response
+	// Attach middleware with the requested key getter and a shared JSON 429 response.
 	return limiterGin.NewMiddleware(instance,
-		limiterGin.WithKeyGetter(ipKeyGetter),
-		limiterGin.WithLimitReachedHandler(func(c *gin.Context) {
-			// ulule/limiter's gin middleware writes the X-RateLimit-* headers as
-			// RESPONSE headers (c.Header → c.Writer.Header()) just before invoking
-			// this handler. NOTE: c.GetHeader() reads the REQUEST headers
-			// (c.Request.Header), so it would never see them — read the value back
-			// from the response writer instead. Reset is a Unix-seconds timestamp.
-			retryAfter := 60
-			if resetStr := c.Writer.Header().Get("X-RateLimit-Reset"); resetStr != "" {
-				if resetTs, err := strconv.ParseInt(resetStr, 10, 64); err == nil {
-					now := clock.Now().Unix()
-					if delta := resetTs - now; delta > 0 {
-						retryAfter = int(delta)
-					}
-				}
-			}
-			response.TooManyRequests(c, constants.MsgRateLimitExceededVN, retryAfter)
-		}),
+		limiterGin.WithKeyGetter(keyGetter),
+		limiterGin.WithLimitReachedHandler(rateLimitReachedHandler),
 	)
 }
 
+// CreateRateLimiter creates a new rate limiter using ulule/limiter with Redis store.
+// Each counter is keyed per client IP (see ipKeyGetter above).
+func CreateRateLimiter(config RateLimitConfig) gin.HandlerFunc {
+	return createRateLimiterWithKey(config, ipKeyGetter)
+}
+
 // CreateLoginRateLimit creates a rate limiter specifically for login attempts.
-// Limit: 10 attempts per minute per IP — tight enough to break credential
-// stuffing / default-password sprays, loose enough that a normal user mistyping
-// their password a few times is not blocked. Per-account lockout is a separate
-// follow-up; this IP cap is the cheap baseline that defeats automated sprays.
+// Limit: 10 attempts per minute per ACCOUNT — keyed by the username/CCCD/mobile
+// the caller submitted (see loginAccountKeyGetter), NOT by source IP. Per-account
+// keying means a distributed attacker rotating IPs cannot bypass the cap when
+// hammering one account. When the body carries no identifier (malformed request,
+// or a non-login endpoint mounted on this limiter), the key falls back to the
+// client IP so anonymous traffic never collapses into a single global bucket.
 func CreateLoginRateLimit(redisURL string) gin.HandlerFunc {
-	return CreateRateLimiter(RateLimitConfig{
+	return createRateLimiterWithKey(RateLimitConfig{
 		Rate:     "10-M",
 		RedisURL: redisURL,
-	})
+	}, loginAccountKeyGetter)
+}
+
+// loginAccountKeyGetter extracts the account identifier from the login request
+// body and returns a per-account limiter key, so the 10/min login cap is
+// enforced per account, not per IP. For /auth/login the identifier is the
+// submitted username/CCCD/mobile; for the OTP second step (/auth/login/verify,
+// /auth/login/resend) it is the otp_session_id, which is bound 1:1 to one
+// account for the duration of the OTP flow. The body is read with a small cap
+// and restored, so the downstream handler's BindJSON re-reads it normally. When
+// the body carries no identifier, the key falls back to the client IP — this
+// keeps isolation per-source instead of collapsing every anonymous request into
+// one shared (global) bucket.
+func loginAccountKeyGetter(c *gin.Context) string {
+	const maxBody = 4 << 10 // 4 KiB — login payloads are tiny; bound memory use
+	if c.Request != nil && c.Request.Body != nil {
+		raw, err := io.ReadAll(io.LimitReader(c.Request.Body, maxBody))
+		// Always restore the body so the handler can re-read it.
+		c.Request.Body = io.NopCloser(bytes.NewReader(raw))
+		if err == nil {
+			var payload struct {
+				Username     string `json:"username"`
+				OTPSessionID string `json:"otp_session_id"`
+			}
+			if json.Unmarshal(raw, &payload) == nil {
+				if id := strings.TrimSpace(payload.Username); id != "" {
+					if len(id) > 255 {
+						id = id[:255]
+					}
+					return "account:" + strings.ToLower(id)
+				}
+				if id := strings.TrimSpace(payload.OTPSessionID); id != "" {
+					if len(id) > 255 {
+						id = id[:255]
+					}
+					return "otp-session:" + id
+				}
+			}
+		}
+	}
+	// No identifier in the body — keep per-source isolation (never global).
+	return "ip:" + c.ClientIP()
 }
 
 // CreateAPIRateLimit creates a rate limiter for general API requests.

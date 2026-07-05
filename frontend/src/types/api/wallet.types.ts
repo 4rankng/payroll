@@ -124,6 +124,7 @@ export interface ReconciliationJob {
 export interface SyncBalanceResponse {
   provider_balance: number;
   local_balance: number;
+  adjusted: boolean;
   currency: string;
 }
 

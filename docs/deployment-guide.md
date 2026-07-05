@@ -6,7 +6,7 @@ Targets, Docker build constraints, database migrations, and backup/restore proce
 
 | Target | Host | Image Tag | Notes |
 |--------|------|-----------|-------|
-| Production | `pay.1stop.app` | `:latest` | x86_64/amd64 only |
+| Production | `tingting.vip` | `:latest` | x86_64/amd64 only |
 | Demo | `demo.tingting.vip` | `:demo` | 1GB droplet, requires 2GB swap |
 
 Both targets use SSH deploy: images are built/pushed to DockerHub, then pulled on the server via `docker compose`.
@@ -27,11 +27,11 @@ make deploy
 This runs (from root Makefile):
 1. `cd frontend && make push` -- build + push amd64 frontend image (`:latest`)
 2. `cd backend && make push` -- build + push amd64 backend image (`:latest`, plus `:GIT_SHA` tag)
-3. `cd backend && make deploy` -- SSH to `pay.1stop.app`, pull images, recreate containers
+3. `cd backend && make deploy` -- SSH to `tingting.vip`, pull images, recreate containers
 
 On the server:
 ```bash
-ssh root@pay.1stop.app
+ssh root@tingting.vip
 cd /opt/payroll && docker compose pull frontend backend
 cd /opt/payroll && docker compose up -d --force-recreate --no-deps frontend backend
 ```

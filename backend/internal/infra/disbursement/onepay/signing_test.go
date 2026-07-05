@@ -324,7 +324,7 @@ func TestVerifyIPN_ValidSignature(t *testing.T) {
 	partnerKey := "ipn-verify-secret"
 	tm := mustParseDate(t, "20260108T112907Z")
 	body := []byte(`{"transaction_id":"TXN001","funds_transfer_id":"FT001","state":"approved"}`)
-	fullURL := "https://pay.1stop.app/api/v1/webhooks/disbursement/1pay"
+	fullURL := "https://tingting.vip/api/v1/webhooks/disbursement/1pay"
 
 	headers := map[string]string{
 		"accept":         "application/json",
@@ -375,7 +375,7 @@ func TestVerifyIPN_InvalidSignature(t *testing.T) {
 	}
 	body := []byte(`{"state":"approved"}`)
 
-	if VerifyIPN("PUT", "https://pay.1stop.app/api/v1/webhooks/disbursement/1pay", headers, body, "partner", "secret") {
+	if VerifyIPN("PUT", "https://tingting.vip/api/v1/webhooks/disbursement/1pay", headers, body, "partner", "secret") {
 		t.Fatal("VerifyIPN accepted an invalid signature")
 	}
 }
@@ -387,7 +387,7 @@ func TestVerifyIPN_MissingAuthHeader(t *testing.T) {
 	}
 	body := []byte(`{}`)
 
-	if VerifyIPN("PUT", "https://pay.1stop.app/api/v1/webhooks/disbursement/1pay", headers, body, "partner", "secret") {
+	if VerifyIPN("PUT", "https://tingting.vip/api/v1/webhooks/disbursement/1pay", headers, body, "partner", "secret") {
 		t.Fatal("VerifyIPN should reject when X-OP-Authorization is missing")
 	}
 }

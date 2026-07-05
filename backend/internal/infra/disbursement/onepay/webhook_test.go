@@ -12,7 +12,7 @@ import (
 	"api-server/internal/domain/ports/infrastructure"
 )
 
-const testCallbackURL = "https://pay.1stop.app/api/v1/webhooks/disbursement/1pay"
+const testCallbackURL = "https://tingting.vip/api/v1/webhooks/disbursement/1pay"
 
 // buildSignedIPNHeaders creates valid OWS signature headers for a given
 // IPN body, partner key, and timestamp. Used by webhook tests.
