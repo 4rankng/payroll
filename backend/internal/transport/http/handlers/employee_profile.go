@@ -118,9 +118,16 @@ func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, empl
 		CheckInTargetStatus:         string(scheduleInfo.CheckInTargetStatus),
 		CheckInTarget:               mapCheckInTarget(scheduleInfo.CheckInTarget),
 		CheckInGeofenceRadiusMeters: scheduleInfo.CheckInGeofenceRadiusMeters,
-		CreatedAt:                   employee.CreatedAt,
-		UpdatedAt:                   employee.UpdatedAt,
 	}
+	// Advisory shift window for the frontend check-in button gate.
+	if scheduleInfo.ShiftStart != "" {
+		resp.ShiftStart = &scheduleInfo.ShiftStart
+		resp.ShiftEnd = &scheduleInfo.ShiftEnd
+		resp.CheckInWindowStart = &scheduleInfo.CheckInWindowStart
+		resp.CheckInWindowEnd = &scheduleInfo.CheckInWindowEnd
+	}
+	resp.CreatedAt = employee.CreatedAt
+	resp.UpdatedAt = employee.UpdatedAt
 	if employee.User != nil {
 		resp.Username = employee.User.Username
 	}

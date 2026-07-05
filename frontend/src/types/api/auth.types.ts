@@ -102,6 +102,12 @@ export interface EmployeeProfile {
   check_in_target_status?: CheckInTargetStatus;
   check_in_target?: CheckInTarget | null;
   check_in_geofence_radius_meters?: number;
+  // Advisory shift window (for the check-in button readiness gate). Null when
+  // no shift is configured. The server's validateCheckInWindow is authoritative.
+  shift_start?: string;
+  shift_end?: string;
+  check_in_window_start?: string;
+  check_in_window_end?: string;
   created_at: string;
   updated_at: string;
 }

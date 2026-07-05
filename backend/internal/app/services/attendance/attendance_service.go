@@ -1187,3 +1187,21 @@ func hasConfiguredPosition(configuredPositions map[string]string, position strin
 	}
 	return false
 }
+
+// ResolveShiftWindow is an exported helper for the employee profile service to
+// derive the advisory check-in window for display on the employee portal. It
+// takes a flattened payrate map + position + "now", and returns the shift
+// start/end times and the ±1h check-in window bounds, or nil if no shift is
+// configured. This reuses the same resolveShifts → closestShift logic as CheckIn
+// so the frontend hint always matches the server's validation.
+func ResolveShiftWindow(flattened map[string]int, position string, now time.Time) (shiftStart, shiftEnd, windowStart, windowEnd time.Time, ok bool) {
+	_, _, shifts := resolveShifts(flattened, position, now)
+	if len(shifts) == 0 {
+		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
+	}
+	shift := closestShift(shifts, now)
+	if shift == nil {
+		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
+	}
+	return shift.start, shift.end, shift.start.Add(-checkInShiftWindow), shift.start.Add(checkInShiftWindow), true
+}
