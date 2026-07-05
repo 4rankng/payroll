@@ -214,12 +214,19 @@
      MOBILE PAGE STYLES - Touch-friendly, safe-area-aware
      ======================================================================== */
   .mobile-page {
+    --mobile-safe-top: env(safe-area-inset-top, 0px);
+    --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --mobile-header-top-padding: calc(var(--mobile-safe-top) + 1rem);
+    --mobile-page-top-padding: calc(var(--mobile-safe-top) + 0.75rem);
+    --mobile-page-bottom-padding: calc(5.75rem + var(--mobile-safe-bottom));
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
     -webkit-overflow-scrolling: touch;
   }
 
   .mobile-page button,
-  .mobile-page a {
+  .mobile-page a,
+  .mobile-page [role="button"] {
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -365,5 +372,36 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+/* ─── Check-in button micro-animations ─────────────────────────────────── */
+/* GPS-warming pulse: gentle breathing while acquiring a fix. */
+@keyframes check-in-warming {
+  0%, 100% { transform: scale(1); opacity: 0.85; box-shadow: 0 4px 12px rgba(16,185,129,0.15); }
+  50% { transform: scale(1.02); opacity: 1; box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+}
+.check-in-warming { animation: check-in-warming 1.8s ease-in-out infinite; }
+
+/* Became-ready pop: one-shot bounce when GPS stabilizes + inside geofence. */
+@keyframes check-in-ready-pop {
+  0% { transform: scale(0.92); }
+  55% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.check-in-ready-pop { animation: check-in-ready-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Outside-window hint fade-in. */
+@keyframes check-in-hint-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.check-in-hint-fade { animation: check-in-hint-fade 0.3s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .check-in-warming,
+  .check-in-ready-pop,
+  .check-in-hint-fade {
+    animation: none;
   }
 }

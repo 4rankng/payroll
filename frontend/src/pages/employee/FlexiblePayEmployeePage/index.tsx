@@ -218,6 +218,10 @@ const FlexiblePayEmployeePage = () => {
               className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
               checkInTarget={profile.check_in_target}
               checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
+              shiftStart={profile.shift_start}
+              shiftEnd={profile.shift_end}
+              checkInWindowStart={profile.check_in_window_start}
+              checkInWindowEnd={profile.check_in_window_end}
               style={cardShadow}
             />
 

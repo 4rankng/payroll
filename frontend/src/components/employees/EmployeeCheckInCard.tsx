@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, BadgeCheck, BriefcaseBusiness, Clock, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +59,11 @@ interface EmployeeCheckInCardProps {
   className?: string;
   checkInTarget?: CheckInTarget | null;
   checkInGeofenceRadiusMeters?: number | null;
+  /** Advisory shift window (from the profile DTO). Null/absent = no timing gate. */
+  shiftStart?: string;
+  shiftEnd?: string;
+  checkInWindowStart?: string;
+  checkInWindowEnd?: string;
   style?: React.CSSProperties;
 }
 
@@ -160,6 +165,10 @@ export function EmployeeCheckInCard({
   className,
   checkInTarget,
   checkInGeofenceRadiusMeters,
+  shiftStart,
+  shiftEnd,
+  checkInWindowStart,
+  checkInWindowEnd,
   style,
 }: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
@@ -415,6 +424,37 @@ export function EmployeeCheckInCard({
   const locationRecoveryText = "Thử lại";
   const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
   const visibleLocationSample = location.sample;
+
+  // --- Check-in readiness gate (GPS + geofence + timing) ---
+  // Combines three signals: GPS stability (useContinuousLocation.isSubmitReady),
+  // geofence position (from guidance), and the shift timing window (from the
+  // profile DTO — Phase 1). The button shows only when all three are green.
+  const withinWindow = useMemo(() => {
+    if (!checkInWindowStart || !checkInWindowEnd) return true; // no shift configured
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const [sh, sm] = checkInWindowStart.split(":").map(Number);
+    const [eh, em] = checkInWindowEnd.split(":").map(Number);
+    if (!Number.isFinite(sh) || !Number.isFinite(eh)) return true;
+    return nowMin >= sh * 60 + sm && nowMin <= eh * 60 + em;
+  }, [checkInWindowStart, checkInWindowEnd]);
+
+  const gpsReady = location.isSubmitReady;
+  const gpsAcquiring = location.isWatching && !gpsReady && !location.fatalError;
+
+  // Became-ready pop: fire a one-shot CSS class when transitioning to ready.
+  const [showReadyPop, setShowReadyPop] = useState(false);
+  const prevReadyRef = useRef(false);
+  useEffect(() => {
+    const ready = withinWindow && gpsReady && !isPending;
+    if (ready && !prevReadyRef.current) {
+      setShowReadyPop(true);
+      const t = setTimeout(() => setShowReadyPop(false), 500);
+      prevReadyRef.current = true;
+      return () => clearTimeout(t);
+    }
+    if (!ready) prevReadyRef.current = false;
+  }, [withinWindow, gpsReady, isPending]);
   const locationPreview = checkInTarget ? (
     <Suspense fallback={<MapFallback />}>
       <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
@@ -716,35 +756,135 @@ export function EmployeeCheckInCard({
       ) : (
         <div className="space-y-4">
           {locationPreview}
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[18px] font-bold leading-6 text-slate-950">Sẵn sàng vào làm</p>
-                <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
-                  Khi đã tới cổng nhà máy, bấm Vào làm để bắt đầu ca.
-                </p>
+          {/* Outside-window hint: show shift time + countdown instead of the button */}
+          {!withinWindow ? (
+            <div className="check-in-hint-fade rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[18px] font-bold leading-6 text-slate-950">
+                    Chưa đến giờ vào làm
+                  </p>
+                  <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                    {shiftStart
+                      ? `Ca làm việc bắt đầu lúc ${shiftStart}. Giờ chấm công từ ${checkInWindowStart} đến ${checkInWindowEnd}.`
+                      : "Chưa có ca làm việc được cấu hình."}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <Button
-            size="lg"
-            className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
-            style={{
-              boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
-            }}
-            disabled={isPending}
-            onClick={() => handleAction("check_in")}
-          >
-            {isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <BriefcaseBusiness className="w-5 h-5 mr-2" />
-            )}
-            {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
-          </Button>
+          ) : gpsReady ? (
+            <>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-employee">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[18px] font-bold leading-6 text-slate-950">
+                      Sẵn sàng vào làm
+                    </p>
+                    <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                      Vị trí đã xác định. Bấm Vào làm để bắt đầu ca.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className={`h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600 ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
+                disabled={isPending}
+                onClick={() => handleAction("check_in")}
+              >
+                {isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                )}
+                {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
+              </Button>
+            </>
+          ) : gpsAcquiring ? (
+            <>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
+                    <MapPin className="h-5 w-5 animate-pulse" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[18px] font-bold leading-6 text-slate-950">
+                      Đang xác định vị trí...
+                    </p>
+                    <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                      {locationProgress?.status === "excellent"
+                        ? "Tín hiệu rất tốt — sẵn sàng chấm công."
+                        : locationProgress?.status === "acceptable"
+                          ? "Tín hiệu khá — đang ổn định thêm."
+                          : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="check-in-warming h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg"
+                style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
+                disabled
+              >
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Đang lấy vị trí...
+              </Button>
+            </>
+          ) : location.fatalError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[18px] font-bold leading-6 text-slate-950">
+                    Không lấy được vị trí
+                  </p>
+                  <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                    {location.fatalError.title}. {location.fatalError.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-employee">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[18px] font-bold leading-6 text-slate-950">Sẵn sàng vào làm</p>
+                    <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
+                      Khi đã tới cổng nhà máy, bấm Vào làm để bắt đầu ca.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="h-14 w-full rounded-xl bg-employee text-[18px] font-bold text-white shadow-lg hover:bg-employee-600"
+                style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
+                disabled={isPending}
+                onClick={() => handleAction("check_in")}
+              >
+                {isPending ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                )}
+                {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
+              </Button>
+            </>
+          )}
         </div>
       )}
     </div>
