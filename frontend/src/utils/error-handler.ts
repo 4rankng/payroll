@@ -282,8 +282,15 @@ export const getErrorMessage = (error: unknown): string => {
     if (apiError.http_status === 429) {
       const retryAfter = apiError.retry_after || 60;
       const baseMsg = apiError.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau';
-      // If the server message already ends with "sau", append the seconds; else
-      // build the full sentence.
+      // The apiClient 429 interceptor already constructs the canonical
+      // "...sau N giây" message, and a server may also send a fully-formed
+      // sentence. If the duration is already present ("giây"), return verbatim
+      // to avoid producing "…sau 60 giây (thử lại sau 60 giây)".
+      if (baseMsg.includes('giây')) {
+        return baseMsg;
+      }
+      // If the server message ends with "sau", append the seconds; else
+      // build the full sentence in parens.
       if (baseMsg.endsWith('sau')) {
         return `${baseMsg} ${retryAfter} giây`;
       }

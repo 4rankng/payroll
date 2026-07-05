@@ -11,7 +11,7 @@ import (
 
 // CaptchaConfig controls when CAPTCHA is required and how long codes live.
 type CaptchaConfig struct {
-	Enabled    bool          // feature flag (CAPTCHA_ENABLED)
+	Enabled    bool          // feature flag (CAPTCHA_ENABLE)
 	Threshold  int           // require CAPTCHA after this many consecutive failures (default 3)
 	CodeTTL    time.Duration // how long a captcha challenge stays valid (default 5m)
 	CodeLength int           // number of digits in the code (default 5)

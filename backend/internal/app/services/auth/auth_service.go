@@ -279,6 +279,10 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	if s.captchaService != nil && s.captchaService.RequiredForFailures(user.OTPFailedAttempts) {
 		if !s.captchaService.Verify(ctx, req.CaptchaID, req.CaptchaCode) {
 			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: captcha không hợp lệ")
+			// Keep the failure counter climbing so the account continues to
+			// escalate toward OTP-lockout; a sustained captcha-failed flood must
+			// not freeze the counter at the threshold indefinitely.
+			s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil)
 			return nil, domain.NewValidationError(constants.MsgCaptchaFailedVN)
 		}
 	}
@@ -291,8 +295,15 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	}
 
 	// Reset the consecutive-failure counter on successful password verification.
+	// NOTE: only the counter is cleared — an existing OTP lockout
+	// (user.OTPLockedUntil in the future, set by the OTP brute-force backoff) is
+	// preserved so a correct password cannot unlock an account the OTP subsystem
+	// locked. The shared counter is reused for CAPTCHA-threshold tracking, which
+	// is safe here: an attacker without the password can never reach this reset
+	// (it requires a valid password) nor the OTP increment path (also behind the
+	// password check), so they cannot deplete the counter to dodge the CAPTCHA.
 	if user.OTPFailedAttempts > 0 {
-		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, 0, nil)
+		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, 0, user.OTPLockedUntil)
 	}
 
 	// Email-OTP 2FA gate (RT-C2): when the feature is enabled and the caller is
