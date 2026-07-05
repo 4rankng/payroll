@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"api-server/internal/app/services/attendance"
 	"api-server/internal/app/services/audit"
 	"api-server/internal/app/services/user"
 	"api-server/internal/domain"
@@ -19,6 +20,7 @@ type EmployeeProfileService struct {
 	EmployeeRepo        domain.EmployeeRepository
 	TimesheetRepo       domain.TimesheetRepository
 	ProjectEmployeeRepo domain.ProjectEmployeeRepository
+	PayrateRepo         domain.PayrateRepository
 	UserService         *user.UserService
 	EventBus            domain.EventBus
 }
@@ -38,6 +40,12 @@ type EmployeeScheduleInfo struct {
 	CheckInTargetStatus         CheckInTargetStatus
 	CheckInTarget               *CheckInTargetInfo
 	CheckInGeofenceRadiusMeters *uint
+	// Advisory shift window for the frontend check-in button gate. Empty when
+	// no shift is configured.
+	ShiftStart         string
+	ShiftEnd           string
+	CheckInWindowStart string
+	CheckInWindowEnd   string
 }
 
 type CheckInTargetInfo struct {
@@ -51,6 +59,7 @@ func NewEmployeeProfileService(
 	employeeRepo domain.EmployeeRepository,
 	timesheetRepo domain.TimesheetRepository,
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
+	payrateRepo domain.PayrateRepository,
 	userService *user.UserService,
 	eventBus domain.EventBus,
 ) *EmployeeProfileService {
@@ -58,6 +67,7 @@ func NewEmployeeProfileService(
 		EmployeeRepo:        employeeRepo,
 		TimesheetRepo:       timesheetRepo,
 		ProjectEmployeeRepo: projectEmployeeRepo,
+		PayrateRepo:         payrateRepo,
 		UserService:         userService,
 		EventBus:            eventBus,
 	}
@@ -179,6 +189,42 @@ func (s *EmployeeProfileService) populateCheckInTarget(ctx context.Context, empl
 		RadiusMeters: project.GeofenceRadiusMeters,
 		Gates:        project.GeofenceGates,
 	}
+
+	// Resolve the advisory shift window for the frontend check-in button gate.
+	// Reuses the same payrate-based shift resolution as AttendanceService.CheckIn
+	// (resolveShifts → closestShift). Null/empty when no shift is configured —
+	// the frontend treats empty as "no timing gate". The server's
+	// validateCheckInWindow remains authoritative; this is informational only.
+	s.populateShiftWindow(ctx, project.ID, targetAssignment.Position, info)
+}
+
+// populateShiftWindow resolves the employee's applicable shift today and the
+// ±1h check-in window, writing them to info.ShiftStart/ShiftEnd/
+// CheckInWindowStart/CheckInWindowEnd. No-op (leaves fields empty) when the
+// payrate is missing, malformed, or has no shift for the position.
+func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, projectID uint, position string, info *EmployeeScheduleInfo) {
+	if s.PayrateRepo == nil || position == "" {
+		return
+	}
+	payrates, err := s.PayrateRepo.GetByProject(ctx, projectID)
+	if err != nil || len(payrates) == 0 {
+		return
+	}
+	// Use the first (most recent) payrate — matches AttendanceService's pattern.
+	payrate := payrates[0]
+	flattened, err := payrate.Payrate.Flatten()
+	if err != nil || len(flattened) == 0 {
+		return
+	}
+	now := clock.Now()
+	shiftStart, shiftEnd, winStart, winEnd, ok := attendance.ResolveShiftWindow(flattened, position, now)
+	if !ok {
+		return
+	}
+	info.ShiftStart = shiftStart.Format("15:04")
+	info.ShiftEnd = shiftEnd.Format("15:04")
+	info.CheckInWindowStart = winStart.Format("15:04")
+	info.CheckInWindowEnd = winEnd.Format("15:04")
 }
 
 // UpdateMyProfile updates the employee's own profile (name, email, username)
