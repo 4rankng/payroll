@@ -159,9 +159,17 @@ export interface WalletDemandPrediction {
   shortfall: number;
   surplus: number;
   completion_rate: number;
-  method: 'cohort-median' | 'avg-final' | 'no-history';
+  method: 'monte-carlo' | 'gamma-fit' | 'cohort-median' | 'avg-final' | 'no-history';
   confidence: 'high' | 'medium' | 'low';
   basis_periods: number;
+  // Newsvendor / tail-risk fields. Optional for backward-compat with older deploys.
+  p50_reference?: number; // median remaining cash-out
+  p90_reference?: number;
+  p99_reference?: number; // tail
+  coverage_probability?: number; // p* actually used (e.g. 0.95)
+  n_history?: number; // usable historical periods
+  confidence_interval?: { lower: number; upper: number };
+  service_level?: { quantile: number; cost_under: number; cost_over: number };
 }
 
 export interface WalletDemandForecastResponse {

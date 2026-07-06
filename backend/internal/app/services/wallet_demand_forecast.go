@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
+	"api-server/internal/config"
 	"api-server/internal/domain"
 	"api-server/internal/domain/wallet"
 	"api-server/internal/pkg/clock"
@@ -21,6 +23,7 @@ type WalletDemandForecastService struct {
 	requestRepo domain.AdvancePaymentRequestRepository
 	walletSvc   wallet.WalletService
 	clock       clock.Clock
+	cfg         config.WalletForecastConfig
 }
 
 // NewWalletDemandForecastService constructs the forecast service. clk defaults to
@@ -29,6 +32,7 @@ func NewWalletDemandForecastService(
 	requestRepo domain.AdvancePaymentRequestRepository,
 	walletSvc wallet.WalletService,
 	clk clock.Clock,
+	cfg config.WalletForecastConfig,
 ) *WalletDemandForecastService {
 	if clk == nil {
 		clk = clock.New()
@@ -37,6 +41,7 @@ func NewWalletDemandForecastService(
 		requestRepo: requestRepo,
 		walletSvc:   walletSvc,
 		clock:       clk,
+		cfg:         cfg,
 	}
 }
 
@@ -48,10 +53,13 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	maxDay := maxCycleDay(currentForMonth)
 	todayCycleDay := max(cycleDayFor(now, currentForMonth), 1)
 
-	forMonths := []string{
-		currentForMonth,
-		addMonths(currentForMonth, -1),
-		addMonths(currentForMonth, -2),
+	historyMonths := s.cfg.HistoryMonths
+	if historyMonths < 3 {
+		historyMonths = 3 // current period + at least 2 historical
+	}
+	forMonths := make([]string, 0, historyMonths)
+	for i := 0; i < historyMonths; i++ {
+		forMonths = append(forMonths, addMonths(currentForMonth, -i))
 	}
 
 	rows, err := s.requestRepo.GetCohortByMonths(ctx, forMonths)
@@ -76,25 +84,63 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 
 	current := byMonth[currentForMonth]
 	actualSoFar := current.cumulativeAt(todayCycleDay)
-
-	projectedTotal, method, basis, confidence := forecastProjectedTotal(actualSoFar, historical, todayCycleDay)
-	rate := completionRate(historical)
-	projectedPaid := int64(float64(projectedTotal) * rate)
-	if method == "no-history" {
-		// No completion-rate basis: assume every projected request will be paid
-		// (conservative for treasury — never under-recommend with no history).
-		projectedPaid = projectedTotal
-	}
 	alreadyPaid := current.completedTotal
+
+	rate := completionRate(historical)
+	paidFrac := rate
+	if paidFrac <= 0 {
+		// No completed history: assume remaining demand will be paid (conservative
+		// — never under-recommend when the completion signal is missing).
+		paidFrac = 1
+	}
+
+	nSim := s.cfg.NSim
+	if nSim <= 0 {
+		nSim = 5000
+	}
+	dist := forecastDemandDistribution(
+		historical, todayCycleDay, nSim,
+		forecastSeed(currentForMonth, todayCycleDay), paidFrac,
+	)
+
+	sl := serviceLevelConfig{
+		Quantile:          s.cfg.ServiceLevel,
+		CostUnder:         s.cfg.CostUnder,
+		CostOver:          s.cfg.CostOver,
+		UncertaintyFactor: s.cfg.UncertaintyFactor,
+	}
+	recommended, coverage := newsvendorRecommendation(dist, sl)
+
+	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and
+	// acts as a pace-conditioned floor on the recommendation so a fast current
+	// period is never under-buffered.
+	paceTotal, _, _, _ := forecastProjectedTotal(actualSoFar, historical, todayCycleDay)
+	projectedPaid := int64(float64(paceTotal) * rate)
+	if dist.method == "no-history" {
+		projectedPaid = paceTotal
+	}
 	remainingToPay := max(int64(0), projectedPaid-alreadyPaid)
-	recommendedBalance := remainingToPay
+
+	paceRemainingCash := float64(max(int64(0), paceTotal-actualSoFar)) * paidFrac
+	if dist.method == "no-history" {
+		paceRemainingCash = float64(max(int64(0), actualSoFar-alreadyPaid))
+	}
+	recommended = max(recommended, int64(math.Round(paceRemainingCash)))
+
+	// Reference ladder + CI band, in cash units (degenerate for no-history).
+	p50Ref := int64(math.Round(dist.p50))
+	p90Ref := int64(math.Round(dist.p90))
+	p99Ref := int64(math.Round(dist.p99))
+	if dist.method == "no-history" {
+		p50Ref, p90Ref, p99Ref = remainingToPay, remainingToPay, remainingToPay
+	}
 
 	currentAvailable := int64(0)
 	if bal, err := s.walletSvc.GetBalance(ctx); err == nil && bal != nil {
 		currentAvailable = bal.Available
 	}
 
-	shortfall := recommendedBalance - currentAvailable
+	shortfall := recommended - currentAvailable
 	surplus := int64(0)
 	if shortfall < 0 {
 		surplus = -shortfall
@@ -112,19 +158,33 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		MaxCycleDay:     maxDay,
 		Periods:         periods,
 		Prediction: wallet.WalletDemandPrediction{
-			ActualSoFar:        actualSoFar,
-			ProjectedTotal:     projectedTotal,
-			ProjectedPaid:      projectedPaid,
-			AlreadyPaid:        alreadyPaid,
-			RemainingToPay:     remainingToPay,
-			RecommendedBalance: recommendedBalance,
-			CurrentAvailable:   currentAvailable,
-			Shortfall:          shortfall,
-			Surplus:            surplus,
-			CompletionRate:     rate,
-			Method:             method,
-			Confidence:         confidence,
-			BasisPeriods:       basis,
+			ActualSoFar:         actualSoFar,
+			ProjectedTotal:      paceTotal,
+			ProjectedPaid:       projectedPaid,
+			AlreadyPaid:         alreadyPaid,
+			RemainingToPay:      remainingToPay,
+			RecommendedBalance:  recommended,
+			CurrentAvailable:    currentAvailable,
+			Shortfall:           shortfall,
+			Surplus:             surplus,
+			CompletionRate:      rate,
+			Method:              dist.method,
+			Confidence:          confidenceLabel(dist),
+			BasisPeriods:        dist.basisPeriods,
+			P50Reference:        p50Ref,
+			P90Reference:        p90Ref,
+			P99Reference:        p99Ref,
+			CoverageProbability: coverage,
+			NHistory:            dist.basisPeriods,
+			ConfidenceInterval: wallet.ForecastConfidenceInterval{
+				Lower: p50Ref,
+				Upper: p99Ref,
+			},
+			ServiceLevel: wallet.ForecastServiceLevel{
+				Quantile:  coverage,
+				CostUnder: s.cfg.CostUnder,
+				CostOver:  s.cfg.CostOver,
+			},
 		},
 		GeneratedAt: now.Format(time.RFC3339),
 	}, nil

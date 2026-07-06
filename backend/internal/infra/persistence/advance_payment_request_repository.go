@@ -735,7 +735,7 @@ func (r *AdvancePaymentRequestRepository) GetCohortByMonths(ctx context.Context,
 		           DATE(CONCAT(ap.for_month, '-20'))) + 1                     AS cycle_day,
 		  apr.status                                                         AS status,
 		  COUNT(*)                                                           AS request_count,
-		  COALESCE(SUM(apr.request_amount), 0)                               AS total_amount
+		  COALESCE(SUM(apr.request_amount - COALESCE(apr.fee, 0)), 0)        AS total_amount
 		FROM advance_payment_requests apr
 		JOIN advance_payments ap ON apr.adv_pay_id = ap.id
 		JOIN project_employees pe

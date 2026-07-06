@@ -11,24 +11,25 @@ import (
 )
 
 type Config struct {
-	App          AppConfig
-	DB           DBConfig
-	Auth         AuthConfig
-	Log          LogConfig
-	RateLimit    RateLimitConfig
-	Casbin       CasbinConfig
-	Redis        RedisConfig
-	Asynq        AsynqConfig
-	Security     SecurityConfig
-	CORS         CORSConfig
-	Notification NotificationConfig
-	WebSocket    WebSocketConfig
-	Scheduler    SchedulerConfig
-	Asset        AssetConfig
-	Disbursement DisbursementConfig
-	OTP          OTPConfig
-	Google       GoogleConfig
-	Captcha      CaptchaConfig
+	App            AppConfig
+	DB             DBConfig
+	Auth           AuthConfig
+	Log            LogConfig
+	RateLimit      RateLimitConfig
+	Casbin         CasbinConfig
+	Redis          RedisConfig
+	Asynq          AsynqConfig
+	Security       SecurityConfig
+	CORS           CORSConfig
+	Notification   NotificationConfig
+	WebSocket      WebSocketConfig
+	Scheduler      SchedulerConfig
+	Asset          AssetConfig
+	Disbursement   DisbursementConfig
+	OTP            OTPConfig
+	Google         GoogleConfig
+	Captcha        CaptchaConfig
+	WalletForecast WalletForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -181,6 +182,26 @@ type DisbursementConfig struct {
 func (d DisbursementConfig) EmployeeDisbursementEnabled() bool {
 	return (d.Ninepay.Enabled && d.Ninepay.EnabledForEmployee) ||
 		(d.Onepay.Enabled && d.Onepay.EnabledForEmployee)
+}
+
+// WalletForecastConfig governs the advisory wallet demand-forecast newsvendor
+// knob. The forecast is DISPLAY ONLY (must not feed SyncBalance/CreateTopup);
+// these values only shape the recommended balance shown on the Wallet page.
+//
+// Service-level resolution (in precedence order):
+//   - ServiceLevel > 0 → use it directly as the target quantile p*.
+//   - else if CostUnder+CostOver > 0 → p* = CostUnder/(CostUnder+CostOver).
+//   - else → 0.95.
+//
+// All fields optional; defaults give p*=0.95, a 5000-draw Monte Carlo, a 6-month
+// cohort lookback, and no extra safety stock.
+type WalletForecastConfig struct {
+	ServiceLevel      float64 // env WALLET_FORECAST_SERVICE_LEVEL, default 0.95
+	CostUnder         float64 // env WALLET_FORECAST_COST_UNDER (Cu), default 0
+	CostOver          float64 // env WALLET_FORECAST_COST_OVER (Co), default 0
+	NSim              int     // env WALLET_FORECAST_N_SIM, default 5000
+	HistoryMonths     int     // env WALLET_FORECAST_HISTORY_MONTHS, default 6
+	UncertaintyFactor float64 // env WALLET_FORECAST_UNCERTAINTY_FACTOR, default 0
 }
 
 // NinepayConfig holds the credentials, endpoint, and feature flags for
@@ -394,6 +415,14 @@ func Load() (*Config, error) {
 			CodeTTL:    parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
 			CodeLength: parseInt(getEnv("CAPTCHA_CODE_LENGTH", "5")),
 		},
+		WalletForecast: WalletForecastConfig{
+			ServiceLevel:      parseFloat(getEnv("WALLET_FORECAST_SERVICE_LEVEL", "0.95")),
+			CostUnder:         parseFloat(getEnv("WALLET_FORECAST_COST_UNDER", "0")),
+			CostOver:          parseFloat(getEnv("WALLET_FORECAST_COST_OVER", "0")),
+			NSim:              parseInt(getEnv("WALLET_FORECAST_N_SIM", "5000")),
+			HistoryMonths:     parseInt(getEnv("WALLET_FORECAST_HISTORY_MONTHS", "6")),
+			UncertaintyFactor: parseFloat(getEnv("WALLET_FORECAST_UNCERTAINTY_FACTOR", "0")),
+		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
 		TenantQueueWorkers:     parseInt(getEnv("TENANT_QUEUE_WORKERS", "5")),
@@ -557,6 +586,27 @@ func (c *Config) validate() error {
 		)
 	}
 
+	// Wallet forecast service-level: an explicit quantile must be a valid
+	// probability; costs must be non-negative. When ServiceLevel==0 and both
+	// costs are 0, the reader falls back to the 0.95 default (not an error).
+	if c.WalletForecast.ServiceLevel > 0 && c.WalletForecast.ServiceLevel > 1 {
+		return fmt.Errorf(
+			"config: WALLET_FORECAST_SERVICE_LEVEL must be in (0, 1], got %v",
+			c.WalletForecast.ServiceLevel,
+		)
+	}
+	if c.WalletForecast.CostUnder < 0 || c.WalletForecast.CostOver < 0 {
+		return fmt.Errorf(
+			"config: WALLET_FORECAST_COST_UNDER / _COST_OVER must be non-negative",
+		)
+	}
+	if c.WalletForecast.UncertaintyFactor < 0 || c.WalletForecast.UncertaintyFactor > 1 {
+		return fmt.Errorf(
+			"config: WALLET_FORECAST_UNCERTAINTY_FACTOR must be in [0, 1], got %v",
+			c.WalletForecast.UncertaintyFactor,
+		)
+	}
+
 	return nil
 }
 
@@ -575,6 +625,11 @@ func parseInt(s string) int {
 func parseInt64(s string) int64 {
 	i, _ := strconv.ParseInt(s, 10, 64)
 	return i
+}
+
+func parseFloat(s string) float64 {
+	f, _ := strconv.ParseFloat(s, 64)
+	return f
 }
 
 func parseDuration(s string) time.Duration {

@@ -76,6 +76,10 @@ type EmailAttachment struct {
 	Filename    string
 	ContentType string
 	Content     []byte
+	// ContentID, when set, marks this attachment as inline. The HTML body can
+	// then reference it via <img src="cid:CONTENTID">. Providers map this to
+	// their inline-image mechanism (e.g. Resend's Attachment.ContentId).
+	ContentID string
 }
 
 // Size returns the attachment size in bytes.
