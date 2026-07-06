@@ -710,6 +710,50 @@ func (r *AdvancePaymentRequestRepository) CountByStatusInWindow(ctx context.Cont
 	return out, nil
 }
 
+// GetCohortByMonths returns cohort rows (for_month × cycle-day × status) for the
+// given for_months, scoped to flexible-schedule project assignments via a
+// project-correlated join on project_employees.
+//
+// cycle_day is 1-indexed from the period start (day 20 of for_month) and is derived
+// from created_at in Asia/Ho_Chi_Minh: created_at is stored UTC on prod, so without
+// CONVERT_TZ the day boundary shifts and rows land on the wrong cycle-day. The
+// caller clamps rows to [1, maxCycleDay(for_month)].
+func (r *AdvancePaymentRequestRepository) GetCohortByMonths(ctx context.Context, forMonths []string) ([]domain.CohortRow, error) {
+	if len(forMonths) == 0 {
+		return nil, nil
+	}
+	placeholders := make([]string, len(forMonths))
+	args := make([]any, len(forMonths))
+	for i, m := range forMonths {
+		placeholders[i] = "?"
+		args[i] = m
+	}
+	query := fmt.Sprintf(`
+		SELECT
+		  ap.for_month                                                       AS for_month,
+		  DATEDIFF(DATE(CONVERT_TZ(apr.created_at, '+00:00', '+07:00')),
+		           DATE(CONCAT(ap.for_month, '-20'))) + 1                     AS cycle_day,
+		  apr.status                                                         AS status,
+		  COUNT(*)                                                           AS request_count,
+		  COALESCE(SUM(apr.request_amount), 0)                               AS total_amount
+		FROM advance_payment_requests apr
+		JOIN advance_payments ap ON apr.adv_pay_id = ap.id
+		JOIN project_employees pe
+		  ON pe.employee_id = apr.employee_id
+		 AND pe.project_id   = apr.project_id
+		 AND pe.deleted_at IS NULL
+		 AND pe.payment_schedule = 'flexible'
+		WHERE ap.for_month IN (%s)
+		GROUP BY ap.for_month, cycle_day, apr.status
+	`, strings.Join(placeholders, ","))
+
+	var rows []domain.CohortRow
+	if err := r.DB.WithContext(ctx).Raw(query, args...).Scan(&rows).Error; err != nil {
+		return nil, r.errorHandler.HandleListError(err, "advance_payment_request_cohort")
+	}
+	return rows, nil
+}
+
 // CreateWithBudgetCheck atomically creates an advance payment request only if the
 // employee's total active requests (PENDING + APPROVED + COMPLETED) + the new request
 // amount do not exceed the max advance limit for the given month.

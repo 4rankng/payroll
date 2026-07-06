@@ -132,3 +132,43 @@ export interface AdjustBalanceRequest {
   amount: number;
   reason: string;
 }
+
+// Wallet Demand Forecast types — matches backend wallet.WalletDemandForecast*
+export interface WalletDemandPoint {
+  cycle_day: number;
+  day_label: string; // "20/6" … "9/7"
+  amount: number; // cumulative request amount through this cycle day
+  daily_amount: number;
+}
+
+export interface WalletDemandPeriod {
+  for_month: string;
+  label: string; // "Kỳ 06/2026"
+  is_current: boolean;
+  series: WalletDemandPoint[];
+}
+
+export interface WalletDemandPrediction {
+  actual_so_far: number;
+  projected_total: number;
+  projected_paid: number;
+  already_paid: number;
+  remaining_to_pay: number;
+  recommended_balance: number;
+  current_available: number;
+  shortfall: number;
+  surplus: number;
+  completion_rate: number;
+  method: 'cohort-median' | 'avg-final' | 'no-history';
+  confidence: 'high' | 'medium' | 'low';
+  basis_periods: number;
+}
+
+export interface WalletDemandForecastResponse {
+  current_for_month: string;
+  current_cycle_day: number;
+  max_cycle_day: number;
+  periods: WalletDemandPeriod[];
+  prediction: WalletDemandPrediction;
+  generated_at: string;
+}

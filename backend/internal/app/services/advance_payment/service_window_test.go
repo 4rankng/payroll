@@ -31,8 +31,11 @@ func TestIsRequestMonthAllowed(t *testing.T) {
 	day20 := time.Date(2026, 6, 20, 9, 0, 0, 0, clock.DefaultLocation)
 	day25 := time.Date(2026, 6, 25, 9, 0, 0, 0, clock.DefaultLocation)
 
-	if !isRequestMonthAllowed(day5, "2026-05") || !isRequestMonthAllowed(day5, "2026-06") {
-		t.Fatalf("expected day 5 to allow previous and current calendar month")
+	if !isRequestMonthAllowed(day5, "2026-05") {
+		t.Fatalf("expected day 5 to allow previous calendar month only")
+	}
+	if isRequestMonthAllowed(day5, "2026-06") {
+		t.Fatalf("did not expect day 5 to allow current calendar month (tail = previous month only)")
 	}
 	if isRequestMonthAllowed(day5, "2026-04") {
 		t.Fatalf("did not expect day 5 to allow unrelated month")

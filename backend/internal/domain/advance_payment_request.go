@@ -172,6 +172,22 @@ type AdvancePaymentRequestRepository interface {
 	// CountByStatusInWindow returns request counts grouped by status for rows created
 	// within [since, until). Used by the health dashboard throughput tiles.
 	CountByStatusInWindow(ctx context.Context, since, until time.Time) (map[AdvancePaymentRequestStatus]int64, error)
+	// GetCohortByMonths returns cohort rows (one per for_month × cycle-day × status)
+	// for the given for_months, scoped to flexible-schedule project assignments.
+	// Used by the wallet demand-forecast chart and prediction. cycle_day is 1-indexed
+	// from the period start (day 20 of for_month); the persistence layer derives it in
+	// Asia/Ho_Chi_Minh so prod UTC created_at values resolve to the correct local day.
+	GetCohortByMonths(ctx context.Context, forMonths []string) ([]CohortRow, error)
+}
+
+// CohortRow is one cell of the advance-payment request cohort matrix: the request
+// count and total amount for a given period (for_month), cycle-day, and status.
+type CohortRow struct {
+	ForMonth     string `gorm:"column:for_month"`
+	CycleDay     int    `gorm:"column:cycle_day"`
+	Status       string `gorm:"column:status"`
+	RequestCount int64  `gorm:"column:request_count"`
+	TotalAmount  int64  `gorm:"column:total_amount"`
 }
 
 type AdvancePaymentStatsSummary struct {

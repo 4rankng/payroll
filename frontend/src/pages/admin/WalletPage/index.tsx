@@ -22,6 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 import WalletTransactionsList from "@/components/wallet/WalletTransactionsList";
 import CreateManualDisbursementDialog from "@/components/wallet/CreateManualDisbursementDialog";
+import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
+import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
+import { QueryKeys } from "@/lib/queryKeys";
 import { walletService } from "@/services/api/wallet.service";
 import type { WalletBalance } from "@/types/api/wallet.types";
 import { showErrorNotification } from "@/utils/error-handler";
@@ -157,6 +160,13 @@ export default function WalletPage() {
     queryFn: () => walletService.getBalance(),
   });
 
+  const { data: forecast, isLoading: forecastLoading } = useQuery({
+    queryKey: QueryKeys.wallet.demandForecast(),
+    queryFn: () => walletService.getDemandForecast(),
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+  });
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["wallet"] });
   };
@@ -262,6 +272,14 @@ export default function WalletPage() {
             watermark="text-amber-500/15"
             isLoading={balanceLoading}
           />
+        </div>
+
+        {/* Demand forecast: cohort chart + prediction card */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <div className="md:col-span-2">
+            <WalletDemandChart data={forecast} isLoading={forecastLoading} />
+          </div>
+          <WalletDemandCard data={forecast} />
         </div>
 
         {/* Transactions */}

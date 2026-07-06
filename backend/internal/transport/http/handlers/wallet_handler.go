@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"api-server/internal/app/services"
 	"api-server/internal/app/services/disbursement"
 	"api-server/internal/constants"
 	infrastructure "api-server/internal/domain/ports/infrastructure"
@@ -22,17 +23,19 @@ import (
 
 type WalletHandler struct {
 	service  wallet.WalletService
+	forecast *services.WalletDemandForecastService
 	registry *disbursement.Registry
 	clock    clock.Clock
 	logger   *slog.Logger
 }
 
-func NewWalletHandler(service wallet.WalletService, registry *disbursement.Registry, clk clock.Clock) *WalletHandler {
+func NewWalletHandler(service wallet.WalletService, registry *disbursement.Registry, forecast *services.WalletDemandForecastService, clk clock.Clock) *WalletHandler {
 	if clk == nil {
 		clk = clock.New()
 	}
 	return &WalletHandler{
 		service:  service,
+		forecast: forecast,
 		registry: registry,
 		clock:    clk,
 		logger:   slog.Default().With("component", "WalletHandler"),
@@ -46,6 +49,22 @@ func (h *WalletHandler) GetBalance(c *gin.Context) {
 		return
 	}
 	response.Success(c, balance, "Lấy số dư ví thành công")
+}
+
+// GetDemandForecast returns the advance-payment cohort chart series + the
+// advisory balance prediction for the Wallet page. Display-only by contract.
+func (h *WalletHandler) GetDemandForecast(c *gin.Context) {
+	if h.forecast == nil {
+		response.InternalServerError(c, "Dịch vụ dự báo nhu cầu ứng lương chưa được cấu hình")
+		return
+	}
+	resp, err := h.forecast.GetDemandForecast(c.Request.Context())
+	if err != nil {
+		h.logger.Error("demand-forecast: failed", "error", err)
+		response.InternalServerError(c, err.Error())
+		return
+	}
+	response.Success(c, resp, "Lấy dự báo nhu cầu ứng lương thành công")
 }
 
 func (h *WalletHandler) SyncBalance(c *gin.Context) {
