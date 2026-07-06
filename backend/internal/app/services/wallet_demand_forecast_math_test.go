@@ -130,3 +130,220 @@ func TestCompletionRate(t *testing.T) {
 		t.Errorf("mixed = %f, want %f", got, 1.0/3.0)
 	}
 }
+
+// --- Newsvendor / MC engine tests ----------------------------------------
+
+// mkHist builds a historical cohortSeries whose remaining net demand at `day`
+// equals `remaining` (grandTotal − cumulativeAt(day)). maxCycleDay is 20.
+func mkHist(remaining, grandTotal int64, day int) cohortSeries {
+	return cohortSeries{
+		maxCycleDay: 20,
+		grandTotal:  grandTotal,
+		cumulative:  map[int]int64{day: grandTotal - remaining},
+	}
+}
+
+func almostEq(a, b, tol float64) bool {
+	if a-b > tol || b-a > tol {
+		return false
+	}
+	return true
+}
+
+func TestQuantileOfSorted(t *testing.T) {
+	// R-7 interpolation on [1..11]: median (p=0.5) → index 5 → value 6.
+	eleven := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+	if v, c := quantileOfSorted(eleven, 0.5); !almostEq(v, 6, 1e-9) || c {
+		t.Errorf("p50 of [1..11] = %v (clamped=%v), want 6 / false", v, c)
+	}
+	if v, c := quantileOfSorted(eleven, 0.0); v != 1 || c {
+		t.Errorf("p0 = %v, want 1", v)
+	}
+	if v, c := quantileOfSorted(eleven, 1.0); v != 11 || c {
+		t.Errorf("p100 = %v, want 11", v)
+	}
+	// Small-n honesty: 2 points, p>0.5 → max, clamped.
+	two := []float64{10, 20}
+	if v, c := quantileOfSorted(two, 0.95); v != 20 || !c {
+		t.Errorf("p95 of [10,20] = %v (clamped=%v), want 20 / true", v, c)
+	}
+	// Small-n but p<=0.5 still interpolates.
+	if v, c := quantileOfSorted(two, 0.5); !almostEq(v, 15, 1e-9) || c {
+		t.Errorf("p50 of [10,20] = %v (clamped=%v), want 15 / false", v, c)
+	}
+	if v, c := quantileOfSorted(nil, 0.95); v != 0 || !c {
+		t.Errorf("empty → (0, true), got (%v, %v)", v, c)
+	}
+	one := []float64{42}
+	if v, c := quantileOfSorted(one, 0.95); v != 42 || c {
+		t.Errorf("single → (42, false), got (%v, %v)", v, c)
+	}
+}
+
+func TestServiceLevelConfig_EffectiveQuantile(t *testing.T) {
+	cases := []struct {
+		sl   serviceLevelConfig
+		want float64
+	}{
+		{serviceLevelConfig{Quantile: 0.95}, 0.95},
+		{serviceLevelConfig{CostUnder: 95, CostOver: 5}, 0.95},
+		{serviceLevelConfig{}, 0.95}, // default
+		{serviceLevelConfig{Quantile: 0.5}, 0.5},
+		{serviceLevelConfig{Quantile: 1.5}, 0.999},                          // clamped
+		{serviceLevelConfig{Quantile: 0.9, CostUnder: 1, CostOver: 1}, 0.9}, // explicit wins
+	}
+	for _, c := range cases {
+		if got := c.sl.effectiveQuantile(); !almostEq(got, c.want, 1e-9) {
+			t.Errorf("effectiveQuantile(%+v) = %v, want %v", c.sl, got, c.want)
+		}
+	}
+}
+
+func TestFitGammaMoM(t *testing.T) {
+	// [90,100,110]: mean 100, population var 200/3 ≈ 66.67 → shape 150, scale 0.6667.
+	shape, scale := fitGammaMoM([]float64{90, 100, 110})
+	if !almostEq(shape, 150, 0.1) || !almostEq(scale, 2.0/3.0, 1e-4) {
+		t.Errorf("fitGammaMoM([90,100,110]) = (shape=%v, scale=%v), want (~150, ~0.667)", shape, scale)
+	}
+	// Degenerate inputs return (0,0).
+	if s, sc := fitGammaMoM([]float64{100, 100, 100}); s != 0 || sc != 0 {
+		t.Errorf("zero-variance → (0,0), got (%v, %v)", s, sc)
+	}
+	if s, sc := fitGammaMoM(nil); s != 0 || sc != 0 {
+		t.Errorf("empty → (0,0), got (%v, %v)", s, sc)
+	}
+}
+
+func TestConfidenceLabel(t *testing.T) {
+	cases := []struct {
+		dist demandDistribution
+		want string
+	}{
+		{demandDistribution{method: "no-history"}, "low"},
+		{demandDistribution{method: "gamma-fit", basisPeriods: 1}, "low"},
+		{demandDistribution{method: "gamma-fit", basisPeriods: 2}, "medium"},
+		{demandDistribution{method: "gamma-fit", basisPeriods: 2, divergent: true}, "low"},
+		{demandDistribution{method: "monte-carlo", basisPeriods: 3}, "high"},
+		{demandDistribution{method: "monte-carlo", basisPeriods: 3, divergent: true}, "low"},
+		{demandDistribution{method: "monte-carlo", basisPeriods: 6}, "high"},
+	}
+	for _, c := range cases {
+		if got := confidenceLabel(c.dist); got != c.want {
+			t.Errorf("confidenceLabel(basis=%d divergent=%v method=%s) = %q, want %q",
+				c.dist.basisPeriods, c.dist.divergent, c.dist.method, got, c.want)
+		}
+	}
+}
+
+func TestNewsvendorRecommendation(t *testing.T) {
+	// samples [0..99]: p95 ≈ 94.05, p99 ≈ 98.01.
+	samples := make([]float64, 100)
+	for i := range samples {
+		samples[i] = float64(i)
+	}
+	dist := demandDistribution{samples: samples, p99: 98.01}
+
+	// p* = 0.95, no safety stock → recommended ≈ 94.
+	rec, cov := newsvendorRecommendation(dist, serviceLevelConfig{Quantile: 0.95})
+	if cov != 0.95 || rec < 93 || rec > 95 {
+		t.Errorf("p95 no-safety: recommended=%d coverage=%v, want ~94 / 0.95", rec, cov)
+	}
+
+	// Safety stock 0.5 of (p99 − p*) ≈ 0.5×(98−94) = +2 → ~96.
+	recSS, _ := newsvendorRecommendation(dist, serviceLevelConfig{Quantile: 0.95, UncertaintyFactor: 0.5})
+	if recSS < rec || recSS-rec > 4 {
+		t.Errorf("safety stock: recommended=%d, want in (%d, %d]", recSS, rec, rec+4)
+	}
+
+	// Divergent: empirical max floors the recommendation above the quantile.
+	div := demandDistribution{samples: samples, p99: 98.01, empiricalMax: 200, divergent: true}
+	recDiv, _ := newsvendorRecommendation(div, serviceLevelConfig{Quantile: 0.95})
+	if recDiv != 200 {
+		t.Errorf("divergent floor: recommended=%d, want 200 (empiricalMax)", recDiv)
+	}
+
+	// No-history → 0 recommendation (orchestrator applies its own floor).
+	recNH, _ := newsvendorRecommendation(demandDistribution{method: "no-history"}, serviceLevelConfig{Quantile: 0.95})
+	if recNH != 0 {
+		t.Errorf("no-history recommended=%d, want 0", recNH)
+	}
+}
+
+func TestForecastDemandDistribution_NoHistory(t *testing.T) {
+	// No historical periods at all.
+	dist := forecastDemandDistribution(nil, 10, 5000, 1, 1)
+	if dist.method != "no-history" || len(dist.samples) != 1 || dist.samples[0] != 0 {
+		t.Errorf("nil history: method=%s samples=%v, want no-history/[0]", dist.method, dist.samples)
+	}
+	// Historical periods all have zero grand total → still no usable history.
+	zero := []cohortSeries{{maxCycleDay: 20, grandTotal: 0}}
+	dist = forecastDemandDistribution(zero, 10, 5000, 1, 1)
+	if dist.method != "no-history" {
+		t.Errorf("all-zero history: method=%s, want no-history", dist.method)
+	}
+}
+
+func TestForecastDemandDistribution_MethodAndBasis(t *testing.T) {
+	day := 10
+	// 1 usable period → gamma-fit, basis 1.
+	dist := forecastDemandDistribution([]cohortSeries{mkHist(100, 200, day)}, day, 2000, 7, 1)
+	if dist.method != "gamma-fit" || dist.basisPeriods != 1 {
+		t.Errorf("n=1: method=%s basis=%d, want gamma-fit/1", dist.method, dist.basisPeriods)
+	}
+	// 2 usable periods → gamma-fit, basis 2.
+	dist = forecastDemandDistribution([]cohortSeries{mkHist(100, 200, day), mkHist(120, 200, day)}, day, 2000, 7, 1)
+	if dist.method != "gamma-fit" || dist.basisPeriods != 2 {
+		t.Errorf("n=2: method=%s basis=%d, want gamma-fit/2", dist.method, dist.basisPeriods)
+	}
+	// 3 usable periods → monte-carlo, basis 3.
+	dist = forecastDemandDistribution(
+		[]cohortSeries{mkHist(90, 200, day), mkHist(100, 200, day), mkHist(110, 200, day)},
+		day, 2000, 7, 1,
+	)
+	if dist.method != "monte-carlo" || dist.basisPeriods != 3 {
+		t.Errorf("n=3: method=%s basis=%d, want monte-carlo/3", dist.method, dist.basisPeriods)
+	}
+}
+
+func TestForecastDemandDistribution_Ordering(t *testing.T) {
+	dist := forecastDemandDistribution(
+		[]cohortSeries{mkHist(80, 200, 10), mkHist(100, 200, 10), mkHist(140, 200, 10)},
+		10, 3000, 42, 1,
+	)
+	if !(dist.p50 <= dist.p90 && dist.p90 <= dist.p95 && dist.p95 <= dist.p99) {
+		t.Errorf("quantile ordering violated: p50=%v p90=%v p95=%v p99=%v",
+			dist.p50, dist.p90, dist.p95, dist.p99)
+	}
+	if dist.p50 < 0 {
+		t.Errorf("p50 negative: %v", dist.p50)
+	}
+}
+
+func TestForecastDemandDistribution_PaidFracScaling(t *testing.T) {
+	hist := []cohortSeries{mkHist(90, 200, 10), mkHist(100, 200, 10), mkHist(110, 200, 10)}
+	full := forecastDemandDistribution(hist, 10, 3000, 42, 1)
+	half := forecastDemandDistribution(hist, 10, 3000, 42, 0.5)
+	if !almostEq(half.p50, full.p50/2, full.p50*0.05) {
+		t.Errorf("paidFrac=0.5 should halve p50: full=%v half=%v", full.p50, half.p50)
+	}
+}
+
+func TestForecastDemandDistribution_Determinism(t *testing.T) {
+	hist := []cohortSeries{mkHist(90, 200, 10), mkHist(100, 200, 10), mkHist(110, 200, 10)}
+	a := forecastDemandDistribution(hist, 10, 3000, 12345, 1)
+	b := forecastDemandDistribution(hist, 10, 3000, 12345, 1)
+	if a.p50 != b.p50 || a.p95 != b.p95 || a.p99 != b.p99 {
+		t.Errorf("seeded non-deterministic: a=(%v,%v,%v) b=(%v,%v,%v)",
+			a.p50, a.p95, a.p99, b.p50, b.p95, b.p99)
+	}
+}
+
+func TestForecastDemandDistribution_Degenerate(t *testing.T) {
+	// Identical remaining across 3 periods → zero variance → point mass at mean.
+	hist := []cohortSeries{mkHist(100, 200, 10), mkHist(100, 200, 10), mkHist(100, 200, 10)}
+	dist := forecastDemandDistribution(hist, 10, 2000, 9, 1)
+	if !(almostEq(dist.p50, 100, 1e-9) && almostEq(dist.p95, 100, 1e-9) && almostEq(dist.p99, 100, 1e-9)) {
+		t.Errorf("degenerate point mass: p50=%v p95=%v p99=%v, want all 100",
+			dist.p50, dist.p95, dist.p99)
+	}
+}

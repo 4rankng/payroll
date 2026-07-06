@@ -13,6 +13,8 @@ const CONFIDENCE_VN: Record<string, string> = {
 };
 
 const METHOD_VN: Record<string, string> = {
+  'monte-carlo': 'mô phỏng Monte Carlo',
+  'gamma-fit': 'phân phối gamma',
   'cohort-median': 'trung vị các kỳ trước',
   'avg-final': 'trung bình tổng các kỳ trước',
   'no-history': 'nhu cầu hiện tại',
@@ -27,6 +29,7 @@ const METHOD_VN: Record<string, string> = {
 export function WalletDemandCard({ data }: WalletDemandCardProps) {
   const pred = data?.prediction;
   const noHistory = pred?.method === 'no-history';
+  const covPct = Math.round((pred?.coverage_probability ?? 0.95) * 100);
 
   return (
     <div className="relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
@@ -54,7 +57,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
             <p className="text-[11px] text-muted-foreground mt-2">
               {noHistory
                 ? 'Chưa đủ dữ liệu các kỳ trước. Hiển thị nhu cầu hiện tại chờ chi trả.'
-                : 'Nên giữ trong ví để chi trả phần còn lại của kỳ này'}
+                : `Nên giữ trong ví (p${covPct}) để chi trả phần còn lại của kỳ này`}
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -88,9 +91,25 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
             </div>
 
             <p className="mt-3 text-[10.5px] text-muted-foreground">
-              Ước tính theo {METHOD_VN[pred.method] ?? pred.method} · Độ tin cậy:{' '}
+              Phủ {covPct}% các kỳ tương tự · {METHOD_VN[pred.method] ?? pred.method} · Tin cậy:{' '}
               {CONFIDENCE_VN[pred.confidence] ?? pred.confidence}
             </p>
+            {!noHistory && pred.p50_reference != null && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+                {(
+                  [
+                    ['p50', pred.p50_reference],
+                    ['p90', pred.p90_reference],
+                    ['p99', pred.p99_reference],
+                  ] as const
+                ).map(([label, val]) => (
+                  <span key={label} className="inline-flex items-center gap-1">
+                    <span className="font-semibold uppercase">{label}</span>
+                    <span className="tabular-nums">{formatCurrency(val ?? 0)}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>

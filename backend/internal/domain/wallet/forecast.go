@@ -31,18 +31,46 @@ type WalletDemandPoint struct {
 
 // WalletDemandPrediction is the advisory balance forecast for the current
 // period. DISPLAY ONLY — must not feed SyncBalance or any auto top-up.
+//
+// RecommendedBalance is the newsvendor p*-quantile (+ optional safety stock) of
+// the predicted remaining-cycle net cash-out distribution. P50Reference exposes
+// the median for side-by-side comparison with the previous (median-based) engine.
 type WalletDemandPrediction struct {
 	ActualSoFar        int64   `json:"actual_so_far"`
-	ProjectedTotal     int64   `json:"projected_total"`
+	ProjectedTotal     int64   `json:"projected_total"` // p50 projection of full-period net demand
 	ProjectedPaid      int64   `json:"projected_paid"`
 	AlreadyPaid        int64   `json:"already_paid"`
-	RemainingToPay     int64   `json:"remaining_to_pay"`
+	RemainingToPay     int64   `json:"remaining_to_pay"` // p50-based, kept for display continuity
 	RecommendedBalance int64   `json:"recommended_balance"`
 	CurrentAvailable   int64   `json:"current_available"`
-	Shortfall          int64   `json:"shortfall"`
+	Shortfall          int64   `json:"shortfall"` // vs RecommendedBalance
 	Surplus            int64   `json:"surplus"`
 	CompletionRate     float64 `json:"completion_rate"`
-	Method             string  `json:"method"`     // cohort-median | avg-final | no-history
-	Confidence         string  `json:"confidence"` // high | medium | low
+	Method             string  `json:"method"`     // monte-carlo | gamma-fit | no-history | cohort-median (legacy)
+	Confidence         string  `json:"confidence"` // high | medium | low (derived from n × MC/gamma agreement)
 	BasisPeriods       int     `json:"basis_periods"`
+
+	// Newsvendor / tail-risk fields.
+	P50Reference        int64                      `json:"p50_reference"`        // median remaining cash-out
+	P90Reference        int64                      `json:"p90_reference"`        // p90 remaining cash-out
+	P99Reference        int64                      `json:"p99_reference"`        // p99 remaining cash-out (tail)
+	CoverageProbability float64                    `json:"coverage_probability"` // p* actually used (e.g. 0.95)
+	NHistory            int                        `json:"n_history"`            // usable historical periods
+	ConfidenceInterval  ForecastConfidenceInterval `json:"confidence_interval"`
+	ServiceLevel        ForecastServiceLevel       `json:"service_level"`
+}
+
+// ForecastConfidenceInterval is the small-n band on RecommendedBalance,
+// expressed as the [p50, p99] range of the predicted remaining cash-out.
+type ForecastConfidenceInterval struct {
+	Lower int64 `json:"lower"`
+	Upper int64 `json:"upper"`
+}
+
+// ForecastServiceLevel reports the newsvendor p* used and the (optional) Cu/Co
+// costs it was derived from.
+type ForecastServiceLevel struct {
+	Quantile  float64 `json:"quantile"`
+	CostUnder float64 `json:"cost_under"`
+	CostOver  float64 `json:"cost_over"`
 }

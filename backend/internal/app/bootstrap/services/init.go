@@ -36,11 +36,11 @@ import (
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/domain/wallet"
+	"api-server/internal/infra/cache"
 	"api-server/internal/infra/disbursement/ninepay"
 	"api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/email"
 	"api-server/internal/infra/events"
-	"api-server/internal/infra/cache"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/infra/persistence/repositories"
 	"api-server/internal/infra/storage"
@@ -161,6 +161,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	} else {
 		emailProvider = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
+	// Wrap with the brand-banner decorator: any email whose HTML references
+	// cid:brand-banner automatically receives the inline banner attachment.
+	emailProvider = email.NewBrandingSender(emailProvider, logger)
 
 	emailService := notification.NewEmailService(cfg.Notification, emailProvider, payrollReportAdapter, repos.Notification, repos.User, emailNotificationPublisher, assetService, logger)
 
@@ -509,7 +512,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
-	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk)
+	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk, cfg.WalletForecast)
 
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
@@ -556,12 +559,23 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	projectEmployeeSvc := project.NewProjectEmployeeService(repos.ProjectEmployee, repos.Employee, repos.EmployeeUser, repos.Project, repos.Timesheet, repos.AuditLog, transactionManager, repos.AdvancePayment, repos.Payrate, notificationPort, eventBus, payCycleNotificationPublisher, timesheetService, cacheService)
 
 	// Email-OTP 2FA: build the pending-session store (Redis) + OTP service.
-	// The email sender reuses the provider selected above (Resend in prod,
-	// sandbox in dev). When OTP_ENABLE=false the service is still constructed
-	// (cheap) but AuthService.requiresOTP() short-circuits and login behaves
-	// exactly as before.
+	//
+	// OTP delivery ALWAYS uses the real Resend provider when OTP is enabled,
+	// regardless of environment. Login depends on the code reaching the inbox,
+	// and a sandbox/no-op provider would silently swallow the code and lock
+	// every account out once MaxAttempts is hit. The Resend API key is
+	// fail-fast validated at boot when OTP_ENABLE=true, so it is guaranteed
+	// present here. General notifications keep the env-selected provider
+	// (sandbox in dev) so development does not spam real mailboxes. When
+	// OTP_ENABLE=false the service is still constructed (cheap) but
+	// AuthService.requiresOTP() short-circuits and login behaves as before.
+	otpEmailSender := emailProvider // already branding-wrapped via emailProvider above
+	if cfg.OTP.Enabled {
+		// Real Resend (login codes must reach inboxes), then branding-wrapped.
+		otpEmailSender = email.NewBrandingSender(email.NewResendProvider(cfg.Notification.ResendAPIKey), logger)
+	}
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
-	otpService := otp.NewOTPService(otpPendingStore, repos.User, emailProvider, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
+	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
 
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)

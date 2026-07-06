@@ -18,6 +18,7 @@ const PayrollReportTemplatePath = "templates/payroll_template.xlsx"
 const PayrollReportByProjectTemplatePath = "templates/sao_ke_tt_theo_du_an.xlsx"
 const PayrollEmailTemplatePath = "templates/email/payroll_statement.html"
 const AdvancePaymentReminderTemplatePath = "templates/email/advance_payment_reminder.html"
+const BrandBannerPath = "templates/email/banner_inline.jpg"
 const EmployeeProfileTemplatePath = "templates/HoSoNhanSu.xlsx"
 
 const MyCompany = "Hệ thống"

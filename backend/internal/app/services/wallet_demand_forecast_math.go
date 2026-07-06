@@ -2,6 +2,7 @@ package services
 
 import (
 	"math"
+	"math/rand/v2"
 	"sort"
 	"time"
 
@@ -18,7 +19,8 @@ import (
 // through day 9 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
-// request amounts (all statuses), plus completed/grand totals.
+// NET request amounts (request_amount − fee; all statuses), plus completed/grand
+// totals. Net is the cash that actually leaves the wallet per request.
 type cohortSeries struct {
 	forMonth       string
 	isCurrent      bool
@@ -190,4 +192,317 @@ func completionRate(historical []cohortSeries) float64 {
 		return 1
 	}
 	return r
+}
+
+// --- Newsvendor / tail-risk engine ---------------------------------------
+//
+// The goal is "no service disruption", i.e. the wallet must cover the rest of
+// the cycle. A median (p50) target gives a 50% chance of falling short — the
+// wrong target for a service-level objective. Instead we build a predictive
+// DISTRIBUTION of remaining-cycle net cash-out and read the p*-quantile
+// (newsvendor), p* = Cu/(Cu+Co). With Cu ≫ Co, p* is high (0.95 by default).
+
+// demandDistribution is the predictive distribution of the current period's
+// REMAINING net cash-out (cash still to leave the wallet from tomorrow through
+// cycle end), conditional on demand observed through todayCycleDay. All fields
+// are VND cash (already scaled by the historical completion fraction). It is
+// deterministic given the input cohorts + rngSeed.
+type demandDistribution struct {
+	samples      []float64 // sorted ascending; remaining cash-out draws (≥0)
+	p50          float64
+	p90          float64
+	p95          float64
+	p99          float64
+	gammaShape   float64 // MoM fit params (0 when degenerate)
+	gammaScale   float64
+	empiricalMax float64 // max historical remaining cash-out (observed tail)
+	method       string  // "monte-carlo" | "gamma-fit" | "no-history"
+	basisPeriods int     // # usable historical periods
+	nSim         int
+	divergent    bool // gamma p95 under-represents the observed tail
+}
+
+// serviceLevelConfig is the newsvendor cost / quantile knob. Precedence:
+// Quantile > 0 wins; else CostUnder/(CostUnder+CostOver); else 0.95.
+type serviceLevelConfig struct {
+	Quantile          float64
+	CostUnder         float64
+	CostOver          float64
+	UncertaintyFactor float64 // adds safety stock from the p99−p* slack
+}
+
+// effectiveQuantile resolves the newsvendor service level p*.
+func (sl serviceLevelConfig) effectiveQuantile() float64 {
+	if sl.Quantile > 0 {
+		return clampF(sl.Quantile, 0.5, 0.999)
+	}
+	if sl.CostUnder > 0 || sl.CostOver > 0 {
+		return clampF(sl.CostUnder/(sl.CostUnder+sl.CostOver), 0.5, 0.999)
+	}
+	return 0.95
+}
+
+// quantileOfSorted returns the p-th percentile (R-7 linear interpolation) of an
+// ascending-sorted slice. HONEST SMALL-N: when len < 3 and p > 0.5 it returns
+// the max element with clamped=true — never fabricate a tail by interpolating
+// between one or two points. len==0 → (0, true); len==1 → (x, false).
+func quantileOfSorted(sorted []float64, p float64) (value float64, clamped bool) {
+	n := len(sorted)
+	if n == 0 {
+		return 0, true
+	}
+	if n == 1 {
+		return sorted[0], false
+	}
+	if n < 3 && p > 0.5 {
+		return sorted[n-1], true
+	}
+	if p <= 0 {
+		return sorted[0], false
+	}
+	if p >= 1 {
+		return sorted[n-1], false
+	}
+	h := float64(n-1) * p
+	lo := int(math.Floor(h))
+	if lo >= n-1 {
+		return sorted[n-1], false
+	}
+	frac := h - float64(lo)
+	return sorted[lo] + frac*(sorted[lo+1]-sorted[lo]), false
+}
+
+// fitGammaMoM fits a gamma distribution by method of moments. Returns (0,0) on
+// a degenerate input (empty, non-positive mean, or zero variance); the caller
+// then falls back to a point mass at the mean.
+func fitGammaMoM(xs []float64) (shape, scale float64) {
+	if len(xs) == 0 {
+		return 0, 0
+	}
+	mean := meanF(xs)
+	if mean <= 0 {
+		return 0, 0
+	}
+	var ssd float64
+	for _, x := range xs {
+		d := x - mean
+		ssd += d * d
+	}
+	variance := ssd / float64(len(xs)) // population variance
+	if variance <= 0 {
+		return 0, 0
+	}
+	return mean * mean / variance, variance / mean
+}
+
+// gammaSample draws one sample from Gamma(shape, scale) via Marsaglia-Tsang
+// (shape≥1) with the standard boost for shape<1. r must be a seeded source.
+func gammaSample(r *rand.Rand, shape, scale float64) float64 {
+	if shape <= 0 || scale <= 0 {
+		return 0
+	}
+	if shape < 1 {
+		g := gammaSample(r, shape+1, 1)
+		u := r.Float64()
+		for u <= 0 {
+			u = r.Float64()
+		}
+		return g * math.Pow(u, 1/shape) * scale
+	}
+	d := shape - 1.0/3.0
+	c := 1.0 / math.Sqrt(9*d)
+	for {
+		x := boxMuller(r)
+		v := 1 + c*x
+		if v <= 0 {
+			continue
+		}
+		v = v * v * v
+		u := r.Float64()
+		if u < 1-0.0331*x*x*x*x {
+			return d * v * scale
+		}
+		if math.Log(u) < 0.5*x*x+d*(1-v+math.Log(v)) {
+			return d * v * scale
+		}
+	}
+}
+
+// boxMuller draws a standard normal from two uniform draws in (0,1).
+func boxMuller(r *rand.Rand) float64 {
+	u1 := nextUnit(r)
+	u2 := nextUnit(r)
+	return math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
+}
+
+// nextUnit returns a uniform float in (0,1), excluding the open endpoints so
+// log/cos in boxMuller stay finite.
+func nextUnit(r *rand.Rand) float64 {
+	u := r.Float64()
+	for u <= 1e-300 || u >= 1 {
+		u = r.Float64()
+	}
+	return u
+}
+
+// forecastDemandDistribution projects the distribution of REMAINING net cash-out
+// for the current period. It fits a gamma (method of moments) to each historical
+// period's remaining net demand at todayCycleDay, then draws nSim samples scaled
+// by paidFrac (the historical completion fraction) to express the result as cash
+// that will actually leave the wallet. I/O-free; pin rngSeed for deterministic
+// output.
+func forecastDemandDistribution(
+	historical []cohortSeries,
+	todayCycleDay int,
+	nSim int,
+	rngSeed int64,
+	paidFrac float64,
+) demandDistribution {
+	pf := clampF(paidFrac, 0, 1)
+
+	// Remaining net demand for each usable historical period.
+	var rem []float64
+	for _, h := range historical {
+		if h.grandTotal <= 0 {
+			continue
+		}
+		r := float64(h.grandTotal - h.cumulativeAt(todayCycleDay))
+		if r < 0 {
+			r = 0
+		}
+		rem = append(rem, r)
+	}
+	if len(rem) == 0 {
+		return demandDistribution{samples: []float64{0}, method: "no-history"}
+	}
+
+	empiricalMaxDemand := 0.0
+	for _, r := range rem {
+		if r > empiricalMaxDemand {
+			empiricalMaxDemand = r
+		}
+	}
+
+	shape, scale := fitGammaMoM(rem)
+	n := nSim
+	if n < 1000 {
+		n = 1000
+	}
+	rng := rand.New(rand.NewPCG(uint64(rngSeed), 0))
+	samples := make([]float64, n)
+	if shape <= 0 || scale <= 0 {
+		// Degenerate (zero variance): point mass at the mean × paidFrac.
+		v := meanF(rem) * pf
+		for i := range samples {
+			samples[i] = v
+		}
+	} else {
+		for i := range samples {
+			s := gammaSample(rng, shape, scale) * pf
+			if s < 0 {
+				s = 0
+			}
+			samples[i] = s
+		}
+	}
+	sort.Float64s(samples)
+
+	p50, _ := quantileOfSorted(samples, 0.50)
+	p90, _ := quantileOfSorted(samples, 0.90)
+	p95, _ := quantileOfSorted(samples, 0.95)
+	p99, _ := quantileOfSorted(samples, 0.99)
+
+	empiricalMaxCash := empiricalMaxDemand * pf
+	// Divergence: the smooth gamma p95 must not fall far below the worst
+	// observed period; if it does, the tail is under-represented.
+	divergent := empiricalMaxCash > 0 && p95 < empiricalMaxCash*0.75
+
+	method := "monte-carlo"
+	if len(rem) < 3 {
+		method = "gamma-fit"
+	}
+
+	return demandDistribution{
+		samples:      samples,
+		p50:          p50,
+		p90:          p90,
+		p95:          p95,
+		p99:          p99,
+		gammaShape:   shape,
+		gammaScale:   scale,
+		empiricalMax: empiricalMaxCash,
+		method:       method,
+		basisPeriods: len(rem),
+		nSim:         n,
+		divergent:    divergent,
+	}
+}
+
+// newsvendorRecommendation reads the distribution at the service-level quantile
+// p* and adds optional safety stock proportional to the p99−p* slack. When the
+// gamma fit diverges from the observed tail, the empirical max floors the
+// recommendation so a smoothed-away outlier can never understate the buffer.
+func newsvendorRecommendation(dist demandDistribution, sl serviceLevelConfig) (recommended int64, coverage float64) {
+	q := sl.effectiveQuantile()
+	if dist.method == "no-history" {
+		return 0, q
+	}
+	val, _ := quantileOfSorted(dist.samples, q)
+	rec := val + sl.UncertaintyFactor*math.Max(0, dist.p99-val)
+	if dist.divergent {
+		rec = max(rec, dist.empiricalMax)
+	}
+	return int64(math.Round(rec)), q
+}
+
+// confidenceLabel derives the advisory confidence from the basis size and
+// whether the gamma fit diverged from the observed tail.
+func confidenceLabel(dist demandDistribution) string {
+	switch {
+	case dist.method == "no-history", dist.basisPeriods <= 1:
+		return "low"
+	case dist.basisPeriods == 2:
+		if dist.divergent {
+			return "low"
+		}
+		return "medium"
+	default:
+		if dist.divergent {
+			return "low"
+		}
+		return "high"
+	}
+}
+
+// forecastSeed derives a deterministic seed from the period and cycle day so the
+// same request returns stable numbers within a day (no UI flicker on refetch).
+func forecastSeed(forMonth string, todayCycleDay int) int64 {
+	m, err := clock.ParseMonth(forMonth)
+	if err != nil {
+		return int64(todayCycleDay)
+	}
+	return int64(m.Year())*10000 + int64(m.Month())*100 + int64(todayCycleDay)
+}
+
+// meanF returns the arithmetic mean of xs (0 if empty).
+func meanF(xs []float64) float64 {
+	if len(xs) == 0 {
+		return 0
+	}
+	var s float64
+	for _, x := range xs {
+		s += x
+	}
+	return s / float64(len(xs))
+}
+
+// clampF clamps v to [lo, hi].
+func clampF(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
 }
