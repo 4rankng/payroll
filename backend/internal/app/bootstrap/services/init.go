@@ -161,10 +161,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	} else {
 		emailProvider = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
-	// Wrap with the brand-banner decorator: any email whose HTML references
-	// cid:brand-banner automatically receives the inline banner attachment.
-	emailProvider = email.NewBrandingSender(emailProvider, logger)
-
 	emailService := notification.NewEmailService(cfg.Notification, emailProvider, payrollReportAdapter, repos.Notification, repos.User, emailNotificationPublisher, assetService, logger)
 
 	// Create notification adapter port
@@ -569,10 +565,10 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// (sandbox in dev) so development does not spam real mailboxes. When
 	// OTP_ENABLE=false the service is still constructed (cheap) but
 	// AuthService.requiresOTP() short-circuits and login behaves as before.
-	otpEmailSender := emailProvider // already branding-wrapped via emailProvider above
+	otpEmailSender := emailProvider
 	if cfg.OTP.Enabled {
-		// Real Resend (login codes must reach inboxes), then branding-wrapped.
-		otpEmailSender = email.NewBrandingSender(email.NewResendProvider(cfg.Notification.ResendAPIKey), logger)
+		// Real Resend — login codes must reach inboxes.
+		otpEmailSender = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
 	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
