@@ -16,8 +16,8 @@ func TestBuildOTPEmailMessage_BannerUsesFullContentWidth(t *testing.T) {
 		t.Fatalf("BuildOTPEmailMessage returned error: %v", err)
 	}
 
-	if !strings.Contains(msg.HTMLBody, `src="cid:brand-banner"`) {
-		t.Fatalf("HTMLBody missing inline brand banner CID")
+	if !strings.Contains(msg.HTMLBody, `src="https://tingting.vip/email-banner.jpg"`) {
+		t.Fatalf("HTMLBody missing brand banner URL")
 	}
 	if !strings.Contains(msg.HTMLBody, `width="600"`) {
 		t.Fatalf("HTMLBody banner width should match the 600px banner asset")

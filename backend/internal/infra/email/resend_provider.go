@@ -46,7 +46,6 @@ func buildResendRequest(msg *domain.EmailMessage) *resend.SendEmailRequest {
 			Filename:    a.Filename,
 			Content:     content,
 			ContentType: a.ContentType,
-			ContentId:   a.ContentID,
 		})
 	}
 
