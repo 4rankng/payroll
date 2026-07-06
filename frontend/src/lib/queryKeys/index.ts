@@ -358,6 +358,13 @@ export const QueryKeys = {
     user: () => [...QueryKeys.auth.all, 'user'] as const,
     permissions: () => [...QueryKeys.auth.all, 'permissions'] as const,
   },
+
+  // ========== WALLET ==========
+  wallet: {
+    all: ['wallet'] as const,
+    balance: () => [...QueryKeys.wallet.all, 'balance'] as const,
+    demandForecast: () => [...QueryKeys.wallet.all, 'demand-forecast'] as const,
+  },
 } as const;
 
 /**

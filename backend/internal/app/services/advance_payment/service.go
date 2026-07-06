@@ -98,11 +98,11 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		validMonths = append(validMonths, months...)
 	} else {
 		if isBeforeCutoff {
-			// Days 1-10: Can withdraw from previous month AND current month
+			// Days 1-9 (tail of the previous period): withdraw from the
+			// previous month's salary only.
 			validMonths = append(validMonths, prevCalMonth)
-			validMonths = append(validMonths, currentCalMonth)
 		} else if isInLockedGap {
-			// Days 11-19: show the current month quota. Requesting stays locked
+			// Days 10-19: show the current month quota. Requesting stays locked
 			// only until admin uploads bang cham cong for that month.
 			validMonths = append(validMonths, currentCalMonth)
 		} else {
@@ -298,7 +298,8 @@ func isRequestMonthAllowed(now time.Time, forMonth string) bool {
 	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
 	if IsBeforeCutoff(now) {
-		return forMonth == prevCalMonth || forMonth == currentCalMonth
+		// Days 1-9 (tail of the previous period): previous month only.
+		return forMonth == prevCalMonth
 	}
 
 	return forMonth == currentCalMonth

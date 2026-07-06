@@ -13,6 +13,7 @@ func setupWalletRoutes(v1 *gin.RouterGroup, container *Container) {
 	}
 	{
 		w.GET("/balance", container.Handlers.Wallet.GetBalance)
+		w.GET("/demand-forecast", container.Handlers.Wallet.GetDemandForecast)
 		w.POST("/balance/sync", container.Handlers.Wallet.SyncBalance)
 		w.POST("/balance/adjust", container.Handlers.Wallet.AdjustBalance)
 		w.GET("/transactions", container.Handlers.Wallet.GetTransactions)

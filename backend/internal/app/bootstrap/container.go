@@ -375,7 +375,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
 		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
-		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
+		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
 		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
 		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
 		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
