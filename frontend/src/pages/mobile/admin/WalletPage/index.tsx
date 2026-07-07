@@ -7,6 +7,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import WalletTransactionsList from '@/components/wallet/WalletTransactionsList';
 import CreateManualDisbursementDialog from '@/components/wallet/CreateManualDisbursementDialog';
+import { WalletDemandCard } from '@/components/wallet/WalletDemandCard';
+import { WalletDemandChart } from '@/components/wallet/WalletDemandChart';
+import { QueryKeys } from '@/lib/queryKeys';
 import { walletService } from '@/services/api/wallet.service';
 import type { WalletBalance } from '@/types/api/wallet.types';
 import { showErrorNotification } from '@/utils/error-handler';
@@ -38,6 +41,13 @@ export default function WalletPageMobile() {
   const { data: balance } = useQuery<WalletBalance>({
     queryKey: BALANCE_QUERY_KEY,
     queryFn: () => walletService.getBalance(),
+  });
+
+  const { data: forecast, isLoading: forecastLoading } = useQuery({
+    queryKey: QueryKeys.wallet.demandForecast(),
+    queryFn: () => walletService.getDemandForecast(),
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 
   const invalidateAll = () => { queryClient.invalidateQueries({ queryKey: ['wallet'] }); };
@@ -139,7 +149,11 @@ export default function WalletPageMobile() {
 
       {/* Light transaction panel */}
       <div className="bg-background rounded-t-3xl -mt-4 min-h-[60dvh] shadow-[0_-8px_32px_rgba(0,0,0,0.2)]">
-        <div className="px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        <div className="space-y-4 px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          <section aria-label="Dự báo nhu cầu ví" className="space-y-3">
+            <WalletDemandChart data={forecast} isLoading={forecastLoading} />
+            <WalletDemandCard data={forecast} />
+          </section>
           <WalletTransactionsList />
         </div>
       </div>

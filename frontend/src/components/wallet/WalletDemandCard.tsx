@@ -1,4 +1,4 @@
-import { Wallet as WalletIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Wallet as WalletIcon } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type { WalletDemandForecastResponse } from '@/types/api/wallet.types';
 
@@ -30,6 +30,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
   const pred = data?.prediction;
   const noHistory = pred?.method === 'no-history';
   const covPct = Math.round((pred?.coverage_probability ?? 0.95) * 100);
+  const needsTopUp = (pred?.shortfall ?? 0) > 0;
 
   return (
     <div className="relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
@@ -57,37 +58,51 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
             <p className="text-[11px] text-muted-foreground mt-2">
               {noHistory
                 ? 'Chưa đủ dữ liệu các kỳ trước. Hiển thị nhu cầu hiện tại chờ chi trả.'
-                : `Nên giữ trong ví (p${covPct}) để chi trả phần còn lại của kỳ này`}
+                : 'Mức nên giữ lại để chi trả phần còn lại của kỳ này'}
             </p>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-border/60 bg-muted/40 p-2.5">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  Số dư khả dụng
-                </p>
-                <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
-                  {formatCurrency(pred.current_available)}
-                </p>
+            <div
+              className={`mt-3 rounded-xl border p-3 ${
+                needsTopUp ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p
+                    className={`text-[10px] font-semibold uppercase tracking-wider ${
+                      needsTopUp ? 'text-rose-700' : 'text-emerald-700'
+                    }`}
+                  >
+                    {needsTopUp ? 'Cần nạp thêm' : 'Số dư ví hiện có'}
+                  </p>
+                  <p
+                    className={`mt-1 font-financial text-base font-bold leading-none tabular-nums ${
+                      needsTopUp ? 'text-rose-700' : 'text-emerald-800'
+                    }`}
+                  >
+                    {formatCurrency(needsTopUp ? pred.shortfall : pred.current_available)}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10.5px] font-semibold ${
+                    needsTopUp ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                  }`}
+                >
+                  {needsTopUp ? (
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  {needsTopUp ? 'Chưa đủ' : 'Đủ chi trả'}
+                </span>
               </div>
-              {pred.shortfall > 0 ? (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 p-2.5">
-                  <p className="text-[10px] uppercase tracking-wider text-rose-700 font-semibold">
-                    Cần nạp thêm
-                  </p>
-                  <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-rose-700">
-                    {formatCurrency(pred.shortfall)}
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2.5">
-                  <p className="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">
-                    Dư khả dụng
-                  </p>
-                  <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-emerald-700">
-                    {formatCurrency(pred.surplus)}
-                  </p>
-                </div>
-              )}
+              <p className={`mt-2 text-[11px] ${needsTopUp ? 'text-rose-700' : 'text-emerald-700'}`}>
+                {needsTopUp
+                  ? 'Nạp thêm để đạt mức nên giữ lại trong ví.'
+                  : noHistory
+                    ? 'Đủ chi trả theo nhu cầu hiện tại.'
+                    : 'Đủ chi trả theo mức dự báo.'}
+              </p>
             </div>
 
             <p className="mt-3 text-[10.5px] text-muted-foreground">
