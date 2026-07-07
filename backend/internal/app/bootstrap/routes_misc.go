@@ -49,6 +49,7 @@ func setupMobileRoutes(v1 *gin.RouterGroup, container *Container) {
 		attendance.GET("/today", container.Handlers.Attendance.GetToday)
 		attendance.POST("/check-in", container.Handlers.Attendance.CheckIn)
 		attendance.POST("/check-out", container.Handlers.Attendance.CheckOut)
+		attendance.POST("/cancel-current", container.Handlers.Attendance.CancelCurrent)
 		attendance.POST("/attempt-log", container.Handlers.Attendance.LogDeviceAttempt)
 		attendance.GET("/history", container.Handlers.Attendance.List)
 	}

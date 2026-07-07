@@ -17,6 +17,7 @@ import {
   useTodayAttendance,
   useCheckIn,
   useCheckOut,
+  useCancelCurrentAttendance,
   useLogAttendanceDeviceAttempt,
 } from "@/hooks/api/useAttendance";
 import { getErrorMessage } from "@/utils/error-handler";
@@ -127,7 +128,7 @@ function getLocationAcquisitionMessage(progress: LocationAcquisitionProgress | n
   }
 
   if (progress.status === "excellent" || progress.status === "acceptable") {
-    return "Vị trí đã sẵn sàng. Đang gửi chấm công.";
+    return "Đã có tín hiệu GPS. Đang gửi chấm công để hệ thống kiểm tra.";
   }
 
   return `Chưa thể chấm công. Sai số hiện khoảng ${bestAccuracy}${
@@ -174,12 +175,14 @@ export function EmployeeCheckInCard({
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
+  const cancelCurrentAttendanceMutation = useCancelCurrentAttendance();
   const logDeviceAttemptMutation = useLogAttendanceDeviceAttempt();
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
+  const [showCancelShiftConfirm, setShowCancelShiftConfirm] = useState(false);
   // Synchronous in-flight guard. The button's `disabled` only takes effect after
   // the next render, so a rapid double-tap (common on mobile) can fire handleAction
   // twice before `isLocating`/`isPending` flips — sending a second request that the
@@ -388,18 +391,33 @@ export function EmployeeCheckInCard({
       return;
     }
 
-    // Cold path: the watch has not yet produced an inside-gate sample. Wait for
-    // one (hard cap 30s, matching the prior acquire budget) while the converging-
-    // accuracy banner shows. awaitSubmitReady rejects on timeout / fatal-permission
-    // and routes through onActionError to the same recovery UX as before.
+    // Cold path: submit the first fresh device fix to the backend even when the
+    // client-side guidance says "outside". The server is the geofence authority
+    // and records validation failures in attendance_failed_attempts; waiting for
+    // an "inside" sample here would leave outside-geofence taps stuck client-side
+    // with no backend audit row.
     setIsLocating(true);
     try {
-      const sample = await location.awaitSubmitReady();
+      const sample = await location.awaitFreshSample();
       await submit(sample);
     } catch (error: unknown) {
       await onActionError(error, type, options);
     } finally {
       setIsLocating(false);
+      submittingRef.current = false;
+    }
+  };
+
+  const handleCancelCurrentShift = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
+      await cancelCurrentAttendanceMutation.mutateAsync();
+      setShowCancelShiftConfirm(false);
+      setLocationIssue(null);
+    } catch {
+      // Error toast is handled by useCancelCurrentAttendance.
+    } finally {
       submittingRef.current = false;
     }
   };
@@ -458,7 +476,7 @@ export function EmployeeCheckInCard({
   // All hooks below run on every render (before the isLoading early return) to
   // satisfy the Rules of Hooks; isPending is derived from mutation/loading flags
   // that are all available pre-return.
-  const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
+  const isPending = checkInMutation.isPending || checkOutMutation.isPending || cancelCurrentAttendanceMutation.isPending || isLocating;
   const [showReadyPop, setShowReadyPop] = useState(false);
   const prevReadyRef = useRef(false);
   useEffect(() => {
@@ -574,6 +592,52 @@ export function EmployeeCheckInCard({
               }}
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DoorOpen className="mr-2 h-4 w-4" />}
+              Hủy ca
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showCancelShiftConfirm} onOpenChange={setShowCancelShiftConfirm}>
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-red-100 bg-white shadow-2xl shadow-red-900/20 sm:max-w-md">
+          <AlertDialogHeader className="bg-red-600 px-5 pb-4 pt-5 text-left">
+            <AlertDialogTitle className="text-lg font-bold leading-snug text-white">
+              Hủy ca đang làm?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mt-1 text-sm leading-5 text-red-50">
+              Dùng khi bạn đã vào nhầm ca và muốn vào làm lại đúng ca.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 px-5 py-4">
+            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-950">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+              <div>
+                <p className="text-base font-bold leading-6">Ca này sẽ không tính lương</p>
+                <p className="mt-1 text-sm font-medium leading-5 text-red-800">
+                  Hệ thống sẽ ghi nhận ca đã hủy và mở lại nút Vào làm.
+                </p>
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
+            <AlertDialogCancel
+              disabled={isPending}
+              className="mt-0 h-12 w-full rounded-lg border-slate-200 bg-white text-base font-bold text-slate-900 hover:bg-slate-50"
+            >
+              Quay lại
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              className="h-12 w-full rounded-lg bg-red-600 text-base font-bold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
+              onClick={(event) => {
+                event.preventDefault();
+                handleCancelCurrentShift();
+              }}
+            >
+              {cancelCurrentAttendanceMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <AlertCircle className="mr-2 h-4 w-4" />
+              )}
               Hủy ca
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -745,19 +809,32 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           </div>
-          <Button
-            size="lg"
-            className="h-14 w-full rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
-            disabled={isPending}
-            onClick={() => handleAction("check_out")}
-          >
-            {isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : (
-              <DoorOpen className="w-5 h-5 mr-2" />
-            )}
-            {isLocating ? "Đang lấy vị trí..." : "Tan ca"}
-          </Button>
+          <div className="grid grid-cols-[0.9fr_1.1fr] gap-3">
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="h-14 rounded-xl border-red-200 bg-red-50 text-[17px] font-bold text-red-700 hover:bg-red-100 hover:text-red-800"
+              disabled={isPending}
+              onClick={() => setShowCancelShiftConfirm(true)}
+            >
+              <AlertCircle className="mr-2 h-5 w-5 shrink-0" />
+              Hủy ca
+            </Button>
+            <Button
+              size="lg"
+              className="h-14 rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
+              disabled={isPending}
+              onClick={() => handleAction("check_out")}
+            >
+              {isPending && !cancelCurrentAttendanceMutation.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : (
+                <DoorOpen className="w-5 h-5 mr-2" />
+              )}
+              {isLocating ? "Đang lấy vị trí..." : "Tan ca"}
+            </Button>
+          </div>
         </div>
       ) : attendance?.status === "orphaned" ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">

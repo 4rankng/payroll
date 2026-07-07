@@ -70,6 +70,12 @@ export const attendanceService = {
     );
   },
 
+  cancelCurrent: async () => {
+    return apiClient.post<AttendanceRecord>(
+      API_ENDPOINTS.attendance.mobile.cancelCurrent
+    );
+  },
+
   logDeviceAttempt: async (payload: AttendanceDeviceAttemptPayload) => {
     return apiClient.post<null>(
       API_ENDPOINTS.attendance.mobile.attemptLog,

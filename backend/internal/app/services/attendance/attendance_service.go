@@ -27,6 +27,7 @@ const (
 )
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
+const employeeCancelledWrongShiftReason = "Nhân viên đã hủy ca do vào nhầm ca."
 
 // TaskEnqueuer schedules deferred attendance tasks. Implemented by the asynq
 // client wrapper; fakes capture the calls in tests. Nil is allowed — when unset,
@@ -655,6 +656,63 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 			})
 		}
 
+		result = attendance
+		return nil
+	})
+
+	return result, err
+}
+
+// CancelCurrentAttendance lets an employee void their current open check-in when
+// they entered the wrong shift. It records zero earning and a reject reason, then
+// the existing check-in path allows a corrected check-in afterward because the
+// record is now a no-checkout rejection.
+func (s *AttendanceService) CancelCurrentAttendance(ctx context.Context, employeeID uint) (*domain.Attendance, error) {
+	var result *domain.Attendance
+
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		now := s.clock.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+		attendance, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, today)
+		if err != nil {
+			return fmt.Errorf("failed to get today's attendance: %w", err)
+		}
+		if attendance == nil {
+			yesterday := today.AddDate(0, 0, -1)
+			attendance, err = s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, yesterday)
+			if err != nil {
+				return fmt.Errorf("failed to get yesterday's attendance: %w", err)
+			}
+		}
+		if attendance == nil {
+			return domain.NewValidationError("Không tìm thấy ca đang làm để hủy")
+		}
+		if attendance.EmployeeID != employeeID {
+			return domain.NewValidationError("Không thể hủy ca của nhân viên khác")
+		}
+		if attendance.IsCompleted() {
+			return domain.NewValidationError("Ca này đã tan ca, không thể hủy")
+		}
+		if attendance.SalaryRejectReason != nil {
+			return domain.NewValidationError("Ca này đã được hủy hoặc từ chối")
+		}
+		if attendance.GetStatus(now) == domain.AttendanceStatusOrphaned {
+			return domain.NewValidationError("Ca làm việc đã quá hạn tan ca")
+		}
+
+		ok, err := s.attendanceRepo.MarkAutoRejected(txCtx, attendance.ID, employeeCancelledWrongShiftReason)
+		if err != nil {
+			return fmt.Errorf("failed to cancel attendance: %w", err)
+		}
+		if !ok {
+			return domain.NewValidationError("Ca này đã được cập nhật, vui lòng tải lại")
+		}
+
+		zero := int64(0)
+		reason := employeeCancelledWrongShiftReason
+		attendance.EarningAmount = &zero
+		attendance.SalaryRejectReason = &reason
 		result = attendance
 		return nil
 	})
