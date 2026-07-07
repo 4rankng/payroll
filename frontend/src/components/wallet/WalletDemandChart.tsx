@@ -50,7 +50,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
     return () => obs.disconnect();
   }, []);
 
-  const periods = data?.periods ?? [];
+  const periods = useMemo(() => data?.periods ?? [], [data?.periods]);
   const currentPeriod = periods.find((p) => p.is_current);
 
   // Pivot periods into Recharts rows keyed by cycle day. All periods share the
