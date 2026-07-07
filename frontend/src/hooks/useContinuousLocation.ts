@@ -41,6 +41,8 @@ export interface UseContinuousLocationResult {
   /** Resolve with a submit-ready sample, or reject with a geolocation error on
    *  timeout / fatal error / abort. */
   awaitSubmitReady: (timeoutMs?: number) => Promise<LocationSample>;
+  /** Resolve with the next fresh GPS sample, regardless of geofence status. */
+  awaitFreshSample: (timeoutMs?: number) => Promise<LocationSample>;
   /** Clear state and restart the watch (recovery CTA, or after OS settings change). */
   retry: () => void;
 }
@@ -102,6 +104,7 @@ export function useContinuousLocation({
   const fatalErrorRef = useRef<GeolocationPositionError | null>(null);
   const isSubmitReadyRef = useRef(false);
   const pendingAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
+  const pendingFreshSampleAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
   sampleRef.current = sample;
   progressRef.current = progress;
   fatalErrorRef.current = fatalError;
@@ -124,6 +127,14 @@ export function useContinuousLocation({
     pendingAwaitersRef.current.clear();
   }, []);
 
+  const resolveFreshSampleAwaiters = useCallback((s: LocationSample) => {
+    pendingFreshSampleAwaitersRef.current.forEach((a) => {
+      clearTimeout(a.timer);
+      a.resolve(s);
+    });
+    pendingFreshSampleAwaitersRef.current.clear();
+  }, []);
+
   // Reject every pending awaiter (fatal error or silent abort) and clear timers.
   const rejectAwaiters = useCallback((err: unknown) => {
     pendingAwaitersRef.current.forEach((a) => {
@@ -131,6 +142,11 @@ export function useContinuousLocation({
       a.reject(err);
     });
     pendingAwaitersRef.current.clear();
+    pendingFreshSampleAwaitersRef.current.forEach((a) => {
+      clearTimeout(a.timer);
+      a.reject(err);
+    });
+    pendingFreshSampleAwaitersRef.current.clear();
   }, []);
 
   // Pause on tab hidden, resume on visible. iOS suspends the PWA anyway; this
@@ -161,6 +177,7 @@ export function useContinuousLocation({
         const next = p.bestFreshSample ?? null;
         sampleRef.current = next;
         setSample(next);
+        if (next) resolveFreshSampleAwaiters(next);
       },
       onError: (geoError) => {
         if (cancelled) return;
@@ -196,7 +213,7 @@ export function useContinuousLocation({
       // failed-attempt row should be written when the 30s timer would have fired.
       rejectAwaiters(new AbortedSubmitError());
     };
-  }, [enabled, target, visible, restartEpoch, radius, rejectAwaiters]);
+  }, [enabled, target, visible, restartEpoch, radius, rejectAwaiters, resolveFreshSampleAwaiters]);
 
   // Drain pending awaiters the moment submit-readiness flips true.
   useEffect(() => {
@@ -239,6 +256,41 @@ export function useContinuousLocation({
     [submitTimeoutMs, radius]
   );
 
+  const awaitFreshSample = useCallback(
+    (timeoutMs: number = submitTimeoutMs): Promise<LocationSample> => {
+      return new Promise<LocationSample>((resolve, reject) => {
+        if (fatalErrorRef.current) {
+          reject(fatalErrorRef.current);
+          return;
+        }
+        if (sampleRef.current) {
+          resolve(sampleRef.current);
+          return;
+        }
+
+        const requiredAccuracy = radius ?? 50;
+        const awaiter: PendingAwaiter = {
+          resolve,
+          reject,
+          timer: setTimeout(
+            () => {
+              pendingFreshSampleAwaitersRef.current.delete(awaiter);
+              reject(
+                createInaccurateGeolocationError(
+                  progressRef.current?.bestAccuracy,
+                  requiredAccuracy
+                )
+              );
+            },
+            timeoutMs
+          ),
+        };
+        pendingFreshSampleAwaitersRef.current.add(awaiter);
+      });
+    },
+    [submitTimeoutMs, radius]
+  );
+
   const retry = useCallback(() => {
     // Cancel any in-flight awaiter (silent abort), then restart the watch.
     rejectAwaiters(new AbortedSubmitError());
@@ -258,6 +310,7 @@ export function useContinuousLocation({
     isWatching,
     fatalError,
     awaitSubmitReady,
+    awaitFreshSample,
     retry,
   };
 }

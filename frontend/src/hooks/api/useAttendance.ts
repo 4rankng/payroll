@@ -75,6 +75,25 @@ export function useCheckOut() {
   });
 }
 
+export function useCancelCurrentAttendance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: attendanceService.cancelCurrent,
+    onSuccess: (response) => {
+      toast.success("Đã hủy ca", {
+        description: "Bạn có thể vào làm lại đúng ca.",
+      });
+      queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
+      queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
+    },
+    onError: (error: unknown) => {
+      const e = error as { response?: { data?: { message?: string } }; message?: string };
+      toast.error(e?.response?.data?.message || "Không thể hủy ca");
+    },
+  });
+}
+
 export function useLogAttendanceDeviceAttempt() {
   return useMutation({
     mutationFn: (payload: AttendanceDeviceAttemptPayload) =>

@@ -264,6 +264,22 @@ func (h *Handler) CheckOut(c *gin.Context) {
 	response.Success(c, h.mapToResponse(att), "Tan ca thành công")
 }
 
+// CancelCurrent handles POST /api/v1/mobile/attendance/cancel-current.
+func (h *Handler) CancelCurrent(c *gin.Context) {
+	employeeID, ok := h.resolveEmployeeID(c)
+	if !ok {
+		return
+	}
+
+	att, err := h.attendanceService.CancelCurrentAttendance(c.Request.Context(), employeeID)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, h.mapToResponse(att), "Đã hủy ca")
+}
+
 // GetToday handles GET /api/v1/mobile/attendance/today
 func (h *Handler) GetToday(c *gin.Context) {
 	employeeID, ok := h.resolveEmployeeID(c)

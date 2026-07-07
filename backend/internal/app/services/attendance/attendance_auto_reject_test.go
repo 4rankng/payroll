@@ -52,17 +52,17 @@ func (f *fakeTransactionManager) WithTransactionResult(ctx context.Context, fn f
 // here are usable; unexpected calls panic — which surfaces as a clear test fail.
 type fakeAttendanceRepo struct {
 	domain.AttendanceRepository
-	byID                  *domain.Attendance
-	byDate                *domain.Attendance
-	byDateByDay           map[string]*domain.Attendance
-	created               *domain.Attendance
-	updated               *domain.Attendance
-	orphanCandidates      []*domain.Attendance
-	markedAutoRejected    bool
-	markedIDs             []uint
-	quotaCreditedIDs      []uint
+	byID                   *domain.Attendance
+	byDate                 *domain.Attendance
+	byDateByDay            map[string]*domain.Attendance
+	created                *domain.Attendance
+	updated                *domain.Attendance
+	orphanCandidates       []*domain.Attendance
+	markedAutoRejected     bool
+	markedIDs              []uint
+	quotaCreditedIDs       []uint
 	overdueQuotaCandidates []uint
-	nextID                uint
+	nextID                 uint
 }
 
 func (f *fakeAttendanceRepo) Create(_ context.Context, a *domain.Attendance) error {
@@ -93,6 +93,14 @@ func (f *fakeAttendanceRepo) Update(_ context.Context, a *domain.Attendance) err
 func (f *fakeAttendanceRepo) findByID(id uint) *domain.Attendance {
 	if f.byID != nil && f.byID.ID == id {
 		return f.byID
+	}
+	if f.byDate != nil && f.byDate.ID == id {
+		return f.byDate
+	}
+	for _, a := range f.byDateByDay {
+		if a != nil && a.ID == id {
+			return a
+		}
 	}
 	for _, a := range f.orphanCandidates {
 		if a.ID == id {
@@ -234,10 +242,10 @@ type fakeEnqCall struct {
 // fakeTaskEnqueuer records EnqueueAutoRejectCheckout calls and signals `done` so
 // tests can synchronize on the after-commit goroutine.
 type fakeTaskEnqueuer struct {
-	mu         sync.Mutex
-	calls      []fakeEnqCall
+	mu          sync.Mutex
+	calls       []fakeEnqCall
 	creditCalls []fakeEnqCall
-	done       chan struct{}
+	done        chan struct{}
 }
 
 func (f *fakeTaskEnqueuer) EnqueueAutoRejectCheckout(id uint, at time.Time) error {
@@ -348,6 +356,75 @@ func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
 	}
 	if repo.updated != nil {
 		t.Fatalf("expected no persistence on a rejected checkout, but attendance was updated")
+	}
+}
+
+func TestCancelCurrentAttendanceMarksOpenShiftRejected(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 7, 7, 8, 30, 0, 0, loc)
+	today := time.Date(2026, 7, 7, 0, 0, 0, 0, loc)
+	att := &domain.Attendance{
+		ID:          19,
+		EmployeeID:  123,
+		ProjectID:   55,
+		Date:        today,
+		CheckInTime: checkIn,
+		CheckInGate: "Cổng chính",
+	}
+	repo := &fakeAttendanceRepo{byDate: att}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		clock:              clock.NewFake(time.Date(2026, 7, 7, 9, 0, 0, 0, loc)),
+		transactionManager: &fakeTransactionManager{},
+	}
+
+	got, err := svc.CancelCurrentAttendance(context.Background(), 123)
+	if err != nil {
+		t.Fatalf("CancelCurrentAttendance returned error: %v", err)
+	}
+	if got == nil || got.ID != att.ID {
+		t.Fatalf("expected canceled attendance %d, got %#v", att.ID, got)
+	}
+	if !repo.markedAutoRejected {
+		t.Fatal("expected repository to mark attendance rejected")
+	}
+	if got.EarningAmount == nil || *got.EarningAmount != 0 {
+		t.Fatalf("expected earning 0, got %v", got.EarningAmount)
+	}
+	if got.SalaryRejectReason == nil || !strings.Contains(*got.SalaryRejectReason, "vào nhầm ca") {
+		t.Fatalf("expected wrong-shift cancel reason, got %v", got.SalaryRejectReason)
+	}
+	if got.GetStatus(svc.clock.Now()) != domain.AttendanceStatusRejected {
+		t.Fatalf("expected rejected status, got %s", got.GetStatus(svc.clock.Now()))
+	}
+}
+
+func TestCancelCurrentAttendanceRejectsCompletedShift(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 7, 7, 8, 30, 0, 0, loc)
+	checkOut := time.Date(2026, 7, 7, 17, 0, 0, 0, loc)
+	today := time.Date(2026, 7, 7, 0, 0, 0, 0, loc)
+	repo := &fakeAttendanceRepo{byDate: &domain.Attendance{
+		ID:           20,
+		EmployeeID:   123,
+		ProjectID:    55,
+		Date:         today,
+		CheckInTime:  checkIn,
+		CheckOutTime: &checkOut,
+		CheckInGate:  "Cổng chính",
+	}}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		clock:              clock.NewFake(time.Date(2026, 7, 7, 18, 0, 0, 0, loc)),
+		transactionManager: &fakeTransactionManager{},
+	}
+
+	_, err := svc.CancelCurrentAttendance(context.Background(), 123)
+	if err == nil {
+		t.Fatal("expected completed shift cancel to fail")
+	}
+	if repo.markedAutoRejected {
+		t.Fatal("expected completed shift not to be marked rejected")
 	}
 }
 
