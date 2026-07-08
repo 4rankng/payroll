@@ -424,12 +424,19 @@ func (r *BulkTransferFileRepository) GetSalaryDistribution(ctx context.Context, 
 		// Extend toDate to end of day so records created throughout the last day are included
 		toDateEndOfDay := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 23, 59, 59, 0, toDate.Location())
 		query = query.Where(
-			// Weekly: include if the pay period overlaps with the requested range
-			// (from_date <= toDate AND to_date >= fromDate), falling back to from_date only when to_date is missing
+			// Weekly: include if the pay period overlaps the requested range
+			// (from_date <= toDate AND to_date >= fromDate), falling back to from_date only
+			// when to_date is missing. Some creation paths leave from_date/to_date NULL, so
+			// fall back to created_at — when the transfer was actually made — in that case.
 			r.DB.Where("cycle = ? AND from_date IS NOT NULL AND to_date IS NOT NULL AND from_date <= ? AND to_date >= ?", "weekly", toDateEndOfDay, *fromDate).
 				Or("cycle = ? AND from_date IS NOT NULL AND to_date IS NULL AND from_date >= ? AND from_date <= ?", "weekly", *fromDate, toDateEndOfDay).
+				Or("cycle = ? AND from_date IS NULL AND to_date IS NULL AND created_at >= ? AND created_at <= ?", "weekly", *fromDate, toDateEndOfDay).
+				// Monthly: match by for_month start/end overlapping the range; fall back to
+				// created_at when for_month is missing.
 				Or("cycle = ? AND for_month IS NOT NULL AND STR_TO_DATE(CONCAT(for_month, '-01'), '%Y-%m-%d') BETWEEN ? AND ?", "monthly", *fromDate, toDateEndOfDay).
 				Or("cycle = ? AND for_month IS NOT NULL AND LAST_DAY(STR_TO_DATE(CONCAT(for_month, '-01'), '%Y-%m-%d')) BETWEEN ? AND ?", "monthly", *fromDate, toDateEndOfDay).
+				Or("cycle = ? AND for_month IS NULL AND created_at >= ? AND created_at <= ?", "monthly", *fromDate, toDateEndOfDay).
+				// Flexible / unknown cycle: created_at within range.
 				Or("(cycle NOT IN (?, ?) OR cycle IS NULL) AND created_at >= ? AND created_at <= ?", "weekly", "monthly", *fromDate, toDateEndOfDay),
 		)
 	}
