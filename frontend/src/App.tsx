@@ -74,6 +74,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { authManager } from "@/lib/auth";
 import { SecureModalProvider } from "@/components/modals/SecureModalProvider";
 import ModalRouter from "@/components/modals/ModalRouter";
+import { EmailPromptGate } from "@/components/EmailPromptGate";
 import { showErrorNotification, isNetworkError, handleNetworkError } from "@/utils/error-handler";
 import { initInvalidationService } from "@/lib/cache/invalidationService";
 import { setupQueryPersistence } from "@/lib/cache/queryPersister";
@@ -299,6 +300,9 @@ const AppContent = () => {
 
       {/* Modal Router - centralized URL-driven modal system */}
       <ModalRouter />
+
+      {/* Prompts admin/partner/adv_partner users with no email to provide one. */}
+      <EmailPromptGate />
     </>
   );
 };
