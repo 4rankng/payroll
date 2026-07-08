@@ -41,6 +41,8 @@ import {
   type LocationPermissionIssue,
 } from "@/utils/geolocation";
 import { useContinuousLocation, isAbortedSubmitError } from "@/hooks/useContinuousLocation";
+import { getCheckInGeofenceGuidance, type CheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
+import { formatDistanceMeters } from "@/utils/geoDistance";
 import type { CheckInTarget } from "@/types/api/auth.types";
 
 const EmployeeLocationMap = lazy(() =>
@@ -120,7 +122,20 @@ function formatAccuracy(accuracy: number | undefined): string | null {
   return `${Math.round(accuracy)}m`;
 }
 
-function getLocationAcquisitionMessage(progress: LocationAcquisitionProgress | null): string {
+function getOutsideGeofenceInstruction(guidance: CheckInGeofenceGuidance): string | null {
+  if (guidance.status !== "outside") return null;
+  const gateName = guidance.nearestGate?.name || "cổng chấm công gần nhất";
+  const distance = formatDistanceMeters(guidance.distanceMeters);
+  return `Hãy di chuyển gần hơn tới ${gateName}. Cách ${distance}.`;
+}
+
+function getLocationAcquisitionMessage(
+  progress: LocationAcquisitionProgress | null,
+  guidance: CheckInGeofenceGuidance
+): string {
+  const outsideInstruction = getOutsideGeofenceInstruction(guidance);
+  if (outsideInstruction) return outsideInstruction;
+
   const bestAccuracy = formatAccuracy(progress?.bestAccuracy);
   const requiredAccuracy = formatAccuracy(progress?.requiredAccuracyMeters);
   if (!progress || progress.sampleCount === 0 || !bestAccuracy) {
@@ -222,6 +237,11 @@ export function EmployeeCheckInCard({
   // Aliases so the existing JSX (converging-accuracy banner, map preview) reads the
   // continuous watch's reactive state unchanged.
   const locationProgress: LocationAcquisitionProgress | null = location.progress;
+  const checkInGuidance = useMemo(
+    () => getCheckInGeofenceGuidance(checkInTarget, location.sample),
+    [checkInTarget, location.sample]
+  );
+  const outsideGeofenceInstruction = getOutsideGeofenceInstruction(checkInGuidance);
 
   // Clear a stale location-recovery banner when the user returns to the tab.
   // useTodayAttendance refetches on window focus, so if the user fixed the OS
@@ -652,7 +672,7 @@ export function EmployeeCheckInCard({
             <div className="min-w-0 flex-1">
               <p className="text-[17px] font-bold leading-6">Đang kiểm tra vị trí...</p>
               <p className="mt-1 text-[15px] font-medium leading-6 text-sky-800">
-                {getLocationAcquisitionMessage(locationProgress)}
+                {getLocationAcquisitionMessage(locationProgress, checkInGuidance)}
               </p>
             </div>
           </div>
@@ -947,11 +967,11 @@ export function EmployeeCheckInCard({
                       Đang xác định vị trí...
                     </p>
                     <p className="mt-1 text-[16px] font-medium leading-6 text-slate-600">
-                      {locationProgress?.status === "excellent"
+                      {outsideGeofenceInstruction || (locationProgress?.status === "excellent"
                         ? "Tín hiệu rất tốt — sẵn sàng chấm công."
                         : locationProgress?.status === "acceptable"
                           ? "Tín hiệu khá — đang ổn định thêm."
-                          : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần."}
+                          : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần.")}
                     </p>
                   </div>
                 </div>

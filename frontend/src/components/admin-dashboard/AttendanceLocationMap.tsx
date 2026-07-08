@@ -50,6 +50,7 @@ export function AttendanceLocationMap({
       tone: 'blue',
       label: 'Vị trí lúc vào làm',
       legendLabel: 'Vào làm',
+      checkpointKey: 'check-in',
     });
   }
   if (hasCheckOut) {
@@ -60,24 +61,49 @@ export function AttendanceLocationMap({
       tone: 'amber',
       label: 'Vị trí lúc tan ca',
       legendLabel: 'Tan ca',
+      checkpointKey: 'check-out',
     });
   }
 
-  const checkpoint: LocationMapCheckpoint | null =
+  const checkInCheckpoint: LocationMapCheckpoint | null =
     row.nearest_checkpoint_lat != null && row.nearest_checkpoint_lng != null
       ? {
+          key: 'check-in',
           lat: row.nearest_checkpoint_lat,
           lng: row.nearest_checkpoint_lng,
           name: row.nearest_checkpoint_name?.trim() || undefined,
           radiusMeters: row.geofence_radius_meters,
+          tone: 'blue',
+          legendLabel: 'Cổng vào',
         }
       : null;
+  const checkOutCheckpoint: LocationMapCheckpoint | null =
+    row.check_out_nearest_checkpoint_lat != null && row.check_out_nearest_checkpoint_lng != null
+      ? {
+          key: 'check-out',
+          lat: row.check_out_nearest_checkpoint_lat,
+          lng: row.check_out_nearest_checkpoint_lng,
+          name: row.check_out_nearest_checkpoint_name?.trim() || undefined,
+          radiusMeters: row.geofence_radius_meters,
+          tone: 'amber',
+          legendLabel: 'Cổng tan',
+        }
+      : null;
+  const checkpoints = [checkInCheckpoint, checkOutCheckpoint].filter(
+    (item): item is LocationMapCheckpoint => item != null,
+  );
 
   const radiusMeters = row.geofence_radius_meters;
 
   const accuracyChips: AccuracyChip[] = [{ icon: Navigation, label: `Vào · ${formatGpsAccuracy(row.check_in_accuracy)}` }];
   if (row.check_out_accuracy != null) {
     accuracyChips.push({ icon: Navigation, label: `Ra · ${formatGpsAccuracy(row.check_out_accuracy)}` });
+  }
+  if (row.check_out_nearest_checkpoint_distance_meters != null) {
+    accuracyChips.push({
+      icon: MapPin,
+      label: `Tan tới cổng ${formatDistanceMeters(row.check_out_nearest_checkpoint_distance_meters)}`,
+    });
   }
   if (radiusMeters != null) {
     accuracyChips.push({ icon: MapPin, label: `Bán kính ${formatDistanceMeters(radiusMeters)}` });
@@ -86,7 +112,7 @@ export function AttendanceLocationMap({
   return (
     <LocationMap
       points={points}
-      checkpoint={checkpoint}
+      checkpoints={checkpoints}
       badge={badge}
       employeeName={row.employee_name ?? `#${row.employee_id}`}
       subtitle={subtitle ?? row.nearest_checkpoint_name?.trim() ?? undefined}

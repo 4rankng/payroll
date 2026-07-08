@@ -29,6 +29,10 @@ export interface AdminAttendanceResponse {
   nearest_checkpoint_lat?: number | null;
   nearest_checkpoint_lng?: number | null;
   nearest_checkpoint_distance_meters?: number | null;
+  check_out_nearest_checkpoint_name?: string | null;
+  check_out_nearest_checkpoint_lat?: number | null;
+  check_out_nearest_checkpoint_lng?: number | null;
+  check_out_nearest_checkpoint_distance_meters?: number | null;
   geofence_radius_meters?: number | null;
   status: string;
 }

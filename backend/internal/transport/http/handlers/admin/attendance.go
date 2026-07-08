@@ -232,21 +232,36 @@ func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.Admin
 		res.RejectedAt = &rejectedAt
 	}
 
-	nearest := nearestCheckpointForCoordinates(att.CheckInLat, att.CheckInLng, &att.Project)
-	if nearest == nil {
-		return res
+	if nearest := nearestCheckpointForCoordinates(att.CheckInLat, att.CheckInLng, &att.Project); nearest != nil {
+		distance := nearest.distanceMeters
+		res.NearestCheckpointDistanceMeters = &distance
+		if nearest.name != "" {
+			name := nearest.name
+			res.NearestCheckpointName = &name
+		}
+		res.NearestCheckpointLat = &nearest.lat
+		res.NearestCheckpointLng = &nearest.lng
+		if nearest.geofenceRadiusMeters > 0 {
+			radius := nearest.geofenceRadiusMeters
+			res.GeofenceRadiusMeters = &radius
+		}
 	}
-	distance := nearest.distanceMeters
-	res.NearestCheckpointDistanceMeters = &distance
-	if nearest.name != "" {
-		name := nearest.name
-		res.NearestCheckpointName = &name
-	}
-	res.NearestCheckpointLat = &nearest.lat
-	res.NearestCheckpointLng = &nearest.lng
-	if nearest.geofenceRadiusMeters > 0 {
-		radius := nearest.geofenceRadiusMeters
-		res.GeofenceRadiusMeters = &radius
+
+	if att.CheckOutLat != nil && att.CheckOutLng != nil {
+		if nearest := nearestCheckpointForCoordinates(*att.CheckOutLat, *att.CheckOutLng, &att.Project); nearest != nil {
+			distance := nearest.distanceMeters
+			res.CheckOutNearestCheckpointDistanceMeters = &distance
+			if nearest.name != "" {
+				name := nearest.name
+				res.CheckOutNearestCheckpointName = &name
+			}
+			res.CheckOutNearestCheckpointLat = &nearest.lat
+			res.CheckOutNearestCheckpointLng = &nearest.lng
+			if nearest.geofenceRadiusMeters > 0 && res.GeofenceRadiusMeters == nil {
+				radius := nearest.geofenceRadiusMeters
+				res.GeofenceRadiusMeters = &radius
+			}
+		}
 	}
 
 	return res

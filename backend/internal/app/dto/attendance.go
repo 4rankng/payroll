@@ -94,16 +94,20 @@ type AdminAttendanceResponse struct {
 	SalaryRejectReason *string    `json:"salary_reject_reason,omitempty"`
 	RejectedAt         *time.Time `json:"rejected_at,omitempty"`
 	// Admin review audit (migration 083). Nil when never reviewed.
-	ReviewAction                    *string    `json:"review_action,omitempty"`
-	ReviewNote                      *string    `json:"review_note,omitempty"`
-	ReviewedBy                      *uint      `json:"reviewed_by,omitempty"`
-	ReviewedAt                      *time.Time `json:"reviewed_at,omitempty"`
-	NearestCheckpointName           *string    `json:"nearest_checkpoint_name,omitempty"`
-	NearestCheckpointLat            *float64   `json:"nearest_checkpoint_lat,omitempty"`
-	NearestCheckpointLng            *float64   `json:"nearest_checkpoint_lng,omitempty"`
-	NearestCheckpointDistanceMeters *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
-	GeofenceRadiusMeters            *uint      `json:"geofence_radius_meters,omitempty"`
-	Status                          string     `json:"status"`
+	ReviewAction                            *string    `json:"review_action,omitempty"`
+	ReviewNote                              *string    `json:"review_note,omitempty"`
+	ReviewedBy                              *uint      `json:"reviewed_by,omitempty"`
+	ReviewedAt                              *time.Time `json:"reviewed_at,omitempty"`
+	NearestCheckpointName                   *string    `json:"nearest_checkpoint_name,omitempty"`
+	NearestCheckpointLat                    *float64   `json:"nearest_checkpoint_lat,omitempty"`
+	NearestCheckpointLng                    *float64   `json:"nearest_checkpoint_lng,omitempty"`
+	NearestCheckpointDistanceMeters         *float64   `json:"nearest_checkpoint_distance_meters,omitempty"`
+	CheckOutNearestCheckpointName           *string    `json:"check_out_nearest_checkpoint_name,omitempty"`
+	CheckOutNearestCheckpointLat            *float64   `json:"check_out_nearest_checkpoint_lat,omitempty"`
+	CheckOutNearestCheckpointLng            *float64   `json:"check_out_nearest_checkpoint_lng,omitempty"`
+	CheckOutNearestCheckpointDistanceMeters *float64   `json:"check_out_nearest_checkpoint_distance_meters,omitempty"`
+	GeofenceRadiusMeters                    *uint      `json:"geofence_radius_meters,omitempty"`
+	Status                                  string     `json:"status"`
 }
 
 // PaginatedAttendanceResponse represents a paginated list of attendances

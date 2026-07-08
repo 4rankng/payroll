@@ -140,6 +140,7 @@ export const useEmployeeSummary = (id: number, enabled = true) => {
     queryKey: QueryKeys.employees.employeeSummary(id),
     queryFn: () => employeeService.getEmployeeSummaryById(id),
     enabled,
+    retry: false,
   });
 };
 
@@ -199,6 +200,7 @@ export const useEmployeeTimesheet = (
     ),
     queryFn: () => employeeService.getEmployeeTimesheet(id, filters),
     enabled,
+    retry: false,
   });
 };
 
