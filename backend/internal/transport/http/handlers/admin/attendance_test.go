@@ -165,6 +165,50 @@ func TestMapAdminAttendanceResponseRejectedIncludesRejectTimeAndNearestGate(t *t
 	}
 }
 
+func TestMapAdminAttendanceResponseIncludesCheckoutNearestGate(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 7, 2, 21, 0, 0, 0, loc)
+	checkOutTime := time.Date(2026, 7, 2, 20, 55, 0, 0, loc)
+	checkOutLat := 10.0201
+	checkOutLng := 106.0201
+	checkOutGate := "Cổng B"
+	att := &domain.Attendance{
+		ID:           8,
+		EmployeeID:   123,
+		ProjectID:    55,
+		Date:         time.Date(2026, 7, 2, 0, 0, 0, 0, loc),
+		CheckInTime:  time.Date(2026, 7, 2, 8, 0, 0, 0, loc),
+		CheckInLat:   10.0001,
+		CheckInLng:   106.0001,
+		CheckInGate:  "Cổng A",
+		CheckOutTime: &checkOutTime,
+		CheckOutLat:  &checkOutLat,
+		CheckOutLng:  &checkOutLng,
+		CheckOutGate: &checkOutGate,
+		Employee:     domain.Employee{Fullname: "Đỗ Thị Thoa"},
+		Project: domain.Project{
+			Name:                 "LGD",
+			GeofenceRadiusMeters: 100,
+			GeofenceGates: []domain.GeofenceGate{
+				{Name: "Cổng A", Lat: 10.0002, Lng: 106.0002},
+				{Name: "Cổng B", Lat: 10.0202, Lng: 106.0202},
+			},
+		},
+	}
+
+	got := mapAdminAttendanceResponse(att, now)
+
+	if got.CheckOutNearestCheckpointName == nil || *got.CheckOutNearestCheckpointName != "Cổng B" {
+		t.Fatalf("checkout nearest checkpoint = %v, want Cổng B", got.CheckOutNearestCheckpointName)
+	}
+	if got.CheckOutNearestCheckpointDistanceMeters == nil || *got.CheckOutNearestCheckpointDistanceMeters <= 0 {
+		t.Fatalf("checkout nearest distance = %v, want > 0", got.CheckOutNearestCheckpointDistanceMeters)
+	}
+	if got.CheckOutNearestCheckpointLat == nil || got.CheckOutNearestCheckpointLng == nil {
+		t.Fatalf("checkout nearest checkpoint coordinates = (%v, %v), want non-nil", got.CheckOutNearestCheckpointLat, got.CheckOutNearestCheckpointLng)
+	}
+}
+
 func TestListFailedAttemptsInfersCheckoutProjectForLegacyRows(t *testing.T) {
 	loc := clock.DefaultLocation
 	createdAt := time.Date(2026, 7, 2, 23, 35, 0, 0, loc)
@@ -277,4 +321,3 @@ func (fakeTransactionManager) WithTransaction(ctx context.Context, fn func(conte
 func (fakeTransactionManager) WithTransactionResult(ctx context.Context, fn func(context.Context) (interface{}, error)) (interface{}, error) {
 	return fn(ctx)
 }
-

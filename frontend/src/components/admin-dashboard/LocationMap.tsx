@@ -10,7 +10,7 @@ import {
   ZoomControl,
 } from 'react-leaflet';
 import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
-import { AlertTriangle, Clock, Map, MapPin, Satellite, WifiOff, X, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, Clock, Map as MapIcon, MapPin, Satellite, WifiOff, X, type LucideIcon } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export type AttemptTone = 'blue' | 'amber' | 'slate';
 export type ReasonSeverity = 'danger' | 'warning' | 'info' | 'neutral';
 type BaseLayer = 'street' | 'satellite';
 type MarkerTone = 'blue' | 'amber' | 'rose' | 'slate';
+type CheckpointTone = 'emerald' | 'amber' | 'blue';
 
 export interface LocationMapPoint {
   lat: number;
@@ -31,13 +32,18 @@ export interface LocationMapPoint {
   tone: MarkerTone;
   /** When set, the point also appears in the legend. */
   legendLabel?: string;
+  /** Optional key of the checkpoint this point should connect to. */
+  checkpointKey?: string;
 }
 
 export interface LocationMapCheckpoint {
+  key?: string;
   lat: number;
   lng: number;
   name?: string;
   radiusMeters?: number | null;
+  tone?: CheckpointTone;
+  legendLabel?: string;
 }
 
 export interface AccuracyChip {
@@ -48,6 +54,7 @@ export interface AccuracyChip {
 interface LocationMapProps {
   points: LocationMapPoint[];
   checkpoint?: LocationMapCheckpoint | null;
+  checkpoints?: LocationMapCheckpoint[];
   badge?: { label: string; tone: AttemptTone };
   employeeName?: string;
   subtitle?: string;
@@ -83,9 +90,16 @@ const POINT_COLORS: Record<MarkerTone, { fill: string; haloStroke: string; haloF
   slate: { fill: '#475569', haloStroke: '#475569', haloFill: '#64748b', legend: 'bg-slate-500' },
 };
 
+const CHECKPOINT_COLORS: Record<CheckpointTone, { stroke: string; fill: string; legend: string }> = {
+  emerald: { stroke: '#047857', fill: '#10b981', legend: 'bg-emerald-500' },
+  amber: { stroke: '#b45309', fill: '#f59e0b', legend: 'bg-amber-500' },
+  blue: { stroke: '#1d4ed8', fill: '#3b82f6', legend: 'bg-blue-500' },
+};
+
 export function LocationMap({
   points,
   checkpoint,
+  checkpoints,
   badge,
   employeeName,
   subtitle,
@@ -100,6 +114,17 @@ export function LocationMap({
 }: LocationMapProps) {
   const [tileFailed, setTileFailed] = useState(false);
   const [baseLayer, setBaseLayer] = useState<BaseLayer>('satellite');
+  const effectiveCheckpoints = useMemo(
+    () => checkpoints ?? (checkpoint ? [checkpoint] : []),
+    [checkpoint, checkpoints],
+  );
+  const primaryCheckpoint = effectiveCheckpoints[0] ?? null;
+  const checkpointByKey = useMemo(() => {
+    const entries = effectiveCheckpoints
+      .filter((item): item is LocationMapCheckpoint & { key: string } => Boolean(item.key))
+      .map((item) => [item.key, item] as const);
+    return new Map(entries);
+  }, [effectiveCheckpoints]);
 
   const switchLayer = (layer: BaseLayer) => {
     setTileFailed(false);
@@ -108,9 +133,9 @@ export function LocationMap({
 
   const center: LatLngExpression | null = useMemo(() => {
     if (points.length) return [points[0].lat, points[0].lng];
-    if (checkpoint) return [checkpoint.lat, checkpoint.lng];
+    if (primaryCheckpoint) return [primaryCheckpoint.lat, primaryCheckpoint.lng];
     return null;
-  }, [points, checkpoint]);
+  }, [points, primaryCheckpoint]);
 
   const hasDistance = distanceMeters != null && Number.isFinite(distanceMeters);
   const hasRadius = radiusMeters != null && radiusMeters > 0;
@@ -147,41 +172,57 @@ export function LocationMap({
                 eventHandlers={{ tileerror: () => setTileFailed(true) }}
               />
             )}
-            <FitBounds points={points} checkpoint={checkpoint} />
+            <FitBounds points={points} checkpoints={effectiveCheckpoints} />
             <ZoomControl position="bottomright" />
 
-            {checkpoint && hasRadius ? (
-              <Circle
-                center={[checkpoint.lat, checkpoint.lng]}
-                radius={radiusMeters as number}
-                pathOptions={{ color: '#059669', fillColor: '#10b981', fillOpacity: 0.12, weight: 2 }}
-              >
-                <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                  {checkpoint.name || 'Điểm chấm gần nhất'}
-                </Tooltip>
-              </Circle>
-            ) : null}
+            {effectiveCheckpoints.map((item, i) => {
+              const checkpointTone = item.tone ?? 'emerald';
+              const c = CHECKPOINT_COLORS[checkpointTone];
+              const checkpointRadius = item.radiusMeters ?? radiusMeters;
+              return checkpointRadius != null && checkpointRadius > 0 ? (
+                <Circle
+                  key={`checkpoint-radius-${item.key ?? i}`}
+                  center={[item.lat, item.lng]}
+                  radius={checkpointRadius}
+                  pathOptions={{ color: c.stroke, fillColor: c.fill, fillOpacity: 0.12, weight: 2 }}
+                >
+                  <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                    {item.name || item.legendLabel || 'Điểm chấm gần nhất'}
+                  </Tooltip>
+                </Circle>
+              ) : null;
+            })}
 
-            {checkpoint ? (
-              <CircleMarker
-                center={[checkpoint.lat, checkpoint.lng]}
-                radius={8}
-                pathOptions={{ color: '#047857', fillColor: '#ffffff', fillOpacity: 1, weight: 3 }}
-              >
-                <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                  {checkpoint.name || 'Điểm chấm gần nhất'}
-                </Tooltip>
-              </CircleMarker>
-            ) : null}
+            {effectiveCheckpoints.map((item, i) => {
+              const checkpointTone = item.tone ?? 'emerald';
+              const c = CHECKPOINT_COLORS[checkpointTone];
+              return (
+                <CircleMarker
+                  key={`checkpoint-marker-${item.key ?? i}`}
+                  center={[item.lat, item.lng]}
+                  radius={8}
+                  pathOptions={{ color: c.stroke, fillColor: '#ffffff', fillOpacity: 1, weight: 3 }}
+                >
+                  <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                    {item.name || item.legendLabel || 'Điểm chấm gần nhất'}
+                  </Tooltip>
+                </CircleMarker>
+              );
+            })}
 
-            {checkpoint
-              ? points.map((p, i) => (
-                  <Polyline
-                    key={`line-${i}`}
-                    positions={[[p.lat, p.lng], [checkpoint.lat, checkpoint.lng]]}
-                    pathOptions={{ color: '#2563eb', dashArray: '6 6', weight: 2 }}
-                  />
-                ))
+            {effectiveCheckpoints.length
+              ? points.map((p, i) => {
+                  const pointCheckpoint = p.checkpointKey ? checkpointByKey.get(p.checkpointKey) : null;
+                  const lineCheckpoint = pointCheckpoint ?? primaryCheckpoint;
+                  if (!lineCheckpoint) return null;
+                  return (
+                    <Polyline
+                      key={`line-${i}`}
+                      positions={[[p.lat, p.lng], [lineCheckpoint.lat, lineCheckpoint.lng]]}
+                      pathOptions={{ color: POINT_COLORS[p.tone].haloStroke, dashArray: '6 6', weight: 2 }}
+                    />
+                  );
+                })
               : null}
 
             {points.map((p, i) => {
@@ -318,7 +359,7 @@ export function LocationMap({
               <LayerButton
                 active={baseLayer === 'street'}
                 onClick={() => switchLayer('street')}
-                icon={Map}
+                icon={MapIcon}
                 label="Bản đồ"
               />
             </div>
@@ -330,12 +371,15 @@ export function LocationMap({
       {showMap ? (
         <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 z-[500] sm:bottom-4 sm:left-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
-            {checkpoint ? (
-              <LegendItem>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30" />
-                Điểm chấm
-              </LegendItem>
-            ) : null}
+            {effectiveCheckpoints.map((item, i) => {
+              const checkpointTone = item.tone ?? 'emerald';
+              return (
+                <LegendItem key={`checkpoint-legend-${item.key ?? i}`}>
+                  <span className={cn('h-2 w-2 rounded-full ring-2 ring-black/5', CHECKPOINT_COLORS[checkpointTone].legend)} />
+                  {item.legendLabel || 'Điểm chấm'}
+                </LegendItem>
+              );
+            })}
             {points
               .filter((p) => p.legendLabel)
               .map((p, i) => (
@@ -374,10 +418,10 @@ export function LocationMap({
 
 function FitBounds({
   points,
-  checkpoint,
+  checkpoints,
 }: {
   points: LocationMapPoint[];
-  checkpoint?: LocationMapCheckpoint | null;
+  checkpoints: LocationMapCheckpoint[];
 }) {
   const map = useMap();
 
@@ -385,13 +429,15 @@ function FitBounds({
   // but don't move points) don't reset the user's pan/zoom.
   const boundsKey = useMemo(() => {
     const pts = points.map((p) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`).join('|');
-    const cp = checkpoint ? `${checkpoint.lat.toFixed(6)},${checkpoint.lng.toFixed(6)}` : '';
+    const cp = checkpoints.map((item) => `${item.lat.toFixed(6)},${item.lng.toFixed(6)}`).join('|');
     return `${pts}#${cp}`;
-  }, [points, checkpoint]);
+  }, [points, checkpoints]);
 
   useEffect(() => {
     const pts: [number, number][] = points.map((p) => [p.lat, p.lng]);
-    if (checkpoint) pts.push([checkpoint.lat, checkpoint.lng]);
+    for (const item of checkpoints) {
+      pts.push([item.lat, item.lng]);
+    }
     if (!pts.length) return;
     map.fitBounds(pts as LatLngBoundsExpression, { padding: [48, 48], maxZoom: 17 });
     // Leaflet renders gray tiles when its container is sized during an open
