@@ -135,7 +135,7 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92dvh] w-full max-w-2xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+      <DialogContent className="flex max-h-[92dvh] w-full max-w-2xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
 
         {/* Header */}
         <div className="shrink-0 bg-slate-900 px-4 pt-4 pb-3 text-white">

@@ -36,7 +36,8 @@ export const NotificationDetailModal = memo(function NotificationDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-lg w-[90vw] p-0 bg-slate-900 border-slate-700"
+        className="max-w-lg w-[90vw] bg-slate-900 border-slate-700"
+        contentPadding="none"
         title={notification.title}
         description={notification.message}
         hideCloseButton

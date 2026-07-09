@@ -33,12 +33,13 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
   title?: string;
   description?: string;
   hideCloseButton?: boolean;
+  contentPadding?: 'default' | 'none';
 };
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, title, description, hideCloseButton, ...props }, ref) => {
+>(({ className, children, title, description, hideCloseButton, contentPadding = 'default', ...props }, ref) => {
   const isMobile = useIsMobile();
 
   return (
@@ -47,7 +48,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 overflow-hidden border bg-background p-4 shadow-2xl sm:p-6",
+          "fixed z-50 flex flex-col gap-4 overflow-hidden border bg-background shadow-2xl",
+          contentPadding === 'default' && "p-4 sm:p-6",
           isMobile
             ? /* Mobile: bottom sheet */
               "inset-x-0 bottom-0 w-full max-h-[92dvh] rounded-t-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300 data-[state=closed]:duration-200"

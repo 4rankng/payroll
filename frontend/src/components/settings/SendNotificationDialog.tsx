@@ -130,7 +130,8 @@ export const SendNotificationDialog = memo(function SendNotificationDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-screen h-screen max-w-none max-h-none shadow-none p-0 flex flex-col overflow-hidden bg-muted/30"
+        className="w-screen h-screen max-w-none max-h-none shadow-none flex flex-col overflow-hidden bg-muted/30"
+        contentPadding="none"
         title="GỬI THÔNG BÁO"
         description="Gửi thông báo đến người dùng"
         hideCloseButton

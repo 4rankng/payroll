@@ -254,7 +254,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92dvh] w-full max-w-xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+        <DialogContent className="flex max-h-[92dvh] w-full max-w-xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
 
           <DialogNavyHeader
             title="Lịch sử sao kê"

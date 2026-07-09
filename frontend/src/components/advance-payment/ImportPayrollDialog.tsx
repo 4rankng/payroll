@@ -90,7 +90,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton>
+      <DialogContent className="max-w-md gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
         <DialogNavyHeader
           title="Nhập bảng lương"
           description="Nhập file Excel chứa thông tin ứng lương"

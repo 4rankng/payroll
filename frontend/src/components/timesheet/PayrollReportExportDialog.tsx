@@ -68,7 +68,8 @@ export const PayrollReportExportDialog = memo(function PayrollReportExportDialog
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] sm:max-w-md p-0"
+        className="max-w-[95vw] sm:max-w-md"
+        contentPadding="none"
         title="Xuất sao kê thanh toán"
         description="Chọn ngày để tải báo cáo sao kê"
       >

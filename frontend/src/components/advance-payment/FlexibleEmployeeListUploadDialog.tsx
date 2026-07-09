@@ -81,7 +81,7 @@ export const FlexibleEmployeeListUploadDialog = memo(function FlexibleEmployeeLi
     const hasErrors = importResult.errors && importResult.errors.length > 0;
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92dvh] max-w-lg flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+        <DialogContent className="flex max-h-[92dvh] max-w-lg flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
           <DialogNavyHeader
             title="Kết quả nhập"
             description="Tổng kết quá trình xử lý file Excel"
@@ -145,7 +145,7 @@ export const FlexibleEmployeeListUploadDialog = memo(function FlexibleEmployeeLi
   // ── Upload view ──
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92dvh] max-w-md flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+      <DialogContent className="flex max-h-[92dvh] max-w-md flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
         <DialogNavyHeader
           title="Nhập danh sách nhân viên"
           description="File Excel danh sách nhân viên lịch trả lương linh hoạt"

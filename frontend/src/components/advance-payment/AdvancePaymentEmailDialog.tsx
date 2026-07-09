@@ -54,12 +54,12 @@ function getDefaultMonth(monthOptions: { value: string }[]) {
 const Tag = memo(function Tag({ email, onRemove, primary }: { email: string; onRemove: () => void; primary?: boolean }) {
   return (
     <span className={cn(
-      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border',
+      'inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium',
       primary ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border',
     )}>
-      <span className="max-w-[150px] truncate">{email}</span>
-      <button type="button" onClick={onRemove} className="rounded-full p-0.5 hover:opacity-70">
-        <X className="h-2.5 w-2.5" />
+      <span className="max-w-[180px] break-all leading-snug sm:truncate">{email}</span>
+      <button type="button" onClick={onRemove} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-background/70 hover:opacity-80" aria-label={`Xóa ${email}`}>
+        <X className="h-3 w-3" />
       </button>
     </span>
   );
@@ -87,17 +87,17 @@ const EmailCol = memo(function EmailCol({ label, sublabel, placeholder, value, e
         <span className="text-xs text-muted-foreground">{sublabel}</span>
         <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground tabular-nums">{emails.length}</span>
       </div>
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         <Input
           type="email"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
-          className={cn('h-7 text-xs', error && 'border-destructive')}
+          className={cn('min-h-11 text-sm', error && 'border-destructive')}
         />
-        <Button type="button" onClick={onAdd} size="icon" variant="outline" className="h-7 w-7 shrink-0 border-dashed">
-          <Plus className="h-3 w-3" />
+        <Button type="button" onClick={onAdd} size="icon" variant="outline" className="h-11 w-11 shrink-0 border-dashed" aria-label={`Thêm ${label}`}>
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
       {error && <p className="flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" />{error}</p>}
@@ -188,20 +188,26 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-2xl p-0 gap-0 overflow-hidden sm:max-w-2xl max-w-[calc(100vw-1rem)]" hideCloseButton>
+      <DialogContent
+        className="w-full max-w-[calc(100vw-1rem)] max-h-[92dvh] gap-0 overflow-hidden sm:max-w-3xl"
+        contentPadding="none"
+        title="Email Sao kê ứng lương"
+        description="Gửi báo cáo sao kê ứng lương tháng qua email"
+        hideCloseButton
+      >
 
         {/* Navy header with inline actions */}
         <div className="bg-slate-900 px-4 pt-4 pb-3 text-white flex-shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-tight">Email Sao kê ứng lương</p>
               <p className="text-xs text-slate-400 mt-0.5">Gửi báo cáo sao kê ứng lương tháng qua email</p>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-3 text-xs bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                className="min-h-11 flex-1 bg-white/10 px-3 text-xs text-white shadow-none hover:bg-white/20 sm:flex-none"
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >
@@ -209,7 +215,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
               </Button>
               <Button
                 size="sm"
-                className="h-7 gap-1.5 px-3 text-xs bg-white/10 hover:bg-white/20 text-white border-0 shadow-none"
+                className="min-h-11 flex-1 gap-1.5 bg-white/10 px-3 text-xs text-white shadow-none hover:bg-white/20 sm:flex-none"
                 onClick={handleSend}
                 disabled={!canSend || isLoading}
               >
@@ -217,14 +223,15 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
                   ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Đang gửi...</>
                   : <><Mail className="h-3.5 w-3.5" />Gửi email</>}
               </Button>
-              <DialogClose className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors outline-none">
-                <X className="w-3.5 h-3.5 text-white" />
+              <DialogClose className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 outline-none transition-colors hover:bg-white/20" aria-label="Đóng">
+                <X className="h-4 w-4 text-white" />
               </DialogClose>
             </div>
           </div>
         </div>
 
         {/* Body: Month | To | CC */}
+        <div className="max-h-[calc(92dvh-92px)] overflow-y-auto">
         <div className="flex flex-col sm:flex-row sm:divide-x sm:divide-border">
 
           {/* Month selector column */}
@@ -237,7 +244,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
                   type="button"
                   onClick={() => { setSelectedMonth(month.value); setPreviewError(''); }}
                   className={cn(
-                    'h-8 px-3 rounded-xl text-sm font-medium border transition-colors',
+                    'min-h-11 px-3 rounded-xl text-sm font-medium border transition-colors',
                     selectedMonth === month.value
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-background text-foreground border-border hover:bg-muted',
@@ -251,7 +258,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
               type="button"
               variant="outline"
               size="sm"
-              className="h-7 w-full gap-1.5 text-xs"
+              className="min-h-11 w-full gap-1.5 text-sm"
               onClick={handlePreview}
               disabled={!selectedMonth || isPreviewing}
             >
@@ -268,7 +275,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
           </div>
 
           {/* To + CC columns */}
-          <div className="flex flex-1 divide-x divide-border min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
             <div className="flex-1 px-4 py-3 min-w-0">
               <EmailCol
                 label="Người nhận"
@@ -299,6 +306,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
               />
             </div>
           </div>
+        </div>
         </div>
 
       </DialogContent>
