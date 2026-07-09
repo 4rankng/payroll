@@ -69,6 +69,14 @@ func TestWalletDemandForecastLockedGapHasNoTopUpNeed(t *testing.T) {
 	if got.Prediction.Shortfall != 0 {
 		t.Fatalf("Shortfall = %d, want 0", got.Prediction.Shortfall)
 	}
+	if got.Prediction.P50Reference <= 0 || got.Prediction.P90Reference <= 0 || got.Prediction.P99Reference <= 0 {
+		t.Fatalf(
+			"remaining-cycle forecast quantiles = p50:%d p90:%d p99:%d, want non-zero despite zero near-term top-up need",
+			got.Prediction.P50Reference,
+			got.Prediction.P90Reference,
+			got.Prediction.P99Reference,
+		)
+	}
 	if len(repo.months) == 0 || repo.months[0] != "2026-07" {
 		t.Fatalf("queried months = %v, want current effective period first", repo.months)
 	}

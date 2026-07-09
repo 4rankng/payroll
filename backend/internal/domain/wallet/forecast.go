@@ -32,9 +32,10 @@ type WalletDemandPoint struct {
 // WalletDemandPrediction is the advisory balance forecast for the current
 // period. DISPLAY ONLY — must not feed SyncBalance or any auto top-up.
 //
-// RecommendedBalance is the newsvendor p*-quantile (+ optional safety stock) of
-// the predicted near-term net cash-out distribution. The horizon is controlled by
-// LeadDays so the card can act as a just-in-time top-up reminder.
+// RecommendedBalance is the just-in-time wallet balance target for the near-term
+// top-up window. P50/P90/P99Reference describe the remaining-cycle forecast
+// through the cutoff day so the statistical forecast does not collapse to zero
+// when the near-term wallet window has no request days.
 type WalletDemandPrediction struct {
 	ActualSoFar        int64   `json:"actual_so_far"`
 	ProjectedTotal     int64   `json:"projected_total"` // p50 projection of full-period net demand
@@ -53,9 +54,9 @@ type WalletDemandPrediction struct {
 	HorizonCycleDay    int     `json:"horizon_cycle_day"`
 
 	// Newsvendor / tail-risk fields.
-	P50Reference        int64                      `json:"p50_reference"`        // median horizon cash-out
-	P90Reference        int64                      `json:"p90_reference"`        // p90 horizon cash-out
-	P99Reference        int64                      `json:"p99_reference"`        // p99 horizon cash-out (tail)
+	P50Reference        int64                      `json:"p50_reference"`        // median remaining-cycle cash-out
+	P90Reference        int64                      `json:"p90_reference"`        // p90 remaining-cycle cash-out
+	P99Reference        int64                      `json:"p99_reference"`        // p99 remaining-cycle cash-out (tail)
 	CoverageProbability float64                    `json:"coverage_probability"` // p* actually used (e.g. 0.95)
 	NHistory            int                        `json:"n_history"`            // usable historical periods
 	ConfidenceInterval  ForecastConfidenceInterval `json:"confidence_interval"`

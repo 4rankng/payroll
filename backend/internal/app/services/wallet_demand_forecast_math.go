@@ -19,8 +19,9 @@ import (
 // through day 8 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
-// NET request amounts (request_amount − fee; all statuses), plus completed/grand
-// totals. Net is the cash that actually leaves the wallet per request.
+// net employee-requested amounts (request_amount - fee), plus completed/grand
+// totals. The source is advance_payment_requests only; quota/max_adv_amount must
+// never feed this forecast.
 type cohortSeries struct {
 	forMonth       string
 	isCurrent      bool

@@ -165,7 +165,7 @@ export interface WalletDemandPrediction {
   lead_days?: number;
   horizon_cycle_day?: number;
   // Newsvendor / tail-risk fields. Optional for backward-compat with older deploys.
-  p50_reference?: number; // median horizon cash-out
+  p50_reference?: number; // median remaining-cycle cash-out
   p90_reference?: number;
   p99_reference?: number; // tail
   coverage_probability?: number; // p* actually used (e.g. 0.95)
