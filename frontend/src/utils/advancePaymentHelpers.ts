@@ -161,6 +161,15 @@ function sortQuotasByMonth(quotas: AdvancePaymentQuota[]): AdvancePaymentQuota[]
   return [...quotas].sort((a, b) => a.forMonth.localeCompare(b.forMonth));
 }
 
+function hasQuotaValue(quota: AdvancePaymentQuota): boolean {
+  return (
+    quota.maxAdvanceAmount > 0 ||
+    quota.completedAmount > 0 ||
+    quota.pendingAmount > 0 ||
+    quota.remainingAmount > 0
+  );
+}
+
 function getHistoryUsedAmount(
   history: AdvancePaymentHistoryItem[] | undefined,
   forMonth: string,
@@ -181,19 +190,22 @@ export function getAdvanceQuotaSummary(
 ): AdvanceQuotaSummary {
   const quotas = sortQuotasByMonth(info.quotas ?? []);
   const activeQuota =
-    quotas.find((quota) => quota.forMonth === info.forMonth) ??
+    quotas.find((quota) => quota.forMonth === info.forMonth && hasQuotaValue(quota)) ??
     quotas.find((quota) => quota.remainingAmount > 0) ??
+    [...quotas].reverse().find(hasQuotaValue) ??
+    quotas.find((quota) => quota.forMonth === info.forMonth) ??
     quotas[0];
 
   const forMonth = activeQuota?.forMonth ?? info.forMonth;
-  const maxAdvanceAmount = activeQuota?.maxAdvanceAmount ?? info.maxAdvanceAmount;
+  const rawMaxAdvanceAmount = activeQuota?.maxAdvanceAmount ?? info.maxAdvanceAmount;
   const quotaCompleted = activeQuota?.completedAmount ?? info.completedAmount;
   const quotaPending = activeQuota?.pendingAmount ?? info.pendingAmount;
   const historyUsed = getHistoryUsedAmount(history, forMonth);
   const usedAmount = Math.max(quotaCompleted + quotaPending, historyUsed);
   const remainingAmount =
     activeQuota?.remainingAmount ??
-    Math.max(0, info.remainingAmount || maxAdvanceAmount - usedAmount);
+    Math.max(0, info.remainingAmount || rawMaxAdvanceAmount - usedAmount);
+  const maxAdvanceAmount = Math.max(rawMaxAdvanceAmount, usedAmount + remainingAmount);
   const usedPercentage =
     maxAdvanceAmount > 0
       ? Math.min(100, Math.round((usedAmount / maxAdvanceAmount) * 100))

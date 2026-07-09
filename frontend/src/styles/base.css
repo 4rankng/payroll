@@ -496,6 +496,14 @@
     letter-spacing: var(--tracking-normal);
   }
 
+  .employee-type-bank-value {
+    font-family: var(--font-family-display);
+    font-size: var(--type-body);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
   .employee-type-inline-amount {
     font-family: var(--font-family-display);
     font-size: var(--type-body);
@@ -559,6 +567,73 @@
     font-weight: var(--font-bold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
+  }
+
+  @media (max-width: 640px) {
+    .employee-mobile-page {
+      --employee-mobile-caption: 0.625rem;     /* 10px: tiny badges/caps */
+      --employee-mobile-label: 0.6875rem;      /* 11px: field labels */
+      --employee-mobile-body-sm: 0.75rem;      /* 12px: secondary copy */
+      --employee-mobile-body: 0.8125rem;       /* 13px: body/action text */
+      --employee-mobile-title-sm: 0.875rem;    /* 14px: card titles */
+      --employee-mobile-title: 1rem;           /* 16px: screen/card headers */
+      --employee-mobile-amount-sm: 0.8125rem;  /* 13px: row money values */
+      --employee-mobile-amount-md: 0.875rem;   /* 14px: bank/inline money values */
+      --employee-mobile-amount-lg: 1rem;       /* 16px: list item primary money */
+      --employee-mobile-amount-xl: 1.25rem;    /* 20px: wallet hero amount */
+    }
+
+    .employee-mobile-page .employee-type-header-greeting,
+    .employee-mobile-page .employee-type-label-caps,
+    .employee-mobile-page .employee-type-pill {
+      font-size: var(--employee-mobile-caption);
+    }
+
+    .employee-mobile-page .employee-type-label {
+      font-size: var(--employee-mobile-label);
+    }
+
+    .employee-mobile-page .employee-type-body-sm {
+      font-size: var(--employee-mobile-body-sm);
+    }
+
+    .employee-mobile-page .employee-type-body,
+    .employee-mobile-page .employee-type-action {
+      font-size: var(--employee-mobile-body);
+    }
+
+    .employee-mobile-page .employee-type-card-title {
+      font-size: var(--employee-mobile-title-sm);
+      line-height: 1.25;
+    }
+
+    .employee-mobile-page .employee-type-header-name,
+    .employee-mobile-page .employee-type-hero-title {
+      font-size: var(--employee-mobile-title);
+      line-height: 1.25;
+    }
+
+    .employee-mobile-page .employee-type-row-amount {
+      font-size: var(--employee-mobile-amount-sm);
+      line-height: 1.25;
+    }
+
+    .employee-mobile-page .employee-type-bank-value,
+    .employee-mobile-page .employee-type-inline-amount {
+      font-size: var(--employee-mobile-amount-md);
+      line-height: 1.25;
+    }
+
+    .employee-mobile-page .employee-type-card-amount,
+    .employee-mobile-page .employee-type-large-row-amount {
+      font-size: var(--employee-mobile-amount-lg);
+      line-height: 1.15;
+    }
+
+    .employee-mobile-page .employee-type-hero-amount {
+      font-size: var(--employee-mobile-amount-xl);
+      line-height: 1.05;
+    }
   }
 
   .employee-pay-illustration {

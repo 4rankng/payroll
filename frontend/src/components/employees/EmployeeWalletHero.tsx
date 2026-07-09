@@ -90,26 +90,38 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
           </p>
 
           {model.metrics.length > 0 && (
-            <div className="mt-5 divide-y divide-slate-100 border-y border-slate-100">
-              {model.metrics.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2.5"
-                >
-                  <p className="employee-type-label min-w-0 text-slate-500">
-                    {metric.label}
-                  </p>
-                  <p
-                    className={cn(
-                      "employee-type-inline-amount whitespace-nowrap text-right tabular-nums",
-                      metricToneClass[metric.tone ?? "slate"]
-                    )}
+            <>
+              {model.metricsTitle && (
+                <p className="employee-type-label-caps mt-5 text-slate-500">
+                  {model.metricsTitle}
+                </p>
+              )}
+              <div
+                className={cn(
+                  "divide-y divide-slate-100 border-y border-slate-100",
+                  model.metricsTitle ? "mt-2" : "mt-5"
+                )}
+              >
+                {model.metrics.map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2.5"
                   >
-                    {metric.value}
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <p className="employee-type-label min-w-0 text-slate-500">
+                      {metric.label}
+                    </p>
+                    <p
+                      className={cn(
+                        "employee-type-inline-amount whitespace-nowrap text-right tabular-nums",
+                        metricToneClass[metric.tone ?? "slate"]
+                      )}
+                    >
+                      {metric.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <div className={cn("mt-5 grid gap-1", actionGridClass)}>
