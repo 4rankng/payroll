@@ -747,7 +747,9 @@ func (r *AdvancePaymentRequestRepository) CountByStatusInWindow(ctx context.Cont
 // cycle_day is 1-indexed from the period start (day 20 of for_month) and is derived
 // from created_at in Asia/Ho_Chi_Minh: created_at is stored UTC on prod, so without
 // CONVERT_TZ the day boundary shifts and rows land on the wrong cycle-day. The
-// caller clamps rows to [1, maxCycleDay(for_month)].
+// caller clamps rows to [1, maxCycleDay(for_month)]. total_amount is intentionally
+// request_amount - fee from actual employee requests; never use max_adv_amount
+// here because that is quota, not demand.
 func (r *AdvancePaymentRequestRepository) GetCohortByMonths(ctx context.Context, forMonths []string) ([]domain.CohortRow, error) {
 	if len(forMonths) == 0 {
 		return nil, nil

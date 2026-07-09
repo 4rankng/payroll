@@ -184,8 +184,9 @@ type AdvancePaymentRequestRepository interface {
 }
 
 // CohortRow is one cell of the advance-payment request cohort matrix: the request
-// count and total NET amount (request_amount − fee) for a given period (for_month),
-// cycle-day, and status. Net is the cash that actually leaves the wallet per request.
+// count and total net employee-requested amount (request_amount - fee) for a
+// given period (for_month), cycle-day, and status. It is demand from actual
+// advance_payment_requests, not quota/max_adv_amount.
 type CohortRow struct {
 	ForMonth     string `gorm:"column:for_month"`
 	CycleDay     int    `gorm:"column:cycle_day"`

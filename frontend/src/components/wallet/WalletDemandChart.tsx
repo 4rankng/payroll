@@ -21,6 +21,7 @@ interface WalletDemandChartProps {
 }
 
 type WalletDemandPeriod = WalletDemandForecastResponse['periods'][number];
+type ChartPeriod = WalletDemandPeriod & { displayLabel: string };
 
 const SERIES_COLORS = ['hsl(38 92% 50%)', 'hsl(206 90% 45%)', 'hsl(153 65% 38%)'];
 
@@ -31,10 +32,25 @@ const getCumulativeAt = (period: WalletDemandPeriod, cycleDay: number) => {
   return period.series[period.series.length - 1]?.amount ?? 0;
 };
 
+const getFinalAmount = (period: WalletDemandPeriod) =>
+  period.series.length ? period.series[period.series.length - 1]?.amount ?? 0 : 0;
+
+const getRemainingFromDay = (period: WalletDemandPeriod, cycleDay: number) =>
+  Math.max(0, getFinalAmount(period) - getCumulativeAt(period, cycleDay - 1));
+
+const mean = (values: number[]) => {
+  if (!values.length) return 0;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+};
+
+const getForecastLabel = (period: WalletDemandPeriod) =>
+  `Dự báo ${period.label.replace(/^Kỳ\s+/, '')}`;
+
 /**
- * Cohort line chart of remaining advance-payment request volume per period.
+ * Cohort line chart of remaining net advance-payment request volume per period.
+ * Backend amounts come from actual requests (request_amount - fee), not quota.
  * One <Line> per period (current + last 2 completed). X-axis is the cycle day
- * label ("20/6" … "8/7"); Y-axis is VND requested from today through that day.
+ * label ("20/6" … "8/7"); Y-axis is VND requested from each day through cutoff.
  */
 export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -58,27 +74,40 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
 
   const periods = useMemo(() => (data?.periods ?? []).slice(0, 3), [data?.periods]);
   const currentPeriod = periods.find((p) => p.is_current);
+  const currentCycleDay = data?.current_cycle_day ?? 0;
+  const chartPeriods = useMemo<ChartPeriod[]>(() => {
+    const currentMaxDay = currentPeriod?.series.length ?? 0;
+    return periods.map((period) => ({
+      ...period,
+      displayLabel:
+        period.is_current && currentCycleDay < currentMaxDay
+          ? getForecastLabel(period)
+          : period.label,
+    }));
+  }, [currentCycleDay, currentPeriod?.series.length, periods]);
 
   // Pivot periods into Recharts rows keyed by cycle day. Values are remaining
-  // demand from today through that day, not cumulative demand since period start.
+  // demand from that day through cutoff, not cumulative demand since period start.
   const chartData = useMemo(() => {
-    if (!periods.length || !currentPeriod) return [];
+    if (!chartPeriods.length || !currentPeriod) return [];
     const maxDay = currentPeriod.series.length;
-    const startDay = data?.current_cycle_day && data.current_cycle_day > 0 ? data.current_cycle_day : 1;
-    const baselineDay = data?.current_cycle_day && data.current_cycle_day > 1 ? data.current_cycle_day - 1 : 0;
+    const historicalPeriods = chartPeriods.filter((p) => !p.is_current && getFinalAmount(p) > 0);
     const rows: Array<Record<string, number | string>> = [];
-    for (let d = startDay; d <= maxDay; d++) {
+    for (let d = 1; d <= maxDay; d++) {
       const row: Record<string, number | string> = {
         cycle_day: d,
         day_label: currentPeriod.series[d - 1]?.day_label ?? `${d}`,
       };
-      for (const p of periods) {
-        row[p.label] = Math.max(0, getCumulativeAt(p, d) - getCumulativeAt(p, baselineDay));
+      for (const p of chartPeriods) {
+        row[p.displayLabel] =
+          p.is_current && currentCycleDay < maxDay
+            ? mean(historicalPeriods.map((hist) => getRemainingFromDay(hist, d)))
+            : getRemainingFromDay(p, d);
       }
       rows.push(row);
     }
     return rows;
-  }, [data?.current_cycle_day, periods, currentPeriod]);
+  }, [chartPeriods, currentCycleDay, currentPeriod]);
 
   const handleLegendClick = (value?: string | number) => {
     const key = typeof value === 'string' ? value : String(value);
@@ -128,7 +157,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
         <p className="text-sm font-semibold text-foreground">Nhu cầu ứng lương còn lại theo kỳ</p>
       </div>
       <p className="text-[11.5px] text-muted-foreground mb-3">
-        Từ hôm nay đến hết ngày 8, 3 kỳ gần nhất
+        Theo số tiền yêu cầu sau phí, 3 kỳ gần nhất
       </p>
 
       <div className="flex-1 w-full min-w-0">
@@ -179,13 +208,13 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
                 }}
               />
             )}
-            {periods.map((p, idx) => {
+            {chartPeriods.map((p, idx) => {
               const color = SERIES_COLORS[idx % SERIES_COLORS.length];
               return (
                 <Line
-                  key={p.label}
+                  key={p.displayLabel}
                   type="monotone"
-                  dataKey={p.label}
+                  dataKey={p.displayLabel}
                   stroke={color}
                   strokeWidth={p.is_current ? 2.5 : 1.5}
                   dot={false}

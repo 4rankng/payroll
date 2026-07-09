@@ -106,7 +106,16 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	if nSim <= 0 {
 		nSim = 5000
 	}
-	dist := forecastDemandDistributionBetween(
+
+	forecastStartCycleDay := 0
+	if todayCycleDay > 0 {
+		forecastStartCycleDay = todayCycleDay - 1
+	}
+	cycleDist := forecastDemandDistributionBetween(
+		historical, forecastStartCycleDay, maxDay, nSim,
+		forecastSeed(currentForMonth, maxDay), paidFrac,
+	)
+	leadDist := forecastDemandDistributionBetween(
 		historical, todayCycleDay, horizonCycleDay, nSim,
 		forecastSeed(currentForMonth, horizonCycleDay), paidFrac,
 	)
@@ -117,7 +126,7 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		CostOver:          s.cfg.CostOver,
 		UncertaintyFactor: s.cfg.UncertaintyFactor,
 	}
-	recommended, coverage := newsvendorRecommendation(dist, sl)
+	recommended, coverage := newsvendorRecommendation(leadDist, sl)
 	recommended += knownUnpaid
 
 	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and
@@ -129,16 +138,16 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	}
 	paceTotal, _, _, _ := forecastProjectedTotal(actualSoFar, historical, projectionCycleDay)
 	projectedPaid := int64(float64(paceTotal) * rate)
-	if dist.method == "no-history" {
+	if cycleDist.method == "no-history" {
 		projectedPaid = paceTotal
 	}
 	remainingToPay := max(int64(0), projectedPaid-alreadyPaid)
 
-	// Reference ladder + CI band, in lead-window cash units.
-	p50Ref := knownUnpaid + int64(math.Round(dist.p50))
-	p90Ref := knownUnpaid + int64(math.Round(dist.p90))
-	p99Ref := knownUnpaid + int64(math.Round(dist.p99))
-	if dist.method == "no-history" {
+	// Reference ladder + CI band, in remaining-cycle cash units.
+	p50Ref := knownUnpaid + int64(math.Round(cycleDist.p50))
+	p90Ref := knownUnpaid + int64(math.Round(cycleDist.p90))
+	p99Ref := knownUnpaid + int64(math.Round(cycleDist.p99))
+	if cycleDist.method == "no-history" {
 		p50Ref, p90Ref, p99Ref = knownUnpaid, knownUnpaid, knownUnpaid
 	}
 
@@ -154,10 +163,7 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		shortfall = 0
 	}
 
-	chartMonths := forMonths
-	if len(chartMonths) > walletDemandChartPeriodCount {
-		chartMonths = chartMonths[:walletDemandChartPeriodCount]
-	}
+	chartMonths := chooseWalletDemandChartMonths(forMonths, byMonth, currentForMonth)
 	periods := make([]wallet.WalletDemandPeriod, 0, len(chartMonths))
 	for _, fm := range chartMonths {
 		periods = append(periods, buildDemandPeriod(byMonth[fm]))
@@ -179,16 +185,16 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 			Shortfall:           shortfall,
 			Surplus:             surplus,
 			CompletionRate:      rate,
-			Method:              dist.method,
-			Confidence:          confidenceLabel(dist),
-			BasisPeriods:        dist.basisPeriods,
+			Method:              cycleDist.method,
+			Confidence:          confidenceLabel(cycleDist),
+			BasisPeriods:        cycleDist.basisPeriods,
 			LeadDays:            leadDays,
 			HorizonCycleDay:     horizonCycleDay,
 			P50Reference:        p50Ref,
 			P90Reference:        p90Ref,
 			P99Reference:        p99Ref,
 			CoverageProbability: coverage,
-			NHistory:            dist.basisPeriods,
+			NHistory:            cycleDist.basisPeriods,
 			ConfidenceInterval: wallet.ForecastConfidenceInterval{
 				Lower: p50Ref,
 				Upper: p99Ref,
@@ -208,6 +214,51 @@ func forecastForMonth(t time.Time) string {
 		return clock.NextAdvanceMonthFromTime(t)
 	}
 	return clock.AdvanceMonthFromTime(t)
+}
+
+func chooseWalletDemandChartMonths(
+	forMonths []string,
+	byMonth map[string]cohortSeries,
+	currentForMonth string,
+) []string {
+	chartMonths := make([]string, 0, walletDemandChartPeriodCount)
+	if _, ok := byMonth[currentForMonth]; ok {
+		chartMonths = append(chartMonths, currentForMonth)
+	}
+
+	for _, fm := range forMonths {
+		if len(chartMonths) >= walletDemandChartPeriodCount {
+			break
+		}
+		if fm == currentForMonth {
+			continue
+		}
+		if byMonth[fm].completedTotal <= 0 {
+			continue
+		}
+		chartMonths = append(chartMonths, fm)
+	}
+
+	for _, fm := range forMonths {
+		if len(chartMonths) >= walletDemandChartPeriodCount {
+			break
+		}
+		if containsMonth(chartMonths, fm) {
+			continue
+		}
+		chartMonths = append(chartMonths, fm)
+	}
+
+	return chartMonths
+}
+
+func containsMonth(months []string, month string) bool {
+	for _, m := range months {
+		if m == month {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *WalletDemandForecastService) leadDays() int {

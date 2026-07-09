@@ -6,20 +6,6 @@ interface WalletDemandCardProps {
   data?: WalletDemandForecastResponse;
 }
 
-const CONFIDENCE_VN: Record<string, string> = {
-  high: 'cao',
-  medium: 'trung bình',
-  low: 'thấp',
-};
-
-const METHOD_VN: Record<string, string> = {
-  'monte-carlo': 'mô phỏng Monte Carlo',
-  'gamma-fit': 'phân phối gamma',
-  'cohort-median': 'trung vị các kỳ trước',
-  'avg-final': 'trung bình tổng các kỳ trước',
-  'no-history': 'nhu cầu hiện tại',
-};
-
 /**
  * Advisory balance-prediction card for the Wallet page. Mirrors the hero card's
  * visual language (rounded-2xl, watermark icon, amber accent, font-financial).
@@ -29,7 +15,6 @@ const METHOD_VN: Record<string, string> = {
 export function WalletDemandCard({ data }: WalletDemandCardProps) {
   const pred = data?.prediction;
   const noHistory = pred?.method === 'no-history';
-  const covPct = Math.round((pred?.coverage_probability ?? 0.95) * 100);
   const needsTopUp = (pred?.shortfall ?? 0) > 0;
   const leadDays = pred?.lead_days ?? 2;
   const leadLabel = leadDays === 1 ? '1 ngày tới' : `${leadDays} ngày tới`;
@@ -46,7 +31,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
         <div className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.18)]" />
           <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-amber-700">
-            Dự báo nhu cầu ứng lương
+            Mức cần giữ trong ví
           </span>
         </div>
 
@@ -107,26 +92,6 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
               </p>
             </div>
 
-            <p className="mt-3 text-[10.5px] text-muted-foreground">
-              Phủ {covPct}% các kỳ tương tự · {METHOD_VN[pred.method] ?? pred.method} · Tin cậy:{' '}
-              {CONFIDENCE_VN[pred.confidence] ?? pred.confidence}
-            </p>
-            {!noHistory && pred.p50_reference != null && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                {(
-                  [
-                    ['p50', pred.p50_reference],
-                    ['p90', pred.p90_reference],
-                    ['p99', pred.p99_reference],
-                  ] as const
-                ).map(([label, val]) => (
-                  <span key={label} className="inline-flex items-center gap-1">
-                    <span className="font-semibold uppercase">{label}</span>
-                    <span className="tabular-nums">{formatCurrency(val ?? 0)}</span>
-                  </span>
-                ))}
-              </div>
-            )}
           </>
         )}
       </div>
