@@ -157,7 +157,8 @@ export default function ReconcileUploadDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md p-0 gap-0 overflow-hidden"
+        className="max-w-md gap-0 overflow-hidden"
+        contentPadding="none"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => {
           const target = e.target as HTMLElement | null;

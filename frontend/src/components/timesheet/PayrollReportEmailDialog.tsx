@@ -159,7 +159,11 @@ export const PayrollReportEmailDialog = memo(function PayrollReportEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[calc(100vw-1rem)] max-h-[92dvh] gap-0 overflow-hidden p-0 sm:max-w-2xl" hideCloseButton>
+      <DialogContent
+        className="w-full max-w-[calc(100vw-1rem)] max-h-[92dvh] gap-0 overflow-hidden sm:max-w-2xl"
+        contentPadding="none"
+        hideCloseButton
+      >
 
         {/* ── header with actions inline ── */}
         <div className="bg-slate-900 px-4 pt-4 pb-3 text-white flex-shrink-0">

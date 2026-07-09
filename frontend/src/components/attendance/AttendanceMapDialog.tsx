@@ -25,7 +25,8 @@ export function AttendanceMapDialog({
     >
       <DialogContent
         hideCloseButton
-        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 p-0 gap-0"
+        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 gap-0"
+        contentPadding="none"
       >
         {row ? (
           <AttendanceLocationMap row={row} onClose={onClose} />

@@ -65,7 +65,7 @@ export function MarkSchedulePaidDialog({ isOpen, onClose, loan, schedule }: Mark
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton>
+      <DialogContent className="max-w-md gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
         <DialogNavyHeader
           title="Xác nhận thanh toán"
           description={`Kỳ ${schedule.period} — không thể hoàn tác sau khi xác nhận`}

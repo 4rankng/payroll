@@ -1,10 +1,18 @@
 package excel
 
 import (
+	"archive/zip"
+	"bytes"
+	"encoding/xml"
+	"fmt"
+	"io"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -12,6 +20,109 @@ func TestNewExportService(t *testing.T) {
 	service := NewExportService()
 	assert.NotNil(t, service)
 	assert.IsType(t, &ExportService{}, service)
+}
+
+func assertNoOrphanedWorksheetTableRelationships(workbook []byte) error {
+	files, err := unzipWorkbookFiles(workbook)
+	if err != nil {
+		return err
+	}
+
+	for relsPath, relsContent := range files {
+		if !strings.HasPrefix(relsPath, "xl/worksheets/_rels/sheet") || !strings.HasSuffix(relsPath, ".xml.rels") {
+			continue
+		}
+
+		var rels workbookRelationships
+		if err := xml.Unmarshal(relsContent, &rels); err != nil {
+			return fmt.Errorf("parse %s: %w", relsPath, err)
+		}
+
+		sheetPath := strings.TrimSuffix(strings.Replace(relsPath, "xl/worksheets/_rels/", "xl/worksheets/", 1), ".rels")
+		sheetContent, ok := files[sheetPath]
+		if !ok {
+			return fmt.Errorf("missing worksheet XML for %s", relsPath)
+		}
+
+		for _, rel := range rels.Relationships {
+			if !strings.HasSuffix(rel.Type, "/table") {
+				continue
+			}
+			if !bytes.Contains(sheetContent, []byte("<tableParts")) {
+				return fmt.Errorf("%s has table relationship %s without tableParts in %s", relsPath, rel.ID, sheetPath)
+			}
+			targetPath := path.Clean(path.Join("xl/worksheets", rel.Target))
+			if _, ok := files[targetPath]; !ok {
+				return fmt.Errorf("%s references missing table target %s", relsPath, targetPath)
+			}
+		}
+	}
+
+	return nil
+}
+
+func assertNoUndeclaredIgnorablePrefixes(workbook []byte) error {
+	files, err := unzipWorkbookFiles(workbook)
+	if err != nil {
+		return err
+	}
+
+	for fileName, content := range files {
+		if !strings.HasSuffix(fileName, ".xml") || !bytes.Contains(content, []byte("mc:Ignorable=")) {
+			continue
+		}
+
+		xmlContent := string(content)
+		matches := mcIgnorablePattern.FindAllStringSubmatch(xmlContent, -1)
+		for _, match := range matches {
+			if len(match) != 2 {
+				continue
+			}
+			for _, prefix := range strings.Fields(match[1]) {
+				if !strings.Contains(xmlContent, "xmlns:"+prefix+"=") {
+					return fmt.Errorf("%s has undeclared mc:Ignorable prefix %s", fileName, prefix)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func unzipWorkbookFiles(workbook []byte) (map[string][]byte, error) {
+	reader, err := zip.NewReader(bytes.NewReader(workbook), int64(len(workbook)))
+	if err != nil {
+		return nil, err
+	}
+
+	files := make(map[string][]byte, len(reader.File))
+	for _, file := range reader.File {
+		rc, err := file.Open()
+		if err != nil {
+			return nil, fmt.Errorf("open %s: %w", file.Name, err)
+		}
+		content, readErr := io.ReadAll(rc)
+		closeErr := rc.Close()
+		if readErr != nil {
+			return nil, fmt.Errorf("read %s: %w", file.Name, readErr)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("close %s: %w", file.Name, closeErr)
+		}
+		files[file.Name] = content
+	}
+
+	return files, nil
+}
+
+type workbookRelationships struct {
+	Relationships []workbookRelationship `xml:"Relationship"`
+}
+
+type workbookRelationship struct {
+	ID     string `xml:"Id,attr"`
+	Type   string `xml:"Type,attr"`
+	Target string `xml:"Target,attr"`
 }
 
 func TestCreateStyledWorkbook(t *testing.T) {
@@ -47,6 +158,64 @@ func TestCreateStyledWorkbook(t *testing.T) {
 			assert.Contains(t, sheetList, sheetName)
 		}
 	})
+}
+
+func TestRemoveTablesFromSheetPreventsCopySheetTableRelationshipOrphans(t *testing.T) {
+	service := &ExportService{}
+	wb := excelize.NewFile()
+	const templateSheet = "Sample Project"
+
+	require.NoError(t, wb.SetSheetName("Sheet1", templateSheet))
+	require.NoError(t, wb.SetCellValue(templateSheet, "A1", "Name"))
+	require.NoError(t, wb.SetCellValue(templateSheet, "B1", "Amount"))
+	require.NoError(t, wb.SetCellValue(templateSheet, "A2", "Nguyen Van A"))
+	require.NoError(t, wb.SetCellValue(templateSheet, "B2", 1000000))
+	require.NoError(t, wb.AddTable(templateSheet, &excelize.Table{
+		Range:     "A1:B2",
+		Name:      "SampleTable",
+		StyleName: "TableStyleMedium2",
+	}))
+
+	tables, err := wb.GetTables(templateSheet)
+	require.NoError(t, err)
+	require.Len(t, tables, 1)
+
+	require.NoError(t, service.RemoveTablesFromSheet(wb, templateSheet))
+
+	tables, err = wb.GetTables(templateSheet)
+	require.NoError(t, err)
+	require.Empty(t, tables)
+
+	templateIndex, err := wb.GetSheetIndex(templateSheet)
+	require.NoError(t, err)
+	sheetIndex, err := wb.NewSheet("LGD")
+	require.NoError(t, err)
+	require.NoError(t, wb.CopySheet(templateIndex, sheetIndex))
+	require.NoError(t, wb.DeleteSheet(templateSheet))
+
+	buffer, err := wb.WriteToBuffer()
+	require.NoError(t, err)
+	require.NoError(t, assertNoOrphanedWorksheetTableRelationships(buffer.Bytes()))
+}
+
+func TestSanitizeWorkbookXMLRemovesUndeclaredIgnorablePrefixes(t *testing.T) {
+	service := &ExportService{}
+	wb := excelize.NewFile()
+	require.NoError(t, wb.SetCellValue("Sheet1", "A1", "value"))
+
+	buffer, err := wb.WriteToBuffer()
+	require.NoError(t, err)
+
+	withInvalidIgnorable := bytes.Replace(
+		buffer.Bytes(),
+		[]byte(`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"`),
+		[]byte(`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:xr="http://schemas.microsoft.com/office/spreadsheetml/2014/revision" mc:Ignorable="x14ac xr xr2"`),
+		1,
+	)
+
+	sanitized, err := service.SanitizeWorkbookXML(withInvalidIgnorable)
+	require.NoError(t, err)
+	require.NoError(t, assertNoUndeclaredIgnorablePrefixes(sanitized))
 }
 
 func TestSetupHeaderStyle(t *testing.T) {

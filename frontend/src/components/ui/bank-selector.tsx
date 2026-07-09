@@ -288,7 +288,8 @@ export function BankSelector({
       />
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
-          className="flex flex-col sm:max-w-[520px] max-w-[calc(100vw-2rem)] p-0 gap-0 max-h-[70vh] overflow-hidden"
+          className="flex flex-col sm:max-w-[520px] max-w-[calc(100vw-2rem)] gap-0 max-h-[70vh] overflow-hidden"
+          contentPadding="none"
           title="Chọn ngân hàng"
           hideCloseButton={true}
         >

@@ -154,7 +154,7 @@ export const CommandPalette = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={close}>
-      <DialogContent className="p-0 max-w-2xl" hideCloseButton>
+      <DialogContent className="max-w-2xl" contentPadding="none" hideCloseButton>
         <div className="flex flex-col">
           {/* Search Input */}
           <div className="flex items-center border-b px-3">

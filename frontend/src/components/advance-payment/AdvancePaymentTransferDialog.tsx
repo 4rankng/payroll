@@ -25,7 +25,7 @@ export const AdvancePaymentTransferDialog = memo(
     return (
       <>
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-md p-0 gap-0 overflow-hidden" hideCloseButton>
+          <DialogContent className="max-w-md gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
             <DialogNavyHeader
               title="Chuyển lô ứng lương"
               description="Quản lý và theo dõi các lượt chuyển tiền ứng lương"

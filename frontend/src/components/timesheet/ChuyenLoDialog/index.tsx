@@ -207,7 +207,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
 
       return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-4xl w-full max-h-[85vh] p-0 flex flex-col gap-0 overflow-hidden" hideCloseButton>
+          <DialogContent className="max-w-4xl w-full max-h-[85vh] flex flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
             {/* Header */}
             <div className="shrink-0 bg-slate-900 px-4 pt-4 pb-3 text-white">
               <div className="flex items-center gap-3">
@@ -347,7 +347,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
     // Processing / polling view
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden" hideCloseButton>
+        <DialogContent className="sm:max-w-lg gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
           <DialogNavyHeader
             title={
               <span className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
 
   return (
     <Dialog open={open} onOpenChange={form.handleDialogOpen}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden" hideCloseButton>
+      <DialogContent className="sm:max-w-lg gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
         <DialogNavyHeader
           title="Chuyển lô"
           description={selectionCount > 0

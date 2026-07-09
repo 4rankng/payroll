@@ -322,7 +322,8 @@ function FailedAttemptMapDialog({ row, onClose }: { row: AdminFailedAttempt | nu
       <DialogContent
         title="Bản đồ lần chấm công"
         hideCloseButton
-        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 p-0 gap-0"
+        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 gap-0"
+        contentPadding="none"
       >
         {row ? (
           <FailedAttemptLocationMap
@@ -618,7 +619,8 @@ function AttendanceMapDialog({
       <DialogContent
         title="Bản đồ chấm công"
         hideCloseButton
-        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 p-0 gap-0"
+        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 gap-0"
+        contentPadding="none"
       >
         {row ? (
           <AttendanceLocationMap

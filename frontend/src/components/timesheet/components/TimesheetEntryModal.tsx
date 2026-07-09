@@ -41,7 +41,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={f.isLoading ? undefined : onClose}>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-2xl shadow-2xl" hideCloseButton>
+      <DialogContent className="sm:max-w-[480px] gap-0 overflow-hidden rounded-2xl shadow-2xl" contentPadding="none" hideCloseButton>
         {/* Header */}
         <div className="bg-slate-900 px-5 pt-5 pb-4 text-white flex-shrink-0">
           <div className="flex items-start justify-between gap-3">

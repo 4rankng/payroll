@@ -96,7 +96,7 @@ export const AdvancePaymentResultUploadDialog = memo(
     if (showResults && uploadResult) {
       return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="flex max-h-[92dvh] max-w-3xl flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+          <DialogContent className="flex max-h-[92dvh] max-w-3xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
             <DialogNavyHeader
               title="Kết quả chuyển tiền"
               description="Chi tiết xử lý file Excel chuyển tiền ứng lương"
@@ -180,7 +180,7 @@ export const AdvancePaymentResultUploadDialog = memo(
     // ── Upload view ──
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92dvh] max-w-md flex-col gap-0 overflow-hidden p-0" hideCloseButton>
+        <DialogContent className="flex max-h-[92dvh] max-w-md flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
           <DialogNavyHeader
             title="Kết quả chuyển tiền"
             description="Tải lên file Excel kết quả chuyển tiền để cập nhật trạng thái"

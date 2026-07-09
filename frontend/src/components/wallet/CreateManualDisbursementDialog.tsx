@@ -105,7 +105,8 @@ export default function CreateManualDisbursementDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden p-0 sm:max-w-[580px]"
+          className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden sm:max-w-[580px]"
+          contentPadding="none"
           hideCloseButton
         >
           <DialogNavyHeader

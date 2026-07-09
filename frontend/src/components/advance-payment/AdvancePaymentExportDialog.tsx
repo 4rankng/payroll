@@ -68,7 +68,8 @@ export const AdvancePaymentExportDialog = memo(function AdvancePaymentExportDial
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] sm:max-w-sm p-0"
+        className="max-w-[95vw] sm:max-w-sm"
+        contentPadding="none"
         title="Xuất sao kê ứng lương"
         description="Chọn tháng để tải xuống sao kê ứng lương"
       >

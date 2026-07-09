@@ -93,21 +93,22 @@ func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServic
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get template sheet index: %w", err)
 	}
+	if err := excelService.RemoveTablesFromSheet(f, templateSheetName); err != nil {
+		return nil, nil, fmt.Errorf("failed to remove template tables: %w", err)
+	}
 
-	for _, projectData := range reportData {
-		// Clone the template sheet for each project
+	projectSheetNames := make([]string, 0, len(reportData))
+	for idx, projectData := range reportData {
 		newSheetName := projectData.Project.Name
 		if len(newSheetName) > 31 {
 			// Excel sheet name limit is 31 characters
 			newSheetName = newSheetName[:31]
 		}
+		projectSheetNames = append(projectSheetNames, newSheetName)
 
-		e.logger.Info("Creating sheet for project",
-			"projectID", projectData.Project.ID,
-			"projectName", projectData.Project.Name,
-			"sheetName", newSheetName,
-			"employeeCount", projectData.EmployeeCount,
-			"totalAmount", projectData.TotalAmount)
+		if idx == 0 {
+			continue
+		}
 
 		// Create a new sheet for this project
 		sheetIndex, err := f.NewSheet(newSheetName)
@@ -118,6 +119,28 @@ func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServic
 		// Copy ALL formatting from template (merged cells, row heights, styles, etc.)
 		if err := f.CopySheet(templateIndex, sheetIndex); err != nil {
 			return nil, nil, fmt.Errorf("failed to copy sheet: %w", err)
+		}
+	}
+
+	if len(projectSheetNames) > 0 {
+		if err := f.SetSheetName(templateSheetName, projectSheetNames[0]); err != nil {
+			return nil, nil, fmt.Errorf("failed to rename template sheet: %w", err)
+		}
+	}
+
+	for idx, projectData := range reportData {
+		newSheetName := projectSheetNames[idx]
+
+		e.logger.Info("Creating sheet for project",
+			"projectID", projectData.Project.ID,
+			"projectName", projectData.Project.Name,
+			"sheetName", newSheetName,
+			"employeeCount", projectData.EmployeeCount,
+			"totalAmount", projectData.TotalAmount)
+
+		sheetIndex, err := f.GetSheetIndex(newSheetName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get project sheet index: %w", err)
 		}
 
 		f.SetActiveSheet(sheetIndex)
@@ -157,19 +180,6 @@ func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServic
 		summaryIndex = -1
 	}
 
-	// Delete the template sheet if we created other sheets
-	if len(reportData) > 0 {
-		// The template is either renamed or still exists
-		// If it still exists, delete it
-		idx, err := f.GetSheetIndex(templateSheetName)
-		if err == nil && idx >= 0 {
-			if err := f.DeleteSheet(templateSheetName); err != nil {
-				// Ignore error if sheet doesn't exist
-				observability.GetLogger().Warn("failed to delete template sheet", "error", err)
-			}
-		}
-	}
-
 	// Write to buffer
 	if err := addInternalSheet(f, collectRequestIDs(reportData)); err != nil {
 		return nil, nil, fmt.Errorf("failed to add INTERNAL sheet: %w", err)
@@ -183,13 +193,17 @@ func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServic
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to write Excel file: %w", err)
 	}
+	excelBytes, err := excelService.SanitizeWorkbookXML(buffer.Bytes())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to sanitize Excel file: %w", err)
+	}
 
 	e.logger.Info("Excel generation completed successfully",
 		"totalProjects", len(reportData),
 		"totalAmount", totalAmountAllProjects,
-		"fileSize", len(buffer.Bytes()))
+		"fileSize", len(excelBytes))
 
-	return buffer.Bytes(), summary, nil
+	return excelBytes, summary, nil
 }
 
 func (e *FlexPayReconciliationExporter) buildSummary(totalPaid int64, totalRequested int64, atDate time.Time) *serviceports.PayrollReportSummary {
