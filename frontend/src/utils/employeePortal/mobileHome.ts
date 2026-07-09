@@ -95,7 +95,6 @@ export function createFlexibleEmployeeHomeModel({
   hasCheckIn,
 }: FlexibleEmployeeHomeInput): EmployeeHomeViewModel {
   const pendingRequests = history.filter((item) => item.status === "PENDING").length;
-  const payrollPeriod = formatPayrollMonth(info.forMonth);
   const requestBlocked = !info.canRequest;
   const blockedDescription =
     info.canRequestReason || info.canRequestTitle || "Chưa thể gửi yêu cầu lúc này.";
@@ -162,9 +161,8 @@ export function createFlexibleEmployeeHomeModel({
     amountLabel: requestBlocked ? "Hạn mức còn lại" : "Có thể ứng",
     amount: formatCurrency(info.remainingAmount),
     amountDescription: info.canRequest
-      ? `Sẵn sàng gửi yêu cầu cho ${payrollPeriod.toLowerCase()}.`
+      ? "Sẵn sàng gửi yêu cầu ứng lương."
       : blockedDescription,
-    periodLabel: payrollPeriod,
     metrics: [
       { label: "Đã nhận", value: formatCurrency(info.completedAmount), tone: "employee" },
       { label: "Đang chờ", value: formatCurrency(info.pendingAmount), tone: "amber" },

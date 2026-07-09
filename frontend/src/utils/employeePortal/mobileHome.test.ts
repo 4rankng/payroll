@@ -31,6 +31,7 @@ describe("createFlexibleEmployeeHomeModel", () => {
 
     expect(model.amountLabel).toBe("Hạn mức còn lại");
     expect(model.amountDescription).toBe("Xin chờ bảng lương 07/2026 để tiếp tục");
+    expect(model.periodLabel).toBeUndefined();
     expect(model.quickActions).toEqual([
       {
         id: "history",
@@ -56,7 +57,8 @@ describe("createFlexibleEmployeeHomeModel", () => {
     });
 
     expect(model.amountLabel).toBe("Có thể ứng");
-    expect(model.amountDescription).toBe("Sẵn sàng gửi yêu cầu cho 20/06 – 19/07/2026.");
+    expect(model.amountDescription).toBe("Sẵn sàng gửi yêu cầu ứng lương.");
+    expect(model.periodLabel).toBeUndefined();
     expect(model.quickActions[0]).toMatchObject({
       label: "Ứng lương",
       icon: "advance",
