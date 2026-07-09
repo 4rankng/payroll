@@ -9,7 +9,7 @@ import (
 
 const publicEmailBannerURL = "https://tingting.vip/email-banner.jpg"
 
-const publicEmailBannerHTML = `<p style="text-align:center;"><img src="https://tingting.vip/email-banner.jpg" alt="Ting Ting Soft" width="600" style="display:inline-block;width:100%;max-width:600px;height:auto;border:0;"></p>`
+const publicEmailBannerHTML = `<p style="text-align:left;"><img src="https://tingting.vip/email-banner.jpg" alt="Ting Ting Soft" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></p>`
 
 func withPublicEmailBanner(htmlBody, textBody string) string {
 	body := strings.TrimSpace(htmlBody)
