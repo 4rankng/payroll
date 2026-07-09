@@ -22,12 +22,12 @@ type EmployeeProfileResponse struct {
 	// Shift window (advisory — for the frontend check-in button readiness gate).
 	// All nullable: null when no shift is configured for the employee's position
 	// today. The server's validateCheckInWindow remains authoritative.
-	ShiftStart          *string `json:"shift_start,omitempty"`
-	ShiftEnd            *string `json:"shift_end,omitempty"`
-	CheckInWindowStart  *string `json:"check_in_window_start,omitempty"`
-	CheckInWindowEnd    *string `json:"check_in_window_end,omitempty"`
-	CreatedAt                   time.Time          `json:"created_at"`
-	UpdatedAt                   time.Time          `json:"updated_at"`
+	ShiftStart         *string   `json:"shift_start,omitempty"`
+	ShiftEnd           *string   `json:"shift_end,omitempty"`
+	CheckInWindowStart *string   `json:"check_in_window_start,omitempty"`
+	CheckInWindowEnd   *string   `json:"check_in_window_end,omitempty"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 type CheckInTargetInfo struct {

@@ -663,7 +663,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			employeeUserService,
 			projectEmployeeSvc,
 		),
-		Attendance: attendanceService,
+		Attendance:         attendanceService,
 		TransactionManager: transactionManager,
 	}
 

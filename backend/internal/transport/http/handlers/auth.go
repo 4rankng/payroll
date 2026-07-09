@@ -138,11 +138,12 @@ func (h *AuthHandler) ResendOTPCode(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{
-		"otp_required":  true,
+		"otp_required":   true,
 		"otp_session_id": sessionID,
-		"expires_in":    expiresIn,
+		"expires_in":     expiresIn,
 	}, "Mã mới đã được gửi")
 }
+
 // @Description Get the profile of the currently authenticated user
 // @Tags auth
 // @Accept json

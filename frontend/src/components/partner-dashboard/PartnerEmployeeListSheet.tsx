@@ -50,7 +50,7 @@ function InfoRow({ icon: Icon, label, children }: {
     <div className="flex items-center gap-1.5 min-w-0">
       <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
       <span className="text-[10px] text-muted-foreground shrink-0">{label}</span>
-      <span className="text-xs text-foreground tabular-nums truncate">{children}</span>
+      <span className="min-w-0 break-words text-xs text-foreground tabular-nums">{children}</span>
     </div>
   );
 }

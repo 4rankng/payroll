@@ -65,10 +65,10 @@ export function EmployeeBankInfoCard({
         <div>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
-              <p className="text-[12px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
+              <p className="employee-type-label-caps text-slate-500">
                 Tài khoản nhận tiền
               </p>
-              <h2 className="text-[17px] font-bold leading-6 text-slate-950">
+              <h2 className="employee-type-card-title text-slate-950">
                 Thông tin ngân hàng
               </h2>
             </div>
@@ -82,11 +82,11 @@ export function EmployeeBankInfoCard({
                   <div className="flex items-center gap-3 px-4 py-3.5">
                     <EmployeeIconFrame icon={Icon} size="row" tone="slate" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-medium leading-5 text-slate-500">
+                      <p className="employee-type-label text-slate-500">
                         {label}
                       </p>
                       <p
-                        className={`mt-0.5 text-[18px] font-bold leading-7 text-slate-950 ${
+                        className={`employee-type-row-amount mt-0.5 text-slate-950 ${
                           mono ? "break-all font-mono" : "whitespace-normal break-words"
                         }`}
                       >
@@ -104,10 +104,10 @@ export function EmployeeBankInfoCard({
           <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-300">
             <Building2 className="h-5 w-5" />
           </div>
-          <p className="text-base font-semibold text-gray-500">
+          <p className="employee-type-card-title text-gray-500">
             Chưa có thông tin ngân hàng
           </p>
-          <p className="mt-1 text-[15px] text-gray-400">
+          <p className="employee-type-body mt-1 text-gray-400">
             Liên hệ quản lý để cập nhật
           </p>
         </div>

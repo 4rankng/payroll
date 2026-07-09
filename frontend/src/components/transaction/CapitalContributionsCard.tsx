@@ -50,10 +50,10 @@ export function CapitalContributionsCard({ contributions, isLoading }: CapitalCo
             key={i}
             className="flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0 bg-card"
           >
-            <span className="text-base font-semibold tabular-nums leading-none tracking-tight text-foreground truncate max-w-full">
+            <span className="max-w-full break-words text-base font-semibold tabular-nums leading-tight tracking-normal text-foreground">
               {item.value}
             </span>
-            <span className="text-xs text-muted-foreground leading-none text-center whitespace-nowrap truncate max-w-full">
+            <span className="max-w-full text-center text-xs leading-tight text-muted-foreground">
               {item.label}
             </span>
           </div>

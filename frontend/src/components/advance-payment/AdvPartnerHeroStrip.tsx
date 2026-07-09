@@ -20,7 +20,7 @@ const AnimatedCurrency = memo(function AnimatedCurrency({
 }) {
   const animated = useCountUp(target, 700);
   return (
-    <span className="font-financial tabular-nums tracking-tight">
+    <span className="font-financial tabular-nums tracking-normal">
       {formatCurrency(animated)}
     </span>
   );
@@ -53,7 +53,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
             <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
             Giải ngân kỳ này
           </div>
-          <div className={cn("mt-1.5 font-financial font-semibold leading-none tracking-tight text-foreground", compact ? "text-[24px]" : "text-4xl")}>
+          <div className={cn("mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}>
             <AnimatedCurrency target={totalAmount} />
           </div>
         </div>

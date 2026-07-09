@@ -74,14 +74,14 @@ export function TimesheetSummaryCards({ summary }: TimesheetSummaryCardsProps) {
             )}
             strokeWidth={1.5}
           />
-          <div className="relative pr-10">
+          <div className="relative min-w-0 pr-10">
             <div className="flex items-center gap-1.5">
               <Icon className={cn('h-3 w-3 shrink-0', iconText)} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight truncate">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight line-clamp-2">
                 {label}
               </span>
             </div>
-            <p className="mt-1 text-[15px] font-semibold tabular-nums text-foreground leading-tight truncate">
+            <p className="mt-1 break-words text-[15px] font-semibold tabular-nums text-foreground leading-tight">
               {value}
               {sub && <span className="text-[11px] font-normal text-muted-foreground ml-1">{sub}</span>}
             </p>

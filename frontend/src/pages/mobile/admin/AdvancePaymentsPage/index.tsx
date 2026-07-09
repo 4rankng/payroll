@@ -90,7 +90,7 @@ function AttendanceMetric({ label, value, strong }: { label: string; value: stri
   return (
     <div className="min-w-0 rounded-lg bg-muted/45 px-2.5 py-2">
       <p className="text-[10px] font-medium text-muted-foreground">{label}</p>
-      <p className={cn("mt-0.5 truncate tabular-nums", strong ? "font-financial font-semibold text-foreground" : "font-medium text-foreground")}>
+      <p className={cn("mt-0.5 break-words tabular-nums", strong ? "font-financial font-semibold text-foreground" : "font-medium text-foreground")}>
         {value}
       </p>
     </div>

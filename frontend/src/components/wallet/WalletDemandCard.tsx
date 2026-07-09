@@ -52,7 +52,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
           <p className="mt-3 text-xs text-muted-foreground">Chưa đủ dữ liệu</p>
         ) : (
           <>
-            <p className="mt-2 font-financial text-[26px] font-bold leading-none tracking-[-0.02em] tabular-nums text-foreground">
+            <p className="mt-2 break-words font-financial text-[clamp(1.375rem,6vw,1.625rem)] font-bold leading-tight tracking-normal tabular-nums text-foreground">
               {formatCurrency(pred.recommended_balance)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-2">
@@ -76,7 +76,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
                     {needsTopUp ? 'Cần nạp thêm' : 'Số dư ví hiện có'}
                   </p>
                   <p
-                    className={`mt-1 font-financial text-base font-bold leading-none tabular-nums ${
+                    className={`mt-1 break-words font-financial text-base font-bold leading-tight tabular-nums ${
                       needsTopUp ? 'text-rose-700' : 'text-emerald-800'
                     }`}
                   >

@@ -148,8 +148,8 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
 
               {/* Main Balance */}
               <div className={cn(
-                "mt-1.5 whitespace-nowrap font-financial font-semibold leading-[1.05] tracking-[-0.02em]",
-                compact ? "text-[24px]" : "text-[32px]",
+                "mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
+                compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.75rem,8vw,2rem)]",
                 isLow ? "text-red-400" : "text-white"
               )}>
                 {formatCurrency(available).replace('₫', '')}
@@ -172,19 +172,19 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
 
             {/* Meta Grid */}
             <div className={cn("grid grid-cols-2", compact ? "mt-3 gap-2" : "mt-[22px] gap-3.5")}>
-              <div>
+              <div className="min-w-0">
                 <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                   Tổng phí trả
                 </div>
-                <div className={cn("mt-1 font-financial font-medium text-white", compact ? "text-[13px]" : "text-[15px]")}>
+                <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
                   {formatCurrency(totalProviderFee ?? 0)}
                 </div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                   Phí tháng này
                 </div>
-                <div className={cn("mt-1 font-financial font-medium text-white", compact ? "text-[13px]" : "text-[15px]")}>
+                <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
                   {formatCurrency(monthlyProviderFee ?? 0)}
                 </div>
               </div>

@@ -44,7 +44,7 @@ func IsAfterCutoff(t time.Time) bool {
 	return clock.IsAfterCutoff(t)
 }
 
-// IsInLockedGap returns true for the inter-period gap (days 11–20): after the
+// IsInLockedGap returns true for the inter-period gap (days 9-19): after the
 // previous period's window has closed but before the new period has started.
 func IsInLockedGap(t time.Time) bool {
 	return clock.IsInLockedGap(t)

@@ -16,7 +16,7 @@ import (
 // makes the forecast logic trivially unit-testable.
 //
 // Period model: the advance-payment period for forMonth M runs from day 20 of M
-// through day 9 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
+// through day 8 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
 // NET request amounts (request_amount − fee; all statuses), plus completed/grand
@@ -60,8 +60,8 @@ func maxCycleDay(forMonth string) int {
 }
 
 // cycleDayFor returns the 1-indexed cycle day of t within the period that begins
-// on day 20 of forMonth. Day 20 of forMonth → 1; day 9 of the next month →
-// maxCycleDay. Returns 0 when t falls outside the [day-20, day-9] window.
+// on day 20 of forMonth. Day 20 of forMonth -> 1; day 8 of the next month ->
+// maxCycleDay. Returns 0 when t falls outside the [day-20, day-8] window.
 func cycleDayFor(t time.Time, forMonth string) int {
 	m, err := clock.ParseMonth(forMonth)
 	if err != nil {

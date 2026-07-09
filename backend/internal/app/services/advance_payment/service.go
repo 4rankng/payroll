@@ -98,16 +98,23 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		validMonths = append(validMonths, months...)
 	} else {
 		if isBeforeCutoff {
-			// Days 1-9 (tail of the previous period): withdraw from the
+			// Days 1-8 (tail of the previous period): withdraw from the
 			// previous month's salary only.
 			validMonths = append(validMonths, prevCalMonth)
 		} else if isInLockedGap {
-			// Days 10-19: show the current month quota. Requesting stays locked
+			// Days 9-19: show the current month quota. Requesting stays locked
 			// only until admin uploads bang cham cong for that month.
 			validMonths = append(validMonths, currentCalMonth)
 		} else {
-			// Days 20-31: Can withdraw from current month
-			validMonths = append(validMonths, currentCalMonth)
+			currentMonthMax, err := s.config.AdvancePaymentRepo.SumMaxAdvByEmployeeMonth(ctx, employeeID, currentCalMonth)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check employee current month advance data")
+			}
+			if currentMonthMax > 0 {
+				validMonths = append(validMonths, currentCalMonth)
+			} else {
+				validMonths = append(validMonths, prevCalMonth)
+			}
 		}
 	}
 
@@ -166,7 +173,7 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 
 	if !eligibility.hasCheckInEnabled && isRequestWindowLocked(now, hasCurrentMonthQuota) {
 		info.CanRequest = false
-		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(currentCalMonth))
+		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(prevCalMonth))
 		info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
 	} else {
 		info.CanRequest = info.RemainingAmount >= 10000
@@ -290,7 +297,7 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 }
 
 func isRequestWindowLocked(now time.Time, hasCurrentMonthQuota bool) bool {
-	return IsInLockedGap(now) && !hasCurrentMonthQuota
+	return !IsBeforeCutoff(now) && !hasCurrentMonthQuota
 }
 
 func isRequestMonthAllowed(now time.Time, forMonth string) bool {
@@ -298,7 +305,7 @@ func isRequestMonthAllowed(now time.Time, forMonth string) bool {
 	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
 	if IsBeforeCutoff(now) {
-		// Days 1-9 (tail of the previous period): previous month only.
+		// Days 1-8 (tail of the previous period): previous month only.
 		return forMonth == prevCalMonth
 	}
 

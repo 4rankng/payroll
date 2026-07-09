@@ -70,7 +70,7 @@ type Attendance struct {
 	// means the earning is held / pending its 24h credit window; non-NULL means
 	// it has been credited and must not be banked again. The deferred credit task
 	// and the safety-net sweep gate on this — it is the idempotency key.
-	QuotaCreditedAt    *time.Time `json:"quota_credited_at" gorm:"type:datetime(3)"`
+	QuotaCreditedAt *time.Time `json:"quota_credited_at" gorm:"type:datetime(3)"`
 	// Admin review audit (migration 083): populated when an admin manually
 	// approves/rejects a disputed attendance via /admin/attendances/:id/approve|reject.
 	// review_action is "approved" | "rejected"; a nil pointer means "never reviewed"

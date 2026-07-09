@@ -34,11 +34,11 @@ export const EmployeeSummaryCards = ({ summary, formatCurrency }: EmployeeSummar
         <div className="relative pr-10">
           <div className="flex items-center gap-1.5">
             <Icon className={cn('h-3 w-3 shrink-0', iconText)} strokeWidth={2.2} />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight truncate">
+            <span className="type-caption truncate uppercase tracking-wide text-muted-foreground">
               {label}
             </span>
           </div>
-          <p className="mt-1 text-[15px] font-semibold tabular-nums text-slate-800 leading-tight truncate">
+          <p className="type-body-strong mt-1 break-words tabular-nums text-slate-800">
             {isCurrency ? formatCurrency(summary[key]) : summary[key].toLocaleString('vi-VN')}
           </p>
         </div>

@@ -61,7 +61,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             </div>
 
             {/* Value */}
-            <div className={cn("mt-1.5 font-financial font-semibold leading-none tracking-[-0.02em] text-foreground", compact ? "text-[22px]" : "text-[28px]")}>
+            <div className={cn("mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums", compact ? "text-[clamp(1.375rem,7vw,1.625rem)]" : "text-[clamp(1.625rem,5vw,1.75rem)]")}>
               {formatCurrency(totalFeeEarned)}
             </div>
 
@@ -80,7 +80,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {totalPaid} yêu cầu
               </div>
-              <div className="mt-0.5 font-financial text-sm font-medium text-foreground">
+              <div className="mt-0.5 break-words font-financial text-sm font-medium leading-snug text-foreground tabular-nums">
                 {avgFeePerRequest > 0 ? `~${formatCurrency(avgFeePerRequest)}` : "—"} /yc
               </div>
             </div>
@@ -88,7 +88,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {totalRequests} NV
               </div>
-              <div className="mt-0.5 font-financial text-sm font-medium text-foreground">
+              <div className="mt-0.5 break-words font-financial text-sm font-medium leading-snug text-foreground tabular-nums">
                 {avgFeePerEmployee > 0 ? `~${formatCurrency(avgFeePerEmployee)}` : "—"} /nv
               </div>
             </div>

@@ -465,10 +465,10 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			return nil
 		})
 
-		// Test 2: Phase 1 boundary (day 10) — last open day
-		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 1 boundary (day 10) — still open", func() error {
-			if err := SetServerTime(adminClient, makeTime(10)); err != nil {
-				return fmt.Errorf("set clock to day 10: %w", err)
+		// Test 2: Phase 1 boundary (day 8) — last open day
+		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 1 boundary (day 8) — still open", func() error {
+			if err := SetServerTime(adminClient, makeTime(8)); err != nil {
+				return fmt.Errorf("set clock to day 8: %w", err)
 			}
 
 			var p1bInfo AdvancePaymentInfoResponse
@@ -476,7 +476,7 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				return fmt.Errorf("get advance info: %w", err)
 			}
 
-			fmt.Printf("    Day 10: forMonth=%s, canRequest=%v, remaining=%d\n",
+			fmt.Printf("    Day 8: forMonth=%s, canRequest=%v, remaining=%d\n",
 				p1bInfo.ForMonth, p1bInfo.CanRequest, p1bInfo.RemainingAmount)
 
 			if err := AssertEqual("forMonth", prevCalMonth, p1bInfo.ForMonth); err != nil {
@@ -519,17 +519,17 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			return AssertGreaterOrEqual("http_status", 400, statusCode)
 		})
 
-		// Test 4: Phase 1→2 transition (day 10 → day 11)
-		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 1→2 transition (day 10 → day 11)", func() error {
-			if err := SetServerTime(adminClient, makeTime(10)); err != nil {
-				return fmt.Errorf("set clock to day 10: %w", err)
+		// Test 4: Phase 1→2 transition (day 8 → day 9)
+		reporter.RunTest(flowAdvance, "Cutoff [clock]: Phase 1→2 transition (day 8 → day 9)", func() error {
+			if err := SetServerTime(adminClient, makeTime(8)); err != nil {
+				return fmt.Errorf("set clock to day 8: %w", err)
 			}
 
 			var before AdvancePaymentInfoResponse
 			if _, err := empClient.GetInto("/api/v1/me/advance-payment", &before); err != nil {
-				return fmt.Errorf("get advance info (day 10): %w", err)
+				return fmt.Errorf("get advance info (day 8): %w", err)
 			}
-			fmt.Printf("    Day 10: canRequest=%v, forMonth=%s\n", before.CanRequest, before.ForMonth)
+			fmt.Printf("    Day 8: canRequest=%v, forMonth=%s\n", before.CanRequest, before.ForMonth)
 
 			if err := AdvanceServerTime(adminClient, 24*time.Hour); err != nil {
 				return fmt.Errorf("advance clock by 24h: %w", err)
@@ -537,12 +537,16 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 
 			var after AdvancePaymentInfoResponse
 			if _, err := empClient.GetInto("/api/v1/me/advance-payment", &after); err != nil {
-				return fmt.Errorf("get advance info (day 11): %w", err)
+				return fmt.Errorf("get advance info (day 9): %w", err)
 			}
-			fmt.Printf("    Day 11: canRequest=%v, reason=%s\n", after.CanRequest, after.CanRequestReason)
+			fmt.Printf("    Day 9: canRequest=%v, reason=%s\n", after.CanRequest, after.CanRequestReason)
 
 			if after.HasFlexible {
 				if err := AssertFalse("canRequest_after", after.CanRequest); err != nil {
+					return err
+				}
+				expectedTitle := fmt.Sprintf("Kỳ ứng lương %s/%s kết thúc", prevCalMonth[5:7], prevCalMonth[0:4])
+				if err := AssertEqual("canRequestTitle_after", expectedTitle, after.CanRequestTitle); err != nil {
 					return err
 				}
 				if before.HasFlexible && before.RemainingAmount >= 10000 && before.CanRequest && !after.CanRequest {

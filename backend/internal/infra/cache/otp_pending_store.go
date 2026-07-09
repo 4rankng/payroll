@@ -152,7 +152,7 @@ func (s *OTPPendingStore) DeleteSessionsForUser(ctx context.Context, userID uint
 	return nil
 }
 
-func sessionKey(id string) string  { return "otp:pending:" + id }
+func sessionKey(id string) string    { return "otp:pending:" + id }
 func userSessionKey(uid uint) string { return fmt.Sprintf("otp:user:%d", uid) }
 
 // newOpaqueID returns a 192-bit (32-byte) random id, base64url-encoded, suitable

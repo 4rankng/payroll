@@ -250,8 +250,8 @@ export const lineHeights = {
  * Letter spacing utilities
  */
 export const letterSpacing = {
-  tighter: "-0.05em",
-  tight: "-0.025em",
+  tighter: "0em",
+  tight: "0em",
   normal: "0em",
   wide: "0.025em",
   wider: "0.05em",

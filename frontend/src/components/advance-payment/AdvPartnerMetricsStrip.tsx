@@ -85,7 +85,7 @@ function MetricCard({
         strokeWidth={1.5}
       />
 
-      <div className="relative pr-11">
+      <div className="relative min-w-0 pr-11">
         {/* Label */}
         <div className="flex items-center gap-1.5">
           <Icon className={cn("h-3.5 w-3.5 shrink-0", iconText)} strokeWidth={2.2} />
@@ -94,8 +94,8 @@ function MetricCard({
           </span>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
-          <div className="font-financial text-[22px] font-semibold leading-none tracking-[-0.02em] text-foreground">
+        <div className="mt-1.5 flex min-w-0 flex-wrap items-end gap-x-2 gap-y-1">
+          <div className="min-w-0 break-words font-financial text-[clamp(1.125rem,6vw,1.375rem)] font-semibold leading-tight tracking-normal text-foreground tabular-nums">
             {value}
             {unit && <span className="ml-0.5 text-sm font-normal text-muted-foreground">{unit}</span>}
           </div>

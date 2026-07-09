@@ -46,10 +46,10 @@ export function HexagonBadge({ label, value, accent, ariaLabel }: HexagonBadgePr
 
       {/* Label + value below the hexagon */}
       <div className="text-center min-w-0 w-full px-1">
-        <p className={cn('text-xs font-bold tabular-nums leading-tight truncate', a.text)}>
+        <p className={cn('break-words text-xs font-bold tabular-nums leading-tight', a.text)}>
           {value}
         </p>
-        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
+        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight text-muted-foreground">
           {label}
         </p>
       </div>

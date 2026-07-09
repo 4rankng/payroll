@@ -63,7 +63,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   const stackValueBlock = (
     <div className="flex flex-col gap-0.5 items-start">
       <p
-        className="font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
+        className="break-words font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
       >
         {displayValue}
       </p>
@@ -131,7 +131,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
                 {label}
               </span>
             </div>
-            <p className="font-display text-[22px] font-extrabold tabular-nums leading-none tracking-normal text-foreground">
+            <p className="break-words font-display text-[clamp(1.125rem,6vw,1.375rem)] font-extrabold tabular-nums leading-tight tracking-normal text-foreground">
               {displayValue}
             </p>
             {sublabel && (
@@ -168,7 +168,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
               </span>
             </div>
             <p
-              className="mt-1 font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
+              className="mt-1 break-words font-display text-xl font-extrabold tabular-nums leading-tight tracking-normal text-foreground sm:text-2xl"
             >
               {displayValue}
             </p>
