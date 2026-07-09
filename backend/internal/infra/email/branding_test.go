@@ -20,6 +20,9 @@ func TestWithPublicEmailBannerAddsBannerToHTMLFragment(t *testing.T) {
 	if !strings.HasPrefix(body, publicEmailBannerHTML) {
 		t.Fatalf("expected banner to be prepended to HTML fragments")
 	}
+	if !strings.Contains(body, `style="text-align:left;"`) {
+		t.Fatalf("expected banner wrapper to align left")
+	}
 }
 
 func TestWithPublicEmailBannerDoesNotDuplicateExistingBanner(t *testing.T) {
@@ -53,7 +56,7 @@ func TestWithPublicEmailBannerInsertsAfterBodyTag(t *testing.T) {
 	if bodyTagIdx < 0 || bannerIdx < 0 || contentIdx < 0 {
 		t.Fatalf("expected body tag, banner, and content in normalized HTML: %q", body)
 	}
-	if !(bodyTagIdx < bannerIdx && bannerIdx < contentIdx) {
+	if bodyTagIdx >= bannerIdx || bannerIdx >= contentIdx {
 		t.Fatalf("expected banner after body tag and before body content")
 	}
 }
