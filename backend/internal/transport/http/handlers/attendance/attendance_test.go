@@ -56,6 +56,12 @@ func (f *fakeCheckoutFailedAttemptRepo) Create(_ context.Context, attempt *domai
 	return nil
 }
 
+// ExistsRecent reports no recent attempt so the handler always proceeds to
+// Create — the test asserts the attempt is recorded.
+func (f *fakeCheckoutFailedAttemptRepo) ExistsRecent(_ context.Context, _ uint, _, _ string, _ uint, _ time.Duration) (bool, error) {
+	return false, nil
+}
+
 type fakeCheckoutProjectEmployeeRepo struct {
 	domain.ProjectEmployeeRepository
 	assignment *domain.ProjectEmployee

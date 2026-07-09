@@ -57,6 +57,12 @@ func (h *Handler) resolveEmployeeID(c *gin.Context) (uint, bool) {
 	return employee.ID, true
 }
 
+// failedAttemptDedupWindow is how close two failed attempts for the same
+// employee / attempt type / reason / project must be for the later one to be
+// dropped as a retry. Picked to collapse a frantic burst of taps (observed six
+// identical check-out failures inside 42 s on demo) into a single forensic row.
+const failedAttemptDedupWindow = 60 * time.Second
+
 // recordFailedAttempt fire-and-forgets a failed-attempt log for a validation error.
 // It uses context.Background() with a timeout so the write never blocks the
 // request and survives the request-context cancellation after the response is sent.
@@ -72,6 +78,12 @@ func (h *Handler) recordFailedAttempt(employeeID, projectID uint, attemptType, c
 		}()
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
+		// Drop retries of the same failure within the dedup window. A query
+		// error falls through to insert so a transient DB blip never silently
+		// swallows logging.
+		if recent, err := h.failedAttemptRepo.ExistsRecent(ctx, employeeID, attemptType, category, projectID, failedAttemptDedupWindow); err == nil && recent {
+			return
+		}
 		msg := errorMsg
 		var latPtr, lngPtr *float64
 		if geo.Lat != 0 || geo.Lng != 0 {

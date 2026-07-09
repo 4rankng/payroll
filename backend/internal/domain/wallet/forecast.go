@@ -33,8 +33,8 @@ type WalletDemandPoint struct {
 // period. DISPLAY ONLY — must not feed SyncBalance or any auto top-up.
 //
 // RecommendedBalance is the newsvendor p*-quantile (+ optional safety stock) of
-// the predicted remaining-cycle net cash-out distribution. P50Reference exposes
-// the median for side-by-side comparison with the previous (median-based) engine.
+// the predicted near-term net cash-out distribution. The horizon is controlled by
+// LeadDays so the card can act as a just-in-time top-up reminder.
 type WalletDemandPrediction struct {
 	ActualSoFar        int64   `json:"actual_so_far"`
 	ProjectedTotal     int64   `json:"projected_total"` // p50 projection of full-period net demand
@@ -49,11 +49,13 @@ type WalletDemandPrediction struct {
 	Method             string  `json:"method"`     // monte-carlo | gamma-fit | no-history | cohort-median (legacy)
 	Confidence         string  `json:"confidence"` // high | medium | low (derived from n × MC/gamma agreement)
 	BasisPeriods       int     `json:"basis_periods"`
+	LeadDays           int     `json:"lead_days"`
+	HorizonCycleDay    int     `json:"horizon_cycle_day"`
 
 	// Newsvendor / tail-risk fields.
-	P50Reference        int64                      `json:"p50_reference"`        // median remaining cash-out
-	P90Reference        int64                      `json:"p90_reference"`        // p90 remaining cash-out
-	P99Reference        int64                      `json:"p99_reference"`        // p99 remaining cash-out (tail)
+	P50Reference        int64                      `json:"p50_reference"`        // median horizon cash-out
+	P90Reference        int64                      `json:"p90_reference"`        // p90 horizon cash-out
+	P99Reference        int64                      `json:"p99_reference"`        // p99 horizon cash-out (tail)
 	CoverageProbability float64                    `json:"coverage_probability"` // p* actually used (e.g. 0.95)
 	NHistory            int                        `json:"n_history"`            // usable historical periods
 	ConfidenceInterval  ForecastConfidenceInterval `json:"confidence_interval"`

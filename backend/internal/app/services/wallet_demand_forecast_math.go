@@ -50,13 +50,49 @@ func daysInMonth(year int, month time.Month) int {
 
 // maxCycleDay returns the last cycle-day index for the period that begins on
 // day 20 of forMonth: (daysInMonth(forMonth) - 20 + 1) + RequestCutoffDay.
-// 30-day June → 20; 31-day July → 21; 28-day Feb → 19; 29-day Feb → 20.
+// 30-day June → 19; 31-day July → 20; 28-day Feb → 17; 29-day Feb → 18.
 func maxCycleDay(forMonth string) int {
 	m, err := clock.ParseMonth(forMonth)
 	if err != nil {
 		return 0
 	}
 	return (daysInMonth(m.Year(), m.Month()) - clock.PeriodCycleStartDay + 1) + clock.RequestCutoffDay
+}
+
+// forecastHorizonCycleDay returns the cycle day covered by the top-up lead
+// window. A 0 result means the lead window does not overlap the request window,
+// so the just-in-time funding target should be zero unless known unpaid demand
+// already exists.
+func forecastHorizonCycleDay(now time.Time, forMonth string, leadDays int) int {
+	if leadDays < 0 {
+		leadDays = 0
+	}
+	start, end, ok := periodWindow(forMonth)
+	if !ok {
+		return 0
+	}
+	today := dateOnly(now.In(clock.DefaultLocation))
+	leadEnd := today.AddDate(0, 0, leadDays)
+	if leadEnd.Before(start) || today.After(end) {
+		return 0
+	}
+	if leadEnd.After(end) {
+		return maxCycleDay(forMonth)
+	}
+	return cycleDayFor(leadEnd, forMonth)
+}
+
+func periodWindow(forMonth string) (time.Time, time.Time, bool) {
+	m, err := clock.ParseMonth(forMonth)
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	start := time.Date(m.Year(), m.Month(), clock.PeriodCycleStartDay, 0, 0, 0, 0, clock.DefaultLocation)
+	return start, start.AddDate(0, 0, maxCycleDay(forMonth)-1), true
+}
+
+func dateOnly(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, clock.DefaultLocation)
 }
 
 // cycleDayFor returns the 1-indexed cycle day of t within the period that begins
@@ -74,7 +110,8 @@ func cycleDayFor(t time.Time, forMonth string) int {
 		return t.Day() - clock.PeriodCycleStartDay + 1
 	}
 	// Next calendar month: days 1..RequestCutoffDay.
-	if t.Year() == year && t.Month() == month+1 && t.Day() >= 1 && t.Day() <= clock.RequestCutoffDay {
+	nextMonth := time.Date(year, month, 1, 0, 0, 0, 0, clock.DefaultLocation).AddDate(0, 1, 0)
+	if t.Year() == nextMonth.Year() && t.Month() == nextMonth.Month() && t.Day() >= 1 && t.Day() <= clock.RequestCutoffDay {
 		return (daysInMonth(year, month) - clock.PeriodCycleStartDay + 1) + t.Day()
 	}
 	return 0
@@ -358,15 +395,38 @@ func forecastDemandDistribution(
 	rngSeed int64,
 	paidFrac float64,
 ) demandDistribution {
+	return forecastDemandDistributionBetween(historical, todayCycleDay, 1<<30, nSim, rngSeed, paidFrac)
+}
+
+// forecastDemandDistributionBetween projects the distribution of net cash-out
+// between two cycle-day positions. It is used by the Wallet page's just-in-time
+// top-up reminder: fromCycleDay is the observed boundary, throughCycleDay is the
+// lead-window horizon. When the horizon is not ahead of the observed boundary,
+// the future-demand distribution is zero.
+func forecastDemandDistributionBetween(
+	historical []cohortSeries,
+	fromCycleDay int,
+	throughCycleDay int,
+	nSim int,
+	rngSeed int64,
+	paidFrac float64,
+) demandDistribution {
 	pf := clampF(paidFrac, 0, 1)
 
-	// Remaining net demand for each usable historical period.
+	// Net demand in the forecast window for each usable historical period.
 	var rem []float64
 	for _, h := range historical {
 		if h.grandTotal <= 0 {
 			continue
 		}
-		r := float64(h.grandTotal - h.cumulativeAt(todayCycleDay))
+		var r float64
+		if throughCycleDay > fromCycleDay {
+			endAmount := h.cumulativeAt(throughCycleDay)
+			if throughCycleDay > h.maxCycleDay {
+				endAmount = h.grandTotal
+			}
+			r = float64(endAmount - h.cumulativeAt(fromCycleDay))
+		}
 		if r < 0 {
 			r = 0
 		}
