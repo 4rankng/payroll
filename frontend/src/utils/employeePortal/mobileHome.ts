@@ -1,4 +1,5 @@
 import { formatCurrency, formatNumber } from "@/utils/formatters";
+import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 
@@ -8,8 +9,7 @@ export type EmployeeActionIcon =
   | "history"
   | "account"
   | "timesheet"
-  | "notification"
-  | "limit";
+  | "notification";
 
 export type EmployeeNudgeTone = "employee" | "amber" | "slate";
 
@@ -71,7 +71,7 @@ interface RegularEmployeeHomeInput {
 
 export function formatPayrollMonth(value?: string): string {
   if (!value || !/^\d{4}-\d{2}/.test(value)) return "Kỳ lương hiện tại";
-  return `Tháng ${value.slice(5, 7)}/${value.slice(0, 4)}`;
+  return formatAdvancePeriodDisplay(value);
 }
 
 export function maskBankAccountNumber(value?: string | null): string | undefined {
@@ -93,31 +93,33 @@ export function createFlexibleEmployeeHomeModel({
   info,
   history,
   hasCheckIn,
-  hasBankInfo,
 }: FlexibleEmployeeHomeInput): EmployeeHomeViewModel {
   const pendingRequests = history.filter((item) => item.status === "PENDING").length;
   const payrollPeriod = formatPayrollMonth(info.forMonth);
+  const requestBlocked = !info.canRequest;
+  const blockedDescription =
+    info.canRequestReason || info.canRequestTitle || "Chưa thể gửi yêu cầu lúc này.";
   const quickActions: EmployeeQuickAction[] = [
-    {
-      id: "advance",
-      label: "Ứng lương",
-      icon: "advance",
-      targetId: info.canRequest ? "employee-advance-request" : "employee-limit",
-      disabled: !info.canRequest && !info.canRequestReason,
-    },
-    hasCheckIn
-      ? {
-          id: "attendance",
-          label: "Chấm công",
-          icon: "attendance",
-          targetId: "employee-check-in",
-        }
-      : {
-          id: "limit",
-          label: "Hạn mức",
-          icon: "limit",
-          targetId: "employee-limit",
-        },
+    ...(info.canRequest
+      ? [
+          {
+            id: "advance",
+            label: "Ứng lương",
+            icon: "advance" as const,
+            targetId: "employee-advance-request",
+          },
+        ]
+      : []),
+    ...(hasCheckIn
+      ? [
+          {
+            id: "attendance",
+            label: "Chấm công",
+            icon: "attendance" as const,
+            targetId: "employee-check-in",
+          },
+        ]
+      : []),
     {
       id: "history",
       label: "Lịch sử",
@@ -143,25 +145,6 @@ export function createFlexibleEmployeeHomeModel({
       targetId: "employee-check-in",
     });
   }
-  if (!hasBankInfo) {
-    nudges.push({
-      id: "bank-missing",
-      title: "Kiểm tra tài khoản nhận tiền",
-      description: "Thiếu thông tin ngân hàng, hãy báo quản lý cập nhật.",
-      icon: "account",
-      tone: "amber",
-      targetId: "employee-bank",
-    });
-  } else {
-    nudges.push({
-      id: "bank-ready",
-      title: "Kiểm tra tài khoản nhận tiền",
-      description: "Xác nhận đúng tài khoản trước khi gửi yêu cầu.",
-      icon: "account",
-      tone: "slate",
-      targetId: "employee-bank",
-    });
-  }
   if (pendingRequests > 0) {
     nudges.unshift({
       id: "pending-request",
@@ -176,11 +159,11 @@ export function createFlexibleEmployeeHomeModel({
   return {
     eyebrow: "Ví lương",
     title: "Gói lương sớm",
-    amountLabel: "Có thể ứng",
+    amountLabel: requestBlocked ? "Hạn mức còn lại" : "Có thể ứng",
     amount: formatCurrency(info.remainingAmount),
     amountDescription: info.canRequest
       ? `Sẵn sàng gửi yêu cầu cho ${payrollPeriod.toLowerCase()}.`
-      : info.canRequestTitle || "Chưa thể gửi yêu cầu lúc này.",
+      : blockedDescription,
     periodLabel: payrollPeriod,
     metrics: [
       { label: "Đã nhận", value: formatCurrency(info.completedAmount), tone: "employee" },
@@ -200,7 +183,6 @@ export function createRegularEmployeeHomeModel({
   totalPaid,
   workDayCount,
   totalRecords,
-  hasBankInfo,
   unreadCount,
 }: RegularEmployeeHomeInput): EmployeeHomeViewModel {
   const nudges: EmployeeNudge[] = [
@@ -211,16 +193,6 @@ export function createRegularEmployeeHomeModel({
       icon: "timesheet",
       tone: "employee",
       targetId: "employee-timesheets",
-    },
-    {
-      id: hasBankInfo ? "bank-ready" : "bank-missing",
-      title: "Kiểm tra tài khoản nhận tiền",
-      description: hasBankInfo
-        ? "Tài khoản nhận lương đã sẵn sàng để đối chiếu."
-        : "Thiếu thông tin ngân hàng, hãy báo quản lý cập nhật.",
-      icon: "account",
-      tone: hasBankInfo ? "slate" : "amber",
-      targetId: "employee-bank",
     },
   ];
 

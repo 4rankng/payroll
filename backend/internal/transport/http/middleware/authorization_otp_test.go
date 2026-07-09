@@ -124,7 +124,7 @@ func TestAuthorize_OTPDisabled_NoEnforcement(t *testing.T) {
 // discardHandler is a no-op slog handler for quiet tests.
 type discardHandler struct{}
 
-func (h *discardHandler) Enabled(_ context.Context, _ slog.Level) bool      { return false }
-func (h *discardHandler) Handle(_ context.Context, _ slog.Record) error    { return nil }
-func (h *discardHandler) WithAttrs(_ []slog.Attr) slog.Handler              { return h }
-func (h *discardHandler) WithGroup(_ string) slog.Handler                   { return h }
+func (h *discardHandler) Enabled(_ context.Context, _ slog.Level) bool  { return false }
+func (h *discardHandler) Handle(_ context.Context, _ slog.Record) error { return nil }
+func (h *discardHandler) WithAttrs(_ []slog.Attr) slog.Handler          { return h }
+func (h *discardHandler) WithGroup(_ string) slog.Handler               { return h }

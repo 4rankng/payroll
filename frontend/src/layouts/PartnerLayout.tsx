@@ -21,10 +21,10 @@ const PartnerLayoutInner = () => {
     <div className="relative flex h-dvh w-full group/layout">
       <PartnerSidebar />
       <SidebarToggle />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <main
           id="main-content"
-          className="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_30rem),linear-gradient(180deg,#f8fafc_0%,#edf4f8_100%)]"
+          className="min-h-0 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_30rem),linear-gradient(180deg,#f8fafc_0%,#edf4f8_100%)]"
         >
           <div className="min-h-full mobile-main-content animate-page-enter max-w-[1320px] mx-auto">
             <SectionErrorBoundary sectionName="trang đối tác">

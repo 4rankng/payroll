@@ -2,13 +2,15 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { ArrowRight, AlertCircle, DollarSign } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/utils/formatters";
+import { formatAdvancePeriodDisplay, getAdvanceQuotaSummary } from "@/utils/advancePaymentHelpers";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
-import type { AdvancePaymentInfo } from "@/types/api/advance-payment.types";
+import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 
 interface AdvancePaymentRequestFormProps {
   info: AdvancePaymentInfo;
+  history?: AdvancePaymentHistoryItem[];
   feeDetails: { fee: number; netAmount: number } | null;
   onSubmit: (data: { amount: number; forMonth: string }) => void;
   onAmountChange?: (amount: number) => void;
@@ -19,6 +21,7 @@ interface AdvancePaymentRequestFormProps {
 
 export function AdvancePaymentRequestForm({
   info,
+  history,
   feeDetails,
   onSubmit,
   onAmountChange,
@@ -29,22 +32,12 @@ export function AdvancePaymentRequestForm({
   const [amount, setAmount] = useState("");
   const [sliderValue, setSliderValue] = useState(0);
 
-  // Default to the oldest available month with quota
-  const availableQuotas = useMemo(() => info.quotas || [], [info.quotas]);
-  const sortedQuotas = useMemo(
-    () => [...availableQuotas].sort((a, b) => a.forMonth.localeCompare(b.forMonth)),
-    [availableQuotas]
+  const quotaSummary = useMemo(
+    () => getAdvanceQuotaSummary(info, history),
+    [history, info]
   );
-  const defaultMonth = sortedQuotas.length > 0 ? sortedQuotas[0].forMonth : info.forMonth;
-  const selectedMonth = defaultMonth;
-
-  const selectedQuotaRemaining = useMemo(() => {
-    if (availableQuotas.length > 0) {
-      const q = availableQuotas.find(q => q.forMonth === selectedMonth);
-      return q ? q.remainingAmount : 0;
-    }
-    return info.remainingAmount;
-  }, [availableQuotas, selectedMonth, info.remainingAmount]);
+  const selectedMonth = quotaSummary.forMonth;
+  const selectedQuotaRemaining = quotaSummary.remainingAmount;
 
   const numericAmount = useMemo(() => {
     const parsed = parseInt(amount.replace(/\D/g, ""), 10);
@@ -153,10 +146,10 @@ export function AdvancePaymentRequestForm({
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="text-[12px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
+          <p className="employee-type-label-caps text-slate-500">
             Tạo yêu cầu
           </p>
-          <h2 className="mt-1 text-[22px] font-extrabold leading-7 tracking-normal text-slate-950">
+          <h2 className="employee-type-hero-title mt-1 text-slate-950">
             Nhận lương sớm
           </h2>
         </div>
@@ -164,7 +157,25 @@ export function AdvancePaymentRequestForm({
       </div>
 
       <div className="border-t border-slate-100 pt-4">
-        <label htmlFor="advance-payment-amount" className="block text-[13px] font-semibold leading-5 text-slate-500">
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+            <p className="employee-type-label text-slate-500">Kỳ lương</p>
+            <p className="employee-type-row-amount mt-1 text-slate-950">
+              {formatAdvancePeriodDisplay(selectedMonth)}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-right">
+            <p className="employee-type-label text-slate-500">Đã dùng</p>
+            <p className="employee-type-row-amount mt-1 text-slate-950 tabular-nums">
+              {quotaSummary.usedPercentage}%
+            </p>
+            <p className="employee-type-body-sm mt-0.5 text-slate-500 tabular-nums">
+              {formatCurrency(quotaSummary.usedAmount)}
+            </p>
+          </div>
+        </div>
+
+        <label htmlFor="advance-payment-amount" className="employee-type-label block text-slate-500">
           Số tiền muốn ứng
         </label>
         <div className="relative mt-2">
@@ -176,13 +187,13 @@ export function AdvancePaymentRequestForm({
             placeholder="0"
             value={formatAmountInput(amount)}
             onChange={handleAmountChange}
-            className={`h-16 w-full rounded-2xl border bg-white px-3 pr-14 text-[32px] font-extrabold leading-none tracking-normal text-slate-950 transition-all focus:outline-none focus:ring-2 ${
+            className={`employee-type-hero-amount h-16 w-full rounded-2xl border bg-white px-3 pr-14 text-slate-950 transition-all focus:outline-none focus:ring-2 ${
               validationError
                 ? "border-red-300 focus:ring-red-100"
                 : "border-slate-200 focus:border-employee focus:ring-green-100"
             }`}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-slate-100 px-2 py-1 text-[13px] font-bold text-slate-500">
+          <span className="employee-type-pill absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-slate-100 px-2 py-1 text-slate-500">
             VND
           </span>
         </div>
@@ -200,10 +211,10 @@ export function AdvancePaymentRequestForm({
                     : "border-slate-200 bg-white text-slate-700"
                 }`}
               >
-                <span className="block text-[12px] font-bold leading-4 opacity-80">
+                <span className="employee-type-label block opacity-80">
                   {quickAmount.label} hạn mức
                 </span>
-                <span className="mt-1 block truncate text-[15px] font-extrabold leading-5 tabular-nums">
+                <span className="employee-type-inline-amount mt-1 block whitespace-nowrap tabular-nums">
                   {formatCurrency(quickAmount.amount)}
                 </span>
               </button>
@@ -214,8 +225,8 @@ export function AdvancePaymentRequestForm({
         {selectedQuotaRemaining > 0 && (
           <div className="mt-4">
             <div className="mb-2 flex items-center justify-between gap-3">
-              <span className="text-[13px] font-semibold leading-5 text-slate-500">Kéo để chọn nhanh</span>
-              <span className="text-[13px] font-bold leading-5 text-employee tabular-nums">
+              <span className="employee-type-label text-slate-500">Kéo để chọn nhanh</span>
+              <span className="employee-type-label text-employee tabular-nums">
                 Tối đa {formatCurrency(selectedQuotaRemaining)}
               </span>
             </div>
@@ -229,7 +240,7 @@ export function AdvancePaymentRequestForm({
                 { "--slider-thumb-color": EMPLOYEE_BRAND_COLOR } as React.CSSProperties
               }
             />
-            <div className="mt-2 flex justify-between text-[14px] text-slate-500">
+            <div className="employee-type-body-sm mt-2 flex justify-between text-slate-500">
               <span>0</span>
               <span>Tối đa</span>
             </div>
@@ -238,14 +249,14 @@ export function AdvancePaymentRequestForm({
       </div>
 
       {validationError && (
-        <p className="mt-3 flex items-center gap-1.5 rounded-2xl bg-red-50 px-3 py-2 text-[14px] font-semibold leading-6 text-red-600">
+        <p className="employee-type-body mt-3 flex items-center gap-1.5 rounded-2xl bg-red-50 px-3 py-2 text-red-600">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {validationError}
         </p>
       )}
 
       {canShowFeePreview && (
-        <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-[15px]">
+        <div className="employee-type-body mt-4 space-y-2 border-t border-slate-100 pt-4">
           <div className="flex justify-between gap-3 text-slate-500">
             <span>Số tiền yêu cầu</span>
             <span className="font-bold text-slate-900 tabular-nums">
@@ -260,7 +271,7 @@ export function AdvancePaymentRequestForm({
           </div>
           <div className="flex justify-between gap-3 border-t border-slate-200 pt-2">
             <span className="font-extrabold text-slate-700">Bạn nhận được</span>
-            <span className="text-[22px] font-extrabold leading-7 text-employee tabular-nums">
+            <span className="employee-type-card-amount text-employee tabular-nums">
               {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
             </span>
           </div>
@@ -271,7 +282,7 @@ export function AdvancePaymentRequestForm({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className={`inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 py-2 text-[17px] font-extrabold text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 ${canSubmit ? 'bg-employee shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)]' : 'bg-gray-400'}`}
+          className={`employee-type-action inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 py-2 text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 ${canSubmit ? 'bg-employee shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)]' : 'bg-gray-400'}`}
         >
           {isPending ? (
             <>

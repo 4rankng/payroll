@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
 import { authManager } from "@/lib/auth";
@@ -25,14 +24,13 @@ import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
 import { EmployeeCheckInCard } from "@/components/employees/EmployeeCheckInCard";
 import { EmployeeAttendanceHistoryCard } from "@/components/employees/EmployeeAttendanceHistoryCard";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
-import { AdvancePaymentLimitCard } from "@/components/advance-payment/AdvancePaymentLimitCard";
 import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvancePaymentRequestForm";
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
+import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
 import {
   createFlexibleEmployeeHomeModel,
-  formatPayrollMonth,
   getEmployeeAccountHolder,
   hasEmployeeBankInfo,
   type EmployeeNudge,
@@ -228,39 +226,12 @@ const FlexiblePayEmployeePage = () => {
           <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
         )}
 
-        {info && (
-          <section id="employee-limit" className="scroll-mt-4">
-            <AdvancePaymentLimitCard info={info} style={employeeCardShadow} />
-          </section>
-        )}
-
-        {info && !info.canRequest && info.canRequestReason && (
-          <div
-            className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3"
-            style={employeeCardShadow}
-          >
-            <div className="shrink-0 mt-0.5">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                <Clock className="h-4 w-4 text-amber-600" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="mb-1 text-base font-bold leading-6 text-amber-900">
-                {info.canRequestTitle || "Chưa thể ứng lương"}
-              </p>
-              <p className="text-[15px] font-medium leading-6 text-amber-800">
-                {info.canRequestReason}
-              </p>
-            </div>
-            <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-          </div>
-        )}
-
         {info?.canRequest && (
           <section id="employee-advance-request" className="scroll-mt-4">
             <AdvancePaymentRequestForm
               key={formKey}
               info={info}
+              history={history}
               feeDetails={feeDetails}
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}
@@ -324,7 +295,7 @@ const FlexiblePayEmployeePage = () => {
         bankAccountNumber={profile?.bank_account_number}
         bankName={profile?.bank?.branch_name}
         bankAccountName={getEmployeeAccountHolder(profile)}
-        payrollPeriodLabel={formatPayrollMonth(latestMonth)}
+        payrollPeriodLabel={formatAdvancePeriodDisplay(latestMonth)}
         onConfirm={handleConfirmSubmit}
         isPending={requestMutation.isPending}
       />

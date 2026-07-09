@@ -72,7 +72,7 @@ function StatTile({ label, value, hint, icon: Icon, iconText, watermark, isLoadi
         {isLoading ? (
           <div className="mt-2 h-7 w-32 bg-muted rounded animate-pulse" />
         ) : (
-          <p className="mt-1.5 font-financial text-[26px] font-bold tabular-nums tracking-[-0.02em] leading-none text-foreground">
+          <p className="mt-1.5 break-words font-financial text-[clamp(1.375rem,5vw,1.625rem)] font-bold tabular-nums tracking-normal leading-tight text-foreground">
             {value}
           </p>
         )}
@@ -117,7 +117,7 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
             Số dư khả dụng
           </span>
         </div>
-        <p className="font-financial text-[36px] sm:text-[40px] font-bold leading-none tracking-[-0.02em] tabular-nums text-foreground">
+        <p className="break-words font-financial text-[clamp(1.875rem,8vw,2.5rem)] font-bold leading-tight tracking-normal tabular-nums text-foreground">
           {balance ? formatVND(balance.available) : "—"}
         </p>
         <div className="mt-3 flex items-center gap-2 text-[11.5px] text-muted-foreground">

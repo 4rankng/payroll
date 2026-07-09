@@ -159,7 +159,7 @@ function TimesheetStatsRow({
               </span>
             </div>
             <p className={cn(
-              "mt-1 font-display text-[18px] font-bold tabular-nums leading-tight tracking-tight truncate",
+              "mt-1 break-words font-display text-[18px] font-bold tabular-nums leading-tight tracking-normal",
               active ? "text-primary" : "text-foreground",
             )}>
               {value.toLocaleString("vi-VN")}

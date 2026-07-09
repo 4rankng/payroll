@@ -45,8 +45,8 @@ const minCheckInAdvanceRequest uint64 = 10000
 // client; the handler maps it field-by-field into dto.AdvancePaymentInfoResponse (which
 // carries the canonical camelCase json tags). Do not add json tags here.
 type CheckInAdvanceInfo struct {
-	ForMonth                  string
-	Salary                    uint64 // tiền công thực tế (100% earned, already credited)
+	ForMonth string
+	Salary   uint64 // tiền công thực tế (100% earned, already credited)
 	// PendingEarnings is the total earning held in the 24h credit window this
 	// month — checked-out attendances whose earning has not yet been banked into
 	// the quota pool. Shown separately so the worker sees money is coming; it is

@@ -251,8 +251,8 @@ const EmployeePage = () => {
               <div className="w-12 h-12 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-6 h-6 text-sky-400" />
               </div>
-              <p className="text-[15px] font-semibold text-foreground">Chưa có bảng công</p>
-              <p className="text-[13px] text-slate-400 mt-1">Dữ liệu sẽ hiển thị tại đây</p>
+              <p className="employee-type-card-title text-foreground">Chưa có bảng công</p>
+              <p className="employee-type-body-sm mt-1 text-slate-400">Dữ liệu sẽ hiển thị tại đây</p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -266,11 +266,11 @@ const EmployeePage = () => {
                     <div className="flex items-center justify-between px-4 pt-4 pb-3">
                       <div className="flex items-center gap-2">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isPaid ? "bg-emerald-500" : "bg-amber-400"}`} />
-                        <span className="text-[15px] font-bold text-slate-800 capitalize">
+                        <span className="employee-type-row-amount capitalize text-slate-800">
                           {format(new Date(day.date), "EEEE, dd/MM", { locale: vi })}
                         </span>
                       </div>
-                      <span className={`text-[13px] font-semibold px-2.5 py-1 rounded-full ${
+                      <span className={`employee-type-pill rounded-full px-2.5 py-1 ${
                         isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                       }`}>
                         {isPaid ? "Đã trả" : "Chưa trả"}
@@ -284,9 +284,9 @@ const EmployeePage = () => {
                         { label: "Đã nhận", value: formatCurrency(day.totalPaidAmount), unit: null, color: isPaid ? "text-emerald-600" : "text-slate-400" },
                       ].map(({ label, value, unit, color }) => (
                         <div key={label} className="px-3 py-3 text-center">
-                          <p className="text-[13px] text-slate-400 font-medium mb-1">{label}</p>
-                          <p className={`text-[15px] font-bold tabular-nums truncate ${color}`}>
-                            {value}{unit && <span className="text-[13px] font-normal text-slate-400 ml-0.5">{unit}</span>}
+                          <p className="employee-type-label mb-1 text-slate-400">{label}</p>
+                          <p className={`employee-type-row-amount whitespace-nowrap tabular-nums ${color}`}>
+                            {value}{unit && <span className="type-caption ml-0.5 font-normal text-slate-400">{unit}</span>}
                           </p>
                         </div>
                       ))}

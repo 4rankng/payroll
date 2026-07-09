@@ -32,7 +32,6 @@
   #root {
     min-height: 100vh;
     min-height: 100dvh;
-    height: 100dvh;
   }
 
   /* ========================================================================
@@ -187,6 +186,125 @@
     letter-spacing: var(--tracking-wider);
   }
 
+  /* ========================================================================
+     SEMANTIC TYPOGRAPHY ROLES
+     Prefer these for new UI so font size follows hierarchy, not local taste.
+     ======================================================================== */
+  .type-page-title {
+    font-family: var(--font-family-display);
+    font-size: var(--type-page-title);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-section-title {
+    font-family: var(--font-family-display);
+    font-size: var(--type-section-title);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-card-title {
+    font-family: var(--font-family-display);
+    font-size: var(--type-card-title);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-body {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-body-strong {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-body-sm {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body-sm);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-label {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .type-label-caps {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .type-caption {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-caption);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-count-badge {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-count-badge);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-action {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-metric-sm,
+  .type-metric-md,
+  .type-metric-lg,
+  .type-metric-xl {
+    font-family: var(--font-family-display);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .type-metric-sm {
+    font-size: var(--type-metric-sm);
+  }
+
+  .type-metric-md {
+    font-size: var(--type-metric-md);
+  }
+
+  .type-metric-lg {
+    font-size: var(--type-metric-lg);
+  }
+
+  .type-metric-xl {
+    font-size: var(--type-metric-xl);
+  }
+
   /* Mobile typography adjustment */
   @media (max-width: 640px) {
     html {
@@ -320,6 +438,127 @@
     .employee-mobile-page [role="button"] {
       min-height: 44px;
     }
+  }
+
+  .employee-type-header-greeting {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-header-name {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-md);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-hero-title {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-md);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-card-title {
+    font-family: var(--font-family-display);
+    font-size: var(--type-card-title);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-hero-amount {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-xl);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-card-amount {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-lg);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-row-amount {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-sm);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-inline-amount {
+    font-family: var(--font-family-display);
+    font-size: var(--type-body);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-large-row-amount {
+    font-family: var(--font-family-display);
+    font-size: var(--type-metric-lg);
+    font-weight: var(--font-extrabold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-label {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-label-caps {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+
+  .employee-type-body {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-body-sm {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body-sm);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-pill {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-label);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-action {
+    font-family: var(--font-family-sans);
+    font-size: var(--type-body);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
   }
 
   .employee-pay-illustration {

@@ -75,19 +75,19 @@ export const MobilePageHeader = ({
               <Icon className="h-[18px] w-[18px] text-primary/75" strokeWidth={2} />
             </div>
           )}
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-[21px] font-extrabold leading-tight tracking-tight text-slate-950">
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-0.5 text-xs font-medium leading-normal text-slate-500">
+              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-500">
                 {subtitle}
               </p>
             )}
           </div>
         </div>
         {actions && (
-          <div className="flex max-w-[58%] shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
+          <div className="flex max-w-[56%] shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
             {actions}
           </div>
         )}

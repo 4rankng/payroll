@@ -208,6 +208,7 @@ var (
 //   - IP/UA match the session binding (RT-M5: ErrSessionBindingMismatch)
 //   - resend cooldown (ErrResendCooldown) to prevent inbox-flooding a victim
 //   - account not locked mid-session (RT-M4)
+//
 // On success the session is overwritten with the new code hash (RT-H1: the old
 // code no longer verifies) and a new email is dispatched. Returns the session id
 // (unchanged — the client keeps the same id).

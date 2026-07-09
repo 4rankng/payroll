@@ -54,10 +54,10 @@ func NewCaptchaService(rdb *redis.Client, cfg CaptchaConfig) *CaptchaService {
 	store := newRedisCaptchaStore(rdb, ttl)
 	// DriverDigit: number-only captcha. Height/width tuned for mobile display.
 	driver := base64Captcha.DriverDigit{
-		Height: 80,
-		Width:  200,
-		Length: length,
-		MaxSkew: 0.7,
+		Height:   80,
+		Width:    200,
+		Length:   length,
+		MaxSkew:  0.7,
 		DotCount: 80,
 	}
 	return &CaptchaService{

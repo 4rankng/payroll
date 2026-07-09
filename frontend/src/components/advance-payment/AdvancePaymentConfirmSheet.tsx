@@ -46,24 +46,24 @@ export function AdvancePaymentConfirmSheet({
           <div className="h-1.5 w-12 rounded-full bg-slate-300" />
         </div>
         <SheetHeader className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-4 text-left">
-          <SheetTitle className="text-[22px] font-extrabold leading-7 tracking-normal text-slate-950">
+          <SheetTitle className="employee-type-hero-title text-slate-950">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
-          <p className="text-[14px] font-medium leading-6 text-slate-500">
+          <p className="employee-type-body text-slate-500">
             Kiểm tra kỹ thông tin trước khi gửi giao dịch.
           </p>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5">
           <section className="border-b border-slate-100 py-5">
-            <p className="text-[13px] font-bold uppercase leading-5 text-slate-500">
+            <p className="employee-type-label-caps text-slate-500">
               Số tiền thực nhận
             </p>
-            <p className="mt-1 break-words text-[36px] font-extrabold leading-none tracking-normal text-employee tabular-nums">
+            <p className="employee-type-hero-amount mt-1 break-words text-employee tabular-nums">
               {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
             </p>
 
-            <div className="mt-5 space-y-3 text-[16px] leading-6">
+            <div className="employee-type-body mt-5 space-y-3">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tiền yêu cầu</span>
                 <span className="font-bold text-slate-900 tabular-nums">
@@ -88,13 +88,13 @@ export function AdvancePaymentConfirmSheet({
           </section>
 
           <section className="py-5">
-            <p className="text-[13px] font-bold uppercase leading-5 text-slate-500">
+            <p className="employee-type-label-caps text-slate-500">
               Chuyển đến chủ tài khoản
             </p>
-            <p className="mt-1 break-words text-[27px] font-extrabold leading-8 tracking-normal text-employee">
+            <p className="employee-type-card-amount mt-1 break-words text-employee">
               {bankAccountName || "Chưa cập nhật"}
             </p>
-            <div className="mt-5 space-y-3 text-[16px] leading-6">
+            <div className="employee-type-body mt-5 space-y-3">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tài khoản</span>
                 <span className="break-all text-right font-bold text-slate-900 tabular-nums">
@@ -118,14 +118,14 @@ export function AdvancePaymentConfirmSheet({
           <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}
-              className="min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-[16px] font-bold text-slate-600 transition-transform active:scale-[0.97]"
+              className="employee-type-action min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-slate-600 transition-transform active:scale-[0.97]"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
               disabled={isPending || !feeDetails}
-              className="min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-[16px] font-extrabold text-white shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)] transition-transform active:scale-[0.97] disabled:opacity-50"
+              className="employee-type-action min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-white shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)] transition-transform active:scale-[0.97] disabled:opacity-50"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">

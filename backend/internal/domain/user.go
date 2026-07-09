@@ -19,15 +19,15 @@ const (
 
 // User represents a user entity in the domain
 type User struct {
-	ID        uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	Username  string         `json:"username" gorm:"type:varchar(255);uniqueIndex;not null"`
-	Email     *string        `json:"email" gorm:"type:varchar(255);index"`
-	Password  string         `json:"-" gorm:"longtext;not null"` // Never expose password in JSON
-	Fullname  string         `json:"fullname" gorm:"type:varchar(255);not null"`
-	CCCD      *string        `json:"cccd,omitempty" gorm:"type:varchar(20);uniqueIndex:unique_user_cccd_deleted_at;comment:'Citizen ID for admin/partner login'"`
-	Mobile    *string        `json:"mobile,omitempty" gorm:"type:varchar(15);uniqueIndex:unique_user_mobile_deleted_at"`
-	Role      UserRole       `json:"role" gorm:"type:enum('admin','partner','employee','adv_partner');not null;default:'employee'"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_user_cccd_deleted_at;uniqueIndex:unique_user_mobile_deleted_at"`
+	ID                  uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	Username            string         `json:"username" gorm:"type:varchar(255);uniqueIndex;not null"`
+	Email               *string        `json:"email" gorm:"type:varchar(255);index"`
+	Password            string         `json:"-" gorm:"longtext;not null"` // Never expose password in JSON
+	Fullname            string         `json:"fullname" gorm:"type:varchar(255);not null"`
+	CCCD                *string        `json:"cccd,omitempty" gorm:"type:varchar(20);uniqueIndex:unique_user_cccd_deleted_at;comment:'Citizen ID for admin/partner login'"`
+	Mobile              *string        `json:"mobile,omitempty" gorm:"type:varchar(15);uniqueIndex:unique_user_mobile_deleted_at"`
+	Role                UserRole       `json:"role" gorm:"type:enum('admin','partner','employee','adv_partner');not null;default:'employee'"`
+	DeletedAt           gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_user_cccd_deleted_at;uniqueIndex:unique_user_mobile_deleted_at"`
 	LastLogin           *time.Time     `json:"last_login" gorm:"type:datetime(3)"`
 	TokensInvalidBefore *time.Time     `json:"-" gorm:"type:datetime(3);comment:'When non-null, any JWT issued before this instant is rejected. Used by RevokeUserTokens.'"`
 	OTPFailedAttempts   int            `json:"-" gorm:"type:int;not null;default:0;comment:'consecutive failed OTP verifies; reset on success'"`

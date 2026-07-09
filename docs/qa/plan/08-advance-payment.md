@@ -6,8 +6,8 @@
 
 ### Request Window (3-Phase Cutoff)
 ```
-Day  1-10:  OPEN for previous calendar month's period
-Day 11-19:  LOCKED (inter-period gap, requests rejected)
+Day  1-8:   OPEN for previous calendar month's period
+Day  9-19:  LOCKED (inter-period gap, requests rejected)
 Day 20-31:  OPEN for current month ONLY IF admin uploaded "bang luong" for current month
 ```
 
@@ -44,8 +44,8 @@ Advance Payment:
 [APPROVED] → (9Pay fails) → [FAILED]
 
 Request Window:
-Day 1-10:  OPEN (previous month)
-Day 11-19: LOCKED
+Day 1-8:   OPEN (previous month)
+Day 9-19:  LOCKED
 Day 20-31: OPEN (current month, IF bang luong uploaded)
 ```
 
@@ -75,8 +75,8 @@ Day 20-31: OPEN (current month, IF bang luong uploaded)
 | F13-14 | Exceeds max amount | Negative | POST with amount > max | 400, exceeds available amount |
 | F13-15 | Calculate fee with zero | Negative | POST calculate-fee with amount = 0 | 400, validation error |
 | **Request Window** ||||
-| F13-16 | Request during Day 1-10 (OPEN) | Edge | Set clock to day 5 → create request | 201, forMonth = previous month |
-| F13-17 | Request during Day 11-19 (LOCKED) | Negative | Set clock to day 15 → create request | 400, request window locked |
+| F13-16 | Request during Day 1-8 (OPEN) | Edge | Set clock to day 5 → create request | 201, forMonth = previous month |
+| F13-17 | Request during Day 9-19 (LOCKED) | Negative | Set clock to day 15 → create request | 400, request window locked |
 | F13-18 | Request during Day 20-31 (OPEN) | Edge | Set clock to day 25 → create request (bang luong uploaded) | 201, forMonth = current month |
 | F13-19 | Request Day 20-31 without bang luong | Negative | Set clock to day 25 (no bang luong) → create request | 400, locked until bang luong uploaded |
 | **Cancellation Edge Cases** ||||

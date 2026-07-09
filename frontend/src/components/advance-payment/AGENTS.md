@@ -18,7 +18,6 @@ Components for the advance payment (FlexPay) feature that allows employees to re
 | `AdvancePaymentExportDialog.tsx` | Export advance payment list dialog |
 | `AdvancePaymentEmailDialog.tsx` | Email advance payment report dialog |
 | `AdvancePaymentStatsStrip.tsx` | Statistics strip (total requested, approved, transferred) |
-| `AdvancePaymentLimitCard.tsx` | Card showing employee's advance payment limit and usage |
 | `AdvancePaymentHistoryCard.tsx` | History card showing past advance payments |
 | `AdvancePaymentPageHeaderMobile.tsx` | Mobile page header for advance payment section |
 | `AdvancePaymentMobileList.tsx` | Mobile-optimized advance payment list |

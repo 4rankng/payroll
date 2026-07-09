@@ -427,11 +427,11 @@ func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*C
 func (s *AuthService) generateAccessToken(user *domain.User, otpVerified bool) (string, error) {
 	jti := uuid.New().String()
 	claims := Claims{
-		UserID:       user.ID,
-		Username:     user.Username,
-		Fullname:     user.Fullname,
-		Role:         string(user.Role),
-		OTPVerified:  otpVerified,
+		UserID:      user.ID,
+		Username:    user.Username,
+		Fullname:    user.Fullname,
+		Role:        string(user.Role),
+		OTPVerified: otpVerified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			ExpiresAt: jwt.NewNumericDate(clock.Now().Add(s.accessTTL)),

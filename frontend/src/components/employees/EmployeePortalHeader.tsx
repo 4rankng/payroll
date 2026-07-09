@@ -29,10 +29,10 @@ export function EmployeePortalHeader({
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
       >
         <div className="min-w-0">
-          <p className="text-[16px] font-semibold leading-6 text-white/85">
+          <p className="employee-type-header-greeting text-white/85">
             Xin chào
           </p>
-          <h1 className="truncate text-[26px] font-bold leading-8 text-white">
+          <h1 className="employee-type-header-name truncate text-white">
             {employeeName || "bạn"}
           </h1>
         </div>
@@ -44,7 +44,7 @@ export function EmployeePortalHeader({
           >
             <Bell className="h-6 w-6" strokeWidth={2.1} />
             {unreadCount != null && unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 h-4 min-w-4 rounded-full bg-red-500 px-1 text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="type-count-badge absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -67,7 +67,7 @@ export function EmployeePortalHeader({
                 className="gap-2.5 rounded-lg py-2.5"
               >
                 <Settings className="w-4 h-4 text-gray-400" />
-                <span className="text-[15px]">Đổi mật khẩu</span>
+                <span className="type-body">Đổi mật khẩu</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -75,7 +75,7 @@ export function EmployeePortalHeader({
                 className="gap-2.5 rounded-lg py-2.5 text-red-500"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-[15px]">Đăng xuất</span>
+                <span className="type-body">Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
