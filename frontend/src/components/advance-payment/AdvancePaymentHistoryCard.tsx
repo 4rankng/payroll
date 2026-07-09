@@ -77,7 +77,7 @@ const HistoryItemRow = ({
   return (
     <article
       className={cn(
-        "px-4 py-4",
+        "px-4 py-3",
         item.status === "PENDING" && "bg-amber-50/25"
       )}
     >
@@ -96,16 +96,16 @@ const HistoryItemRow = ({
         </span>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-4">
-        <span className="employee-type-label-caps pb-1 text-slate-500">
+      <div className="mt-2.5 flex items-end justify-between gap-4">
+        <span className="employee-type-label-caps pb-0.5 text-slate-500">
           Yêu cầu
         </span>
-        <span className="employee-type-large-row-amount shrink-0 text-slate-950 tabular-nums">
+        <span className="employee-type-card-amount shrink-0 text-slate-950 tabular-nums">
           {safeFormat(item.requestAmount)}
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-4 border-t border-slate-100 pt-3">
+      <div className="mt-2.5 flex items-center justify-between gap-4 border-t border-slate-100 pt-2.5">
         <div className="min-w-0">
           <span className="employee-type-label block text-slate-500">
             Thực nhận

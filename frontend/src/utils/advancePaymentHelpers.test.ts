@@ -93,4 +93,57 @@ describe("getAdvanceQuotaSummary", () => {
     expect(summary.forMonth).toBe("2026-06");
     expect(summary.usedPercentage).toBe(76);
   });
+
+  it("skips a zero current-month quota while waiting for the next payroll upload", () => {
+    const summary = getAdvanceQuotaSummary({
+      ...baseInfo,
+      forMonth: "2026-07",
+      maxAdvanceAmount: 0,
+      completedAmount: 0,
+      pendingAmount: 0,
+      remainingAmount: 0,
+      canRequest: false,
+      quotas: [
+        {
+          forMonth: "2026-06",
+          maxAdvanceAmount: 12_360_000,
+          completedAmount: 9_360_000,
+          pendingAmount: 0,
+          remainingAmount: 3_000_000,
+        },
+        {
+          forMonth: "2026-07",
+          maxAdvanceAmount: 0,
+          completedAmount: 0,
+          pendingAmount: 0,
+          remainingAmount: 0,
+        },
+      ],
+    });
+
+    expect(summary.forMonth).toBe("2026-06");
+    expect(summary.maxAdvanceAmount).toBe(12_360_000);
+    expect(summary.completedAmount).toBe(9_360_000);
+    expect(summary.remainingAmount).toBe(3_000_000);
+  });
+
+  it("uses history as the minimum known limit when quota rows are missing", () => {
+    const summary = getAdvanceQuotaSummary(
+      {
+        ...baseInfo,
+        forMonth: "2026-07",
+        maxAdvanceAmount: 0,
+        completedAmount: 0,
+        pendingAmount: 0,
+        remainingAmount: 0,
+        canRequest: false,
+        quotas: [],
+      },
+      completedHistory.map(({ forMonth: _forMonth, ...item }) => item)
+    );
+
+    expect(summary.completedAmount).toBe(9_360_000);
+    expect(summary.maxAdvanceAmount).toBe(9_360_000);
+    expect(summary.remainingAmount).toBe(0);
+  });
 });

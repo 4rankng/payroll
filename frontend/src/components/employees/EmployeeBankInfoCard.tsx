@@ -1,4 +1,4 @@
-import { Building2, CreditCard, User, type LucideIcon } from "lucide-react";
+import { Building2, CreditCard } from "lucide-react";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
 
@@ -9,19 +9,16 @@ interface EmployeeBankInfoCardProps {
 }
 
 const bankFields: readonly {
-  icon: LucideIcon;
   label: string;
   getValue: (p: EmployeeProfile) => string | undefined;
   mono: boolean;
 }[] = [
   {
-    icon: Building2,
     label: "Ngân hàng",
     getValue: (p) => p.bank?.branch_name,
     mono: false,
   },
   {
-    icon: CreditCard,
     label: "Số tài khoản",
     getValue: (p) => p.bank_account_number,
     mono: true,
@@ -45,7 +42,6 @@ export function EmployeeBankInfoCard({
     ? [
         ...bankFields,
         {
-          icon: User,
           label: "Chủ tài khoản",
           getValue: (p: EmployeeProfile) => p.bank_account_name,
           mono: false,
@@ -74,20 +70,29 @@ export function EmployeeBankInfoCard({
             </div>
             <EmployeeIconFrame icon={CreditCard} />
           </div>
-          <div className="divide-y divide-slate-100">
-            {fields.map(({ icon: Icon, label, getValue, mono }) => {
+          <div className="grid grid-cols-2 border-slate-100">
+            {fields.map(({ label, getValue, mono }, index) => {
               const value = getValue(profile);
+              const isAccountOwner = label === "Chủ tài khoản";
               return (
-                <div key={label}>
-                  <div className="flex items-center gap-3 px-4 py-3.5">
-                    <EmployeeIconFrame icon={Icon} size="row" tone="slate" />
-                    <div className="min-w-0 flex-1">
-                      <p className="employee-type-label text-slate-500">
+                <div
+                  key={label}
+                  className={
+                    isAccountOwner
+                      ? "col-span-2 border-t border-slate-100"
+                      : index === 0
+                        ? "border-r border-slate-100"
+                        : ""
+                  }
+                >
+                  <div className="min-w-0 px-4 py-3.5">
+                    <div className="min-w-0">
+                      <p className="employee-type-label truncate text-slate-500">
                         {label}
                       </p>
                       <p
-                        className={`employee-type-row-amount mt-0.5 text-slate-950 ${
-                          mono ? "break-all font-mono" : "whitespace-normal break-words"
+                        className={`employee-type-bank-value mt-1 text-slate-950 ${
+                          mono ? "whitespace-nowrap font-mono" : "whitespace-normal break-words"
                         }`}
                       >
                         {value || "—"}

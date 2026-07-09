@@ -20,9 +20,30 @@ describe("createFlexibleEmployeeHomeModel", () => {
     const model = createFlexibleEmployeeHomeModel({
       info: {
         ...baseInfo,
+        forMonth: "2026-07",
+        maxAdvanceAmount: 0,
+        completedAmount: 0,
+        pendingAmount: 0,
+        remainingAmount: 0,
         canRequest: false,
         canRequestTitle: "Kỳ ứng lương 06/2026 kết thúc",
         canRequestReason: "Xin chờ bảng lương 07/2026 để tiếp tục",
+        quotas: [
+          {
+            forMonth: "2026-06",
+            maxAdvanceAmount: 12_360_000,
+            completedAmount: 9_360_000,
+            pendingAmount: 0,
+            remainingAmount: 3_000_000,
+          },
+          {
+            forMonth: "2026-07",
+            maxAdvanceAmount: 0,
+            completedAmount: 0,
+            pendingAmount: 0,
+            remainingAmount: 0,
+          },
+        ],
       },
       history: [],
       hasCheckIn: false,
@@ -30,8 +51,15 @@ describe("createFlexibleEmployeeHomeModel", () => {
     });
 
     expect(model.amountLabel).toBe("Hạn mức còn lại");
+    expect(model.amount).toContain("3.000.000");
     expect(model.amountDescription).toBe("Xin chờ bảng lương 07/2026 để tiếp tục");
     expect(model.periodLabel).toBeUndefined();
+    expect(model.metricsTitle).toBe("Ứng lương 06/2026");
+    expect(model.metrics).toEqual([
+      expect.objectContaining({ label: "Đã nhận", value: expect.stringContaining("9.360.000") }),
+      expect.objectContaining({ label: "Đang chờ", value: expect.stringContaining("0") }),
+      expect.objectContaining({ label: "Hạn mức", value: expect.stringContaining("12.360.000") }),
+    ]);
     expect(model.quickActions).toEqual([
       {
         id: "history",
@@ -59,6 +87,7 @@ describe("createFlexibleEmployeeHomeModel", () => {
     expect(model.amountLabel).toBe("Có thể ứng");
     expect(model.amountDescription).toBe("Sẵn sàng gửi yêu cầu ứng lương.");
     expect(model.periodLabel).toBeUndefined();
+    expect(model.metricsTitle).toBeUndefined();
     expect(model.quickActions[0]).toMatchObject({
       label: "Ứng lương",
       icon: "advance",
@@ -67,5 +96,42 @@ describe("createFlexibleEmployeeHomeModel", () => {
     expect(model.quickActions).not.toContainEqual(
       expect.objectContaining({ targetId: "employee-limit" })
     );
+  });
+
+  it("labels history-only blocked data with the ended payroll month", () => {
+    const model = createFlexibleEmployeeHomeModel({
+      info: {
+        ...baseInfo,
+        forMonth: "2026-07",
+        maxAdvanceAmount: 0,
+        completedAmount: 0,
+        pendingAmount: 0,
+        remainingAmount: 0,
+        canRequest: false,
+        canRequestTitle: "Kỳ ứng lương 06/2026 kết thúc",
+        canRequestReason: "Xin chờ bảng lương 07/2026 để tiếp tục",
+        quotas: [],
+      },
+      history: [
+        {
+          id: 1,
+          requestAmount: 9_360_000,
+          netAmount: 9_172_800,
+          fee: 187_200,
+          status: "COMPLETED",
+          createdAt: "2026-07-08T00:00:00Z",
+        },
+      ],
+      hasCheckIn: false,
+      hasBankInfo: true,
+    });
+
+    expect(model.amountDescription).toBe("Xin chờ bảng lương 07/2026 để tiếp tục");
+    expect(model.metricsTitle).toBe("Ứng lương 06/2026");
+    expect(model.metrics).toEqual([
+      expect.objectContaining({ label: "Đã nhận", value: expect.stringContaining("9.360.000") }),
+      expect.objectContaining({ label: "Đang chờ", value: expect.stringContaining("0") }),
+      expect.objectContaining({ label: "Hạn mức", value: expect.stringContaining("9.360.000") }),
+    ]);
   });
 });

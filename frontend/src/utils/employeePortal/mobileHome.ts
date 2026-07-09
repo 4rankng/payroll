@@ -1,5 +1,8 @@
 import { formatCurrency, formatNumber } from "@/utils/formatters";
-import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
+import {
+  formatAdvancePeriodDisplay,
+  getAdvanceQuotaSummary,
+} from "@/utils/advancePaymentHelpers";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 
@@ -45,6 +48,7 @@ export interface EmployeeHomeViewModel {
   amount: string;
   amountDescription: string;
   periodLabel?: string;
+  metricsTitle?: string;
   metrics: EmployeeWalletMetric[];
   quickActions: EmployeeQuickAction[];
   nudges: EmployeeNudge[];
@@ -74,6 +78,16 @@ export function formatPayrollMonth(value?: string): string {
   return formatAdvancePeriodDisplay(value);
 }
 
+function formatNumericMonth(value?: string): string {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return value ?? "";
+  return `${value.slice(5, 7)}/${value.slice(0, 4)}`;
+}
+
+function extractNumericMonth(value?: string): string | undefined {
+  const match = value?.match(/(\d{2})\/(\d{4})/);
+  return match ? `${match[1]}/${match[2]}` : undefined;
+}
+
 export function maskBankAccountNumber(value?: string | null): string | undefined {
   const normalized = value?.replace(/\s+/g, "") ?? "";
   if (!normalized) return undefined;
@@ -95,9 +109,18 @@ export function createFlexibleEmployeeHomeModel({
   hasCheckIn,
 }: FlexibleEmployeeHomeInput): EmployeeHomeViewModel {
   const pendingRequests = history.filter((item) => item.status === "PENDING").length;
+  const quota = getAdvanceQuotaSummary(info, history);
   const requestBlocked = !info.canRequest;
   const blockedDescription =
     info.canRequestReason || info.canRequestTitle || "Chưa thể gửi yêu cầu lúc này.";
+  const showingFallbackQuota =
+    requestBlocked &&
+    quota.forMonth !== info.forMonth &&
+    (quota.maxAdvanceAmount > 0 || quota.completedAmount > 0 || quota.pendingAmount > 0);
+  const metricsMonthLabel = requestBlocked
+    ? extractNumericMonth(info.canRequestTitle) ||
+      (showingFallbackQuota ? formatNumericMonth(quota.forMonth) : undefined)
+    : undefined;
   const quickActions: EmployeeQuickAction[] = [
     ...(info.canRequest
       ? [
@@ -159,14 +182,15 @@ export function createFlexibleEmployeeHomeModel({
     eyebrow: "Ví lương",
     title: "Gói lương sớm",
     amountLabel: requestBlocked ? "Hạn mức còn lại" : "Có thể ứng",
-    amount: formatCurrency(info.remainingAmount),
+    amount: formatCurrency(quota.remainingAmount),
     amountDescription: info.canRequest
       ? "Sẵn sàng gửi yêu cầu ứng lương."
       : blockedDescription,
+    metricsTitle: metricsMonthLabel ? `Ứng lương ${metricsMonthLabel}` : undefined,
     metrics: [
-      { label: "Đã nhận", value: formatCurrency(info.completedAmount), tone: "employee" },
-      { label: "Đang chờ", value: formatCurrency(info.pendingAmount), tone: "amber" },
-      { label: "Hạn mức", value: formatCurrency(info.maxAdvanceAmount), tone: "slate" },
+      { label: "Đã nhận", value: formatCurrency(quota.completedAmount), tone: "employee" },
+      { label: "Đang chờ", value: formatCurrency(quota.pendingAmount), tone: "amber" },
+      { label: "Hạn mức", value: formatCurrency(quota.maxAdvanceAmount), tone: "slate" },
     ],
     quickActions,
     nudges,
