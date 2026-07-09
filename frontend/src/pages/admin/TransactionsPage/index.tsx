@@ -51,6 +51,8 @@ const TransactionsPage = () => {
   const {
     importOnePayFeeReport,
     isImportingOnePayFeeReport,
+    runWalletSettlement,
+    isRunningWalletSettlement,
   } = useLedgerManagement();
 
   const { data: transactionsData } = useTransactions(filters);
@@ -72,6 +74,14 @@ const TransactionsPage = () => {
 
   const handleUploadSettlementResult = () => {
     setShowSettlementDialog(true);
+  };
+
+  const handleRunWalletSettlement = async () => {
+    try {
+      await runWalletSettlement();
+    } catch {
+      // Error is handled by the hook
+    }
   };
 
   const handleRowClick = (transaction: Transaction) => {
@@ -156,6 +166,8 @@ const TransactionsPage = () => {
         onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
         onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
+        onRunWalletSettlement={handleRunWalletSettlement}
+        isRunningWalletSettlement={isRunningWalletSettlement}
       />
 
       <TransactionSummaryCard

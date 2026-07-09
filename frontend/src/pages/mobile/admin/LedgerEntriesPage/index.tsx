@@ -118,7 +118,7 @@ const LedgerEntriesPageMobile = () => {
   const { data: accountMetadata, isLoading: isLoadingAccountMetadata } = useLedgerMetadata();
 
   // CRUD operations
-  const { reverseEntry: performReverse, recalculateBalances: performRecalculate, isReversing, isRecalculating } = useLedgerManagement();
+  const { reverseEntry: performReverse, recalculateBalances: performRecalculate, runWalletSettlement: performRunWalletSettlement, isReversing, isRecalculating, isRunningWalletSettlement } = useLedgerManagement();
 
   // Modal navigation
   const { openLedgerDetails, openAddLedgerEntry } = useGeneralModals();
@@ -154,6 +154,14 @@ const LedgerEntriesPageMobile = () => {
     try {
       await performRecalculate();
     } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
+  const handleRunWalletSettlement = async () => {
+    try {
+      await performRunWalletSettlement();
+    } catch {
       // Error is handled by the hook
     }
   };
@@ -216,6 +224,8 @@ const LedgerEntriesPageMobile = () => {
         onAddDoubleEntry={() => setShowDoubleEntryModal(true)}
         onRecalculateBalance={handleRecalculateBalance}
         isRecalculating={isRecalculating}
+        onRunWalletSettlement={handleRunWalletSettlement}
+        isRunningWalletSettlement={isRunningWalletSettlement}
         onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
         onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}
         onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}

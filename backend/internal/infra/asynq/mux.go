@@ -111,10 +111,17 @@ func RegisterDisbursementPoller(srv *Server) error {
 }
 
 // RegisterWalletSettlement registers the periodic EOD wallet settlement task.
-// Runs daily at 00:01 Vietnam time.
+// Fires daily at 00:01 Asia/Ho_Chi_Minh — the scheduler evaluates crontab specs
+// in clock.DefaultLocation (see NewServer), not asynq's UTC default. The worker
+// is self-healing: each run sweeps every stranded payment regardless of
+// completion day, so a missed run is backfilled on the next tick, and the manual
+// admin trigger (RunWalletSettlement) covers on-demand needs. The TaskID mirrors
+// the admin trigger so a cron fire and an on-demand click — or two clicks — can
+// never run two settlement tasks at once and race the guard.
 func RegisterWalletSettlement(srv *Server) error {
 	_, err := srv.Scheduler().Register("1 0 * * *", asynqlib.NewTask(TaskWalletSettlement, nil),
 		asynqlib.Queue(QueueLow),
+		asynqlib.TaskID("wallet:settlement:run"),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to register wallet settlement periodic task: %w", err)

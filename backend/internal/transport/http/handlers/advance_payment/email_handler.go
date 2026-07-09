@@ -46,7 +46,7 @@ func (h *AdvancePaymentHandler) SendReconciliationEmail(c *gin.Context) {
 
 	if len(reportData) == 0 {
 		logger.Info("No completed requests found for the month", "forMonth", req.ForMonth)
-		response.Success(c, nil, "Không có dữ liệu thanh toán ứng lương cho tháng được chọn")
+		response.Success(c, nil, "Không có dữ liệu Nhận lương sớm 24/7 cho tháng được chọn")
 		return
 	}
 
@@ -90,7 +90,7 @@ func (h *AdvancePaymentHandler) SendReconciliationEmail(c *gin.Context) {
 		ExcelBytes: excelBytes,
 		HTMLBody:   htmlBody,
 		TextBody:   textBody,
-		Subject:    fmt.Sprintf("Sao kê thanh toán ứng lương - %s", req.ForMonth),
+		Subject:    fmt.Sprintf("Sao kê Nhận lương sớm 24/7 - %s", req.ForMonth),
 		Summary:    summary,
 	})
 	if err != nil {

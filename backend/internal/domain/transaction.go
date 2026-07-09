@@ -108,6 +108,11 @@ type TransactionRepository interface {
 	GetWithRoundingImbalance(ctx context.Context, tolerance int64, since time.Time) ([]*Transaction, error)
 	Delete(ctx context.Context, id uint) error
 	GetPendingByDescription(ctx context.Context, description string) (*Transaction, error)
+	// IncrementAmount atomically adds delta to the transaction's amount
+	// (UPDATE transactions SET amount = amount + delta WHERE id = ?). Used by the
+	// wallet-settlement recovery path to keep Amount in sync when late-arriving
+	// payments are appended to an existing day's transaction. Honors tx context.
+	IncrementAmount(ctx context.Context, id uint, delta int64) error
 }
 
 // TransactionFilters represents filtering options for transaction queries

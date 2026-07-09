@@ -1,4 +1,4 @@
-import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText } from 'lucide-react';
+import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText, Zap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -12,6 +12,8 @@ interface TransactionPageHeaderProps {
   onExportSaoKeAdvance: () => void;
   onImportOnePayFeeReport: () => void;
   isSendingSaoKe?: boolean;
+  onRunWalletSettlement?: () => void;
+  isRunningWalletSettlement?: boolean;
 }
 
 export function TransactionPageHeader({
@@ -23,6 +25,8 @@ export function TransactionPageHeader({
   onExportSaoKeAdvance,
   onImportOnePayFeeReport,
   isSendingSaoKe = false,
+  onRunWalletSettlement,
+  isRunningWalletSettlement = false,
 }: TransactionPageHeaderProps) {
   return (
     <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền">
@@ -86,6 +90,20 @@ export function TransactionPageHeader({
           <ReceiptText className="w-4 h-4" />
           Phí OnePay
         </Button>
+        {onRunWalletSettlement && (
+          <Button
+            variant="outline"
+            onClick={onRunWalletSettlement}
+            disabled={isRunningWalletSettlement}
+          >
+            {isRunningWalletSettlement ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
+            Chốt lương
+          </Button>
+        )}
         <Button onClick={onAddTransaction}>
           <Plus />
           Thêm

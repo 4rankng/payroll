@@ -215,6 +215,12 @@ export const API_ENDPOINTS = {
     onePayFeeReports: '/ledger/onepay-fee-reports',
   },
 
+  // Wallet disbursement settlement — admin on-demand trigger for the EOD
+  // consolidation that groups completed wallet payments into ledger records.
+  walletSettlement: {
+    run: '/admin/wallet-settlement/run',
+  },
+
   // Transactions (Revenue/Expense management)
   transactions: {
     base: '/transactions',

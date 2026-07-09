@@ -68,4 +68,13 @@ func setupAdvancePaymentRoutes(protected *gin.RouterGroup, container *Container)
 		disbursementFee.PATCH("/:id", container.Handlers.DisbursementFee.Update)
 		disbursementFee.DELETE("/:id", container.Handlers.DisbursementFee.Delete)
 	}
+
+	// Manual wallet-settlement trigger. Runs the same EOD consolidation task as
+	// the daily cron on demand, settling stranded completed wallet payments into
+	// ledger records. Admin-only.
+	walletSettlement := protected.Group("/admin/wallet-settlement")
+	walletSettlement.Use(container.Middleware.Authorization.Authorize())
+	{
+		walletSettlement.POST("/run", container.Handlers.AdvancePayment.RunWalletSettlement)
+	}
 }

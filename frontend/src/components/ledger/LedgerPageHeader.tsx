@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Loader2,
   TrendingUp,
+  Zap,
 } from 'lucide-react';
 import { CashFlowChart } from './CashFlowChart';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,8 @@ interface LedgerPageHeaderProps {
   onViewSaoKeHistory?: () => void;
   onImportOnePayFeeReport?: () => void;
   isSendingSaoKe?: boolean;
+  onRunWalletSettlement?: () => void;
+  isRunningWalletSettlement?: boolean;
 }
 
 export function LedgerPageHeader({
@@ -52,6 +55,8 @@ export function LedgerPageHeader({
   onViewSaoKeHistory,
   onImportOnePayFeeReport,
   isSendingSaoKe = false,
+  onRunWalletSettlement,
+  isRunningWalletSettlement = false,
 }: LedgerPageHeaderProps) {
   const [showChart, setShowChart] = useState(false);
   const [showActionsSheet, setShowActionsSheet] = useState(false);
@@ -66,6 +71,13 @@ export function LedgerPageHeader({
       label: 'Nhập bút toán kép',
       icon: GitMerge,
       onClick: onAddDoubleEntry,
+    },
+    onRunWalletSettlement && {
+      key: 'wallet-settlement',
+      label: isRunningWalletSettlement ? 'Đang chốt lương...' : 'Chốt lương chuyển tiền',
+      icon: Zap,
+      onClick: onRunWalletSettlement,
+      disabled: isRunningWalletSettlement,
     },
     onRecalculateBalance && {
       key: 'recalc',
@@ -166,6 +178,21 @@ export function LedgerPageHeader({
             >
               <ReceiptText className="w-4 h-4" />
               Phí OnePay
+            </Button>
+          )}
+          {onRunWalletSettlement && (
+            <Button
+              variant="ghost"
+              className="rounded-none border-0 gap-1.5"
+              onClick={onRunWalletSettlement}
+              disabled={isRunningWalletSettlement}
+            >
+              {isRunningWalletSettlement ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4" />
+              )}
+              Chốt lương
             </Button>
           )}
         </div>

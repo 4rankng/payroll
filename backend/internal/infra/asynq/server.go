@@ -6,6 +6,7 @@ import (
 	asynqlib "github.com/hibiken/asynq"
 
 	"api-server/internal/config"
+	"api-server/internal/pkg/clock"
 )
 
 // Server wraps asynq.Server with lifecycle management
@@ -38,7 +39,11 @@ func NewServer(cfg config.AsynqConfig) *Server {
 		}),
 	})
 
-	scheduler := asynqlib.NewScheduler(redisOpt, &asynqlib.SchedulerOpts{})
+	// Evaluate crontab specs (e.g. wallet:settlement's "1 0 * * *") in the
+	// business timezone, not asynq's UTC default. @every jobs are unaffected.
+	scheduler := asynqlib.NewScheduler(redisOpt, &asynqlib.SchedulerOpts{
+		Location: clock.DefaultLocation,
+	})
 
 	return &Server{
 		server:    server,

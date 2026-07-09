@@ -252,6 +252,15 @@ class LedgerService {
   }
 
   /**
+   * Manually trigger the EOD wallet-disbursement settlement. Consolidates
+   * stranded completed wallet payments (grouped by completion day) into
+   * "Wallet disbursement YYYY-MM-DD" ledger records. Idempotent.
+   */
+  async runWalletSettlement(): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.walletSettlement.run);
+  }
+
+  /**
    * Import OnePay monthly fee report and create a ledger expense transaction.
    */
   async importOnePayFeeReport(file: File): Promise<OnePayFeeImportResponse> {
