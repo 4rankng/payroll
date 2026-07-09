@@ -249,35 +249,10 @@ func (s *Service) ProcessBankResult(ctx context.Context, file *excelize.File) (*
 				s.logger.Error("failed to link requests to transaction", "error", err)
 			}
 
-			ledgerEntries := []*domain.LedgerEntry{
-				{
-					Date:          now,
-					Account:       domain.AccountCash,
-					Party:         "Nhân viên",
-					Debit:         0,
-					Credit:        grandTotalNetAmount,
-					CreatedBy:     constants.SystemUserID,
-					TransactionID: &transaction.ID,
-				},
-				{
-					Date:          now,
-					Account:       domain.AccountReceivable,
-					Party:         partnerCompany,
-					Debit:         receivableAmount,
-					Credit:        0,
-					CreatedBy:     constants.SystemUserID,
-					TransactionID: &transaction.ID,
-				},
-				{
-					Date:          now,
-					Account:       domain.AccountRevenue,
-					Party:         partnerCompany,
-					Debit:         0,
-					Credit:        grandTotalFee,
-					CreatedBy:     constants.SystemUserID,
-					TransactionID: &transaction.ID,
-				},
-			}
+			ledgerEntries := domain.BuildDisbursementSettlementEntries(
+				transaction.ID, grandTotalNetAmount, grandTotalFee,
+				partnerCompany, constants.SystemUserID, now,
+			)
 			if err := s.config.LedgerRepo.CreateTransaction(ctx, ledgerEntries); err != nil {
 				s.logger.Error("failed to create ledger entries", "error", err)
 			}

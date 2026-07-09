@@ -130,6 +130,9 @@ type AdvancePaymentRequestRepository interface {
 	Cancel(ctx context.Context, id uint64) error
 	List(ctx context.Context, filters AdvancePaymentRequestFilters) ([]*AdvancePaymentRequest, int64, error)
 	GetByIDs(ctx context.Context, ids []uint64) ([]*AdvancePaymentRequest, error)
+	// GetByIDsLean is GetByIDs without preloading AdvancePayment/Project/Employee,
+	// for callers that only need scalar fields (e.g. settlement aggregation).
+	GetByIDsLean(ctx context.Context, ids []uint64) ([]*AdvancePaymentRequest, error)
 	GetStatsSummary(ctx context.Context, fromDate, toDate time.Time, forMonth string) (*AdvancePaymentStatsSummary, error)
 	// MarkReceivableSettled marks the specified requests as receivable settled
 	MarkReceivableSettled(ctx context.Context, ids []uint64, settledAt time.Time) (int64, error)

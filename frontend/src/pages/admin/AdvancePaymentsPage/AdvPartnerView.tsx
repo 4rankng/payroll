@@ -215,15 +215,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
 
   const heroProps = useMemo(
     () => ({
-      totalPaidAmount: summaryData?.totalPaidAmount ?? 0,
       totalAmount: summaryData?.totalAmount ?? 0,
-      totalFeeEarned: summaryData?.totalFeeEarned ?? 0,
-      totalPaid: summaryData?.totalPaid ?? 0,
-      totalRequests: summaryData?.totalRequests ?? 0,
-      totalCancelled: summaryData?.totalCancelled ?? 0,
-      avgProcessingTimeSecs: summaryData?.avgProcessingTimeSecs ?? 0,
-      completedUnder30s: summaryData?.completedUnder30s ?? 0,
-      disbursementPercentage: summaryData?.disbursementPercentage ?? 0,
     }),
     [summaryData],
   );

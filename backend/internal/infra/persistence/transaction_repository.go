@@ -502,3 +502,19 @@ func (r *transactionRepository) getDB(ctx context.Context) *gorm.DB {
 	}
 	return r.db.WithContext(ctx)
 }
+
+// IncrementAmount atomically adds delta to a transaction's amount. Honors tx
+// context so it commits/rolls back with the surrounding settlement transaction.
+func (r *transactionRepository) IncrementAmount(ctx context.Context, id uint, delta int64) error {
+	result := r.getDB(ctx).
+		Model(&domain.Transaction{}).
+		Where("id = ?", id).
+		UpdateColumn("amount", gorm.Expr("amount + ?", delta))
+	if result.Error != nil {
+		return fmt.Errorf("failed to increment transaction amount: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.NewNotFoundError(fmt.Sprintf("transaction %d not found", id))
+	}
+	return nil
+}

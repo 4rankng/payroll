@@ -120,6 +120,7 @@ type Services struct {
 	BulkTransferPayment               workers.TransferTimesheetUpdater
 	BCCImport                         *services.BCCImportService
 	Attendance                        *attendance.AttendanceService
+	TransactionManager                *infraServices.TransactionManager
 }
 
 func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logger *slog.Logger, db *persistence.Database, redis *persistence.RedisClient, eventBus domain.EventBus, asynqClient *asynqinfra.Client, clk clock.Clock) *Services {
@@ -663,6 +664,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			projectEmployeeSvc,
 		),
 		Attendance: attendanceService,
+		TransactionManager: transactionManager,
 	}
 
 	return servicesStruct

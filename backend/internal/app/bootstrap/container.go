@@ -204,6 +204,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			repos.AdvancePaymentRequest,
 			repos.Transaction,
 			repos.Ledger,
+			services.TransactionManager,
 			infra.Logger,
 		)
 		statusInquiryPollerWorker = workers.NewStatusInquiryPollerWorker(

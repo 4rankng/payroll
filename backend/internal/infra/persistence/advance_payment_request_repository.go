@@ -384,6 +384,35 @@ func (r *AdvancePaymentRequestRepository) GetByIDs(ctx context.Context, ids []ui
 	return requests, nil
 }
 
+// GetByIDsLean is GetByIDs without preloading relations, for callers that only
+// need scalar fields (e.g. settlement aggregation in the wallet worker).
+func (r *AdvancePaymentRequestRepository) GetByIDsLean(ctx context.Context, ids []uint64) ([]*domain.AdvancePaymentRequest, error) {
+	if len(ids) == 0 {
+		return []*domain.AdvancePaymentRequest{}, nil
+	}
+
+	var requests []*domain.AdvancePaymentRequest
+	err := r.getDB(ctx).
+		Where("id IN ?", ids).
+		Find(&requests).Error
+
+	if err != nil {
+		return nil, r.errorHandler.HandleListError(err, "advance_payment_request")
+	}
+
+	return requests, nil
+}
+
+// getDB returns the tx-scoped DB when a transaction is propagated on the context
+// (so this repo participates in domain.TransactionManager transactions), else
+// the base DB. Mirrors transactionRepository.getDB / settlement_repository.
+func (r *AdvancePaymentRequestRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 func (r *AdvancePaymentRequestRepository) applyFilters(query *gorm.DB, filters domain.AdvancePaymentRequestFilters) *gorm.DB {
 	if filters.Status != nil {
 		query = query.Where("advance_payment_requests.status = ?", *filters.Status)
@@ -513,13 +542,14 @@ func (r *AdvancePaymentRequestRepository) MarkReceivableSettled(ctx context.Cont
 	return result.RowsAffected, nil
 }
 
-// UpdateSettlementTransactionID links requests to their settlement transaction
+// UpdateSettlementTransactionID links requests to their settlement transaction.
+// Routed through getDB so it commits with the surrounding settlement tx.
 func (r *AdvancePaymentRequestRepository) UpdateSettlementTransactionID(ctx context.Context, ids []uint64, transactionID uint) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return r.DB.WithContext(ctx).
+	return r.getDB(ctx).
 		Model(&domain.AdvancePaymentRequest{}).
 		Where("id IN ?", ids).
 		Update("settlement_transaction_id", transactionID).Error

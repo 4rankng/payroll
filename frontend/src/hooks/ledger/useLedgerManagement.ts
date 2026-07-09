@@ -102,6 +102,38 @@ export const useLedgerManagement = () => {
     },
   });
 
+  const runWalletSettlementMutation = useMutation({
+    mutationFn: () => ledgerService.runWalletSettlement(),
+    onSuccess: () => {
+      toast({
+        title: 'Đã kích chạy chốt lương',
+        description: 'Các bản ghi "Wallet disbursement" sẽ xuất hiện trong vài giây.',
+      });
+      // The consolidation runs async on the asynq worker (~seconds), so the new
+      // ledger rows land shortly after the enqueue returns. Re-invalidate the
+      // ledger/transaction queries on a short stagger to catch the rows across a
+      // range of worker latencies, rather than a single brittle guess. The
+      // queryClient is app-scoped, so timers firing after unmount are harmless.
+      [2000, 5000].forEach((ms) => {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['ledger-entries'] });
+          queryClient.invalidateQueries({ queryKey: ['ledger-overall-balance'] });
+          queryClient.invalidateQueries({ queryKey: ['ledger-account-balance'] });
+          queryClient.invalidateQueries({ queryKey: ['ledger-cash-flow'] });
+          queryClient.invalidateQueries({ queryKey: ['ledger-summary'] });
+          queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        }, ms);
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Lỗi',
+        description: error.message || 'Không thể kích chạy chốt lương. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const createTransactionMutation = useMutation({
     mutationFn: (data: CreateTransactionRequest) => ledgerService.createTransaction(data),
     onSuccess: (data) => {
@@ -131,10 +163,12 @@ export const useLedgerManagement = () => {
     recalculateBalances: recalculateBalancesMutation.mutateAsync,
     importOnePayFeeReport: importOnePayFeeReportMutation.mutateAsync,
     createTransaction: createTransactionMutation.mutateAsync,
+    runWalletSettlement: runWalletSettlementMutation.mutateAsync,
     isCreating: createEntryMutation.isPending,
     isReversing: reverseEntryMutation.isPending,
     isRecalculating: recalculateBalancesMutation.isPending,
     isImportingOnePayFeeReport: importOnePayFeeReportMutation.isPending,
     isCreatingTransaction: createTransactionMutation.isPending,
+    isRunningWalletSettlement: runWalletSettlementMutation.isPending,
   };
 };

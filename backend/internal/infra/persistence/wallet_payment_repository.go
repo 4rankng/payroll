@@ -324,11 +324,24 @@ func (r *walletPaymentRepository) UpdateStatus(ctx context.Context, id uint64, s
 	return nil
 }
 
-func (r *walletPaymentRepository) GetCompletedUnsettled(ctx context.Context, date time.Time) ([]*wallet.WalletPayment, error) {
-	start := timeutil.StartOfDay(date)
-	end := start.AddDate(0, 0, 1)
+// maxUnsettledPerRun bounds the self-healing sweep (zero-date path) so a large
+// backlog can't OOM a single run. The oldest stranded payments are returned
+// first; the rest are picked up on subsequent runs. A day split across the
+// boundary is reconciled additively by the worker's recovery path.
+const maxUnsettledPerRun = 5000
 
-	query := `
+func (r *walletPaymentRepository) GetCompletedUnsettled(ctx context.Context, date time.Time) ([]*wallet.WalletPayment, error) {
+	// Bucket by completion day using settled_at (the semantically-correct
+	// "when did this payment complete" timestamp), falling back to created_at
+	// for any completed row missing settled_at. updated_at is wrong here: it
+	// advances on every write, so a later update can slide a payment out of its
+	// completion-day window and strand it from the daily settlement.
+	// When date is the zero value, every stranded completed-unsettled payment
+	// is returned (any completion day) so the worker can backfill days whose
+	// single pickup run was missed.
+	bucket := "COALESCE(wp.settled_at, wp.created_at)"
+
+	selectColumns := `
 		SELECT wp.id, wp.txn_id, wp.request_id, wp.invoice_no, wp.provider,
 		       wp.requested_amount, wp.fee,
 		       wp.recipient_name, wp.recipient_account_no, wp.recipient_bank,
@@ -337,10 +350,23 @@ func (r *walletPaymentRepository) GetCompletedUnsettled(ctx context.Context, dat
 		FROM wallet_payments wp
 		INNER JOIN advance_payment_requests apr ON wp.entity_id = apr.id
 		WHERE wp.status = ?
-		  AND wp.updated_at >= ? AND wp.updated_at < ?
 		  AND apr.settlement_transaction_id IS NULL`
 
-	rows, err := r.db.QueryContext(ctx, query, "completed", start, end)
+	var (
+		query string
+		args  []any
+	)
+	if date.IsZero() {
+		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", selectColumns, bucket, maxUnsettledPerRun)
+		args = []any{"completed"}
+	} else {
+		start := timeutil.StartOfDay(date)
+		end := start.AddDate(0, 0, 1)
+		query = fmt.Sprintf("%s AND %s >= ? AND %s < ? ORDER BY %s", selectColumns, bucket, bucket, bucket)
+		args = []any{"completed", start, end}
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query completed unsettled wallet payments: %w", err)
 	}

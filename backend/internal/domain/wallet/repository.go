@@ -27,10 +27,14 @@ type WalletPaymentRepository interface {
 	List(ctx context.Context, filter WalletPaymentFilter) ([]*WalletPayment, int64, error)
 	SumByStatuses(ctx context.Context, statuses []string) (int64, error)
 	SumUnreconciledByStatuses(ctx context.Context, statuses []string) (int64, error)
-	// GetCompletedUnsettled returns completed wallet payments from the given date
-	// whose linked advance_payment_requests have NOT yet been ledger-settled
-	// (settlement_transaction_id IS NULL). This follows the same pattern as
-	// the bulk transfer result upload flow.
+	// GetCompletedUnsettled returns completed wallet payments whose linked
+	// advance_payment_requests have NOT yet been ledger-settled
+	// (settlement_transaction_id IS NULL). Payments are bucketed by completion
+	// day using settled_at (created_at fallback), not updated_at which advances
+	// on every write. When date is the zero value, every stranded payment is
+	// returned regardless of completion day so the worker can backfill days
+	// whose single pickup run was missed; otherwise only payments completed on
+	// that calendar day are returned. Results are ordered by completion time.
 	GetCompletedUnsettled(ctx context.Context, date time.Time) ([]*WalletPayment, error)
 }
 
