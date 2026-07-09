@@ -7,28 +7,33 @@ import (
 	"api-server/internal/domain"
 )
 
-const publicEmailBannerURL = "https://tingting.vip/email-banner.jpg"
+const publicEmailBannerURL = "https://tingting.vip/email-banner.jpg?v=20260709"
+const publicEmailBannerPath = "tingting.vip/email-banner.jpg"
 
-const publicEmailBannerHTML = `<p style="text-align:left;"><img src="https://tingting.vip/email-banner.jpg" alt="Ting Ting Soft" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></p>`
+const publicEmailBannerHTML = `<img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="640" style="display:block;width:100%;max-width:640px;height:auto;border:0;border-radius:16px;">`
 
 func withPublicEmailBanner(htmlBody, textBody string) string {
 	body := strings.TrimSpace(htmlBody)
 	if body == "" {
 		body = textBodyToHTML(textBody)
 	}
-	if body == "" || strings.Contains(body, publicEmailBannerURL) {
+	if body == "" || strings.Contains(body, publicEmailBannerPath) {
 		return body
 	}
 
 	lowerBody := strings.ToLower(body)
+	if !strings.Contains(lowerBody, "<html") && !strings.Contains(lowerBody, "<body") {
+		return brandedEmailShell(body)
+	}
+
 	if bodyIdx := strings.Index(lowerBody, "<body"); bodyIdx >= 0 {
 		if closeIdx := strings.Index(lowerBody[bodyIdx:], ">"); closeIdx >= 0 {
 			insertPos := bodyIdx + closeIdx + 1
-			return body[:insertPos] + "\n" + publicEmailBannerHTML + "\n" + body[insertPos:]
+			return body[:insertPos] + "\n" + `<div style="max-width:640px;margin:0 auto 16px;">` + publicEmailBannerHTML + `</div>` + "\n" + body[insertPos:]
 		}
 	}
 
-	return publicEmailBannerHTML + "\n" + body
+	return brandedEmailShell(body)
 }
 
 func textBodyToHTML(textBody string) string {
@@ -41,7 +46,40 @@ func textBodyToHTML(textBody string) string {
 	escaped = strings.ReplaceAll(escaped, "\r\n", "\n")
 	escaped = strings.ReplaceAll(escaped, "\r", "\n")
 	escaped = strings.ReplaceAll(escaped, "\n", "<br>\n")
-	return `<p style="margin:0 0 12px;line-height:1.5;">` + escaped + `</p>`
+	return `<p style="margin:0;color:#334155;font-size:15px;line-height:24px;">` + escaped + `</p>`
+}
+
+func brandedEmailShell(innerHTML string) string {
+	return `<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Thông báo TingTing</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;margin:0;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px;border-collapse:separate;border-spacing:0;">
+          <tr>
+            <td style="padding:0 0 14px;">` + publicEmailBannerHTML + `</td>
+          </tr>
+          <tr>
+            <td style="background:#ffffff;border:1px solid #e6eaf2;border-radius:16px;padding:28px 32px;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
+              <p style="margin:0 0 8px;color:#64748b;font-size:13px;line-height:20px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;">Thông báo</p>
+              <div style="color:#334155;font-size:15px;line-height:24px;">` + innerHTML + `</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 8px 0;text-align:center;color:#94a3b8;font-size:12px;line-height:18px;">Email tự động từ TingTing.</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
 }
 
 func cloneMessageWithPublicBanner(msg *domain.EmailMessage) *domain.EmailMessage {

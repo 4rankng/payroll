@@ -1,187 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nhắc nhở yêu cầu ứng lương đang chờ xử lý</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e74c3c;
-            padding-bottom: 20px;
-        }
-        .header h1 {
-            color: #e74c3c;
-            margin: 0;
-            font-size: 24px;
-        }
-        .header p {
-            color: #666;
-            margin: 10px 0 0;
-        }
-        .summary-box {
-            background-color: #f8f9f8;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        .summary-box h2 {
-            color: #e74c3c;
-            margin-top: 0;
-            font-size: 18px;
-        }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .summary-item {
-            text-align: center;
-            padding: 15px;
-            background-color: #ffffff;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
-        .summary-item .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #e74c3c;
-        }
-        .summary-item .label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .info-box {
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 25px;
-        }
-        .info-box p {
-            margin: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background-color: #e74c3c;
-            color: white;
-            font-weight: 600;
-        }
-        tr:hover {
-            background-color: #f8f8f8;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .total-row {
-            background-color: #f8f9f8;
-            font-weight: bold;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nhắc nhở yêu cầu ứng lương</title>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="https://tingting.vip/email-banner.jpg" alt="Ting Ting Soft" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;margin:0 0 12px;">
-            <h1>Nhắc nhở yêu cầu ứng lương đang chờ xử lý</h1>
-            <p>Ngày: {{.Date}}</p>
-        </div>
-
-        <div class="summary-box">
-            <h2>Tổng quan</h2>
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <div class="value">{{.TotalRequests}}</div>
-                    <div class="label">Yêu cầu chờ xử lý</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">{{.TotalEmployees}}</div>
-                    <div class="label">Nhân viên</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">{{.TotalAmount}}</div>
-                    <div class="label">Tổng tiền (VND)</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="info-box">
-            <p><strong>Lưu ý:</strong> Có yêu cầu ứng lương đang chờ xử lý. Vui lòng đăng nhập vào hệ thống để xử lý các yêu cầu này.</p>
-        </div>
-
-        <h2>Chi tiết yêu cầu</h2>
-        <table>
-            <thead>
+<body style="margin:0;padding:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;margin:0;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="720" cellpadding="0" cellspacing="0" style="width:100%;max-width:720px;border-collapse:separate;border-spacing:0;">
+          <tr>
+            <td style="padding:0 0 14px;">
+              <img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="720" style="display:block;width:100%;max-width:720px;height:auto;border:0;border-radius:16px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#ffffff;border:1px solid #e6eaf2;border-radius:16px;padding:0;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                    <th>STT</th>
-                    <th>Mã nhân viên</th>
-                    <th>Tên nhân viên</th>
-                    <th>Dự án</th>
-                    <th class="text-right">Số tiền yêu cầu</th>
-                    <th class="text-right">Phí dịch vụ</th>
-                    <th class="text-right">Thực nhận</th>
+                  <td style="padding:28px 32px 8px;">
+                    <p style="margin:0 0 8px;color:#64748b;font-size:13px;line-height:20px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;">Nhắc nhở xử lý</p>
+                    <h1 style="margin:0;color:#111827;font-size:24px;line-height:32px;font-weight:700;">Yêu cầu ứng lương đang chờ xử lý</h1>
+                    <p style="margin:8px 0 0;color:#64748b;font-size:14px;line-height:22px;">Ngày {{.Date}}</p>
+                  </td>
                 </tr>
-            </thead>
-            <tbody>
-                {{range .Requests}}
                 <tr>
-                    <td>{{.STT}}</td>
-                    <td>{{.EmployeeCCCD}}</td>
-                    <td>{{.EmployeeName}}</td>
-                    <td>{{.ProjectCode}}</td>
-                    <td class="text-right">{{.RequestAmount}}</td>
-                    <td class="text-right">{{.Fee}}</td>
-                    <td class="text-right">{{.NetAmount}}</td>
+                  <td style="padding:20px 32px 0;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
+                      <tr>
+                        <td style="padding:18px 20px;border-right:1px solid #e2e8f0;">
+                          <p style="margin:0;color:#64748b;font-size:13px;line-height:18px;">Yêu cầu chờ xử lý</p>
+                          <p style="margin:4px 0 0;color:#0f172a;font-size:26px;line-height:34px;font-weight:800;">{{.TotalRequests}}</p>
+                        </td>
+                        <td style="padding:18px 20px;border-right:1px solid #e2e8f0;">
+                          <p style="margin:0;color:#64748b;font-size:13px;line-height:18px;">Nhân viên</p>
+                          <p style="margin:4px 0 0;color:#0f172a;font-size:26px;line-height:34px;font-weight:800;">{{.TotalEmployees}}</p>
+                        </td>
+                        <td style="padding:18px 20px;">
+                          <p style="margin:0;color:#64748b;font-size:13px;line-height:18px;">Tổng tiền</p>
+                          <p style="margin:4px 0 0;color:#0f172a;font-size:20px;line-height:28px;font-weight:800;">{{.TotalAmount}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
                 </tr>
-                {{end}}
-                <tr class="total-row">
-                    <td colspan="4"><strong>Tổng cộng</strong></td>
-                    <td class="text-right"><strong>{{.TotalRequestAmount}}</strong></td>
-                    <td class="text-right"><strong>{{.TotalFee}}</strong></td>
-                    <td class="text-right"><strong>{{.TotalNetAmount}}</strong></td>
+                <tr>
+                  <td style="padding:20px 32px 0;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8eb;border:1px solid #fed7aa;border-radius:14px;">
+                      <tr>
+                        <td style="padding:16px 18px;color:#7c2d12;font-size:14px;line-height:22px;">
+                          Có yêu cầu ứng lương đang chờ xử lý. Vui lòng đăng nhập vào hệ thống để kiểm tra, xử lý và cập nhật kết quả chuyển khoản.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
                 </tr>
-            </tbody>
+                <tr>
+                  <td style="padding:24px 32px 30px;">
+                    <p style="margin:0 0 12px;color:#111827;font-size:16px;line-height:24px;font-weight:700;">Chi tiết yêu cầu</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6eaf2;border-radius:14px;border-collapse:separate;border-spacing:0;">
+                      <thead>
+                        <tr>
+                          <th align="left" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">STT</th>
+                          <th align="left" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Mã NV</th>
+                          <th align="left" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Tên nhân viên</th>
+                          <th align="left" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Dự án</th>
+                          <th align="right" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Yêu cầu</th>
+                          <th align="right" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Phí</th>
+                          <th align="right" style="padding:12px 10px;border-bottom:1px solid #e6eaf2;color:#64748b;font-size:12px;line-height:18px;font-weight:700;">Thực nhận</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {{range .Requests}}
+                        <tr>
+                          <td style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#334155;font-size:13px;line-height:19px;">{{.STT}}</td>
+                          <td style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#334155;font-size:13px;line-height:19px;">{{.EmployeeCCCD}}</td>
+                          <td style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#111827;font-size:13px;line-height:19px;font-weight:700;">{{.EmployeeName}}</td>
+                          <td style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#334155;font-size:13px;line-height:19px;">{{.ProjectCode}}</td>
+                          <td align="right" style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#334155;font-size:13px;line-height:19px;">{{.RequestAmount}}</td>
+                          <td align="right" style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#334155;font-size:13px;line-height:19px;">{{.Fee}}</td>
+                          <td align="right" style="padding:12px 10px;border-bottom:1px solid #edf2f7;color:#111827;font-size:13px;line-height:19px;font-weight:700;">{{.NetAmount}}</td>
+                        </tr>
+                        {{end}}
+                        <tr>
+                          <td colspan="4" style="padding:14px 10px;color:#0f172a;font-size:13px;line-height:19px;font-weight:800;">Tổng cộng</td>
+                          <td align="right" style="padding:14px 10px;color:#0f172a;font-size:13px;line-height:19px;font-weight:800;">{{.TotalRequestAmount}}</td>
+                          <td align="right" style="padding:14px 10px;color:#0f172a;font-size:13px;line-height:19px;font-weight:800;">{{.TotalFee}}</td>
+                          <td align="right" style="padding:14px 10px;color:#0f172a;font-size:13px;line-height:19px;font-weight:800;">{{.TotalNetAmount}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 8px 0;text-align:center;color:#94a3b8;font-size:12px;line-height:18px;">Email tự động từ TingTing.</td>
+          </tr>
         </table>
-
-        <div class="footer">
-            <p>Đây là email tự động từ hệ thống Ứng lương - TingTing.</p>
-            <p>Vui lòng không phản hồi email này.</p>
-        </div>
-    </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

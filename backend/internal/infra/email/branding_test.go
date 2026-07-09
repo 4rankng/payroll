@@ -17,11 +17,11 @@ func TestWithPublicEmailBannerAddsBannerToHTMLFragment(t *testing.T) {
 	if strings.Contains(body, "cid:") {
 		t.Fatalf("expected public URL banner, not inline CID image")
 	}
-	if !strings.HasPrefix(body, publicEmailBannerHTML) {
-		t.Fatalf("expected banner to be prepended to HTML fragments")
+	if !strings.Contains(body, `<table role="presentation" width="640"`) {
+		t.Fatalf("expected HTML fragments to be wrapped in the branded email shell")
 	}
-	if !strings.Contains(body, `style="text-align:left;"`) {
-		t.Fatalf("expected banner wrapper to align left")
+	if !strings.Contains(body, "border-radius:16px") {
+		t.Fatalf("expected branded email shell to use polished card styling")
 	}
 }
 
@@ -44,6 +44,9 @@ func TestWithPublicEmailBannerBuildsHTMLForTextOnlyEmail(t *testing.T) {
 	}
 	if !strings.Contains(body, "Dòng &lt;2&gt;") {
 		t.Fatalf("expected generated HTML to escape text body")
+	}
+	if !strings.Contains(body, "Thông báo") {
+		t.Fatalf("expected text-only email to use the branded notification shell")
 	}
 }
 
