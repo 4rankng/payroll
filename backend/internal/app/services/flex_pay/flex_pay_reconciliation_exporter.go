@@ -339,6 +339,11 @@ func (e *FlexPayReconciliationExporter) updateSummarySheet(
 		"projectCount", len(reportData),
 		"dueDate", summary.DueDate.Format("02/01/2006"))
 
+	// B7:C8 is covered by the embedded provider banner in the workbook template.
+	if err := f.SetCellValue(summarySheet, "B7", ""); err != nil {
+		return err
+	}
+
 	// D2, E2: Tiền CTy Phải Trả
 	if err := f.SetCellValue(summarySheet, "D2", "Tiền CTy Phải Trả"); err != nil {
 		return err

@@ -1,11 +1,5 @@
-import { useState, useMemo } from "react";
-import {
-  Calendar,
-  DollarSign,
-  Clock,
-  CreditCard,
-  Wallet,
-} from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +25,19 @@ import { useSettingByKey } from "@/hooks/api/useSettings";
 import type { EmployeeTimesheetFilters } from "@/types/api/auth.types";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
-import { EmployeePortalHeader } from "@/components/employees/EmployeePortalHeader";
+import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
+import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { groupTimesheetsByDay } from "@/utils/employeePortal/timesheetGrouping";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { getDayPaymentStatus } from "@/utils/employeePortal/paymentStatus";
+import {
+  createRegularEmployeeHomeModel,
+  hasEmployeeBankInfo,
+  type EmployeeNudge,
+  type EmployeeQuickAction,
+} from "@/utils/employeePortal/mobileHome";
 
 const EmployeePage = () => {
   const navigate = useNavigate();
@@ -96,6 +97,35 @@ const EmployeePage = () => {
   const totalPayable = useMemo(() => timesheets.reduce((s, e) => s + e.amount * bulkTransferPercentage, 0), [timesheets, bulkTransferPercentage]);
   const totalPaid = useMemo(() => timesheets.reduce((s, e) => s + e.paid_amount, 0), [timesheets]);
   const groupedDays = useMemo(() => groupTimesheetsByDay(timesheets), [timesheets]);
+  const selectedMonthLabel = useMemo(
+    () => monthFilter ? format(new Date(`${monthFilter}-01`), "MMMM yyyy", { locale: vi }) : "Kỳ lương hiện tại",
+    [monthFilter]
+  );
+  const homeModel = useMemo(
+    () =>
+      createRegularEmployeeHomeModel({
+        monthLabel: selectedMonthLabel,
+        monthlyTotalSalary,
+        monthlyTotalHours,
+        totalPayable,
+        totalPaid,
+        workDayCount: groupedDays.length,
+        totalRecords,
+        hasBankInfo: hasEmployeeBankInfo(profile),
+        unreadCount: unreadNotifications?.count,
+      }),
+    [
+      groupedDays.length,
+      monthlyTotalHours,
+      monthlyTotalSalary,
+      profile,
+      selectedMonthLabel,
+      totalPaid,
+      totalPayable,
+      totalRecords,
+      unreadNotifications?.count,
+    ]
+  );
 
   const updatePasswordMutation = useUpdateEmployeePassword();
 
@@ -114,7 +144,19 @@ const EmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  if (profileLoading || summaryLoading) {
+  const handleHomeAction = useCallback((action: EmployeeQuickAction | EmployeeNudge) => {
+    if (action.intent === "notifications") {
+      setNotificationSheetOpen(true);
+      return;
+    }
+    if (!action.targetId) return;
+    document.getElementById(action.targetId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, []);
+
+  if (profileLoading || summaryLoading || timesheetsLoading) {
     return (
       <div className="employee-mobile-page min-h-[100dvh]" style={{ backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="sticky top-0 z-10 border-b border-white/30 bg-employee">
@@ -147,62 +189,25 @@ const EmployeePage = () => {
   }
 
   return (
-    <div
-      className="employee-mobile-page min-h-[100dvh]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)', backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", backgroundAttachment: "fixed" }}
-    >
-      {/* Header */}
-      <EmployeePortalHeader
+    <EmployeeMobileShell
         employeeName={profile?.fullname}
         unreadCount={unreadNotifications?.count}
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
-      />
-
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto space-y-4 p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          {(summaryLoading || timesheetsLoading) ? (
-            [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-xl bg-card/50" />)
-          ) : (
-            <>
-              {[
-                { icon: DollarSign, iconText: "text-sky-600",     watermark: "text-sky-500/15",     label: "Tổng lương", value: formatCurrency(monthlyTotalSalary), sub: format(new Date(monthFilter + "-01"), "MMMM yyyy", { locale: vi }) },
-                { icon: Clock,      iconText: "text-emerald-600", watermark: "text-emerald-500/15", label: "Tổng công",  value: `${monthlyTotalHours % 1 === 0 ? monthlyTotalHours : formatNumber(monthlyTotalHours, 1)} giờ`, sub: `${groupedDays.length} ngày làm việc` },
-                { icon: CreditCard, iconText: "text-violet-600",  watermark: "text-violet-500/15",  label: "Hạn mức trả", value: formatCurrency(totalPayable), sub: null },
-                { icon: Wallet,     iconText: "text-amber-600",   watermark: "text-amber-500/15",   label: "Đã nhận",     value: formatCurrency(totalPaid), sub: null },
-              ].map(({ icon: Icon, iconText, watermark, label, value, sub }) => (
-                <div key={label} className="group relative rounded-xl p-4 overflow-hidden transition-colors glass-card">
-                  {/* Watermark — large faint icon decoration */}
-                  <Icon
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 h-14 w-14 pointer-events-none transition-transform duration-300 group-hover:scale-105 ${watermark}`}
-                    strokeWidth={1.5}
-                  />
-                  <div className="relative pr-12">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Icon className={`h-3.5 w-3.5 shrink-0 ${iconText}`} strokeWidth={2.2} />
-                      <span className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground leading-tight truncate">{label}</span>
-                    </div>
-                    <p className="text-lg font-bold text-slate-800 tabular-nums truncate leading-tight">{value}</p>
-                    {sub && <p className="text-[13px] text-slate-400 mt-1 truncate">{sub}</p>}
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
+      >
+        <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
 
         {/* Bank Account Information */}
-        <EmployeeBankInfoCard
-          profile={profile!}
-          className="rounded-xl overflow-hidden glass-card"
-        />
+        <section id="employee-bank" className="scroll-mt-4">
+          <EmployeeBankInfoCard
+            profile={profile!}
+            className="rounded-xl overflow-hidden glass-card"
+          />
+        </section>
 
         {/* Timesheets Section */}
-        <div>
+        <section id="employee-timesheets" className="scroll-mt-4">
           <div
             className="flex items-center justify-between gap-3 mb-3 px-4 py-3 rounded-xl"
             style={{
@@ -299,8 +304,7 @@ const EmployeePage = () => {
             </div>
           )}
           <div ref={observerRef} className="h-4" />
-        </div>
-      </div>
+        </section>
 
       {/* Password Sheet */}
       <ChangePasswordSheet
@@ -311,7 +315,7 @@ const EmployeePage = () => {
       />
 
       <NotificationSheet isOpen={notificationSheetOpen} onClose={() => setNotificationSheetOpen(false)} />
-    </div>
+    </EmployeeMobileShell>
   );
 };
 

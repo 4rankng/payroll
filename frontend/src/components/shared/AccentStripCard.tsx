@@ -22,7 +22,7 @@ export const AccentStripCard = memo(function AccentStripCard({
   return (
     <div
       className={cn(
-        'bg-card border border-border rounded-xl overflow-hidden shadow-sm',
+        'overflow-hidden rounded-2xl border border-border bg-card shadow-none',
         onClick && 'cursor-pointer active:bg-muted/40 transition-colors touch-manipulation',
         className,
       )}
