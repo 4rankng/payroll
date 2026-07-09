@@ -23,7 +23,7 @@ export interface GroupedStatCardProps {
 
 export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, className }: GroupedStatCardProps) => {
   const stripCls = cn(
-    'rounded-xl border border-border/40 bg-card overflow-hidden shadow-soft',
+    'overflow-hidden rounded-2xl border border-border/40 bg-card shadow-none',
     'grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex',
   );
 

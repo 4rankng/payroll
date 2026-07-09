@@ -12,7 +12,7 @@ export function MobilePageShell({ children, className }: MobilePageShellProps) {
       className={cn(
         "min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]",
         "[--mobile-nonsticky-header-top-padding:1rem]",
-        "px-3 pb-[var(--mobile-page-bottom-padding,calc(5.75rem+env(safe-area-inset-bottom)))] pt-[var(--mobile-page-top-padding,calc(0.75rem+env(safe-area-inset-top)))]",
+        "px-4 pb-[var(--mobile-page-bottom-padding,calc(5.75rem+env(safe-area-inset-bottom)))] pt-[var(--mobile-page-top-padding,calc(0.75rem+env(safe-area-inset-top)))]",
         className,
       )}
     >
@@ -30,7 +30,7 @@ export function MobileSurface({ children, className }: MobileSurfaceProps) {
   return (
     <section
       className={cn(
-        "rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-[var(--shadow-navy-soft)]",
+        "overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white shadow-none",
         className,
       )}
     >

@@ -5,6 +5,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { formatCurrency } from "@/utils/formatters";
+import { maskBankAccountNumber } from "@/utils/employeePortal/mobileHome";
 
 interface AdvancePaymentConfirmSheetProps {
   open: boolean;
@@ -12,6 +13,9 @@ interface AdvancePaymentConfirmSheetProps {
   amount: number;
   feeDetails: { fee: number; netAmount: number } | null;
   bankAccountNumber?: string;
+  bankName?: string;
+  bankAccountName?: string;
+  payrollPeriodLabel?: string;
   onConfirm: () => void;
   isPending: boolean;
 }
@@ -22,63 +26,106 @@ export function AdvancePaymentConfirmSheet({
   amount,
   feeDetails,
   bankAccountNumber,
+  bankName,
+  bankAccountName,
+  payrollPeriodLabel,
   onConfirm,
   isPending,
 }: AdvancePaymentConfirmSheetProps) {
+  const maskedBankAccountNumber = maskBankAccountNumber(bankAccountNumber);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[70vh] rounded-t-3xl px-6 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+        className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-white p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)]"
+        title="Xác nhận yêu cầu ứng lương"
+        description="Kiểm tra số tiền thực nhận và tài khoản nhận tiền"
       >
-        {/* Drag handle */}
-        <div className="flex shrink-0 justify-center pb-2 pt-3">
-          <div className="h-1.5 w-11 rounded-full bg-muted-foreground/25" />
+        <div className="flex shrink-0 justify-center pt-3">
+          <div className="h-1.5 w-12 rounded-full bg-slate-300" />
         </div>
-        <SheetHeader className="border-b border-gray-100 pb-4">
-          <SheetTitle className="text-[20px] font-bold leading-7 text-gray-900">
+        <SheetHeader className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-4 text-left">
+          <SheetTitle className="text-[22px] font-extrabold leading-7 tracking-normal text-slate-950">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
+          <p className="text-[14px] font-medium leading-6 text-slate-500">
+            Kiểm tra kỹ thông tin trước khi gửi giao dịch.
+          </p>
         </SheetHeader>
-        <div className="mt-4 space-y-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}>
-          <div className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-4">
-            <div className="flex justify-between gap-4 text-[16px] leading-6">
-              <span className="text-gray-500">Số tiền yêu cầu</span>
-              <span className="font-semibold text-gray-800 tabular-nums">
-                {formatCurrency(amount)}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 text-[16px] leading-6">
-              <span className="text-gray-500">Phí giao dịch</span>
-              <span className="font-semibold text-red-500 tabular-nums">
-                −{feeDetails ? formatCurrency(feeDetails.fee) : "…"}
-              </span>
-            </div>
-            <div className="flex justify-between gap-4 border-t border-gray-200 pt-3">
-              <span className="text-[17px] font-semibold leading-7 text-gray-700">Thực nhận</span>
-              <span
-                className="text-[22px] font-bold leading-7 text-employee tabular-nums"
-              >
-                {feeDetails ? formatCurrency(feeDetails.netAmount) : "…"}
-              </span>
-            </div>
-          </div>
-          {bankAccountNumber && (
-            <p className="text-center text-[15px] leading-6 text-gray-400">
-              Nhận về tài khoản {bankAccountNumber}
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5">
+          <section className="border-b border-slate-100 py-5">
+            <p className="text-[13px] font-bold uppercase leading-5 text-slate-500">
+              Số tiền thực nhận
             </p>
-          )}
-          <div className="flex gap-3 pt-1">
+            <p className="mt-1 break-words text-[36px] font-extrabold leading-none tracking-normal text-employee tabular-nums">
+              {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
+            </p>
+
+            <div className="mt-5 space-y-3 text-[16px] leading-6">
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Số tiền yêu cầu</span>
+                <span className="font-bold text-slate-900 tabular-nums">
+                  {formatCurrency(amount)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Phí giao dịch</span>
+                <span className="font-bold text-red-500 tabular-nums">
+                  {feeDetails ? `−${formatCurrency(feeDetails.fee)}` : "Đang tính..."}
+                </span>
+              </div>
+              {payrollPeriodLabel && (
+                <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+                  <span className="text-slate-500">Trong kỳ lương</span>
+                  <span className="text-right font-bold text-slate-900">
+                    {payrollPeriodLabel}
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="py-5">
+            <p className="text-[13px] font-bold uppercase leading-5 text-slate-500">
+              Chuyển đến chủ tài khoản
+            </p>
+            <p className="mt-1 break-words text-[27px] font-extrabold leading-8 tracking-normal text-employee">
+              {bankAccountName || "Chưa cập nhật"}
+            </p>
+            <div className="mt-5 space-y-3 text-[16px] leading-6">
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Số tài khoản</span>
+                <span className="break-all text-right font-bold text-slate-900 tabular-nums">
+                  {maskedBankAccountNumber || "Chưa cập nhật"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+                <span className="text-slate-500">Ngân hàng</span>
+                <span className="max-w-[58%] text-right font-bold text-slate-900">
+                  {bankName || "Chưa cập nhật"}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div
+          className="shrink-0 border-t border-slate-200 bg-white px-5 py-3"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.875rem)" }}
+        >
+          <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}
-              className="min-h-14 flex-1 rounded-xl border border-gray-200 py-3 text-[16px] font-semibold text-gray-600 transition-transform active:scale-[0.97]"
+              className="min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-[16px] font-bold text-slate-600 transition-transform active:scale-[0.97]"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
-              disabled={isPending}
-              className="min-h-14 flex-1 rounded-xl bg-employee py-3 text-[16px] font-semibold text-white transition-transform active:scale-[0.97] disabled:opacity-50"
+              disabled={isPending || !feeDetails}
+              className="min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-[16px] font-extrabold text-white shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)] transition-transform active:scale-[0.97] disabled:opacity-50"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -86,7 +133,7 @@ export function AdvancePaymentConfirmSheet({
                   Đang gửi...
                 </span>
               ) : (
-                "Xác nhận"
+                "Xác nhận giao dịch"
               )}
             </button>
           </div>

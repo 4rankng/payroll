@@ -21,6 +21,7 @@ func NewResendProvider(apiKey string) *ResendProvider {
 }
 
 func (p *ResendProvider) Send(ctx context.Context, msg *domain.EmailMessage) (*domain.EmailDeliveryResult, error) {
+	msg = cloneMessageWithPublicBanner(msg)
 	req := buildResendRequest(msg)
 	resp, err := p.client.Emails.SendWithContext(ctx, req)
 	if err != nil {

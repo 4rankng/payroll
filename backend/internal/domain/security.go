@@ -125,6 +125,16 @@ type AuditLogRepository interface {
 	List(ctx context.Context, filters AuditFilters) ([]*AuditLog, error)
 	Count(ctx context.Context, filters AuditFilters) (int64, error)
 	DeleteOldLogs(ctx context.Context, olderThan time.Time) error
+
+	// Analytics aggregations for the System Health dashboard. These run
+	// GROUP BY + COUNT(DISTINCT) at the database so the application never
+	// scans unbounded numbers of raw audit rows.
+	GetBrowserPlatformStats(ctx context.Context, since time.Time) ([]BrowserPlatformStat, error)
+	GetBrowserPlatformUsers(ctx context.Context, browser, platform string, since time.Time) ([]BrowserPlatformUser, error)
+	GetOSGroupedStats(ctx context.Context, since time.Time) ([]OSGroupStat, error)
+	GetBrowserGroupedStats(ctx context.Context, since time.Time) ([]BrowserGroupStat, error)
+	GetOSGroupedUsers(ctx context.Context, osFamily string, since time.Time) ([]BrowserPlatformUser, error)
+	GetBrowserGroupedUsers(ctx context.Context, browserFamily string, since time.Time) ([]BrowserPlatformUser, error)
 }
 
 // BlacklistFilters represents filtering options for blacklisted token queries
@@ -153,6 +163,47 @@ type AuditFilters struct {
 	Offset     int
 	SortBy     string
 	SortOrder  string
+}
+
+// BrowserPlatformStat represents unique user/action counts for a browser+platform combination.
+type BrowserPlatformStat struct {
+	Browser      string `json:"browser"`
+	Platform     string `json:"platform"`
+	UniqueUsers  int    `json:"unique_users"`
+	TotalActions int    `json:"total_actions"`
+}
+
+// BrowserPlatformUser represents a user who used a specific browser+platform (or family) combination.
+type BrowserPlatformUser struct {
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
+	Fullname string `json:"fullname"`
+	Role     string `json:"role"`
+	Actions  int    `json:"actions"`
+	LastSeen string `json:"last_seen"`
+}
+
+// VersionStat holds user/action counts for a single version within a family.
+type VersionStat struct {
+	Version      string `json:"version"`
+	UniqueUsers  int    `json:"unique_users"`
+	TotalActions int    `json:"total_actions"`
+}
+
+// OSGroupStat holds aggregated stats for one OS family with per-version breakdown.
+type OSGroupStat struct {
+	OSFamily     string        `json:"os_family"`
+	UniqueUsers  int           `json:"unique_users"`
+	TotalActions int           `json:"total_actions"`
+	Versions     []VersionStat `json:"versions"`
+}
+
+// BrowserGroupStat holds aggregated stats for one browser family with per-version breakdown.
+type BrowserGroupStat struct {
+	BrowserFamily string        `json:"browser_family"`
+	UniqueUsers   int           `json:"unique_users"`
+	TotalActions  int           `json:"total_actions"`
+	Versions      []VersionStat `json:"versions"`
 }
 
 // GORM hooks for AuditLog

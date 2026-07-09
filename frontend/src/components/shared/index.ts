@@ -31,6 +31,9 @@ export { MobilePageShell, MobileSurface } from './MobilePageShell';
 
 export { MobilePageHeader } from './MobilePageHeader';
 
+export { MobileOperationsPanel, MobileTaskList } from './MobileOperationsPanel';
+export type { MobileOperationAction, MobileOperationMetric, MobileTaskRow } from './MobileOperationsPanel';
+
 export { MobileSubPageHeader } from './MobileSubPageHeader';
 
 export { MobileSectionHeader } from './MobileSectionHeader';

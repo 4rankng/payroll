@@ -38,6 +38,7 @@ func NewSandboxProvider(logger *slog.Logger) *SandboxProvider {
 }
 
 func (p *SandboxProvider) Send(ctx context.Context, msg *domain.EmailMessage) (*domain.EmailDeliveryResult, error) {
+	msg = cloneMessageWithPublicBanner(msg)
 	id := p.counter.Add(1)
 	now := clock.Now()
 
