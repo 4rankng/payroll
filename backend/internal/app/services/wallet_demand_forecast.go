@@ -12,6 +12,11 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
+const (
+	defaultWalletForecastLeadDays = 2
+	walletDemandChartPeriodCount  = 3
+)
+
 // WalletDemandForecastService produces the advance-payment demand cohort chart
 // data and the wallet-balance prediction for the Wallet page.
 //
@@ -45,13 +50,15 @@ func NewWalletDemandForecastService(
 	}
 }
 
-// GetDemandForecast builds the cohort series for the current period + last two
-// completed periods and the balance prediction for the current period.
+// GetDemandForecast builds the cohort series for the effective period + recent
+// completed periods and the just-in-time balance prediction.
 func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*wallet.WalletDemandForecastResponse, error) {
 	now := s.clock.Now()
-	currentForMonth := clock.AdvanceMonthFromTime(now)
+	currentForMonth := forecastForMonth(now)
 	maxDay := maxCycleDay(currentForMonth)
-	todayCycleDay := max(cycleDayFor(now, currentForMonth), 1)
+	todayCycleDay := cycleDayFor(now, currentForMonth)
+	leadDays := s.leadDays()
+	horizonCycleDay := forecastHorizonCycleDay(now, currentForMonth, leadDays)
 
 	historyMonths := s.cfg.HistoryMonths
 	if historyMonths < 3 {
@@ -85,6 +92,7 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	current := byMonth[currentForMonth]
 	actualSoFar := current.cumulativeAt(todayCycleDay)
 	alreadyPaid := current.completedTotal
+	knownUnpaid := max(int64(0), actualSoFar-alreadyPaid)
 
 	rate := completionRate(historical)
 	paidFrac := rate
@@ -98,9 +106,9 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	if nSim <= 0 {
 		nSim = 5000
 	}
-	dist := forecastDemandDistribution(
-		historical, todayCycleDay, nSim,
-		forecastSeed(currentForMonth, todayCycleDay), paidFrac,
+	dist := forecastDemandDistributionBetween(
+		historical, todayCycleDay, horizonCycleDay, nSim,
+		forecastSeed(currentForMonth, horizonCycleDay), paidFrac,
 	)
 
 	sl := serviceLevelConfig{
@@ -110,29 +118,28 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		UncertaintyFactor: s.cfg.UncertaintyFactor,
 	}
 	recommended, coverage := newsvendorRecommendation(dist, sl)
+	recommended += knownUnpaid
 
 	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and
-	// acts as a pace-conditioned floor on the recommendation so a fast current
-	// period is never under-buffered.
-	paceTotal, _, _, _ := forecastProjectedTotal(actualSoFar, historical, todayCycleDay)
+	// remaining-to-pay fields for API continuity. The top-up recommendation above
+	// intentionally uses the lead-window distribution, not the full-cycle reserve.
+	projectionCycleDay := todayCycleDay
+	if projectionCycleDay < 1 {
+		projectionCycleDay = horizonCycleDay
+	}
+	paceTotal, _, _, _ := forecastProjectedTotal(actualSoFar, historical, projectionCycleDay)
 	projectedPaid := int64(float64(paceTotal) * rate)
 	if dist.method == "no-history" {
 		projectedPaid = paceTotal
 	}
 	remainingToPay := max(int64(0), projectedPaid-alreadyPaid)
 
-	paceRemainingCash := float64(max(int64(0), paceTotal-actualSoFar)) * paidFrac
+	// Reference ladder + CI band, in lead-window cash units.
+	p50Ref := knownUnpaid + int64(math.Round(dist.p50))
+	p90Ref := knownUnpaid + int64(math.Round(dist.p90))
+	p99Ref := knownUnpaid + int64(math.Round(dist.p99))
 	if dist.method == "no-history" {
-		paceRemainingCash = float64(max(int64(0), actualSoFar-alreadyPaid))
-	}
-	recommended = max(recommended, int64(math.Round(paceRemainingCash)))
-
-	// Reference ladder + CI band, in cash units (degenerate for no-history).
-	p50Ref := int64(math.Round(dist.p50))
-	p90Ref := int64(math.Round(dist.p90))
-	p99Ref := int64(math.Round(dist.p99))
-	if dist.method == "no-history" {
-		p50Ref, p90Ref, p99Ref = remainingToPay, remainingToPay, remainingToPay
+		p50Ref, p90Ref, p99Ref = knownUnpaid, knownUnpaid, knownUnpaid
 	}
 
 	currentAvailable := int64(0)
@@ -147,8 +154,12 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		shortfall = 0
 	}
 
-	periods := make([]wallet.WalletDemandPeriod, 0, len(forMonths))
-	for _, fm := range forMonths {
+	chartMonths := forMonths
+	if len(chartMonths) > walletDemandChartPeriodCount {
+		chartMonths = chartMonths[:walletDemandChartPeriodCount]
+	}
+	periods := make([]wallet.WalletDemandPeriod, 0, len(chartMonths))
+	for _, fm := range chartMonths {
 		periods = append(periods, buildDemandPeriod(byMonth[fm]))
 	}
 
@@ -171,6 +182,8 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 			Method:              dist.method,
 			Confidence:          confidenceLabel(dist),
 			BasisPeriods:        dist.basisPeriods,
+			LeadDays:            leadDays,
+			HorizonCycleDay:     horizonCycleDay,
 			P50Reference:        p50Ref,
 			P90Reference:        p90Ref,
 			P99Reference:        p99Ref,
@@ -188,6 +201,20 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		},
 		GeneratedAt: now.Format(time.RFC3339),
 	}, nil
+}
+
+func forecastForMonth(t time.Time) string {
+	if clock.IsInLockedGap(t) {
+		return clock.NextAdvanceMonthFromTime(t)
+	}
+	return clock.AdvanceMonthFromTime(t)
+}
+
+func (s *WalletDemandForecastService) leadDays() int {
+	if s.cfg.LeadDays <= 0 {
+		return defaultWalletForecastLeadDays
+	}
+	return s.cfg.LeadDays
 }
 
 // buildDemandPeriod turns a pivoted series into the JSON period payload: one

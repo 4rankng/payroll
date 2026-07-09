@@ -128,6 +128,50 @@ func TestValidateGeofenceRejectsWhenNoGatesConfigured(t *testing.T) {
 	}
 }
 
+// TestValidateGeofenceAcceptsInsideHalfWithZoneScaleAccuracy pins the inner-half
+// relaxation: the reported point sits 50 m from a 150 m gate (plainly at the
+// gate), but ±100 m accuracy pushes the worst-case circle 8 cm past the radius.
+// The strict worst-case rule alone rejects this — observed on demo where an
+// employee tapped check-out six times in 42 s and was blocked every time. With
+// zone-scale accuracy (100 ≤ 150) and a point in the inner half (50 ≤ 75), the
+// point estimate is trusted and the reading passes.
+func TestValidateGeofenceAcceptsInsideHalfWithZoneScaleAccuracy(t *testing.T) {
+	lat, lng := metersNorthOf(geofenceTestGateLat, geofenceTestGateLng, 50) // ~50m from gate, inside 150m
+	project := &domain.Project{
+		GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng A", Lat: geofenceTestGateLat, Lng: geofenceTestGateLng}},
+		GeofenceRadiusMeters: 150,
+	}
+
+	gate, err := newGeofenceTestService().validateGeofence(project, domain.GeoReading{Lat: lat, Lng: lng, Accuracy: 100})
+	if err != nil {
+		t.Fatalf("expected an on-gate reading with zone-scale accuracy to pass, got %v", err)
+	}
+	if gate != "Cổng A" {
+		t.Fatalf("expected gate \"Cổng A\", got %q", gate)
+	}
+}
+
+// TestValidateGeofenceLabelsFarReadingAsOutsideDespitePoorAccuracy pins the
+// mislabel fix: a reading ~5.9 km from the gate with ±200 m accuracy used to be
+// reported as "GPS không chính xác" because the accuracy guard fired before the
+// distance check. A far reading is unambiguously outside, so it must surface the
+// geofence_outside message regardless of accuracy.
+func TestValidateGeofenceLabelsFarReadingAsOutsideDespitePoorAccuracy(t *testing.T) {
+	lat, lng := metersNorthOf(geofenceTestGateLat, geofenceTestGateLng, -5869) // ~5.9km south of the gate
+	project := &domain.Project{
+		GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng A", Lat: geofenceTestGateLat, Lng: geofenceTestGateLng}},
+		GeofenceRadiusMeters: 150,
+	}
+
+	_, err := newGeofenceTestService().validateGeofence(project, domain.GeoReading{Lat: lat, Lng: lng, Accuracy: 200})
+	if err == nil {
+		t.Fatal("expected a far reading to be rejected, got nil")
+	}
+	if !strings.Contains(err.Error(), "ngoài khu vực chấm công") {
+		t.Fatalf("expected geofence_outside message for a far reading, got %q", err.Error())
+	}
+}
+
 func TestClassifyAttemptErrorGPSInaccurate(t *testing.T) {
 	got := ClassifyAttemptError("Tín hiệu GPS không đủ chính xác. Vui lòng thử lại ngoài trời.")
 	if got != "gps_inaccurate" {

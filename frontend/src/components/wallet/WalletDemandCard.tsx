@@ -31,6 +31,8 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
   const noHistory = pred?.method === 'no-history';
   const covPct = Math.round((pred?.coverage_probability ?? 0.95) * 100);
   const needsTopUp = (pred?.shortfall ?? 0) > 0;
+  const leadDays = pred?.lead_days ?? 2;
+  const leadLabel = leadDays === 1 ? '1 ngày tới' : `${leadDays} ngày tới`;
 
   return (
     <div className="relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
@@ -58,7 +60,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
             <p className="text-[11px] text-muted-foreground mt-2">
               {noHistory
                 ? 'Chưa đủ dữ liệu các kỳ trước. Hiển thị nhu cầu hiện tại chờ chi trả.'
-                : 'Mức nên giữ lại để chi trả phần còn lại của kỳ này'}
+                : `Mức nên giữ lại cho nhu cầu ${leadLabel}`}
             </p>
 
             <div
@@ -98,10 +100,10 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
               </div>
               <p className={`mt-2 text-[11px] ${needsTopUp ? 'text-rose-700' : 'text-emerald-700'}`}>
                 {needsTopUp
-                  ? 'Nạp thêm để đạt mức nên giữ lại trong ví.'
+                  ? `Nạp thêm để đạt mức cần giữ cho ${leadLabel}.`
                   : noHistory
                     ? 'Đủ chi trả theo nhu cầu hiện tại.'
-                    : 'Đủ chi trả theo mức dự báo.'}
+                    : `Đủ chi trả theo nhu cầu ${leadLabel}.`}
               </p>
             </div>
 

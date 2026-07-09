@@ -227,6 +227,11 @@ type AttendanceFailedAttemptRepository interface {
 	GetCategoryCounts(ctx context.Context, since, until time.Time) ([]FailedAttemptCategoryCount, error)
 	// GetCountByAttemptType returns counts grouped by attempt_type within the window.
 	GetCountByAttemptType(ctx context.Context, since, until time.Time) ([]FailedAttemptTypeCount, error)
+	// ExistsRecent reports whether a failed attempt with the same employee,
+	// attempt type, reason category, and project was recorded within the last
+	// `within`. Used to collapse rapid retries of the same failure into a single
+	// forensic record so the dashboard is not flooded with one row per tap.
+	ExistsRecent(ctx context.Context, employeeID uint, attemptType, reasonCategory string, projectID uint, within time.Duration) (bool, error)
 }
 
 // IsCompleted returns true if the attendance record has both check-in and check-out

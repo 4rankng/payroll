@@ -49,6 +49,71 @@ func TestCycleDayFor(t *testing.T) {
 	}
 }
 
+func TestCycleDayForHandlesYearBoundary(t *testing.T) {
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		t.Fatalf("load Asia/Ho_Chi_Minh: %v", err)
+	}
+
+	cases := []struct {
+		desc string
+		t    time.Time
+		want int
+	}{
+		{"dec20_start", time.Date(2026, 12, 20, 12, 0, 0, 0, loc), 1},
+		{"jan1_tail", time.Date(2027, 1, 1, 12, 0, 0, 0, loc), 13},
+		{"jan8_cutoff", time.Date(2027, 1, 8, 12, 0, 0, 0, loc), 20},
+		{"jan9_closed", time.Date(2027, 1, 9, 12, 0, 0, 0, loc), 0},
+	}
+	for _, c := range cases {
+		if got := cycleDayFor(c.t, "2026-12"); got != c.want {
+			t.Errorf("%s: cycleDayFor = %d, want %d", c.desc, got, c.want)
+		}
+	}
+}
+
+func TestForecastHorizonCycleDayLeadWindow(t *testing.T) {
+	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	if err != nil {
+		t.Fatalf("load Asia/Ho_Chi_Minh: %v", err)
+	}
+
+	cases := []struct {
+		desc     string
+		now      time.Time
+		forMonth string
+		leadDays int
+		want     int
+	}{
+		{
+			desc:     "closed_gap_before_lead_window",
+			now:      time.Date(2026, 7, 9, 12, 0, 0, 0, loc),
+			forMonth: "2026-07",
+			leadDays: 2,
+			want:     0,
+		},
+		{
+			desc:     "lead_window_reaches_next_period_start",
+			now:      time.Date(2026, 7, 18, 12, 0, 0, 0, loc),
+			forMonth: "2026-07",
+			leadDays: 2,
+			want:     1,
+		},
+		{
+			desc:     "lead_window_crosses_cutoff",
+			now:      time.Date(2026, 8, 7, 12, 0, 0, 0, loc),
+			forMonth: "2026-07",
+			leadDays: 2,
+			want:     maxCycleDay("2026-07"),
+		},
+	}
+	for _, c := range cases {
+		if got := forecastHorizonCycleDay(c.now, c.forMonth, c.leadDays); got != c.want {
+			t.Errorf("%s: forecastHorizonCycleDay = %d, want %d", c.desc, got, c.want)
+		}
+	}
+}
+
 func TestPivotCohortCumulative(t *testing.T) {
 	rows := []domain.CohortRow{
 		{ForMonth: "2026-06", CycleDay: 1, Status: "PENDING", TotalAmount: 100},

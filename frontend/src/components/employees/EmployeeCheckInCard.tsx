@@ -204,6 +204,25 @@ export function EmployeeCheckInCard({
   // backend rejects with 400 ("Bạn đã vào làm/tan ca rồi"), producing a duplicate
   // toast. This ref is set in the same call stack, closing that race.
   const submittingRef = useRef(false);
+  // Brief lockout after a GPS/geofence checkout failure. It gives the phone's GPS
+  // a few seconds to settle before the next attempt and stops a frantic burst of
+  // retries (observed six identical check-out failures in 42 s on demo) from
+  // spamming the backend. The backend dedups the same window; this is the UX half.
+  const CHECKOUT_GPS_COOLDOWN_MS = 10_000;
+  const [checkoutCooldownUntil, setCheckoutCooldownUntil] = useState<number | null>(null);
+  const checkoutCooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checkoutCoolingDown = checkoutCooldownUntil !== null && Date.now() < checkoutCooldownUntil;
+  const armCheckoutCooldown = () => {
+    setCheckoutCooldownUntil(Date.now() + CHECKOUT_GPS_COOLDOWN_MS);
+    if (checkoutCooldownTimer.current) clearTimeout(checkoutCooldownTimer.current);
+    checkoutCooldownTimer.current = setTimeout(() => setCheckoutCooldownUntil(null), CHECKOUT_GPS_COOLDOWN_MS);
+  };
+  useEffect(() => {
+    const timer = checkoutCooldownTimer;
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   const attendance = attendanceResponse?.data;
   const canStartCorrectShift = attendance?.status === "completed" && isConfirmedNoSalaryAttendance(attendance);
@@ -302,11 +321,13 @@ export function EmployeeCheckInCard({
             )
           );
           toast({ title: "Chưa thể chấm công", variant: "destructive" });
+          armCheckoutCooldown();
           return;
         }
         if (isGeofenceOutsideMessage(message)) {
           setLocationIssue(createOutsideGeofenceLocationIssue());
           toast({ title: "Chưa thể chấm công", variant: "destructive" });
+          armCheckoutCooldown();
           return;
         }
         if (!options?.confirmNoSalary && canConfirmNoSalaryCheckout(message)) {
@@ -356,6 +377,7 @@ export function EmployeeCheckInCard({
   };
 
   const handleAction = async (type: "check_in" | "check_out", options?: { confirmNoSalary?: boolean }) => {
+    if (type === "check_out" && checkoutCoolingDown) return;
     if (submittingRef.current) return;
     submittingRef.current = true;
     // Clear any stale recovery banner so it doesn't linger during the new attempt.
@@ -844,15 +866,17 @@ export function EmployeeCheckInCard({
             <Button
               size="lg"
               className="h-14 rounded-xl bg-slate-950 text-[18px] font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800"
-              disabled={isPending}
+              disabled={isPending || checkoutCoolingDown}
               onClick={() => handleAction("check_out")}
             >
               {isPending && !cancelCurrentAttendanceMutation.isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : checkoutCoolingDown ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : (
                 <DoorOpen className="w-5 h-5 mr-2" />
               )}
-              {isLocating ? "Đang lấy vị trí..." : "Tan ca"}
+              {checkoutCoolingDown ? "Đang chờ GPS..." : isLocating ? "Đang lấy vị trí..." : "Tan ca"}
             </Button>
           </div>
         </div>

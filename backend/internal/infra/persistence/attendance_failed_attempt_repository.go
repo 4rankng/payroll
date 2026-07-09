@@ -122,3 +122,24 @@ func (r *attendanceFailedAttemptRepository) GetCountByAttemptType(ctx context.Co
 		Scan(&counts).Error
 	return counts, err
 }
+
+// ExistsRecent reports whether a failed attempt matching the given employee,
+// attempt type, reason category, and project was recorded within the last
+// `within`. created_at is stored in the application timezone (Asia/Ho_Chi_Minh)
+// and this process runs in that same timezone, so the cutoff compares like with
+// like. A non-positive window short-circuits to false so callers can disable
+// dedup by passing zero.
+func (r *attendanceFailedAttemptRepository) ExistsRecent(ctx context.Context, employeeID uint, attemptType, reasonCategory string, projectID uint, within time.Duration) (bool, error) {
+	if within <= 0 {
+		return false, nil
+	}
+	cutoff := time.Now().Add(-within)
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.AttendanceFailedAttempt{}).
+		Where("employee_id = ? AND attempt_type = ? AND reason_category = ? AND project_id = ?", employeeID, attemptType, reasonCategory, projectID).
+		Where("created_at >= ?", cutoff).
+		Limit(1).
+		Count(&count).Error
+	return count > 0, err
+}

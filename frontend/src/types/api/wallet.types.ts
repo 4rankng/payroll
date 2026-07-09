@@ -162,8 +162,10 @@ export interface WalletDemandPrediction {
   method: 'monte-carlo' | 'gamma-fit' | 'cohort-median' | 'avg-final' | 'no-history';
   confidence: 'high' | 'medium' | 'low';
   basis_periods: number;
+  lead_days?: number;
+  horizon_cycle_day?: number;
   // Newsvendor / tail-risk fields. Optional for backward-compat with older deploys.
-  p50_reference?: number; // median remaining cash-out
+  p50_reference?: number; // median horizon cash-out
   p90_reference?: number;
   p99_reference?: number; // tail
   coverage_probability?: number; // p* actually used (e.g. 0.95)
