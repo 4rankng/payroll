@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Calendar, CheckCircle, AlertCircle } from "lucide-react";
-import { formatCurrency } from "@/utils/formatters";
 import { TimesheetPageHeaderMobile } from "@/components/timesheet/mobile/TimesheetPageHeaderMobile";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { TimesheetDisplaySection } from "@/components/timesheet/TimesheetDisplaySection";
@@ -22,7 +20,6 @@ import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { BulkTransferHistoryDialog } from "@/components/transaction/BulkTransferHistoryDialog";
 import { BulkTransferHistoryDetailDialog } from "@/components/transaction/BulkTransferHistoryDetailDialog";
-import { GroupedStatCard, StatItem } from "@/components/shared/GroupedStatCard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { useTimesheetManagement } from "@/hooks/timesheet/useTimesheetManagement";
@@ -37,7 +34,7 @@ import {
   useCashReadiness,
   useTimesheetSummary,
 } from "@/hooks/api/useTimesheets";
-import { CashReadinessCard } from "@/components/timesheet/CashReadinessCard";
+import { PayrollControlCenter } from "@/components/timesheet/PayrollControlCenter";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -161,58 +158,8 @@ const TimesheetPageMobile = () => {
 
   const timesheetStats = useTimesheetStatsConfig(statsFilters);
 
-  const overviewStats = useMemo<StatItem[]>(() => {
-    if (!timesheetStats.summary) return [];
-    const paidAmount = timesheetStats.summary.paidAmount;
-    return [
-      {
-        label: "Đã thanh toán",
-        value: paidAmount ? formatCurrency(paidAmount) : formatCurrency(0),
-      },
-      { label: "NV đã thanh toán", value: timesheetStats.summary.paidEmployees ?? 0 },
-    ];
-  }, [timesheetStats.summary]);
-
-  const pendingActionStats = useMemo<StatItem[]>(() => {
-    if (!timesheetStats.summary) return [];
-    const editCount = timesheetStats.statsConfig.find((s) => s.title === "Yêu cầu sửa")?.value ?? 0;
-    const pendingAmount = timesheetStats.summary.pendingPaymentAmount;
-    const sf = timesheetManagement.statusFilter;
-    return [
-      {
-        label: "Chờ duyệt",
-        value: timesheetStats.summary.pendingApproval,
-        variant: "accent" as const,
-        onClick: () => timesheetManagement.setStatusFilter(sf === "pending_approval" ? "all" : "pending_approval"),
-      },
-      {
-        label: "NV chờ thanh toán",
-        value: timesheetStats.summary.pendingEmployees ?? 0,
-        variant: "accent" as const,
-        onClick: () => timesheetManagement.setStatusFilter(sf === "pending_payment" ? "all" : "pending_payment"),
-      },
-      {
-        label: "Chờ thanh toán",
-        value: pendingAmount ? formatCurrency(pendingAmount) : formatCurrency(0),
-        variant: (pendingAmount ?? 0) > 0 ? ("accent" as const) : undefined,
-      },
-      {
-        label: "Yêu cầu sửa",
-        value: editCount,
-        variant: (editCount as number) > 0 ? ("accent" as const) : undefined,
-      },
-    ];
-  }, [timesheetStats.summary, timesheetStats.statsConfig, timesheetManagement]);
-
-  const completedStats = useMemo<StatItem[]>(() => {
-    if (!timesheetStats.summary) return [];
-    const sf = timesheetManagement.statusFilter;
-    return [
-      { label: "Đã duyệt", value: timesheetStats.summary.approvedEntries, onClick: () => timesheetManagement.setStatusFilter(sf === "approved" ? "all" : "approved") },
-      { label: "Đã thanh toán", value: timesheetStats.summary.paidEntries, onClick: () => timesheetManagement.setStatusFilter(sf === "paid" ? "all" : "paid") },
-      { label: "Bị loại", value: timesheetStats.summary.rejectedEntries, onClick: () => timesheetManagement.setStatusFilter(sf === "rejected" ? "all" : "rejected") },
-    ];
-  }, [timesheetStats.summary, timesheetManagement]);
+  // Pending edit-request count feeds the "Có vấn đề" KPI in the control center.
+  const editCount = Number(timesheetStats.statsConfig.find((s) => s.title === "Yêu cầu sửa")?.value ?? 0);
 
   const exportBulkTransferMutation = useExportBulkTransfer();
   const exportPayrollReportMutation = useExportPayrollReport();
@@ -411,26 +358,20 @@ const TimesheetPageMobile = () => {
         onChange={timesheetManagement.setSelectedMonth}
       />
 
-      {/* Stats strips */}
-      {(overviewStats.length > 0 || pendingActionStats.length > 0 || completedStats.length > 0) && (
-        <div className="space-y-3">
-          {overviewStats.length > 0 && (
-            <GroupedStatCard title="Tổng quan" icon={Calendar} stats={overviewStats} />
-          )}
-          {pendingActionStats.length > 0 && (
-            <GroupedStatCard title="Cần xử lý" icon={AlertCircle} stats={pendingActionStats} />
-          )}
-          {completedStats.length > 0 && (
-            <GroupedStatCard title="Hoàn tất" icon={CheckCircle} stats={completedStats} />
-          )}
-        </div>
-      )}
-
-      {/* Advisory cash-prep forecast for the next bulk transfer (mirrors desktop) */}
-      <CashReadinessCard
-        data={cashReadiness.data}
-        isLoading={cashReadiness.isLoading}
-        isError={cashReadiness.isError}
+      {/* ── Payroll Control Center: cash readiness + operational KPIs ── */}
+      <PayrollControlCenter
+        cashReadiness={{
+          data: cashReadiness.data,
+          isLoading: cashReadiness.isLoading,
+          isError: cashReadiness.isError,
+        }}
+        stats={{
+          summary: timesheetStats.summary,
+          editCount,
+          isLoading: timesheetStats.isLoading,
+        }}
+        activeFilter={timesheetManagement.statusFilter}
+        onFilterChange={timesheetManagement.setStatusFilter}
       />
 
       <MissingBankDetailsSection />

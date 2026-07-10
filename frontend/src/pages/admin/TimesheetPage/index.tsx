@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, BarChart3, AlertCircle, CheckCircle2, FileSpreadsheet } from 'lucide-react';
-import { Masonry } from 'masonic';
+import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -19,38 +18,13 @@ import { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement
 import { useTimesheetStatsConfig } from '@/hooks/useTimesheetStatsConfig';
 import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
 import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
-import { CashReadinessCard } from '@/components/timesheet/CashReadinessCard';
+import { PayrollControlCenter } from '@/components/timesheet/PayrollControlCenter';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { useSettingByKey } from '@/hooks/api/useSettings';
 import { MODAL_IDS } from '@/constants/modalRegistry';
-import { InlineStatStrip } from '@/components/shared/InlineStatStrip';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/utils/formatters';
 import type { Timesheet } from '@/types/api/timesheet.types';
-
-// ── masonry ────────────────────────────────────────────────────────────────
-
-interface StatCardData {
-  id: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  isLoading: boolean;
-  items: Array<{ label: string; value: string | number; highlight: boolean }>;
-}
-
-const StatMasonryCard = ({ data }: { index: number; data: StatCardData; width: number }) => (
-  <div className="w-full space-y-2">
-    <div className="flex items-center gap-2 px-0.5">
-      <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/5 border border-primary/10">
-        <data.icon className="h-3.5 w-3.5 text-primary/70" />
-      </div>
-      <span className="text-xs font-bold uppercase tracking-wider text-foreground">{data.label}</span>
-    </div>
-    <InlineStatStrip isLoading={data.isLoading} items={data.items} wrap={false} direction="vertical" />
-  </div>
-);
-
 
 const TimesheetPage = () => {
   const [chuyenLoDialogOpen, setChuyenLoDialogOpen] = useState(false);
@@ -129,44 +103,8 @@ const TimesheetPage = () => {
 
   const timesheetStats = useTimesheetStatsConfig(statsFilters);
 
-  // Split into three logical rows by category
-  const overviewRow = useMemo(() => {
-    const s = timesheetStats.summary;
-    const paidAmount = s?.paidAmount;
-    return [
-      { label: 'Đã thanh toán', value: paidAmount ? formatCurrency(paidAmount) : formatCurrency(0), highlight: false },
-      { label: 'NV đã thanh toán', value: s?.paidEmployees ?? 0, highlight: false },
-    ];
-  }, [timesheetStats.summary]);
-
-  const pendingRow = useMemo(() => {
-    const s = timesheetStats.summary;
-    const editCount = timesheetStats.statsConfig.find(c => c.title === 'Yêu cầu sửa')?.value ?? 0;
-    const pendingAmount = s?.pendingPaymentAmount;
-    const sf = timesheetManagement.statusFilter;
-    return [
-      { label: 'Chờ duyệt', value: s?.pendingApproval ?? 0, highlight: true, onClick: () => timesheetManagement.setStatusFilter(sf === 'pending_approval' ? 'all' : 'pending_approval') },
-      { label: 'NV chờ thanh toán', value: s?.pendingEmployees ?? 0, highlight: true, onClick: () => timesheetManagement.setStatusFilter(sf === 'pending_payment' ? 'all' : 'pending_payment') },
-      { label: 'Chờ thanh toán', value: pendingAmount ? formatCurrency(pendingAmount) : formatCurrency(0), highlight: pendingAmount > 0 },
-      { label: 'Yêu cầu sửa', value: editCount as number, highlight: (editCount as number) > 0 },
-    ];
-  }, [timesheetStats.summary, timesheetStats.statsConfig, timesheetManagement]);
-
-  const completedRow = useMemo(() => {
-    const s = timesheetStats.summary;
-    const sf = timesheetManagement.statusFilter;
-    return [
-      { label: 'Đã duyệt', value: s?.approvedEntries ?? 0, highlight: false, onClick: () => timesheetManagement.setStatusFilter(sf === 'approved' ? 'all' : 'approved') },
-      { label: 'Đã thanh toán', value: s?.paidEntries ?? 0, highlight: false, onClick: () => timesheetManagement.setStatusFilter(sf === 'paid' ? 'all' : 'paid') },
-      { label: 'Bị loại', value: s?.rejectedEntries ?? 0, highlight: false, onClick: () => timesheetManagement.setStatusFilter(sf === 'rejected' ? 'all' : 'rejected') },
-    ];
-  }, [timesheetStats.summary, timesheetManagement]);
-
-  const statCards = useMemo<StatCardData[]>(() => [
-    { id: 'overview', icon: BarChart3, label: 'Tổng quan', isLoading: timesheetStats.isLoading, items: overviewRow },
-    { id: 'pending', icon: AlertCircle, label: 'Cần xử lý', isLoading: timesheetStats.isLoading, items: pendingRow },
-    { id: 'completed', icon: CheckCircle2, label: 'Hoàn tất', isLoading: timesheetStats.isLoading, items: completedRow },
-  ], [timesheetStats.isLoading, overviewRow, pendingRow, completedRow]);
+  // Pending edit-request count feeds the "Có vấn đề" KPI in the control center.
+  const editCount = Number(timesheetStats.statsConfig.find(c => c.title === 'Yêu cầu sửa')?.value ?? 0);
 
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
@@ -362,26 +300,21 @@ const TimesheetPage = () => {
         </div>
       </PageHeader>
 
-      {/* ── Stat strips ── */}
-      <Masonry
-        items={statCards}
-        render={StatMasonryCard}
-        columnWidth={280}
-        columnGutter={16}
-        rowGutter={16}
-        maxColumnCount={3}
-        overscanBy={Infinity}
-        itemKey={data => data.id}
+      {/* ── Payroll Control Center: cash readiness + operational KPIs ── */}
+      <PayrollControlCenter
+        cashReadiness={{
+          data: cashReadiness.data,
+          isLoading: cashReadiness.isLoading,
+          isError: cashReadiness.isError,
+        }}
+        stats={{
+          summary: timesheetStats.summary,
+          editCount,
+          isLoading: timesheetStats.isLoading,
+        }}
+        activeFilter={timesheetManagement.statusFilter}
+        onFilterChange={timesheetManagement.setStatusFilter}
       />
-
-      {/* ── Advisory cash-prep forecast for the next bulk transfer ── */}
-      <div className="mt-4 max-w-md">
-        <CashReadinessCard
-          data={cashReadiness.data}
-          isLoading={cashReadiness.isLoading}
-          isError={cashReadiness.isError}
-        />
-      </div>
 
       <MissingBankDetailsSection />
 

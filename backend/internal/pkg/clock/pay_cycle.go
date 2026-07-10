@@ -141,30 +141,42 @@ type TimesheetPayCycle struct {
 	MaxCycleDay   int       // pay date's cycle-day
 }
 
-// NextTimesheetPayCycle resolves the next upcoming pay cycle from t. The next
-// pay date is the smallest Ky pay date >= today; on a pay day itself that Ky is
-// current (the transfer is happening today). All times are interpreted in
+// NextTimesheetPayCycle resolves the next pay cycle the admin should be
+// preparing cash for, relative to t. The target is the smallest Ky pay date
+// STRICTLY AFTER today: once today reaches a cycle's pay date, that cycle's
+// transfer is happening and its preparation window (pay date − lead days) has
+// already closed, so the card rolls forward to the next cycle.
+//
+// Concretely (HCM calendar): days 1–9 → Ky 1 (pay 10); days 10–16 → Ky 2
+// (pay 17); days 17–23 → Ky 3 (pay 24); days 24–end → Ky 4 (pay day 1 of the
+// next month). Keeping CycleDayToday strictly below MaxCycleDay is also what
+// leaves the projection window open — landing on the pay day itself would
+// collapse the accrual forecast to zero. All times are interpreted in
 // DefaultLocation (Asia/Ho_Chi_Minh).
 func NextTimesheetPayCycle(t time.Time) TimesheetPayCycle {
 	now := t.In(DefaultLocation)
-	year, month, day := now.Year(), now.Month(), now.Day()
-
-	// The next pay date is determined by today's day-of-month. The thresholds
-	// mirror the 4-cycle table (pay days 10 / 17 / 24 / day-1-next-month).
-	var ky int
-	switch {
-	case day <= 10:
-		ky = 1
-	case day <= 17:
-		ky = 2
-	case day <= 24:
-		ky = 3
-	default:
-		ky = 4
-	}
-
-	today := time.Date(year, month, day, 0, 0, 0, 0, DefaultLocation)
+	year, month := now.Year(), now.Month()
+	today := time.Date(year, month, now.Day(), 0, 0, 0, 0, DefaultLocation)
 	workMonth := time.Date(year, month, 1, 0, 0, 0, 0, DefaultLocation)
+
+	for ky := 1; ky <= TimesheetKyCount; ky++ {
+		pay := PayDate(ky, year, month)
+		if !pay.After(today) {
+			continue
+		}
+		return TimesheetPayCycle{
+			Ky:            ky,
+			WorkMonth:     workMonth,
+			NextPayDate:   pay,
+			CycleDayToday: CycleDayForApproval(ky, year, month, today),
+			MaxCycleDay:   MaxCycleDay(ky, year, month),
+		}
+	}
+	// Defensive fallback: Ky 4 pays on day 1 of next month, which is always
+	// strictly after any day in this month, so the loop returns by Ky 4 in
+	// practice. Reaching here would only mean t is itself past day 1 of next
+	// month, in which case Ky 4 of this month is the correct nearest cycle.
+	ky := TimesheetKyCount
 	return TimesheetPayCycle{
 		Ky:            ky,
 		WorkMonth:     workMonth,

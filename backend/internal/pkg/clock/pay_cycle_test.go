@@ -115,9 +115,15 @@ func TestNextTimesheetPayCycle(t *testing.T) {
 	}{
 		{"Jul 3 (mid Ky1)", dateAt(2026, time.July, 3), 1, 10, 3, 10},
 		{"Jul 8 (post-work, pre-pay Ky1)", dateAt(2026, time.July, 8), 1, 10, 8, 10},
-		{"Jul 10 (Ky1 pay day)", dateAt(2026, time.July, 10), 1, 10, 10, 10},
+		{"Jul 9 (eve of Ky1 pay)", dateAt(2026, time.July, 9), 1, 10, 9, 10},
+		// On a cycle's pay day the card must roll FORWARD: that cycle's transfer
+		// is happening and its prep window (pay date − lead) has closed.
+		{"Jul 10 (Ky1 pay day → advance to Ky2)", dateAt(2026, time.July, 10), 2, 17, 3, 10},
 		{"Jul 11 (Ky2)", dateAt(2026, time.July, 11), 2, 17, 4, 10},
+		{"Jul 16 (eve of Ky2 pay)", dateAt(2026, time.July, 16), 2, 17, 9, 10},
+		{"Jul 17 (Ky2 pay day → advance to Ky3)", dateAt(2026, time.July, 17), 3, 24, 3, 10},
 		{"Jul 20 (Ky3)", dateAt(2026, time.July, 20), 3, 24, 6, 10},
+		{"Jul 24 (Ky3 pay day → advance to Ky4)", dateAt(2026, time.July, 24), 4, 1, 3, 11},
 		{"Jul 25 (Ky4)", dateAt(2026, time.July, 25), 4, 1, 4, 11},
 		{"Jul 31 (Ky4, last day)", dateAt(2026, time.July, 31), 4, 1, 10, 11},
 	}
