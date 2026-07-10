@@ -35,7 +35,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
     <div className="overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-bold leading-5 text-slate-950">{statusTitle(guidance)}</p>
+          <p className="employee-type-card-title truncate font-bold text-slate-950">{statusTitle(guidance)}</p>
           <p className="mt-0.5 truncate text-[12px] font-semibold leading-4 text-slate-500">
             {statusDescription(guidance, target)}
           </p>

@@ -1,4 +1,4 @@
-.PHONY: deploy demo dev backup restore demo-db
+.PHONY: deploy demo dev backup restore demo-db sandbox
 
 # Build & push all images, then deploy to production
 deploy:
@@ -13,6 +13,10 @@ deploy:
 dev:
 	@echo "🚀 Starting development environment..."
 	$(MAKE) -C backend dev
+
+# Start the local mock OnePay/9Pay sandbox (port 9001) for advance-payout testing
+sandbox:
+	$(MAKE) -C backend sandbox
 
 # Backup production database to OneDrive
 backup:

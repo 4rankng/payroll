@@ -4,15 +4,12 @@ import { EmployeePortalHeader } from "@/components/employees/EmployeePortalHeade
 
 const employeeMobileBackground: CSSProperties = {
   backgroundImage:
-    "linear-gradient(180deg, rgba(224, 249, 255, 0.86) 0%, rgba(241, 250, 255, 0.92) 42%, rgba(248, 250, 252, 0.98) 100%), url('/employee-bg.avif')",
-  backgroundSize: "cover",
-  backgroundPosition: "center top",
-  backgroundAttachment: "fixed",
+    "linear-gradient(180deg, #e8f8ef 0%, #f2f8f5 10rem, #f5f7fa 100%)",
   paddingBottom: "env(safe-area-inset-bottom)",
 };
 
 export const employeeCardShadow = {
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255,255,255,0.75) inset",
+  boxShadow: "0 8px 24px -20px rgba(15, 23, 42, 0.48)",
 } as const;
 
 interface EmployeeMobileShellProps {
@@ -53,7 +50,7 @@ export function EmployeeMobileShell({
 
       <main
         className={cn(
-          "employee-portal-card-stack mx-auto max-w-2xl space-y-4 p-4 pb-[calc(7rem+env(safe-area-inset-bottom))]",
+          "employee-portal-card-stack mx-auto max-w-lg space-y-3 px-3 py-3 min-[390px]:px-4 pb-[calc(5rem+env(safe-area-inset-bottom))]",
           contentClassName
         )}
       >

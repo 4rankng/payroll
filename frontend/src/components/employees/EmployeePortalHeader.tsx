@@ -25,8 +25,8 @@ export function EmployeePortalHeader({
   return (
     <div className="bg-employee">
       <div
-        className="max-w-2xl mx-auto px-4 pb-4 flex items-center justify-between gap-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
+        className="mx-auto flex max-w-lg items-center justify-between gap-3 px-3 pb-3 min-[390px]:px-4"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)" }}
       >
         <div className="min-w-0">
           <p className="employee-type-header-greeting text-white/85">
@@ -42,7 +42,7 @@ export function EmployeePortalHeader({
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
-            <Bell className="h-6 w-6" strokeWidth={2.1} />
+            <Bell className="h-5 w-5" strokeWidth={2.1} />
             {unreadCount != null && unreadCount > 0 && (
               <span className="type-count-badge absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -55,7 +55,7 @@ export function EmployeePortalHeader({
                 className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/15"
                 aria-label="Menu tài khoản"
               >
-                <UserCircle className="h-8 w-8 text-white/90" strokeWidth={2.1} />
+                <UserCircle className="h-7 w-7 text-white/90" strokeWidth={2.1} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

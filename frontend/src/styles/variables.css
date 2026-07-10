@@ -126,6 +126,16 @@
     --type-metric-lg: var(--text-4xl);     /* 24px */
     --type-metric-xl: var(--text-5xl);     /* 28px */
 
+    /* Compact task-first scale for the employee self-service portal and its
+       portalled sheets. Keep this separate from admin/partner typography. */
+    --employee-type-caption: 0.6875rem;    /* 11px: status, eyebrow, badge */
+    --employee-type-label: 0.75rem;        /* 12px: field label, metadata */
+    --employee-type-body-sm: 0.75rem;      /* 12px: secondary copy */
+    --employee-type-body: 0.8125rem;       /* 13px: body copy */
+    --employee-type-strong: 0.875rem;      /* 14px: action, primary row */
+    --employee-type-title: 1rem;           /* 16px: section title */
+    --employee-type-money: 1.25rem;        /* 20px: primary money only */
+
     /* Line Heights - Optimized for Data Density */
     --leading-none: 1;
     --leading-tight: 1.15;

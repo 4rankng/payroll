@@ -20,7 +20,6 @@ import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell, employeeCardShadow } from "@/components/employees/EmployeeMobileShell";
-import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
 import { EmployeeCheckInCard } from "@/components/employees/EmployeeCheckInCard";
 import { EmployeeAttendanceHistoryCard } from "@/components/employees/EmployeeAttendanceHistoryCard";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
@@ -29,13 +28,7 @@ import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
-import {
-  createFlexibleEmployeeHomeModel,
-  getEmployeeAccountHolder,
-  hasEmployeeBankInfo,
-  type EmployeeNudge,
-  type EmployeeQuickAction,
-} from "@/utils/employeePortal/mobileHome";
+import { getEmployeeAccountHolder } from "@/utils/employeePortal/mobileHome";
 
 const FlexiblePayEmployeePage = () => {
   const navigate = useNavigate();
@@ -69,18 +62,6 @@ const FlexiblePayEmployeePage = () => {
 
   const info = infoResponse?.data;
   const history = useMemo(() => historyResponse?.data ?? [], [historyResponse?.data]);
-  const homeModel = useMemo(
-    () =>
-      info
-        ? createFlexibleEmployeeHomeModel({
-            info,
-            history,
-            hasCheckIn: isCheckIn,
-            hasBankInfo: hasEmployeeBankInfo(profile),
-          })
-        : null,
-    [history, info, isCheckIn, profile]
-  );
 
   // Debounced server-side fee calculation
   const [serverFeeDetails, setServerFeeDetails] = useState<{
@@ -162,18 +143,6 @@ const FlexiblePayEmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  const handleHomeAction = useCallback((action: EmployeeQuickAction | EmployeeNudge) => {
-    if (action.intent === "notifications") {
-      setNotificationSheetOpen(true);
-      return;
-    }
-    if (!action.targetId) return;
-    document.getElementById(action.targetId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, []);
-
   if (profileLoading || infoLoading) {
     return (
       <div
@@ -220,62 +189,61 @@ const FlexiblePayEmployeePage = () => {
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
-        contentClassName="pb-[calc(8rem+env(safe-area-inset-bottom))]"
+        contentClassName="pb-[calc(5rem+env(safe-area-inset-bottom))]"
       >
-        {homeModel && (
-          <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
+        {profile?.check_in_enabled && (
+          <section id="employee-check-in" className="scroll-mt-4">
+            <EmployeeCheckInCard
+              checkInTarget={profile.check_in_target}
+              checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
+              shiftStart={profile.shift_start}
+              shiftEnd={profile.shift_end}
+              checkInWindowStart={profile.check_in_window_start}
+              checkInWindowEnd={profile.check_in_window_end}
+            />
+          </section>
         )}
 
-        {info?.canRequest && (
+        {info && (
           <section id="employee-advance-request" className="scroll-mt-4">
             <AdvancePaymentRequestForm
               key={formKey}
               info={info}
               history={history}
               feeDetails={feeDetails}
+              bankAccountNumber={profile?.bank_account_number}
+              bankName={profile?.bank?.branch_name}
+              bankAccountName={getEmployeeAccountHolder(profile)}
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}
               isPending={requestMutation.isPending}
+              className="rounded-2xl border border-slate-200 bg-white p-3"
               style={employeeCardShadow}
             />
           </section>
         )}
 
         {profile?.check_in_enabled && (
-          <>
-            <section id="employee-check-in" className="scroll-mt-4">
-              <EmployeeCheckInCard
-                className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
-                checkInTarget={profile.check_in_target}
-                checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
-                shiftStart={profile.shift_start}
-                shiftEnd={profile.shift_end}
-                checkInWindowStart={profile.check_in_window_start}
-                checkInWindowEnd={profile.check_in_window_end}
-                style={employeeCardShadow}
-              />
-            </section>
-
-            <EmployeeAttendanceHistoryCard
-              className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
-              style={employeeCardShadow}
-            />
-          </>
-        )}
-
-        <section id="employee-bank" className="scroll-mt-4">
-          <EmployeeBankInfoCard
-            profile={profile!}
-            className="bg-white/95 rounded-2xl overflow-hidden ring-1 ring-white/80"
+          <EmployeeAttendanceHistoryCard
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
             style={employeeCardShadow}
           />
-        </section>
+        )}
 
         <section id="employee-history" className="scroll-mt-4">
           <AdvancePaymentHistoryCard
             history={history}
             isLoading={historyLoading}
             onCancel={handleCancelRequest}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            style={employeeCardShadow}
+          />
+        </section>
+
+        <section id="employee-bank" className="scroll-mt-4">
+          <EmployeeBankInfoCard
+            profile={profile!}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
             style={employeeCardShadow}
           />
         </section>

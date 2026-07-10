@@ -1,22 +1,20 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   Ban,
   CheckCircle,
+  ChevronDown,
   Clock,
   History,
   XCircle,
 } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/utils/formatters";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 import { getVietnameseAdvancePaymentStatus } from "@/utils/advancePaymentHelpers";
-import type {
-  AdvancePaymentHistoryItem,
-  AdvancePaymentStatus,
-} from "@/types/api/advance-payment.types";
+import { formatCurrency } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
   PENDING: {
@@ -41,39 +39,136 @@ const STATUS_CONFIG = {
   },
 } as const;
 
-const safeFormat = (v: number | null | undefined) =>
-  v == null || isNaN(v) ? "—" : formatCurrency(v);
+const safeFormat = (value: number | null | undefined) =>
+  value == null || isNaN(value) ? "—" : formatCurrency(value);
 
-const safeDate = (d: string | null | undefined) => {
-  if (!d) return "—";
-  const dt = new Date(d);
-  return isNaN(dt.getTime()) ? "—" : format(dt, "dd/MM/yyyy", { locale: vi });
+const safeDate = (date: string | null | undefined) => {
+  if (!date) return "—";
+  const parsedDate = new Date(date);
+  return isNaN(parsedDate.getTime())
+    ? "—"
+    : format(parsedDate, "dd/MM/yyyy", { locale: vi });
 };
 
-// Internal sub-component
-const HistoryItemRow = ({
+function StatusPill({ item }: { item: AdvancePaymentHistoryItem }) {
+  const config =
+    STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ??
+    STATUS_CONFIG.CANCELLED;
+  const StatusIcon = config.icon;
+
+  return (
+    <span
+      className={cn(
+        "employee-type-pill inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5",
+        config.pill
+      )}
+    >
+      <StatusIcon className="h-4 w-4" />
+      {getVietnameseAdvancePaymentStatus(item.status)}
+    </span>
+  );
+}
+
+function CancelPendingAction({
+  itemId,
+  onCancel,
+}: {
+  itemId: number;
+  onCancel?: (id: number) => void;
+}) {
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dismissButtonRef = useRef<HTMLButtonElement | null>(null);
+  const confirmationWasOpen = useRef(false);
+
+  useEffect(() => {
+    if (showConfirmCancel) {
+      confirmationWasOpen.current = true;
+      dismissButtonRef.current?.focus();
+      return;
+    }
+
+    if (confirmationWasOpen.current) {
+      confirmationWasOpen.current = false;
+      cancelButtonRef.current?.focus();
+    }
+  }, [showConfirmCancel]);
+
+  useEffect(
+    () => () => {
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+    },
+    []
+  );
+
+  const handleCancelClick = () => {
+    if (showConfirmCancel) {
+      if (resetTimer.current) {
+        clearTimeout(resetTimer.current);
+        resetTimer.current = null;
+      }
+      onCancel?.(itemId);
+      setShowConfirmCancel(false);
+      return;
+    }
+
+    setShowConfirmCancel(true);
+    resetTimer.current = setTimeout(() => {
+      resetTimer.current = null;
+      setShowConfirmCancel(false);
+    }, 3000);
+  };
+
+  const handleDismissCancel = () => {
+    if (resetTimer.current) {
+      clearTimeout(resetTimer.current);
+      resetTimer.current = null;
+    }
+    setShowConfirmCancel(false);
+  };
+
+  if (showConfirmCancel) {
+    return (
+      <div className="flex min-h-11 items-center justify-end gap-2">
+        <button
+          ref={dismissButtonRef}
+          type="button"
+          onClick={handleDismissCancel}
+          className="employee-type-action min-h-11 rounded-full px-3 text-slate-500 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        >
+          Không
+        </button>
+        <button
+          type="button"
+          onClick={handleCancelClick}
+          className="employee-type-action min-h-11 rounded-full bg-red-50 px-4 text-red-600 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+        >
+          Xác nhận
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      ref={cancelButtonRef}
+      type="button"
+      onClick={handleCancelClick}
+      className="employee-type-action min-h-11 w-full rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+    >
+      Hủy yêu cầu
+    </button>
+  );
+}
+
+function HistoryItemRow({
   item,
   onCancel,
 }: {
   item: AdvancePaymentHistoryItem;
   onCancel?: (id: number) => void;
-}) => {
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
-  const cfg =
-    STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.CANCELLED;
-  const StatusIcon = cfg.icon;
-
-  const handleCancelClick = () => {
-    if (showConfirmCancel) {
-      onCancel?.(item.id);
-      setShowConfirmCancel(false);
-    } else {
-      setShowConfirmCancel(true);
-      setTimeout(() => setShowConfirmCancel(false), 3000);
-    }
-  };
-
+}) {
   return (
     <article
       className={cn(
@@ -82,78 +177,43 @@ const HistoryItemRow = ({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <span
-          className={cn(
-            "employee-type-pill inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5",
-            cfg.pill
-          )}
-        >
-          <StatusIcon className="h-4 w-4" />
-          {getVietnameseAdvancePaymentStatus(item.status)}
-        </span>
-        <span className="employee-type-label text-slate-400">
+        <StatusPill item={item} />
+        <span className="employee-type-label text-slate-600">
           {safeDate(item.createdAt)}
         </span>
       </div>
 
       <div className="mt-2.5 flex items-end justify-between gap-4">
-        <span className="employee-type-label-caps pb-0.5 text-slate-500">
-          Yêu cầu
-        </span>
-        <span className="employee-type-card-amount shrink-0 text-slate-950 tabular-nums">
-          {safeFormat(item.requestAmount)}
-        </span>
-      </div>
-
-      <div className="mt-2.5 flex items-center justify-between gap-4 border-t border-slate-100 pt-2.5">
         <div className="min-w-0">
           <span className="employee-type-label block text-slate-500">
-            Thực nhận
+            Số tiền yêu cầu
           </span>
-          <span className="employee-type-row-amount mt-0.5 block whitespace-nowrap text-emerald-600 tabular-nums">
-            {safeFormat(item.netAmount)}
+          <span className="employee-type-card-amount mt-1 block text-slate-950 tabular-nums">
+            {safeFormat(item.requestAmount)}
           </span>
         </div>
         <div className="shrink-0 text-right">
           <span className="employee-type-label block text-slate-500">
-            Phí giao dịch
+            Thực nhận
           </span>
-          <span className="employee-type-row-amount mt-0.5 block text-slate-700 tabular-nums">
-            {safeFormat(item.fee)}
+          <span className="employee-type-row-amount mt-1 block text-emerald-600 tabular-nums">
+            {safeFormat(item.netAmount)}
           </span>
         </div>
       </div>
 
+      <p className="employee-type-body-sm mt-2 text-slate-500">
+        Phí giao dịch: <span className="font-semibold text-slate-700 tabular-nums">{safeFormat(item.fee)}</span>
+      </p>
+
       {item.status === "PENDING" && (
         <div className="mt-3 border-t border-amber-100 pt-3">
-          {showConfirmCancel ? (
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => setShowConfirmCancel(false)}
-                className="employee-type-action min-h-11 rounded-full px-3 text-slate-500 transition-colors hover:text-slate-700"
-              >
-                Không
-              </button>
-              <button
-                onClick={handleCancelClick}
-                className="employee-type-action min-h-11 rounded-full bg-red-50 px-4 text-red-600 transition-colors hover:bg-red-100"
-              >
-                Xác nhận
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleCancelClick}
-              className="employee-type-action min-h-11 w-full rounded-2xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-            >
-              Hủy
-            </button>
-          )}
+          <CancelPendingAction itemId={item.id} onCancel={onCancel} />
         </div>
       )}
     </article>
   );
-};
+}
 
 interface AdvancePaymentHistoryCardProps {
   history: AdvancePaymentHistoryItem[];
@@ -170,60 +230,85 @@ export function AdvancePaymentHistoryCard({
   className,
   style,
 }: AdvancePaymentHistoryCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const panelId = useId();
+  const newestPendingRequest = history.find((item) => item.status === "PENDING");
+
   return (
     <div
-      className={className ?? "bg-white rounded-2xl overflow-hidden"}
+      className={className ?? "overflow-hidden rounded-2xl bg-white"}
       style={style}
     >
-      <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
-        <div className="flex items-center gap-2">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
           <EmployeeIconFrame icon={History} size="row" tone="slate" />
-          <h2 className="employee-type-hero-title text-slate-950">
-            Lịch sử yêu cầu
-          </h2>
-        </div>
-        {history.length > 0 && (
-          <span className="employee-type-pill rounded-full bg-slate-100 px-3 py-1.5 text-slate-500">
-            {history.length} yêu cầu
+          <span className="min-w-0">
+            <span className="employee-type-hero-title block text-slate-950">
+              Lịch sử yêu cầu
+            </span>
+            <span className="employee-type-body-sm mt-0.5 block text-slate-500">
+              {isLoading
+                ? "Đang tải lịch sử"
+                : history.length > 0
+                  ? `${history.length} yêu cầu`
+                  : "Chưa có yêu cầu"}
+            </span>
           </span>
-        )}
-      </div>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {newestPendingRequest && (
+            <span className="employee-type-pill rounded-full bg-amber-50 px-2.5 py-1.5 text-amber-700">
+              Đang chờ
+            </span>
+          )}
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-slate-400 transition-transform duration-200",
+              isOpen && "rotate-180"
+            )}
+          />
+        </span>
+      </button>
 
-      <div className="pb-3">
-        {isLoading ? (
-          <div className="space-y-3 px-4 pt-2">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-[22px]" />
-            ))}
-          </div>
-        ) : history.length === 0 ? (
-          <div className="px-4 pb-9 pt-6 text-center">
-            <img
-              src="/advance-payment-empty-state.png"
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-              className="mx-auto mb-3 h-32 w-32 object-contain"
-            />
-            <p className="employee-type-card-title text-gray-500">
-              Chưa có lần ứng lương nào
-            </p>
-            <p className="employee-type-body mt-1 text-gray-400">
-              Khi bạn gửi yêu cầu, trạng thái sẽ hiện ở đây.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100 border-t border-slate-100">
-            {history.map((item) => (
-              <HistoryItemRow
-                key={item.id}
-                item={item}
-                onCancel={onCancel}
+      {isOpen && (
+        <div id={panelId} className="border-t border-slate-100 pb-3">
+          {isLoading ? (
+            <div className="space-y-3 px-4 pt-3">
+              {[1, 2, 3].map((index) => (
+                <Skeleton key={index} className="h-28 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : history.length === 0 ? (
+            <div className="px-4 pb-7 pt-5 text-center">
+              <img
+                src="/advance-payment-empty-state.png"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                className="mx-auto mb-3 h-28 w-28 object-contain"
               />
-            ))}
-          </div>
-        )}
-      </div>
+              <p className="employee-type-card-title text-slate-700">
+                Chưa có lần ứng lương nào
+              </p>
+              <p className="employee-type-body mt-1 text-slate-600">
+                Khi bạn gửi yêu cầu, trạng thái sẽ hiện ở đây.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {history.map((item) => (
+                <HistoryItemRow key={item.id} item={item} onCancel={onCancel} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

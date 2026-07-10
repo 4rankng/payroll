@@ -198,36 +198,20 @@ const EmployeePage = () => {
       >
         <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
 
-        {/* Bank Account Information */}
-        <section id="employee-bank" className="scroll-mt-4">
-          <EmployeeBankInfoCard
-            profile={profile!}
-            className="rounded-xl overflow-hidden glass-card"
-          />
-        </section>
-
         {/* Timesheets Section */}
         <section id="employee-timesheets" className="scroll-mt-4">
-          <div
-            className="flex items-center justify-between gap-3 mb-3 px-4 py-3 rounded-xl"
-            style={{
-              background: "rgba(255,255,255,0.82)",
-              backdropFilter: "blur(16px) saturate(1.4)",
-              WebkitBackdropFilter: "blur(16px) saturate(1.4)",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-            }}
-          >
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-sky-600" />
-              <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide">BẢNG CÔNG</h2>
+              <Calendar className="h-4 w-4 text-sky-600" />
+              <h2 className="employee-type-hero-title text-slate-900">Bảng công</h2>
               {totalRecords > 0 && (
-                <Badge className="text-xs font-semibold px-2 py-0.5 bg-sky-100 text-sky-700 border-0 hover:bg-sky-100">
+                <Badge className="employee-type-pill border-0 bg-sky-100 px-2 py-1 text-sky-700 hover:bg-sky-100">
                   {totalRecords}
                 </Badge>
               )}
             </div>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="h-11 w-auto min-w-11 rounded-lg border-0 bg-white/60 text-sm font-medium transition-colors hover:bg-white/80">
+              <SelectTrigger className="employee-type-label h-11 w-auto min-w-11 rounded-xl border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   <SelectValue />
@@ -235,7 +219,7 @@ const EmployeePage = () => {
               </SelectTrigger>
               <SelectContent className="rounded-xl border-white/60 bg-white/90 backdrop-blur-xl shadow-lg overflow-hidden">
                 {monthOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="text-sm py-2.5 rounded-lg focus:bg-sky-50/80 focus:text-sky-700">{o.label}</SelectItem>
+                  <SelectItem key={o.value} value={o.value} className="employee-type-body rounded-lg py-2.5 focus:bg-sky-50/80 focus:text-sky-700">{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -247,7 +231,7 @@ const EmployeePage = () => {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-card/50" />)}
             </div>
           ) : groupedDays.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/60 py-12 text-center" style={{ background: "rgba(255,255,255,0.50)" }}>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 py-8 text-center">
               <div className="w-12 h-12 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-6 h-6 text-sky-400" />
               </div>
@@ -261,9 +245,9 @@ const EmployeePage = () => {
                 const isPaid = status === "full";
 
                 return (
-                  <div key={day.date} className="rounded-xl overflow-hidden glass-card">
+                  <div key={day.date} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     {/* Card header */}
-                    <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                    <div className="flex items-center justify-between px-3 py-3">
                       <div className="flex items-center gap-2">
                         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isPaid ? "bg-emerald-500" : "bg-amber-400"}`} />
                         <span className="employee-type-row-amount capitalize text-slate-800">
@@ -278,12 +262,12 @@ const EmployeePage = () => {
                     </div>
 
                     {/* Stats row */}
-                    <div className="grid grid-cols-1 divide-y divide-sky-100/60 border-t border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">                      {[
+                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">                      {[
                         { label: "Giờ công", value: `${day.totalHours % 1 === 0 ? day.totalHours : formatNumber(day.totalHours, 1)}`, unit: "h", color: "text-foreground" },
                         { label: "Tổng lương", value: formatCurrency(day.totalAmount), unit: null, color: "text-foreground" },
                         { label: "Đã nhận", value: formatCurrency(day.totalPaidAmount), unit: null, color: isPaid ? "text-emerald-600" : "text-slate-400" },
                       ].map(({ label, value, unit, color }) => (
-                        <div key={label} className="px-3 py-3 text-center">
+                        <div key={label} className="min-w-0 px-2 py-2.5 text-center">
                           <p className="employee-type-label mb-1 text-slate-400">{label}</p>
                           <p className={`employee-type-row-amount whitespace-nowrap tabular-nums ${color}`}>
                             {value}{unit && <span className="type-caption ml-0.5 font-normal text-slate-400">{unit}</span>}
@@ -303,7 +287,14 @@ const EmployeePage = () => {
               Đang tải thêm...
             </div>
           )}
-          <div ref={observerRef} className="h-4" />
+          <div ref={observerRef} className="h-3" />
+        </section>
+
+        <section id="employee-bank" className="scroll-mt-4">
+          <EmployeeBankInfoCard
+            profile={profile!}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          />
         </section>
 
       {/* Password Sheet */}

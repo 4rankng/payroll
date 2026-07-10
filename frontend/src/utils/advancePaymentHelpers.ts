@@ -232,22 +232,33 @@ export function formatMonthShort(monthString: string): string {
 }
 
 /**
- * Get current "for month" based on business rule
- * Day >= 9 → current month; Day < 9 → last month
- * Returns YYYY-MM format
+ * Day-of-month from which a freshly-created advance request lands in the
+ * CURRENT calendar month — also the day the self-check-in advance window opens.
+ *
+ * Mirrors `SelfCheckInAdvanceWindowOpenDay` in
+ * `backend/internal/app/services/advance_payment/checkin_advance.go`. If the
+ * backend constant changes, update this one too.
  */
-export function getCurrentForMonth(): string {
-  const now = new Date();
-  const day = now.getDate();
+export const ADVANCE_REQUEST_WINDOW_OPEN_DAY = 10;
 
-  if (day >= 9) {
-    // Current month
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  } else {
-    // Last month
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
-  }
+/**
+ * Default month (YYYY-MM) to open the admin advance-payments list on.
+ *
+ * From `ADVANCE_REQUEST_WINDOW_OPEN_DAY` onward, a new self-check-in request
+ * lands in the current calendar month (the request window opens on day 10);
+ * before that, new non-check-in requests land in the previous month (tail of
+ * the previous advance period). Defaulting the admin list to that same month
+ * keeps freshly-created requests visible without manually switching the
+ * selector.
+ *
+ * `now` is injectable for testing.
+ */
+export function getDefaultAdvanceMonth(now: Date = new Date()): string {
+  const monthDate =
+    now.getDate() < ADVANCE_REQUEST_WINDOW_OPEN_DAY
+      ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      : now;
+  return `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
 }
 
 /**

@@ -54,12 +54,12 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[32px] border border-white/80 bg-white/95 shadow-[0_20px_50px_-34px_rgba(15,23,42,0.8)]",
+        "overflow-hidden rounded-2xl border border-employee-100 bg-white shadow-sm",
         className
       )}
       aria-label={model.title}
     >
-      <div className="bg-employee px-5 pb-14 pt-5 text-white">
+      <div className="bg-employee px-4 pb-9 pt-4 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="employee-type-label text-white/80">
@@ -70,42 +70,42 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
             </h2>
           </div>
           {model.periodLabel && (
-            <span className="employee-type-pill shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-white">
+            <span className="employee-type-pill shrink-0 rounded-full bg-white/15 px-2.5 py-1.5 text-white">
               {model.periodLabel}
             </span>
           )}
         </div>
       </div>
 
-      <div className="-mt-9 px-4 pb-5">
-        <div className="rounded-t-[30px] bg-white px-4 pb-1 pt-5">
+      <div className="-mt-6 px-3 pb-3">
+        <div className="rounded-t-2xl bg-white px-3 pb-1 pt-4">
           <p className="employee-type-label-caps text-slate-500">
             {model.amountLabel}
           </p>
           <p className="employee-type-hero-amount mt-1 break-words text-employee tabular-nums">
             {model.amount}
           </p>
-          <p className="employee-type-body mt-2 text-slate-500">
+          <p className="employee-type-body mt-1.5 text-slate-500">
             {model.amountDescription}
           </p>
 
           {model.metrics.length > 0 && (
             <>
               {model.metricsTitle && (
-                <p className="employee-type-label-caps mt-5 text-slate-500">
+                <p className="employee-type-label-caps mt-3 text-slate-500">
                   {model.metricsTitle}
                 </p>
               )}
               <div
                 className={cn(
                   "divide-y divide-slate-100 border-y border-slate-100",
-                  model.metricsTitle ? "mt-2" : "mt-5"
+                  model.metricsTitle ? "mt-1.5" : "mt-3"
                 )}
               >
                 {model.metrics.map((metric) => (
                   <div
                     key={metric.label}
-                    className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2.5"
+                    className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2"
                   >
                     <p className="employee-type-label min-w-0 text-slate-500">
                       {metric.label}
@@ -124,7 +124,7 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
             </>
           )}
 
-          <div className={cn("mt-5 grid gap-1", actionGridClass)}>
+          <div className={cn("mt-3 grid gap-1", actionGridClass)}>
             {model.quickActions.map((action) => {
               const Icon = ACTION_ICONS[action.icon];
               return (
@@ -133,12 +133,12 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
                   type="button"
                   disabled={action.disabled}
                   onClick={() => onAction(action)}
-                  className="group flex min-h-[74px] min-w-0 flex-col items-center justify-center gap-2 px-1 py-2 text-center transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+                  className="group flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors active:bg-employee-50 disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-employee/10 text-employee transition-colors group-active:bg-employee group-active:text-white">
-                    <Icon className="h-5 w-5" strokeWidth={2.2} />
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-employee/10 text-employee transition-colors group-active:bg-employee group-active:text-white">
+                    <Icon className="h-4 w-4" strokeWidth={2.2} />
                   </span>
-                  <span className="employee-type-label w-full text-wrap text-slate-700">
+                  <span className="employee-type-label min-w-0 text-wrap text-slate-700">
                     {action.label}
                   </span>
                 </button>
@@ -148,7 +148,7 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
         </div>
 
         {model.nudges.length > 0 && (
-          <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+          <div className="mt-2 divide-y divide-slate-100 border-t border-slate-100">
             {model.nudges.slice(0, 3).map((nudge) => {
               const Icon = ACTION_ICONS[nudge.icon];
               return (
@@ -156,11 +156,11 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
                   key={nudge.id}
                   type="button"
                   onClick={() => onAction(nudge)}
-                  className="flex min-h-[64px] w-full items-center gap-3 px-1 py-3 text-left transition-transform active:scale-[0.99]"
+                  className="flex min-h-11 w-full items-center gap-2.5 px-1 py-2 text-left transition-transform active:scale-[0.99]"
                 >
                   <span
                     className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border",
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
                       toneClass[nudge.tone]
                     )}
                   >
