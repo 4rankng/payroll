@@ -1,4 +1,4 @@
-import { Bell, Settings, LogOut, UserCircle } from "lucide-react";
+import { Bell, Settings, LogOut, UserRound } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -29,8 +29,8 @@ export function EmployeePortalHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--employee-border)] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/88">
       <div
-        className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-4 lg:px-6"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+        className="mx-auto grid max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
       >
         <div className="min-w-0">
           <h1 className="employee-type-header-name truncate text-[var(--employee-text)]" title={employeeName}>
@@ -38,16 +38,16 @@ export function EmployeePortalHeader({
           </h1>
           <p className="employee-type-header-date mt-0.5 truncate capitalize text-[var(--employee-text-secondary)] tabular-nums">{todayLabel}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            className="relative flex h-11 w-11 items-center justify-center rounded-[10px] border border-transparent text-[#475467] transition-colors duration-200 hover:border-[var(--employee-border)] hover:bg-[#F9FAFB] active:bg-[#F2F4F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+            className="relative flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--employee-border)] bg-white text-[#475467] transition-transform duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] focus-visible:ring-offset-2"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
             <Bell className="h-5 w-5" strokeWidth={2.1} />
             {unreadCount != null && unreadCount > 0 && (
-              <span className="employee-type-notification-badge absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#D92D20] px-1 text-white ring-2 ring-white">
+              <span className="employee-type-notification-badge employee-notification-pop absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#D92D20] px-1 text-white ring-2 ring-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
@@ -56,10 +56,10 @@ export function EmployeePortalHeader({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--employee-border-strong)] bg-white text-[#344054] transition-colors duration-200 hover:bg-[#F9FAFB] active:bg-[#F2F4F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] focus-visible:ring-offset-2"
+                className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] transition-transform duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] focus-visible:ring-offset-2"
                 aria-label="Menu tài khoản"
               >
-                <UserCircle className="h-5 w-5" strokeWidth={2.1} />
+                <UserRound className="h-5 w-5" strokeWidth={2.1} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

@@ -32,6 +32,8 @@ export interface EmployeeMonth {
   shortLabel: string;
   /** Can the user navigate one month forward? (false at/after current month) */
   canGoNext: boolean;
+  /** Can the user navigate one month backward? (false at the 24-month floor) */
+  canGoPrev: boolean;
   /** Is the selected month the current calendar month? */
   isCurrentMonth: boolean;
   goPrev: () => void;
@@ -112,6 +114,7 @@ export function useEmployeeMonth(): EmployeeMonth {
       fromDate: format(start, "yyyy-MM-dd"),
       toDate: format(end, "yyyy-MM-dd"),
       shortLabel: format(start, "MM/yyyy"),
+      canGoPrev: isBefore(floorMonth, start),
       canGoNext: isBefore(start, currentMonth),
       isCurrentMonth: start.getTime() === currentMonth.getTime(),
       goPrev,
@@ -119,5 +122,5 @@ export function useEmployeeMonth(): EmployeeMonth {
       goToday,
       setValue,
     };
-  }, [resolvedDate, currentMonth, goPrev, goNext, goToday, setValue]);
+  }, [resolvedDate, currentMonth, floorMonth, goPrev, goNext, goToday, setValue]);
 }

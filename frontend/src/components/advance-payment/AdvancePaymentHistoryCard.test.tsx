@@ -14,6 +14,13 @@ const pendingRequest: AdvancePaymentHistoryItem = {
 };
 
 describe("AdvancePaymentHistoryCard", () => {
+  it("uses transaction-shaped skeletons while history is loading", () => {
+    render(<AdvancePaymentHistoryCard history={[]} isLoading />);
+
+    expect(screen.getByLabelText("Đang tải lịch sử yêu cầu")).toBeInTheDocument();
+    expect(screen.queryByText("Chưa có yêu cầu ứng lương")).not.toBeInTheDocument();
+  });
+
   it("starts each transaction collapsed and keeps cancellation keyboard focus deterministic", () => {
     render(
       <AdvancePaymentHistoryCard
@@ -55,23 +62,43 @@ describe("AdvancePaymentHistoryCard", () => {
     expect(onCancel).toHaveBeenCalledWith(42);
   });
 
-  it("shows a compact month-aware empty state", () => {
+  it("shows a compact all-time empty state", () => {
     render(
       <AdvancePaymentHistoryCard
         history={[]}
         isLoading={false}
-        monthLabel="07/2026"
       />
     );
 
-    expect(screen.getByText("Chưa có yêu cầu trong tháng 07/2026")).toBeInTheDocument();
-    // The header badge prefixes the salary period so month navigation has feedback
-    // even when the selected month is empty.
-    expect(
-      screen.getByText((_, element) =>
-        element?.tagName === "SPAN" && element.textContent === "Kỳ 07/2026 · 0 yêu cầu"
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText("Chưa có yêu cầu ứng lương")).toBeInTheDocument();
+    expect(screen.getByText("Yêu cầu mới sẽ xuất hiện tại đây.")).toBeInTheDocument();
+    expect(screen.getByText("0 yêu cầu")).toBeInTheDocument();
+  });
+
+  it("shows five rows initially and makes older all-time requests scrollable", () => {
+    const history = Array.from({ length: 6 }, (_, index) => ({
+      ...pendingRequest,
+      id: index + 1,
+      status: "COMPLETED" as const,
+      requestAmount: 500_000 + index * 10_000,
+      createdAt: `2026-07-${String(10 - index).padStart(2, "0")}T08:00:00+07:00`,
+    }));
+
+    render(
+      <AdvancePaymentHistoryCard
+        history={history}
+        totalCount={12}
+        isLoading={false}
+      />
+    );
+
+    expect(screen.getByText("12 yêu cầu")).toBeInTheDocument();
+    const scrollRegion = screen.getByLabelText("Lịch sử yêu cầu, cuộn để xem thêm");
+    expect(scrollRegion).toHaveClass("max-h-[390px]", "overflow-y-auto");
+    const rows = screen.getAllByRole("button", { name: /Xem phí và chi tiết/i });
+    expect(rows).toHaveLength(6);
+    expect(rows[0]).toHaveTextContent("10/07/2026");
+    expect(rows[5]).toHaveTextContent("05/07/2026");
   });
 
   it("renders a retry action for history errors", () => {

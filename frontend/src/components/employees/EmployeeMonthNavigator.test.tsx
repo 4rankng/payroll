@@ -33,6 +33,14 @@ describe("EmployeeMonthNavigator", () => {
     expect(screen.getByRole("button", { name: "Xem tháng sau" })).toBeEnabled();
   });
 
+  it("disables backward navigation at the 24-month history floor", () => {
+    const floor = format(subMonths(startOfMonth(new Date()), 24), "yyyy-MM");
+    render(<MemoryRouter initialEntries={[`/employee?month=${floor}`]}><MonthHarness /></MemoryRouter>);
+
+    expect(screen.getByRole("button", { name: "Xem tháng trước" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Xem tháng sau" })).toBeEnabled();
+  });
+
   it("opens an accessible month and year picker", () => {
     render(<MemoryRouter initialEntries={["/employee"]}><MonthHarness /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: /Kỳ lương tháng/i }));

@@ -45,9 +45,8 @@ const FlexiblePayEmployeePage = () => {
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const { data: unreadNotifications } = useUnreadNotifications();
-  // URL-backed month: drives the history cards. The request form / check-in /
-  // wallet hero stay on the current month (they reflect live eligibility), so
-  // only the two history cards below read from `month`.
+  // URL-backed month drives the viewed quota and attendance period. Request
+  // history remains all-time so employees always see their latest activity.
   const month = useEmployeeMonth();
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
   // (70% advanceable cap, calendar-month window); others use the admin-upload flow.
@@ -62,22 +61,12 @@ const FlexiblePayEmployeePage = () => {
   } = isCheckIn
     ? checkInInfoQuery
     : regularInfoQuery;
-  // Two history views:
-  //  - formHistory (all-time) feeds the request form's quota/pending logic,
-  //    which must reflect the employee's total used budget regardless of the
-  //    month currently being browsed.
-  //  - history (month-scoped) feeds only the history card.
-  const { data: formHistoryResponse } = useAdvancePaymentHistory({ page: 1, pageSize: 50 });
   const {
     data: historyResponse,
     isLoading: historyLoading,
     isError: historyError,
     refetch: refetchHistory,
-  } = useAdvancePaymentHistory({
-    page: 1,
-    pageSize: 50,
-    forMonth: month.value,
-  });
+  } = useAdvancePaymentHistory({ page: 1, pageSize: 100 });
 
   const calculateFeeMutation = useCalculateFee();
   const regularRequestMutation = useRequestAdvancePayment();
@@ -88,7 +77,7 @@ const FlexiblePayEmployeePage = () => {
 
   const info = infoResponse?.data;
   const history = useMemo(() => historyResponse?.data ?? [], [historyResponse?.data]);
-  const formHistory = useMemo(() => formHistoryResponse?.data ?? [], [formHistoryResponse?.data]);
+  const historyTotal = historyResponse?.pagination?.totalRecords ?? history.length;
 
   // Debounced server-side fee calculation
   const [serverFeeDetails, setServerFeeDetails] = useState<{
@@ -129,6 +118,15 @@ const FlexiblePayEmployeePage = () => {
     setLatestAmount(data.amount);
     setLatestMonth(data.forMonth);
     setConfirmSheetOpen(true);
+  }, []);
+
+  const handleBankAction = useCallback(() => {
+    const section = document.getElementById("employee-bank");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
   }, []);
 
   const handleConfirmSubmit = useCallback(async () => {
@@ -172,7 +170,7 @@ const FlexiblePayEmployeePage = () => {
 
   if (profileLoading || infoLoading) {
     return (
-      <div className="employee-mobile-page min-h-[100dvh] bg-[#F6F8FA]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="employee-mobile-page min-h-[100dvh] bg-[var(--employee-page)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div
           className="flex items-center justify-between border-b border-[#E4E7EC] bg-white px-4 pb-3"
           style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
@@ -206,85 +204,79 @@ const FlexiblePayEmployeePage = () => {
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
+        contentClassName="max-w-lg space-y-6"
       >
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start">
-          <div className="min-w-0 space-y-6">
-            <div className="space-y-2">
-              <EmployeeMonthNavigator month={month} />
+        <EmployeeMonthNavigator month={month} />
 
-              {infoError ? (
-                <section id="employee-advance-request" className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]" role="alert">
-                  <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
-                  <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
-                  <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
-                  <button
-                    type="button"
-                    onClick={() => refetchInfo()}
-                    className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
-                  >
-                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                    Tải lại
-                  </button>
-                </section>
-              ) : info ? (
-                <section id="employee-advance-request" className="scroll-mt-24">
-                  <AdvancePaymentRequestForm
-                    key={`${formKey}-${month.value}`}
-                    info={info}
-                    viewMonth={month.value}
-                    history={formHistory}
-                    feeDetails={feeDetails}
-                    hasBankDestination={hasEmployeeBankInfo(profile)}
-                    onSubmit={handleRequestSubmit}
-                    onAmountChange={handleAmountChange}
-                    isPending={requestMutation.isPending}
-                    className="rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"
-                  />
-                </section>
-              ) : null}
-            </div>
+        {infoError ? (
+          <section id="employee-advance-request" className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]" role="alert">
+            <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
+            <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
+            <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
+            <button
+              type="button"
+              onClick={() => refetchInfo()}
+              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Tải lại
+            </button>
+          </section>
+        ) : info ? (
+          <section id="employee-advance-request" className="scroll-mt-24">
+            <AdvancePaymentRequestForm
+              key={`${formKey}-${month.value}`}
+              info={info}
+              viewMonth={month.value}
+              history={history}
+              feeDetails={feeDetails}
+              hasBankDestination={hasEmployeeBankInfo(profile)}
+              onSubmit={handleRequestSubmit}
+              onAmountChange={handleAmountChange}
+              onBankAction={handleBankAction}
+              isPending={requestMutation.isPending}
+              className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"
+            />
+          </section>
+        ) : null}
 
-            <section id="employee-history" className="scroll-mt-24">
-              <AdvancePaymentHistoryCard
-                history={history}
-                isLoading={historyLoading}
-                isError={historyError}
-                onRetry={() => refetchHistory()}
-                onCancel={handleCancelRequest}
-                monthLabel={month.shortLabel}
-              />
-            </section>
-          </div>
+        <section id="employee-history" className="scroll-mt-24">
+          <AdvancePaymentHistoryCard
+            history={history}
+            isLoading={historyLoading}
+            isError={historyError}
+            onRetry={() => refetchHistory()}
+            onCancel={handleCancelRequest}
+            totalCount={historyTotal}
+          />
+        </section>
 
-          <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
-            {profile?.check_in_enabled && (
-              <section id="employee-check-in" className="scroll-mt-24">
-                <EmployeeCheckInCard
-                  checkInTarget={profile.check_in_target}
-                  checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
-                  shiftStart={profile.shift_start}
-                  shiftEnd={profile.shift_end}
-                  checkInWindowStart={profile.check_in_window_start}
-                  checkInWindowEnd={profile.check_in_window_end}
-                />
-              </section>
-            )}
+        <section id="employee-bank" className="scroll-mt-24">
+          <EmployeeBankInfoCard profile={profile!} />
+        </section>
 
-            {profile?.check_in_enabled && (
-              <EmployeeAttendanceHistoryCard
-                fromDate={month.fromDate}
-                toDate={month.toDate}
-                monthLabel={month.shortLabel}
-                className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white"
-                style={employeeCardShadow}
-              />
-            )}
+        {profile?.check_in_enabled && (
+          <section id="employee-check-in" className="scroll-mt-24">
+            <EmployeeCheckInCard
+              checkInTarget={profile.check_in_target}
+              checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
+              shiftStart={profile.shift_start}
+              shiftEnd={profile.shift_end}
+              checkInWindowStart={profile.check_in_window_start}
+              checkInWindowEnd={profile.check_in_window_end}
+            />
+          </section>
+        )}
 
-            <section id="employee-bank" className="scroll-mt-24">
-              <EmployeeBankInfoCard profile={profile!} />
-            </section>
-          </aside>
-        </div>
+        {profile?.check_in_enabled && (
+          <EmployeeAttendanceHistoryCard
+            fromDate={month.fromDate}
+            toDate={month.toDate}
+            monthLabel={month.shortLabel}
+            className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white"
+            style={employeeCardShadow}
+          />
+        )}
 
       <ChangePasswordSheet
         open={passwordSheetOpen}

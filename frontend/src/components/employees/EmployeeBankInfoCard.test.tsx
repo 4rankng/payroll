@@ -14,9 +14,42 @@ describe("EmployeeBankInfoCard", () => {
   it("shows the receiving destination and keeps the full account number", () => {
     render(<EmployeeBankInfoCard profile={profile} />);
 
-    expect(screen.getByText("Tài khoản sẽ nhận tiền ứng lương")).toBeInTheDocument();
+    expect(screen.getByText("Tài khoản nhận tiền")).toBeInTheDocument();
+    expect(screen.queryByText("Tiền ứng lương sẽ được chuyển vào tài khoản này")).not.toBeInTheDocument();
+    expect(screen.getByText("Ngân hàng")).toBeInTheDocument();
+    expect(screen.getByText("Số tài khoản")).toBeInTheDocument();
+    expect(screen.getByText("Chủ tài khoản")).toBeInTheDocument();
     expect(screen.getByText(profile.bank_account_number)).toBeInTheDocument();
     expect(screen.getByText(profile.bank.branch_name)).toBeInTheDocument();
+    expect(screen.getByText(profile.bank_account_name)).toBeInTheDocument();
+  });
+
+  it("always shows the account holder even when it matches the employee name", () => {
+    render(
+      <EmployeeBankInfoCard
+        profile={{
+          fullname: "Nguyễn Văn An",
+          bank_account_name: "Nguyễn Văn An",
+          bank_account_number: "11122111918888",
+          bank: { branch_name: "Quân đội (MB)" },
+        } as EmployeeProfile}
+      />
+    );
+
+    expect(screen.getByText("Chủ tài khoản")).toBeInTheDocument();
+    expect(screen.getByText("Nguyễn Văn An")).toBeInTheDocument();
+  });
+
+  it("shows a clear empty account state without inventing verification", () => {
+    render(
+      <EmployeeBankInfoCard
+        profile={{ fullname: "Nguyễn Văn An" } as EmployeeProfile}
+      />
+    );
+
+    expect(screen.getByText("Chưa có thông tin ngân hàng")).toBeInTheDocument();
+    expect(screen.getByText("Liên hệ quản lý để cập nhật")).toBeInTheDocument();
+    expect(screen.queryByText("Đã xác minh")).not.toBeInTheDocument();
   });
 
   it("copies the full account number from an accessible action", async () => {

@@ -49,15 +49,21 @@ func (h *Handler) GetSummary(c *gin.Context) {
 		}
 	}
 
-	// Parse date parameters
+	// Parse date parameters in local timezone to match DB storage and the
+	// other timesheet endpoints (which use ParseInLocation). Using
+	// time.Parse here would interpret the date as UTC, shifting the half-open
+	// range [fromDate, toDate) by the UTC offset (e.g. +07:00 in HCM), which
+	// silently drops boundary-day entries and produces a smaller employee /
+	// amount count than the grouped endpoint and Excel weekly export.
+	loc, _ := time.LoadLocation("Local")
 	if fromDate := c.Query("fromDate"); fromDate != "" {
-		if d, err := time.Parse("2006-01-02", fromDate); err == nil {
+		if d, err := time.ParseInLocation("2006-01-02", fromDate, loc); err == nil {
 			filters.FromDate = &d
 		}
 	}
 
 	if toDate := c.Query("toDate"); toDate != "" {
-		if d, err := time.Parse("2006-01-02", toDate); err == nil {
+		if d, err := time.ParseInLocation("2006-01-02", toDate, loc); err == nil {
 			filters.ToDate = &d
 		}
 	}

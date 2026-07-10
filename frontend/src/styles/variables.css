@@ -70,22 +70,27 @@
 
     /* Employee payroll-fintech surfaces. These aliases keep the employee
        portal cohesive without changing the admin and partner themes. */
-    --employee-page: #f6f8fa;
+    --employee-page: #f5f7f9;
     --employee-surface: #ffffff;
     --employee-text: #101828;
     --employee-text-secondary: #667085;
     --employee-text-muted: #98a2b3;
     --employee-border: #e4e7ec;
     --employee-border-strong: #d0d5dd;
-    --employee-accent: #07883f;
-    --employee-accent-strong: #067647;
-    --employee-accent-soft: #ecfdf3;
+    --employee-accent: #08783e;
+    --employee-accent-strong: #066534;
+    --employee-accent-soft: #eaf8f0;
+    --employee-accent-border: #b7e4ca;
+    --employee-accent-ring: #c8f0d8;
+    --employee-summary-wash: linear-gradient(145deg, #ffffff 0%, #eefaf3 58%, #eaf8f0 100%);
     --employee-warning: #b54708;
     --employee-warning-strong: #93370d;
-    --employee-warning-soft: #fffaeb;
+    --employee-warning-soft: #fff7e8;
+    --employee-warning-border: #fedf89;
     --employee-error: #b42318;
     --employee-error-soft: #fef3f2;
     --employee-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px -24px rgba(16, 24, 40, 0.28);
+    --employee-cta-shadow: 0 8px 16px -12px rgba(8, 120, 62, 0.72);
 
     /* ========================================================================
        GRADIENT SYSTEM

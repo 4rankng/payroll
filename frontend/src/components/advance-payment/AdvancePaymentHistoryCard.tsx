@@ -6,7 +6,6 @@ import {
   CheckCircle,
   ChevronDown,
   Clock,
-  ReceiptText,
   RefreshCw,
   XCircle,
 } from "lucide-react";
@@ -17,11 +16,11 @@ import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
-  PENDING: { icon: Clock, text: "text-[#B54708]" },
-  APPROVED: { icon: CheckCircle, text: "text-[#067647]" },
-  COMPLETED: { icon: CheckCircle, text: "text-[#067647]" },
-  FAILED: { icon: XCircle, text: "text-[#B42318]" },
-  CANCELLED: { icon: Ban, text: "text-[#475467]" },
+  PENDING: { icon: Clock, tone: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-[var(--employee-warning-border)]" },
+  APPROVED: { icon: CheckCircle, tone: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] ring-[var(--employee-accent-border)]" },
+  COMPLETED: { icon: CheckCircle, tone: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] ring-[var(--employee-accent-border)]" },
+  FAILED: { icon: XCircle, tone: "bg-[var(--employee-error-soft)] text-[var(--employee-error)] ring-[#FECDCA]" },
+  CANCELLED: { icon: Ban, tone: "bg-[#F2F4F7] text-[#475467] ring-[#E4E7EC]" },
 } as const;
 
 const safeFormat = (value: number | null | undefined) =>
@@ -112,36 +111,36 @@ function HistoryItem({ item, onCancel }: { item: AdvancePaymentHistoryItem; onCa
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((current) => !current)}
-        className="w-full px-4 py-3.5 text-left transition-colors duration-200 hover:bg-[#F9FAFB] active:bg-[#F2F4F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
+        className="w-full px-4 py-3.5 text-left transition-transform duration-200 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
       >
-        <span className="flex items-center justify-between gap-3">
-          <span className={cn("employee-type-label inline-flex min-w-0 items-center gap-1.5 font-semibold", config.text)}>
-            <StatusIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{getVietnameseAdvancePaymentStatus(item.status)}</span>
-          </span>
-          <span className="employee-type-pill shrink-0 text-[var(--employee-text-secondary)] tabular-nums">{safeDate(item.createdAt)}</span>
-        </span>
-
-        <span className="mt-3 grid grid-cols-2 gap-4">
-          <span className="min-w-0">
-            <span className="employee-type-body-sm block text-[var(--employee-text-secondary)]">Số tiền yêu cầu</span>
-            <span className="employee-type-card-title mt-1 block break-words text-[var(--employee-text)] tabular-nums">{safeFormat(item.requestAmount)}</span>
+        <span className="flex items-center gap-3">
+          <span className="min-w-0 flex-1">
+            <span className={cn("employee-type-pill inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 ring-1 ring-inset", config.tone)}>
+              <StatusIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{getVietnameseAdvancePaymentStatus(item.status)}</span>
+            </span>
+            <span className="employee-type-body-sm mt-1.5 block text-[var(--employee-text-secondary)] tabular-nums">
+              Yêu cầu ngày {safeDate(item.createdAt)}
+            </span>
           </span>
           <span className="min-w-0 text-right">
-            <span className="employee-type-body-sm block text-[var(--employee-text-secondary)]">Thực nhận</span>
-            <span className="employee-type-card-title mt-1 block break-words text-[var(--employee-accent-strong)] tabular-nums">{safeFormat(item.netAmount)}</span>
+            <span className="employee-type-card-title block break-words text-[var(--employee-text)] tabular-nums">
+              {safeFormat(item.requestAmount)}
+            </span>
+            <span className="employee-type-body-sm mt-1 block text-[var(--employee-text-secondary)]">Số tiền yêu cầu</span>
           </span>
-        </span>
-
-        <span className="employee-type-body-sm mt-2.5 flex items-center justify-between gap-3 text-[var(--employee-text-secondary)]">
-          <span>{isOpen ? "Thu gọn chi tiết" : "Xem phí và chi tiết"}</span>
-          <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
+          <ChevronDown className={cn("h-5 w-5 shrink-0 text-[var(--employee-text-muted)] transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
+          <span className="sr-only">{isOpen ? "Thu gọn chi tiết" : "Xem phí và chi tiết"}</span>
         </span>
       </button>
 
       {isOpen && (
         <div id={panelId} className="border-t border-[#EAECF0] bg-[#F9FAFB] px-4 py-3">
           <div className="flex items-center justify-between gap-4">
+            <span className="employee-type-label text-[#667085]">Thực nhận</span>
+            <span className="employee-type-row-amount text-[var(--employee-accent)] tabular-nums">{safeFormat(item.netAmount)}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-4">
             <span className="employee-type-label text-[#667085]">Phí giao dịch</span>
             <span className="employee-type-row-amount text-[#344054] tabular-nums">{safeFormat(item.fee)}</span>
           </div>
@@ -162,7 +161,7 @@ interface AdvancePaymentHistoryCardProps {
   isError?: boolean;
   onRetry?: () => void;
   onCancel?: (id: number) => void;
-  monthLabel?: string;
+  totalCount?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -173,20 +172,20 @@ export function AdvancePaymentHistoryCard({
   isError = false,
   onRetry,
   onCancel,
-  monthLabel,
+  totalCount,
   className,
   style,
 }: AdvancePaymentHistoryCardProps) {
   return (
     <div className={className} style={style} aria-labelledby="employee-advance-history-title">
-      <div className="mb-3 flex items-end justify-between gap-3 px-0.5">
-        <div>
+      <div className="mb-3 flex items-start justify-between gap-3 px-0.5">
+        <div className="min-w-0">
           <h2 id="employee-advance-history-title" className="employee-type-section-title text-[#101828]">Lịch sử yêu cầu</h2>
           <p className="employee-type-body mt-0.5 text-[var(--employee-text-secondary)]">Theo dõi trạng thái các yêu cầu ứng lương</p>
         </div>
         {!isLoading && !isError && (
-          <span className="employee-type-pill shrink-0 text-[#475467] tabular-nums">
-            {monthLabel ? `Kỳ ${monthLabel} · ` : ""}{history.length} yêu cầu
+          <span className="employee-type-pill shrink-0 rounded-full bg-[var(--employee-accent-soft)] px-2.5 py-1 text-[var(--employee-accent)] tabular-nums">
+            {totalCount ?? history.length} yêu cầu
           </span>
         )}
       </div>
@@ -200,22 +199,38 @@ export function AdvancePaymentHistoryCard({
           <p className="employee-type-strong text-[#101828]">Chưa tải được lịch sử</p>
           <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
           {onRetry && (
-            <button type="button" onClick={onRetry} className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-4 text-[#344054] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#07883F]">
+            <button type="button" onClick={onRetry} className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại
             </button>
           )}
         </div>
       ) : history.length === 0 ? (
-        <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]">
-          <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#F2F4F7] text-[var(--employee-text-secondary)]">
-            <ReceiptText className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <p className="employee-type-card-title text-[#344054]">Chưa có yêu cầu trong tháng {monthLabel}</p>
-          <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Các yêu cầu mới sẽ xuất hiện tại đây.</p>
+        <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-4 py-5 text-center">
+          <img
+            src="/advance-payment-empty-state.png"
+            alt=""
+            width={72}
+            height={72}
+            loading="lazy"
+            decoding="async"
+            className="employee-empty-art mb-2 h-[72px] w-[72px] rounded-2xl object-cover"
+            aria-hidden="true"
+          />
+          <p className="employee-type-card-title text-[#344054]">Chưa có yêu cầu ứng lương</p>
+          <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Yêu cầu mới sẽ xuất hiện tại đây.</p>
         </div>
       ) : (
-        <div className="divide-y divide-[#EAECF0] overflow-hidden rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+        <div
+          className={cn(
+            "divide-y divide-[#EAECF0] rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]",
+            history.length > 5
+              ? "max-h-[390px] overflow-y-auto overscroll-contain"
+              : "overflow-hidden"
+          )}
+          tabIndex={history.length > 5 ? 0 : undefined}
+          aria-label={history.length > 5 ? "Lịch sử yêu cầu, cuộn để xem thêm" : undefined}
+        >
           {history.map((item) => <HistoryItem key={item.id} item={item} onCancel={onCancel} />)}
         </div>
       )}

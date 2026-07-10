@@ -113,6 +113,7 @@
 - Reserve the 32px role for the single primary wage/advance amount. Attendance rows, badges, bank details, map guidance, and buttons stay within the 12–18px roles.
 - Use only 400, 500, 600, and 700 weights in the employee portal. Prefer borders, spacing, and surface contrast over repeated shadows.
 - Employee disclosures and sheets use the same semantic classes so portalled content does not fall back to the larger admin typography scale.
+- Employee self-service surfaces use the `--employee-*` semantic tokens: a neutral `#F5F7F9` canvas, white surfaces, accessible dark emerald actions, soft emerald summaries, and amber only for actionable warnings. Financial status must also include text or an icon.
 
 **Spacing:**
 ```css
