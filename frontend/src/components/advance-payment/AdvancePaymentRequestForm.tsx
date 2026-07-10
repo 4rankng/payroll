@@ -15,6 +15,8 @@ interface AdvancePaymentRequestFormProps {
   info: AdvancePaymentInfo;
   /** Payroll month selected by the page-level month navigator (`YYYY-MM`). */
   viewMonth?: string;
+  /** Whether the selected calendar month is earlier than the current month. */
+  isPastMonth?: boolean;
   history?: AdvancePaymentHistoryItem[];
   feeDetails: { fee: number; netAmount: number } | null;
   hasBankDestination: boolean;
@@ -29,6 +31,7 @@ interface AdvancePaymentRequestFormProps {
 export function AdvancePaymentRequestForm({
   info,
   viewMonth,
+  isPastMonth = false,
   history,
   feeDetails,
   hasBankDestination,
@@ -122,14 +125,16 @@ export function AdvancePaymentRequestForm({
     !validationError &&
     !isPending &&
     selectedQuotaRemaining > 0;
-  const awaitingPayroll = quotaSummary.maxAdvanceAmount <= 0;
+  const awaitingPayroll = !isPastMonth && quotaSummary.maxAdvanceAmount <= 0;
   const quotaExhausted = quotaSummary.maxAdvanceAmount > 0 && selectedQuotaRemaining <= 0;
   const requestUnavailable =
+    isPastMonth ||
     awaitingPayroll ||
     !isViewingActionableMonth ||
     !info.canRequest ||
     !hasBankDestination ||
     quotaExhausted;
+  const showUnavailableContext = !isPastMonth && !quotaExhausted;
   const allowanceUsedAmount = Math.min(
     quotaSummary.maxAdvanceAmount,
     Math.max(quotaSummary.usedAmount, quotaSummary.maxAdvanceAmount - quotaSummary.remainingAmount)
@@ -138,13 +143,14 @@ export function AdvancePaymentRequestForm({
     ? Math.min(100, Math.max(0, Math.round((allowanceUsedAmount / quotaSummary.maxAdvanceAmount) * 100)))
     : 0;
   const status = useMemo(() => {
+    if (isPastMonth) return { label: "Kỳ lương trước", tone: "neutral" as const };
     if (awaitingPayroll) return { label: "Chờ cập nhật bảng công", tone: "warning" as const };
     if (!hasBankDestination) return { label: "Thiếu tài khoản nhận tiền", tone: "warning" as const };
     if (quotaExhausted) return { label: "Đã dùng hết hạn mức", tone: "warning" as const };
     if (!isViewingActionableMonth) return { label: "Kỳ lương trước", tone: "neutral" as const };
     if (!info.canRequest) return { label: "Tạm chưa khả dụng", tone: "warning" as const };
     return { label: "Còn hạn mức", tone: "success" as const };
-  }, [awaitingPayroll, hasBankDestination, info.canRequest, isViewingActionableMonth, quotaExhausted]);
+  }, [awaitingPayroll, hasBankDestination, info.canRequest, isPastMonth, isViewingActionableMonth, quotaExhausted]);
 
   useEffect(() => {
     onAmountChange?.(numericAmount);
@@ -208,18 +214,20 @@ export function AdvancePaymentRequestForm({
       <div className="-mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-4 pb-4 pt-4">
         <div className="flex items-start justify-between gap-3">
           <p className="employee-type-label-caps pt-1 text-[var(--employee-accent)]">Số tiền có thể ứng</p>
-          <span
-            className={`employee-type-pill inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 ${
-              status.tone === "success"
-                ? "bg-white/90 text-[var(--employee-accent)] ring-1 ring-[var(--employee-accent-border)]"
-                : status.tone === "warning"
-                  ? "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-1 ring-[var(--employee-warning-border)]"
-                  : "bg-white/90 text-[var(--employee-text-secondary)] ring-1 ring-[var(--employee-border)]"
-            }`}
-          >
-            {status.tone === "success" && <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />}
-            {status.label}
-          </span>
+          {!awaitingPayroll && (
+            <span
+              className={`employee-type-pill inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 ${
+                status.tone === "success"
+                  ? "bg-white/90 text-[var(--employee-accent)] ring-1 ring-[var(--employee-accent-border)]"
+                  : status.tone === "warning"
+                    ? "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-1 ring-[var(--employee-warning-border)]"
+                    : "bg-white/90 text-[var(--employee-text-secondary)] ring-1 ring-[var(--employee-border)]"
+              }`}
+            >
+              {status.tone === "success" && <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />}
+              {status.label}
+            </span>
+          )}
         </div>
 
         <div className="mt-1 flex items-center gap-2.5">
@@ -257,7 +265,7 @@ export function AdvancePaymentRequestForm({
         </div>
       </div>
 
-      {requestUnavailable ? (
+      {requestUnavailable ? showUnavailableContext ? (
         <div className="mt-4 border-t border-[#EAECF0] pt-4" role="status">
           <div className="flex items-start gap-2.5 rounded-[10px] border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] px-3 py-2.5">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--employee-warning)]" aria-hidden="true" />
@@ -267,10 +275,6 @@ export function AdvancePaymentRequestForm({
                   ? `Đang chờ bảng công tháng ${viewedMonthLabel}`
                   : !hasBankDestination
                   ? "Chưa có tài khoản nhận tiền"
-                  : quotaExhausted
-                    ? "Hạn mức kỳ này đã sử dụng hết"
-                  : !isViewingActionableMonth
-                    ? "Kỳ ứng lương này đã kết thúc"
                   : info.canRequestTitle || "Chưa thể ứng lương"}
               </p>
               <p className="employee-type-body-sm mt-0.5 text-[var(--employee-warning)]">
@@ -278,10 +282,6 @@ export function AdvancePaymentRequestForm({
                   ? `Hạn mức ứng lương sẽ hiển thị sau khi bảng công tháng ${viewedMonthLabel} được cập nhật.`
                   : !hasBankDestination
                   ? "Liên hệ quản lý để cập nhật thông tin ngân hàng trước khi ứng lương."
-                  : quotaExhausted
-                    ? "Bạn có thể xem lại các yêu cầu bên dưới hoặc chờ kỳ lương tiếp theo."
-                  : !isViewingActionableMonth
-                    ? "Bạn có thể xem lại các yêu cầu của kỳ lương này ở bên dưới."
                   : info.canRequestReason || "Vui lòng quay lại trong kỳ ứng lương tiếp theo."}
               </p>
             </div>
@@ -298,7 +298,7 @@ export function AdvancePaymentRequestForm({
             </button>
           )}
         </div>
-      ) : (
+      ) : null : (
         <>
           <div className="mt-4 border-t border-[#EAECF0] pt-4">
             <label htmlFor="advance-payment-amount" className="employee-type-label block text-[#475467]">

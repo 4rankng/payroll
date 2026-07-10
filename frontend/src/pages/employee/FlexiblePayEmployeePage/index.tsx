@@ -228,6 +228,7 @@ const FlexiblePayEmployeePage = () => {
               key={`${formKey}-${month.value}`}
               info={info}
               viewMonth={month.value}
+              isPastMonth={!month.isCurrentMonth}
               history={history}
               feeDetails={feeDetails}
               hasBankDestination={hasEmployeeBankInfo(profile)}
