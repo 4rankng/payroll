@@ -24,11 +24,14 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { ArrowDownUp } from "lucide-react";
 import { useTransactions } from "@/hooks/transactions/useTransactions";
 import { useLedgerSummary } from "@/hooks/ledger/useLedgerBalance";
+import { useLedgerManagement } from "@/hooks/ledger/useLedgerManagement";
 import { useGeneralModals } from "@/hooks/useModalNavigation";
-import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
+import { useSendPayrollReportEmail } from "@/hooks/api/usePayrolls";
 import { useSendReconciliationEmail } from "@/hooks/api/useAdvancePaymentReconciliation";
 import { dateToString } from "@/utils/dateHelpers";
+import { extractOnePayFeeIssues } from "@/utils/onepayFeeReport";
 import type { TransactionFilters as FiltersType, Transaction } from "@/services/api/transaction.service";
+import type { OnePayFeeImportResponse, OnePayFeeReportIssue } from "@/types/api/financial.types";
 
 const SORT_FIELD_MAP: Record<string, string> = {
   created_at: "created_at",
@@ -69,12 +72,15 @@ const TransactionsPageMobile = () => {
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
   const [selectedHistoryFilename, setSelectedHistoryFilename] = useState("");
+  const [selectedHistoryUploadedAt, setSelectedHistoryUploadedAt] = useState<string | null>(null);
   const [shouldLoadBulkTransferHistory, setShouldLoadBulkTransferHistory] = useState(false);
   const [payrollEmailDialogOpen, setPayrollEmailDialogOpen] = useState(false);
   const [advanceEmailDialogOpen, setAdvanceEmailDialogOpen] = useState(false);
   const [exportSaoKeDialogOpen, setExportSaoKeDialogOpen] = useState(false);
   const [exportAdvanceDialogOpen, setExportAdvanceDialogOpen] = useState(false);
   const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
+  const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
+  const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
 
   const { data: transactionsData, isLoading: isLoadingTransactions } =
     useTransactions(filters);
@@ -90,6 +96,12 @@ const TransactionsPageMobile = () => {
   const { openTransactionDetails, openAddLedgerEntry } = useGeneralModals();
   const sendPayrollEmailMutation = useSendPayrollReportEmail();
   const sendAdvanceEmailMutation = useSendReconciliationEmail();
+  const {
+    importOnePayFeeReport,
+    isImportingOnePayFeeReport,
+    runWalletSettlement,
+    isRunningWalletSettlement,
+  } = useLedgerManagement();
 
   const handleViewHistory = useCallback(() => {
     setShowHistoryDialog(true);
@@ -101,8 +113,36 @@ const TransactionsPageMobile = () => {
     setShowHistoryDialog(false);
     setSelectedHistoryId(null);
     setSelectedHistoryFilename("");
+    setSelectedHistoryUploadedAt(null);
     setShouldLoadBulkTransferHistory(false);
   }, []);
+
+  const handleOnePayFeeDialogOpenChange = useCallback((open: boolean) => {
+    setOnePayFeeDialogOpen(open);
+    if (open) {
+      setOnePayFeeResult(null);
+      setOnePayFeeIssues([]);
+    }
+  }, []);
+
+  const handleImportOnePayFeeReport = useCallback(async (file: File) => {
+    setOnePayFeeResult(null);
+    setOnePayFeeIssues([]);
+    try {
+      const result = await importOnePayFeeReport(file);
+      setOnePayFeeResult(result);
+    } catch (error) {
+      setOnePayFeeIssues(extractOnePayFeeIssues(error));
+    }
+  }, [importOnePayFeeReport]);
+
+  const handleRunWalletSettlement = useCallback(async () => {
+    try {
+      await runWalletSettlement();
+    } catch {
+      /* handled by mutation */
+    }
+  }, [runWalletSettlement]);
 
   const handlePayrollReportEmailSend = useCallback(
     async (params: PayrollReportEmailParams) => {
@@ -143,7 +183,7 @@ const TransactionsPageMobile = () => {
         onImportTransactions={() => setShowImportDialog(true)}
         onViewHistory={handleViewHistory}
         onUploadSettlement={() => setShowSettlementDialog(true)}
-        onImportOnePayFee={() => setOnePayFeeDialogOpen(true)}
+        onImportOnePayFee={() => handleOnePayFeeDialogOpenChange(true)}
         onExportSaoKePayroll={() => setExportSaoKeDialogOpen(true)}
         onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
         onSendStatementEmail={() => setPayrollEmailDialogOpen(true)}
@@ -151,6 +191,9 @@ const TransactionsPageMobile = () => {
         onViewSaoKeHistory={() => setShowSaoKeHistoryDialog(true)}
         isSendingStatementEmail={sendPayrollEmailMutation.isPending}
         isSendingAdvanceEmail={sendAdvanceEmailMutation.isPending}
+        isImportingOnePayFee={isImportingOnePayFeeReport}
+        onRunWalletSettlement={handleRunWalletSettlement}
+        isRunningWalletSettlement={isRunningWalletSettlement}
       />
 
       <TransactionSummaryCardMobile
@@ -255,7 +298,11 @@ const TransactionsPageMobile = () => {
       />
       <OnePayFeeReportDialog
         open={onePayFeeDialogOpen}
-        onOpenChange={setOnePayFeeDialogOpen}
+        onOpenChange={handleOnePayFeeDialogOpenChange}
+        onUpload={handleImportOnePayFeeReport}
+        isUploading={isImportingOnePayFeeReport}
+        result={onePayFeeResult}
+        issues={onePayFeeIssues}
       />
       <ExportSaoKeDialog
         open={exportSaoKeDialogOpen}
@@ -273,9 +320,10 @@ const TransactionsPageMobile = () => {
       <BulkTransferHistoryDialog
         open={showHistoryDialog && selectedHistoryId === null}
         onOpenChange={handleCloseHistory}
-        onSelectHistory={(id, filename) => {
+        onSelectHistory={(id, filename, uploadedAt) => {
           setSelectedHistoryId(id);
           setSelectedHistoryFilename(filename);
+          setSelectedHistoryUploadedAt(uploadedAt);
         }}
         shouldFetchHistories={shouldLoadBulkTransferHistory}
       />
@@ -283,10 +331,12 @@ const TransactionsPageMobile = () => {
         open={showHistoryDialog && selectedHistoryId !== null}
         historyId={selectedHistoryId}
         filename={selectedHistoryFilename}
+        uploadedAt={selectedHistoryUploadedAt || undefined}
         onOpenChange={handleCloseHistory}
         onBack={() => {
           setSelectedHistoryId(null);
           setSelectedHistoryFilename("");
+          setSelectedHistoryUploadedAt(null);
         }}
       />
 

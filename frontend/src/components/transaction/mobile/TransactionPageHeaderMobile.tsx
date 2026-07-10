@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   Plus, MoreHorizontal, FileUp, History, Mail, Loader2, ArrowRightLeft,
-  FileDown, FileText, CreditCard,
+  FileDown, FileText, CreditCard, Zap,
 } from 'lucide-react';
 
 interface TransactionPageHeaderMobileProps {
@@ -27,6 +27,8 @@ interface TransactionPageHeaderMobileProps {
   isSendingStatementEmail?: boolean;
   isSendingAdvanceEmail?: boolean;
   isImportingOnePayFee?: boolean;
+  onRunWalletSettlement?: () => void;
+  isRunningWalletSettlement?: boolean;
 }
 
 export function TransactionPageHeaderMobile({
@@ -43,6 +45,8 @@ export function TransactionPageHeaderMobile({
   isSendingStatementEmail = false,
   isSendingAdvanceEmail = false,
   isImportingOnePayFee = false,
+  onRunWalletSettlement,
+  isRunningWalletSettlement = false,
 }: TransactionPageHeaderMobileProps) {
   const [showActionsSheet, setShowActionsSheet] = useState(false);
   const close = () => setShowActionsSheet(false);
@@ -175,6 +179,22 @@ export function TransactionPageHeaderMobile({
                     )}
                     <span className="text-sm font-medium">
                       {isImportingOnePayFee ? 'Đang nhập...' : 'Nhập phí OnePay'}
+                    </span>
+                  </button>
+                )}
+                {onRunWalletSettlement && (
+                  <button
+                    className={actionClass}
+                    onClick={() => { onRunWalletSettlement(); close(); }}
+                    disabled={isRunningWalletSettlement}
+                  >
+                    {isRunningWalletSettlement ? (
+                      <Loader2 className="h-5 w-5 shrink-0 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Zap className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {isRunningWalletSettlement ? 'Đang chốt...' : 'Chốt lương'}
                     </span>
                   </button>
                 )}
