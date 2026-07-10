@@ -92,6 +92,7 @@ export const API_ENDPOINTS = {
     base: '/timesheets',
     preview: '/timesheets/preview',
     summary: '/timesheets/summary',
+    cashReadiness: '/timesheets/cash-readiness',
     grouped: '/timesheets/grouped', // Server-side grouped by employee for partner view
     byId: (id: number) => `/timesheets/${id}`,
     approve: (id: number) => `/timesheets/${id}/approve`,

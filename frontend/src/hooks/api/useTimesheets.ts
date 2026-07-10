@@ -19,6 +19,7 @@ import type {
   EmployeeTimesheetSummary,
   ListGroupedTimesheetsResponse,
 } from '@/types/api/timesheet.types';
+import type { CashReadinessParams } from '@/types/api/cash-readiness.types';
 import { addItemToList, updateItemInList, removeItemFromList, updateSummaryCount, batchUpdateItemsInList } from '@/utils/cacheUpdates';
 import { invalidateCache } from '@/lib/cache/invalidationService';
 import { QueryKeys } from '@/lib/queryKeys';
@@ -48,6 +49,16 @@ export const useTimesheetSummary = (params?: {
   return useQuery({
     queryKey: QueryKeys.timesheets.summary(normalizeFilters(params)),
     queryFn: () => timesheetService.getSummary(params),
+  });
+};
+
+// Get the advisory cash-prep forecast for the next timesheet bulk transfer.
+// Lives in the timesheets query namespace so bulk-approve/transfer refresh it.
+// DISPLAY ONLY — never feeds back into balance/disbursement.
+export const useCashReadiness = (params?: CashReadinessParams) => {
+  return useQuery({
+    queryKey: QueryKeys.timesheets.cashReadiness(normalizeFilters(params)),
+    queryFn: () => timesheetService.getCashReadiness(params),
   });
 };
 

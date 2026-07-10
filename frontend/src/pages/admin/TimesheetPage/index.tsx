@@ -18,7 +18,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
 import { useTimesheetStatsConfig } from '@/hooks/useTimesheetStatsConfig';
 import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
-import { useApproveAllTimesheets, useTimesheetSummary } from '@/hooks/api/useTimesheets';
+import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
+import { CashReadinessCard } from '@/components/timesheet/CashReadinessCard';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { useSettingByKey } from '@/hooks/api/useSettings';
 import { MODAL_IDS } from '@/constants/modalRegistry';
@@ -81,6 +82,7 @@ const TimesheetPage = () => {
   // approveAll() ignores filters and approves system-wide, so we show the
   // honest, unfiltered scope here.
   const { data: globalSummary, refetch: refetchGlobalSummary } = useTimesheetSummary({});
+  const cashReadiness = useCashReadiness({});
 
   // Initialize employee and status selection from URL on mount only
   useEffect(() => {
@@ -371,6 +373,15 @@ const TimesheetPage = () => {
         overscanBy={Infinity}
         itemKey={data => data.id}
       />
+
+      {/* ── Advisory cash-prep forecast for the next bulk transfer ── */}
+      <div className="mt-4 max-w-md">
+        <CashReadinessCard
+          data={cashReadiness.data}
+          isLoading={cashReadiness.isLoading}
+          isError={cashReadiness.isError}
+        />
+      </div>
 
       <MissingBankDetailsSection />
 

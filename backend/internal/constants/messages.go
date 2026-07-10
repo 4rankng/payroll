@@ -234,6 +234,8 @@ const (
 	MsgFailedToGetUpdatedTimesheetVN            = "Không thể lấy bảng chấm công đã cập nhật"
 	MsgFailedToGetPendingTimesheetsVN           = "Không thể lấy bảng chấm công đang chờ"
 	MsgFailedToGetTimesheetSummaryVN            = "Không thể lấy tóm tắt bảng chấm công"
+	MsgCashReadinessRetrievedVN                 = "Lấy dự báo tiền cần chuẩn bị thành công"
+	MsgFailedToGetCashReadinessVN               = "Không thể lấy dự báo tiền cần chuẩn bị"
 	MsgBulkTimesheetsCreatedSuccessfullyVN      = "Tạo hàng loạt bảng chấm công thành công"
 	MsgBulkTimesheetsUpdatedSuccessfullyVN      = "Cập nhật hàng loạt bảng chấm công thành công"
 	MsgBulkTimesheetsDeletedSuccessfullyVN      = "Xóa hàng loạt bảng chấm công thành công"

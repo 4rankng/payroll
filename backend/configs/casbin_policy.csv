@@ -38,6 +38,7 @@ p, partner, /api/v1/timesheets/:id, DELETE, allow
 # not cover :id under keyMatch2 (no prefix match), so this rule is required.
 p, partner, /api/v1/timesheets/:id, GET, allow
 p, partner, /api/v1/timesheets/summary, GET, allow
+p, partner, /api/v1/timesheets/cash-readiness, GET, allow
 p, partner, /api/v1/timesheets/grouped, GET, allow
 p, partner, /api/v1/timesheets/export, GET, allow
 # Payroll report: partner may export their own (handler allows RolePartner and

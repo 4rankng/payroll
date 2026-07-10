@@ -3,6 +3,7 @@ package handlers
 import (
 	timesheetHandler "api-server/internal/transport/http/handlers/timesheet"
 
+	"api-server/internal/app/services"
 	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/payroll"
@@ -33,6 +34,7 @@ func NewTimesheetHandler(
 	timesheetRepo domain.TimesheetRepository,
 	auditService interface{},
 	clk clock.Clock,
+	cashReadinessSvc *services.CashReadinessForecastService,
 ) *TimesheetHandler {
 	return &TimesheetHandler{
 		Handler: timesheetHandler.NewHandler(
@@ -51,6 +53,7 @@ func NewTimesheetHandler(
 			timesheetRepo,
 			auditService,
 			clk,
+			cashReadinessSvc,
 		),
 	}
 }

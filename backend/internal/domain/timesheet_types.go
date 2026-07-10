@@ -87,6 +87,23 @@ type TimesheetRepository interface {
 
 	// Salary period change validation
 	CountUnsettledPaidTimesheets(ctx context.Context, projectID uint) (int64, error)
+
+	// Cash-readiness forecast: daily approved-pay accrual rows that the
+	// CashReadinessForecastService pivots into per-Ky cohort curves. Scoped
+	// identically to GetSummaryStats so the cohort and the "Chờ thanh toán"
+	// figure never diverge.
+	GetAccrualCohort(ctx context.Context, filters TimesheetFilters) ([]TimesheetAccrualDailyRow, error)
+}
+
+// TimesheetAccrualDailyRow is one day's approved-pay accrual for a single work
+// date, aggregated across employees: the total approved amount whose work date
+// is WorkDate and whose approval landed on ApprovedDate. Cycle-day derivation
+// and cumulative pivoting happen in Go (pkg/clock + the forecast service) so
+// the cycle model stays a single testable source of truth.
+type TimesheetAccrualDailyRow struct {
+	WorkDate     time.Time `gorm:"column:work_date" json:"work_date"`
+	ApprovedDate time.Time `gorm:"column:approved_date" json:"approved_date"`
+	Amount       int64     `gorm:"column:amount" json:"amount"`
 }
 
 // Narrow interfaces for interface segregation — each consumer depends only on what it needs.

@@ -1,5 +1,6 @@
 import { apiClient, buildQueryString, ApiResponse, createIdempotencyKey } from './client';
 import type { PartnerImportFile, PartnerImportListParams } from '@/types/api/timesheet.types';
+import type { CashReadinessResponse, CashReadinessParams } from '@/types/api/cash-readiness.types';
 import { API_ENDPOINTS, API_CONFIG } from '@/config/api.config';
 import { authManager } from '@/lib/auth';
 import {
@@ -44,6 +45,21 @@ class TimesheetService {
     const queryString = params ? buildQueryString(params) : '';
     const response = await apiClient.get<TimesheetSummary>(
       `${API_ENDPOINTS.timesheets.summary}${queryString}`
+    );
+    if (!response.data) {
+      throw new Error('API response missing expected data');
+    }
+    return response.data;
+  }
+
+  /**
+   * Get the advisory cash-prep forecast for the next timesheet bulk transfer.
+   * DISPLAY ONLY — never feeds back into balance/disbursement.
+   */
+  async getCashReadiness(params?: CashReadinessParams): Promise<CashReadinessResponse> {
+    const queryString = params ? buildQueryString(params) : '';
+    const response = await apiClient.get<CashReadinessResponse>(
+      `${API_ENDPOINTS.timesheets.cashReadiness}${queryString}`
     );
     if (!response.data) {
       throw new Error('API response missing expected data');

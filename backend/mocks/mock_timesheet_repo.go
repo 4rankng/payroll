@@ -772,6 +772,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) GetSummaryStats(ctx, filters inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSummaryStats", reflect.TypeOf((*MockTimesheetRepository)(nil).GetSummaryStats), ctx, filters)
 }
 
+// GetAccrualCohort mocks base method.
+func (m *MockTimesheetRepository) GetAccrualCohort(ctx context.Context, filters domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccrualCohort", ctx, filters)
+	ret0, _ := ret[0].([]domain.TimesheetAccrualDailyRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccrualCohort indicates an expected call of GetAccrualCohort.
+func (mr *MockTimesheetRepositoryMockRecorder) GetAccrualCohort(ctx, filters interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccrualCohort", reflect.TypeOf((*MockTimesheetRepository)(nil).GetAccrualCohort), ctx, filters)
+}
+
 // GetTotalPaidSalary mocks base method.
 func (m *MockTimesheetRepository) GetTotalPaidSalary(ctx context.Context) (int64, error) {
 	m.ctrl.T.Helper()

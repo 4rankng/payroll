@@ -30,6 +30,7 @@ type Config struct {
 	Google         GoogleConfig
 	Captcha        CaptchaConfig
 	WalletForecast WalletForecastConfig
+	CashForecast   CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -203,6 +204,21 @@ type WalletForecastConfig struct {
 	HistoryMonths     int     // env WALLET_FORECAST_HISTORY_MONTHS, default 6
 	LeadDays          int     // env WALLET_FORECAST_LEAD_DAYS, default 2
 	UncertaintyFactor float64 // env WALLET_FORECAST_UNCERTAINTY_FACTOR, default 0
+}
+
+// CashForecastConfig governs the advisory timesheet cash-readiness forecast on
+// /admin/timesheet ("how much cash to prepare for the next weekly bulk
+// transfer"). Like the wallet forecast, this is DISPLAY ONLY — it never feeds
+// SyncBalance/CreateTopup or any disbursement.
+//
+// All fields optional; defaults give a p95 band, a 5000-draw Monte Carlo, a
+// 6-month cohort lookback (≈ 24 Ky observations across Ky 1–4), a 2-day
+// prepare-by lead window, and no extra safety stock.
+type CashForecastConfig struct {
+	ServiceLevel  float64 // env CASH_FORECAST_SERVICE_LEVEL, default 0.95 (band upper quantile)
+	NSim          int     // env CASH_FORECAST_N_SIM, default 5000
+	HistoryMonths int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
+	LeadDays      int     // env CASH_FORECAST_LEAD_DAYS, default 2
 }
 
 // NinepayConfig holds the credentials, endpoint, and feature flags for
@@ -425,6 +441,12 @@ func Load() (*Config, error) {
 			LeadDays:          parseInt(getEnv("WALLET_FORECAST_LEAD_DAYS", "2")),
 			UncertaintyFactor: parseFloat(getEnv("WALLET_FORECAST_UNCERTAINTY_FACTOR", "0")),
 		},
+		CashForecast: CashForecastConfig{
+			ServiceLevel:  parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
+			NSim:          parseInt(getEnv("CASH_FORECAST_N_SIM", "5000")),
+			HistoryMonths: parseInt(getEnv("CASH_FORECAST_HISTORY_MONTHS", "6")),
+			LeadDays:      parseInt(getEnv("CASH_FORECAST_LEAD_DAYS", "2")),
+		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
 		TenantQueueWorkers:     parseInt(getEnv("TENANT_QUEUE_WORKERS", "5")),
@@ -612,6 +634,33 @@ func (c *Config) validate() error {
 		return fmt.Errorf(
 			"config: WALLET_FORECAST_UNCERTAINTY_FACTOR must be in [0, 1], got %v",
 			c.WalletForecast.UncertaintyFactor,
+		)
+	}
+
+	// Cash-readiness forecast: the band upper quantile must be a valid
+	// probability and the lead window non-negative.
+	if c.CashForecast.ServiceLevel > 0 && (c.CashForecast.ServiceLevel < 0.5 || c.CashForecast.ServiceLevel > 0.999) {
+		return fmt.Errorf(
+			"config: CASH_FORECAST_SERVICE_LEVEL must be in [0.5, 0.999], got %v",
+			c.CashForecast.ServiceLevel,
+		)
+	}
+	if c.CashForecast.LeadDays < 0 {
+		return fmt.Errorf(
+			"config: CASH_FORECAST_LEAD_DAYS must be non-negative, got %d",
+			c.CashForecast.LeadDays,
+		)
+	}
+	if c.CashForecast.HistoryMonths > 0 && c.CashForecast.HistoryMonths < 3 {
+		return fmt.Errorf(
+			"config: CASH_FORECAST_HISTORY_MONTHS must be 0 (default 6) or >= 3, got %d",
+			c.CashForecast.HistoryMonths,
+		)
+	}
+	if c.CashForecast.NSim > 0 && c.CashForecast.NSim < 1000 {
+		return fmt.Errorf(
+			"config: CASH_FORECAST_N_SIM must be 0 (default 5000) or >= 1000, got %d",
+			c.CashForecast.NSim,
 		)
 	}
 

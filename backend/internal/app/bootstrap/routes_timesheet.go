@@ -6,6 +6,7 @@ func setupTimesheetRoutes(protected *gin.RouterGroup, container *Container) {
 	timesheets := protected.Group("/timesheets")
 	{
 		timesheets.GET("/summary", container.Handlers.Timesheet.GetSummary)
+		timesheets.GET("/cash-readiness", container.Handlers.Timesheet.GetCashReadiness)
 		timesheets.POST("", container.Handlers.Timesheet.BulkCreateTimesheets)
 		timesheets.POST("/preview", container.Handlers.Timesheet.PreviewTimesheets)
 		timesheets.GET("", container.Handlers.Timesheet.ListTimesheets)

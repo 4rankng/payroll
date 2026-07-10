@@ -138,6 +138,8 @@ export const QueryKeys = {
     detail: (id: number) => [...QueryKeys.timesheets.details(), id] as const,
     summary: (params?: { project_id?: number; employee_id?: number; fromDate?: string; toDate?: string; }) =>
       [...QueryKeys.timesheets.all, 'summary', params] as const,
+    cashReadiness: (params?: { project_id?: number; employee_id?: number; fromDate?: string; toDate?: string; }) =>
+      [...QueryKeys.timesheets.all, 'cash-readiness', params] as const,
 
     // Filtered timesheets
     byProject: (projectId: number, filters?: TimesheetFilters) =>

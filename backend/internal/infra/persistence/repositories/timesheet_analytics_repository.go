@@ -108,6 +108,38 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 	return &stats, nil
 }
 
+// GetAccrualCohort returns daily approved-pay accrual rows for the cash-readiness
+// forecast. Each row is the total approved `amount` for a (work date, approval
+// day) pair within the filters' date window.
+//
+// Scoping (partner access, project, employee) is applied identically to
+// GetSummaryStats via BuildSummaryQuery, so the cohort and the "Chờ thanh toán"
+// confirmed-payable figure use the exact same row set definition.
+//
+// Only approved timesheets with a non-null approved_at are counted. Payment
+// status is intentionally NOT filtered here: every historical cycle's rows are
+// eventually paid, so excluding paid would zero out the forecasting basis. The
+// current cycle's confirmed-payable floor (approved + unpaid) comes separately
+// from GetSummaryStats. The caller is responsible for setting filters.TimesheetStatus
+// and the lookback date window.
+func (r *TimesheetAnalyticsRepository) GetAccrualCohort(ctx context.Context, filters domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
+	var rows []domain.TimesheetAccrualDailyRow
+	err := r.queryBuilder.BuildSummaryQuery(filters).
+		Where("timesheets.approved_at IS NOT NULL").
+		Select(`
+			DATE(timesheets.date) AS work_date,
+			DATE(timesheets.approved_at) AS approved_date,
+			COALESCE(SUM(timesheets.amount), 0) AS amount
+		`).
+		Group("DATE(timesheets.date), DATE(timesheets.approved_at)").
+		Order("work_date ASC").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 // GetSummaryByProject retrieves summary statistics for a specific project
 func (r *TimesheetAnalyticsRepository) GetSummaryByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) (*domain.TimesheetSummary, error) {
 	var summary domain.TimesheetSummary

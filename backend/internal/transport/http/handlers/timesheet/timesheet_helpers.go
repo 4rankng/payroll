@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"api-server/internal/app/services"
 	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/payroll"
@@ -40,6 +41,7 @@ type Handler struct {
 	timesheetRepo                  domain.TimesheetRepository
 	auditService                   interface{} // *infrastructure.AuditService
 	clock                          clock.Clock
+	cashReadinessSvc               *services.CashReadinessForecastService
 }
 
 // NewHandler creates a new timesheet handler
@@ -59,6 +61,7 @@ func NewHandler(
 	timesheetRepo domain.TimesheetRepository,
 	auditService interface{},
 	clk clock.Clock,
+	cashReadinessSvc *services.CashReadinessForecastService,
 ) *Handler {
 	if clk == nil {
 		clk = clock.New()
@@ -81,6 +84,7 @@ func NewHandler(
 		timesheetRepo:                  timesheetRepo,
 		auditService:                   auditService,
 		clock:                          clk,
+		cashReadinessSvc:               cashReadinessSvc,
 	}
 }
 

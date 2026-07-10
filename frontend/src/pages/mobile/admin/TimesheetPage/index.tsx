@@ -34,8 +34,10 @@ import {
 } from "@/hooks/api/usePayrolls";
 import {
   useApproveAllTimesheets,
+  useCashReadiness,
   useTimesheetSummary,
 } from "@/hooks/api/useTimesheets";
+import { CashReadinessCard } from "@/components/timesheet/CashReadinessCard";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -222,6 +224,7 @@ const TimesheetPageMobile = () => {
   // honest, unfiltered scope here. Mirrors the desktop TimesheetPage.
   const { data: globalSummary, refetch: refetchGlobalSummary } =
     useTimesheetSummary({});
+  const cashReadiness = useCashReadiness({});
 
   const handleAddTimesheet = useCallback(
     () => openModal(MODAL_IDS.TIMESHEET_ENTRY),
@@ -422,6 +425,13 @@ const TimesheetPageMobile = () => {
           )}
         </div>
       )}
+
+      {/* Advisory cash-prep forecast for the next bulk transfer (mirrors desktop) */}
+      <CashReadinessCard
+        data={cashReadiness.data}
+        isLoading={cashReadiness.isLoading}
+        isError={cashReadiness.isError}
+      />
 
       <MissingBankDetailsSection />
 

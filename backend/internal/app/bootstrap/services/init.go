@@ -113,6 +113,7 @@ type Services struct {
 	WalletPaymentStats                *disbursement.StatsService
 	Wallet                            wallet.WalletService
 	WalletDemandForecast              *services.WalletDemandForecastService
+	CashReadiness                     *services.CashReadinessForecastService
 	NinepayCloser                     io.Closer
 	NinePayBulkTransfer               *bulktransfer.NinePayBulkTransferService
 	NinePayBatchCompletion            *bulktransfer.NinePayBatchCompletionChecker
@@ -510,6 +511,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
 	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk, cfg.WalletForecast)
+	cashReadinessService := services.NewCashReadinessForecastService(timesheetService, repos.Timesheet, walletService, nil, clk, cfg.CashForecast)
 
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
@@ -647,6 +649,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		NinepayCloser:                     ninepayCloser,
 		Wallet:                            walletService,
 		WalletDemandForecast:              walletDemandForecastService,
+		CashReadiness:                     cashReadinessService,
 		NinePayBulkTransfer:               autoBulkTransferSvc,
 		AutoBulkTransfer:                  autoBulkTransferSvc,
 		NinePayBatchCompletion:            ninePayBatchCompletion,

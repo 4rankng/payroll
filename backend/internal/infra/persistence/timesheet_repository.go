@@ -134,6 +134,10 @@ func (r *TimesheetRepository) GetSummaryStats(ctx context.Context, filters domai
 	return r.analyticsRepo.GetSummaryStats(ctx, filters)
 }
 
+func (r *TimesheetRepository) GetAccrualCohort(ctx context.Context, filters domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
+	return r.analyticsRepo.GetAccrualCohort(ctx, filters)
+}
+
 func (r *TimesheetRepository) GetByProjectEmployeeDatePaytype(ctx context.Context, projectID, employeeID uint, date time.Time, paytype string) (*domain.Timesheet, error) {
 	return r.queryRepo.GetByProjectEmployeeDatePaytype(ctx, projectID, employeeID, date, paytype)
 }
