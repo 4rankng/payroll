@@ -88,13 +88,6 @@ function extractNumericMonth(value?: string): string | undefined {
   return match ? `${match[1]}/${match[2]}` : undefined;
 }
 
-export function maskBankAccountNumber(value?: string | null): string | undefined {
-  const normalized = value?.replace(/\s+/g, "") ?? "";
-  if (!normalized) return undefined;
-  if (normalized.length <= 4) return normalized;
-  return `**** **** ${normalized.slice(-4)}`;
-}
-
 export function getEmployeeAccountHolder(profile?: EmployeeProfile | null): string | undefined {
   return profile?.bank_account_name?.trim() || profile?.fullname?.trim();
 }

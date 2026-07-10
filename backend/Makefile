@@ -1,4 +1,4 @@
-.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup push-demo deploy-demo demo-db
+.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup sandbox-push-demo push-demo deploy-demo demo-db
 
 # Load environment variables from .env file
 include .env
@@ -277,6 +277,23 @@ sandbox-rebuild:
 # Top up the mock OnePay balance (default +100,000,000 VND on localhost:9001).
 onepay-topup:
 	cd sandbox/onepay && ./topup.sh $${AMOUNT:-100000000} $${HOST:-http://localhost:9001}
+
+# Build & push the mock sandbox image (:demo). Separate from backend/frontend
+# (the sandbox has its own Dockerfile at sandbox/Dockerfile). Used by demo + dev compose.
+sandbox-push-demo:
+	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
+	@docker buildx use $(BUILDER)
+	@docker buildx inspect --bootstrap >/dev/null
+	@echo "🔐 Logging into DockerHub..."
+	@docker logout >/dev/null 2>&1 || true
+	@echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+	@echo "🏗️  Building & pushing AMD64 sandbox image ($(DOCKERHUB_USERNAME)/payroll-sandbox:$(DEMO_TAG))..."
+	cd sandbox && docker buildx build \
+		--platform linux/amd64 \
+		--tag $(DOCKERHUB_USERNAME)/payroll-sandbox:$(DEMO_TAG) \
+		--push \
+		.
+	@echo "✅ Push complete: $(DOCKERHUB_USERNAME)/payroll-sandbox:$(DEMO_TAG)"
 
 # Clean up unused Docker resources
 clean:

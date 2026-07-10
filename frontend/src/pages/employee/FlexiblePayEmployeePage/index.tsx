@@ -28,7 +28,7 @@ import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
-import { getEmployeeAccountHolder } from "@/utils/employeePortal/mobileHome";
+import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 
 const FlexiblePayEmployeePage = () => {
   const navigate = useNavigate();
@@ -211,9 +211,7 @@ const FlexiblePayEmployeePage = () => {
               info={info}
               history={history}
               feeDetails={feeDetails}
-              bankAccountNumber={profile?.bank_account_number}
-              bankName={profile?.bank?.branch_name}
-              bankAccountName={getEmployeeAccountHolder(profile)}
+              hasBankDestination={hasEmployeeBankInfo(profile)}
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}
               isPending={requestMutation.isPending}

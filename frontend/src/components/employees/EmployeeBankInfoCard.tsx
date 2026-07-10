@@ -82,7 +82,7 @@ export function EmployeeBankInfoCard({
             </span>
             <span className="employee-type-body-sm mt-0.5 block truncate text-slate-500">
               {hasBankInfo
-                ? profile.bank?.branch_name || "Tài khoản nhận tiền đã cập nhật"
+                ? "Tài khoản nhận lương đã cập nhật"
                 : "Chưa cập nhật tài khoản nhận tiền"}
             </span>
           </span>

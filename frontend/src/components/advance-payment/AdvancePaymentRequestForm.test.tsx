@@ -27,9 +27,7 @@ const info: AdvancePaymentInfo = {
 const baseProps = {
   history: [],
   feeDetails: { fee: 10_000, netAmount: 490_000 },
-  bankAccountNumber: "0366178061",
-  bankName: "Quân đội (MB)",
-  bankAccountName: "Bùi Nguyễn Duy Anh",
+  hasBankDestination: true,
   onSubmit: vi.fn(),
   onAmountChange: vi.fn(),
   isPending: false,
@@ -44,7 +42,8 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.getByRole("button", { name: "50%" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tối đa" })).toBeInTheDocument();
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
-    expect(screen.getByText(/\*\*\*\* \*\*\*\* 8061/)).toBeInTheDocument();
+    expect(screen.queryByText("Bùi Nguyễn Duy Anh")).not.toBeInTheDocument();
+    expect(screen.queryByText("0366178061")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
@@ -57,8 +56,7 @@ describe("AdvancePaymentRequestForm", () => {
       <AdvancePaymentRequestForm
         {...baseProps}
         info={info}
-        bankAccountNumber={undefined}
-        bankName={undefined}
+        hasBankDestination={false}
       />
     );
 

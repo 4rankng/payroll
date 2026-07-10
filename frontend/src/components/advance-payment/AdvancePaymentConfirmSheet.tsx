@@ -5,7 +5,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { formatCurrency } from "@/utils/formatters";
-import { maskBankAccountNumber } from "@/utils/employeePortal/mobileHome";
 
 interface AdvancePaymentConfirmSheetProps {
   open: boolean;
@@ -32,8 +31,6 @@ export function AdvancePaymentConfirmSheet({
   onConfirm,
   isPending,
 }: AdvancePaymentConfirmSheetProps) {
-  const maskedBankAccountNumber = maskBankAccountNumber(bankAccountNumber);
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -98,7 +95,7 @@ export function AdvancePaymentConfirmSheet({
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tài khoản</span>
                 <span className="break-all text-right font-bold text-slate-900 tabular-nums">
-                  {maskedBankAccountNumber || "Chưa cập nhật"}
+                  {bankAccountNumber || "Chưa cập nhật"}
                 </span>
               </div>
               <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
