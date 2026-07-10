@@ -129,11 +129,11 @@ describe("AdvancePaymentRequestForm", () => {
       />
     );
 
-    expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
     expect(screen.getByText("Đã dùng hết hạn mức")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "100");
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Xem lịch sử yêu cầu" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Bạn có thể xem lại các yêu cầu bên dưới hoặc chờ kỳ lương tiếp theo.")).not.toBeInTheDocument();
   });
 
   it("shows a proportional allowance summary for partially used quota", () => {
@@ -210,7 +210,24 @@ describe("AdvancePaymentRequestForm", () => {
 
     expect(screen.getByText("01/07 – 31/07/2026")).toBeInTheDocument();
     expect(screen.getByText("Đang chờ bảng công tháng 07/2026")).toBeInTheDocument();
+    expect(screen.queryByText("Chờ cập nhật bảng công")).not.toBeInTheDocument();
     expect(screen.queryByText("Hạn mức kỳ này đã sử dụng hết")).not.toBeInTheDocument();
+  });
+
+  it("treats an empty past month as closed instead of waiting for attendance", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={info}
+        viewMonth="2026-05"
+        isPastMonth
+      />
+    );
+
+    expect(screen.getByText("Kỳ lương trước")).toBeInTheDocument();
+    expect(screen.queryByText("Kỳ ứng lương này đã kết thúc")).not.toBeInTheDocument();
+    expect(screen.queryByText("Không có hạn mức ứng lương trong kỳ này.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Đang chờ bảng công tháng 05/2026")).not.toBeInTheDocument();
   });
 
   it("keeps exhausted June messaging when June is the viewed month", () => {
@@ -237,6 +254,7 @@ describe("AdvancePaymentRequestForm", () => {
     );
 
     expect(screen.getByText("01/06 – 30/06/2026")).toBeInTheDocument();
-    expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
+    expect(screen.getByText("Đã dùng hết hạn mức")).toBeInTheDocument();
+    expect(screen.queryByText("Hạn mức kỳ này đã sử dụng hết")).not.toBeInTheDocument();
   });
 });
