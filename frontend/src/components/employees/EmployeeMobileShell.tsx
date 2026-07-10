@@ -3,13 +3,12 @@ import { cn } from "@/lib/utils";
 import { EmployeePortalHeader } from "@/components/employees/EmployeePortalHeader";
 
 const employeeMobileBackground: CSSProperties = {
-  backgroundImage:
-    "linear-gradient(180deg, #e8f8ef 0%, #f2f8f5 10rem, #f5f7fa 100%)",
+  backgroundColor: "#F6F8FA",
   paddingBottom: "env(safe-area-inset-bottom)",
 };
 
 export const employeeCardShadow = {
-  boxShadow: "0 8px 24px -20px rgba(15, 23, 42, 0.48)",
+  boxShadow: "0 2px 8px rgba(16, 24, 40, 0.06)",
 } as const;
 
 interface EmployeeMobileShellProps {
@@ -50,7 +49,7 @@ export function EmployeeMobileShell({
 
       <main
         className={cn(
-          "employee-portal-card-stack mx-auto max-w-lg space-y-3 px-3 py-3 min-[390px]:px-4 pb-[calc(5rem+env(safe-area-inset-bottom))]",
+          "employee-portal-card-stack mx-auto max-w-lg space-y-4 px-4 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))]",
           contentClassName
         )}
       >

@@ -854,25 +854,26 @@ export function EmployeeCheckInCard({
           ) : null}
         </div>
       ) : attendance?.status === "checked_in" ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-700">
-                <BriefcaseBusiness className="h-5 w-5" />
+        <div className="rounded-2xl border border-[#B7E5C7] bg-white p-4 shadow-[0_2px_8px_rgba(16,24,40,0.06)]">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF3] text-[#067647]">
+                <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="employee-type-card-title font-bold text-slate-950">Đang làm việc</p>
-                <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
-                  Vào lúc {safeFormatTime(attendance.check_in_time)} · Tan ca để ghi nhận lương
+                <p className="employee-type-label-caps text-[#067647]">Đang trong ca</p>
+                <p className="employee-type-hero-title mt-1 text-[#101828]">Đang làm việc</p>
+                <p className="employee-type-body mt-1 text-[#475467]">
+                  {safeFormatTime(attendance.check_in_time)} — hiện tại · Tan ca để ghi nhận lương
                 </p>
               </div>
             </div>
           {locationMapDisclosure}
-          <div className="mt-2 grid grid-cols-[0.8fr_1.2fr] gap-2">
+          <div className="mt-4 grid grid-cols-[0.8fr_1.2fr] gap-2">
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="employee-type-action h-12 rounded-xl border-red-200 bg-red-50 font-bold text-red-700 hover:bg-red-100 hover:text-red-800"
+              className="employee-type-action h-12 rounded-xl border border-transparent bg-transparent font-semibold text-[#B42318] hover:bg-[#FEF3F2] hover:text-[#B42318]"
               disabled={isPending}
               onClick={() => setShowCancelShiftConfirm(true)}
             >
@@ -881,7 +882,7 @@ export function EmployeeCheckInCard({
             </Button>
             <Button
               size="lg"
-              className="employee-type-action h-12 rounded-xl bg-slate-950 font-bold text-white shadow-md shadow-slate-900/15 hover:bg-slate-800"
+              className="employee-type-action h-12 rounded-xl bg-[#07883F] font-bold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647]"
               disabled={isPending || checkoutCoolingDown}
               onClick={() => handleAction("check_out")}
             >

@@ -581,14 +581,14 @@
     .employee-mobile-page {
       --employee-mobile-caption: 0.6875rem;    /* 11px: status/badges */
       --employee-mobile-label: 0.75rem;        /* 12px: field labels */
-      --employee-mobile-body-sm: 0.75rem;      /* 12px: secondary copy */
-      --employee-mobile-body: 0.8125rem;       /* 13px: body/action text */
+      --employee-mobile-body-sm: 0.8125rem;    /* 13px: secondary copy */
+      --employee-mobile-body: 0.875rem;        /* 14px: body/action text */
       --employee-mobile-title-sm: 0.875rem;    /* 14px: card titles */
-      --employee-mobile-title: 1rem;           /* 16px: screen/card headers */
+      --employee-mobile-title: 1.25rem;        /* 20px: screen headers */
       --employee-mobile-amount-sm: 0.875rem;   /* 14px: row money values */
       --employee-mobile-amount-md: 0.875rem;   /* 14px: bank/inline money values */
       --employee-mobile-amount-lg: 1rem;       /* 16px: list item primary money */
-      --employee-mobile-amount-xl: 1.25rem;    /* 20px: wallet hero amount */
+      --employee-mobile-amount-xl: 1.5rem;     /* 24px: wallet hero amount */
     }
 
     .employee-mobile-page .employee-type-header-greeting,

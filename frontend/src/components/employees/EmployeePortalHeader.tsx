@@ -1,4 +1,6 @@
 import { Bell, Settings, LogOut, UserCircle } from "lucide-react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,23 +24,23 @@ export function EmployeePortalHeader({
   onChangePassword,
   onLogout,
 }: EmployeePortalHeaderProps) {
+  const todayLabel = format(new Date(), "EEEE, d 'tháng' M", { locale: vi });
+
   return (
-    <div className="bg-employee">
+    <header className="border-b border-[#E4E7EC] bg-white">
       <div
-        className="mx-auto flex max-w-lg items-center justify-between gap-3 px-3 pb-3 min-[390px]:px-4"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.625rem)" }}
+        className="mx-auto flex min-h-16 max-w-lg items-center justify-between gap-3 px-4 py-2"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.5rem)" }}
       >
         <div className="min-w-0">
-          <p className="employee-type-header-greeting text-white/85">
-            Xin chào
-          </p>
-          <h1 className="employee-type-header-name truncate text-white">
+          <h1 className="employee-type-header-name truncate text-[#101828]">
             {employeeName || "bạn"}
           </h1>
+          <p className="employee-type-body-sm mt-0.5 capitalize text-[#667085]">{todayLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
-            className="relative flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full text-[#475467] transition-colors hover:bg-[#F2F4F7] focus-visible:ring-2 focus-visible:ring-[#07883F]"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
@@ -52,10 +54,10 @@ export function EmployeePortalHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/15"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#07883F] text-white transition-colors hover:bg-[#067647] focus-visible:ring-2 focus-visible:ring-[#07883F] focus-visible:ring-offset-2"
                 aria-label="Menu tài khoản"
               >
-                <UserCircle className="h-7 w-7 text-white/90" strokeWidth={2.1} />
+                <UserCircle className="h-6 w-6" strokeWidth={2.1} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -81,6 +83,6 @@ export function EmployeePortalHeader({
           </DropdownMenu>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

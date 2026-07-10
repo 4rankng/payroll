@@ -189,7 +189,6 @@ const FlexiblePayEmployeePage = () => {
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
-        contentClassName="pb-[calc(5rem+env(safe-area-inset-bottom))]"
       >
         {profile?.check_in_enabled && (
           <section id="employee-check-in" className="scroll-mt-4">
@@ -215,7 +214,7 @@ const FlexiblePayEmployeePage = () => {
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}
               isPending={requestMutation.isPending}
-              className="rounded-2xl border border-slate-200 bg-white p-3"
+              className="rounded-2xl border border-[#E4E7EC] bg-white p-4"
               style={employeeCardShadow}
             />
           </section>
@@ -223,7 +222,7 @@ const FlexiblePayEmployeePage = () => {
 
         {profile?.check_in_enabled && (
           <EmployeeAttendanceHistoryCard
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
             style={employeeCardShadow}
           />
         )}
@@ -233,7 +232,7 @@ const FlexiblePayEmployeePage = () => {
             history={history}
             isLoading={historyLoading}
             onCancel={handleCancelRequest}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
             style={employeeCardShadow}
           />
         </section>
@@ -241,7 +240,7 @@ const FlexiblePayEmployeePage = () => {
         <section id="employee-bank" className="scroll-mt-4">
           <EmployeeBankInfoCard
             profile={profile!}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
             style={employeeCardShadow}
           />
         </section>

@@ -158,19 +158,19 @@ export function AdvancePaymentRequestForm({
 
   return (
     <div
-      className={className ?? "rounded-[24px] bg-white p-4"}
+      className={className ?? "rounded-2xl border border-[#E4E7EC] bg-white p-4"}
       style={style}
     >
-      <div className="flex items-center justify-between gap-4 rounded-2xl bg-employee/5 px-3.5 py-3 ring-1 ring-employee/10">
+      <div className="flex items-start justify-between gap-4 border-b border-[#EAECF0] pb-4">
         <div className="min-w-0">
-          <p className="employee-type-label-caps text-slate-500">Có thể ứng</p>
-          <p className="employee-type-card-amount mt-1 truncate text-employee tabular-nums">
+          <p className="employee-type-label text-[#667085]">Có thể ứng</p>
+          <p className="employee-type-hero-amount mt-1 truncate text-[#067647] tabular-nums">
             {formatCurrency(selectedQuotaRemaining)}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="employee-type-label-caps text-slate-500">Kỳ lương</p>
-          <p className="employee-type-row-amount mt-1 text-slate-950">
+          <p className="employee-type-label text-[#667085]">Kỳ lương</p>
+          <p className="employee-type-row-amount mt-1 text-[#101828]">
             {formatAdvancePeriodDisplay(selectedMonth)}
           </p>
         </div>
@@ -197,7 +197,7 @@ export function AdvancePaymentRequestForm({
       ) : (
         <>
           <div className="mt-4">
-            <label htmlFor="advance-payment-amount" className="employee-type-label block text-slate-700">
+            <label htmlFor="advance-payment-amount" className="employee-type-label block text-[#475467]">
               Số tiền muốn ứng
             </label>
             <div className="relative mt-2">
@@ -210,13 +210,13 @@ export function AdvancePaymentRequestForm({
                 placeholder="0"
                 value={formatAmountInput(amount)}
                 onChange={handleAmountChange}
-                className={`employee-type-hero-amount h-14 w-full rounded-2xl border bg-slate-50 px-3.5 pr-16 text-slate-950 placeholder:text-slate-500 transition-all focus:bg-white focus:outline-none focus:ring-2 ${
+                className={`employee-type-hero-amount h-14 w-full rounded-xl border bg-white px-3.5 pr-16 text-[#101828] placeholder:text-[#98A2B3] transition-all focus:outline-none focus:ring-2 ${
                   validationError
-                    ? "border-red-400 focus:ring-red-100"
-                    : "border-slate-300 focus:border-employee focus:ring-employee/15"
+                    ? "border-[#FDA29B] focus:ring-[#FECDCA]"
+                    : "border-[#D0D5DD] focus:border-[#07883F] focus:ring-[#D1FADF]"
                 }`}
               />
-              <span className="employee-type-pill absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-slate-200 px-2 py-1.5 text-slate-700">
+              <span className="employee-type-label absolute right-3 top-1/2 -translate-y-1/2 text-[#667085]">
                 VND
               </span>
             </div>
@@ -230,10 +230,10 @@ export function AdvancePaymentRequestForm({
                   type="button"
                   aria-pressed={numericAmount === quickAmount.amount}
                   onClick={() => setAmountFromNumber(quickAmount.amount)}
-                  className={`employee-type-action min-h-11 rounded-xl border px-2 py-2 transition-all active:scale-[0.97] ${
+                  className={`employee-type-action min-h-11 rounded-lg border px-2 py-2 transition-all active:scale-[0.97] ${
                     numericAmount === quickAmount.amount
-                      ? "border-employee bg-employee text-white"
-                      : "border-slate-200 bg-white text-slate-600"
+                      ? "border-[#07883F] bg-[#07883F] text-white"
+                      : "border-[#D0D5DD] bg-white text-[#475467]"
                   }`}
                 >
                   {quickAmount.label}
@@ -243,23 +243,23 @@ export function AdvancePaymentRequestForm({
           )}
 
           {validationError && (
-            <p className="employee-type-body mt-3 flex items-start gap-1.5 rounded-xl bg-red-50 px-3 py-2 text-red-600">
+            <p className="employee-type-body mt-3 flex items-start gap-1.5 rounded-lg bg-[#FEF3F2] px-3 py-2 text-[#B42318]">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               {validationError}
             </p>
           )}
 
           {canShowFeePreview && (
-            <div className="mt-3 grid grid-cols-2 divide-x divide-slate-200 rounded-2xl border border-slate-100 bg-slate-50 py-2.5">
+            <div className="mt-4 grid grid-cols-2 divide-x divide-[#EAECF0] border-y border-[#EAECF0] py-3">
               <div className="px-3">
-                <p className="employee-type-label text-slate-500">Phí chuyển tiền</p>
-                <p className="employee-type-inline-amount mt-1 text-slate-700 tabular-nums">
+                <p className="employee-type-label text-[#667085]">Phí chuyển tiền</p>
+                <p className="employee-type-inline-amount mt-1 text-[#475467] tabular-nums">
                   {feeDetails ? formatCurrency(feeDetails.fee) : "Đang tính..."}
                 </p>
               </div>
               <div className="px-3 text-right">
-                <p className="employee-type-label text-slate-500">Bạn nhận được</p>
-                <p className="employee-type-inline-amount mt-1 text-employee tabular-nums">
+                <p className="employee-type-label text-[#667085]">Bạn thực nhận</p>
+                <p className="employee-type-inline-amount mt-1 text-[#067647] tabular-nums">
                   {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export function AdvancePaymentRequestForm({
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className={`employee-type-action mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-5 py-2 text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 ${canSubmit ? "bg-employee shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)]" : "bg-slate-400"}`}
+            className={`employee-type-action mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 py-2 text-white transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45 ${canSubmit ? "bg-[#07883F] shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647]" : "bg-[#98A2B3]"}`}
           >
             {isPending ? (
               <>
@@ -288,15 +288,15 @@ export function AdvancePaymentRequestForm({
       )}
 
       {latestPendingRequest && (
-        <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5" role="status">
-          <Clock3 className="h-4 w-4 shrink-0 text-amber-600" />
+        <div className="mt-4 flex items-center gap-2.5 border-t border-[#EAECF0] pt-3" role="status">
+          <Clock3 className="h-4 w-4 shrink-0 text-[#B54708]" />
           <div className="min-w-0 flex-1">
-            <p className="employee-type-label text-amber-800">Yêu cầu đang chờ xử lý</p>
+            <p className="employee-type-label text-[#B54708]">Yêu cầu đang chờ xử lý</p>
             {latestPendingDate && (
-              <p className="employee-type-body-sm mt-0.5 text-amber-700">Gửi ngày {latestPendingDate}</p>
+              <p className="employee-type-body-sm mt-0.5 text-[#B54708]">Gửi ngày {latestPendingDate}</p>
             )}
           </div>
-          <span className="employee-type-inline-amount shrink-0 text-amber-800 tabular-nums">
+          <span className="employee-type-inline-amount shrink-0 text-[#B54708] tabular-nums">
             {formatCurrency(latestPendingRequest.requestAmount)}
           </span>
         </div>
