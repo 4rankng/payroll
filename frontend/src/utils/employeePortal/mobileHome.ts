@@ -1,6 +1,6 @@
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import {
-  formatAdvancePeriodDisplay,
+  formatPayrollMonthRange,
   getAdvanceQuotaSummary,
 } from "@/utils/advancePaymentHelpers";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
@@ -75,7 +75,7 @@ interface RegularEmployeeHomeInput {
 
 export function formatPayrollMonth(value?: string): string {
   if (!value || !/^\d{4}-\d{2}/.test(value)) return "Kỳ lương hiện tại";
-  return formatAdvancePeriodDisplay(value);
+  return formatPayrollMonthRange(value);
 }
 
 function formatNumericMonth(value?: string): string {

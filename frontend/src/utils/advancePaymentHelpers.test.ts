@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getAdvanceQuotaSummary, getDefaultAdvanceMonth } from "./advancePaymentHelpers";
+import {
+  formatPayrollMonthRange,
+  formatMonthShort,
+  getAdvanceQuotaSummary,
+  getDefaultAdvanceMonth,
+} from "./advancePaymentHelpers";
 import type {
   AdvancePaymentHistoryItem,
   AdvancePaymentInfo,
@@ -145,6 +150,26 @@ describe("getAdvanceQuotaSummary", () => {
     expect(summary.completedAmount).toBe(9_360_000);
     expect(summary.maxAdvanceAmount).toBe(9_360_000);
     expect(summary.remainingAmount).toBe(0);
+  });
+});
+
+describe("formatPayrollMonthRange", () => {
+  it("renders a payroll month as its full calendar-month range", () => {
+    expect(formatPayrollMonthRange("2026-07")).toBe("01/07 – 31/07/2026");
+  });
+
+  it("uses the correct final day for leap-year February", () => {
+    expect(formatPayrollMonthRange("2024-02")).toBe("01/02 – 29/02/2024");
+  });
+
+  it("preserves invalid values instead of inventing a period", () => {
+    expect(formatPayrollMonthRange("invalid")).toBe("invalid");
+  });
+});
+
+describe("formatMonthShort", () => {
+  it("renders YYYY-MM as MM/YYYY", () => {
+    expect(formatMonthShort("2026-07")).toBe("07/2026");
   });
 });
 

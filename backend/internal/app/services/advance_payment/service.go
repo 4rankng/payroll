@@ -313,7 +313,7 @@ func isRequestMonthAllowed(now time.Time, forMonth string) bool {
 }
 
 // GetRequestHistoryByUserID returns the request history for the authenticated user
-func (s *Service) GetRequestHistoryByUserID(ctx context.Context, userID uint64, limit, offset int) ([]domain.AdvancePaymentHistoryItem, int64, error) {
+func (s *Service) GetRequestHistoryByUserID(ctx context.Context, userID uint64, limit, offset int, fromDate, toDate *time.Time, forMonth *string) ([]domain.AdvancePaymentHistoryItem, int64, error) {
 	// Look up employee by user ID
 	employee, err := s.config.EmployeeRepo.GetByUserID(ctx, uint(userID))
 	if err != nil {
@@ -323,11 +323,11 @@ func (s *Service) GetRequestHistoryByUserID(ctx context.Context, userID uint64, 
 		return nil, 0, errors.Wrap(err, "failed to get employee by user id")
 	}
 
-	return s.GetRequestHistory(ctx, uint64(employee.ID), limit, offset)
+	return s.GetRequestHistory(ctx, uint64(employee.ID), limit, offset, fromDate, toDate, forMonth)
 }
 
 // GetRequestHistory returns the request history for an employee
-func (s *Service) GetRequestHistory(ctx context.Context, employeeID uint64, limit, offset int) ([]domain.AdvancePaymentHistoryItem, int64, error) {
+func (s *Service) GetRequestHistory(ctx context.Context, employeeID uint64, limit, offset int, fromDate, toDate *time.Time, forMonth *string) ([]domain.AdvancePaymentHistoryItem, int64, error) {
 	if limit <= 0 {
 		limit = 20
 	}
@@ -335,7 +335,7 @@ func (s *Service) GetRequestHistory(ctx context.Context, employeeID uint64, limi
 		limit = 100
 	}
 
-	requests, total, err := s.config.AdvancePaymentRequestRepo.GetByEmployee(ctx, employeeID, limit, offset)
+	requests, total, err := s.config.AdvancePaymentRequestRepo.GetByEmployee(ctx, employeeID, limit, offset, fromDate, toDate, forMonth)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "failed to get request history")
 	}

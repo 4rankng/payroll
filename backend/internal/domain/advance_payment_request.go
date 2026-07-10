@@ -119,7 +119,7 @@ func (apr *AdvancePaymentRequest) IsReceivableSettled() bool {
 type AdvancePaymentRequestRepository interface {
 	Create(ctx context.Context, req *AdvancePaymentRequest) error
 	GetByID(ctx context.Context, id uint64) (*AdvancePaymentRequest, error)
-	GetByEmployee(ctx context.Context, employeeID uint64, limit, offset int) ([]*AdvancePaymentRequest, int64, error)
+	GetByEmployee(ctx context.Context, employeeID uint64, limit, offset int, fromDate, toDate *time.Time, forMonth *string) ([]*AdvancePaymentRequest, int64, error)
 	GetPendingByDateRange(ctx context.Context, fromDate, toDate time.Time) ([]*AdvancePaymentRequest, error)
 	GetPendingGroupedByEmployee(ctx context.Context, forMonth string) ([]*EmployeePendingRequests, error)
 	SumCompletedByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)

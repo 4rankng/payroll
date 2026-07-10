@@ -44,6 +44,7 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     expect(screen.queryByText("Bùi Nguyễn Duy Anh")).not.toBeInTheDocument();
     expect(screen.queryByText("0366178061")).not.toBeInTheDocument();
+    expect(screen.getByText("01/07 – 31/07/2026")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
@@ -106,5 +107,101 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByRole("button", { name: "25%" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "50%" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tối đa" })).toBeInTheDocument();
+  });
+
+  it("explains a zero remaining quota instead of showing an unusable form", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          remainingAmount: 0,
+          quotas: [{ ...info.quotas[0], remainingAmount: 0 }],
+        }}
+      />
+    );
+
+    expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+  });
+
+  it("keeps a large available amount readable without changing its value", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          maxAdvanceAmount: 999_999_999,
+          remainingAmount: 999_999_999,
+          quotas: [{ ...info.quotas[0], maxAdvanceAmount: 999_999_999, remainingAmount: 999_999_999 }],
+        }}
+      />
+    );
+
+    expect(screen.getByText("999.999.999 ₫")).toBeInTheDocument();
+  });
+
+  it("shows the viewed July payroll month as waiting instead of falling back to exhausted June", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          forMonth: "2026-06",
+          maxAdvanceAmount: 1_000_000,
+          completedAmount: 1_000_000,
+          remainingAmount: 0,
+          canRequest: false,
+          quotas: [
+            {
+              forMonth: "2026-06",
+              maxAdvanceAmount: 1_000_000,
+              completedAmount: 1_000_000,
+              pendingAmount: 0,
+              remainingAmount: 0,
+            },
+            {
+              forMonth: "2026-07",
+              maxAdvanceAmount: 0,
+              completedAmount: 0,
+              pendingAmount: 0,
+              remainingAmount: 0,
+            },
+          ],
+        }}
+        viewMonth="2026-07"
+      />
+    );
+
+    expect(screen.getByText("01/07 – 31/07/2026")).toBeInTheDocument();
+    expect(screen.getByText("Đang chờ bảng công tháng 07/2026")).toBeInTheDocument();
+    expect(screen.queryByText("Hạn mức kỳ này đã sử dụng hết")).not.toBeInTheDocument();
+  });
+
+  it("keeps exhausted June messaging when June is the viewed month", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          forMonth: "2026-06",
+          maxAdvanceAmount: 1_000_000,
+          completedAmount: 1_000_000,
+          remainingAmount: 0,
+          canRequest: false,
+          quotas: [{
+            forMonth: "2026-06",
+            maxAdvanceAmount: 1_000_000,
+            completedAmount: 1_000_000,
+            pendingAmount: 0,
+            remainingAmount: 0,
+          }],
+        }}
+        viewMonth="2026-06"
+      />
+    );
+
+    expect(screen.getByText("01/06 – 30/06/2026")).toBeInTheDocument();
+    expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
   });
 });
