@@ -443,8 +443,8 @@
   }
 
   /* Weight ladder (employee portal): 400 body/descriptions → 500 labels →
-     600 titles, money, actions, badges → 700 reserved for the two true heroes
-     (screen/sheet title and the primary money figure). Calm, Linear/Stripe-like. */
+     600 titles, values, actions, badges → 700 reserved for the primary money
+     figure. The hierarchy comes from role, spacing, and contrast—not boldness. */
   .employee-type-header-greeting {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-caption);
@@ -455,16 +455,24 @@
 
   .employee-type-header-name {
     font-family: var(--font-family-display);
-    font-size: var(--employee-type-title);
+    font-size: 1.375rem;
     font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
+    line-height: 1.75rem;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-header-date {
+    font-family: var(--font-family-sans);
+    font-size: 0.8125rem;
+    font-weight: var(--font-normal);
+    line-height: 1.125rem;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-hero-title {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
   }
@@ -473,7 +481,7 @@
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
     font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
+    line-height: 1.5rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -481,15 +489,15 @@
     font-family: var(--font-family-display);
     font-size: var(--employee-type-strong);
     font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
+    line-height: 1.375rem;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-month-title {
     font-family: var(--font-family-display);
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     font-weight: var(--font-semibold);
-    line-height: 1.55;
+    line-height: 1.5rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -498,6 +506,14 @@
     font-size: var(--employee-type-money);
     font-weight: var(--font-bold);
     line-height: var(--leading-none);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-confirm-amount {
+    font-family: var(--font-family-display);
+    font-size: 1.5rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.875rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -519,17 +535,49 @@
 
   .employee-type-bank-value {
     font-family: var(--font-family-display);
-    font-size: var(--employee-type-strong);
+    font-size: 0.9375rem;
     font-weight: var(--font-semibold);
-    line-height: var(--leading-snug);
+    line-height: 1.375rem;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-bank-label {
     font-family: var(--font-family-sans);
-    font-size: 0.875rem;
-    font-weight: var(--font-medium);
-    line-height: 1.4;
+    font-size: 0.8125rem;
+    font-weight: var(--font-normal);
+    line-height: 1.1875rem;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-payroll-value {
+    font-family: var(--font-family-display);
+    font-size: 0.9375rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.375rem;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-payroll-label {
+    font-family: var(--font-family-sans);
+    font-size: 0.8125rem;
+    font-weight: var(--font-normal);
+    line-height: 1.125rem;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-warning-title {
+    font-family: var(--font-family-sans);
+    font-size: 0.9375rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.3125rem;
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-notification-badge {
+    font-family: var(--font-family-sans);
+    font-size: 0.6875rem;
+    font-weight: var(--font-bold);
+    line-height: 0.875rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -553,7 +601,7 @@
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-label);
     font-weight: var(--font-medium);
-    line-height: var(--leading-normal);
+    line-height: 1.125rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -561,7 +609,7 @@
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-caption);
     font-weight: var(--font-semibold);
-    line-height: var(--leading-none);
+    line-height: 1.0625rem;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
   }
@@ -570,7 +618,7 @@
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-body);
     font-weight: var(--font-normal);
-    line-height: var(--leading-relaxed);
+    line-height: 1.3125rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -578,7 +626,7 @@
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-body-sm);
     font-weight: var(--font-normal);
-    line-height: var(--leading-normal);
+    line-height: 1.1875rem;
     letter-spacing: var(--tracking-normal);
   }
 
@@ -594,31 +642,31 @@
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-caption);
     font-weight: var(--font-semibold);
-    line-height: var(--leading-none);
+    line-height: 1.0625rem;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-action {
     font-family: var(--font-family-sans);
-    font-size: var(--employee-type-strong);
+    font-size: 0.875rem;
     font-weight: var(--font-semibold);
-    line-height: var(--leading-none);
+    line-height: 1.25rem;
     letter-spacing: var(--tracking-normal);
   }
 
   @media (max-width: 640px) {
     .employee-mobile-page {
-      --employee-mobile-caption: 0.8125rem;    /* 13px: statuses/badges */
+      --employee-mobile-caption: 0.75rem;      /* 12px: metadata/counters */
       --employee-mobile-label: 0.8125rem;      /* 13px: field labels */
-      --employee-mobile-body-sm: 0.875rem;     /* 14px: secondary copy */
-      --employee-mobile-body: 0.9375rem;       /* 15px: body text */
+      --employee-mobile-body-sm: 0.8125rem;    /* 13px: secondary copy */
+      --employee-mobile-body: 0.875rem;        /* 14px: body text */
       --employee-mobile-title-sm: 1rem;        /* 16px: card titles */
-      --employee-mobile-section-title: 1.25rem;  /* 20px: section titles */
-      --employee-mobile-header-name: 1.5rem;   /* 24px: employee name */
-      --employee-mobile-amount-sm: 1rem;       /* 16px: row money values */
-      --employee-mobile-amount-md: 1rem;       /* 16px: bank/inline values */
-      --employee-mobile-amount-lg: 1.125rem;   /* 18px: record primary money */
-      --employee-mobile-amount-xl: 2.25rem;    /* 36px: primary available amount */
+      --employee-mobile-section-title: 1.125rem; /* 18px: section titles */
+      --employee-mobile-header-name: 1.375rem; /* 22px: employee name */
+      --employee-mobile-amount-sm: 0.9375rem;  /* 15px: row money values */
+      --employee-mobile-amount-md: 0.9375rem;  /* 15px: bank/inline values */
+      --employee-mobile-amount-lg: 1rem;       /* 16px: record primary money */
+      --employee-mobile-amount-xl: 2rem;       /* 32px: primary available amount */
     }
 
     .employee-mobile-page .employee-type-header-greeting,
@@ -645,29 +693,29 @@
 
     .employee-mobile-page .employee-type-card-title {
       font-size: var(--employee-mobile-title-sm);
-      line-height: 1.25;
+      line-height: 1.375rem;
     }
 
     .employee-mobile-page .employee-type-header-name {
       font-size: var(--employee-mobile-header-name);
-      line-height: 1.23;
+      line-height: 1.75rem;
     }
 
     .employee-mobile-page .employee-type-hero-title,
     .employee-mobile-page .employee-type-section-title {
       font-size: var(--employee-mobile-section-title);
-      line-height: 1.35;
+      line-height: 1.5rem;
     }
 
     .employee-mobile-page .employee-type-row-amount {
       font-size: var(--employee-mobile-amount-sm);
-      line-height: 1.25;
+      line-height: 1.375rem;
     }
 
     .employee-mobile-page .employee-type-bank-value,
     .employee-mobile-page .employee-type-inline-amount {
       font-size: var(--employee-mobile-amount-md);
-      line-height: 1.25;
+      line-height: 1.375rem;
     }
 
     .employee-mobile-page .employee-type-card-amount,
@@ -678,7 +726,7 @@
 
     .employee-mobile-page .employee-type-hero-amount {
       font-size: var(--employee-mobile-amount-xl);
-      line-height: 1.05;
+      line-height: 2.375rem;
     }
   }
 

@@ -1,6 +1,7 @@
-import { Building2, CreditCard } from "lucide-react";
+import { Building2, Copy, CreditCard } from "lucide-react";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
+import { toast } from "@/components/ui/sonner";
 
 interface EmployeeBankInfoCardProps {
   profile: EmployeeProfile;
@@ -12,6 +13,7 @@ const bankFields: readonly {
   label: string;
   getValue: (p: EmployeeProfile) => string | undefined;
   mono: boolean;
+  copyable?: boolean;
 }[] = [
   {
     label: "Ngân hàng",
@@ -22,6 +24,7 @@ const bankFields: readonly {
     label: "Số tài khoản",
     getValue: (p) => p.bank_account_number,
     mono: true,
+    copyable: true,
   },
 ];
 
@@ -45,6 +48,7 @@ export function EmployeeBankInfoCard({
           label: "Chủ tài khoản",
           getValue: (p: EmployeeProfile) => p.bank_account_name,
           mono: false,
+          copyable: false,
         },
       ]
     : bankFields;
@@ -54,6 +58,19 @@ export function EmployeeBankInfoCard({
     profile.bank ||
     accountOwner
   );
+
+  const handleCopyAccountNumber = async (accountNumber: string) => {
+    try {
+      await navigator.clipboard.writeText(accountNumber);
+      toast({ title: "Đã sao chép số tài khoản" });
+    } catch {
+      toast({
+        title: "Chưa thể sao chép số tài khoản",
+        description: "Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div
@@ -67,7 +84,7 @@ export function EmployeeBankInfoCard({
           <span id="employee-bank-title" className="employee-type-section-title block text-[#101828]">
             Thông tin ngân hàng
           </span>
-          <span className="employee-type-body-sm mt-0.5 block text-[#667085]">
+          <span className="employee-type-body mt-0.5 block text-[var(--employee-text-secondary)]">
             {hasBankInfo
               ? "Tài khoản sẽ nhận tiền ứng lương"
               : "Chưa cập nhật tài khoản nhận tiền"}
@@ -75,20 +92,35 @@ export function EmployeeBankInfoCard({
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-[#E4E7EC] bg-white" style={style}>
+      <div className="overflow-hidden rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]" style={style}>
         {hasBankInfo ? (
           <dl className="divide-y divide-[#EAECF0]">
-            {fields.map(({ label, getValue, mono }) => {
+            {fields.map(({ label, getValue, mono, copyable }) => {
               const value = getValue(profile);
               return (
-                <div key={label} className="grid grid-cols-[minmax(92px,0.75fr)_minmax(0,1.25fr)] items-start gap-4 px-4 py-3">
-                  <dt className="employee-type-label text-[#667085]">{label}</dt>
+                <div key={label} className="grid grid-cols-[minmax(84px,0.7fr)_minmax(0,1.3fr)] items-center gap-3 px-4 py-3 lg:grid-cols-1 lg:items-start lg:gap-1">
+                  <dt className="employee-type-bank-label text-[var(--employee-text-secondary)]">{label}</dt>
                   <dd
-                    className={`employee-type-bank-value min-w-0 text-right text-[#101828] ${
+                    className={`employee-type-bank-value min-w-0 text-right text-[var(--employee-text)] lg:text-left ${
                       mono ? "break-all font-mono tabular-nums" : "break-words"
                     }`}
                   >
-                    {value || "—"}
+                    {copyable && value ? (
+                      <span className="flex min-w-0 items-center justify-end gap-1.5 lg:justify-start">
+                        <span className="min-w-0 break-all">{value}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyAccountNumber(value)}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] text-[var(--employee-text-secondary)] transition-colors duration-200 hover:bg-[#F2F4F7] active:bg-[#EAECF0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+                          aria-label="Sao chép số tài khoản"
+                          title="Sao chép số tài khoản"
+                        >
+                          <Copy className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </span>
+                    ) : (
+                      value || "—"
+                    )}
                   </dd>
                 </div>
               );

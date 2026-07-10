@@ -193,8 +193,8 @@ export function AdvancePaymentRequestForm({
           {formatCurrency(selectedQuotaRemaining)}
         </p>
         <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-[#EAECF0] pt-3">
-          <span className="employee-type-label text-[var(--employee-text-secondary)]">Kỳ lương</span>
-          <span className="employee-type-row-amount text-[var(--employee-text)] tabular-nums">
+          <span className="employee-type-payroll-label text-[var(--employee-text-secondary)]">Kỳ lương</span>
+          <span className="employee-type-payroll-value text-[var(--employee-text)] tabular-nums">
             {formatPayrollMonthRange(selectedMonth)}
           </span>
         </div>
@@ -205,7 +205,7 @@ export function AdvancePaymentRequestForm({
           <div className="flex items-start gap-2.5 rounded-[10px] bg-[var(--employee-warning-soft)] px-3 py-2.5">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--employee-warning)]" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="employee-type-card-title text-[var(--employee-warning-strong)]">
+              <p className="employee-type-warning-title text-[var(--employee-warning-strong)]">
                 {awaitingPayroll
                   ? `Đang chờ bảng công tháng ${viewedMonthLabel}`
                   : !hasBankDestination

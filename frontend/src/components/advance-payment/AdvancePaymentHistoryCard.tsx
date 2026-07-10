@@ -6,6 +6,7 @@ import {
   CheckCircle,
   ChevronDown,
   Clock,
+  ReceiptText,
   RefreshCw,
   XCircle,
 } from "lucide-react";
@@ -105,34 +106,34 @@ function HistoryItem({ item, onCancel }: { item: AdvancePaymentHistoryItem; onCa
   const StatusIcon = config.icon;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#E4E7EC] bg-white">
+    <article className="bg-white">
       <button
         type="button"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((current) => !current)}
-        className="w-full px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#07883F]"
+        className="w-full px-4 py-3.5 text-left transition-colors duration-200 hover:bg-[#F9FAFB] active:bg-[#F2F4F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
       >
         <span className="flex items-center justify-between gap-3">
           <span className={cn("employee-type-label inline-flex min-w-0 items-center gap-1.5 font-semibold", config.text)}>
             <StatusIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">{getVietnameseAdvancePaymentStatus(item.status)}</span>
           </span>
-          <span className="employee-type-label shrink-0 text-[#667085] tabular-nums">{safeDate(item.createdAt)}</span>
+          <span className="employee-type-pill shrink-0 text-[var(--employee-text-secondary)] tabular-nums">{safeDate(item.createdAt)}</span>
         </span>
 
         <span className="mt-3 grid grid-cols-2 gap-4">
           <span className="min-w-0">
-            <span className="employee-type-label block text-[#667085]">Số tiền yêu cầu</span>
-            <span className="employee-type-card-amount mt-1 block break-words text-[#101828] tabular-nums">{safeFormat(item.requestAmount)}</span>
+            <span className="employee-type-body-sm block text-[var(--employee-text-secondary)]">Số tiền yêu cầu</span>
+            <span className="employee-type-card-title mt-1 block break-words text-[var(--employee-text)] tabular-nums">{safeFormat(item.requestAmount)}</span>
           </span>
           <span className="min-w-0 text-right">
-            <span className="employee-type-label block text-[#667085]">Thực nhận</span>
-            <span className="employee-type-card-amount mt-1 block break-words text-[#067647] tabular-nums">{safeFormat(item.netAmount)}</span>
+            <span className="employee-type-body-sm block text-[var(--employee-text-secondary)]">Thực nhận</span>
+            <span className="employee-type-card-title mt-1 block break-words text-[var(--employee-accent-strong)] tabular-nums">{safeFormat(item.netAmount)}</span>
           </span>
         </span>
 
-        <span className="employee-type-body-sm mt-2.5 flex items-center justify-between gap-3 text-[#667085]">
+        <span className="employee-type-body-sm mt-2.5 flex items-center justify-between gap-3 text-[var(--employee-text-secondary)]">
           <span>{isOpen ? "Thu gọn chi tiết" : "Xem phí và chi tiết"}</span>
           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
         </span>
@@ -181,10 +182,10 @@ export function AdvancePaymentHistoryCard({
       <div className="mb-3 flex items-end justify-between gap-3 px-0.5">
         <div>
           <h2 id="employee-advance-history-title" className="employee-type-section-title text-[#101828]">Lịch sử yêu cầu</h2>
-          <p className="employee-type-body-sm mt-0.5 text-[#667085]">Theo dõi kết quả ứng lương của bạn</p>
+          <p className="employee-type-body mt-0.5 text-[var(--employee-text-secondary)]">Theo dõi trạng thái các yêu cầu ứng lương</p>
         </div>
         {!isLoading && !isError && (
-          <span className="employee-type-label shrink-0 text-[#475467]">
+          <span className="employee-type-pill shrink-0 text-[#475467] tabular-nums">
             {monthLabel ? `Kỳ ${monthLabel} · ` : ""}{history.length} yêu cầu
           </span>
         )}
@@ -195,7 +196,7 @@ export function AdvancePaymentHistoryCard({
           {[1, 2].map((index) => <Skeleton key={index} className="h-32 w-full rounded-xl" />)}
         </div>
       ) : isError ? (
-        <div className="rounded-xl border border-[#E4E7EC] bg-white px-4 py-5 text-center" role="alert">
+        <div className="rounded-xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center" role="alert">
           <p className="employee-type-strong text-[#101828]">Chưa tải được lịch sử</p>
           <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
           {onRetry && (
@@ -206,12 +207,15 @@ export function AdvancePaymentHistoryCard({
           )}
         </div>
       ) : history.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#D0D5DD] bg-white px-4 py-6 text-center">
-          <p className="employee-type-strong text-[#344054]">Chưa có yêu cầu trong tháng {monthLabel}</p>
-          <p className="employee-type-body-sm mt-1 text-[#667085]">Yêu cầu mới sẽ xuất hiện tại đây.</p>
+        <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]">
+          <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#F2F4F7] text-[var(--employee-text-secondary)]">
+            <ReceiptText className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <p className="employee-type-card-title text-[#344054]">Chưa có yêu cầu trong tháng {monthLabel}</p>
+          <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Các yêu cầu mới sẽ xuất hiện tại đây.</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="divide-y divide-[#EAECF0] overflow-hidden rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
           {history.map((item) => <HistoryItem key={item.id} item={item} onCancel={onCancel} />)}
         </div>
       )}

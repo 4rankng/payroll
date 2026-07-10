@@ -207,78 +207,84 @@ const FlexiblePayEmployeePage = () => {
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
       >
-        <EmployeeMonthNavigator month={month} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start">
+          <div className="min-w-0 space-y-6">
+            <div className="space-y-2">
+              <EmployeeMonthNavigator month={month} />
 
-        {profile?.check_in_enabled && (
-          <section id="employee-check-in" className="scroll-mt-4">
-            <EmployeeCheckInCard
-              checkInTarget={profile.check_in_target}
-              checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
-              shiftStart={profile.shift_start}
-              shiftEnd={profile.shift_end}
-              checkInWindowStart={profile.check_in_window_start}
-              checkInWindowEnd={profile.check_in_window_end}
-            />
-          </section>
-        )}
+              {infoError ? (
+                <section id="employee-advance-request" className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]" role="alert">
+                  <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
+                  <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
+                  <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
+                  <button
+                    type="button"
+                    onClick={() => refetchInfo()}
+                    className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+                  >
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                    Tải lại
+                  </button>
+                </section>
+              ) : info ? (
+                <section id="employee-advance-request" className="scroll-mt-24">
+                  <AdvancePaymentRequestForm
+                    key={`${formKey}-${month.value}`}
+                    info={info}
+                    viewMonth={month.value}
+                    history={formHistory}
+                    feeDetails={feeDetails}
+                    hasBankDestination={hasEmployeeBankInfo(profile)}
+                    onSubmit={handleRequestSubmit}
+                    onAmountChange={handleAmountChange}
+                    isPending={requestMutation.isPending}
+                    className="rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"
+                  />
+                </section>
+              ) : null}
+            </div>
 
-        {infoError ? (
-          <section id="employee-advance-request" className="scroll-mt-4 rounded-2xl border border-[#E4E7EC] bg-white px-4 py-5 text-center" role="alert">
-            <AlertCircle className="mx-auto h-5 w-5 text-[#B42318]" aria-hidden="true" />
-            <h2 className="employee-type-section-title mt-2 text-[#101828]">Chưa tải được hạn mức ứng lương</h2>
-            <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
-            <button
-              type="button"
-              onClick={() => refetchInfo()}
-              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-4 text-[#344054] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#07883F]"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Tải lại
-            </button>
-          </section>
-        ) : info ? (
-          <section id="employee-advance-request" className="scroll-mt-4">
-            <AdvancePaymentRequestForm
-              key={`${formKey}-${month.value}`}
-              info={info}
-              viewMonth={month.value}
-              history={formHistory}
-              feeDetails={feeDetails}
-              hasBankDestination={hasEmployeeBankInfo(profile)}
-              onSubmit={handleRequestSubmit}
-              onAmountChange={handleAmountChange}
-              isPending={requestMutation.isPending}
-              className="rounded-2xl border border-[#E4E7EC] bg-white p-4"
-            />
-          </section>
-        ) : null}
+            <section id="employee-history" className="scroll-mt-24">
+              <AdvancePaymentHistoryCard
+                history={history}
+                isLoading={historyLoading}
+                isError={historyError}
+                onRetry={() => refetchHistory()}
+                onCancel={handleCancelRequest}
+                monthLabel={month.shortLabel}
+              />
+            </section>
+          </div>
 
-        {profile?.check_in_enabled && (
-          <EmployeeAttendanceHistoryCard
-            fromDate={month.fromDate}
-            toDate={month.toDate}
-            monthLabel={month.shortLabel}
-            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
-            style={employeeCardShadow}
-          />
-        )}
+          <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
+            {profile?.check_in_enabled && (
+              <section id="employee-check-in" className="scroll-mt-24">
+                <EmployeeCheckInCard
+                  checkInTarget={profile.check_in_target}
+                  checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
+                  shiftStart={profile.shift_start}
+                  shiftEnd={profile.shift_end}
+                  checkInWindowStart={profile.check_in_window_start}
+                  checkInWindowEnd={profile.check_in_window_end}
+                />
+              </section>
+            )}
 
-        <section id="employee-history" className="scroll-mt-4">
-          <AdvancePaymentHistoryCard
-            history={history}
-            isLoading={historyLoading}
-            isError={historyError}
-            onRetry={() => refetchHistory()}
-            onCancel={handleCancelRequest}
-            monthLabel={month.shortLabel}
-          />
-        </section>
+            {profile?.check_in_enabled && (
+              <EmployeeAttendanceHistoryCard
+                fromDate={month.fromDate}
+                toDate={month.toDate}
+                monthLabel={month.shortLabel}
+                className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white"
+                style={employeeCardShadow}
+              />
+            )}
 
-        <section id="employee-bank" className="scroll-mt-4">
-          <EmployeeBankInfoCard
-            profile={profile!}
-          />
-        </section>
+            <section id="employee-bank" className="scroll-mt-24">
+              <EmployeeBankInfoCard profile={profile!} />
+            </section>
+          </aside>
+        </div>
 
       <ChangePasswordSheet
         open={passwordSheetOpen}

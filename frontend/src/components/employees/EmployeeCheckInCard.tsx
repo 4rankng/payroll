@@ -101,8 +101,8 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
     <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.18fr)] gap-2">
       {details.map((detail) => (
         <div key={detail.label} className={`rounded-lg border px-2.5 py-2 ${toneClass}`}>
-          <p className="whitespace-nowrap text-[11px] font-semibold uppercase leading-4 text-slate-500">{detail.label}</p>
-          <p className="employee-type-body mt-0.5 font-bold">{detail.value}</p>
+          <p className="employee-type-pill whitespace-nowrap uppercase text-slate-500">{detail.label}</p>
+          <p className="employee-type-body mt-0.5 font-semibold">{detail.value}</p>
         </div>
       ))}
     </div>
@@ -601,7 +601,7 @@ export function EmployeeCheckInCard({
       <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
         <AlertDialogContent className="max-w-[calc(100vw-32px)] border-employee-100 bg-white shadow-2xl shadow-employee-900/20 sm:max-w-md">
           <AlertDialogHeader className="bg-employee-900 px-5 pb-4 pt-5 text-left">
-            <AlertDialogTitle className="employee-type-hero-title font-bold text-white">
+            <AlertDialogTitle className="employee-type-hero-title font-semibold text-white">
               Tan ca ngoài giờ hợp lệ
             </AlertDialogTitle>
             <AlertDialogDescription className="mt-1 text-sm leading-5 text-employee-100">
@@ -650,13 +650,13 @@ export function EmployeeCheckInCard({
           <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
             <AlertDialogCancel
               disabled={isPending}
-              className="employee-type-action mt-0 h-12 w-full rounded-lg border-employee-200 bg-white font-bold text-employee-900 hover:bg-employee-50 hover:text-employee-900"
+              className="employee-type-action mt-0 h-12 w-full rounded-lg border-employee-200 bg-white font-semibold text-employee-900 hover:bg-employee-50 hover:text-employee-900"
             >
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-bold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
+              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-semibold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
               onClick={(event) => {
                 event.preventDefault();
                 handleAction("check_out", { confirmNoSalary: true });
@@ -671,7 +671,7 @@ export function EmployeeCheckInCard({
       <AlertDialog open={showCancelShiftConfirm} onOpenChange={setShowCancelShiftConfirm}>
         <AlertDialogContent className="max-w-[calc(100vw-32px)] border-red-100 bg-white shadow-2xl shadow-red-900/20 sm:max-w-md">
           <AlertDialogHeader className="bg-red-600 px-5 pb-4 pt-5 text-left">
-            <AlertDialogTitle className="employee-type-hero-title font-bold text-white">
+            <AlertDialogTitle className="employee-type-hero-title font-semibold text-white">
               Hủy ca đang làm?
             </AlertDialogTitle>
             <AlertDialogDescription className="mt-1 text-sm leading-5 text-red-50">
@@ -692,13 +692,13 @@ export function EmployeeCheckInCard({
           <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
             <AlertDialogCancel
               disabled={isPending}
-              className="employee-type-action mt-0 h-12 w-full rounded-lg border-slate-200 bg-white font-bold text-slate-900 hover:bg-slate-50"
+              className="employee-type-action mt-0 h-12 w-full rounded-lg border-slate-200 bg-white font-semibold text-slate-900 hover:bg-slate-50"
             >
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-bold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
+              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-semibold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
               onClick={(event) => {
                 event.preventDefault();
                 handleCancelCurrentShift();
@@ -721,7 +721,7 @@ export function EmployeeCheckInCard({
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="employee-type-card-title font-bold">Đang kiểm tra vị trí...</p>
+              <p className="employee-type-card-title font-semibold">Đang kiểm tra vị trí...</p>
               <p className="employee-type-body-sm mt-0.5 font-medium text-sky-800">
                 {getLocationAcquisitionMessage(locationProgress, checkInGuidance)}
               </p>
@@ -730,21 +730,21 @@ export function EmployeeCheckInCard({
           {locationProgress?.sampleCount ? (
             <div className="mt-2 grid grid-cols-3 gap-2">
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-bold text-sky-700">Sai số</p>
-                <p className="employee-type-body mt-0.5 truncate font-extrabold text-sky-950">
+                <p className="employee-type-label-caps font-semibold text-sky-700">Sai số</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
                   {formatAccuracy(locationProgress.bestAccuracy) || "--"}
                 </p>
               </div>
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-bold text-sky-700">Cần</p>
-                <p className="employee-type-body mt-0.5 truncate font-extrabold text-sky-950">
+                <p className="employee-type-label-caps font-semibold text-sky-700">Cần</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
                   {"<="}
                   {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
                 </p>
               </div>
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-bold text-sky-700">Lần đo</p>
-                <p className="employee-type-body mt-0.5 truncate font-extrabold text-sky-950">
+                <p className="employee-type-label-caps font-semibold text-sky-700">Lần đo</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
                   {locationProgress.sampleCount}
                 </p>
               </div>
@@ -759,7 +759,7 @@ export function EmployeeCheckInCard({
               {locationIssue.requiresSettings ? <Settings className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="employee-type-card-title truncate font-bold">{locationIssue.title}</p>
+              <p className="employee-type-card-title truncate font-semibold">{locationIssue.title}</p>
               {showRecoveryDescription ? (
                 <p className="employee-type-body-sm mt-0.5 font-medium text-amber-800">{locationIssue.description}</p>
               ) : null}
@@ -769,7 +769,7 @@ export function EmployeeCheckInCard({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="employee-type-action h-11 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 font-bold text-amber-950 hover:bg-amber-100"
+                  className="employee-type-action h-11 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 font-semibold text-amber-950 hover:bg-amber-100"
                   disabled={isPending}
                   onClick={() => {
                     // Restart the watch (re-arms GPS, re-prompts permission if the
@@ -798,7 +798,7 @@ export function EmployeeCheckInCard({
                 <BadgeCheck className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="employee-type-card-title font-bold text-slate-950">Ca hôm nay đã xong</p>
+                <p className="employee-type-card-title font-semibold text-slate-950">Ca hôm nay đã xong</p>
                 <p className="employee-type-body-sm mt-0.5 font-semibold text-slate-600">
                   {safeFormatTime(attendance.check_in_time)} — {safeFormatTime(attendance.check_out_time)}
                 </p>
@@ -820,7 +820,7 @@ export function EmployeeCheckInCard({
                 {salaryRecorded ? <WalletCards className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="employee-type-body font-bold">
+                <p className="employee-type-body font-semibold">
                   {salaryRecorded ? `Lương ca: ${formatCurrency(attendance.earning_amount)}` : salaryIssue.title}
                 </p>
                 <p className="employee-type-body-sm mt-0.5 font-medium opacity-85">
@@ -836,7 +836,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-bold text-white shadow-md hover:bg-employee-600"
+                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600"
                 style={{
                   boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
                 }}
@@ -882,7 +882,7 @@ export function EmployeeCheckInCard({
             </Button>
             <Button
               size="lg"
-              className="employee-type-action h-12 rounded-xl bg-[#07883F] font-bold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647]"
+              className="employee-type-action h-12 rounded-xl bg-[#07883F] font-semibold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647]"
               disabled={isPending || checkoutCoolingDown}
               onClick={() => handleAction("check_out")}
             >
@@ -904,7 +904,7 @@ export function EmployeeCheckInCard({
               <AlertCircle className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="employee-type-card-title font-bold text-red-950">Ca cần kiểm tra</p>
+              <p className="employee-type-card-title font-semibold text-red-950">Ca cần kiểm tra</p>
               <p className="employee-type-body-sm mt-0.5 font-medium text-red-700">
                 Bạn chưa bấm Tan ca cho ca trước. Hãy báo quản lý để kiểm tra lại lương.
               </p>
@@ -918,7 +918,7 @@ export function EmployeeCheckInCard({
               <AlertCircle className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="employee-type-card-title font-bold text-orange-950">
+              <p className="employee-type-card-title font-semibold text-orange-950">
                 {rejectedIssue.title === "Cần quản lý kiểm tra" ? "Ca đã bị từ chối" : rejectedIssue.title}
               </p>
               <p className="employee-type-body-sm mt-0.5 font-medium text-orange-700">
@@ -938,7 +938,7 @@ export function EmployeeCheckInCard({
                   <Clock className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-card-title font-bold text-slate-950">Chưa đến giờ vào làm</p>
+                  <p className="employee-type-card-title font-semibold text-slate-950">Chưa đến giờ vào làm</p>
                   <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
                     {shiftStart
                       ? `Ca làm việc bắt đầu lúc ${shiftStart}. Giờ chấm công từ ${checkInWindowStart} đến ${checkInWindowEnd}.`
@@ -969,14 +969,14 @@ export function EmployeeCheckInCard({
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-bold text-slate-950">Sẵn sàng vào làm</p>
+                    <p className="employee-type-card-title font-semibold text-slate-950">Sẵn sàng vào làm</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Vị trí đã xác định</p>
                   </div>
                 </div>
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className={`employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-bold text-white shadow-md hover:bg-employee-600 ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                className={`employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 ${showReadyPop ? "check-in-ready-pop" : ""}`}
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -996,7 +996,7 @@ export function EmployeeCheckInCard({
                     <MapPin className="h-5 w-5 animate-pulse" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-bold text-slate-950">Đang xác định vị trí...</p>
+                    <p className="employee-type-card-title font-semibold text-slate-950">Đang xác định vị trí...</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
                       {outsideGeofenceInstruction || (locationProgress?.status === "excellent"
                         ? "Tín hiệu rất tốt — sẵn sàng chấm công."
@@ -1009,7 +1009,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action check-in-warming mt-2 h-12 w-full rounded-xl bg-employee font-bold text-white shadow-md"
+                className="employee-type-action check-in-warming mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled
               >
@@ -1024,7 +1024,7 @@ export function EmployeeCheckInCard({
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-card-title font-bold text-slate-950">Không lấy được vị trí</p>
+                  <p className="employee-type-card-title font-semibold text-slate-950">Không lấy được vị trí</p>
                   <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
                     {location.fatalError.title}. {location.fatalError.description}
                   </p>
@@ -1039,14 +1039,14 @@ export function EmployeeCheckInCard({
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-bold text-slate-950">Sẵn sàng vào làm</p>
+                    <p className="employee-type-card-title font-semibold text-slate-950">Sẵn sàng vào làm</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Bấm Vào làm khi đã tới cổng</p>
                   </div>
                 </div>
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-bold text-white shadow-md hover:bg-employee-600"
+                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600"
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}

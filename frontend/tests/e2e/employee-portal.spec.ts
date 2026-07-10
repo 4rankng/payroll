@@ -100,7 +100,7 @@ test.describe("mobile employee payroll dashboard", () => {
   });
 
   test("preserves hierarchy and prevents overflow at supported widths", async ({ page }) => {
-    for (const width of [360, 390, 430]) {
+    for (const width of [320, 375, 390, 430, 768, 1024]) {
       await page.setViewportSize({ width, height: 844 });
       await expect(page.getByRole("heading", { name: "Nguyễn Thị Nhân Viên Có Tên Rất Dài" })).toBeVisible();
       await expect(page.getByText("4.000.000 ₫")).toBeVisible();
@@ -138,12 +138,15 @@ test.describe("mobile employee payroll dashboard", () => {
 
     await page.getByRole("button", { name: "Menu tài khoản" }).click();
     await expect(page.getByText("Đổi mật khẩu")).toBeVisible();
-    await page.keyboard.press("Escape");
+    await page.mouse.click(24, 220);
+    await expect(page.getByText("Đổi mật khẩu")).toBeHidden();
+
+    await page.getByRole("button", { name: "Xem tháng sau" }).click();
 
     await page.getByRole("button", { name: "50%" }).click();
-    await expect(page.getByRole("button", { name: "Tiếp tục" })).toBeEnabled();
-    await page.getByRole("button", { name: "Tiếp tục" }).click();
-    await expect(page.getByText("Xác nhận yêu cầu ứng lương")).toBeVisible();
-    await expect(page.getByText("123456789012345678901234567890")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeEnabled();
+    await page.getByRole("button", { name: "Yêu cầu ứng lương" }).click();
+    await expect(page.getByRole("dialog").getByRole("heading", { name: "Xác nhận yêu cầu ứng lương" }).last()).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("123456789012345678901234567890")).toBeVisible();
   });
 });

@@ -29,14 +29,14 @@ export function EmployeePortalHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--employee-border)] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/88">
       <div
-        className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-3 lg:px-6"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+        className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-4 lg:px-6"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
       >
         <div className="min-w-0">
           <h1 className="employee-type-header-name truncate text-[var(--employee-text)]" title={employeeName}>
             {employeeName || "bạn"}
           </h1>
-          <p className="employee-type-body-sm mt-0.5 truncate capitalize text-[var(--employee-text-secondary)]">{todayLabel}</p>
+          <p className="employee-type-header-date mt-0.5 truncate capitalize text-[var(--employee-text-secondary)] tabular-nums">{todayLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button
@@ -47,7 +47,7 @@ export function EmployeePortalHeader({
           >
             <Bell className="h-5 w-5" strokeWidth={2.1} />
             {unreadCount != null && unreadCount > 0 && (
-              <span className="type-count-badge absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D92D20] px-1 text-white ring-2 ring-white">
+              <span className="employee-type-notification-badge absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#D92D20] px-1 text-white ring-2 ring-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}

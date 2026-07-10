@@ -53,7 +53,7 @@ const EmployeeRouter = () => {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-200/70">
               <AlertCircle className="h-8 w-8" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="employee-type-section-title text-slate-900">
               Chưa tải được hồ sơ
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
