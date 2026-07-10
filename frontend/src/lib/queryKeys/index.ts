@@ -329,7 +329,7 @@ export const QueryKeys = {
     employee: {
       info: ['employee', 'advance-payment', 'info'] as const,
       checkInAdvanceInfo: ['employee', 'check-in-advance', 'info'] as const,
-      history: (filters?: { page?: number; pageSize?: number }) =>
+      history: (filters?: { page?: number; pageSize?: number; forMonth?: string; fromDate?: string; toDate?: string }) =>
         ['employee', 'advance-payment', 'history', filters] as const,
     },
     admin: {

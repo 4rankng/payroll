@@ -5,6 +5,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/transport/http/response"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,30 @@ func (h *AdvancePaymentHandler) GetMyAdvancePaymentHistory(c *gin.Context) {
 
 	offset := (page - 1) * pageSize
 
-	items, total, err := h.service.GetRequestHistoryByUserID(c.Request.Context(), uint64(userID.(uint)), pageSize, offset)
+	// Optional salary-period scope (forMonth=YYYY-MM). Preferred for employee
+	// history: an advance is charged to a salary period, which can differ from
+	// the calendar month it was submitted in (days 1–8 charge to the previous
+	// period). Omitted = all-time history.
+	var forMonth *string
+	if fm := c.Query("forMonth"); fm != "" {
+		forMonth = &fm
+	}
+
+	// Optional created_at date-range fallback (inclusive bounds, matching the
+	// admin ListAdvancePayments convention).
+	var fromDate, toDate *time.Time
+	if fromDateStr := c.Query("fromDate"); fromDateStr != "" {
+		if t, err := time.Parse("2006-01-02", fromDateStr); err == nil {
+			fromDate = &t
+		}
+	}
+	if toDateStr := c.Query("toDate"); toDateStr != "" {
+		if t, err := time.Parse("2006-01-02", toDateStr); err == nil {
+			toDate = &t
+		}
+	}
+
+	items, total, err := h.service.GetRequestHistoryByUserID(c.Request.Context(), uint64(userID.(uint)), pageSize, offset, fromDate, toDate, forMonth)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return

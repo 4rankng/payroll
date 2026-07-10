@@ -1,11 +1,9 @@
 import { useId, useMemo, useState } from "react";
-import { format } from "date-fns";
 import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   ChevronUp,
   CircleX,
@@ -20,11 +18,6 @@ import {
   isSalaryRecorded,
   type AttendanceIssueDetail,
 } from "@/utils/attendanceHelpers";
-import {
-  getAttendanceHistoryMonth,
-  getNextAttendanceHistoryMonth,
-  getPreviousAttendanceHistoryMonth,
-} from "@/utils/attendanceHistoryMonth";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +34,12 @@ function formatTime(time: string | undefined | null, fallback = "--:--"): string
 }
 
 interface EmployeeAttendanceHistoryCardProps {
+  /** `yyyy-MM-dd` — first day of the month to show (drives the attendance query). */
+  fromDate: string;
+  /** `yyyy-MM-dd` — last day of the month to show (drives the attendance query). */
+  toDate: string;
+  /** Period label shown in the header (e.g. "07/2026"). */
+  monthLabel: string;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -145,14 +144,18 @@ function AttendanceHistoryRow({ attendance }: { attendance: AttendanceRecord }) 
   );
 }
 
-export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAttendanceHistoryCardProps) {
+export function EmployeeAttendanceHistoryCard({
+  fromDate,
+  toDate,
+  monthLabel,
+  className,
+  style,
+}: EmployeeAttendanceHistoryCardProps) {
   const [isFullHistoryOpen, setIsFullHistoryOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(() => new Date());
   const panelId = useId();
-  const month = useMemo(() => getAttendanceHistoryMonth(selectedMonth), [selectedMonth]);
   const historyParams = useMemo(
-    () => ({ limit: 100, from_date: month.fromDate, to_date: month.toDate }),
-    [month.fromDate, month.toDate]
+    () => ({ limit: 100, from_date: fromDate, to_date: toDate }),
+    [fromDate, toDate]
   );
   const { data: historyResponse, isLoading } = useAttendanceHistory(historyParams);
   const history = useMemo(() => {
@@ -178,8 +181,8 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
             <History className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 id="employee-attendance-title" className="employee-type-hero-title text-[#101828]">Chấm công</h2>
-            <p className="employee-type-body-sm mt-0.5 text-[#667085]">{month.label}</p>
+            <h2 id="employee-attendance-title" className="employee-type-card-title text-[#101828]">Chấm công</h2>
+            <p className="employee-type-body-sm mt-0.5 text-[#667085]">{monthLabel}</p>
           </div>
         </div>
         <div className="flex shrink-0 gap-1.5" aria-label="Tóm tắt chấm công">
@@ -188,18 +191,6 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
         </div>
       </div>
 
-      {isFullHistoryOpen && (
-        <div className="flex items-center justify-between gap-2 border-y border-[#EAECF0] px-4 py-2.5">
-          <button type="button" aria-label="Xem tháng trước" className="flex h-11 w-11 items-center justify-center rounded-lg text-[#475467] hover:bg-[#F2F4F7] focus-visible:ring-2 focus-visible:ring-[#07883F]" onClick={() => setSelectedMonth((current) => getPreviousAttendanceHistoryMonth(current))}>
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="employee-type-card-title text-[#101828]">{month.label}</span>
-          <button type="button" aria-label="Xem tháng sau" disabled={!month.canGoNext} className="flex h-11 w-11 items-center justify-center rounded-lg text-[#475467] hover:bg-[#F2F4F7] focus-visible:ring-2 focus-visible:ring-[#07883F] disabled:pointer-events-none disabled:text-[#D0D5DD]" onClick={() => setSelectedMonth((current) => getNextAttendanceHistoryMonth(current))}>
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="space-y-3 px-4 pb-4">
           {Array.from({ length: ATTENDANCE_PREVIEW_LIMIT }).map((_, index) => <Skeleton key={index} className="h-20 w-full rounded-xl" />)}
@@ -207,7 +198,7 @@ export function EmployeeAttendanceHistoryCard({ className, style }: EmployeeAtte
       ) : history.length === 0 ? (
         <div className="mx-4 mb-4 rounded-xl border border-dashed border-[#D0D5DD] px-4 py-7 text-center text-[#475467]">
           <Calendar className="mx-auto mb-2 h-8 w-8 text-[#98A2B3]" aria-hidden="true" />
-          <p className="employee-type-card-title">Chưa có ca làm trong kỳ này</p>
+          <p className="employee-type-card-title">Chưa có ca làm trong tháng {monthLabel}</p>
           <p className="employee-type-body-sm mt-1">Chọn tháng khác để xem lịch sử trước đó.</p>
         </div>
       ) : (

@@ -17,16 +17,26 @@ const EmployeeRouter = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-[100dvh] bg-muted/50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <Skeleton className="h-12 w-48" />
+      <div className="min-h-[100dvh] bg-[#F6F8FA]">
+        <div className="border-b border-[#E4E7EC] bg-white">
+          <div className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-44" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-11 w-11 rounded-xl" />
+              <Skeleton className="h-11 w-11 rounded-xl" />
+            </div>
           </div>
         </div>
-        <div className="max-w-2xl mx-auto p-4 space-y-4">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-48 w-full" />
+        <div className="mx-auto max-w-lg space-y-5 p-4">
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <div className="space-y-2.5">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </div>
         </div>
       </div>
     );

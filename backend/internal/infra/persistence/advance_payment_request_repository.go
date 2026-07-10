@@ -48,12 +48,33 @@ func (r *AdvancePaymentRequestRepository) GetByID(ctx context.Context, id uint64
 	return &req, nil
 }
 
-func (r *AdvancePaymentRequestRepository) GetByEmployee(ctx context.Context, employeeID uint64, limit, offset int) ([]*domain.AdvancePaymentRequest, int64, error) {
+func (r *AdvancePaymentRequestRepository) GetByEmployee(ctx context.Context, employeeID uint64, limit, offset int, fromDate, toDate *time.Time, forMonth *string) ([]*domain.AdvancePaymentRequest, int64, error) {
 	var requests []*domain.AdvancePaymentRequest
 	var total int64
 
 	query := r.DB.WithContext(ctx).Model(&domain.AdvancePaymentRequest{}).
-		Where("employee_id = ?", employeeID)
+		Where("advance_payment_requests.employee_id = ?", employeeID)
+
+	// Salary-period scope (preferred for employee history): group requests by the
+	// for_month they are charged to, not the calendar day they were submitted. A
+	// request created early in a month can belong to the previous salary period
+	// (days 1–8 charge to the previous period), so created_at bounds would
+	// misplace it. for_month lives on the parent advance_payments row, so we join
+	// through adv_pay_id (every request has one, including PENDING).
+	if forMonth != nil {
+		query = query.
+			Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
+			Where("ap.for_month = ?", *forMonth)
+	}
+
+	// Optional date-range fallback (inclusive created_at bounds), kept for callers
+	// that still scope by submission date.
+	if fromDate != nil {
+		query = query.Where("advance_payment_requests.created_at >= ?", *fromDate)
+	}
+	if toDate != nil {
+		query = query.Where("advance_payment_requests.created_at <= ?", *toDate)
+	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -61,7 +82,7 @@ func (r *AdvancePaymentRequestRepository) GetByEmployee(ctx context.Context, emp
 
 	err := query.
 		Preload("Project").
-		Order("created_at DESC").
+		Order("advance_payment_requests.created_at DESC").
 		Limit(limit).
 		Offset(offset).
 		Find(&requests).Error

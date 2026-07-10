@@ -12,7 +12,7 @@ import {
 import { formatCurrency } from "@/utils/formatters";
 import {
   validateAdvancePaymentAmount,
-  formatAdvancePeriodDisplay,
+  formatPayrollMonthRange,
   getVietnameseAdvancePaymentStatus,
 } from "@/utils/advancePaymentHelpers";
 import {
@@ -172,7 +172,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-800">Ứng lương</h2>
-                <p className="text-xs text-muted-foreground">{info ? formatAdvancePeriodDisplay(info.forMonth) : "Đang tải..."}</p>
+                <p className="text-xs text-muted-foreground">{info ? formatPayrollMonthRange(info.forMonth) : "Đang tải..."}</p>
               </div>
             </div>
           </div>

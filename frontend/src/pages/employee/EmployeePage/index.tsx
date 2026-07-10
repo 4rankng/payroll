@@ -4,13 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { authManager } from "@/lib/auth";
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { format } from "date-fns";
@@ -22,11 +15,13 @@ import {
   useEmployeeTimesheetsInfinite,
 } from "@/hooks/api/useEmployeePortal";
 import { useSettingByKey } from "@/hooks/api/useSettings";
+import { useEmployeeMonth } from "@/hooks/useEmployeeMonth";
 import type { EmployeeTimesheetFilters } from "@/types/api/auth.types";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
 import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
+import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavigator";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { groupTimesheetsByDay } from "@/utils/employeePortal/timesheetGrouping";
@@ -42,19 +37,7 @@ import {
 const EmployeePage = () => {
   const navigate = useNavigate();
 
-  const monthOptions = useMemo(() => {
-    const options = [];
-    const now = new Date();
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = format(date, "yyyy-MM");
-      const label = format(date, "MMMM yyyy", { locale: vi });
-      options.push({ value, label });
-    }
-    return options;
-  }, []);
-
-  const [monthFilter, setMonthFilter] = useState<string>(monthOptions[0]?.value || "");
+  const month = useEmployeeMonth();
   const statusFilter = "all";
   const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
@@ -66,18 +49,17 @@ const EmployeePage = () => {
   const { data: unreadNotifications } = useUnreadNotifications();
 
   const baseFilters = useMemo<Omit<EmployeeTimesheetFilters, "page" | "pageSize">>(() => {
-    const f: Omit<EmployeeTimesheetFilters, "page" | "pageSize"> = { sortBy: "date", sortOrder: "desc" };
-    if (monthFilter) {
-      const [year, month] = monthFilter.split("-");
-      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-      f.fromDate = `${monthFilter}-01`;
-      f.toDate = `${monthFilter}-${lastDay.toString().padStart(2, "0")}`;
-    }
+    const f: Omit<EmployeeTimesheetFilters, "page" | "pageSize"> = {
+      sortBy: "date",
+      sortOrder: "desc",
+      fromDate: month.fromDate,
+      toDate: month.toDate,
+    };
     if (statusFilter && statusFilter !== "all") {
       f.payment_status = statusFilter as "paid" | "unpaid";
     }
     return f;
-  }, [monthFilter, statusFilter]);
+  }, [month.fromDate, month.toDate, statusFilter]);
 
   const { data: infiniteData, isLoading: timesheetsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useEmployeeTimesheetsInfinite(baseFilters, 50);
@@ -98,8 +80,8 @@ const EmployeePage = () => {
   const totalPaid = useMemo(() => timesheets.reduce((s, e) => s + e.paid_amount, 0), [timesheets]);
   const groupedDays = useMemo(() => groupTimesheetsByDay(timesheets), [timesheets]);
   const selectedMonthLabel = useMemo(
-    () => monthFilter ? format(new Date(`${monthFilter}-01`), "MMMM yyyy", { locale: vi }) : "Kỳ lương hiện tại",
-    [monthFilter]
+    () => format(month.date, "MMMM yyyy", { locale: vi }),
+    [month.date]
   );
   const homeModel = useMemo(
     () =>
@@ -200,29 +182,15 @@ const EmployeePage = () => {
 
         {/* Timesheets Section */}
         <section id="employee-timesheets" className="scroll-mt-4">
-          <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-sky-600" />
-              <h2 className="employee-type-hero-title text-slate-900">Bảng công</h2>
-              {totalRecords > 0 && (
-                <Badge className="employee-type-pill border-0 bg-sky-100 px-2 py-1 text-sky-700 hover:bg-sky-100">
-                  {totalRecords}
-                </Badge>
-              )}
-            </div>
-            <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="employee-type-label h-11 w-auto min-w-11 rounded-xl border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-white/60 bg-white/90 backdrop-blur-xl shadow-lg overflow-hidden">
-                {monthOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="employee-type-body rounded-lg py-2.5 focus:bg-sky-50/80 focus:text-sky-700">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <EmployeeMonthNavigator month={month} className="mb-3" />
+          <div className="mb-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+            <Calendar className="h-4 w-4 text-sky-600" />
+            <h2 className="employee-type-hero-title text-slate-900">Bảng công</h2>
+            {totalRecords > 0 && (
+              <Badge className="employee-type-pill border-0 bg-sky-100 px-2 py-1 text-sky-700 hover:bg-sky-100">
+                {totalRecords}
+              </Badge>
+            )}
           </div>
 
           {/* Timesheet cards */}

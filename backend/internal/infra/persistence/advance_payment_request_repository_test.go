@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"testing"
+	"time"
 
 	"api-server/internal/domain"
 
@@ -159,6 +160,156 @@ func TestCreateWithBudgetCheck_NoBudgetRow(t *testing.T) {
 	t.Logf("Correctly rejected: %v", err)
 }
 
+// TestGetByEmployee_DateRange verifies the optional fromDate/toDate filter on the
+// employee history list. Seeds one request stamped to the current month and one
+// to the previous month, then asserts that the date-range filter returns only the
+// matching subset, that the total count reflects the filter, and that nil bounds
+// return all rows (backward compatibility).
+func TestGetByEmployee_DateRange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	// The employees/projects tables have many NOT NULL columns, so we can't
+	// trivially seed throwaway rows. Discover real IDs from the test DB instead,
+	// and skip if either is missing (e.g. a fresh migration with no seed data).
+	var empID uint64
+	if err := repo.DB.Model(&domain.Employee{}).Limit(1).
+		Select("id").Scan(&empID).Error; err != nil || empID == 0 {
+		t.Skipf("no employee row available to satisfy FK; skipping: %v", err)
+	}
+	var projectID uint64
+	if err := repo.DB.Model(&domain.Project{}).Limit(1).
+		Select("id").Scan(&projectID).Error; err != nil || projectID == 0 {
+		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
+	}
+	repo.DB.Unscoped().Where("employee_id = ? AND for_month = ?", empID, "2020-01").
+		Delete(&domain.AdvancePayment{})
+
+	advPay := &domain.AdvancePayment{
+		EmployeeID:   uint(empID),
+		ForMonth:     "2020-01",
+		MaxAdvAmount: 1_000_000,
+		ProjectID:    uint(projectID),
+	}
+	if err := repo.DB.Create(advPay).Error; err != nil {
+		t.Fatalf("setup: create advance_payment: %v", err)
+	}
+
+	thisMonthTime := startOfMonth(time.Now())
+	lastMonthTime := startOfMonth(time.Now().AddDate(0, -1, 0))
+
+	reqThisMonth := &domain.AdvancePaymentRequest{
+		AdvPayID:      advPay.ID,
+		ProjectID:     advPay.ProjectID,
+		EmployeeID:    uint(empID),
+		RequestAmount: 100000,
+		Fee:           2000,
+		NetAmount:     98000,
+		Status:        domain.AdvancePaymentStatusPending,
+		CreatedAt:     thisMonthTime,
+	}
+	if err := repo.DB.Create(reqThisMonth).Error; err != nil {
+		t.Fatalf("create this-month request: %v", err)
+	}
+
+	reqLastMonth := &domain.AdvancePaymentRequest{
+		AdvPayID:      advPay.ID,
+		ProjectID:     advPay.ProjectID,
+		EmployeeID:    uint(empID),
+		RequestAmount: 200000,
+		Fee:           4000,
+		NetAmount:     196000,
+		Status:        domain.AdvancePaymentStatusPending,
+		CreatedAt:     lastMonthTime,
+	}
+	if err := repo.DB.Create(reqLastMonth).Error; err != nil {
+		t.Fatalf("create last-month request: %v", err)
+	}
+
+	// No filter → both rows (backward compatibility).
+	all, totalAll, err := repo.GetByEmployee(ctx, empID, 100, 0, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("GetByEmployee (no filter): %v", err)
+	}
+	if totalAll < 2 || len(all) < 2 {
+		t.Fatalf("expected >=2 rows without filter, got total=%d len=%d", totalAll, len(all))
+	}
+
+	// Filter to the previous month only → reqLastMonth, not reqThisMonth.
+	prevEnd := endOfMonth(lastMonthTime)
+	filtered, totalFiltered, err := repo.GetByEmployee(ctx, empID, 100, 0, &lastMonthTime, &prevEnd, nil)
+	if err != nil {
+		t.Fatalf("GetByEmployee (prev month): %v", err)
+	}
+	if totalFiltered != 1 || len(filtered) != 1 {
+		t.Fatalf("expected 1 row in previous month, got total=%d len=%d", totalFiltered, len(filtered))
+	}
+	if filtered[0].ID != reqLastMonth.ID {
+		t.Errorf("expected last-month request id=%d, got id=%d", reqLastMonth.ID, filtered[0].ID)
+	}
+
+	// Filter to the current month only → reqThisMonth, not reqLastMonth.
+	thisEnd := endOfMonth(thisMonthTime)
+	thisMonthRows, totalThis, err := repo.GetByEmployee(ctx, empID, 100, 0, &thisMonthTime, &thisEnd, nil)
+	if err != nil {
+		t.Fatalf("GetByEmployee (this month): %v", err)
+	}
+	if totalThis != 1 || len(thisMonthRows) != 1 {
+		t.Fatalf("expected 1 row in current month, got total=%d len=%d", totalThis, len(thisMonthRows))
+	}
+	if thisMonthRows[0].ID != reqThisMonth.ID {
+		t.Errorf("expected this-month request id=%d, got id=%d", reqThisMonth.ID, thisMonthRows[0].ID)
+	}
+
+	// Salary-period (for_month) filter: both requests are charged to 2020-01 even
+	// though reqLastMonth was created a month earlier, so the filter must surface
+	// both. This is the employee-history guarantee — group by salary period, not
+	// by the calendar month the request was submitted in.
+	janFM := "2020-01"
+	byMonth, _, err := repo.GetByEmployee(ctx, empID, 100, 0, nil, nil, &janFM)
+	if err != nil {
+		t.Fatalf("GetByEmployee (for_month=2020-01): %v", err)
+	}
+	seen := make(map[uint]bool, len(byMonth))
+	for _, r := range byMonth {
+		seen[r.ID] = true
+	}
+	if !seen[reqThisMonth.ID] || !seen[reqLastMonth.ID] {
+		t.Errorf("for_month=2020-01 must include both requests regardless of created_at month; got %v", seen)
+	}
+
+	// A different salary period returns neither of our 2020-01 requests.
+	otherFM := "2020-02"
+	otherRows, _, err := repo.GetByEmployee(ctx, empID, 100, 0, nil, nil, &otherFM)
+	if err != nil {
+		t.Fatalf("GetByEmployee (for_month=2020-02): %v", err)
+	}
+	for _, r := range otherRows {
+		if r.ID == reqThisMonth.ID || r.ID == reqLastMonth.ID {
+			t.Errorf("for_month=2020-02 must not return 2020-01 requests; got id=%d", r.ID)
+		}
+	}
+
+	// Cleanup the rows this test created (setupTestRepo only wipes 999901's
+	// advance_payment_requests for the budget-check month; ours are on 2020-01).
+	repo.DB.Where("id IN (?, ?)", reqThisMonth.ID, reqLastMonth.ID).
+		Delete(&domain.AdvancePaymentRequest{})
+	repo.DB.Where("id = ?", advPay.ID).Delete(&domain.AdvancePayment{})
+}
+
+func startOfMonth(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
+}
+
+func endOfMonth(t time.Time) time.Time {
+	return startOfMonth(t).AddDate(0, 1, -1)
+}
+
 // getTestDB connects to the local test database.
 func getTestDB() (*gorm.DB, error) {
 	dsn := "root:rootpassword@tcp(localhost:3306)/payroll_db?parseTime=true&loc=Local"
@@ -181,8 +332,8 @@ func setupTestRepo(t *testing.T) (*AdvancePaymentRequestRepository, func()) {
 
 	cleanup := func() {
 		// Clean up test data
-		db.Exec("DELETE FROM advance_payment_requests WHERE employee_id IN (999901, 999902, 999903)")
-		db.Exec("DELETE FROM advance_payments WHERE employee_id IN (999901, 999902, 999903)")
+		db.Exec("DELETE FROM advance_payment_requests WHERE employee_id IN (999901, 999902, 999903, 999904)")
+		db.Exec("DELETE FROM advance_payments WHERE employee_id IN (999901, 999902, 999903, 999904)")
 	}
 
 	return repo, cleanup

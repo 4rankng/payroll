@@ -68,6 +68,25 @@
     --surface-page: 210 41% 95%;      /* #EEF3F8 - mobile admin page bg */
     --surface-border: 212 37% 90%;    /* #DCE5EF - card/surface border */
 
+    /* Employee payroll-fintech surfaces. These aliases keep the employee
+       portal cohesive without changing the admin and partner themes. */
+    --employee-page: #f6f8fa;
+    --employee-surface: #ffffff;
+    --employee-text: #101828;
+    --employee-text-secondary: #667085;
+    --employee-text-muted: #98a2b3;
+    --employee-border: #e4e7ec;
+    --employee-border-strong: #d0d5dd;
+    --employee-accent: #07883f;
+    --employee-accent-strong: #067647;
+    --employee-accent-soft: #ecfdf3;
+    --employee-warning: #b54708;
+    --employee-warning-strong: #93370d;
+    --employee-warning-soft: #fffaeb;
+    --employee-error: #b42318;
+    --employee-error-soft: #fef3f2;
+    --employee-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px -24px rgba(16, 24, 40, 0.28);
+
     /* ========================================================================
        GRADIENT SYSTEM
        ======================================================================== */
@@ -126,15 +145,15 @@
     --type-metric-lg: var(--text-4xl);     /* 24px */
     --type-metric-xl: var(--text-5xl);     /* 28px */
 
-    /* Compact task-first scale for the employee self-service portal and its
-       portalled sheets. Keep this separate from admin/partner typography. */
-    --employee-type-caption: 0.6875rem;    /* 11px: status, eyebrow, badge */
-    --employee-type-label: 0.75rem;        /* 12px: field label, metadata */
-    --employee-type-body-sm: 0.8125rem;    /* 13px: secondary copy */
-    --employee-type-body: 0.875rem;        /* 14px: body copy */
-    --employee-type-strong: 0.875rem;      /* 14px: action, primary row */
-    --employee-type-title: 1rem;           /* 16px: section title */
-    --employee-type-money: 1.5rem;         /* 24px: primary money only */
+    /* Employee self-service scale: compact, but readable at arm's length on
+       mobile. Keep these roles separate from admin/partner typography. */
+    --employee-type-caption: 0.8125rem;    /* 13px: status, badge */
+    --employee-type-label: 0.8125rem;      /* 13px: field label, metadata */
+    --employee-type-body-sm: 0.875rem;     /* 14px: secondary copy */
+    --employee-type-body: 0.9375rem;       /* 15px: body copy */
+    --employee-type-strong: 1rem;          /* 16px: action, primary row */
+    --employee-type-title: 1.25rem;        /* 20px: section title */
+    --employee-type-money: 2.25rem;        /* 36px: primary money only */
 
     /* Line Heights - Optimized for Data Density */
     --leading-none: 1;

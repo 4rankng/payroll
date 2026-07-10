@@ -426,6 +426,8 @@
       line-height: 1.5;
       text-size-adjust: 100%;
       -webkit-text-size-adjust: 100%;
+      color: var(--employee-text);
+      background: var(--employee-page);
     }
 
     .employee-mobile-page h1,
@@ -440,6 +442,9 @@
     }
   }
 
+  /* Weight ladder (employee portal): 400 body/descriptions → 500 labels →
+     600 titles, money, actions, badges → 700 reserved for the two true heroes
+     (screen/sheet title and the primary money figure). Calm, Linear/Stripe-like. */
   .employee-type-header-greeting {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-caption);
@@ -451,7 +456,7 @@
   .employee-type-header-name {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
   }
@@ -459,7 +464,15 @@
   .employee-type-hero-title {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
-    font-weight: var(--font-extrabold);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-section-title {
+    font-family: var(--font-family-display);
+    font-size: var(--employee-type-title);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
   }
@@ -467,15 +480,23 @@
   .employee-type-card-title {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-strong);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-month-title {
+    font-family: var(--font-family-display);
+    font-size: 1.125rem;
+    font-weight: var(--font-semibold);
+    line-height: 1.55;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-hero-amount {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-money);
-    font-weight: var(--font-extrabold);
+    font-weight: var(--font-bold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
   }
@@ -483,7 +504,7 @@
   .employee-type-card-amount {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
-    font-weight: var(--font-extrabold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);
   }
@@ -491,7 +512,7 @@
   .employee-type-row-amount {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-strong);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
   }
@@ -499,15 +520,23 @@
   .employee-type-bank-value {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-strong);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-bank-label {
+    font-family: var(--font-family-sans);
+    font-size: 0.875rem;
+    font-weight: var(--font-medium);
+    line-height: 1.4;
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-inline-amount {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-strong);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
   }
@@ -515,7 +544,7 @@
   .employee-type-large-row-amount {
     font-family: var(--font-family-display);
     font-size: var(--employee-type-title);
-    font-weight: var(--font-extrabold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);
   }
@@ -523,7 +552,7 @@
   .employee-type-label {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-label);
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-medium);
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
   }
@@ -540,7 +569,7 @@
   .employee-type-body {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-body);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-normal);
     line-height: var(--leading-relaxed);
     letter-spacing: var(--tracking-normal);
   }
@@ -548,7 +577,7 @@
   .employee-type-body-sm {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-body-sm);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-normal);
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
   }
@@ -564,7 +593,7 @@
   .employee-type-pill {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-caption);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
   }
@@ -572,23 +601,24 @@
   .employee-type-action {
     font-family: var(--font-family-sans);
     font-size: var(--employee-type-strong);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
   }
 
   @media (max-width: 640px) {
     .employee-mobile-page {
-      --employee-mobile-caption: 0.6875rem;    /* 11px: status/badges */
-      --employee-mobile-label: 0.75rem;        /* 12px: field labels */
-      --employee-mobile-body-sm: 0.8125rem;    /* 13px: secondary copy */
-      --employee-mobile-body: 0.875rem;        /* 14px: body/action text */
-      --employee-mobile-title-sm: 0.875rem;    /* 14px: card titles */
-      --employee-mobile-title: 1.25rem;        /* 20px: screen headers */
-      --employee-mobile-amount-sm: 0.875rem;   /* 14px: row money values */
-      --employee-mobile-amount-md: 0.875rem;   /* 14px: bank/inline money values */
-      --employee-mobile-amount-lg: 1rem;       /* 16px: list item primary money */
-      --employee-mobile-amount-xl: 1.5rem;     /* 24px: wallet hero amount */
+      --employee-mobile-caption: 0.8125rem;    /* 13px: statuses/badges */
+      --employee-mobile-label: 0.8125rem;      /* 13px: field labels */
+      --employee-mobile-body-sm: 0.875rem;     /* 14px: secondary copy */
+      --employee-mobile-body: 0.9375rem;       /* 15px: body text */
+      --employee-mobile-title-sm: 1rem;        /* 16px: card titles */
+      --employee-mobile-section-title: 1.25rem;  /* 20px: section titles */
+      --employee-mobile-header-name: 1.5rem;   /* 24px: employee name */
+      --employee-mobile-amount-sm: 1rem;       /* 16px: row money values */
+      --employee-mobile-amount-md: 1rem;       /* 16px: bank/inline values */
+      --employee-mobile-amount-lg: 1.125rem;   /* 18px: record primary money */
+      --employee-mobile-amount-xl: 2.25rem;    /* 36px: primary available amount */
     }
 
     .employee-mobile-page .employee-type-header-greeting,
@@ -618,10 +648,15 @@
       line-height: 1.25;
     }
 
-    .employee-mobile-page .employee-type-header-name,
-    .employee-mobile-page .employee-type-hero-title {
-      font-size: var(--employee-mobile-title);
-      line-height: 1.25;
+    .employee-mobile-page .employee-type-header-name {
+      font-size: var(--employee-mobile-header-name);
+      line-height: 1.23;
+    }
+
+    .employee-mobile-page .employee-type-hero-title,
+    .employee-mobile-page .employee-type-section-title {
+      font-size: var(--employee-mobile-section-title);
+      line-height: 1.35;
     }
 
     .employee-mobile-page .employee-type-row-amount {
@@ -647,6 +682,17 @@
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .employee-mobile-page *,
+    .employee-mobile-page *::before,
+    .employee-mobile-page *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
   .employee-pay-illustration {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 24px rgba(0, 177, 79, 0.08);
   }
@@ -654,26 +700,6 @@
   @media (prefers-reduced-motion: no-preference) {
     .employee-pay-illustration {
       animation: employee-pay-breathe 4.8s ease-in-out infinite;
-    }
-
-    .employee-portal-card-stack > * {
-      animation: employee-card-rise 420ms ease-out both;
-    }
-
-    .employee-portal-card-stack > *:nth-child(2) {
-      animation-delay: 55ms;
-    }
-
-    .employee-portal-card-stack > *:nth-child(3) {
-      animation-delay: 110ms;
-    }
-
-    .employee-portal-card-stack > *:nth-child(4) {
-      animation-delay: 165ms;
-    }
-
-    .employee-portal-card-stack > *:nth-child(5) {
-      animation-delay: 220ms;
     }
   }
 
@@ -688,16 +714,6 @@
     }
   }
 
-  @keyframes employee-card-rise {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 }
 
 /* ─── Check-in button micro-animations ─────────────────────────────────── */

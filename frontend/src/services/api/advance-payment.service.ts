@@ -79,12 +79,21 @@ class AdvancePaymentService {
   }
 
   /**
-   * Get advance payment history for employee (paginated)
+   * Get advance payment history for employee (paginated, optional month filter).
+   * `forMonth` (`yyyy-MM`) groups by salary period (preferred — an advance is
+   * charged to a period, which can differ from the calendar month it was sent in).
+   * `fromDate`/`toDate` are a legacy created_at fallback.
    * API returns: { data: AdvancePaymentHistoryItem[], pagination: {...}, status, message }
    */
   async getAdvancePaymentHistory(filters?: {
     page?: number;
     pageSize?: number;
+    /** `yyyy-MM` — salary period to group by (preferred over the date range). */
+    forMonth?: string;
+    /** `yyyy-MM-dd` — inclusive lower bound on created_at (legacy fallback). */
+    fromDate?: string;
+    /** `yyyy-MM-dd` — inclusive upper bound on created_at (legacy fallback). */
+    toDate?: string;
   }): Promise<ApiResponse<AdvancePaymentHistoryItem[]>> {
     const queryString = filters ? buildQueryString(filters) : "";
     return apiClient.get<AdvancePaymentHistoryItem[]>(

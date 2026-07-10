@@ -123,9 +123,13 @@ export function useRequestCheckInAdvance() {
 /**
  * Get advance payment history for the logged-in employee.
  * Polls every 30s while any request is PENDING and notifies on status change.
+ *
+ * `forMonth` (`yyyy-MM`) groups by salary period (preferred). `fromDate`/`toDate`
+ * (`yyyy-MM-dd`) are a legacy created_at fallback; omitting all returns all-time
+ * history (backward compatible).
  */
 export function useAdvancePaymentHistory(
-  filters?: { page?: number; pageSize?: number },
+  filters?: { page?: number; pageSize?: number; forMonth?: string; fromDate?: string; toDate?: string },
   options?: { enabled?: boolean },
 ) {
   const previousStatusesRef = useRef<Map<number, string>>(new Map());

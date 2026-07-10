@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
 import { authManager } from "@/lib/auth";
@@ -22,12 +23,14 @@ import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCar
 import { EmployeeMobileShell, employeeCardShadow } from "@/components/employees/EmployeeMobileShell";
 import { EmployeeCheckInCard } from "@/components/employees/EmployeeCheckInCard";
 import { EmployeeAttendanceHistoryCard } from "@/components/employees/EmployeeAttendanceHistoryCard";
+import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavigator";
+import { useEmployeeMonth } from "@/hooks/useEmployeeMonth";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvancePaymentRequestForm";
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
-import { formatAdvancePeriodDisplay } from "@/utils/advancePaymentHelpers";
+import { formatPayrollMonthRange } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 
 const FlexiblePayEmployeePage = () => {
@@ -42,16 +45,39 @@ const FlexiblePayEmployeePage = () => {
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const { data: unreadNotifications } = useUnreadNotifications();
+  // URL-backed month: drives the history cards. The request form / check-in /
+  // wallet hero stay on the current month (they reflect live eligibility), so
+  // only the two history cards below read from `month`.
+  const month = useEmployeeMonth();
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
   // (70% advanceable cap, calendar-month window); others use the admin-upload flow.
   const isCheckIn = !!profile?.check_in_enabled;
   const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckIn });
   const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckIn });
-  const { data: infoResponse, isLoading: infoLoading, refetch: refetchInfo } = isCheckIn
+  const {
+    data: infoResponse,
+    isLoading: infoLoading,
+    isError: infoError,
+    refetch: refetchInfo,
+  } = isCheckIn
     ? checkInInfoQuery
     : regularInfoQuery;
-  const { data: historyResponse, isLoading: historyLoading } =
-    useAdvancePaymentHistory({ page: 1, pageSize: 10 });
+  // Two history views:
+  //  - formHistory (all-time) feeds the request form's quota/pending logic,
+  //    which must reflect the employee's total used budget regardless of the
+  //    month currently being browsed.
+  //  - history (month-scoped) feeds only the history card.
+  const { data: formHistoryResponse } = useAdvancePaymentHistory({ page: 1, pageSize: 50 });
+  const {
+    data: historyResponse,
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch: refetchHistory,
+  } = useAdvancePaymentHistory({
+    page: 1,
+    pageSize: 50,
+    forMonth: month.value,
+  });
 
   const calculateFeeMutation = useCalculateFee();
   const regularRequestMutation = useRequestAdvancePayment();
@@ -62,6 +88,7 @@ const FlexiblePayEmployeePage = () => {
 
   const info = infoResponse?.data;
   const history = useMemo(() => historyResponse?.data ?? [], [historyResponse?.data]);
+  const formHistory = useMemo(() => formHistoryResponse?.data ?? [], [formHistoryResponse?.data]);
 
   // Debounced server-side fee calculation
   const [serverFeeDetails, setServerFeeDetails] = useState<{
@@ -145,38 +172,28 @@ const FlexiblePayEmployeePage = () => {
 
   if (profileLoading || infoLoading) {
     return (
-      <div
-        className="employee-mobile-page min-h-[100dvh]"
-        style={{
-          backgroundImage: "url('/employee-bg.avif')",
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-          backgroundAttachment: "fixed",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
+      <div className="employee-mobile-page min-h-[100dvh] bg-[#F6F8FA]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div
-          className="px-4 pb-4 flex items-center justify-between bg-employee"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
+          className="flex items-center justify-between border-b border-[#E4E7EC] bg-white px-4 pb-3"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
         >
           <div className="space-y-2">
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-7 w-44" />
+            <Skeleton className="h-4 w-28" />
           </div>
           <div className="flex gap-2">
             {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-10 w-10 rounded-full" />
+              <Skeleton key={i} className="h-11 w-11 rounded-xl" />
             ))}
           </div>
         </div>
-        <div className="p-4 space-y-3">
-          <div className="rounded-2xl border border-white/60 bg-white/75 px-4 py-3 shadow-sm backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700">Đang tải FlexPay</p>
-            <p className="mt-1 text-sm text-slate-500">Kiểm tra hạn mức ứng lương và lịch sử gần đây.</p>
+        <div className="mx-auto max-w-lg space-y-5 p-4">
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <div className="space-y-2.5">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-32 w-full rounded-xl" />
           </div>
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
-          ))}
         </div>
       </div>
     );
@@ -190,6 +207,8 @@ const FlexiblePayEmployeePage = () => {
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
       >
+        <EmployeeMonthNavigator month={month} />
+
         {profile?.check_in_enabled && (
           <section id="employee-check-in" className="scroll-mt-4">
             <EmployeeCheckInCard
@@ -203,25 +222,42 @@ const FlexiblePayEmployeePage = () => {
           </section>
         )}
 
-        {info && (
+        {infoError ? (
+          <section id="employee-advance-request" className="scroll-mt-4 rounded-2xl border border-[#E4E7EC] bg-white px-4 py-5 text-center" role="alert">
+            <AlertCircle className="mx-auto h-5 w-5 text-[#B42318]" aria-hidden="true" />
+            <h2 className="employee-type-section-title mt-2 text-[#101828]">Chưa tải được hạn mức ứng lương</h2>
+            <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
+            <button
+              type="button"
+              onClick={() => refetchInfo()}
+              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-4 text-[#344054] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#07883F]"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Tải lại
+            </button>
+          </section>
+        ) : info ? (
           <section id="employee-advance-request" className="scroll-mt-4">
             <AdvancePaymentRequestForm
-              key={formKey}
+              key={`${formKey}-${month.value}`}
               info={info}
-              history={history}
+              viewMonth={month.value}
+              history={formHistory}
               feeDetails={feeDetails}
               hasBankDestination={hasEmployeeBankInfo(profile)}
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}
               isPending={requestMutation.isPending}
               className="rounded-2xl border border-[#E4E7EC] bg-white p-4"
-              style={employeeCardShadow}
             />
           </section>
-        )}
+        ) : null}
 
         {profile?.check_in_enabled && (
           <EmployeeAttendanceHistoryCard
+            fromDate={month.fromDate}
+            toDate={month.toDate}
+            monthLabel={month.shortLabel}
             className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
             style={employeeCardShadow}
           />
@@ -231,17 +267,16 @@ const FlexiblePayEmployeePage = () => {
           <AdvancePaymentHistoryCard
             history={history}
             isLoading={historyLoading}
+            isError={historyError}
+            onRetry={() => refetchHistory()}
             onCancel={handleCancelRequest}
-            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
-            style={employeeCardShadow}
+            monthLabel={month.shortLabel}
           />
         </section>
 
         <section id="employee-bank" className="scroll-mt-4">
           <EmployeeBankInfoCard
             profile={profile!}
-            className="overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"
-            style={employeeCardShadow}
           />
         </section>
 
@@ -260,7 +295,7 @@ const FlexiblePayEmployeePage = () => {
         bankAccountNumber={profile?.bank_account_number}
         bankName={profile?.bank?.branch_name}
         bankAccountName={getEmployeeAccountHolder(profile)}
-        payrollPeriodLabel={formatAdvancePeriodDisplay(latestMonth)}
+        payrollPeriodLabel={formatPayrollMonthRange(latestMonth)}
         onConfirm={handleConfirmSubmit}
         isPending={requestMutation.isPending}
       />

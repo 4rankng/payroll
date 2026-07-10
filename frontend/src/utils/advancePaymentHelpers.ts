@@ -85,9 +85,8 @@ export function calculateAdvancePaymentDetails(amount: number): { fee: number; n
  * Example: "2026-03" → "Tháng 3/2026"
  *
  * Use this for option labels in month-picker dropdowns where the value is
- * just an identifier. For headers/pills that describe the active advance
- * payment period, prefer `formatAdvancePeriodDisplay` — it shows the actual
- * cycle dates so users don't read the anchor month as a calendar month.
+ * just an identifier. Use `formatPayrollMonthRange` for labels that describe
+ * the employee's salary month.
  */
 export function formatMonthDisplay(monthString: string): string {
   if (!monthString || monthString.length !== 7) return monthString;
@@ -100,6 +99,24 @@ export function formatMonthDisplay(monthString: string): string {
   }
 
   return `Tháng ${monthNum}/${year}`;
+}
+
+/**
+ * Render a payroll month as its full calendar-month range.
+ *
+ * This is deliberately separate from `formatAdvancePeriodDisplay`: payroll
+ * for July is 01/07–31/07, while the window in which that payroll can be
+ * advanced is controlled independently by the backend (currently 20/07–08/08).
+ */
+export function formatPayrollMonthRange(monthString: string): string {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthString)) return monthString;
+
+  const [yearString, monthStringValue] = monthString.split("-");
+  const year = Number(yearString);
+  const month = Number(monthStringValue);
+  const lastDay = new Date(year, month, 0).getDate();
+
+  return `01/${monthStringValue} – ${String(lastDay).padStart(2, "0")}/${monthStringValue}/${yearString}`;
 }
 
 /**
@@ -223,12 +240,52 @@ export function getAdvanceQuotaSummary(
 }
 
 /**
+ * Return quota values for one explicitly viewed payroll month without falling
+ * back to another month. Month navigation uses this path so an empty July
+ * payroll cannot accidentally display June's remaining or exhausted quota.
+ */
+export function getAdvanceQuotaSummaryForMonth(
+  info: AdvancePaymentInfo,
+  forMonth: string,
+  history?: AdvancePaymentHistoryItem[],
+): AdvanceQuotaSummary {
+  const exactQuota = (info.quotas ?? []).find((quota) => quota.forMonth === forMonth);
+  const usesTopLevel = !exactQuota && info.forMonth === forMonth;
+  const rawMaxAdvanceAmount = exactQuota?.maxAdvanceAmount ?? (usesTopLevel ? info.maxAdvanceAmount : 0);
+  const quotaCompleted = exactQuota?.completedAmount ?? (usesTopLevel ? info.completedAmount : 0);
+  const quotaPending = exactQuota?.pendingAmount ?? (usesTopLevel ? info.pendingAmount : 0);
+  const matchingHistory = history?.filter(
+    (item) => item.forMonth === forMonth || (!item.forMonth && usesTopLevel),
+  );
+  const historyUsed = getHistoryUsedAmount(matchingHistory, forMonth);
+  const usedAmount = Math.max(quotaCompleted + quotaPending, historyUsed);
+  const remainingAmount =
+    exactQuota?.remainingAmount ??
+    (usesTopLevel ? Math.max(0, info.remainingAmount || rawMaxAdvanceAmount - usedAmount) : 0);
+  const maxAdvanceAmount = Math.max(rawMaxAdvanceAmount, usedAmount + remainingAmount);
+
+  return {
+    forMonth,
+    maxAdvanceAmount,
+    completedAmount: Math.max(quotaCompleted, historyUsed - quotaPending),
+    pendingAmount: quotaPending,
+    remainingAmount,
+    usedAmount,
+    usedPercentage:
+      maxAdvanceAmount > 0
+        ? Math.min(100, Math.round((usedAmount / maxAdvanceAmount) * 100))
+        : 0,
+  };
+}
+
+/**
  * Format month string to short Vietnamese format
  * Example: "2026-03" → "03/2026"
  */
 export function formatMonthShort(monthString: string): string {
-  if (!monthString || monthString.length !== 7) return monthString;
-  return monthString.replace('-', '/');
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthString)) return monthString;
+  const [year, month] = monthString.split("-");
+  return `${month}/${year}`;
 }
 
 /**

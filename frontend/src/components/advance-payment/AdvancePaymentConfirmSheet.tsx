@@ -63,20 +63,20 @@ export function AdvancePaymentConfirmSheet({
             <div className="employee-type-body mt-4 space-y-2.5">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tiền yêu cầu</span>
-                <span className="font-bold text-slate-900 tabular-nums">
+                <span className="font-semibold text-slate-900 tabular-nums">
                   {formatCurrency(amount)}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Phí giao dịch</span>
-                <span className="font-bold text-red-500 tabular-nums">
+                <span className="font-semibold text-red-500 tabular-nums">
                   {feeDetails ? `−${formatCurrency(feeDetails.fee)}` : "Đang tính..."}
                 </span>
               </div>
               {payrollPeriodLabel && (
                 <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
                   <span className="text-slate-500">Trong kỳ lương</span>
-                  <span className="text-right font-bold text-slate-900">
+                  <span className="text-right font-semibold text-slate-900">
                     {payrollPeriodLabel}
                   </span>
                 </div>
@@ -94,13 +94,13 @@ export function AdvancePaymentConfirmSheet({
             <div className="employee-type-body mt-4 space-y-2.5">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tài khoản</span>
-                <span className="break-all text-right font-bold text-slate-900 tabular-nums">
+                <span className="break-all text-right font-semibold text-slate-900 tabular-nums">
                   {bankAccountNumber || "Chưa cập nhật"}
                 </span>
               </div>
               <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
                 <span className="text-slate-500">Ngân hàng</span>
-                <span className="max-w-[58%] text-right font-bold text-slate-900">
+                <span className="max-w-[58%] text-right font-semibold text-slate-900">
                   {bankName || "Chưa cập nhật"}
                 </span>
               </div>
