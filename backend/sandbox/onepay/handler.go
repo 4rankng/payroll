@@ -34,7 +34,7 @@ type Config struct {
 
 func LoadConfig() Config {
 	return Config{
-		ListenAddr:    env("MOCK_LISTEN_ADDR", ":9002"),
+		ListenAddr:    env("MOCK_LISTEN_ADDR", ":9001"),
 		IPNURL:        env("MOCK_ONEPAY_IPN_URL", "http://host.docker.internal:8080/api/v1/webhooks/disbursement/1pay"),
 		IPNDelay:      envDuration("MOCK_ONEPAY_IPN_DELAY", 3*time.Second),
 		IPNRetryDelay: envDuration("MOCK_ONEPAY_IPN_RETRY_DELAY", 5*time.Second),
@@ -335,7 +335,7 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var rawMap map[string]interface{}
+	var rawMap map[string]any
 	bodyBytes, _ := io.ReadAll(r.Body)
 	if len(bodyBytes) > 0 {
 		if err := json.Unmarshal(bodyBytes, &rawMap); err == nil {

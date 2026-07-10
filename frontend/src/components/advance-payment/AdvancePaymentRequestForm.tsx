@@ -1,8 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { AlertCircle, ArrowRight, Clock3, Landmark } from "lucide-react";
+import { AlertCircle, ArrowRight, Clock3 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { formatAdvancePeriodDisplay, getAdvanceQuotaSummary } from "@/utils/advancePaymentHelpers";
-import { maskBankAccountNumber } from "@/utils/employeePortal/mobileHome";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 
@@ -10,9 +9,7 @@ interface AdvancePaymentRequestFormProps {
   info: AdvancePaymentInfo;
   history?: AdvancePaymentHistoryItem[];
   feeDetails: { fee: number; netAmount: number } | null;
-  bankAccountNumber?: string;
-  bankName?: string;
-  bankAccountName?: string;
+  hasBankDestination: boolean;
   onSubmit: (data: { amount: number; forMonth: string }) => void;
   onAmountChange?: (amount: number) => void;
   isPending: boolean;
@@ -24,9 +21,7 @@ export function AdvancePaymentRequestForm({
   info,
   history,
   feeDetails,
-  bankAccountNumber,
-  bankName,
-  bankAccountName,
+  hasBankDestination,
   onSubmit,
   onAmountChange,
   isPending,
@@ -41,8 +36,6 @@ export function AdvancePaymentRequestForm({
   );
   const selectedMonth = quotaSummary.forMonth;
   const selectedQuotaRemaining = quotaSummary.remainingAmount;
-  const maskedBankAccountNumber = maskBankAccountNumber(bankAccountNumber);
-  const hasBankDestination = Boolean(bankAccountNumber && bankName);
 
   const latestPendingRequest = useMemo(
     () =>
@@ -246,20 +239,6 @@ export function AdvancePaymentRequestForm({
                   {quickAmount.label}
                 </button>
               ))}
-            </div>
-          )}
-
-          {(bankAccountName || bankName || maskedBankAccountNumber) && (
-            <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
-              <Landmark className="h-4 w-4 shrink-0 text-slate-500" />
-              <div className="min-w-0 flex-1">
-                <p className="employee-type-label truncate text-slate-700">
-                  {bankAccountName || "Tài khoản nhận tiền"}
-                </p>
-                <p className="employee-type-body-sm mt-0.5 truncate text-slate-500 tabular-nums">
-                  {[bankName, maskedBankAccountNumber].filter(Boolean).join(" · ")}
-                </p>
-              </div>
             </div>
           )}
 
