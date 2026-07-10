@@ -281,7 +281,15 @@ func (s *Server) getAccountInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	holderName := "MOCK ACCOUNT HOLDER"
+	// Permissive: return an EMPTY holder_name so the backend's CheckAccount
+	// skips name verification (provider.CheckAccount only matches when
+	// holder_name != ""; and the execute worker only overrides the recipient
+	// name when the bank-confirmed name is non-empty). A fixed literal like
+	// "MOCK ACCOUNT HOLDER" mismatches every real employee name and fails
+	// every transfer. OnePay's GET /customers doesn't carry the expected name
+	// (unlike 9Pay's check-account, which echoes account_name), so empty is the
+	// permissive choice — the backend keeps the employee's own recorded name.
+	holderName := ""
 	writeJSON(w, http.StatusOK, map[string]any{
 		"response_code":  "00",
 		"message":        "SUCCESSFUL",

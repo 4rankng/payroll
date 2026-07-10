@@ -1,6 +1,8 @@
-import { Building2, CreditCard } from "lucide-react";
+import { useId, useState } from "react";
+import { Building2, ChevronDown, CreditCard } from "lucide-react";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { EmployeeIconFrame } from "@/components/employees/EmployeeIconFrame";
+import { cn } from "@/lib/utils";
 
 interface EmployeeBankInfoCardProps {
   profile: EmployeeProfile;
@@ -33,6 +35,9 @@ export function EmployeeBankInfoCard({
   className,
   style,
 }: EmployeeBankInfoCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const panelId = useId();
+
   if (!profile) return null;
 
   const accountOwner = profile.bank_account_name?.trim();
@@ -56,20 +61,43 @@ export function EmployeeBankInfoCard({
   );
 
   return (
-    <div className={className} style={style} role="region" aria-label="Thông tin ngân hàng">
-      {hasBankInfo ? (
-        <div>
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <div>
-              <p className="employee-type-label-caps text-slate-500">
-                Tài khoản nhận tiền
-              </p>
-              <h2 className="employee-type-card-title text-slate-950">
-                Thông tin ngân hàng
-              </h2>
-            </div>
-            <EmployeeIconFrame icon={CreditCard} />
-          </div>
+    <div
+      className={className ?? "overflow-hidden rounded-2xl bg-white"}
+      style={style}
+      role="region"
+      aria-label="Thông tin ngân hàng"
+    >
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          <EmployeeIconFrame icon={CreditCard} size="row" />
+          <span className="min-w-0">
+            <span className="employee-type-card-title block text-slate-950">
+              Thông tin ngân hàng
+            </span>
+            <span className="employee-type-body-sm mt-0.5 block truncate text-slate-500">
+              {hasBankInfo
+                ? profile.bank?.branch_name || "Tài khoản nhận tiền đã cập nhật"
+                : "Chưa cập nhật tài khoản nhận tiền"}
+            </span>
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+
+      {isOpen && (
+        <div id={panelId} className="border-t border-slate-100">
+          {hasBankInfo ? (
           <div className="grid grid-cols-2 border-slate-100">
             {fields.map(({ label, getValue, mono }, index) => {
               const value = getValue(profile);
@@ -103,18 +131,19 @@ export function EmployeeBankInfoCard({
               );
             })}
           </div>
-        </div>
-      ) : (
-        <div className="px-4 pb-3 text-center py-8">
-          <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-300">
-            <Building2 className="h-5 w-5" />
+          ) : (
+          <div className="px-4 py-7 text-center">
+            <div className="mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <p className="employee-type-card-title text-slate-700">
+              Chưa có thông tin ngân hàng
+            </p>
+            <p className="employee-type-body mt-1 text-slate-600">
+              Liên hệ quản lý để cập nhật
+            </p>
           </div>
-          <p className="employee-type-card-title text-gray-500">
-            Chưa có thông tin ngân hàng
-          </p>
-          <p className="employee-type-body mt-1 text-gray-400">
-            Liên hệ quản lý để cập nhật
-          </p>
+          )}
         </div>
       )}
     </div>

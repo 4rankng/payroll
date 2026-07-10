@@ -38,14 +38,14 @@ export function AdvancePaymentConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="flex h-[92dvh] max-h-[92dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-white p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)]"
+        className="mx-auto flex h-auto max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-white p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] sm:max-w-lg"
         title="Xác nhận yêu cầu ứng lương"
         description="Kiểm tra số tiền thực nhận và tài khoản nhận tiền"
       >
         <div className="flex shrink-0 justify-center pt-3">
           <div className="h-1.5 w-12 rounded-full bg-slate-300" />
         </div>
-        <SheetHeader className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-4 text-left">
+        <SheetHeader className="shrink-0 border-b border-slate-200 px-5 pb-3 pt-3 text-left">
           <SheetTitle className="employee-type-hero-title text-slate-950">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
@@ -55,7 +55,7 @@ export function AdvancePaymentConfirmSheet({
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5">
-          <section className="border-b border-slate-100 py-5">
+          <section className="border-b border-slate-100 py-4">
             <p className="employee-type-label-caps text-slate-500">
               Số tiền thực nhận
             </p>
@@ -63,7 +63,7 @@ export function AdvancePaymentConfirmSheet({
               {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
             </p>
 
-            <div className="employee-type-body mt-5 space-y-3">
+            <div className="employee-type-body mt-4 space-y-2.5">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tiền yêu cầu</span>
                 <span className="font-bold text-slate-900 tabular-nums">
@@ -87,14 +87,14 @@ export function AdvancePaymentConfirmSheet({
             </div>
           </section>
 
-          <section className="py-5">
+          <section className="py-4">
             <p className="employee-type-label-caps text-slate-500">
               Chuyển đến chủ tài khoản
             </p>
             <p className="employee-type-card-amount mt-1 break-words text-employee">
               {bankAccountName || "Chưa cập nhật"}
             </p>
-            <div className="employee-type-body mt-5 space-y-3">
+            <div className="employee-type-body mt-4 space-y-2.5">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Số tài khoản</span>
                 <span className="break-all text-right font-bold text-slate-900 tabular-nums">

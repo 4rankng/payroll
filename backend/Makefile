@@ -1,4 +1,4 @@
-.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend onepay-sandbox onepay-sandbox-logs onepay-sandbox-rebuild onepay-topup push-demo deploy-demo demo-db
+.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup push-demo deploy-demo demo-db
 
 # Load environment variables from .env file
 include .env
@@ -52,8 +52,7 @@ db:
 	@echo "   Adminer:     http://localhost:8081"
 	@echo ""
 	@echo "🧪 Sandbox (APP_ENV=development):"
-	@echo "   9Pay mock:   localhost:9001"
-	@echo "   OnePay mock: localhost:9002"
+	@echo "   Mock (9Pay + OnePay): localhost:9001"
 	@echo "   Email:       in-process (captured, not sent)"
 
 dev:
@@ -262,19 +261,22 @@ sync:
 	@scp templates/*.xlsx root@$(PROD_SERVER):/opt/payroll/templates/
 	@scp templates/email/*.html root@$(PROD_SERVER):/opt/payroll/templates/email/
 
-onepay-sandbox:
+# Unified mock server (OnePay PayOut + 9Pay disbursement) on :9001.
+# `make db` also starts it; this target starts only the sandbox service.
+sandbox:
 	$(check-docker)
-	docker compose -f $(COMPOSE_FILE) up -d --build onepay-sandbox
+	docker compose -f $(COMPOSE_FILE) up -d --build sandbox
 
-onepay-sandbox-logs:
-	docker compose -f $(COMPOSE_FILE) logs -f onepay-sandbox
+sandbox-logs:
+	docker compose -f $(COMPOSE_FILE) logs -f sandbox
 
-onepay-sandbox-rebuild:
-	docker compose -f $(COMPOSE_FILE) build --no-cache onepay-sandbox
-	docker compose -f $(COMPOSE_FILE) up -d onepay-sandbox
+sandbox-rebuild:
+	docker compose -f $(COMPOSE_FILE) build --no-cache sandbox
+	docker compose -f $(COMPOSE_FILE) up -d sandbox
 
+# Top up the mock OnePay balance (default +100,000,000 VND on localhost:9001).
 onepay-topup:
-	cd sandbox/onepay && ./topup.sh $${AMOUNT:-100000000} $${HOST:-http://localhost:9002}
+	cd sandbox/onepay && ./topup.sh $${AMOUNT:-100000000} $${HOST:-http://localhost:9001}
 
 # Clean up unused Docker resources
 clean:

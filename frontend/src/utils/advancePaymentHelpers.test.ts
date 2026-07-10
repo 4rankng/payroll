@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAdvanceQuotaSummary } from "./advancePaymentHelpers";
+import { getAdvanceQuotaSummary, getDefaultAdvanceMonth } from "./advancePaymentHelpers";
 import type {
   AdvancePaymentHistoryItem,
   AdvancePaymentInfo,
@@ -145,5 +145,29 @@ describe("getAdvanceQuotaSummary", () => {
     expect(summary.completedAmount).toBe(9_360_000);
     expect(summary.maxAdvanceAmount).toBe(9_360_000);
     expect(summary.remainingAmount).toBe(0);
+  });
+});
+
+describe("getDefaultAdvanceMonth", () => {
+  it("returns the previous month before the request window opens (day < 10)", () => {
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 9, 12))).toBe("2026-06");
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 1, 12))).toBe("2026-06");
+  });
+
+  it("returns the current month once the request window opens (day >= 10)", () => {
+    // Day 10 is the first day a self-check-in advance request lands in the
+    // current month — the admin list must open here, not on the previous month.
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 10, 12))).toBe("2026-07");
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 20, 12))).toBe("2026-07");
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 31, 12))).toBe("2026-07");
+  });
+
+  it("crosses the year boundary when the previous month is December", () => {
+    expect(getDefaultAdvanceMonth(new Date(2026, 0, 9, 12))).toBe("2025-12");
+    expect(getDefaultAdvanceMonth(new Date(2026, 0, 10, 12))).toBe("2026-01");
+  });
+
+  it("returns a YYYY-MM string when called with no argument", () => {
+    expect(getDefaultAdvanceMonth()).toMatch(/^\d{4}-\d{2}$/);
   });
 });

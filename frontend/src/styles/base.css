@@ -442,7 +442,7 @@
 
   .employee-type-header-greeting {
     font-family: var(--font-family-sans);
-    font-size: var(--type-label);
+    font-size: var(--employee-type-caption);
     font-weight: var(--font-semibold);
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
@@ -450,7 +450,7 @@
 
   .employee-type-header-name {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-md);
+    font-size: var(--employee-type-title);
     font-weight: var(--font-bold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -458,7 +458,7 @@
 
   .employee-type-hero-title {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-md);
+    font-size: var(--employee-type-title);
     font-weight: var(--font-extrabold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -466,7 +466,7 @@
 
   .employee-type-card-title {
     font-family: var(--font-family-display);
-    font-size: var(--type-card-title);
+    font-size: var(--employee-type-strong);
     font-weight: var(--font-bold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -474,7 +474,7 @@
 
   .employee-type-hero-amount {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-xl);
+    font-size: var(--employee-type-money);
     font-weight: var(--font-extrabold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
@@ -482,7 +482,7 @@
 
   .employee-type-card-amount {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-lg);
+    font-size: var(--employee-type-title);
     font-weight: var(--font-extrabold);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);
@@ -490,7 +490,7 @@
 
   .employee-type-row-amount {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-sm);
+    font-size: var(--employee-type-strong);
     font-weight: var(--font-bold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -498,7 +498,7 @@
 
   .employee-type-bank-value {
     font-family: var(--font-family-display);
-    font-size: var(--type-body);
+    font-size: var(--employee-type-strong);
     font-weight: var(--font-bold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -506,7 +506,7 @@
 
   .employee-type-inline-amount {
     font-family: var(--font-family-display);
-    font-size: var(--type-body);
+    font-size: var(--employee-type-strong);
     font-weight: var(--font-bold);
     line-height: var(--leading-snug);
     letter-spacing: var(--tracking-normal);
@@ -514,7 +514,7 @@
 
   .employee-type-large-row-amount {
     font-family: var(--font-family-display);
-    font-size: var(--type-metric-lg);
+    font-size: var(--employee-type-title);
     font-weight: var(--font-extrabold);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-normal);
@@ -522,7 +522,7 @@
 
   .employee-type-label {
     font-family: var(--font-family-sans);
-    font-size: var(--type-label);
+    font-size: var(--employee-type-label);
     font-weight: var(--font-semibold);
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
@@ -530,7 +530,7 @@
 
   .employee-type-label-caps {
     font-family: var(--font-family-sans);
-    font-size: var(--type-label);
+    font-size: var(--employee-type-caption);
     font-weight: var(--font-semibold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-wide);
@@ -539,7 +539,7 @@
 
   .employee-type-body {
     font-family: var(--font-family-sans);
-    font-size: var(--type-body);
+    font-size: var(--employee-type-body);
     font-weight: var(--font-medium);
     line-height: var(--leading-relaxed);
     letter-spacing: var(--tracking-normal);
@@ -547,15 +547,23 @@
 
   .employee-type-body-sm {
     font-family: var(--font-family-sans);
-    font-size: var(--type-body-sm);
+    font-size: var(--employee-type-body-sm);
     font-weight: var(--font-medium);
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  .employee-type-strong {
+    font-family: var(--font-family-sans);
+    font-size: var(--employee-type-strong);
+    font-weight: var(--font-semibold);
     line-height: var(--leading-normal);
     letter-spacing: var(--tracking-normal);
   }
 
   .employee-type-pill {
     font-family: var(--font-family-sans);
-    font-size: var(--type-label);
+    font-size: var(--employee-type-caption);
     font-weight: var(--font-bold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
@@ -563,7 +571,7 @@
 
   .employee-type-action {
     font-family: var(--font-family-sans);
-    font-size: var(--type-body);
+    font-size: var(--employee-type-strong);
     font-weight: var(--font-bold);
     line-height: var(--leading-none);
     letter-spacing: var(--tracking-normal);
@@ -571,13 +579,13 @@
 
   @media (max-width: 640px) {
     .employee-mobile-page {
-      --employee-mobile-caption: 0.625rem;     /* 10px: tiny badges/caps */
-      --employee-mobile-label: 0.6875rem;      /* 11px: field labels */
+      --employee-mobile-caption: 0.6875rem;    /* 11px: status/badges */
+      --employee-mobile-label: 0.75rem;        /* 12px: field labels */
       --employee-mobile-body-sm: 0.75rem;      /* 12px: secondary copy */
       --employee-mobile-body: 0.8125rem;       /* 13px: body/action text */
       --employee-mobile-title-sm: 0.875rem;    /* 14px: card titles */
       --employee-mobile-title: 1rem;           /* 16px: screen/card headers */
-      --employee-mobile-amount-sm: 0.8125rem;  /* 13px: row money values */
+      --employee-mobile-amount-sm: 0.875rem;   /* 14px: row money values */
       --employee-mobile-amount-md: 0.875rem;   /* 14px: bank/inline money values */
       --employee-mobile-amount-lg: 1rem;       /* 16px: list item primary money */
       --employee-mobile-amount-xl: 1.25rem;    /* 20px: wallet hero amount */
@@ -597,9 +605,12 @@
       font-size: var(--employee-mobile-body-sm);
     }
 
-    .employee-mobile-page .employee-type-body,
-    .employee-mobile-page .employee-type-action {
+    .employee-mobile-page .employee-type-body {
       font-size: var(--employee-mobile-body);
+    }
+
+    .employee-mobile-page .employee-type-action {
+      font-size: 0.875rem;
     }
 
     .employee-mobile-page .employee-type-card-title {
