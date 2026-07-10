@@ -47,7 +47,7 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.getByText("01/07 – 31/07/2026")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
-    fireEvent.click(screen.getByRole("button", { name: "Tiếp tục" }));
+    fireEvent.click(screen.getByRole("button", { name: "Yêu cầu ứng lương" }));
 
     expect(onSubmit).toHaveBeenCalledWith({ amount: 500_000, forMonth: "2026-07" });
   });
@@ -63,6 +63,7 @@ describe("AdvancePaymentRequestForm", () => {
 
     expect(screen.getByText("Chưa có tài khoản nhận tiền")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
   });
 
   it("shows the server reason when requests are unavailable", () => {
@@ -81,6 +82,7 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.getByText("Ngoài kỳ ứng lương")).toBeInTheDocument();
     expect(screen.getByText("Kỳ tiếp theo mở vào ngày 15.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
   });
 
   it("deduplicates quick choices after the minimum amount clamp", () => {
@@ -123,6 +125,7 @@ describe("AdvancePaymentRequestForm", () => {
 
     expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
   });
 
   it("keeps a large available amount readable without changing its value", () => {

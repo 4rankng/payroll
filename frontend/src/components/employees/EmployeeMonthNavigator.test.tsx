@@ -35,7 +35,7 @@ describe("EmployeeMonthNavigator", () => {
 
   it("opens an accessible month and year picker", () => {
     render(<MemoryRouter initialEntries={["/employee"]}><MonthHarness /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: /Đang xem Tháng/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Kỳ lương tháng/i }));
 
     expect(screen.getByRole("combobox", { name: "Chọn năm" })).toBeInTheDocument();
     expect(screen.getByText("Xem lịch sử lương và yêu cầu")).toBeInTheDocument();

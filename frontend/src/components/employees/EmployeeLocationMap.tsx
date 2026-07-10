@@ -35,12 +35,12 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
     <div className="overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         <div className="min-w-0">
-          <p className="employee-type-card-title truncate font-bold text-slate-950">{statusTitle(guidance)}</p>
-          <p className="mt-0.5 truncate text-[12px] font-semibold leading-4 text-slate-500">
+          <p className="employee-type-card-title truncate text-slate-950">{statusTitle(guidance)}</p>
+          <p className="employee-type-pill mt-0.5 truncate text-slate-500">
             {statusDescription(guidance, target)}
           </p>
         </div>
-        <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-sky-50 px-2.5 text-[11px] font-bold leading-4 text-sky-700">
+        <span className="employee-type-pill inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-sky-50 px-2.5 text-sky-700">
           <Navigation className="h-3.5 w-3.5" />
           {sample?.accuracy ? (
             <>+/-{Math.round(sample.accuracy)}m</>
@@ -50,17 +50,17 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
         </span>
       </div>
       {tileFailed ? (
-        <div className="border-t border-slate-100 bg-slate-50 px-3 py-3 text-[13px] font-medium leading-5 text-slate-600">
+        <div className="employee-type-body-sm border-t border-slate-100 bg-slate-50 px-3 py-3 text-slate-600">
           Không tải được bản đồ.
         </div>
       ) : (
         <div className="relative h-60 w-full border-t border-slate-100 bg-slate-100">
-          <div className="pointer-events-none absolute left-3 top-3 z-[500] inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-[12px] font-bold leading-4 text-slate-900 shadow-sm ring-1 ring-slate-200/80">
+          <div className="employee-type-pill pointer-events-none absolute left-3 top-3 z-[500] inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-slate-900 shadow-sm ring-1 ring-slate-200/80">
             <MapPin className="h-4 w-4 text-emerald-600" />
             {target.project_name}
           </div>
           {guidance.distanceMeters != null ? (
-            <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-[500] rounded-lg bg-white/95 px-3 py-2 text-[12px] font-semibold leading-4 text-slate-700 shadow-sm ring-1 ring-slate-200/80">
+            <div className="employee-type-pill pointer-events-none absolute bottom-3 left-3 right-3 z-[500] rounded-lg bg-white/95 px-3 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200/80">
               Cách {guidance.nearestGate?.name || "cổng chấm công"} {formatDistanceMeters(guidance.distanceMeters)}
             </div>
           ) : null}
@@ -146,14 +146,14 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
       )}
       <div className="grid grid-cols-2 gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
         <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
-          <p className="text-[11px] font-bold uppercase leading-4 text-slate-500">Bán kính</p>
-          <p className="mt-0.5 truncate text-[14px] font-extrabold leading-5 text-slate-950">
+          <p className="employee-type-pill uppercase text-slate-500">Bán kính</p>
+          <p className="employee-type-body mt-0.5 truncate font-semibold text-slate-950">
             {formatDistanceMeters(target.radius_meters)}
           </p>
         </div>
         <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
-          <p className="text-[11px] font-bold uppercase leading-4 text-slate-500">Cổng gần nhất</p>
-          <p className="mt-0.5 truncate text-[14px] font-extrabold leading-5 text-slate-950">
+          <p className="employee-type-pill uppercase text-slate-500">Cổng gần nhất</p>
+          <p className="employee-type-body mt-0.5 truncate font-semibold text-slate-950">
             {guidance.nearestGate?.name || target.gates[0]?.name || "Chưa xác định"}
           </p>
         </div>

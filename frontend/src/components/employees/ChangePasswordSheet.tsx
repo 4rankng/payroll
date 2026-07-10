@@ -139,7 +139,7 @@ export function ChangePasswordSheet({
           className="h-auto max-h-[85vh] rounded-t-3xl px-5"
         >
           <SheetHeader className="pb-4 border-b border-gray-100">
-            <SheetTitle className="text-base font-bold text-gray-900">
+            <SheetTitle className="employee-type-card-title text-gray-900">
               Đổi mật khẩu
             </SheetTitle>
           </SheetHeader>
@@ -155,7 +155,7 @@ export function ChangePasswordSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-gray-900">
+          <DialogTitle className="employee-type-card-title text-gray-900">
             Đổi mật khẩu
           </DialogTitle>
         </DialogHeader>

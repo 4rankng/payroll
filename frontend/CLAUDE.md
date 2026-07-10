@@ -109,8 +109,8 @@
 **Employee self-service typography:**
 
 - Use the `employee-type-*` semantic classes on `/employee`; do not add arbitrary pixel font sizes in employee portal components.
-- Mobile scale: caption/status and labels 13px, secondary copy/actions 14px, body 15px, strong values 16px, section titles 18px, employee name 26px, and primary money 28px.
-- Reserve the 26px and 28px roles for the employee identity and single primary wage/advance amount. Attendance rows, badges, map guidance, and buttons stay within the 13–16px roles.
+- Mobile scale: metadata 12px, labels/supporting copy 13px, body/actions 14px, strong values 15–16px, section titles 18px, employee name 22px, and primary money 32px.
+- Reserve the 32px role for the single primary wage/advance amount. Attendance rows, badges, bank details, map guidance, and buttons stay within the 12–18px roles.
 - Use only 400, 500, 600, and 700 weights in the employee portal. Prefer borders, spacing, and surface contrast over repeated shadows.
 - Employee disclosures and sheets use the same semantic classes so portalled content does not fall back to the larger admin typography scale.
 

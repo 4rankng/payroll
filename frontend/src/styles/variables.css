@@ -147,13 +147,13 @@
 
     /* Employee self-service scale: compact, but readable at arm's length on
        mobile. Keep these roles separate from admin/partner typography. */
-    --employee-type-caption: 0.8125rem;    /* 13px: status, badge */
-    --employee-type-label: 0.8125rem;      /* 13px: field label, metadata */
-    --employee-type-body-sm: 0.875rem;     /* 14px: secondary copy */
-    --employee-type-body: 0.9375rem;       /* 15px: body copy */
-    --employee-type-strong: 1rem;          /* 16px: action, primary row */
-    --employee-type-title: 1.25rem;        /* 20px: section title */
-    --employee-type-money: 2.25rem;        /* 36px: primary money only */
+    --employee-type-caption: 0.75rem;      /* 12px: metadata, counters */
+    --employee-type-label: 0.8125rem;      /* 13px: financial labels */
+    --employee-type-body-sm: 0.8125rem;    /* 13px: supporting copy */
+    --employee-type-body: 0.875rem;        /* 14px: primary body */
+    --employee-type-strong: 1rem;          /* 16px: card and empty-state title */
+    --employee-type-title: 1.125rem;       /* 18px: section title */
+    --employee-type-money: 2rem;           /* 32px: primary money only */
 
     /* Line Heights - Optimized for Data Density */
     --leading-none: 1;

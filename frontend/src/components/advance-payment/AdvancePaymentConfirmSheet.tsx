@@ -56,7 +56,7 @@ export function AdvancePaymentConfirmSheet({
             <p className="employee-type-label-caps text-slate-500">
               Số tiền thực nhận
             </p>
-            <p className="employee-type-hero-amount mt-1 break-words text-employee tabular-nums">
+            <p className="employee-type-confirm-amount mt-1 break-words text-employee tabular-nums">
               {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
             </p>
 
