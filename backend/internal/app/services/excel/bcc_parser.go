@@ -150,47 +150,26 @@ func resolveBCCSheet(f *excelize.File) string {
 	return ""
 }
 
-// buildDayColMap reads row 8 from col index 4 (Column E) onward.
+// buildDayColMap reads the detected day-number row from col index 4 (Column E) onward.
 // Day numbers appear every 4 columns; the number is propagated to all sub-columns
 // of that day group. Returns start column index, colIndex→dayNum map and the stop column index.
 //
-// Row 8 cells store the day-of-month as an Excel date serial with format "dd".
+// Day-number cells store the day-of-month as an Excel date serial with format "dd".
 // We read raw (unformatted) values so that serial 22 → "22" (the correct day),
 // rather than letting excelize apply its epoch offset and produce "21".
+//
+// The day-number row itself is detected by detectDayRow: legacy monthly templates
+// put day numbers in row 8 (weekdays T2..CN in row 7), while newer weekly-cycle
+// templates swap the two (day numbers in row 7, weekdays in row 8).
 func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, error) {
-	const dataRow = 8
+	dataRow := detectDayRow(f, sheet)
 	colToDayNum := make(map[int]int)
 	currentDay := 0
 	stopCol := 200
 
-	// Dynamically detect where the timesheet dates start by scanning from Column E (index 4) onwards.
-	// Only accept values in the valid day-of-month range (1-31) to avoid false positives
-	// from non-day numeric cells (e.g. year "2026", counts, or rate amounts).
-	startColIdx := -1
-	for colIdx := 4; colIdx <= 200; colIdx++ {
-		cn, err := excelize.CoordinatesToCellName(colIdx+1, dataRow)
-		if err != nil {
-			break
-		}
-		val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
-		if err != nil {
-			continue
-		}
-		val = strings.TrimSpace(val)
-		if val != "" {
-			dayNum := 0
-			if n, err2 := strconv.Atoi(val); err2 == nil {
-				dayNum = n
-			} else if serial, err3 := strconv.ParseFloat(val, 64); err3 == nil {
-				dayNum = int(serial)
-			}
-			if dayNum >= 1 && dayNum <= 31 {
-				startColIdx = colIdx
-				break
-			}
-		}
-	}
-
+	// Day region start: first column in dataRow holding a day-of-month value (1-31),
+	// rejecting non-day numeric cells (year "2026", counts, rate amounts).
+	startColIdx := firstDayColumn(f, sheet, dataRow)
 	if startColIdx == -1 {
 		startColIdx = 7 // fallback to original behavior (Column H)
 	}
@@ -224,9 +203,63 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 		}
 	}
 	if len(colToDayNum) == 0 {
-		return 0, nil, 0, fmt.Errorf("buildDayColMap: no day columns found in row %d", dataRow)
+		return 0, nil, 0, fmt.Errorf("buildDayColMap: no day-of-month columns found in rows 7-8")
 	}
 	return startColIdx, colToDayNum, stopCol, nil
+}
+
+// detectDayRow returns the row (7 or 8) that holds the day-of-month numbers.
+//
+// Legacy monthly templates place day numbers in row 8 with weekday abbreviations
+// (T2..CN) in row 7. Newer weekly-cycle templates swap these rows: day numbers in
+// row 7 and weekdays in row 8. We pick the row whose first day number (1-31)
+// appears at the smaller column index — the day region always begins at column I
+// in every known template, so the correct row wins and any stray late numeric
+// cell in the other row (e.g. a partial day range) loses. Row 8 (legacy) wins ties.
+func detectDayRow(f *excelize.File, sheet string) int {
+	row8 := firstDayColumn(f, sheet, 8)
+	row7 := firstDayColumn(f, sheet, 7)
+	switch {
+	case row7 == -1:
+		return 8
+	case row8 == -1:
+		return 7
+	case row7 < row8:
+		return 7
+	default:
+		return 8
+	}
+}
+
+// firstDayColumn scans columns E..GR (col index 4..200) in row and returns the
+// col-index (where col-index+1 is the 1-based column number) of the first cell
+// holding a day-of-month value (1-31), or -1 if none. Reading RawCellValue
+// avoids excelize's date-epoch offset on "dd"-formatted serials.
+func firstDayColumn(f *excelize.File, sheet string, row int) int {
+	for colIdx := 4; colIdx <= 200; colIdx++ {
+		cn, err := excelize.CoordinatesToCellName(colIdx+1, row)
+		if err != nil {
+			break
+		}
+		val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
+		if err != nil {
+			continue
+		}
+		val = strings.TrimSpace(val)
+		if val == "" {
+			continue
+		}
+		dayNum := 0
+		if n, err := strconv.Atoi(val); err == nil {
+			dayNum = n
+		} else if serial, err := strconv.ParseFloat(val, 64); err == nil {
+			dayNum = int(serial)
+		}
+		if dayNum >= 1 && dayNum <= 31 {
+			return colIdx
+		}
+	}
+	return -1
 }
 
 // weekdayAbbrs is the set of Vietnamese weekday abbreviations that appear in
