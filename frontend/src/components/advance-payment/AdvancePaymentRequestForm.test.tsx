@@ -30,6 +30,7 @@ const baseProps = {
   hasBankDestination: true,
   onSubmit: vi.fn(),
   onAmountChange: vi.fn(),
+  onBankAction: vi.fn(),
   isPending: false,
 };
 
@@ -45,6 +46,8 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByText("Bùi Nguyễn Duy Anh")).not.toBeInTheDocument();
     expect(screen.queryByText("0366178061")).not.toBeInTheDocument();
     expect(screen.getByText("01/07 – 31/07/2026")).toBeInTheDocument();
+    expect(screen.getByText("Còn hạn mức")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "0");
 
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     fireEvent.click(screen.getByRole("button", { name: "Yêu cầu ứng lương" }));
@@ -53,17 +56,20 @@ describe("AdvancePaymentRequestForm", () => {
   });
 
   it("blocks the form when receiving bank details are missing", () => {
+    const onBankAction = vi.fn();
     render(
       <AdvancePaymentRequestForm
         {...baseProps}
         info={info}
         hasBankDestination={false}
+        onBankAction={onBankAction}
       />
     );
 
     expect(screen.getByText("Chưa có tài khoản nhận tiền")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Xem tài khoản nhận tiền" }));
+    expect(onBankAction).toHaveBeenCalledOnce();
   });
 
   it("shows the server reason when requests are unavailable", () => {
@@ -82,7 +88,7 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.getByText("Ngoài kỳ ứng lương")).toBeInTheDocument();
     expect(screen.getByText("Kỳ tiếp theo mở vào ngày 15.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Xem lịch sử yêu cầu" })).not.toBeInTheDocument();
   });
 
   it("deduplicates quick choices after the minimum amount clamp", () => {
@@ -124,8 +130,34 @@ describe("AdvancePaymentRequestForm", () => {
     );
 
     expect(screen.getByText("Hạn mức kỳ này đã sử dụng hết")).toBeInTheDocument();
+    expect(screen.getByText("Đã dùng hết hạn mức")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "100");
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Xem lịch sử yêu cầu" })).not.toBeInTheDocument();
+  });
+
+  it("shows a proportional allowance summary for partially used quota", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          maxAdvanceAmount: 1_000_000,
+          completedAmount: 250_000,
+          remainingAmount: 750_000,
+          quotas: [{
+            ...info.quotas[0],
+            maxAdvanceAmount: 1_000_000,
+            completedAmount: 250_000,
+            remainingAmount: 750_000,
+          }],
+        }}
+      />
+    );
+
+    expect(screen.getByText("Đã dùng 250.000 ₫")).toBeInTheDocument();
+    expect(screen.getByText("Hạn mức 1.000.000 ₫")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "25");
   });
 
   it("keeps a large available amount readable without changing its value", () => {

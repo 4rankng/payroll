@@ -17,7 +17,7 @@ const EmployeeRouter = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[#F6F8FA]">
+      <div className="min-h-[100dvh] bg-[var(--employee-page)]">
         <div className="border-b border-[#E4E7EC] bg-white">
           <div className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
             <div className="space-y-2">

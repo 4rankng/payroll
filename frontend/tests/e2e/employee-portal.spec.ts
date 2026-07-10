@@ -96,12 +96,21 @@ test.describe("mobile employee payroll dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await mockEmployeePortal(page);
     await page.goto("/employee");
-    await expect(page.getByText("Có thể ứng")).toBeVisible();
+    await expect(page.getByText("Số tiền có thể ứng")).toBeVisible();
   });
 
   test("preserves hierarchy and prevents overflow at supported widths", async ({ page }) => {
-    for (const width of [320, 375, 390, 430, 768, 1024]) {
-      await page.setViewportSize({ width, height: 844 });
+    const walletArtwork = page.locator('img[src="/employee-pay-wallet.png"]');
+    await expect(walletArtwork).toBeVisible();
+    expect(await walletArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+
+    for (const viewport of [
+      { width: 360, height: 800 },
+      { width: 390, height: 844 },
+      { width: 393, height: 873 },
+      { width: 430, height: 932 },
+    ]) {
+      await page.setViewportSize(viewport);
       await expect(page.getByRole("heading", { name: "Nguyễn Thị Nhân Viên Có Tên Rất Dài" })).toBeVisible();
       await expect(page.getByText("4.000.000 ₫")).toBeVisible();
       await expect(page.getByText("123456789012345678901234567890")).toBeVisible();
@@ -127,6 +136,108 @@ test.describe("mobile employee payroll dashboard", () => {
       expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.viewportWidth);
       expect(metrics.undersized).toEqual([]);
     }
+  });
+
+  test("keeps the approved salary-advance information order", async ({ page }) => {
+    const sectionOrder = await page.evaluate(() => {
+      const ids = ["employee-advance-request", "employee-history", "employee-bank"];
+      return ids.map((id) => document.getElementById(id)?.getBoundingClientRect().top ?? -1);
+    });
+
+    expect(sectionOrder[0]).toBeLessThan(sectionOrder[1]);
+    expect(sectionOrder[1]).toBeLessThan(sectionOrder[2]);
+  });
+
+  test("keeps illustration motion subtle and honors reduced-motion", async ({ page }) => {
+    const artwork = page.locator(".employee-pay-art");
+    await expect(artwork).toBeVisible();
+
+    const activeAnimation = await artwork.evaluate((element) => getComputedStyle(element).animationName);
+    expect(activeAnimation).toContain("employee-pay-float");
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const reducedMotion = await artwork.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        duration: style.animationDuration,
+        iterations: style.animationIterationCount,
+      };
+    });
+    expect(reducedMotion.iterations).toBe("1");
+    expect(["0.01ms", "1e-05s"]).toContain(reducedMotion.duration);
+  });
+
+  test("renders exhausted and empty states without duplicating history navigation", async ({ page }) => {
+    await page.unroute("**/api/v1/me/advance-payment");
+    await page.unroute("**/api/v1/me/advance-payment/history*");
+    await page.route("**/api/v1/me/advance-payment", (route) => route.fulfill({
+      json: json({
+        forMonth: "2026-07",
+        maxAdvanceAmount: 5_000_000,
+        completedAmount: 5_000_000,
+        pendingAmount: 0,
+        remainingAmount: 0,
+        canRequest: false,
+        feePercentage: 2,
+        minFee: 10_000,
+        hasFlexible: true,
+        quotas: [{
+          forMonth: "2026-07",
+          maxAdvanceAmount: 5_000_000,
+          completedAmount: 5_000_000,
+          pendingAmount: 0,
+          remainingAmount: 0,
+        }],
+      }),
+    }));
+    await page.route("**/api/v1/me/advance-payment/history*", (route) => route.fulfill({
+      json: {
+        ...json([]),
+        pagination: { page: 1, pageSize: 100, totalPages: 0, totalRecords: 0 },
+      },
+    }));
+
+    await page.reload();
+
+    await expect(page.getByText("Đã dùng hết hạn mức")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Xem lịch sử yêu cầu" })).toHaveCount(0);
+    await expect(page.getByText("Chưa có yêu cầu ứng lương")).toBeVisible();
+    await expect(page.getByText("0 yêu cầu")).toBeVisible();
+    const emptyArtwork = page.locator('img[src="/advance-payment-empty-state.png"]');
+    await expect(emptyArtwork).toBeVisible();
+    expect(await emptyArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  });
+
+  test("shows all-time requests newest first with five visible rows", async ({ page }) => {
+    const requests = Array.from({ length: 7 }, (_, index) => ({
+      id: index + 1,
+      requestAmount: 1_000_000 + index * 10_000,
+      fee: 20_000,
+      netAmount: 980_000 + index * 10_000,
+      status: "COMPLETED",
+      forMonth: index < 3 ? "2026-07" : "2026-06",
+      createdAt: `2026-07-${String(10 - index).padStart(2, "0")}T08:00:00+07:00`,
+    }));
+    await page.unroute("**/api/v1/me/advance-payment/history*");
+    await page.route("**/api/v1/me/advance-payment/history*", (route) => route.fulfill({
+      json: {
+        ...json(requests),
+        pagination: { page: 1, pageSize: 100, totalPages: 1, totalRecords: requests.length },
+      },
+    }));
+
+    await page.reload();
+
+    await expect(page.getByText("7 yêu cầu")).toBeVisible();
+    const history = page.getByLabel("Lịch sử yêu cầu, cuộn để xem thêm");
+    await expect(history).toBeVisible();
+    const dimensions = await history.evaluate((element) => ({
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    }));
+    expect(dimensions.clientHeight).toBeLessThanOrEqual(390);
+    expect(dimensions.scrollHeight).toBeGreaterThan(dimensions.clientHeight);
+    await expect(history.getByRole("button").first()).toContainText("10/07/2026");
   });
 
   test("supports month navigation, transaction disclosure, account menu, and request confirmation", async ({ page }) => {
