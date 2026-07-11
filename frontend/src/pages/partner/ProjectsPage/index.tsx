@@ -63,16 +63,13 @@ const STATUS_META: Record<
 };
 
 // ─── Project avatar (color identity) ───────────────────────────────────────
-// 8 curated soft-gradient pairings, chosen for variety without clashing
+// Restrained project identities: distinct enough to scan, cohesive enough to
+// remain part of the TingTing partner workspace.
 const AVATAR_GRADIENTS = [
-  'from-indigo-500 to-purple-600',
-  'from-emerald-500 to-teal-600',
-  'from-blue-500 to-cyan-600',
-  'from-amber-500 to-orange-600',
-  'from-pink-500 to-rose-600',
-  'from-violet-500 to-fuchsia-600',
-  'from-sky-500 to-blue-600',
-  'from-lime-500 to-green-600',
+  'from-emerald-600 to-teal-600',
+  'from-teal-600 to-cyan-700',
+  'from-green-700 to-emerald-600',
+  'from-slate-600 to-slate-700',
 ];
 
 function hashToGradient(input: string): string {
@@ -165,10 +162,10 @@ function ProjectCard({
         }
       }}
       className={cn(
-        'group relative w-full rounded-2xl bg-card cursor-pointer',
+        'group relative w-full rounded-2xl border border-border/60 bg-card cursor-pointer',
         'shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_8px_-4px_rgba(15,15,30,0.04)]',
         'hover:shadow-[0_2px_4px_-1px_rgba(15,15,30,0.08),0_12px_24px_-8px_rgba(15,15,30,0.10)]',
-        'hover:-translate-y-0.5 transition-all duration-200',
+        'hover:-translate-y-0.5 hover:border-primary/20 transition-all duration-200',
       )}
     >
       <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 p-4 md:p-5 items-center">
@@ -287,7 +284,7 @@ const ProjectsPage = () => {
   return (
     <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-5">
-        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur">
+        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur">
           <PageHeader
             title="Dự án"
             description="Quản lý và theo dõi các dự án được phân quyền"
@@ -306,7 +303,7 @@ const ProjectsPage = () => {
               { label: 'Đang hoạt động', value: activeCount },
               { label: 'Đang hiển thị', value: projects.length },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-200/70 bg-slate-50/70 px-3 py-2">
+              <div key={item.label} className="rounded-xl border border-emerald-100/80 bg-emerald-50/45 px-3 py-2.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{item.label}</p>
                 <p className="mt-1 text-lg font-bold tabular-nums text-slate-900">{item.value.toLocaleString('vi-VN')}</p>
               </div>
@@ -315,7 +312,7 @@ const ProjectsPage = () => {
         </div>
 
       {/* ── UNIFIED TOOLBAR ── */}
-      <div className="rounded-2xl bg-card p-2.5 shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_6px_-2px_rgba(15,15,30,0.04)]">
+      <div className="rounded-2xl border border-border/60 bg-card p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Status filter pills */}
           <div className="flex items-center gap-1 flex-wrap">
@@ -329,7 +326,7 @@ const ProjectsPage = () => {
                   className={cn(
                     'px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all shrink-0',
                     isActive
-                      ? 'bg-foreground text-background shadow-sm'
+                      ? 'bg-primary text-primary-foreground shadow-[0_6px_16px_-10px_rgba(8,120,62,0.7)]'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                   )}
                 >

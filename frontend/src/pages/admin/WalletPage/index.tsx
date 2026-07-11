@@ -97,20 +97,20 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
       aria-label="Số dư ví"
       className={cn(
         "relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm",
-        // Subtle amber wash so the hero reads as the headline element.
-        "bg-[radial-gradient(140%_90%_at_0%_0%,rgba(245,158,11,0.05)_0%,transparent_55%),linear-gradient(135deg,rgba(248,250,252,1)_0%,rgba(255,255,255,1)_100%)]",
+        // Subtle emerald wash keeps the wallet hero aligned with TingTing.
+        "bg-[radial-gradient(140%_90%_at_0%_0%,rgba(8,120,62,0.06)_0%,transparent_55%),linear-gradient(135deg,rgba(248,250,249,1)_0%,rgba(255,255,255,1)_100%)]",
       )}
     >
       {/* Watermark icon — bleeds bottom-right */}
       <WalletIcon
-        className="absolute -right-4 -bottom-4 h-40 w-40 text-amber-500/[0.06] pointer-events-none"
+        className="absolute -right-4 -bottom-4 h-40 w-40 text-primary/[0.06] pointer-events-none"
         strokeWidth={1.2}
       />
 
       <div className="relative">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.18)]" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-amber-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_3px_rgba(8,120,62,0.16)]" />
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-primary">
             Số dư khả dụng
           </span>
         </div>
@@ -124,7 +124,7 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
             type="button"
             onClick={onSync}
             disabled={syncing}
-            className="ml-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-40"
+            className="ml-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/5 transition-colors disabled:opacity-40"
             title="Đồng bộ số dư với nhà cung cấp"
           >
             {syncing ? (
@@ -209,8 +209,8 @@ export default function WalletPage() {
         {/* Page header */}
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 border border-amber-200">
-              <WalletIcon className="h-4 w-4 text-amber-600" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+              <WalletIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
               <h1 className="text-base font-semibold text-foreground leading-tight tracking-tight">
@@ -258,8 +258,8 @@ export default function WalletPage() {
             value={balance ? formatVND(balance.pending_out) : "—"}
             hint="Chuyển khoản đang xử lý"
             icon={TrendingDown}
-            iconText="text-amber-600"
-            watermark="text-amber-500/15"
+            iconText="text-primary"
+            watermark="text-primary/10"
             isLoading={balanceLoading}
           />
         </div>

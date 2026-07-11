@@ -96,7 +96,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       aria-label="Ví tiền"
       className={cn(
         "relative overflow-hidden p-[22px] px-6 text-white",
-        "bg-[#101D35]",
+        "bg-[#06452E]",
         compact && "p-3.5",
         className
       )}
@@ -105,7 +105,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       <div 
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: 'linear-gradient(#1B2A47 1px, transparent 1px), linear-gradient(90deg, #1B2A47 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(183,228,202,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(183,228,202,0.10) 1px, transparent 1px)',
           backgroundSize: '28px 28px'
         }}
       />
@@ -130,8 +130,8 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#6FA8FF] shadow-[0_0_0_3px_rgba(111,168,255,0.18)]" />
-                  <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#6FA8FF]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
+                  <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
                     Ví tiền
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 isLow ? "text-red-400" : "text-white"
               )}>
                 {formatCurrency(available).replace('₫', '')}
-                <span className={cn("ml-1 font-medium", compact ? "text-base" : "text-lg", isLow ? "text-red-400/80" : "text-[#6FA8FF]")}>₫</span>
+                <span className={cn("ml-1 font-medium", compact ? "text-base" : "text-lg", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
               </div>
 
               {hasDivergence && showProviderBalance && providerBalance && (

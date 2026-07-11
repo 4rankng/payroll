@@ -398,7 +398,7 @@ const EmployeesPage = () => {
     <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
           <PageHeader
             title="Nhân viên dự án"
             description="Danh sách nhân viên trong các dự án được phân quyền"
@@ -473,7 +473,7 @@ const EmployeesPage = () => {
         </div>
 
         <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-white/70 bg-white/78 backdrop-blur px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-border/60 bg-white/90 backdrop-blur px-3 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
@@ -540,8 +540,8 @@ const EmployeesPage = () => {
             emptyState={
               <div className="flex flex-col items-center justify-center py-16 px-4">
                 <div className="relative mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 border border-slate-200">
-                    <Users className="h-9 w-9 text-primary/30" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/5 border border-primary/15">
+                    <Users className="h-9 w-9 text-primary/45" />
                   </div>
                   <div className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-lg bg-background border shadow-sm">
                     <UserPlus className="h-4 w-4 text-muted-foreground" />

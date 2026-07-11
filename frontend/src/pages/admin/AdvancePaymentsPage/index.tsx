@@ -239,7 +239,7 @@ const AdvancePaymentsPage = () => {
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
 
   return (
-    <div ref={animRoot} className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(15,49,103,0.08),transparent_32rem),linear-gradient(180deg,rgba(248,250,252,0.96),#f8fafc_34rem)]">
+    <div ref={animRoot} className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]">
       <div className="mx-auto max-w-[1480px] space-y-4 p-4 lg:space-y-5 lg:p-6">
 
         {/* ─── MOBILE: Wallet hero — full-bleed, above everything ─── */}
@@ -261,7 +261,7 @@ const AdvancePaymentsPage = () => {
         {/* ─── 1. Page header ─── */}
         <div
           data-mobile-header
-          className="rounded-2xl border border-white/80 bg-white/82 px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_18px_48px_-32px_rgba(15,49,103,0.35)] backdrop-blur sm:px-5"
+          className="rounded-2xl border border-white/80 bg-white/82 px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_18px_48px_-32px_rgba(8,120,62,0.22)] backdrop-blur sm:px-5"
         >
           <PageHeader
             title="Quản lý ứng lương"
@@ -280,7 +280,7 @@ const AdvancePaymentsPage = () => {
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
             "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
-            "shadow-[0_1px_2px_rgba(15,23,42,0.05),0_22px_60px_-42px_rgba(15,49,103,0.55)]",
+            "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_22px_60px_-42px_rgba(8,120,62,0.30)]",
             isMobile && "mobile-section-enter",
           )}
         >
@@ -352,7 +352,7 @@ const AdvancePaymentsPage = () => {
           data-mobile-content
           className={cn(
             "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
-            "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_20px_56px_-42px_rgba(15,49,103,0.48)]",
+            "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
         >

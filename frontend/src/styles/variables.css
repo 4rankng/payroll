@@ -6,11 +6,12 @@
 @layer base {
   :root {
     /* ========================================================================
-       NAVY & GOLD Premium Palette - Breaking Cliched Blue Territory
+       TINGTING EMERALD PRODUCT PALETTE
+       Shared by login, employee, partner, and admin experiences.
        ======================================================================== */
 
-    /* Primary - Deep Navy (Authority, Trust, Professionalism) */
-    --primary: 220 90% 25%;           /* #0a2540 - Bold, commanding */
+    /* Primary - TingTing Emerald */
+    --primary: 151 87% 25%;           /* #08783e */
     --primary-foreground: 0 0% 100%;  /* Pure white for contrast */
 
     /* Success - Professional Green (Positive, Achievement, Growth) */
@@ -28,31 +29,31 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Background System - Warm, Premium Whites */
-    --background: 220 20% 98%;        /* #f7fafc - Warm white */
-    --foreground: 220 90% 15%;        /* #0a1f33 - Deep navy text */
+    --background: 210 25% 97%;        /* #f5f7f9 - employee canvas */
+    --foreground: 220 43% 11%;        /* #101828 - neutral ink */
 
     /* Surface Colors - Subtle Depth */
     --card: 0 0% 100%;                /* Pure white */
-    --card-foreground: 220 90% 15%;
+    --card-foreground: 220 43% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 90% 15%;
+    --popover-foreground: 220 43% 11%;
 
     /* Muted States - Sophisticated Grays */
-    --muted: 220 15% 92%;             /* Light gray, not blue-tinted */
-    --muted-foreground: 220 10% 45%;  /* Sophisticated gray */
+    --muted: 216 24% 96%;             /* #f2f4f7 */
+    --muted-foreground: 220 13% 46%;  /* #667085 */
 
     /* Accents - Refined Neutrals */
-    --accent: 220 10% 94%;
-    --accent-foreground: 220 90% 15%;
+    --accent: 145 54% 95%;             /* soft emerald */
+    --accent-foreground: 151 87% 25%;
 
     /* Borders & Inputs - Crisp Definition */
-    --border: 220 10% 88%;
-    --input: 220 10% 88%;
-    --ring: 220 90% 25%;              /* Navy focus rings */
+    --border: 216 18% 90%;             /* #e4e7ec */
+    --input: 216 18% 84%;              /* #d0d5dd */
+    --ring: 151 87% 25%;               /* emerald focus rings */
 
     /* Secondary Actions - Neutral */
-    --secondary: 220 10% 94%;
-    --secondary-foreground: 220 90% 15%;
+    --secondary: 216 24% 96%;
+    --secondary-foreground: 220 43% 11%;
 
     /* Border Radius - Confident Curves (full scale) */
     --radius-sm: 0.5rem;              /* 8px  - rounded-lg */
@@ -65,8 +66,8 @@
     /* ========================================================================
        SURFACE TOKENS - Mobile page chrome (single source of truth)
        ======================================================================== */
-    --surface-page: 210 41% 95%;      /* #EEF3F8 - mobile admin page bg */
-    --surface-border: 212 37% 90%;    /* #DCE5EF - card/surface border */
+    --surface-page: 210 25% 97%;      /* #F5F7F9 */
+    --surface-border: 216 18% 90%;    /* #E4E7EC */
 
     /* Employee payroll-fintech surfaces. These aliases keep the employee
        portal cohesive without changing the admin and partner themes. */
@@ -98,8 +99,8 @@
     /* ========================================================================
        GRADIENT SYSTEM
        ======================================================================== */
-    --gradient-navy: linear-gradient(135deg, hsl(220 90% 25%) 0%, hsl(220 80% 35%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 15% 96%) 100%);
+    --gradient-navy: linear-gradient(135deg, #08783e 0%, #066534 100%);
+    --gradient-subtle: linear-gradient(180deg, #f8fafb 0%, #f5f7f9 100%);
 
     /* ========================================================================
        SHADOW SYSTEM
@@ -190,21 +191,21 @@
     /* ========================================================================
        SIDEBAR COLORS - Deep Navy Authority
        ======================================================================== */
-    --sidebar-background: 220 90% 12%;
-    --sidebar-foreground: 220 10% 95%;
-    --sidebar-primary: 220 90% 25%;
+    --sidebar-background: 153 76% 13%;
+    --sidebar-foreground: 145 33% 96%;
+    --sidebar-primary: 151 87% 25%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 30% 20%;
-    --sidebar-accent-foreground: 220 10% 95%;
-    --sidebar-border: 220 30% 18%;
-    --sidebar-ring: 220 90% 50%;
+    --sidebar-accent: 153 55% 20%;
+    --sidebar-accent-foreground: 145 33% 96%;
+    --sidebar-border: 153 48% 18%;
+    --sidebar-ring: 148 60% 58%;
 
     /* ========================================================================
        ROLE-BASED ACCENTS - Maintaining Functionality
        ======================================================================== */
-    --admin-accent: 220 91% 60%;
-    --partner-accent: 266 83% 60%;
-    --manager-accent: 142 71% 45%; /* Professional green */
+    --admin-accent: 148 60% 58%;
+    --partner-accent: 148 60% 58%;
+    --manager-accent: 151 87% 25%;
   }
 
   .dark {

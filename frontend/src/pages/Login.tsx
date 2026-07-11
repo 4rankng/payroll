@@ -166,14 +166,14 @@ const Login = () => {
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/login-bg.avif')" }}
+        style={{ backgroundImage: "url('/login-bg-employee.png')" }}
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-black/55 via-black/45 to-black/65" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-white/20 to-emerald-50/20" />
 
       {/* Brand Logo — desktop: top left */}
       <div className="hidden md:absolute md:z-20 md:top-6 md:left-6 md:flex md:items-center md:gap-3 md:animate-fade-in-up md:delay-100">
         <img src="/logo-square.png" alt="TingTing logo" className="h-10 w-10 rounded-lg object-contain" />
-        <h1 className="font-display font-extrabold text-xl text-white tracking-tight">TingTing</h1>
+        <h1 className="font-display font-extrabold text-xl text-emerald-800 tracking-tight">TingTing</h1>
       </div>
 
       <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center px-4 py-6 md:py-0">
@@ -181,11 +181,11 @@ const Login = () => {
         {/* Brand Logo — mobile: above card */}
         <div className="flex md:hidden items-center gap-3 mb-7 animate-fade-in-up delay-100">
           <img src="/logo-square.png" alt="TingTing logo" className="h-11 w-11 rounded-xl object-contain shadow-lg" />
-          <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">TingTing</h1>
+          <h1 className="font-display font-extrabold text-2xl text-emerald-800 tracking-tight">TingTing</h1>
         </div>
 
         {/* Login Card */}
-        <div className="w-full animate-hero-reveal delay-200 rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.35)] bg-white">
+        <div className="w-full animate-hero-reveal delay-200 rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,120,70,0.16)] bg-white">
 
           {/* Card header */}
           <div className="bg-white px-8 pt-8 pb-6">
@@ -355,7 +355,7 @@ const Login = () => {
               <Button
                 type="submit"
                 variant="default"
-                className="w-full h-11 font-bold text-sm rounded-xl mt-2 premium-button bg-gradient-navy text-white shadow-navy hover:shadow-navy"
+                className="w-full h-11 font-bold text-sm rounded-xl mt-2 premium-button bg-employee-600 text-white shadow-[0_8px_24px_rgba(0,158,69,0.22)] hover:bg-employee-700 hover:shadow-[0_10px_28px_rgba(0,122,55,0.28)]"
                 disabled={isDisabled}
               >
                 {loginMutation.isPending
@@ -379,10 +379,10 @@ const Login = () => {
       {/* Page footer */}
       <div className="absolute bottom-6 left-0 right-0 z-10">
         <div className="flex flex-col items-center gap-1.5">
-          <p className="text-center text-xs text-white/60 font-medium">
+          <p className="text-center text-xs text-gray-600 font-medium">
             © {new Date().getFullYear()} TingTing. Enterprise Payroll Solutions.
           </p>
-          <div className="flex items-center gap-3 text-xs text-white/40">
+          <div className="flex items-center gap-3 text-xs text-gray-500">
             <span>Điều khoản</span>
             <span>·</span>
             <span>Quyền riêng tư</span>

@@ -74,8 +74,8 @@ function TimesheetStatsRow({
       label: "Nhân viên",
       value: employeeCount,
       icon: Users,
-      iconText: "text-sky-600",
-      watermark: "text-sky-500/15",
+      iconText: "text-emerald-600",
+      watermark: "text-emerald-500/15",
       active: false,
       onClick: undefined as (() => void) | undefined,
     },
@@ -106,8 +106,8 @@ function TimesheetStatsRow({
       label: "NV chờ TT",
       value: pendingEmployees,
       icon: Wallet,
-      iconText: pendingEmployees > 0 ? "text-violet-600" : "text-muted-foreground",
-      watermark: pendingEmployees > 0 ? "text-violet-500/15" : "text-slate-500/10",
+      iconText: pendingEmployees > 0 ? "text-teal-600" : "text-muted-foreground",
+      watermark: pendingEmployees > 0 ? "text-teal-500/15" : "text-slate-500/10",
       active: statusFilter === "pending_payment",
       onClick: pendingEmployees > 0
         ? () => onToggleStatus(statusFilter === "pending_payment" ? "all" : "pending_payment")
@@ -394,11 +394,11 @@ export default function TimesheetsPage() {
       <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.45)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Clock className="h-5 w-5" />
                 </span>
                 Bảng công
@@ -444,7 +444,7 @@ export default function TimesheetsPage() {
         )}
 
         {/* Action buttons */}
-        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center rounded-2xl border border-white/70 bg-white/78 p-2.5 shadow-sm backdrop-blur">
+        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center rounded-2xl border border-border/60 bg-white/90 p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] backdrop-blur">
           <Button
             variant="outline"
             size="sm"
@@ -521,7 +521,7 @@ export default function TimesheetsPage() {
         >
           <div className="space-y-3">
             <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-              <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-white/70 bg-white/78 backdrop-blur px-3 py-2 shadow-sm">
+              <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-border/60 bg-white/90 backdrop-blur px-3 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                 <TimesheetFilters />
               </div>
             </div>

@@ -23,7 +23,7 @@ interface WalletDemandChartProps {
 type WalletDemandPeriod = WalletDemandForecastResponse['periods'][number];
 type ChartPeriod = WalletDemandPeriod & { displayLabel: string };
 
-const SERIES_COLORS = ['hsl(38 92% 50%)', 'hsl(206 90% 45%)', 'hsl(153 65% 38%)'];
+const SERIES_COLORS = ['hsl(151 87% 25%)', 'hsl(171 66% 34%)', 'hsl(215 16% 47%)'];
 
 const getCumulativeAt = (period: WalletDemandPeriod, cycleDay: number) => {
   if (cycleDay <= 0) return 0;
@@ -153,7 +153,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
       className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm h-full flex flex-col"
     >
       <div className="flex items-center gap-2 mb-1">
-        <TrendingUp className="h-4 w-4 text-amber-600" />
+        <TrendingUp className="h-4 w-4 text-primary" />
         <p className="text-sm font-semibold text-foreground">Nhu cầu ứng lương còn lại theo kỳ</p>
       </div>
       <p className="text-[11.5px] text-muted-foreground mb-3">
@@ -198,12 +198,12 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
             {todayLabel && (
               <ReferenceLine
                 x={todayLabel}
-                stroke="hsl(38 92% 50%)"
+                stroke="hsl(151 87% 25%)"
                 strokeDasharray="4 4"
                 label={{
                   value: 'Hôm nay',
                   fontSize: 10,
-                  fill: 'hsl(38 92% 45%)',
+                  fill: 'hsl(151 87% 25%)',
                   position: 'insideTopRight',
                 }}
               />

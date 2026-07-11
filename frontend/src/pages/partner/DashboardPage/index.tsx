@@ -118,7 +118,7 @@ function TrendChip({
 const TILE_COLORS = {
   emerald: { iconText: 'text-emerald-600', watermark: 'text-emerald-500/15' },
   amber:   { iconText: 'text-amber-600',   watermark: 'text-amber-500/15' },
-  blue:    { iconText: 'text-blue-600',    watermark: 'text-blue-500/15' },
+  blue:    { iconText: 'text-teal-600',    watermark: 'text-teal-500/15' },
 } as const;
 
 function StatTile({
@@ -331,13 +331,15 @@ const PartnerDashboardPage = () => {
   const showMomBadges = selectedMonth !== ALL_VALUE;
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1320px] mx-auto space-y-6">
-      <PageHeader
-        title="Tổng quan"
-        description="Theo dõi hoạt động nhân viên và tình hình thanh toán"
-      >
-        <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
-      </PageHeader>
+    <div className="p-4 lg:p-8 max-w-[1320px] mx-auto space-y-5">
+      <div className="rounded-2xl border border-white/80 bg-white/85 px-5 py-4 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur">
+        <PageHeader
+          title="Tổng quan"
+          description="Theo dõi hoạt động nhân viên và tình hình thanh toán"
+        >
+          <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
+        </PageHeader>
+      </div>
 
       {/* ── HERO SECTION ── */}
       {isLoading ? (
@@ -345,13 +347,14 @@ const PartnerDashboardPage = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in-up">
           {/* Left: big payout hero card */}
-          <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-white/10 p-6 lg:p-8 text-white shadow-elevated">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--sidebar-background))_0%,hsl(var(--primary))_58%,hsl(38_92%_42%)_100%)]" />
+          <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-emerald-200/15 p-6 lg:p-8 text-white shadow-[0_22px_54px_-32px_rgba(6,69,46,0.58)]">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#06452E_0%,#08783E_62%,#15905A_100%)]" />
+            <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/10 blur-3xl" />
             <div className="absolute inset-0 opacity-[0.08] pointer-events-none [background-image:linear-gradient(90deg,white_1px,transparent_1px),linear-gradient(0deg,white_1px,transparent_1px)] [background-size:28px_28px]" />
 
             <div className="relative">
               <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
                 <span className="text-[10.5px] font-bold uppercase tracking-normal text-white/75">
                   Tổng chi trả · {periodLabel}
                 </span>
@@ -379,7 +382,7 @@ const PartnerDashboardPage = () => {
 
               <div className="mt-5 flex items-center gap-4 text-[11.5px]">
                 <div className="flex items-center gap-1.5">
-                  <Banknote className="h-3.5 w-3.5 text-amber-200" />
+                  <Banknote className="h-3.5 w-3.5 text-emerald-200" />
                   <span className="text-white/70">Cập nhật theo thời gian thực</span>
                 </div>
               </div>

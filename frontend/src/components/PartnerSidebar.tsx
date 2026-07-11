@@ -144,7 +144,7 @@ const PartnerSidebar = () => {
     <>
       <Sidebar
         collapsible="icon"
-        className="border-r border-white/[0.06] bg-[hsl(var(--sidebar-dark))]"
+        className="border-r border-white/[0.06] bg-[hsl(var(--sidebar-background))]"
       >
         {/* Header — logo */}
         <SidebarHeader className="p-0 shrink-0 border-b border-white/[0.06]">

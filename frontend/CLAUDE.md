@@ -58,12 +58,12 @@
 
 ### Design System
 
-**Color Palette (Navy & Gold):**
+**Color Palette (TingTing Emerald):**
 ```css
-/* Primary - Navy */
---color-primary: #1e3a8a;       /* Navy blue */
---color-primary-light: #3b82f6;  /* Light blue */
---color-primary-dark: #1e40af;   /* Dark navy */
+/* Primary - TingTing Emerald */
+--color-primary: #08783e;
+--color-primary-light: #eaf8f0;
+--color-primary-dark: #066534;
 
 /* Secondary - Gold */
 --color-secondary: #f59e0b;     /* Gold */
@@ -72,10 +72,10 @@
 
 /* Neutral */
 --color-bg: #ffffff;
---color-bg-alt: #f8fafc;
---color-text: #1e293b;
---color-text-muted: #64748b;
---color-border: #e2e8f0;
+--color-bg-alt: #f5f7f9;
+--color-text: #101828;
+--color-text-muted: #667085;
+--color-border: #e4e7ec;
 
 /* Status */
 --color-success: #10b981;

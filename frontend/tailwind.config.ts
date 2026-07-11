@@ -94,12 +94,12 @@ export default {
 				info: 'hsl(var(--info))',
 			},
 			backgroundImage: {
-				'gradient-navy': 'linear-gradient(135deg, hsl(220 90% 25%) 0%, hsl(220 80% 35%) 100%)',
+				'gradient-navy': 'linear-gradient(135deg, #08783e 0%, #066534 100%)',
 				'gradient-teal': 'linear-gradient(135deg, hsl(180 70% 45%) 0%, hsl(180 65% 40%) 100%)',
 				'gradient-subtle': 'linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 15% 96%) 100%)',
 			},
 			boxShadow: {
-				'navy': '0 8px 32px hsl(220 90% 25% / 0.25)',
+				'navy': '0 8px 32px rgb(8 120 62 / 0.22)',
 				'card-elevated': '0 1px 3px hsl(220 20% 90%), 0 10px 40px -10px hsl(220 30% 85%), 0 0 0 1px hsl(220 10% 90%) inset',
 			},
 			keyframes: {

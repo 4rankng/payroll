@@ -8,7 +8,7 @@ interface WalletDemandCardProps {
 
 /**
  * Advisory balance-prediction card for the Wallet page. Mirrors the hero card's
- * visual language (rounded-2xl, watermark icon, amber accent, font-financial).
+ * visual language (rounded-2xl, watermark icon, emerald accent, font-financial).
  *
  * DISPLAY ONLY — the backend never feeds this back into SyncBalance / topups.
  */
@@ -23,14 +23,14 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
     <div className="relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
       {/* Watermark icon — bleeds bottom-right */}
       <WalletIcon
-        className="absolute -right-4 -bottom-4 h-32 w-32 text-amber-500/[0.06] pointer-events-none"
+        className="absolute -right-4 -bottom-4 h-32 w-32 text-primary/[0.06] pointer-events-none"
         strokeWidth={1.2}
       />
 
       <div className="relative">
         <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.18)]" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-amber-700">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_3px_rgba(8,120,62,0.16)]" />
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-primary">
             Mức cần giữ trong ví
           </span>
         </div>
