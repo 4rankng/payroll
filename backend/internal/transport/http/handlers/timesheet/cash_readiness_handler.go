@@ -77,9 +77,11 @@ func toCashReadinessResponse(c *domain.CashReadiness) *dto.CashReadinessResponse
 	return &dto.CashReadinessResponse{
 		ConfirmedPayable:  c.ConfirmedPayable,
 		ProjectedP50:      c.ProjectedP50,
+		ProjectedExpected: c.ProjectedExpected,
 		ProjectedP95:      c.ProjectedP95,
 		BandLower:         c.BandLower,
 		BandUpper:         c.BandUpper,
+		ExpectedTotal:     c.ExpectedTotal,
 		WalletAvailable:   c.WalletAvailable,
 		WalletAvailableOK: c.WalletAvailableOK,
 		CashToPrepare:     c.CashToPrepare,

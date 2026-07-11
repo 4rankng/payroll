@@ -8,12 +8,14 @@ type CashReadinessResponse struct {
 	ConfirmedPayable int64 `json:"confirmed_payable"`
 
 	// Projected additional accrual between now and the next pay date.
-	ProjectedP50 int64 `json:"projected_p50"`
-	ProjectedP95 int64 `json:"projected_p95"`
+	ProjectedP50      int64 `json:"projected_p50"`
+	ProjectedExpected int64 `json:"projected_expected"`
+	ProjectedP95      int64 `json:"projected_p95"`
 
 	// Total cash-need band: [confirmed + p50, confirmed + p95].
-	BandLower int64 `json:"band_lower"`
-	BandUpper int64 `json:"band_upper"`
+	BandLower     int64 `json:"band_lower"`
+	BandUpper     int64 `json:"band_upper"`
+	ExpectedTotal int64 `json:"expected_total"`
 
 	WalletAvailable   int64 `json:"wallet_available"`
 	WalletAvailableOK bool  `json:"wallet_available_ok"`

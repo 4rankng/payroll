@@ -38,7 +38,8 @@ type ForecastProvider interface {
 // AccrualProjection is a provider's projection of additional accrual between the
 // observed cycle-day and the horizon (pay date).
 type AccrualProjection struct {
-	P50         int64  // expected additional accrual
+	P50         int64  // median additional accrual
+	Expected    int64  // arithmetic mean additional accrual
 	P95         int64  // tail additional accrual
 	Method      string // "monte-carlo" | "gamma-fit" | "no-history"
 	Confidence  string // "high" | "medium" | "low"
@@ -67,6 +68,7 @@ func (p *TimesheetAccrualProvider) ProjectAccrual(_ context.Context, hist []coho
 	dist := forecastDemandDistributionBetween(hist, fromCycleDay, throughCycleDay, nSim, seed, 1.0)
 	return AccrualProjection{
 		P50:         int64(math.Round(dist.p50)),
+		Expected:    int64(math.Round(meanF(dist.samples))),
 		P95:         int64(math.Round(dist.p95)),
 		Method:      dist.method,
 		Confidence:  confidenceLabel(dist),
@@ -167,6 +169,7 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 
 	// 4. Compose the band + gap.
 	cashToPrepare := confirmed + proj.P50
+	expectedTotal := confirmed + proj.Expected
 	bandLower := confirmed + proj.P50
 	bandUpper := confirmed + proj.P95
 
@@ -176,9 +179,11 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 	return &domain.CashReadiness{
 		ConfirmedPayable:  confirmed,
 		ProjectedP50:      proj.P50,
+		ProjectedExpected: proj.Expected,
 		ProjectedP95:      proj.P95,
 		BandLower:         bandLower,
 		BandUpper:         bandUpper,
+		ExpectedTotal:     expectedTotal,
 		WalletAvailable:   walletAvailable,
 		WalletAvailableOK: walletOK,
 		CashToPrepare:     cashToPrepare,

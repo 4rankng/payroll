@@ -1,6 +1,5 @@
 import { formatCurrency } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import type { CashReadinessResponse } from '@/types/api/cash-readiness.types';
 
 interface CashReadinessCardProps {
@@ -15,18 +14,13 @@ const fmtDate = (rfc3339: string): string => {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-const confidenceMeta: Record<string, { label: string; dot: string; text: string }> = {
-  high: { label: 'Cao', dot: 'bg-emerald-500', text: 'text-emerald-600' },
-  medium: { label: 'Trung bình', dot: 'bg-amber-500', text: 'text-amber-600' },
-  low: { label: 'Thấp', dot: 'bg-rose-500', text: 'text-rose-600' },
-};
-
 /**
  * Advisory payment forecast for the next timesheet bulk transfer.
  *
- * The timesheet page is intentionally limited to the amount expected on the
- * next pay date. Wallet and advance-payment information belongs to the wallet
- * and advance-payment pages, not this forecast.
+ * The headline uses the arithmetic mean of the forecast distribution, while
+ * the full P50–P95 range remains visible below it. Wallet and advance-payment
+ * information belongs to the wallet and advance-payment pages, not this
+ * forecast.
  *
  * DISPLAY ONLY — the backend never feeds this into balance/disbursement.
  */
@@ -37,12 +31,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-9 w-52" />
         <Skeleton className="h-3 w-40" />
-        <div className="mt-2 grid grid-cols-2 gap-3 border-t border-border/60 pt-3">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </div>
+        <Skeleton className="mt-2 h-8 w-44 border-t border-border/60 pt-3" />
       </div>
     );
   }
@@ -61,9 +50,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
     );
   }
 
-  const forecastTotal = Math.max(data.cash_to_prepare, 0);
-  const conf = confidenceMeta[data.confidence] ?? confidenceMeta.low;
-  const lowConfidence = data.confidence === 'low' || data.method === 'no-history';
+  const forecastTotal = Math.max(data.expected_total, 0);
 
   return (
     <div className="flex h-full flex-col">
@@ -72,7 +59,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         Dự báo tiền trả
       </span>
 
-      {/* Headline figure */}
+      {/* Mathematical point estimate: confirmed payable + projected mean */}
       <p className="mt-2 font-financial text-[clamp(1.75rem,5vw,2.125rem)] font-bold leading-none tabular-nums tracking-tight text-foreground">
         {formatCurrency(forecastTotal)}
       </p>
@@ -80,34 +67,11 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         Kỳ {data.ky} · Thanh toán ngày {fmtDate(data.next_pay_date)}
       </p>
 
-      {/* Forecast metadata — concise rows, not four cards */}
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/60 pt-3 text-[11px]">
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">Đã chốt</dt>
-          <dd className="font-financial font-semibold tabular-nums text-foreground">
-            {formatCurrency(data.confirmed_payable)}
-          </dd>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">Dự báo thêm (p50)</dt>
-          <dd className="font-financial font-semibold tabular-nums text-foreground">
-            {formatCurrency(data.projected_p50)}
-          </dd>
-        </div>
+      <dl className="mt-4 border-t border-border/60 pt-3 text-[11px]">
         <div className="flex flex-col gap-0.5">
           <dt className="text-muted-foreground">Khoảng dự báo</dt>
           <dd className="break-words font-financial font-medium tabular-nums text-foreground">
             {formatCurrency(data.band_lower)}–{formatCurrency(data.band_upper)}
-          </dd>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">Độ tin cậy</dt>
-          <dd className={cn('inline-flex items-center gap-1 font-semibold', conf.text)}>
-            <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', conf.dot)} />
-            {conf.label}
-            {lowConfidence && (
-              <span className="font-normal text-muted-foreground">· {data.basis_cycles} kỳ</span>
-            )}
           </dd>
         </div>
       </dl>

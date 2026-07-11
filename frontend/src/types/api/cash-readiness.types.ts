@@ -3,9 +3,11 @@
 export interface CashReadinessResponse {
   confirmed_payable: number;
   projected_p50: number;
+  projected_expected: number;
   projected_p95: number;
   band_lower: number;
   band_upper: number;
+  expected_total: number;
   wallet_available: number;
   wallet_available_ok: boolean;
   cash_to_prepare: number;

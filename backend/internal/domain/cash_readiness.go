@@ -14,15 +14,21 @@ type CashReadiness struct {
 	// (the deterministic floor, identical to GetSummaryStats.PendingPaymentAmount).
 	ConfirmedPayable int64
 
-	// ProjectedP50 / ProjectedP95 are the expected / tail additional approved pay
-	// forecast to accrue between now and the next pay date.
-	ProjectedP50 int64
-	ProjectedP95 int64
+	// ProjectedP50 / ProjectedExpected / ProjectedP95 are the median, arithmetic
+	// mean, and tail additional approved-pay forecasts to accrue between now and
+	// the next pay date.
+	ProjectedP50      int64
+	ProjectedExpected int64
+	ProjectedP95      int64
 
 	// BandLower / BandUpper bound the total cash need: [confirmed + p50,
 	// confirmed + p95]. They are always monotonic (Lower <= Upper).
 	BandLower int64
 	BandUpper int64
+
+	// ExpectedTotal is the mathematical point estimate: confirmed payable plus
+	// the arithmetic mean of the projected accrual distribution.
+	ExpectedTotal int64
 
 	// WalletAvailable is the live wallet Available balance. WalletAvailableOK is
 	// false when the wallet read failed (the figure is 0 and should be flagged).

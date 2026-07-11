@@ -1,15 +1,6 @@
 import { memo } from 'react';
-import {
-  AlertCircle,
-  AlertTriangle,
-  CheckSquare,
-  DollarSign,
-  Users,
-  Wallet,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { CashReadinessCard } from './CashReadinessCard';
-import { PayrollMetricCard, type MetricCategory } from './PayrollMetricCard';
+import { PayrollMetricCard } from './PayrollMetricCard';
 import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { CashReadinessResponse } from '@/types/api/cash-readiness.types';
@@ -28,8 +19,6 @@ interface MetricDef {
   key: string;
   label: string;
   value: string;
-  icon: LucideIcon;
-  category: MetricCategory;
   supportText?: string;
   primary?: boolean;
   mobileSpan?: boolean;
@@ -75,24 +64,18 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       key: 'pending_approval',
       label: 'Chờ duyệt',
       value: fmtInt(summary?.pendingApproval),
-      icon: AlertCircle,
-      category: 'action',
       filter: 'pending_approval',
     },
     {
       key: 'pending_payment_count',
       label: 'Nhân viên chờ thanh toán',
       value: fmtInt(summary?.pendingEmployees),
-      icon: Users,
-      category: 'action',
       filter: 'pending_payment',
     },
     {
       key: 'pending_amount',
       label: 'Chờ thanh toán',
       value: formatCurrency(summary?.pendingPaymentAmount ?? 0),
-      icon: Wallet,
-      category: 'action',
       primary: true,
       mobileSpan: true,
       filter: 'pending_payment',
@@ -101,24 +84,18 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       key: 'approved',
       label: 'Đã duyệt',
       value: fmtInt(summary?.approvedEntries),
-      icon: CheckSquare,
-      category: 'done',
       filter: 'approved',
     },
     {
       key: 'paid',
       label: 'Đã thanh toán',
       value: fmtInt(summary?.paidEntries),
-      icon: DollarSign,
-      category: 'done',
       filter: 'paid',
     },
     {
       key: 'issue',
       label: 'Có vấn đề',
       value: fmtInt(rejected + editCount),
-      icon: AlertTriangle,
-      category: 'issue',
       supportText: `${fmtInt(editCount)} yêu cầu sửa · ${fmtInt(rejected)} bị loại`,
       mobileSpan: true,
       filter: 'rejected',
@@ -164,8 +141,6 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
                 key={m.key}
                 label={m.label}
                 value={m.value}
-                icon={m.icon}
-                category={m.category}
                 supportText={m.supportText}
                 primary={m.primary}
                 mobileSpan={m.mobileSpan}

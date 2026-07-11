@@ -33,9 +33,9 @@ func (f *fakeTimesheetReader) GetAccrualCohort(_ context.Context, _ domain.Times
 // SyncBalance/CreateTopup methods — the forecast's port type makes those
 // unreachable, which is the structural form of the advisory invariant.
 type fakeWallet struct {
-	balance      *wallet.WalletBalance
-	err          error
-	getBalCalls  int
+	balance     *wallet.WalletBalance
+	err         error
+	getBalCalls int
 }
 
 func (f *fakeWallet) GetBalance(_ context.Context) (*wallet.WalletBalance, error) {
@@ -128,6 +128,12 @@ func TestGetCashReadiness_BandMonotonicAndProjects(t *testing.T) {
 	if got.ProjectedP50 > got.ProjectedP95 {
 		t.Errorf("p50 > p95: %d > %d", got.ProjectedP50, got.ProjectedP95)
 	}
+	if got.ProjectedExpected < got.ProjectedP50 || got.ProjectedExpected > got.ProjectedP95 {
+		t.Errorf("expected projection %d is outside p50–p95 interval [%d, %d]", got.ProjectedExpected, got.ProjectedP50, got.ProjectedP95)
+	}
+	if got.ExpectedTotal != got.ConfirmedPayable+got.ProjectedExpected {
+		t.Errorf("ExpectedTotal = %d, want confirmed + expected projection = %d", got.ExpectedTotal, got.ConfirmedPayable+got.ProjectedExpected)
+	}
 	if got.ProjectedP50 <= 0 {
 		t.Errorf("ProjectedP50 = %d, want > 0 with 2 historical cycles", got.ProjectedP50)
 	}
@@ -159,8 +165,11 @@ func TestGetCashReadiness_NoHistoryFallback(t *testing.T) {
 	if got.Confidence != "low" {
 		t.Errorf("Confidence = %q, want low", got.Confidence)
 	}
-	if got.ProjectedP50 != 0 || got.ProjectedP95 != 0 {
-		t.Errorf("no-history projection must be 0, got p50=%d p95=%d", got.ProjectedP50, got.ProjectedP95)
+	if got.ProjectedP50 != 0 || got.ProjectedExpected != 0 || got.ProjectedP95 != 0 {
+		t.Errorf("no-history projection must be 0, got p50=%d expected=%d p95=%d", got.ProjectedP50, got.ProjectedExpected, got.ProjectedP95)
+	}
+	if got.ExpectedTotal != 200_000_000 {
+		t.Errorf("ExpectedTotal = %d, want confirmed-only 200000000", got.ExpectedTotal)
 	}
 	if got.CashToPrepare != 200_000_000 {
 		t.Errorf("CashToPrepare = %d, want confirmed-only 200000000", got.CashToPrepare)
@@ -186,8 +195,8 @@ func TestGetCashReadiness_Deterministic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second call: %v", err)
 	}
-	if a.ProjectedP50 != b.ProjectedP50 || a.ProjectedP95 != b.ProjectedP95 || a.CashToPrepare != b.CashToPrepare {
-		t.Errorf("non-deterministic: p50 a=%d b=%d, p95 a=%d b=%d", a.ProjectedP50, b.ProjectedP50, a.ProjectedP95, b.ProjectedP95)
+	if a.ProjectedP50 != b.ProjectedP50 || a.ProjectedExpected != b.ProjectedExpected || a.ProjectedP95 != b.ProjectedP95 || a.CashToPrepare != b.CashToPrepare || a.ExpectedTotal != b.ExpectedTotal {
+		t.Errorf("non-deterministic: p50 a=%d b=%d, expected a=%d b=%d, p95 a=%d b=%d", a.ProjectedP50, b.ProjectedP50, a.ProjectedExpected, b.ProjectedExpected, a.ProjectedP95, b.ProjectedP95)
 	}
 }
 

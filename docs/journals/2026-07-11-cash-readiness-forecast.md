@@ -10,9 +10,9 @@ the cash."* They discovered the number only when sitting down to export the MBan
 
 ## What shipped
 A single advisory **"Dự báo tiền trả"** card on `/admin/timesheet` (desktop + mobile)
-showing the expected payment: `cash_to_prepare = confirmed_payable + projected_p50`,
-`band = [confirmed+p50, confirmed+p95]`, plus the confirmed amount, forecast range,
-and confidence. Wallet balance, funding shortfall, and advance-payment information
+showing the mathematical point estimate: `expected_total = confirmed_payable + projected_mean`,
+with `band = [confirmed+p50, confirmed+p95]` shown beneath it. Wallet balance,
+funding shortfall, confirmed-payable, and advance-payment information
 are intentionally kept out of the timesheet page; those belong to their respective
 financial workflows.
 
