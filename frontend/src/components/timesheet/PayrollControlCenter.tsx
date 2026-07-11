@@ -158,7 +158,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}

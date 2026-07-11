@@ -199,7 +199,6 @@ export default function TimesheetsPageMobile() {
       <TimesheetPageHeaderMobile
         onAddTimesheet={() => openTimesheetEntry()}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}
-        onPayrollReportExport={() => {}}
         onPaymentHistory={() => navigate("payment-history")}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         userRole="partner"

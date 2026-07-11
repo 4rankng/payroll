@@ -21,7 +21,7 @@ export interface PayrollMetricCardProps {
   supportText?: string;
   /** Headline KPI — gets a navy base tint + larger figure. */
   primary?: boolean;
-  /** Span both columns on mobile so long currency/support text never wraps mid-number. */
+  /** Span both columns below the full desktop layout so long currency values stay readable. */
   mobileSpan?: boolean;
   selected?: boolean;
   disabled?: boolean;
@@ -50,7 +50,9 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
   onClick,
   className,
 }: PayrollMetricCardProps) {
-  const spanCls = mobileSpan ? 'col-span-2 sm:col-span-1' : '';
+  // Long-value tiles keep two tracks at desktop widths so VND values remain
+  // readable instead of protruding beyond their card.
+  const spanCls = mobileSpan ? 'col-span-2 lg:col-span-2' : '';
   const tint = category
     ? categoryIconTint[category]
     : 'bg-muted text-muted-foreground ring-border/60';
@@ -84,7 +86,7 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
       aria-label={`${label}: ${value}${supportText ? `. ${supportText}` : ''}`}
       title={supportText ? `${label} — ${supportText}` : undefined}
       className={cn(
-        'group flex h-full min-h-[76px] flex-col gap-2 rounded-lg border bg-card px-3.5 py-3 text-left',
+        'group flex h-full min-h-[76px] min-w-0 flex-col gap-2 rounded-lg border bg-card px-3.5 py-3 text-left',
         'transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         spanCls,
@@ -104,12 +106,12 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
         <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
       </span>
 
-      <div className="mt-auto flex flex-col gap-0.5">
+      <div className="mt-auto min-w-0 flex flex-col gap-0.5">
         <span
           className={cn(
             'whitespace-nowrap font-financial font-bold leading-none tabular-nums tracking-tight',
             primary
-              ? 'text-[1.375rem] sm:text-[1.75rem]'
+              ? 'text-[clamp(1.125rem,2.2vw,1.75rem)]'
               : 'text-[1.25rem] sm:text-[1.5rem]',
             selected ? 'text-primary' : 'text-foreground',
           )}

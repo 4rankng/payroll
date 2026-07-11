@@ -7,7 +7,7 @@ import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDo
 interface TimesheetPageHeaderMobileProps {
   onAddTimesheet: () => void;
   onApprovedTimesheetsExport: () => void;
-  onPayrollReportExport: () => void;
+  onPayrollReportExport?: () => void;
   // Admin-only
   onBulkTransferExport?: () => void;
   onBulkTransferResultUpload?: () => void;
@@ -94,15 +94,17 @@ export function TimesheetPageHeaderMobile({
                   <span className="text-sm font-medium">{isApprovedExportPending ? 'Đang xuất...' : 'Xuất bảng công đã duyệt'}</span>
                 </Button>
 
-                <Button
-                  variant="ghost"
-                  className="w-full min-h-11 justify-start h-auto px-2 py-3"
-                  onClick={() => { onPayrollReportExport(); close(); }}
-                  disabled={isPayrollReportPending}
-                >
-                  <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">{isPayrollReportPending ? 'Đang xuất...' : 'Xuất sao kê lương'}</span>
-                </Button>
+                {onPayrollReportExport && (
+                  <Button
+                    variant="ghost"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
+                    onClick={() => { onPayrollReportExport(); close(); }}
+                    disabled={isPayrollReportPending}
+                  >
+                    <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">{isPayrollReportPending ? 'Đang xuất...' : 'Xuất sao kê lương'}</span>
+                  </Button>
+                )}
 
                 {onBulkTransferExport && (
                   <Button

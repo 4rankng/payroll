@@ -9,10 +9,12 @@ pay 462 million but because there is no forecast so admin has a hard time to pre
 the cash."* They discovered the number only when sitting down to export the MBank file.
 
 ## What shipped
-A single advisory **"Chuẩn bị tiền trả"** card on `/admin/timesheet` (desktop + mobile)
-showing the gap to prepare: `cash_to_prepare = confirmed_payable + projected_p50`,
-`band = [confirmed+p50, confirmed+p95]`, `gap = max(0, cash_to_prepare − wallet.Available)`,
-plus a "prepare by \<pay date − 2 days\>" line and a confidence badge.
+A single advisory **"Dự báo tiền trả"** card on `/admin/timesheet` (desktop + mobile)
+showing the expected payment: `cash_to_prepare = confirmed_payable + projected_p50`,
+`band = [confirmed+p50, confirmed+p95]`, plus the confirmed amount, forecast range,
+and confidence. Wallet balance, funding shortfall, and advance-payment information
+are intentionally kept out of the timesheet page; those belong to their respective
+financial workflows.
 
 - `clock/pay_cycle.go` — global 4-cycle pay model (pay days 10/17/24/1; work 1-7/8-14/15-21/22-28). Distinct from the advance-payment day-20→9 cycle.
 - `CashReadinessForecastService` behind a swappable `ForecastProvider` (v1 statistical; ML is a drop-in later). Reuses the wallet-forecast newsvendor Monte-Carlo engine — no math reimplemented.

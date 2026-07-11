@@ -287,9 +287,15 @@ const AppContent = () => {
         {/* Advance Payment Partner Routes */}
         <Route path="/adv-partner" element={<ProtectedRoute requiredRole="adv_partner"><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/adv-partner/advance-payments" replace />} />
-          <Route path="advance-payments" element={<AdvPartnerAdvancePaymentsPage />} />
+          <Route
+            path="advance-payments"
+            element={<ResponsivePage desktopComponent={AdvPartnerAdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />}
+          />
           <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
-          <Route path="users" element={<AdvPartnerUsersPage />} />
+          <Route
+            path="users"
+            element={<ResponsivePage desktopComponent={AdvPartnerUsersPage} mobileComponent={UsersPageMobile} />}
+          />
           <Route path="*" element={<NotFound />} />
         </Route>
 
