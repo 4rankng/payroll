@@ -72,6 +72,25 @@ func (h *AuthHandler) GetCaptcha(c *gin.Context) {
 	}, "OK")
 }
 
+// @Summary Check whether login CAPTCHA is required
+// @Description Check the server-side failure counter before submitting credentials
+// @Tags auth
+// @Produce json
+// @Param username query string true "Username, CCCD, or mobile number"
+// @Success 200 {object} response.SuccessResponse
+// @Router /auth/captcha/required [get]
+func (h *AuthHandler) GetCaptchaRequired(c *gin.Context) {
+	username := strings.TrimSpace(c.Query("username"))
+	if username == "" {
+		response.BadRequest(c, "Vui lòng nhập tên đăng nhập")
+		return
+	}
+
+	response.Success(c, gin.H{
+		"required": h.authService.CaptchaRequiredForUsername(c.Request.Context(), username),
+	}, "OK")
+}
+
 // @Summary Verify OTP login code
 // @Description Complete the two-step login by submitting the emailed 6-digit code
 // @Tags auth

@@ -64,6 +64,25 @@ const Login = () => {
     }
   }, []);
 
+  const syncCaptchaRequirement = useCallback(async (): Promise<boolean> => {
+    const username = emailOrUsername.trim();
+    if (!username) return false;
+
+    try {
+      const res = await apiClient.get<{ required: boolean }>("/auth/captcha/required", {
+        params: { username },
+      });
+      const required = res?.data?.required === true;
+      if (required) setFailedAttempts((attempts) => Math.max(attempts, 3));
+      return required;
+    } catch {
+      // Do not make the status check a new login outage. The login endpoint
+      // remains authoritative and the error handler below can still reveal
+      // the CAPTCHA when the server requires it.
+      return false;
+    }
+  }, [emailOrUsername]);
+
   // Redirect authenticated users away from /login
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -84,9 +103,16 @@ const Login = () => {
 
   // Track login failures + fetch CAPTCHA image when threshold is reached.
   useEffect(() => {
-    if (loginMutation.isError) setFailedAttempts((n) => n + 1);
+    if (loginMutation.isError) {
+      const error = loginMutation.error as ApiError;
+      if (error?.message?.toLowerCase().includes("captcha")) {
+        setFailedAttempts((attempts) => Math.max(attempts, 3));
+      } else {
+        setFailedAttempts((attempts) => attempts + 1);
+      }
+    }
     if (loginMutation.isSuccess) setFailedAttempts(0);
-  }, [loginMutation.isError, loginMutation.isSuccess]);
+  }, [loginMutation.error, loginMutation.isError, loginMutation.isSuccess]);
 
   // Fetch the initial challenge when the threshold is first crossed, and
   // auto-refresh the image after each subsequent failed attempt (the prior
@@ -134,17 +160,22 @@ const Login = () => {
   const isDisabled = loginMutation.isPending || googleLoginMutation.isPending;
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
+      const serverRequiresCaptcha = await syncCaptchaRequirement();
+      if (serverRequiresCaptcha && (!captchaId || !captchaCode)) {
+        if (!captchaId) await refreshCaptcha();
+        return;
+      }
       loginMutation.mutate({
         username: emailOrUsername,
         password,
-        ...(needsCaptcha && captchaId
+        ...((needsCaptcha || serverRequiresCaptcha) && captchaId
           ? { captcha_id: captchaId, captcha_code: captchaCode }
           : {}),
       });
     },
-    [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode]
+    [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode, refreshCaptcha, syncCaptchaRequirement]
   );
 
   const togglePassword = useCallback(() => setShowPassword((v) => !v), []);
@@ -264,6 +295,7 @@ const Login = () => {
                     placeholder="CCCD, số điện thoại hoặc tên đăng nhập"
                     value={emailOrUsername}
                     onChange={(e) => setEmailOrUsername(e.target.value)}
+                    onBlur={() => void syncCaptchaRequirement()}
                     className="premium-input pl-10 pr-4 h-11 text-sm bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
                     required
                     autoComplete="username"

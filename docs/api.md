@@ -33,6 +33,7 @@ Routes are registered in `backend/internal/app/bootstrap/routes.go` and split ac
 | POST | `/login/resend` | Resend OTP |
 | POST | `/google` | Google OAuth login (no OTP required) |
 | GET | `/captcha` | Get self-hosted image CAPTCHA (after 3 failed logins) |
+| GET | `/captcha/required?username=...` | Check whether the account must solve CAPTCHA before login |
 | POST | `/logout` | Logout (blacklist token) |
 | GET | `/me` | Get current user profile |
 | PUT | `/me` | Update profile |
