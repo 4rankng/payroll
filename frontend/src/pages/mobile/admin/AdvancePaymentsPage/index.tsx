@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -34,12 +35,16 @@ import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHero
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
 import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
+import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
+import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { formatCurrency } from "@/utils/formatters";
+import { QueryKeys } from "@/lib/queryKeys";
+import { walletService } from "@/services/api/wallet.service";
 import { cn } from "@/lib/utils";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
@@ -116,6 +121,16 @@ const AdvancePaymentsPageMobile = () => {
   const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
   const exportBatchMutation = useExportAdvancePayments();
   const sendEmailMutation = useSendPayrollReportEmail();
+
+  // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
+  // gating the query prevents a 403 storm on this shared mobile component.
+  const { data: demandForecast, isLoading: demandForecastLoading } = useQuery({
+    queryKey: QueryKeys.wallet.demandForecast(),
+    queryFn: () => walletService.getDemandForecast(),
+    enabled: !isAdvPartner,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+  });
 
   const summaryData = page.summary?.data;
 
@@ -287,6 +302,14 @@ const AdvancePaymentsPageMobile = () => {
             className="rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
           />
         </div>
+
+        {/* Demand forecast (admin only) — chart then card, stacked */}
+        {!isAdvPartner && (
+          <>
+            <WalletDemandChart data={demandForecast} isLoading={demandForecastLoading} />
+            <WalletDemandCard data={demandForecast} />
+          </>
+        )}
       </div>
 
       {/* Tab switcher: Yêu cầu / Chấm công — restores desktop tab parity */}

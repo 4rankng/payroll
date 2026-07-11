@@ -1,7 +1,12 @@
 import { useState, useMemo, useCallback, memo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
+import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
+import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
+import { QueryKeys } from "@/lib/queryKeys";
+import { walletService } from "@/services/api/wallet.service";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import {
   AlertDialog,
@@ -99,6 +104,16 @@ const AdvancePaymentsPage = () => {
   const page = useAdvancePaymentsPage({ employeesTabActive: activeTab === "employees" });
   const attendancePage = useAdminAttendancePage({ active: activeTab === "attendances" });
   const exportBatchMutation = useExportAdvancePayments();
+
+  // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
+  // gating the query prevents a 403 storm on the shared mobile component.
+  const { data: demandForecast, isLoading: demandForecastLoading } = useQuery({
+    queryKey: QueryKeys.wallet.demandForecast(),
+    queryFn: () => walletService.getDemandForecast(),
+    enabled: !isAdvPartner,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+  });
 
   const summaryData = page.summary?.data;
 
@@ -301,6 +316,19 @@ const AdvancePaymentsPage = () => {
             />
           </div>
         </section>
+
+        {/* ─── Demand forecast: cohort chart + recommendation (admin only) ─── */}
+        {!isAdvPartner && (
+          <section
+            aria-label="Nhu cầu ứng lương"
+            className="grid grid-cols-1 gap-4 items-stretch md:grid-cols-3"
+          >
+            <div className="md:col-span-2">
+              <WalletDemandChart data={demandForecast} isLoading={demandForecastLoading} />
+            </div>
+            <WalletDemandCard data={demandForecast} />
+          </section>
+        )}
 
         {/* ─── 3. Pipeline + operating health ─── */}
         <section
