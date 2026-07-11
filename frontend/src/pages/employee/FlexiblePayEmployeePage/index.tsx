@@ -129,6 +129,15 @@ const FlexiblePayEmployeePage = () => {
     });
   }, []);
 
+  const handleAdvanceRequestAction = useCallback(() => {
+    const section = document.getElementById("employee-advance-request");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, []);
+
   const handleConfirmSubmit = useCallback(async () => {
     try {
       await requestMutation.mutateAsync({ amount: latestAmount, forMonth: latestMonth });
@@ -204,7 +213,11 @@ const FlexiblePayEmployeePage = () => {
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
-        contentClassName="max-w-lg space-y-6"
+        contentClassName={
+          profile?.check_in_enabled
+            ? "max-w-lg space-y-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-6"
+            : "max-w-lg space-y-6"
+        }
       >
         <EmployeeMonthNavigator month={month} />
 
@@ -265,6 +278,7 @@ const FlexiblePayEmployeePage = () => {
               shiftEnd={profile.shift_end}
               checkInWindowStart={profile.check_in_window_start}
               checkInWindowEnd={profile.check_in_window_end}
+              onAdvanceRequest={handleAdvanceRequestAction}
             />
           </section>
         )}

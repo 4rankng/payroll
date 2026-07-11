@@ -556,7 +556,7 @@ func newOnepayConfig(env string) OnepayConfig {
 		HTTPTimeout:             parseDuration(getEnv("ONEPAY_HTTP_TIMEOUT", "30s")),
 		TPS:                     parseInt(getEnv("ONEPAY_TPS", "3")),
 		QueueBuffer:             parseInt(getEnv("ONEPAY_QUEUE_BUFFER", "100")),
-		AllowedIPs:              parseStringSlice(getEnv("ONEPAY_ALLOWED_IPS", "202.9.84.102,202.9.84.103,116.97.110.81,116.97.110.82,116.97.110.83,116.97.110.84,116.97.110.85,116.97.110.86")),
+		AllowedIPs:              parseStringSlice(getEnvWithEmpty("ONEPAY_ALLOWED_IPS", "202.9.84.102,202.9.84.103,116.97.110.81,116.97.110.82,116.97.110.83,116.97.110.84,116.97.110.85,116.97.110.86")),
 		AllowedIPsUseRemoteAddr: parseBool(getEnv("ONEPAY_ALLOWED_IPS_USE_REMOTE_ADDR", "false")),
 	}
 }
@@ -676,6 +676,17 @@ func (c *Config) validate() error {
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvWithEmpty is like getEnv but distinguishes between "not set" (returns
+// default) and "set to empty string" (returns ""). This lets callers express
+// "I explicitly want no values" — e.g. ONEPAY_ALLOWED_IPS= disables the IP
+// whitelist in development so the mock's Docker-internal IP isn't blocked.
+func getEnvWithEmpty(key, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
 	return defaultValue

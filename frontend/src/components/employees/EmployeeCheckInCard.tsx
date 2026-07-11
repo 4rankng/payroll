@@ -44,6 +44,10 @@ import { useContinuousLocation, isAbortedSubmitError } from "@/hooks/useContinuo
 import { getCheckInGeofenceGuidance, type CheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
 import { formatDistanceMeters } from "@/utils/geoDistance";
 import type { CheckInTarget } from "@/types/api/auth.types";
+import {
+  EmployeeAttendanceActionDock,
+  type AttendanceDockAction,
+} from "./EmployeeAttendanceActionDock";
 
 const EmployeeLocationMap = lazy(() =>
   import("./EmployeeLocationMap").then((module) => ({ default: module.EmployeeLocationMap }))
@@ -67,6 +71,7 @@ interface EmployeeCheckInCardProps {
   shiftEnd?: string;
   checkInWindowStart?: string;
   checkInWindowEnd?: string;
+  onAdvanceRequest: () => void;
   style?: React.CSSProperties;
 }
 
@@ -185,6 +190,7 @@ export function EmployeeCheckInCard({
   shiftEnd,
   checkInWindowStart,
   checkInWindowEnd,
+  onAdvanceRequest,
   style,
 }: EmployeeCheckInCardProps) {
   const { data: attendanceResponse, isLoading } = useTodayAttendance();
@@ -536,15 +542,23 @@ export function EmployeeCheckInCard({
 
   if (isLoading) {
     return (
-      <div
-        className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${className ?? ""}`}
-        style={style}
-      >
-        <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
-          <div className="h-6 w-32 bg-gray-200 rounded"></div>
-          <div className="h-10 w-48 bg-gray-200 rounded-full"></div>
+      <>
+        <div
+          className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${className ?? ""}`}
+          style={style}
+        >
+          <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
+            <div className="h-6 w-32 bg-gray-200 rounded"></div>
+            <div className="h-10 w-48 bg-gray-200 rounded-full"></div>
+          </div>
         </div>
-      </div>
+        <EmployeeAttendanceActionDock
+          action="loading"
+          actionLabel="Đang tải chấm công…"
+          actionDisabled
+          onAdvanceRequest={onAdvanceRequest}
+        />
+      </>
     );
   }
 
@@ -595,6 +609,38 @@ export function EmployeeCheckInCard({
     "Kiểm tra lại khung giờ ca làm."
   );
   const rejectedIssue = getAttendanceIssueSummary(attendance?.salary_reject_reason);
+  let dockAction: AttendanceDockAction = "attention";
+  let dockActionLabel = "Cần kiểm tra";
+  let dockActionDisabled = true;
+  let handleDockAttendanceAction: (() => void) | undefined;
+
+  if (attendance?.status === "checked_in") {
+    dockAction = checkoutCoolingDown || isLocating ? "loading" : "check_out";
+    dockActionLabel = checkoutCoolingDown
+      ? "Đang chờ GPS…"
+      : isLocating
+        ? "Đang lấy vị trí…"
+        : "Tan ca";
+    dockActionDisabled = isPending || checkoutCoolingDown;
+    handleDockAttendanceAction = () => handleAction("check_out");
+  } else if (!attendance || canStartCorrectShift) {
+    if (!withinWindow) {
+      dockActionLabel = "Chưa đến giờ";
+    } else if (gpsAcquiring || isLocating) {
+      dockAction = "loading";
+      dockActionLabel = "Đang kiểm tra GPS…";
+    } else if (location.fatalError) {
+      dockActionLabel = "Kiểm tra vị trí";
+    } else {
+      dockAction = "check_in";
+      dockActionLabel = "Vào làm";
+      dockActionDisabled = isPending;
+      handleDockAttendanceAction = () => handleAction("check_in");
+    }
+  } else if (attendance?.status === "completed") {
+    dockAction = "completed";
+    dockActionLabel = "Đã tan ca";
+  }
 
   return (
     <div className={className} style={style}>
@@ -836,7 +882,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
                 style={{
                   boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
                 }}
@@ -868,12 +914,12 @@ export function EmployeeCheckInCard({
               </div>
             </div>
           {locationMapDisclosure}
-          <div className="mt-4 grid grid-cols-[0.8fr_1.2fr] gap-2">
+          <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-[0.8fr_1.2fr]">
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="employee-type-action h-12 rounded-xl border border-transparent bg-transparent font-semibold text-[#B42318] hover:bg-[#FEF3F2] hover:text-[#B42318]"
+              className="employee-type-action h-12 justify-start rounded-xl border border-transparent bg-transparent font-semibold text-[#B42318] hover:bg-[#FEF3F2] hover:text-[#B42318] lg:justify-center"
               disabled={isPending}
               onClick={() => setShowCancelShiftConfirm(true)}
             >
@@ -882,7 +928,7 @@ export function EmployeeCheckInCard({
             </Button>
             <Button
               size="lg"
-              className="employee-type-action h-12 rounded-xl bg-[#07883F] font-semibold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647]"
+              className="employee-type-action hidden h-12 rounded-xl bg-[#07883F] font-semibold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647] lg:inline-flex"
               disabled={isPending || checkoutCoolingDown}
               onClick={() => handleAction("check_out")}
             >
@@ -976,7 +1022,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className={`employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                className={`employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1009,7 +1055,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action check-in-warming mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md"
+                className="employee-type-action check-in-warming mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled
               >
@@ -1046,7 +1092,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1062,6 +1108,13 @@ export function EmployeeCheckInCard({
           )}
         </div>
       )}
+      <EmployeeAttendanceActionDock
+        action={dockAction}
+        actionLabel={dockActionLabel}
+        actionDisabled={dockActionDisabled}
+        onAdvanceRequest={onAdvanceRequest}
+        onAttendanceAction={handleDockAttendanceAction}
+      />
     </div>
   );
 }

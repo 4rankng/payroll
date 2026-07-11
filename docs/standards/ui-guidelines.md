@@ -130,6 +130,13 @@ Employee views are mobile-first — they are the primary users on mobile devices
 
 Minimum **44px** tap targets for all interactive elements on mobile.
 
+### Employee Action Dock
+
+- Check-in-enabled employee pages keep a compact fixed action dock on mobile with `Ứng lương` as the secondary action and the current attendance action (`Vào làm` / `Tan ca`) as the primary action.
+- Keep the dock to a 44px button height with a quiet top divider; reserve the wider slot for attendance and include bottom safe-area padding.
+- Attendance status, GPS/geofence guidance, map disclosure, and shift cancellation stay in the attendance card. Do not duplicate the large attendance CTA inside that card on mobile.
+- Disabled attendance states must explain themselves in the button label (`Đang kiểm tra GPS…`, `Chưa đến giờ`, `Đã tan ca`, or `Cần kiểm tra`) while leaving `Ứng lương` available.
+
 ## Accessibility
 
 - **ARIA roles** — Interactive elements have appropriate `role`, `aria-label`, `aria-describedby`.

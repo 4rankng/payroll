@@ -341,16 +341,14 @@ func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
 		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
 	}
 
-	// Each test case gets its own for_month so rows don't collide.
 	const provider = "1pay"
-	// testMonths: pick distinct YYYY-MM values (column is varchar(7)) for each case.
+	// Each case uses a distinct YYYY-MM (column is varchar(7)).
 	testMonths := []string{"2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08"}
-	staleTime := time.Now().Add(-10 * time.Minute) // older than the 5-min orphan window
 
 	cases := []struct {
-		name        string
-		wpStatuses  []domaintx.State // wallet_payment statuses to insert for this request
-		wantOrphan  bool             // should GetOrphanedApproved return this request?
+		name       string
+		wpStatuses []domaintx.State // wallet_payment statuses to seed for this request
+		wantOrphan bool             // should GetOrphanedApproved return this request?
 	}{
 		{"only_failed", []domaintx.State{domaintx.StateFailed}, true},
 		{"only_reversed", []domaintx.State{domaintx.StateReversed}, true},
@@ -362,15 +360,13 @@ func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
 		{"no_wallet_payment", nil, true},
 	}
 
-	// Create one APPROVED advance_payment_request per case.
 	type seed struct {
-		reqID   uint
+		reqID    uint
 		wpTxnIDs []uuid.UUID
 	}
 	seeds := make([]seed, 0, len(cases))
 
 	for i, tc := range cases {
-		// Create advance_payment + request for this case.
 		advPay := &domain.AdvancePayment{
 			EmployeeID:   uint(empID),
 			ForMonth:     testMonths[i],
@@ -394,21 +390,23 @@ func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
 			t.Fatalf("setup [%s]: create request: %v", tc.name, err)
 		}
 
-		// GORM auto-fills updated_at on Create; force it stale so the query's
-		// 5-minute orphan window picks it up.
-		if err := repo.DB.Model(&domain.AdvancePaymentRequest{}).
-			Where("id = ?", req.ID).
-			Update("updated_at", staleTime).Error; err != nil {
+		// Force updated_at stale using MySQL's own clock so the orphan
+		// window (updated_at < NOW() - 5 min) is deterministic regardless of
+		// the Go/MySQL timezone offset.
+		if err := repo.DB.Exec(
+			"UPDATE advance_payment_requests SET updated_at = DATE_SUB(NOW(), INTERVAL 10 MINUTE) WHERE id = ?",
+			req.ID,
+		).Error; err != nil {
 			t.Fatalf("setup [%s]: set stale updated_at: %v", tc.name, err)
 		}
 
 		txnIDs := make([]uuid.UUID, 0, len(tc.wpStatuses))
 		for _, st := range tc.wpStatuses {
 			txnID := uuid.New()
-			reqID := fmt.Sprintf("tt-test-%s-%s", tc.name, txnID.String()[:8])
+			wpReqID := fmt.Sprintf("tt-test-%s-%s", tc.name, txnID.String()[:8])
 			wp := &domaintx.WalletPayment{
 				TxnID:              txnID,
-				RequestID:          reqID,
+				RequestID:          wpReqID,
 				Provider:           provider,
 				RequestedAmount:    49000,
 				Fee:                1000,
@@ -428,35 +426,30 @@ func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
 		seeds = append(seeds, seed{reqID: req.ID, wpTxnIDs: txnIDs})
 	}
 
-	// Query orphans.
 	orphans, err := repo.GetOrphanedApproved(ctx, 100, provider)
 	if err != nil {
 		t.Fatalf("GetOrphanedApproved: %v", err)
 	}
 
-	// Build a set of returned request IDs.
 	returned := make(map[uint]bool, len(orphans))
 	for _, o := range orphans {
 		returned[o.ID] = true
 	}
 
-	// Assert each case.
 	for i, tc := range cases {
 		reqID := seeds[i].reqID
-		got := returned[reqID]
-		if got != tc.wantOrphan {
+		if got := returned[reqID]; got != tc.wantOrphan {
 			t.Errorf("case %q (request id=%d): want orphan=%v, got orphan=%v", tc.name, reqID, tc.wantOrphan, got)
 		}
 	}
 
-	// Cleanup wallet_payments and advance_payment_requests for this test.
+	// Cleanup.
 	for _, s := range seeds {
 		if len(s.wpTxnIDs) > 0 {
 			repo.DB.Where("txn_id IN ?", s.wpTxnIDs).Delete(&domaintx.WalletPayment{})
 		}
 		repo.DB.Where("id = ?", s.reqID).Delete(&domain.AdvancePaymentRequest{})
 	}
-	// Cleanup advance_payments for the test months.
 	repo.DB.Unscoped().Where("employee_id = ? AND for_month IN ?", empID, testMonths).
 		Delete(&domain.AdvancePayment{})
 }
