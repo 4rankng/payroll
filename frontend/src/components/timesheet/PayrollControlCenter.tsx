@@ -12,16 +12,15 @@ export type MetricFilter =
   | 'pending_payment'
   | 'approved'
   | 'paid'
-  | 'rejected'
   | 'all';
 
 interface MetricDef {
   key: string;
   label: string;
   value: string;
-  supportText?: string;
   primary?: boolean;
   mobileSpan?: boolean;
+  className?: string;
   filter: MetricFilter;
 }
 
@@ -29,8 +28,6 @@ interface PayrollControlCenterProps {
   cashReadiness: { data?: CashReadinessResponse; isLoading: boolean; isError: boolean };
   stats: {
     summary?: TimesheetSummaryResponse;
-    /** Pending edit-request count (the "Yêu cầu sửa" figure). */
-    editCount: number;
     isLoading: boolean;
   };
   /** Current status filter applied to the table — drives KPI selection. */
@@ -56,8 +53,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
   onFilterChange,
   className,
 }: PayrollControlCenterProps) {
-  const { summary, editCount, isLoading: statsLoading } = stats;
-  const rejected = summary?.rejectedEntries ?? 0;
+  const { summary, isLoading: statsLoading } = stats;
 
   const metrics: MetricDef[] = [
     {
@@ -89,16 +85,9 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
     {
       key: 'paid',
       label: 'Đã thanh toán',
-      value: fmtInt(summary?.paidEntries),
+      value: formatCurrency(summary?.paidAmount ?? 0),
+      className: 'lg:col-span-3',
       filter: 'paid',
-    },
-    {
-      key: 'issue',
-      label: 'Có vấn đề',
-      value: fmtInt(rejected + editCount),
-      supportText: `${fmtInt(editCount)} yêu cầu sửa · ${fmtInt(rejected)} bị loại`,
-      mobileSpan: true,
-      filter: 'rejected',
     },
   ];
 
@@ -141,9 +130,9 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
                 key={m.key}
                 label={m.label}
                 value={m.value}
-                supportText={m.supportText}
                 primary={m.primary}
                 mobileSpan={m.mobileSpan}
+                className={m.className}
                 selected={activeFilter === m.filter}
                 isLoading={statsLoading}
                 onClick={() => handleClick(m)}

@@ -15,7 +15,6 @@ import { BulkTransferHistoryDetailDialog } from '@/components/transaction/BulkTr
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
-import { useTimesheetStatsConfig } from '@/hooks/useTimesheetStatsConfig';
 import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
 import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
 import { PayrollControlCenter } from '@/components/timesheet/PayrollControlCenter';
@@ -101,10 +100,7 @@ const TimesheetPage = () => {
     })() : undefined,
   }), [timesheetManagement.selectedProject, timesheetManagement.selectedMonth]);
 
-  const timesheetStats = useTimesheetStatsConfig(statsFilters);
-
-  // Pending edit-request count feeds the "Có vấn đề" KPI in the control center.
-  const editCount = Number(timesheetStats.statsConfig.find(c => c.title === 'Yêu cầu sửa')?.value ?? 0);
+  const { data: timesheetSummary, isLoading: isTimesheetSummaryLoading } = useTimesheetSummary(statsFilters);
 
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
@@ -308,9 +304,8 @@ const TimesheetPage = () => {
           isError: cashReadiness.isError,
         }}
         stats={{
-          summary: timesheetStats.summary,
-          editCount,
-          isLoading: timesheetStats.isLoading,
+          summary: timesheetSummary,
+          isLoading: isTimesheetSummaryLoading,
         }}
         activeFilter={timesheetManagement.statusFilter}
         onFilterChange={timesheetManagement.setStatusFilter}

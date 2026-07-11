@@ -1,4 +1,4 @@
-# Trououbleshooting
+# Troubleshooting
 
 Known recurring issues, their causes, and fixes. Extracted from git history, AGENTS.md files, and operational experience. See [Testing](testing.md) for test-specific issues.
 
