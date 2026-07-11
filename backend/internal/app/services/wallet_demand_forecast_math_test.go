@@ -292,13 +292,61 @@ func TestConfidenceLabel(t *testing.T) {
 		{demandDistribution{method: "monte-carlo", basisPeriods: 3}, "high"},
 		{demandDistribution{method: "monte-carlo", basisPeriods: 3, divergent: true}, "low"},
 		{demandDistribution{method: "monte-carlo", basisPeriods: 6}, "high"},
+		// Strong directional growth (5.7×) → gamma treats growth as variance → medium.
+		{demandDistribution{method: "monte-carlo", basisPeriods: 6, trendRatio: 5.7}, "medium"},
+		// Just at the cutoff → medium.
+		{demandDistribution{method: "monte-carlo", basisPeriods: 3, trendRatio: 3.0}, "medium"},
+		// Below the cutoff → high (stationary basis, gamma fit trustworthy).
+		{demandDistribution{method: "monte-carlo", basisPeriods: 4, trendRatio: 2.5}, "high"},
+		// Growth + divergence → low (worst case).
+		{demandDistribution{method: "monte-carlo", basisPeriods: 6, trendRatio: 5.7, divergent: true}, "low"},
 	}
 	for _, c := range cases {
 		if got := confidenceLabel(c.dist); got != c.want {
-			t.Errorf("confidenceLabel(basis=%d divergent=%v method=%s) = %q, want %q",
-				c.dist.basisPeriods, c.dist.divergent, c.dist.method, got, c.want)
+			t.Errorf("confidenceLabel(basis=%d divergent=%v trendRatio=%.1f method=%s) = %q, want %q",
+				c.dist.basisPeriods, c.dist.divergent, c.dist.trendRatio, c.dist.method, got, c.want)
 		}
 	}
+}
+
+// TestTrendRatio_RealKy2Data reproduces the production Ky-2 cohort (Jan–Jun 2026)
+// and confirms the trendRatio reflects the 5.7× growth that the gamma fit would
+// otherwise treat as random variance.
+func TestTrendRatio_RealKy2Data(t *testing.T) {
+	// Historical Ky-2 grand totals (VND) from the production database, where
+	// cumulativeAt(4) = 0 for every cycle (batch-at-payday approval pattern), so
+	// remaining = grandTotal for each.
+	historical := []cohortSeries{
+		{forMonth: "2026-01", maxCycleDay: 10, grandTotal: 80_350_500, cumulative: cumSteps(80_350_500, 10)},
+		{forMonth: "2026-02", maxCycleDay: 10, grandTotal: 130_036_050, cumulative: cumSteps(130_036_050, 10)},
+		{forMonth: "2026-03", maxCycleDay: 10, grandTotal: 132_502_900, cumulative: cumSteps(132_502_900, 10)},
+		{forMonth: "2026-04", maxCycleDay: 10, grandTotal: 158_614_931, cumulative: cumSteps(158_614_931, 10)},
+		{forMonth: "2026-05", maxCycleDay: 10, grandTotal: 240_188_932, cumulative: cumSteps(240_188_932, 10)},
+		{forMonth: "2026-06", maxCycleDay: 10, grandTotal: 457_082_437, cumulative: cumSteps(457_082_437, 10)},
+	}
+	// fromCycleDay=4 (today 11/07), throughCycleDay=10 (pay day 17/07).
+	dist := forecastDemandDistributionBetween(historical, 4, 10, 5000, 42, 1.0)
+
+	if dist.trendRatio < 5.0 {
+		t.Errorf("trendRatio = %.2f, want ≥ 5.0 (457M/80M = 5.69× growth)", dist.trendRatio)
+	}
+	if got := confidenceLabel(dist); got == "high" {
+		t.Errorf("confidence = %q, want NOT high (strong trend should downgrade)", got)
+	}
+	if dist.basisPeriods != 6 {
+		t.Errorf("basisPeriods = %d, want 6", dist.basisPeriods)
+	}
+}
+
+// cumSteps builds a cumulative map where ALL volume lands on the last cycle-day
+// (batch-at-payday pattern): cumulative[1..maxDay-1] = 0, cumulative[maxDay] = total.
+func cumSteps(total int64, maxDay int) map[int]int64 {
+	c := make(map[int]int64, maxDay)
+	for d := 1; d < maxDay; d++ {
+		c[d] = 0
+	}
+	c[maxDay] = total
+	return c
 }
 
 func TestNewsvendorRecommendation(t *testing.T) {

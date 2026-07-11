@@ -240,6 +240,13 @@ func completionRate(historical []cohortSeries) float64 {
 // DISTRIBUTION of remaining-cycle net cash-out and read the p*-quantile
 // (newsvendor), p* = Cu/(Cu+Co). With Cu ≫ Co, p* is high (0.95 by default).
 
+// trendRatioCutoff flags when the basis shows directional growth rather than
+// random variance. A max/min ratio ≥ 3 across ≥3 periods means the latest
+// cycles are 3× the earliest — the gamma fit spreads this growth into the
+// distribution's variance, making its quantiles unreliable. Below the cutoff,
+// the basis is treated as stationary and the gamma fit is trusted at face value.
+const trendRatioCutoff = 3.0
+
 // demandDistribution is the predictive distribution of the current period's
 // REMAINING net cash-out (cash still to leave the wallet from tomorrow through
 // cycle end), conditional on demand observed through todayCycleDay. All fields
@@ -257,7 +264,8 @@ type demandDistribution struct {
 	method       string  // "monte-carlo" | "gamma-fit" | "no-history"
 	basisPeriods int     // # usable historical periods
 	nSim         int
-	divergent    bool // gamma p95 under-represents the observed tail
+	divergent    bool    // gamma p95 under-represents the observed tail
+	trendRatio   float64 // max/min of the basis (≥1); high values signal directional growth
 }
 
 // serviceLevelConfig is the newsvendor cost / quantile knob. Precedence:
@@ -438,10 +446,18 @@ func forecastDemandDistributionBetween(
 	}
 
 	empiricalMaxDemand := 0.0
+	empiricalMinDemand := math.MaxFloat64
 	for _, r := range rem {
 		if r > empiricalMaxDemand {
 			empiricalMaxDemand = r
 		}
+		if r < empiricalMinDemand {
+			empiricalMinDemand = r
+		}
+	}
+	trendRatio := 1.0
+	if empiricalMinDemand > 0 {
+		trendRatio = empiricalMaxDemand / empiricalMinDemand
 	}
 
 	shape, scale := fitGammaMoM(rem)
@@ -496,6 +512,7 @@ func forecastDemandDistributionBetween(
 		basisPeriods: len(rem),
 		nSim:         n,
 		divergent:    divergent,
+		trendRatio:   trendRatio,
 	}
 }
 
@@ -517,7 +534,10 @@ func newsvendorRecommendation(dist demandDistribution, sl serviceLevelConfig) (r
 }
 
 // confidenceLabel derives the advisory confidence from the basis size and
-// whether the gamma fit diverged from the observed tail.
+// whether the gamma fit diverged from the observed tail. When the basis shows
+// strong directional growth (trend, not variance), confidence is downgraded —
+// the gamma model treats the growth as random spread, so its quantiles under-
+// represent the trend.
 func confidenceLabel(dist demandDistribution) string {
 	switch {
 	case dist.method == "no-history", dist.basisPeriods <= 1:
@@ -530,6 +550,11 @@ func confidenceLabel(dist demandDistribution) string {
 	default:
 		if dist.divergent {
 			return "low"
+		}
+		// Strong monotonic trend → gamma treats growth as variance, so its
+		// quantiles are unreliable regardless of basis count.
+		if dist.trendRatio >= trendRatioCutoff {
+			return "medium"
 		}
 		return "high"
 	}

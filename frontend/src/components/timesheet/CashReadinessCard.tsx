@@ -2,6 +2,18 @@ import { formatCurrency } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CashReadinessResponse } from '@/types/api/cash-readiness.types';
 
+const CONFIDENCE_LABELS: Record<string, string> = {
+  high: 'Độ tin cậy cao',
+  medium: 'Độ tin cậy vừa',
+  low: 'Độ tin cậy thấp',
+};
+
+const CONFIDENCE_DOT: Record<string, string> = {
+  high: 'bg-emerald-500/70',
+  medium: 'bg-amber-500/70',
+  low: 'bg-rose-500/70',
+};
+
 interface CashReadinessCardProps {
   data?: CashReadinessResponse;
   isLoading?: boolean;
@@ -66,6 +78,13 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
       <p className="mt-1.5 text-[12px] text-muted-foreground">
         Kỳ {data.ky} · Thanh toán ngày {fmtDate(data.next_pay_date)}
       </p>
+
+      {data.confidence && data.basis_cycles > 0 && data.method !== 'no-history' && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle ${CONFIDENCE_DOT[data.confidence] ?? 'bg-muted-foreground/50'}`} />
+          {CONFIDENCE_LABELS[data.confidence] ?? data.confidence} · {data.basis_cycles} kỳ dữ liệu
+        </p>
+      )}
 
       <dl className="mt-4 border-t border-border/60 pt-3 text-[11px]">
         <div className="flex flex-col gap-0.5">
