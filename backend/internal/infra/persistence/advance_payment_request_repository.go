@@ -647,9 +647,15 @@ func (r *AdvancePaymentRequestRepository) ClaimPendingForDisbursement(ctx contex
 func (r *AdvancePaymentRequestRepository) GetOrphanedApproved(ctx context.Context, limit int, provider string) ([]*domain.AdvancePaymentRequest, error) {
 	var requests []*domain.AdvancePaymentRequest
 
+	// Use clock.Now() (app timezone, Asia/Ho_Chi_Minh) instead of MySQL's
+	// NOW() (which may be UTC) so the 5-minute buffer is compared against the
+	// same timezone that wrote updated_at. A MySQL/Go timezone mismatch would
+	// otherwise make stale requests look fresh (or vice-versa).
+	cutoff := clock.Now().Add(-5 * time.Minute)
+
 	q := r.DB.WithContext(ctx).
 		Where("status = ?", domain.AdvancePaymentStatusApproved).
-		Where("updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")
+		Where("updated_at < ?", cutoff)
 
 	if provider != "" {
 		q = q.Where("NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = advance_payment_requests.id AND wp.provider = ? AND wp.status NOT IN ('failed', 'reversed'))", provider)

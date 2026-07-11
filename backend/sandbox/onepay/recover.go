@@ -58,6 +58,7 @@ func (r *recoverer) run(ctx context.Context) {
 
 type staleRow struct {
 	RequestID          string
+	InvoiceNo          string
 	RecipientAccountNo string
 	RecipientBank      string
 	RecipientName      string
@@ -67,11 +68,20 @@ type staleRow struct {
 func (r *recoverer) scan(ctx context.Context) error {
 	r.evictProcessed()
 
+	// wallet_payments.updated_at is written by the backend in Asia/Ho_Chi_Minh
+	// (TZ=Asia/Ho_Chi_Minh in docker-compose), but this mock process and the
+	// MySQL server both run in UTC. Using MySQL's NOW() or Go's time.Now()
+	// (both UTC) would be 7 hours behind the stored UTC+7 timestamps, making
+	// every row look like it's in the future. Compare in the same timezone
+	// the app used when writing the value.
+	vnTz, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
+	cutoff := time.Now().In(vnTz).Add(-30 * time.Second).Format("2006-01-02 15:04:05")
+
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT request_id, recipient_account_no, recipient_bank, recipient_name, requested_amount
+		SELECT request_id, invoice_no, recipient_account_no, recipient_bank, recipient_name, requested_amount
 		FROM   wallet_payments
-		WHERE  provider = '1pay' AND status = 'authorised' AND updated_at < NOW() - INTERVAL 30 SECOND
-		LIMIT  50`)
+		WHERE  provider = '1pay' AND status = 'authorised' AND updated_at < ?
+		LIMIT  50`, cutoff)
 	if err != nil {
 		return fmt.Errorf("query: %w", err)
 	}
@@ -80,7 +90,7 @@ func (r *recoverer) scan(ctx context.Context) error {
 	var found []staleRow
 	for rows.Next() {
 		var s staleRow
-		if err := rows.Scan(&s.RequestID, &s.RecipientAccountNo, &s.RecipientBank, &s.RecipientName, &s.RequestedAmount); err != nil {
+		if err := rows.Scan(&s.RequestID, &s.InvoiceNo, &s.RecipientAccountNo, &s.RecipientBank, &s.RecipientName, &s.RequestedAmount); err != nil {
 			return fmt.Errorf("scan: %w", err)
 		}
 		found = append(found, s)
@@ -95,9 +105,18 @@ func (r *recoverer) scan(ctx context.Context) error {
 		}
 		r.markProcessed(s.RequestID)
 
+		// Use the actual invoice_no (provider-issued transaction_id) as
+		// TransactionID, matching what the transfer handler assigned. The
+		// backend's RecordIPN looks up wallet_payments by invoice_no, so
+		// sending request_id here would never match.
+		txnID := s.InvoiceNo
+		if txnID == "" {
+			txnID = s.RequestID
+		}
+
 		now := time.Now()
 		body := IPNBody{
-			TransactionID: s.RequestID, FundsTransferID: s.RequestID,
+			TransactionID: txnID, FundsTransferID: s.RequestID,
 			AccountNumber: s.RecipientAccountNo, HolderName: s.RecipientName,
 			Amount: s.RequestedAmount, Currency: "VND", State: "approved",
 			ResponseCode: "00", Message: "SUCCESSFUL", SwiftCode: s.RecipientBank,
