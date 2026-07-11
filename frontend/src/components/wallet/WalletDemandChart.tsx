@@ -122,7 +122,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
 
   if (isLoading || !isVisible) {
     return (
-      <div ref={cardRef} className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <div ref={cardRef} className="h-full rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
         <Skeleton className="h-5 w-56 mb-2" />
         <Skeleton className="h-3.5 w-72 mb-4" />
         <Skeleton className="h-[260px] w-full" />
@@ -134,7 +134,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
     return (
       <div
         ref={cardRef}
-        className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm flex flex-col justify-center"
+        className="flex h-full flex-col justify-center rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
       >
         <p className="text-sm font-semibold text-foreground">Nhu cầu ứng lương còn lại theo kỳ</p>
         <p className="text-xs text-muted-foreground mt-2">Chưa có dữ liệu</p>
@@ -150,7 +150,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
   return (
     <div
       ref={cardRef}
-      className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm h-full flex flex-col"
+      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
     >
       <div className="flex items-center gap-2 mb-1">
         <TrendingUp className="h-4 w-4 text-primary" />

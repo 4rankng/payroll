@@ -95,7 +95,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
     <section
       aria-label="Ví tiền"
       className={cn(
-        "relative overflow-hidden p-[22px] px-6 text-white",
+        "relative h-full overflow-hidden p-[22px] px-6 text-white",
         "bg-[#06452E]",
         compact && "p-3.5",
         className

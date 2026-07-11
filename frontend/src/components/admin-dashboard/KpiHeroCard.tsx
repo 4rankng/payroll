@@ -97,7 +97,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card',
+        'group relative h-full overflow-hidden rounded-xl border bg-card',
         'shadow-soft transition-all duration-300',
         isActive ? 'border-primary/30 bg-primary/5' : 'border-border/40',
         onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-card active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
