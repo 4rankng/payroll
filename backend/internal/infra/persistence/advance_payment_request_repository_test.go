@@ -2,11 +2,14 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"api-server/internal/domain"
+	domaintx "api-server/internal/domain/transactions"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -300,6 +303,168 @@ func TestGetByEmployee_DateRange(t *testing.T) {
 	repo.DB.Where("id IN (?, ?)", reqThisMonth.ID, reqLastMonth.ID).
 		Delete(&domain.AdvancePaymentRequest{})
 	repo.DB.Where("id = ?", advPay.ID).Delete(&domain.AdvancePayment{})
+}
+
+// TestGetOrphanedApproved_WalletPaymentStatusFiltering is a table-driven
+// regression test for the double-payment-safety boundary in
+// GetOrphanedApproved. An APPROVED advance request must only be returned as
+// an orphan (and thus re-enqueued by the poller) when it has NO
+// wallet_payment in a non-failed/non-reversed state.
+//
+//   - only-failed            → returned (retry needed)
+//   - only-reversed          → returned (retry needed)
+//   - only-completed         → excluded (money sent — never retry)
+//   - only-pending           → excluded (in-flight)
+//   - only-verified          → excluded (in-flight)
+//   - only-authorised        → excluded (in-flight)
+//   - failed + completed     → excluded (at least one success — never retry)
+//   - no wallet_payment      → returned (never attempted)
+func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	repo, cleanup := setupTestRepo(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	// The advance_payment_requests table has FK constraints on employee_id
+	// and project_id, so we discover real IDs from the test DB.
+	var empID uint64
+	if err := repo.DB.Model(&domain.Employee{}).Limit(1).
+		Select("id").Scan(&empID).Error; err != nil || empID == 0 {
+		t.Skipf("no employee row available to satisfy FK; skipping: %v", err)
+	}
+	var projectID uint64
+	if err := repo.DB.Model(&domain.Project{}).Limit(1).
+		Select("id").Scan(&projectID).Error; err != nil || projectID == 0 {
+		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
+	}
+
+	// Each test case gets its own for_month so rows don't collide.
+	const provider = "1pay"
+	// testMonths: pick distinct YYYY-MM values (column is varchar(7)) for each case.
+	testMonths := []string{"2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08"}
+	staleTime := time.Now().Add(-10 * time.Minute) // older than the 5-min orphan window
+
+	cases := []struct {
+		name        string
+		wpStatuses  []domaintx.State // wallet_payment statuses to insert for this request
+		wantOrphan  bool             // should GetOrphanedApproved return this request?
+	}{
+		{"only_failed", []domaintx.State{domaintx.StateFailed}, true},
+		{"only_reversed", []domaintx.State{domaintx.StateReversed}, true},
+		{"only_completed", []domaintx.State{domaintx.StateCompleted}, false},
+		{"only_pending", []domaintx.State{domaintx.StatePending}, false},
+		{"only_verified", []domaintx.State{domaintx.StateVerified}, false},
+		{"only_authorised", []domaintx.State{domaintx.StateAuthorised}, false},
+		{"failed_and_completed", []domaintx.State{domaintx.StateFailed, domaintx.StateCompleted}, false},
+		{"no_wallet_payment", nil, true},
+	}
+
+	// Create one APPROVED advance_payment_request per case.
+	type seed struct {
+		reqID   uint
+		wpTxnIDs []uuid.UUID
+	}
+	seeds := make([]seed, 0, len(cases))
+
+	for i, tc := range cases {
+		// Create advance_payment + request for this case.
+		advPay := &domain.AdvancePayment{
+			EmployeeID:   uint(empID),
+			ForMonth:     testMonths[i],
+			MaxAdvAmount: 1_000_000,
+			ProjectID:    uint(projectID),
+		}
+		if err := repo.DB.Create(advPay).Error; err != nil {
+			t.Fatalf("setup [%s]: create advance_payment: %v", tc.name, err)
+		}
+
+		req := &domain.AdvancePaymentRequest{
+			AdvPayID:      advPay.ID,
+			ProjectID:     advPay.ProjectID,
+			EmployeeID:    uint(empID),
+			RequestAmount: 50000,
+			Fee:           1000,
+			NetAmount:     49000,
+			Status:        domain.AdvancePaymentStatusApproved,
+		}
+		if err := repo.DB.Create(req).Error; err != nil {
+			t.Fatalf("setup [%s]: create request: %v", tc.name, err)
+		}
+
+		// GORM auto-fills updated_at on Create; force it stale so the query's
+		// 5-minute orphan window picks it up.
+		if err := repo.DB.Model(&domain.AdvancePaymentRequest{}).
+			Where("id = ?", req.ID).
+			Update("updated_at", staleTime).Error; err != nil {
+			t.Fatalf("setup [%s]: set stale updated_at: %v", tc.name, err)
+		}
+
+		txnIDs := make([]uuid.UUID, 0, len(tc.wpStatuses))
+		for _, st := range tc.wpStatuses {
+			txnID := uuid.New()
+			reqID := fmt.Sprintf("tt-test-%s-%s", tc.name, txnID.String()[:8])
+			wp := &domaintx.WalletPayment{
+				TxnID:              txnID,
+				RequestID:          reqID,
+				Provider:           provider,
+				RequestedAmount:    49000,
+				Fee:                1000,
+				RecipientName:      "Test Recipient",
+				RecipientAccountNo: "9999999999",
+				RecipientBank:      "TESTBANK",
+				Status:             st,
+				EntityID:           uint64Ptr(req.ID),
+				Version:            0,
+			}
+			if err := repo.DB.Create(wp).Error; err != nil {
+				t.Fatalf("setup [%s]: create wallet_payment (%s): %v", tc.name, st, err)
+			}
+			txnIDs = append(txnIDs, txnID)
+		}
+
+		seeds = append(seeds, seed{reqID: req.ID, wpTxnIDs: txnIDs})
+	}
+
+	// Query orphans.
+	orphans, err := repo.GetOrphanedApproved(ctx, 100, provider)
+	if err != nil {
+		t.Fatalf("GetOrphanedApproved: %v", err)
+	}
+
+	// Build a set of returned request IDs.
+	returned := make(map[uint]bool, len(orphans))
+	for _, o := range orphans {
+		returned[o.ID] = true
+	}
+
+	// Assert each case.
+	for i, tc := range cases {
+		reqID := seeds[i].reqID
+		got := returned[reqID]
+		if got != tc.wantOrphan {
+			t.Errorf("case %q (request id=%d): want orphan=%v, got orphan=%v", tc.name, reqID, tc.wantOrphan, got)
+		}
+	}
+
+	// Cleanup wallet_payments and advance_payment_requests for this test.
+	for _, s := range seeds {
+		if len(s.wpTxnIDs) > 0 {
+			repo.DB.Where("txn_id IN ?", s.wpTxnIDs).Delete(&domaintx.WalletPayment{})
+		}
+		repo.DB.Where("id = ?", s.reqID).Delete(&domain.AdvancePaymentRequest{})
+	}
+	// Cleanup advance_payments for the test months.
+	repo.DB.Unscoped().Where("employee_id = ? AND for_month IN ?", empID, testMonths).
+		Delete(&domain.AdvancePayment{})
+}
+
+// uint64Ptr is a small helper to take the address of a uint value as *uint64.
+func uint64Ptr(v uint) *uint64 {
+	u := uint64(v)
+	return &u
 }
 
 func startOfMonth(t time.Time) time.Time {

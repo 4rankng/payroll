@@ -461,3 +461,115 @@ func TestForecastDemandDistribution_Degenerate(t *testing.T) {
 			dist.p50, dist.p95, dist.p99)
 	}
 }
+
+// --- Growth EWMA tests ------------------------------------------------------
+
+func TestGrowthEWMA_KnownRates(t *testing.T) {
+	// 100 → 200 → 400: growth rates 2.0, 2.0. EWMA(0.5) = 0.5*2.0 + 0.5*2.0 = 2.0.
+	got := growthEWMA([]int64{100, 200, 400}, 0.5)
+	if !almostEq(got, 2.0, 1e-9) {
+		t.Errorf("growthEWMA([100,200,400], 0.5) = %v, want 2.0", got)
+	}
+	// 100 → 150 → 300: rates 1.5, 2.0. EWMA(0.5) = 0.5*2.0 + 0.5*1.5 = 1.75.
+	got = growthEWMA([]int64{100, 150, 300}, 0.5)
+	if !almostEq(got, 1.75, 1e-9) {
+		t.Errorf("growthEWMA([100,150,300], 0.5) = %v, want 1.75", got)
+	}
+}
+
+func TestGrowthEWMA_EdgeCases(t *testing.T) {
+	// n < 2 → 1.0 (no growth).
+	if got := growthEWMA([]int64{100}, 0.5); !almostEq(got, 1.0, 1e-9) {
+		t.Errorf("growthEWMA([100]) = %v, want 1.0", got)
+	}
+	if got := growthEWMA([]int64{}, 0.5); !almostEq(got, 1.0, 1e-9) {
+		t.Errorf("growthEWMA([]) = %v, want 1.0", got)
+	}
+	// All-zero basis → 1.0 (no division by zero).
+	if got := growthEWMA([]int64{0, 0, 0}, 0.5); !almostEq(got, 1.0, 1e-9) {
+		t.Errorf("growthEWMA([0,0,0]) = %v, want 1.0", got)
+	}
+	// alpha=0 → uses default (0.5).
+	got := growthEWMA([]int64{100, 200}, 0)
+	if !almostEq(got, 2.0, 1e-9) {
+		t.Errorf("growthEWMA([100,200], 0→default) = %v, want 2.0", got)
+	}
+}
+
+func TestGrowthEWMA_LastThreeWindow(t *testing.T) {
+	// 6 points: growth rates 2, 2, 2, 2, 2. Last 3 = [2, 2, 2]. EWMA = 2.0.
+	got := growthEWMA([]int64{10, 20, 40, 80, 160, 320}, 0.5)
+	if !almostEq(got, 2.0, 1e-9) {
+		t.Errorf("growthEWMA(6 doubling points) = %v, want 2.0", got)
+	}
+}
+
+// TestGrowthAdjustment_RealKy2Data verifies the growth-adjustment branch fires
+// on the real production Ky-2 cohort and lifts the P50 above the flat-gamma
+// baseline of ~170M toward the trend trajectory.
+func TestGrowthAdjustment_RealKy2Data(t *testing.T) {
+	// Real Ky-2 grand totals (VND) from the production DB, Jan–Jun 2026.
+	// Batch-at-payday pattern: cumulativeAt(4) = 0, so rem = grandTotal.
+	historical := []cohortSeries{
+		{forMonth: "2026-01", maxCycleDay: 10, grandTotal: 80_350_500, cumulative: cumSteps(80_350_500, 10)},
+		{forMonth: "2026-02", maxCycleDay: 10, grandTotal: 130_036_050, cumulative: cumSteps(130_036_050, 10)},
+		{forMonth: "2026-03", maxCycleDay: 10, grandTotal: 132_502_900, cumulative: cumSteps(132_502_900, 10)},
+		{forMonth: "2026-04", maxCycleDay: 10, grandTotal: 158_614_931, cumulative: cumSteps(158_614_931, 10)},
+		{forMonth: "2026-05", maxCycleDay: 10, grandTotal: 240_188_932, cumulative: cumSteps(240_188_932, 10)},
+		{forMonth: "2026-06", maxCycleDay: 10, grandTotal: 457_082_437, cumulative: cumSteps(457_082_437, 10)},
+	}
+	// fromCycleDay=4 (today 11/07), throughCycleDay=10 (pay day 17/07).
+	dist := forecastDemandDistributionBetween(historical, 4, 10, 5000, 42, 1.0)
+
+	if dist.method != "growth-adjusted" {
+		t.Errorf("method = %q, want growth-adjusted (trendRatio=%.1f >= %v)",
+			dist.method, dist.trendRatio, trendRatioCutoff)
+	}
+	if dist.growthFactor <= 1.0 {
+		t.Errorf("growthFactor = %.3f, want > 1.0 (cohort is growing)", dist.growthFactor)
+	}
+	// Flat-gamma P50 ≈ 170M. Growth-adjusted should be meaningfully higher.
+	if dist.p50 < 250_000_000 {
+		t.Errorf("growth-adjusted p50 = %.0f, want >= 250M (flat gamma was ~170M)", dist.p50)
+	}
+	t.Logf("growth-adjusted: factor=%.3f p50=%.0f p95=%.0f (flat gamma was p50~170M p95~443M)",
+		dist.growthFactor, dist.p50, dist.p95)
+}
+
+// TestGrowthAdjustment_StationaryUnchanged verifies the growth branch does NOT
+// fire on stationary data — output is identical to the pre-change path.
+func TestGrowthAdjustment_StationaryUnchanged(t *testing.T) {
+	// 3 cycles all totaling 1000 — trendRatio = 1.0 (< cutoff).
+	hist := []cohortSeries{
+		{forMonth: "2026-04", maxCycleDay: 10, grandTotal: 1000, cumulative: cumSteps(1000, 10)},
+		{forMonth: "2026-05", maxCycleDay: 10, grandTotal: 1000, cumulative: cumSteps(1000, 10)},
+		{forMonth: "2026-06", maxCycleDay: 10, grandTotal: 1000, cumulative: cumSteps(1000, 10)},
+	}
+	dist := forecastDemandDistributionBetween(hist, 3, 10, 5000, 7, 1.0)
+	if dist.method == "growth-adjusted" {
+		t.Errorf("method = %q on stationary data, want NOT growth-adjusted", dist.method)
+	}
+	if !almostEq(dist.growthFactor, 1.0, 1e-9) {
+		t.Errorf("growthFactor = %v on stationary data, want 1.0", dist.growthFactor)
+	}
+}
+
+// TestChronologicalGrandTotals verifies extraction + sort order.
+func TestChronologicalGrandTotals(t *testing.T) {
+	// Deliberately unsorted input (map-iteration order simulation).
+	hist := []cohortSeries{
+		{forMonth: "2026-06", grandTotal: 457},
+		{forMonth: "2026-01", grandTotal: 80},
+		{forMonth: "2026-03", grandTotal: 132},
+	}
+	got := chronologicalGrandTotals(hist)
+	want := []int64{80, 132, 457}
+	if len(got) != len(want) {
+		t.Fatalf("got %d totals, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("chronologicalGrandTotals[%d] = %d, want %d (chronological)", i, got[i], want[i])
+		}
+	}
+}

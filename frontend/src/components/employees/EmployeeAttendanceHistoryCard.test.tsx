@@ -72,6 +72,8 @@ describe("EmployeeAttendanceHistoryCard", () => {
     expect(screen.getByText("1 cần kiểm tra")).toBeInTheDocument();
     expect(screen.getByText("Ngày 9/7/2026")).toBeInTheDocument();
     expect(screen.getByText("Ngày 7/7/2026")).toBeInTheDocument();
+    expect(screen.getAllByText((_, element) => element?.tagName === "P" && /^\d{2}:\d{2} — \d{2}:\d{2}$/.test(element.textContent ?? ""))).toHaveLength(2);
+    expect(screen.getByText((_, element) => element?.tagName === "P" && /^\d{2}:\d{2} — --:--$/.test(element.textContent ?? ""))).toBeInTheDocument();
     expect(screen.queryByText("Ngày 6/7/2026")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" })).toHaveAttribute("aria-expanded", "false");
   });

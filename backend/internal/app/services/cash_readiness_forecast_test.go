@@ -277,3 +277,36 @@ func TestBuildTimesheetCohort_PartitionsByKy(t *testing.T) {
 
 // errFailedWallet is a sentinel for wallet-read failure in tests.
 var errFailedWallet = errors.New("wallet unavailable")
+
+// TestBuildTimesheetCohort_ChronologicallySorted verifies the sort that the
+// growth EWMA depends on — Go map iteration is randomized, so without this
+// sort the same request could return different growth factors across restarts.
+func TestBuildTimesheetCohort_ChronologicallySorted(t *testing.T) {
+	d := func(s string) time.Time {
+		t, _ := time.ParseInLocation("2006-01-02", s, clock.DefaultLocation)
+		return t
+	}
+	// 3 historical Ky-1 cycles (work day 3) across different months.
+	rows := []domain.TimesheetAccrualDailyRow{
+		{WorkDate: d("2026-06-03"), ApprovedDate: d("2026-06-10"), Amount: 300},
+		{WorkDate: d("2026-04-03"), ApprovedDate: d("2026-04-10"), Amount: 100},
+		{WorkDate: d("2026-05-03"), ApprovedDate: d("2026-05-10"), Amount: 200},
+	}
+	got := buildTimesheetCohort(rows, 1, "2026-07")
+	if len(got) != 3 {
+		t.Fatalf("got %d series, want 3", len(got))
+	}
+	want := []string{"2026-04", "2026-05", "2026-06"}
+	for i, w := range want {
+		if got[i].forMonth != w {
+			t.Errorf("series[%d].forMonth = %q, want %q (chronological)", i, got[i].forMonth, w)
+		}
+	}
+	// Grand totals must also be in chronological order (100, 200, 300).
+	wantTotals := []int64{100, 200, 300}
+	for i, w := range wantTotals {
+		if got[i].grandTotal != w {
+			t.Errorf("series[%d].grandTotal = %d, want %d", i, got[i].grandTotal, w)
+		}
+	}
+}

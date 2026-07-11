@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"api-server/internal/config"
@@ -38,12 +39,13 @@ type ForecastProvider interface {
 // AccrualProjection is a provider's projection of additional accrual between the
 // observed cycle-day and the horizon (pay date).
 type AccrualProjection struct {
-	P50         int64  // median additional accrual
-	Expected    int64  // arithmetic mean additional accrual
-	P95         int64  // tail additional accrual
-	Method      string // "monte-carlo" | "gamma-fit" | "no-history"
-	Confidence  string // "high" | "medium" | "low"
-	BasisCycles int    // number of historical cycles used
+	P50         int64   // median additional accrual
+	Expected    int64   // arithmetic mean additional accrual
+	P95         int64   // tail additional accrual
+	Method      string  // "monte-carlo" | "gamma-fit" | "no-history" | "growth-adjusted"
+	Confidence  string  // "high" | "medium" | "low"
+	BasisCycles int     // number of historical cycles used
+	GrowthRate  float64 // EWMA growth factor applied (1.0 when not trending; >1 = upward trend)
 }
 
 // TimesheetAccrualProvider is the v1 statistical ForecastProvider. It delegates
@@ -73,6 +75,7 @@ func (p *TimesheetAccrualProvider) ProjectAccrual(_ context.Context, hist []coho
 		Method:      dist.method,
 		Confidence:  confidenceLabel(dist),
 		BasisCycles: dist.basisPeriods,
+		GrowthRate:  dist.growthFactor,
 	}, nil
 }
 
@@ -196,6 +199,7 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 		Method:            proj.Method,
 		Confidence:        proj.Confidence,
 		BasisCycles:       proj.BasisCycles,
+		GrowthRate:        proj.GrowthRate,
 		GeneratedAt:       now,
 	}, nil
 }
@@ -296,6 +300,13 @@ func buildTimesheetCohort(rows []domain.TimesheetAccrualDailyRow, targetKy int, 
 		}
 		series = append(series, s)
 	}
+	// Chronological sort is REQUIRED: the growth EWMA (growthEWMA) and any
+	// index-based trend math depend on series[0] = oldest month. Go map
+	// iteration is randomized, so without this sort the same request could
+	// return different growth factors across process restarts.
+	sort.Slice(series, func(i, j int) bool {
+		return series[i].forMonth < series[j].forMonth
+	})
 	return series
 }
 

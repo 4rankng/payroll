@@ -94,6 +94,7 @@ func toCashReadinessResponse(c *domain.CashReadiness) *dto.CashReadinessResponse
 		Method:            c.Method,
 		Confidence:        c.Confidence,
 		BasisCycles:       c.BasisCycles,
+		GrowthRate:        c.GrowthRate,
 		GeneratedAt:       c.GeneratedAt,
 	}
 }

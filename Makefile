@@ -32,6 +32,8 @@ demo:
 	cd frontend && make push-demo
 	@echo "=== Building & pushing backend (demo) ==="
 	cd backend && make push-demo
+	@echo "=== Building & pushing sandbox mock (demo) ==="
+	cd backend && make sandbox-push-demo
 	@echo "=== Deploying to demo.tingting.vip ==="
 	cd backend && make deploy-demo
 

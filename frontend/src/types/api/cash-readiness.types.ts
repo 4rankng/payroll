@@ -17,9 +17,10 @@ export interface CashReadinessResponse {
   lead_days: number;
   ky: number;
   cycle_day_today: number;
-  method: string; // "monte-carlo" | "gamma-fit" | "no-history"
+  method: string; // "monte-carlo" | "gamma-fit" | "no-history" | "growth-adjusted"
   confidence: string; // "high" | "medium" | "low"
   basis_cycles: number;
+  growth_rate: number; // EWMA growth factor (1.0 = stationary; >1 = upward trend)
   generated_at: string; // RFC3339
 }
 

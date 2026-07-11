@@ -47,11 +47,14 @@ type CashReadiness struct {
 	Ky            int
 	CycleDayToday int
 
-	// Forecast quality signal: "monte-carlo" | "gamma-fit" | "no-history";
-	// "high" | "medium" | "low"; and the number of historical cycles used.
+	// Forecast quality signal: "monte-carlo" | "gamma-fit" | "no-history" |
+	// "growth-adjusted"; "high" | "medium" | "low"; and the number of historical
+	// cycles used. GrowthRate is the EWMA growth factor applied (>1 = upward
+	// trend; 1.0 when stationary).
 	Method      string
 	Confidence  string
 	BasisCycles int
+	GrowthRate  float64
 
 	GeneratedAt time.Time
 }

@@ -133,10 +133,10 @@ push-demo:
 
 deploy-demo:
 	@echo "🚀 Deploying to $(DEMO_SERVER)..."
-	@echo "📡 Pulling :demo frontend/backend images..."
-	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose pull backend frontend"
-	@echo "🔄 Restarting demo frontend/backend services..."
-	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose up -d --force-recreate --no-deps backend frontend"
+	@echo "📡 Pulling :demo frontend/backend/sandbox images..."
+	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose pull backend frontend sandbox"
+	@echo "🔄 Restarting demo frontend/backend/sandbox services..."
+	ssh root@$(DEMO_SERVER) "cd /opt/payroll && docker compose up -d --force-recreate --no-deps backend frontend sandbox"
 	@echo "🧹 Cleaning up unused images..."
 	ssh root@$(DEMO_SERVER) "docker image prune -f"
 	@echo "✅ Demo deployment complete!"

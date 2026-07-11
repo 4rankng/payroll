@@ -261,11 +261,12 @@ type demandDistribution struct {
 	gammaShape   float64 // MoM fit params (0 when degenerate)
 	gammaScale   float64
 	empiricalMax float64 // max historical remaining cash-out (observed tail)
-	method       string  // "monte-carlo" | "gamma-fit" | "no-history"
+	method       string  // "monte-carlo" | "gamma-fit" | "no-history" | "growth-adjusted"
 	basisPeriods int     // # usable historical periods
 	nSim         int
 	divergent    bool    // gamma p95 under-represents the observed tail
 	trendRatio   float64 // max/min of the basis (≥1); high values signal directional growth
+	growthFactor float64 // EWMA growth multiplier applied (1.0 when not trending)
 }
 
 // serviceLevelConfig is the newsvendor cost / quantile knob. Precedence:
@@ -499,6 +500,30 @@ func forecastDemandDistributionBetween(
 		method = "gamma-fit"
 	}
 
+	// Growth adjustment: when the basis shows directional growth (trendRatio
+	// ≥ cutoff), the gamma fit treats the growth as random variance — its
+	// quantiles are centered on the historical mean, not the trend's
+	// trajectory. Multiply the entire distribution by the EWMA growth factor
+	// (derived from grand totals) to re-center on the trend level. The factor
+	// is uniform, so the distribution SHAPE (skew, tail ratio) is preserved;
+	// only the LEVEL shifts. empiricalMaxCash is scaled too, keeping the
+	// divergent comparison self-consistent.
+	growthFactor := 1.0
+	if trendRatio >= trendRatioCutoff {
+		growthFactor = growthEWMA(chronologicalGrandTotals(historical), growthEWMAlphaDefault)
+		if growthFactor > 0 && growthFactor != 1.0 {
+			for i := range samples {
+				samples[i] *= growthFactor
+			}
+			p50 *= growthFactor
+			p90 *= growthFactor
+			p95 *= growthFactor
+			p99 *= growthFactor
+			empiricalMaxCash *= growthFactor
+			method = "growth-adjusted"
+		}
+	}
+
 	return demandDistribution{
 		samples:      samples,
 		p50:          p50,
@@ -513,7 +538,74 @@ func forecastDemandDistributionBetween(
 		nSim:         n,
 		divergent:    divergent,
 		trendRatio:   trendRatio,
+		growthFactor: growthFactor,
 	}
+}
+
+// growthEWMAlphaDefault is the EWMA smoothing factor for the growth-rate
+// adjustment. 0.5 gives equal weight to the latest and historical growth —
+// responsive to recent momentum without overreacting to a single cycle. Env-
+// tunable via CashForecastConfig.GrowthEWMAlpha.
+const growthEWMAlphaDefault = 0.5
+
+// growthEWMA computes the exponentially-weighted moving average of the last 3
+// month-over-month growth rates from grandTotals (which MUST be chronological).
+// Returns a multiplier (e.g., 1.5 = 50% expected growth). Seeded to 1.0 (no
+// growth) when fewer than 2 data points exist or when all prior values are 0.
+//
+// The EWMA seed is the first growth rate in the window; subsequent rates are
+// smoothed with alpha. The "last 3" window prevents a single stale early-cycle
+// growth rate from dominating on a long basis.
+func growthEWMA(grandTotals []int64, alpha float64) float64 {
+	if alpha <= 0 {
+		alpha = growthEWMAlphaDefault
+	}
+	if len(grandTotals) < 2 {
+		return 1.0
+	}
+	var rates []float64
+	for i := 1; i < len(grandTotals); i++ {
+		if grandTotals[i-1] > 0 {
+			rates = append(rates, float64(grandTotals[i])/float64(grandTotals[i-1]))
+		}
+	}
+	if len(rates) == 0 {
+		return 1.0
+	}
+	// Take the last 3 growth rates (or fewer when the basis is thin).
+	start := len(rates) - min(3, len(rates))
+	window := rates[start:]
+	ewma := window[0]
+	for _, r := range window[1:] {
+		ewma = alpha*r + (1-alpha)*ewma
+	}
+	return ewma
+}
+
+// chronologicalGrandTotals extracts the grandTotal from each cohortSeries,
+// sorted chronologically by forMonth. The cohortSeries slice from
+// buildTimesheetCohort is already sorted (since the 2026-07-11 fix), but this
+// helper guarantees order regardless of the caller — the growth EWMA is
+// index-sensitive and must not receive a randomized slice.
+func chronologicalGrandTotals(historical []cohortSeries) []int64 {
+	type entry struct {
+		forMonth   string
+		grandTotal int64
+	}
+	entries := make([]entry, 0, len(historical))
+	for _, h := range historical {
+		if h.grandTotal > 0 {
+			entries = append(entries, entry{forMonth: h.forMonth, grandTotal: h.grandTotal})
+		}
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].forMonth < entries[j].forMonth
+	})
+	out := make([]int64, len(entries))
+	for i, e := range entries {
+		out[i] = e.grandTotal
+	}
+	return out
 }
 
 // newsvendorRecommendation reads the distribution at the service-level quantile

@@ -30,9 +30,10 @@ type CashReadinessResponse struct {
 	Ky            int    `json:"ky"`
 	CycleDayToday int    `json:"cycle_day_today"`
 
-	Method      string `json:"method"`
-	Confidence  string `json:"confidence"`
-	BasisCycles int    `json:"basis_cycles"`
+	Method      string  `json:"method"`
+	Confidence  string  `json:"confidence"`
+	BasisCycles int     `json:"basis_cycles"`
+	GrowthRate  float64 `json:"growth_rate"`
 
 	GeneratedAt time.Time `json:"generated_at"`
 }

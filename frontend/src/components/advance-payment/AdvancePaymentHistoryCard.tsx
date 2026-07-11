@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
   PENDING: { icon: Clock, tone: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-[var(--employee-warning-border)]" },
-  APPROVED: { icon: CheckCircle, tone: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] ring-[var(--employee-accent-border)]" },
+  APPROVED: { icon: CheckCircle, tone: "bg-[var(--employee-info-soft)] text-[var(--employee-info)] ring-[var(--employee-info-border)]" },
   COMPLETED: { icon: CheckCircle, tone: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] ring-[var(--employee-accent-border)]" },
   FAILED: { icon: XCircle, tone: "bg-[var(--employee-error-soft)] text-[var(--employee-error)] ring-[#FECDCA]" },
   CANCELLED: { icon: Ban, tone: "bg-[#F2F4F7] text-[#475467] ring-[#E4E7EC]" },

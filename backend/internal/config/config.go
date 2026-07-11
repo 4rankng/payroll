@@ -219,6 +219,7 @@ type CashForecastConfig struct {
 	NSim          int     // env CASH_FORECAST_N_SIM, default 5000
 	HistoryMonths int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
 	LeadDays      int     // env CASH_FORECAST_LEAD_DAYS, default 2
+	GrowthEWMAlpha float64 // env CASH_FORECAST_GROWTH_EWMA_ALPHA, default 0.5 (EWMA smoothing for growth-rate adjustment)
 }
 
 // NinepayConfig holds the credentials, endpoint, and feature flags for
@@ -661,6 +662,12 @@ func (c *Config) validate() error {
 		return fmt.Errorf(
 			"config: CASH_FORECAST_N_SIM must be 0 (default 5000) or >= 1000, got %d",
 			c.CashForecast.NSim,
+		)
+	}
+	if c.CashForecast.GrowthEWMAlpha > 0 && (c.CashForecast.GrowthEWMAlpha <= 0 || c.CashForecast.GrowthEWMAlpha > 1) {
+		return fmt.Errorf(
+			"config: CASH_FORECAST_GROWTH_EWMA_ALPHA must be in (0, 1], got %v",
+			c.CashForecast.GrowthEWMAlpha,
 		)
 	}
 

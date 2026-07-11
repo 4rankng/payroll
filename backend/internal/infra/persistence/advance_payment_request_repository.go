@@ -638,6 +638,12 @@ func (r *AdvancePaymentRequestRepository) ClaimPendingForDisbursement(ctx contex
 // minutes ago. The time buffer prevents picking up requests currently being
 // processed by an active worker. An empty provider string skips the provider
 // filter (legacy fallback).
+//
+// A request is only considered "processed" if it has a wallet_payment NOT in
+// a terminal-failure state (failed/reversed). This allows the poller to retry
+// requests whose payment attempt failed (e.g. name_mismatch) — the failed row
+// stays as an audit trail, but the request is re-enqueued with a fresh
+// request_id so the execute worker creates a new wallet_payment attempt.
 func (r *AdvancePaymentRequestRepository) GetOrphanedApproved(ctx context.Context, limit int, provider string) ([]*domain.AdvancePaymentRequest, error) {
 	var requests []*domain.AdvancePaymentRequest
 
@@ -646,9 +652,9 @@ func (r *AdvancePaymentRequestRepository) GetOrphanedApproved(ctx context.Contex
 		Where("updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)")
 
 	if provider != "" {
-		q = q.Where("NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = advance_payment_requests.id AND wp.provider = ?)", provider)
+		q = q.Where("NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = advance_payment_requests.id AND wp.provider = ? AND wp.status NOT IN ('failed', 'reversed'))", provider)
 	} else {
-		q = q.Where("NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = advance_payment_requests.id)")
+		q = q.Where("NOT EXISTS (SELECT 1 FROM wallet_payments wp WHERE wp.entity_id = advance_payment_requests.id AND wp.status NOT IN ('failed', 'reversed'))")
 	}
 
 	err := q.
