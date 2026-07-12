@@ -179,7 +179,10 @@
       "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
       "postcss": ">=8.5.10",
       "vite": ">=6.4.2",
-      "ws": ">=8.21.0"
+      "ws": ">=8.21.0",
+      "@radix-ui/react-accordion": "1.2.16",
+      "@radix-ui/react-tabs": "1.1.17",
+      "@radix-ui/react-context": "1.2.0"
     }
   }
 }

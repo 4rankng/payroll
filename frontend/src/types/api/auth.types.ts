@@ -95,6 +95,9 @@ export interface AttendanceScheduleWindow {
   check_in_window_end: string;
   check_out_window_start: string;
   check_out_window_end: string;
+  /** Admin-chosen display name for this shift's time-range (e.g. "Ca làm").
+   * Absent/empty when no name is configured — callers fall back to default labels. */
+  shift_name?: string;
 }
 
 // Employee-specific types

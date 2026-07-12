@@ -152,4 +152,60 @@ describe("AttendanceReference", () => {
     expect(screen.getByText(localTime(morning.check_in_window_start))).toBeInTheDocument();
     expect(screen.getByText(localTime(morning.check_out_window_end))).toBeInTheDocument();
   });
+
+  it("uses admin-configured shift_name for tab labels when provided", () => {
+    const day = {
+      shift_start: "2026-07-12T09:00:00+07:00",
+      shift_end: "2026-07-12T18:00:00+07:00",
+      check_in_window_start: "2026-07-12T08:00:00+07:00",
+      check_in_window_end: "2026-07-12T10:00:00+07:00",
+      check_out_window_start: "2026-07-12T17:00:00+07:00",
+      check_out_window_end: "2026-07-12T22:00:00+07:00",
+      shift_name: "Ca làm",
+    };
+    const night = {
+      shift_start: "2026-07-12T21:00:00+07:00",
+      shift_end: "2026-07-13T05:00:00+07:00",
+      check_in_window_start: "2026-07-12T20:00:00+07:00",
+      check_in_window_end: "2026-07-12T22:00:00+07:00",
+      check_out_window_start: "2026-07-13T04:00:00+07:00",
+      check_out_window_end: "2026-07-13T09:00:00+07:00",
+      shift_name: "Ca đêm",
+    };
+
+    render(<AttendanceReference scheduleWindows={[day, night]} activeScheduleWindow={day} />);
+
+    // Admin names replace the legacy "Ca ngày"/"Ca đêm" labels.
+    expect(screen.getByRole("tab", { name: /Ca làm/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Ca đêm/ })).toBeInTheDocument();
+    // Legacy fallback labels should NOT appear.
+    expect(screen.queryByRole("tab", { name: "Ca ngày" })).not.toBeInTheDocument();
+  });
+
+  it("shows an overnight badge on cross-midnight shifts and not on day shifts", () => {
+    const day = {
+      shift_start: "2026-07-12T09:00:00+07:00",
+      shift_end: "2026-07-12T18:00:00+07:00",
+      check_in_window_start: "2026-07-12T08:00:00+07:00",
+      check_in_window_end: "2026-07-12T10:00:00+07:00",
+      check_out_window_start: "2026-07-12T17:00:00+07:00",
+      check_out_window_end: "2026-07-12T22:00:00+07:00",
+    };
+    const night = {
+      shift_start: "2026-07-12T21:00:00+07:00",
+      shift_end: "2026-07-13T05:00:00+07:00",
+      check_in_window_start: "2026-07-12T20:00:00+07:00",
+      check_in_window_end: "2026-07-12T22:00:00+07:00",
+      check_out_window_start: "2026-07-13T04:00:00+07:00",
+      check_out_window_end: "2026-07-13T09:00:00+07:00",
+    };
+
+    render(<AttendanceReference scheduleWindows={[day, night]} activeScheduleWindow={night} />);
+
+    // The night tab carries the overnight badge ("Qua đêm"); the day tab does not.
+    const nightTab = screen.getByRole("tab", { name: /Ca đêm/ });
+    expect(nightTab).toHaveTextContent("Qua đêm");
+    const dayTab = screen.getByRole("tab", { name: "Ca ngày" });
+    expect(dayTab).not.toHaveTextContent("Qua đêm");
+  });
 });

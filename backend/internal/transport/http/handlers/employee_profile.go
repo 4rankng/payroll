@@ -136,6 +136,10 @@ func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, empl
 		resp.CheckOutWindowStart = &checkOutWindowStart
 		resp.CheckOutWindowEnd = &checkOutWindowEnd
 	}
+	if scheduleInfo.ShiftName != "" {
+		name := scheduleInfo.ShiftName
+		resp.ShiftName = &name
+	}
 	resp.CreatedAt = employee.CreatedAt
 	resp.UpdatedAt = employee.UpdatedAt
 	if employee.User != nil {
@@ -172,6 +176,7 @@ func mapScheduleWindow(window *employee.ScheduleWindowInfo) *dto.ScheduleWindowI
 		CheckInWindowEnd:    window.CheckInWindowEnd,
 		CheckOutWindowStart: window.CheckOutWindowStart,
 		CheckOutWindowEnd:   window.CheckOutWindowEnd,
+		ShiftName:           window.ShiftName,
 	}
 }
 

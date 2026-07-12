@@ -45,7 +45,7 @@ func TestResolveAllShiftWindowsReturnsEveryConfiguredShiftInOrder(t *testing.T) 
 		"Công nhân.ngày thường.07:00-12:00": 250000,
 	}
 
-	windows := ResolveAllShiftWindows(flattened, "Công nhân", now)
+	windows := ResolveAllShiftWindows(flattened, "Công nhân", now, nil)
 	if len(windows) != 2 {
 		t.Fatalf("window count = %d, want 2", len(windows))
 	}
@@ -57,6 +57,62 @@ func TestResolveAllShiftWindowsReturnsEveryConfiguredShiftInOrder(t *testing.T) 
 	}
 	if got, want := windows[1].CheckOutWindowEnd.Format("15:04"), "02:00"; got != want {
 		t.Fatalf("second checkout deadline = %s, want %s", got, want)
+	}
+}
+
+func TestResolveAllShiftWindowsAttachesAdminNameByRange(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	now := time.Date(2026, 6, 21, 12, 0, 0, 0, loc)
+	flattened := map[string]int{
+		"Công nhân.ngày thường.09:00-18:00": 300000,
+		"Công nhân.ngày thường.21:00-05:00": 350000,
+	}
+	names := map[string]string{
+		"09:00-18:00": "Ca làm",
+		"21:00-05:00": "Ca đêm",
+	}
+
+	windows := ResolveAllShiftWindows(flattened, "Công nhân", now, names)
+	if len(windows) != 2 {
+		t.Fatalf("window count = %d, want 2", len(windows))
+	}
+	byRange := map[string]string{}
+	for _, w := range windows {
+		byRange[w.ShiftStart.Format("15:04")+"-"+w.ShiftEnd.Format("15:04")] = w.Name
+	}
+	if got, want := byRange["09:00-18:00"], "Ca làm"; got != want {
+		t.Fatalf("day shift name = %q, want %q", got, want)
+	}
+	if got, want := byRange["21:00-05:00"], "Ca đêm"; got != want {
+		t.Fatalf("night shift name = %q, want %q", got, want)
+	}
+
+	// nil names -> empty Name on every window (fallback path)
+	for _, w := range ResolveAllShiftWindows(flattened, "Công nhân", now, nil) {
+		if w.Name != "" {
+			t.Fatalf("expected empty name for nil map, got %q", w.Name)
+		}
+	}
+}
+
+func TestExtractShiftRanges(t *testing.T) {
+	flattened := map[string]int{
+		"Công nhân.ngày thường.09:00-18:00": 300000,
+		"Lái xe.ngày thường.08:00-17:00":     250000,
+		// duplicate range across positions should be deduped
+		"Quản lý.ngày thường.09:00-18:00": 400000,
+		// non-shift keys (no HH:MM-HH:MM suffix) must be ignored
+		"something.else": 100,
+	}
+	ranges := ExtractShiftRanges(flattened)
+	want := map[string]bool{"09:00-18:00": true, "08:00-17:00": true}
+	if len(ranges) != len(want) {
+		t.Fatalf("range count = %d (%v), want %d", len(ranges), ranges, len(want))
+	}
+	for _, r := range ranges {
+		if !want[r] {
+			t.Fatalf("unexpected range %q", r)
+		}
 	}
 }
 

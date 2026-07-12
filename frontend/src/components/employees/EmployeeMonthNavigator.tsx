@@ -51,7 +51,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
   return (
     <div
       className={cn(
-        "grid min-h-[52px] grid-cols-[44px_minmax(0,1fr)_44px] items-center rounded-xl border border-[var(--employee-border)] bg-white px-1 shadow-[var(--employee-shadow)]",
+        "grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-slate-200 bg-white p-1.5 shadow-[var(--employee-shadow)]",
         className
       )}
       role="group"
@@ -63,7 +63,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         disabled={!month.canGoPrev}
         aria-label="Xem tháng trước"
         title="Tháng trước"
-        className="flex h-11 w-11 items-center justify-center rounded-[10px] text-[#475467] transition-transform duration-200 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
+        className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-50 text-[#475467] transition-colors duration-200 hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:bg-transparent disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
       >
         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -72,13 +72,14 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="mx-auto flex min-h-11 min-w-0 max-w-full items-center justify-center gap-2 rounded-[10px] px-2 text-[var(--employee-text)] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+            className="mx-auto flex min-h-11 min-w-0 max-w-full flex-col items-center justify-center rounded-[14px] px-2 text-[var(--employee-text)] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
-            <CalendarDays className="h-4 w-4 shrink-0 text-[#667085]" aria-hidden="true" />
-            <span className="employee-type-month-title truncate tabular-nums">
-              Tháng {month.shortLabel}
+            <span className="flex min-w-0 items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[var(--employee-accent)]" aria-hidden="true" />
+              <span className="employee-type-month-title truncate tabular-nums">Tháng {month.shortLabel}</span>
             </span>
+            <span className="employee-type-label-caps -mt-0.5 text-slate-400">Kỳ bảng công</span>
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-[min(328px,calc(100vw-32px))] rounded-xl p-3" align="center">
@@ -135,7 +136,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         aria-label="Xem tháng sau"
         title="Tháng sau"
         disabled={!month.canGoNext}
-        className="flex h-11 w-11 items-center justify-center rounded-[10px] text-[#475467] transition-transform duration-200 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
+        className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-50 text-[#475467] transition-colors duration-200 hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:bg-transparent disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
       >
         <ChevronRight className="h-5 w-5" aria-hidden="true" />
       </button>

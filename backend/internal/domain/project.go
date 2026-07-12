@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"gorm.io/gorm"
@@ -13,6 +14,16 @@ type GeofenceGate struct {
 	Name string  `json:"name"`
 	Lat  float64 `json:"lat"`
 	Lng  float64 `json:"lng"`
+}
+
+// ShiftName maps a payrate shift time-range ("HH:MM-HH:MM", e.g. "09:00-18:00")
+// to an admin-chosen display name (e.g. "Ca làm"). The range must match a shift
+// configured in the project's payrate; the payrate remains the single source of
+// truth for shift times and pricing — this only carries a display label used by
+// the advisory schedule shown on the employee attendance card.
+type ShiftName struct {
+	Range string `json:"range"` // "HH:MM-HH:MM" 24h, must match a payrate shift
+	Name  string `json:"name"`  // admin-chosen display name, e.g. "Ca làm"
 }
 
 // ProjectStatus represents project status enum
@@ -46,6 +57,7 @@ type Project struct {
 	IsFlexible           bool           `json:"is_flexible" gorm:"column:is_flexible;type:tinyint(1);not null;default:0;comment:'Whether this project uses flexible check-in schedules'"`
 	GeofenceGates        []GeofenceGate `json:"geofence_gates" gorm:"type:json;serializer:json"`
 	GeofenceRadiusMeters uint           `json:"geofence_radius_meters" gorm:"column:geofence_radius_meters;type:int unsigned;not null;default:100"`
+	ShiftNames           []ShiftName    `json:"shift_names" gorm:"type:json;serializer:json"`
 	DeletedAt            gorm.DeletedAt `json:"-" gorm:"index"`
 	CreatedBy            uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
 	CreatedAt            time.Time      `json:"created_at"`
@@ -255,6 +267,62 @@ func (p *Project) ValidateGeofenceGates() error {
 // IsRunning returns true if project status is running
 func (p *Project) IsRunning() bool {
 	return p.ProjectStatus == ProjectStatusRunning
+}
+
+// shiftRangeRegex matches "HH:MM-HH:MM" 24h time ranges, e.g. "09:00-18:00" or
+// "21:00-05:00". Used by ValidateShiftNames and by callers that need to extract
+// ranges from flattened payrate keys.
+var shiftRangeRegex = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$`)
+
+// IsValidShiftRange reports whether s is a well-formed "HH:MM-HH:MM" 24h range.
+// Exposed so transport/app layers can validate or extract ranges without
+// duplicating the regex.
+func IsValidShiftRange(s string) bool {
+	return shiftRangeRegex.MatchString(s)
+}
+
+// ValidateShiftNames validates admin display names for payrate shifts. It is a
+// no-op when the project is not flexible (names only apply to check-in-enabled
+// projects) or when no names are configured. payrateShiftRanges is the set of
+// "HH:MM-HH:MM" ranges actually configured in the project's payrate; when it is
+// non-empty, every entry's Range must be present in it so admins cannot name a
+// shift the payrate does not define.
+func (p *Project) ValidateShiftNames(payrateShiftRanges []string) error {
+	if !p.IsFlexible || len(p.ShiftNames) == 0 {
+		return nil
+	}
+	if len(p.ShiftNames) > 20 {
+		return NewValidationError("Tối đa 20 ca làm việc mỗi dự án")
+	}
+	known := make(map[string]struct{}, len(payrateShiftRanges))
+	for _, r := range payrateShiftRanges {
+		known[r] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(p.ShiftNames))
+	for i, sn := range p.ShiftNames {
+		if sn.Range == "" {
+			return NewValidationError(fmt.Sprintf("Ca làm việc %d: khoảng thời gian là bắt buộc", i+1))
+		}
+		if !IsValidShiftRange(sn.Range) {
+			return NewValidationError(fmt.Sprintf("Ca làm việc %d: khoảng thời gian không hợp lệ (định dạng HH:MM-HH:MM)", i+1))
+		}
+		if sn.Name == "" {
+			return NewValidationError(fmt.Sprintf("Tên ca làm việc %d là bắt buộc", i+1))
+		}
+		if len(sn.Name) > 50 {
+			return NewValidationError(fmt.Sprintf("Tên ca làm việc %d không được vượt quá 50 ký tự", i+1))
+		}
+		if _, dup := seen[sn.Range]; dup {
+			return NewValidationError(fmt.Sprintf("Ca làm việc %d bị trùng khoảng thời gian", i+1))
+		}
+		seen[sn.Range] = struct{}{}
+		if len(known) > 0 {
+			if _, ok := known[sn.Range]; !ok {
+				return NewValidationError(fmt.Sprintf("Ca làm việc %s không khớp với ca trong bảng lương", sn.Range))
+			}
+		}
+	}
+	return nil
 }
 
 // IsDraft returns true if project status is draft

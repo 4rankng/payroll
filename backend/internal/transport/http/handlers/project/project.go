@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"api-server/internal/app/services/attendance"
 	"api-server/internal/app/services/payroll"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/timesheet"
@@ -50,6 +51,30 @@ func geofenceGatesToDTO(gates []domain.GeofenceGate) []dto.GeofenceGateRequest {
 	return result
 }
 
+// Helper function to convert domain shift names to DTO
+func shiftNamesToDTO(names []domain.ShiftName) []dto.ShiftNameRequest {
+	if len(names) == 0 {
+		return []dto.ShiftNameRequest{}
+	}
+	result := make([]dto.ShiftNameRequest, len(names))
+	for i, n := range names {
+		result[i] = dto.ShiftNameRequest{Range: n.Range, Name: n.Name}
+	}
+	return result
+}
+
+// Helper function to convert DTO shift names to domain
+func shiftNamesFromDTO(req []dto.ShiftNameRequest) []domain.ShiftName {
+	if len(req) == 0 {
+		return nil
+	}
+	result := make([]domain.ShiftName, len(req))
+	for i, n := range req {
+		result[i] = domain.ShiftName{Range: n.Range, Name: n.Name}
+	}
+	return result
+}
+
 // Helper function to convert ProjectWithEmployeeCount to ProjectResponse
 func projectWithEmployeeCountToResponse(project *domain.ProjectWithEmployeeCount) dto.ProjectResponse {
 	return dto.ProjectResponse{
@@ -69,6 +94,7 @@ func projectWithEmployeeCountToResponse(project *domain.ProjectWithEmployeeCount
 		IsFlexible:                 project.IsFlexible,
 		GeofenceGates:              geofenceGatesToDTO(project.GeofenceGates),
 		GeofenceRadiusMeters:       project.GeofenceRadiusMeters,
+		ShiftNames:                 shiftNamesToDTO(project.ShiftNames),
 		CreatedBy:                  project.CreatedBy,
 		CreatedAt:                  project.CreatedAt,
 		UpdatedAt:                  project.UpdatedAt,
@@ -94,6 +120,7 @@ func projectToResponse(project *domain.Project) dto.ProjectResponse {
 		IsFlexible:                 project.IsFlexible,
 		GeofenceGates:              geofenceGatesToDTO(project.GeofenceGates),
 		GeofenceRadiusMeters:       project.GeofenceRadiusMeters,
+		ShiftNames:                 shiftNamesToDTO(project.ShiftNames),
 		CreatedBy:                  project.CreatedBy,
 		CreatedAt:                  project.CreatedAt,
 		UpdatedAt:                  project.UpdatedAt,
@@ -148,6 +175,7 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 		IsFlexible:           project.IsFlexible,
 		GeofenceGates:        geofenceGatesToDTO(project.GeofenceGates),
 		GeofenceRadiusMeters: project.GeofenceRadiusMeters,
+		ShiftNames:           shiftNamesToDTO(project.ShiftNames),
 
 		CreatedBy: project.CreatedBy,
 		CreatedAt: project.CreatedAt,
@@ -455,6 +483,17 @@ func (h *Handler) CreateProject(c *gin.Context) {
 	}
 	if project.IsFlexible {
 		if err := project.ValidateGeofenceGates(); err != nil {
+			response.BadRequest(c, err.Error())
+			return
+		}
+	}
+
+	// Admin-named shifts (labels for payrate shifts). On create we accept the
+	// shape only; the range↔payrate match is validated on update once the
+	// payrate exists.
+	if req.ShiftNames != nil {
+		project.ShiftNames = shiftNamesFromDTO(req.ShiftNames)
+		if err := project.ValidateShiftNames(nil); err != nil {
 			response.BadRequest(c, err.Error())
 			return
 		}
@@ -826,6 +865,25 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 				response.BadRequest(c, err.Error())
 				return
 			}
+		}
+	}
+
+	// Admin-named shifts (labels for payrate shifts). When the request carries
+	// shift_names, map them onto the project and validate against the payrate's
+	// configured shift ranges so admins cannot name shifts the payrate lacks.
+	if req.ShiftNames != nil {
+		project.ShiftNames = shiftNamesFromDTO(req.ShiftNames)
+		var payrateRanges []string
+		if project.IsFlexible && len(project.ShiftNames) > 0 && h.payrateService != nil {
+			if payrate, err := h.payrateService.GetActivePayrateByProjectAndDate(c.Request.Context(), project.ID, h.clock.Now()); err == nil && payrate != nil {
+				if flattened, err := payrate.Payrate.Flatten(); err == nil {
+					payrateRanges = attendance.ExtractShiftRanges(flattened)
+				}
+			}
+		}
+		if err := project.ValidateShiftNames(payrateRanges); err != nil {
+			response.BadRequest(c, err.Error())
+			return
 		}
 	}
 

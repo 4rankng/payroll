@@ -6,6 +6,16 @@ export interface GeofenceGate {
   lng: number;
 }
 
+/**
+ * Admin-chosen display name for a payrate shift time-range.
+ * Example: { range: "09:00-18:00", name: "Ca làm" }
+ * The range must match a shift configured in the project's payrate.
+ */
+export interface ShiftName {
+  range: string; // "HH:MM-HH:MM" 24h format
+  name: string; // admin-chosen display name, e.g. "Ca làm"
+}
+
 export interface EmployeePosition {
   position: string;
   count: number;
@@ -44,6 +54,7 @@ export interface Project {
   is_flexible?: boolean;
   geofence_gates?: GeofenceGate[] | null;
   geofence_radius_meters?: number;
+  shift_names?: ShiftName[] | null;
   created_by: number;
   created_at: string;
   updated_at: string;
@@ -107,6 +118,8 @@ export interface UpdateProjectData {
   off_days?: number; // bitmask: bit0=Sun, bit1=Mon, ..., bit6=Sat
   geofence_gates?: GeofenceGate[];
   geofence_radius_meters?: number;
+  is_flexible?: boolean;
+  shift_names?: ShiftName[];
 }
 
 export interface UpdateProjectStatusData {

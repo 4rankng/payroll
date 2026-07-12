@@ -197,6 +197,10 @@ type ShiftWindow struct {
 	CheckInWindowEnd    time.Time
 	CheckOutWindowStart time.Time
 	CheckOutWindowEnd   time.Time
+	// Name is the admin-chosen display name for this shift's time-range (e.g.
+	// "Ca làm" for "09:00-18:00"), looked up from the project's ShiftNames.
+	// Empty when no name is configured — callers fall back to default labels.
+	Name string
 }
 
 // resolveShifts parses the flattened payrate for the given position and returns:
@@ -1365,7 +1369,11 @@ func ResolveShiftWindows(flattened map[string]int, position string, now time.Tim
 // should display the time-of-day values; duplicate ±1-day resolver candidates
 // are removed. Cross-midnight end and checkout times retain their correct
 // following-day instants.
-func ResolveAllShiftWindows(flattened map[string]int, position string, now time.Time) []ShiftWindow {
+//
+// names optionally maps a "HH:MM-HH:MM" time-range to an admin-chosen display
+// name; when present, the matching ShiftWindow.Name is populated. Pass nil when
+// the caller has no name config (windows come back with empty Name).
+func ResolveAllShiftWindows(flattened map[string]int, position string, now time.Time, names map[string]string) []ShiftWindow {
 	_, _, shifts := resolveShifts(flattened, position, now)
 	windowsByTimeRange := make(map[string]ShiftWindow)
 	for _, shift := range shifts {
@@ -1373,7 +1381,7 @@ func ResolveAllShiftWindows(flattened map[string]int, position string, now time.
 			continue
 		}
 		key := shift.start.Format("15:04") + "-" + shift.end.Format("15:04")
-		windowsByTimeRange[key] = ShiftWindow{
+		window := ShiftWindow{
 			ShiftStart:          shift.start,
 			ShiftEnd:            shift.end,
 			CheckInWindowStart:  shift.start.Add(-checkInShiftWindow),
@@ -1381,6 +1389,10 @@ func ResolveAllShiftWindows(flattened map[string]int, position string, now time.
 			CheckOutWindowStart: shift.end.Add(-checkOutLowerGrace),
 			CheckOutWindowEnd:   shift.end.Add(checkOutUpperGrace),
 		}
+		if names != nil {
+			window.Name = names[key]
+		}
+		windowsByTimeRange[key] = window
 	}
 
 	windows := make([]ShiftWindow, 0, len(windowsByTimeRange))
@@ -1391,4 +1403,29 @@ func ResolveAllShiftWindows(flattened map[string]int, position string, now time.
 		return windows[i].ShiftStart.Before(windows[j].ShiftStart)
 	})
 	return windows
+}
+
+// ExtractShiftRanges returns the set of distinct "HH:MM-HH:MM" shift time-ranges
+// configured in the flattened payrate, across every position. Used by project
+// create/update handlers to validate that admin-named shifts (Project.ShiftNames)
+// correspond to shifts the payrate actually defines. The returned slice is
+// deduplicated but unordered.
+func ExtractShiftRanges(flattened map[string]int) []string {
+	seen := make(map[string]struct{})
+	ranges := make([]string, 0)
+	for key := range flattened {
+		parts := strings.Split(key, ".")
+		if len(parts) < 3 {
+			continue
+		}
+		timeRange := parts[len(parts)-1]
+		if _, ok := seen[timeRange]; ok {
+			continue
+		}
+		if domain.IsValidShiftRange(timeRange) {
+			seen[timeRange] = struct{}{}
+			ranges = append(ranges, timeRange)
+		}
+	}
+	return ranges
 }

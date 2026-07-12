@@ -31,6 +31,10 @@ type EmployeeProfileResponse struct {
 	CheckInWindowEnd     *time.Time           `json:"check_in_window_end,omitempty"`
 	CheckOutWindowStart  *time.Time           `json:"check_out_window_start,omitempty"`
 	CheckOutWindowEnd    *time.Time           `json:"check_out_window_end,omitempty"`
+	// ShiftName is the admin-chosen display name for the employee's active
+	// shift, when one is configured on the project. Omitted when no shift is
+	// resolved or no name is set.
+	ShiftName            *string              `json:"shift_name,omitempty"`
 	ScheduleWindows      []ScheduleWindowInfo `json:"schedule_windows,omitempty"`
 	ActiveScheduleWindow *ScheduleWindowInfo  `json:"active_schedule_window,omitempty"`
 	CreatedAt            time.Time            `json:"created_at"`
@@ -48,6 +52,10 @@ type ScheduleWindowInfo struct {
 	CheckInWindowEnd    time.Time `json:"check_in_window_end"`
 	CheckOutWindowStart time.Time `json:"check_out_window_start"`
 	CheckOutWindowEnd   time.Time `json:"check_out_window_end"`
+	// ShiftName is the admin-chosen display name for this shift's time-range
+	// (e.g. "Ca làm"). Empty when no name is configured; the frontend falls
+	// back to default labels.
+	ShiftName string `json:"shift_name,omitempty"`
 }
 
 type CheckInTargetInfo struct {

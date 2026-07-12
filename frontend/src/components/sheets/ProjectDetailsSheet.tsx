@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authManager } from "@/lib/auth";
 import { GeofenceSection } from "@/components/projects/details/GeofenceSection";
+import { ShiftNamesSection } from "@/components/projects/details/ShiftNamesSection";
 import { Edit3, Trash2, Plus } from "lucide-react";
 import type { ModalConfig } from "@/types/modal-config.types";
 
@@ -363,6 +364,11 @@ function ProjectDetailsSheet({
           {/* ── Geofence section (flexible projects only) ── */}
           {project.is_flexible && (
             <GeofenceSection project={project} />
+          )}
+
+          {/* ── Shift names section (flexible projects only) ── */}
+          {project.is_flexible && (
+            <ShiftNamesSection project={project} />
           )}
 
           {/* ── Permissions section ── */}

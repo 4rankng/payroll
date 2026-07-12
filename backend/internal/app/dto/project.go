@@ -11,6 +11,14 @@ type GeofenceGateRequest struct {
 	Lng  float64 `json:"lng" binding:"required"`
 }
 
+// ShiftNameRequest represents an admin-chosen display name for one payrate
+// shift time-range (e.g. "09:00-18:00" -> "Ca làm"). The range must match a
+// shift configured in the project's payrate.
+type ShiftNameRequest struct {
+	Range string `json:"range" binding:"required"`
+	Name  string `json:"name" binding:"required"`
+}
+
 // CreateProjectRequest represents the request to create a new project
 type CreateProjectRequest struct {
 	ClientName  string  `json:"client_name" binding:"required"`
@@ -29,6 +37,7 @@ type CreateProjectRequest struct {
 	IsFlexible           *bool                 `json:"is_flexible,omitempty"`
 	GeofenceGates        []GeofenceGateRequest `json:"geofence_gates,omitempty"`
 	GeofenceRadiusMeters *uint                 `json:"geofence_radius_meters,omitempty"`
+	ShiftNames           []ShiftNameRequest    `json:"shift_names,omitempty"`
 }
 
 // UpdateProjectRequest represents the request to update a project
@@ -48,6 +57,7 @@ type UpdateProjectRequest struct {
 	IsFlexible           *bool                 `json:"is_flexible,omitempty"`
 	GeofenceGates        []GeofenceGateRequest `json:"geofence_gates,omitempty"`
 	GeofenceRadiusMeters *uint                 `json:"geofence_radius_meters,omitempty"`
+	ShiftNames           []ShiftNameRequest    `json:"shift_names,omitempty"`
 }
 type ProjectResponse struct {
 	ID                         uint                  `json:"id"`
@@ -67,6 +77,7 @@ type ProjectResponse struct {
 	IsFlexible                 bool                  `json:"is_flexible"`
 	GeofenceGates              []GeofenceGateRequest `json:"geofence_gates"`
 	GeofenceRadiusMeters       uint                  `json:"geofence_radius_meters"`
+	ShiftNames                 []ShiftNameRequest    `json:"shift_names"`
 	CreatedBy                  uint                  `json:"created_by"`
 	CreatedAt                  time.Time             `json:"created_at"`
 	UpdatedAt                  time.Time             `json:"updated_at"`
@@ -167,6 +178,7 @@ type ProjectDetailedResponse struct {
 	IsFlexible           bool                  `json:"is_flexible"`
 	GeofenceGates        []GeofenceGateRequest `json:"geofence_gates"`
 	GeofenceRadiusMeters uint                  `json:"geofence_radius_meters"`
+	ShiftNames           []ShiftNameRequest    `json:"shift_names"`
 	CreatedBy            uint                  `json:"created_by"`
 	CreatedAt            time.Time             `json:"created_at"`
 	UpdatedAt            time.Time             `json:"updated_at"`

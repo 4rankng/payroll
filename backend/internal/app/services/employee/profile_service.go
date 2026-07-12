@@ -51,6 +51,9 @@ type EmployeeScheduleInfo struct {
 	CheckInWindowEnd     time.Time
 	CheckOutWindowStart  time.Time
 	CheckOutWindowEnd    time.Time
+	// ShiftName is the admin-chosen display name for the active shift's
+	// time-range, looked up from the project's ShiftNames. Empty when unset.
+	ShiftName            string
 	ScheduleWindows      []ScheduleWindowInfo
 	ActiveScheduleWindow *ScheduleWindowInfo
 }
@@ -64,6 +67,9 @@ type ScheduleWindowInfo struct {
 	CheckInWindowEnd    time.Time
 	CheckOutWindowStart time.Time
 	CheckOutWindowEnd   time.Time
+	// ShiftName is the admin-chosen display name for this shift's time-range.
+	// Empty when no name is configured.
+	ShiftName string
 }
 
 type CheckInTargetInfo struct {
@@ -215,14 +221,15 @@ func (s *EmployeeProfileService) populateCheckInTarget(ctx context.Context, empl
 	// (resolveShifts → closestShift). Null/empty when no shift is configured —
 	// the frontend treats empty as "no timing gate". The server's
 	// validateCheckInWindow remains authoritative; this is informational only.
-	s.populateShiftWindow(ctx, employeeID, project.ID, targetAssignment.Position, info)
+	s.populateShiftWindow(ctx, employeeID, project.ID, targetAssignment.Position, project.ShiftNames, info)
 }
 
 // populateShiftWindow resolves the employee's applicable shift today and the
 // check-in and checkout windows, writing them to info. No-op (leaves fields
 // empty) when the payrate is missing, malformed, or has no shift for the
-// position.
-func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, employeeID, projectID uint, position string, info *EmployeeScheduleInfo) {
+// position. shiftNames carries admin-chosen display names keyed by time-range
+// so each advisory window can be labelled for the employee card.
+func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, employeeID, projectID uint, position string, shiftNames []domain.ShiftName, info *EmployeeScheduleInfo) {
 	if s.PayrateRepo == nil || position == "" {
 		return
 	}
@@ -247,7 +254,11 @@ func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, employ
 	info.CheckInWindowEnd = checkInEnd
 	info.CheckOutWindowStart = checkOutStart
 	info.CheckOutWindowEnd = checkOutEnd
-	info.ScheduleWindows = formatScheduleWindows(attendance.ResolveAllShiftWindows(flattened, position, now))
+	nameByRange := shiftNameMap(shiftNames)
+	info.ScheduleWindows = formatScheduleWindows(attendance.ResolveAllShiftWindows(flattened, position, now, nameByRange))
+	// Name the resolved active (closest) shift window so the employee card's
+	// heading can show the admin label even when only the active window is read.
+	info.ShiftName = nameByRange[shiftKey(shiftStart, shiftEnd)]
 
 	if activeAttendance := s.findActiveAttendance(ctx, employeeID, projectID, now); activeAttendance != nil {
 		activeShiftStart, activeShiftEnd, activeCheckInStart, activeCheckInEnd, activeCheckOutStart, activeCheckOutEnd, activeOK := attendance.ResolveShiftWindows(flattened, position, activeAttendance.CheckInTime)
@@ -259,10 +270,31 @@ func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, employ
 				CheckInWindowEnd:    activeCheckInEnd,
 				CheckOutWindowStart: activeCheckOutStart,
 				CheckOutWindowEnd:   activeCheckOutEnd,
+				Name:                nameByRange[shiftKey(activeShiftStart, activeShiftEnd)],
 			})
 			info.ActiveScheduleWindow = &activeWindow
 		}
 	}
+}
+
+// shiftNameMap converts a project's ShiftNames slice into a "HH:MM-HH:MM" ->
+// name lookup. Returns nil when the slice is empty so ResolveAllShiftWindows
+// skips map work entirely.
+func shiftNameMap(names []domain.ShiftName) map[string]string {
+	if len(names) == 0 {
+		return nil
+	}
+	m := make(map[string]string, len(names))
+	for _, n := range names {
+		m[n.Range] = n.Name
+	}
+	return m
+}
+
+// shiftKey formats two absolute shift instants into the canonical
+// "HH:MM-HH:MM" time-range key used to join payrate shifts and admin names.
+func shiftKey(start, end time.Time) string {
+	return start.Format("15:04") + "-" + end.Format("15:04")
 }
 
 func (s *EmployeeProfileService) findActiveAttendance(ctx context.Context, employeeID, projectID uint, now time.Time) *domain.Attendance {
@@ -310,6 +342,7 @@ func formatScheduleWindow(window attendance.ShiftWindow) ScheduleWindowInfo {
 		CheckInWindowEnd:    window.CheckInWindowEnd,
 		CheckOutWindowStart: window.CheckOutWindowStart,
 		CheckOutWindowEnd:   window.CheckOutWindowEnd,
+		ShiftName:           window.Name,
 	}
 }
 

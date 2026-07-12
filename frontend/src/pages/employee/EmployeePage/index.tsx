@@ -1,13 +1,10 @@
 import { useState, useMemo, useCallback } from "react";
-import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/sonner";
-import { authManager } from "@/lib/auth";
-import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/sonner";
+import { authManager } from "@/lib/auth";
 import {
   useEmployeeProfile,
   useEmployeeSummary,
@@ -21,12 +18,11 @@ import { NotificationSheet } from "@/components/notifications/NotificationSheet"
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
 import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
-import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavigator";
+import { EmployeeTimesheetPanel } from "@/components/employees/EmployeeTimesheetPanel";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { groupTimesheetsByDay } from "@/utils/employeePortal/timesheetGrouping";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { getDayPaymentStatus } from "@/utils/employeePortal/paymentStatus";
 import {
   createRegularEmployeeHomeModel,
   hasEmployeeBankInfo,
@@ -180,83 +176,15 @@ const EmployeePage = () => {
       >
         <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
 
-        {/* Timesheets Section */}
-        <section id="employee-timesheets" className="scroll-mt-4">
-          <EmployeeMonthNavigator month={month} className="mb-3" />
-          <div className="mb-3 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-            <Calendar className="h-4 w-4 text-sky-600" />
-            <h2 className="employee-type-hero-title text-slate-900">Bảng công</h2>
-            {totalRecords > 0 && (
-              <Badge className="employee-type-pill border-0 bg-sky-100 px-2 py-1 text-sky-700 hover:bg-sky-100">
-                {totalRecords}
-              </Badge>
-            )}
-          </div>
-
-          {/* Timesheet cards */}
-          {timesheetsLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-card/50" />)}
-            </div>
-          ) : groupedDays.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 py-8 text-center">
-              <div className="w-12 h-12 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-sky-400" />
-              </div>
-              <p className="employee-type-card-title text-foreground">Chưa có bảng công</p>
-              <p className="employee-type-body-sm mt-1 text-slate-400">Dữ liệu sẽ hiển thị tại đây</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {groupedDays.map((day) => {
-                const status = getDayPaymentStatus(day.totalAmount, day.totalPaidAmount, bulkTransferPercentage);
-                const isPaid = status === "full";
-
-                return (
-                  <div key={day.date} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    {/* Card header */}
-                    <div className="flex items-center justify-between px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isPaid ? "bg-emerald-500" : "bg-amber-400"}`} />
-                        <span className="employee-type-row-amount capitalize text-slate-800">
-                          {format(new Date(day.date), "EEEE, dd/MM", { locale: vi })}
-                        </span>
-                      </div>
-                      <span className={`employee-type-pill rounded-full px-2.5 py-1 ${
-                        isPaid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                      }`}>
-                        {isPaid ? "Đã trả" : "Chưa trả"}
-                      </span>
-                    </div>
-
-                    {/* Stats row */}
-                    <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">                      {[
-                        { label: "Giờ công", value: `${day.totalHours % 1 === 0 ? day.totalHours : formatNumber(day.totalHours, 1)}`, unit: "h", color: "text-foreground" },
-                        { label: "Tổng lương", value: formatCurrency(day.totalAmount), unit: null, color: "text-foreground" },
-                        { label: "Đã nhận", value: formatCurrency(day.totalPaidAmount), unit: null, color: isPaid ? "text-emerald-600" : "text-slate-400" },
-                      ].map(({ label, value, unit, color }) => (
-                        <div key={label} className="min-w-0 px-2 py-2.5 text-center">
-                          <p className="employee-type-label mb-1 text-slate-400">{label}</p>
-                          <p className={`employee-type-row-amount whitespace-nowrap tabular-nums ${color}`}>
-                            {value}{unit && <span className="type-caption ml-0.5 font-normal text-slate-400">{unit}</span>}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {isFetchingNextPage && (
-            <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground text-sm">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-border border-t-sky-600" />
-              Đang tải thêm...
-            </div>
-          )}
-          <div ref={observerRef} className="h-3" />
-        </section>
+        <EmployeeTimesheetPanel
+          month={month}
+          days={groupedDays}
+          totalRecords={totalRecords}
+          bulkTransferPercentage={bulkTransferPercentage}
+          isLoading={timesheetsLoading}
+          isFetchingNextPage={isFetchingNextPage}
+          observerRef={observerRef}
+        />
 
         <section id="employee-bank" className="scroll-mt-4">
           <EmployeeBankInfoCard
