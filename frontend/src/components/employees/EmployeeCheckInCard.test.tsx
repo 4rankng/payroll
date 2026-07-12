@@ -28,6 +28,9 @@ describe("AttendanceReference", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Ca làm việc" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Khung giờ ca làm" })).toBeInTheDocument();
+    expect(screen.getByText("Từ")).toBeInTheDocument();
+    expect(screen.getByText("Đến")).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T08:00:00+07:00"))).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T17:00:00+07:00"))).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T07:00:00+07:00"))).toBeInTheDocument();
@@ -77,6 +80,7 @@ describe("AttendanceReference", () => {
 
     expect(screen.getByText(localTime("2026-07-12T22:00:00+07:00"))).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-13T06:00:00+07:00"))).toBeInTheDocument();
+    expect(screen.queryByText(/hôm sau/i)).not.toBeInTheDocument();
   });
 
   it("keeps the checkpoint reference compact and expands the other locations on demand", () => {

@@ -275,28 +275,35 @@ export function AttendanceReference({
             </div>
           ) : null}
           {selectedSchedule ? (
-            <dl
+            <div
               id={selectedShiftPanelId}
               aria-labelledby={selectedShiftTabId}
-              className="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-[22px] border border-slate-200/80 bg-white px-2 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+              className="mt-5 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
               role="tabpanel"
             >
-              {[
-                { label: "Ca làm", startIso: selectedSchedule.shift_start, endIso: selectedSchedule.shift_end },
-                { label: "Vào làm", startIso: selectedSchedule.check_in_window_start, endIso: selectedSchedule.check_in_window_end },
-                { label: "Tan ca", startIso: selectedSchedule.check_out_window_start, endIso: selectedSchedule.check_out_window_end },
-              ].map((row) => {
-                const start = safeFormatTime(row.startIso);
-                const end = safeFormatTime(row.endIso);
-                return (
-                  <div key={row.label} className="min-w-0 px-2 text-center">
-                    <dt className="employee-type-pill uppercase text-slate-500">{row.label}</dt>
-                    <dd className="mt-2 text-lg font-bold tracking-tight text-slate-950">{start}</dd>
-                    <dd className="employee-type-body-sm mt-1 text-slate-500">{end}</dd>
-                  </div>
-                );
-              })}
-            </dl>
+              <div role="table" aria-label="Khung giờ ca làm">
+                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-slate-100 bg-slate-50/70 px-5 py-2.5">
+                  <span role="columnheader" className="sr-only">Loại giờ</span>
+                  <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Từ</span>
+                  <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Đến</span>
+                </div>
+                {[
+                  { label: "Ca làm", startIso: selectedSchedule.shift_start, endIso: selectedSchedule.shift_end },
+                  { label: "Vào làm", startIso: selectedSchedule.check_in_window_start, endIso: selectedSchedule.check_in_window_end },
+                  { label: "Tan ca", startIso: selectedSchedule.check_out_window_start, endIso: selectedSchedule.check_out_window_end },
+                ].map((row) => {
+                  const start = safeFormatTime(row.startIso);
+                  const end = safeFormatTime(row.endIso);
+                  return (
+                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-slate-100 px-5 py-4 last:border-b-0">
+                      <span role="rowheader" className="employee-type-body font-semibold text-slate-700">{row.label}</span>
+                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{start}</span>
+                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{end}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           ) : null}
         </div>
       ) : null}
