@@ -283,7 +283,7 @@ export function AttendanceReference({
             >
               <div role="table" aria-label="Khung giờ ca làm">
                 <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-slate-100 bg-slate-50/70 px-5 py-2.5">
-                  <span role="columnheader" className="sr-only">Loại giờ</span>
+                  <span role="columnheader" aria-label="Loại giờ" />
                   <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Từ</span>
                   <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Đến</span>
                 </div>
@@ -1278,7 +1278,7 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-amber-200/90 bg-[#fffdf5] p-5 shadow-[0_18px_42px_rgba(146,64,14,0.10)]">
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-[#fffef9] p-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700 shadow-sm">
                   <Clock className="h-6 w-6" />

@@ -157,9 +157,8 @@ export function AdvancePaymentRequestForm({
     if (!hasBankDestination) return { label: "Thiếu tài khoản nhận tiền", tone: "warning" as const };
     if (quotaExhausted) return { label: "Đã dùng hết hạn mức", tone: "warning" as const };
     if (!isViewingActionableMonth) return { label: "Kỳ lương trước", tone: "neutral" as const };
-    if (!info.canRequest) return { label: "Tạm chưa khả dụng", tone: "warning" as const };
     return { label: "Còn hạn mức", tone: "success" as const };
-  }, [awaitingPayroll, hasBankDestination, info.canRequest, isPastMonth, isViewingActionableMonth, quotaExhausted]);
+  }, [awaitingPayroll, hasBankDestination, isPastMonth, isViewingActionableMonth, quotaExhausted]);
 
   useEffect(() => {
     onAmountChange?.(numericAmount);
