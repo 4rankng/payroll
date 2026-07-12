@@ -48,7 +48,7 @@ const EmployeeRow = memo(function EmployeeRow({
             {item.is_active ? (
               <Badge
                 variant="outline"
-                className="text-[9px] px-1 py-0 h-3.5 border-emerald-300 text-emerald-700 bg-emerald-50 shrink-0"
+                className="text-[11px] px-1 py-0 h-3.5 border-emerald-300 text-emerald-700 bg-emerald-50 shrink-0"
               >
                 <UserCheck className="w-2.5 h-2.5 mr-0.5" />
                 Đang làm
@@ -56,7 +56,7 @@ const EmployeeRow = memo(function EmployeeRow({
             ) : (
               <Badge
                 variant="outline"
-                className="text-[9px] px-1 py-0 h-3.5 border-rose-300 text-rose-600 bg-rose-50 shrink-0"
+                className="text-[11px] px-1 py-0 h-3.5 border-rose-300 text-rose-600 bg-rose-50 shrink-0"
               >
                 <UserX className="w-2.5 h-2.5 mr-0.5" />
                 Nghỉ

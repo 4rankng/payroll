@@ -26,12 +26,12 @@ function formatTime(dateStr: string): string {
 
 function ReasonBadge({ reason }: { reason: string }) {
   if (reason.includes("sai mật khẩu")) {
-    return <Badge variant="warning" className="text-[10px] shrink-0">Sai mật khẩu</Badge>;
+    return <Badge variant="warning" className="text-[11px] shrink-0">Sai mật khẩu</Badge>;
   }
   if (reason.includes("không tìm thấy")) {
-    return <Badge variant="destructive" className="text-[10px] shrink-0">Không tìm thấy</Badge>;
+    return <Badge variant="destructive" className="text-[11px] shrink-0">Không tìm thấy</Badge>;
   }
-  return <Badge variant="secondary" className="text-[10px] shrink-0">{reason}</Badge>;
+  return <Badge variant="secondary" className="text-[11px] shrink-0">{reason}</Badge>;
 }
 
 function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: number }) {
@@ -46,7 +46,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
       {/* Header row: index + reason + name / time */}
       <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">
+          <span className="text-[11px] font-mono text-muted-foreground/60 shrink-0">
             #{index + 1}
           </span>
           <ReasonBadge reason={attempt.reason} />

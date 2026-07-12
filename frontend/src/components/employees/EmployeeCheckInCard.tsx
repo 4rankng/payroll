@@ -289,7 +289,7 @@ export function AttendanceReference({
                     {resolveShiftLabel(schedule, index)}
                     {isOvernightShift(schedule) && (
                       <span
-                        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-medium ${selectedShiftIndex === index ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-600"}`}
+                        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[11px] font-medium ${selectedShiftIndex === index ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-600"}`}
                         title="Ca qua đêm"
                       >
                         <Moon className="h-2.5 w-2.5" aria-hidden="true" />

@@ -107,7 +107,7 @@ export const ProjectSelector = memo(function ProjectSelector({
               className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${selectedId === p.project_id ? 'font-semibold text-primary' : 'text-foreground'}`}
             >
               <span className="truncate block">{p.project_name}</span>
-              <span className="text-[10px] text-muted-foreground">{p.total_employees} NV</span>
+              <span className="text-[11px] text-muted-foreground">{p.total_employees} NV</span>
             </button>
           ))}
         </div>

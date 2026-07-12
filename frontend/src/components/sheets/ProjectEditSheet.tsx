@@ -335,7 +335,7 @@ function ProjectEditSheet({
                     placeholder="Từ ngày"
                     disabled={!isAdmin}
                   />
-                  <p className="text-[10px] text-muted-foreground">Tháng trước (0 = ngày 01)</p>
+                  <p className="text-[11px] text-muted-foreground">Tháng trước (0 = ngày 01)</p>
                 </div>
                 <div className="space-y-0.5">
                   <Input
@@ -346,7 +346,7 @@ function ProjectEditSheet({
                     placeholder="Đến ngày"
                     disabled={!isAdmin}
                   />
-                  <p className="text-[10px] text-muted-foreground">Tháng này (0 = cuối tháng)</p>
+                  <p className="text-[11px] text-muted-foreground">Tháng này (0 = cuối tháng)</p>
                 </div>
               </div>
             </div>
@@ -373,7 +373,7 @@ function ProjectEditSheet({
               placeholder="Nhập mô tả chi tiết về dự án..."
             />
             {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-            <p className="text-[10px] text-muted-foreground text-right">{formData.description.length}/1000</p>
+            <p className="text-[11px] text-muted-foreground text-right">{formData.description.length}/1000</p>
           </div>
         </div>
       </div>

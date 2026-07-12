@@ -42,7 +42,7 @@ export function FilterChipBar({ chips, value, onChange, className }: FilterChipB
             )}
             {chip.label}
             {chip.count != null && (
-              <span className="font-mono text-[10px] opacity-60">{chip.count}</span>
+              <span className="font-mono text-[11px] opacity-60">{chip.count}</span>
             )}
           </button>
         );

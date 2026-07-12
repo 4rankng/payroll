@@ -68,7 +68,7 @@ export function LoanSummaryCards({ summary, isLoading }: LoanSummaryCardsProps) 
             <div className="relative min-w-0 pr-10">
               <div className="flex items-center gap-1.5">
                 <Icon className={cn("h-3 w-3 shrink-0", c.iconText)} strokeWidth={2.2} />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight line-clamp-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight line-clamp-2">
                   {title}
                 </span>
               </div>

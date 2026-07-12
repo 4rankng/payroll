@@ -202,7 +202,7 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
                 strokeDasharray="4 4"
                 label={{
                   value: 'Hôm nay',
-                  fontSize: 10,
+                  fontSize: 11,
                   fill: 'hsl(151 87% 25%)',
                   position: 'insideTopRight',
                 }}

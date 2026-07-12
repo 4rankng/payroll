@@ -40,7 +40,7 @@ export const ContextStrip = memo(function ContextStrip({
             key={i}
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200"
           >
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
               {item.label}
             </span>
             <div className="flex items-center gap-2 min-w-0">

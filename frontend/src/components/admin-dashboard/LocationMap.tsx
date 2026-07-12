@@ -261,7 +261,7 @@ export function LocationMap({
                 {badge ? (
                   <span
                     className={cn(
-                      'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset',
+                      'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset',
                       ATTEMPT_BADGE_TONES[badge.tone],
                     )}
                   >
@@ -348,7 +348,7 @@ export function LocationMap({
           ) : null}
 
           <div className="grid grid-cols-1 gap-2 border-t border-border/50 bg-muted/20 px-3 py-2 min-[380px]:flex min-[380px]:items-center">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
             <div className="flex w-fit items-center gap-0.5 rounded-full bg-background/70 p-0.5 ring-1 ring-inset ring-border/50 min-[380px]:ml-auto">
               <LayerButton
                 active={baseLayer === 'satellite'}
@@ -461,7 +461,7 @@ function StatChip({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
 
 function LegendItem({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
       {children}
     </span>
   );

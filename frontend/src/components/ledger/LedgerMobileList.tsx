@@ -130,7 +130,7 @@ export function LedgerMobileList({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground shrink-0">{fmtDate(entry.date)}</span>
                 <span className={cn(
-                  'text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0',
+                  'text-[11px] font-medium px-1.5 py-0.5 rounded-full shrink-0',
                   ACCOUNT_COLORS[entry.account] || 'bg-muted text-foreground'
                 )}>
                   {getAccountLabel(entry.account)}

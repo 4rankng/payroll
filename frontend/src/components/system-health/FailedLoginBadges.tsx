@@ -56,10 +56,10 @@ function BadgeItem({
       <span className="font-medium text-foreground truncate max-w-[200px]">
         {summary.identifier}
       </span>
-      <Badge variant={variant} className="text-[10px] tabular-nums ml-1 shrink-0">
+      <Badge variant={variant} className="text-[11px] tabular-nums ml-1 shrink-0">
         {summary.count}×
       </Badge>
-      <span className="text-[10px] text-muted-foreground ml-1 shrink-0">
+      <span className="text-[11px] text-muted-foreground ml-1 shrink-0">
         {formatLastSeen(summary.last_seen)}
       </span>
     </button>

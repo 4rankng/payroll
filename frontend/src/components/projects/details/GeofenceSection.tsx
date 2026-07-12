@@ -100,7 +100,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex items-center justify-between px-4 sm:px-6 py-2">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
           Vị trí check-in
         </p>
         {!adding && editingIndex === null && (
@@ -181,7 +181,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
         ) : (
           <div className="rounded-lg border overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_100px_100px_72px] gap-2 bg-muted/50 px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_100px_100px_72px] gap-2 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               <span>Tên cổng</span>
               <span>Vĩ độ</span>
               <span>Kinh độ</span>

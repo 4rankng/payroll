@@ -209,11 +209,11 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-emerald-50/80 rounded-xl px-3 py-2 border border-emerald-100">
-                        <p className="text-[10px] text-slate-400 mb-0.5">Đã ứng</p>
+                        <p className="text-[11px] text-slate-400 mb-0.5">Đã ứng</p>
                         <p className="text-xs font-bold text-emerald-600">{formatCurrency(info.completedAmount)}</p>
                       </div>
                       <div className="bg-amber-50/80 rounded-xl px-3 py-2 border border-amber-100">
-                        <p className="text-[10px] text-slate-400 mb-0.5">Đang chờ</p>
+                        <p className="text-[11px] text-slate-400 mb-0.5">Đang chờ</p>
                         <p className="text-xs font-bold text-amber-600">{formatCurrency(info.pendingAmount)}</p>
                       </div>
                     </div>

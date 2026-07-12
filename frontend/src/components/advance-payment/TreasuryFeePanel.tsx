@@ -55,7 +55,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             {/* Label */}
             <div className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-              <span className={cn("font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[9.5px]" : "text-[10.5px]")}>
+              <span className={cn("font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[11px]" : "text-[11px]")}>
                 Phí thu kỳ này
               </span>
             </div>
@@ -77,7 +77,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
           {/* Mini grid */}
           <div className={cn("grid grid-cols-2", compact ? "mt-3 gap-2" : "mt-4 gap-2.5")}>
             <div className={cn("rounded-lg border border-border/70 bg-muted/30", compact ? "p-2.5" : "p-3")}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {totalPaid} yêu cầu
               </div>
               <div className="mt-0.5 break-words font-financial text-sm font-medium leading-snug text-foreground tabular-nums">
@@ -85,7 +85,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
               </div>
             </div>
             <div className={cn("rounded-lg border border-border/70 bg-muted/30", compact ? "p-2.5" : "p-3")}>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {totalRequests} NV
               </div>
               <div className="mt-0.5 break-words font-financial text-sm font-medium leading-snug text-foreground tabular-nums">

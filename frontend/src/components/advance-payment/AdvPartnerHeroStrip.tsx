@@ -49,7 +49,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         </div>
       ) : (
         <div>
-          <div className={cn("flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[9.5px]" : "text-[10.5px]")}>
+          <div className={cn("flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[11px]" : "text-[11px]")}>
             <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
             Giải ngân kỳ này
           </div>

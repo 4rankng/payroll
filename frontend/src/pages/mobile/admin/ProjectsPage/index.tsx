@@ -145,7 +145,7 @@ const ProjectsPageMobile = () => {
         <Button variant="outline" size="icon" className="rounded-xl border-border bg-card shrink-0 relative" onClick={() => setFilterSheetOpen(true)} aria-label="Bộ lọc">
           <SlidersHorizontal className="h-4 w-4" />
           {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[11px] text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
           )}
         </Button>
       </div>

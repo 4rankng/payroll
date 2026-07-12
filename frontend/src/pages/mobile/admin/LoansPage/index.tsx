@@ -41,7 +41,7 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="min-w-0 break-all font-mono text-sm font-semibold text-primary">{loan.loan_code}</span>
         {loan.status && (
-          <Badge variant="outline" className={cn("min-h-6 shrink-0 border px-1.5 text-[10px]", statusConfig.className)}>
+          <Badge variant="outline" className={cn("min-h-6 shrink-0 border px-1.5 text-[11px]", statusConfig.className)}>
             {statusConfig.label}
           </Badge>
         )}
@@ -163,7 +163,7 @@ const LoansPageMobile = () => {
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-border bg-card shrink-0 min-w-[80px]">
               <span className="text-sm font-bold tabular-nums leading-none text-foreground">{stat.value}</span>
-              <span className="text-[10px] leading-none text-muted-foreground">{stat.label}</span>
+              <span className="text-[11px] leading-none text-muted-foreground">{stat.label}</span>
             </div>
           ))}
         </div>

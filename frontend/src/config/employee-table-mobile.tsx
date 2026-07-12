@@ -133,7 +133,7 @@ export const createEmployeeMobileConfig = (
             {projects[0].payment_schedule && (
               <Badge
                 variant="outline"
-                className={`text-[10px] px-1.5 py-0 h-4 shrink-0 mt-1 rounded-[4px] ${getPaymentScheduleBadgeClasses(projects[0].payment_schedule)}`}
+                className={`text-[11px] px-1.5 py-0 h-4 shrink-0 mt-1 rounded-[4px] ${getPaymentScheduleBadgeClasses(projects[0].payment_schedule)}`}
               >
                 {
                   VIETNAMESE_EMPLOYEE_LABELS.schedule[
@@ -154,7 +154,7 @@ export const createEmployeeMobileConfig = (
           {projects[0].payment_schedule && (
             <Badge
               variant="outline"
-              className={`text-[10px] px-1.5 py-0 h-4 shrink-0 mt-1 rounded-[2px] ${getPaymentScheduleBadgeClasses(projects[0].payment_schedule)}`}
+              className={`text-[11px] px-1.5 py-0 h-4 shrink-0 mt-1 rounded-[2px] ${getPaymentScheduleBadgeClasses(projects[0].payment_schedule)}`}
             >
               {
                 VIETNAMESE_EMPLOYEE_LABELS.schedule[

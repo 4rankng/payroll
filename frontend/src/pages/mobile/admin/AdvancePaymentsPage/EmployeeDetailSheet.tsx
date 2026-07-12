@@ -166,7 +166,7 @@ export function EmployeeDetailSheet({
                               </span>
                               <Badge
                                 variant="outline"
-                                className={`${getAdvancePaymentStatusColor(req.status)} text-[10px] px-1.5 py-0 h-4`}
+                                className={`${getAdvancePaymentStatusColor(req.status)} text-[11px] px-1.5 py-0 h-4`}
                               >
                                 {getVietnameseAdvancePaymentStatus(req.status)}
                               </Badge>

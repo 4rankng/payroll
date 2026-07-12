@@ -95,7 +95,7 @@ export function InfoCell({
 }) {
   return (
     <div className="flex flex-col gap-0.5 px-3 py-2.5">
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
       <span className={cn("text-sm font-semibold", mono && "font-mono", accent)}>
         {value ?? "-"}
       </span>

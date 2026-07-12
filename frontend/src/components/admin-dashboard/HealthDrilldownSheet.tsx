@@ -1055,11 +1055,11 @@ function FailedAttemptCard({
 
       <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-w-0">
-          <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">Khoảng cách</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase text-slate-400">Khoảng cách</p>
           <ContextualDistance row={row} />
         </div>
         <div className="min-w-0 border-t border-slate-200 pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
-          <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">Địa điểm</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase text-slate-400">Địa điểm</p>
           <p className="break-words text-sm font-semibold text-slate-950">
             {row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}
           </p>

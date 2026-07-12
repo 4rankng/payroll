@@ -23,12 +23,12 @@ function ProjectCell({ projects }: { projects: CurrentProject[] }) {
           <span className="font-mono text-xs font-medium text-foreground">{p.code}</span>
           <span className="text-xs text-muted-foreground">{p.name}</span>
           {p.payment_schedule && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+            <Badge variant="secondary" className="text-[11px] px-1.5 py-0 h-4 font-normal">
               {SCHEDULE_LABEL[p.payment_schedule] ?? p.payment_schedule}
             </Badge>
           )}
           {p.position && (
-            <span className="text-[10px] text-muted-foreground">• {p.position}</span>
+            <span className="text-[11px] text-muted-foreground">• {p.position}</span>
           )}
         </div>
       ))}
@@ -108,7 +108,7 @@ export const MissingBankDetailsSection = ({
                           {hasPending && (
                             <span
                               title={`${employee.timesheet_summary!.pending_timesheets} bảng công chờ duyệt`}
-                              className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-700 bg-orange-100 border border-orange-200 rounded px-1.5 py-0.5"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 bg-orange-100 border border-orange-200 rounded px-1.5 py-0.5"
                             >
                               <Clock className="h-2.5 w-2.5" />
                               {employee.timesheet_summary!.pending_timesheets} chờ duyệt

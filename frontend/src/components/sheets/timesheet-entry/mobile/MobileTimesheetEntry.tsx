@@ -415,7 +415,7 @@ export function MobileTimesheetEntry({
     <div className="border-b bg-background shadow-sm animate-in slide-in-from-top-2 duration-200">
       <div className="px-4 pt-3 pb-4 space-y-3">
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
             Dự án
           </p>
           <Select
@@ -439,7 +439,7 @@ export function MobileTimesheetEntry({
 
         {availableEmployees.length > 0 && (
           <div className="space-y-1">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
               Nhân viên
             </p>
             <Select
@@ -464,7 +464,7 @@ export function MobileTimesheetEntry({
         )}
 
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
             Khoảng thời gian
           </p>
           <DateRangePicker
@@ -839,7 +839,7 @@ export function MobileTimesheetEntry({
           <SlidersHorizontal className="h-3.5 w-3.5" />
           <span className="text-xs">Bộ lọc</span>
           {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-white text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-white text-[11px] font-bold flex items-center justify-center">
               {activeFilterCount}
             </span>
           )}

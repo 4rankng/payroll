@@ -335,7 +335,7 @@ export default function PayrateEditPageMobile() {
                       sf?.effective_to.status === 'error' && 'text-red-600',
                     )}>
                       Đến ngày
-                      <span className="text-[10px] font-normal opacity-70">(tuỳ chọn)</span>
+                      <span className="text-[11px] font-normal opacity-70">(tuỳ chọn)</span>
                     </Label>
                     <Input
                       ref={toDateRef}

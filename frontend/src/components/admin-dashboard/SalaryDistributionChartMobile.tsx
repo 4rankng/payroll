@@ -100,8 +100,8 @@ function MobileCycleSection({ section }: { section: CycleSection }) {
         <div className="w-full" style={{ height: chartData.length * 36 + 24, minWidth: 1 }}>
           <ResponsiveContainer width="100%" height={chartData.length * 36 + 24} minWidth={0}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 32, left: 4, bottom: 0 }} barSize={18}>
-              <XAxis type="number" domain={[0, maxCount]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickCount={4} />
-              <YAxis type="category" dataKey="label" width={90} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', width: 90 }} tickLine={false} axisLine={false} />
+              <XAxis type="number" domain={[0, maxCount]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickCount={4} />
+              <YAxis type="category" dataKey="label" width={90} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', width: 90 }} tickLine={false} axisLine={false} />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
                 contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '11px', padding: '6px 10px' }}

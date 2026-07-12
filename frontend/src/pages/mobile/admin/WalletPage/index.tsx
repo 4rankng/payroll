@@ -118,12 +118,12 @@ export default function WalletPageMobile() {
             <TrendingDown className="h-4 w-4 text-amber-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400">Đang chi trả</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">Đang chi trả</p>
             <p className="font-financial text-base font-bold tabular-nums text-slate-100 leading-tight">
               {balance ? formatVND(balance.pending_out) : '—'}
             </p>
           </div>
-          <span className="text-[10.5px] text-slate-500 leading-tight text-right max-w-[7rem]">
+          <span className="text-[11px] text-slate-500 leading-tight text-right max-w-[7rem]">
             Chuyển khoản đang xử lý
           </span>
         </div>
@@ -157,15 +157,15 @@ export default function WalletPageMobile() {
             <AlertDialogDescription className="text-xs space-y-2">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div className="rounded-md bg-slate-50 p-2">
-                  <p className="text-[10px] text-slate-500">Nhà cung cấp</p>
+                  <p className="text-[11px] text-slate-500">Nhà cung cấp</p>
                   <p className="font-semibold tabular-nums text-slate-900">{formatVND(mismatch?.provider ?? 0)}</p>
                 </div>
                 <div className="rounded-md bg-slate-50 p-2">
-                  <p className="text-[10px] text-slate-500">Hệ thống</p>
+                  <p className="text-[11px] text-slate-500">Hệ thống</p>
                   <p className="font-semibold tabular-nums text-slate-900">{formatVND(mismatch?.local ?? 0)}</p>
                 </div>
                 <div className={`rounded-md p-2 ${diff > 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-                  <p className="text-[10px] text-slate-500">Chênh lệch</p>
+                  <p className="text-[11px] text-slate-500">Chênh lệch</p>
                   <p className={`font-semibold tabular-nums ${diff > 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                     {diff > 0 ? '+' : ''}{formatVND(diff)}
                   </p>

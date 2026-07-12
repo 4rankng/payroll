@@ -83,7 +83,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
           )}
           {badge && (
             <span className={cn(
-              'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap',
+              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
               BADGE_STYLES[badge.variant],
             )}>
               {badge.label}
@@ -188,7 +188,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
                 )}
                 {badge && (
                   <span className={cn(
-                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap',
+                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap',
                     BADGE_STYLES[badge.variant],
                   )}>
                     {badge.label}

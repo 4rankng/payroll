@@ -53,14 +53,14 @@ const MiniTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!sorted.length) return null;
   return (
     <div className="bg-card border border-border/60 rounded-xl p-2 shadow-sm max-w-[200px]">
-      <p className="text-muted-foreground mb-1" style={{ fontSize: 10 }}>Lũy kế đến {label && typeof label === 'string' && label.includes('-') ? formatTooltipDate(label) : label}</p>
+      <p className="text-muted-foreground mb-1" style={{ fontSize: 11 }}>Lũy kế đến {label && typeof label === 'string' && label.includes('-') ? formatTooltipDate(label) : label}</p>
       {sorted.map((e, i) => (
         <div key={i} className="flex items-center justify-between gap-1.5 mb-0.5">
           <div className="flex items-center gap-1 min-w-0">
             <span className="rounded-full flex-shrink-0" style={{ width: 5, height: 5, backgroundColor: e.color }} />
-            <span className="truncate text-foreground" style={{ fontSize: 10 }}>{e.name}</span>
+            <span className="truncate text-foreground" style={{ fontSize: 11 }}>{e.name}</span>
           </div>
-          <span className="font-semibold tabular-nums flex-shrink-0" style={{ fontSize: 10, color: e.color }}>{fmtVND(e.value)}</span>
+          <span className="font-semibold tabular-nums flex-shrink-0" style={{ fontSize: 11, color: e.color }}>{fmtVND(e.value)}</span>
         </div>
       ))}
     </div>
@@ -75,7 +75,7 @@ const Chip = memo(({ label, color, active, onPress }: ChipProps) => (
   <button
     onClick={onPress}
     className="flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition-opacity active:scale-95"
-    style={{ opacity: active ? 1 : 0.3, fontSize: 10, lineHeight: '16px', padding: '1px 5px' }}
+    style={{ opacity: active ? 1 : 0.3, fontSize: 11, lineHeight: '16px', padding: '1px 5px' }}
   >
     <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, backgroundColor: color }} />
     <span style={{ color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', fontWeight: active ? 600 : 400 }}>
@@ -95,7 +95,7 @@ const RankRow = memo(({ item, idx }: { item: ProjectProfitabilityItem; idx: numb
       <td className="py-2 pl-4 pr-2 text-muted-foreground tabular-nums" style={{ fontSize: 11, width: 28 }}>{idx + 1}</td>
       <td className="py-2 px-2" style={{ fontSize: 11 }}>
         <p className="font-semibold text-foreground leading-tight truncate" style={{ maxWidth: 110 }}>{item.project_name}</p>
-        <p className="text-muted-foreground leading-tight truncate" style={{ fontSize: 10, maxWidth: 110 }}>{item.client_name}</p>
+        <p className="text-muted-foreground leading-tight truncate" style={{ fontSize: 11, maxWidth: 110 }}>{item.client_name}</p>
       </td>
       <td className="py-2 px-2 text-right tabular-nums text-muted-foreground" style={{ fontSize: 11 }}>
         {fmtVND(item.total_payout_vnd)}
@@ -165,7 +165,7 @@ export const ProjectProfitabilityMobile = memo(() => {
         <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/40">
           <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Lợi Nhuận Tuần</span>
-          <span className="text-muted-foreground ml-auto" style={{ fontSize: 10 }}>Lũy kế 84 ngày gần nhất</span>
+          <span className="text-muted-foreground ml-auto" style={{ fontSize: 11 }}>Lũy kế 84 ngày gần nhất</span>
         </div>
 
         {/* legend chips */}
@@ -217,7 +217,7 @@ export const ProjectProfitabilityMobile = memo(() => {
         <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/40">
           <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Xếp Hạng Lợi Nhuận</span>
-          <span className="text-muted-foreground ml-auto" style={{ fontSize: 10 }}>12 tháng gần nhất</span>
+          <span className="text-muted-foreground ml-auto" style={{ fontSize: 11 }}>12 tháng gần nhất</span>
         </div>
 
         {tableLoading ? (
@@ -231,11 +231,11 @@ export const ProjectProfitabilityMobile = memo(() => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="py-1.5 pl-4 pr-2 text-left text-muted-foreground font-medium" style={{ fontSize: 10 }}>#</th>
-                  <th className="py-1.5 px-2 text-left text-muted-foreground font-medium" style={{ fontSize: 10 }}>Dự án</th>
-                  <th className="py-1.5 px-2 text-right text-muted-foreground font-medium" style={{ fontSize: 10 }}>Đã trả NV</th>
-                  <th className="py-1.5 px-2 text-right text-muted-foreground font-medium" style={{ fontSize: 10 }}>Doanh thu</th>
-                  <th className="py-1.5 pl-2 pr-4 text-right text-muted-foreground font-medium" style={{ fontSize: 10 }}>Lợi nhuận</th>
+                  <th className="py-1.5 pl-4 pr-2 text-left text-muted-foreground font-medium" style={{ fontSize: 11 }}>#</th>
+                  <th className="py-1.5 px-2 text-left text-muted-foreground font-medium" style={{ fontSize: 11 }}>Dự án</th>
+                  <th className="py-1.5 px-2 text-right text-muted-foreground font-medium" style={{ fontSize: 11 }}>Đã trả NV</th>
+                  <th className="py-1.5 px-2 text-right text-muted-foreground font-medium" style={{ fontSize: 11 }}>Doanh thu</th>
+                  <th className="py-1.5 pl-2 pr-4 text-right text-muted-foreground font-medium" style={{ fontSize: 11 }}>Lợi nhuận</th>
                 </tr>
               </thead>
               <tbody>

@@ -275,7 +275,7 @@ const EmployeesPageMobile = () => {
                     {stat.value.toLocaleString("vi-VN")}
                   </span>
                   <span
-                    className={`text-[10px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
+                    className={`text-[11px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
                   >
                     {stat.label}
                   </span>
@@ -308,7 +308,7 @@ const EmployeesPageMobile = () => {
         >
           <SlidersHorizontal className="h-4 w-4" />
           {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-white flex items-center justify-center font-bold">
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[11px] text-white flex items-center justify-center font-bold">
               {activeFilterCount}
             </span>
           )}

@@ -97,14 +97,14 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <Badge
                           variant={err.status_code >= 500 ? "destructive" : "outline"}
-                          className="text-[10px] font-mono px-1.5 py-0 h-5"
+                          className="text-[11px] font-mono px-1.5 py-0 h-5"
                         >
                           {err.status_code}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
                           {relativeTime(err.called_at)}
                         </span>
-                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                        <span className="text-[11px] text-muted-foreground tabular-nums">
                           {err.duration_ms.toLocaleString()}ms
                         </span>
                       </div>

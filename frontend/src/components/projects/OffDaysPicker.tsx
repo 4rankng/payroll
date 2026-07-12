@@ -51,7 +51,7 @@ export function OffDaysPicker({ value, onChange, disabled }: OffDaysPickerProps)
           );
         })}
       </div>
-      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
           Ngày thường

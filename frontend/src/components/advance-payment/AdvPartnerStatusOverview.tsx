@@ -205,7 +205,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                     {/* Label row with small inline icon prefix */}
                     <div className="flex items-center gap-1.5">
                       <cell.icon className={cn("h-3 w-3 shrink-0", cell.iconText)} strokeWidth={2.2} />
-                      <span className="text-[10px] font-semibold uppercase leading-tight tracking-[0.06em] text-muted-foreground">
+                      <span className="text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-muted-foreground">
                         {cell.label}
                       </span>
                     </div>

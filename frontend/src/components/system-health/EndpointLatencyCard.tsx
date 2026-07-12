@@ -19,7 +19,7 @@ export function EndpointLatencyCard({ endpoint }: Props) {
         {parsed ? (
           <>
             <span className={cn(
-              "shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded leading-none",
+              "shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded leading-none",
               METHOD_COLORS[parsed.method] ?? "bg-muted text-muted-foreground",
             )}>
               {parsed.method}

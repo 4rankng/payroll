@@ -145,7 +145,7 @@ export default function AuditLogPageMobile() {
             <Filter className="h-3.5 w-3.5" />
             Lọc
             {activeCount > 0 && (
-              <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
+              <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[11px] text-primary-foreground">
                 {activeCount}
               </Badge>
             )}

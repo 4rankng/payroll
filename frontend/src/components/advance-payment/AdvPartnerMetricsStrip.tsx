@@ -89,7 +89,7 @@ function MetricCard({
         {/* Label */}
         <div className="flex items-center gap-1.5">
           <Icon className={cn("h-3.5 w-3.5 shrink-0", iconText)} strokeWidth={2.2} />
-          <span className="text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground/80">
+          <span className="text-[11px] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground/80">
             {label}
           </span>
         </div>
@@ -140,7 +140,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         watermark="text-emerald-500/15"
         footer={
           <>
-            <span className="rounded bg-muted px-1.5 py-px font-financial text-[10px] font-medium text-foreground/70">
+            <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium text-foreground/70">
               {totalPaid}/{effectiveTotal} HT
             </span>
             <span>{totalCancelled} hủy</span>
@@ -157,7 +157,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         watermark="text-amber-500/15"
         footer={
           <>
-            <span className="rounded bg-muted px-1.5 py-px font-financial text-[10px] font-medium text-foreground/70">
+            <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium text-foreground/70">
               {completedUnder30s}/{totalPaid} &lt;30s
             </span>
             <span className="whitespace-nowrap">{completedUnder30s < totalPaid ? "Cần tối ưu" : "Tốt"}</span>
@@ -174,7 +174,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         watermark="text-violet-500/15"
         footer={
           <>
-            <span className="whitespace-nowrap rounded bg-muted px-1.5 py-px font-financial text-[10px] font-medium text-foreground/70">
+            <span className="whitespace-nowrap rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium text-foreground/70">
               / yêu cầu
             </span>
             <span className="whitespace-nowrap">{feePercentage.toFixed(1)}% GN</span>

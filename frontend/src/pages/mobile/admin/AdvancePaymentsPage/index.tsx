@@ -77,7 +77,7 @@ function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
             {row.project_name || "—"}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
           {statusLabel}
         </span>
       </div>
@@ -94,7 +94,7 @@ function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
 function AttendanceMetric({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="min-w-0 rounded-lg bg-muted/45 px-2.5 py-2">
-      <p className="text-[10px] font-medium text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
       <p className={cn("mt-0.5 break-words tabular-nums", strong ? "font-financial font-semibold text-foreground" : "font-medium text-foreground")}>
         {value}
       </p>
@@ -347,7 +347,7 @@ const AdvancePaymentsPageMobile = () => {
       <MobileSurface className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
               Yêu cầu
             </p>
             <h2 className="text-[15px] font-bold leading-tight text-slate-900">
@@ -398,7 +398,7 @@ const AdvancePaymentsPageMobile = () => {
         <MobileSurface className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                 Chấm công
               </p>
               <h2 className="text-[15px] font-bold leading-tight text-slate-900">

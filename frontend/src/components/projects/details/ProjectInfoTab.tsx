@@ -44,7 +44,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
     <div className="p-4 space-y-4">
       {/* Basic Info */}
       <section>
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Thông tin cơ bản</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Thông tin cơ bản</p>
         <div className="bg-muted/30 rounded-xl px-3 py-1">
           <Field label="Tên dự án" value={project.name || '-'} />
           <Field label="Mã dự án" value={project.code || '-'} mono />
@@ -58,7 +58,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
 
       {/* Time */}
       <section>
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Thời gian</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Thời gian</p>
         <div className="bg-muted/30 rounded-xl px-3 py-1">
           <Field label="Ngày bắt đầu" value={formatDateForDisplay(project.start_date)} />
           <Field label="Ngày kết thúc" value={formatDateForDisplay(project.end_date)} />
@@ -74,7 +74,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
       {/* Salary Period + Off Days side by side on sm+, stacked on mobile */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Kỳ lương tháng</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Kỳ lương tháng</p>
           <div className="bg-muted/30 rounded-xl px-3 py-1">
             <Field
               label="Bắt đầu"
@@ -88,7 +88,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
         </div>
 
         <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Ngày nghỉ tuần</p>
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Ngày nghỉ tuần</p>
           <div className="bg-muted/30 rounded-xl px-3 py-2">
             {offDays === 0 ? (
               <p className="text-xs text-muted-foreground">Không có</p>
@@ -98,7 +98,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                   {DAY_LABELS.map((label, bit) => (
                     <span
                       key={bit}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                      className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${
                         isOffDay(offDays, bit)
                           ? 'bg-red-100 text-red-600 border-red-400'
                           : 'bg-emerald-50 text-emerald-700 border-emerald-300'
@@ -108,7 +108,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                     </span>
                   ))}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
                     Ngày thường

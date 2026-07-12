@@ -177,7 +177,7 @@ export function LedgerFiltersMobile({
               <Filter className="h-4 w-4" />
               Lọc
               {activeFilterCount > 0 && (
-                <Badge className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 text-[10px] flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 text-[11px] flex items-center justify-center rounded-full">
                   {activeFilterCount}
                 </Badge>
               )}

@@ -268,12 +268,12 @@ const LegendItem = memo(function LegendItem({ slice, isTop }: { slice: BankSlice
         />
         <span className="text-xs text-foreground truncate">{slice.name}</span>
         {isTop && (slice.transfers ?? 0) > 0 && (
-          <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+          <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
             {slice.transfers!.toLocaleString('vi-VN')} lần
           </span>
         )}
         {isTop && (slice.totalPaid ?? 0) > 0 && (
-          <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+          <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
             / {formatVND(slice.totalPaid!)}
           </span>
         )}

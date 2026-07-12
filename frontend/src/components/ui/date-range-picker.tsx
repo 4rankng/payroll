@@ -371,7 +371,7 @@ export function DateRangePicker({
       />
       <span className={cn(
         "select-none text-muted-foreground/40",
-        variant === "compact" ? "text-[10px]" : "text-xs"
+        variant === "compact" ? "text-[11px]" : "text-xs"
       )}>–</span>
       <SinglePicker
         selected={endDate ? parseStringToDate(endDate) : null}

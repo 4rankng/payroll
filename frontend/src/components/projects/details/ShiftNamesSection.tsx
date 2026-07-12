@@ -81,7 +81,7 @@ export function ShiftNamesSection({ project }: ShiftNamesSectionProps) {
     return (
       <div className="border-t pt-2 pb-4">
         <div className="px-4 sm:px-6 py-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
             Tên ca làm việc
           </p>
         </div>
@@ -123,7 +123,7 @@ export function ShiftNamesSection({ project }: ShiftNamesSectionProps) {
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex items-center justify-between px-4 sm:px-6 py-2">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
           Tên ca làm việc
         </p>
         {!editing && (
@@ -144,7 +144,7 @@ export function ShiftNamesSection({ project }: ShiftNamesSectionProps) {
         </p>
 
         <div className="rounded-lg border overflow-hidden">
-          <div className="grid grid-cols-[120px_1fr] gap-2 bg-muted/50 px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="grid grid-cols-[120px_1fr] gap-2 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             <span>Khung giờ</span>
             <span>Tên hiển thị</span>
           </div>
@@ -160,7 +160,7 @@ export function ShiftNamesSection({ project }: ShiftNamesSectionProps) {
                   <span className="font-mono text-[11px] text-muted-foreground truncate">{range}</span>
                   {overnight && (
                     <span
-                      className="inline-flex items-center gap-0.5 rounded bg-indigo-50 px-1 py-0.5 text-[9px] font-medium text-indigo-600 shrink-0"
+                      className="inline-flex items-center gap-0.5 rounded bg-indigo-50 px-1 py-0.5 text-[11px] font-medium text-indigo-600 shrink-0"
                       title="Ca qua đêm"
                     >
                       <Moon className="h-2.5 w-2.5" />

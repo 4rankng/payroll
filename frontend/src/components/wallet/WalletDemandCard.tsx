@@ -30,7 +30,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
       <div className="relative">
         <div className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_3px_rgba(8,120,62,0.16)]" />
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-primary">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
             Mức cần giữ trong ví
           </span>
         </div>
@@ -56,7 +56,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p
-                    className={`text-[10px] font-semibold uppercase tracking-wider ${
+                    className={`text-[11px] font-semibold uppercase tracking-wider ${
                       needsTopUp ? 'text-rose-700' : 'text-emerald-700'
                     }`}
                   >
@@ -71,7 +71,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
                   </p>
                 </div>
                 <span
-                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10.5px] font-semibold ${
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${
                     needsTopUp ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
                   }`}
                 >

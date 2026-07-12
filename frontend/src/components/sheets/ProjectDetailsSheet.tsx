@@ -302,7 +302,7 @@ function ProjectDetailsSheet({
           {/* ── Info section ── */}
           <div className="pb-2">
             <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Thông tin dự án
               </p>
               {canEditProject && (
@@ -323,7 +323,7 @@ function ProjectDetailsSheet({
           {/* ── Employees section ── */}
           <div className="border-t pt-2 pb-4">
             <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Nhân viên ({activeEmployeesCount})
               </p>
               {canManageEmployees && (
@@ -375,7 +375,7 @@ function ProjectDetailsSheet({
           {canManageProjectAccess && (
             <div className="border-t pt-2 pb-4">
               <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Phân quyền
                 </p>
               </div>
@@ -389,7 +389,7 @@ function ProjectDetailsSheet({
           {canDeleteProject && (
             <div className="border-t pt-2 pb-4 px-4 sm:px-6">
               <div className="py-2 mb-2">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Vùng nguy hiểm
                 </p>
               </div>

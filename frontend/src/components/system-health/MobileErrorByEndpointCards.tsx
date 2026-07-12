@@ -81,7 +81,7 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
                 <Badge
                   key={code}
                   variant={code >= 500 ? "destructive" : "outline"}
-                  className="text-[10px] px-1.5 py-0 h-5 font-mono"
+                  className="text-[11px] px-1.5 py-0 h-5 font-mono"
                 >
                   {code} ×{count}
                 </Badge>

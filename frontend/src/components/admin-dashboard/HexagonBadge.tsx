@@ -49,7 +49,7 @@ export function HexagonBadge({ label, value, accent, ariaLabel }: HexagonBadgePr
         <p className={cn('break-words text-xs font-bold tabular-nums leading-tight', a.text)}>
           {value}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight text-muted-foreground">
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground">
           {label}
         </p>
       </div>

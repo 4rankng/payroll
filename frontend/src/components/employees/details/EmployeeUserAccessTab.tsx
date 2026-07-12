@@ -204,13 +204,13 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
                         {employeeUser.user_fullname}
                       </span>
                       {employeeUser.user_id === employee.created_by && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                           Người tạo
                         </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">{employeeUser.user_email}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       Cấp quyền: {format(new Date(employeeUser.granted_at), 'dd/MM/yyyy')}
                     </p>
                   </div>

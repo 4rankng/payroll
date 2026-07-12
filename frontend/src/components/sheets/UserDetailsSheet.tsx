@@ -207,18 +207,18 @@ function UserDetailsSheet({
               {/* Timestamps */}
               <div className="grid grid-cols-1 rounded-xl border bg-card min-[380px]:grid-cols-2 min-[380px]:divide-x min-[380px]:divide-border/50">
                 <div className="flex flex-col gap-0.5 px-3 py-2.5 border-b border-border/50 min-[380px]:border-b-0">
-                  <span className="text-[10px] text-muted-foreground">Ngày tạo</span>
+                  <span className="text-[11px] text-muted-foreground">Ngày tạo</span>
                   <span className="text-sm font-semibold">{format(new Date(user.created_at), 'dd/MM/yyyy')}</span>
                 </div>
                 <div className="flex flex-col gap-0.5 px-3 py-2.5">
-                  <span className="text-[10px] text-muted-foreground">Cập nhật cuối</span>
+                  <span className="text-[11px] text-muted-foreground">Cập nhật cuối</span>
                   <span className="text-sm font-semibold">{format(new Date(user.updated_at), 'dd/MM/yyyy')}</span>
                 </div>
               </div>
 
               {/* Activity summary */}
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Hoạt động (30 ngày)</p>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Hoạt động (30 ngày)</p>
                 {activityLoading ? (
                   <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -230,7 +230,7 @@ function UserDetailsSheet({
                     <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
                       <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Đăng nhập cuối</p>
+                        <p className="text-[11px] text-muted-foreground leading-none mb-0.5">Đăng nhập cuối</p>
                         <p className="text-sm font-bold break-words">
                           {activityData?.authentication?.last_login
                             ? formatDistanceToNow(new Date(activityData.authentication.last_login), { addSuffix: true, locale: vi })
@@ -241,14 +241,14 @@ function UserDetailsSheet({
                     <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
                       <Activity className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Đăng nhập</p>
+                        <p className="text-[11px] text-muted-foreground leading-none mb-0.5">Đăng nhập</p>
                         <p className="text-sm font-bold text-blue-600">{activityData?.authentication?.total_logins ?? 0}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
                       <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-[10px] text-muted-foreground leading-none mb-0.5">Công</p>
+                        <p className="text-[11px] text-muted-foreground leading-none mb-0.5">Công</p>
                         <p className="text-sm font-bold">{activityData?.payroll_operations?.timesheets_managed ?? 0}</p>
                       </div>
                     </div>

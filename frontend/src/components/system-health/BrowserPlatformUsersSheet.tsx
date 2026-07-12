@@ -41,7 +41,7 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
     <div className="rounded-lg border bg-card p-3 space-y-2">
       {/* Header: rank + name + role */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">
+        <span className="text-[11px] font-mono text-muted-foreground/60 shrink-0">
           #{index + 1}
         </span>
         <span className="text-sm font-semibold text-foreground truncate flex-1 min-w-0">
@@ -49,7 +49,7 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
         </span>
         <Badge
           variant={ROLE_VARIANTS[user.role] ?? "secondary"}
-          className="text-[10px] shrink-0"
+          className="text-[11px] shrink-0"
         >
           {ROLE_LABELS[user.role] ?? user.role}
         </Badge>

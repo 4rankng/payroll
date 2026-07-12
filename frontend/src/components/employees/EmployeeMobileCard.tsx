@@ -105,7 +105,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
               <Badge
                 variant="outline"
                 className={cn(
-                  "text-[10px] h-4 px-1.5 shrink-0 border ml-auto",
+                  "text-[11px] h-4 px-1.5 shrink-0 border ml-auto",
                   getPaymentScheduleBadgeConfig(paymentSchedule).className,
                 )}
               >
