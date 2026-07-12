@@ -65,7 +65,6 @@ function safeFormatTime(time: string | undefined | null, fallback = "--:--"): st
 interface EmployeeCheckInCardProps {
   className?: string;
   checkInTarget?: CheckInTarget | null;
-  checkInGeofenceRadiusMeters?: number | null;
   /** Advisory shift window (from the profile DTO). Null/absent = no timing gate. */
   shiftStart?: string;
   shiftEnd?: string;
@@ -185,7 +184,6 @@ function createOutsideGeofenceLocationIssue(): LocationPermissionIssue {
 export function EmployeeCheckInCard({
   className,
   checkInTarget,
-  checkInGeofenceRadiusMeters,
   shiftStart,
   shiftEnd,
   checkInWindowStart,
@@ -239,7 +237,7 @@ export function EmployeeCheckInCard({
   // submitted instantly, instead of the tap cold-starting a 25-30s acquisition
   // that times out before the phone's first GNSS fix — the dominant on-site check-
   // in failure. (The old canPreviewCheckLocation gate toggled off during isLocating,
-  // which defeated warm reuse.) effectiveRadius keeps the legacy prop fallback.
+  // which defeated warm reuse.)
   // Deliberately NOT gated on `isLoading`: the card's isLoading early-return only
   // swaps in a skeleton, but this hook still runs (hooks run before any return),
   // so letting the watch warm during the brief load makes the first actionable
@@ -248,18 +246,9 @@ export function EmployeeCheckInCard({
   const locationEnabled =
     Boolean(checkInTarget) &&
     (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
-  const effectiveRadius =
-    (typeof checkInTarget?.radius_meters === "number" && checkInTarget.radius_meters > 0
-      ? checkInTarget.radius_meters
-      : null) ??
-    (typeof checkInGeofenceRadiusMeters === "number" && checkInGeofenceRadiusMeters > 0
-      ? checkInGeofenceRadiusMeters
-      : null) ??
-    undefined;
   const location = useContinuousLocation({
     target: checkInTarget,
     enabled: locationEnabled,
-    requiredAccuracyMeters: effectiveRadius,
   });
   // Aliases so the existing JSX (converging-accuracy banner, map preview) reads the
   // continuous watch's reactive state unchanged.
@@ -441,14 +430,14 @@ export function EmployeeCheckInCard({
       return;
     }
 
-    // Cold path: submit the first fresh device fix to the backend even when the
-    // client-side guidance says "outside". The server is the geofence authority
-    // and records validation failures in attendance_failed_attempts; waiting for
-    // an "inside" sample here would leave outside-geofence taps stuck client-side
-    // with no backend audit row.
+    // Cold path: submit the first fresh sub-50m device fix to the backend even
+    // when the client-side guidance says "outside". The server is the geofence
+    // authority and records validation failures in attendance_failed_attempts;
+    // waiting for an "inside" sample here would leave outside-geofence taps
+    // stuck client-side with no backend audit row.
     setIsLocating(true);
     try {
-      const sample = await location.awaitFreshSample();
+      const sample = await location.awaitAccurateSample();
       await submit(sample);
     } catch (error: unknown) {
       await onActionError(error, type, options);
@@ -784,7 +773,7 @@ export function EmployeeCheckInCard({
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
                 <p className="employee-type-label-caps font-semibold text-sky-700">Cần</p>
                 <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
-                  {"<="}
+                  {"<"}
                   {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
                 </p>
               </div>

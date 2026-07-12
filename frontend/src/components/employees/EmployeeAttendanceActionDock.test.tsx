@@ -16,7 +16,10 @@ describe("EmployeeAttendanceActionDock", () => {
       />
     );
 
-    expect(screen.getByRole("toolbar", { name: "Hành động nhân viên" })).toBeInTheDocument();
+    const toolbar = screen.getByRole("toolbar", { name: "Hành động nhân viên" });
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar).toHaveClass("employee-attendance-action-dock");
+    expect(toolbar).not.toHaveClass("lg:hidden");
     const advanceButton = screen.getByRole("button", { name: "Ứng lương" });
     const attendanceButton = screen.getByRole("button", { name: "Tan ca" });
     expect(advanceButton).toHaveClass("h-11");

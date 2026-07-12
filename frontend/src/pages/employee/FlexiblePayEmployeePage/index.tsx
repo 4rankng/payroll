@@ -215,7 +215,7 @@ const FlexiblePayEmployeePage = () => {
         onLogout={handleLogout}
         contentClassName={
           profile?.check_in_enabled
-            ? "max-w-lg space-y-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-6"
+            ? "max-w-lg space-y-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
             : "max-w-lg space-y-6"
         }
       >
@@ -273,7 +273,6 @@ const FlexiblePayEmployeePage = () => {
           <section id="employee-check-in" className="scroll-mt-24">
             <EmployeeCheckInCard
               checkInTarget={profile.check_in_target}
-              checkInGeofenceRadiusMeters={profile.check_in_geofence_radius_meters}
               shiftStart={profile.shift_start}
               shiftEnd={profile.shift_end}
               checkInWindowStart={profile.check_in_window_start}

@@ -43,7 +43,7 @@ export function EmployeeAttendanceActionDock({
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white lg:hidden"
+      className="employee-attendance-action-dock fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       role="toolbar"
       aria-label="Hành động nhân viên"

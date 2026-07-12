@@ -427,7 +427,7 @@ export function createGeolocationError(code: number, message: string): Geolocati
  *  freshMaxAgeMs: the continuous watch exposes the LATEST fresh sample (current
  *  position), so a tighter window keeps the submit candidate honest about where
  *  the worker is now. */
-const DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS = 15000;
+export const CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS = 15000;
 
 export interface ContinuousLocationHandle {
   /** Stop the underlying watchPosition. Idempotent. */
@@ -471,7 +471,7 @@ export function isSampleFresh(
 export function watchContinuousLocation(
   options?: WatchContinuousLocationOptions
 ): ContinuousLocationHandle {
-  const freshMaxAgeMs = options?.freshMaxAgeMs ?? DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS;
+  const freshMaxAgeMs = options?.freshMaxAgeMs ?? CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS;
   const requiredAccuracyMeters =
     options?.requiredAccuracyMeters ?? DEFAULT_LOCATION_ACQUISITION_OPTIONS.requiredAccuracyMeters;
   const excellentAccuracyMeters =
@@ -531,7 +531,7 @@ export function watchContinuousLocation(
       },
       {
         enableHighAccuracy: true,
-        maximumAge: DEFAULT_CONTINUOUS_FRESH_MAX_AGE_MS,
+        maximumAge: CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS,
       }
     );
   } catch {

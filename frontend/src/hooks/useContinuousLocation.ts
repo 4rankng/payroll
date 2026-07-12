@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import { getCheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
 import {
+  CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS,
   createInaccurateGeolocationError,
+  isSampleFresh,
   watchContinuousLocation,
   type ContinuousLocationHandle,
   type LocationAcquisitionProgress,
@@ -16,8 +18,6 @@ export interface UseContinuousLocationOptions {
    *  running while enabled, INCLUDING during a tap's submit-await — that is what
    *  makes the tap instant. */
   enabled: boolean;
-  /** Optional override for the accuracy threshold used only for status display. */
-  requiredAccuracyMeters?: number;
   /** Hard cap for awaitSubmitReady. Default 30s (matches the cold-acquire budget). */
   submitTimeoutMs?: number;
 }
@@ -28,9 +28,9 @@ export interface UseContinuousLocationResult {
   sample: LocationSample | null;
   /** Rolling acquisition progress for the converging-accuracy UX. */
   progress: LocationAcquisitionProgress | null;
-  /** True iff `sample` is non-null AND its guidance against the target gate is
-   *  "inside" (dist + accuracy <= radius) — mirrors the backend validateGeofence
-   *  certain-path. A warm tap with this true submits instantly. */
+  /** True iff `sample` is fresh, below 50m accuracy, and its guidance against
+   *  the target gate is "inside" (dist + accuracy <= radius). A warm tap with
+   *  this true submits instantly. */
   isSubmitReady: boolean;
   /** True while the underlying watchPosition is active. */
   isWatching: boolean;
@@ -41,14 +41,16 @@ export interface UseContinuousLocationResult {
   /** Resolve with a submit-ready sample, or reject with a geolocation error on
    *  timeout / fatal error / abort. */
   awaitSubmitReady: (timeoutMs?: number) => Promise<LocationSample>;
-  /** Resolve with the next fresh GPS sample, regardless of geofence status. */
-  awaitFreshSample: (timeoutMs?: number) => Promise<LocationSample>;
+  /** Resolve with the next fresh GPS sample below 50m accuracy, regardless of
+   *  geofence status. The server remains the geofence authority. */
+  awaitAccurateSample: (timeoutMs?: number) => Promise<LocationSample>;
   /** Clear state and restart the watch (recovery CTA, or after OS settings change). */
   retry: () => void;
 }
 
 const DEFAULT_SUBMIT_TIMEOUT_MS = 30000;
 const PERMISSION_DENIED = 1;
+const WATCH_STOP_ACCURACY_METERS = 50;
 
 /**
  * Marks a submit-wait as cancelled (watch paused/restarted, component going
@@ -84,13 +86,14 @@ interface PendingAwaiter {
 export function useContinuousLocation({
   target,
   enabled,
-  requiredAccuracyMeters,
   submitTimeoutMs = DEFAULT_SUBMIT_TIMEOUT_MS,
 }: UseContinuousLocationOptions): UseContinuousLocationResult {
   const [sample, setSample] = useState<LocationSample | null>(null);
   const [progress, setProgress] = useState<LocationAcquisitionProgress | null>(null);
   const [fatalError, setFatalError] = useState<GeolocationPositionError | null>(null);
   const [isWatching, setIsWatching] = useState(false);
+  const [watchPausedForAccuracy, setWatchPausedForAccuracy] = useState(false);
+  const [, setSampleFreshnessEpoch] = useState(0);
   // Bump to force a clean watch restart (retry, or visibility return).
   const [restartEpoch, setRestartEpoch] = useState(0);
   const [visible, setVisible] = useState(
@@ -103,20 +106,38 @@ export function useContinuousLocation({
   const progressRef = useRef<LocationAcquisitionProgress | null>(null);
   const fatalErrorRef = useRef<GeolocationPositionError | null>(null);
   const isSubmitReadyRef = useRef(false);
+  const isWatchingRef = useRef(false);
+  const retainSampleOnWatchStopRef = useRef(false);
   const pendingAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
   const pendingFreshSampleAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
   sampleRef.current = sample;
   progressRef.current = progress;
   fatalErrorRef.current = fatalError;
 
-  const radius = requiredAccuracyMeters ?? target?.radius_meters ?? undefined;
+  const requiredAccuracyMeters = WATCH_STOP_ACCURACY_METERS;
 
   const guidance = useMemo(
     () => getCheckInGeofenceGuidance(target, sample),
     [target, sample]
   );
-  const isSubmitReady = Boolean(sample) && guidance.status === "inside" && fatalError === null;
+  const sampleIsFresh = Boolean(sample) && isSampleFresh(sample, Date.now(), CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS);
+  const isSubmitReady =
+    sampleIsFresh &&
+    sample?.accuracy < WATCH_STOP_ACCURACY_METERS &&
+    guidance.status === "inside" &&
+    fatalError === null;
   isSubmitReadyRef.current = isSubmitReady;
+
+  // A paused watch does not emit another location update to make the React tree
+  // re-check freshness. Re-render exactly when the retained fix expires so the
+  // card does not offer it as an instant check-in after the 15s trust window.
+  useEffect(() => {
+    if (!sample) return;
+    const remainingMs = sample.timestamp + CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS - Date.now();
+    if (remainingMs <= 0) return;
+    const timer = setTimeout(() => setSampleFreshnessEpoch((epoch) => epoch + 1), remainingMs);
+    return () => clearTimeout(timer);
+  }, [sample]);
 
   // Resolve every pending awaiter with a submit-ready sample and clear timers.
   const resolveAwaiters = useCallback((s: LocationSample) => {
@@ -161,15 +182,28 @@ export function useContinuousLocation({
 
   useEffect(() => {
     if (!enabled || !target || !visible) {
+      retainSampleOnWatchStopRef.current = false;
+      isWatchingRef.current = false;
+      setIsWatching(false);
+      setWatchPausedForAccuracy(false);
+      setSample(null);
+      sampleRef.current = null;
+      rejectAwaiters(new AbortedSubmitError());
+      return;
+    }
+
+    if (watchPausedForAccuracy) {
+      isWatchingRef.current = false;
       setIsWatching(false);
       return;
     }
 
     let cancelled = false;
+    isWatchingRef.current = true;
     setIsWatching(true);
 
     const handle: ContinuousLocationHandle = watchContinuousLocation({
-      requiredAccuracyMeters: radius,
+      requiredAccuracyMeters,
       onUpdate: (p) => {
         if (cancelled) return;
         progressRef.current = p;
@@ -177,7 +211,19 @@ export function useContinuousLocation({
         const next = p.bestFreshSample ?? null;
         sampleRef.current = next;
         setSample(next);
-        if (next) resolveFreshSampleAwaiters(next);
+        if (next && next.accuracy < WATCH_STOP_ACCURACY_METERS) {
+          resolveFreshSampleAwaiters(next);
+        }
+        if (next && next.accuracy < WATCH_STOP_ACCURACY_METERS) {
+          // A sub-50m fix is precise enough to preserve for the short freshness
+          // window. Stop high-accuracy GPS immediately instead of polling until
+          // the employee acts; a stale future tap restarts the watch below.
+          retainSampleOnWatchStopRef.current = true;
+          isWatchingRef.current = false;
+          setIsWatching(false);
+          handle.unsubscribe();
+          setWatchPausedForAccuracy(true);
+        }
       },
       onError: (geoError) => {
         if (cancelled) return;
@@ -188,6 +234,8 @@ export function useContinuousLocation({
           // generic timeout).
           fatalErrorRef.current = geoError;
           setFatalError(geoError);
+          isWatchingRef.current = false;
+          setIsWatching(false);
           handle.unsubscribe();
           rejectAwaiters(geoError);
         }
@@ -199,7 +247,12 @@ export function useContinuousLocation({
     return () => {
       cancelled = true;
       handle.unsubscribe();
+      isWatchingRef.current = false;
       setIsWatching(false);
+      if (retainSampleOnWatchStopRef.current) {
+        retainSampleOnWatchStopRef.current = false;
+        return;
+      }
       // A paused/stopped watch must not trust a sample acquired before the pause
       // (the worker may have moved while the watch was off — e.g. backgrounded the
       // app and travelled). Clear so isSubmitReady re-flips only on a fresh
@@ -213,7 +266,7 @@ export function useContinuousLocation({
       // failed-attempt row should be written when the 30s timer would have fired.
       rejectAwaiters(new AbortedSubmitError());
     };
-  }, [enabled, target, visible, restartEpoch, radius, rejectAwaiters, resolveFreshSampleAwaiters]);
+  }, [enabled, target, visible, watchPausedForAccuracy, restartEpoch, requiredAccuracyMeters, rejectAwaiters, resolveFreshSampleAwaiters]);
 
   // Drain pending awaiters the moment submit-readiness flips true.
   useEffect(() => {
@@ -228,12 +281,20 @@ export function useContinuousLocation({
           reject(fatalErrorRef.current);
           return;
         }
-        if (isSubmitReadyRef.current && sampleRef.current) {
-          resolve(sampleRef.current);
+        const currentSample = sampleRef.current;
+        if (
+          isSubmitReadyRef.current &&
+          currentSample &&
+          isSampleFresh(currentSample, Date.now(), CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS)
+        ) {
+          resolve(currentSample);
           return;
         }
 
-        const requiredAccuracy = radius ?? 50;
+        if (!isWatchingRef.current) {
+          setWatchPausedForAccuracy(false);
+        }
+
         const awaiter: PendingAwaiter = {
           resolve,
           reject,
@@ -243,7 +304,7 @@ export function useContinuousLocation({
               reject(
                 createInaccurateGeolocationError(
                   progressRef.current?.bestAccuracy,
-                  requiredAccuracy
+                  WATCH_STOP_ACCURACY_METERS
                 )
               );
             },
@@ -253,22 +314,30 @@ export function useContinuousLocation({
         pendingAwaitersRef.current.add(awaiter);
       });
     },
-    [submitTimeoutMs, radius]
+    [submitTimeoutMs]
   );
 
-  const awaitFreshSample = useCallback(
+  const awaitAccurateSample = useCallback(
     (timeoutMs: number = submitTimeoutMs): Promise<LocationSample> => {
       return new Promise<LocationSample>((resolve, reject) => {
         if (fatalErrorRef.current) {
           reject(fatalErrorRef.current);
           return;
         }
-        if (sampleRef.current) {
-          resolve(sampleRef.current);
+        const currentSample = sampleRef.current;
+        if (
+          currentSample &&
+          currentSample.accuracy < WATCH_STOP_ACCURACY_METERS &&
+          isSampleFresh(currentSample, Date.now(), CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS)
+        ) {
+          resolve(currentSample);
           return;
         }
 
-        const requiredAccuracy = radius ?? 50;
+        if (!isWatchingRef.current) {
+          setWatchPausedForAccuracy(false);
+        }
+
         const awaiter: PendingAwaiter = {
           resolve,
           reject,
@@ -278,7 +347,7 @@ export function useContinuousLocation({
               reject(
                 createInaccurateGeolocationError(
                   progressRef.current?.bestAccuracy,
-                  requiredAccuracy
+                  WATCH_STOP_ACCURACY_METERS
                 )
               );
             },
@@ -288,16 +357,19 @@ export function useContinuousLocation({
         pendingFreshSampleAwaitersRef.current.add(awaiter);
       });
     },
-    [submitTimeoutMs, radius]
+    [submitTimeoutMs]
   );
 
   const retry = useCallback(() => {
     // Cancel any in-flight awaiter (silent abort), then restart the watch.
     rejectAwaiters(new AbortedSubmitError());
     fatalErrorRef.current = null;
+    retainSampleOnWatchStopRef.current = false;
+    isWatchingRef.current = false;
     progressRef.current = null;
     sampleRef.current = null;
     setFatalError(null);
+    setWatchPausedForAccuracy(false);
     setProgress(null);
     setSample(null);
     setRestartEpoch((n) => n + 1);
@@ -310,7 +382,7 @@ export function useContinuousLocation({
     isWatching,
     fatalError,
     awaitSubmitReady,
-    awaitFreshSample,
+    awaitAccurateSample,
     retry,
   };
 }
