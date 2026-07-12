@@ -135,8 +135,8 @@ describe("AttendanceReference", () => {
 
     render(<AttendanceReference scheduleWindows={[morning, evening]} activeScheduleWindow={evening} />);
 
-    const firstShiftTab = screen.getByRole("tab", { name: "Ca 1" });
-    const secondShiftTab = screen.getByRole("tab", { name: "Ca 2" });
+    const firstShiftTab = screen.getByRole("tab", { name: "Ca ngày" });
+    const secondShiftTab = screen.getByRole("tab", { name: "Ca đêm" });
 
     expect(secondShiftTab).toHaveAttribute("aria-selected", "true");
     expect(secondShiftTab).toHaveAttribute("aria-controls");

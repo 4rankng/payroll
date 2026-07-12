@@ -269,7 +269,7 @@ export function AttendanceReference({
                   onClick={() => setSelectedShiftIndex(index)}
                   className={`employee-type-action min-h-12 rounded-xl font-semibold transition-all duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.22)]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
                 >
-                  Ca {index + 1}
+                  {index === 0 ? "Ca ngày" : "Ca đêm"}
                 </button>
               ))}
             </div>
