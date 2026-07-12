@@ -332,7 +332,7 @@ export function AttendanceReference({
                   aria-controls={additionalGatesId}
                   aria-expanded={showAdditionalGates}
                   onClick={() => setShowAdditionalGates((visible) => !visible)}
-                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950 shadow-inner shadow-slate-200/70" : "border-slate-200/80 bg-[#fffef9] text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-white"}`}
+                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950 shadow-inner shadow-slate-200/70" : "border-slate-200/80 bg-whtie text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-white"}`}
                 >
                   <strong className="text-xl leading-none">+{gates.length - 2}</strong>
                 </button>
@@ -344,7 +344,7 @@ export function AttendanceReference({
               {gates.slice(2).map((gate, index) => (
                 <li
                   key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-[#fffef9] px-4 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
+                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-whtie px-4 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
                 >
                   {gate.name || `Điểm chấm công ${index + 3}`}
                 </li>
@@ -1278,7 +1278,7 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-[#fffef9] p-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700 shadow-sm">
                   <Clock className="h-6 w-6" />
