@@ -350,14 +350,13 @@
 
   .mobile-main-content {
     max-width: 100%;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   @media (max-width: 1023px) {
     .mobile-main-content {
       scroll-padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-      overscroll-behavior-y: contain;
     }
 
     .mobile-main-content button,

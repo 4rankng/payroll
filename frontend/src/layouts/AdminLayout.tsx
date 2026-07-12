@@ -7,6 +7,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SidebarToggle } from "@/components/SidebarToggle";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/contexts";
+import { useIsMobile } from "@/hooks/useBreakpoint";
 import {
   Home,
   Users,
@@ -50,14 +51,32 @@ const ADMIN_MORE_ITEMS: NavLeaf[] = [
 ];
 
 const AdminLayoutInner = () => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="relative flex h-dvh w-full group/layout">
+    <div
+      className={
+        isMobile
+          ? "relative flex min-h-dvh w-full group/layout"
+          : "relative flex h-dvh w-full group/layout"
+      }
+    >
       <AdminSidebar />
       <SidebarToggle />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={
+          isMobile
+            ? "flex min-w-0 flex-1 flex-col"
+            : "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        }
+      >
         <main
           id="main-content"
-          className="min-h-0 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,#f8fafb_0%,#f5f7f9_100%)]"
+          className={
+            isMobile
+              ? "min-h-dvh flex-1 overflow-visible bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,#f8fafb_0%,#f5f7f9_100%)]"
+              : "min-h-0 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,#f8fafb_0%,#f5f7f9_100%)]"
+          }
         >
           <div className="min-h-full mobile-main-content animate-page-enter max-w-[1320px] mx-auto">
             <SectionErrorBoundary sectionName="trang quản trị">
