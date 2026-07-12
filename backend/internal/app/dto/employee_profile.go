@@ -22,12 +22,32 @@ type EmployeeProfileResponse struct {
 	// Shift window (advisory — for the frontend check-in button readiness gate).
 	// All nullable: null when no shift is configured for the employee's position
 	// today. The server's validateCheckInWindow remains authoritative.
-	ShiftStart         *string   `json:"shift_start,omitempty"`
-	ShiftEnd           *string   `json:"shift_end,omitempty"`
-	CheckInWindowStart *string   `json:"check_in_window_start,omitempty"`
-	CheckInWindowEnd   *string   `json:"check_in_window_end,omitempty"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	// Values are absolute instants in the application timezone (Asia/Ho_Chi_Minh),
+	// serialized as RFC 3339 (e.g. "2026-07-12T19:00:00+07:00") so the frontend can
+	// compare them against Date.now() without depending on the device timezone.
+	ShiftStart           *time.Time           `json:"shift_start,omitempty"`
+	ShiftEnd             *time.Time           `json:"shift_end,omitempty"`
+	CheckInWindowStart   *time.Time           `json:"check_in_window_start,omitempty"`
+	CheckInWindowEnd     *time.Time           `json:"check_in_window_end,omitempty"`
+	CheckOutWindowStart  *time.Time           `json:"check_out_window_start,omitempty"`
+	CheckOutWindowEnd    *time.Time           `json:"check_out_window_end,omitempty"`
+	ScheduleWindows      []ScheduleWindowInfo `json:"schedule_windows,omitempty"`
+	ActiveScheduleWindow *ScheduleWindowInfo  `json:"active_schedule_window,omitempty"`
+	CreatedAt            time.Time            `json:"created_at"`
+	UpdatedAt            time.Time            `json:"updated_at"`
+}
+
+// ScheduleWindowInfo represents one advisory employee shift and its permitted
+// check-in/check-out periods. Values are absolute instants in the application
+// timezone (Asia/Ho_Chi_Minh), serialized as RFC 3339 so the frontend can compare
+// them against Date.now() without depending on the device timezone.
+type ScheduleWindowInfo struct {
+	ShiftStart          time.Time `json:"shift_start"`
+	ShiftEnd            time.Time `json:"shift_end"`
+	CheckInWindowStart  time.Time `json:"check_in_window_start"`
+	CheckInWindowEnd    time.Time `json:"check_in_window_end"`
+	CheckOutWindowStart time.Time `json:"check_out_window_start"`
+	CheckOutWindowEnd   time.Time `json:"check_out_window_end"`
 }
 
 type CheckInTargetInfo struct {

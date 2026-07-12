@@ -8,6 +8,78 @@ import (
 	"api-server/internal/domain"
 )
 
+func TestResolveShiftWindowsUsesCheckoutRulesForCrossMidnightShift(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	now := time.Date(2026, 6, 21, 20, 10, 0, 0, loc)
+	flattened := map[string]int{"Công nhân.ngày thường.20:00-04:00": 300000}
+
+	start, end, checkInStart, checkInEnd, checkOutStart, checkOutEnd, ok := ResolveShiftWindows(flattened, "Công nhân", now)
+	if !ok {
+		t.Fatal("expected resolved cross-midnight shift")
+	}
+	if got, want := start.Format("15:04"), "20:00"; got != want {
+		t.Fatalf("shift start = %s, want %s", got, want)
+	}
+	if got, want := end.Format("15:04"), "04:00"; got != want {
+		t.Fatalf("shift end = %s, want %s", got, want)
+	}
+	if got, want := checkInStart.Format("15:04"), "19:00"; got != want {
+		t.Fatalf("check-in window start = %s, want %s", got, want)
+	}
+	if got, want := checkInEnd.Format("15:04"), "21:00"; got != want {
+		t.Fatalf("check-in window end = %s, want %s", got, want)
+	}
+	if got, want := checkOutStart.Format("15:04"), "03:00"; got != want {
+		t.Fatalf("checkout window start = %s, want %s", got, want)
+	}
+	if got, want := checkOutEnd.Format("15:04"), "08:00"; got != want {
+		t.Fatalf("checkout window end = %s, want %s", got, want)
+	}
+}
+
+func TestResolveAllShiftWindowsReturnsEveryConfiguredShiftInOrder(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	now := time.Date(2026, 6, 21, 12, 0, 0, 0, loc)
+	flattened := map[string]int{
+		"Công nhân.ngày thường.13:00-22:00": 300000,
+		"Công nhân.ngày thường.07:00-12:00": 250000,
+	}
+
+	windows := ResolveAllShiftWindows(flattened, "Công nhân", now)
+	if len(windows) != 2 {
+		t.Fatalf("window count = %d, want 2", len(windows))
+	}
+	if got, want := windows[0].ShiftStart.Format("15:04"), "07:00"; got != want {
+		t.Fatalf("first shift = %s, want %s", got, want)
+	}
+	if got, want := windows[1].ShiftStart.Format("15:04"), "13:00"; got != want {
+		t.Fatalf("second shift = %s, want %s", got, want)
+	}
+	if got, want := windows[1].CheckOutWindowEnd.Format("15:04"), "02:00"; got != want {
+		t.Fatalf("second checkout deadline = %s, want %s", got, want)
+	}
+}
+
+func TestResolveShiftWindowsAnchorsActiveOvernightAttendanceToCheckIn(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*60*60)
+	checkInTime := time.Date(2026, 6, 21, 20, 10, 0, 0, loc)
+	flattened := map[string]int{"Công nhân.ngày thường.20:00-04:00": 300000}
+
+	_, shiftEnd, _, _, checkOutStart, checkOutEnd, ok := ResolveShiftWindows(flattened, "Công nhân", checkInTime)
+	if !ok {
+		t.Fatal("expected active overnight attendance shift")
+	}
+	if got, want := shiftEnd.Format("2006-01-02 15:04"), "2026-06-22 04:00"; got != want {
+		t.Fatalf("shift end = %s, want %s", got, want)
+	}
+	if got, want := checkOutStart.Format("2006-01-02 15:04"), "2026-06-22 03:00"; got != want {
+		t.Fatalf("checkout start = %s, want %s", got, want)
+	}
+	if got, want := checkOutEnd.Format("2006-01-02 15:04"), "2026-06-22 08:00"; got != want {
+		t.Fatalf("checkout end = %s, want %s", got, want)
+	}
+}
+
 func TestValidateCheckOutWindowRejectsBeforeCheckoutWindow(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*60*60)
 	checkIn := time.Date(2026, 6, 21, 20, 9, 0, 0, loc)
@@ -94,8 +166,20 @@ func TestValidateCheckInWindowRejectsOutsideShift(t *testing.T) {
 		time.Date(2026, 6, 21, 9, 0, 0, 0, loc),  // exactly T+1h (exclusive)
 		time.Date(2026, 6, 21, 9, 30, 0, 0, loc), // after window
 	} {
-		if err := validateCheckInWindow(shift, ci); err == nil {
+		err := validateCheckInWindow(shift, ci)
+		if err == nil {
 			t.Fatalf("expected check-in %v outside (T-1h, T+1h) to be rejected", ci)
+		}
+		domainErr, ok := err.(*domain.DomainError)
+		if !ok {
+			t.Fatalf("expected DomainError, got %T", err)
+		}
+		if domainErr.Code != attendanceCheckInWindowCode {
+			t.Fatalf("expected code %q, got %q", attendanceCheckInWindowCode, domainErr.Code)
+		}
+		if domainErr.Context["guidance_type"] != "timing" || domainErr.Context["action"] != "check_in" ||
+			domainErr.Context["window_start"] != "07:00" || domainErr.Context["window_end"] != "09:00" {
+			t.Fatalf("unexpected timing guidance: %#v", domainErr.Context)
 		}
 	}
 }

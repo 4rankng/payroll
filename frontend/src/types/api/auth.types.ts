@@ -84,6 +84,19 @@ export interface CheckInTarget {
   gates: GeofenceGate[];
 }
 
+// Advisory schedule windows. Values are absolute instants serialized as RFC 3339
+// (e.g. "2026-07-12T19:00:00+07:00") in the application timezone
+// (Asia/Ho_Chi_Minh). Compare against Date.now() / Date.getTime() — never against
+// getHours(), which is device-timezone-dependent. See @/utils/vn-time.
+export interface AttendanceScheduleWindow {
+  shift_start: string;
+  shift_end: string;
+  check_in_window_start: string;
+  check_in_window_end: string;
+  check_out_window_start: string;
+  check_out_window_end: string;
+}
+
 // Employee-specific types
 export interface EmployeeProfile {
   id: number;
@@ -106,11 +119,17 @@ export interface EmployeeProfile {
   check_in_target?: CheckInTarget | null;
   check_in_geofence_radius_meters?: number;
   // Advisory shift window (for the check-in button readiness gate). Null when
-  // no shift is configured. The server's validateCheckInWindow is authoritative.
+  // no shift is configured. Values are absolute instants (RFC 3339) in the
+  // application timezone; compare against epoch, never getHours(). The server's
+  // validateCheckInWindow is authoritative.
   shift_start?: string;
   shift_end?: string;
   check_in_window_start?: string;
   check_in_window_end?: string;
+  check_out_window_start?: string;
+  check_out_window_end?: string;
+  schedule_windows?: AttendanceScheduleWindow[];
+  active_schedule_window?: AttendanceScheduleWindow | null;
   created_at: string;
   updated_at: string;
 }

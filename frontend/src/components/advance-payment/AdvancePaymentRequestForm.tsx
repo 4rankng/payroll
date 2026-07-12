@@ -17,6 +17,8 @@ interface AdvancePaymentRequestFormProps {
   viewMonth?: string;
   /** Whether the selected calendar month is earlier than the current month. */
   isPastMonth?: boolean;
+  /** Self-check-in employees earn their quota from attendance, not timesheets. */
+  isSelfCheckInFlow?: boolean;
   history?: AdvancePaymentHistoryItem[];
   feeDetails: { fee: number; netAmount: number } | null;
   hasBankDestination: boolean;
@@ -24,6 +26,11 @@ interface AdvancePaymentRequestFormProps {
   onAmountChange?: (amount: number) => void;
   onBankAction?: () => void;
   isPending: boolean;
+  requestConfirmation?: {
+    amount: number;
+    forMonth: string;
+    submittedAt: string;
+  } | null;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -32,6 +39,7 @@ export function AdvancePaymentRequestForm({
   info,
   viewMonth,
   isPastMonth = false,
+  isSelfCheckInFlow = false,
   history,
   feeDetails,
   hasBankDestination,
@@ -39,6 +47,7 @@ export function AdvancePaymentRequestForm({
   onAmountChange,
   onBankAction,
   isPending,
+  requestConfirmation,
   className,
   style,
 }: AdvancePaymentRequestFormProps) {
@@ -125,7 +134,7 @@ export function AdvancePaymentRequestForm({
     !validationError &&
     !isPending &&
     selectedQuotaRemaining > 0;
-  const awaitingPayroll = !isPastMonth && quotaSummary.maxAdvanceAmount <= 0;
+  const awaitingPayroll = !isSelfCheckInFlow && !isPastMonth && quotaSummary.maxAdvanceAmount <= 0;
   const quotaExhausted = quotaSummary.maxAdvanceAmount > 0 && selectedQuotaRemaining <= 0;
   const requestUnavailable =
     isPastMonth ||
@@ -206,6 +215,10 @@ export function AdvancePaymentRequestForm({
     onSubmit({ amount: numericAmount, forMonth: selectedMonth });
   }, [feeDetails, numericAmount, selectedMonth, onSubmit, validationError]);
 
+  const visibleConfirmation = requestConfirmation?.forMonth === selectedMonth
+    ? requestConfirmation
+    : null;
+
   return (
     <div
       className={className ?? "overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"}
@@ -265,7 +278,23 @@ export function AdvancePaymentRequestForm({
         </div>
       </div>
 
-      {requestUnavailable ? showUnavailableContext ? (
+      {visibleConfirmation ? (
+        <div
+          className="employee-advance-request-confirm mt-4 flex items-start gap-3 rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-3.5 py-3.5"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[var(--employee-accent)] shadow-sm">
+            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="employee-type-warning-title text-[var(--employee-text)]">Yêu cầu đã gửi</p>
+            <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">
+              {formatCurrency(visibleConfirmation.amount)} · Gửi ngày {formatDate(visibleConfirmation.submittedAt)}
+            </p>
+          </div>
+        </div>
+      ) : requestUnavailable ? showUnavailableContext ? (
         <div className="mt-4 border-t border-[#EAECF0] pt-4" role="status">
           <div className="flex items-start gap-2.5 rounded-[10px] border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] px-3 py-2.5">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--employee-warning)]" aria-hidden="true" />
@@ -391,7 +420,7 @@ export function AdvancePaymentRequestForm({
         </>
       )}
 
-      {latestPendingRequest && (
+      {!visibleConfirmation && latestPendingRequest && (
         <div className="mt-4 flex items-center gap-2.5 border-t border-[#EAECF0] pt-3" role="status">
           <Clock3 className="h-4 w-4 shrink-0 text-[#B54708]" />
           <div className="min-w-0 flex-1">

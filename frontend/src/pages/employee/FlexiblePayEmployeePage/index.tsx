@@ -33,6 +33,12 @@ import { NotificationSheet } from "@/components/notifications/NotificationSheet"
 import { formatPayrollMonthRange } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 
+interface AdvanceRequestConfirmation {
+  amount: number;
+  forMonth: string;
+  submittedAt: string;
+}
+
 const FlexiblePayEmployeePage = () => {
   const navigate = useNavigate();
   const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
@@ -41,6 +47,8 @@ const FlexiblePayEmployeePage = () => {
   const [latestAmount, setLatestAmount] = useState<number>(0);
   const [latestMonth, setLatestMonth] = useState<string>("");
   const [formKey, setFormKey] = useState(0);
+  const [requestConfirmation, setRequestConfirmation] = useState<AdvanceRequestConfirmation | null>(null);
+  const [confirmationDataReady, setConfirmationDataReady] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
@@ -142,15 +150,42 @@ const FlexiblePayEmployeePage = () => {
     try {
       await requestMutation.mutateAsync({ amount: latestAmount, forMonth: latestMonth });
       setConfirmSheetOpen(false);
+      setRequestConfirmation({
+        amount: latestAmount,
+        forMonth: latestMonth,
+        submittedAt: new Date().toISOString(),
+      });
+      setConfirmationDataReady(false);
       setFormKey((k) => k + 1);
       setLatestAmount(0);
       setLatestMonth("");
       setServerFeeDetails(null);
-      refetchInfo();
+      void Promise.all([refetchInfo(), refetchHistory()]).finally(() => setConfirmationDataReady(true));
     } catch {
       /* handled */
     }
-  }, [latestAmount, latestMonth, requestMutation, refetchInfo]);
+  }, [latestAmount, latestMonth, requestMutation, refetchHistory, refetchInfo]);
+
+  useEffect(() => {
+    if (!requestConfirmation) return;
+
+    if (month.value !== requestConfirmation.forMonth) {
+      setRequestConfirmation(null);
+      setConfirmationDataReady(false);
+      return;
+    }
+
+    const hasMatchingPendingRequest = history.some(
+      (item) => item.status === "PENDING" && item.forMonth === requestConfirmation.forMonth
+    );
+
+    // Keep the acknowledgement visible until fresh request data confirms that
+    // the employee can make another request for this payroll month.
+    if (confirmationDataReady && !hasMatchingPendingRequest && info?.canRequest) {
+      setRequestConfirmation(null);
+      setConfirmationDataReady(false);
+    }
+  }, [confirmationDataReady, history, info?.canRequest, month.value, requestConfirmation]);
 
   const handleCancelRequest = useCallback(
     (id: number) => {
@@ -242,6 +277,7 @@ const FlexiblePayEmployeePage = () => {
               info={info}
               viewMonth={month.value}
               isPastMonth={!month.isCurrentMonth}
+              isSelfCheckInFlow={isCheckIn}
               history={history}
               feeDetails={feeDetails}
               hasBankDestination={hasEmployeeBankInfo(profile)}
@@ -249,6 +285,7 @@ const FlexiblePayEmployeePage = () => {
               onAmountChange={handleAmountChange}
               onBankAction={handleBankAction}
               isPending={requestMutation.isPending}
+              requestConfirmation={requestConfirmation}
               className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"
             />
           </section>
@@ -277,6 +314,10 @@ const FlexiblePayEmployeePage = () => {
               shiftEnd={profile.shift_end}
               checkInWindowStart={profile.check_in_window_start}
               checkInWindowEnd={profile.check_in_window_end}
+              checkOutWindowStart={profile.check_out_window_start}
+              checkOutWindowEnd={profile.check_out_window_end}
+              scheduleWindows={profile.schedule_windows}
+              activeScheduleWindow={profile.active_schedule_window}
               onAdvanceRequest={handleAdvanceRequestAction}
             />
           </section>

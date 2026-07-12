@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Circle, CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { LatLngBoundsExpression, LatLngExpression } from "leaflet";
-import { MapPin, Navigation } from "lucide-react";
+import { BadgeCheck, MapPin, Navigation } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
@@ -32,7 +32,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
     : null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
+    <div className="relative isolate z-0 overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         <div className="min-w-0">
           <p className="employee-type-card-title truncate text-slate-950">{statusTitle(guidance)}</p>
@@ -40,10 +40,10 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
             {statusDescription(guidance, target)}
           </p>
         </div>
-        <span className="employee-type-pill inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-sky-50 px-2.5 text-sky-700">
+        <span className={`employee-type-pill inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed bg-emerald-50 text-emerald-700" : "bg-sky-50 text-sky-700"}`}>
           <Navigation className="h-3.5 w-3.5" />
           {sample?.accuracy ? (
-            <>+/-{Math.round(sample.accuracy)}m</>
+            <>{sample.accuracy < 50 ? <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" /> : null}+/-{Math.round(sample.accuracy)}m</>
           ) : (
             <>GPS</>
           )}
@@ -105,6 +105,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
                   fillColor: "#ffffff",
                   fillOpacity: 1,
                   weight: 3,
+                  className: guidance.status === "outside" && guidance.nearestGate?.lat === gate.lat && guidance.nearestGate?.lng === gate.lng ? "checkpoint-marker-emphasis" : undefined,
                 }}
               >
                 <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
@@ -115,7 +116,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
             {sample && nearestPoint ? (
               <Polyline
                 positions={[center, nearestPoint]}
-                pathOptions={{ color: "#0284c7", dashArray: "6 6", weight: 2 }}
+                pathOptions={{ color: "#0284c7", dashArray: "6 6", weight: 2, className: guidance.status === "outside" ? "checkpoint-route-reveal" : undefined }}
               />
             ) : null}
             {sample ? (

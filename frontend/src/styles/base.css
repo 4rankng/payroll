@@ -753,6 +753,10 @@
     .employee-notification-pop {
       animation: employee-notification-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
+
+    .employee-advance-request-confirm {
+      animation: employee-advance-request-confirm 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
   }
 
   @keyframes employee-pay-float {
@@ -788,6 +792,17 @@
     }
   }
 
+  @keyframes employee-advance-request-confirm {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
 }
 
 /* ─── Check-in button micro-animations ─────────────────────────────────── */
@@ -813,10 +828,53 @@
 }
 .check-in-hint-fade { animation: check-in-hint-fade 0.3s ease-out; }
 
+@keyframes attendance-gates-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.attendance-gates-reveal { animation: attendance-gates-reveal 0.22s ease-out; }
+
+@keyframes attendance-action-confirm {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.attendance-action-confirm,
+.attendance-window-open { animation: attendance-action-confirm 0.28s ease-out; }
+
+@keyframes gps-accuracy-confirmed {
+  0% { transform: scale(0.88); opacity: 0.6; }
+  65% { transform: scale(1.07); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.gps-accuracy-confirmed { animation: gps-accuracy-confirmed 0.35s ease-out; }
+
+@keyframes checkpoint-route-reveal {
+  from { stroke-dashoffset: 28; opacity: 0.25; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+.checkpoint-route-reveal { animation: checkpoint-route-reveal 0.35s ease-out; }
+@keyframes checkpoint-marker-emphasis {
+  0%, 100% { stroke-width: 3; }
+  50% { stroke-width: 7; }
+}
+.checkpoint-marker-emphasis { animation: checkpoint-marker-emphasis 0.45s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   .check-in-warming,
   .check-in-ready-pop,
   .check-in-hint-fade {
     animation: none;
   }
+  .attendance-action-confirm,
+  .attendance-window-open,
+  .gps-accuracy-confirmed,
+  .checkpoint-route-reveal,
+  .checkpoint-marker-emphasis { animation: none; }
 }

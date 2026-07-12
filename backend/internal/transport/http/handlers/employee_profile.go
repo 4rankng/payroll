@@ -118,13 +118,23 @@ func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, empl
 		CheckInTargetStatus:         string(scheduleInfo.CheckInTargetStatus),
 		CheckInTarget:               mapCheckInTarget(scheduleInfo.CheckInTarget),
 		CheckInGeofenceRadiusMeters: scheduleInfo.CheckInGeofenceRadiusMeters,
+		ScheduleWindows:             mapScheduleWindows(scheduleInfo.ScheduleWindows),
+		ActiveScheduleWindow:        mapScheduleWindow(scheduleInfo.ActiveScheduleWindow),
 	}
 	// Advisory shift window for the frontend check-in button gate.
-	if scheduleInfo.ShiftStart != "" {
-		resp.ShiftStart = &scheduleInfo.ShiftStart
-		resp.ShiftEnd = &scheduleInfo.ShiftEnd
-		resp.CheckInWindowStart = &scheduleInfo.CheckInWindowStart
-		resp.CheckInWindowEnd = &scheduleInfo.CheckInWindowEnd
+	if !scheduleInfo.ShiftStart.IsZero() {
+		shiftStart := scheduleInfo.ShiftStart
+		shiftEnd := scheduleInfo.ShiftEnd
+		checkInWindowStart := scheduleInfo.CheckInWindowStart
+		checkInWindowEnd := scheduleInfo.CheckInWindowEnd
+		checkOutWindowStart := scheduleInfo.CheckOutWindowStart
+		checkOutWindowEnd := scheduleInfo.CheckOutWindowEnd
+		resp.ShiftStart = &shiftStart
+		resp.ShiftEnd = &shiftEnd
+		resp.CheckInWindowStart = &checkInWindowStart
+		resp.CheckInWindowEnd = &checkInWindowEnd
+		resp.CheckOutWindowStart = &checkOutWindowStart
+		resp.CheckOutWindowEnd = &checkOutWindowEnd
 	}
 	resp.CreatedAt = employee.CreatedAt
 	resp.UpdatedAt = employee.UpdatedAt
@@ -138,6 +148,31 @@ func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, empl
 		}
 	}
 	return resp
+}
+
+func mapScheduleWindows(windows []employee.ScheduleWindowInfo) []dto.ScheduleWindowInfo {
+	if len(windows) == 0 {
+		return nil
+	}
+	mapped := make([]dto.ScheduleWindowInfo, 0, len(windows))
+	for _, window := range windows {
+		mapped = append(mapped, *mapScheduleWindow(&window))
+	}
+	return mapped
+}
+
+func mapScheduleWindow(window *employee.ScheduleWindowInfo) *dto.ScheduleWindowInfo {
+	if window == nil {
+		return nil
+	}
+	return &dto.ScheduleWindowInfo{
+		ShiftStart:          window.ShiftStart,
+		ShiftEnd:            window.ShiftEnd,
+		CheckInWindowStart:  window.CheckInWindowStart,
+		CheckInWindowEnd:    window.CheckInWindowEnd,
+		CheckOutWindowStart: window.CheckOutWindowStart,
+		CheckOutWindowEnd:   window.CheckOutWindowEnd,
+	}
 }
 
 func mapCheckInTarget(target *employee.CheckInTargetInfo) *dto.CheckInTargetInfo {

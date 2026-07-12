@@ -36,10 +36,10 @@ export function useCheckIn() {
       queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
       queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
     },
-    onError: (error: unknown) => {
-      const e = error as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(e?.response?.data?.message || "Không thể vào làm");
-    },
+    // EmployeeCheckInCard is the only caller and owns timing/GPS error UI.
+    // Keeping this handler defined suppresses the global mutation toast so a
+    // timing dialog or checkpoint map is not obscured by a duplicate toast.
+    onError: () => {},
   });
 }
 

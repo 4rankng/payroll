@@ -114,6 +114,23 @@ func TestValidateGeofenceRejectsOutsideGate(t *testing.T) {
 	if !strings.Contains(err.Error(), "ngoài khu vực chấm công") {
 		t.Fatalf("expected geofence_outside message, got %q", err.Error())
 	}
+	domainErr, ok := err.(*domain.DomainError)
+	if !ok {
+		t.Fatalf("expected DomainError, got %T", err)
+	}
+	if domainErr.Code != attendanceOutsideGeofenceCode {
+		t.Fatalf("expected code %q, got %q", attendanceOutsideGeofenceCode, domainErr.Code)
+	}
+	checkpoint, ok := domainErr.Context["nearest_checkpoint"].(nearestCheckpointGuidance)
+	if !ok {
+		t.Fatalf("expected nearest checkpoint guidance, got %#v", domainErr.Context)
+	}
+	if checkpoint.Name != "Cổng A" || checkpoint.Lat != geofenceTestGateLat || checkpoint.Lng != geofenceTestGateLng {
+		t.Fatalf("unexpected checkpoint: %#v", checkpoint)
+	}
+	if checkpoint.DistanceMeters < 700 || checkpoint.DistanceMeters > 900 {
+		t.Fatalf("expected roughly 800m distance, got %.2fm", checkpoint.DistanceMeters)
+	}
 }
 
 func TestValidateGeofenceRejectsWhenNoGatesConfigured(t *testing.T) {

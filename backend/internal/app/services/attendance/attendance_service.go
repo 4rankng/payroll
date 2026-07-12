@@ -3,6 +3,7 @@ package attendance
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -28,6 +29,35 @@ const (
 
 const confirmedNoSalaryCheckoutReason = "Nhân viên đã xác nhận tan ca không ghi nhận tiền lương cho ca này."
 const employeeCancelledWrongShiftReason = "Nhân viên đã hủy ca do vào nhầm ca."
+
+const (
+	attendanceCheckInWindowCode   = "ATTENDANCE_CHECK_IN_WINDOW"
+	attendanceCheckOutWindowCode  = "ATTENDANCE_CHECK_OUT_WINDOW"
+	attendanceGPSInaccurateCode   = "ATTENDANCE_GPS_INACCURATE"
+	attendanceOutsideGeofenceCode = "ATTENDANCE_OUTSIDE_GEOFENCE"
+)
+
+type nearestCheckpointGuidance struct {
+	Name           string  `json:"name"`
+	Lat            float64 `json:"lat"`
+	Lng            float64 `json:"lng"`
+	DistanceMeters float64 `json:"distance_meters"`
+}
+
+func newTimingValidationError(code, action, message string, earliest, latest time.Time) *domain.DomainError {
+	return domain.NewValidationErrorWithCode(code, message).
+		WithContext("guidance_type", "timing").
+		WithContext("action", action).
+		WithContext("window_start", earliest.Format("15:04")).
+		WithContext("window_end", latest.Format("15:04"))
+}
+
+func newLocationValidationError(code, reason, message string, checkpoint nearestCheckpointGuidance) *domain.DomainError {
+	return domain.NewValidationErrorWithCode(code, message).
+		WithContext("guidance_type", "location").
+		WithContext("reason", reason).
+		WithContext("nearest_checkpoint", checkpoint)
+}
 
 // TaskEnqueuer schedules deferred attendance tasks. Implemented by the asynq
 // client wrapper; fakes capture the calls in tests. Nil is allowed — when unset,
@@ -102,11 +132,11 @@ func validateCheckInWindow(shift *parsedShift, checkInTime time.Time) error {
 	}
 	earliest := shift.start.Add(-checkInShiftWindow)
 	latest := shift.start.Add(checkInShiftWindow)
-	return domain.NewValidationError(fmt.Sprintf(
+	return newTimingValidationError(attendanceCheckInWindowCode, "check_in", fmt.Sprintf(
 		"Giờ vào làm không hợp lệ. Bạn chỉ được vào làm từ %s đến %s.",
 		earliest.Format("15:04"),
 		latest.Format("15:04"),
-	))
+	), earliest, latest)
 }
 
 // validateCheckOutWindow rejects a checkout that falls outside the allowed
@@ -117,19 +147,19 @@ func validateCheckOutWindow(shift *parsedShift, checkInTime, checkOutTime time.T
 	earliest := shift.end.Add(-checkOutLowerGrace)
 	latest := shift.end.Add(checkOutUpperGrace)
 	if checkOutTime.Before(earliest) {
-		return domain.NewValidationError(fmt.Sprintf(
+		return newTimingValidationError(attendanceCheckOutWindowCode, "check_out", fmt.Sprintf(
 			"Bạn mới vào làm lúc %s. Chỉ có thể tan ca từ %s đến %s.",
 			checkInTime.Format("15:04"),
 			earliest.Format("15:04"),
 			latest.Format("15:04"),
-		))
+		), earliest, latest)
 	}
 	if checkOutTime.After(latest) {
-		return domain.NewValidationError(fmt.Sprintf(
+		return newTimingValidationError(attendanceCheckOutWindowCode, "check_out", fmt.Sprintf(
 			"Đã quá giờ tan ca. Bạn chỉ được tan ca từ %s đến %s.",
 			earliest.Format("15:04"),
 			latest.Format("15:04"),
-		))
+		), earliest, latest)
 	}
 	return nil
 }
@@ -154,6 +184,19 @@ type parsedShift struct {
 	start  time.Time
 	end    time.Time
 	amount int
+}
+
+// ShiftWindow is an advisory representation of a configured shift and the
+// attendance windows derived from it. It is intentionally separate from the
+// domain Attendance model: these times are informational and the validation
+// methods remain authoritative.
+type ShiftWindow struct {
+	ShiftStart          time.Time
+	ShiftEnd            time.Time
+	CheckInWindowStart  time.Time
+	CheckInWindowEnd    time.Time
+	CheckOutWindowStart time.Time
+	CheckOutWindowEnd   time.Time
 }
 
 // resolveShifts parses the flattened payrate for the given position and returns:
@@ -319,8 +362,14 @@ func (s *AttendanceService) validateGeofence(project *domain.Project, reading do
 
 	radius := float64(project.GeofenceRadiusMeters)
 	insideButUncertain := false
+	var nearestGate domain.GeofenceGate
+	nearestDistance := -1.0
 	for _, gate := range gates {
 		dist := geo.HaversineDistance(reading.Lat, reading.Lng, gate.Lat, gate.Lng)
+		if nearestDistance < 0 || dist < nearestDistance {
+			nearestGate = gate
+			nearestDistance = dist
+		}
 		if dist > radius {
 			continue
 		}
@@ -336,10 +385,26 @@ func (s *AttendanceService) validateGeofence(project *domain.Project, reading do
 		}
 		insideButUncertain = true
 	}
-	if insideButUncertain {
-		return "", domain.NewValidationError("Tín hiệu GPS không đủ chính xác để chấm công. Hãy đứng ở nơi thoáng hơn, giữ điện thoại yên vài giây rồi thử lại.")
+	checkpoint := nearestCheckpointGuidance{
+		Name:           nearestGate.Name,
+		Lat:            nearestGate.Lat,
+		Lng:            nearestGate.Lng,
+		DistanceMeters: nearestDistance,
 	}
-	return "", domain.NewValidationError("Bạn đang ở ngoài khu vực chấm công của dự án. Vui lòng di chuyển đến cổng hoặc khu vực đã được cấu hình.")
+	if insideButUncertain {
+		return "", newLocationValidationError(
+			attendanceGPSInaccurateCode,
+			"gps_inaccurate",
+			"Tín hiệu GPS không đủ chính xác để chấm công. Hãy đứng ở nơi thoáng hơn, giữ điện thoại yên vài giây rồi thử lại.",
+			checkpoint,
+		)
+	}
+	return "", newLocationValidationError(
+		attendanceOutsideGeofenceCode,
+		"outside_geofence",
+		"Bạn đang ở ngoài khu vực chấm công của dự án. Vui lòng di chuyển đến cổng hoặc khu vực đã được cấu hình.",
+		checkpoint,
+	)
 }
 
 // resolveProject determines the project for a check-in request.
@@ -1264,20 +1329,66 @@ func hasConfiguredPosition(configuredPositions map[string]string, position strin
 	return false
 }
 
-// ResolveShiftWindow is an exported helper for the employee profile service to
-// derive the advisory check-in window for display on the employee portal. It
-// takes a flattened payrate map + position + "now", and returns the shift
-// start/end times and the ±1h check-in window bounds, or nil if no shift is
-// configured. This reuses the same resolveShifts → closestShift logic as CheckIn
-// so the frontend hint always matches the server's validation.
+// ResolveShiftWindow is retained for callers that only need the check-in
+// advisory window. New callers that also need checkout guidance should use
+// ResolveShiftWindows.
 func ResolveShiftWindow(flattened map[string]int, position string, now time.Time) (shiftStart, shiftEnd, windowStart, windowEnd time.Time, ok bool) {
+	shiftStart, shiftEnd, windowStart, windowEnd, _, _, ok = ResolveShiftWindows(flattened, position, now)
+	return shiftStart, shiftEnd, windowStart, windowEnd, ok
+}
+
+// ResolveShiftWindows derives both advisory attendance windows for display on
+// the employee portal. It reuses the same resolveShifts → closestShift logic as
+// CheckIn and CheckOut, including cross-midnight shift resolution. The returned
+// checkout bounds are [shift.end - 1h, shift.end + 4h], matching
+// validateCheckOutWindow exactly.
+func ResolveShiftWindows(flattened map[string]int, position string, now time.Time) (shiftStart, shiftEnd, checkInWindowStart, checkInWindowEnd, checkOutWindowStart, checkOutWindowEnd time.Time, ok bool) {
 	_, _, shifts := resolveShifts(flattened, position, now)
 	if len(shifts) == 0 {
-		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
+		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
 	}
 	shift := closestShift(shifts, now)
 	if shift == nil {
-		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
+		return time.Time{}, time.Time{}, time.Time{}, time.Time{}, time.Time{}, time.Time{}, false
 	}
-	return shift.start, shift.end, shift.start.Add(-checkInShiftWindow), shift.start.Add(checkInShiftWindow), true
+	return shift.start,
+		shift.end,
+		shift.start.Add(-checkInShiftWindow),
+		shift.start.Add(checkInShiftWindow),
+		shift.end.Add(-checkOutLowerGrace),
+		shift.end.Add(checkOutUpperGrace),
+		true
+}
+
+// ResolveAllShiftWindows returns one advisory window for every configured shift
+// for the resolved position. The absolute date is anchored to now, but callers
+// should display the time-of-day values; duplicate ±1-day resolver candidates
+// are removed. Cross-midnight end and checkout times retain their correct
+// following-day instants.
+func ResolveAllShiftWindows(flattened map[string]int, position string, now time.Time) []ShiftWindow {
+	_, _, shifts := resolveShifts(flattened, position, now)
+	windowsByTimeRange := make(map[string]ShiftWindow)
+	for _, shift := range shifts {
+		if shift.start.Year() != now.Year() || shift.start.YearDay() != now.YearDay() {
+			continue
+		}
+		key := shift.start.Format("15:04") + "-" + shift.end.Format("15:04")
+		windowsByTimeRange[key] = ShiftWindow{
+			ShiftStart:          shift.start,
+			ShiftEnd:            shift.end,
+			CheckInWindowStart:  shift.start.Add(-checkInShiftWindow),
+			CheckInWindowEnd:    shift.start.Add(checkInShiftWindow),
+			CheckOutWindowStart: shift.end.Add(-checkOutLowerGrace),
+			CheckOutWindowEnd:   shift.end.Add(checkOutUpperGrace),
+		}
+	}
+
+	windows := make([]ShiftWindow, 0, len(windowsByTimeRange))
+	for _, window := range windowsByTimeRange {
+		windows = append(windows, window)
+	}
+	sort.Slice(windows, func(i, j int) bool {
+		return windows[i].ShiftStart.Before(windows[j].ShiftStart)
+	})
+	return windows
 }

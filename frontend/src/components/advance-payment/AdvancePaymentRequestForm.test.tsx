@@ -55,6 +55,26 @@ describe("AdvancePaymentRequestForm", () => {
     expect(onSubmit).toHaveBeenCalledWith({ amount: 500_000, forMonth: "2026-07" });
   });
 
+  it("replaces the request controls with the submitted-request acknowledgement", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={info}
+        requestConfirmation={{
+          amount: 500_000,
+          forMonth: "2026-07",
+          submittedAt: "2026-07-12T03:00:00.000Z",
+        }}
+      />
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Yêu cầu đã gửi");
+    expect(screen.getByText(/500\.000 ₫/)).toBeInTheDocument();
+    expect(screen.getByText(/Gửi ngày/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yêu cầu ứng lương" })).not.toBeInTheDocument();
+  });
+
   it("blocks the form when receiving bank details are missing", () => {
     const onBankAction = vi.fn();
     render(
@@ -89,6 +109,28 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.getByText("Kỳ tiếp theo mở vào ngày 15.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Xem lịch sử yêu cầu" })).not.toBeInTheDocument();
+  });
+
+  it("uses the check-in eligibility reason instead of waiting for a timesheet", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        isSelfCheckInFlow
+        info={{
+          ...info,
+          maxAdvanceAmount: 0,
+          remainingAmount: 0,
+          canRequest: false,
+          canRequestTitle: "Chưa đủ hạn mức",
+          canRequestReason: "Bạn chưa có tiền công được ứng còn lại. Vui lòng chấm công thêm ca làm việc.",
+          quotas: [{ ...info.quotas[0], maxAdvanceAmount: 0, remainingAmount: 0 }],
+        }}
+      />
+    );
+
+    expect(screen.getByText("Chưa đủ hạn mức")).toBeInTheDocument();
+    expect(screen.getByText("Bạn chưa có tiền công được ứng còn lại. Vui lòng chấm công thêm ca làm việc.")).toBeInTheDocument();
+    expect(screen.queryByText(/Đang chờ bảng công tháng/)).not.toBeInTheDocument();
   });
 
   it("deduplicates quick choices after the minimum amount clamp", () => {

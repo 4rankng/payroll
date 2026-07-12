@@ -21,6 +21,7 @@ type EmployeeProfileService struct {
 	TimesheetRepo       domain.TimesheetRepository
 	ProjectEmployeeRepo domain.ProjectEmployeeRepository
 	PayrateRepo         domain.PayrateRepository
+	AttendanceRepo      domain.AttendanceRepository
 	UserService         *user.UserService
 	EventBus            domain.EventBus
 }
@@ -40,12 +41,29 @@ type EmployeeScheduleInfo struct {
 	CheckInTargetStatus         CheckInTargetStatus
 	CheckInTarget               *CheckInTargetInfo
 	CheckInGeofenceRadiusMeters *uint
-	// Advisory shift window for the frontend check-in button gate. Empty when
-	// no shift is configured.
-	ShiftStart         string
-	ShiftEnd           string
-	CheckInWindowStart string
-	CheckInWindowEnd   string
+	// Advisory shift window for the frontend check-in button gate. Zero-value
+	// (time.Time{}) when no shift is configured. Values are absolute instants in
+	// the application timezone so the frontend can compare them against its
+	// wall-clock without timezone ambiguity.
+	ShiftStart           time.Time
+	ShiftEnd             time.Time
+	CheckInWindowStart   time.Time
+	CheckInWindowEnd     time.Time
+	CheckOutWindowStart  time.Time
+	CheckOutWindowEnd    time.Time
+	ScheduleWindows      []ScheduleWindowInfo
+	ActiveScheduleWindow *ScheduleWindowInfo
+}
+
+// ScheduleWindowInfo is advisory timing information for one configured shift.
+// Values are absolute instants in the application timezone (Asia/Ho_Chi_Minh).
+type ScheduleWindowInfo struct {
+	ShiftStart          time.Time
+	ShiftEnd            time.Time
+	CheckInWindowStart  time.Time
+	CheckInWindowEnd    time.Time
+	CheckOutWindowStart time.Time
+	CheckOutWindowEnd   time.Time
 }
 
 type CheckInTargetInfo struct {
@@ -60,6 +78,7 @@ func NewEmployeeProfileService(
 	timesheetRepo domain.TimesheetRepository,
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
 	payrateRepo domain.PayrateRepository,
+	attendanceRepo domain.AttendanceRepository,
 	userService *user.UserService,
 	eventBus domain.EventBus,
 ) *EmployeeProfileService {
@@ -68,6 +87,7 @@ func NewEmployeeProfileService(
 		TimesheetRepo:       timesheetRepo,
 		ProjectEmployeeRepo: projectEmployeeRepo,
 		PayrateRepo:         payrateRepo,
+		AttendanceRepo:      attendanceRepo,
 		UserService:         userService,
 		EventBus:            eventBus,
 	}
@@ -195,14 +215,14 @@ func (s *EmployeeProfileService) populateCheckInTarget(ctx context.Context, empl
 	// (resolveShifts → closestShift). Null/empty when no shift is configured —
 	// the frontend treats empty as "no timing gate". The server's
 	// validateCheckInWindow remains authoritative; this is informational only.
-	s.populateShiftWindow(ctx, project.ID, targetAssignment.Position, info)
+	s.populateShiftWindow(ctx, employeeID, project.ID, targetAssignment.Position, info)
 }
 
 // populateShiftWindow resolves the employee's applicable shift today and the
-// ±1h check-in window, writing them to info.ShiftStart/ShiftEnd/
-// CheckInWindowStart/CheckInWindowEnd. No-op (leaves fields empty) when the
-// payrate is missing, malformed, or has no shift for the position.
-func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, projectID uint, position string, info *EmployeeScheduleInfo) {
+// check-in and checkout windows, writing them to info. No-op (leaves fields
+// empty) when the payrate is missing, malformed, or has no shift for the
+// position.
+func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, employeeID, projectID uint, position string, info *EmployeeScheduleInfo) {
 	if s.PayrateRepo == nil || position == "" {
 		return
 	}
@@ -217,14 +237,80 @@ func (s *EmployeeProfileService) populateShiftWindow(ctx context.Context, projec
 		return
 	}
 	now := clock.Now()
-	shiftStart, shiftEnd, winStart, winEnd, ok := attendance.ResolveShiftWindow(flattened, position, now)
+	shiftStart, shiftEnd, checkInStart, checkInEnd, checkOutStart, checkOutEnd, ok := attendance.ResolveShiftWindows(flattened, position, now)
 	if !ok {
 		return
 	}
-	info.ShiftStart = shiftStart.Format("15:04")
-	info.ShiftEnd = shiftEnd.Format("15:04")
-	info.CheckInWindowStart = winStart.Format("15:04")
-	info.CheckInWindowEnd = winEnd.Format("15:04")
+	info.ShiftStart = shiftStart
+	info.ShiftEnd = shiftEnd
+	info.CheckInWindowStart = checkInStart
+	info.CheckInWindowEnd = checkInEnd
+	info.CheckOutWindowStart = checkOutStart
+	info.CheckOutWindowEnd = checkOutEnd
+	info.ScheduleWindows = formatScheduleWindows(attendance.ResolveAllShiftWindows(flattened, position, now))
+
+	if activeAttendance := s.findActiveAttendance(ctx, employeeID, projectID, now); activeAttendance != nil {
+		activeShiftStart, activeShiftEnd, activeCheckInStart, activeCheckInEnd, activeCheckOutStart, activeCheckOutEnd, activeOK := attendance.ResolveShiftWindows(flattened, position, activeAttendance.CheckInTime)
+		if activeOK {
+			activeWindow := formatScheduleWindow(attendance.ShiftWindow{
+				ShiftStart:          activeShiftStart,
+				ShiftEnd:            activeShiftEnd,
+				CheckInWindowStart:  activeCheckInStart,
+				CheckInWindowEnd:    activeCheckInEnd,
+				CheckOutWindowStart: activeCheckOutStart,
+				CheckOutWindowEnd:   activeCheckOutEnd,
+			})
+			info.ActiveScheduleWindow = &activeWindow
+		}
+	}
+}
+
+func (s *EmployeeProfileService) findActiveAttendance(ctx context.Context, employeeID, projectID uint, now time.Time) *domain.Attendance {
+	if s.AttendanceRepo == nil {
+		return nil
+	}
+	fromDate := now.AddDate(0, 0, -1)
+	attendances, err := s.AttendanceRepo.List(ctx, domain.AttendanceFilters{
+		EmployeeID:           &employeeID,
+		ProjectID:            &projectID,
+		FromDate:             &fromDate,
+		ToDate:               &now,
+		UseCheckInTimeWindow: true,
+		Limit:                10,
+		SortBy:               "check_in_time",
+		SortOrder:            "desc",
+	})
+	if err != nil {
+		return nil
+	}
+	for _, attendance := range attendances {
+		if attendance != nil && attendance.CheckOutTime == nil && attendance.SalaryRejectReason == nil {
+			return attendance
+		}
+	}
+	return nil
+}
+
+func formatScheduleWindows(windows []attendance.ShiftWindow) []ScheduleWindowInfo {
+	if len(windows) == 0 {
+		return nil
+	}
+	formatted := make([]ScheduleWindowInfo, 0, len(windows))
+	for _, window := range windows {
+		formatted = append(formatted, formatScheduleWindow(window))
+	}
+	return formatted
+}
+
+func formatScheduleWindow(window attendance.ShiftWindow) ScheduleWindowInfo {
+	return ScheduleWindowInfo{
+		ShiftStart:          window.ShiftStart,
+		ShiftEnd:            window.ShiftEnd,
+		CheckInWindowStart:  window.CheckInWindowStart,
+		CheckInWindowEnd:    window.CheckInWindowEnd,
+		CheckOutWindowStart: window.CheckOutWindowStart,
+		CheckOutWindowEnd:   window.CheckOutWindowEnd,
+	}
 }
 
 // UpdateMyProfile updates the employee's own profile (name, email, username)

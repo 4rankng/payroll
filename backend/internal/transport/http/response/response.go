@@ -21,6 +21,8 @@ type ErrorResponse struct {
 	Status     string `json:"status"`
 	Message    string `json:"message"`
 	HTTPStatus int    `json:"http_status"`
+	Code       string `json:"code,omitempty"`
+	Details    any    `json:"details,omitempty"`
 }
 
 type Pagination struct {
@@ -190,22 +192,31 @@ func HandleDomainError(c *gin.Context, err error) {
 		// Use translator to get user-friendly message
 		translatedMessage := translator.TranslateError(err)
 
+		response := ErrorResponse{
+			Status:  "error",
+			Message: translatedMessage,
+			Code:    domainErr.Code,
+			Details: domainErr.Context,
+		}
+
 		switch domainErr.Type {
 		case "NOT_FOUND", "not_found":
-			NotFoundWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusNotFound
 		case "VALIDATION_ERROR", "validation_error":
-			BadRequestWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusBadRequest
 		case "UNAUTHORIZED", "unauthorized":
-			UnauthorizedWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusUnauthorized
 		case "FORBIDDEN", "forbidden":
-			ForbiddenWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusForbidden
 		case "CONFLICT", "conflict":
-			ConflictWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusConflict
 		case "INTERNAL_ERROR", "internal_error":
-			InternalServerErrorWithCode(c, translatedMessage, domainErr.Code)
+			response.HTTPStatus = http.StatusInternalServerError
 		default:
 			InternalServerError(c, constants.MsgInternalServerErrorVN)
+			return
 		}
+		c.JSON(response.HTTPStatus, response)
 	} else {
 		// For non-domain errors, use translator to clean them up
 		translatedMessage := translator.TranslateError(err)

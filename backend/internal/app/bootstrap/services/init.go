@@ -201,7 +201,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 
 	employeeUserService := employee.NewEmployeeUserService(repos.Employee, userService)
-	employeeProfileService := employee.NewEmployeeProfileService(repos.Employee, repos.Timesheet, repos.ProjectEmployee, repos.Payrate, userService, eventBus)
+	employeeProfileService := employee.NewEmployeeProfileService(repos.Employee, repos.Timesheet, repos.ProjectEmployee, repos.Payrate, repos.Attendance, userService, eventBus)
 	lenderService := loan.NewLenderService(repos.Lender, cacheService, eventBus)
 	attendanceService := attendance.NewAttendanceService(repos.Attendance, repos.ProjectEmployee, repos.Project, repos.Payrate, repos.AdvancePayment, transactionManager, asynqClient, clk)
 

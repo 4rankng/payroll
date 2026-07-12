@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AlertCircle, BadgeCheck, BriefcaseBusiness, ChevronDown, Clock, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,6 +21,12 @@ import {
   useLogAttendanceDeviceAttempt,
 } from "@/hooks/api/useAttendance";
 import { getErrorMessage } from "@/utils/error-handler";
+import {
+  getTimingErrorGuidance,
+  hasLocationErrorGuidance,
+  scrollToLocationGuidance,
+  type TimingErrorGuidance,
+} from "@/utils/attendance-error-guidance";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
@@ -43,7 +49,8 @@ import {
 import { useContinuousLocation, isAbortedSubmitError } from "@/hooks/useContinuousLocation";
 import { getCheckInGeofenceGuidance, type CheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
 import { formatDistanceMeters } from "@/utils/geoDistance";
-import type { CheckInTarget } from "@/types/api/auth.types";
+import { parseEpochMs } from "@/utils/vn-time";
+import type { AttendanceScheduleWindow, CheckInTarget } from "@/types/api/auth.types";
 import {
   EmployeeAttendanceActionDock,
   type AttendanceDockAction,
@@ -70,6 +77,10 @@ interface EmployeeCheckInCardProps {
   shiftEnd?: string;
   checkInWindowStart?: string;
   checkInWindowEnd?: string;
+  checkOutWindowStart?: string;
+  checkOutWindowEnd?: string;
+  scheduleWindows?: AttendanceScheduleWindow[];
+  activeScheduleWindow?: AttendanceScheduleWindow | null;
   onAdvanceRequest: () => void;
   style?: React.CSSProperties;
 }
@@ -181,6 +192,164 @@ function createOutsideGeofenceLocationIssue(): LocationPermissionIssue {
   };
 }
 
+// Schedule timestamps are API instants. Render them with the device-local
+// HH:mm formatter used elsewhere in this card; dates and timezone suffixes are
+// intentionally not shown in the compact employee reference.
+
+export function AttendanceReference({
+  checkInTarget,
+  shiftStart,
+  shiftEnd,
+  checkInWindowStart,
+  checkInWindowEnd,
+  checkOutWindowStart,
+  checkOutWindowEnd,
+  scheduleWindows,
+  activeScheduleWindow,
+}: Pick<
+  EmployeeCheckInCardProps,
+  | "checkInTarget"
+  | "shiftStart"
+  | "shiftEnd"
+  | "checkInWindowStart"
+  | "checkInWindowEnd"
+  | "checkOutWindowStart"
+  | "checkOutWindowEnd"
+  | "scheduleWindows"
+  | "activeScheduleWindow"
+>) {
+  const legacySchedule =
+    shiftStart && shiftEnd && checkInWindowStart && checkInWindowEnd && checkOutWindowStart && checkOutWindowEnd
+      ? [{
+          shift_start: shiftStart,
+          shift_end: shiftEnd,
+          check_in_window_start: checkInWindowStart,
+          check_in_window_end: checkInWindowEnd,
+          check_out_window_start: checkOutWindowStart,
+          check_out_window_end: checkOutWindowEnd,
+        }]
+      : [];
+  const schedules = scheduleWindows?.length ? scheduleWindows : legacySchedule;
+  const gates = checkInTarget?.gates ?? [];
+  const activeIndex = schedules.findIndex(
+    (schedule) =>
+      activeScheduleWindow?.shift_start === schedule.shift_start &&
+      activeScheduleWindow.shift_end === schedule.shift_end
+  );
+  const [selectedShiftIndex, setSelectedShiftIndex] = useState(activeIndex >= 0 ? activeIndex : 0);
+  const selectedSchedule = schedules[selectedShiftIndex] ?? schedules[0];
+  const shiftSelectorId = useId();
+  const selectedShiftTabId = `${shiftSelectorId}-tab-${selectedShiftIndex}`;
+  const selectedShiftPanelId = `${shiftSelectorId}-panel`;
+  const additionalGatesId = `${shiftSelectorId}-additional-gates`;
+  const [showAdditionalGates, setShowAdditionalGates] = useState(false);
+
+  if (schedules.length === 0 && gates.length === 0) return null;
+
+  return (
+    <section className="mt-6 space-y-6 border-t border-slate-200/80 pt-5" aria-label="Thông tin chấm công">
+      {schedules.length > 0 ? (
+        <div>
+          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-950">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+              <CalendarClock className="h-5 w-5" aria-hidden="true" />
+            </span>
+            Ca làm việc
+          </h3>
+          {schedules.length > 1 ? (
+            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 shadow-inner shadow-slate-200/60" role="tablist" aria-label="Chọn ca làm">
+              {schedules.map((schedule, index) => (
+                <button
+                  key={`${schedule.shift_start}-${schedule.shift_end}`}
+                  type="button"
+                  role="tab"
+                  id={`${shiftSelectorId}-tab-${index}`}
+                  aria-controls={selectedShiftPanelId}
+                  aria-selected={selectedShiftIndex === index}
+                  onClick={() => setSelectedShiftIndex(index)}
+                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-all duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.22)]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
+                >
+                  Ca {index + 1}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {selectedSchedule ? (
+            <dl
+              id={selectedShiftPanelId}
+              aria-labelledby={selectedShiftTabId}
+              className="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-[22px] border border-slate-200/80 bg-white px-2 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+              role="tabpanel"
+            >
+              {[
+                { label: "Ca làm", startIso: selectedSchedule.shift_start, endIso: selectedSchedule.shift_end },
+                { label: "Vào làm", startIso: selectedSchedule.check_in_window_start, endIso: selectedSchedule.check_in_window_end },
+                { label: "Tan ca", startIso: selectedSchedule.check_out_window_start, endIso: selectedSchedule.check_out_window_end },
+              ].map((row) => {
+                const start = safeFormatTime(row.startIso);
+                const end = safeFormatTime(row.endIso);
+                return (
+                  <div key={row.label} className="min-w-0 px-2 text-center">
+                    <dt className="employee-type-pill uppercase text-slate-500">{row.label}</dt>
+                    <dd className="mt-2 text-lg font-bold tracking-tight text-slate-950">{start}</dd>
+                    <dd className="employee-type-body-sm mt-1 text-slate-500">{end}</dd>
+                  </div>
+                );
+              })}
+            </dl>
+          ) : null}
+        </div>
+      ) : null}
+      {gates.length > 0 ? (
+        <div>
+          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-950">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+              <MapPin className="h-5 w-5" aria-hidden="true" />
+            </span>
+            {gates.length} điểm chấm công
+          </h3>
+          <ul className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_0.48fr] gap-2.5" aria-label="Các điểm chấm công">
+            {gates.slice(0, 2).map((gate, index) => (
+              <li
+                key={`${gate.name}-${gate.lat}-${gate.lng}`}
+                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-3 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
+              >
+                {gate.name || `Điểm chấm công ${index + 1}`}
+              </li>
+            ))}
+            {gates.length > 2 ? (
+              <li>
+                <button
+                  type="button"
+                  aria-label={`${showAdditionalGates ? "Ẩn" : "Hiển thị"} ${gates.length - 2} điểm chấm công khác`}
+                  aria-controls={additionalGatesId}
+                  aria-expanded={showAdditionalGates}
+                  onClick={() => setShowAdditionalGates((visible) => !visible)}
+                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950 shadow-inner shadow-slate-200/70" : "border-slate-200/80 bg-[#fffef9] text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-white"}`}
+                >
+                  <strong className="text-xl leading-none">+{gates.length - 2}</strong>
+                </button>
+              </li>
+            ) : null}
+          </ul>
+          {gates.length > 2 && showAdditionalGates ? (
+            <ul id={additionalGatesId} className="attendance-gates-reveal mt-3 grid gap-2 sm:grid-cols-2" aria-label="Các điểm chấm công khác">
+              {gates.slice(2).map((gate, index) => (
+                <li
+                  key={`${gate.name}-${gate.lat}-${gate.lng}`}
+                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-[#fffef9] px-4 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
+                >
+                  {gate.name || `Điểm chấm công ${index + 3}`}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function EmployeeCheckInCard({
   className,
   checkInTarget,
@@ -188,6 +357,10 @@ export function EmployeeCheckInCard({
   shiftEnd,
   checkInWindowStart,
   checkInWindowEnd,
+  checkOutWindowStart,
+  checkOutWindowEnd,
+  scheduleWindows,
+  activeScheduleWindow,
   onAdvanceRequest,
   style,
 }: EmployeeCheckInCardProps) {
@@ -199,11 +372,15 @@ export function EmployeeCheckInCard({
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
   const [locationIssue, setLocationIssue] = useState<LocationPermissionIssue | null>(null);
+  const [timingGuidance, setTimingGuidance] = useState<TimingErrorGuidance | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
   const [showCancelShiftConfirm, setShowCancelShiftConfirm] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
+  const [attendanceConfirmation, setAttendanceConfirmation] = useState<{ action: "check_in" | "check_out"; time: string } | null>(null);
+  const [showWindowOpen, setShowWindowOpen] = useState(false);
   const locationMapRegionId = useId();
+  const locationMapRef = useRef<HTMLDivElement>(null);
   // Synchronous in-flight guard. The button's `disabled` only takes effect after
   // the next render, so a rapid double-tap (common on mobile) can fire handleAction
   // twice before `isLocating`/`isPending` flips — sending a second request that the
@@ -217,6 +394,7 @@ export function EmployeeCheckInCard({
   const CHECKOUT_GPS_COOLDOWN_MS = 10_000;
   const [checkoutCooldownUntil, setCheckoutCooldownUntil] = useState<number | null>(null);
   const checkoutCooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attendanceConfirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checkoutCoolingDown = checkoutCooldownUntil !== null && Date.now() < checkoutCooldownUntil;
   const armCheckoutCooldown = () => {
     setCheckoutCooldownUntil(Date.now() + CHECKOUT_GPS_COOLDOWN_MS);
@@ -227,6 +405,7 @@ export function EmployeeCheckInCard({
     const timer = checkoutCooldownTimer;
     return () => {
       if (timer.current) clearTimeout(timer.current);
+      if (attendanceConfirmationTimer.current) clearTimeout(attendanceConfirmationTimer.current);
     };
   }, []);
 
@@ -259,6 +438,17 @@ export function EmployeeCheckInCard({
   );
   const outsideGeofenceInstruction = getOutsideGeofenceInstruction(checkInGuidance);
 
+  const showLocationGuidance = useCallback(
+    (issue: LocationPermissionIssue) => {
+      setLocationIssue(issue);
+      if (checkInTarget?.gates.length) {
+        setShowLocationMap(true);
+        scrollToLocationGuidance(locationMapRef.current);
+      }
+    },
+    [checkInTarget]
+  );
+
   // Clear a stale location-recovery banner when the user returns to the tab.
   // useTodayAttendance refetches on window focus, so if the user fixed the OS
   // location permission elsewhere and comes back, the banner — which is only
@@ -288,6 +478,12 @@ export function EmployeeCheckInCard({
     };
   };
 
+  const showAttendanceConfirmation = (action: "check_in" | "check_out") => {
+    setAttendanceConfirmation({ action, time: format(new Date(), "HH:mm") });
+    if (attendanceConfirmationTimer.current) clearTimeout(attendanceConfirmationTimer.current);
+    attendanceConfirmationTimer.current = setTimeout(() => setAttendanceConfirmation(null), 3500);
+  };
+
   // Centralized error classification shared by the warm and cold submit paths.
   // Geolocation errors (cold-tap timeout / inaccurate / fatal-permission) →
   // recovery banner + failed-attempt log. Backend errors (poor accuracy, outside
@@ -311,7 +507,7 @@ export function EmployeeCheckInCard({
         // useCheckOut.onError is a no-op, so the card owns all checkout error UI.
         const message = getErrorMessage(error);
         if (isPoorLocationAccuracyMessage(message)) {
-          setLocationIssue(
+          showLocationGuidance(
             createPoorAccuracyLocationIssue(
               location.progress?.bestAccuracy,
               location.progress?.requiredAccuracyMeters
@@ -322,7 +518,7 @@ export function EmployeeCheckInCard({
           return;
         }
         if (isGeofenceOutsideMessage(message)) {
-          setLocationIssue(createOutsideGeofenceLocationIssue());
+          showLocationGuidance(createOutsideGeofenceLocationIssue());
           toast({ title: "Chưa thể chấm công", variant: "destructive" });
           armCheckoutCooldown();
           return;
@@ -333,6 +529,15 @@ export function EmployeeCheckInCard({
           setNoSalaryReason(message);
           setShowNoSalaryConfirm(true);
         } else {
+          if (hasLocationErrorGuidance(error)) {
+            showLocationGuidance(createOutsideGeofenceLocationIssue());
+            return;
+          }
+          const timing = getTimingErrorGuidance(error, type);
+          if (timing) {
+            setTimingGuidance(timing);
+            return;
+          }
           // A confirmed no-salary call that failed (e.g. the shift was auto-
           // rejected while the dialog was open) or a non-overridable error:
           // close any stale dialog, surface the message once, and refetch today's
@@ -345,14 +550,20 @@ export function EmployeeCheckInCard({
       } else {
         const message = getErrorMessage(error);
         if (isPoorLocationAccuracyMessage(message)) {
-          setLocationIssue(
+          showLocationGuidance(
             createPoorAccuracyLocationIssue(
               location.progress?.bestAccuracy,
               location.progress?.requiredAccuracyMeters
             )
           );
         } else if (isGeofenceOutsideMessage(message)) {
-          setLocationIssue(createOutsideGeofenceLocationIssue());
+          showLocationGuidance(createOutsideGeofenceLocationIssue());
+        } else if (getTimingErrorGuidance(error, type)) {
+          setTimingGuidance(getTimingErrorGuidance(error, type)!);
+        } else if (hasLocationErrorGuidance(error)) {
+          showLocationGuidance(createOutsideGeofenceLocationIssue());
+        } else {
+          toast({ title: message || "Không thể vào làm", variant: "destructive" });
         }
       }
       return;
@@ -362,7 +573,7 @@ export function EmployeeCheckInCard({
     // a fatal watch error (permission denied). Same recovery UX + failed-attempt
     // logging as before.
     const issue = getLocationPermissionIssue(error);
-    setLocationIssue(issue);
+    showLocationGuidance(issue);
     logDeviceAttemptMutation.mutate({
       attempt_type: type,
       gps_status: getDeviceGpsStatus(issue),
@@ -411,6 +622,7 @@ export function EmployeeCheckInCard({
           confirm_no_salary: options?.confirmNoSalary,
         });
       }
+      showAttendanceConfirmation(type);
       setLocationIssue(null);
       setNoSalaryReason(null);
       setShowNoSalaryConfirm(false);
@@ -483,31 +695,32 @@ export function EmployeeCheckInCard({
     }, 60_000);
     return () => clearInterval(id);
   }, []);
+  // Window gate. The server sends absolute instants (RFC 3339 with a +07:00
+  // offset), so we compare epoch milliseconds directly — this is independent of
+  // the device timezone. A worker whose phone is set to UTC must still be able
+  // to check in to a 20:00 Vietnam shift at 20:17 Vietnam time. The previous
+  // implementation parsed HH:mm strings and compared getHours() (device-local),
+  // which mis-gated anyone whose device timezone was not Asia/Ho_Chi_Minh.
   const withinWindow = useMemo(() => {
-    if (!checkInWindowStart || !checkInWindowEnd) return true; // no shift configured
-    const now = new Date(nowTick.current);
-    const nowMin = now.getHours() * 60 + now.getMinutes();
-    const [sh, sm] = checkInWindowStart.split(":").map(Number);
-    const [eh, em] = checkInWindowEnd.split(":").map(Number);
-    if (!Number.isFinite(sh) || !Number.isFinite(eh)) return true;
-    return nowMin >= sh * 60 + sm && nowMin <= eh * 60 + em;
+    const startMs = parseEpochMs(checkInWindowStart);
+    const endMs = parseEpochMs(checkInWindowEnd);
+    if (startMs === null || endMs === null) return true; // no shift configured
+    const now = nowTick.current;
+    return now >= startMs && now <= endMs;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkInWindowStart, checkInWindowEnd, nowTick.current]);
 
   // Seconds until the check-in window opens, for the outside-window hint
   // countdown. Recomputed on the minute tick (minute precision is sufficient;
-  // showing seconds would require a 1s timer and is noisy on mobile).
+  // showing seconds would require a 1s timer and is noisy on mobile). Computed
+  // from the absolute window-start epoch so it is correct regardless of device
+  // timezone.
   const secondsUntilWindow = useMemo(() => {
-    if (!checkInWindowStart || withinWindow) return null;
-    const [sh, sm] = checkInWindowStart.split(":").map(Number);
-    if (!Number.isFinite(sh)) return null;
-    const now = new Date(nowTick.current);
-    const target = new Date(now);
-    target.setHours(sh, sm ?? 0, 0, 0);
-    // If the window already passed today, the gap is stale; treat as no
-    // countdown (the static window text still shows).
-    if (target.getTime() <= now.getTime()) return null;
-    return Math.round((target.getTime() - now.getTime()) / 1000);
+    const startMs = parseEpochMs(checkInWindowStart);
+    if (startMs === null || withinWindow) return null;
+    const now = nowTick.current;
+    if (startMs <= now) return null; // window already passed
+    return Math.round((startMs - now) / 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkInWindowStart, withinWindow, nowTick.current]);
 
@@ -528,6 +741,16 @@ export function EmployeeCheckInCard({
     }
     if (!ready) prevReadyRef.current = false;
   }, [withinWindow, gpsReady, isPending]);
+  const previousWithinWindow = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (previousWithinWindow.current === false && withinWindow) {
+      setShowWindowOpen(true);
+      const timer = setTimeout(() => setShowWindowOpen(false), 2600);
+      previousWithinWindow.current = withinWindow;
+      return () => clearTimeout(timer);
+    }
+    previousWithinWindow.current = withinWindow;
+  }, [withinWindow]);
 
   if (isLoading) {
     return (
@@ -557,18 +780,27 @@ export function EmployeeCheckInCard({
   // "check_in" and could mislabel the recovery CTA on a fresh check_out).
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
   const locationRecoveryText = "Thử lại";
-  const showLocationRecovery = locationIssue && (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
+  // Geofence failures already expand and scroll to the checkpoint map. Keeping
+  // a second "Ngoài khu vực / Thử lại" banner above it duplicates the same
+  // guidance, so reserve this recovery panel for device/GPS permission issues.
+  const showLocationRecovery =
+    locationIssue?.title !== "Ngoài khu vực" &&
+    Boolean(locationIssue) &&
+    (attendance?.status === "checked_in" || !attendance || canStartCorrectShift);
   const visibleLocationSample = location.sample;
 
   const locationPreview = checkInTarget && showLocationMap ? (
-    <div id={locationMapRegionId} className="mt-2">
+    <div
+      id={locationMapRegionId}
+      className="mt-2"
+    >
       <Suspense fallback={<MapFallback />}>
         <EmployeeLocationMap target={checkInTarget} sample={visibleLocationSample} />
       </Suspense>
     </div>
   ) : null;
   const locationMapDisclosure = checkInTarget ? (
-    <div className="mt-2 border-t border-slate-100 pt-1">
+    <div ref={locationMapRef} className="mt-2 scroll-mt-24 border-t border-slate-100 pt-1" tabIndex={-1}>
       <Button
         type="button"
         variant="ghost"
@@ -589,6 +821,19 @@ export function EmployeeCheckInCard({
       {locationPreview}
     </div>
   ) : null;
+  const attendanceReference = (
+    <AttendanceReference
+      checkInTarget={checkInTarget}
+      shiftStart={shiftStart}
+      shiftEnd={shiftEnd}
+      checkInWindowStart={checkInWindowStart}
+      checkInWindowEnd={checkInWindowEnd}
+      checkOutWindowStart={checkOutWindowStart}
+      checkOutWindowEnd={checkOutWindowEnd}
+      scheduleWindows={scheduleWindows}
+      activeScheduleWindow={activeScheduleWindow}
+    />
+  );
   const showRecoveryDescription =
     Boolean(locationIssue) &&
     (!checkInTarget || locationIssue?.requiresSettings || locationIssue?.type !== "unknown");
@@ -630,9 +875,29 @@ export function EmployeeCheckInCard({
     dockAction = "completed";
     dockActionLabel = "Đã tan ca";
   }
+  if (attendanceConfirmation) {
+    dockAction = "completed";
+    dockActionLabel = `${attendanceConfirmation.action === "check_in" ? "Đã vào làm" : "Đã tan ca"} ${attendanceConfirmation.time}`;
+    dockActionDisabled = true;
+    handleDockAttendanceAction = undefined;
+  }
 
   return (
     <div className={className} style={style}>
+      {showWindowOpen ? (
+        <div className="attendance-window-open mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-950" role="status">
+          <Clock className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+          <span className="employee-type-body-sm font-semibold">Đã đến giờ chấm công</span>
+        </div>
+      ) : null}
+      {attendanceConfirmation ? (
+        <div className="attendance-action-confirm mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-950" role="status">
+          <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+          <span className="employee-type-body-sm font-semibold">
+            {attendanceConfirmation.action === "check_in" ? "Đã vào làm" : "Đã tan ca"} lúc {attendanceConfirmation.time}
+          </span>
+        </div>
+      ) : null}
       <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
         <AlertDialogContent className="max-w-[calc(100vw-32px)] border-employee-100 bg-white shadow-2xl shadow-employee-900/20 sm:max-w-md">
           <AlertDialogHeader className="bg-employee-900 px-5 pb-4 pt-5 text-left">
@@ -699,6 +964,43 @@ export function EmployeeCheckInCard({
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DoorOpen className="mr-2 h-4 w-4" />}
               Hủy ca
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={Boolean(timingGuidance)}
+        onOpenChange={(open) => {
+          if (!open) setTimingGuidance(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-amber-200 bg-white shadow-2xl shadow-amber-900/10 sm:max-w-md">
+          <AlertDialogHeader className="bg-amber-50 px-5 pb-4 pt-5 text-left">
+            <AlertDialogTitle className="employee-type-hero-title text-amber-950">
+              {timingGuidance?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="mt-1 text-sm leading-5 text-amber-900">
+              {timingGuidance?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {timingGuidance?.windowStart && timingGuidance.windowEnd ? (
+            <div className="px-5 py-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+                <p className="employee-type-label-caps font-semibold text-amber-800">
+                  {timingGuidance.actionLabel}
+                </p>
+                <p className="employee-type-strong mt-1 text-slate-950">
+                  {timingGuidance.windowStart} - {timingGuidance.windowEnd}
+                </p>
+              </div>
+            </div>
+          ) : null}
+          <AlertDialogFooter className="px-5 pb-5">
+            <AlertDialogAction
+              className="employee-type-action h-12 w-full rounded-lg bg-[#07883F] font-semibold text-white hover:bg-[#067647]"
+              onClick={() => setTimingGuidance(null)}
+            >
+              Đã hiểu
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -868,6 +1170,7 @@ export function EmployeeCheckInCard({
 
           {canStartCorrectShift ? (
             <>
+              {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
@@ -902,6 +1205,7 @@ export function EmployeeCheckInCard({
                 </p>
               </div>
             </div>
+          {attendanceReference}
           {locationMapDisclosure}
           <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-[0.8fr_1.2fr]">
             <Button
@@ -967,20 +1271,21 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade rounded-2xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
-                  <Clock className="h-5 w-5" />
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-amber-200/90 bg-[#fffdf5] p-5 shadow-[0_18px_42px_rgba(146,64,14,0.10)]">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700 shadow-sm">
+                  <Clock className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-card-title font-semibold text-slate-950">Chưa đến giờ vào làm</p>
-                  <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                  <p className="employee-type-label-caps font-bold tracking-[0.14em] text-amber-700">Ca làm tiếp theo</p>
+                  <p className="employee-type-card-title mt-1 font-bold text-slate-950">Chưa đến giờ vào làm</p>
+                  <p className="employee-type-body-sm mt-1.5 leading-6 text-slate-600">
                     {shiftStart
-                      ? `Ca làm việc bắt đầu lúc ${shiftStart}. Giờ chấm công từ ${checkInWindowStart} đến ${checkInWindowEnd}.`
+                      ? `Ca làm việc bắt đầu lúc ${safeFormatTime(shiftStart)}. Giờ chấm công từ ${safeFormatTime(checkInWindowStart)} đến ${safeFormatTime(checkInWindowEnd)}.`
                       : "Chưa có ca làm việc được cấu hình."}
                   </p>
                   {secondsUntilWindow != null && (
-                    <p className="employee-type-body-sm mt-0.5 font-semibold text-amber-700">
+                    <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 font-semibold text-amber-800 shadow-sm">
                       {(() => {
                         const m = Math.floor(secondsUntilWindow / 60);
                         const s = secondsUntilWindow % 60;
@@ -995,6 +1300,7 @@ export function EmployeeCheckInCard({
                   )}
                 </div>
               </div>
+              {attendanceReference}
               {locationMapDisclosure}
             </div>
           ) : gpsReady ? (
@@ -1008,6 +1314,7 @@ export function EmployeeCheckInCard({
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Vị trí đã xác định</p>
                   </div>
                 </div>
+              {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
@@ -1041,6 +1348,7 @@ export function EmployeeCheckInCard({
                     </p>
                   </div>
                 </div>
+              {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
@@ -1065,6 +1373,7 @@ export function EmployeeCheckInCard({
                   </p>
                 </div>
               </div>
+              {attendanceReference}
               {locationMapDisclosure}
             </div>
           ) : (
@@ -1078,6 +1387,7 @@ export function EmployeeCheckInCard({
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Bấm Vào làm khi đã tới cổng</p>
                   </div>
                 </div>
+              {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
