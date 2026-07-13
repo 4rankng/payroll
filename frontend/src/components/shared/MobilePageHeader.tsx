@@ -57,7 +57,7 @@ export const MobilePageHeader = ({
           : 'var(--mobile-nonsticky-header-top-padding, var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem)))',
       }}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           {back && (
             <Button
@@ -87,7 +87,7 @@ export const MobilePageHeader = ({
           </div>
         </div>
         {actions && (
-          <div className="flex max-w-[56%] shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
+          <div className="flex basis-full max-w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:basis-auto sm:max-w-[56%] [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
             {actions}
           </div>
         )}
