@@ -1,7 +1,37 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { describe, expect, it } from "vitest";
-import { AttendanceReference } from "./EmployeeCheckInCard";
+import { describe, expect, it, vi } from "vitest";
+import { AttendanceReference, EmployeeCheckInCard } from "./EmployeeCheckInCard";
+import type { CheckInTarget } from "@/types/api/auth.types";
+import type { LocationSample } from "@/utils/geolocation";
+
+const locationMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/hooks/useContinuousLocation", () => ({
+  isAbortedSubmitError: () => false,
+  useContinuousLocation: locationMock,
+}));
+
+vi.mock("@/hooks/api/useAttendance", () => {
+  const mutation = () => ({ isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() });
+  return {
+    ATTENDANCE_QUERY_KEYS: { today: () => ["attendance", "today"] },
+    useTodayAttendance: () => ({ data: undefined, isLoading: false }),
+    useCheckIn: mutation,
+    useCheckOut: mutation,
+    useCancelCurrentAttendance: mutation,
+    useLogAttendanceDeviceAttempt: mutation,
+  };
+});
+
+vi.mock("./EmployeeLocationMap", () => ({
+  EmployeeLocationMap: ({ target, sample }: { target: CheckInTarget; sample?: LocationSample | null }) => (
+    <div data-testid="employee-location-map">
+      {target.project_name} · {sample ? Math.round(sample.accuracy) : "GPS"}
+    </div>
+  ),
+}));
 
 const localTime = (iso: string) => format(new Date(iso), "HH:mm");
 
@@ -207,5 +237,148 @@ describe("AttendanceReference", () => {
     expect(nightTab).toHaveTextContent("Qua đêm");
     const dayTab = screen.getByRole("tab", { name: "Ca ngày" });
     expect(dayTab).not.toHaveTextContent("Qua đêm");
+  });
+});
+
+describe("EmployeeCheckInCard geofence guidance", () => {
+  it("shows inward guidance and opens the map for an inside-but-uncertain fix", async () => {
+    const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
+    const sample = {
+      lat: gate.lat + 124 / 111_195,
+      lng: gate.lng,
+      accuracy: 48,
+      timestamp: Date.now(),
+    };
+    locationMock.mockReturnValue({
+      sample,
+      progress: {
+        sampleCount: 2,
+        elapsedMs: 3_000,
+        bestAccuracy: 48,
+        requiredAccuracyMeters: 150,
+        status: "acceptable",
+      },
+      isSubmitReady: false,
+      isWatching: false,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{
+            project_id: 58,
+            project_name: "LGD",
+            radius_meters: 150,
+            gates: [gate],
+          }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText("Tiến gần tâm khu vực")).toBeInTheDocument();
+    expect(
+      screen.getByText("Hãy tiến gần hơn tới tâm khu vực chấm công tại Cổng D rồi thử lại.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Sẵn sàng vào làm")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ẩn bản đồ" })).toHaveAttribute("aria-expanded", "true");
+    expect(await screen.findByTestId("employee-location-map")).toBeInTheDocument();
+  });
+
+  it("respects a manual close until the boundary guidance episode ends and begins again", async () => {
+    const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
+    let sample: LocationSample = {
+      lat: gate.lat + 124 / 111_195,
+      lng: gate.lng,
+      accuracy: 48,
+      timestamp: Date.now(),
+    };
+    locationMock.mockImplementation(() => ({
+      sample,
+      progress: {
+        sampleCount: 2,
+        elapsedMs: 3_000,
+        bestAccuracy: sample.accuracy,
+        requiredAccuracyMeters: 150,
+        status: "acceptable",
+      },
+      isSubmitReady: false,
+      isWatching: false,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    }));
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const renderCard = () => (
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{
+            project_id: 58,
+            project_name: "LGD",
+            radius_meters: 150,
+            gates: [gate],
+          }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(renderCard());
+
+    const disclosure = screen.getByRole("button", { name: "Ẩn bản đồ" });
+    expect(await screen.findByTestId("employee-location-map")).toBeInTheDocument();
+    fireEvent.click(disclosure);
+    expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
+
+    sample = { ...sample, lat: gate.lat + 122 / 111_195, timestamp: sample.timestamp + 1_000 };
+    rerender(renderCard());
+    expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
+
+    sample = { ...sample, accuracy: 800, timestamp: sample.timestamp + 1_000 };
+    rerender(renderCard());
+    expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
+
+    sample = { ...sample, accuracy: 48, timestamp: sample.timestamp + 1_000 };
+    rerender(renderCard());
+    expect(screen.getByRole("button", { name: "Ẩn bản đồ" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("keeps genuinely poor GPS guidance collapsed instead of presenting a direction", () => {
+    const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
+    locationMock.mockReturnValue({
+      sample: { lat: gate.lat, lng: gate.lng, accuracy: 800, timestamp: Date.now() },
+      progress: {
+        sampleCount: 2,
+        elapsedMs: 3_000,
+        bestAccuracy: 800,
+        requiredAccuracyMeters: 150,
+        status: "poor",
+      },
+      isSubmitReady: false,
+      isWatching: true,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [gate] }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Tiến gần tâm khu vực")).not.toBeInTheDocument();
   });
 });

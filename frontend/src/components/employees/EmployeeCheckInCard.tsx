@@ -47,8 +47,11 @@ import {
   type LocationPermissionIssue,
 } from "@/utils/geolocation";
 import { useContinuousLocation, isAbortedSubmitError } from "@/hooks/useContinuousLocation";
-import { getCheckInGeofenceGuidance, type CheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
-import { formatDistanceMeters } from "@/utils/geoDistance";
+import {
+  getCheckInGeofenceGuidance,
+  getCheckInGeofenceInstruction,
+  type CheckInGeofenceGuidance,
+} from "@/utils/checkInGeofenceGuidance";
 import { parseEpochMs } from "@/utils/vn-time";
 import type { AttendanceScheduleWindow, CheckInTarget } from "@/types/api/auth.types";
 import {
@@ -137,19 +140,27 @@ function formatAccuracy(accuracy: number | undefined): string | null {
   return `${Math.round(accuracy)}m`;
 }
 
-function getOutsideGeofenceInstruction(guidance: CheckInGeofenceGuidance): string | null {
-  if (guidance.status !== "outside") return null;
-  const gateName = guidance.nearestGate?.name || "cổng chấm công gần nhất";
-  const distance = formatDistanceMeters(guidance.distanceMeters);
-  return `Hãy di chuyển gần hơn tới ${gateName}. Cách ${distance}.`;
+function createBoundaryLocationIssue(
+  guidance: CheckInGeofenceGuidance
+): LocationPermissionIssue | null {
+  const instruction = getCheckInGeofenceInstruction(guidance);
+  if (guidance.status !== "inaccurate" || !instruction) return null;
+
+  return {
+    type: "inaccurate",
+    title: "Tiến gần tâm khu vực",
+    description: instruction,
+    canRetry: true,
+    requiresSettings: false,
+  };
 }
 
 function getLocationAcquisitionMessage(
   progress: LocationAcquisitionProgress | null,
   guidance: CheckInGeofenceGuidance
 ): string {
-  const outsideInstruction = getOutsideGeofenceInstruction(guidance);
-  if (outsideInstruction) return outsideInstruction;
+  const geofenceInstruction = getCheckInGeofenceInstruction(guidance);
+  if (geofenceInstruction) return geofenceInstruction;
 
   const bestAccuracy = formatAccuracy(progress?.bestAccuracy);
   const requiredAccuracy = formatAccuracy(progress?.requiredAccuracyMeters);
@@ -415,6 +426,7 @@ export function EmployeeCheckInCard({
   const [showWindowOpen, setShowWindowOpen] = useState(false);
   const locationMapRegionId = useId();
   const locationMapRef = useRef<HTMLDivElement>(null);
+  const previousActionableBoundaryRef = useRef<string | null>(null);
   // Synchronous in-flight guard. The button's `disabled` only takes effect after
   // the next render, so a rapid double-tap (common on mobile) can fire handleAction
   // twice before `isLocating`/`isPending` flips — sending a second request that the
@@ -470,7 +482,30 @@ export function EmployeeCheckInCard({
     () => getCheckInGeofenceGuidance(checkInTarget, location.sample),
     [checkInTarget, location.sample]
   );
-  const outsideGeofenceInstruction = getOutsideGeofenceInstruction(checkInGuidance);
+  const geofenceInstruction = getCheckInGeofenceInstruction(checkInGuidance);
+  const isActionableBoundaryGuidance =
+    checkInGuidance.status === "inaccurate" && geofenceInstruction !== null;
+  const actionableBoundaryEpisodeKey = isActionableBoundaryGuidance
+    ? [
+        checkInTarget?.project_id ?? "unknown-project",
+        checkInTarget?.radius_meters ?? "unknown-radius",
+        checkInGuidance.nearestGate?.lat ?? "unknown-lat",
+        checkInGuidance.nearestGate?.lng ?? "unknown-lng",
+      ].join(":")
+    : null;
+
+  // Open the map only on entry into the actionable boundary state. A worker who
+  // closes it keeps that choice while GPS samples continue updating; leaving and
+  // later re-entering the state starts a new guidance episode and may open it again.
+  useEffect(() => {
+    if (
+      actionableBoundaryEpisodeKey &&
+      previousActionableBoundaryRef.current !== actionableBoundaryEpisodeKey
+    ) {
+      setShowLocationMap(true);
+    }
+    previousActionableBoundaryRef.current = actionableBoundaryEpisodeKey;
+  }, [actionableBoundaryEpisodeKey]);
 
   const showLocationGuidance = useCallback(
     (issue: LocationPermissionIssue) => {
@@ -542,10 +577,11 @@ export function EmployeeCheckInCard({
         const message = getErrorMessage(error);
         if (isPoorLocationAccuracyMessage(message)) {
           showLocationGuidance(
-            createPoorAccuracyLocationIssue(
-              location.progress?.bestAccuracy,
-              location.progress?.requiredAccuracyMeters
-            )
+            createBoundaryLocationIssue(checkInGuidance) ||
+              createPoorAccuracyLocationIssue(
+                location.progress?.bestAccuracy,
+                location.progress?.requiredAccuracyMeters
+              )
           );
           toast({ title: "Chưa thể chấm công", variant: "destructive" });
           armCheckoutCooldown();
@@ -585,10 +621,11 @@ export function EmployeeCheckInCard({
         const message = getErrorMessage(error);
         if (isPoorLocationAccuracyMessage(message)) {
           showLocationGuidance(
-            createPoorAccuracyLocationIssue(
-              location.progress?.bestAccuracy,
-              location.progress?.requiredAccuracyMeters
-            )
+            createBoundaryLocationIssue(checkInGuidance) ||
+              createPoorAccuracyLocationIssue(
+                location.progress?.bestAccuracy,
+                location.progress?.requiredAccuracyMeters
+              )
           );
         } else if (isGeofenceOutsideMessage(message)) {
           showLocationGuidance(createOutsideGeofenceLocationIssue());
@@ -676,11 +713,10 @@ export function EmployeeCheckInCard({
       return;
     }
 
-    // Cold path: submit the first fresh sub-50m device fix to the backend even
-    // when the client-side guidance says "outside". The server is the geofence
-    // authority and records validation failures in attendance_failed_attempts;
-    // waiting for an "inside" sample here would leave outside-geofence taps
-    // stuck client-side with no backend audit row.
+    // Cold path: submit the first fresh fix that meets the project's configured
+    // accuracy radius, even when client guidance says "outside". The server is
+    // the geofence authority and records validation failures; waiting for an
+    // "inside" sample here would leave outside-geofence taps unaudited.
     setIsLocating(true);
     try {
       const sample = await location.awaitAccurateSample();
@@ -894,6 +930,11 @@ export function EmployeeCheckInCard({
   } else if (!attendance || canStartCorrectShift) {
     if (!withinWindow) {
       dockActionLabel = "Chưa đến giờ";
+    } else if (geofenceInstruction) {
+      dockAction = "check_in";
+      dockActionLabel = checkInGuidance.status === "inaccurate" ? "Tiến gần tâm" : "Đến gần cổng";
+      dockActionDisabled = isPending;
+      handleDockAttendanceAction = () => handleAction("check_in");
     } else if (gpsAcquiring || isLocating) {
       dockAction = "loading";
       dockActionLabel = "Đang kiểm tra GPS…";
@@ -1109,7 +1150,7 @@ export function EmployeeCheckInCard({
               <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
                 <p className="employee-type-label-caps font-semibold text-sky-700">Cần</p>
                 <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
-                  {"<"}
+                  {"≤"}
                   {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
                 </p>
               </div>
@@ -1365,6 +1406,38 @@ export function EmployeeCheckInCard({
                 {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
               </Button>
             </div>
+          ) : geofenceInstruction ? (
+              <div className="rounded-2xl border border-amber-200 bg-white p-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="employee-type-card-title font-semibold text-slate-950">
+                      {checkInGuidance.status === "inaccurate" ? "Tiến gần tâm khu vực" : "Ngoài khu vực"}
+                    </p>
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                      {geofenceInstruction}
+                    </p>
+                  </div>
+                </div>
+              {attendanceReference}
+              {locationMapDisclosure}
+              <Button
+                size="lg"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
+                style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
+                disabled={isPending}
+                onClick={() => handleAction("check_in")}
+              >
+                {isPending ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <MapPin className="mr-2 h-5 w-5" />
+                )}
+                {checkInGuidance.status === "inaccurate" ? "Tiến gần tâm rồi thử lại" : "Đến gần cổng rồi thử lại"}
+              </Button>
+            </div>
           ) : gpsAcquiring ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -1374,7 +1447,7 @@ export function EmployeeCheckInCard({
                   <div className="min-w-0 flex-1">
                     <p className="employee-type-card-title font-semibold text-slate-950">Đang xác định vị trí...</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
-                      {outsideGeofenceInstruction || (locationProgress?.status === "excellent"
+                      {geofenceInstruction || (locationProgress?.status === "excellent"
                         ? "Tín hiệu rất tốt — sẵn sàng chấm công."
                         : locationProgress?.status === "acceptable"
                           ? "Tín hiệu khá — đang ổn định thêm."

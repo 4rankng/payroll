@@ -121,7 +121,7 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
-  it("stops the GPS watch after a sub-50m fix while retaining the fresh sample", async () => {
+  it("stops the GPS watch after a sufficiently accurate fix while retaining the fresh sample", async () => {
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
@@ -138,7 +138,24 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
-  it("waits for a sub-50m fix before providing a check-in sample", async () => {
+  it("accepts an on-site fix within the project's configured accuracy radius", async () => {
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      stub.emitFix(target.gates[0].lat, target.gates[0].lng, 80);
+    });
+
+    await waitFor(() => expect(result.current.sample).toMatchObject({ accuracy: 80 }));
+    expect(result.current.isSubmitReady).toBe(true);
+    await expect(result.current.awaitAccurateSample(1)).resolves.toMatchObject({ accuracy: 80 });
+
+    unmount();
+  });
+
+  it("waits for a fix within the project's accuracy radius before providing a check-in sample", async () => {
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
@@ -146,14 +163,14 @@ describe("useContinuousLocation", () => {
 
     const accurateSamplePromise = result.current.awaitAccurateSample();
     await act(async () => {
-      stub.emitFix(target.gates[0].lat, target.gates[0].lng, 50);
+      stub.emitFix(target.gates[0].lat, target.gates[0].lng, target.radius_meters + 0.1);
     });
     expect(stub.clearWatch).not.toHaveBeenCalled();
 
     await act(async () => {
-      stub.emitFix(target.gates[0].lat, target.gates[0].lng, 49.9);
+      stub.emitFix(target.gates[0].lat, target.gates[0].lng, target.radius_meters - 0.1);
     });
-    await expect(accurateSamplePromise).resolves.toMatchObject({ accuracy: 49.9 });
+    await expect(accurateSamplePromise).resolves.toMatchObject({ accuracy: target.radius_meters - 0.1 });
 
     unmount();
   });

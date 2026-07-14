@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
-import { getCheckInGeofenceGuidance } from "./checkInGeofenceGuidance";
+import {
+  getCheckInGeofenceGuidance,
+  getCheckInGeofenceInstruction,
+} from "./checkInGeofenceGuidance";
 
 const baseTarget: CheckInTarget = {
   project_id: 58,
@@ -40,6 +43,40 @@ describe("getCheckInGeofenceGuidance", () => {
     const result = getCheckInGeofenceGuidance(target, sample(20.8679818, 106.5711738, 25));
 
     expect(result.status).toBe("inaccurate");
+  });
+
+  it("guides an inside-but-uncertain worker toward the gate center", () => {
+    const target: CheckInTarget = {
+      project_id: 58,
+      project_name: "LGD",
+      radius_meters: 150,
+      gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }],
+    };
+    const roughly124MetersNorth = 20.8679818 + 124 / 111_195;
+    const guidance = getCheckInGeofenceGuidance(
+      target,
+      sample(roughly124MetersNorth, 106.5711738, 48)
+    );
+
+    expect(guidance.status).toBe("inaccurate");
+    expect(getCheckInGeofenceInstruction(guidance)).toBe(
+      "Hãy tiến gần hơn tới tâm khu vực chấm công tại Cổng D rồi thử lại."
+    );
+  });
+
+  it("keeps poor-GPS recovery guidance when moving inward cannot help", () => {
+    const target: CheckInTarget = {
+      ...baseTarget,
+      radius_meters: 150,
+      gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }],
+    };
+    const guidance = getCheckInGeofenceGuidance(
+      target,
+      sample(20.8679818, 106.5711738, 800)
+    );
+
+    expect(guidance.status).toBe("inaccurate");
+    expect(getCheckInGeofenceInstruction(guidance)).toBeNull();
   });
 
   it("returns outside for the observed 4.4km-over LGD attempt", () => {

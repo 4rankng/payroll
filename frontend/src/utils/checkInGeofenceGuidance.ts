@@ -1,4 +1,5 @@
 import type { CheckInTarget, GeofenceGate } from "@/types/api/auth.types";
+import { formatDistanceMeters } from "@/utils/geoDistance";
 import type { LocationSample } from "@/utils/geolocation";
 
 export type CheckInGeofenceStatus =
@@ -14,6 +15,7 @@ export interface CheckInGeofenceGuidance {
   distanceMeters?: number;
   overByMeters?: number;
   radiusMeters?: number;
+  accuracyMeters?: number;
 }
 
 const EARTH_RADIUS_METERS = 6371000;
@@ -66,6 +68,7 @@ export function getCheckInGeofenceGuidance(
         nearestGate: gate,
         distanceMeters: distance,
         radiusMeters: target.radius_meters,
+        accuracyMeters: accuracy,
       };
     }
     if (distance <= target.radius_meters) {
@@ -84,7 +87,29 @@ export function getCheckInGeofenceGuidance(
     distanceMeters: nearestDistance,
     overByMeters,
     radiusMeters: target.radius_meters,
+    accuracyMeters: accuracy,
   };
+}
+
+export function getCheckInGeofenceInstruction(
+  guidance: CheckInGeofenceGuidance
+): string | null {
+  const gateName = guidance.nearestGate?.name || "cổng chấm công gần nhất";
+
+  if (guidance.status === "outside") {
+    return `Hãy di chuyển gần hơn tới ${gateName}. Cách ${formatDistanceMeters(guidance.distanceMeters)}.`;
+  }
+
+  if (
+    guidance.status === "inaccurate" &&
+    typeof guidance.accuracyMeters === "number" &&
+    typeof guidance.radiusMeters === "number" &&
+    guidance.accuracyMeters <= guidance.radiusMeters
+  ) {
+    return `Hãy tiến gần hơn tới tâm khu vực chấm công tại ${gateName} rồi thử lại.`;
+  }
+
+  return null;
 }
 
 function toRadians(value: number): number {
