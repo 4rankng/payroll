@@ -76,6 +76,21 @@ func (s *EmailService) SendGenericEmail(ctx context.Context, payload *dto.SendEm
 	return s.dispatch(ctx, msg)
 }
 
+// AvailableSenders returns the configured, provider-verified identities that an
+// administrator may choose for a manual email. The default sender is always included.
+func (s *EmailService) AvailableSenders() ([]dto.EmailSenderOption, error) {
+	addresses, err := s.allowedFromAddresses()
+	if err != nil {
+		return nil, err
+	}
+
+	options := make([]dto.EmailSenderOption, 0, len(addresses))
+	for _, address := range addresses {
+		options = append(options, dto.EmailSenderOption{Name: address.Name, Address: address.Address})
+	}
+	return options, nil
+}
+
 // SendPayrollReportEmail generates the payroll report for the specified date range and emails it.
 func (s *EmailService) SendPayrollReportEmail(ctx context.Context, payload *dto.SendPayrollReportEmailRequest) (string, error) {
 	if payload == nil {
@@ -618,10 +633,48 @@ func (s *EmailService) dispatchWithMeta(ctx context.Context, msg *domain.EmailMe
 }
 
 func (s *EmailService) resolveFromAddress(raw string) (domain.EmailAddress, error) {
-	if strings.TrimSpace(raw) == "" {
-		return domain.EmailAddress{Name: s.cfg.FromName, Address: strings.ToLower(s.cfg.FromEmail)}, nil
+	allowed, err := s.allowedFromAddresses()
+	if err != nil {
+		return domain.EmailAddress{}, err
 	}
-	return domain.ParseEmailAddress(raw)
+	if strings.TrimSpace(raw) == "" {
+		return allowed[0], nil
+	}
+
+	requested, err := domain.ParseEmailAddress(raw)
+	if err != nil {
+		return domain.EmailAddress{}, err
+	}
+	for _, address := range allowed {
+		if address.Address == requested.Address {
+			return address, nil
+		}
+	}
+
+	return domain.EmailAddress{}, domain.NewValidationError("địa chỉ email gửi chưa được cấu hình hoặc xác minh")
+}
+
+func (s *EmailService) allowedFromAddresses() ([]domain.EmailAddress, error) {
+	defaultAddress, err := domain.ParseEmailAddress(fmt.Sprintf("%s <%s>", s.cfg.FromName, s.cfg.FromEmail))
+	if err != nil {
+		return nil, domain.NewValidationError("địa chỉ email gửi mặc định không hợp lệ")
+	}
+
+	addresses := []domain.EmailAddress{defaultAddress}
+	seen := map[string]struct{}{defaultAddress.Address: {}}
+	for _, raw := range s.cfg.AllowedFromEmails {
+		address, parseErr := domain.ParseEmailAddress(raw)
+		if parseErr != nil {
+			return nil, domain.NewValidationError("địa chỉ email gửi được cấu hình không hợp lệ")
+		}
+		if _, exists := seen[address.Address]; exists {
+			continue
+		}
+		seen[address.Address] = struct{}{}
+		addresses = append(addresses, address)
+	}
+
+	return addresses, nil
 }
 
 func parseAddresses(values []string) ([]domain.EmailAddress, error) {

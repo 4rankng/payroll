@@ -33,6 +33,20 @@ func TestWithPublicEmailBannerDoesNotDuplicateExistingBanner(t *testing.T) {
 	}
 }
 
+func TestWithPublicEmailBannerReplacesDuplicateOrNonImageReferences(t *testing.T) {
+	body := withPublicEmailBanner(
+		`<img src="https://tingting.vip/email-banner.jpg?v=old"><img src='https://tingting.vip/email-banner.jpg?v=older'><a href="https://tingting.vip/email-banner.jpg">Tải banner</a><!-- tingting.vip/email-banner.jpg -->`,
+		"",
+	)
+
+	if count := strings.Count(body, publicEmailBannerURL); count != 1 {
+		t.Fatalf("expected exactly one canonical banner image, got %d in %q", count, body)
+	}
+	if !strings.Contains(body, `href="https://tingting.vip/email-banner.jpg"`) {
+		t.Fatalf("expected non-image banner reference to remain untouched")
+	}
+}
+
 func TestWithPublicEmailBannerBuildsHTMLForTextOnlyEmail(t *testing.T) {
 	body := withPublicEmailBanner("", "Dòng 1\nDòng <2>")
 

@@ -38,22 +38,25 @@ func (h *EmailHandler) SendGenericEmail(c *gin.Context) {
 		return
 	}
 
-	// Parse multipart form
-	if err := c.Request.ParseMultipartForm(32 << 20); err != nil { // 32 MB max memory
-		response.BadRequest(c, constants.MsgInvalidFormDataVN)
-		return
-	}
+	var req dto.SendEmailRequest
+	if strings.HasPrefix(c.ContentType(), "multipart/form-data") {
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil { // 32 MB max memory
+			response.BadRequest(c, constants.MsgInvalidFormDataVN)
+			return
+		}
 
-	// Extract form fields
-	req := dto.SendEmailRequest{
-		From:       c.PostForm("from"),
-		Recipients: c.PostFormArray("recipients"),
-		Cc:         c.PostFormArray("cc"),
-		Bcc:        c.PostFormArray("bcc"),
-		Subject:    c.PostForm("subject"),
-		HTMLBody:   c.PostForm("htmlBody"),
-		TextBody:   c.PostForm("textBody"),
-		ReplyTo:    c.PostForm("replyTo"),
+		req = dto.SendEmailRequest{
+			From:       c.PostForm("from"),
+			Recipients: c.PostFormArray("recipients"),
+			Cc:         c.PostFormArray("cc"),
+			Bcc:        c.PostFormArray("bcc"),
+			Subject:    c.PostForm("subject"),
+			HTMLBody:   c.PostForm("htmlBody"),
+			TextBody:   c.PostForm("textBody"),
+			ReplyTo:    c.PostForm("replyTo"),
+		}
+	} else if !helpers.BindJSON(c, &req) {
+		return
 	}
 
 	// Validate basic request
@@ -120,6 +123,21 @@ func (h *EmailHandler) SendGenericEmail(c *gin.Context) {
 	}
 
 	response.Success(c, dto.SendEmailResponse{MessageID: messageID}, constants.MsgEmailSentSuccessfullyVN)
+}
+
+// GetAvailableSenders lists configured, verified sender identities for the admin composer.
+func (h *EmailHandler) GetAvailableSenders(c *gin.Context) {
+	if !isAdmin(c) {
+		response.Forbidden(c, constants.MsgForbiddenVN)
+		return
+	}
+
+	senders, err := h.emailService.AvailableSenders()
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.Success(c, senders, "Đã lấy danh sách địa chỉ gửi email")
 }
 
 // validateEmailAttachmentType checks if the file extension is in the allowlist.

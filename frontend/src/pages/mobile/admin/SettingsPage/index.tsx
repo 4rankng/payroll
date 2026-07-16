@@ -9,10 +9,12 @@ import { SettingCard } from '@/components/settings/SettingCard';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
-const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG]);
+const TAB_EMAIL = 'email';
+const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL]);
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
@@ -57,12 +59,15 @@ const SettingsPageMobile = () => {
 
       <div className="p-4 space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
-          <TabsList className="grid h-auto w-full grid-cols-2 p-1">
+          <TabsList className="grid h-auto w-full grid-cols-3 p-1">
             <TabsTrigger value={TAB_GENERAL} className="typography-body-medium min-h-11 px-3 py-2">
               Trả lương
             </TabsTrigger>
             <TabsTrigger value={TAB_FEE_CONFIG} className="typography-body-medium min-h-11 px-3 py-2">
               Tạm ứng
+            </TabsTrigger>
+            <TabsTrigger value={TAB_EMAIL} className="typography-body-medium min-h-11 px-3 py-2">
+              Email
             </TabsTrigger>
           </TabsList>
 
@@ -112,6 +117,10 @@ const SettingsPageMobile = () => {
             <FeeScheduleSection />
             <Separator />
             <DisbursementFeeScheduleSection />
+          </TabsContent>
+
+          <TabsContent value={TAB_EMAIL} className="mt-0">
+            <AdminEmailComposer embedded />
           </TabsContent>
         </Tabs>
       </div>

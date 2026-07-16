@@ -16,6 +16,11 @@ export interface SendEmailResponse {
   messageId?: string;
 }
 
+export interface EmailSenderOption {
+  name?: string;
+  address: string;
+}
+
 export interface EmailHistoryFilters {
   page: number;
   pageSize: number;

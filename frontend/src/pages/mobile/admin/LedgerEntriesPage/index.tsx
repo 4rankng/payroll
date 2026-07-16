@@ -4,13 +4,14 @@ import { LedgerPageHeader } from '@/components/ledger/LedgerPageHeader';
 import { LedgerSummaryCard } from '@/components/ledger/LedgerSummaryCard';
 import { LedgerMobileList } from '@/components/ledger/LedgerMobileList';
 import { LedgerFiltersMobile } from '@/components/ledger/mobile/LedgerFiltersMobile';
+import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { DoubleEntryModal } from '@/components/ledger/DoubleEntryModal';
 import { ReversalDialog } from '@/components/ledger/ReversalDialog';
 import { PayrollReportEmailDialog, type PayrollReportEmailParams } from '@/components/timesheet/PayrollReportEmailDialog';
 import { AdvancePaymentEmailDialog, type AdvancePaymentEmailParams } from '@/components/advance-payment/AdvancePaymentEmailDialog';
 import { SaoKeHistoryDialog } from '@/components/transaction/SaoKeHistoryDialog';
 import { useLedgerEntries } from '@/hooks/ledger/useLedgerEntries';
-import { useOverallBalance, useCashFlowSummary, useLedgerSummary } from '@/hooks/ledger/useLedgerBalance';
+import { useOverallBalance, useLedgerSummary } from '@/hooks/ledger/useLedgerBalance';
 import { useLedgerManagement } from '@/hooks/ledger/useLedgerManagement';
 import { useLedgerMetadata } from '@/hooks/ledger/useLedgerMetadata';
 import { useSendPayrollReportEmail } from '@/hooks/api/usePayrolls';
@@ -89,24 +90,9 @@ const LedgerEntriesPageMobile = () => {
     }
   }, [searchParams]);
 
-  // Get current month date range for cash flow (keep as current month for cash flow summary)
-  const currentMonth = useMemo(() => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return {
-      fromDate: dateToString(firstDay),
-      toDate: dateToString(lastDay),
-    };
-  }, []);
-
   // Data fetching
   const { data: entriesData, isLoading: isLoadingEntries } = useLedgerEntries(filters);
   const { data: overallBalance, isLoading: isLoadingBalance } = useOverallBalance();
-  const { data: cashFlowData, isLoading: isLoadingCashFlow } = useCashFlowSummary(
-    currentMonth.fromDate,
-    currentMonth.toDate
-  );
   const { data: ledgerSummary, isLoading: isLoadingSummary } = useLedgerSummary(
     filters.fromDate || getInitialDateRange.fromDate,
     filters.toDate || getInitialDateRange.toDate,
@@ -133,7 +119,7 @@ const LedgerEntriesPageMobile = () => {
         totalRecords: entriesData.length,
       }
     : entriesData?.pagination;
-  const netCashFlow = cashFlowData?.net_cash_flow;
+  const netCashFlow = ledgerSummary?.totals.net_cashflow;
   const projects = projectsData?.data || [];
 
   // Handlers
@@ -214,12 +200,12 @@ const LedgerEntriesPageMobile = () => {
   const hasFilters = !!(filters.project_id || filters.account || filters.party || filters.created_by || filters.has_evidence !== undefined);
 
   return (
-    <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <MobilePageShell className="space-y-4">
       <LedgerPageHeader
         overallBalance={overallBalance}
         netCashFlow={netCashFlow}
         isLoadingBalance={isLoadingBalance}
-        isLoadingCashFlow={isLoadingCashFlow}
+        isLoadingCashFlow={isLoadingSummary}
         onAddEntry={handleAddEntry}
         onAddDoubleEntry={() => setShowDoubleEntryModal(true)}
         onRecalculateBalance={handleRecalculateBalance}
@@ -295,7 +281,7 @@ const LedgerEntriesPageMobile = () => {
         open={saoKeHistoryDialogOpen}
         onOpenChange={setSaoKeHistoryDialogOpen}
       />
-    </div>
+    </MobilePageShell>
   );
 };
 

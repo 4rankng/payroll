@@ -162,6 +162,7 @@ func setupLoanRoutes(protected *gin.RouterGroup, container *Container) {
 func setupEmailRoutes(protected *gin.RouterGroup, container *Container) {
 	emails := protected.Group("/email")
 	{
+		emails.GET("/senders", container.Handlers.Email.GetAvailableSenders)
 		emails.GET("/history", container.Handlers.Email.GetEmailHistory)
 		emails.POST("/history/:id/settle", container.Handlers.Settlement.SettleFromNotification)
 		emails.POST("/history/:id/upload-settlement", container.Handlers.Settlement.UploadSettlement)

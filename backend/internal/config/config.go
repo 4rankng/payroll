@@ -139,6 +139,7 @@ type NotificationConfig struct {
 	EmailEnabled      bool
 	FromEmail         string
 	FromName          string
+	AllowedFromEmails []string
 	DefaultRecipients []string
 	DefaultCC         []string
 	DefaultBCC        []string
@@ -215,10 +216,10 @@ type WalletForecastConfig struct {
 // 6-month cohort lookback (≈ 24 Ky observations across Ky 1–4), a 2-day
 // prepare-by lead window, and no extra safety stock.
 type CashForecastConfig struct {
-	ServiceLevel  float64 // env CASH_FORECAST_SERVICE_LEVEL, default 0.95 (band upper quantile)
-	NSim          int     // env CASH_FORECAST_N_SIM, default 5000
-	HistoryMonths int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
-	LeadDays      int     // env CASH_FORECAST_LEAD_DAYS, default 2
+	ServiceLevel   float64 // env CASH_FORECAST_SERVICE_LEVEL, default 0.95 (band upper quantile)
+	NSim           int     // env CASH_FORECAST_N_SIM, default 5000
+	HistoryMonths  int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
+	LeadDays       int     // env CASH_FORECAST_LEAD_DAYS, default 2
 	GrowthEWMAlpha float64 // env CASH_FORECAST_GROWTH_EWMA_ALPHA, default 0.5 (EWMA smoothing for growth-rate adjustment)
 }
 
@@ -380,6 +381,7 @@ func Load() (*Config, error) {
 			EmailEnabled:      true,
 			FromEmail:         getEnv("EMAIL_FROM", "noreply@tingting.vip"),
 			FromName:          "TingTing",
+			AllowedFromEmails: parseStringSlice(getEnv("EMAIL_ALLOWED_FROM", "")),
 			DefaultRecipients: []string{},
 			DefaultCC:         []string{},
 			DefaultBCC:        []string{},

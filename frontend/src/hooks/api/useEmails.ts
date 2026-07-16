@@ -1,12 +1,32 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { emailService } from '@/services/api/email.service';
-import type { EmailHistoryFilters, EmailHistoryResult } from '@/types/api/email.types';
+import type { EmailHistoryFilters, EmailHistoryResult, SendEmailData } from '@/types/api/email.types';
 import { showSuccessNotification, showErrorNotification } from '@/utils/error-handler';
 
 export const emailQueryKeys = {
   all: ['email'] as const,
   historyLists: () => [...emailQueryKeys.all, 'history'] as const,
   historyList: (pageSize: number) => [...emailQueryKeys.historyLists(), { pageSize }] as const,
+  senders: () => [...emailQueryKeys.all, 'senders'] as const,
+};
+
+export const useEmailSenders = () => useQuery({
+  queryKey: emailQueryKeys.senders(),
+  queryFn: () => emailService.getAvailableSenders(),
+});
+
+export const useSendCustomEmail = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SendEmailData) => emailService.sendCustomEmail(data),
+    onSuccess: () => {
+      showSuccessNotification('Đã gửi email thành công');
+      queryClient.invalidateQueries({ queryKey: emailQueryKeys.historyLists() });
+    },
+    onError: (error) => {
+      showErrorNotification(error, 'Gửi email thất bại');
+    },
+  });
 };
 
 export interface UseEmailHistoryOptions {

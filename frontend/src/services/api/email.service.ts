@@ -5,6 +5,7 @@ import type {
   EmailHistoryResult,
   EmailHistoryPagination,
   EmailHistoryRecord,
+  EmailSenderOption,
   SendEmailData,
   SendEmailResponse,
   UploadSettlementResponse,
@@ -12,12 +13,8 @@ import type {
 
 class EmailService {
   async sendCustomEmail(data: SendEmailData): Promise<SendEmailResponse> {
-    // If no attachments, use regular JSON post
-    if (!data.attachments || data.attachments.length === 0) {
-      return apiClient.post(API_ENDPOINTS.email.send, data) as unknown as Promise<SendEmailResponse>;
-    }
-
-    // Build FormData for multipart/form-data request
+    // Always use multipart so attachments and no-attachment messages share the
+    // same backend contract.
     const formData = new FormData();
 
     // Add optional from field
@@ -63,12 +60,21 @@ class EmailService {
     }
 
     // Add attachments
-    data.attachments.forEach(file => {
+    (data.attachments ?? []).forEach(file => {
       formData.append('attachments', file);
     });
 
-    // Use the upload method for multipart/form-data
-    return apiClient.upload(API_ENDPOINTS.email.send, formData) as unknown as Promise<SendEmailResponse>;
+    const response = await apiClient.upload<{ message_id: string }>(API_ENDPOINTS.email.send, formData);
+    return {
+      success: response.status === 'success',
+      message: response.message ?? '',
+      messageId: response.data?.message_id,
+    };
+  }
+
+  async getAvailableSenders(): Promise<EmailSenderOption[]> {
+    const response = await apiClient.get<EmailSenderOption[]>(API_ENDPOINTS.email.senders);
+    return response.data ?? [];
   }
   async settleFromEmailHistory(id: number): Promise<void> {
     await apiClient.post(API_ENDPOINTS.email.settleHistory(id), {});

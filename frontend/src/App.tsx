@@ -24,6 +24,7 @@ const AdvPartnerAdvancePaymentsPage = lazy(() => import("./pages/admin/AdvancePa
 const SettingsPage = lazy(() => import("./pages/admin/SettingsPage"));
 const WalletPage = lazy(() => import("./pages/admin/WalletPage"));
 const SendNotificationPage = lazy(() => import("./pages/admin/SendNotificationPage"));
+const EmailPage = lazy(() => import("./pages/admin/EmailPage"));
 const SystemHealthPage = lazy(() => import("./pages/admin/SystemHealthPage"));
 const CronHealthPage = lazy(() => import("./pages/admin/CronHealthPage"));
 const PayrateEditPage = lazy(() => import("./pages/admin/PayrateEditPage"));
@@ -266,6 +267,7 @@ const AppContent = () => {
           <Route path="cron-health" element={<ResponsivePage desktopComponent={CronHealthPage} mobileComponent={CronHealthPageMobile} />} />
           <Route path="audit-log" element={<ResponsivePage desktopComponent={AuditLogPage} mobileComponent={AuditLogPageMobile} />} />
           <Route path="send-notification" element={<ResponsivePage desktopComponent={SendNotificationPage} mobileComponent={SendNotificationPageMobile} />} />
+          <Route path="email" element={<EmailPage />} />
           <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
           <Route path="*" element={<NotFound />} />
         </Route>

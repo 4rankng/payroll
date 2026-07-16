@@ -107,6 +107,13 @@ type SendEmailResponse struct {
 	MessageID string `json:"message_id"`
 }
 
+// EmailSenderOption is an approved sender identity available to administrators.
+// Every address is configured and verified outside the application by the email provider.
+type EmailSenderOption struct {
+	Name    string `json:"name,omitempty"`
+	Address string `json:"address"`
+}
+
 // UploadSettlementResponse is returned after uploading a settlement file to an email history record.
 type UploadSettlementResponse struct {
 	ProcessedTimesheets int   `json:"processedTimesheets"`

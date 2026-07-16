@@ -2,6 +2,7 @@ package email
 
 import (
 	"html"
+	"regexp"
 	"strings"
 
 	"api-server/internal/domain"
@@ -12,14 +13,20 @@ const publicEmailBannerPath = "tingting.vip/email-banner.jpg"
 
 const publicEmailBannerHTML = `<img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="640" style="display:block;width:100%;max-width:640px;height:auto;border:0;border-radius:16px;">`
 
+var publicEmailBannerImagePattern = regexp.MustCompile(`(?is)<img\b[^>]*\bsrc\s*=\s*(?:"[^"]*tingting\.vip/email-banner\.jpg[^"]*"|'[^']*tingting\.vip/email-banner\.jpg[^']*'|[^\s>]*tingting\.vip/email-banner\.jpg[^\s>]*)[^>]*>`)
+
 func withPublicEmailBanner(htmlBody, textBody string) string {
 	body := strings.TrimSpace(htmlBody)
 	if body == "" {
 		body = textBodyToHTML(textBody)
 	}
-	if body == "" || strings.Contains(body, publicEmailBannerPath) {
+	if body == "" {
 		return body
 	}
+	// Always supply the canonical banner exactly once. A pasted email may
+	// contain an old, duplicated, or malformed banner image; remove only those
+	// image tags before inserting the maintained public asset below.
+	body = publicEmailBannerImagePattern.ReplaceAllString(body, "")
 
 	lowerBody := strings.ToLower(body)
 	if !strings.Contains(lowerBody, "<html") && !strings.Contains(lowerBody, "<body") {

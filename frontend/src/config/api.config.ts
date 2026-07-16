@@ -277,6 +277,7 @@ export const API_ENDPOINTS = {
   // Email
   email: {
     history: '/email/history',
+    senders: '/email/senders',
     settleHistory: (id: number) => `/email/history/${id}/settle`,
     uploadSettlement: (id: number) => `/email/history/${id}/upload-settlement`,
     send: '/email/send',

@@ -15,23 +15,30 @@ func (r *LedgerEntryRepository) GetBalance(ctx context.Context) (int64, error) {
 	var rows []accountAgg
 	err := r.DB.WithContext(ctx).
 		Model(&domain.LedgerEntry{}).
-		Select("account, CAST(COALESCE(SUM(credit - debit), 0) AS SIGNED) as total_debit, CAST(COALESCE(SUM(debit - credit), 0) AS SIGNED) as total_credit").
+		Select("account, CAST(COALESCE(SUM(debit), 0) AS SIGNED) as total_debit, CAST(COALESCE(SUM(credit), 0) AS SIGNED) as total_credit").
+		Where("deleted_at IS NULL").
 		Group("account").
 		Scan(&rows).Error
 	if err != nil {
 		return 0, err
 	}
 
+	return calculateNetWorthFromAccountTotals(rows), nil
+}
+
+// calculateNetWorthFromAccountTotals computes assets less liabilities from
+// account-level debit and credit totals.
+func calculateNetWorthFromAccountTotals(rows []accountAgg) int64 {
 	var total int64
 	for _, acc := range rows {
 		switch acc.Account {
 		case domain.AccountCash, domain.AccountReceivable:
-			total += acc.TotalDebit // credit-debit (net asset)
-		case domain.AccountPayable:
-			total -= acc.TotalDebit
+			total += acc.TotalDebit - acc.TotalCredit
+		case domain.AccountPayable, domain.AccountLoan:
+			total -= acc.TotalCredit - acc.TotalDebit
 		}
 	}
-	return total, nil
+	return total
 }
 
 func (r *LedgerEntryRepository) GetBalanceByAccount(ctx context.Context, account domain.LedgerAccount) (int64, error) {

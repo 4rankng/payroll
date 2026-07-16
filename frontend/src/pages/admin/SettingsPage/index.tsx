@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings, Percent, Building2, Receipt } from 'lucide-react';
+import { Settings, Percent, Building2, Receipt, Mail } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
@@ -9,10 +9,12 @@ import { SettingCard } from '@/components/settings/SettingCard';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
+import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
-const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG]);
+const TAB_EMAIL = 'email';
+const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL]);
 
 const SettingsPage = () => {
   const form = useSettingsForm();
@@ -76,6 +78,10 @@ const SettingsPage = () => {
           <TabsTrigger value={TAB_FEE_CONFIG} className="gap-1.5">
             <Receipt className="h-3.5 w-3.5" />
             Tạm ứng
+          </TabsTrigger>
+          <TabsTrigger value={TAB_EMAIL} className="gap-1.5">
+            <Mail className="h-3.5 w-3.5" />
+            Email
           </TabsTrigger>
         </TabsList>
 
@@ -157,6 +163,10 @@ const SettingsPage = () => {
           <FeeScheduleSection />
           <Separator />
           <DisbursementFeeScheduleSection />
+        </TabsContent>
+
+        <TabsContent value={TAB_EMAIL} className="mt-0">
+          <AdminEmailComposer embedded />
         </TabsContent>
       </Tabs>
     </div>
