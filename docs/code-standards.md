@@ -44,6 +44,17 @@ func (s *Service) DoSomething() error {
 
 The `Clock` interface provides: `Now()`, `NowUTC()`, `TodayStart()`, `TodayEnd()`, `UnixNow()`. A `FakeClock` is available for testing.
 
+### Calendar Dates and Database Timezones
+
+Treat `YYYY-MM-DD` business dates differently from timestamps:
+
+- Parse payroll and timesheet dates with `timeutil.ParseBusinessDate()`. Do not use `time.Parse("2006-01-02", ...)`, which silently creates UTC midnight.
+- SQL `DATE` filters must implement `UsesCalendarDates() bool`. The shared persistence filter then binds timezone-free `YYYY-MM-DD` strings and uses a half-open `[from, to+1 day)` interval.
+- Use UTC only for real instants such as event timestamps, provider timestamps, and audit timestamps.
+- Boundary tests must use a non-UTC timezone and assert that both the first and last requested calendar days are included.
+
+This separation prevents the MySQL connection location from shifting a date-only boundary and omitting an entire day.
+
 ### Error Handling
 
 Domain errors use `domain.New*Error()` constructors from `internal/domain/errors.go`:

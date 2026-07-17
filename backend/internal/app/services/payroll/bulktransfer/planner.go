@@ -214,11 +214,11 @@ func (p *ExportPlanner) selectAndAggregate(
 			// The MySQL DSN uses loc=Local. Parsing a date-only value as UTC
 			// shifts the lower bound forward by the local offset and excludes
 			// every row on the first day of the requested cycle.
-			fromDate, _ := time.ParseInLocation(timeutil.DateFormat, req.FromDate, time.Local)
+			fromDate, _ := timeutil.ParseBusinessDate(req.FromDate)
 			filters.FromDate = &fromDate
 		}
 		if req.ToDate != "" {
-			toDate, _ := time.ParseInLocation(timeutil.DateFormat, req.ToDate, time.Local)
+			toDate, _ := timeutil.ParseBusinessDate(req.ToDate)
 			filters.ToDate = &toDate
 		}
 	}
@@ -295,8 +295,8 @@ func buildForecastOutcomeItems(
 		validation == nil || validation.ValidData == nil {
 		return nil
 	}
-	fromDate, fromErr := time.Parse(timeutil.DateFormat, req.FromDate)
-	toDate, toErr := time.Parse(timeutil.DateFormat, req.ToDate)
+	fromDate, fromErr := timeutil.ParseBusinessDate(req.FromDate)
+	toDate, toErr := timeutil.ParseBusinessDate(req.ToDate)
 	if fromErr != nil || toErr != nil {
 		return nil
 	}
@@ -340,7 +340,7 @@ func buildForecastOutcomeItems(
 		if timesheet == nil || amount <= 0 {
 			continue
 		}
-		workDate := time.Date(timesheet.Date.Year(), timesheet.Date.Month(), timesheet.Date.Day(), 0, 0, 0, 0, time.UTC)
+		workDate := time.Date(timesheet.Date.Year(), timesheet.Date.Month(), timesheet.Date.Day(), 0, 0, 0, 0, fromDate.Location())
 		if workDate.Before(fromDate) || workDate.After(toDate) {
 			continue
 		}

@@ -244,8 +244,8 @@ func TestPlanner_Plan_Weekly_AggregatesAndValidates(t *testing.T) {
 	require.NotEmpty(t, b.listFilters)
 	require.NotNil(t, b.listFilters[0].FromDate)
 	require.NotNil(t, b.listFilters[0].ToDate)
-	assert.Equal(t, time.Local, b.listFilters[0].FromDate.Location())
-	assert.Equal(t, time.Local, b.listFilters[0].ToDate.Location())
+	assert.Equal(t, pkgClock.DefaultLocation, b.listFilters[0].FromDate.Location())
+	assert.Equal(t, pkgClock.DefaultLocation, b.listFilters[0].ToDate.Location())
 	assert.Equal(t, "2026-07-08", b.listFilters[0].FromDate.Format(timeutil.DateFormat))
 	assert.Equal(t, "2026-07-14", b.listFilters[0].ToDate.Format(timeutil.DateFormat))
 }

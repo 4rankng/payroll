@@ -117,6 +117,13 @@ func ParseDate(s string) (time.Time, error) {
 	return time.ParseInLocation(DateFormat, s, time.UTC)
 }
 
+// ParseBusinessDate parses a date-only value in the application's canonical
+// business timezone. Use this for payroll/timesheet calendar dates. ParseDate
+// retains its legacy UTC behavior for callers that explicitly need a UTC date.
+func ParseBusinessDate(s string) (time.Time, error) {
+	return time.ParseInLocation(DateFormat, s, clock.DefaultLocation)
+}
+
 func ParseDateTime(s string) (time.Time, error) {
 	return time.ParseInLocation("2006-01-02 15:04:05", s, time.UTC)
 }

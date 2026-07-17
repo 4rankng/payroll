@@ -280,6 +280,13 @@ func (tf *TimesheetFilters) GetDateField() string {
 	return "date"
 }
 
+// UsesCalendarDates identifies timesheets.date as an SQL DATE column. The
+// persistence filter builder binds its range as timezone-free YYYY-MM-DD
+// values, preventing driver/location conversion from dropping boundary days.
+func (tf *TimesheetFilters) UsesCalendarDates() bool {
+	return true
+}
+
 // GetCreatedBy implements common.CreatorFilter interface
 func (tf *TimesheetFilters) GetCreatedBy() *uint {
 	return tf.CreatedBy

@@ -281,6 +281,18 @@ func (s *Service) generateMBankTransferExcel(rows []transferRow) ([]byte, error)
 		return nil, fmt.Errorf("failed to fill transfer data: %w", err)
 	}
 
+	// The template's cached used range ends at row 6. Excelize writes cells
+	// beyond that row but does not automatically expand the worksheet
+	// <dimension>, causing Excel and other readers to expose only the original
+	// four transfer rows. Keep the used range aligned with the generated data.
+	lastRow := len(rows) + 2
+	if lastRow < 2 {
+		lastRow = 2
+	}
+	if err := f.SetSheetDimension(constants.MBank_SheetName, fmt.Sprintf("A1:F%d", lastRow)); err != nil {
+		return nil, fmt.Errorf("failed to update MBank worksheet dimension: %w", err)
+	}
+
 	// Save to buffer (XLSX format) - MBank uses XLSX directly
 	buffer, err := f.WriteToBuffer()
 	if err != nil {

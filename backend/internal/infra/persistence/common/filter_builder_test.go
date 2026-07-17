@@ -36,9 +36,10 @@ func (f *TestStatusFilter) GetStatusField() string {
 
 // TestDateRangeFilter implements DateRangeFilter interface for testing.
 type TestDateRangeFilter struct {
-	fromDate  *time.Time
-	toDate    *time.Time
-	dateField string
+	fromDate     *time.Time
+	toDate       *time.Time
+	dateField    string
+	calendarDate bool
 }
 
 func (f *TestDateRangeFilter) GetFromDate() *time.Time {
@@ -54,6 +55,10 @@ func (f *TestDateRangeFilter) GetDateField() string {
 		return "created_at"
 	}
 	return f.dateField
+}
+
+func (f *TestDateRangeFilter) UsesCalendarDates() bool {
+	return f.calendarDate
 }
 
 // TestCreatorFilter implements CreatorFilter interface for testing.
@@ -118,6 +123,7 @@ func TestFilterBuilder_ApplyStatus(t *testing.T) {
 
 		assert.NotNil(t, result)
 	})
+
 }
 
 func TestFilterBuilder_ApplyDateRange(t *testing.T) {
@@ -168,6 +174,27 @@ func TestFilterBuilder_ApplyDateRange(t *testing.T) {
 		result := fb.ApplyDateRange(query, nil)
 
 		assert.NotNil(t, result)
+	})
+
+	t.Run("calendar DATE bounds are timezone-free SQL values", func(t *testing.T) {
+		// UTC input deliberately simulates the recurring caller mistake. A SQL
+		// DATE has no timezone, so the repository boundary must strip the zone
+		// instead of letting the MySQL driver shift midnight.
+		utcFrom := time.Date(2026, 7, 8, 0, 0, 0, 0, time.UTC)
+		utcTo := time.Date(2026, 7, 14, 0, 0, 0, 0, time.UTC)
+		filter := &TestDateRangeFilter{
+			fromDate:     &utcFrom,
+			toDate:       &utcTo,
+			dateField:    "date",
+			calendarDate: true,
+		}
+
+		result := fb.ApplyDateRange(db.Session(&gorm.Session{DryRun: true}).Table("timesheets"), filter).
+			Find(&[]struct{}{})
+
+		require.Len(t, result.Statement.Vars, 2)
+		assert.Equal(t, "2026-07-08", result.Statement.Vars[0])
+		assert.Equal(t, "2026-07-15", result.Statement.Vars[1])
 	})
 }
 

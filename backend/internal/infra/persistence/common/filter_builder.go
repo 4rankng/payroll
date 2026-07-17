@@ -54,6 +54,14 @@ type DateRangeFilter interface {
 	GetDateField() string
 }
 
+// CalendarDateRangeFilter marks filters whose database column is SQL DATE,
+// not DATETIME/TIMESTAMP. DATE values have no timezone and must be bound as
+// YYYY-MM-DD strings so the MySQL driver's connection location cannot shift a
+// boundary across (or into) a calendar day.
+type CalendarDateRangeFilter interface {
+	UsesCalendarDates() bool
+}
+
 // ApplyDateRange applies a date range filter to the query using a half-open interval
 // [fromDate, toDate+1day). This avoids timezone boundary issues when comparing
 // DATE columns against time.Time values that may shift across midnight due to
@@ -62,19 +70,40 @@ func (fb *FilterBuilder) ApplyDateRange(query *gorm.DB, filter DateRangeFilter) 
 	if filter == nil {
 		return query
 	}
+	calendarDates := false
+	if typed, ok := filter.(CalendarDateRangeFilter); ok {
+		calendarDates = typed.UsesCalendarDates()
+	}
 
 	if fromDate := filter.GetFromDate(); fromDate != nil {
 		field := filter.GetDateField()
-		query = query.Where(fmt.Sprintf("%s >= ?", field), *fromDate)
+		if calendarDates {
+			query = query.Where(fmt.Sprintf("%s >= ?", field), formatCalendarDate(*fromDate))
+		} else {
+			query = query.Where(fmt.Sprintf("%s >= ?", field), *fromDate)
+		}
 	}
 
 	if toDate := filter.GetToDate(); toDate != nil {
 		field := filter.GetDateField()
-		nextDay := toDate.Add(24 * time.Hour)
-		query = query.Where(fmt.Sprintf("%s < ?", field), nextDay)
+		if calendarDates {
+			query = query.Where(fmt.Sprintf("%s < ?", field), formatNextCalendarDate(*toDate))
+		} else {
+			nextDay := toDate.Add(24 * time.Hour)
+			query = query.Where(fmt.Sprintf("%s < ?", field), nextDay)
+		}
 	}
 
 	return query
+}
+
+func formatCalendarDate(value time.Time) string {
+	return fmt.Sprintf("%04d-%02d-%02d", value.Year(), value.Month(), value.Day())
+}
+
+func formatNextCalendarDate(value time.Time) string {
+	dateOnly := time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, time.UTC)
+	return dateOnly.AddDate(0, 0, 1).Format("2006-01-02")
 }
 
 // CreatorFilter defines the interface for filters that apply to creator/user fields.

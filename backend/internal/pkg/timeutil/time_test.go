@@ -3,6 +3,8 @@ package timeutil
 import (
 	"testing"
 	"time"
+
+	"api-server/internal/pkg/clock"
 )
 
 func TestNow(t *testing.T) {
@@ -202,6 +204,18 @@ func TestParseDate(t *testing.T) {
 	expected := time.Date(2024, 3, 15, 0, 0, 0, 0, time.UTC)
 	if !parsed.Equal(expected) {
 		t.Errorf("ParseDate() = %v, want %v", parsed, expected)
+	}
+}
+
+func TestParseBusinessDate(t *testing.T) {
+	parsed, err := ParseBusinessDate("2026-07-08")
+	if err != nil {
+		t.Fatalf("ParseBusinessDate() error = %v", err)
+	}
+
+	expected := time.Date(2026, 7, 8, 0, 0, 0, 0, clock.DefaultLocation)
+	if !parsed.Equal(expected) || parsed.Location() != clock.DefaultLocation {
+		t.Errorf("ParseBusinessDate() = %v (%v), want %v (%v)", parsed, parsed.Location(), expected, clock.DefaultLocation)
 	}
 }
 

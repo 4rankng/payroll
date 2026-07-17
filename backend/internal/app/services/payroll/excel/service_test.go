@@ -357,6 +357,30 @@ func TestService_GenerateBulkTransferExcelWithPaymentPercentage_UsesCapturedValu
 	assert.Zero(t, settings.calls, "captured export percentage must not be read again")
 }
 
+func TestService_GenerateBulkTransferExcel_ExpandsWorksheetDimension(t *testing.T) {
+	withBackendWorkingDirectory(t)
+	service := NewService(&mockSettingsConfigService{bulkPct: 1})
+	entries := make([]bulkTransferTestEntry, 0, 10)
+	for i := 1; i <= 10; i++ {
+		entries = append(entries, bulkTransferTestEntry{
+			employeeID:      uint(i),
+			projectID:       1,
+			amount:          1_000,
+			transactionCode: fmt.Sprintf("TX-%d", i),
+		})
+	}
+
+	response, err := service.GenerateBulkTransferExcel(context.Background(), newBulkTransferTestData(entries), &dto.ExportBulkTransferRequest{}, "", "", "weekly")
+	require.NoError(t, err)
+
+	workbook, err := excelize.OpenReader(bytes.NewReader(response.Data))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, workbook.Close()) })
+	dimension, err := workbook.GetSheetDimension(constants.MBank_SheetName)
+	require.NoError(t, err)
+	assert.Equal(t, "A1:F12", dimension)
+}
+
 func TestService_GenerateBulkTransferExcel_MultipleReadableWorkbooksPreserveRows(t *testing.T) {
 	withBackendWorkingDirectory(t)
 	settings := &mockSettingsConfigService{bulkPct: 1}

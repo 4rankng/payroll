@@ -8,6 +8,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/timeutil"
 )
 
 // PeriodCalculator handles date and period calculations for bulk transfers
@@ -33,13 +34,12 @@ func (pc *PeriodCalculator) ResolveWeeklyRange(req *dto.ExportBulkTransferReques
 		return time.Time{}, time.Time{}, domain.NewValidationError(constants.MsgFromDateRequiredForWeeklyVN)
 	}
 
-	loc, _ := time.LoadLocation("Local")
-	fromDate, err := time.ParseInLocation("2006-01-02", req.FromDate, loc)
+	fromDate, err := timeutil.ParseBusinessDate(req.FromDate)
 	if err != nil {
 		return time.Time{}, time.Time{}, domain.NewValidationError(constants.MsgFromDateInvalidFormatVN2)
 	}
 
-	toDate, err := time.ParseInLocation("2006-01-02", req.ToDate, loc)
+	toDate, err := timeutil.ParseBusinessDate(req.ToDate)
 	if err != nil {
 		return time.Time{}, time.Time{}, domain.NewValidationError(constants.MsgToDateInvalidFormatVN2)
 	}
@@ -133,11 +133,10 @@ func clampDay(day int, max int) int {
 
 // ParseDateRange parses and validates date range from string request parameters
 func (pc *PeriodCalculator) ParseDateRange(fromDateStr, toDateStr string) (*time.Time, *time.Time, error) {
-	loc, _ := time.LoadLocation("Local")
 	var fromDate, toDate *time.Time
 
 	if fromDateStr != "" {
-		parsed, err := time.ParseInLocation("2006-01-02", fromDateStr, loc)
+		parsed, err := timeutil.ParseBusinessDate(fromDateStr)
 		if err != nil {
 			return nil, nil, domain.NewValidationError(constants.MsgFromDateInvalidVN)
 		}
@@ -145,7 +144,7 @@ func (pc *PeriodCalculator) ParseDateRange(fromDateStr, toDateStr string) (*time
 	}
 
 	if toDateStr != "" {
-		parsed, err := time.ParseInLocation("2006-01-02", toDateStr, loc)
+		parsed, err := timeutil.ParseBusinessDate(toDateStr)
 		if err != nil {
 			return nil, nil, domain.NewValidationError(constants.MsgToDateInvalidVN)
 		}
