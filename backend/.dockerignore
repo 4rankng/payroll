@@ -82,6 +82,11 @@ venv
 db_data
 data
 mysql_backup
+
+# --- Runtime upload storage (mounted as a volume in prod, never baked into the image) ---
+# Excluding this keeps the build context lean — it was previously ~62MB of dead weight.
+uploads
+**/uploads
 *.sql
 *.sql.gz
 *.dump

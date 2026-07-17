@@ -15,7 +15,6 @@ import { useTimesheetContext } from '@/components/timesheet/TimesheetContext';
 const STATUS_OPTIONS = [
   { value: 'pending_approval', label: 'Chờ duyệt' },
   { value: 'pending_payment', label: 'Chờ TT' },
-  { value: 'approved', label: 'Đã duyệt' },
   { value: 'paid', label: 'Đã thanh toán' },
   { value: 'rejected', label: 'Bị loại' },
 ];

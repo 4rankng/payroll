@@ -113,8 +113,8 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
     // Apply status filter if selected
     if (statusFilter !== 'all') {
       if (statusFilter === 'pending_payment') {
-        // "Chờ TT" = pending_approval or approved, not yet paid
-        apiFilters.status = ['pending_approval', 'approved'];
+        // "Chờ TT" = approved but not yet paid
+        apiFilters.status = 'approved';
         apiFilters.payment_status = 'pending';
       } else if (statusFilter === 'approved') {
         // "Đã duyệt" = all approved timesheets (paid and unpaid)
