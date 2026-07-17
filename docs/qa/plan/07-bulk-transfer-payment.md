@@ -13,7 +13,8 @@
 - 9Pay mock sandbox sends IPNs to `http://host.docker.internal:8080/api/v1/webhooks/disbursement/9pay`
 
 ### Manual Bulk Transfer
-- Export Excel with approved timesheets
+- Export Excel with approved timesheets whose `payment_status` is `pending`
+  or `failed` (the shared "Chờ thanh toán" cohort)
 - Each MBank workbook must total less than 500,000,000 VND after applying the configured payment percentage
 - Exports that fit download as one `.xlsx`; larger exports are split by atomic transfer row and download as one `.zip` containing multiple `.xlsx` workbooks
 - Admin processes with bank externally

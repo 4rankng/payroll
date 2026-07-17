@@ -114,11 +114,14 @@ func (s *TimesheetResponseService) ParseTimesheetFilters(ctx context.Context, pa
 	if statusArray, ok := params["status"].([]string); ok && len(statusArray) > 0 {
 		var timesheetStatuses []domain.TimesheetStatus
 		var paymentStatuses []domain.PaymentStatus
+		pendingPaymentRequested := false
 
 		for _, s := range statusArray {
 			switch s {
 			case "pending_approval":
 				timesheetStatuses = append(timesheetStatuses, domain.TimesheetStatusPendingApproval)
+			case "pending_payment":
+				pendingPaymentRequested = true
 			case "approved":
 				timesheetStatuses = append(timesheetStatuses, domain.TimesheetStatusApproved)
 			case "rejected":
@@ -130,6 +133,15 @@ func (s *TimesheetResponseService) ParseTimesheetFilters(ctx context.Context, pa
 			case "cancelled":
 				paymentStatuses = append(paymentStatuses, domain.PaymentStatusCancelled)
 			}
+		}
+
+		// pending_payment is a complete business cohort, not one axis of the
+		// generic status filter. Keep it deterministic if an external client
+		// accidentally combines it with other status tokens.
+		if pendingPaymentRequested {
+			pendingPaymentFilters := domain.NewPendingPaymentTimesheetFilters()
+			timesheetStatuses = pendingPaymentFilters.TimesheetStatus
+			paymentStatuses = pendingPaymentFilters.PaymentStatus
 		}
 
 		if len(timesheetStatuses) > 0 {

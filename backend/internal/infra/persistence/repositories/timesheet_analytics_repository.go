@@ -80,21 +80,17 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 		stats.LastUpdated = main.LastUpdated
 	}
 
-	// Query 2: pending payment amount + employee count.
-	// "NV chờ TT" = employees who have at least one entry pending payment
-	// (status approved or pending_approval, payment_status != paid). Uses the
-	// same row set as PendingPaymentAmount so the two figures stay consistent.
+	// Query 2: pending payment amount + employee count. Keep this cohort aligned
+	// with payroll export: approved entries whose payment is pending or failed.
 	type pendingPaymentResult struct {
 		PendingPaymentAmount    int64 `gorm:"column:pending_payment_amount"`
 		PendingPaymentEmployees int   `gorm:"column:pending_payment_employees"`
 	}
 	var pending pendingPaymentResult
+	pendingPaymentFilters := domain.NewPendingPaymentTimesheetFilters()
 	err = r.queryBuilder.BuildSummaryQuery(filters).
-		Where("timesheet_status IN ?", []domain.TimesheetStatus{
-			domain.TimesheetStatusApproved,
-			domain.TimesheetStatusPendingApproval,
-		}).
-		Where("payment_status != ?", domain.PaymentStatusPaid).
+		Where("timesheet_status IN ?", pendingPaymentFilters.TimesheetStatus).
+		Where("payment_status IN ?", pendingPaymentFilters.PaymentStatus).
 		Select(`
 			COALESCE(SUM(amount), 0)                       AS pending_payment_amount,
 			COUNT(DISTINCT timesheets.employee_id)         AS pending_payment_employees

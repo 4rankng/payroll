@@ -200,14 +200,8 @@ func (p *ExportPlanner) selectAndAggregate(
 	cycle string,
 	periodCache map[uint]projectPeriod,
 ) (*excel.BulkTransferData, *excel.BulkTransferValidationResult, []domain.CashForecastOutcomeItem, float64, error) {
-	// Base filters: eligible timesheets per existing rule
-	filters := domain.TimesheetFilters{
-		TimesheetStatus: []domain.TimesheetStatus{domain.TimesheetStatusApproved},
-		PaymentStatus: []domain.PaymentStatus{
-			domain.PaymentStatusPending,
-			domain.PaymentStatusFailed,
-		},
-	}
+	// Base filters: eligible timesheets per the shared pending-payment rule.
+	filters := domain.NewPendingPaymentTimesheetFilters()
 	// For weekly exports, include date filters; for monthly, dates are handled per-project
 	if !isMonthly {
 		if req.FromDate != "" {
@@ -237,14 +231,8 @@ func (p *ExportPlanner) selectAndAggregate(
 
 	// Also fetch admin-marked timesheets that should always be included until paid
 	trueVal := true
-	forcedFilters := domain.TimesheetFilters{
-		TimesheetStatus: []domain.TimesheetStatus{domain.TimesheetStatusApproved},
-		PaymentStatus: []domain.PaymentStatus{
-			domain.PaymentStatusPending,
-			domain.PaymentStatusFailed,
-		},
-		ForcePayroll: &trueVal,
-	}
+	forcedFilters := domain.NewPendingPaymentTimesheetFilters()
+	forcedFilters.ForcePayroll = &trueVal
 	if len(req.ProjectIDs) > 0 {
 		forcedFilters.ProjectIDs = req.ProjectIDs
 	}

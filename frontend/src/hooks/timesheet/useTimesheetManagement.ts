@@ -14,6 +14,7 @@ import {
 import { useProjects, useProjectEmployeesSimple } from '@/hooks/api/useProjects';
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useTimesheetModals } from '@/hooks/useModalNavigation';
+import { buildTimesheetStatusFilters, TimesheetStatusFilter } from '@/utils/timesheetFilterHelpers';
 
 interface TimesheetManagementConfig {
   userRole?: 'admin' | 'partner';
@@ -30,7 +31,7 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
   });
   const [selectedProject, setSelectedProject] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment'>('all');
+  const [statusFilter, setStatusFilter] = useState<TimesheetStatusFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -110,22 +111,7 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
       }
     }
 
-    // Apply status filter if selected
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'pending_payment') {
-        // "Chờ TT" = approved but not yet paid
-        apiFilters.status = 'approved';
-        apiFilters.payment_status = 'pending';
-      } else if (statusFilter === 'approved') {
-        // "Đã duyệt" = all approved timesheets (paid and unpaid)
-        apiFilters.status = 'approved';
-      } else if (statusFilter === 'paid') {
-        // "Đã thanh toán" = payment_status=paid
-        apiFilters.status = 'paid';
-      } else {
-        apiFilters.status = statusFilter as 'pending_approval' | 'approved' | 'rejected' | 'paid' | 'failed' | 'cancelled';
-      }
-    }
+    Object.assign(apiFilters, buildTimesheetStatusFilters(statusFilter));
 
     return extraFilters
       ? { ...apiFilters, ...extraFilters }
@@ -337,7 +323,7 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
     setCurrentPage(1);
   };
 
-  const setStatusFilterWithReset = (status: Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment') => {
+  const setStatusFilterWithReset = (status: TimesheetStatusFilter) => {
     setStatusFilter(status);
     setCurrentPage(1);
   };

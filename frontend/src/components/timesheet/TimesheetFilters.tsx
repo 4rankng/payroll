@@ -164,6 +164,7 @@ export const TimesheetFilters = () => {
           onChange={onMonthChange}
           placeholder="Tháng"
           options={monthOptions}
+          className="bg-card"
         />
       )}
 
@@ -172,6 +173,7 @@ export const TimesheetFilters = () => {
         onChange={onStatusChange}
         placeholder="Trạng thái"
         options={STATUS_OPTIONS}
+        className="bg-card"
       />
 
       <SearchableDropdown
@@ -181,7 +183,7 @@ export const TimesheetFilters = () => {
         placeholder="Dự án"
         searchPlaceholder="Tìm dự án..."
         emptyMessage="Không tìm thấy dự án nào."
-        className="h-7 text-xs"
+        className="h-11 min-h-11 rounded-xl bg-card px-3 text-sm"
         allOption={{ value: 'all', label: 'Dự án' }}
         pillStyle
       />
@@ -191,7 +193,7 @@ export const TimesheetFilters = () => {
         onChange={onEmployeeChange}
         selectedProject={selectedProject}
         placeholder="Nhân viên"
-        className="inline-flex items-center gap-1 h-7 px-2.5 py-0 rounded-xl text-xs font-medium whitespace-nowrap border border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40 transition-colors duration-100 [&>svg]:h-3 [&>svg]:w-3"
+        className="inline-flex h-11 min-h-11 items-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-0 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-100 hover:border-border hover:bg-accent/40 hover:text-foreground [&>svg]:h-3.5 [&>svg]:w-3.5"
         availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as unknown as Employee[]}
         includeAvailableOnly={shouldUseProjectEmployees}
         pillStyle

@@ -85,7 +85,7 @@ export interface TimesheetFilters {
   employee_id?: number; // snake_case to match backend query param
   fromDate?: string;
   toDate?: string;
-  status?: 'pending_approval' | 'approved' | 'rejected' | 'paid' | 'failed' | 'cancelled' | ('pending_approval' | 'approved' | 'rejected' | 'paid' | 'failed' | 'cancelled')[];
+  status?: 'pending_payment' | 'pending_approval' | 'approved' | 'rejected' | 'paid' | 'failed' | 'cancelled' | ('pending_approval' | 'approved' | 'rejected' | 'paid' | 'failed' | 'cancelled')[];
   payment_status?: string; // Backend: filter by payment_status (pending, paid, failed, cancelled)
   allowed_edit?: boolean | 0 | 1;
   sortBy?: string;

@@ -248,6 +248,19 @@ type TimesheetFilters struct {
 	Search                    string // search by employee fullname or code
 }
 
+// NewPendingPaymentTimesheetFilters returns the canonical cohort that is ready
+// for payroll: approved timesheets that have not been paid or whose payment
+// attempt failed and can be retried.
+func NewPendingPaymentTimesheetFilters() TimesheetFilters {
+	return TimesheetFilters{
+		TimesheetStatus: []TimesheetStatus{TimesheetStatusApproved},
+		PaymentStatus: []PaymentStatus{
+			PaymentStatusPending,
+			PaymentStatusFailed,
+		},
+	}
+}
+
 // GetStatuses implements common.StatusFilter interface for TimesheetStatus
 func (tf *TimesheetFilters) GetStatuses() []string {
 	if len(tf.TimesheetStatus) == 0 {

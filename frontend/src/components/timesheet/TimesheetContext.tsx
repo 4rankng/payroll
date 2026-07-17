@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { Timesheet } from '@/types/api/timesheet.types';
+import type { TimesheetStatusFilter } from '@/utils/timesheetFilterHelpers';
 import type { SortingState, OnChangeFn } from '@tanstack/react-table';
 import type { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
 
@@ -44,8 +45,8 @@ interface TimesheetFilterState {
   onProjectChange: (v: string) => void;
   selectedEmployee: string;
   onEmployeeChange: (v: string) => void;
-  statusFilter: Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment';
-  onStatusChange: (v: Timesheet['status'] | Timesheet['payment_status'] | 'all' | 'pending_payment') => void;
+  statusFilter: TimesheetStatusFilter;
+  onStatusChange: (v: TimesheetStatusFilter) => void;
   projects: Array<{ id: number; code: string; name: string }>;
   projectEmployees?: Array<{ id: number; name: string; subtitle?: string; cccd?: string; fullname?: string; current_projects?: Array<{ project_id: number }> }>;
   searchTerm?: string;

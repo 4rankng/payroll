@@ -66,6 +66,11 @@ CRUD, bulk approve/reject/reset, approve-all, preview, export, grouped view, pay
 | POST | `/bulk-approve` | Bulk approve timesheets |
 | POST | `/export-entries-template` | Download export template |
 
+`GET /summary` and the shared `status=pending_payment` filter use the same cohort:
+approved timesheets whose `payment_status` is `pending` or `failed`. That
+cohort also powers the frontend "Chờ thanh toán" filter label and the
+bulk-transfer planner/export flow.
+
 `GET /cash-readiness` keeps the legacy percentile fields and adds a transparent
 cash decomposition: `observed_approved`, `pending_target_amount`,
 `expected_pending_amount`, `expected_future_amount`, `expected_payout`, and
