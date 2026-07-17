@@ -34,6 +34,16 @@ type EmailService struct {
 	logger           *slog.Logger
 }
 
+const (
+	defaultEmailSender   = "Ting Ting <noreply@tingting.vip>"
+	marketingEmailSender = "Ting Ting Software Solution <marketing@tingting.vip>"
+)
+
+var approvedEmailSenders = []string{
+	defaultEmailSender,
+	marketingEmailSender,
+}
+
 // AssetStoragePort is a minimal interface for saving files as assets.
 type AssetStoragePort interface {
 	UploadAssetFromBytes(ctx context.Context, data []byte, filename string, uploadType string, uploadedBy uint) (*domain.Asset, error)
@@ -76,8 +86,8 @@ func (s *EmailService) SendGenericEmail(ctx context.Context, payload *dto.SendEm
 	return s.dispatch(ctx, msg)
 }
 
-// AvailableSenders returns the configured, provider-verified identities that an
-// administrator may choose for a manual email. The default sender is always included.
+// AvailableSenders returns the approved, provider-verified identities that an
+// administrator may choose for a manual email.
 func (s *EmailService) AvailableSenders() ([]dto.EmailSenderOption, error) {
 	addresses, err := s.allowedFromAddresses()
 	if err != nil {
@@ -655,22 +665,12 @@ func (s *EmailService) resolveFromAddress(raw string) (domain.EmailAddress, erro
 }
 
 func (s *EmailService) allowedFromAddresses() ([]domain.EmailAddress, error) {
-	defaultAddress, err := domain.ParseEmailAddress(fmt.Sprintf("%s <%s>", s.cfg.FromName, s.cfg.FromEmail))
-	if err != nil {
-		return nil, domain.NewValidationError("địa chỉ email gửi mặc định không hợp lệ")
-	}
-
-	addresses := []domain.EmailAddress{defaultAddress}
-	seen := map[string]struct{}{defaultAddress.Address: {}}
-	for _, raw := range s.cfg.AllowedFromEmails {
+	addresses := make([]domain.EmailAddress, 0, len(approvedEmailSenders))
+	for _, raw := range approvedEmailSenders {
 		address, parseErr := domain.ParseEmailAddress(raw)
 		if parseErr != nil {
-			return nil, domain.NewValidationError("địa chỉ email gửi được cấu hình không hợp lệ")
+			return nil, domain.NewInternalError("địa chỉ email gửi cố định không hợp lệ", parseErr)
 		}
-		if _, exists := seen[address.Address]; exists {
-			continue
-		}
-		seen[address.Address] = struct{}{}
 		addresses = append(addresses, address)
 	}
 

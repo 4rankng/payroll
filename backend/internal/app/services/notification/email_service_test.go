@@ -12,30 +12,26 @@ import (
 	emailinfra "api-server/internal/infra/email"
 )
 
-func TestEmailServiceResolveFromAddressUsesConfiguredIdentities(t *testing.T) {
-	service := &EmailService{cfg: config.NotificationConfig{
-		FromName:          "TingTing",
-		FromEmail:         "noreply@tingting.vip",
-		AllowedFromEmails: []string{"TingTing Hỗ trợ <support@tingting.vip>"},
-	}}
+func TestEmailServiceResolveFromAddressUsesApprovedIdentities(t *testing.T) {
+	service := &EmailService{}
 
 	t.Run("uses default when omitted", func(t *testing.T) {
 		address, err := service.resolveFromAddress("")
 		if err != nil {
 			t.Fatalf("resolve default sender: %v", err)
 		}
-		if address.Name != "TingTing" || address.Address != "noreply@tingting.vip" {
+		if address.Name != "Ting Ting" || address.Address != "noreply@tingting.vip" {
 			t.Fatalf("unexpected default sender: %#v", address)
 		}
 	})
 
-	t.Run("uses canonical configured alternate", func(t *testing.T) {
-		address, err := service.resolveFromAddress("support@tingting.vip")
+	t.Run("uses canonical approved marketing sender", func(t *testing.T) {
+		address, err := service.resolveFromAddress("marketing@tingting.vip")
 		if err != nil {
-			t.Fatalf("resolve configured sender: %v", err)
+			t.Fatalf("resolve marketing sender: %v", err)
 		}
-		if address.Name != "TingTing Hỗ trợ" || address.Address != "support@tingting.vip" {
-			t.Fatalf("unexpected configured sender: %#v", address)
+		if address.Name != "Ting Ting Software Solution" || address.Address != "marketing@tingting.vip" {
+			t.Fatalf("unexpected marketing sender: %#v", address)
 		}
 	})
 
@@ -51,9 +47,8 @@ func TestEmailServiceSendGenericEmailUsesSelectedSenderAndBranding(t *testing.T)
 	provider := emailinfra.NewSandboxProvider(slog.Default())
 	service := NewEmailService(
 		config.NotificationConfig{
-			FromName:          "TingTing",
-			FromEmail:         "noreply@tingting.vip",
-			AllowedFromEmails: []string{"TingTing Hỗ trợ <support@tingting.vip>"},
+			FromName:  "TingTing",
+			FromEmail: "noreply@tingting.vip",
 		},
 		provider,
 		nil,
@@ -65,7 +60,7 @@ func TestEmailServiceSendGenericEmailUsesSelectedSenderAndBranding(t *testing.T)
 	)
 
 	_, err := service.SendGenericEmail(context.Background(), &dto.SendEmailRequest{
-		From:       "support@tingting.vip",
+		From:       "marketing@tingting.vip",
 		Recipients: []string{"recipient@example.com"},
 		Subject:    "Thông báo",
 		HTMLBody:   "<p>Nội dung email</p>",
@@ -78,7 +73,7 @@ func TestEmailServiceSendGenericEmailUsesSelectedSenderAndBranding(t *testing.T)
 	if captured == nil || captured.Message == nil {
 		t.Fatal("expected captured email")
 	}
-	if captured.Message.From.Address != "support@tingting.vip" {
+	if captured.Message.From.Address != "marketing@tingting.vip" {
 		t.Fatalf("unexpected sender: %#v", captured.Message.From)
 	}
 	if !strings.Contains(captured.Message.HTMLBody, "tingting.vip/email-banner.jpg") {
@@ -86,12 +81,8 @@ func TestEmailServiceSendGenericEmailUsesSelectedSenderAndBranding(t *testing.T)
 	}
 }
 
-func TestEmailServiceAvailableSendersIncludesDefaultOnlyOnce(t *testing.T) {
-	service := &EmailService{cfg: config.NotificationConfig{
-		FromName:          "TingTing",
-		FromEmail:         "noreply@tingting.vip",
-		AllowedFromEmails: []string{"TingTing <NOREPLY@tingting.vip>", "support@tingting.vip"},
-	}}
+func TestEmailServiceAvailableSendersReturnsApprovedIdentities(t *testing.T) {
+	service := &EmailService{}
 
 	senders, err := service.AvailableSenders()
 	if err != nil {
@@ -100,7 +91,8 @@ func TestEmailServiceAvailableSendersIncludesDefaultOnlyOnce(t *testing.T) {
 	if len(senders) != 2 {
 		t.Fatalf("expected 2 senders, got %#v", senders)
 	}
-	if senders[0].Address != "noreply@tingting.vip" || senders[1].Address != "support@tingting.vip" {
+	if senders[0].Name != "Ting Ting" || senders[0].Address != "noreply@tingting.vip" ||
+		senders[1].Name != "Ting Ting Software Solution" || senders[1].Address != "marketing@tingting.vip" {
 		t.Fatalf("unexpected sender order: %#v", senders)
 	}
 }

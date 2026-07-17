@@ -139,7 +139,6 @@ type NotificationConfig struct {
 	EmailEnabled      bool
 	FromEmail         string
 	FromName          string
-	AllowedFromEmails []string
 	DefaultRecipients []string
 	DefaultCC         []string
 	DefaultBCC        []string
@@ -381,7 +380,6 @@ func Load() (*Config, error) {
 			EmailEnabled:      true,
 			FromEmail:         getEnv("EMAIL_FROM", "noreply@tingting.vip"),
 			FromName:          "TingTing",
-			AllowedFromEmails: parseStringSlice(getEnv("EMAIL_ALLOWED_FROM", "")),
 			DefaultRecipients: []string{},
 			DefaultCC:         []string{},
 			DefaultBCC:        []string{},
