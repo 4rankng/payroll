@@ -137,8 +137,6 @@ type CORSConfig struct {
 
 type NotificationConfig struct {
 	EmailEnabled      bool
-	FromEmail         string
-	FromName          string
 	DefaultRecipients []string
 	DefaultCC         []string
 	DefaultBCC        []string
@@ -378,8 +376,6 @@ func Load() (*Config, error) {
 		},
 		Notification: NotificationConfig{
 			EmailEnabled:      true,
-			FromEmail:         getEnv("EMAIL_FROM", "noreply@tingting.vip"),
-			FromName:          "TingTing",
 			DefaultRecipients: []string{},
 			DefaultCC:         []string{},
 			DefaultBCC:        []string{},
@@ -578,9 +574,6 @@ func (c *Config) validate() error {
 	// config is mandatory (codes are delivered via Resend). Without this, an
 	// enabled-but-misconfigured deploy would silently lock out every admin/partner.
 	if c.OTP.Enabled {
-		if c.Notification.FromEmail == "" {
-			return fmt.Errorf("EMAIL_FROM must be set when OTP_ENABLE=true (needed to deliver codes)")
-		}
 		if c.Notification.ResendAPIKey == "" {
 			return fmt.Errorf("RESEND_API_KEY must be set when OTP_ENABLE=true")
 		}

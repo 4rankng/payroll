@@ -46,10 +46,7 @@ func TestEmailServiceResolveFromAddressUsesApprovedIdentities(t *testing.T) {
 func TestEmailServiceSendGenericEmailUsesSelectedSenderAndBranding(t *testing.T) {
 	provider := emailinfra.NewSandboxProvider(slog.Default())
 	service := NewEmailService(
-		config.NotificationConfig{
-			FromName:  "TingTing",
-			FromEmail: "noreply@tingting.vip",
-		},
+		config.NotificationConfig{},
 		provider,
 		nil,
 		nil,

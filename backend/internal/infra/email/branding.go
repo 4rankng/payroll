@@ -62,7 +62,7 @@ func brandedEmailShell(innerHTML string) string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Thông báo TingTing</title>
+  <title>TingTing</title>
 </head>
 <body style="margin:0;padding:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;margin:0;padding:28px 12px;">
@@ -74,12 +74,8 @@ func brandedEmailShell(innerHTML string) string {
           </tr>
           <tr>
             <td style="background:#ffffff;border:1px solid #e6eaf2;border-radius:16px;padding:28px 32px;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
-              <p style="margin:0 0 8px;color:#64748b;font-size:13px;line-height:20px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;">Thông báo</p>
               <div style="color:#334155;font-size:15px;line-height:24px;">` + innerHTML + `</div>
             </td>
-          </tr>
-          <tr>
-            <td style="padding:16px 8px 0;text-align:center;color:#94a3b8;font-size:12px;line-height:18px;">Email tự động từ TingTing.</td>
           </tr>
         </table>
       </td>

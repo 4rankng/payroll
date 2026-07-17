@@ -59,8 +59,11 @@ func TestWithPublicEmailBannerBuildsHTMLForTextOnlyEmail(t *testing.T) {
 	if !strings.Contains(body, "Dòng &lt;2&gt;") {
 		t.Fatalf("expected generated HTML to escape text body")
 	}
-	if !strings.Contains(body, "Thông báo") {
-		t.Fatalf("expected text-only email to use the branded notification shell")
+	if strings.Contains(body, ">Thông báo</p>") {
+		t.Fatalf("expected the branded email shell not to add a notification heading")
+	}
+	if strings.Contains(body, "Email tự động từ TingTing.") {
+		t.Fatalf("expected the branded email shell not to add an automatic-email footer")
 	}
 }
 

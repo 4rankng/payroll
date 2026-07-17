@@ -35,8 +35,8 @@ type EmailService struct {
 }
 
 const (
-	defaultEmailSender   = "Ting Ting <noreply@tingting.vip>"
-	marketingEmailSender = "Ting Ting Software Solution <marketing@tingting.vip>"
+	defaultEmailSender   = constants.DefaultEmailSenderName + " <" + constants.DefaultEmailSenderAddress + ">"
+	marketingEmailSender = constants.MarketingEmailSenderName + " <" + constants.MarketingEmailSenderEmail + ">"
 )
 
 var approvedEmailSenders = []string{
@@ -206,7 +206,7 @@ func (s *EmailService) SendAdvancePaymentReconciliationEmail(ctx context.Context
 	ccAddrs, _ := parseAddresses(chooseAddresses(params.CC, s.cfg.DefaultCC))
 	bccAddrs, _ := parseAddresses(chooseAddresses(params.BCC, s.cfg.DefaultBCC))
 
-	fromAddr := domain.EmailAddress{Name: s.cfg.FromName, Address: strings.ToLower(strings.TrimSpace(s.cfg.FromEmail))}
+	fromAddr := domain.EmailAddress{Name: constants.DefaultEmailSenderName, Address: constants.DefaultEmailSenderAddress}
 
 	msg := &domain.EmailMessage{
 		Kind:     domain.EmailKindAdvancePaymentReport,
@@ -368,8 +368,8 @@ func (s *EmailService) GetEmailHistory(ctx context.Context, limit, offset int) (
 			senderName = sender.Fullname
 			senderUsername = sender.Username
 		} else if notification.SenderID == constants.SystemUserID {
-			senderName = s.cfg.FromName
-			senderUsername = strings.TrimSpace(s.cfg.FromEmail)
+			senderName = constants.DefaultEmailSenderName
+			senderUsername = constants.DefaultEmailSenderAddress
 		}
 
 		entry := dto.EmailHistoryEntry{
@@ -540,7 +540,7 @@ func (s *EmailService) buildPayrollReportMessage(payload *dto.SendPayrollReportE
 		return nil, err
 	}
 
-	fromAddr := domain.EmailAddress{Name: s.cfg.FromName, Address: strings.ToLower(strings.TrimSpace(s.cfg.FromEmail))}
+	fromAddr := domain.EmailAddress{Name: constants.DefaultEmailSenderName, Address: constants.DefaultEmailSenderAddress}
 
 	if summary == nil {
 		summary = &services.PayrollReportSummary{}

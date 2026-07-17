@@ -33,6 +33,7 @@ import (
 	"api-server/internal/app/services/user"
 	"api-server/internal/app/workers"
 	appConfig "api-server/internal/config"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/domain/wallet"
@@ -574,7 +575,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		otpEmailSender = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
-	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, cfg.Notification.FromEmail, cfg.OTP, clk, logger)
+	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, constants.DefaultEmailSenderAddress, cfg.OTP, clk, logger)
 
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
