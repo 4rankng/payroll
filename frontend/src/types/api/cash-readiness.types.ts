@@ -1,7 +1,7 @@
-// Advisory cash-prep forecast for the next timesheet bulk transfer.
+// Advisory forecast for the next timesheet Ky only.
 // Mirrors backend dto.CashReadinessResponse. All monetary fields are VND.
 export interface CashReadinessResponse {
-  confirmed_payable: number;
+  observed_approved: number;
   projected_p50: number;
   projected_expected: number;
   projected_p95: number;

@@ -15,13 +15,11 @@ import (
 
 // Cash-readiness forecast for the next timesheet bulk transfer.
 //
-// Composes the deterministic confirmed-payable floor (already-approved +
-// pending-approval, not-yet-paid — identical to GetSummaryStats) with a
-// short-horizon projected-accrual band derived from a per-Ky timesheet cohort,
-// then subtracts the live wallet balance to surface a single "cash to prepare"
-// gap. Reuses the I/O-free newsvendor Monte-Carlo engine (the same one the
-// wallet demand forecast uses) on a NEW timesheet-accrual cohort — the wallet
-// forecast's advance-payment cohort is the wrong data source for this problem.
+// Forecasts the final approved value of the next Ky only. It combines approved
+// value already observed inside the target Ky with a short-horizon projection
+// of approvals still expected before that Ky's pay date, then subtracts the
+// live wallet balance to surface a single "cash to prepare" gap. Outstanding
+// payments from earlier cycles are intentionally excluded.
 //
 // ADVISORY ONLY: the service holds only READ-ONLY ports. It has no handle to
 // SyncBalance, CreateTopup, or any disbursement, so feeding it back into balance
@@ -79,15 +77,6 @@ func (p *TimesheetAccrualProvider) ProjectAccrual(_ context.Context, hist []coho
 	}, nil
 }
 
-// TimesheetSummaryReader reads the confirmed-payable figure. Backed by
-// TimesheetService.GetSummaryStats (the CACHED path) so the forecast shares the
-// exact value — and the same mutation invalidation — the "Chờ thanh toán" card
-// shows. Routing through the cached service (not the raw repo) is what keeps the
-// two figures from diverging inside the summary cache TTL.
-type TimesheetSummaryReader interface {
-	GetSummaryStats(ctx context.Context, filters domain.TimesheetFilters) (*domain.TimesheetSummaryStats, error)
-}
-
 // TimesheetAccrualReader reads the historical accrual cohort. Backed by the
 // timesheet repository (domain.TimesheetRepository satisfies it structurally).
 type TimesheetAccrualReader interface {
@@ -100,10 +89,9 @@ type WalletBalanceReader interface {
 	GetBalance(ctx context.Context) (*wallet.WalletBalance, error)
 }
 
-// CashReadinessForecastService composes confirmed-payable + projected accrual −
-// wallet balance into the cash-prep gap.
+// CashReadinessForecastService composes target-Ky observed approvals + projected
+// target-Ky approvals − wallet balance into the cash-prep gap.
 type CashReadinessForecastService struct {
-	summaryReader TimesheetSummaryReader
 	timesheetRepo TimesheetAccrualReader
 	walletSvc     WalletBalanceReader
 	provider      ForecastProvider
@@ -111,12 +99,9 @@ type CashReadinessForecastService struct {
 	cfg           config.CashForecastConfig
 }
 
-// NewCashReadinessForecastService constructs the service. summaryReader should be
-// the cached TimesheetService (so confirmed-payable matches the summary card
-// exactly); timesheetRepo is the cohort reader. clk and provider default to the
-// real clock / statistical provider when nil.
+// NewCashReadinessForecastService constructs the service. clk and provider
+// default to the real clock / statistical provider when nil.
 func NewCashReadinessForecastService(
-	summaryReader TimesheetSummaryReader,
 	timesheetRepo TimesheetAccrualReader,
 	walletSvc WalletBalanceReader,
 	provider ForecastProvider,
@@ -130,7 +115,6 @@ func NewCashReadinessForecastService(
 		provider = NewTimesheetAccrualProvider()
 	}
 	return &CashReadinessForecastService{
-		summaryReader: summaryReader,
 		timesheetRepo: timesheetRepo,
 		walletSvc:     walletSvc,
 		provider:      provider,
@@ -139,22 +123,16 @@ func NewCashReadinessForecastService(
 	}
 }
 
-// GetCashReadiness builds the cash-prep forecast for the next pay cycle, scoped
-// to the same filters as the summary endpoint (so confirmed-payable matches the
-// "Chờ thanh toán" card exactly).
+// GetCashReadiness builds the target-Ky forecast for the next pay date. Filters
+// scope the cohort by project/employee/role, but the current outstanding-payment
+// summary is deliberately not an input.
 func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, filters domain.TimesheetFilters) (*domain.CashReadiness, error) {
 	now := s.clock.Now()
 	pc := clock.NextTimesheetPayCycle(now)
 	leadDays := s.leadDays()
 
-	// 1. Confirmed-payable: the SAME cached source as the summary card.
-	summary, err := s.summaryReader.GetSummaryStats(ctx, filters)
-	if err != nil {
-		return nil, fmt.Errorf("lấy confirmed-payable: %w", err)
-	}
-	confirmed := summary.PendingPaymentAmount
-
-	// 2. Build the per-Ky historical cohort (excluding the in-progress cycle).
+	// 1. Build the per-Ky historical cohort (excluding the in-progress cycle)
+	// and read approved value already observed inside the target cycle.
 	cohortFilters := s.cohortFilters(filters, now)
 	rows, err := s.timesheetRepo.GetAccrualCohort(ctx, cohortFilters)
 	if err != nil {
@@ -162,25 +140,27 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 	}
 	currentForMonth := pc.WorkMonth.Format("2006-01")
 	historical := buildTimesheetCohort(rows, pc.Ky, currentForMonth)
+	observedApproved := observedApprovedForCycle(rows, pc.Ky, currentForMonth, pc.CycleDayToday)
 
-	// 3. Project accrual between today's cycle-day and the pay date.
+	// 2. Project approvals still expected between today's cycle-day and the pay date.
 	seed := timesheetForecastSeed(pc.Ky, currentForMonth, pc.CycleDayToday)
 	proj, err := s.provider.ProjectAccrual(ctx, historical, pc.CycleDayToday, pc.MaxCycleDay, seed, s.cfg)
 	if err != nil {
 		return nil, fmt.Errorf("dự báo accrual: %w", err)
 	}
 
-	// 4. Compose the band + gap.
-	cashToPrepare := confirmed + proj.P50
-	expectedTotal := confirmed + proj.Expected
-	bandLower := confirmed + proj.P50
-	bandUpper := confirmed + proj.P95
+	// 3. Compose the target-Ky total band + gap. No outstanding-payment backlog
+	// is added here: every term belongs to the next Ky shown on the card.
+	cashToPrepare := observedApproved + proj.P50
+	expectedTotal := observedApproved + proj.Expected
+	bandLower := observedApproved + proj.P50
+	bandUpper := observedApproved + proj.P95
 
 	walletAvailable, walletOK := s.walletAvailable(ctx)
 	gap := max(int64(0), cashToPrepare-walletAvailable)
 
 	return &domain.CashReadiness{
-		ConfirmedPayable:  confirmed,
+		ObservedApproved:  observedApproved,
 		ProjectedP50:      proj.P50,
 		ProjectedExpected: proj.Expected,
 		ProjectedP95:      proj.P95,
@@ -204,9 +184,9 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 	}, nil
 }
 
-// cohortFilters mirrors GetSummary's role/project/employee scope but overrides
-// the status (approved-only) and date window (lookback) for the cohort basis.
-// Payment status is intentionally NOT filtered — see GetAccrualCohort.
+// cohortFilters preserves role/project/employee scope but overrides the status
+// (approved-only) and date window (lookback) for the cohort basis. Payment
+// status is intentionally NOT filtered — see GetAccrualCohort.
 func (s *CashReadinessForecastService) cohortFilters(filters domain.TimesheetFilters, now time.Time) domain.TimesheetFilters {
 	months := s.historyMonths()
 	from := now.AddDate(0, -months, 0)
@@ -220,6 +200,23 @@ func (s *CashReadinessForecastService) cohortFilters(filters domain.TimesheetFil
 		FromDate:                  &from,
 		ToDate:                    &now,
 	}
+}
+
+// observedApprovedForCycle sums approvals already recorded for the target Ky up
+// to the current cycle-day. The repository input is approved-only, so pending
+// approvals and outstanding payments from other cycles cannot enter this floor.
+func observedApprovedForCycle(rows []domain.TimesheetAccrualDailyRow, targetKy int, currentForMonth string, throughCycleDay int) int64 {
+	var total int64
+	for _, r := range rows {
+		if clock.KyFromWorkDay(r.WorkDate.Day()) != targetKy || r.WorkDate.Format("2006-01") != currentForMonth {
+			continue
+		}
+		cycleDay := clock.CycleDayForApproval(targetKy, r.WorkDate.Year(), r.WorkDate.Month(), r.ApprovedDate)
+		if cycleDay >= 1 && cycleDay <= throughCycleDay {
+			total += r.Amount
+		}
+	}
+	return total
 }
 
 func (s *CashReadinessForecastService) walletAvailable(ctx context.Context) (int64, bool) {

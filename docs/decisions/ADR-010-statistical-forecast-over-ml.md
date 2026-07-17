@@ -13,16 +13,32 @@ The question was whether to use ML (Prophet / LightGBM) or a statistical baselin
 
 Use a **statistical baseline** (ETS + newsvendor Monte-Carlo) rather than ML, behind a swappable `ForecastProvider` interface so ML can be added later without touching handlers/UI.
 
+### Target-cycle scope clarification (2026-07-17)
+
+The forecast represents only the next Kỳ shown on the card. It must not include
+`GetSummaryStats.PendingPaymentAmount` or any outstanding-payment backlog from
+other cycles. Its point estimate is:
+
+```text
+approved value observed in the target Kỳ
++ projected target-Kỳ approvals through its pay date
+```
+
+The interval applies to that same target-Kỳ total. The separate “Chờ thanh toán”
+KPI remains an operational backlog metric and is never a forecast input.
+
 ### Rationale
 
-1. **The total is mostly deterministic.** The confirmed-payable half (approved + unpaid timesheets) is a known sum — no model beats "sum the known values." ML contributes zero to the dominant term and obscures it.
+1. **The observed target-Kỳ amount is deterministic.** Approved value already recorded inside the target Kỳ is summed directly; only approvals still expected before that Kỳ's pay date are projected. Outstanding payments from other cycles are outside the forecast scope.
 2. **Short horizon, near-constant daily amounts.** The projection term covers days (the weekly bulk-transfer cadence) with near-constant per-employee daily amounts (rate × hours). For that shape, a transparent ETS/seasonal-naive average + Monte-Carlo band beats a black box.
 3. **Makridakis M-competition evidence.** Simple statistical methods and ensembles match or beat complex ML on aggregate, low-frequency business series. ML wins concentrate in high-frequency, high-dimensional data — the opposite of weekly payroll.
 4. **ML needs ≥18 months clean history + a retraining/drift pipeline.** On a short horizon it overfits, and you cannot explain a 40M VND miss — which is exactly what matters when cash is short.
 
 ### Validation
 
-**Backtest results: 7.3% + 0.0% absolute error** forecasting 2 cycles from priors.
+The existing test demonstrates rolling-origin methodology with synthetic
+fixtures; it is not a production accuracy measurement. Real confidence must be
+based on persisted forecast snapshots compared with actual target-Kỳ payouts.
 
 ### Escalation Path (Documented, Not Built)
 
@@ -38,7 +54,7 @@ The forecast is advisory-only and never feeds `SyncBalance`. A `WalletBalanceRea
 - Transparent and explainable — the admin can see exactly how the number is computed.
 - No ML infrastructure (training pipeline, model registry, drift monitoring) needed.
 - The swappable interface leaves the ML door open without paying its cost now.
-- Backtest validated the approach with low error.
+- The approach remains simple enough to backtest and explain once real snapshots are available.
 
 **Negative:**
 - May underperform ML if Tết/seasonality causes large payout swings in the future.
@@ -48,7 +64,7 @@ The forecast is advisory-only and never feeds `SyncBalance`. A `WalletBalanceRea
 
 1. **Prophet (Facebook)** — Rejected for now. Needs ≥18 months clean history and a retraining pipeline. Overfits on short horizons. Available as a drop-in `ForecastProvider` if needed.
 2. **LightGBM** — Rejected for now. Same reasons as Prophet. Black-box nature makes it hard to explain a 40M VND miss to the admin.
-3. **Pure deterministic (no forecast)** — Rejected. The confirmed-payable alone doesn't account for accrual between today and the pay date.
+3. **Pure deterministic (no forecast)** — Rejected. Target-Kỳ approvals observed so far do not account for approvals expected between today and the pay date.
 4. **Neural network (LSTM)** — Rejected. Over-provisioned for weekly payroll data. Would require significant data engineering.
 
 ## References

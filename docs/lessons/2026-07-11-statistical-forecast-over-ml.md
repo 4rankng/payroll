@@ -8,11 +8,17 @@
 
 The admin needed a forecast of how much cash to prepare for the next weekly bulk transfer. The question arose: should we use ML (Prophet / LightGBM) or a simpler statistical approach?
 
-The total amount (462M VND) was mostly deterministic — approved + unpaid timesheets. Only the projected accrual between today and the pay date was uncertain.
+The forecast target is the next Kỳ only. Approved value already observed inside
+that Kỳ is deterministic; approvals still expected before its pay date are
+uncertain. Outstanding unpaid amounts from other cycles are a separate KPI and
+must not enter the forecast.
 
 ## Decision / Outcome
 
-Chose a **statistical baseline** (ETS + newsvendor Monte-Carlo) over ML. Backtest validated: **7.3% + 0.0% absolute error** forecasting 2 cycles from priors.
+Chose a **statistical baseline** (ETS + newsvendor Monte-Carlo) over ML. The
+existing rolling-origin test uses synthetic fixtures to validate methodology;
+real accuracy remains unmeasured until forecast snapshots are compared with
+actual target-Kỳ payouts.
 
 ML was kept as a documented escalation path behind a swappable `ForecastProvider` interface — if error stays >~12% over ≥4 cycles, a Prophet/LightGBM provider can be added without touching handlers or UI.
 
@@ -22,7 +28,7 @@ ML was kept as a documented escalation path behind a swappable `ForecastProvider
 - Short horizon (days, not months)
 - Near-constant per-period amounts (rate × hours)
 - Low frequency (weekly, not hourly)
-- Mostly deterministic (the dominant term is a known sum)
+- Partly deterministic (approved target-Kỳ value observed so far is a known sum)
 
 ...simple statistical methods (ETS, seasonal-naive, Monte-Carlo bands) match or beat ML, are transparent and explainable, and require no training pipeline or drift monitoring.
 

@@ -34,57 +34,59 @@ This classification is the single most important business output of the feature:
 
 ## Architecture
 
-### Cycle date ranges (the Kỳ 1–4 model)
+### Cycle date ranges — REUSE `clock.PayCycle` (red-team Finding 3)
 
-```go
-// payrollCycle.go (new, tiny helper)
-//
-// A payroll month is divided into 4 cycles. Each cycle covers a 7-day window
-// and is paid ~3 days after the window closes:
-//   Kỳ 1: days  1–7  → paid day 10
-//   Kỳ 2: days  8–14 → paid day 17
-//   Kỳ 3: days 15–21 → paid day 24
-//   Kỳ 4: days 22–28 → paid day  1 of the NEXT month
+**Do not create `payroll_cycle.go`.** The canonical model already exists at `backend/internal/pkg/clock/pay_cycle.go`:
+- `clock.KyFromWorkDay(day int) int` → returns 1..4
+- `clock.WorkStartDay(ky int) int` → 1, 8, 15, 22
+- `clock.PayDate(ky, year, month) time.Time` → handles Kỳ 4 wrap to next-month day 1
+- `clock.NextTimesheetPayCycle(t) TimesheetPayCycle` → the next upcoming cycle relative to `t`
 
-type PayrollCycle struct {
-    Index    int       // 1..4
-    MonthRef time.Time // first-of-month this cycle belongs to
-    FromDate time.Time
-    ToDate   time.Time
-    PayDate  time.Time
-}
+The simulation starts at `clock.NextTimesheetPayCycle(clock.Now())` and walks forward via a **small new helper** `clock.NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle` (added to `pay_cycle.go`, ~15 lines, wraps Kỳ 4 → Kỳ 1 next month). Each cycle's date window:
+- `FromDate` = `time.Date(year, month, clock.WorkStartDay(ky), ..., DefaultLocation)`
+- `ToDate`   = `FromDate.AddDate(0, 0, 6)` (7-day window)
+- `PayDate`  = `clock.PayDate(ky, year, month)`
 
-// CycleContaining returns the Kỳ 1..4 that contains t (Ho Chi Minh time).
-func CycleContaining(t time.Time) PayrollCycle { ... }
-
-// Next returns the next cycle in monthly sequence, wrapping Kỳ 4 → Kỳ 1 of next month.
-func (c PayrollCycle) Next() PayrollCycle { ... }
-```
-
-The simulation starts at `CycleContaining(clock.Now())` and walks `.Next()` up to `req.ProjectedCycleCount` times (default 4, max 6).
+If `clock.NextPayCycleAfter` already exists, use it; otherwise add it. This is the only new code in the cycle layer — everything else is reuse.
 
 ### Per-cycle planning
 
 ```go
+startCycle := clock.NextTimesheetPayCycle(s.clock.Now())
+cycle := startCycle
+var coveredTimesheetIDs map[uint]struct{}
+var cycles []CycleProjection
+
 for i := 0; i < req.ProjectedCycleCount; i++ {
     cycleReq := cloneRequestForCycle(req, cycle) // sets FromDate/ToDate, clears ForMonth (weekly mode)
     plan, err := planner.Plan(ctx, cycleReq)
-    if err != nil { return nil, fmt.Errorf("cycle %d: %w", cycle.Index, err) }
+    if err != nil { return nil, fmt.Errorf("cycle Kỳ %d: %w", cycle.Ky, err) }
 
-    // Subtract timesheets already included in earlier cycles (sim-only: in production
-    // this happens automatically because status flips to paid between exports).
-    alreadyIncluded := unionOfTimesheetIDs(prevCycles)
-    included, excluded, remaining := partition(plan, alreadyIncluded)
+    // Surface the timesheet IDs that Plan() aggregated. Plan's RawAggregated
+    // is *excel.BulkTransferData, which DOES carry EmployeeProjectTimesheets
+    // (map[EmployeeProjectKey][]uint). Flatten it to get the included set.
+    cycleIncludedIDs := flattenTimesheetIDs(plan.RawAggregated.EmployeeProjectTimesheets)
 
-    // Run sim-only validators (Phase 2 core — see "Extra validators" below)
-    findings := simValidators.Run(included, cycle)
+    // Track cumulative coverage for the full-pool verdict (computed after the loop)
+    for id := range cycleIncludedIDs { coveredTimesheetIDs[id] = struct{}{} }
 
-    cycles = append(cycles, CycleProjection{...})
-    cycle = cycle.Next()
+    // Run sim-only validators on this cycle's included data
+    findings := simValidators.Run(plan, cycle)
+
+    cycles = append(cycles, CycleProjection{
+        Sequence: i + 1,
+        Label:    fmt.Sprintf("Kỳ %d%s", cycle.Ky, i == 0 && " (hiện tại)"),
+        ...,
+        Included:    buildRowsFromAggregated(plan.ValidatedData.ValidData, masker),
+        Excluded:    buildExcludedRows(plan.ValidatedData.SkippedEmployees),
+        Findings:    findings,
+    })
+
+    cycle = clock.NextPayCycleAfter(cycle) // walks Kỳ 1→2→3→4→(next month)1
 }
 ```
 
-**Important modeling note:** because `Plan()` selects `payment_status IN (pending, failed)` and we don't actually flip statuses between simulated cycles, every cycle would otherwise return the **same** set. The simulation's job is therefore: (a) show what production **would** include in this cycle's date window, and (b) explicitly model "items already settled by a prior simulated cycle" as the subtraction. This is honest: it answers *"if exports 1..k each succeed at the bank, what's left for cycle k+1?"*
+**Red-team correction (Finding 6):** the original plan said "subtract already-included timesheet IDs from later cycles". That step is now **removed** — it was based on a misreading that `Plan()` returns per-timesheet IDs at the top level. In reality each cycle's `Plan()` runs against that cycle's date window, and an item in Kỳ 1's window will NOT appear in Kỳ 2's `Plan()` output (different date range). So the cycles are naturally disjoint by date. The cross-cycle dedup problem only arises at the **full-pool verdict** step (next subsection), where we compute `fullPool − coveredAcrossAllCycles`.
 
 ### Extra sim-only validators (not in production — per user decision)
 
@@ -127,91 +129,113 @@ reconciliation := Reconciliation{
 
 Use the lightest existing ledger query (e.g. a `SUM` over `ledger_entries` filtered by account + date). Avoid loading full ledger rows. Confirm the exact method with `backend/internal/infra/persistence/ledger_repository_queries.go` during implementation; if none fits, add one read-only `SUM` query — no new mutation.
 
-### Verdict computation (full-pool)
+### Verdict computation (full-pool, corrected classifier chain)
 
 The verdict is computed against the **entire outstanding pool**, not the union of the N windows:
 
 ```go
 // 1. Compute the FULL outstanding pool: all approved timesheets with
 //    payment_status IN (pending, failed), NO date filter, project/employee filters only.
-fullPool := planner.Plan(ctx, reqWithNoDateFilter)  // reuse same code path
-fullPoolIDs := setOf(fullPool.ValidatedData timesheet IDs)
+//    (Phase 1 added req.noDateFilter=true to make Plan() support this — red-team Finding 8)
+fullPoolReq := cloneRequest(req)
+fullPoolReq.noDateFilter = true
+fullPoolPlan, err := planner.Plan(ctx, fullPoolReq)
+fullPoolIDs := flattenTimesheetIDs(fullPoolPlan.RawAggregated.EmployeeProjectTimesheets)
 
-// 2. Compute what the N projected windows WILL cover
-coveredIDs := unionOf(cycle.Included timesheet IDs for cycle in projectedCycles)
+// 2. Compute what the N projected windows WILL cover (accumulated in the loop above)
+// coveredTimesheetIDs is already populated.
 
 // 3. Remainder = full pool minus covered
-remainderIDs := fullPoolIDs - coveredIDs
+remainderIDs := setDifference(fullPoolIDs, coveredTimesheetIDs)
 
-// 4. Classify each remainder item by money-flow (see classification table above)
+// 4. Classify each remainder item by money-flow via the REAL chain
+//    (red-team Finding 2: original chain was wrong; this is the corrected path)
+//
+//    timesheet.ID
+//      → transaction_codes (where JSON_CONTAINS(data->'$.weekly_pay.timesheet_ids', id)
+//                            OR JSON_CONTAINS(data->'$.monthly_pay.timesheet_ids', id))
+//      → transaction_codes.code
+//      → wallet_payments (where txn_id = code)
+//      → wallet_payments.status
 remainders := classifyByMoneyFlow(ctx, remainderIDs)
-//   For each timesheet:
-//     - query linked wallet_payment(s) by entity_id chain (timesheet → transaction → settlement → wallet_payment,
-//       OR timesheet → advance_payment_request → wallet_payment)
-//     - if any wallet_payment.Status == completed       → OP_LOSS (money left, not recovered)
-//     - elif any wallet_payment.Status in (pending, verified, authorised) → STUCK_IN_FLIGHT
-//     - else                                              → UNPAID_WAGES
-//   Classify at the timesheet level; aggregate to employee×project for display.
+//   Classification rule per timesheet ID:
+//     - matchedCodes := transactionCodeRepo.FindByTimesheetID(ctx, id)  // new indexed query, see below
+//     - wpRows := walletPaymentRepo.GetByTxnIDs(ctx, codes-of-matchedCodes)  // batch
+//     - if any wp.Status == completed                     → OP_LOSS
+//     - elif any wp.Status in (pending,verified,authorised) → STUCK_IN_FLIGHT
+//     - else (no codes, no wallet rows, or all failed)    → UNPAID_WAGES
 
 // 5. Verdict
 hasOpLoss        := any(remainders, class == OP_LOSS)
 hasUnpaidWages   := any(remainders, class == UNPAID_WAGES)
-hasBlocking      := any(findings, severity == blocking)
+hasBlocking      := any(cycle.Findings for cycle in cycles, severity == blocking)
 deltaNonZero     := reconciliation.Delta != 0
 
 switch {
 case hasOpLoss || (hasBlocking && hasUnpaidWages):
-    Verdict = "KHONG_THE_TAT_TOAN"   // Không thể tất toán — op-loss or blocking unpaid items
+    Verdict = "KHONG_THE_TAT_TOAN"
 case hasUnpaidWages || hasBlocking || deltaNonZero || len(warnings) > 0:
-    Verdict = "CAN_KIEM_TRA"          // Cần kiểm tra — gaps exist but recoverable
+    Verdict = "CAN_KIEM_TRA"
 default:
-    Verdict = "AN_TOAN_DE_XUAT"       // An toàn để xuất — full pool covered, reconciled, clean
+    Verdict = "AN_TOAN_DE_XUAT"
 }
 ```
 
-**Verdict semantics (locked):**
-- `AN_TOAN_DE_XUAT`: every outstanding approved timesheet is covered by one of the N windows, no blocking findings, reconciliation delta = 0.
-- `CAN_KIEM_TRA`: some outstanding items are NOT covered, OR validation/reconciliation problems exist — admin must investigate but the situation is recoverable with manual action.
-- `KHONG_THE_TAT_TOAN`: at least one `OP_LOSS` remainder exists (money already disbursed, receivable unrecovered) OR blocking findings on unpaid wages. This is the "stop and escalate" verdict.
+**Two new repository queries required** (red-team Findings 3 & 7 — neither exists today):
+1. `transactionCodeRepo.FindByTimesheetIDs(ctx, ids []uint) (map[uint][]*TransactionCode, error)` — batch query: `SELECT * FROM transaction_codes WHERE JSON_CONTAINS(data->'$.weekly_pay.timesheet_ids', ?) OR JSON_CONTAINS(data->'$.monthly_pay.timesheet_ids', ?)`. Build the reverse map in Go. MySQL 8 supports `JSON_CONTAINS` and the `data` column is `JSON` type.
+2. `walletPaymentRepo.GetByTxnIDs(ctx, txnIDs []string) ([]*WalletPayment, error)` — batch lookup (avoids the N+1 red-team Finding 3 flagged).
 
-### Past-cycle straggler handling (locked decision)
+Both are read-only SELECTs against indexed columns.
 
-Per user decision: **just report them**. Stragglers (items in `fullPoolIDs` but outside all N projected windows) appear in the `remainders` list with their op-loss class. The simulation does **not** auto-add a catch-up batch and does **not** widen windows backward. The admin sees exactly: "K VND unpaid wages + L VND op-loss will remain after these N exports" and decides manually.
+### Reconciliation (red-team Finding 7 — new ledger method)
 
-This is surfaced at the top of the dialog:
-> "Các giao dịch thuộc kỳ trước vẫn chưa thanh toán sẽ KHÔNG được tự động bao gồm. Xem danh sách 'Còn lại' để xử lý thủ công."
-> ("Items from prior cycles that remain unpaid will NOT be auto-included. See the 'Remaining' list to handle manually.")
-
-### Read-only enforcement
+The existing `ledger_repository_queries.go` has NO method that returns a SUM of an account over a date range. `GetCumulativeTotalsBeforeDate` returns the wrong shape (and uses `float64`). Phase 2 adds **one** new read-only method:
 
 ```go
-func (s *SimulationService) Simulate(ctx context.Context, req *dto.SimulateSettlementRequest) (*dto.SimulationResult, error) {
-    // Wrap in a read-only tx so a programming error can't mutate.
-    return s.db.Transaction(func(tx *gorm.DB) error {
-        roCtx := context.WithValue(ctx, ctxKeyReadOnlyTx{}, tx)
-        result, err := s.simulate(roCtx, req)
-        // always return err == nil at the end so the tx rolls back cleanly;
-        // carry result/err out via closure.
-        ...
-    }, &gorm.Session{&sql.TxOptions{ReadOnly: true}})
+// LedgerEntryRepository (interface addition)
+// GetAccountTotalInRange returns SUM(credit) - SUM(debit) for the given account
+// over [from, to]. int64 VND — no float.
+GetAccountTotalInRange(ctx context.Context, account domain.LedgerAccount, from, to time.Time) (int64, error)
+```
+
+SQL: `SELECT COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0) FROM ledger_entries WHERE account = ? AND deleted_at IS NULL AND entry_date BETWEEN ? AND ?`. Single round-trip, indexed.
+
+Reconciliation then:
+```go
+receivable, err := ledgerRepo.GetAccountTotalInRange(ctx, domain.AccountReceivable, firstCycle.FromDate, lastCycle.ToDate)
+reconciliation := Reconciliation{
+    ExportedTotal:    totalIncluded, // int64
+    LedgerReceivable: receivable,    // int64
+    Delta:            receivable - totalIncluded,
+    Reconciled:       receivable == totalIncluded, // exact int64 equality
 }
 ```
 
-If the underlying MySQL driver or GORM version makes `ReadOnly: true` a no-op, the secondary guarantee is that `simulate()` only ever calls `ExportPlanner.Plan()` (which Phase 1 made pure) and the read-only ledger query. Add a `t.Helper`-style assertion test in Phase 5 that no write was issued (assert row counts of `bulk_transfer_files`, `transaction_codes`, `timesheets.payment_status` unchanged before/after).
+### Read-only enforcement (red-team Finding 9 — corrected)
+
+**Do NOT rely on `sql.TxOptions{ReadOnly: true}`** — red-team verified the configured `go-sql-driver/mysql` silently ignores it. The read-only guarantee rests on two real pillars:
+
+1. **Code-level:** `SimulationService.Simulate()` only ever calls: `ExportPlanner.Plan()` (Phase 1 makes this provably write-free — grep-verified zero `fileRepo.*`/`transactionCodeRepo.Create*`/`eventBus.Publish`/`*Update*` calls), the new read-only `GetAccountTotalInRange`, `FindByTimesheetIDs`, and `GetByTxnIDs`. A grep assertion test in Phase 5 enforces no write calls appear in the simulation source.
+2. **Test-level:** Phase 5's canonical no-mutation integration test snapshots row counts of `bulk_transfer_files`, `transaction_codes`, `timesheets` (by `payment_status`), `wallet_payments`, and `ledger_entries` before and after a simulation call, and fails on any drift.
+
+A plain `db.WithContext(ctx)` (no transaction wrapper) is sufficient. The simulation may OPTIONALLY wrap in a transaction for **snapshot consistency** (so all N cycles see the same data view) — but the safety claim does not depend on the tx being read-only.
 
 ## Related Code Files
 
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_service.go` — `SimulationService`, `Simulate`, cycle loop, verdict, full-pool scan.
-- **Create:** `backend/internal/app/services/payroll/bulktransfer/payroll_cycle.go` — `PayrollCycle`, `CycleContaining`, `Next` (uses `clock.Now()` in `Asia/Ho_Chi_Minh`).
+- **Modify:** `backend/internal/pkg/clock/pay_cycle.go` — add `NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle` (~15 lines, wraps Kỳ 4 → Kỳ 1 next month). Do NOT create a new cycle file.
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_validators.go` — `simValidators.Run`, `SimFinding`.
-- **Create:** `backend/internal/app/services/payroll/bulktransfer/remainder_classifier.go` — `classifyByMoneyFlow(ctx, remainderIDs) → []ClassifiedRemainder`. Queries wallet_payment linkage per item.
-- **Read-only deps:** `backend/internal/app/services/payroll/bulktransfer/planner.go` (Phase 1), `backend/internal/app/services/payroll/excel/service.go`, `backend/internal/infra/persistence/ledger_repository_queries.go`, `backend/internal/infra/persistence/wallet_payment_repository.go` (for money-flow classification).
+- **Create:** `backend/internal/app/services/payroll/bulktransfer/remainder_classifier.go` — `classifyByMoneyFlow(ctx, remainderIDs) → []ClassifiedRemainder`. Traverses timesheet → transaction_codes → wallet_payments (the corrected chain).
+- **Modify (interface additions):** `backend/internal/infra/persistence/ledger_repository_queries.go` + `ledger.go` repo interface — add `GetAccountTotalInRange`.
+- **Modify (interface additions):** `backend/internal/domain/transaction_code.go` (repo interface) — add `FindByTimesheetIDs`.
+- **Modify (interface additions):** `backend/internal/domain/transactions/repository.go` (wallet_payment repo interface) — add `GetByTxnIDs`.
+- **Read-only deps:** `backend/internal/app/services/payroll/bulktransfer/planner.go` (Phase 1), `backend/internal/app/services/payroll/excel/service.go`.
 - **DTO (added in Phase 3 but referenced here):** `dto.SimulateSettlementRequest`, `dto.SimulationResult`, `dto.ClassifiedRemainder` — see Phase 3 for full shape.
 
 ## Implementation Steps
 
-1. **Write `payroll_cycle.go` first** with unit tests (`payroll_cycle_test.go`): assert `CycleContaining` for days 1, 7, 8, 14, 15, 21, 22, 28, month-wrap. Uses `clock.Now()` per CLAUDE.md.
-2. **Define `SimulationService` struct** holding: `planner *ExportPlanner`, `ledgerRepo`, `clock`, `db *gorm.DB`, `logger`.
+1. **Add `clock.NextPayCycleAfter`** to `backend/internal/pkg/clock/pay_cycle.go` (~15 lines) + unit test in `pay_cycle_test.go`: assert wrap Kỳ 4 → Kỳ 1 next month. Reuses the existing canonical model — do NOT create a parallel one.
+2. **Define `SimulationService` struct** holding: `planner *ExportPlanner`, `ledgerRepo`, `transactionCodeRepo`, `walletPaymentRepo`, `clock`, `db *gorm.DB`, `logger`.
 3. **Implement `Simulate`:**
    - Resolve starting cycle from `clock.Now()`.
    - Loop `ProjectedCycleCount` times (default 4, clamp 1–6).
@@ -220,7 +244,7 @@ If the underlying MySQL driver or GORM version makes `ReadOnly: true` a no-op, t
    - Compute verdict.
    - Track `snapshotEpoch = max(cycle.Plan.SnapshotEpoch)` across cycles.
 4. **Implement `simulation_validators.go`** as a slice of small functions `func(*ValidationContext) []SimFinding`. Each is pure. Mark `InProduction: bool` per validator for UI messaging.
-5. **Wrap in read-only transaction.** Verify `sql.TxOptions{ReadOnly: true}` is honored; if not, document and rely on the "Plan is pure" guarantee + Phase 5 no-mutation test.
+5. **Read-only enforcement:** do NOT wrap in a read-only transaction (red-team Finding 9 — `ReadOnly:true` is a no-op in the configured MySQL driver). The safety guarantee is structural: `Simulate()` only calls the pure `Plan()` + read-only repo queries. A grep-assertion test in Phase 5 enforces no write calls appear in the simulation source.
 6. **Determinism:** sort `Included`, `Excluded`, `Remaining` slices by `(employee_id, project_id, timesheet_id)` before returning.
 
 ## Success Criteria
@@ -243,8 +267,8 @@ In production, an item paid in Kỳ 1 won't appear in Kỳ 2's `Plan()` because 
 **Risk: ledger `SUM` query doesn't exist or is expensive.**
 Mitigation: use the lightest existing query in `ledger_repository_queries.go`; if a new one is needed it's a single indexed `SUM(credit) - SUM(debit)` on `ledger_entries` for `account='receivable'`. Bounded by date range. Not N+1.
 
-**Risk: MySQL silently ignores `ReadOnly: true`.**
-Mitigation: belt-and-suspenders — Phase 1 guarantees `Plan()` is pure. Phase 5 includes an explicit no-mutation integration test that asserts row counts and statuses are unchanged.
+**Risk: a write call leaks into the simulation path during future maintenance.**
+Mitigation: Phase 5's grep-assertion test (`TestSimulationSourceHasNoWriteCalls`) fails the build if any forbidden write-call substring appears in the simulation source files. Plus the row-count snapshot integration test catches runtime mutations.
 
 **Risk: `int64` overflow on very large sums.**
 Not realistic for VND payroll (would require ~9.2 × 10^18 VND). Document as accepted.

@@ -2,6 +2,11 @@
 
 **Date:** 2026-07-11 · **Commit:** `9a24a05` · **Status:** shipped (Phases 1–5)
 
+> **Scope correction shipped 2026-07-17:** the forecast is target-Kỳ only. The
+> current “Chờ thanh toán” amount is a separate backlog KPI and is not added to
+> the forecast. The corrected point estimate is target-Kỳ approved value
+> observed so far plus projected remaining target-Kỳ approvals.
+
 ## Problem
 The admin had no way to know, ahead of the pay date, how much cash the next weekly
 bulk transfer would require. Pain (verbatim): *"today is 10 July and admin need to
@@ -10,9 +15,10 @@ the cash."* They discovered the number only when sitting down to export the MBan
 
 ## What shipped
 A single advisory **"Dự báo tiền trả"** card on `/admin/timesheet` (desktop + mobile)
-showing the mathematical point estimate: `expected_total = confirmed_payable + projected_mean`,
-with `band = [confirmed+p50, confirmed+p95]` shown beneath it. Wallet balance,
-funding shortfall, confirmed-payable, and advance-payment information
+showing the mathematical point estimate:
+`expected_total = observed_target_ky_approved + projected_remaining_mean`, with
+`band = [observed_target_ky_approved+p50, observed_target_ky_approved+p95]`
+shown beneath it. Outstanding payments, wallet balance, funding shortfall, and advance-payment information
 are intentionally kept out of the timesheet page; those belong to their respective
 financial workflows.
 
@@ -22,13 +28,13 @@ financial workflows.
 - `CashReadinessCard` + `useCashReadiness` — shared component on both surfaces; no gold tokens.
 
 ## Key decisions
-- **Statistical baseline over ML.** The total is mostly deterministic (approved + unpaid); short horizon, near-constant daily amounts; Makridakis favors simple methods on low-frequency series. **Backtest validated it: 7.3% + 0.0% abs error** forecasting 2 cycles from priors. ML stays a documented escalation path behind `ForecastProvider` if error stays >~12% over ≥4 cycles.
+- **Statistical baseline over ML.** The target-Kỳ horizon is short and daily amounts are comparatively stable, so a transparent baseline remains preferable until real rolling accuracy data justifies more complexity. The existing backtest uses synthetic fixtures and must not be presented as production accuracy.
 - **Advisory invariant enforced structurally.** A `WalletBalanceReader` port narrows to `GetBalance` only — the service has no type-level reach to `SyncBalance`/`CreateTopup`, making the wallet-balance-inflation regression structurally impossible (not just commented).
-- **Confirmed-payable routed through the cached `TimesheetService.GetSummaryStats`** (not the raw repo) so the card's "Đã chốt" line can never diverge from the sibling "Chờ thanh toán" tile.
-- **No separate backend cache** — `GetSummaryStats` already caches/invalidates the hot number; the cohort is a scoped indexed `GROUP BY`. Avoids stale-cache risk.
+- **Target-Kỳ isolation.** The service reads approved accrual for the target Kỳ directly from the cohort source. It has no summary-reader dependency, so the sibling “Chờ thanh toán” backlog cannot affect the forecast.
+- **No separate backend cache** — the cohort is a scoped indexed `GROUP BY`; avoiding another cache removes stale-forecast risk.
 
 ## Verification
-`go build` green; `go test` green (clock, services incl. backtest, repositories, domain); `golangci-lint` clean on new code; frontend `tsc` + `vite build` green. Code-review subagent: no critical/high; the one medium (cache divergence) + three cosmetic findings all fixed.
+Original implementation checks were green for the focused forecast packages and frontend build. The backtest is a synthetic methodology regression, not a claim about production error.
 
 ## Deferred (need a product decision)
 - Always-on accuracy instrumentation (needs a forecast-snapshot storage decision — the offline backtest covers the same signal meanwhile).

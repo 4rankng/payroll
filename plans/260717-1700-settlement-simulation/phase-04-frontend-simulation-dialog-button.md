@@ -20,7 +20,7 @@ Add a **"Mô phỏng đối soát"** button to both the desktop (`TransactionPag
 
 ## Architecture
 
-### File layout
+### File layout (red-team Finding 5 — wired through payroll services, NOT ledger)
 
 ```
 frontend/src/
@@ -34,26 +34,28 @@ frontend/src/
 │       └── SimulationFindings.tsx            ← NEW (warnings + blocking)
 ├── types/api/
 │   └── settlement-simulation.types.ts        ← NEW (mirrors backend DTO exactly)
-├── config/api.config.ts                       ← MODIFY (add endpoint)
-├── services/api/ledger.service.ts             ← MODIFY (add method)
-├── hooks/ledger/useLedgerManagement.ts        ← MODIFY (add mutation)
+├── config/api.config.ts                       ← MODIFY (add endpoint to payrolls group)
+├── services/api/payroll.service.ts            ← MODIFY (add method — NOT ledger.service.ts)
+├── hooks/api/usePayrolls.ts                   ← MODIFY (add mutation — NOT useLedgerManagement.ts)
 ├── components/transaction/TransactionPageHeader.tsx  ← MODIFY (desktop button)
 ├── components/ledger/LedgerPageHeader.tsx            ← MODIFY (mobile button)
 ├── pages/admin/TransactionsPage/index.tsx            ← MODIFY (wire dialog)
 └── pages/mobile/admin/LedgerEntriesPage/index.tsx    ← MODIFY (wire dialog)
 ```
 
+**Red-team Finding 5:** the simulation endpoint lives under `/payrolls/*`, and the directly-analogous `exportBulkTransfer` already lives in `payroll.service.ts` + `hooks/api/usePayrolls.ts`. Wire the new endpoint there, NOT in `ledger.service.ts` / `useLedgerManagement.ts`. (The button sits on the ledger page, but the API call belongs to the payroll domain.)
+
 ### Endpoint + service + hook
 
-**`api.config.ts`** — add to the existing `payrolls` endpoint group (already has `exportBulkTransfer`):
+**`api.config.ts`** — add to the existing `payrolls` endpoint group (alongside `exportBulkTransfer`):
 ```ts
 payrolls: {
-  // ... existing ...
+  // ... existing exportBulkTransfer, etc. ...
   simulateSettlement: '/payrolls/simulate-settlement',
 }
 ```
 
-**`ledger.service.ts`** — add method (note: payroll endpoints live on the PayrollService client if one exists; if not, follow how `exportBulkTransfer` is called today and mirror that exactly):
+**`payroll.service.ts`** — add method (mirror how `exportBulkTransfer` is implemented in this same file):
 ```ts
 async simulateSettlement(params: SettlementSimulationRequest): Promise<SettlementSimulationResult> {
   const response = await apiClient.post<SettlementSimulationResult>(
@@ -64,10 +66,10 @@ async simulateSettlement(params: SettlementSimulationRequest): Promise<Settlemen
 }
 ```
 
-**`useLedgerManagement.ts`** — add mutation. Note: this is a **read** masquerading as a POST; do **not** invalidate any query keys on success (no data changed). Only show a toast on error.
+**`hooks/api/usePayrolls.ts`** — add mutation. Note: this is a **read** masquerading as a POST; do **not** invalidate any query keys on success (no data changed). Only show a toast on error.
 ```ts
 const simulateSettlementMutation = useMutation({
-  mutationFn: (params: SettlementSimulationRequest) => ledgerService.simulateSettlement(params),
+  mutationFn: (params: SettlementSimulationRequest) => payrollService.simulateSettlement(params),
   onError: (error: Error) => {
     toast({ title: 'Lỗi', description: error.message, variant: 'destructive' });
   },
@@ -162,16 +164,16 @@ const [simulationOpen, setSimulationOpen] = useState(false);
 
 - **Create:** `frontend/src/components/ledger/SettlementSimulationDialog.tsx` + 4 sub-components in `settlement-simulation/`.
 - **Create:** `frontend/src/types/api/settlement-simulation.types.ts`.
-- **Modify:** `frontend/src/config/api.config.ts`, `frontend/src/services/api/ledger.service.ts`, `frontend/src/hooks/ledger/useLedgerManagement.ts`.
+- **Modify:** `frontend/src/config/api.config.ts` (add endpoint to `payrolls` group), `frontend/src/services/api/payroll.service.ts` (add method — NOT ledger.service.ts, per red-team Finding 5), `frontend/src/hooks/api/usePayrolls.ts` (add mutation — NOT useLedgerManagement.ts).
 - **Modify:** `frontend/src/components/transaction/TransactionPageHeader.tsx`, `frontend/src/components/ledger/LedgerPageHeader.tsx`.
 - **Modify:** `frontend/src/pages/admin/TransactionsPage/index.tsx`, `frontend/src/pages/mobile/admin/LedgerEntriesPage/index.tsx`.
-- **Reference patterns:** `frontend/src/components/ledger/OnePayFeeReportDialog.tsx` (dialog skeleton), `frontend/src/components/ledger/DoubleEntryModal.tsx` (complex forms), `frontend/src/hooks/ledger/useLedgerManagement.ts` (mutation pattern).
+- **Reference patterns:** `frontend/src/components/ledger/OnePayFeeReportDialog.tsx` (dialog skeleton), `frontend/src/components/ledger/DoubleEntryModal.tsx` (complex forms), `frontend/src/services/api/payroll.service.ts` (where `exportBulkTransfer` lives — mirror it), `frontend/src/hooks/api/usePayrolls.ts` (mutation pattern for payroll endpoints).
 
 ## Implementation Steps
 
 1. **Write types first** (`settlement-simulation.types.ts`) from the Phase 3 DTO. Run `pnpm type-check` to confirm.
-2. **Add endpoint** to `api.config.ts` and **method** to `ledger.service.ts`.
-3. **Add mutation** to `useLedgerManagement.ts` (read-only semantics — no invalidation).
+2. **Add endpoint** to `api.config.ts` (in the `payrolls` group) and **method** to `payroll.service.ts` (mirror `exportBulkTransfer` in the same file — NOT `ledger.service.ts`, per red-team Finding 5).
+3. **Add mutation** to `hooks/api/usePayrolls.ts` (read-only semantics — no invalidation; NOT `useLedgerManagement.ts`).
 4. **Build sub-components bottom-up:** `SimulationFindings` → `SimulationRowDrilldown` → `SimulationCycleTable` → `SimulationVerdictBanner`. Each is pure, fed by props.
 5. **Assemble `SettlementSimulationDialog`** mirroring `OnePayFeeReportDialog` skeleton. Wire the mutation; render result sections.
 6. **Add buttons** to both headers (props + JSX).

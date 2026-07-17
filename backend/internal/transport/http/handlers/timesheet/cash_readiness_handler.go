@@ -13,8 +13,8 @@ import (
 )
 
 // GetCashReadiness returns the advisory cash-prep forecast for the next timesheet
-// bulk transfer. Filter parsing and partner scoping mirror GetSummary verbatim so
-// confirmed-payable matches the "Chờ thanh toán" card exactly.
+// Ky. Filter parsing and partner scoping mirror GetSummary, but the summary's
+// outstanding-payment amount is not part of this forecast.
 func (h *Handler) GetCashReadiness(c *gin.Context) {
 	userID, exists := c.Get(constants.CtxUserID)
 	if !exists {
@@ -75,7 +75,7 @@ func (h *Handler) GetCashReadiness(c *gin.Context) {
 
 func toCashReadinessResponse(c *domain.CashReadiness) *dto.CashReadinessResponse {
 	return &dto.CashReadinessResponse{
-		ConfirmedPayable:  c.ConfirmedPayable,
+		ObservedApproved:  c.ObservedApproved,
 		ProjectedP50:      c.ProjectedP50,
 		ProjectedExpected: c.ProjectedExpected,
 		ProjectedP95:      c.ProjectedP95,

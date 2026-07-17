@@ -61,7 +61,7 @@ CRUD, bulk approve/reject/reset, approve-all, preview, export, grouped view, pay
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/cash-readiness` | Cash-readiness forecast for next bulk transfer |
+| GET | `/cash-readiness` | Target-Kỳ forecast for the next pay date; excludes outstanding-payment backlog |
 | GET | `/summary` | Summary stats (pending payment amount, etc.) |
 | POST | `/bulk-approve` | Bulk approve timesheets |
 | POST | `/export-entries-template` | Download export template |

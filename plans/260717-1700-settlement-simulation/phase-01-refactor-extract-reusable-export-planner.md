@@ -1,9 +1,9 @@
 ---
 phase: 1
-title: "Refactor: Extract Reusable Export Planner"
-status: pending
+title: 'Refactor: Extract Reusable Export Planner'
+status: completed
 priority: P1
-effort: "M"
+effort: M
 dependencies: []
 ---
 
@@ -13,12 +13,32 @@ dependencies: []
 
 Split `ExportService.Export(ctx, req)` into two methods on a new `ExportPlanner` receiver:
 
-- **`Plan(ctx, req) (*ExportPlan, error)`** — pure: selects eligible timesheets, unions forced items, aggregates by employee×project, runs `ValidateAndFilterBulkTransferData`, computes a `snapshot_epoch`. No writes. No Excel. No code generation.
-- **`Persist(ctx, req, plan) (filename, auditData, error)`** — writes `bulk_transfer_files` row, creates `transaction_codes` batch, emits `BulkTransferFileExported` audit event.
+- **`Plan(ctx, req) (*ExportPlan, error)`** — pure: selects eligible timesheets, unions forced items, aggregates by employee×project, runs `ValidateAndFilterBulkTransferData`, computes `snapshot_epoch`. No writes. No Excel. No code generation.
+- **`Persist(ctx, req, plan) (filename, error)`** — writes **only what today's `saveBulkTransferFile` actually writes**: generates a filename and calls `transactionCodeRepo.CreateBatch`. Emits the audit event via `publishExportAudit` (also moved here).
 
-`ExportService.Export()` then becomes a thin orchestrator: `plan, err := planner.Plan(ctx, req); ...; persist := planner.Persist(ctx, req, plan); ...; excel := excelService.Generate(...)`. **Production behavior is byte-for-byte unchanged** — verified by the existing `flow_manual_bulk_transfer.go` integration test.
+`ExportService.Export()` then becomes a thin orchestrator: `plan, err := planner.Plan(ctx, req); ...; filename, err := planner.Persist(ctx, req, plan); ...; excel := excelService.Generate(...)`. **Production behavior is byte-for-byte unchanged** — verified by the existing `flow_manual_bulk_transfer.go` integration test.
 
-This is the linchpin: Phase 2's simulation calls `Plan()` only. Without this refactor, any simulation would necessarily duplicate production logic and drift.
+### Red-team correction (Finding 1)
+
+The original Phase 1 claimed `saveBulkTransferFile` writes a `bulk_transfer_files` row. **It does not.** Verified at `backend/internal/app/services/payroll/bulktransfer/export_service.go`: zero `fileRepo.` calls in the file. The `bulk_transfer_files` row is written elsewhere (`audit_service.go:109`, `ninepay_service.go:245`, `result_processor.go:638`) — those paths are OUT OF SCOPE for this refactor. Phase 1's write surface is therefore **smaller than originally stated**: just `transactionCodeRepo.CreateBatch` + the audit event publish. This makes the refactor lower-risk than first drafted.
+
+### Red-team correction (Finding 8) — no-date-filter mode
+
+Phase 2's full-pool scan needs `Plan()` to run with **no date filter** (select all outstanding approved+pending/failed timesheets regardless of cycle window). Today `Plan()` always resolves a date range via `ResolveWeeklyRange`/`ResolveMonthlyRange`, both of which reject empty inputs (`period_calculator.go:31-34`). Phase 1 therefore adds a third entry mode to `Plan`:
+
+```go
+// ExportBulkTransferRequest gains an internal-only field:
+type ExportBulkTransferRequest struct {
+    // ... existing fields unchanged ...
+    // noDateFilter is set ONLY by the simulation's full-pool scan.
+    // Production export never sets it. When true, Plan() skips date resolution
+    // and the timesheet query omits FromDate/ToDate (still applies status +
+    // project + employee filters).
+    noDateFilter bool `json:"-"`
+}
+```
+
+`Plan()` checks `req.noDateFilter`: if true, skip `ResolveWeeklyRange`/`ResolveMonthlyRange`, leave `filters.FromDate`/`filters.ToDate` nil. Everything downstream (forced-payroll union, aggregation, validation, snapshot) runs unchanged. This keeps the "single selection algorithm" invariant: the full-pool scan is the **same** Plan() code with one fewer filter, not a parallel implementation.
 
 ## Requirements
 
@@ -89,20 +109,19 @@ func (es *ExportService) Export(ctx, req) (*dto.ExportBulkTransferResponse, erro
 }
 ```
 
-### `SnapshotEpoch` computation
+### `SnapshotEpoch` computation (red-team Finding 8 — single SQL, no preload)
 
-While iterating timesheets in `Plan`, track `max(timesheet.UpdatedAt)`. Also include `updated_at` from the employee/project/assignment rows touched (their bank info can change). This is the value the simulation returns and the real export (Phase 3) optionally checks.
+Red-team verified the `excel.Employee` struct (`excel/service.go`) does NOT carry `UpdatedAt`, so iterating preloaded structs cannot produce a complete epoch. Phase 1 computes it as **one explicit SQL query** after the read step:
 
-```go
-var snapshot time.Time
-for _, ts := range filteredTimesheets {
-    if ts.UpdatedAt.After(snapshot) { snapshot = ts.UpdatedAt }
-}
-// (also walk employeeData, projectData, assignmentCache for their updated_at)
-plan.SnapshotEpoch = snapshot
+```sql
+SELECT GREATEST(
+  COALESCE((SELECT MAX(updated_at) FROM timesheets        WHERE id IN (?)),           '1970-01-01'),
+  COALESCE((SELECT MAX(updated_at) FROM employees         WHERE id IN (?)),           '1970-01-01'),
+  COALESCE((SELECT MAX(updated_at) FROM project_employees WHERE employee_id IN (?) AND project_id IN (?)), '1970-01-01')
+)
 ```
 
-If GORM doesn't preload `UpdatedAt` reliably on all those models, the fallback is a single `SELECT MAX(updated_at) FROM timesheets WHERE id IN (?)` plus equivalent for employees — one round-trip, deterministic.
+This is the value the simulation returns and the real export (Phase 3) optionally checks. It captures the three mutation surfaces that actually change selection: timesheet status, employee bank info, and project-employee assignment (which controls the `PaymentSchedule` filter in `aggregateTimesheetData`). One round-trip, deterministic, covers the real drift sources.
 
 ## Related Code Files
 

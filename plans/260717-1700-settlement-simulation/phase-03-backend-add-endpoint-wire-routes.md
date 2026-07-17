@@ -20,24 +20,41 @@ Expose `SimulationService.Simulate` via a new admin-only endpoint `POST /api/v1/
 
 ## Architecture
 
-### Route
+### Route + auth (red-team Finding 4 — explicit, not inherited)
+
+`Authorize()` is Casbin RBAC (`backend/internal/transport/http/middleware/authorization.go:45`), NOT admin-default. The `/payrolls/*` group is admin-inherited **only by absence of partner/employee policy rows**, which is fragile. Phase 3 enforces admin TWO ways:
 
 ```go
 // routes_disbursement.go — inside setupPayrollRoutes
 payrolls.POST("/simulate-settlement", container.Handlers.Payroll.SimulateSettlement)
-// (after the existing line: payrolls.POST("/export-bulk-transfer", ...))
 ```
 
-The `/payrolls` group already sits behind `Auth.Authenticate()` + `Authorization.Authorize()`, so admin gating is inherited. Confirm `Authorize()` defaults to admin for this group during implementation; if it's broader, add an explicit admin check inside the handler (mirror `settle_from_notification.go:16`).
+**AND** add an explicit Casbin policy row (red-team Finding 4):
 
-### Handler (new file)
+```csv
+# backend/configs/casbin_policy.csv — append
+# Settlement simulation is admin-only (partner/employee get no row → denied)
+# No explicit row needed for admin if admin has wildcard; verify by grep.
+# If admin uses wildcards, the route is already allowed for admin. If admin uses
+# explicit per-route rows, ADD:
+# p, admin, /api/v1/payrolls/simulate-settlement, POST, allow
+```
+
+Verify the casbin model during implementation — the existing `export-bulk-transfer` route works for admin today, so mirror whatever mechanism makes THAT work for the new route.
+
+**AND** add an in-handler admin check (belt-and-suspenders, mirrors `settle_from_notification.go:16`):
 
 ```go
 // payroll_simulation_handler.go
 func (h *PayrollHandler) SimulateSettlement(c *gin.Context) {
+    // Defense-in-depth admin check (mirrors settlement/settle_from_notification.go:16)
+    if !isAdminContext(c) {
+        response.Forbidden(c, "Yêu cầu quyền admin")
+        return
+    }
+
     var req dto.SimulateSettlementRequest
     if err := c.ShouldBindJSON(&req); err != nil { response.BadRequest(c, ...); return }
-
     req.CreatedBy = userIDFromCtx(c) // for audit logging only — NOT a write
 
     result, err := h.payrollService.SimulateSettlement(c.Request.Context(), &req)
@@ -51,7 +68,17 @@ func (h *PayrollHandler) SimulateSettlement(c *gin.Context) {
 }
 ```
 
-`PayrollHandler` already holds `payrollService`. Add a `SimulateSettlement` method on `PayrollService` (in `service.go`) that delegates to a `simulationService` field. Wire `simulationService` in the PayrollService constructor / DI container.
+### DTO bank-account masking (red-team Finding 10)
+
+The DTO assembler masks bank account numbers at the API boundary — the UI never sees raw numbers. Add a `maskBankAccount(s string) string` helper (keep last 4, prefix with `••••`):
+
+```go
+// In dto assembly:
+BankAccountNumberMasked string `json:"bank_account_number"` // always masked, e.g. "••••1234"
+// NO raw BankAccountNumber field is ever serialized.
+```
+
+Apply to every row type in `SimulationResult` (included, excluded, remaining, remainders items).
 
 ### Stale-snapshot guard on real export
 

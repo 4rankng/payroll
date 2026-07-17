@@ -20,11 +20,35 @@ Prove the five safety promises of this feature: (a) simulation is **read-only**,
 
 ## Architecture
 
+### Code-level read-only grep assertion (red-team Finding 9)
+
+A static test that fails if any write-call leaks into the simulation path:
+
+```go
+// backend/internal/app/services/payroll/bulktransfer/simulation_readonly_assert_test.go
+func TestSimulationSourceHasNoWriteCalls(t *testing.T) {
+    // Read simulation_service.go, simulation_validators.go, remainder_classifier.go
+    // as source text. Assert NONE of these substrings appear (outside comments):
+    forbidden := []string{
+        "fileRepo.Create", "fileRepo.Update", "fileRepo.Delete",
+        "transactionCodeRepo.Create", "transactionCodeRepo.Update", "transactionCodeRepo.UpdateFileID",
+        "eventBus.Publish",
+        "timesheetRepo.BulkUpdate", "timesheetRepo.Update",
+        "walletPaymentRepo.Create", "walletPaymentRepo.Update",
+        "ledgerRepo.Create", "ledgerEntryRepo.Create",
+        "settlementRepo.Create",
+    }
+    // Fail with a clear message naming the offending file:line if any match.
+}
+```
+
+This is the canonical enforcement that Phase 1's "Plan() is pure" invariant stays true as the codebase evolves.
+
 ### Unit tests (Go, fast)
 
 | File | Covers |
 |------|--------|
-| `backend/internal/app/services/payroll/bulktransfer/payroll_cycle_test.go` | `CycleContaining` for days 1/7/8/14/15/21/22/28; `Next()` wrap Kỳ 4 → Kỳ 1 next month; uses fake clock |
+| `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go` | Verdict computation: all-`AN_TOAN` case, missing-bank → `CAN_KIEM_TRA`, blocking → `KHONG_THE_TAT_TOAN`; reconciliation delta logic; cycle subtraction; **full-pool verdict** (window-internal clean but full-pool has remainder → `CAN_KIEM_TRA`); uses planner fake |
 | `backend/internal/app/services/payroll/bulktransfer/simulation_validators_test.go` | Each validator: zero/negative, dup-across-batches, broken refs, missing bank code, already-settled, batch>5000 — table-driven |
 | `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go` | Verdict computation: all-`AN_TOAN` case, missing-bank → `CAN_KIEM_TRA`, blocking → `KHONG_THE_TAT_TOAN`; reconciliation delta logic; cycle subtraction; **full-pool verdict** (window-internal clean but full-pool has remainder → `CAN_KIEM_TRA`); uses planner fake |
 | `backend/internal/app/services/payroll/bulktransfer/remainder_classifier_test.go` | Money-flow classification: `UNPAID_WAGES` (no wallet_payment), `OP_LOSS` (wallet_payment=completed, receivable unsettled), `STUCK_IN_FLIGHT` (wallet_payment=authorised); mixed-case aggregation; cites wallet_payment_id in evidence |
@@ -92,9 +116,16 @@ func runSettlementSimulationTests(client *APIClient, data *TestData, reporter *R
     //    the verdict uses full-pool logic, not window-internal.
     reporter.RunTest(flowSettlementSim, "Full-pool verdict overrides clean window-internal state", func() error { ... })
 
-    // ── 6. PERMISSIONS ───────────────────────────────────────────────
-    //    Employee/partner token → 403.
-    reporter.RunTest(flowSettlementSim, "Non-admin token → 403", func() error { ... })
+    // ── 6. PERMISSIONS (red-team Finding 4 — test BOTH directions) ────
+    //    6a. Admin token → 200 (proves the Casbin policy row exists and allows).
+    //        Without this, the route could be denied-by-default for everyone.
+    reporter.RunTest(flowSettlementSim, "Admin token → 200 (route is reachable)", func() error { ... })
+
+    //    6b. Partner token → 403 (no policy row for partner).
+    reporter.RunTest(flowSettlementSim, "Partner token → 403", func() error { ... })
+
+    //    6c. Employee token → 403.
+    reporter.RunTest(flowSettlementSim, "Employee token → 403", func() error { ... })
 }
 ```
 
@@ -103,26 +134,36 @@ func runSettlementSimulationTests(client *APIClient, data *TestData, reporter *R
 This is the canonical "simulation doesn't drift" proof. Pseudocode:
 
 ```go
-// 1. Pick a deterministic test project with seeded timesheets in cycle K.
-cycle := CycleContaining(clock.Now()) // or a fixed test cycle
-simReq := { project_ids: [testProject], projected_cycle_count: 1, for_cycle: cycle }
-simResp, _ := admin.Post("/api/v1/payrolls/simulate-settlement", simReq)
-simIDs := collectTimesheetIDs(simResp.cycles[0].included)
-simTotal := simResp.cycles[0].included_amount
+// Red-team Finding 11: parseBulkTransferExcel helper does NOT exist.
+// flow_manual_bulk_transfer.go is 39 lines and exports no parser.
+// Two options for parity verification:
+//   (A) Build a minimal XLSX parser that extracts transaction codes + amounts
+//       from the exported MBank template — non-trivial, ~150 lines.
+//   (B) Compare at the SERVICE layer instead of through the Excel file:
+//       call ExportPlanner.Plan() directly (Phase 1 makes this pure/readable)
+//       and call SimulationService.Simulate(); assert the cycle-1 included IDs
+//       match Plan()'s RawAggregated.EmployeeProjectTimesheets flattened.
+// Option (B) is recommended — it tests the actual code path the simulation uses,
+// avoids depending on Excel template internals, and is deterministic.
 
-// 2. Run the REAL export for the same cycle (this DOES mutate — set up data fresh
-//    for this test or run it last, or better: capture sim first, then export, then
-//    parse the file).
-exportReq := { project_ids: [testProject], fromDate: cycle.from, toDate: cycle.to }
-exportResp, _ := admin.DownloadPost("/api/v1/payrolls/export-bulk-transfer", exportReq)
-exportedIDs, exportedTotal := parseBulkTransferExcel(exportResp.body) // reuse helpers from flow_manual_bulk_transfer.go
+// Recommended approach (B):
+// 1. Seed a deterministic test project with timesheets in cycle K's window.
+// 2. Direct call (unit-level, in-process, no HTTP):
+//    planIDs := flattenTimesheetIDs(planner.Plan(ctx, cycleReq).RawAggregated.EmployeeProjectTimesheets)
+// 3. HTTP call:
+//    simResp, _ := admin.Post("/api/v1/payrolls/simulate-settlement", simReq)
+//    simIDs := collectTimesheetIDs(simResp.cycles[0].included)
+// 4. Assert:
+//    assert(setEqual(planIDs, simIDs))
+//    assert(simTotal == planTotal)  // int64 equality
 
-// 3. Assert
-assert(simIDs == exportedIDs)         // set equality
-assert(simTotal == exportedTotal)     // int64 equality
+// ALSO add a real-export parity check via Option (A) as a SECONDARY integration
+// test, but scope it to asserting only the included COUNT and TOTAL (not every ID),
+// to avoid coupling to template internals. Extract count+total from the exported
+// file via a minimal helper that reads just the summary row.
 ```
 
-Order matters: capture the sim first (read-only), then export (mutates by marking items), then parse the file. If the test flips ordering the sim will see post-export statuses. Run this test with a **freshly seeded project** each time — do not depend on global test state.
+Order matters: capture the sim first (read-only), then export (mutates by marking items). Run this test with a **freshly seeded project** each time — do not depend on global test state. Clean up the seeded project + created `transaction_codes` + `bulk_transfer_files` rows in a `defer` to avoid polluting other flows (red-team Finding 10 from Security reviewer).
 
 ### The no-mutation snapshot helper
 
@@ -146,7 +187,7 @@ This test is the **real** enforcement of "strictly read-only" — stronger than 
 
 ## Related Code Files
 
-- **Create:** `backend/internal/app/services/payroll/bulktransfer/payroll_cycle_test.go`.
+- **Modify:** `backend/internal/pkg/clock/pay_cycle_test.go` — add tests for the new `NextPayCycleAfter` helper (Kỳ 1→2→3→4→next month Kỳ 1 wrap).
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_validators_test.go`.
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go`.
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/planner_test.go` (Phase 1 regression).
@@ -156,7 +197,7 @@ This test is the **real** enforcement of "strictly read-only" — stronger than 
 
 ## Implementation Steps
 
-1. **Write `payroll_cycle_test.go` first** (no DB needed) to lock the cycle model before integration tests rely on it.
+1. **Extend `pay_cycle_test.go`** (no DB needed) to cover the new `NextPayCycleAfter` helper before integration tests rely on it.
 2. **Write `simulation_validators_test.go`** — table-driven, pure inputs, no DB.
 3. **Write `simulation_service_test.go`** with a fake `ExportPlanner` (interface extracted if not already) and a fake ledger repo. Lock the verdict table.
 4. **Write `planner_test.go`** — this is Phase 1's safety net. Seed a fake repo with a known timesheet set; assert `Plan()` returns the expected `ExportPlan` (same as a golden snapshot of pre-refactor output).
@@ -167,7 +208,7 @@ This test is the **real** enforcement of "strictly read-only" — stronger than 
 
 ## Success Criteria
 
-- [ ] `payroll_cycle_test.go`: 8+ cases covering all Kỳ boundaries and wrap.
+- [ ] `pay_cycle_test.go`: `NextPayCycleAfter` covers Kỳ 1→2→3→4→(next month)1 wrap + all intermediate transitions.
 - [ ] `simulation_validators_test.go`: every validator code has ≥1 pass + ≥1 fail case.
 - [ ] `simulation_service_test.go`: 3 verdict paths + reconciliation + cycle subtraction + **full-pool verdict override**.
 - [ ] `remainder_classifier_test.go`: all 3 classes + mixed aggregation; every `OP_LOSS` cites a wallet_payment_id.
@@ -181,6 +222,7 @@ This test is the **real** enforcement of "strictly read-only" — stronger than 
 - [ ] Integration: straggler reported as `UNPAID_WAGES` + prior-cycle warning, no catch-up batch.
 - [ ] Integration: full-pool verdict overrides clean window-internal state.
 - [ ] Integration: non-admin → 403.
+- [ ] Integration: admin → 200 (Casbin policy row proven present).
 - [ ] `make api-test` fully green.
 - [ ] Backend unit coverage ≥ 80% for `bulktransfer` package.
 

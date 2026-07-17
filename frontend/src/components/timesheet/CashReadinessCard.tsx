@@ -29,10 +29,10 @@ const fmtDate = (rfc3339: string): string => {
 /**
  * Advisory payment forecast for the next timesheet bulk transfer.
  *
- * The headline uses the arithmetic mean of the forecast distribution, while
- * the full P50–P95 range remains visible below it. Wallet and advance-payment
- * information belongs to the wallet and advance-payment pages, not this
- * forecast.
+ * The headline is the expected final payout for the target Ky only: approvals
+ * already observed inside that Ky plus projected approvals through its pay
+ * date. The full P50–P95 range remains visible below it. Outstanding payments,
+ * wallet, and advance-payment information are separate operational concerns.
  *
  * DISPLAY ONLY — the backend never feeds this into balance/disbursement.
  */
@@ -71,7 +71,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         Dự báo tiền trả
       </span>
 
-      {/* Mathematical point estimate: confirmed payable + projected mean */}
+      {/* Target-Ky point estimate: observed approved + projected remaining mean */}
       <p className="mt-2 font-financial text-[clamp(1.75rem,5vw,2.125rem)] font-bold leading-none tabular-nums tracking-tight text-foreground">
         {formatCurrency(forecastTotal)}
       </p>
@@ -86,13 +86,30 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         </p>
       )}
 
-      <dl className="mt-4 border-t border-border/60 pt-3 text-[11px]">
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-muted-foreground">Khoảng dự báo</dt>
-          <dd className="break-words font-financial font-medium tabular-nums text-foreground">
-            {formatCurrency(data.band_lower)}–{formatCurrency(data.band_upper)}
-          </dd>
-        </div>
+      <dl className="mt-5 border-t border-border/60 pt-3 lg:mt-auto">
+        <dt className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo</dt>
+        <dd
+          className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-0"
+          aria-label={`Từ ${formatCurrency(data.band_lower)} đến ${formatCurrency(data.band_upper)}`}
+        >
+          <div className="min-w-0 sm:pr-5">
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Từ
+            </span>
+            <span className="mt-1 block whitespace-nowrap font-financial text-[clamp(0.95rem,1.35vw,1.125rem)] font-semibold leading-none tabular-nums text-foreground">
+              {formatCurrency(data.band_lower)}
+            </span>
+          </div>
+
+          <div className="min-w-0 border-t border-border/50 pt-2.5 sm:border-l sm:border-t-0 sm:py-0 sm:pl-5 sm:text-right">
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Đến
+            </span>
+            <span className="mt-1 block whitespace-nowrap font-financial text-[clamp(0.95rem,1.35vw,1.125rem)] font-semibold leading-none tabular-nums text-foreground">
+              {formatCurrency(data.band_upper)}
+            </span>
+          </div>
+        </dd>
       </dl>
     </div>
   );

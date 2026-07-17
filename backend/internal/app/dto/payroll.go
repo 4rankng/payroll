@@ -14,6 +14,15 @@ type ExportBulkTransferRequest struct {
 	ToDate      string `json:"toDate,omitempty"`
 	ForMonth    string `json:"for_month,omitempty"`
 	CreatedBy   uint   `json:"-"` // Set from context, not from request body
+
+	// NoDateFilter is set ONLY by the settlement simulation's full-pool scan
+	// (Phase 2). Production export never sets it. When true, ExportPlanner.Plan
+	// skips date resolution and selects every outstanding approved timesheet
+	// (payment_status pending|failed) matching only the project/employee
+	// filters — so the simulation can compute the full-pool coverage verdict
+	// without a second selection algorithm. Exported so the simulation service
+	// (different package) can set it; the json:"-" tag keeps it off the wire.
+	NoDateFilter bool `json:"-"`
 }
 
 // ExportBulkTransferResponse represents the response from bulk transfer export

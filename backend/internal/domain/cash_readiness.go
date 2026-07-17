@@ -2,32 +2,30 @@ package domain
 
 import "time"
 
-// CashReadiness is the advisory cash-prep forecast for the next timesheet bulk
-// transfer. It composes the deterministic confirmed-payable floor with a
-// short-horizon projected-accrual band and subtracts the live wallet balance to
-// surface a single "cash to prepare" gap.
+// CashReadiness is the advisory forecast for the next timesheet Ky. It composes
+// approved value already observed in that Ky with a short-horizon projection of
+// approvals still expected before its pay date.
 //
 // ADVISORY ONLY: this type never feeds SyncBalance/CreateTopup or any
 // disbursement — see CashReadinessForecastService's read-only ports.
 type CashReadiness struct {
-	// ConfirmedPayable is the approved + pending-approval, not-yet-paid total
-	// (the deterministic floor, identical to GetSummaryStats.PendingPaymentAmount).
-	ConfirmedPayable int64
+	// ObservedApproved is approved value already recorded inside the target Ky.
+	// It excludes the global outstanding-payment backlog shown by "Chờ thanh toán".
+	ObservedApproved int64
 
 	// ProjectedP50 / ProjectedExpected / ProjectedP95 are the median, arithmetic
-	// mean, and tail additional approved-pay forecasts to accrue between now and
-	// the next pay date.
+	// mean, and tail additional target-Ky approvals expected between now and the
+	// target Ky's pay date.
 	ProjectedP50      int64
 	ProjectedExpected int64
 	ProjectedP95      int64
 
-	// BandLower / BandUpper bound the total cash need: [confirmed + p50,
-	// confirmed + p95]. They are always monotonic (Lower <= Upper).
+	// BandLower / BandUpper bound the final target-Ky payout:
+	// [observed approved + p50, observed approved + p95].
 	BandLower int64
 	BandUpper int64
 
-	// ExpectedTotal is the mathematical point estimate: confirmed payable plus
-	// the arithmetic mean of the projected accrual distribution.
+	// ExpectedTotal is the mathematical point estimate for the target Ky.
 	ExpectedTotal int64
 
 	// WalletAvailable is the live wallet Available balance. WalletAvailableOK is
@@ -35,8 +33,8 @@ type CashReadiness struct {
 	WalletAvailable   int64
 	WalletAvailableOK bool
 
-	// CashToPrepare is the expected total to prepare (confirmed + p50). The Gap
-	// is how much of that exceeds the current wallet balance (>= 0).
+	// CashToPrepare is the target-Ky observed approved value + projected p50. The
+	// Gap is how much of that exceeds the current wallet balance (>= 0).
 	CashToPrepare int64
 	Gap           int64
 

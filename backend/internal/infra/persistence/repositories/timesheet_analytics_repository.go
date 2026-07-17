@@ -112,16 +112,15 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 // forecast. Each row is the total approved `amount` for a (work date, approval
 // day) pair within the filters' date window.
 //
-// Scoping (partner access, project, employee) is applied identically to
-// GetSummaryStats via BuildSummaryQuery, so the cohort and the "Chờ thanh toán"
-// confirmed-payable figure use the exact same row set definition.
+// Scoping (partner access, project, employee) is applied via BuildSummaryQuery.
+// The resulting cohort is independent from the "Chờ thanh toán" summary: that
+// outstanding-payment backlog is not an input to the target-Ky forecast.
 //
 // Only approved timesheets with a non-null approved_at are counted. Payment
 // status is intentionally NOT filtered here: every historical cycle's rows are
-// eventually paid, so excluding paid would zero out the forecasting basis. The
-// current cycle's confirmed-payable floor (approved + unpaid) comes separately
-// from GetSummaryStats. The caller is responsible for setting filters.TimesheetStatus
-// and the lookback date window.
+// eventually paid, so excluding paid would zero out the historical forecasting
+// basis. The caller is responsible for setting filters.TimesheetStatus and the
+// lookback date window.
 func (r *TimesheetAnalyticsRepository) GetAccrualCohort(ctx context.Context, filters domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
 	var rows []domain.TimesheetAccrualDailyRow
 	err := r.queryBuilder.BuildSummaryQuery(filters).

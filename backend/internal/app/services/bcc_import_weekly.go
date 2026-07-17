@@ -123,6 +123,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	// 5. STK auto-creation (same pattern as multi-position).
 	var importErrors []domain.ImportError
+	blockedEmployeeCCCDs := make(map[string]struct{})
 
 	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
 	if stkErr != nil {
@@ -161,6 +162,9 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				if cccd == "" || fullName == "" {
 					continue
 				}
+				if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, cccd) {
+					continue // a duplicate STK row must not repeat the primary error
+				}
 
 				var bankID *uint
 				if row.BankName != "" {
@@ -174,6 +178,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 				existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, cccd)
 				if empErr != nil && !domain.IsNotFoundError(empErr) {
+					blockedEmployeeCCCDs[cccd] = struct{}{}
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: fullName,
 						Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
@@ -194,6 +199,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 					}
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 					if createErr != nil {
+						blockedEmployeeCCCDs[cccd] = struct{}{}
 						importErrors = append(importErrors, domain.ImportError{
 							Employee: fullName,
 							Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
@@ -248,6 +254,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				// Ensure employee is assigned to the project.
 				existingAssignment, assignErr := s.employeeService.GetActiveAssignment(txCtx, projectID, emp.ID)
 				if assignErr != nil && !domain.IsNotFoundError(assignErr) {
+					blockedEmployeeCCCDs[cccd] = struct{}{}
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: fullName,
 						Reason:   fmt.Sprintf("lỗi kiểm tra phân công nhân viên %s: %v", fullName, assignErr),
@@ -266,6 +273,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						CreatedBy:       uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
+						blockedEmployeeCCCDs[cccd] = struct{}{}
 						importErrors = append(importErrors, domain.ImportError{
 							Employee: fullName,
 							Reason:   fmt.Sprintf("không thể phân công nhân viên %s: %v", fullName, createErr),
@@ -310,6 +318,9 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				if _, exists := byCCCD[emp.EmployeeCode]; exists {
 					continue // already assigned
 				}
+				if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, emp.EmployeeCode) {
+					continue // a primary creation/assignment error was already recorded
+				}
 				if seenMissing[emp.EmployeeCode] {
 					continue
 				}
@@ -332,6 +343,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 					// Check if employee exists globally by CCCD.
 					existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, m.cccd)
 					if empErr != nil && !domain.IsNotFoundError(empErr) {
+						blockedEmployeeCCCDs[m.cccd] = struct{}{}
 						importErrors = append(importErrors, domain.ImportError{
 							Employee: m.fullName,
 							Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", m.cccd, empErr),
@@ -360,6 +372,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						}
 						createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 						if createErr != nil {
+							blockedEmployeeCCCDs[m.cccd] = struct{}{}
 							importErrors = append(importErrors, domain.ImportError{
 								Employee: m.fullName,
 								Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", m.cccd, createErr),
@@ -423,6 +436,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						CreatedBy:       uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
+						blockedEmployeeCCCDs[m.cccd] = struct{}{}
 						importErrors = append(importErrors, domain.ImportError{
 							Employee: m.fullName,
 							Reason:   fmt.Sprintf("không thể phân công nhân viên %s: %v", m.fullName, createErr),
@@ -452,6 +466,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	var entries []domainservices.BulkCreateTimesheetEntry
 	totalRows := 0
+	reportedMissingCCCDs := make(map[string]struct{})
 
 	for _, sheet := range parsed.Sheets {
 		shiftType := sheet.ShiftType
@@ -472,12 +487,19 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		for _, emp := range sheet.Employees {
 			totalRows++
 
+			if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, emp.EmployeeCode) {
+				continue
+			}
 			assignment := byCCCD[emp.EmployeeCode]
 			if assignment == nil {
-				importErrors = append(importErrors, domain.ImportError{
-					Employee: emp.FullName,
-					Reason:   fmt.Sprintf("không tìm thấy nhân viên với CCCD \"%s\" trong dự án", emp.EmployeeCode),
-				})
+				if missingErr := weeklyBCCMissingAssignmentError(
+					emp.EmployeeCode,
+					emp.FullName,
+					blockedEmployeeCCCDs,
+					reportedMissingCCCDs,
+				); missingErr != nil {
+					importErrors = append(importErrors, *missingErr)
+				}
 				continue
 			}
 
@@ -712,6 +734,30 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	}
 
 	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt), nil
+}
+
+func weeklyBCCMissingAssignmentError(
+	cccd string,
+	fullName string,
+	blockedCCCDs map[string]struct{},
+	reportedCCCDs map[string]struct{},
+) *domain.ImportError {
+	if isWeeklyBCCEmployeeBlocked(blockedCCCDs, cccd) {
+		return nil
+	}
+	if _, reported := reportedCCCDs[cccd]; reported {
+		return nil
+	}
+	reportedCCCDs[cccd] = struct{}{}
+	return &domain.ImportError{
+		Employee: fullName,
+		Reason:   fmt.Sprintf("không tìm thấy nhân viên với CCCD \"%s\" trong dự án", cccd),
+	}
+}
+
+func isWeeklyBCCEmployeeBlocked(blockedCCCDs map[string]struct{}, cccd string) bool {
+	_, blocked := blockedCCCDs[cccd]
+	return blocked
 }
 
 // shiftInConfig reports whether shiftType appears as a leaf key in the flattened

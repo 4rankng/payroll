@@ -15,12 +15,14 @@ import (
 // --- fakes -----------------------------------------------------------------
 
 type fakeTimesheetReader struct {
-	summary     *domain.TimesheetSummaryStats
-	cohort      []domain.TimesheetAccrualDailyRow
-	cohortCalls int
+	summary      *domain.TimesheetSummaryStats
+	summaryCalls int
+	cohort       []domain.TimesheetAccrualDailyRow
+	cohortCalls  int
 }
 
 func (f *fakeTimesheetReader) GetSummaryStats(_ context.Context, _ domain.TimesheetFilters) (*domain.TimesheetSummaryStats, error) {
+	f.summaryCalls++
 	return f.summary, nil
 }
 
@@ -46,16 +48,17 @@ func (f *fakeWallet) GetBalance(_ context.Context) (*wallet.WalletBalance, error
 func newSvc(t *testing.T, ts *fakeTimesheetReader, w WalletBalanceReader, now time.Time) *CashReadinessForecastService {
 	t.Helper()
 	return NewCashReadinessForecastService(
-		ts, ts, w, NewTimesheetAccrualProvider(), clock.NewFake(now), config.CashForecastConfig{},
+		ts, w, NewTimesheetAccrualProvider(), clock.NewFake(now), config.CashForecastConfig{},
 	)
 }
 
 // july3 = 2026-07-03: Ky 1, cycle-day 3, pay day Jul 10.
 var july3 = time.Date(2026, time.July, 3, 9, 0, 0, 0, clock.DefaultLocation)
 
-func TestGetCashReadiness_ConfirmedMatchesSummary(t *testing.T) {
+func TestGetCashReadiness_ExcludesOutstandingPendingPayment(t *testing.T) {
 	ts := &fakeTimesheetReader{
-		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 462_000_000},
+		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 555_980_675},
+		cohort:  twoCyclesCohort(),
 	}
 	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 100_000_000}}, july3)
 
@@ -63,14 +66,21 @@ func TestGetCashReadiness_ConfirmedMatchesSummary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetCashReadiness: %v", err)
 	}
-	if got.ConfirmedPayable != 462_000_000 {
-		t.Errorf("ConfirmedPayable = %d, want 462000000 (must match GetSummaryStats)", got.ConfirmedPayable)
+	if ts.summaryCalls != 0 {
+		t.Fatalf("GetSummaryStats called %d times; outstanding pending payment must not be a forecast input", ts.summaryCalls)
+	}
+	if got.ObservedApproved != 100 {
+		t.Errorf("ObservedApproved = %d, want 100 from the current target Ky only", got.ObservedApproved)
+	}
+	if got.ExpectedTotal >= ts.summary.PendingPaymentAmount {
+		t.Errorf("ExpectedTotal = %d, unexpectedly includes pending-payment backlog %d", got.ExpectedTotal, ts.summary.PendingPaymentAmount)
 	}
 }
 
 func TestGetCashReadiness_GapMath(t *testing.T) {
-	// No cohort history → projection collapses to 0; CashToPrepare = confirmed.
-	ts := &fakeTimesheetReader{summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 300_000_000}}
+	// No historical cohort → projection collapses to 0; the target-Ky observed
+	// approved value is still the cash-to-prepare floor.
+	ts := &fakeTimesheetReader{cohort: currentCycleApproved(300_000_000)}
 	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 120_000_000}}, july3)
 
 	got, err := svc.GetCashReadiness(context.Background(), domain.TimesheetFilters{})
@@ -106,15 +116,19 @@ func twoCyclesCohort() []domain.TimesheetAccrualDailyRow {
 		// 2026-06 Ky1: approvals at cycle-days 2, 8 → grandTotal 500.
 		{WorkDate: d("2026-06-02"), ApprovedDate: d("2026-06-02"), Amount: 150},
 		{WorkDate: d("2026-06-02"), ApprovedDate: d("2026-06-08"), Amount: 350},
-		// 2026-07 Ky1 (current cycle) — MUST be excluded from the historical basis.
-		{WorkDate: d("2026-07-02"), ApprovedDate: d("2026-07-02"), Amount: 999_999},
+		// 2026-07 Ky1 (current cycle) — observed now but excluded from history.
+		{WorkDate: d("2026-07-02"), ApprovedDate: d("2026-07-02"), Amount: 100},
 	}
+}
+
+func currentCycleApproved(amount int64) []domain.TimesheetAccrualDailyRow {
+	d, _ := time.ParseInLocation("2006-01-02", "2026-07-02", clock.DefaultLocation)
+	return []domain.TimesheetAccrualDailyRow{{WorkDate: d, ApprovedDate: d, Amount: amount}}
 }
 
 func TestGetCashReadiness_BandMonotonicAndProjects(t *testing.T) {
 	ts := &fakeTimesheetReader{
-		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 100_000_000},
-		cohort:  twoCyclesCohort(),
+		cohort: twoCyclesCohort(),
 	}
 	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 50_000_000}}, july3)
 
@@ -131,8 +145,8 @@ func TestGetCashReadiness_BandMonotonicAndProjects(t *testing.T) {
 	if got.ProjectedExpected < got.ProjectedP50 || got.ProjectedExpected > got.ProjectedP95 {
 		t.Errorf("expected projection %d is outside p50–p95 interval [%d, %d]", got.ProjectedExpected, got.ProjectedP50, got.ProjectedP95)
 	}
-	if got.ExpectedTotal != got.ConfirmedPayable+got.ProjectedExpected {
-		t.Errorf("ExpectedTotal = %d, want confirmed + expected projection = %d", got.ExpectedTotal, got.ConfirmedPayable+got.ProjectedExpected)
+	if got.ExpectedTotal != got.ObservedApproved+got.ProjectedExpected {
+		t.Errorf("ExpectedTotal = %d, want target-Ky observed + expected projection = %d", got.ExpectedTotal, got.ObservedApproved+got.ProjectedExpected)
 	}
 	if got.ProjectedP50 <= 0 {
 		t.Errorf("ProjectedP50 = %d, want > 0 with 2 historical cycles", got.ProjectedP50)
@@ -150,8 +164,7 @@ func TestGetCashReadiness_BandMonotonicAndProjects(t *testing.T) {
 
 func TestGetCashReadiness_NoHistoryFallback(t *testing.T) {
 	ts := &fakeTimesheetReader{
-		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 200_000_000},
-		cohort:  nil, // no historical data
+		cohort: currentCycleApproved(200_000_000), // current Ky only; no history
 	}
 	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 0}}, july3)
 
@@ -169,10 +182,10 @@ func TestGetCashReadiness_NoHistoryFallback(t *testing.T) {
 		t.Errorf("no-history projection must be 0, got p50=%d expected=%d p95=%d", got.ProjectedP50, got.ProjectedExpected, got.ProjectedP95)
 	}
 	if got.ExpectedTotal != 200_000_000 {
-		t.Errorf("ExpectedTotal = %d, want confirmed-only 200000000", got.ExpectedTotal)
+		t.Errorf("ExpectedTotal = %d, want observed target-Ky amount 200000000", got.ExpectedTotal)
 	}
 	if got.CashToPrepare != 200_000_000 {
-		t.Errorf("CashToPrepare = %d, want confirmed-only 200000000", got.CashToPrepare)
+		t.Errorf("CashToPrepare = %d, want observed target-Ky amount 200000000", got.CashToPrepare)
 	}
 	if got.BandLower != got.BandUpper {
 		t.Errorf("no-history band must collapse: Lower=%d Upper=%d", got.BandLower, got.BandUpper)
@@ -181,8 +194,7 @@ func TestGetCashReadiness_NoHistoryFallback(t *testing.T) {
 
 func TestGetCashReadiness_Deterministic(t *testing.T) {
 	ts := &fakeTimesheetReader{
-		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 100_000_000},
-		cohort:  twoCyclesCohort(),
+		cohort: twoCyclesCohort(),
 	}
 	mk := func() *CashReadinessForecastService {
 		return newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 40_000_000}}, july3)
@@ -205,7 +217,7 @@ func TestGetCashReadiness_AdvisoryInvariant(t *testing.T) {
 	// type-level access to SyncBalance/CreateTopup, so the invariant is enforced
 	// by the port. This test confirms the wallet is read via GetBalance and the
 	// forecast still returns when the wallet read fails (defensive).
-	ts := &fakeTimesheetReader{summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 100_000_000}}
+	ts := &fakeTimesheetReader{cohort: currentCycleApproved(100_000_000)}
 	w := &fakeWallet{balance: &wallet.WalletBalance{Available: 30_000_000}}
 	svc := newSvc(t, ts, w, july3)
 
@@ -220,7 +232,7 @@ func TestGetCashReadiness_AdvisoryInvariant(t *testing.T) {
 		t.Errorf("WalletAvailable = %d (ok=%v), want 30000000 ok=true", got.WalletAvailable, got.WalletAvailableOK)
 	}
 
-	// Wallet read failure must not blank the card — confirmed + projection still shown.
+	// Wallet read failure must not blank the target-Ky forecast.
 	wErr := &fakeWallet{err: errFailedWallet}
 	svc2 := newSvc(t, ts, wErr, july3)
 	got2, err := svc2.GetCashReadiness(context.Background(), domain.TimesheetFilters{})
@@ -230,13 +242,13 @@ func TestGetCashReadiness_AdvisoryInvariant(t *testing.T) {
 	if got2.WalletAvailableOK {
 		t.Error("WalletAvailableOK should be false on read failure")
 	}
-	if got2.ConfirmedPayable != 100_000_000 {
-		t.Errorf("confirmed must still populate on wallet failure: %d", got2.ConfirmedPayable)
+	if got2.ObservedApproved != 100_000_000 {
+		t.Errorf("target-Ky observed amount must still populate on wallet failure: %d", got2.ObservedApproved)
 	}
 }
 
 func TestGetCashReadiness_PayCycleFraming(t *testing.T) {
-	ts := &fakeTimesheetReader{summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 0}}
+	ts := &fakeTimesheetReader{}
 	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{}}, july3)
 
 	got, _ := svc.GetCashReadiness(context.Background(), domain.TimesheetFilters{})
@@ -272,6 +284,24 @@ func TestBuildTimesheetCohort_PartitionsByKy(t *testing.T) {
 	}
 	if got[0].grandTotal != 200 {
 		t.Errorf("grandTotal = %d, want 200 (Ky-2 row excluded)", got[0].grandTotal)
+	}
+}
+
+func TestObservedApprovedForCycle_ScopesMonthKyAndCycleDay(t *testing.T) {
+	d := func(s string) time.Time {
+		parsed, _ := time.ParseInLocation("2006-01-02", s, clock.DefaultLocation)
+		return parsed
+	}
+	rows := []domain.TimesheetAccrualDailyRow{
+		{WorkDate: d("2026-07-02"), ApprovedDate: d("2026-07-02"), Amount: 100}, // target, observed
+		{WorkDate: d("2026-07-03"), ApprovedDate: d("2026-07-05"), Amount: 200}, // target, after cycle-day 3
+		{WorkDate: d("2026-07-10"), ApprovedDate: d("2026-07-02"), Amount: 300}, // other Ky
+		{WorkDate: d("2026-06-02"), ApprovedDate: d("2026-06-02"), Amount: 400}, // historical month
+	}
+
+	got := observedApprovedForCycle(rows, 1, "2026-07", 3)
+	if got != 100 {
+		t.Errorf("observedApprovedForCycle = %d, want 100 from target month/Ky through cycle-day 3", got)
 	}
 }
 

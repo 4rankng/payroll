@@ -512,7 +512,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
 	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk, cfg.WalletForecast)
-	cashReadinessService := services.NewCashReadinessForecastService(timesheetService, repos.Timesheet, walletService, nil, clk, cfg.CashForecast)
+	cashReadinessService := services.NewCashReadinessForecastService(repos.Timesheet, walletService, nil, clk, cfg.CashForecast)
 
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)

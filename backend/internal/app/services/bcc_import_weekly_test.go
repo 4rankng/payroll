@@ -5,6 +5,7 @@ import (
 	"time"
 
 	excelparser "api-server/internal/app/services/excel"
+	"api-server/internal/domain"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -82,4 +83,46 @@ func TestFindSTKRow(t *testing.T) {
 	// Empty slice
 	row = findSTKRow(nil, "031086013798")
 	assert.Nil(t, row)
+}
+
+func TestWeeklyBCCMissingAssignmentError_SuppressesBlockedEmployee(t *testing.T) {
+	blocked := map[string]struct{}{"031082006723": {}}
+	reported := make(map[string]struct{})
+	assert.True(t, isWeeklyBCCEmployeeBlocked(blocked, "031082006723"))
+	assert.False(t, isWeeklyBCCEmployeeBlocked(blocked, "031082006724"))
+
+	for range 5 {
+		err := weeklyBCCMissingAssignmentError(
+			"031082006723",
+			"Nguyễn Văn Hương",
+			blocked,
+			reported,
+		)
+		assert.Nil(t, err)
+	}
+	assert.Empty(t, reported)
+}
+
+func TestWeeklyBCCMissingAssignmentError_ReportsUnknownEmployeeOnce(t *testing.T) {
+	blocked := make(map[string]struct{})
+	reported := make(map[string]struct{})
+
+	first := weeklyBCCMissingAssignmentError(
+		"031082006723",
+		"Nguyễn Văn Hương",
+		blocked,
+		reported,
+	)
+	assert.Equal(t, &domain.ImportError{
+		Employee: "Nguyễn Văn Hương",
+		Reason:   "không tìm thấy nhân viên với CCCD \"031082006723\" trong dự án",
+	}, first)
+
+	second := weeklyBCCMissingAssignmentError(
+		"031082006723",
+		"Nguyễn Văn Hương",
+		blocked,
+		reported,
+	)
+	assert.Nil(t, second)
 }

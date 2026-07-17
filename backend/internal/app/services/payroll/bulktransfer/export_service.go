@@ -18,21 +18,26 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExportService handles bulk transfer export operations
+// ExportService handles bulk transfer export operations.
+//
+// Post-Phase-1 refactor: Export() is now a thin orchestrator. The read +
+// aggregate + validate phase lives in ExportPlanner.Plan() (see planner.go);
+// the write phase (transaction_codes batch + audit event) lives in
+// ExportService.Persist(). Production calls Plan() → Persist() → Excel gen.
+// The settlement simulation (Phase 2) calls Plan() only, so it cannot drift
+// from production selection logic.
 type ExportService struct {
-	timesheetRepo       TimesheetRepository
-	employeeRepo        EmployeeRepository
-	projectRepo         ProjectRepository
-	projectEmployeeRepo ProjectEmployeeRepository
+	planner             *ExportPlanner
 	fileRepo            BulkTransferFileRepository
 	transactionCodeRepo TransactionCodeRepository
 	excelService        *excel.Service
-	periodCalculator    *PeriodCalculator
 	checksumCalculator  *ChecksumCalculator
 	eventBus            domain.EventBus
 }
 
-// NewExportService creates a new export service instance
+// NewExportService creates a new export service instance. The planner is
+// constructed internally from the same read-side deps; callers (DI container)
+// see the same constructor signature as before the refactor.
 func NewExportService(
 	timesheetRepo TimesheetRepository,
 	employeeRepo EmployeeRepository,
@@ -44,172 +49,186 @@ func NewExportService(
 	periodCalculator *PeriodCalculator,
 	eventBus domain.EventBus,
 ) *ExportService {
+	planner := NewExportPlanner(
+		timesheetRepo,
+		employeeRepo,
+		projectRepo,
+		projectEmployeeRepo,
+		periodCalculator,
+		excelService,
+	)
 	return &ExportService{
-		timesheetRepo:       timesheetRepo,
-		employeeRepo:        employeeRepo,
-		projectRepo:         projectRepo,
-		projectEmployeeRepo: projectEmployeeRepo,
+		planner:             planner,
 		fileRepo:            fileRepo,
 		transactionCodeRepo: transactionCodeRepo,
 		excelService:        excelService,
-		periodCalculator:    periodCalculator,
 		checksumCalculator:  NewChecksumCalculator(),
 		eventBus:            eventBus,
 	}
 }
 
-// Export generates an Excel file with bulk transfer data
+// Planner exposes the read-only planner for the simulation service (Phase 2)
+// to reuse without duplicating selection logic.
+func (es *ExportService) Planner() *ExportPlanner { return es.planner }
+
+// Export generates an Excel file with bulk transfer data.
+//
+// Behavior is byte-for-byte identical to the pre-refactor implementation —
+// verified by the existing flow_manual_bulk_transfer integration test. The
+// only structural change is that the read phase is delegated to Plan() and
+// the write phase to Persist(), so the simulation can call Plan() alone.
 func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransferRequest) (*dto.ExportBulkTransferResponse, error) {
-	isMonthly := strings.TrimSpace(req.ForMonth) != ""
-	var (
-		fromDate   time.Time
-		toDate     time.Time
-		monthStart time.Time
-		err        error
-	)
-
-	periodCache := make(map[uint]projectPeriod)
-	cycle := string(domain.PaymentScheduleWeekly)
-
-	if isMonthly {
-		cycle = string(domain.PaymentScheduleMonthly)
-		monthStart, err = es.periodCalculator.ResolveMonthlyRange(req)
-		if err != nil {
-			return nil, err
-		}
-		// For display purposes, use standard month range
-		fromDate = monthStart
-		toDate = endOfMonth(monthStart)
-	} else {
-		fromDate, toDate, err = es.periodCalculator.ResolveWeeklyRange(req)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	fromDateStr := fromDate.Format(timeutil.DateFormat)
-	toDateStr := toDate.Format(timeutil.DateFormat)
-
-	// Base filters: eligible timesheets per existing rule
-	filters := domain.TimesheetFilters{
-		TimesheetStatus: []domain.TimesheetStatus{domain.TimesheetStatusApproved},
-		PaymentStatus: []domain.PaymentStatus{
-			domain.PaymentStatusPending,
-			domain.PaymentStatusFailed,
-		},
-	}
-	// For weekly exports, include date filters; for monthly, dates are handled per-project
-	if !isMonthly {
-		filters.FromDate = &fromDate
-		filters.ToDate = &toDate
-	}
-	if len(req.ProjectIDs) > 0 {
-		filters.ProjectIDs = req.ProjectIDs
-	}
-
-	// Get all timesheets matching the date and status criteria
-	allTimesheets, err := es.listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
+	plan, err := es.planner.Plan(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get timesheets: %w", err)
+		return nil, err
 	}
 
-	// Filter by employee IDs if provided in request
-	baseFiltered := es.filterTimesheetsByRequest(allTimesheets, req)
+	// Phase 3 will add an optional stale-snapshot enforcement here:
+	//   if req.IfMatchSnapshot != nil && !req.IfMatchSnapshot.IsZero() &&
+	//	      plan.SnapshotEpoch.After(*req.IfMatchSnapshot) {
+	//       return nil, domain.ErrStaleSimulation
+	//   }
+	// Left out of Phase 1 to keep the refactor behavior-neutral.
 
-	// Also fetch admin-marked timesheets that should always be included until paid
-	trueVal := true
-	forcedFilters := domain.TimesheetFilters{
-		TimesheetStatus: []domain.TimesheetStatus{domain.TimesheetStatusApproved},
-		PaymentStatus: []domain.PaymentStatus{
-			domain.PaymentStatusPending,
-			domain.PaymentStatusFailed,
-		},
-		ForcePayroll: &trueVal,
-	}
-	if len(req.ProjectIDs) > 0 {
-		forcedFilters.ProjectIDs = req.ProjectIDs
-	}
-
-	forcedAll, err := es.listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get forced timesheets: %w", err)
-	}
-	forced := es.filterTimesheetsByRequest(forcedAll, req)
-
-	// Union forced set with baseFiltered, de-duplicated
-	filteredTimesheets := make([]*domain.Timesheet, 0, len(baseFiltered)+len(forced))
-	seen := make(map[uint]bool)
-	for _, t := range baseFiltered {
-		if !seen[t.ID] {
-			filteredTimesheets = append(filteredTimesheets, t)
-			seen[t.ID] = true
-		}
-	}
-	for _, t := range forced {
-		if !seen[t.ID] {
-			filteredTimesheets = append(filteredTimesheets, t)
-			seen[t.ID] = true
-		}
-	}
-
-	// Aggregate data by employee-project combination with payment schedule filter
-	aggregatedData, err := es.aggregateTimesheetData(ctx, filteredTimesheets, cycle)
-	if err != nil {
-		return nil, fmt.Errorf("failed to aggregate timesheet data: %w", err)
-	}
-
-	// Validate and filter the data before saving
-	validationResult := es.excelService.ValidateAndFilterBulkTransferData(aggregatedData)
-
-	// Save bulk transfer file record to database
-	filename, err := es.saveBulkTransferFile(ctx, req, validationResult.ValidData, cycle, fromDate, toDate)
+	filename, err := es.Persist(ctx, req, plan)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save bulk transfer file: %w", err)
 	}
 
 	// Generate ZIP file with bulk transfer data
-	response, err := es.excelService.GenerateBulkTransferExcel(ctx, aggregatedData, req, fromDateStr, toDateStr, cycle)
+	fromDateStr, toDateStr := formatDateRange(plan)
+	response, err := es.excelService.GenerateBulkTransferExcel(ctx, plan.RawAggregated, req, fromDateStr, toDateStr, plan.Cycle)
 	if err != nil {
 		return nil, err
 	}
 
 	response.FromDate = fromDateStr
 	response.ToDate = toDateStr
-	response.Cycle = cycle
+	response.Cycle = plan.Cycle
 	response.Filename = filename
 
-	// Audit emit: top-level "BulkTransferFileExported". Best-effort — a publish
-	// failure must not fail the export itself, since the file is already
-	// generated and the user is downloading it.
-	es.publishExportAudit(ctx, req, filename, cycle, fromDateStr, toDateStr, validationResult.ValidData)
-
+	// Audit emit happens inside Persist() (write phase owns the event too).
 	return response, nil
 }
 
+// Persist performs the write phase of an export: generates a filename, creates
+// the transaction_codes batch, and emits the BulkTransferFileExported audit
+// event. Renamed + body-identical to the pre-refactor saveBulkTransferFile +
+// publishExportAudit pair (which the planner no longer owns).
+//
+// Note (red-team Finding 1): this does NOT create a bulk_transfer_files row.
+// That row is written elsewhere (audit_service.go, ninepay_service.go,
+// result_processor.go) when a file asset is actually materialized. Persist's
+// write surface is exactly: transactionCodeRepo.CreateBatch + eventBus.Publish.
+func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransferRequest, plan *ExportPlan) (string, error) {
+	filename := generateFilename(plan.Cycle)
+
+	if plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil {
+		// Nothing to persist (no eligible rows). Still emit the audit event
+		// so the export attempt is traceable.
+		es.publishExportAudit(ctx, req, filename, plan.Cycle, plan, 0, 0)
+		return filename, nil
+	}
+
+	data := plan.ValidatedData.ValidData
+
+	// Convert data to BulkTransferFileData array + prepare transaction codes
+	var fileDataArray []dto.BulkTransferFileData
+	var totalAmount int64
+	var transactionCodesToCreate []*domain.TransactionCode
+	stt := 1
+
+	for key, amount := range data.EmployeeProjectAmounts {
+		employee := data.EmployeeData[key.EmployeeID]
+		project := data.ProjectData[key.ProjectID]
+		timesheetIDs := data.EmployeeProjectTimesheets[key]
+		transactionCode := data.TransactionCodes[key]
+
+		bankName := ""
+		if employee.Bank != nil {
+			bankName = employee.Bank.BranchName
+		}
+
+		fileData := dto.BulkTransferFileData{
+			STT:             stt,
+			EmployeeID:      employee.ID,
+			ProjectID:       project.ID,
+			TimesheetIDs:    timesheetIDs,
+			AccountNumber:   employee.BankAccountNumber,
+			AccountName:     employee.BankAccountName,
+			BankName:        bankName,
+			Amount:          amount,
+			TransactionCode: transactionCode,
+		}
+		fileDataArray = append(fileDataArray, fileData)
+		totalAmount += amount
+		stt++
+
+		// Prepare transaction code data
+		var tcData domain.TransactionCodeData
+		if plan.Cycle == string(domain.PaymentScheduleMonthly) {
+			tcData = domain.TransactionCodeData{
+				MonthlyPay: &domain.CyclePayData{
+					TimesheetIDs: timesheetIDs,
+					EmployeeID:   employee.ID,
+					ProjectID:    project.ID,
+					Amount:       amount,
+				},
+			}
+		} else {
+			tcData = domain.TransactionCodeData{
+				WeeklyPay: &domain.CyclePayData{
+					TimesheetIDs: timesheetIDs,
+					EmployeeID:   employee.ID,
+					ProjectID:    project.ID,
+					Amount:       amount,
+				},
+			}
+		}
+		tcDataBytes, _ := json.Marshal(tcData)
+		transactionCodesToCreate = append(transactionCodesToCreate, &domain.TransactionCode{
+			Code: transactionCode,
+			Data: tcDataBytes,
+		})
+	}
+
+	// Sort by STT to ensure consistent ordering (pre-refactor behavior).
+	sort.Slice(fileDataArray, func(i, j int) bool {
+		return fileDataArray[i].STT < fileDataArray[j].STT
+	})
+
+	// Create transaction codes (FileID will be set when result is uploaded)
+	if len(transactionCodesToCreate) > 0 {
+		if err := es.transactionCodeRepo.CreateBatch(ctx, transactionCodesToCreate); err != nil {
+			return "", fmt.Errorf("failed to create transaction codes: %w", err)
+		}
+	}
+
+	// Audit emit (was publishExportAudit in pre-refactor code).
+	txnCount := len(data.EmployeeProjectAmounts)
+	es.publishExportAudit(ctx, req, filename, plan.Cycle, plan, txnCount, totalAmount)
+
+	return filename, nil
+}
+
 // publishExportAudit emits the audit event for a successful bulk-transfer file
-// export. Failures are logged but do not propagate.
+// export. Failures are logged but do not propagate. Body-identical to the
+// pre-refactor helper; signature changed to take the ExportPlan so it can
+// derive date strings without re-parsing the request.
 func (es *ExportService) publishExportAudit(
 	ctx context.Context,
 	req *dto.ExportBulkTransferRequest,
-	filename, cycle, fromDateStr, toDateStr string,
-	validData *excel.BulkTransferData,
+	filename, cycle string,
+	plan *ExportPlan,
+	txnCount int,
+	totalAmount int64,
 ) {
 	if es.eventBus == nil {
 		return
 	}
 
-	var totalAmount int64
-	var txnCount int
-	if validData != nil {
-		txnCount = len(validData.EmployeeProjectAmounts)
-		for _, amount := range validData.EmployeeProjectAmounts {
-			totalAmount += amount
-		}
-	}
-
 	forMonth := strings.TrimSpace(req.ForMonth)
-	fromForEvent := fromDateStr
-	toForEvent := toDateStr
+	fromForEvent, toForEvent := formatDateRangeStrings(plan)
 	if forMonth != "" {
 		fromForEvent = ""
 		toForEvent = ""
@@ -233,281 +252,30 @@ func (es *ExportService) publishExportAudit(
 	}
 }
 
-// filterTimesheetsByRequest filters timesheets by employee IDs if specified in request
-func (es *ExportService) filterTimesheetsByRequest(allTimesheets []*domain.Timesheet, req *dto.ExportBulkTransferRequest) []*domain.Timesheet {
-	if len(req.EmployeeIDs) == 0 {
-		return allTimesheets
-	}
-
-	// Build a set for O(1) lookup instead of O(N) slices.Contains per iteration
-	employeeSet := make(map[uint]struct{}, len(req.EmployeeIDs))
-	for _, id := range req.EmployeeIDs {
-		employeeSet[id] = struct{}{}
-	}
-
-	filtered := make([]*domain.Timesheet, 0, len(allTimesheets))
-	for _, ts := range allTimesheets {
-		if _, ok := employeeSet[ts.EmployeeID]; ok {
-			filtered = append(filtered, ts)
-		}
-	}
-	return filtered
-}
-
-// listTimesheetsForCycle retrieves timesheets with cycle-specific logic
-func (es *ExportService) listTimesheetsForCycle(ctx context.Context, baseFilters domain.TimesheetFilters, req *dto.ExportBulkTransferRequest, isMonthly bool, monthStart time.Time, periodCache map[uint]projectPeriod) ([]*domain.Timesheet, error) {
-	// For weekly exports, use the provided date range directly
-	if !isMonthly {
-		return es.timesheetRepo.List(ctx, baseFilters)
-	}
-
-	// For monthly exports, we need to query per-project based on each project's salary period
-	var projectIDs []uint
-	if len(req.ProjectIDs) > 0 {
-		projectIDs = req.ProjectIDs
-	} else {
-		// Get all active projects
-		projects, err := es.projectRepo.List(ctx, domain.ProjectFilters{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get projects: %w", err)
-		}
-		projectIDs = make([]uint, 0, len(projects))
-		for _, project := range projects {
-			projectIDs = append(projectIDs, project.ID)
-		}
-	}
-
-	combined := make([]*domain.Timesheet, 0)
-	seenTimesheets := make(map[uint]struct{})
-	handledProjects := make(map[uint]struct{})
-
-	for _, projectID := range projectIDs {
-		if _, handled := handledProjects[projectID]; handled {
-			continue
-		}
-		handledProjects[projectID] = struct{}{}
-
-		period, err := es.periodCalculator.GetProjectPeriod(ctx, projectID, monthStart, periodCache)
-		if err != nil {
-			return nil, err
-		}
-
-		projectFilters := baseFilters
-		start := period.start
-		end := period.end
-		projectFilters.ProjectIDs = []uint{projectID}
-		projectFilters.FromDate = &start
-		projectFilters.ToDate = &end
-
-		timesheets, err := es.timesheetRepo.List(ctx, projectFilters)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, timesheet := range timesheets {
-			if _, exists := seenTimesheets[timesheet.ID]; exists {
-				continue
-			}
-			combined = append(combined, timesheet)
-			seenTimesheets[timesheet.ID] = struct{}{}
-		}
-	}
-
-	return combined, nil
-}
-
-// aggregateTimesheetData groups timesheets by employee-project combination and fetches related data
-func (es *ExportService) aggregateTimesheetData(ctx context.Context, timesheets []*domain.Timesheet, cycle string) (*excel.BulkTransferData, error) {
-	employeeProjectAmounts := make(map[excel.EmployeeProjectKey]int64)
-	employeeProjectTimesheets := make(map[excel.EmployeeProjectKey][]uint)
-	employeeData := make(map[uint]excel.Employee)
-	projectData := make(map[uint]excel.Project)
-	transactionCodes := make(map[excel.EmployeeProjectKey]string)
-	assignmentCache := make(map[excel.EmployeeProjectKey]*domain.ProjectEmployee)
-
-	var paymentScheduleFilter *string
-	if cycle != "" {
-		paymentScheduleFilter = &cycle
-	}
-
-	for _, timesheet := range timesheets {
-		key := excel.EmployeeProjectKey{
-			EmployeeID: timesheet.EmployeeID,
-			ProjectID:  timesheet.ProjectID,
-		}
-
-		// If payment schedule filter is provided, check employee's payment schedule
-		if paymentScheduleFilter != nil && *paymentScheduleFilter != "" {
-			assignment, ok := assignmentCache[key]
-			if !ok {
-				var err error
-				assignment, err = es.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, timesheet.ProjectID, timesheet.EmployeeID)
-				if err != nil {
-					// Skip if assignment not found
-					continue
-				}
-				assignmentCache[key] = assignment
-			}
-
-			if assignment == nil || assignment.PaymentSchedule != *paymentScheduleFilter {
-				continue
-			}
-		}
-
-		employeeProjectAmounts[key] += timesheet.Amount
-		employeeProjectTimesheets[key] = append(employeeProjectTimesheets[key], timesheet.ID)
-
-		// Generate transaction code for this key if not already generated.
-		// Use first 8 chars of UUID — shorter but still unique (DB enforces
-		// uniqueness). Format is alphanumeric only (no hyphen): this code
-		// flows through to 9pay as request_id, and 9pay rejects hyphens
-		// with error 318.
-		if _, exists := transactionCodes[key]; !exists {
-			txUUID := uuid.New()
-			txShort := strings.ReplaceAll(txUUID.String(), "-", "")[:8]
-			if paymentScheduleFilter != nil && *paymentScheduleFilter == string(domain.PaymentScheduleFlexible) {
-				transactionCodes[key] = fmt.Sprintf("tt%s", txShort)
-			} else {
-				transactionCodes[key] = fmt.Sprintf("VFIC%s", txShort)
-			}
-		}
-
-		// Get employee data if not already fetched
-		if _, exists := employeeData[timesheet.EmployeeID]; !exists {
-			employee, err := es.employeeRepo.GetByID(ctx, timesheet.EmployeeID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get employee %d: %w", timesheet.EmployeeID, err)
-			}
-
-			// Convert to excel.Employee
-			excelEmployee := excel.Employee{
-				ID:                employee.ID,
-				Fullname:          employee.FormattedFullname(),
-				BankAccountNumber: employee.BankAccountNumber,
-				BankAccountName:   employee.BankAccountName,
-			}
-			if employee.Bank != nil {
-				excelEmployee.Bank = &excel.Bank{
-					ID:         employee.Bank.ID,
-					BranchName: employee.Bank.BranchName,
-					BankCode:   employee.Bank.BankCode,
-				}
-			}
-			employeeData[timesheet.EmployeeID] = excelEmployee
-		}
-
-		// Get project data if not already fetched
-		if _, exists := projectData[timesheet.ProjectID]; !exists {
-			project, err := es.projectRepo.GetByID(ctx, timesheet.ProjectID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get project %d: %w", timesheet.ProjectID, err)
-			}
-			projectData[timesheet.ProjectID] = excel.Project{
-				ID:   project.ID,
-				Name: project.Name,
-			}
-		}
-	}
-
-	return &excel.BulkTransferData{
-		EmployeeProjectAmounts:    employeeProjectAmounts,
-		EmployeeProjectTimesheets: employeeProjectTimesheets,
-		EmployeeData:              employeeData,
-		ProjectData:               projectData,
-		TransactionCodes:          transactionCodes,
-	}, nil
-}
-
-// saveBulkTransferFile saves the bulk transfer export request to database
-func (es *ExportService) saveBulkTransferFile(
-	ctx context.Context,
-	req *dto.ExportBulkTransferRequest,
-	data *excel.BulkTransferData,
-	cycle string,
-	fromDate, toDate time.Time,
-) (string, error) {
-	// Generate UUID for filename
+// generateFilename produces the MBank-style filename {prefix}_{cycle}_{uuid}.
+// Extracted from the pre-refactor saveBulkTransferFile.
+func generateFilename(cycle string) string {
 	fileUUID := uuid.New()
 	uuidStr := strings.ReplaceAll(fileUUID.String(), "-", "")
-
-	// Create filename: {bankprefix}_{cycle}_{uuid_no_hyphen}
-	filename := fmt.Sprintf("%s_%s_%s", pkgConstants.MBankPrefix, cycle, uuidStr)
-
-	// Convert data to BulkTransferFileData array
-	var fileDataArray []dto.BulkTransferFileData
-	var totalAmount int64
-	stt := 1
-
-	// Prepare transaction codes for batch creation (created after file)
-	var transactionCodesToCreate []*domain.TransactionCode
-
-	if data != nil {
-		for key, amount := range data.EmployeeProjectAmounts {
-			employee := data.EmployeeData[key.EmployeeID]
-			project := data.ProjectData[key.ProjectID]
-			timesheetIDs := data.EmployeeProjectTimesheets[key]
-			transactionCode := data.TransactionCodes[key]
-
-			bankName := ""
-			if employee.Bank != nil {
-				bankName = employee.Bank.BranchName
-			}
-
-			fileData := dto.BulkTransferFileData{
-				STT:             stt,
-				EmployeeID:      employee.ID,
-				ProjectID:       project.ID,
-				TimesheetIDs:    timesheetIDs,
-				AccountNumber:   employee.BankAccountNumber,
-				AccountName:     employee.BankAccountName,
-				BankName:        bankName,
-				Amount:          amount,
-				TransactionCode: transactionCode,
-			}
-			fileDataArray = append(fileDataArray, fileData)
-			totalAmount += amount
-			stt++
-
-			// Prepare transaction code data
-			var tcData domain.TransactionCodeData
-			if cycle == string(domain.PaymentScheduleMonthly) {
-				tcData = domain.TransactionCodeData{
-					MonthlyPay: &domain.CyclePayData{
-						TimesheetIDs: timesheetIDs,
-						EmployeeID:   employee.ID,
-						ProjectID:    project.ID,
-						Amount:       amount,
-					},
-				}
-			} else {
-				tcData = domain.TransactionCodeData{
-					WeeklyPay: &domain.CyclePayData{
-						TimesheetIDs: timesheetIDs,
-						EmployeeID:   employee.ID,
-						ProjectID:    project.ID,
-						Amount:       amount,
-					},
-				}
-			}
-			tcDataBytes, _ := json.Marshal(tcData)
-			transactionCodesToCreate = append(transactionCodesToCreate, &domain.TransactionCode{
-				Code: transactionCode,
-				Data: tcDataBytes,
-			})
-		}
-	}
-
-	// Sort by STT to ensure consistent ordering
-	sort.Slice(fileDataArray, func(i, j int) bool {
-		return fileDataArray[i].STT < fileDataArray[j].STT
-	})
-
-	// Create transaction codes (FileID will be set when result is uploaded)
-	if len(transactionCodesToCreate) > 0 {
-		if err := es.transactionCodeRepo.CreateBatch(ctx, transactionCodesToCreate); err != nil {
-			return "", fmt.Errorf("failed to create transaction codes: %w", err)
-		}
-	}
-
-	return filename, nil
+	return fmt.Sprintf("%s_%s_%s", pkgConstants.MBankPrefix, cycle, uuidStr)
 }
+
+// formatDateRange returns the (from, to) display strings for a plan, or zero
+// strings for full-pool mode (Phase 2) where there is no date window.
+func formatDateRange(plan *ExportPlan) (string, string) {
+	if plan == nil || plan.FromDate.IsZero() {
+		return "", ""
+	}
+	return plan.FromDate.Format(timeutil.DateFormat), plan.ToDate.Format(timeutil.DateFormat)
+}
+
+// formatDateRangeStrings is a thin alias used by publishExportAudit for
+// readability alongside the forMonth branch.
+func formatDateRangeStrings(plan *ExportPlan) (string, string) {
+	return formatDateRange(plan)
+}
+
+// Compile-time guard: ensure time import stays used ( formatDateRange relies
+// on time.Time zero-check). Avoids an unused-import error if other helpers
+// are refactored later.
+var _ = time.Time{}

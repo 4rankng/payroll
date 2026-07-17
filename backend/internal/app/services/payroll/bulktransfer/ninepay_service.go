@@ -154,7 +154,7 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 		filters.ProjectIDs = req.ProjectIDs
 	}
 
-	allTimesheets, err := s.exportService.listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
+	allTimesheets, err := s.exportService.Planner().listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get timesheets: %w", err)
 	}
@@ -169,7 +169,7 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 	if len(req.ProjectIDs) > 0 {
 		forcedFilters.ProjectIDs = req.ProjectIDs
 	}
-	forcedAll, err := s.exportService.listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
+	forcedAll, err := s.exportService.Planner().listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get forced timesheets: %w", err)
 	}
@@ -194,7 +194,7 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 		return nil, domain.NewValidationError("Không tìm thấy bảng chấm công đủ điều kiện để chuyển tiền")
 	}
 	// Aggregate by employee-project
-	aggregatedData, err := s.exportService.aggregateTimesheetData(ctx, filteredTimesheets, cycle)
+	aggregatedData, err := s.exportService.Planner().aggregateTimesheetData(ctx, filteredTimesheets, cycle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate timesheet data: %w", err)
 	}
@@ -352,7 +352,7 @@ func (s *NinePayBulkTransferService) GetBatchStatus(ctx context.Context, batchID
 func (s *NinePayBulkTransferService) resolveDateRange(req *dto.ExportBulkTransferRequest, isMonthly bool) (fromDate, toDate time.Time, monthStart time.Time, err error) {
 
 	if isMonthly {
-		monthStart, err = s.exportService.periodCalculator.ResolveMonthlyRange(req)
+		monthStart, err = s.exportService.Planner().periodCalculator.ResolveMonthlyRange(req)
 		if err != nil {
 			return
 		}
@@ -360,7 +360,7 @@ func (s *NinePayBulkTransferService) resolveDateRange(req *dto.ExportBulkTransfe
 		toDate = endOfMonth(monthStart)
 		return
 	}
-	fromDate, toDate, err = s.exportService.periodCalculator.ResolveWeeklyRange(req)
+	fromDate, toDate, err = s.exportService.Planner().periodCalculator.ResolveWeeklyRange(req)
 	return
 }
 
@@ -391,7 +391,7 @@ func (s *NinePayBulkTransferService) EstimateFee(ctx context.Context, req *dto.E
 		filters.ProjectIDs = req.ProjectIDs
 	}
 
-	allTimesheets, err := s.exportService.listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
+	allTimesheets, err := s.exportService.Planner().listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get timesheets: %w", err)
 	}
@@ -405,7 +405,7 @@ func (s *NinePayBulkTransferService) EstimateFee(ctx context.Context, req *dto.E
 	if len(req.ProjectIDs) > 0 {
 		forcedFilters.ProjectIDs = req.ProjectIDs
 	}
-	forcedAll, err := s.exportService.listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
+	forcedAll, err := s.exportService.Planner().listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get forced timesheets: %w", err)
 	}
@@ -425,7 +425,7 @@ func (s *NinePayBulkTransferService) EstimateFee(ctx context.Context, req *dto.E
 		}
 	}
 
-	aggregatedData, err := s.exportService.aggregateTimesheetData(ctx, filteredTimesheets, cycle)
+	aggregatedData, err := s.exportService.Planner().aggregateTimesheetData(ctx, filteredTimesheets, cycle)
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate timesheet data: %w", err)
 	}
