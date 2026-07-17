@@ -61,10 +61,21 @@ CRUD, bulk approve/reject/reset, approve-all, preview, export, grouped view, pay
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/cash-readiness` | Target-Kỳ forecast for the next pay date; excludes outstanding-payment backlog |
+| GET | `/cash-readiness` | Advisory target-Kỳ forecast for the next pay date; excludes outstanding-payment backlog |
 | GET | `/summary` | Summary stats (pending payment amount, etc.) |
 | POST | `/bulk-approve` | Bulk approve timesheets |
 | POST | `/export-entries-template` | Download export template |
+
+`GET /cash-readiness` keeps the legacy percentile fields and adds a transparent
+cash decomposition: `observed_approved`, `pending_target_amount`,
+`expected_pending_amount`, `expected_future_amount`, `expected_payout`, and
+`recommended_reserve`. All amounts use the configured weekly payable percentage,
+matching the cash written to the bank-transfer workbook. Reliability fields
+(`reliability_state`, `calibration_samples`, WAPE, bias, interval coverage, and
+reserve shortfall rate) are measured only from unfiltered company forecasts
+resolved against distinct timesheets in generated weekly transfer files.
+Filtered forecasts are never mixed into company accuracy. The response remains
+advisory and cannot initiate a top-up or payment.
 
 ### Payrolls (`/api/v1/payrolls`)
 

@@ -213,11 +213,16 @@ type WalletForecastConfig struct {
 // 6-month cohort lookback (≈ 24 Ky observations across Ky 1–4), a 2-day
 // prepare-by lead window, and no extra safety stock.
 type CashForecastConfig struct {
-	ServiceLevel   float64 // env CASH_FORECAST_SERVICE_LEVEL, default 0.95 (band upper quantile)
-	NSim           int     // env CASH_FORECAST_N_SIM, default 5000
-	HistoryMonths  int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
-	LeadDays       int     // env CASH_FORECAST_LEAD_DAYS, default 2
-	GrowthEWMAlpha float64 // env CASH_FORECAST_GROWTH_EWMA_ALPHA, default 0.5 (EWMA smoothing for growth-rate adjustment)
+	ServiceLevel              float64 // env CASH_FORECAST_SERVICE_LEVEL, default 0.95
+	NSim                      int     // env CASH_FORECAST_N_SIM, default 5000
+	HistoryMonths             int     // env CASH_FORECAST_HISTORY_MONTHS, default 6
+	LeadDays                  int     // env CASH_FORECAST_LEAD_DAYS, default 2
+	GrowthEWMAlpha            float64 // retained for v1 compatibility
+	WAPEThreshold             float64 // measured reliability threshold, default 0.10
+	AbsBiasThreshold          float64 // measured reliability threshold, default 0.03
+	ReserveShortfallThreshold float64 // measured reliability threshold, default 0.10
+	CoverageMin               float64 // central interval coverage lower bound, default 0.85
+	CoverageMax               float64 // central interval coverage upper bound, default 0.95
 }
 
 // NinepayConfig holds the credentials, endpoint, and feature flags for
@@ -439,10 +444,16 @@ func Load() (*Config, error) {
 			UncertaintyFactor: parseFloat(getEnv("WALLET_FORECAST_UNCERTAINTY_FACTOR", "0")),
 		},
 		CashForecast: CashForecastConfig{
-			ServiceLevel:  parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
-			NSim:          parseInt(getEnv("CASH_FORECAST_N_SIM", "5000")),
-			HistoryMonths: parseInt(getEnv("CASH_FORECAST_HISTORY_MONTHS", "6")),
-			LeadDays:      parseInt(getEnv("CASH_FORECAST_LEAD_DAYS", "2")),
+			ServiceLevel:              parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
+			NSim:                      parseInt(getEnv("CASH_FORECAST_N_SIM", "5000")),
+			HistoryMonths:             parseInt(getEnv("CASH_FORECAST_HISTORY_MONTHS", "6")),
+			LeadDays:                  parseInt(getEnv("CASH_FORECAST_LEAD_DAYS", "2")),
+			GrowthEWMAlpha:            parseFloat(getEnv("CASH_FORECAST_GROWTH_EWMA_ALPHA", "0.5")),
+			WAPEThreshold:             parseFloat(getEnv("CASH_FORECAST_WAPE_THRESHOLD", "0.10")),
+			AbsBiasThreshold:          parseFloat(getEnv("CASH_FORECAST_ABS_BIAS_THRESHOLD", "0.03")),
+			ReserveShortfallThreshold: parseFloat(getEnv("CASH_FORECAST_RESERVE_SHORTFALL_THRESHOLD", "0.10")),
+			CoverageMin:               parseFloat(getEnv("CASH_FORECAST_COVERAGE_MIN", "0.85")),
+			CoverageMax:               parseFloat(getEnv("CASH_FORECAST_COVERAGE_MAX", "0.95")),
 		},
 		TenantConcurrencyLimit: parseInt(getEnv("TENANT_CONCURRENCY_LIMIT", "10")),
 		RequestTimeout:         parseDuration(getEnv("REQUEST_TIMEOUT", "10s")),
@@ -657,11 +668,26 @@ func (c *Config) validate() error {
 			c.CashForecast.NSim,
 		)
 	}
-	if c.CashForecast.GrowthEWMAlpha > 0 && (c.CashForecast.GrowthEWMAlpha <= 0 || c.CashForecast.GrowthEWMAlpha > 1) {
+	if c.CashForecast.GrowthEWMAlpha < 0 || c.CashForecast.GrowthEWMAlpha > 1 {
 		return fmt.Errorf(
 			"config: CASH_FORECAST_GROWTH_EWMA_ALPHA must be in (0, 1], got %v",
 			c.CashForecast.GrowthEWMAlpha,
 		)
+	}
+	if c.CashForecast.WAPEThreshold < 0 || c.CashForecast.WAPEThreshold > 1 {
+		return fmt.Errorf("config: CASH_FORECAST_WAPE_THRESHOLD must be 0 (default) or in (0, 1], got %v", c.CashForecast.WAPEThreshold)
+	}
+	if c.CashForecast.AbsBiasThreshold < 0 || c.CashForecast.AbsBiasThreshold > 1 {
+		return fmt.Errorf("config: CASH_FORECAST_ABS_BIAS_THRESHOLD must be 0 (default) or in (0, 1], got %v", c.CashForecast.AbsBiasThreshold)
+	}
+	if c.CashForecast.ReserveShortfallThreshold < 0 || c.CashForecast.ReserveShortfallThreshold > 1 {
+		return fmt.Errorf("config: CASH_FORECAST_RESERVE_SHORTFALL_THRESHOLD must be 0 (default) or in (0, 1], got %v", c.CashForecast.ReserveShortfallThreshold)
+	}
+	if c.CashForecast.CoverageMin < 0 || c.CashForecast.CoverageMin > 1 || c.CashForecast.CoverageMax < 0 || c.CashForecast.CoverageMax > 1 {
+		return fmt.Errorf("config: cash forecast coverage bounds must be 0 (default) or in (0, 1], got [%v, %v]", c.CashForecast.CoverageMin, c.CashForecast.CoverageMax)
+	}
+	if c.CashForecast.CoverageMin > 0 && c.CashForecast.CoverageMax > 0 && c.CashForecast.CoverageMin > c.CashForecast.CoverageMax {
+		return fmt.Errorf("config: CASH_FORECAST_COVERAGE_MIN must not exceed CASH_FORECAST_COVERAGE_MAX, got [%v, %v]", c.CashForecast.CoverageMin, c.CashForecast.CoverageMax)
 	}
 
 	return nil

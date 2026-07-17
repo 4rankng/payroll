@@ -2,15 +2,14 @@ package domain
 
 import "time"
 
-// CashReadiness is the advisory forecast for the next timesheet Ky. It composes
-// approved value already observed in that Ky with a short-horizon projection of
-// approvals still expected before its pay date.
+// CashReadiness is the advisory forecast for the next timesheet payout. It
+// combines the target Ky's current observed value and a short-horizon
+// projection of approvals still expected before its pay date.
 //
 // ADVISORY ONLY: this type never feeds SyncBalance/CreateTopup or any
 // disbursement — see CashReadinessForecastService's read-only ports.
 type CashReadiness struct {
 	// ObservedApproved is approved value already recorded inside the target Ky.
-	// It excludes the global outstanding-payment backlog shown by "Chờ thanh toán".
 	ObservedApproved int64
 
 	// ProjectedP50 / ProjectedExpected / ProjectedP95 are the median, arithmetic
@@ -25,8 +24,29 @@ type CashReadiness struct {
 	BandLower int64
 	BandUpper int64
 
-	// ExpectedTotal is the mathematical point estimate for the target Ky.
+	// ExpectedTotal is the mathematical point estimate for the target-Ky payout.
 	ExpectedTotal int64
+
+	// V2 decomposition and decision outputs. RecommendedReserve is the
+	// operational service-level quantile; ExpectedPayout remains the arithmetic
+	// expectation. Both are floored by ObservedApproved.
+	PendingTargetAmount   int64
+	ExpectedPendingAmount int64
+	ExpectedFutureAmount  int64
+	ExpectedPayout        int64
+	RecommendedReserve    int64
+	IntervalLower         int64
+	IntervalUpper         int64
+	ModelVersion          string
+
+	// Calibration is based only on resolved, company-wide snapshots from the
+	// same horizon bucket. Rates are decimal fractions (0.10 = 10%).
+	CalibrationSamples   int
+	ReliabilityState     string
+	AccuracyWAPE         float64
+	AccuracyBias         float64
+	IntervalCoverage     float64
+	ReserveShortfallRate float64
 
 	// WalletAvailable is the live wallet Available balance. WalletAvailableOK is
 	// false when the wallet read failed (the figure is 0 and should be flagged).

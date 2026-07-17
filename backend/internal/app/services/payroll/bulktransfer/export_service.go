@@ -97,7 +97,7 @@ func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransfer
 
 	// Generate ZIP file with bulk transfer data
 	fromDateStr, toDateStr := formatDateRange(plan)
-	response, err := es.excelService.GenerateBulkTransferExcel(ctx, plan.RawAggregated, req, fromDateStr, toDateStr, plan.Cycle)
+	response, err := es.excelService.GenerateBulkTransferExcelWithPaymentPercentage(plan.RawAggregated, req, fromDateStr, toDateStr, plan.Cycle, plan.PaymentPercentage)
 	if err != nil {
 		return nil, err
 	}
@@ -107,14 +107,16 @@ func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	response.Cycle = plan.Cycle
 	response.Filename = filename
 
-	// Audit emit happens inside Persist() (write phase owns the event too).
+	// Only a successfully generated bank file is an export outcome. Publishing
+	// before generation would let a failed download calibrate cash forecasts.
+	txnCount, totalAmount := exportAuditTotals(plan)
+	es.publishExportAudit(ctx, req, filename, plan.Cycle, plan, txnCount, totalAmount)
 	return response, nil
 }
 
-// Persist performs the write phase of an export: generates a filename, creates
-// the transaction_codes batch, and emits the BulkTransferFileExported audit
-// event. Renamed + body-identical to the pre-refactor saveBulkTransferFile +
-// publishExportAudit pair (which the planner no longer owns).
+// Persist performs the write phase of an export: generates a filename and
+// creates the transaction_codes batch. The successful-export event is emitted
+// by Export only after file generation succeeds.
 //
 // Note (red-team Finding 1): this does NOT create a bulk_transfer_files row.
 // That row is written elsewhere (audit_service.go, ninepay_service.go,
@@ -124,9 +126,6 @@ func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransfe
 	filename := generateFilename(plan.Cycle)
 
 	if plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil {
-		// Nothing to persist (no eligible rows). Still emit the audit event
-		// so the export attempt is traceable.
-		es.publishExportAudit(ctx, req, filename, plan.Cycle, plan, 0, 0)
 		return filename, nil
 	}
 
@@ -204,11 +203,19 @@ func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransfe
 		}
 	}
 
-	// Audit emit (was publishExportAudit in pre-refactor code).
-	txnCount := len(data.EmployeeProjectAmounts)
-	es.publishExportAudit(ctx, req, filename, plan.Cycle, plan, txnCount, totalAmount)
-
 	return filename, nil
+}
+
+func exportAuditTotals(plan *ExportPlan) (int, int64) {
+	if plan == nil || plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil {
+		return 0, 0
+	}
+	data := plan.ValidatedData.ValidData
+	var total int64
+	for _, amount := range data.EmployeeProjectAmounts {
+		total += amount
+	}
+	return len(data.EmployeeProjectAmounts), total
 }
 
 // publishExportAudit emits the audit event for a successful bulk-transfer file
@@ -244,6 +251,8 @@ func (es *ExportService) publishExportAudit(
 		forMonth,
 		txnCount,
 		totalAmount,
+		len(req.ProjectIDs) == 0 && len(req.EmployeeIDs) == 0,
+		plan.ForecastOutcomeItems,
 	)
 	if err := es.eventBus.Publish(ctx, event); err != nil {
 		observability.GetLogger().Warn("Failed to publish BulkTransferFileExported audit event",

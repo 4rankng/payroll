@@ -585,13 +585,15 @@ type DataExportedEvent struct {
 // having to join other tables.
 type BulkTransferFileExportedEvent struct {
 	BaseEvent
-	Filename          string
-	Cycle             string // weekly / monthly / flexible
-	FromDate          string // ISO date, empty if monthly
-	ToDate            string // ISO date, empty if monthly
-	ForMonth          string // YYYY-MM, empty if weekly
-	TransactionsCount int
-	TotalAmount       int64
+	Filename             string
+	Cycle                string // weekly / monthly / flexible
+	FromDate             string // ISO date, empty if monthly
+	ToDate               string // ISO date, empty if monthly
+	ForMonth             string // YYYY-MM, empty if weekly
+	TransactionsCount    int
+	TotalAmount          int64
+	CompanyWide          bool // false when project/employee filters scoped the export
+	ForecastOutcomeItems []CashForecastOutcomeItem
 }
 
 // BulkTransferResultImportedEvent is emitted when an admin imports a bulk

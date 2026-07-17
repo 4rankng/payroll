@@ -195,9 +195,14 @@ class BulkTransferService {
       );
     }
 
-    // Create blob with XLSX content type
+    const responseContentType = response.headers['content-type'];
+    const contentType = typeof responseContentType === 'string' && responseContentType.trim()
+      ? responseContentType
+      : 'application/octet-stream';
+
+    // Preserve the server-provided media type so both XLSX and ZIP exports download correctly.
     const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      type: contentType
     });
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');

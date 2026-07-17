@@ -27,7 +27,9 @@ type ExportBulkTransferRequest struct {
 
 // ExportBulkTransferResponse represents the response from bulk transfer export
 type ExportBulkTransferResponse struct {
-	Data             []byte                 `json:"-"` // ZIP file bytes (not serialized to JSON)
+	Data             []byte                 `json:"-"` // Download bytes (XLSX or ZIP, not serialized to JSON)
+	ContentType      string                 `json:"-"`
+	FileExtension    string                 `json:"-"`
 	Files            []BulkTransferFileInfo `json:"files"`
 	SkippedEmployees []SkippedEmployeeInfo  `json:"skipped_employees,omitempty"`
 	TotalEmployees   int                    `json:"total_employees"`

@@ -14,6 +14,8 @@
 
 ### Manual Bulk Transfer
 - Export Excel with approved timesheets
+- Each MBank workbook must total less than 500,000,000 VND after applying the configured payment percentage
+- Exports that fit download as one `.xlsx`; larger exports are split by atomic transfer row and download as one `.zip` containing multiple `.xlsx` workbooks
 - Admin processes with bank externally
 - Upload result file → timesheets marked as paid synchronously
 - Manual upload marks timesheets as paid directly (no IPN polling)
@@ -56,7 +58,7 @@ Manual Transfer: [exported] → uploaded → paid (synchronous)
 
 | # | Scenario | Type | Steps | Expected Result |
 |---|----------|------|-------|-----------------|
-| F12-01 | Export bulk transfer Excel | Happy | GET `/bulk-transfers/export?forMonth=2026-06` | 200, binary Excel file |
+| F12-01 | Export bulk transfer file | Happy | POST `/payrolls/export-bulk-transfer` for a weekly range or month | 200; one `.xlsx` when the total is below 500M VND, otherwise a `.zip` of `.xlsx` files whose individual totals are each below 500M VND |
 | F12-02 | Upload result file | Happy | POST `/bulk-transfers/upload-result` with Excel | 200, timesheets marked paid synchronously |
 | F12-03 | Export for non-existent month | Negative | GET `/bulk-transfers/export?forMonth=2020-01` | 200, empty Excel (no data) |
 | F12-04 | Upload marks timesheets paid | Integration | Upload → check timesheets | payment_status='paid' immediately |

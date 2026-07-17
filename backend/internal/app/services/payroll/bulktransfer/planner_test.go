@@ -290,3 +290,27 @@ func TestPlanner_Plan_EmptyPool_NoError(t *testing.T) {
 	assert.Equal(t, 0, plan.ValidatedData.ValidCount)
 	assert.True(t, plan.SnapshotEpoch.IsZero(), "empty pool → zero snapshot")
 }
+
+func TestBuildForecastOutcomeItems_DeduplicatesOnlyValidatedExactRangeRows(t *testing.T) {
+	key := excel.EmployeeProjectKey{EmployeeID: 7, ProjectID: 12}
+	validation := &excel.BulkTransferValidationResult{ValidData: &excel.BulkTransferData{
+		EmployeeProjectAmounts:    map[excel.EmployeeProjectKey]int64{key: 1_200},
+		EmployeeProjectTimesheets: map[excel.EmployeeProjectKey][]uint{key: {101, 102, 103}},
+	}}
+	selected := []*domain.Timesheet{
+		{ID: 101, EmployeeID: 7, ProjectID: 12, Date: time.Date(2026, time.July, 8, 0, 0, 0, 0, time.UTC), Amount: 100},
+		{ID: 102, EmployeeID: 7, ProjectID: 12, Date: time.Date(2026, time.July, 14, 0, 0, 0, 0, time.UTC), Amount: 200},
+		// Force-included backlog is in the bank file but outside the forecast range.
+		{ID: 103, EmployeeID: 7, ProjectID: 12, Date: time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC), Amount: 900},
+		// This row failed validation and must not become a measured outcome.
+		{ID: 104, EmployeeID: 8, ProjectID: 12, Date: time.Date(2026, time.July, 10, 0, 0, 0, 0, time.UTC), Amount: 500},
+	}
+	items := buildForecastOutcomeItems(&dto.ExportBulkTransferRequest{
+		FromDate: "2026-07-08", ToDate: "2026-07-14",
+	}, false, selected, validation, 0.70)
+
+	require.Equal(t, []domain.CashForecastOutcomeItem{
+		{TimesheetID: 101, Amount: 70},
+		{TimesheetID: 102, Amount: 140},
+	}, items)
+}

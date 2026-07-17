@@ -102,9 +102,16 @@ func (s *OTPService) StartLogin(ctx context.Context, user *domain.User, ip, ua s
 	}
 	codeHash := HashCode(code)
 
-	sessionID, err := s.pendingStore.CreateSession(ctx, user.ID, codeHash, ip, ua)
+	sessionID, created, err := s.pendingStore.CreateSessionIfAbsent(ctx, user.ID, codeHash, ip, ua)
 	if err != nil {
 		return "", err
+	}
+	if !created {
+		// A live challenge already owns the per-user Redis index. Reuse it
+		// without rotating the code or sending another email; /login/resend is
+		// the sole intentional path for replacing a delivered code.
+		s.logger.Info("otp: reused pending login challenge", "user_id", user.ID)
+		return sessionID, nil
 	}
 
 	// Dispatch the email asynchronously so the login response returns immediately.
@@ -121,11 +128,16 @@ func (s *OTPService) StartLogin(ctx context.Context, user *domain.User, ip, ua s
 			s.logger.Error("otp: build email failed", "error", err, "user_id", user.ID)
 			return
 		}
-		if _, err := s.emailSender.Send(bg, msg); err != nil {
+		result, err := s.emailSender.Send(bg, msg)
+		if err != nil {
 			s.logger.Error("otp: send email failed", "error", err, "user_id", user.ID)
 			return
 		}
-		s.logger.Info("otp: code emailed", "user_id", user.ID)
+		messageID := ""
+		if result != nil {
+			messageID = result.MessageID
+		}
+		s.logger.Info("otp: code emailed", "user_id", user.ID, "provider_message_id", messageID)
 	}()
 
 	return sessionID, nil
@@ -254,11 +266,16 @@ func (s *OTPService) ResendCode(ctx context.Context, sessionID, ip, ua string) (
 			s.logger.Error("otp: build resend email failed", "error", err, "user_id", user.ID)
 			return
 		}
-		if _, err := s.emailSender.Send(bg, msg); err != nil {
+		result, err := s.emailSender.Send(bg, msg)
+		if err != nil {
 			s.logger.Error("otp: resend email failed", "error", err, "user_id", user.ID)
 			return
 		}
-		s.logger.Info("otp: code resent", "user_id", user.ID)
+		messageID := ""
+		if result != nil {
+			messageID = result.MessageID
+		}
+		s.logger.Info("otp: code resent", "user_id", user.ID, "provider_message_id", messageID)
 	}()
 
 	return sessionID, nil

@@ -246,6 +246,8 @@ func NewBulkTransferFileExportedEvent(
 	fromDate, toDate, forMonth string,
 	transactionsCount int,
 	totalAmount int64,
+	companyWide bool,
+	forecastOutcomeItems []CashForecastOutcomeItem,
 ) BulkTransferFileExportedEvent {
 	actorName := auditctx.GetFullName(ctx)
 	auditMessage := BuildEventAuditMessage(
@@ -256,14 +258,16 @@ func NewBulkTransferFileExportedEvent(
 		formatVND(totalAmount),
 	)
 	return BulkTransferFileExportedEvent{
-		BaseEvent:         newBaseEventWithActor(ctx, "BulkTransferFileExported", 0, actorUserID, AuditActionExport, EntityTypeBulkTransferFile, auditMessage),
-		Filename:          filename,
-		Cycle:             cycle,
-		FromDate:          fromDate,
-		ToDate:            toDate,
-		ForMonth:          forMonth,
-		TransactionsCount: transactionsCount,
-		TotalAmount:       totalAmount,
+		BaseEvent:            newBaseEventWithActor(ctx, "BulkTransferFileExported", 0, actorUserID, AuditActionExport, EntityTypeBulkTransferFile, auditMessage),
+		Filename:             filename,
+		Cycle:                cycle,
+		FromDate:             fromDate,
+		ToDate:               toDate,
+		ForMonth:             forMonth,
+		TransactionsCount:    transactionsCount,
+		TotalAmount:          totalAmount,
+		CompanyWide:          companyWide,
+		ForecastOutcomeItems: forecastOutcomeItems,
 	}
 }
 

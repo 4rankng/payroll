@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -122,15 +123,26 @@ func (h *PayrollHandler) ExportBulkTransfer(c *gin.Context) {
 		return
 	}
 
-	// Use the filename that was already generated and saved to database
-	xlsxFilename := fmt.Sprintf("%s.xlsx", exportResponse.Filename)
+	contentType := exportResponse.ContentType
+	if contentType == "" {
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	}
+	fileExtension := exportResponse.FileExtension
+	if fileExtension == "" {
+		fileExtension = ".xlsx"
+	}
 
-	// Set headers for XLSX file download
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", xlsxFilename))
+	// Use the filename that was already generated and saved to database.
+	downloadFilename := fmt.Sprintf("%s%s", exportResponse.Filename, fileExtension)
+	contentDisposition := mime.FormatMediaType("attachment", map[string]string{"filename": downloadFilename})
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", contentDisposition)
 	c.Header("Content-Length", strconv.Itoa(len(exportResponse.Data)))
+	c.Header("Cache-Control", "no-store")
+	c.Header("X-Content-Type-Options", "nosniff")
 
-	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", exportResponse.Data)
+	c.Data(http.StatusOK, contentType, exportResponse.Data)
 }
 
 // InitiateAutoBulkTransfer initiates an auto bulk transfer for approved timesheets

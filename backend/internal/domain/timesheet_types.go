@@ -88,22 +88,26 @@ type TimesheetRepository interface {
 	// Salary period change validation
 	CountUnsettledPaidTimesheets(ctx context.Context, projectID uint) (int64, error)
 
-	// Cash-readiness forecast: daily approved-pay accrual rows that the
-	// CashReadinessForecastService pivots into per-Ky cohort curves. Scoped
-	// identically to GetSummaryStats so the cohort and the "Chờ thanh toán"
-	// figure never diverge.
+	// Cash-readiness forecast: point-in-time facts used to reconstruct approved,
+	// pending, and not-yet-created target-Ky exposure. Scoped identically to
+	// GetSummaryStats; payment status is deliberately not part of this query.
 	GetAccrualCohort(ctx context.Context, filters TimesheetFilters) ([]TimesheetAccrualDailyRow, error)
 }
 
-// TimesheetAccrualDailyRow is one day's approved-pay accrual for a single work
-// date, aggregated across employees: the total approved amount whose work date
-// is WorkDate and whose approval landed on ApprovedDate. Cycle-day derivation
-// and cumulative pivoting happen in Go (pkg/clock + the forecast service) so
-// the cycle model stays a single testable source of truth.
+// TimesheetAccrualDailyRow is a row-level, read-only forecast fact. CreatedAt
+// and ApprovedAt allow leakage-free point-in-time reconstruction; employee and
+// project identifiers support headcount normalization and subgroup fallback.
+// ApprovedDate is retained for source compatibility with the v1 forecast tests
+// and is populated alongside ApprovedAt by persistence.
 type TimesheetAccrualDailyRow struct {
-	WorkDate     time.Time `gorm:"column:work_date" json:"work_date"`
-	ApprovedDate time.Time `gorm:"column:approved_date" json:"approved_date"`
-	Amount       int64     `gorm:"column:amount" json:"amount"`
+	WorkDate     time.Time       `gorm:"column:work_date" json:"work_date"`
+	CreatedAt    time.Time       `gorm:"column:created_at" json:"created_at"`
+	ApprovedAt   *time.Time      `gorm:"column:approved_at" json:"approved_at"`
+	ApprovedDate time.Time       `gorm:"column:approved_date" json:"approved_date"`
+	Status       TimesheetStatus `gorm:"column:timesheet_status" json:"timesheet_status"`
+	EmployeeID   uint            `gorm:"column:employee_id" json:"employee_id"`
+	ProjectID    uint            `gorm:"column:project_id" json:"project_id"`
+	Amount       int64           `gorm:"column:amount" json:"amount"`
 }
 
 // Narrow interfaces for interface segregation — each consumer depends only on what it needs.

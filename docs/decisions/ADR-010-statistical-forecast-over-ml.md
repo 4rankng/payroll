@@ -36,11 +36,27 @@ KPI remains an operational backlog metric and is never a forecast input.
 
 ### Validation
 
-The existing test demonstrates rolling-origin methodology with synthetic
-fixtures; it is not a production accuracy measurement. Real confidence must be
-based on persisted forecast snapshots compared with actual target-Kỳ payouts.
+Synthetic tests validate the calculation and time boundaries, but do not claim
+production accuracy. Company-wide point-in-time forecasts are now persisted and
+resolved against the distinct timesheets in successfully generated weekly bank
+files. Split files accumulate; retries are deduplicated by target range and
+timesheet ID. Forecasts and outcomes both use the configured weekly payable
+percentage, so accuracy is measured in actual cash-transfer units rather than
+gross timesheet value.
 
-### Escalation Path (Documented, Not Built)
+Accuracy is compared only at the same days-to-pay horizon. The UI remains
+`uncalibrated` with fewer than 12 resolved observations, reports `learning` from
+12 to 23, and can report measured reliability from 24 observations using WAPE,
+bias, interval coverage, and reserve-shortfall rate. Resolved predictions are
+immutable so later dashboard reads cannot rewrite forecast history.
+
+When analogous in-progress historical cycles are unavailable (for example,
+legacy data was entered after the original cycle day), the estimator may use
+completed comparable cycles and labels the method `completed-cycle-bootstrap`.
+This prevents a misleading all-zero projection while preserving an explicit
+low-confidence state.
+
+### Escalation Path
 
 Keep the `ForecastProvider` interface. If the instrumented p50-vs-actual error stays >~12% over ≥4 cycles AND Tết/seasonality is shown to swing payout, add a Prophet/LightGBM provider behind the same interface. No handler or UI changes would be needed.
 
@@ -58,7 +74,8 @@ The forecast is advisory-only and never feeds `SyncBalance`. A `WalletBalanceRea
 
 **Negative:**
 - May underperform ML if Tết/seasonality causes large payout swings in the future.
-- The escalation path requires instrumented accuracy tracking (deferred — needs a forecast-snapshot storage decision).
+- Reliability needs enough real weekly outcomes; new deployments deliberately
+  remain uncalibrated until the sample gate is reached.
 
 ## Alternatives Considered
 

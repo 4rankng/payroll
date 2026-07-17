@@ -26,6 +26,8 @@ func TestAuditHandler_BulkTransferFileExported_PersistsRow(t *testing.T) {
 		"weekly",
 		"2026-04-28", "2026-05-04", "",
 		17, 1_234_500,
+		true,
+		nil,
 	)
 
 	if err := handler.Handle(ctx, event); err != nil {

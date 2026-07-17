@@ -22,6 +22,39 @@ const DefaultSessionTTL = 5 * time.Minute
 // has been superseded by a newer login for the same user.
 var ErrOTPSessionNotFound = errors.New("otp session not found or expired")
 
+var createSessionIfAbsentScript = redis.NewScript(`
+local existing_id = redis.call("GET", KEYS[1])
+if existing_id then
+	local existing_key = ARGV[1] .. existing_id
+	local remaining_ttl = redis.call("PTTL", existing_key)
+	if remaining_ttl > 0 then
+		redis.call("PEXPIRE", KEYS[1], remaining_ttl)
+		return {existing_id, 0}
+	end
+	redis.call("DEL", KEYS[1])
+end
+
+redis.call("SET", KEYS[2], ARGV[2], "PX", ARGV[3])
+redis.call("SET", KEYS[1], ARGV[4], "PX", ARGV[3])
+return {ARGV[4], 1}
+`)
+
+var saveSessionScript = redis.NewScript(`
+local remaining_ttl = redis.call("PTTL", KEYS[1])
+if remaining_ttl <= 0 then
+	return 0
+end
+
+local current_id = redis.call("GET", KEYS[2])
+if not current_id or current_id ~= ARGV[1] then
+	return 0
+end
+
+redis.call("SET", KEYS[1], ARGV[2], "PX", remaining_ttl)
+redis.call("SET", KEYS[2], ARGV[1], "PX", remaining_ttl)
+return remaining_ttl
+`)
+
 // OTPPendingSession is the per-login state stored under an opaque session id.
 // It binds the second step (/auth/login/verify) to the first (/auth/login) and
 // carries the information needed to validate the submitted code without ever
@@ -53,6 +86,56 @@ func NewOTPPendingStore(client *redis.Client, ttl time.Duration) *OTPPendingStor
 		ttl = DefaultSessionTTL
 	}
 	return &OTPPendingStore{client: client, ttl: ttl}
+}
+
+// CreateSessionIfAbsent atomically creates a pending session unless the user
+// already has a live one. Concurrent callers for the same user all receive the
+// same session id, and only the caller that stored it receives created=true.
+// A user index whose primary session has expired is replaced in the same Redis
+// operation, so stale indexes do not block a new login attempt.
+func (s *OTPPendingStore) CreateSessionIfAbsent(ctx context.Context, userID uint, codeHash []byte, ip, ua string) (sessionID string, created bool, err error) {
+	sessionID, err = newOpaqueID()
+	if err != nil {
+		return "", false, fmt.Errorf("generate otp session id: %w", err)
+	}
+
+	session := OTPPendingSession{
+		UserID:    userID,
+		CodeHash:  codeHash,
+		IP:        ip,
+		UserAgent: ua,
+		CreatedAt: time.Now().UTC(),
+	}
+	payload, err := json.Marshal(session)
+	if err != nil {
+		return "", false, fmt.Errorf("marshal otp session: %w", err)
+	}
+
+	result, err := createSessionIfAbsentScript.Run(
+		ctx,
+		s.client,
+		[]string{userSessionKey(userID), sessionKey(sessionID)},
+		"otp:pending:",
+		payload,
+		s.ttl.Milliseconds(),
+		sessionID,
+	).Slice()
+	if err != nil {
+		return "", false, fmt.Errorf("create otp session: %w", err)
+	}
+	if len(result) != 2 {
+		return "", false, fmt.Errorf("create otp session: unexpected redis result")
+	}
+
+	storedID, ok := result[0].(string)
+	if !ok || storedID == "" {
+		return "", false, fmt.Errorf("create otp session: invalid session id result")
+	}
+	createdValue, ok := result[1].(int64)
+	if !ok {
+		return "", false, fmt.Errorf("create otp session: invalid created result")
+	}
+	return storedID, createdValue == 1, nil
 }
 
 // CreateSession writes a new pending session for the user and returns the opaque
@@ -111,6 +194,16 @@ func (s *OTPPendingStore) GetSession(ctx context.Context, sessionID string) (*OT
 	if err := json.Unmarshal(payload, &session); err != nil {
 		return nil, fmt.Errorf("unmarshal otp session: %w", err)
 	}
+	currentID, err := s.client.Get(ctx, userSessionKey(session.UserID)).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrOTPSessionNotFound
+		}
+		return nil, fmt.Errorf("read otp user index: %w", err)
+	}
+	if currentID != sessionID {
+		return nil, ErrOTPSessionNotFound
+	}
 	return &session, nil
 }
 
@@ -123,8 +216,18 @@ func (s *OTPPendingStore) SaveSession(ctx context.Context, sessionID string, ses
 	if err != nil {
 		return fmt.Errorf("marshal otp session: %w", err)
 	}
-	if err := s.client.Set(ctx, sessionKey(sessionID), payload, s.ttl).Err(); err != nil {
+	remainingTTL, err := saveSessionScript.Run(
+		ctx,
+		s.client,
+		[]string{sessionKey(sessionID), userSessionKey(session.UserID)},
+		sessionID,
+		payload,
+	).Int64()
+	if err != nil {
 		return fmt.Errorf("write otp session: %w", err)
+	}
+	if remainingTTL <= 0 {
+		return ErrOTPSessionNotFound
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package bulktransfer
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -30,6 +31,13 @@ type ExportPlan struct {
 	RawAggregated *excel.BulkTransferData // pre-validation (carries EmployeeProjectTimesheets)
 	ValidatedData *excel.BulkTransferValidationResult
 	SnapshotEpoch time.Time
+	// PaymentPercentage is captured once during planning and reused for both
+	// workbook generation and forecast outcome allocation.
+	PaymentPercentage float64
+	// ForecastOutcomeItems contains only successfully validated weekly
+	// timesheets inside the declared range. Force-included backlog outside the
+	// range remains in the bank file but never contaminates forecast accuracy.
+	ForecastOutcomeItems []domain.CashForecastOutcomeItem
 }
 
 // ExportPlanner performs the read-only selection + aggregation + validation
@@ -118,7 +126,7 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 		}
 	}
 
-	rawAggregated, validated, err := p.selectAndAggregate(ctx, req, isMonthly, monthStart, cycle, periodCache)
+	rawAggregated, validated, outcomeItems, paymentPercentage, err := p.selectAndAggregate(ctx, req, isMonthly, monthStart, cycle, periodCache)
 	if err != nil {
 		return nil, err
 	}
@@ -132,14 +140,16 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 	}
 
 	return &ExportPlan{
-		Cycle:         cycle,
-		FromDate:      fromDate,
-		ToDate:        toDate,
-		MonthStart:    monthStart,
-		IsMonthly:     isMonthly,
-		RawAggregated: rawAggregated,
-		ValidatedData: validated,
-		SnapshotEpoch: snapshot,
+		Cycle:                cycle,
+		FromDate:             fromDate,
+		ToDate:               toDate,
+		MonthStart:           monthStart,
+		IsMonthly:            isMonthly,
+		RawAggregated:        rawAggregated,
+		ValidatedData:        validated,
+		SnapshotEpoch:        snapshot,
+		PaymentPercentage:    paymentPercentage,
+		ForecastOutcomeItems: outcomeItems,
 	}, nil
 }
 
@@ -159,7 +169,7 @@ func (p *ExportPlanner) planNoDateFilter(ctx context.Context, req *dto.ExportBul
 	fullReq.FromDate = ""
 	fullReq.ToDate = ""
 
-	rawAggregated, validated, err := p.selectAndAggregate(ctx, &fullReq, false, time.Time{}, cycle, periodCache)
+	rawAggregated, validated, _, paymentPercentage, err := p.selectAndAggregate(ctx, &fullReq, false, time.Time{}, cycle, periodCache)
 	if err != nil {
 		return nil, err
 	}
@@ -170,11 +180,12 @@ func (p *ExportPlanner) planNoDateFilter(ctx context.Context, req *dto.ExportBul
 	}
 
 	return &ExportPlan{
-		Cycle:         cycle,
-		IsMonthly:     false,
-		RawAggregated: rawAggregated,
-		ValidatedData: validated,
-		SnapshotEpoch: snapshot,
+		Cycle:             cycle,
+		IsMonthly:         false,
+		RawAggregated:     rawAggregated,
+		ValidatedData:     validated,
+		SnapshotEpoch:     snapshot,
+		PaymentPercentage: paymentPercentage,
 	}, nil
 }
 
@@ -188,7 +199,7 @@ func (p *ExportPlanner) selectAndAggregate(
 	monthStart time.Time,
 	cycle string,
 	periodCache map[uint]projectPeriod,
-) (*excel.BulkTransferData, *excel.BulkTransferValidationResult, error) {
+) (*excel.BulkTransferData, *excel.BulkTransferValidationResult, []domain.CashForecastOutcomeItem, float64, error) {
 	// Base filters: eligible timesheets per existing rule
 	filters := domain.TimesheetFilters{
 		TimesheetStatus: []domain.TimesheetStatus{domain.TimesheetStatusApproved},
@@ -215,7 +226,7 @@ func (p *ExportPlanner) selectAndAggregate(
 	// Get all timesheets matching the date and status criteria
 	allTimesheets, err := p.listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get timesheets: %w", err)
+		return nil, nil, nil, 0, fmt.Errorf("failed to get timesheets: %w", err)
 	}
 
 	// Filter by employee IDs if provided in request
@@ -237,7 +248,7 @@ func (p *ExportPlanner) selectAndAggregate(
 
 	forcedAll, err := p.listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get forced timesheets: %w", err)
+		return nil, nil, nil, 0, fmt.Errorf("failed to get forced timesheets: %w", err)
 	}
 	forced := p.filterTimesheetsByRequest(forcedAll, req)
 
@@ -260,13 +271,80 @@ func (p *ExportPlanner) selectAndAggregate(
 	// Aggregate data by employee-project combination with payment schedule filter
 	aggregatedData, err := p.aggregateTimesheetData(ctx, filteredTimesheets, cycle)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to aggregate timesheet data: %w", err)
+		return nil, nil, nil, 0, fmt.Errorf("failed to aggregate timesheet data: %w", err)
 	}
 
 	// Validate and filter the data before saving
 	validationResult := p.excelService.ValidateAndFilterBulkTransferData(aggregatedData)
 
-	return aggregatedData, validationResult, nil
+	paymentPercentage := p.excelService.GetPaymentPercentageForSchedule(ctx, cycle)
+	return aggregatedData, validationResult, buildForecastOutcomeItems(req, isMonthly, filteredTimesheets, validationResult, paymentPercentage), paymentPercentage, nil
+}
+
+func buildForecastOutcomeItems(
+	req *dto.ExportBulkTransferRequest,
+	isMonthly bool,
+	selected []*domain.Timesheet,
+	validation *excel.BulkTransferValidationResult,
+	paymentPercentage float64,
+) []domain.CashForecastOutcomeItem {
+	if req == nil || isMonthly || req.NoDateFilter || req.FromDate == "" || req.ToDate == "" ||
+		validation == nil || validation.ValidData == nil {
+		return nil
+	}
+	fromDate, fromErr := time.Parse(timeutil.DateFormat, req.FromDate)
+	toDate, toErr := time.Parse(timeutil.DateFormat, req.ToDate)
+	if fromErr != nil || toErr != nil {
+		return nil
+	}
+	if paymentPercentage <= 0 || paymentPercentage > 1 {
+		return nil
+	}
+	selectedByID := make(map[uint]*domain.Timesheet, len(selected))
+	for _, timesheet := range selected {
+		if timesheet != nil {
+			selectedByID[timesheet.ID] = timesheet
+		}
+	}
+	allocated := make(map[uint]int64)
+	for key, ids := range validation.ValidData.EmployeeProjectTimesheets {
+		rawTotal := validation.ValidData.EmployeeProjectAmounts[key]
+		if rawTotal <= 0 || len(ids) == 0 {
+			continue
+		}
+		paymentTotal := int64(float64(rawTotal) * paymentPercentage)
+		orderedIDs := append([]uint(nil), ids...)
+		sort.Slice(orderedIDs, func(i, j int) bool { return orderedIDs[i] < orderedIDs[j] })
+		var allocatedTotal int64
+		lastID := uint(0)
+		for _, id := range orderedIDs {
+			timesheet := selectedByID[id]
+			if timesheet == nil || timesheet.Amount <= 0 {
+				continue
+			}
+			amount := int64(float64(timesheet.Amount) * paymentPercentage)
+			allocated[id] = amount
+			allocatedTotal += amount
+			lastID = id
+		}
+		if lastID != 0 {
+			allocated[lastID] += paymentTotal - allocatedTotal
+		}
+	}
+	items := make([]domain.CashForecastOutcomeItem, 0, len(allocated))
+	for id, amount := range allocated {
+		timesheet := selectedByID[id]
+		if timesheet == nil || amount <= 0 {
+			continue
+		}
+		workDate := time.Date(timesheet.Date.Year(), timesheet.Date.Month(), timesheet.Date.Day(), 0, 0, 0, 0, time.UTC)
+		if workDate.Before(fromDate) || workDate.After(toDate) {
+			continue
+		}
+		items = append(items, domain.CashForecastOutcomeItem{TimesheetID: id, Amount: amount})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].TimesheetID < items[j].TimesheetID })
+	return items
 }
 
 // filterTimesheetsByRequest filters timesheets by employee IDs if specified in request.

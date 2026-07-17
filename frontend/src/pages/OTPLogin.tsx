@@ -28,9 +28,12 @@ const OTPLogin = () => {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+  // The initial OTP was just sent by /auth/login. Start the same cooldown used
+  // after an explicit resend so the page cannot immediately emit a duplicate.
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const resendInFlightRef = useRef(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -95,7 +98,8 @@ const OTPLogin = () => {
   }, [sessionId, code, login, navigate]);
 
   const handleResend = useCallback(async () => {
-    if (!sessionId || cooldown > 0) return;
+    if (!sessionId || cooldown > 0 || resendInFlightRef.current) return;
+    resendInFlightRef.current = true;
     setResending(true);
     setError(null);
     try {
@@ -104,6 +108,7 @@ const OTPLogin = () => {
     } catch (err) {
       showErrorNotification(err as Error);
     } finally {
+      resendInFlightRef.current = false;
       setResending(false);
     }
   }, [sessionId, cooldown]);

@@ -26,6 +26,8 @@ func TestBulkTransferFileExportedEvent_FieldsAndAudit(t *testing.T) {
 		"2026-04-28", "2026-05-04", "",
 		17,
 		1_234_500,
+		true,
+		nil,
 	)
 
 	if event.UserID() != actorID {
@@ -96,7 +98,7 @@ func TestBulkTransferResultImportedEvent_FieldsAndAudit(t *testing.T) {
 func TestBulkTransferAuditEvents_ActorFallsBackToParam(t *testing.T) {
 	const actorID uint = 555
 
-	exp := NewBulkTransferFileExportedEvent(context.Background(), actorID, "f", "weekly", "", "", "", 0, 0)
+	exp := NewBulkTransferFileExportedEvent(context.Background(), actorID, "f", "weekly", "", "", "", 0, 0, true, nil)
 	if exp.UserID() != actorID {
 		t.Fatalf("export actor lost: got %d, want %d", exp.UserID(), actorID)
 	}

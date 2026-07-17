@@ -29,6 +29,7 @@ const Login = () => {
   const [captchaId, setCaptchaId] = useState<string | null>(null);
   const [captchaCode, setCaptchaCode] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
@@ -36,6 +37,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const needsCaptcha = failedAttempts >= 3;
+  const loginSubmitInFlightRef = useRef(false);
 
   // Fetch a fresh CAPTCHA challenge. The endpoint is public (no auth token
   // required — see backend setupAuthRoutes), so it works pre-login. Goes
@@ -157,23 +159,37 @@ const Login = () => {
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }, []);
 
-  const isDisabled = loginMutation.isPending || googleLoginMutation.isPending;
+  const isDisabled = loginSubmitting || loginMutation.isPending || googleLoginMutation.isPending;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      const serverRequiresCaptcha = await syncCaptchaRequirement();
-      if (serverRequiresCaptcha && (!captchaId || !captchaCode)) {
-        if (!captchaId) await refreshCaptcha();
-        return;
+      // The CAPTCHA preflight awaits a network request before React Query marks
+      // the login mutation pending. Guard that entire window synchronously so a
+      // double click/Enter cannot create two OTP challenges and two emails.
+      if (loginSubmitInFlightRef.current) return;
+      loginSubmitInFlightRef.current = true;
+      setLoginSubmitting(true);
+      try {
+        const serverRequiresCaptcha = await syncCaptchaRequirement();
+        if (serverRequiresCaptcha && (!captchaId || !captchaCode)) {
+          if (!captchaId) await refreshCaptcha();
+          return;
+        }
+        await loginMutation.mutateAsync({
+          username: emailOrUsername,
+          password,
+          ...((needsCaptcha || serverRequiresCaptcha) && captchaId
+            ? { captcha_id: captchaId, captcha_code: captchaCode }
+            : {}),
+        });
+      } catch {
+        // The mutation owns error presentation; this only prevents an unhandled
+        // rejection from mutateAsync while keeping the single-flight guard.
+      } finally {
+        loginSubmitInFlightRef.current = false;
+        setLoginSubmitting(false);
       }
-      loginMutation.mutate({
-        username: emailOrUsername,
-        password,
-        ...((needsCaptcha || serverRequiresCaptcha) && captchaId
-          ? { captcha_id: captchaId, captcha_code: captchaCode }
-          : {}),
-      });
     },
     [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode, refreshCaptcha, syncCaptchaRequirement]
   );

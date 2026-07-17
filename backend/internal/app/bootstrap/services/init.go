@@ -217,6 +217,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	cacheInvalidationHandler := events.NewCacheInvalidationHandler(cacheService)
 	eventBus.SubscribeAll(cacheInvalidationHandler)
 
+	// Resolve company-wide cash-forecast snapshots from weekly bulk-transfer
+	// exports. The handler is advisory measurement only and cannot mutate wallet
+	// or disbursement state.
+	cashForecastAccuracyHandler := events.NewCashForecastAccuracyHandler(repos.CashForecastSnapshot)
+	eventBus.SubscribeAll(cashForecastAccuracyHandler)
+
 	// Register employee user creation handler to decouple user creation from HTTP request path
 	employeeUserCreatedHandler := events.NewEmployeeUserCreatedHandler(repos.Employee, employeeUserService)
 	eventBus.SubscribeAll(employeeUserCreatedHandler)
@@ -512,7 +518,15 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
 	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk, cfg.WalletForecast)
-	cashReadinessService := services.NewCashReadinessForecastService(repos.Timesheet, walletService, nil, clk, cfg.CashForecast)
+	cashReadinessService := services.NewCashReadinessForecastService(
+		repos.Timesheet,
+		walletService,
+		nil,
+		clk,
+		cfg.CashForecast,
+		settingsConfigService,
+		repos.CashForecastSnapshot,
+	)
 
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)

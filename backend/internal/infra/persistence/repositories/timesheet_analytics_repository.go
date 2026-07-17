@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 	"context"
 	"database/sql"
 	"strings"
@@ -108,30 +109,42 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 	return &stats, nil
 }
 
-// GetAccrualCohort returns daily approved-pay accrual rows for the cash-readiness
-// forecast. Each row is the total approved `amount` for a (work date, approval
-// day) pair within the filters' date window.
+// GetAccrualCohort returns row-level point-in-time facts for the cash-readiness
+// forecast. The service reconstructs each historical cycle as it was at an
+// analogous forecast timestamp using created_at and approved_at.
 //
 // Scoping (partner access, project, employee) is applied via BuildSummaryQuery.
 // The resulting cohort is independent from the "Chờ thanh toán" summary: that
 // outstanding-payment backlog is not an input to the target-Ky forecast.
 //
-// Only approved timesheets with a non-null approved_at are counted. Payment
-// status is intentionally NOT filtered here: every historical cycle's rows are
-// eventually paid, so excluding paid would zero out the historical forecasting
-// basis. The caller is responsible for setting filters.TimesheetStatus and the
-// lookback date window.
+// Payment status is intentionally NOT filtered: a paid row is still valid
+// historical demand. Rejected and pending rows are included because they are
+// required to estimate pending-to-approved conversion without importing the
+// global outstanding-payment backlog.
 func (r *TimesheetAnalyticsRepository) GetAccrualCohort(ctx context.Context, filters domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
 	var rows []domain.TimesheetAccrualDailyRow
+	activeOn := timeutil.StartOfDay(clock.NowUTC())
 	err := r.queryBuilder.BuildSummaryQuery(filters).
-		Where("timesheets.approved_at IS NOT NULL").
+		Where(`(
+			SELECT forecast_pe.payment_schedule
+			FROM project_employees forecast_pe
+			WHERE forecast_pe.project_id = timesheets.project_id
+			  AND forecast_pe.employee_id = timesheets.employee_id
+			  AND forecast_pe.deleted_at IS NULL
+			  AND (forecast_pe.last_date IS NULL OR forecast_pe.last_date >= ?)
+			ORDER BY forecast_pe.created_at DESC, forecast_pe.id DESC
+			LIMIT 1
+		) = ?`, activeOn, domain.PaymentScheduleWeekly).
 		Select(`
 			DATE(timesheets.date) AS work_date,
-			DATE(timesheets.approved_at) AS approved_date,
-			COALESCE(SUM(timesheets.amount), 0) AS amount
+			timesheets.created_at AS created_at,
+			timesheets.approved_at AS approved_at,
+			timesheets.timesheet_status AS timesheet_status,
+			timesheets.employee_id AS employee_id,
+			timesheets.project_id AS project_id,
+			timesheets.amount AS amount
 		`).
-		Group("DATE(timesheets.date), DATE(timesheets.approved_at)").
-		Order("work_date ASC").
+		Order("timesheets.date ASC, timesheets.created_at ASC, timesheets.id ASC").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err

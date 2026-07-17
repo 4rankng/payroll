@@ -15,15 +15,8 @@ import (
 // --- fakes -----------------------------------------------------------------
 
 type fakeTimesheetReader struct {
-	summary      *domain.TimesheetSummaryStats
-	summaryCalls int
-	cohort       []domain.TimesheetAccrualDailyRow
-	cohortCalls  int
-}
-
-func (f *fakeTimesheetReader) GetSummaryStats(_ context.Context, _ domain.TimesheetFilters) (*domain.TimesheetSummaryStats, error) {
-	f.summaryCalls++
-	return f.summary, nil
+	cohort      []domain.TimesheetAccrualDailyRow
+	cohortCalls int
 }
 
 func (f *fakeTimesheetReader) GetAccrualCohort(_ context.Context, _ domain.TimesheetFilters) ([]domain.TimesheetAccrualDailyRow, error) {
@@ -48,34 +41,12 @@ func (f *fakeWallet) GetBalance(_ context.Context) (*wallet.WalletBalance, error
 func newSvc(t *testing.T, ts *fakeTimesheetReader, w WalletBalanceReader, now time.Time) *CashReadinessForecastService {
 	t.Helper()
 	return NewCashReadinessForecastService(
-		ts, w, NewTimesheetAccrualProvider(), clock.NewFake(now), config.CashForecastConfig{},
+		ts, w, NewTimesheetAccrualProvider(), clock.NewFake(now), config.CashForecastConfig{}, nil,
 	)
 }
 
 // july3 = 2026-07-03: Ky 1, cycle-day 3, pay day Jul 10.
 var july3 = time.Date(2026, time.July, 3, 9, 0, 0, 0, clock.DefaultLocation)
-
-func TestGetCashReadiness_ExcludesOutstandingPendingPayment(t *testing.T) {
-	ts := &fakeTimesheetReader{
-		summary: &domain.TimesheetSummaryStats{PendingPaymentAmount: 555_980_675},
-		cohort:  twoCyclesCohort(),
-	}
-	svc := newSvc(t, ts, &fakeWallet{balance: &wallet.WalletBalance{Available: 100_000_000}}, july3)
-
-	got, err := svc.GetCashReadiness(context.Background(), domain.TimesheetFilters{})
-	if err != nil {
-		t.Fatalf("GetCashReadiness: %v", err)
-	}
-	if ts.summaryCalls != 0 {
-		t.Fatalf("GetSummaryStats called %d times; outstanding pending payment must not be a forecast input", ts.summaryCalls)
-	}
-	if got.ObservedApproved != 100 {
-		t.Errorf("ObservedApproved = %d, want 100 from the current target Ky only", got.ObservedApproved)
-	}
-	if got.ExpectedTotal >= ts.summary.PendingPaymentAmount {
-		t.Errorf("ExpectedTotal = %d, unexpectedly includes pending-payment backlog %d", got.ExpectedTotal, ts.summary.PendingPaymentAmount)
-	}
-}
 
 func TestGetCashReadiness_GapMath(t *testing.T) {
 	// No historical cohort → projection collapses to 0; the target-Ky observed

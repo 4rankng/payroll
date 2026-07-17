@@ -1,9 +1,13 @@
 package excel
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"os"
+	"sort"
 	"strings"
 
 	"api-server/internal/app/dto"
@@ -13,6 +17,12 @@ import (
 	"api-server/internal/pkg/constants"
 
 	"github.com/xuri/excelize/v2"
+)
+
+const (
+	bulkTransferWorkbookLimit = int64(500_000_000)
+	xlsxContentType           = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	zipContentType            = "application/zip"
 )
 
 // Service handles Excel operations for payroll
@@ -80,10 +90,25 @@ type Project struct {
 	Name string
 }
 
+type transferRow struct {
+	key             EmployeeProjectKey
+	accountNumber   string
+	accountName     string
+	bankBranchName  string
+	paymentAmount   int64
+	transactionCode string
+}
+
 func NewService(settingsConfig SettingsConfigService) *Service {
 	return &Service{
 		settingsConfig: settingsConfig,
 	}
+}
+
+// GetPaymentPercentageForSchedule exposes the same cached business setting
+// used by workbook generation so forecast outcomes use identical cash units.
+func (s *Service) GetPaymentPercentageForSchedule(ctx context.Context, cycle string) float64 {
+	return s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
 }
 
 // ValidateAndFilterBulkTransferData validates bank information and filters out invalid entries
@@ -169,13 +194,41 @@ func (s *Service) GetBulkTransferTemplate() ([]byte, error) {
 
 // GenerateBulkTransferExcel creates XLSX file with bulk transfer data using MBank template
 func (s *Service) GenerateBulkTransferExcel(ctx context.Context, data *BulkTransferData, req *dto.ExportBulkTransferRequest, fromDate, toDate, cycle string) (*dto.ExportBulkTransferResponse, error) {
+	paymentPercentage := s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
+	return s.GenerateBulkTransferExcelWithPaymentPercentage(data, req, fromDate, toDate, cycle, paymentPercentage)
+}
+
+// GenerateBulkTransferExcelWithPaymentPercentage generates the workbook from a
+// percentage captured by the export plan. This keeps the file and its forecast
+// outcome on one immutable cash basis even if settings change mid-export.
+func (s *Service) GenerateBulkTransferExcelWithPaymentPercentage(data *BulkTransferData, req *dto.ExportBulkTransferRequest, fromDate, toDate, cycle string, paymentPercentage float64) (*dto.ExportBulkTransferResponse, error) {
 	// First validate and filter the data
 	validationResult := s.ValidateAndFilterBulkTransferData(data)
 
-	// Generate MBank Excel file (even if empty, to show template with headers only)
-	excelBytes, err := s.generateMBankTransferExcel(ctx, validationResult.ValidData, fromDate, toDate, cycle)
+	rows, err := s.buildTransferRowsWithPaymentPercentage(validationResult.ValidData, paymentPercentage)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate MBank Excel: %w", err)
+		return nil, err
+	}
+	partitions, err := partitionTransferRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	var downloadData []byte
+	contentType := xlsxContentType
+	fileExtension := ".xlsx"
+	if len(partitions) == 1 {
+		downloadData, err = s.generateMBankTransferExcel(partitions[0])
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate MBank Excel: %w", err)
+		}
+	} else {
+		downloadData, err = s.archiveBulkTransferWorkbooks(partitions, cycle)
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive MBank Excel files: %w", err)
+		}
+		contentType = zipContentType
+		fileExtension = ".zip"
 	}
 
 	// Convert skipped employees to DTO format
@@ -191,7 +244,9 @@ func (s *Service) GenerateBulkTransferExcel(ctx context.Context, data *BulkTrans
 	}
 
 	return &dto.ExportBulkTransferResponse{
-		Data:             excelBytes,
+		Data:             downloadData,
+		ContentType:      contentType,
+		FileExtension:    fileExtension,
 		Files:            nil, // No longer using multiple files
 		SkippedEmployees: skippedEmployeeDTOs,
 		TotalEmployees:   validationResult.TotalCount,
@@ -204,7 +259,7 @@ func (s *Service) GenerateBulkTransferExcel(ctx context.Context, data *BulkTrans
 }
 
 // generateMBankTransferExcel creates MBank format Excel file
-func (s *Service) generateMBankTransferExcel(ctx context.Context, data *BulkTransferData, fromDate, toDate, cycle string) ([]byte, error) {
+func (s *Service) generateMBankTransferExcel(rows []transferRow) ([]byte, error) {
 	// Load MBank template
 	f, err := excelize.OpenFile(constants.MBankTemplatePath)
 	if err != nil {
@@ -222,7 +277,7 @@ func (s *Service) generateMBankTransferExcel(ctx context.Context, data *BulkTran
 	}
 
 	// Fill in data starting from row 3 (rows 1-2 have headers)
-	if err := s.fillMBankTransferData(ctx, f, data, fromDate, toDate, cycle); err != nil {
+	if err := s.fillMBankTransferData(f, rows); err != nil {
 		return nil, fmt.Errorf("failed to fill transfer data: %w", err)
 	}
 
@@ -233,6 +288,131 @@ func (s *Service) generateMBankTransferExcel(ctx context.Context, data *BulkTran
 	}
 
 	return buffer.Bytes(), nil
+}
+
+func (s *Service) buildTransferRows(ctx context.Context, data *BulkTransferData, cycle string) ([]transferRow, error) {
+	paymentPercentage := s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
+	return s.buildTransferRowsWithPaymentPercentage(data, paymentPercentage)
+}
+
+func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData, paymentPercentage float64) ([]transferRow, error) {
+	if math.IsNaN(paymentPercentage) || math.IsInf(paymentPercentage, 0) || paymentPercentage <= 0 || paymentPercentage > 1 {
+		return nil, fmt.Errorf("payment percentage must be finite and between zero and one")
+	}
+
+	rows := make([]transferRow, 0, len(data.EmployeeProjectAmounts))
+	keys := make([]EmployeeProjectKey, 0, len(data.EmployeeProjectAmounts))
+	for key := range data.EmployeeProjectAmounts {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].EmployeeID != keys[j].EmployeeID {
+			return keys[i].EmployeeID < keys[j].EmployeeID
+		}
+		return keys[i].ProjectID < keys[j].ProjectID
+	})
+
+	for _, key := range keys {
+		totalAmount := data.EmployeeProjectAmounts[key]
+		if totalAmount <= 0 {
+			return nil, fmt.Errorf("source amount for employee %d and project %d must be greater than zero", key.EmployeeID, key.ProjectID)
+		}
+
+		calculatedAmount := float64(totalAmount) * paymentPercentage
+		if math.IsNaN(calculatedAmount) || math.IsInf(calculatedAmount, 0) {
+			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d must be finite", key.EmployeeID, key.ProjectID)
+		}
+		if calculatedAmount < 1 {
+			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d must be at least 1 VND", key.EmployeeID, key.ProjectID)
+		}
+		if calculatedAmount >= float64(math.MaxInt64) {
+			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d exceeds int64 range", key.EmployeeID, key.ProjectID)
+		}
+		if calculatedAmount >= float64(bulkTransferWorkbookLimit) {
+			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d must be below %d VND", key.EmployeeID, key.ProjectID, bulkTransferWorkbookLimit)
+		}
+
+		employee := data.EmployeeData[key.EmployeeID]
+		bankBranchName := ""
+		if employee.Bank != nil {
+			bankBranchName = employee.Bank.BranchName
+		}
+
+		rows = append(rows, transferRow{
+			key:             key,
+			accountNumber:   employee.BankAccountNumber,
+			accountName:     employee.BankAccountName,
+			bankBranchName:  bankBranchName,
+			paymentAmount:   int64(calculatedAmount),
+			transactionCode: data.TransactionCodes[key],
+		})
+	}
+
+	return rows, nil
+}
+
+func partitionTransferRows(rows []transferRow) ([][]transferRow, error) {
+	if len(rows) == 0 {
+		return [][]transferRow{{}}, nil
+	}
+
+	partitions := make([][]transferRow, 1)
+	currentPartition := 0
+	var currentTotal int64
+	for _, row := range rows {
+		if row.paymentAmount <= 0 || row.paymentAmount >= bulkTransferWorkbookLimit {
+			return nil, fmt.Errorf("transfer amount for employee %d and project %d must be between 1 and %d VND", row.key.EmployeeID, row.key.ProjectID, bulkTransferWorkbookLimit-1)
+		}
+
+		if currentTotal+row.paymentAmount >= bulkTransferWorkbookLimit {
+			partitions = append(partitions, nil)
+			currentPartition++
+			currentTotal = 0
+		}
+		partitions[currentPartition] = append(partitions[currentPartition], row)
+		currentTotal += row.paymentAmount
+	}
+
+	return partitions, nil
+}
+
+func (s *Service) archiveBulkTransferWorkbooks(partitions [][]transferRow, cycle string) ([]byte, error) {
+	var buffer bytes.Buffer
+	archive := zip.NewWriter(&buffer)
+	cycleLabel := safeBulkTransferCycleLabel(cycle)
+	for i, partition := range partitions {
+		workbook, err := s.generateMBankTransferExcel(partition)
+		if err != nil {
+			_ = archive.Close()
+			return nil, fmt.Errorf("failed to generate workbook part %d: %w", i+1, err)
+		}
+
+		filename := fmt.Sprintf("%s_%s_part_%02d.xlsx", constants.MBankPrefix, cycleLabel, i+1)
+		entry, err := archive.Create(filename)
+		if err != nil {
+			_ = archive.Close()
+			return nil, fmt.Errorf("failed to create archive entry %s: %w", filename, err)
+		}
+		if _, err := entry.Write(workbook); err != nil {
+			_ = archive.Close()
+			return nil, fmt.Errorf("failed to write archive entry %s: %w", filename, err)
+		}
+	}
+	if err := archive.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close archive: %w", err)
+	}
+	return buffer.Bytes(), nil
+}
+
+func safeBulkTransferCycleLabel(cycle string) string {
+	switch strings.ToLower(strings.TrimSpace(cycle)) {
+	case constants.CycleWeekly:
+		return constants.CycleWeekly
+	case constants.CycleMonthly:
+		return constants.CycleMonthly
+	default:
+		return "payment"
+	}
 }
 
 // clearExistingDataMBank removes existing data from the MBank Excel template
@@ -263,40 +443,21 @@ func (s *Service) clearExistingDataMBank(f *excelize.File) error {
 }
 
 // fillMBankTransferData populates the MBank Excel template with transfer data
-func (s *Service) fillMBankTransferData(ctx context.Context, f *excelize.File, data *BulkTransferData, fromDate, toDate, cycle string) error {
+func (s *Service) fillMBankTransferData(f *excelize.File, rows []transferRow) error {
 	row := 3
-	stt := 1
-
-	// Get payment percentage based on payment schedule (weekly or monthly)
-	bulkTransferPaymentPercentage := s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
-
-	for key, totalAmount := range data.EmployeeProjectAmounts {
-		employee := data.EmployeeData[key.EmployeeID]
-
-		// Apply payment percentage from configuration
-		paymentAmount := int64(float64(totalAmount) * bulkTransferPaymentPercentage)
-
-		// Get transaction code from data
-		transactionCode := data.TransactionCodes[key]
-
-		// Get bank branch name with nil check
-		var bankBranchName string
-		if employee.Bank != nil {
-			bankBranchName = employee.Bank.BranchName
-		}
-
+	for i, transfer := range rows {
 		// Set cell values with error checking (MBank format)
 		// A3=STT, B3=Account Number, C3=Account Name, D3=Bank Name, E3=Amount, F3=Transaction Code
 		cellUpdates := []struct {
 			cell  string
 			value any
 		}{
-			{fmt.Sprintf("A%d", row), stt},
-			{fmt.Sprintf("B%d", row), employee.BankAccountNumber},
-			{fmt.Sprintf("C%d", row), employee.BankAccountName},
-			{fmt.Sprintf("D%d", row), bankBranchName},
-			{fmt.Sprintf("E%d", row), paymentAmount},
-			{fmt.Sprintf("F%d", row), transactionCode},
+			{fmt.Sprintf("A%d", row), i + 1},
+			{fmt.Sprintf("B%d", row), transfer.accountNumber},
+			{fmt.Sprintf("C%d", row), transfer.accountName},
+			{fmt.Sprintf("D%d", row), transfer.bankBranchName},
+			{fmt.Sprintf("E%d", row), transfer.paymentAmount},
+			{fmt.Sprintf("F%d", row), transfer.transactionCode},
 		}
 
 		for _, update := range cellUpdates {
@@ -306,7 +467,6 @@ func (s *Service) fillMBankTransferData(ctx context.Context, f *excelize.File, d
 		}
 
 		row++
-		stt++
 	}
 
 	return nil
