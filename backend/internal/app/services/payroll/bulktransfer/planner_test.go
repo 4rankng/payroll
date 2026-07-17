@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/services/payroll/excel"
 	"api-server/internal/domain"
 	pkgClock "api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,11 +26,13 @@ type stubRepoBundle struct {
 	assignments      map[excel.EmployeeProjectKey]*domain.ProjectEmployee
 	timesheetByID    map[uint]*domain.Timesheet
 	weeklyPercentage float64
+	listFilters      []domain.TimesheetFilters
 }
 
 type stubTimesheetRepo struct{ b *stubRepoBundle }
 
 func (r *stubTimesheetRepo) List(ctx context.Context, filters domain.TimesheetFilters) ([]*domain.Timesheet, error) {
+	r.b.listFilters = append(r.b.listFilters, filters)
 	out := make([]*domain.Timesheet, 0, len(r.b.timesheets))
 	for _, ts := range r.b.timesheets {
 		// honor status + payment status + project filters; dates ignored for simplicity
@@ -235,6 +238,16 @@ func TestPlanner_Plan_Weekly_AggregatesAndValidates(t *testing.T) {
 
 	// SnapshotEpoch = the seeded updated_at.
 	assert.Equal(t, time.Date(2026, 7, 12, 9, 0, 0, 0, pkgClock.DefaultLocation), plan.SnapshotEpoch)
+
+	// Date-only filters must use the same location as the loc=Local MySQL DSN.
+	// UTC midnight would become local 08:00 and omit the entire first day.
+	require.NotEmpty(t, b.listFilters)
+	require.NotNil(t, b.listFilters[0].FromDate)
+	require.NotNil(t, b.listFilters[0].ToDate)
+	assert.Equal(t, time.Local, b.listFilters[0].FromDate.Location())
+	assert.Equal(t, time.Local, b.listFilters[0].ToDate.Location())
+	assert.Equal(t, "2026-07-08", b.listFilters[0].FromDate.Format(timeutil.DateFormat))
+	assert.Equal(t, "2026-07-14", b.listFilters[0].ToDate.Format(timeutil.DateFormat))
 }
 
 // TestPlanner_Plan_NoDateFilter_FullPool verifies the full-pool scan mode

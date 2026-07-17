@@ -34,12 +34,13 @@ describe('getCashReadinessDisplay', () => {
 
     expect(display.expectedPayout).toBe(170);
     expect(display.recommendedReserve).toBe(170);
+    expect(display.showExpectedPayout).toBe(false);
     expect(display.intervalLower).toBe(150);
     expect(display.intervalUpper).toBe(190);
     expect(display.drivers.map((driver) => driver.label)).toEqual(['Đã duyệt', 'Phần còn lại']);
   });
 
-  it('labels completed-cycle fallback and hides accuracy before measurement', () => {
+  it('does not show an empty-cycle warning and hides accuracy before measurement', () => {
     const display = getCashReadinessDisplay({
       ...legacyResponse(),
       method: 'completed-cycle-bootstrap',
@@ -52,7 +53,8 @@ describe('getCashReadinessDisplay', () => {
       accuracy_wape: 0,
     });
 
-    expect(display.dataWarning).toContain('chưa có dữ liệu nhập');
+    expect(display.dataWarning).toBeUndefined();
+    expect(display.showExpectedPayout).toBe(true);
     expect(display.accuracyMetrics).toEqual([]);
   });
 
@@ -69,5 +71,32 @@ describe('getCashReadinessDisplay', () => {
 
     expect(display.reliabilityLabel).toBe('Đã đo bằng kết quả thực tế');
     expect(display.accuracyMetrics).toHaveLength(4);
+  });
+
+  it('hides an empty breakdown that only repeats the headline amount', () => {
+    const display = getCashReadinessDisplay({
+      ...legacyResponse(),
+      observed_approved: 0,
+      pending_target_amount: 0,
+      expected_pending_amount: 0,
+      expected_future_amount: 350_557_938,
+      expected_payout: 350_557_938,
+      recommended_reserve: 350_557_938,
+    });
+
+    expect(display.drivers).toEqual([]);
+  });
+
+  it('keeps a real multi-part breakdown but removes zero-value rows', () => {
+    const display = getCashReadinessDisplay({
+      ...legacyResponse(),
+      observed_approved: 100,
+      pending_target_amount: 0,
+      expected_future_amount: 70,
+      expected_payout: 170,
+      recommended_reserve: 170,
+    });
+
+    expect(display.drivers.map((driver) => driver.label)).toEqual(['Đã duyệt', 'Chưa phát sinh']);
   });
 });

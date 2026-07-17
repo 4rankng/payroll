@@ -45,3 +45,17 @@ The fundamental mistake was treating incomplete target-cycle data as if it were 
 - Keep the focused backend regression set running in CI for the forecast, snapshot repository, and export handler paths.
 - Watch the repo-wide backend suite separately; the active bulk-transfer split plan still notes unrelated baseline failures in `bootstrap/config`, and those are not caused by this work.
 - Owner: backend payroll. Verify the next production export resolves against the same exact work-date range that generated the snapshot.
+
+## Follow-up: workforce-scale underforecast
+
+Production evidence exposed a second empty-target defect. The six-month cohort
+had a median participation of 63 employees while the two latest completed Kỳ
+had 279 and 285. The partial-cycle remainder model reused that stale median even
+when the target had no rows at all, producing a 135M payable expectation against
+recent payable cycles around 363M-418M.
+
+Model v3 now bootstraps full completed-cycle totals when the target is empty and
+normalizes them to a recency-weighted workforce level. Against the same
+production cohort, the expected 70% payable amount is approximately 382M. The
+733M outstanding-payment KPI remains separate because it contains unpaid prior
+Kỳ rather than new Ky3 work.

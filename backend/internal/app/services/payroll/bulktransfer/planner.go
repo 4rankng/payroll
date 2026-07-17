@@ -211,11 +211,14 @@ func (p *ExportPlanner) selectAndAggregate(
 	// For weekly exports, include date filters; for monthly, dates are handled per-project
 	if !isMonthly {
 		if req.FromDate != "" {
-			fromDate, _ := time.Parse(timeutil.DateFormat, req.FromDate)
+			// The MySQL DSN uses loc=Local. Parsing a date-only value as UTC
+			// shifts the lower bound forward by the local offset and excludes
+			// every row on the first day of the requested cycle.
+			fromDate, _ := time.ParseInLocation(timeutil.DateFormat, req.FromDate, time.Local)
 			filters.FromDate = &fromDate
 		}
 		if req.ToDate != "" {
-			toDate, _ := time.Parse(timeutil.DateFormat, req.ToDate)
+			toDate, _ := time.ParseInLocation(timeutil.DateFormat, req.ToDate, time.Local)
 			filters.ToDate = &toDate
 		}
 	}

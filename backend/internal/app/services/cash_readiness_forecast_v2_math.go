@@ -11,7 +11,7 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const cashReadinessModelVersion = "cash-readiness-v2"
+const cashReadinessModelVersion = "cash-readiness-v3"
 
 type cashReadinessV2Projection struct {
 	approved           int64
@@ -34,7 +34,9 @@ type cashCycleObservation struct {
 	key                   string
 	payDate               time.Time
 	observedEmployees     int
+	finalEmployees        int
 	futurePerEmployee     float64
+	finalApprovedPerHead  float64
 	projectFuturePerHead  map[uint]float64
 	projectObservedHeads  map[uint]int
 	completedOnlyFallback bool
@@ -60,6 +62,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 
 	var approved, pending int64
 	pendingRows := make([]int64, 0)
+	targetHasRows := false
 	targetEmployees := make(map[uint]struct{})
 	targetProjectEmployees := make(map[uint]map[uint]struct{})
 	byCycle := make(map[string][]domain.TimesheetAccrualDailyRow)
@@ -71,6 +74,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		if key != targetKey || row.CreatedAt.After(now) {
 			continue
 		}
+		targetHasRows = true
 		if row.EmployeeID != 0 {
 			targetEmployees[row.EmployeeID] = struct{}{}
 			if targetProjectEmployees[row.ProjectID] == nil {
@@ -104,7 +108,10 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 	}
 
 	targetHeadcount := len(targetEmployees)
-	if targetHeadcount == 0 {
+	if !targetHasRows {
+		targetHeadcount = recentWorkforceLevel(observations, 0, cfg.GrowthEWMAlpha)
+	} else if targetHeadcount == 0 {
+		// Compatibility for legacy aggregate rows without employee identity.
 		targetHeadcount = medianObservedHeadcount(observations)
 	}
 	if targetHeadcount < 1 {
@@ -118,7 +125,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 	rng := rand.New(rand.NewPCG(uint64(seed), uint64(seed)^0x9e3779b97f4a7c15))
 	samples := make([]int64, nSim)
 	var futureSampleTotal float64
-	useProjects := projectBasisSufficient(observations, targetProjectEmployees, 6)
+	useProjects := targetHasRows && projectBasisSufficient(observations, targetProjectEmployees, 6)
 	method := "normalized-bootstrap"
 	completedFallbacks := 0
 	for _, observation := range observations {
@@ -126,7 +133,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 			completedFallbacks++
 		}
 	}
-	if completedFallbacks == len(observations) {
+	if !targetHasRows || completedFallbacks == len(observations) {
 		method = "completed-cycle-bootstrap"
 	}
 	for i := range samples {
@@ -138,7 +145,10 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		}
 
 		var futureSample int64
-		if useProjects {
+		if !targetHasRows {
+			obs := observations[rng.IntN(len(observations))]
+			futureSample = int64(math.Round(obs.finalApprovedPerHead * float64(targetHeadcount)))
+		} else if useProjects {
 			for projectID, employees := range targetProjectEmployees {
 				choices := projectRates(observations, projectID)
 				if len(choices) == 0 {
@@ -299,9 +309,15 @@ func buildCashCycleObservations(byCycle map[string][]domain.TimesheetAccrualDail
 				observedHeadcount = 1
 			}
 		}
+		finalHeadcount := len(finalEmployees)
+		if finalHeadcount == 0 {
+			finalHeadcount = 1
+		}
 		obs := cashCycleObservation{
 			key: key, payDate: payDate, observedEmployees: observedHeadcount,
+			finalEmployees:       finalHeadcount,
 			futurePerEmployee:    float64(future) / float64(observedHeadcount),
+			finalApprovedPerHead: float64(finalApproved) / float64(finalHeadcount),
 			projectFuturePerHead: make(map[uint]float64), projectObservedHeads: make(map[uint]int),
 			completedOnlyFallback: !observedAny,
 		}
@@ -349,6 +365,25 @@ func medianObservedHeadcount(observations []cashCycleObservation) int {
 	}
 	sort.Ints(values)
 	return values[len(values)/2]
+}
+
+// recentWorkforceLevel estimates the employee participation level for the
+// target Ky when it has no rows. The current observed headcount parameter is a
+// defensive floor; the level is an EWMA of final participation in completed
+// cycles. This preserves scale without changing the established partial-cycle
+// normalization once target rows begin arriving.
+func recentWorkforceLevel(observations []cashCycleObservation, currentObserved int, alpha float64) int {
+	if len(observations) == 0 {
+		return currentObserved
+	}
+	if alpha <= 0 || alpha > 1 {
+		alpha = growthEWMAlphaDefault
+	}
+	level := float64(max(1, observations[0].finalEmployees))
+	for _, observation := range observations[1:] {
+		level = alpha*float64(max(1, observation.finalEmployees)) + (1-alpha)*level
+	}
+	return max(currentObserved, int(math.Round(level)))
 }
 
 func projectBasisSufficient(observations []cashCycleObservation, targets map[uint]map[uint]struct{}, minimum int) bool {

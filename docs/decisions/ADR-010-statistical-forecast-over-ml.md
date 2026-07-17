@@ -56,6 +56,16 @@ completed comparable cycles and labels the method `completed-cycle-bootstrap`.
 This prevents a misleading all-zero projection while preserving an explicit
 low-confidence state.
 
+For an entirely empty target Kỳ, the bootstrap uses full completed-cycle totals
+normalized per final participating employee. When the target is empty, its
+workforce scale is an EWMA of recent completed-cycle participation; once target
+rows exist, their observed participants anchor the established partial-cycle
+model. This is deliberately recency-sensitive: using the median headcount across
+the whole six-month window materially underforecasts during rapid workforce
+growth. The corrected contract is model version
+`cash-readiness-v3`; earlier resolved snapshots are not mixed into its accuracy
+metrics.
+
 ### Escalation Path
 
 Keep the `ForecastProvider` interface. If the instrumented p50-vs-actual error stays >~12% over ≥4 cycles AND Tết/seasonality is shown to swing payout, add a Prophet/LightGBM provider behind the same interface. No handler or UI changes would be needed.

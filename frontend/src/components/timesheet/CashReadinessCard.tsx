@@ -57,23 +57,21 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         Dự báo tiền trả
       </span>
 
-      <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Dự kiến chi trả
+      <div className="mt-2 min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+          Nên chuẩn bị
+        </p>
+        <p className="mt-1 break-words font-financial text-[clamp(1.5rem,4vw,2rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
+          {formatCurrency(display.recommendedReserve)}
+        </p>
+        {display.showExpectedPayout && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Dự kiến chi trả{' '}
+            <span className="font-financial font-semibold tabular-nums text-foreground">
+              {formatCurrency(display.expectedPayout)}
+            </span>
           </p>
-          <p className="mt-1 break-words font-financial text-[clamp(1.35rem,4vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-foreground">
-            {formatCurrency(display.expectedPayout)}
-          </p>
-        </div>
-        <div className="min-w-0 border-t border-border/50 pt-2.5 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0 sm:text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Nên chuẩn bị
-          </p>
-          <p className="mt-1 break-words font-financial text-[clamp(1.35rem,4vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
-            {formatCurrency(display.recommendedReserve)}
-          </p>
-        </div>
+        )}
       </div>
 
       <p className="mt-2 text-[11px] text-muted-foreground">
@@ -86,51 +84,64 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         </p>
       )}
 
-      <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 border-t border-border/60 pt-3 sm:grid-cols-2">
-        {display.drivers.map((driver) => (
-          <div key={driver.label} className="flex min-w-0 items-baseline justify-between gap-3">
-            <dt className="text-[11px] text-muted-foreground">
-              {driver.label}
-              {driver.description && <span className="block text-[10px] text-muted-foreground/80">{driver.description}</span>}
-            </dt>
-            <dd className="whitespace-nowrap font-financial text-[12px] font-semibold tabular-nums text-foreground">
-              {formatCurrency(driver.amount)}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      {display.drivers.length > 0 && (
+        <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 border-t border-border/60 pt-3 sm:grid-cols-2">
+          {display.drivers.map((driver) => (
+            <div key={driver.label} className="flex min-w-0 items-baseline justify-between gap-3">
+              <dt className="text-[11px] text-muted-foreground">
+                {driver.label}
+                {driver.description && <span className="block text-[10px] text-muted-foreground/80">{driver.description}</span>}
+              </dt>
+              <dd className="whitespace-nowrap font-financial text-[12px] font-semibold tabular-nums text-foreground">
+                {formatCurrency(driver.amount)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       <div className="mt-3 border-t border-border/60 pt-3 lg:mt-auto">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
-          <p
-            className="font-financial text-[12px] font-semibold tabular-nums text-foreground"
-            aria-label={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
-          >
-            {formatCurrency(display.intervalLower)} – {formatCurrency(display.intervalUpper)}
-          </p>
-        </div>
-
-        <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/45 px-2 py-1.5">
-          <span
-            className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${RELIABILITY_DOT[display.reliabilityState]}`}
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-foreground">{display.reliabilityLabel}</p>
-            <p className="text-[10px] leading-snug text-muted-foreground">{display.reliabilityDescription}</p>
-            {display.accuracyMetrics.length > 0 && (
-              <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-                {display.accuracyMetrics.map((metric) => (
-                  <div key={metric.label} className="inline-flex gap-1 text-[10px]">
-                    <dt className="text-muted-foreground">{metric.label}</dt>
-                    <dd className="font-semibold tabular-nums text-foreground">{metric.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+        <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
+        <dl
+          className="mt-1.5 grid grid-cols-2 gap-2"
+          aria-label={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
+        >
+          <div className="min-w-0 rounded-md bg-muted/45 px-2.5 py-2">
+            <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Từ</dt>
+            <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-foreground">
+              {formatCurrency(display.intervalLower)}
+            </dd>
           </div>
-        </div>
+          <div className="min-w-0 rounded-md bg-primary/5 px-2.5 py-2 text-right">
+            <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">Đến</dt>
+            <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-primary">
+              {formatCurrency(display.intervalUpper)}
+            </dd>
+          </div>
+        </dl>
+
+        {display.reliabilityState !== 'uncalibrated' && (
+          <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/45 px-2 py-1.5">
+            <span
+              className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${RELIABILITY_DOT[display.reliabilityState]}`}
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-foreground">{display.reliabilityLabel}</p>
+              <p className="text-[10px] leading-snug text-muted-foreground">{display.reliabilityDescription}</p>
+              {display.accuracyMetrics.length > 0 && (
+                <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                  {display.accuracyMetrics.map((metric) => (
+                    <div key={metric.label} className="inline-flex gap-1 text-[10px]">
+                      <dt className="text-muted-foreground">{metric.label}</dt>
+                      <dd className="font-semibold tabular-nums text-foreground">{metric.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

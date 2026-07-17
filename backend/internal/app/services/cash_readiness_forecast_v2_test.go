@@ -186,6 +186,58 @@ func TestCashReadinessV2_UsesCompletedCyclesWhenTargetHasNoRowsYet(t *testing.T)
 	}
 }
 
+func TestCashReadinessV2_UsesRecentWorkforceLevelWhenTargetHasNoRows(t *testing.T) {
+	rows := make([]domain.TimesheetAccrualDailyRow, 0)
+	addCompletedCycle := func(month time.Month, employees int) {
+		work := time.Date(2026, month, 1, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		created := time.Date(2026, month, 7, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		approved := time.Date(2026, month, 10, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		for employee := 1; employee <= employees; employee++ {
+			rows = append(rows, forecastRow(work, created, approved, domain.TimesheetStatusApproved, uint(employee), 10, 100))
+		}
+	}
+	// The old median-headcount fallback chose 2 and ignored the sharp, sustained
+	// expansion to 10 workers in the two most recent completed cycles.
+	addCompletedCycle(time.February, 2)
+	addCompletedCycle(time.March, 2)
+	addCompletedCycle(time.April, 2)
+	addCompletedCycle(time.May, 10)
+	addCompletedCycle(time.June, 10)
+
+	now, _ := time.ParseInLocation("2006-01-02", "2026-07-17", clock.DefaultLocation)
+	projection := forecastCashReadinessV2(
+		rows,
+		now,
+		clock.NextTimesheetPayCycle(now),
+		42,
+		config.CashForecastConfig{NSim: 1000, GrowthEWMAlpha: 0.5},
+	)
+
+	if projection.expectedFuture != 800 {
+		t.Fatalf("expected future=%d, want recent-workforce EWMA level 8 * 100 = 800", projection.expectedFuture)
+	}
+}
+
+func TestCashReadinessV2_NoTargetRowsBootstrapFullCompletedTotals(t *testing.T) {
+	rows := make([]domain.TimesheetAccrualDailyRow, 0, 20)
+	for employee := 1; employee <= 10; employee++ {
+		// These rows already existed at the analogous cycle day. A partial-cycle
+		// model sees no remaining future amount, but an entirely empty target Ky
+		// must bootstrap the completed total instead of returning zero.
+		rows = append(rows,
+			forecastRow("2026-05-01", "2026-05-01", "2026-05-02", domain.TimesheetStatusApproved, uint(employee), 10, 100),
+			forecastRow("2026-06-01", "2026-06-01", "2026-06-02", domain.TimesheetStatusApproved, uint(employee), 10, 100),
+		)
+	}
+
+	now, _ := time.ParseInLocation("2006-01-02", "2026-07-17", clock.DefaultLocation)
+	projection := forecastCashReadinessV2(rows, now, clock.NextTimesheetPayCycle(now), 42, config.CashForecastConfig{NSim: 1000})
+
+	if projection.expectedFuture != 1_000 || projection.expectedPayout != 1_000 {
+		t.Fatalf("empty-target projection=%#v, want full completed-cycle total 1000", projection)
+	}
+}
+
 func TestGetCashReadinessV2_CalibrationAndSnapshotAreAdvisory(t *testing.T) {
 	measurement := &fakeCashMeasurement{
 		accuracy:  domain.CashForecastAccuracy{SampleCount: 24, WAPE: .08, Bias: .02, IntervalCoverage: .90, ReserveShortfallRate: .05},
@@ -275,6 +327,9 @@ func TestGetCashReadinessV2_UsesWeeklyPayableCashPercentage(t *testing.T) {
 	}
 	if got.ObservedApproved != 70 || got.CashToPrepare != 70 || got.ExpectedPayout != 70 {
 		t.Fatalf("payable cash amounts = approved %d, prepare %d, expected %d; want 70 each", got.ObservedApproved, got.CashToPrepare, got.ExpectedPayout)
+	}
+	if got.ModelVersion != "cash-readiness-v3" {
+		t.Fatalf("model version=%q, want v3 after workforce-level correction", got.ModelVersion)
 	}
 }
 

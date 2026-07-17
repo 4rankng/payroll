@@ -17,6 +17,7 @@ export interface CashReadinessAccuracyMetric {
 export interface CashReadinessDisplay {
   expectedPayout: number;
   recommendedReserve: number;
+  showExpectedPayout: boolean;
   intervalLower: number;
   intervalUpper: number;
   drivers: CashReadinessDriver[];
@@ -123,20 +124,26 @@ export const getCashReadinessDisplay = (data: CashReadinessResponse): CashReadin
     drivers.push({ label: 'Phần còn lại', amount: nonNegative(data.projected_expected), description: 'ước tính' });
   }
 
+  const nonZeroDrivers = drivers.filter((driver) => driver.amount > 0);
+  const displayDrivers =
+    nonZeroDrivers.length === 1 &&
+    (nonZeroDrivers[0].amount === expectedPayout || nonZeroDrivers[0].amount === recommendedReserve)
+      ? []
+      : nonZeroDrivers;
+
   return {
     expectedPayout,
     recommendedReserve,
+    showExpectedPayout: expectedPayout !== recommendedReserve,
     intervalLower,
     intervalUpper,
-    drivers,
+    drivers: displayDrivers,
     reliabilityState,
     ...getReliabilityCopy(reliabilityState, calibrationSamples),
     accuracyMetrics: reliabilityState === 'measured' ? getAccuracyMetrics(data) : [],
     dataWarning:
       data.method === 'no-history'
         ? 'Chưa đủ lịch sử để ước tính phần chưa phát sinh; số tiền hiện tại chủ yếu dựa trên hàng chờ hiện có.'
-        : data.method === 'completed-cycle-bootstrap'
-          ? 'Kỳ này chưa có dữ liệu nhập; ước tính dựa trên tổng chi trả của các kỳ đã hoàn tất và chưa được hiệu chỉnh.'
-          : undefined,
+        : undefined,
   };
 };
