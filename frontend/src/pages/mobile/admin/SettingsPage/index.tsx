@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Bell, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,15 +10,19 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
+import { SendNotificationDialog } from '@/components/settings/SendNotificationDialog';
+import { Button } from '@/components/ui/button';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
 const TAB_EMAIL = 'email';
-const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL]);
+const TAB_NOTIFICATIONS = 'notifications';
+const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICATIONS]);
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const requestedTab = searchParams.get('tab');
   const activeTab = requestedTab && VALID_TABS.has(requestedTab) ? requestedTab : TAB_GENERAL;
 
@@ -59,7 +63,7 @@ const SettingsPageMobile = () => {
 
       <div className="p-4 space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
-          <TabsList className="grid h-auto w-full grid-cols-3 p-1">
+          <TabsList className="grid h-auto w-full grid-cols-2 p-1">
             <TabsTrigger value={TAB_GENERAL} className="typography-body-medium min-h-11 px-3 py-2">
               Trả lương
             </TabsTrigger>
@@ -68,6 +72,9 @@ const SettingsPageMobile = () => {
             </TabsTrigger>
             <TabsTrigger value={TAB_EMAIL} className="typography-body-medium min-h-11 px-3 py-2">
               Email
+            </TabsTrigger>
+            <TabsTrigger value={TAB_NOTIFICATIONS} className="typography-body-medium min-h-11 px-3 py-2">
+              Thông báo
             </TabsTrigger>
           </TabsList>
 
@@ -122,8 +129,33 @@ const SettingsPageMobile = () => {
           <TabsContent value={TAB_EMAIL} className="mt-0">
             <AdminEmailComposer embedded />
           </TabsContent>
+
+          <TabsContent value={TAB_NOTIFICATIONS} className="mt-0">
+            <section className="space-y-4 rounded-xl border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Bell className="h-4 w-4 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold">Gửi Thông Báo</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Soạn và gửi thông báo đến người dùng trong hệ thống.
+                  </p>
+                </div>
+              </div>
+              <Button className="min-h-11 w-full" onClick={() => setIsNotificationDialogOpen(true)}>
+                <Bell className="mr-2 h-4 w-4" />
+                Gửi thông báo
+              </Button>
+            </section>
+          </TabsContent>
         </Tabs>
       </div>
+
+      <SendNotificationDialog
+        open={isNotificationDialogOpen}
+        onOpenChange={setIsNotificationDialogOpen}
+      />
     </div>
   );
 };

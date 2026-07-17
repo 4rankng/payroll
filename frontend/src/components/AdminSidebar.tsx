@@ -78,7 +78,6 @@ const menuItems: MenuItem[] = [
   { title: "Nhật ký", icon: ClipboardList, path: "/admin/audit-log", group: "he-thong" },
   { title: "Cài Đặt", icon: Settings, path: "/admin/settings", group: "he-thong" },
   { title: "Quản lý ví", icon: Wallet, path: "/admin/wallet", group: "tai-chinh" },
-  { title: "Gửi thông báo", icon: Bell, path: "/admin/send-notification", group: "he-thong" },
 ];
 
 const menuGroups = [

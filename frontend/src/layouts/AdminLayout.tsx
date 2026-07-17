@@ -18,7 +18,6 @@ import {
   Wallet,
   UserCog,
   Settings,
-  Bell,
   Activity,
   Clock,
   ClipboardList,
@@ -47,7 +46,6 @@ const ADMIN_MORE_ITEMS: NavLeaf[] = [
   { title: "Ví", icon: Wallet, path: "/admin/wallet" },
   { title: "Lịch CV", icon: Calendar, path: "/admin/cron-health" },
   { title: "Cài đặt", icon: Settings, path: "/admin/settings" },
-  { title: "Gửi thông báo", icon: Bell, path: "/admin/send-notification" },
 ];
 
 const AdminLayoutInner = () => {
