@@ -97,9 +97,12 @@ POST /api/v1/payrolls/export-onepay-bulk  (Admin only)
   ├─ 4. Persist VFIC codes via transactionCodeRepo.CreateBatch  ← REUSE existing pattern
   ├─ 5. Generate Excel via excelService.GenerateOnePayExport(rows)  ← NEW method
   │     Uses eMB_BulkPayment layout with 7 columns (incl. Mã SWIFT)
-  ├─ 6. (Optional) Persist a BulkTransferFile record for audit
+  ├─ 6. Persist BulkTransferFile record for audit (Validation Decision V2):
+  │     - filename, total_count, transfer_amount, source='onepay_export'
+  │     - asset_id (store the .xlsx via fileStorage)
+  │     - data JSON with VFIC → timesheet_ids mapping (for later entity_id resolution)
   ├─ 7. Publish WalletBulkTransferFileExportedEvent
-  └─ 8. Return OnePayExportResult{ExcelBytes, Filename, counts, skipped}
+  └─ 8. Return OnePayExportResult{ExcelBytes, Filename, counts, skipped, ExportID}
 ```
 
 ### Excel output format
@@ -125,13 +128,18 @@ Note: This shifts Amount/PaymentDetail to columns F/G (vs the user's original at
 payrolls.POST("/export-onepay-bulk", container.Handlers.Payroll.ExportOnePayBulk)
 ```
 
-Returns the Excel as a blob with `Content-Disposition: attachment; filename="Yeu_cau_chuyen_tien_<cycle>_<YYYYMMDD_HHMMSS>.xlsx"`. Also returns metadata (counts, skipped employees) via a companion JSON endpoint OR via custom response headers.
+Returns the Excel as a blob with metadata in custom `X-` headers (Validation Decision V1):
 
-**Recommended**: Two-step —
-1. `POST /export-onepay-bulk` returns JSON `{file_id, filename, total_count, transfer_amount, skipped_employees}` AND triggers blob download via a separate `GET /export-onepay-bulk/:file_id/download`.
-2. This lets the UI show the skipped-employees warning BEFORE the download starts, so the admin can decide whether to proceed.
+```
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename="Yeu_cau_chuyen_tien_<cycle>_<YYYYMMDD_HHMMSS>.xlsx"
+X-Total-Count: 3
+X-Transfer-Amount: 3964500
+X-Skipped-Count: 1
+X-Export-Id: 42   ← BulkTransferFile.id (Validation Decision V2)
+```
 
-Simpler alternative: single `POST` returns the blob directly + metadata in custom `X-` headers. Phase 5 (frontend) decides based on UX preference.
+Frontend reads headers to show toast + skipped-employees dialog (Phase 5).
 
 ### Handler
 

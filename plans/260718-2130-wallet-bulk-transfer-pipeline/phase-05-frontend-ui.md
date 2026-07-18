@@ -42,7 +42,7 @@ TimesheetPage/index.tsx (existing)
             Blob download + skipped-employees toast
 ```
 
-**Skipped-employees UX**: read `X-Skipped-Count` header (or JSON metadata). If >0, show a warning toast: `"Đã bỏ qua N nhân viên thiếu thông tin ngân hàng. Vui lòng kiểm tra và xuất lại sau khi cập nhật."` with a "Xem danh sách" link that opens a dialog listing them.
+**Skipped-employees UX** (Validation Decision V5): read `X-Skipped-Count` header. If >0, show a warning toast: `"Đã bỏ qua N nhân viên thiếu thông tin ngân hàng. Vui lòng kiểm tra và xuất lại sau khi cập nhật."` with a "Xem danh sách" button that opens a `SkippedEmployeesDialog` listing them with names + reasons (`missing_bank_info`, `unresolved_swift`). The dialog is dismissible; the file still downloads successfully.
 
 ### Stage 2 — Wallet page (`/admin/wallet`)
 

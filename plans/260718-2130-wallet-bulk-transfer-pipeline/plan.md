@@ -184,7 +184,7 @@ This is the **write-side companion** to the read-only bank-transfer-history plan
 - No reverse/refund workflow.
 - No manual KQ re-upload override.
 - No provider switcher UI.
-- No SMS/email notifications beyond existing `notifyEmployee`/`notifyInitiator` (bulk rows have `EntityID=nil` → `notifyEmployee` early-returns; acceptable).
+- ~~No SMS/email notifications beyond existing `notifyEmployee`/`notifyInitiator`~~ **REVERSED by Validation V6**: push notifications ARE required for all employee money receipts. See "Notification Path" above — Phase 3 extends `notifyEmployee` to handle bulk rows via `recipient_account_no → employee` lookup.
 - No changes to `BulkTransferFile` domain (existing 9Pay flow).
 - No pre-flight `CheckAccount` step in worker.
 - No `pending_ipns` buffer table.

@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Shared Admin Primitives"
-status: pending
+status: complete
 effort: ""
 priority: P1
 dependencies: [1]

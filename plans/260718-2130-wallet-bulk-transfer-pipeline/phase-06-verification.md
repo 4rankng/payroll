@@ -192,8 +192,9 @@ Upload the legacy `yeu_cau_chuyen_tien.xlsx` (no SWIFT column).
 5. Assert: 3 `wallet_payments` rows with `bulk_transfer_batch_id=id`, `fee=3850`, `request_id` matching the VFIC codes from step 1.
 6. Assert: 1 Expense txn with `amount=3 × 3850=11550`.
 7. Download KQ → assert 3 rows showing `Thành công` with FT numbers.
+8. **Assert**: notification service received 3 `notifyEmployee` calls (one per row) — proves Validation Decision V6 (push notifications for all employee money receipts) is wired. Mock notification service records calls; verify each call references the correct employee (resolved via `recipient_account_no → employee.bank_account_number`).
 
-This test proves the two stages work together: the file the exporter produces is consumable by the wallet pipeline without manual intervention.
+This test proves the two stages work together: the file the exporter produces is consumable by the wallet pipeline without manual intervention, AND notifications fire when money lands.
 
 ## Related Code Files
 

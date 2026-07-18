@@ -168,11 +168,27 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
     return nil
 }
 
-// ensureBulkBatchLink stamps bulk_transfer_batch_id + order + vfic_code.
+// ensureBulkBatchLink stamps bulk_transfer_batch_id + order + vfic_code + entity_id.
 // Idempotent — safe to call on retry.
+//
+// entity_id resolution (Validation Decision V6 — enable push notifications):
+// The existing notifyEmployee FSM hook requires entity_id to look up the employee
+// via advance_payment_requests. For bulk transfers (no advance_payment_request),
+// we resolve entity_id differently — but the simplest path is to leave entity_id
+// nil and instead extend notifyEmployee to handle nil-entity_id rows by looking
+// up employee via recipient_account_no. See plan.md "Notification Path" section.
+//
+// For now, ensureBulkBatchLink stamps everything EXCEPT entity_id; the notification
+// extension is a Phase 3 follow-up task documented in plan.md.
 func (w *WalletBulkTransferRowWorker) ensureBulkBatchLink(ctx, rowID uint64, batchID uint64, row BulkTransferRow) {
     w.paymentRepo.UpdateBulkBatchLink(ctx, rowID, batchID, uint(row.OrderNo), row.VFICCode)
 }
+
+// TODO (Phase 3 follow-up — Notification Path per Validation V6):
+// Once notifyEmployee is extended to handle bulk rows (Option A in plan.md:
+// lookup employee by recipient_account_no when entity_id is nil), no entity_id
+// stamping is needed — the notification hook will resolve employee from the
+// wallet_payment's recipient_account_no directly.
 
 // markRowFailed routes a row through the FSM via RecordSyncResponse,
 // NOT via direct UpdateStatus (red-team v2 Security C5).
@@ -293,6 +309,7 @@ if !cfg.OTP.Enabled {
 - **Create**: `backend/internal/app/workers/wallet_bulk_transfer_row_worker.go` — 5-step worker.
 - **Create**: `backend/internal/app/services/wallet_bulk/service_test.go`.
 - **Modify**: `backend/internal/domain/transactions/repository.go` — add `CountByBatchAndStatuses`, `SumFeeByBatchAndStatuses`, `UpdateBulkBatchLink`, `IncrementSweeperRetry`, `ListByEnqueueState`, `UpdateEnqueueState`, `ListByStatusAndOlderThan`.
+- **Modify (Notification Path — Validation V6)**: `backend/internal/app/services/disbursement/wallet_payment_service.go` — extend `notifyEmployee` to handle `entity_id == nil` rows by looking up employee via `recipient_account_no → employees.bank_account_number`. Apply to all notification call sites (OnEnterCompleted, OnEnterFailed hooks already exist). Mirrors the Option A design from `plan.md` "Notification Path" section. Add a unit test asserting a bulk row with `entity_id=nil` + valid `recipient_account_no` triggers a notification.
 - **Modify**: `backend/internal/infra/persistence/tx_wallet_payment_repository.go` — implement the new methods.
 - **Modify**: `backend/internal/app/bootstrap/services/init.go`, `container.go` — wire service + register 3 asynq tasks.
 - **Reuse (no change)**: `WalletPaymentService.Initiate`, `RecordAccountCheck`, `RecordSyncResponse`, `RecordIPN`.
@@ -354,4 +371,4 @@ if !cfg.OTP.Enabled {
 - **Risk**: Ledger write fails after `fee_booked_at` committed. **Mitigation**: `completing` recovery cron every 5min.
 - **Risk**: Lock held across ledger write. **Mitigation**: Booking in separate asynq task AFTER lock release.
 - **Risk**: Reconcile-flow collision. **Mitigation**: Documented; recommend not running reconcile while bulk batch in-flight.
-- **Risk**: `notifyEmployee` early-returns when `EntityID==nil`. **Mitigation**: Acceptable for bulk (Non-Goal).
+- **Risk (mitigated)**: ~~`notifyEmployee` early-returns when `EntityID==nil`~~ — **Validation V6 reversed this**: push notifications ARE required for bulk transfers. **Mitigation**: Phase 3 extends `notifyEmployee` to handle `entity_id=nil` rows by looking up employee via `recipient_account_no → employees.bank_account_number` (Option A in plan.md "Notification Path"). Test 18 step 8 verifies notifications fire for bulk-completed rows.

@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: Design System and Shell
-status: in-progress
+status: complete
 effort: ''
 priority: P1
 dependencies: []

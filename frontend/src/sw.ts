@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+import { shouldHandleAppCacheRequest } from './lib/service-worker-cache-policy';
+
 // Custom Service Worker for TingTing PWA
 // Combines Workbox precaching with push notification handling
 
@@ -10,11 +12,25 @@ declare const self: ServiceWorkerGlobalScope & {
 // Precache manifest injected by VitePWA injectManifest
 const PRECACHE_MANIFEST = self.__WB_MANIFEST;
 
-// Cache name — bump version to force SW update when caching strategy changes
-const CACHE_NAME = 'tingting-cache-v3';
+// Cache name — bump version to force SW update when caching strategy changes.
+const CACHE_PREFIX = 'tingting-cache-';
+const CACHE_NAME = 'tingting-cache-v4';
+const IS_DEVELOPMENT = self.location.pathname.endsWith('/dev-sw.js');
 
 // Install event — precache assets
 self.addEventListener('install', (event: ExtendableEvent) => {
+  if (IS_DEVELOPMENT) {
+    event.waitUntil(
+      caches.keys().then((names) =>
+        Promise.all(
+          names.filter((name) => name.startsWith(CACHE_PREFIX)).map((name) => caches.delete(name))
+        )
+      )
+    );
+    self.skipWaiting();
+    return;
+  }
+
   const precacheUrls = PRECACHE_MANIFEST.map((entry) =>
     typeof entry === 'string' ? entry : entry.url
   );
@@ -27,13 +43,24 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 // Activate event — clean old caches
 self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
-      )
-    )
+    (async () => {
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith(CACHE_PREFIX) && (IS_DEVELOPMENT || name !== CACHE_NAME))
+          .map((name) => caches.delete(name))
+      );
+      await self.clients.claim();
+
+      // A newly activated development worker may have replaced one that was
+      // serving stale Vite modules. Reload controlled tabs once so they rebuild
+      // from the live module graph immediately instead of keeping stale DOM.
+      if (IS_DEVELOPMENT) {
+        const clients = await self.clients.matchAll({ type: 'window' });
+        await Promise.all(clients.map((client) => client.navigate(client.url)));
+      }
+    })()
   );
-  self.clients.claim();
 });
 
 // Fetch event — navigations hit network first (fresh app on every deploy);
@@ -42,14 +69,12 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 self.addEventListener('fetch', (event: FetchEvent) => {
   const url = new URL(event.request.url);
 
-  // Only handle same-origin requests; let cross-origin (dev server HMR, etc.) pass through
-  if (url.origin !== self.location.origin) return;
-
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  // Never intercept API calls — live business data must always reach the server.
-  if (url.pathname.startsWith('/api/')) return;
+  if (!shouldHandleAppCacheRequest({
+    isDevelopment: IS_DEVELOPMENT,
+    isSameOrigin: url.origin === self.location.origin,
+    method: event.request.method,
+    pathname: url.pathname,
+  })) return;
 
   // App navigations (HTML documents): network-first so new deploys win, falling
   // back to the cached app shell when the network is unavailable.

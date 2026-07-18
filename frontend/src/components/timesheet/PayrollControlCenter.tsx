@@ -86,6 +86,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       key: 'paid',
       label: 'Đã thanh toán',
       value: formatCurrency(summary?.paidAmount ?? 0),
+      mobileSpan: true,
       className: 'lg:col-span-3',
       filter: 'paid',
     },

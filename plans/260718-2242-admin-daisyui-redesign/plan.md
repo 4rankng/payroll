@@ -4,7 +4,7 @@ description: >-
   Redesign every admin route and subpage with a scoped daisyUI-based ledger
   system while preserving all payroll workflows, deep links, and responsive
   behavior.
-status: in-progress
+status: complete
 priority: P2
 branch: main
 tags:
@@ -25,7 +25,7 @@ source: skill
 
 ## Overview
 
-Apply one production-grade admin visual system across all routes under `/admin`. The design direction, “Sổ lương công trường,” keeps TingTing's emerald identity while replacing page-specific experiments with calm ledger surfaces, consistent hierarchy, tabular financial values, and exception-first workflows.
+Apply one production-grade admin visual system across all routes under `/admin`. The direction preserves the original TingTing information architecture, colored logo and white wordmark, and compact proportions while improving hierarchy, responsive behavior, tabular financial values, and operational clarity.
 
 The daisyUI MCP v5 snippets are the component and theme reference. Because the application is on Tailwind CSS 3.4, implementation uses a namespaced compatible daisyUI layer instead of a risky Tailwind 4 migration. Existing Radix/shadcn behavior remains authoritative for focus-managed dialogs, sheets, selects, and URL-driven modals.
 
@@ -51,10 +51,10 @@ The daisyUI MCP v5 snippets are the component and theme reference. Because the a
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Design System and Shell](./phase-01-design-system-and-shell.md) | In Progress |
-| 2 | [Shared Admin Primitives](./phase-02-shared-admin-primitives.md) | Pending |
-| 3 | [Route Migration](./phase-03-route-migration.md) | Pending |
-| 4 | [Visual QA and Verification](./phase-04-visual-qa-and-verification.md) | Pending |
+| 1 | [Design System and Shell](./phase-01-design-system-and-shell.md) | Complete |
+| 2 | [Shared Admin Primitives](./phase-02-shared-admin-primitives.md) | Complete |
+| 3 | [Route Migration](./phase-03-route-migration.md) | Complete |
+| 4 | [Visual QA and Verification](./phase-04-visual-qa-and-verification.md) | Complete |
 
 ## Dependencies
 
