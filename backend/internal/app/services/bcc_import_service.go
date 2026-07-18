@@ -257,14 +257,15 @@ func (s *BCCImportService) ProcessUpload(
 				if existingEmp == nil {
 					// Create new employee
 					emp = &domain.Employee{
-						Fullname:          fullName,
-						CCCD:              cccd,
-						BankAccountNumber: row.BankAccount,
-						BankAccountName:   strings.ToUpper(fullName),
-						BankID:            bankID,
-						Mobile:            row.Mobile,
-						CreatedBy:         uploaderID,
+						Fullname:  fullName,
+						CCCD:      cccd,
+						Mobile:    row.Mobile,
+						CreatedBy: uploaderID,
 					}
+					// Attach bank fields only when STK provides enough info to
+					// build a complete record; otherwise the profile is created
+					// without banking info and can be filled in later.
+					applySTKBankFields(emp, row, bankID, fullName)
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 					if createErr != nil {
 						slog.Error("BCCImport: failed to auto-create employee",

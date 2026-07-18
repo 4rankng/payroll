@@ -189,14 +189,15 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				var emp *domain.Employee
 				if existingEmp == nil {
 					emp = &domain.Employee{
-						Fullname:          fullName,
-						CCCD:              cccd,
-						BankAccountNumber: row.BankAccount,
-						BankAccountName:   strings.ToUpper(fullName),
-						BankID:            bankID,
-						Mobile:            row.Mobile,
-						CreatedBy:         uploaderID,
+						Fullname:  fullName,
+						CCCD:      cccd,
+						Mobile:    row.Mobile,
+						CreatedBy: uploaderID,
 					}
+					// Attach bank fields only when STK provides enough info to
+					// build a complete record; otherwise the profile is created
+					// without banking info and can be filled in later.
+					applySTKBankFields(emp, row, bankID, fullName)
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 					if createErr != nil {
 						blockedEmployeeCCCDs[cccd] = struct{}{}
@@ -361,11 +362,13 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						}
 						// Fill bank info from STK if available.
 						if stkRow := findSTKRow(stkRows, m.cccd); stkRow != nil {
-							emp.BankAccountNumber = stkRow.BankAccount
-							emp.BankAccountName = strings.ToUpper(m.fullName)
+							// Resolve bank id first so applySTKBankFields can decide
+							// whether the row has enough info for a complete record.
+							var stkBankID *uint
 							if stkRow.BankName != "" {
-								emp.BankID = s.employeeService.ResolveBankID(txCtx, stkRow.BankName)
+								stkBankID = s.employeeService.ResolveBankID(txCtx, stkRow.BankName)
 							}
+							applySTKBankFields(emp, *stkRow, stkBankID, m.fullName)
 							if stkRow.Mobile != "" {
 								emp.Mobile = stkRow.Mobile
 							}

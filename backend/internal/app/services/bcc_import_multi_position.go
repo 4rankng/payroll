@@ -145,14 +145,15 @@ func (s *BCCImportService) processMultiPositionUpload(
 				var emp *domain.Employee
 				if existingEmp == nil {
 					emp = &domain.Employee{
-						Fullname:          fullName,
-						CCCD:              cccd,
-						BankAccountNumber: row.BankAccount,
-						BankAccountName:   strings.ToUpper(fullName),
-						BankID:            bankID,
-						Mobile:            row.Mobile,
-						CreatedBy:         uploaderID,
+						Fullname:  fullName,
+						CCCD:      cccd,
+						Mobile:    row.Mobile,
+						CreatedBy: uploaderID,
 					}
+					// Attach bank fields only when STK provides enough info to
+					// build a complete record; otherwise the profile is created
+					// without banking info and can be filled in later.
+					applySTKBankFields(emp, row, bankID, fullName)
 					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
 					if createErr != nil {
 						importErrors = append(importErrors, domain.ImportError{
