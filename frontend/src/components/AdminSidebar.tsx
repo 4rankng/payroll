@@ -21,6 +21,7 @@ import {
   Activity,
   Clock,
   ClipboardList,
+  ReceiptText,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,7 @@ const menuItems: MenuItem[] = [
   { title: "Nhân viên", icon: Users, path: "/admin/employees", group: "quan-ly" },
   { title: "Bảng công", icon: Calendar, path: "/admin/timesheet", group: "quan-ly" },
   { title: "Ứng lương", icon: HandCoins, path: "/admin/advance-payments", group: "quan-ly" },
+  { title: "Lịch sử trả lương", icon: ReceiptText, path: "/admin/payment-history", group: "tai-chinh" },
   { title: "Sổ Cái", icon: BookOpen, path: "/admin/ledger", group: "tai-chinh" },
   { title: "Khoản vay", icon: Landmark, path: "/admin/loans", group: "tai-chinh" },
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },

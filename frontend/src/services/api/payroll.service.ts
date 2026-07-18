@@ -4,6 +4,8 @@ import { extractFilenameFromHeaders } from '@/utils/file-download';
 import type {
   PaymentHistoryFilters,
   PaymentHistoryListResponse,
+  BankTransferHistoryFilters,
+  BankTransferHistoryListResponse,
 } from '@/types/api/payroll.types';
 
 export interface PaymentHistoryExportParams {
@@ -12,6 +14,16 @@ export interface PaymentHistoryExportParams {
 }
 
 class PayrollService {
+  async getBankTransferHistories(
+    filters: BankTransferHistoryFilters,
+  ): Promise<BankTransferHistoryListResponse> {
+    const queryString = buildQueryString(filters);
+    const response = await apiClient.get<BankTransferHistoryListResponse>(
+      `${API_ENDPOINTS.payrolls.bankTransferHistories}${queryString}`,
+    );
+    return response as unknown as BankTransferHistoryListResponse;
+  }
+
   /**
    * Get paginated list of payment histories
    */

@@ -113,6 +113,7 @@ func setupPayrollRoutes(protected *gin.RouterGroup, container *Container) {
 		payrolls.GET("/bulk-transfer-upload-histories/:id", container.Handlers.Payroll.GetBulkTransferUploadHistoryByID)
 		payrolls.GET("/bulk-transfer-upload-histories/:id/download", container.Handlers.Payroll.DownloadBulkTransferHistoryFile)
 		payrolls.GET("/histories", container.Handlers.Payroll.GetPayrollHistories)
+		payrolls.GET("/bank-transfer-histories", container.Handlers.Payroll.GetBankTransferHistories)
 		payrolls.POST("/histories/export", container.Handlers.Payroll.ExportPayrollHistories)
 	}
 }

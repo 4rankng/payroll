@@ -28,6 +28,7 @@ const SystemHealthPage = lazy(() => import("./pages/admin/SystemHealthPage"));
 const CronHealthPage = lazy(() => import("./pages/admin/CronHealthPage"));
 const PayrateEditPage = lazy(() => import("./pages/admin/PayrateEditPage"));
 const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage"));
+const AdminPaymentHistoryPage = lazy(() => import("./pages/admin/PaymentHistoryPage"));
 
 // Admin Mobile Pages (lazy-loaded)
 const AdminDashboardMobile = lazy(() => import("./pages/mobile/admin/DashboardPage"));
@@ -54,12 +55,12 @@ const PartnerProjectsPage = lazy(() => import("./pages/partner/ProjectsPage"));
 const PartnerEmployeesPage = lazy(() => import("./pages/partner/EmployeesPage"));
 const PartnerTimesheetsPage = lazy(() => import("./pages/partner/TimesheetsPage"));
 const PartnerDashboardPage = lazy(() => import("./pages/partner/DashboardPage"));
+const PartnerPaymentHistoryPage = lazy(() => import("./pages/partner/PaymentHistoryPage"));
 
 // Partner Mobile Pages (lazy-loaded)
 const PartnerProjectsPageMobile = lazy(() => import("./pages/mobile/partner/ProjectsPage"));
 const PartnerEmployeesPageMobile = lazy(() => import("./pages/mobile/partner/EmployeesPage"));
 const PartnerTimesheetsPageMobile = lazy(() => import("./pages/mobile/partner/TimesheetsPage"));
-const PartnerPaymentHistoryPageMobile = lazy(() => import("./pages/mobile/partner/TimesheetsPage/PaymentHistoryPage"));
 const PartnerDashboardMobile = lazy(() => import("./pages/mobile/partner/DashboardPage"));
 
 // Adv Partner Desktop Pages (lazy-loaded)
@@ -249,6 +250,7 @@ const AppContent = () => {
           <Route path="projects" element={<ResponsivePage desktopComponent={ProjectsPage} mobileComponent={ProjectsPageMobile} />} />
           <Route path="employees" element={<ResponsivePage desktopComponent={EmployeesPage} mobileComponent={EmployeesPageMobile} />} />
           <Route path="timesheet" element={<ResponsivePage desktopComponent={TimesheetPage} mobileComponent={TimesheetPageMobile} />} />
+          <Route path="payment-history" element={<AdminPaymentHistoryPage />} />
           <Route path="timesheets" element={<Navigate to="/admin/timesheet" replace />} />
           <Route path="transactions" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={TransactionsPageMobile} />} />
           <Route path="ledger" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={LedgerEntriesPageMobile} />} />
@@ -277,7 +279,7 @@ const AppContent = () => {
           <Route path="projects" element={<ResponsivePage desktopComponent={PartnerProjectsPage} mobileComponent={PartnerProjectsPageMobile} />} />
           <Route path="employees" element={<ResponsivePage desktopComponent={PartnerEmployeesPage} mobileComponent={PartnerEmployeesPageMobile} />} />
           <Route path="timesheet" element={<ResponsivePage desktopComponent={PartnerTimesheetsPage} mobileComponent={PartnerTimesheetsPageMobile} />} />
-          <Route path="timesheet/payment-history" element={<PartnerPaymentHistoryPageMobile />} />
+          <Route path="timesheet/payment-history" element={<PartnerPaymentHistoryPage />} />
           <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
         </Route>
 

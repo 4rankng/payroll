@@ -135,6 +135,20 @@ func (r *BulkTransferFileRepository) ListWithFilters(ctx context.Context, cycle 
 	return files, total, err
 }
 
+// ListWeeklyForWorkMonth returns bounded weekly batch data for one work month.
+// Completion is evaluated per stored transaction row by the application service.
+func (r *BulkTransferFileRepository) ListWeeklyForWorkMonth(ctx context.Context, monthStart, monthEnd time.Time) ([]*domain.BulkTransferFile, error) {
+	var files []*domain.BulkTransferFile
+	err := r.DB.WithContext(ctx).
+		Where("cycle = ?", "weekly").
+		Where(r.DB.Where("from_date >= ? AND from_date <= ?", monthStart, monthEnd).
+			Or("asset_id IS NOT NULL")).
+		Where("data IS NOT NULL AND data != '' AND data != '{}' ").
+		Order("from_date DESC, created_at DESC").
+		Find(&files).Error
+	return files, err
+}
+
 func (r *BulkTransferFileRepository) FindByTimesheetIDs(ctx context.Context, timesheetIDs []uint) (*domain.BulkTransferFile, error) {
 	if len(timesheetIDs) == 0 {
 		return nil, domain.NewValidationError("không có timesheet để đối soát")

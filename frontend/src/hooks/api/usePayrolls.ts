@@ -3,7 +3,8 @@ import { bulkTransferService, type BulkTransferExportParams, type BulkTransferRe
 import { timesheetService } from '@/services/api/timesheet.service';
 import { payrollService, type PaymentHistoryExportParams } from '@/services/api/payroll.service';
 import { showSuccessNotification } from '@/utils/error-handler';
-import type { PaymentHistoryFilters } from '@/types/api/payroll.types';
+import type { BankTransferHistoryFilters, PaymentHistoryFilters } from '@/types/api/payroll.types';
+import { bankTransferHistoriesKey } from '@/lib/queryKeys';
 import type { SettlementSimulationRequest, SettlementSimulationResult } from '@/types/api/settlement-simulation.types';
 
 /**
@@ -156,6 +157,14 @@ export const usePaymentHistories = (filters?: PaymentHistoryFilters) => {
     queryKey: ['payment-histories', filters],
     queryFn: () => payrollService.getPaymentHistories(filters),
     enabled: filters !== undefined,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useBankTransferHistories = (filters: BankTransferHistoryFilters) => {
+  return useQuery({
+    queryKey: bankTransferHistoriesKey(filters as Record<string, unknown>),
+    queryFn: () => payrollService.getBankTransferHistories(filters),
     refetchOnWindowFocus: true,
   });
 };

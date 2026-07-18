@@ -187,6 +187,44 @@ type ListPayrollHistoriesResponse struct {
 	Pagination PaginationResponse   `json:"pagination"`
 }
 
+// ListBankTransferHistoriesRequest filters completed weekly bank transfers.
+type ListBankTransferHistoriesRequest struct {
+	Month      string `form:"month"` // YYYY-MM work month; defaults to current month
+	Cycle      int    `form:"cycle" binding:"omitempty,min=1,max=4"`
+	ProjectID  []uint `form:"projectId"`
+	EmployeeID []uint `form:"employeeId"`
+	Search     string `form:"search"`
+	Page       int    `form:"page,default=1" binding:"min=1"`
+	PageSize   int    `form:"pageSize,default=20" binding:"min=1,max=100"`
+}
+
+// BankTransferHistoryTransfer is one completed bank posting in an employee cycle.
+type BankTransferHistoryTransfer struct {
+	BankReference string `json:"bank_reference"`
+	Amount        int64  `json:"amount"`
+	PaidAt        string `json:"paid_at,omitempty"`
+}
+
+// BankTransferHistoryItem groups completed postings by employee and fixed weekly cycle.
+type BankTransferHistoryItem struct {
+	EmployeeID   uint                          `json:"employee_id"`
+	EmployeeName string                        `json:"employee_name"`
+	ProjectIDs   []uint                        `json:"project_ids"`
+	ProjectNames []string                      `json:"project_names"`
+	WorkMonth    string                        `json:"work_month"`
+	Cycle        int                           `json:"cycle"`
+	FromDate     string                        `json:"from_date"`
+	ToDate       string                        `json:"to_date"`
+	PaymentDate  string                        `json:"payment_date"`
+	TotalAmount  int64                         `json:"total_amount"`
+	Transfers    []BankTransferHistoryTransfer `json:"transfers"`
+}
+
+type ListBankTransferHistoriesResponse struct {
+	Data       []BankTransferHistoryItem `json:"data"`
+	Pagination PaginationResponse        `json:"pagination"`
+}
+
 // BulkTransferSuccessfulPayment represents a single successful payment in the bulk transfer result
 type BulkTransferSuccessfulPayment struct {
 	Amount                string `json:"amount"`

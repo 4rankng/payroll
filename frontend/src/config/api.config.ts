@@ -150,6 +150,7 @@ export const API_ENDPOINTS = {
     base: '/payrolls',
     byId: (id: number) => `/payrolls/${id}`,
     histories: '/payrolls/histories',
+    bankTransferHistories: '/payrolls/bank-transfer-histories',
     exportHistories: '/payrolls/histories/export',
     bulkTransferTemplate: '/payrolls/bulk-transfer-template',
     exportBulkTransfer: '/payrolls/export-bulk-transfer',

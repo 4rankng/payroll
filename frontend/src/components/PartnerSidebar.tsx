@@ -10,6 +10,7 @@ import {
   ChevronUp,
   LayoutDashboard,
   Bell,
+  ReceiptText,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,8 @@ const menuItems = [
   { title: "Tổng quan", icon: LayoutDashboard, path: "/partner/dashboard", end: true },
   { title: "Dự án", icon: Briefcase, path: "/partner/projects", end: false },
   { title: "Nhân viên", icon: Users, path: "/partner/employees" },
-  { title: "Bảng công", icon: Calendar, path: "/partner/timesheet" },
+  { title: "Bảng công", icon: Calendar, path: "/partner/timesheet", end: true },
+  { title: "Lịch sử trả lương", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
 ];
 
 interface NavItemProps {

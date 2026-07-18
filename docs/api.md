@@ -84,7 +84,22 @@ advisory and cannot initiate a top-up or payment.
 
 ### Payrolls (`/api/v1/payrolls`)
 
-Payroll calculation and disbursement.
+Payroll calculation, disbursement, and the Admin/Partner read-only bank transfer history screen.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/bank-transfer-histories` | Read-only completed bank transfers grouped by employee and fixed weekly cycle; supports `month`, `cycle`, `projectId`, `employeeId`, `search`, `page`, and `pageSize` query filters |
+
+Fixed weekly cycle windows:
+
+| Cycle | Window |
+|-------|--------|
+| 1 | Days 1-7 |
+| 2 | Days 8-14 |
+| 3 | Days 15-21 |
+| 4 | Days 22-28 |
+
+The history response is intentionally read-only and history-only. It returns completed transfer rows grouped by employee and cycle, including each bank reference number and amount, the cycle window, payment date, total amount, and pagination. Partner access is filtered to accessible projects server-side.
 
 ### Payrates (`/api/v1/payrates`)
 

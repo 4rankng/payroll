@@ -80,6 +80,10 @@ export function pendingScheduleChangesKey() {
   return ['project-employees', 'pending-schedule-changes'] as const;
 }
 
+export function bankTransferHistoriesKey(filters: Record<string, unknown>) {
+  return ['payrolls', 'bank-transfer-histories', filters] as const;
+}
+
 
 // ========== QUERY KEY PREDICATES ==========
 

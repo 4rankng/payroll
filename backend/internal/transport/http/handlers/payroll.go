@@ -396,6 +396,36 @@ func (h *PayrollHandler) GetPayrollHistories(c *gin.Context) {
 	response.SuccessWithPagination(c, result.Data, message, pagination)
 }
 
+// GetBankTransferHistories retrieves completed bank postings grouped by employee and weekly cycle.
+func (h *PayrollHandler) GetBankTransferHistories(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+		return
+	}
+	userRole, exists := c.Get(constants.CtxUserRole)
+	if !exists {
+		response.Forbidden(c, constants.MsgUserRoleNotFoundInContextVN)
+		return
+	}
+	var req dto.ListBankTransferHistoriesRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.BadRequest(c, constants.MsgInvalidRequestBodyVN)
+		return
+	}
+	result, err := h.payrollService.GetBankTransferHistories(c.Request.Context(), &req, userID.(uint), userRole.(string))
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.SuccessWithPagination(c, result.Data, constants.MsgDataRetrievedSuccessfullyVN, response.Pagination{
+		Page:         result.Pagination.Page,
+		PageSize:     result.Pagination.PageSize,
+		TotalPages:   result.Pagination.TotalPages,
+		TotalRecords: int(result.Pagination.TotalRecords),
+	})
+}
+
 // ExportPayrollHistories exports payroll histories to Excel with multiple sheets
 func (h *PayrollHandler) ExportPayrollHistories(c *gin.Context) {
 	// Get user info from context

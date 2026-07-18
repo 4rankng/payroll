@@ -5,8 +5,11 @@ import (
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/timeutil"
 	"context"
+	"encoding/json"
 	"fmt"
 	"mime/multipart"
+	"sort"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -23,11 +26,19 @@ import (
 )
 
 // PayrollService provides bulk transfer functionality
+type bankTransferHistoryFileRepository interface {
+	ListWeeklyForWorkMonth(ctx context.Context, monthStart, monthEnd time.Time) ([]*domain.BulkTransferFile, error)
+}
+
 type PayrollService struct {
-	bulkTransferService *bulktransfer.Service
-	excelService        *excel.Service
-	timesheetRepo       domain.TimesheetRepository
-	simulationService   *SettlementSimulationService
+	bulkTransferService     *bulktransfer.Service
+	excelService            *excel.Service
+	timesheetRepo           domain.TimesheetRepository
+	employeeRepo            domain.EmployeeRepository
+	projectRepo             domain.ProjectRepository
+	bankTransferHistoryRepo bankTransferHistoryFileRepository
+	transactionCodeRepo     domain.TransactionCodeRepository
+	simulationService       *SettlementSimulationService
 }
 
 // SetSimulationService wires the settlement-simulation service. Called from
@@ -96,11 +107,16 @@ func NewPayrollService(
 
 	// Create bulk transfer service with config (18 params → 1)
 	bulkTransferService := bulktransfer.NewService(bulkTransferConfig)
+	bankTransferHistoryRepo, _ := bulkTransferFileRepo.(bankTransferHistoryFileRepository)
 
 	return &PayrollService{
-		bulkTransferService: bulkTransferService,
-		excelService:        excelService,
-		timesheetRepo:       timesheetRepo,
+		bulkTransferService:     bulkTransferService,
+		excelService:            excelService,
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		bankTransferHistoryRepo: bankTransferHistoryRepo,
+		transactionCodeRepo:     transactionCodeRepo,
 	}
 }
 
@@ -255,6 +271,302 @@ func (s *PayrollService) GetPayrollHistories(ctx context.Context, req *dto.ListP
 			TotalRecords: totalCount,
 		},
 	}, nil
+}
+
+// GetBankTransferHistories returns completed bank postings grouped by employee and weekly cycle.
+func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.ListBankTransferHistoriesRequest, userID uint, userRole string) (*dto.ListBankTransferHistoriesResponse, error) {
+	workMonth := clock.Now()
+	if req.Month != "" {
+		parsed, err := time.ParseInLocation("2006-01", req.Month, clock.DefaultLocation)
+		if err != nil {
+			return nil, domain.NewValidationError("Tháng không hợp lệ, định dạng đúng là YYYY-MM")
+		}
+		workMonth = parsed
+	}
+	monthStart := time.Date(workMonth.Year(), workMonth.Month(), 1, 0, 0, 0, 0, clock.DefaultLocation)
+	monthEnd := time.Date(workMonth.Year(), workMonth.Month(), 28, 23, 59, 59, 0, clock.DefaultLocation)
+
+	allowedProjects := make(map[uint]struct{})
+	if userRole != "admin" {
+		projects, err := s.projectRepo.List(ctx, domain.ProjectFilters{AccessibleBy: &userID, Limit: -1})
+		if err != nil {
+			return nil, err
+		}
+		for _, project := range projects {
+			allowedProjects[project.ID] = struct{}{}
+		}
+	}
+	requestedProjects := make(map[uint]struct{}, len(req.ProjectID))
+	for _, id := range req.ProjectID {
+		requestedProjects[id] = struct{}{}
+	}
+	requestedEmployees := make(map[uint]struct{}, len(req.EmployeeID))
+	for _, id := range req.EmployeeID {
+		requestedEmployees[id] = struct{}{}
+	}
+
+	if s.bankTransferHistoryRepo == nil {
+		return nil, domain.NewInternalError("Không thể tải lịch sử chuyển khoản", fmt.Errorf("bank transfer history repository is not configured"))
+	}
+	files, err := s.bankTransferHistoryRepo.ListWeeklyForWorkMonth(ctx, monthStart, monthEnd)
+	if err != nil {
+		return nil, err
+	}
+
+	type aggregate struct {
+		item       dto.BankTransferHistoryItem
+		projectSet map[uint]struct{}
+		refSet     map[string]struct{}
+	}
+	aggregates := make(map[string]*aggregate)
+	employeeIDs := make(map[uint]struct{})
+	projectIDs := make(map[uint]struct{})
+	parsedByFile := make(map[uint][]dto.BulkTransferFileData, len(files))
+	transactionCodes := make([]string, 0)
+	for _, file := range files {
+		entries, parseErr := dto.ParseBulkTransferFileData(file.Data)
+		if parseErr != nil {
+			continue
+		}
+		parsedByFile[file.ID] = entries
+		for _, entry := range entries {
+			if entry.TransactionCode != "" {
+				transactionCodes = append(transactionCodes, entry.TransactionCode)
+			}
+		}
+	}
+	codeRows, err := s.transactionCodeRepo.FindByCodes(ctx, transactionCodes)
+	if err != nil {
+		return nil, err
+	}
+	codeData := make(map[string]domain.TransactionCodeData, len(codeRows))
+	timesheetIDSet := make(map[uint]struct{})
+	for _, row := range codeRows {
+		var data domain.TransactionCodeData
+		if json.Unmarshal(row.Data, &data) != nil || data.WeeklyPay == nil {
+			continue
+		}
+		codeData[row.Code] = data
+		for _, id := range data.WeeklyPay.TimesheetIDs {
+			timesheetIDSet[id] = struct{}{}
+		}
+	}
+	timesheetIDs := make([]uint, 0, len(timesheetIDSet))
+	for id := range timesheetIDSet {
+		timesheetIDs = append(timesheetIDs, id)
+	}
+	timesheets := []*domain.Timesheet{}
+	if len(timesheetIDs) > 0 {
+		timesheets, err = s.timesheetRepo.GetByIDs(ctx, timesheetIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	timesheetMap := make(map[uint]*domain.Timesheet, len(timesheets))
+	for _, timesheet := range timesheets {
+		timesheetMap[timesheet.ID] = timesheet
+	}
+
+	for _, file := range files {
+		entries := parsedByFile[file.ID]
+		for _, entry := range entries {
+			ref := strings.TrimSpace(entry.BankTxnRef)
+			if entry.TransferStatus != "completed" || ref == "" || entry.Amount <= 0 {
+				continue
+			}
+			entryEmployeeID := entry.EmployeeID
+			entryProjectID := entry.ProjectID
+			weeklyData := codeData[entry.TransactionCode].WeeklyPay
+			if weeklyData != nil {
+				if entryEmployeeID == 0 {
+					entryEmployeeID = weeklyData.EmployeeID
+				}
+				if entryProjectID == 0 {
+					entryProjectID = weeklyData.ProjectID
+				}
+			}
+			if entryEmployeeID == 0 || entryProjectID == 0 {
+				continue
+			}
+			cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(file, weeklyData, timesheetMap, monthStart)
+			if !ok || (req.Cycle != 0 && req.Cycle != cycle) {
+				continue
+			}
+			if userRole != "admin" {
+				if _, ok := allowedProjects[entryProjectID]; !ok {
+					continue
+				}
+			}
+			if len(requestedProjects) > 0 {
+				if _, ok := requestedProjects[entryProjectID]; !ok {
+					continue
+				}
+			}
+			if len(requestedEmployees) > 0 {
+				if _, ok := requestedEmployees[entryEmployeeID]; !ok {
+					continue
+				}
+			}
+
+			key := fmt.Sprintf("%s:%d:%d", monthStart.Format("2006-01"), cycle, entryEmployeeID)
+			agg := aggregates[key]
+			if agg == nil {
+				payDate := clock.PayDate(cycle, monthStart.Year(), monthStart.Month())
+				agg = &aggregate{
+					item: dto.BankTransferHistoryItem{
+						EmployeeID:  entryEmployeeID,
+						WorkMonth:   monthStart.Format("2006-01"),
+						Cycle:       cycle,
+						FromDate:    fromDate.Format("2006-01-02"),
+						ToDate:      toDate.Format("2006-01-02"),
+						PaymentDate: payDate.Format("2006-01-02"),
+						Transfers:   []dto.BankTransferHistoryTransfer{},
+					},
+					projectSet: make(map[uint]struct{}),
+					refSet:     make(map[string]struct{}),
+				}
+				aggregates[key] = agg
+			}
+			transferKey := strings.ToUpper(ref)
+			if _, duplicate := agg.refSet[transferKey]; duplicate {
+				continue
+			}
+			agg.refSet[transferKey] = struct{}{}
+			agg.projectSet[entryProjectID] = struct{}{}
+			agg.item.TotalAmount += entry.Amount
+			paidAt := ""
+			if entry.UploadedAt != nil {
+				paidAt = *entry.UploadedAt
+			}
+			agg.item.Transfers = append(agg.item.Transfers, dto.BankTransferHistoryTransfer{
+				BankReference: ref,
+				Amount:        entry.Amount,
+				PaidAt:        paidAt,
+			})
+			employeeIDs[entryEmployeeID] = struct{}{}
+			projectIDs[entryProjectID] = struct{}{}
+		}
+	}
+	if len(aggregates) == 0 {
+		return emptyBankTransferHistory(req), nil
+	}
+
+	employeeIDList := make([]int64, 0, len(employeeIDs))
+	for id := range employeeIDs {
+		employeeIDList = append(employeeIDList, int64(id))
+	}
+	employees, err := s.employeeRepo.GetByIDs(ctx, employeeIDList)
+	if err != nil {
+		return nil, err
+	}
+	employeeMap := make(map[uint]*domain.Employee, len(employees))
+	for _, employee := range employees {
+		employeeMap[employee.ID] = employee
+	}
+	projectIDList := make([]uint, 0, len(projectIDs))
+	for id := range projectIDs {
+		projectIDList = append(projectIDList, id)
+	}
+	projects, err := s.projectRepo.GetByIDs(ctx, projectIDList)
+	if err != nil {
+		return nil, err
+	}
+
+	search := strings.ToLower(strings.TrimSpace(req.Search))
+	items := make([]dto.BankTransferHistoryItem, 0, len(aggregates))
+	for _, agg := range aggregates {
+		if employee := employeeMap[agg.item.EmployeeID]; employee != nil {
+			agg.item.EmployeeName = employee.Fullname
+		}
+		if search != "" && !strings.Contains(strings.ToLower(agg.item.EmployeeName), search) && !historyTransfersContain(agg.item.Transfers, search) {
+			continue
+		}
+		for id := range agg.projectSet {
+			agg.item.ProjectIDs = append(agg.item.ProjectIDs, id)
+			if project := projects[id]; project != nil {
+				agg.item.ProjectNames = append(agg.item.ProjectNames, project.Name)
+			}
+		}
+		sort.Slice(agg.item.Transfers, func(i, j int) bool { return agg.item.Transfers[i].BankReference < agg.item.Transfers[j].BankReference })
+		sort.Slice(agg.item.ProjectIDs, func(i, j int) bool { return agg.item.ProjectIDs[i] < agg.item.ProjectIDs[j] })
+		sort.Strings(agg.item.ProjectNames)
+		items = append(items, agg.item)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Cycle != items[j].Cycle {
+			return items[i].Cycle > items[j].Cycle
+		}
+		return items[i].EmployeeName < items[j].EmployeeName
+	})
+
+	total := len(items)
+	start := (req.Page - 1) * req.PageSize
+	if start > total {
+		start = total
+	}
+	end := start + req.PageSize
+	if end > total {
+		end = total
+	}
+	totalPages := 0
+	if total > 0 {
+		totalPages = (total + req.PageSize - 1) / req.PageSize
+	}
+	return &dto.ListBankTransferHistoriesResponse{
+		Data:       items[start:end],
+		Pagination: dto.PaginationResponse{Page: req.Page, PageSize: req.PageSize, TotalPages: totalPages, TotalRecords: int64(total)},
+	}, nil
+}
+
+func fixedWeeklyCycle(fromDate, toDate time.Time) (int, bool) {
+	starts := []int{0, 1, 8, 15, 22}
+	ends := []int{0, 7, 14, 21, 28}
+	if fromDate.Year() != toDate.Year() || fromDate.Month() != toDate.Month() {
+		return 0, false
+	}
+	for cycle := 1; cycle <= 4; cycle++ {
+		if fromDate.Day() == starts[cycle] && toDate.Day() == ends[cycle] {
+			return cycle, true
+		}
+	}
+	return 0, false
+}
+
+func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain.CyclePayData, timesheets map[uint]*domain.Timesheet, workMonth time.Time) (int, time.Time, time.Time, bool) {
+	if file.FromDate != nil && file.ToDate != nil {
+		if cycle, ok := fixedWeeklyCycle(*file.FromDate, *file.ToDate); ok && file.FromDate.Year() == workMonth.Year() && file.FromDate.Month() == workMonth.Month() {
+			return cycle, file.FromDate.In(clock.DefaultLocation), file.ToDate.In(clock.DefaultLocation), true
+		}
+	}
+	if weeklyData == nil {
+		return 0, time.Time{}, time.Time{}, false
+	}
+	for _, id := range weeklyData.TimesheetIDs {
+		timesheet := timesheets[id]
+		if timesheet == nil || timesheet.Date.Year() != workMonth.Year() || timesheet.Date.Month() != workMonth.Month() || timesheet.Date.Day() > 28 {
+			continue
+		}
+		cycle := clock.KyFromWorkDay(timesheet.Date.Day())
+		fromDate := time.Date(workMonth.Year(), workMonth.Month(), clock.WorkStartDay(cycle), 0, 0, 0, 0, clock.DefaultLocation)
+		return cycle, fromDate, fromDate.AddDate(0, 0, 6), true
+	}
+	return 0, time.Time{}, time.Time{}, false
+}
+
+func emptyBankTransferHistory(req *dto.ListBankTransferHistoriesRequest) *dto.ListBankTransferHistoriesResponse {
+	return &dto.ListBankTransferHistoriesResponse{
+		Data:       []dto.BankTransferHistoryItem{},
+		Pagination: dto.PaginationResponse{Page: req.Page, PageSize: req.PageSize, TotalPages: 0, TotalRecords: 0},
+	}
+}
+
+func historyTransfersContain(transfers []dto.BankTransferHistoryTransfer, search string) bool {
+	for _, transfer := range transfers {
+		if strings.Contains(strings.ToLower(transfer.BankReference), search) {
+			return true
+		}
+	}
+	return false
 }
 
 // ExportPayrollHistories exports payroll histories to Excel with multiple sheets per project

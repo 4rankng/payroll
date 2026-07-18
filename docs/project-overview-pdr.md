@@ -45,6 +45,7 @@ Vietnamese construction companies manage workers across multiple projects with c
 - IPN (Instant Payment Notification) webhook handling with IP whitelist
 - Disbursement polling for status tracking
 - Fee charged only at transfer execution (zero on preflight)
+- Read-only bank transfer history screen for Admin and Partner roles, grouped by employee and fixed weekly cycle, showing completed transfer references and amounts only
 
 ### Attendance & Check-In/Out
 - Employee self check-in/out with GPS geofence validation

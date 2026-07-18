@@ -82,6 +82,7 @@ p, partner, /api/v1/dashboard/*, GET, allow
 
 # Payrolls - limited access
 p, partner, /api/v1/payrolls/histories, GET, allow
+p, partner, /api/v1/payrolls/bank-transfer-histories, GET, allow
 p, partner, /api/v1/payrolls/histories/export, POST, allow
 p, partner, /api/v1/payrolls/bulk-transfer-template, GET, allow
 

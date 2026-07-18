@@ -35,3 +35,45 @@ export interface PaymentHistoryListResponse {
     totalRecords: number;
   };
 }
+
+export interface BankTransferHistoryTransfer {
+  bank_reference: string;
+  amount: number;
+  paid_at?: string;
+}
+
+export interface BankTransferHistory {
+  employee_id: number;
+  employee_name: string;
+  project_ids: number[];
+  project_names: string[];
+  work_month: string;
+  cycle: 1 | 2 | 3 | 4;
+  from_date: string;
+  to_date: string;
+  payment_date: string;
+  total_amount: number;
+  transfers: BankTransferHistoryTransfer[];
+}
+
+export interface BankTransferHistoryFilters {
+  month?: string;
+  cycle?: number;
+  projectId?: number[];
+  employeeId?: number[];
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface BankTransferHistoryListResponse {
+  status: string;
+  message: string;
+  data: BankTransferHistory[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalRecords: number;
+  };
+}
