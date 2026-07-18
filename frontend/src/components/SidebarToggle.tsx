@@ -19,9 +19,9 @@ export const SidebarToggle = ({ className }: { className?: string }) => {
       className={cn(
         "admin-toggle-tab fixed z-50 top-5",
         "flex items-center justify-center",
-        "h-10 w-3 rounded-r-xl border border-l-0",
-        "before:absolute before:-inset-y-1 before:-left-4 before:-right-[17px] before:content-['']",
-        "hover:text-white",
+        "h-10 w-6 -translate-x-px rounded-r-xl border border-l-0 border-white/15 bg-[#263d33] text-white/75 shadow-sm",
+        "before:absolute before:-inset-y-1 before:-left-3 before:-right-3 before:content-['']",
+        "hover:bg-[#315042] hover:text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
         "transition-[left,background-color,color] duration-200 ease-in-out",
         className

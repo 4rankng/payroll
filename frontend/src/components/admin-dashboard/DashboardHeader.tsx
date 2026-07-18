@@ -43,7 +43,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
   return (
     <PageHeader
       title="Tổng quan"
-      description="Sổ lương công trường theo kỳ, ưu tiên ngoại lệ và dòng tiền cần xử lý"
+      description="Theo dõi số liệu vận hành, nhân sự và tài chính theo kỳ"
     >
       <div className="admin-dashboard-header flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button

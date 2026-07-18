@@ -78,7 +78,7 @@ const menuItems: MenuItem[] = [
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },
   { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health", group: "he-thong" },
   { title: "Nhật ký", icon: ClipboardList, path: "/admin/audit-log", group: "he-thong" },
-  { title: "Cài Đặt", icon: Settings, path: "/admin/settings", group: "he-thong" },
+  { title: "Cài đặt", icon: Settings, path: "/admin/settings", group: "he-thong" },
   { title: "Quản lý ví", icon: Wallet, path: "/admin/wallet", group: "tai-chinh" },
 ];
 
@@ -110,10 +110,10 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "h-9 px-2.5",
+            : "h-11 px-2.5 lg:h-9",
           isActive
             ? "bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--admin-accent)/0.15)]"
-            : "text-white/50 hover:bg-card/10 hover:text-white/80 hover:translate-x-0.5"
+            : "text-white/65 hover:bg-card/10 hover:text-white/90 hover:translate-x-0.5"
         )}
       >
         {/* Gliding active pill — slides in with a scale animation */}
@@ -209,10 +209,10 @@ const NavGroup = React.memo(
         <button
           type="button"
           onClick={() => onToggle(groupKey)}
-          className="flex items-center w-full px-2.5 py-1 mt-4 select-none cursor-pointer group/label"
+          className="mt-4 flex min-h-11 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label lg:min-h-0"
           aria-expanded={isExpanded}
         >
-          <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/50 group-hover/label:text-white/70 transition-colors">
+          <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/65 group-hover/label:text-white/85 transition-colors">
             {label}
           </span>
           <ChevronDown
@@ -447,7 +447,7 @@ const AdminSidebar = () => {
                   "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
                   "bg-card/[0.04] border border-white/[0.06]",
                   "hover:bg-card/[0.08] hover:border-white/[0.1]",
-                  isCollapsed ? "h-9 w-9 justify-center mx-auto" : "h-auto min-h-[40px] px-2.5 py-2 gap-2.5"
+                  isCollapsed ? "h-9 w-9 justify-center mx-auto" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
                 )}
               >
                 {isCollapsed && user && (
@@ -458,7 +458,7 @@ const AdminSidebar = () => {
                 {!isCollapsed && user && (
                   <>
                     <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-[10px] text-white/45 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                      <span className="text-[10px] text-white/60 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
                       <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
                     </div>
                     <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/45" />

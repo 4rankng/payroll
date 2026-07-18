@@ -78,7 +78,7 @@ function DashboardLedgerPanel({
   return (
     <section
       className={cn(
-        'admin-dashboard-panel rounded-[28px] border border-border/70 bg-white shadow-sm',
+        'admin-dashboard-panel rounded-2xl border border-border/70 bg-white shadow-sm',
         className,
       )}
     >
@@ -103,7 +103,7 @@ function AttentionAction({ title, detail, value, icon: Icon, tone, onClick }: At
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        'admin-dashboard-attention-item flex min-h-11 w-full flex-col justify-between rounded-3xl border px-4 py-3 text-left transition-colors',
+        'admin-dashboard-attention-item flex min-h-11 w-full flex-col justify-between rounded-xl border px-4 py-3 text-left transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'motion-reduce:transition-none',
         TONE_CLASSES[tone],
@@ -275,9 +275,9 @@ const AdminDashboard = () => {
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
           <DashboardLedgerPanel
-            eyebrow="Sổ lương công trường"
-            title="Ngoại lệ và việc cần khóa sổ"
-            subtitle="Ưu tiên các điểm nghẽn ảnh hưởng trực tiếp đến bảng công, giải ngân và quân số đang làm."
+            eyebrow="Cần xử lý"
+            title="Việc cần xử lý"
+            subtitle="Các mục đang chờ xử lý trong bảng công, giải ngân và nhân sự."
             icon={AlertTriangle}
             actions={
               <button

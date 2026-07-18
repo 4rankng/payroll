@@ -96,7 +96,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     ) : null;
 
   const sheetSurfaceClass =
-    "admin-mobile-sheet rounded-t-[30px] border-x-0 border-b-0 px-0 pb-0 pt-0";
+    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-white/70 bg-slate-50/95 px-0 pb-0 pt-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
   const openGroupDescription =
@@ -110,7 +110,6 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         <div className="h-1.5 w-14 rounded-full bg-[hsl(var(--border))]" />
       </div>
       <SheetHeader className="px-5 pb-3 pt-4 text-left">
-        <p className="admin-kicker">Ledger shell</p>
         <SheetTitle className="text-xl font-semibold tracking-tight text-[hsl(var(--foreground))]">
           {title}
         </SheetTitle>
@@ -128,7 +127,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     <button
       key={item.title}
       className={cn(
-        "admin-mobile-tile group flex min-h-[104px] flex-col items-center justify-center gap-2 rounded-[24px] p-3 text-center transition-all touch-manipulation",
+        "admin-mobile-tile group flex min-h-[104px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-sm transition-all touch-manipulation",
         "active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
         tone === "default" &&
           isActive &&
@@ -173,7 +172,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   if (override) {
     return (
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex min-h-[64px] items-center px-4">{override.content}</div>
@@ -184,7 +183,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   return (
     <>
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >

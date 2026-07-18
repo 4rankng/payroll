@@ -94,16 +94,22 @@ const AdminLayoutInner = () => {
 const AdminLayout = () => {
   const { user } = useAuth();
   const isAdvPartner = user?.role === 'adv_partner';
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
+    if (!isAdmin) return;
     document.documentElement.classList.add("admin-route-active");
     return () => document.documentElement.classList.remove("admin-route-active");
-  }, []);
+  }, [isAdmin]);
 
   return (
     <ProtectedRoute requiredRole={["admin", "adv_partner"]}>
       <SidebarProvider defaultOpen={true}>
-        <div data-admin-ui="" data-theme="congtruong" className="admin-shell-scope">
+        <div
+          data-admin-ui={isAdmin ? "" : undefined}
+          data-theme={isAdmin ? "congtruong" : undefined}
+          className={isAdmin ? "admin-shell-scope" : "w-full min-w-0"}
+        >
           <AdminLayoutInner />
           <MobileBottomNav
             groups={isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS}

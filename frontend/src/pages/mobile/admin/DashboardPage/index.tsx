@@ -70,7 +70,7 @@ function DashboardDisclosureSection({
   return (
     <AccordionItem
       value={value}
-      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white shadow-sm"
+      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-sm"
     >
       <AccordionTrigger className="min-h-11 px-4 py-4 no-underline hover:no-underline">
         <div className="flex min-w-0 items-start gap-3 pr-2 text-left">
@@ -264,7 +264,7 @@ const AdminDashboardMobile = () => {
         }
       />
 
-      <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white">
+      <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
         <div className="flex items-center gap-1.5 overflow-x-auto px-2 py-2">
           <button
             onClick={() => setSelectedMonth('all')}
