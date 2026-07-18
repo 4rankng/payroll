@@ -15,7 +15,6 @@ import (
 	"api-server/internal/app/services/payroll/excel"
 	"api-server/internal/app/services/payroll/pdf"
 	"api-server/internal/domain"
-	"api-server/internal/pkg/clock"
 
 	"gorm.io/gorm"
 )
@@ -48,7 +47,6 @@ type Service struct {
 	notificationService *NotificationService
 	fileHistoryService  *FileHistoryService
 	resultProcessor     *ResultProcessor
-	simulationService   *SimulationService
 	assetRepo           domain.AssetRepository
 
 	// Bank result parsers (Strategy Pattern)
@@ -257,7 +255,6 @@ func NewService(cfg *Config) *Service {
 		resultProcessor:     resultProcessor,
 		resultParsers:       resultParsers,
 		assetRepo:           cfg.AssetRepository,
-		simulationService:   NewSimulationService(exportService.Planner(), cfg.LedgerService, clock.New()),
 	}
 
 	return svc
@@ -266,12 +263,6 @@ func NewService(cfg *Config) *Service {
 // ExportBulkTransfer delegates to the export service
 func (s *Service) ExportBulkTransfer(ctx context.Context, req *dto.ExportBulkTransferRequest) (*dto.ExportBulkTransferResponse, error) {
 	return s.exportService.Export(ctx, req)
-}
-
-// SimulateSettlement projects the current + next N−1 payroll cycles read-only
-// and returns a full-pool coverage verdict. Delegates to SimulationService.
-func (s *Service) SimulateSettlement(ctx context.Context, req *dto.SimulateSettlementRequest) (*dto.SimulationResult, error) {
-	return s.simulationService.Simulate(ctx, req)
 }
 
 // ProcessBulkTransferResult delegates to the result processor

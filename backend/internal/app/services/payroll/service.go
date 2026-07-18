@@ -27,6 +27,14 @@ type PayrollService struct {
 	bulkTransferService *bulktransfer.Service
 	excelService        *excel.Service
 	timesheetRepo       domain.TimesheetRepository
+	simulationService   *SettlementSimulationService
+}
+
+// SetSimulationService wires the settlement-simulation service. Called from
+// bootstrap after both PayrollService and PayrollReportByProjectService are
+// constructed (avoids bloating the NewPayrollService constructor signature).
+func (s *PayrollService) SetSimulationService(sim *SettlementSimulationService) {
+	s.simulationService = sim
 }
 
 // NewPayrollService creates a new PayrollService with only bulk transfer functionality
@@ -147,11 +155,14 @@ func (s *PayrollService) ExportBulkTransfer(ctx context.Context, req *dto.Export
 	return s.bulkTransferService.ExportBulkTransfer(ctx, req)
 }
 
-// SimulateSettlement projects the current + next N−1 payroll cycles read-only
-// and returns a full-pool coverage verdict with remainders + reconciliation.
-// Delegates to bulktransfer.Service.SimulateSettlement.
+// SimulateSettlement projects N future exports starting from a start_date and
+// returns a coverage verdict with remainders + reconciliation. Mirrors the
+// real "Xuất sao kê" selection via PayrollReportByProjectService.
 func (s *PayrollService) SimulateSettlement(ctx context.Context, req *dto.SimulateSettlementRequest) (*dto.SimulationResult, error) {
-	return s.bulkTransferService.SimulateSettlement(ctx, req)
+	if s.simulationService == nil {
+		return nil, fmt.Errorf("simulation service not configured")
+	}
+	return s.simulationService.Simulate(ctx, req)
 }
 
 // ProcessBulkTransferResult processes bulk transfer results

@@ -531,6 +531,16 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
 
+	// Wire the settlement simulation service: it reuses the production
+	// PayrollReportByProjectService (same selection logic as "Xuất sao kê")
+	// and the ledger for reconciliation.
+	payrollSvc.SetSimulationService(payroll.NewSettlementSimulationService(
+		payrollReportByProjectService,
+		repos.Timesheet,
+		ledgerService,
+		clk,
+	))
+
 	// Create auto bulk transfer service (enabled when any disbursement provider is registered)
 	var autoBulkTransferSvc *bulktransfer.NinePayBulkTransferService
 	var ninePayBatchCompletion *bulktransfer.NinePayBatchCompletionChecker

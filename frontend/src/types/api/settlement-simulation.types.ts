@@ -1,76 +1,68 @@
 // Settlement Simulation types — mirrors backend dto.SimulateSettlementRequest
 // and dto.SimulationResult (see backend/internal/app/dto/payroll.go).
 //
-// The simulation projects the current payroll cycle + next N−1 cycles
-// (Kỳ 1–4 monthly cadence) by reusing the production ExportPlanner. It
-// returns a full-pool coverage verdict: "will these N exports cover every
-// outstanding approved timesheet?" Payroll-only scope — every remainder is
-// unpaid wages (the eligible pool is payment_status IN (pending, failed) by
-// construction).
+// The simulation projects N future "Xuất sao kê" exports starting from an
+// admin-chosen date. It reuses the EXACT same PayrollReportByProjectService
+// selection logic as production (GET /timesheets/payroll/report), so whatever
+// the real export picks up, the sim picks up. Returns a coverage verdict:
+// "will these N exports reconcile every paid-but-unsettled timesheet?"
 
 export type SettlementVerdict =
-  | 'AN_TOAN_DE_XUAT' // safe to export — full pool covered, no blocking, reconciled
-  | 'CAN_KIEM_TRA' // needs review — remainders / blocking / drift
-  | 'KHONG_THE_TAT_TOAN'; // reserved — cannot fire in payroll-only scope
+  | 'AN_TOAN_DE_XUAT' // safe — full pool covered, reconciled
+  | 'CAN_KIEM_TRA'; // needs review — remainders or reconciliation drift
 
 export interface SettlementSimulationRequest {
+  start_date: string; // YYYY-MM-DD — first export date (required)
+  export_count?: number; // default 4, clamped [1,10]
+  cadence_days?: number; // default 7; step between exports
   project_ids?: number[];
   employee_ids?: number[];
-  projected_cycle_count?: number; // default 4, clamped [1,6] server-side
-  for_month?: string; // optional YYYY-MM override
 }
 
 export interface SettlementSimulationResult {
-  snapshot_epoch: string; // ISO 8601 — max(updated_at) across observed rows
-  starting_cycle: CycleMeta;
-  projected_cycle_count: number;
+  snapshot_epoch: string;
+  start_date: string;
+  export_dates: string[];
   verdict: SettlementVerdict;
   summary: SimulationSummary;
   reconciliation: ReconciliationResult;
-  cycles: CycleProjection[];
+  exports: ExportProjection[];
   remainders: RemainderRow[];
   warnings: SimWarning[];
 }
 
-export interface CycleMeta {
-  index: number; // 1..4
-  month_ref: string; // YYYY-MM-DD (first of month)
-  from_date: string;
-  to_date: string;
-  pay_date: string;
-}
-
 export interface SimulationSummary {
-  total_eligible_count: number;
-  total_eligible_amount: number; // int64 VND
-  total_included_count: number;
+  total_eligible_timesheets: number;
+  total_eligible_groups: number;
+  total_eligible_amount: number;
+  total_included_timesheets: number;
+  total_included_groups: number;
   total_included_amount: number;
-  remaining_after_all_count: number;
-  remaining_after_all_amount: number;
+  remaining_timesheets: number;
+  remaining_groups: number;
+  remaining_amount: number;
   all_settled: boolean;
 }
 
 export interface ReconciliationResult {
   exported_total: number;
   ledger_receivable: number;
-  delta: number; // receivable − exported; 0 = reconciled
+  delta: number;
   reconciled: boolean;
 }
 
-export interface CycleProjection {
-  sequence: number; // 1..N
-  label: string; // "Kỳ 2 (hiện tại)"
+export interface ExportProjection {
+  sequence: number;
+  export_date: string;
   from_date: string;
   to_date: string;
-  pay_date: string;
   included_count: number;
   included_amount: number;
   excluded_count: number;
-  remaining_after_count: number;
-  remaining_after_amount: number;
+  remaining_count: number;
+  remaining_amount: number;
   included: SimulationRow[];
   excluded: SimulationExcludedRow[];
-  findings: SimFinding[];
 }
 
 export interface SimulationRow {
@@ -80,7 +72,8 @@ export interface SimulationRow {
   project_name: string;
   amount: number;
   timesheet_ids: number[];
-  bank_account_masked: string; // last 4 only — PII never leaves backend
+  timesheet_dates: string[];
+  bank_account_masked?: string;
 }
 
 export interface SimulationExcludedRow {
@@ -90,11 +83,11 @@ export interface SimulationExcludedRow {
   project_name: string;
   amount: number;
   timesheet_ids: number[];
+  timesheet_dates: string[];
   reason: string;
-  in_production: boolean; // true = production also excludes; false = sim-only check
+  in_production: boolean;
 }
 
-// RemainderRow — every remainder is unpaid wages in payroll-only scope.
 export interface RemainderRow {
   employee_id: number;
   employee_name: string;
@@ -102,15 +95,9 @@ export interface RemainderRow {
   project_name: string;
   amount: number;
   timesheet_ids: number[];
+  timesheet_dates: string[];
   reason: string;
-  bank_account_masked: string;
-}
-
-export interface SimFinding {
-  severity: 'blocking' | 'warning' | 'info';
-  code: string;
-  message: string;
-  in_production: boolean;
+  bank_account_masked?: string;
 }
 
 export interface SimWarning {
