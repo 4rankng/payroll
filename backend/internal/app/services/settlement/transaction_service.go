@@ -291,13 +291,6 @@ func (s *TransactionService) CreateSettlement(
 			}
 		}
 
-		// Fire-and-forget audit event on the in-memory bus.
-		settledEvent := domain.NewTransactionSettledEvent(newCtx, txn, settlement)
-		if pubErr := s.events.Publish(newCtx, settledEvent); pubErr != nil {
-			s.logger.Warn("Failed to publish TransactionSettled audit event",
-				"transactionID", txn.ID, "settlementID", settlement.ID, "error", pubErr)
-		}
-
 		// Store results to return after transaction commits
 		finalTxn = txn
 		finalSettlement = settlement
@@ -308,6 +301,12 @@ func (s *TransactionService) CreateSettlement(
 
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	settledEvent := domain.NewTransactionSettledEvent(ctx, finalTxn, finalSettlement)
+	if pubErr := s.events.Publish(ctx, settledEvent); pubErr != nil {
+		s.logger.Warn("Failed to publish TransactionSettled audit event",
+			"transactionID", finalTxn.ID, "settlementID", finalSettlement.ID, "error", pubErr)
 	}
 
 	// Invalidate cache
@@ -358,7 +357,6 @@ func (s *TransactionService) GetTransaction(ctx context.Context, id uint) (*doma
 	if err != nil {
 		return nil, err
 	}
-
 	// Store in cache
 	if cacheErr := s.cache.Set(ctx, cacheKey, txn, constants.TransactionDetailCacheTTL); cacheErr != nil {
 		s.logger.Error("Failed to cache transaction", "transactionID", id, "error", cacheErr)
@@ -592,6 +590,7 @@ func (s *TransactionService) UpdateTransactionEvidence(ctx context.Context, id u
 	if err != nil {
 		return nil, err
 	}
+	originalTxn := *txn
 
 	// Apply updates only to evidence fields
 	if url != nil {
@@ -606,7 +605,7 @@ func (s *TransactionService) UpdateTransactionEvidence(ctx context.Context, id u
 	}
 
 	// Publish TransactionUpdated event (async audit logging via event handler)
-	event := domain.NewTransactionUpdatedEvent(ctx, txn, nil)
+	event := domain.NewTransactionUpdatedEvent(ctx, txn, &originalTxn)
 	if err := s.events.Publish(ctx, event); err != nil {
 		s.logger.Warn("Failed to publish TransactionUpdated event", "transactionID", txn.ID, "error", err)
 	}

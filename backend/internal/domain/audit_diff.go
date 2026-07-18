@@ -111,6 +111,15 @@ func CompareLoans(original, updated *Loan) map[string]FieldChange {
 	if original.LenderID != updated.LenderID {
 		changes["lender_id"] = FieldChange{Before: original.LenderID, After: updated.LenderID}
 	}
+	if !equalStringPtr(original.Description, updated.Description) {
+		changes["description"] = FieldChange{Before: strPtrToStr(original.Description), After: strPtrToStr(updated.Description)}
+	}
+	if original.OutstandingPrincipal != updated.OutstandingPrincipal {
+		changes["outstanding_principal"] = FieldChange{Before: original.OutstandingPrincipal, After: updated.OutstandingPrincipal}
+	}
+	if original.TotalInterestPaid != updated.TotalInterestPaid {
+		changes["total_interest_paid"] = FieldChange{Before: original.TotalInterestPaid, After: updated.TotalInterestPaid}
+	}
 	return changes
 }
 
@@ -194,6 +203,12 @@ func CompareTransactions(original, updated *Transaction) map[string]FieldChange 
 	}
 	if original.TransactionType != updated.TransactionType {
 		changes["transaction_type"] = FieldChange{Before: string(original.TransactionType), After: string(updated.TransactionType)}
+	}
+	if original.URL != updated.URL {
+		changes["url"] = FieldChange{Before: original.URL, After: updated.URL}
+	}
+	if !equalUintPtr(original.AssetID, updated.AssetID) {
+		changes["asset_id"] = FieldChange{Before: uintPtrToVal(original.AssetID), After: uintPtrToVal(updated.AssetID)}
 	}
 	return changes
 }

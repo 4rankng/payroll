@@ -14,6 +14,7 @@ const ACTION_VARIANT_MAP: Record<string, ActionVariant> = {
   APPROVE: 'blue',
   BULK_APPROVE: 'blue',
   SETTLE: 'blue',
+  EXTERNAL_PAY: 'blue',
   DELETE: 'red',
   REJECT: 'red',
   BULK_REJECT: 'red',
@@ -63,69 +64,98 @@ export interface AuditFieldChange {
 }
 
 export type MetadataShape =
-  | { kind: 'changed_fields'; fields: Record<string, AuditFieldChange> }
-  | { kind: 'auth'; data: Record<string, unknown> }
-  | { kind: 'bulk'; data: Record<string, unknown> }
-  | { kind: 'financial'; data: Record<string, unknown> }
-  | { kind: 'identity'; data: Record<string, unknown> }
-  | { kind: 'relationship'; data: Record<string, unknown> }
-  | { kind: 'raw'; data: Record<string, unknown> }
+  | {
+      kind: 'changed_fields';
+      fields: Record<string, AuditFieldChange>;
+      context: Record<string, unknown>;
+    }
+  | { kind: 'details'; data: Record<string, unknown> }
+  | { kind: 'invalid'; raw: string }
   | { kind: 'empty' };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractFieldChanges(
+  value: unknown,
+): { fields: Record<string, AuditFieldChange>; malformed: boolean } {
+  if (!isRecord(value)) return { fields: {}, malformed: true };
+
+  let malformed = false;
+  const fields = Object.fromEntries(
+    Object.entries(value).flatMap(([field, rawChange]) => {
+      if (!isRecord(rawChange)) {
+        malformed = true;
+        return [];
+      }
+
+      const hasBefore = 'before' in rawChange || 'old' in rawChange;
+      const hasAfter = 'after' in rawChange || 'new' in rawChange;
+      if (!hasBefore || !hasAfter) {
+        malformed = true;
+        return [];
+      }
+
+      return [[field, {
+        before: 'before' in rawChange ? rawChange.before : rawChange.old,
+        after: 'after' in rawChange ? rawChange.after : rawChange.new,
+      }]];
+    }),
+  );
+
+  return { fields, malformed };
+}
+
+function extractLegacyPairs(data: Record<string, unknown>): Record<string, AuditFieldChange> {
+  const fields: Record<string, AuditFieldChange> = {};
+
+  for (const [key, before] of Object.entries(data)) {
+    if (!key.startsWith('old_')) continue;
+    const field = key.slice(4);
+    const afterKey = `new_${field}`;
+    if (afterKey in data) {
+      fields[field] = { before, after: data[afterKey] };
+      delete data[key];
+      delete data[afterKey];
+    }
+  }
+
+  return fields;
+}
 
 export function parseMetadata(raw: string | null | undefined): MetadataShape {
   if (!raw) return { kind: 'empty' };
 
-  let parsed: Record<string, unknown>;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { kind: 'empty' };
+    return { kind: 'invalid', raw };
   }
 
-  if (!parsed || typeof parsed !== 'object') return { kind: 'empty' };
+  if (!isRecord(parsed)) return { kind: 'invalid', raw };
 
-  if ('changed_fields' in parsed && typeof parsed.changed_fields === 'object' && parsed.changed_fields !== null) {
-    const fields = Object.fromEntries(
-      Object.entries(parsed.changed_fields).flatMap(([field, value]) => {
-        if (!value || typeof value !== 'object') return [];
+  const data = { ...parsed };
+  delete data.location;
 
-        const change = value as Record<string, unknown>;
-        return [[field, {
-          before: 'before' in change ? change.before : change.old,
-          after: 'after' in change ? change.after : change.new,
-        }]];
-      }),
-    );
-
-    return {
-      kind: 'changed_fields',
-      fields,
-    };
+  const legacyFields = extractLegacyPairs(data);
+  if ('changed_fields' in data) {
+    const { fields, malformed } = extractFieldChanges(data.changed_fields);
+    delete data.changed_fields;
+    const combinedFields = { ...fields, ...legacyFields };
+    if (malformed) {
+      return { kind: 'invalid', raw };
+    }
+    return { kind: 'changed_fields', fields: combinedFields, context: data };
   }
 
-  // Auth events: login (success or failure), logout, password change
-  if ('success' in parsed || 'reason' in parsed || 'method' in parsed ||
-      'attempted_identifier' in parsed || 'login_identifier' in parsed) {
-    return { kind: 'auth', data: parsed };
+  if (Object.keys(legacyFields).length > 0) {
+    return { kind: 'changed_fields', fields: legacyFields, context: data };
   }
 
-  if ('count' in parsed || 'total' in parsed || 'completed' in parsed) {
-    return { kind: 'bulk', data: parsed };
-  }
-
-  if ('amount' in parsed || 'total_amount' in parsed || 'settlement_amount' in parsed) {
-    return { kind: 'financial', data: parsed };
-  }
-
-  if (('project_id' in parsed || 'project_name' in parsed) && ('employee_id' in parsed || 'employee_name' in parsed)) {
-    return { kind: 'relationship', data: parsed };
-  }
-
-  if ('username' in parsed || 'fullname' in parsed || 'cccd' in parsed || 'email' in parsed) {
-    return { kind: 'identity', data: parsed };
-  }
-
-  return { kind: 'raw', data: parsed };
+  if (Object.keys(data).length === 0) return { kind: 'empty' };
+  return { kind: 'details', data };
 }
 
 // Extract location from any metadata shape
@@ -166,16 +196,82 @@ export function formatVND(value: unknown): string {
 }
 
 export function formatFieldName(key: string): string {
+  const label = AUDIT_FIELD_LABELS[key];
+  if (label) return label;
   return key
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return 'Không có';
+  if (value === '') return 'Trống';
   if (typeof value === 'boolean') return value ? 'Có' : 'Không';
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
+}
+
+const AUDIT_FIELD_LABELS: Record<string, string> = {
+  account: 'Tài khoản',
+  address: 'Địa chỉ',
+  amount: 'Số tiền',
+  approver_id: 'Người duyệt',
+  bank_account_name: 'Tên chủ tài khoản',
+  bank_account_number: 'Số tài khoản ngân hàng',
+  bank_code: 'Mã ngân hàng',
+  bank_id: 'Ngân hàng',
+  branch_name: 'Tên chi nhánh',
+  cccd: 'CCCD',
+  client_name: 'Khách hàng',
+  code: 'Mã',
+  completed: 'Thành công',
+  count: 'Số lượng',
+  created_by: 'Người tạo',
+  date: 'Ngày',
+  date_of_birth: 'Ngày sinh',
+  effective_date: 'Ngày hiệu lực',
+  email: 'Email',
+  employee_id: 'Nhân viên',
+  employee_name: 'Tên nhân viên',
+  failed: 'Thất bại',
+  file_name: 'Tên tệp',
+  filename: 'Tên tệp',
+  fullname: 'Họ và tên',
+  hours_worked: 'Số giờ làm',
+  method: 'Phương thức',
+  mobile: 'Số điện thoại',
+  name: 'Tên',
+  notes: 'Ghi chú',
+  pay_rate: 'Mức lương',
+  payment_status: 'Trạng thái thanh toán',
+  project_id: 'Dự án',
+  project_name: 'Tên dự án',
+  reason: 'Lý do',
+  record_count: 'Số bản ghi',
+  reference: 'Mã tham chiếu',
+  role: 'Vai trò',
+  schedule_id: 'Mã biểu phí',
+  status: 'Trạng thái',
+  summary: 'Giá trị',
+  total: 'Tổng số',
+  total_amount: 'Tổng tiền',
+  transaction_type: 'Loại giao dịch',
+  username: 'Tên đăng nhập',
+};
+
+const MONEY_FIELDS = new Set([
+  'amount',
+  'outstanding_principal',
+  'principal_amount',
+  'pay_rate',
+  'settlement_amount',
+  'total_amount',
+  'total_interest_paid',
+]);
+
+export function formatAuditValue(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === '') return formatValue(value);
+  return MONEY_FIELDS.has(key) ? formatVND(value) : formatValue(value);
 }
 
 export function formatRelativeTime(dateStr: string): string {

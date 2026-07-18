@@ -161,6 +161,7 @@ func (s *LoanService) ProcessScheduledPayment(ctx context.Context, loanID uint, 
 	if err != nil {
 		return nil, nil, err
 	}
+	originalLoan := *loan
 
 	schedule, err := s.RepaymentScheduleRepo.GetByID(ctx, scheduleID)
 	if err != nil {
@@ -301,7 +302,7 @@ func (s *LoanService) ProcessScheduledPayment(ctx context.Context, loanID uint, 
 	}
 
 	// Publish event
-	event := domain.NewLoanUpdatedEvent(ctx, loan, nil)
+	event := domain.NewLoanUpdatedEvent(ctx, loan, &originalLoan)
 	if err := s.events.Publish(ctx, event); err != nil {
 		s.logger.Warn("Failed to publish LoanUpdated event", "loanID", loanID, "error", err)
 	}

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	auditctx "api-server/internal/pkg/context"
 )
@@ -142,8 +143,9 @@ func NewTimesheetDeletedEvent(ctx context.Context, timesheet *Timesheet) Timeshe
 
 // NewTimesheetEditRequestCreatedEvent creates a TimesheetEditRequestCreatedEvent
 func NewTimesheetEditRequestCreatedEvent(ctx context.Context, timesheetID, requestedBy uint, reason string) TimesheetEditRequestCreatedEvent {
+	auditMessage := fmt.Sprintf("%s đã yêu cầu chỉnh sửa bảng công #%d", auditctx.GetFullName(ctx), timesheetID)
 	return TimesheetEditRequestCreatedEvent{
-		BaseEvent:   newBaseEventWithActor(ctx, "TimesheetEditRequestCreated", timesheetID, requestedBy, AuditActionCreate, EntityTypeTimesheet, ""),
+		BaseEvent:   newBaseEventWithActor(ctx, "TimesheetEditRequestCreated", timesheetID, requestedBy, AuditActionCreate, EntityTypeTimesheet, auditMessage),
 		TimesheetID: timesheetID,
 		RequestedBy: requestedBy,
 		Reason:      reason,
@@ -152,8 +154,9 @@ func NewTimesheetEditRequestCreatedEvent(ctx context.Context, timesheetID, reque
 
 // NewTimesheetEditRequestUpdatedEvent creates a TimesheetEditRequestUpdatedEvent
 func NewTimesheetEditRequestUpdatedEvent(ctx context.Context, requestID, timesheetID, requestedBy uint, newStatus, reason string) TimesheetEditRequestUpdatedEvent {
+	auditMessage := fmt.Sprintf("%s đã cập nhật yêu cầu chỉnh sửa bảng công #%d thành %s", auditctx.GetFullName(ctx), timesheetID, newStatus)
 	return TimesheetEditRequestUpdatedEvent{
-		BaseEvent:   newBaseEventWithActor(ctx, "TimesheetEditRequestUpdated", requestID, requestedBy, AuditActionUpdate, EntityTypeTimesheet, ""),
+		BaseEvent:   newBaseEventWithActor(ctx, "TimesheetEditRequestUpdated", requestID, requestedBy, AuditActionUpdate, EntityTypeTimesheet, auditMessage),
 		RequestID:   requestID,
 		TimesheetID: timesheetID,
 		RequestedBy: requestedBy,
@@ -165,13 +168,19 @@ func NewTimesheetEditRequestUpdatedEvent(ctx context.Context, requestID, timeshe
 // NewTimesheetMarkingEvent creates a TimesheetMarkingEvent
 func NewTimesheetMarkingEvent(
 	ctx context.Context,
+	actorID uint,
 	timesheetIDs []uint,
 	markedAs string,
 	source string,
 	sourceAssetID *uint,
 ) TimesheetMarkingEvent {
+	actorName := auditctx.GetFullName(ctx)
+	if actorName == "" {
+		actorName = fmt.Sprintf("Người dùng #%d", actorID)
+	}
+	auditMessage := fmt.Sprintf("%s đã đánh dấu %d bảng công là %s", actorName, len(timesheetIDs), markedAs)
 	return TimesheetMarkingEvent{
-		BaseEvent:     newBaseEvent(ctx, "TimesheetMarking", 0, AuditActionUpdate, EntityTypeTimesheet), // AggregateID is 0 for multiple timesheets
+		BaseEvent:     newBaseEventWithActor(ctx, "TimesheetMarking", 0, actorID, AuditActionUpdate, EntityTypeTimesheet, auditMessage), // AggregateID is 0 for multiple timesheets
 		TimesheetIDs:  timesheetIDs,
 		MarkedAs:      markedAs,
 		Source:        source,
@@ -186,8 +195,9 @@ func NewTimesheetsRevenuePaidFromInternalEvent(
 	fileID uint,
 	filename string,
 ) TimesheetsRevenuePaidFromInternalEvent {
+	auditMessage := fmt.Sprintf("%s đã ghi nhận doanh thu nội bộ cho %d bảng công từ tệp %s", auditctx.GetFullName(ctx), len(timesheetIDs), filename)
 	return TimesheetsRevenuePaidFromInternalEvent{
-		BaseEvent:    newBaseEvent(ctx, "TimesheetsRevenuePaidFromInternal", 0, AuditActionUpdate, EntityTypeTimesheet),
+		BaseEvent:    newBaseEventWithAudit(ctx, "TimesheetsRevenuePaidFromInternal", 0, AuditActionUpdate, EntityTypeTimesheet, auditMessage),
 		TimesheetIDs: timesheetIDs,
 		FileID:       fileID,
 		Filename:     filename,

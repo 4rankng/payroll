@@ -93,7 +93,6 @@ func (s *LoanService) DisburseLoan(ctx context.Context, loanID uint, disbursemen
 	if err != nil {
 		return nil, nil, err
 	}
-
 	// Check if can disburse
 	if err := loan.CanDisburse(); err != nil {
 		return nil, nil, err
@@ -197,6 +196,7 @@ func (s *LoanService) RepayPrincipal(ctx context.Context, loanID uint, amount in
 	if err != nil {
 		return nil, nil, err
 	}
+	originalLoan := *loan
 
 	// Check if can repay
 	if err := loan.CanRepay(amount); err != nil {
@@ -288,7 +288,7 @@ func (s *LoanService) RepayPrincipal(ctx context.Context, loanID uint, amount in
 	}
 
 	// Publish event
-	event := domain.NewLoanUpdatedEvent(ctx, loan, nil)
+	event := domain.NewLoanUpdatedEvent(ctx, loan, &originalLoan)
 	if err := s.events.Publish(ctx, event); err != nil {
 		s.logger.Warn("Failed to publish LoanUpdated event", "loanID", loan.ID, "error", err)
 	}
@@ -314,6 +314,7 @@ func (s *LoanService) ProcessLoanPayment(ctx context.Context, loanID uint, sched
 	if err != nil {
 		return nil, nil, err
 	}
+	originalLoan := *loan
 
 	// Get the schedule that is being paid
 	schedule, err := s.RepaymentScheduleRepo.GetByID(ctx, scheduleID)
@@ -405,7 +406,7 @@ func (s *LoanService) ProcessLoanPayment(ctx context.Context, loanID uint, sched
 	}
 
 	// Publish event
-	event := domain.NewLoanUpdatedEvent(ctx, loan, nil)
+	event := domain.NewLoanUpdatedEvent(ctx, loan, &originalLoan)
 	if err := s.events.Publish(ctx, event); err != nil {
 		s.logger.Warn("Failed to publish LoanUpdated event", "loanID", loan.ID, "error", err)
 	}
@@ -572,6 +573,7 @@ func (s *LoanService) UpdateLoan(ctx context.Context, id uint, updates map[strin
 	if err != nil {
 		return nil, err
 	}
+	originalLoan := *loan
 
 	// Apply updates (only non-financial fields)
 	if description, ok := updates["description"]; ok {
@@ -593,7 +595,7 @@ func (s *LoanService) UpdateLoan(ctx context.Context, id uint, updates map[strin
 	}
 
 	// Publish event
-	event := domain.NewLoanUpdatedEvent(ctx, loan, nil)
+	event := domain.NewLoanUpdatedEvent(ctx, loan, &originalLoan)
 	if err := s.events.Publish(ctx, event); err != nil {
 		s.logger.Warn("Failed to publish LoanUpdated event", "loanID", loan.ID, "error", err)
 	}
@@ -612,11 +614,17 @@ func (s *LoanService) UpdateInterestPaid(ctx context.Context, loanID uint, amoun
 	if err != nil {
 		return err
 	}
+	originalLoan := *loan
 
 	loan.TotalInterestPaid += amount
 
 	if err := s.LoanRepo.Update(ctx, loan); err != nil {
 		return fmt.Errorf("failed to update loan interest paid: %w", err)
+	}
+
+	event := domain.NewLoanUpdatedEvent(ctx, loan, &originalLoan)
+	if err := s.events.Publish(ctx, event); err != nil {
+		s.logger.Warn("Failed to publish LoanUpdated event", "loanID", loan.ID, "error", err)
 	}
 
 	s.logger.Info("Loan interest paid updated", "loanID", loanID, "amount", amount, "total", loan.TotalInterestPaid)

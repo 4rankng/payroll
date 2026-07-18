@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+
+	auditctx "api-server/internal/pkg/context"
 )
 
 // NewTransactionCreatedEvent creates a TransactionCreatedEvent.
@@ -86,8 +88,9 @@ func NewTransactionDeletedEvent(ctx context.Context, txn *Transaction) Transacti
 
 // NewTransactionSettledEvent creates a TransactionSettledEvent
 func NewTransactionSettledEvent(ctx context.Context, txn *Transaction, settlement *Settlement) TransactionSettledEvent {
+	auditMessage := fmt.Sprintf("%s đã tất toán giao dịch #%d số tiền %s VND", auditctx.GetFullName(ctx), txn.ID, formatVND(settlement.Amount))
 	return TransactionSettledEvent{
-		BaseEvent:       newBaseEvent(ctx, "TransactionSettled", txn.ID, AuditActionSettle, EntityTypeTransaction),
+		BaseEvent:       newBaseEventWithAudit(ctx, "TransactionSettled", txn.ID, AuditActionSettle, EntityTypeTransaction, auditMessage),
 		Amount:          settlement.Amount,
 		SettlementID:    settlement.ID,
 		TransactionDesc: txn.Description,
@@ -197,8 +200,9 @@ func NewSettlementCreatedEvent(ctx context.Context, settlement *Settlement, txn 
 	if txn != nil {
 		transactionCode = txn.TransactionCode
 	}
+	auditMessage := fmt.Sprintf("%s đã tạo đối soát #%d số tiền %s VND", auditctx.GetFullName(ctx), settlement.ID, formatVND(settlement.Amount))
 	return SettlementCreatedEvent{
-		BaseEvent:       newBaseEvent(ctx, "SettlementCreated", settlement.ID, AuditActionCreate, EntityTypeTransaction),
+		BaseEvent:       newBaseEventWithAudit(ctx, "SettlementCreated", settlement.ID, AuditActionCreate, EntityTypeTransaction, auditMessage),
 		TransactionID:   settlement.TransactionID,
 		Amount:          settlement.Amount,
 		SettlementUUID:  settlement.SettlementUUID,
@@ -231,8 +235,9 @@ func NewSettlementUploadProcessedEvent(
 	transactionMap map[uint][]uint,
 	processedBy uint,
 ) SettlementUploadProcessedEvent {
+	auditMessage := fmt.Sprintf("%s đã xử lý tệp đối soát %s", auditctx.GetFullName(ctx), filename)
 	return SettlementUploadProcessedEvent{
-		BaseEvent:        newBaseEvent(ctx, "SettlementUploadProcessed", assetID, AuditActionCreate, EntityTypeAsset),
+		BaseEvent:        newBaseEventWithActor(ctx, "SettlementUploadProcessed", assetID, processedBy, AuditActionCreate, EntityTypeAsset, auditMessage),
 		AssetID:          assetID,
 		Filename:         filename,
 		TimesheetIDs:     timesheetIDs,
@@ -252,8 +257,9 @@ func NewSettlementAppliedFromUploadEvent(
 	filename string,
 	timesheetIDs []uint,
 ) SettlementAppliedFromUploadEvent {
+	auditMessage := fmt.Sprintf("%s đã áp dụng đối soát từ tệp %s cho giao dịch #%d", auditctx.GetFullName(ctx), filename, transactionID)
 	return SettlementAppliedFromUploadEvent{
-		BaseEvent:     newBaseEvent(ctx, "SettlementAppliedFromUpload", transactionID, AuditActionSettle, EntityTypeTransaction),
+		BaseEvent:     newBaseEventWithAudit(ctx, "SettlementAppliedFromUpload", transactionID, AuditActionSettle, EntityTypeTransaction, auditMessage),
 		TransactionID: transactionID,
 		Amount:        amount,
 		Source:        "upload",

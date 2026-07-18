@@ -583,6 +583,7 @@ export const VIETNAMESE_AUDIT_LABELS = {
     PERMISSION_DENIED: 'Từ chối quyền truy cập',
     DATA_EXPORT: 'Xuất dữ liệu',
     BULK_OPERATION: 'Thao tác hàng loạt',
+    EXTERNAL_PAY: 'Thanh toán ngoài hệ thống',
   },
   entities: {
     user: 'Người dùng',
@@ -604,5 +605,8 @@ export const VIETNAMESE_AUDIT_LABELS = {
     financial: 'Tài chính',
     import_batch: 'Lô nhập liệu',
     export_batch: 'Lô xuất liệu',
+    bulk_transfer_file: 'Tệp chuyển khoản hàng loạt',
+    advance_payment_fee_schedule: 'Biểu phí ứng lương',
+    disbursement_fee_schedule: 'Biểu phí giải ngân',
   }
 } as const;

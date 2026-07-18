@@ -154,7 +154,11 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
             </div>
 
             {/* Metadata */}
-            <MetadataRenderer metadata={log.metadata} />
+            <MetadataRenderer
+              metadata={log.metadata}
+              action={log.action}
+              entityType={log.entity_type}
+            />
           </div>
         )}
       </SheetContent>

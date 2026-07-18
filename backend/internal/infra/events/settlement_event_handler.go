@@ -101,6 +101,7 @@ func (h *SettlementEventHandler) handleSettlementUploadProcessed(ctx context.Con
 	// Emit TimesheetMarkingEvent for the INTERNAL sheet timesheets
 	timesheetMarkingEvent := domain.NewTimesheetMarkingEvent(
 		ctx,
+		event.UserID(),
 		event.TimesheetIDs,
 		"paid",
 		"upload_internal_sheet",

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BankTransferHistoryPageContent } from './BankTransferHistoryPageContent';
@@ -77,5 +77,15 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByText('Mã GD:')).toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument();
     expect(screen.getByText('CCCD: —')).toBeInTheDocument();
+  });
+
+  it('selects a month directly without asking for a day', () => {
+    render(<BankTransferHistoryPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 07/2026' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn tháng 08 năm 2026' }));
+
+    expect(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 08/2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Chọn tháng 08 năm 2026' })).not.toBeInTheDocument();
   });
 });

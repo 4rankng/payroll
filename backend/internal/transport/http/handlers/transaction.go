@@ -363,23 +363,6 @@ func (h *TransactionHandler) SettleTransaction(c *gin.Context) {
 		"amount", utils.FormatVND(createdSettlement.Amount),
 		"remaining", utils.FormatVND(txn.GetRemainingAmount()))
 
-	// If this is a revenue transaction that is now fully settled, emit event to mark all timesheets as paid
-	if txn.TransactionType == domain.TransactionTypeRevenue && txn.Status == domain.TransactionStatusSettled {
-		// Emit TransactionSettledEvent - the event handler will mark ALL timesheets in the transaction as paid
-		event := domain.NewTransactionSettledEvent(c.Request.Context(), txn, createdSettlement)
-		if err := h.eventBus.Publish(c.Request.Context(), event); err != nil {
-			h.logger.Error("Failed to publish TransactionSettledEvent",
-				"transactionID", txn.ID,
-				"settlementID", createdSettlement.ID,
-				"error", err)
-			// Log error but don't fail the settlement operation
-		} else {
-			h.logger.Info("Successfully emitted TransactionSettledEvent",
-				"transactionID", txn.ID,
-				"settlementID", createdSettlement.ID)
-		}
-	}
-
 	// Build response
 	settlementResp := h.mapToSettlementResponse(createdSettlement)
 	resp := dto.TransactionWithSettlementsResponse{

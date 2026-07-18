@@ -385,6 +385,20 @@ func (h *AuditEventHandler) buildMetadata(event domain.DomainEvent) map[string]i
 	case domain.SettingsDeletedEvent:
 		return map[string]interface{}{"key": e.Key}
 
+	// --- Fee schedule events ---
+	case domain.AdvancePaymentFeeScheduleCreatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.AdvancePaymentFeeScheduleUpdatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.AdvancePaymentFeeScheduleDeletedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.DisbursementFeeScheduleCreatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.DisbursementFeeScheduleUpdatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.DisbursementFeeScheduleDeletedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+
 	// --- Import/Export events ---
 	case domain.DataImportedEvent:
 		return map[string]interface{}{
@@ -544,8 +558,21 @@ func (h *AuditEventHandler) buildMetadata(event domain.DomainEvent) map[string]i
 			"marked_as": e.MarkedAs,
 			"source":    e.Source,
 		}
+	case domain.TimesheetBulkExternallyPaidEvent:
+		return map[string]interface{}{
+			"count":     e.Count,
+			"reference": e.Reference,
+		}
 	}
 	return nil
+}
+
+func feeScheduleMetadata(scheduleID, effectiveDate, summary string) map[string]interface{} {
+	return map[string]interface{}{
+		"schedule_id":    scheduleID,
+		"effective_date": effectiveDate,
+		"summary":        summary,
+	}
 }
 
 // CanHandle returns true if this handler can process the given event type

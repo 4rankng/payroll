@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	auditctx "api-server/internal/pkg/context"
 
@@ -10,8 +11,9 @@ import (
 
 // NewDataImportedEvent creates a DataImportedEvent
 func NewDataImportedEvent(ctx context.Context, dataType string, recordCount int, fileName string) DataImportedEvent {
+	auditMessage := fmt.Sprintf("%s đã nhập %d bản ghi %s từ tệp %s", auditctx.GetFullName(ctx), recordCount, dataType, fileName)
 	return DataImportedEvent{
-		BaseEvent:   newBaseEvent(ctx, "DataImported", 0, AuditActionImport, EntityTypeAsset),
+		BaseEvent:   newBaseEventWithAudit(ctx, "DataImported", 0, AuditActionImport, EntityTypeAsset, auditMessage),
 		DataType:    dataType,
 		RecordCount: recordCount,
 		FileName:    fileName,
@@ -20,8 +22,9 @@ func NewDataImportedEvent(ctx context.Context, dataType string, recordCount int,
 
 // NewDataExportedEvent creates a DataExportedEvent
 func NewDataExportedEvent(ctx context.Context, dataType string, recordCount int, fileName string) DataExportedEvent {
+	auditMessage := fmt.Sprintf("%s đã xuất %d bản ghi %s ra tệp %s", auditctx.GetFullName(ctx), recordCount, dataType, fileName)
 	return DataExportedEvent{
-		BaseEvent:   newBaseEvent(ctx, "DataExported", 0, AuditActionExport, EntityTypeAsset),
+		BaseEvent:   newBaseEventWithAudit(ctx, "DataExported", 0, AuditActionExport, EntityTypeAsset, auditMessage),
 		DataType:    dataType,
 		RecordCount: recordCount,
 		FileName:    fileName,
@@ -394,8 +397,9 @@ func NewBulkTransferPaymentStatusUpdatedEvent(
 	paymentStatus string,
 	totalUpdated int,
 ) BulkTransferPaymentStatusUpdatedEvent {
+	auditMessage := fmt.Sprintf("%s đã cập nhật trạng thái thanh toán của %d giao dịch thành %s", auditctx.GetFullName(ctx), totalUpdated, paymentStatus)
 	return BulkTransferPaymentStatusUpdatedEvent{
-		BaseEvent:     newBaseEvent(ctx, "BulkTransferPaymentStatusUpdated", bulkFileID, AuditActionUpdate, EntityTypeTransaction),
+		BaseEvent:     newBaseEventWithAudit(ctx, "BulkTransferPaymentStatusUpdated", bulkFileID, AuditActionUpdate, EntityTypeTransaction, auditMessage),
 		BulkFileID:    bulkFileID,
 		TimesheetIDs:  timesheetIDs,
 		PaymentStatus: paymentStatus,
@@ -412,8 +416,9 @@ func NewBulkTransferTransactionCreatedEvent(
 	assetID uint,
 	filename string,
 ) BulkTransferTransactionCreatedEvent {
+	auditMessage := fmt.Sprintf("%s đã tạo giao dịch %d từ tệp chuyển khoản %s", auditctx.GetFullName(ctx), transactionID, filename)
 	return BulkTransferTransactionCreatedEvent{
-		BaseEvent:     newBaseEvent(ctx, "BulkTransferTransactionCreated", bulkFileID, AuditActionCreate, EntityTypeTransaction),
+		BaseEvent:     newBaseEventWithAudit(ctx, "BulkTransferTransactionCreated", bulkFileID, AuditActionCreate, EntityTypeTransaction, auditMessage),
 		BulkFileID:    bulkFileID,
 		TransactionID: transactionID,
 		Amount:        amount,

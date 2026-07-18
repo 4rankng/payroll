@@ -41,4 +41,69 @@ describe('MetadataRenderer', () => {
     expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument();
     expect(screen.getByText('Nguyễn Văn B')).toBeInTheDocument();
   });
+
+  it('renders flat create metadata as a readable created-value list', () => {
+    const metadata = JSON.stringify({
+      name: 'Dự án Riverside',
+      code: 'RS-01',
+      client_name: '',
+    });
+
+    render(<MetadataRenderer metadata={metadata} action="CREATE" entityType="project" />);
+
+    expect(screen.getByText('Giá trị được tạo')).toBeInTheDocument();
+    expect(screen.getByText('Tên')).toBeInTheDocument();
+    expect(screen.getByText('Dự án Riverside')).toBeInTheDocument();
+    expect(screen.getByText('Trống')).toBeInTheDocument();
+    expect(screen.queryByText(/\{"name"/)).not.toBeInTheDocument();
+  });
+
+  it('does not classify a business reason as authentication metadata', () => {
+    const metadata = JSON.stringify({
+      project_name: 'Dự án Riverside',
+      employee_name: 'Nguyễn Văn A',
+      reason: 'Kết thúc phân công',
+    });
+
+    render(<MetadataRenderer metadata={metadata} action="DELETE" entityType="project_employee" />);
+
+    expect(screen.getByText('Giá trị đã xóa')).toBeInTheDocument();
+    expect(screen.queryByText('Chi tiết xác thực')).not.toBeInTheDocument();
+    expect(screen.getByText('Kết thúc phân công')).toBeInTheDocument();
+  });
+
+  it('normalizes paired old and new fields into a diff', () => {
+    const metadata = JSON.stringify({
+      old_fullname: 'Nguyễn Văn A',
+      new_fullname: 'Nguyễn Văn B',
+      cccd: '012345678901',
+    });
+
+    render(<MetadataRenderer metadata={metadata} action="UPDATE" entityType="employee" />);
+
+    expect(screen.getByText('Thay đổi')).toBeInTheDocument();
+    expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument();
+    expect(screen.getByText('Nguyễn Văn B')).toBeInTheDocument();
+    expect(screen.getByText('CCCD')).toBeInTheDocument();
+  });
+
+  it('shows invalid metadata instead of silently claiming there are no details', () => {
+    render(<MetadataRenderer metadata="{invalid" action="UPDATE" entityType="employee" />);
+
+    expect(screen.getByText('Dữ liệu chi tiết không hợp lệ')).toBeInTheDocument();
+  });
+
+  it('rejects mixed valid and malformed field changes instead of hiding part of the audit', () => {
+    const metadata = JSON.stringify({
+      changed_fields: {
+        fullname: { before: 'Nguyễn Văn A', after: 'Nguyễn Văn B' },
+        mobile: { before: '0900000000' },
+      },
+    });
+
+    render(<MetadataRenderer metadata={metadata} action="UPDATE" entityType="employee" />);
+
+    expect(screen.getByText('Dữ liệu chi tiết không hợp lệ')).toBeInTheDocument();
+    expect(screen.queryByText('Nguyễn Văn B')).not.toBeInTheDocument();
+  });
 });
