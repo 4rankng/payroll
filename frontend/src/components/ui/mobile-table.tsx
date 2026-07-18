@@ -78,7 +78,10 @@ export function MobileTable<T extends Record<string, unknown>>({
   // Render empty state
   if (!data?.length) {
     return (
-      <div className={cn("rounded-2xl border border-dashed border-border/70 bg-card/80 px-5 py-12 text-center", className)}>
+      <div
+        data-slot="mobile-table-empty"
+        className={cn("rounded-2xl border border-dashed border-border/70 bg-card/80 px-5 py-12 text-center", className)}
+      >
         <div className="typography-body-medium text-muted-foreground">
           {emptyState ?? "Không có dữ liệu"}
         </div>
@@ -113,7 +116,12 @@ export function MobileTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div role="list" className={cn("w-full", className)} aria-label="Data table mobile view">
+    <div
+      role="list"
+      data-slot="mobile-table"
+      className={cn("w-full", className)}
+      aria-label="Data table mobile view"
+    >
       <Accordion
         type={accordionType}
         collapsible={accordionType === "single"}
@@ -128,6 +136,7 @@ export function MobileTable<T extends Record<string, unknown>>({
               value={rowId}
               key={rowId}
               role="listitem"
+              data-slot="mobile-table-row"
               className={cn(
                 "mb-2.5 overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm transition-all duration-200 touch-manipulation hover:border-border hover:shadow-md",
                 extraClass,

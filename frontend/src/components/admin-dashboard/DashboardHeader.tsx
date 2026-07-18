@@ -43,25 +43,29 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
   return (
     <PageHeader
       title="Tổng quan"
-      description="Theo dõi bảng công, nhân sự và dòng tiền lương"
+      description="Sổ lương công trường theo kỳ, ưu tiên ngoại lệ và dòng tiền cần xử lý"
     >
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+      <div className="admin-dashboard-header flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleShowAll}
-          className={`h-11 justify-center rounded-xl px-3 text-xs font-semibold sm:h-10 ${value === 'all' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          className={`min-h-11 justify-center rounded-2xl border px-3 text-xs font-semibold sm:h-10 sm:min-h-10 ${
+            value === 'all'
+              ? 'border-primary/20 bg-primary/10 text-primary'
+              : 'border-border/60 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+          }`}
         >
           <RefreshCcw className="mr-2 h-3.5 w-3.5" />
           Tất cả kỳ
         </Button>
 
-        <div className="grid grid-cols-[44px_1fr_44px] gap-1 sm:flex sm:items-center">
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] gap-1.5 sm:flex sm:items-center">
           <Button
             variant="outline"
             size="sm"
             onClick={handlePreviousMonth}
-            className="h-11 w-11 rounded-xl p-0 sm:h-10 sm:w-10"
+            className="h-11 w-11 rounded-2xl border-border/60 bg-background p-0 sm:h-10 sm:w-10"
             aria-label="Tháng trước"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -71,7 +75,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={`h-11 min-w-0 rounded-xl px-3 text-sm font-semibold sm:h-10 sm:min-w-[132px] ${value === 'all' ? 'opacity-70' : ''}`}
+                className={`h-11 min-w-0 rounded-2xl border-border/60 bg-background px-3 text-sm font-semibold sm:h-10 sm:min-w-[148px] ${
+                  value === 'all' ? 'opacity-70' : ''
+                }`}
               >
                 <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
                 <span className="truncate">
@@ -94,7 +100,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
             variant="outline"
             size="sm"
             onClick={handleNextMonth}
-            className="h-11 w-11 rounded-xl p-0 sm:h-10 sm:w-10"
+            className="h-11 w-11 rounded-2xl border-border/60 bg-background p-0 sm:h-10 sm:w-10"
             aria-label="Tháng sau"
           >
             <ChevronRight className="h-4 w-4" />

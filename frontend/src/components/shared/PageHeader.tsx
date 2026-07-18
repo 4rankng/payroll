@@ -33,21 +33,30 @@ export const PageHeader = ({
 
   return (
     <TooltipProvider>
-      <div className={cn('flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4', className)}>
-        {/* Left: title + description */}
+      <section
+        data-slot="page-header"
+        data-admin-surface="header"
+        className={cn(
+          'admin-page-header flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
+          className,
+        )}
+      >
         <div className="min-w-0 flex-1 sm:min-w-64 sm:basis-64">
           <div className="flex items-center gap-2">
-            {Icon && (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Icon className="h-4 w-4 text-muted-foreground" />
+              {Icon && (
+                <div data-slot="page-header-icon" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p data-slot="page-header-eyebrow" className="hidden">Quản trị</p>
+                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {title}
+                </h1>
               </div>
-            )}
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {title}
-            </h1>
           </div>
           {description && (
-            <p className={cn(
+            <p data-slot="page-header-description" className={cn(
               'mt-1 text-sm text-muted-foreground leading-normal',
               Icon ? 'sm:ml-9' : '',
             )}>
@@ -56,9 +65,11 @@ export const PageHeader = ({
           )}
         </div>
 
-        {/* Right: actions + children (month navigator etc.) */}
         {hasControls && (
-          <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <div
+            data-slot="page-header-controls"
+            className="flex max-w-full shrink-0 flex-wrap items-center gap-2 sm:justify-end"
+          >
             {actions.map((action, index) => (
               <Button
                 key={index}
@@ -75,7 +86,7 @@ export const PageHeader = ({
             {children}
           </div>
         )}
-      </div>
+      </section>
     </TooltipProvider>
   );
 };

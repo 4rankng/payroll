@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -55,8 +56,8 @@ const AdminLayoutInner = () => {
     <div
       className={
         isMobile
-          ? "relative flex min-h-dvh w-full group/layout"
-          : "relative flex h-dvh w-full group/layout"
+          ? "admin-shell relative flex min-h-dvh w-full group/layout"
+          : "admin-shell relative flex h-dvh w-full group/layout"
       }
     >
       <AdminSidebar />
@@ -72,14 +73,17 @@ const AdminLayoutInner = () => {
           id="main-content"
           className={
             isMobile
-              ? "min-h-dvh flex-1 overflow-visible bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,#f8fafb_0%,#f5f7f9_100%)]"
-              : "min-h-0 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,#f8fafb_0%,#f5f7f9_100%)]"
+              ? "admin-main min-h-dvh flex-1 overflow-visible"
+              : "admin-main min-h-0 flex-1 overflow-auto"
           }
         >
-          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1320px] mx-auto">
-            <SectionErrorBoundary sectionName="trang quản trị">
-              <Outlet />
-            </SectionErrorBoundary>
+          <div className="admin-shell-rail" aria-hidden="true" />
+          <div className="admin-page-frame mobile-main-content animate-page-enter">
+            <div className="admin-page-inner">
+              <SectionErrorBoundary sectionName="trang quản trị">
+                <Outlet />
+              </SectionErrorBoundary>
+            </div>
           </div>
         </main>
       </div>
@@ -91,15 +95,22 @@ const AdminLayout = () => {
   const { user } = useAuth();
   const isAdvPartner = user?.role === 'adv_partner';
 
+  useEffect(() => {
+    document.documentElement.classList.add("admin-route-active");
+    return () => document.documentElement.classList.remove("admin-route-active");
+  }, []);
+
   return (
     <ProtectedRoute requiredRole={["admin", "adv_partner"]}>
       <SidebarProvider defaultOpen={true}>
-        <AdminLayoutInner />
-        <MobileBottomNav
-          groups={isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS}
-          moreItems={isAdvPartner ? undefined : ADMIN_MORE_ITEMS}
-        />
-        <NotificationFAB />
+        <div data-admin-ui="" data-theme="congtruong" className="admin-shell-scope">
+          <AdminLayoutInner />
+          <MobileBottomNav
+            groups={isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS}
+            moreItems={isAdvPartner ? undefined : ADMIN_MORE_ITEMS}
+          />
+          <NotificationFAB />
+        </div>
       </SidebarProvider>
     </ProtectedRoute>
   );

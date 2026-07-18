@@ -45,12 +45,12 @@ type EmployeeScheduleInfo struct {
 	// (time.Time{}) when no shift is configured. Values are absolute instants in
 	// the application timezone so the frontend can compare them against its
 	// wall-clock without timezone ambiguity.
-	ShiftStart           time.Time
-	ShiftEnd             time.Time
-	CheckInWindowStart   time.Time
-	CheckInWindowEnd     time.Time
-	CheckOutWindowStart  time.Time
-	CheckOutWindowEnd    time.Time
+	ShiftStart          time.Time
+	ShiftEnd            time.Time
+	CheckInWindowStart  time.Time
+	CheckInWindowEnd    time.Time
+	CheckOutWindowStart time.Time
+	CheckOutWindowEnd   time.Time
 	// ShiftName is the admin-chosen display name for the active shift's
 	// time-range, looked up from the project's ShiftNames. Empty when unset.
 	ShiftName            string

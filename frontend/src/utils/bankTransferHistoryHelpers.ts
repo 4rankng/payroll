@@ -5,6 +5,20 @@ export const BANK_TRANSFER_CYCLE_LABELS = {
   4: 'Kỳ 4 · ngày 22–28',
 } as const;
 
+const bankTransferDateFormatter = new Intl.DateTimeFormat('vi-VN', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'Asia/Ho_Chi_Minh',
+});
+
+const bankTransferTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'Asia/Ho_Chi_Minh',
+});
+
 export function getCurrentMonthValue(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -24,4 +38,13 @@ export function formatBankTransferPeriod(fromDate: string, toDate: string): stri
   }
 
   return `${formatBankTransferDate(fromDate)}–${formatBankTransferDate(toDate)}`;
+}
+
+export function formatBankTransferDateTime(value?: string): string {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return `${bankTransferDateFormatter.format(date)} · ${bankTransferTimeFormatter.format(date)}`;
 }

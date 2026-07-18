@@ -115,20 +115,20 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
 	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
 
-	uploadedAt := "2026-07-17T20:24:00+07:00"
+	uploadedAt := time.Date(2026, time.July, 17, 20, 24, 0, 0, clock.DefaultLocation)
 	rows := []dto.BulkTransferFileData{
-		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-1", Amount: 1_548_000, TransferStatus: "completed", BankTxnRef: "FT26198846619959", UploadedAt: &uploadedAt},
-		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-2", Amount: 450_000, TransferStatus: "completed", BankTxnRef: "FT26198940380850", UploadedAt: &uploadedAt},
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-1", Amount: 1_548_000, TransferStatus: "completed", BankTxnRef: "FT26198846619959"},
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-2", Amount: 450_000, TransferStatus: "completed", BankTxnRef: "FT26198940380850"},
 		// Re-imported evidence for the same reference must not inflate the total.
-		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-3", Amount: 999, TransferStatus: "completed", BankTxnRef: " ft26198940380850 ", UploadedAt: &uploadedAt},
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-3", Amount: 999, TransferStatus: "completed", BankTxnRef: " ft26198940380850 "},
 		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-4", Amount: 100_000, TransferStatus: "failed", BankTxnRef: "FAILED"},
-		{EmployeeID: 99, ProjectID: 2, TransactionCode: "TX-5", Amount: 700_000, TransferStatus: "completed", BankTxnRef: "FT-UNRELATED", UploadedAt: &uploadedAt},
+		{EmployeeID: 99, ProjectID: 2, TransactionCode: "TX-5", Amount: 700_000, TransferStatus: "completed", BankTxnRef: "FT-UNRELATED"},
 	}
 	data, err := json.Marshal(rows)
 	require.NoError(t, err)
 	assetID := uint(7)
 	cycle := "weekly"
-	file := &domain.BulkTransferFile{ID: 5, Cycle: &cycle, AssetID: &assetID, Data: string(data), CreatedAt: historyDate(2026, time.September, 1)}
+	file := &domain.BulkTransferFile{ID: 5, Cycle: &cycle, AssetID: &assetID, Data: string(data), UploadedAt: &uploadedAt, CreatedAt: historyDate(2026, time.September, 1)}
 
 	transactionRows := make([]*domain.TransactionCode, 0, 5)
 	for index, code := range []string{"TX-1", "TX-2", "TX-3", "TX-4", "TX-5"} {
@@ -181,6 +181,8 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 			require.Len(t, result.Data[0].Transfers, 2)
 			require.Equal(t, "TX-1", result.Data[0].Transfers[0].TransferCode)
 			require.Equal(t, "TX-2", result.Data[0].Transfers[1].TransferCode)
+			require.Equal(t, "2026-07-17T20:24:00+07:00", result.Data[0].Transfers[0].PaidAt)
+			require.Equal(t, "2026-07-17T20:24:00+07:00", result.Data[0].Transfers[1].PaidAt)
 			require.Equal(t, int64(1_998_000), result.Data[0].TotalAmount)
 		})
 	}

@@ -28,8 +28,8 @@ describe('BankTransferHistoryPageContent', () => {
           payment_date: '2026-07-17',
           total_amount: 1_998_000,
           transfers: [
-            { transfer_code: 'VFIC6d037214', bank_reference: 'FT26198846619959', amount: 1_548_000 },
-            { transfer_code: 'VFIC7a193042', bank_reference: 'FT26198940380850', amount: 450_000 },
+            { transfer_code: 'VFIC6d037214', bank_reference: 'FT26198846619959', amount: 1_548_000, paid_at: '2026-07-17T20:24:00+07:00' },
+            { transfer_code: 'VFIC7a193042', bank_reference: 'FT26198940380850', amount: 450_000, paid_at: '2026-07-17T20:31:00+07:00' },
           ],
         }],
         pagination: { page: 1, pageSize: 20, totalPages: 1, totalRecords: 1 },
@@ -45,16 +45,22 @@ describe('BankTransferHistoryPageContent', () => {
 
     expect(screen.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
     expect(screen.getByText('2 bút toán')).toBeInTheDocument();
-    expect(screen.queryByText('FT26198846619959')).not.toBeInTheDocument();
+    expect(screen.getByText('FT26198846619959')).not.toBeVisible();
 
-    fireEvent.click(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i }));
+    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
+    expect(disclosure.closest('details')).not.toHaveAttribute('open');
+
+    fireEvent.click(disclosure);
 
     expect(screen.getByText('FT26198846619959')).toBeInTheDocument();
     expect(screen.getByText('FT26198940380850')).toBeInTheDocument();
     expect(screen.getByText('VFIC6d037214')).toBeInTheDocument();
     expect(screen.getByText('VFIC7a193042')).toBeInTheDocument();
-    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(2);
-    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(2);
+    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(3);
+    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(3);
+    expect(screen.getAllByText('Thời gian xử lý')).toHaveLength(3);
+    expect(screen.getByText('17/07/2026 · 20:24')).toHaveAttribute('datetime', '2026-07-17T20:24:00+07:00');
+    expect(screen.getByText('17/07/2026 · 20:31')).toHaveAttribute('datetime', '2026-07-17T20:31:00+07:00');
     expect(screen.getByText('CCCD 031189014251')).toBeInTheDocument();
     expect(screen.getByText(/1\.548\.000\s*₫/)).toBeInTheDocument();
     expect(screen.getByText(/450\.000\s*₫/)).toBeInTheDocument();
@@ -63,13 +69,13 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByText('Kỳ 2')).toBeInTheDocument();
     expect(screen.getByText('08–14/07/2026')).toHaveAttribute('aria-label', 'Từ 08/07/2026 đến 14/07/2026');
     expect(screen.getByText('17/07/2026')).toBeInTheDocument();
-    const expandedCard = screen.getByRole('button', { name: /Thu gọn giao dịch/i });
-    expect(expandedCard).toHaveAttribute('aria-expanded', 'true');
+    const expandedCard = screen.getByLabelText(/Chi tiết giao dịch/i);
+    expect(expandedCard.closest('details')).toHaveAttribute('open');
 
-    fireEvent.keyDown(expandedCard, { key: 'Enter' });
+    fireEvent.click(expandedCard);
 
-    expect(screen.queryByText('FT26198846619959')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('FT26198846619959')).not.toBeVisible();
+    expect(expandedCard.closest('details')).not.toHaveAttribute('open');
   });
 
   it('shows an empty-note fallback when a legacy payment has no transfer code', () => {
@@ -81,12 +87,12 @@ describe('BankTransferHistoryPageContent', () => {
     useBankTransferHistories.mockReturnValue(result);
 
     render(<BankTransferHistoryPageContent />);
-    fireEvent.click(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i }));
+    fireEvent.click(screen.getByLabelText(/Chi tiết giao dịch/i));
 
     expect(screen.getByText('FT-LEGACY-001')).toBeInTheDocument();
-    expect(screen.getByText('Ghi chú chuyển khoản')).toBeInTheDocument();
-    expect(screen.getByText('Mã giao dịch ngân hàng')).toBeInTheDocument();
-    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(2);
+    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(2);
+    expect(screen.getAllByText('—')).toHaveLength(2);
     expect(screen.getByText('CCCD —')).toBeInTheDocument();
   });
 

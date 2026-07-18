@@ -389,15 +389,18 @@ const AdminSidebar = () => {
     <>
       <Sidebar
         collapsible="icon"
-        className="border-r border-white/[0.06] bg-[hsl(var(--sidebar-background))]"
+        className="admin-sidebar-surface border-r border-white/[0.06] bg-[hsl(var(--sidebar-background))]"
       >
         {/* Header — logo */}
         <SidebarHeader className="p-0 shrink-0 border-b border-white/[0.06]">
-          <div className="flex items-center justify-center h-14">
+          <div className="admin-sidebar-logo flex h-14 items-center justify-center">
             {isCollapsed ? (
               <img src="/logo-square.png" alt="TingTing" className="h-7 w-7 object-contain" />
             ) : (
-              <img src="/tingting-white.png" alt="TingTing" className="h-7 object-contain" />
+              <div className="flex items-center gap-2.5" aria-label="TingTing">
+                <img src="/logo-square.png" alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                <img src="/tingting-white.png" alt="TingTing" className="h-6 w-auto object-contain" />
+              </div>
             )}
           </div>
         </SidebarHeader>
@@ -441,7 +444,7 @@ const AdminSidebar = () => {
               <button
                 type="button"
                 className={cn(
-                  "relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
+                  "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
                   "bg-card/[0.04] border border-white/[0.06]",
                   "hover:bg-card/[0.08] hover:border-white/[0.1]",
                   isCollapsed ? "h-9 w-9 justify-center mx-auto" : "h-auto min-h-[40px] px-2.5 py-2 gap-2.5"

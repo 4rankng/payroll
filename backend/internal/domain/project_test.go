@@ -237,8 +237,8 @@ func TestIsValidShiftRange(t *testing.T) {
 		"21:00-05:00": true,
 		"00:00-23:59": true,
 		// invalid
-		"":          false,
-		"9:00-18:00": false, // hour must be 2 digits
+		"":            false,
+		"9:00-18:00":  false, // hour must be 2 digits
 		"25:00-18:00": false,
 		"09:60-18:00": false,
 		"0900-1800":   false,

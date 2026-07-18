@@ -206,6 +206,52 @@
     --admin-accent: 148 60% 58%;
     --partner-accent: 148 60% 58%;
     --manager-accent: 151 87% 25%;
+
+    /* ========================================================================
+       ADMIN LEDGER THEME - Scoped to [data-admin-ui]
+       ======================================================================== */
+    --admin-background: 45 33% 96%;
+    --admin-foreground: 148 23% 16%;
+    --admin-card: 42 38% 98%;
+    --admin-card-foreground: 148 23% 16%;
+    --admin-popover: 42 38% 98%;
+    --admin-popover-foreground: 148 23% 16%;
+    --admin-primary: 151 87% 25%;
+    --admin-primary-foreground: 0 0% 100%;
+    --admin-secondary: 36 73% 44%;
+    --admin-secondary-foreground: 43 100% 97%;
+    --admin-muted: 43 26% 90%;
+    --admin-muted-foreground: 145 13% 38%;
+    --admin-accent-soft: 148 38% 90%;
+    --admin-accent-foreground: 151 46% 22%;
+    --admin-border: 42 25% 82%;
+    --admin-input: 41 23% 78%;
+    --admin-ring: 151 49% 38%;
+    --admin-success: 146 63% 39%;
+    --admin-success-foreground: 0 0% 100%;
+    --admin-warning: 35 78% 45%;
+    --admin-warning-foreground: 46 100% 97%;
+    --admin-info: 174 72% 31%;
+    --admin-info-foreground: 0 0% 100%;
+    --admin-destructive: 0 58% 49%;
+    --admin-destructive-foreground: 0 0% 100%;
+    --admin-sidebar-background: 149 38% 18%;
+    --admin-sidebar-foreground: 42 36% 92%;
+    --admin-sidebar-primary: 151 87% 25%;
+    --admin-sidebar-primary-foreground: 0 0% 100%;
+    --admin-sidebar-accent: 148 31% 25%;
+    --admin-sidebar-accent-foreground: 42 36% 92%;
+    --admin-sidebar-border: 149 27% 25%;
+    --admin-sidebar-ring: 43 81% 63%;
+    --admin-shell-shadow: 0 20px 60px -42px rgba(11, 43, 29, 0.5);
+    --admin-card-shadow: 0 18px 40px -34px rgba(31, 41, 30, 0.28);
+    --admin-grid-line: rgba(109, 92, 55, 0.12);
+    --admin-grid-strong: rgba(8, 120, 62, 0.18);
+    --admin-shell-glow: rgba(8, 120, 62, 0.16);
+    --admin-amber-glow: rgba(183, 121, 31, 0.18);
+    --admin-font-display: var(--font-family-display);
+    --admin-font-body: var(--font-family-display);
+    --admin-font-mono: var(--font-family-financial);
   }
 
   .dark {
@@ -257,5 +303,41 @@
     /* Green stays vibrant on Dark */
     --success: 142 60% 55%;
     --success-foreground: 142 100% 10%;
+  }
+
+  [data-admin-ui],
+  html.admin-route-active {
+    --background: var(--admin-background);
+    --foreground: var(--admin-foreground);
+    --card: var(--admin-card);
+    --card-foreground: var(--admin-card-foreground);
+    --popover: var(--admin-popover);
+    --popover-foreground: var(--admin-popover-foreground);
+    --primary: var(--admin-primary);
+    --primary-foreground: var(--admin-primary-foreground);
+    --secondary: var(--admin-secondary);
+    --secondary-foreground: var(--admin-secondary-foreground);
+    --muted: var(--admin-muted);
+    --muted-foreground: var(--admin-muted-foreground);
+    --accent: var(--admin-accent-soft);
+    --accent-foreground: var(--admin-accent-foreground);
+    --border: var(--admin-border);
+    --input: var(--admin-input);
+    --ring: var(--admin-ring);
+    --success: var(--admin-success);
+    --success-foreground: var(--admin-success-foreground);
+    --warning: var(--admin-warning);
+    --info: var(--admin-info);
+    --destructive: var(--admin-destructive);
+    --destructive-foreground: var(--admin-destructive-foreground);
+    --sidebar-background: var(--admin-sidebar-background);
+    --sidebar-foreground: var(--admin-sidebar-foreground);
+    --sidebar-primary: var(--admin-sidebar-primary);
+    --sidebar-primary-foreground: var(--admin-sidebar-primary-foreground);
+    --sidebar-accent: var(--admin-sidebar-accent);
+    --sidebar-accent-foreground: var(--admin-sidebar-accent-foreground);
+    --sidebar-border: var(--admin-sidebar-border);
+    --sidebar-ring: var(--admin-sidebar-ring);
+    --admin-accent: 43 81% 63%;
   }
 }

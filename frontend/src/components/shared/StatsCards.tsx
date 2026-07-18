@@ -34,7 +34,10 @@ const gridColsMap: Record<number, string> = {
 };
 
 export const StatsCards = ({ stats, columns = 4 }: StatsCardsProps) => (
-  <div className={cn('grid gap-2.5', gridColsMap[columns] ?? gridColsMap[4])}>
+  <div
+    data-slot="stats-cards"
+    className={cn('grid gap-2.5', gridColsMap[columns] ?? gridColsMap[4])}
+  >
     {stats.map((stat, i) => (
       <KpiHeroCard
         key={i}
@@ -48,6 +51,7 @@ export const StatsCards = ({ stats, columns = 4 }: StatsCardsProps) => (
             ? { value: stat.change, positive: stat.trend === 'up' }
             : undefined
         }
+        className="h-full admin-ledger-stat"
       />
     ))}
   </div>

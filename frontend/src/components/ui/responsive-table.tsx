@@ -89,7 +89,11 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
   // Render desktop table for tablets and above
   if (isDesktop) {
     return (
-      <div className={cn("w-full", className)}>
+      <div
+        data-slot="responsive-table"
+        data-view="desktop"
+        className={cn("w-full", className)}
+      >
         <DataTable
           columns={columns}
           data={data}
@@ -110,7 +114,11 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
 
   // Render mobile table for phones
   return (
-    <div className={cn("w-full", className)}>
+    <div
+      data-slot="responsive-table"
+      data-view="mobile"
+      className={cn("w-full", className)}
+    >
       <MobileTable
         data={data as unknown as Record<string, unknown>[]}
         fields={mobileFields as unknown as MobileField<Record<string, unknown>>[]}
@@ -124,6 +132,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
         pagination={pagination}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        getRowClassName={getRowClassName as unknown as (row: Record<string, unknown>) => string}
       />
     </div>
   );

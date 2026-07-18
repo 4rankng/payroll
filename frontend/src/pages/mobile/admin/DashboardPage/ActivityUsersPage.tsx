@@ -74,7 +74,7 @@ const ActivityUsersPage = () => {
     : "Tất cả thời gian";
 
   return (
-    <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <div className="admin-dashboard-activity-page flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         icon={Activity}
         title={title}
@@ -115,7 +115,7 @@ const ActivityUsersPage = () => {
             {users.map((user) => (
               <button
                 key={user.user_id}
-                className="rounded-xl border bg-card p-3 text-left hover:bg-muted/50 active:bg-muted/70 transition-colors flex flex-col gap-2 touch-manipulation"
+                className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50 active:bg-muted/70 motion-reduce:transition-none touch-manipulation"
                 onClick={() => setSelectedEmployeeId(user.employee_id)}
               >
                 <div className="flex items-center gap-2 min-w-0">

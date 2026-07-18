@@ -98,7 +98,7 @@ func TestResolveAllShiftWindowsAttachesAdminNameByRange(t *testing.T) {
 func TestExtractShiftRanges(t *testing.T) {
 	flattened := map[string]int{
 		"Công nhân.ngày thường.09:00-18:00": 300000,
-		"Lái xe.ngày thường.08:00-17:00":     250000,
+		"Lái xe.ngày thường.08:00-17:00":    250000,
 		// duplicate range across positions should be deduped
 		"Quản lý.ngày thường.09:00-18:00": 400000,
 		// non-shift keys (no HH:MM-HH:MM suffix) must be ignored

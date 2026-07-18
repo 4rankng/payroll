@@ -41,15 +41,16 @@ export function PaginationControls({
   };
 
   return (
-    <div className={cn('flex items-center justify-between gap-3 py-2.5', className)}>
-      {/* Left: record range */}
+    <div
+      data-slot="pagination-controls"
+      className={cn('admin-pagination flex items-center justify-between gap-3 py-2.5', className)}
+    >
       <p className="text-xs text-muted-foreground tabular-nums shrink-0 min-w-[68px]">
         <span className="font-medium text-foreground/70">{from}–{to}</span>
         <span className="mx-1 text-muted-foreground/50">/</span>
         {totalRecords.toLocaleString('vi-VN')}
       </p>
 
-      {/* Center: page buttons */}
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
@@ -122,7 +123,6 @@ export function PaginationControls({
         </Button>
       </div>
 
-      {/* Right: page size selector */}
       <div className="flex items-center gap-1.5 shrink-0">
         <span className="text-xs text-muted-foreground/70 hidden sm:inline">Hiển thị</span>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
@@ -130,7 +130,7 @@ export function PaginationControls({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[10, 20, 50, 100].map(n => (
+            {[10, 20, 50, 100].map((n) => (
               <SelectItem key={n} value={String(n)} className="text-xs py-2">{n}</SelectItem>
             ))}
           </SelectContent>

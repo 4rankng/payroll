@@ -22,8 +22,8 @@ func TestBacktest_ProjectionVsActual(t *testing.T) {
 	// Three Ky-1 cycles. We forecast each from the prior ones and compare to its
 	// own grand total (the "actual" the cycle reached).
 	cycles := []struct {
-		forMonth   string
-		rows       []domain.TimesheetAccrualDailyRow
+		forMonth    string
+		rows        []domain.TimesheetAccrualDailyRow
 		actualTotal int64
 	}{
 		{
@@ -63,7 +63,7 @@ func TestBacktest_ProjectionVsActual(t *testing.T) {
 	// projected through the pay date (cycle-day 10). Compare p50 of the FULL
 	// remaining accrual + observed-so-far to the actual total.
 	type result struct {
-		forMonth string
+		forMonth  string
 		projected int64
 		actual    int64
 	}

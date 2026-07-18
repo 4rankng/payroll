@@ -29,8 +29,10 @@ export const EmptyState = memo(function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
+      data-slot="empty-state"
+      data-admin-surface="empty-state"
       className={cn(
-        'flex flex-col items-center justify-center gap-3',
+        'admin-empty-state flex flex-col items-center justify-center gap-3',
         size === 'default' ? 'py-12' : 'py-10',
         className,
       )}

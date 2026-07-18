@@ -25,12 +25,12 @@ type EmployeeProfileResponse struct {
 	// Values are absolute instants in the application timezone (Asia/Ho_Chi_Minh),
 	// serialized as RFC 3339 (e.g. "2026-07-12T19:00:00+07:00") so the frontend can
 	// compare them against Date.now() without depending on the device timezone.
-	ShiftStart           *time.Time           `json:"shift_start,omitempty"`
-	ShiftEnd             *time.Time           `json:"shift_end,omitempty"`
-	CheckInWindowStart   *time.Time           `json:"check_in_window_start,omitempty"`
-	CheckInWindowEnd     *time.Time           `json:"check_in_window_end,omitempty"`
-	CheckOutWindowStart  *time.Time           `json:"check_out_window_start,omitempty"`
-	CheckOutWindowEnd    *time.Time           `json:"check_out_window_end,omitempty"`
+	ShiftStart          *time.Time `json:"shift_start,omitempty"`
+	ShiftEnd            *time.Time `json:"shift_end,omitempty"`
+	CheckInWindowStart  *time.Time `json:"check_in_window_start,omitempty"`
+	CheckInWindowEnd    *time.Time `json:"check_in_window_end,omitempty"`
+	CheckOutWindowStart *time.Time `json:"check_out_window_start,omitempty"`
+	CheckOutWindowEnd   *time.Time `json:"check_out_window_end,omitempty"`
 	// ShiftName is the admin-chosen display name for the employee's active
 	// shift, when one is configured on the project. Omitted when no shift is
 	// resolved or no name is set.

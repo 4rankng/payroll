@@ -438,6 +438,8 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 			paidAt := ""
 			if entry.UploadedAt != nil {
 				paidAt = *entry.UploadedAt
+			} else if file.UploadedAt != nil {
+				paidAt = file.UploadedAt.In(clock.DefaultLocation).Format(time.RFC3339)
 			}
 			agg.item.Transfers = append(agg.item.Transfers, dto.BankTransferHistoryTransfer{
 				TransferCode:  entry.TransactionCode,

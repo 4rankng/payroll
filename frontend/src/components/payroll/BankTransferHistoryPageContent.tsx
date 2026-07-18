@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Landmark,
   ReceiptText,
   Search,
@@ -25,6 +26,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import type { BankTransferHistory } from '@/types/api/payroll.types';
 import {
   formatBankTransferDate,
+  formatBankTransferDateTime,
   formatBankTransferPeriod,
   getCurrentMonthValue,
 } from '@/utils/bankTransferHistoryHelpers';
@@ -115,140 +117,151 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
 
 function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
-    <div
-      className="divide-y divide-slate-200/80"
-      aria-label={`${item.transfers.length} chi tiết thanh toán`}
-      role="list"
-    >
-      {item.transfers.map((transfer) => (
-        <div
-          key={`${transfer.transfer_code}-${transfer.bank_reference}-${transfer.amount}`}
-          className="grid min-w-0 gap-3 px-4 py-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:items-center sm:px-5"
-          role="listitem"
-        >
-          <div className="min-w-0">
-            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
-              Ghi chú chuyển khoản
-            </p>
-            <p className="mt-1 break-all font-financial text-[11px] font-bold text-slate-700">
-              {transfer.transfer_code || '—'}
-            </p>
-          </div>
-          <div className="min-w-0">
-            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
-              Mã giao dịch ngân hàng
-            </p>
-            <p className="mt-1 break-all font-financial text-[11px] font-semibold text-slate-700">
-              {transfer.bank_reference}
-            </p>
-          </div>
-          <div className="text-left sm:text-right">
-            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 sm:hidden">
-              Số tiền
-            </p>
-            <span className="mt-1 block whitespace-nowrap font-financial text-[12px] font-bold tabular-nums text-emerald-700 sm:mt-0">
-              {formatCurrency(transfer.amount)}
-            </span>
-          </div>
+    <div className="bg-slate-50/90">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-4 py-3.5 sm:px-5">
+        <div>
+          <p className="flex items-center gap-2 font-display text-[11px] font-bold text-slate-900">
+            <Landmark className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
+            Chi tiết giao dịch ngân hàng
+          </p>
+          <p className="mt-0.5 text-[10px] text-slate-500">Mã đối soát và thời gian xử lý của từng bút toán</p>
         </div>
-      ))}
+        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-financial text-[10px] font-bold tabular-nums text-slate-600">
+          {item.transfers.length} bút toán
+        </span>
+      </div>
+
+      <div className="hidden grid-cols-[40px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-5 border-b border-slate-200/80 bg-white/70 px-5 py-2.5 xl:grid">
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Mã giao dịch ngân hàng</span>
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Thời gian xử lý</span>
+        <span className="text-right font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Số tiền</span>
+      </div>
+
+      <div className="space-y-2 p-3 xl:space-y-0 xl:divide-y xl:divide-slate-200/80 xl:p-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
+        {item.transfers.map((transfer, index) => (
+          <div
+            key={`${transfer.transfer_code}-${transfer.bank_reference}-${transfer.amount}`}
+            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-[0_8px_24px_-24px_rgba(15,23,42,0.4)] xl:grid-cols-[40px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] xl:items-center xl:gap-5 xl:rounded-none xl:border-0 xl:bg-transparent xl:px-5 xl:py-4 xl:shadow-none"
+            role="listitem"
+          >
+            <span className="inline-flex h-7 items-center justify-center rounded-lg bg-slate-100 px-2 font-display text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500 xl:h-8 xl:w-8 xl:px-0 xl:font-financial xl:text-[10px] xl:tracking-normal">
+              <span className="mr-1 xl:hidden">Giao dịch</span>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+
+            <div className="min-w-0 text-right xl:col-start-5 xl:row-start-1">
+              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Số tiền</p>
+              <p className="mt-0.5 whitespace-nowrap font-financial text-[14px] font-bold tabular-nums text-emerald-700 xl:mt-0 xl:text-[13px]">
+                {formatCurrency(transfer.amount)}
+              </p>
+            </div>
+
+            <div className="col-span-2 min-w-0 border-t border-slate-100 pt-3 xl:col-span-1 xl:col-start-2 xl:row-start-1 xl:border-0 xl:pt-0">
+              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Ghi chú chuyển khoản</p>
+              <p className="mt-1 break-all font-financial text-[11px] font-bold text-slate-800 xl:mt-0">{transfer.transfer_code || '—'}</p>
+            </div>
+
+            <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-3 xl:row-start-1">
+              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Mã giao dịch ngân hàng</p>
+              <p className="mt-1 break-all font-financial text-[11px] font-semibold text-slate-800 xl:mt-0">{transfer.bank_reference}</p>
+            </div>
+
+            <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-4 xl:row-start-1">
+              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thời gian xử lý</p>
+              <p className="mt-1 flex items-center gap-1.5 xl:mt-0">
+                <Clock3 className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <time className="font-financial text-[11px] font-semibold tabular-nums text-slate-700" dateTime={transfer.paid_at}>
+                  {formatBankTransferDateTime(transfer.paid_at)}
+                </time>
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function HistoryRecord({ item }: { item: BankTransferHistory }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const detailsId = `payment-details-${item.employee_id}-${item.work_month}-${item.cycle}`;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-[border-color,box-shadow] duration-200 hover:border-slate-300 hover:shadow-[0_12px_32px_-28px_rgba(15,23,42,0.35)]">
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={isExpanded}
-        aria-controls={detailsId}
-        aria-label={`${isExpanded ? 'Thu gọn' : 'Xem chi tiết'} giao dịch của ${item.employee_name}`}
-        onClick={() => setIsExpanded((value) => !value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            setIsExpanded((value) => !value);
-          }
-        }}
-        className="group/summary grid min-h-[104px] cursor-pointer gap-x-4 gap-y-3 p-4 outline-none transition-colors hover:bg-slate-50/55 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center lg:grid-cols-[minmax(220px,1.25fr)_minmax(210px,0.9fr)_minmax(150px,0.65fr)_44px] lg:px-5"
-      >
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-emerald-700">
-            <UserRound className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-display text-[14px] font-bold leading-snug text-slate-950">
-              {item.employee_name}
-            </p>
-            <p className="mt-1 font-financial text-[10px] font-semibold tabular-nums tracking-[0.02em] text-slate-600">
-              CCCD {item.employee_cccd || '—'}
-            </p>
-            {item.project_names.length > 0 && (
-              <p className="mt-1 truncate text-[11px] text-slate-500">
-                {item.project_names.join(', ')}
+    <article>
+      <details className="group/record overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_30px_-28px_rgba(15,23,42,0.38)] transition-[border-color,box-shadow] duration-200 open:border-emerald-200 open:shadow-[0_20px_46px_-34px_rgba(6,101,52,0.46)] hover:border-slate-300">
+        <summary
+          aria-controls={detailsId}
+          aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
+          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-3 p-4 outline-none transition-colors marker:content-none hover:bg-slate-50/55 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 sm:p-5 xl:min-h-[112px] xl:grid-cols-[minmax(230px,1.25fr)_minmax(190px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_44px] xl:items-center xl:gap-5 [&::-webkit-details-marker]:hidden"
+        >
+          <div className="col-span-2 flex min-w-0 items-center gap-3 pr-12 xl:col-span-1 xl:pr-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-emerald-700">
+              <UserRound className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-display text-[14px] font-bold leading-snug text-slate-950">
+                {item.employee_name}
               </p>
-            )}
+              <p className="mt-1 font-financial text-[10px] font-semibold tabular-nums tracking-[0.02em] text-slate-600">
+                CCCD {item.employee_cccd || '—'}
+              </p>
+              {item.project_names.length > 0 && (
+                <p className="mt-1 truncate text-[11px] text-slate-500">
+                  {item.project_names.join(', ')}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="min-w-0 sm:row-start-2 lg:row-auto">
-          <div className="flex items-center gap-2">
-            <Badge className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-display text-[10px] font-bold text-emerald-800 hover:bg-emerald-50">
-              Kỳ {item.cycle}
-            </Badge>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 font-display text-[9px] font-bold text-emerald-700">
+          <div className="order-3 min-w-0 rounded-xl bg-slate-50 p-3 xl:order-none xl:rounded-none xl:bg-transparent xl:p-0">
+            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Kỳ thanh toán</p>
+            <div className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold tabular-nums text-slate-800">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <span
+                className="whitespace-nowrap"
+                aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
+              >
+                {formatBankTransferPeriod(item.from_date, item.to_date)}
+              </span>
+            </div>
+            <Badge className="mt-2 shrink-0 rounded-full border border-slate-200 bg-white px-2 py-0.5 font-display text-[10px] font-bold text-slate-700 hover:bg-white xl:bg-slate-50 xl:hover:bg-slate-50">Kỳ {item.cycle}</Badge>
+          </div>
+
+          <div className="order-3 min-w-0 rounded-xl bg-slate-50 p-3 xl:order-none xl:rounded-none xl:bg-transparent xl:p-0">
+            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Ngày thanh toán</p>
+            <time dateTime={item.payment_date} className="mt-1.5 block font-financial text-[12px] font-bold tabular-nums text-slate-800">
+              {formatBankTransferDate(item.payment_date)}
+            </time>
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 font-display text-[9px] font-bold text-emerald-700">
               <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
               Đã chuyển
             </span>
           </div>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold tabular-nums text-slate-700">
-            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-            <span
-              className="whitespace-nowrap"
-              aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
-            >
-              {formatBankTransferPeriod(item.from_date, item.to_date)}
+
+          <div className="order-2 col-span-2 flex items-end justify-between border-y border-slate-100 py-3.5 xl:order-none xl:col-span-1 xl:block xl:border-0 xl:py-0 xl:text-right">
+            <div>
+              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Thực nhận</p>
+              <p className="mt-1 whitespace-nowrap font-financial text-[22px] font-bold tabular-nums tracking-[-0.035em] text-emerald-700 xl:text-[17px]">
+                {formatCurrency(item.total_amount)}
+              </p>
+            </div>
+            <p className="pb-0.5 text-right text-[10px] leading-relaxed text-slate-500 xl:mt-1 xl:pb-0">
+              {item.transfers.length} bút toán<br className="xl:hidden" /> ngân hàng
+            </p>
+          </div>
+
+          <div className="absolute right-4 top-4 flex items-center justify-end sm:right-5 sm:top-5 xl:static">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-[border-color,color,background-color] group-hover/summary:border-emerald-200 group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700">
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180" aria-hidden="true" />
             </span>
           </div>
-          <p className="mt-1 pl-5 text-[10px] text-slate-500">
-            Thanh toán{' '}
-            <time dateTime={item.payment_date} className="font-bold tabular-nums text-emerald-700">
-              {formatBankTransferDate(item.payment_date)}
-            </time>
-          </p>
-        </div>
+        </summary>
 
-        <div className="text-right sm:col-start-2 sm:row-start-1 lg:col-auto lg:row-auto">
-          <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
-            Thực nhận
-          </p>
-          <p className="mt-1 whitespace-nowrap font-financial text-[16px] font-bold tabular-nums tracking-[-0.025em] text-emerald-700">
-            {formatCurrency(item.total_amount)}
-          </p>
-          <p className="mt-0.5 text-[10px] text-slate-500">{item.transfers.length} bút toán</p>
-        </div>
-
-        <div className="flex items-center justify-end sm:col-start-2 sm:row-start-2 lg:col-auto lg:row-auto">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-[border-color,color,background-color] group-hover/summary:border-emerald-200 group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700">
-            <span className="sr-only">{isExpanded ? 'Thu gọn' : 'Xem chi tiết'}</span>
-            <ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
-          </span>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div id={detailsId} className="border-t border-slate-100 bg-slate-50/60">
+        <div id={detailsId} className="border-t border-slate-200/80">
           <TransferReferences item={item} />
         </div>
-      )}
+      </details>
     </article>
   );
 }
@@ -289,10 +302,10 @@ export function BankTransferHistoryPageContent() {
   };
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-4 sm:px-5 md:p-6">
-      <div className="mx-auto max-w-[1480px] space-y-5">
-        <header className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-white px-5 py-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] sm:px-6">
-          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-emerald-100/70" />
+    <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-3 sm:px-5 sm:py-4 md:p-6">
+      <div className="mx-auto max-w-[1480px] space-y-4 sm:space-y-5">
+        <header className="relative overflow-hidden px-1 py-2 sm:rounded-3xl sm:border sm:border-emerald-100 sm:bg-white sm:px-6 sm:py-5 sm:shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)]">
+          <div className="pointer-events-none absolute -right-14 -top-16 hidden h-48 w-48 rounded-full border-[26px] border-emerald-100/70 sm:block" />
           <PageHeader
             className="relative"
             icon={ReceiptText}
@@ -301,8 +314,8 @@ export function BankTransferHistoryPageContent() {
           />
         </header>
 
-        <Card className="overflow-hidden rounded-3xl border-slate-200/80 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.40)]">
-          <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-[180px_220px_minmax(260px,1fr)]">
+        <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.40)] sm:rounded-3xl">
+          <CardContent className="grid grid-cols-2 gap-3 p-3 sm:gap-4 sm:p-5 md:grid-cols-[180px_220px_minmax(260px,1fr)]">
             <label className="space-y-2 font-display text-[11px] font-bold text-slate-600">
               Tháng kỳ lương
               <PayrollMonthPicker
@@ -325,7 +338,7 @@ export function BankTransferHistoryPageContent() {
                 </SelectContent>
               </Select>
             </label>
-            <label className="space-y-2 font-display text-[11px] font-bold text-slate-600">
+            <label className="col-span-2 space-y-2 font-display text-[11px] font-bold text-slate-600 md:col-span-1">
               Tìm kiếm
               <div className="relative mt-0">
                 <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -368,9 +381,10 @@ export function BankTransferHistoryPageContent() {
           </div>
 
           {!isLoading && !isError && records.length > 0 && (
-            <div className="hidden grid-cols-[minmax(220px,1.25fr)_minmax(210px,0.9fr)_minmax(150px,0.65fr)_44px] gap-4 px-5 py-1 lg:grid">
+            <div className="hidden grid-cols-[minmax(230px,1.25fr)_minmax(190px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_44px] gap-5 px-5 py-1 xl:grid">
               <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Nhân viên</span>
               <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Kỳ thanh toán</span>
+              <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Ngày thanh toán</span>
               <span className="text-right font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Số tiền</span>
               <span aria-hidden="true" />
             </div>

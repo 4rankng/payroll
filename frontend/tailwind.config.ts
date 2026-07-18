@@ -9,6 +9,49 @@ export default {
 		"./src/**/*.{ts,tsx}",
 	],
 	prefix: "",
+	daisyui: {
+		themes: [
+			{
+				congtruong: {
+					primary: "#08783e",
+					"primary-content": "#f7fcf8",
+					secondary: "#b7791f",
+					"secondary-content": "#fff9ef",
+					accent: "#2d7b63",
+					"accent-content": "#f5fcf7",
+					neutral: "#20382d",
+					"neutral-content": "#eef5f0",
+					"base-100": "#fcfaf5",
+					"base-200": "#f3efe5",
+					"base-300": "#e4dcc9",
+					"base-content": "#18231c",
+					info: "#0f766e",
+					"info-content": "#effcfb",
+					success: "#0f9f6e",
+					"success-content": "#eefcf6",
+					warning: "#c77a18",
+					"warning-content": "#fff8e8",
+					error: "#c24141",
+					"error-content": "#fff5f5",
+					"--rounded-box": "1.25rem",
+					"--rounded-btn": "1rem",
+					"--rounded-badge": "9999px",
+					"--animation-btn": "0.2s",
+					"--animation-input": "0.2s",
+					"--btn-focus-scale": "0.985",
+					"--border-btn": "1px",
+					"--tab-border": "1px",
+					"--tab-radius": "0.9rem",
+				},
+			},
+		],
+		prefix: "ct-",
+		// Keep daisyUI generated selectors isolated from existing shadcn classes.
+		base: false,
+		darkTheme: false,
+		logs: false,
+		themeRoot: "[data-admin-ui]",
+	},
 	theme: {
 		container: {
 			center: true,
@@ -231,5 +274,6 @@ export default {
 	plugins: [
 		require("tailwindcss-animate"),
 		require("@tailwindcss/typography"),
+		require("daisyui"),
 	],
 } satisfies Config;

@@ -105,7 +105,6 @@ function MobileCardRow<TData>({
       }}
     >
       <CardContent className="p-5 touch-manipulation">
-        {/* Primary columns - always visible */}
         <div className="space-y-4">
           {primaryCols.map((column, index) => {
             const cell = row.getVisibleCells().find(c => c.column.id === column.id);
@@ -232,13 +231,18 @@ export function DataTable<TData, TValue>({
   }[mobileBreakpoint];
 
   return (
-    <div className={cn(embedded ? "flex flex-col" : "space-y-4", className)}>
-      {/* Desktop Table - Hidden on mobile */}
+    <div
+      data-slot="data-table"
+      className={cn(embedded ? "flex flex-col" : "space-y-4", className)}
+    >
       <div className={cn("hidden", breakpointClass)}>
-        <div className={cn(
-          "relative overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
-          !embedded && "rounded-2xl border border-border/40 bg-card/90 backdrop-blur-sm shadow-sm"
-        )}>
+        <div
+          data-slot="data-table-desktop"
+          className={cn(
+            "relative overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
+            !embedded && "rounded-2xl border border-border/40 bg-card/90 backdrop-blur-sm shadow-sm"
+          )}
+        >
           <Table className="w-full">
               {caption && <caption className="sr-only">{caption}</caption>}
               <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
@@ -318,7 +322,6 @@ export function DataTable<TData, TValue>({
                           key={cell.id}
                           className={cn(
                             "align-middle",
-                            // Apply strip styling to first cell only
                             cellIndex === 0 && getRowClassName?.(row.original)
                           )}
                           style={getColumnSizingStyles(cell.column)}
@@ -346,7 +349,6 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      {/* Mobile Card View - Shown on mobile */}
       <div className={cn("block", breakpointClass.replace('block', 'hidden'))}>
         {table.getRowModel().rows?.length ? (
           <div className="space-y-4 px-1">

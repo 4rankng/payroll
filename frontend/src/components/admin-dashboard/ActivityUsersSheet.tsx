@@ -62,7 +62,13 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
   return (
     <>
       <Sheet open={!!schedule} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <SheetContent side={isMobile ? "bottom" : "right"} className={cn("w-full sm:w-[480px] p-0 flex flex-col", isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]")}>
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className={cn(
+            "admin-dashboard-activity-sheet flex w-full flex-col p-0 sm:w-[480px]",
+            isMobile && "max-h-[94dvh] rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)]",
+          )}
+        >
           {/* Mobile drag handle */}
           {isMobile && (
             <div className="flex justify-center pt-2.5 pb-1 flex-shrink-0">
@@ -108,7 +114,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
                 {users.map((user) => (
                   <button
                     key={user.user_id}
-                    className="flex min-h-24 flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50"
+                    className="flex min-h-24 flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50 motion-reduce:transition-none"
                     onClick={() => setSelectedEmployeeId(user.employee_id)}
                   >
                     <div className="flex items-center gap-2 min-w-0">

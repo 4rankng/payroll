@@ -24,16 +24,16 @@ func TestKyFromWorkDay(t *testing.T) {
 
 func TestMaxCycleDay(t *testing.T) {
 	cases := []struct {
-		ky        int
-		year      int
-		month     time.Month
-		want      int
+		ky    int
+		year  int
+		month time.Month
+		want  int
 	}{
 		{1, 2026, time.July, 10},
 		{2, 2026, time.July, 10},
 		{3, 2026, time.July, 10},
-		{4, 2026, time.July, 11},  // 31-day July: (31-22+1)+1 = 11
-		{4, 2026, time.June, 10},  // 30-day June: (30-22+1)+1 = 10
+		{4, 2026, time.July, 11},    // 31-day July: (31-22+1)+1 = 11
+		{4, 2026, time.June, 10},    // 30-day June: (30-22+1)+1 = 10
 		{4, 2026, time.February, 8}, // 28-day Feb: (28-22+1)+1 = 8
 	}
 	for _, c := range cases {
@@ -212,9 +212,9 @@ func TestNextPayCycleAfter_WrapAround(t *testing.T) {
 // "rest-of-month" case (July has 31 days → days 22–31).
 func TestCycleWindow(t *testing.T) {
 	cases := []struct {
-		ky       int
-		fromDay  int
-		toDay    int
+		ky      int
+		fromDay int
+		toDay   int
 	}{
 		{1, 1, 7},
 		{2, 8, 14},
