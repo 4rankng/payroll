@@ -33,9 +33,9 @@ export const PageHeader = ({
 
   return (
     <TooltipProvider>
-      <div className={cn('flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4', className)}>
+      <div className={cn('flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4', className)}>
         {/* Left: title + description */}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 sm:min-w-64 sm:basis-64">
           <div className="flex items-center gap-2">
             {Icon && (
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -58,7 +58,7 @@ export const PageHeader = ({
 
         {/* Right: actions + children (month navigator etc.) */}
         {hasControls && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2 sm:justify-end">
             {actions.map((action, index) => (
               <Button
                 key={index}

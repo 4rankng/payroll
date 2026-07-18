@@ -18,4 +18,20 @@ describe('MobilePageHeader', () => {
     expect(actionsContainer).toHaveClass('basis-full', 'max-w-full', 'sm:basis-auto');
     expect(headerRow).toHaveClass('flex-wrap', 'sm:flex-nowrap');
   });
+
+  it('uses the page canvas when rendered as an embedded borderless header', () => {
+    render(
+      <MobilePageHeader
+        title="Bảng công"
+        sticky={false}
+        bordered={false}
+      />,
+    );
+
+    const headerRow = screen.getByRole('heading', { name: 'Bảng công' }).parentElement?.parentElement?.parentElement;
+    const header = headerRow?.parentElement;
+
+    expect(header).toHaveClass('bg-transparent');
+    expect(header).not.toHaveClass('bg-white');
+  });
 });

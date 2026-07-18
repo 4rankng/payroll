@@ -175,3 +175,61 @@ func TestPrepareByDate(t *testing.T) {
 func dateAt(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, DefaultLocation)
 }
+
+// TestNextPayCycleAfter_WrapAround exercises the helper the settlement
+// simulation uses to project "current + next N" cycles. Kỳ 4 must wrap to
+// Kỳ 1 of the next month; Kỳ 1→2→3 stay in the same month.
+func TestNextPayCycleAfter_WrapAround(t *testing.T) {
+	july1 := NextTimesheetPayCycle(dateAt(2026, time.July, 3)) // Kỳ 1, July
+	if july1.Ky != 1 {
+		t.Fatalf("seed: expected Kỳ 1, got %d", july1.Ky)
+	}
+
+	k2 := NextPayCycleAfter(july1)
+	if k2.Ky != 2 || k2.WorkMonth.Month() != time.July {
+		t.Errorf("Kỳ 1 → Kỳ %d @ %v, want Kỳ 2 @ July", k2.Ky, k2.WorkMonth)
+	}
+	k3 := NextPayCycleAfter(k2)
+	if k3.Ky != 3 || k3.WorkMonth.Month() != time.July {
+		t.Errorf("Kỳ 2 → Kỳ %d @ %v, want Kỳ 3 @ July", k3.Ky, k3.WorkMonth)
+	}
+	k4 := NextPayCycleAfter(k3)
+	if k4.Ky != 4 || k4.WorkMonth.Month() != time.July {
+		t.Errorf("Kỳ 3 → Kỳ %d @ %v, want Kỳ 4 @ July", k4.Ky, k4.WorkMonth)
+	}
+	// Wrap: Kỳ 4 of July → Kỳ 1 of August.
+	nextK1 := NextPayCycleAfter(k4)
+	if nextK1.Ky != 1 || nextK1.WorkMonth.Month() != time.August {
+		t.Errorf("Kỳ 4 wrap → Kỳ %d @ %v, want Kỳ 1 @ August", nextK1.Ky, nextK1.WorkMonth)
+	}
+	// And the August Kỳ 1 pays on Aug 10.
+	if !nextK1.NextPayDate.Equal(dateAt(2026, time.August, 10)) {
+		t.Errorf("Aug Kỳ 1 pay date = %v, want 2026-08-10", nextK1.NextPayDate)
+	}
+}
+
+// TestCycleWindow covers each Kỳ's work-day window, including the Kỳ 4
+// "rest-of-month" case (July has 31 days → days 22–31).
+func TestCycleWindow(t *testing.T) {
+	cases := []struct {
+		ky       int
+		fromDay  int
+		toDay    int
+	}{
+		{1, 1, 7},
+		{2, 8, 14},
+		{3, 15, 21},
+		{4, 22, 31}, // July has 31 days
+	}
+	month := dateAt(2026, time.July, 1)
+	for _, c := range cases {
+		pc := TimesheetPayCycle{Ky: c.ky, WorkMonth: month}
+		from, to := pc.CycleWindow()
+		if from.Day() != c.fromDay {
+			t.Errorf("Kỳ %d from day = %d, want %d", c.ky, from.Day(), c.fromDay)
+		}
+		if to.Day() != c.toDay {
+			t.Errorf("Kỳ %d to day = %d, want %d", c.ky, to.Day(), c.toDay)
+		}
+	}
+}

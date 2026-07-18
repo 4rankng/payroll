@@ -83,12 +83,17 @@ func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransfer
 		return nil, err
 	}
 
-	// Phase 3 will add an optional stale-snapshot enforcement here:
-	//   if req.IfMatchSnapshot != nil && !req.IfMatchSnapshot.IsZero() &&
-	//	      plan.SnapshotEpoch.After(*req.IfMatchSnapshot) {
-	//       return nil, domain.ErrStaleSimulation
-	//   }
-	// Left out of Phase 1 to keep the refactor behavior-neutral.
+	// Stale-snapshot guard (opt-in via IfMatchSnapshot — typically from a prior
+	// /payrolls/simulate-settlement response). Rejects with HTTP 409 when any
+	// relevant row has moved since the simulation, so an export cannot silently
+	// proceed using stale results (acceptance criterion #6). Absent = backward
+	// compatible.
+	if req.IfMatchSnapshot != nil && !req.IfMatchSnapshot.IsZero() && plan.SnapshotEpoch.After(*req.IfMatchSnapshot) {
+		return nil, domain.NewConflictErrorWithCode(
+			"STALE_SIMULATION",
+			"Dữ liệu đã thay đổi kể từ lần mô phỏng gần nhất — vui lòng chạy lại mô phỏng đối soát trước khi xuất.",
+		)
+	}
 
 	filename, err := es.Persist(ctx, req, plan)
 	if err != nil {
@@ -284,7 +289,7 @@ func formatDateRangeStrings(plan *ExportPlan) (string, string) {
 	return formatDateRange(plan)
 }
 
-// Compile-time guard: ensure time import stays used ( formatDateRange relies
-// on time.Time zero-check). Avoids an unused-import error if other helpers
-// are refactored later.
+// `time` is referenced indirectly via formatDateRange's *ExportPlan (which
+// carries time.Time fields) and the IsZero check on plan.FromDate, not via a
+// direct type reference in this file. This anchor keeps the import valid.
 var _ = time.Time{}

@@ -1,10 +1,11 @@
 ---
 phase: 2
-title: "Backend: Build Read-Only Simulation Service"
-status: pending
+title: 'Backend: Build Read-Only Simulation Service'
+status: completed
 priority: P1
-effort: "L"
-dependencies: [1]
+effort: L
+dependencies:
+  - 1
 ---
 
 # Phase 2: Backend: Build Read-Only Simulation Service
@@ -17,19 +18,21 @@ dependencies: [1]
 
 The verdict answers: **"Of ALL outstanding approved timesheets (full pool, NO date filter), how many will these N projected exports cover, and how many will remain unsettled?"** Not "are these N windows internally complete." Past-cycle stragglers (a day-3 timesheet still `failed` when projecting from Kỳ 2 onward) are therefore **failures of coverage**, not edge cases.
 
-Each remaining item after all N cycles is classified by **money-flow direction** because the business consequence differs:
+### Remainders are unpaid wages — single class (correction mid-implementation)
 
-| Remainder class | Definition | Business meaning |
-|-----------------|------------|------------------|
-| `UNPAID_WAGES` | Timesheet not yet disbursed to employee (no linked `wallet_payment` in terminal state, no linked advance payout) | **Employee is owed money** — must be re-exported |
-| `OP_LOSS` | Timesheet where money already left our account (advance paid out, or wallet_payment reached `completed`) but receivable not settled against the client | **Operational loss / unrecovered cost** — client billing gap |
-| `STUCK_IN_FLIGHT` | Has a non-terminal `wallet_payment` (pending/verified/authorised) | **Pending bank outcome** — re-export would double-pay; wait |
+The eligible pool is filtered by `payment_status IN (pending, failed)` — i.e. **not yet paid**. Items already paid (`payment_status = paid`) are excluded by the planner's status filter, so by construction **every remainder is unpaid wages**. The `wallet_payments` table belongs to a separate money flow (advance-payment / FlexPay disbursement via OnePay/9Pay) and is not touched by the payroll bulk-transfer path at all — an earlier draft invented a `OP_LOSS` / `STUCK_IN_FLIGHT` classifier traversing `timesheet → transaction_codes → wallet_payments`, but that chain does not exist for the payroll path and the op-loss class is structurally impossible here. **No remainder classifier is needed.** Each remainder is reported with its employee, project, amount, timesheet IDs, and a human-readable reason ("thuộc kỳ trước, không được bao phủ bởi các kỳ mô phỏng" / "outside the projected cycle windows").
 
-This classification is the single most important business output of the feature: it tells the admin not just "X items remain" but "X items = Y VND unpaid wages + Z VND op-loss + W VND in-flight."
+Verdict therefore collapses to 2 actionable states:
+
+| Verdict | Condition |
+|---------|-----------|
+| `AN_TOAN_DE_XUAT` | Full pool covered by N cycle windows + no blocking findings + reconciliation delta = 0 |
+| `CAN_KIEM_TRA` | Some remainders exist (unpaid wages left after N cycles), OR blocking findings, OR reconciliation drift |
+| `KHONG_THE_TAT_TOAN` | *(Reserved — cannot fire in payroll-only scope since the op-loss class does not exist here. Kept in the enum for forward compatibility if FlexPay simulation is ever added.)* |
 
 ## Requirements
 
-- **Functional:** Project 1–6 cycles. Per cycle: included count/amount, excluded-with-reasons, remaining-after. Across all cycles: **full-pool** verdict, op-loss classification of every remaining item, reconciliation, warnings, snapshot epoch.
+- **Functional:** Project 1–6 cycles. Per cycle: included count/amount, excluded-with-reasons, remaining-after. Across all cycles: **full-pool** verdict, remainders list (every item = unpaid wages with reason), reconciliation, warnings, snapshot epoch.
 - **Non-functional:** Strictly read-only (no DB writes, no status flips, no transaction-code rows, no `bulk_transfer_files` rows, no events). Deterministic ordering. `int64` VND throughout — no decimal drift.
 
 ## Architecture
@@ -148,44 +151,34 @@ fullPoolIDs := flattenTimesheetIDs(fullPoolPlan.RawAggregated.EmployeeProjectTim
 // 3. Remainder = full pool minus covered
 remainderIDs := setDifference(fullPoolIDs, coveredTimesheetIDs)
 
-// 4. Classify each remainder item by money-flow via the REAL chain
-//    (red-team Finding 2: original chain was wrong; this is the corrected path)
-//
-//    timesheet.ID
-//      → transaction_codes (where JSON_CONTAINS(data->'$.weekly_pay.timesheet_ids', id)
-//                            OR JSON_CONTAINS(data->'$.monthly_pay.timesheet_ids', id))
-//      → transaction_codes.code
-//      → wallet_payments (where txn_id = code)
-//      → wallet_payments.status
-remainders := classifyByMoneyFlow(ctx, remainderIDs)
-//   Classification rule per timesheet ID:
-//     - matchedCodes := transactionCodeRepo.FindByTimesheetID(ctx, id)  // new indexed query, see below
-//     - wpRows := walletPaymentRepo.GetByTxnIDs(ctx, codes-of-matchedCodes)  // batch
-//     - if any wp.Status == completed                     → OP_LOSS
-//     - elif any wp.Status in (pending,verified,authorised) → STUCK_IN_FLIGHT
-//     - else (no codes, no wallet rows, or all failed)    → UNPAID_WAGES
+// 4. Build remainder rows. No classifier needed — every remainder is unpaid
+//    wages by construction (the eligible pool is payment_status IN (pending,
+//    failed), i.e. not yet paid). The wallet_payments table is in a separate
+//    money flow (advance-payment) and is not consulted.
+remainders := buildRemainderRows(fullPoolPlan, remainderIDs)
+//   Each row carries: employee_id, employee_name, project_id, project_name,
+//   amount, timesheet_ids, reason ("thuộc kỳ trước, không được bao phủ bởi
+//   các kỳ mô phỏng" / outside the projected cycle windows).
 
-// 5. Verdict
-hasOpLoss        := any(remainders, class == OP_LOSS)
-hasUnpaidWages   := any(remainders, class == UNPAID_WAGES)
+// 5. Verdict — 2 actionable states in payroll-only scope.
+hasRemainders    := len(remainders) > 0
 hasBlocking      := any(cycle.Findings for cycle in cycles, severity == blocking)
 deltaNonZero     := reconciliation.Delta != 0
 
 switch {
-case hasOpLoss || (hasBlocking && hasUnpaidWages):
-    Verdict = "KHONG_THE_TAT_TOAN"
-case hasUnpaidWages || hasBlocking || deltaNonZero || len(warnings) > 0:
+case hasRemainders || hasBlocking || deltaNonZero || len(warnings) > 0:
     Verdict = "CAN_KIEM_TRA"
 default:
     Verdict = "AN_TOAN_DE_XUAT"
 }
+// Note: KHONG_THE_TAT_TOAN is reserved for a future FlexPay-simulation scope
+// where the op-loss class is meaningful; it cannot fire here.
 ```
 
-**Two new repository queries required** (red-team Findings 3 & 7 — neither exists today):
-1. `transactionCodeRepo.FindByTimesheetIDs(ctx, ids []uint) (map[uint][]*TransactionCode, error)` — batch query: `SELECT * FROM transaction_codes WHERE JSON_CONTAINS(data->'$.weekly_pay.timesheet_ids', ?) OR JSON_CONTAINS(data->'$.monthly_pay.timesheet_ids', ?)`. Build the reverse map in Go. MySQL 8 supports `JSON_CONTAINS` and the `data` column is `JSON` type.
-2. `walletPaymentRepo.GetByTxnIDs(ctx, txnIDs []string) ([]*WalletPayment, error)` — batch lookup (avoids the N+1 red-team Finding 3 flagged).
+**One new repository query required** (red-team Finding 7):
+1. `ledgerRepo.GetAccountTotalInRange(ctx, account, from, to) (int64, error)` — single SUM(debit − credit) round-trip. See "Reconciliation" below.
 
-Both are read-only SELECTs against indexed columns.
+No wallet_payment query is needed. No transaction_codes query is needed for classification (only for snapshot/staleness, which Phase 1 already handles via the planner).
 
 ### Reconciliation (red-team Finding 7 — new ledger method)
 
@@ -222,14 +215,12 @@ A plain `db.WithContext(ctx)` (no transaction wrapper) is sufficient. The simula
 
 ## Related Code Files
 
-- **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_service.go` — `SimulationService`, `Simulate`, cycle loop, verdict, full-pool scan.
-- **Modify:** `backend/internal/pkg/clock/pay_cycle.go` — add `NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle` (~15 lines, wraps Kỳ 4 → Kỳ 1 next month). Do NOT create a new cycle file.
+- **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_service.go` — `SimulationService`, `Simulate`, cycle loop, verdict, full-pool scan, remainder rows.
+- **Modify:** `backend/internal/pkg/clock/pay_cycle.go` — add `NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle` + `CycleWindow()` (~30 lines, wraps Kỳ 4 → Kỳ 1 next month). Do NOT create a new cycle file.
 - **Create:** `backend/internal/app/services/payroll/bulktransfer/simulation_validators.go` — `simValidators.Run`, `SimFinding`.
-- **Create:** `backend/internal/app/services/payroll/bulktransfer/remainder_classifier.go` — `classifyByMoneyFlow(ctx, remainderIDs) → []ClassifiedRemainder`. Traverses timesheet → transaction_codes → wallet_payments (the corrected chain).
-- **Modify (interface additions):** `backend/internal/infra/persistence/ledger_repository_queries.go` + `ledger.go` repo interface — add `GetAccountTotalInRange`.
-- **Modify (interface additions):** `backend/internal/domain/transaction_code.go` (repo interface) — add `FindByTimesheetIDs`.
-- **Modify (interface additions):** `backend/internal/domain/transactions/repository.go` (wallet_payment repo interface) — add `GetByTxnIDs`.
+- **Modify (interface addition):** `backend/internal/domain/ledger.go` (`LedgerEntryRepository`) + `backend/internal/infra/persistence/ledger_repository_balance.go` (impl) — add `GetAccountTotalInRange`.
 - **Read-only deps:** `backend/internal/app/services/payroll/bulktransfer/planner.go` (Phase 1), `backend/internal/app/services/payroll/excel/service.go`.
+- **Not touched:** `wallet_payment_repository.go`, `transaction_code_repository.go`. (Correction: an earlier draft extended these for an op-loss classifier — reverted. The payroll path has no wallet_payment involvement.)
 - **DTO (added in Phase 3 but referenced here):** `dto.SimulateSettlementRequest`, `dto.SimulationResult`, `dto.ClassifiedRemainder` — see Phase 3 for full shape.
 
 ## Implementation Steps
@@ -250,10 +241,10 @@ A plain `db.WithContext(ctx)` (no transaction wrapper) is sufficient. The simula
 ## Success Criteria
 
 - [ ] `SimulationService.Simulate` returns a populated `SimulationResult` with 1–6 cycle projections.
-- [ ] **Full-pool scan** runs (one extra `Plan()` call with no date filter) and `remainders` is computed as `fullPool − covered`.
-- [ ] Every remainder item is classified `UNPAID_WAGES` / `OP_LOSS` / `STUCK_IN_FLIGHT` with a non-empty evidence chain (linked wallet_payment status cited).
-- [ ] Verdict is one of `AN_TOAN_DE_XUAT` / `CAN_KIEM_TRA` / `KHONG_THE_TAT_TOAN` per the locked semantics (any `OP_LOSS` → `KHONG_THE_TAT_TOAN`).
-- [ ] Zero calls to `fileRepo.*Create*`, `transactionCodeRepo.Create*`, `eventBus.Publish`, `timesheetRepo.BulkUpdate*`, `settlement*` writes.
+- [ ] **Full-pool scan** runs (one extra `Plan()` call with `NoDateFilter=true`) and `remainders` is computed as `fullPool − covered`.
+- [ ] Every remainder row carries employee/project/amount/timesheet IDs + a human-readable reason; no classifier/wallet_payment lookup is performed.
+- [ ] Verdict is `AN_TOAN_DE_XUAT` (clean) or `CAN_KIEM_TRA` (remainders / blocking / drift). `KHONG_THE_TAT_TOAN` is reserved and never returned in payroll scope.
+- [ ] Zero calls to `fileRepo.*Create*`, `transactionCodeRepo.Create*`, `eventBus.Publish`, `timesheetRepo.BulkUpdate*`, `settlement*` writes, `walletPaymentRepo.*`.
 - [ ] Reconciliation delta is exact integer (`int64`) equality.
 - [ ] Each sim-only validator that fails also surfaces a "production does not check this" warning.
 - [ ] `SnapshotEpoch` returned equals `max(updated_at)` of any timesheet the planner observed (full-pool scan included).

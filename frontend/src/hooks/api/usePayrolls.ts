@@ -4,6 +4,7 @@ import { timesheetService } from '@/services/api/timesheet.service';
 import { payrollService, type PaymentHistoryExportParams } from '@/services/api/payroll.service';
 import { showSuccessNotification } from '@/utils/error-handler';
 import type { PaymentHistoryFilters } from '@/types/api/payroll.types';
+import type { SettlementSimulationRequest, SettlementSimulationResult } from '@/types/api/settlement-simulation.types';
 
 /**
  * Hook to export bulk transfer Excel file for bank transfers
@@ -234,5 +235,20 @@ export const useAutoBulkTransferStatus = (batchId: string | null) => {
       if (data?.status === 'completed') return false;
       return 3000;
     },
+  });
+};
+
+/**
+ * Run a read-only settlement simulation. Returns a full-pool coverage verdict
+ * (will the current + next N−1 payroll cycles settle every outstanding
+ * approved timesheet?) with remainders and reconciliation. No data mutation,
+ * so we intentionally do NOT invalidate any query keys on success.
+ */
+export const useSimulateSettlement = () => {
+  return useMutation<SettlementSimulationResult, Error, SettlementSimulationRequest>({
+    mutationFn: (params: SettlementSimulationRequest) =>
+      bulkTransferService.simulateSettlement(params),
+    // onSuccess: deliberately no invalidation — simulation is read-only.
+    // Errors are handled globally by React Query.
   });
 };

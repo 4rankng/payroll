@@ -15,6 +15,13 @@ type ExportBulkTransferRequest struct {
 	ForMonth    string `json:"for_month,omitempty"`
 	CreatedBy   uint   `json:"-"` // Set from context, not from request body
 
+	// IfMatchSnapshot optionally carries the snapshot_epoch returned by a prior
+	// /payrolls/simulate-settlement call. If set, Export rejects with 409
+	// (domain.ErrStaleSimulation) when any relevant row's updated_at is newer
+	// than this timestamp — preventing an export from silently using stale
+	// simulation results. Absent = today's backward-compatible behavior.
+	IfMatchSnapshot *time.Time `json:"if_match_snapshot,omitempty"`
+
 	// NoDateFilter is set ONLY by the settlement simulation's full-pool scan
 	// (Phase 2). Production export never sets it. When true, ExportPlanner.Plan
 	// skips date resolution and selects every outstanding approved timesheet
@@ -322,4 +329,131 @@ type EstimateFeeResponse struct {
 	TotalFee       int64 `json:"total_fee"`
 	TransferCount  int   `json:"transfer_count"`
 	FeePerTransfer int64 `json:"fee_per_transfer"`
+}
+
+// ============================================================================
+// Settlement Simulation DTOs (Phase 2-3 — /payrolls/simulate-settlement)
+//
+// The simulation projects the current payroll cycle + next N−1 cycles by
+// reusing the production ExportPlanner.Plan(). It returns a full-pool verdict
+// ("will these N exports cover every outstanding approved timesheet?") plus
+// a remainders list. Payroll-only scope: every remainder is unpaid wages
+// (the eligible pool is payment_status IN (pending, failed) by construction).
+// ============================================================================
+
+// SimulateSettlementRequest is the request body for the simulation endpoint.
+type SimulateSettlementRequest struct {
+	ProjectIDs         []uint `json:"project_ids,omitempty"`
+	EmployeeIDs        []uint `json:"employee_ids,omitempty"`
+	ProjectedCycleCount int    `json:"projected_cycle_count,omitempty"` // default 4, clamped [1,6]
+	ForMonth           string `json:"for_month,omitempty"`              // optional YYYY-MM override
+	CreatedBy          uint   `json:"-"`                                // set from auth context
+}
+
+// SimulationResult is the full response payload.
+type SimulationResult struct {
+	SnapshotEpoch       time.Time           `json:"snapshot_epoch"`
+	StartingCycle       CycleMeta           `json:"starting_cycle"`
+	ProjectedCycleCount int                 `json:"projected_cycle_count"`
+	Verdict             string              `json:"verdict"` // AN_TOAN_DE_XUAT | CAN_KIEM_TRA | KHONG_THE_TAT_TOAN
+	Summary             SimulationSummary   `json:"summary"`
+	Reconciliation      ReconciliationResult `json:"reconciliation"`
+	Cycles              []CycleProjection   `json:"cycles"`
+	Remainders          []RemainderRow      `json:"remainders"`
+	Warnings            []SimWarning        `json:"warnings"`
+}
+
+// CycleMeta describes a cycle's window + pay date.
+type CycleMeta struct {
+	Index    int    `json:"index"`
+	MonthRef string `json:"month_ref"`
+	FromDate string `json:"from_date"`
+	ToDate   string `json:"to_date"`
+	PayDate  string `json:"pay_date"`
+}
+
+// SimulationSummary is the answer-first totals block.
+type SimulationSummary struct {
+	TotalEligibleCount     int   `json:"total_eligible_count"`
+	TotalEligibleAmount    int64 `json:"total_eligible_amount"`
+	TotalIncludedCount     int   `json:"total_included_count"`
+	TotalIncludedAmount    int64 `json:"total_included_amount"`
+	RemainingAfterAllCount int   `json:"remaining_after_all_count"`
+	RemainingAfterAllAmount int64 `json:"remaining_after_all_amount"`
+	AllSettled             bool  `json:"all_settled"`
+}
+
+// ReconciliationResult compares the projected export total against the ledger receivable.
+type ReconciliationResult struct {
+	ExportedTotal    int64 `json:"exported_total"`
+	LedgerReceivable int64 `json:"ledger_receivable"`
+	Delta            int64 `json:"delta"`
+	Reconciled       bool  `json:"reconciled"`
+}
+
+// CycleProjection is one projected export batch.
+type CycleProjection struct {
+	Sequence        int                    `json:"sequence"`
+	Label           string                 `json:"label"`
+	FromDate        string                 `json:"from_date"`
+	ToDate          string                 `json:"to_date"`
+	PayDate         string                 `json:"pay_date"`
+	IncludedCount   int                    `json:"included_count"`
+	IncludedAmount  int64                  `json:"included_amount"`
+	ExcludedCount   int                    `json:"excluded_count"`
+	RemainingAfter  int                    `json:"remaining_after_count"`
+	RemainingAmount int64                  `json:"remaining_after_amount"`
+	Included        []SimulationRow        `json:"included"`
+	Excluded        []SimulationExcludedRow `json:"excluded"`
+	Findings        []SimFinding           `json:"findings"`
+}
+
+// SimulationRow is one included (valid, will-be-exported) row.
+type SimulationRow struct {
+	EmployeeID        uint   `json:"employee_id"`
+	EmployeeName      string `json:"employee_name"`
+	ProjectID         uint   `json:"project_id"`
+	ProjectName       string `json:"project_name"`
+	Amount            int64  `json:"amount"`
+	TimesheetIDs      []uint `json:"timesheet_ids"`
+	BankAccountMasked string `json:"bank_account_masked"`
+}
+
+// SimulationExcludedRow is one row filtered out by validation.
+type SimulationExcludedRow struct {
+	EmployeeID   uint   `json:"employee_id"`
+	EmployeeName string `json:"employee_name"`
+	ProjectID    uint   `json:"project_id"`
+	ProjectName  string `json:"project_name"`
+	Amount       int64  `json:"amount"`
+	TimesheetIDs []uint `json:"timesheet_ids"`
+	Reason       string `json:"reason"`
+	InProduction bool   `json:"in_production"`
+}
+
+// RemainderRow is an outstanding item not covered by any projected cycle.
+// Always unpaid wages in payroll-only scope.
+type RemainderRow struct {
+	EmployeeID        uint   `json:"employee_id"`
+	EmployeeName      string `json:"employee_name"`
+	ProjectID         uint   `json:"project_id"`
+	ProjectName       string `json:"project_name"`
+	Amount            int64  `json:"amount"`
+	TimesheetIDs      []uint `json:"timesheet_ids"`
+	Reason            string `json:"reason"`
+	BankAccountMasked string `json:"bank_account_masked"`
+}
+
+// SimFinding is a validation finding (sim-only or shared with production).
+type SimFinding struct {
+	Severity    string `json:"severity"`              // blocking | warning | info
+	Code        string `json:"code"`
+	Message     string `json:"message"`
+	InProduction bool  `json:"in_production"`
+}
+
+// SimWarning is a top-level warning surfaced above the per-cycle findings.
+type SimWarning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }

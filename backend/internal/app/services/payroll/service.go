@@ -147,6 +147,13 @@ func (s *PayrollService) ExportBulkTransfer(ctx context.Context, req *dto.Export
 	return s.bulkTransferService.ExportBulkTransfer(ctx, req)
 }
 
+// SimulateSettlement projects the current + next N−1 payroll cycles read-only
+// and returns a full-pool coverage verdict with remainders + reconciliation.
+// Delegates to bulktransfer.Service.SimulateSettlement.
+func (s *PayrollService) SimulateSettlement(ctx context.Context, req *dto.SimulateSettlementRequest) (*dto.SimulationResult, error) {
+	return s.bulkTransferService.SimulateSettlement(ctx, req)
+}
+
 // ProcessBulkTransferResult processes bulk transfer results
 func (s *PayrollService) ProcessBulkTransferResult(ctx context.Context, fileHeader *multipart.FileHeader, processedBy uint) (*dto.BulkTransferResultResponse, error) {
 	return s.bulkTransferService.ProcessBulkTransferResult(ctx, fileHeader, processedBy)

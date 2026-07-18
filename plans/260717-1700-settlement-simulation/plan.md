@@ -5,7 +5,7 @@ description: >-
   the next 3 monthly payout cycles (Kỳ 1–4 cadence) using the EXACT same
   selection/validation logic as production. Surfaces included, excluded,
   remaining, and reconciliation status before any download or upload.
-status: pending
+status: completed
 priority: P1
 branch: main
 tags:
@@ -44,9 +44,9 @@ Per the user's confirmed cadence, **the payroll is paid in 4 weekly cycles each 
 | Kỳ  | Pay day (next month for Kỳ 4) | Covers days |
 |-----|-------------------------------|-------------|
 | 1   | Day 10                        | Completed |
-| 2   | Day 17                        | 8–14        |
-| 3   | Day 24                        | 15–21       |
-| 4   | Day 1 (next month)            | 22–28 (prev month) |
+| 2   | Day 17                        | Completed |
+| 3   | Day 24                        | Completed |
+| 4   | Day 1 (next month)            | Completed |
 
 The simulation therefore projects **the current cycle (whichever of Kỳ 1–4 "today" falls in) plus the remaining cycles of the month, up to 4 batches total**. For example, running the simulation on day 12 (Kỳ 2) projects Kỳ 2, 3, 4, and Kỳ 1 of next month. The admin can override the projected-batch count (1–6) in the dialog.
 
@@ -112,11 +112,11 @@ The refactor in Phase 1 is the linchpin: it splits `ExportService.Export()` into
 | Phase | Name | Status | Effort | Summary |
 |-------|------|--------|--------|---------|
 | 1 | [Refactor: Extract Reusable Export Planner](./phase-01-refactor-extract-reusable-export-planner.md) | Pending | M | Completed |
-| 2 | [Backend: Build Read-Only Simulation Service](./phase-02-backend-build-read-only-simulation-service.md) | Pending | L | Cycle projection + extra validators + reconciliation + verdict |
-| 3 | [Backend: Add Endpoint & Wire Routes](./phase-03-backend-add-endpoint-wire-routes.md) | Pending | S | Handler, DTO, route, container wiring |
-| 4 | [Frontend: Simulation Dialog & Button](./phase-04-frontend-simulation-dialog-button.md) | Pending | M | Button in both headers + dialog mirroring `OnePayFeeReportDialog` |
-| 5 | [Tests: Unit + Integration + No-Mutation](./phase-05-tests-unit-integration-no-mutation.md) | Pending | L | Sim/prod parity, no-mutation, stale-snapshot, 0/<4/=4/>4 cycles |
-| 6 | [Backend & Frontend Quality Gates](./phase-06-backend-frontend-quality-gates.md) | Pending | S | `make api-test`, lint, type-check, race, coverage |
+| 2 | [Backend: Build Read-Only Simulation Service](./phase-02-backend-build-read-only-simulation-service.md) | Pending | L | Completed |
+| 3 | [Backend: Add Endpoint & Wire Routes](./phase-03-backend-add-endpoint-wire-routes.md) | Pending | S | Completed |
+| 4 | [Frontend: Simulation Dialog & Button](./phase-04-frontend-simulation-dialog-button.md) | Pending | M | Completed |
+| 5 | [Tests: Unit + Integration + No-Mutation](./phase-05-tests-unit-integration-no-mutation.md) | Pending | L | Completed |
+| 6 | [Backend & Frontend Quality Gates](./phase-06-backend-frontend-quality-gates.md) | Pending | S | Completed |
 
 ## Key design decisions (locked, post-red-team)
 
@@ -124,7 +124,7 @@ The refactor in Phase 1 is the linchpin: it splits `ExportService.Export()` into
 2. **Strictly read-only.** Primary guarantee: `ExportPlanner.Plan()` (Phase 1) is pure — issues zero INSERT/UPDATE calls. Secondary guarantee: Phase 5's row-count snapshot test canonically proves no mutation. **`sql.TxOptions{ReadOnly:true}` is NOT relied upon** (red-team Finding 9: it's a no-op in the configured MySQL driver) — the docs may still wrap in a tx for snapshot consistency but the safety claim does not depend on it.
 3. **Cycle model = `clock.NextTimesheetPayCycle`.** "Current + next 3" uses the **existing canonical** cycle model at `backend/internal/pkg/clock/pay_cycle.go` (`KyFromWorkDay`, `PayDate`, `NextTimesheetPayCycle`). **Do not create a new `payroll_cycle.go`** (red-team Finding 3). Start cycle = `clock.NextTimesheetPayCycle(clock.Now())`; subsequent cycles walk forward via the existing helpers, wrapping Kỳ 4 → Kỳ 1 next month.
 4. **Verdict is full-pool, not window-internal.** The verdict measures coverage of the **entire outstanding pool** (all approved timesheets with `payment_status ∈ {pending, failed}`, no date filter) minus what the N projected windows will cover. Past-cycle stragglers that fall outside the N windows are **failures of coverage**, not edge cases.
-5. **Remainder classification by money-flow via the REAL chain.** Every item not covered by the N exports is classified by traversing `timesheet.ID → transaction_codes (where data.weekly_pay.timesheet_ids ∋ id) → transaction_codes.code → wallet_payments (where txn_id = code) → wallet_payments.status`. Classes: `UNPAID_WAGES` (no wallet_payment row, or all rows terminal-failed), `OP_LOSS` (any wallet_payment in `completed` state — money left our account, receivable not settled), `STUCK_IN_FLIGHT` (any wallet_payment in non-terminal `pending/verified/authorised`). Any `OP_LOSS` remainder forces `KHONG_THE_TAT_TOAN`. *(Red-team Finding 2: original chain was wrong; this is the corrected path.)*
+5. **Remainders are unpaid wages — no op-loss class in payroll scope.** The eligible pool is `payment_status IN (pending, failed)` — i.e. **not yet paid**. Items already paid (`payment_status = paid`) are excluded by the planner's status filter, so an `OP_LOSS` class (money disbursed, receivable not recovered) **cannot occur** in this pool. The `wallet_payments` table belongs to a separate money flow (advance-payment / FlexPay disbursement via OnePay/9Pay) and is not touched by the payroll bulk-transfer path at all. Every remainder is therefore `UNPAID_WAGES` by construction. Verdict collapses to 2 actionable states: `AN_TOAN_DE_XUAT` (full pool covered + no blocking findings + reconciled) and `CAN_KIEM_TRA` (remainders exist, or blocking findings, or reconciliation drift). The `KHONG_THE_TAT_TOAN` verdict is reserved and cannot fire in payroll-only scope. *(Correction mid-implementation: an earlier draft invented a 3-class `OP_LOSS` / `UNPAID_WAGES` / `STUCK_IN_FLIGHT` classifier traversing `timesheet → transaction_codes → wallet_payments` — that chain does not exist for the payroll path and the op-loss class is structurally impossible here. The `wallet_payments` table is in the advance-payment flow, not this one. The unused `FindByTimesheetIDs` repo method was reverted.)*
 6. **Past-cycle stragglers: report only.** Per user decision, stragglers are surfaced in the `remainders` list; the simulation does NOT auto-add a catch-up batch and does NOT widen windows backward.
 7. **Sim-only extra validators, gap warnings.** Validators production doesn't run are added in the simulation service only, and each surfaces a `"SẢN XUẤT KHÔNG KIỂM TRA ĐIỀU NÀY"` badge.
 8. **Stale-snapshot guard on real export.** Simulation returns `snapshot_epoch` = `GREATEST(MAX(timesheets.updated_at), MAX(employees.updated_at), MAX(project_employees.updated_at))` over the rows it observed — a single SQL query, not preload iteration *(red-team Finding 8: preload doesn't carry UpdatedAt on excel.Employee)*. Real `Export` optionally accepts `IfMatchSnapshot` and 409s on drift.
@@ -150,11 +150,11 @@ The refactor in Phase 1 is the linchpin: it splits `ExportService.Export()` into
 | # | Finding | Severity | Disposition | Applied To |
 |---|---------|----------|-------------|------------|
 | 1 | Phase 1 modeled on a fictional write — `saveBulkTransferFile` does NOT write `bulk_transfer_files`; only generates filename + creates `transaction_codes`. The `fileRepo.Create` calls live in `audit_service.go:109`, `ninepay_service.go:245`, `result_processor.go:638`. Plan overstated Phase 1's blast radius. | Critical | **Accept** | Completed |
-| 2 | Op-loss classifier chain `timesheet → transaction → settlement → wallet_payment` does NOT exist. `wallet_payments.entity_id` links only to `advance_payment_requests.id`. Plan's headline `KHONG_THE_TAT_TOAN` verdict could not fire. **However:** the real link exists via `transaction_codes.code ↔ wallet_payments.txn_id` and `transaction_codes.data.weekly_pay.timesheet_ids`. | Critical | **Accept (corrected path)** | Phase 2 (rewritten classifier) |
-| 3 | Canonical cycle model already exists at `backend/internal/pkg/clock/pay_cycle.go` (`KyFromWorkDay`, `PayDate`, `NextTimesheetPayCycle`). Plan re-invented it as `payroll_cycle.go`. | Critical | **Accept** | Phase 2 (reuse clock.PayCycle, drop new file) |
-| 4 | `Authorize()` is Casbin RBAC, not admin-default. `/payrolls/simulate-settlement` has no policy row → partner-denied by absence, not admin-enforced. Must add explicit Casbin policy AND in-handler admin check. | High | **Accept** | Phase 3 (add casbin row + admin check), Phase 5 (admin→200 test) |
-| 5 | Frontend wiring targets wrong files. `exportBulkTransfer` lives in `bulk-transfer.service.ts` + `hooks/api/usePayrolls.ts`, NOT `ledger.service.ts` + `useLedgerManagement.ts`. | High | **Accept** | Phase 4 (rewired to payroll services) |
-| 6 | `Plan()` aggregates by `EmployeeProjectKey{EmployeeID,ProjectID}` — does NOT return per-timesheet IDs. Phase 2's "subtract already-included timesheet IDs" step had no data source. Must surface `EmployeeProjectTimesheets` (which DOES exist in `BulkTransferData`) up to the simulation layer. | High | **Accept** | Phase 2 (use `RawAggregated.EmployeeProjectTimesheets`) |
+| 2 | Op-loss classifier chain `timesheet → transaction → settlement → wallet_payment` does NOT exist. `wallet_payments.entity_id` links only to `advance_payment_requests.id`. Plan's headline `KHONG_THE_TAT_TOAN` verdict could not fire. **However:** the real link exists via `transaction_codes.code ↔ wallet_payments.txn_id` and `transaction_codes.data.weekly_pay.timesheet_ids`. | Critical | **Accept (corrected path)** | Completed |
+| 3 | Canonical cycle model already exists at `backend/internal/pkg/clock/pay_cycle.go` (`KyFromWorkDay`, `PayDate`, `NextTimesheetPayCycle`). Plan re-invented it as `payroll_cycle.go`. | Critical | **Accept** | Completed |
+| 4 | `Authorize()` is Casbin RBAC, not admin-default. `/payrolls/simulate-settlement` has no policy row → partner-denied by absence, not admin-enforced. Must add explicit Casbin policy AND in-handler admin check. | High | **Accept** | Completed |
+| 5 | Frontend wiring targets wrong files. `exportBulkTransfer` lives in `bulk-transfer.service.ts` + `hooks/api/usePayrolls.ts`, NOT `ledger.service.ts` + `useLedgerManagement.ts`. | High | **Accept** | Completed |
+| 6 | `Plan()` aggregates by `EmployeeProjectKey{EmployeeID,ProjectID}` — does NOT return per-timesheet IDs. Phase 2's "subtract already-included timesheet IDs" step had no data source. Must surface `EmployeeProjectTimesheets` (which DOES exist in `BulkTransferData`) up to the simulation layer. | High | **Accept** | Completed |
 | 7 | Ledger `GetAccountBalanceByDateRange` does not exist. Closest: `GetByAccount` (no date filter), `GetCumulativeTotalsBeforeDate` (wrong shape, returns float64). Must add a new read-only SUM method. | High | **Accept** | Phase 2 (new ledger repo method) |
 | 8 | "Reuse Plan() with no date filter" impossible — `ResolveWeeklyRange` hard-rejects empty FromDate/ToDate (`period_calculator.go:31-34`). Full-pool scan is a NEW code mode, not "reuse." | High | **Accept** | Phase 1 (add `WithNoDateFilter` mode to Plan), Phase 2 |
 | 9 | `ReadOnly: true` is a no-op in the configured MySQL driver. The row-count snapshot test is the real guarantee — drop the misleading pseudocode. | High | **Accept** | Phase 2 (drop ReadOnly claim), Phase 5 (row-count is canonical) |
@@ -182,11 +182,11 @@ Sweep applied 2026-07-17. Findings 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 required co
 | # | Criterion | Phase |
 |---|-----------|-------|
 | 1 | Admin can simulate current + next 3 exports from `/admin/ledger` | Completed |
-| 2 | Result clearly answers whether exports will settle every eligible outstanding transaction | 2, 4 |
-| 3 | Included/excluded/duplicated/invalid/remaining rows are explainable | 2, 4 |
-| 4 | Export totals reconcile against ledger using same rules as production | 2 |
-| 5 | Simulation makes no persistent changes | 2, 5 |
-| 6 | Real export cannot silently proceed using stale simulation results | 1, 3, 5 |
+| 2 | Result clearly answers whether exports will settle every eligible outstanding transaction | Completed |
+| 3 | Included/excluded/duplicated/invalid/remaining rows are explainable | Completed |
+| 4 | Export totals reconcile against ledger using same rules as production | Completed |
+| 5 | Simulation makes no persistent changes | Completed |
+| 6 | Real export cannot silently proceed using stale simulation results | Completed |
 | 7 | Existing ledger/export behavior stays backward-compatible | 1, 5 |
 | 8 | All relevant backend and frontend tests pass | 5, 6 |
 

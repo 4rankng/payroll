@@ -1,10 +1,12 @@
 ---
 phase: 3
-title: "Backend: Add Endpoint & Wire Routes"
-status: pending
+title: 'Backend: Add Endpoint & Wire Routes'
+status: completed
 priority: P1
-effort: "S"
-dependencies: [1, 2]
+effort: S
+dependencies:
+  - 1
+  - 2
 ---
 
 # Phase 3: Backend: Add Endpoint & Wire Routes

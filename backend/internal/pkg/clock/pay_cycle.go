@@ -194,3 +194,48 @@ func (c TimesheetPayCycle) PrepareByDate(leadDays int) time.Time {
 	}
 	return c.NextPayDate.AddDate(0, 0, -leadDays)
 }
+
+// NextPayCycleAfter returns the pay cycle strictly after the given one,
+// walking the monthly Kỳ 1→2→3→4 sequence and wrapping Kỳ 4 to Kỳ 1 of the
+// next month. Used by the settlement simulation to project "current + next N"
+// cycles without re-resolving from wall-clock time.
+//
+// The returned cycle's WorkMonth is the first-of-month containing the next
+// cycle's work window. Kỳ 4's work window is in the current month but pays on
+// day 1 of the next month, so NextPayCycleAfter(Kỳ 4 of month M) = Kỳ 1 of
+// month M+1 (not M).
+func NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle {
+	nextKy := current.Ky + 1
+	workMonth := current.WorkMonth
+	if nextKy > TimesheetKyCount {
+		// Wrap: Kỳ 4 → Kỳ 1 of next month.
+		nextKy = 1
+		workMonth = workMonth.AddDate(0, 1, 0)
+	}
+	year, month := workMonth.Year(), workMonth.Month()
+	return TimesheetPayCycle{
+		Ky:            nextKy,
+		WorkMonth:     workMonth,
+		NextPayDate:   PayDate(nextKy, year, month),
+		MaxCycleDay:   MaxCycleDay(nextKy, year, month),
+		CycleDayToday: 0, // not meaningful for a projected future cycle
+	}
+}
+
+// CycleWindow returns the [from, to] work-day window (inclusive, HCM timezone,
+// date-only) for a cycle. Kỳ 1 → days 1–7, Kỳ 2 → 8–14, Kỳ 3 → 15–21,
+// Kỳ 4 → 22 through last day of the work month. Used by the settlement
+// simulation to scope each projected cycle's ExportPlanner.Plan() call.
+func (c TimesheetPayCycle) CycleWindow() (from, to time.Time) {
+	year, month := c.WorkMonth.Year(), c.WorkMonth.Month()
+	startDay := WorkStartDay(c.Ky)
+	from = time.Date(year, month, startDay, 0, 0, 0, 0, DefaultLocation)
+	if c.Ky == TimesheetKyCount {
+		// Kỳ 4 runs from day 22 to the last day of the work month.
+		lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, DefaultLocation).Day()
+		to = time.Date(year, month, lastDay, 0, 0, 0, 0, DefaultLocation)
+	} else {
+		to = from.AddDate(0, 0, 6) // 7-day window
+	}
+	return from, to
+}

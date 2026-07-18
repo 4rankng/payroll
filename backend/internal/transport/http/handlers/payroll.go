@@ -145,6 +145,46 @@ func (h *PayrollHandler) ExportBulkTransfer(c *gin.Context) {
 	c.Data(http.StatusOK, contentType, exportResponse.Data)
 }
 
+// SimulateSettlement handles POST /payrolls/simulate-settlement.
+// Read-only dry-run: projects the current + next N−1 payroll cycles and
+// returns a full-pool coverage verdict without mutating any data.
+//
+// Admin-only. Although the `/payrolls` group's Casbin policy denies non-admin
+// roles for this path by absence, we add an explicit in-handler check as
+// defense-in-depth (mirrors settlement/settle_from_notification.go).
+func (h *PayrollHandler) SimulateSettlement(c *gin.Context) {
+	if !isAdmin(c) {
+		response.Forbidden(c, constants.MsgForbiddenVN)
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+		return
+	}
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		response.InternalServerError(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	var req dto.SimulateSettlementRequest
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	req.CreatedBy = userIDUint
+
+	result, err := h.payrollService.SimulateSettlement(c.Request.Context(), &req)
+	if err != nil {
+		h.logger.Error("SimulateSettlement error", "error", err)
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, result, "Mô phỏng đối soát thành công")
+}
+
 // InitiateAutoBulkTransfer initiates an auto bulk transfer for approved timesheets
 func (h *PayrollHandler) InitiateAutoBulkTransfer(c *gin.Context) {
 	if h.autoBulkTransferSvc == nil {

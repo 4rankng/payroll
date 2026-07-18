@@ -153,6 +153,7 @@ export const API_ENDPOINTS = {
     exportHistories: '/payrolls/histories/export',
     bulkTransferTemplate: '/payrolls/bulk-transfer-template',
     exportBulkTransfer: '/payrolls/export-bulk-transfer',
+    simulateSettlement: '/payrolls/simulate-settlement',
     importBulkTransferResult: '/payrolls/bulk-transfer-result',
     bulkTransferUploadHistories: '/payrolls/bulk-transfer-upload-histories',
     bulkTransferUploadHistoryById: (id: number) => `/payrolls/bulk-transfer-upload-histories/${id}`,

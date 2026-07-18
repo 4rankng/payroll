@@ -6,6 +6,7 @@ import { TransactionTable } from '@/components/transaction/TransactionTable';
 import { TransactionFilters } from '@/components/transaction/TransactionFilters';
 import { SettlementResultUploadDialog } from '@/components/transaction/SettlementResultUploadDialog';
 import { OnePayFeeReportDialog } from '@/components/ledger/OnePayFeeReportDialog';
+import { SettlementSimulationDialog } from '@/components/ledger/SettlementSimulationDialog';
 import { PayrollReportEmailDialog, type PayrollReportEmailParams } from '@/components/timesheet/PayrollReportEmailDialog';
 import { AdvancePaymentEmailDialog, type AdvancePaymentEmailParams } from '@/components/advance-payment/AdvancePaymentEmailDialog';
 import { SaoKeHistoryDialog } from '@/components/transaction/SaoKeHistoryDialog';
@@ -43,6 +44,7 @@ const TransactionsPage = () => {
   const [exportSaoKeDialogOpen, setExportSaoKeDialogOpen] = useState(false);
   const [exportAdvanceDialogOpen, setExportAdvanceDialogOpen] = useState(false);
   const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
+  const [simulationDialogOpen, setSimulationDialogOpen] = useState(false);
   const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
   const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
 
@@ -168,6 +170,7 @@ const TransactionsPage = () => {
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
         onRunWalletSettlement={handleRunWalletSettlement}
         isRunningWalletSettlement={isRunningWalletSettlement}
+        onSimulateSettlement={() => setSimulationDialogOpen(true)}
       />
 
       <TransactionSummaryCard
@@ -235,6 +238,11 @@ const TransactionsPage = () => {
         isUploading={isImportingOnePayFeeReport}
         result={onePayFeeResult}
         issues={onePayFeeIssues}
+      />
+
+      <SettlementSimulationDialog
+        open={simulationDialogOpen}
+        onOpenChange={setSimulationDialogOpen}
       />
     </div>
   );

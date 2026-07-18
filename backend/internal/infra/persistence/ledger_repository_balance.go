@@ -54,6 +54,24 @@ func (r *LedgerEntryRepository) GetBalanceByAccount(ctx context.Context, account
 	return res.Balance, err
 }
 
+// GetAccountTotalInRange returns SUM(debit) - SUM(credit) for the given account
+// over the inclusive date range [from, to]. int64 VND. Matches the sign
+// convention of GetBalanceByAccount (debit − credit). Used by the settlement
+// simulation's reconciliation step — read-only, single round-trip, indexed by
+// (account, date).
+func (r *LedgerEntryRepository) GetAccountTotalInRange(ctx context.Context, account domain.LedgerAccount, from, to time.Time) (int64, error) {
+	type result struct {
+		Total int64 `gorm:"column:total"`
+	}
+	var res result
+	err := r.DB.WithContext(ctx).
+		Model(&domain.LedgerEntry{}).
+		Select("CAST(COALESCE(SUM(debit - credit), 0) AS SIGNED) as total").
+		Where("account = ? AND date >= ? AND date <= ?", account, from, to).
+		Scan(&res).Error
+	return res.Total, err
+}
+
 // RecalculateAllBalances recalculates the balance field for every ledger entry in sequence.
 // This is the canonical implementation — all other balance logic must produce the same results.
 func (r *LedgerEntryRepository) RecalculateAllBalances(ctx context.Context) error {

@@ -2,6 +2,10 @@ import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import { formatDateForAPI } from '@/utils/formatters';
 import { extractFilenameFromHeaders } from '@/utils/file-download';
+import type {
+  SettlementSimulationRequest,
+  SettlementSimulationResult,
+} from '@/types/api/settlement-simulation.types';
 
 export interface BulkTransferExportParams {
   project_ids?: number[];
@@ -421,6 +425,26 @@ class BulkTransferService {
       payload
     );
     return response.data ?? { marked_count: payload.timesheet_ids.length };
+  }
+
+  /**
+   * Run a read-only settlement simulation: projects the current payroll
+   * cycle + next N−1 cycles and returns a full-pool coverage verdict with
+   * remainders + reconciliation. Never mutates data.
+   *
+   * Mirrors the production ExportPlanner via /payrolls/simulate-settlement
+   * (admin-only). See backend/internal/app/services/payroll/bulktransfer/
+   * simulation_service.go.
+   */
+  async simulateSettlement(params: SettlementSimulationRequest): Promise<SettlementSimulationResult> {
+    const response = await apiClient.post<SettlementSimulationResult>(
+      API_ENDPOINTS.payrolls.simulateSettlement,
+      params
+    );
+    if (!response.data) {
+      throw new Error('Không nhận được kết quả mô phỏng');
+    }
+    return response.data;
   }
 }
 

@@ -1,10 +1,11 @@
 ---
 phase: 4
-title: "Frontend: Simulation Dialog & Button"
-status: pending
+title: 'Frontend: Simulation Dialog & Button'
+status: completed
 priority: P1
-effort: "M"
-dependencies: [3]
+effort: M
+dependencies:
+  - 3
 ---
 
 # Phase 4: Frontend: Simulation Dialog & Button
@@ -135,13 +136,9 @@ Mirror `OnePayFeeReportDialog.tsx` skeleton. Key sections:
    - **Reconciliation row:** `exported_total | ledger_receivable | delta` with green check or red ✗.
    - **Per-cycle table** (`SimulationCycleTable`): columns — Kỳ, From–To, Included (#/₫), Excluded (#), Remaining (#/₫), Findings (#). Each row expandable.
    - **Row drilldown** (`SimulationRowDrilldown`): Tabs `Bao gồm | Loại trừ | Còn lại`. Each tab a `<Table>` with employee, project, amount, reason (for excluded), bank account (masked).
-   - **Remainders panel** (`SimulationRemainders`): the **most business-critical section**. Shows the 3-class summary as colored stat cards:
-     - 🔴 `OP_LOSS` (red) — "Lỗ vốn — đã trả NV nhưng chưa thu hồi" with count + VND
-     - 🟠 `UNPAID_WAGES` (amber) — "Còn nợ lương NV" with count + VND
-     - 🔵 `STUCK_IN_FLIGHT` (blue) — "Đang chờ ngân hàng — không xuất lại" with count + VND
-     - Below the cards: a `<Table>` of every remainder item with employee, project, amount, class badge, reason, and (for OP_LOSS / STUCK_IN_FLIGHT) a `money_flow_evidence` row citing the `wallet_payment_id` and status. Sorted `OP_LOSS` first (most urgent).
-     - Top-of-panel caveat (Vietnamese): *"Các giao dịch thuộc kỳ trước vẫn chưa thanh toán sẽ KHÔNG được tự động bao phủ."*
-   - **Findings** (`SimulationFindings`): list of blocking/warning/info. Each finding shows a "SẢN XUẤT KHÔNG KIỂM TRA" badge when `in_production === false`.
+   - **Remainders panel** (`SimulationRemainders`): the **most business-critical section**. Shows the unpaid-wages summary as a single amber stat card: "Còn nợ lương NV — X giao dịch, Y ₫". Below the card: a `<Table>` of every remainder item with employee, project, amount, timesheet IDs, and reason ("thuộc kỳ trước, không được bao phủ bởi các kỳ mô phỏng"). Sorted by amount descending.
+     - Top-of-panel caveat (Vietnamese): *"Các giao dịch thuộc kỳ trước vẫn chưa thanh toán sẽ KHÔNG được tự động bao phủ. Xem danh sách 'Còn lại' để xử lý thủ công."*
+     - Note: there is no op-loss / in-flight class in payroll-only scope — the eligible pool is `payment_status IN (pending, failed)`, i.e. not yet paid.
    - **Stale-data note:** "Dữ liệu này chốt tại `{snapshot_epoch}`. Nếu có thay đổi, chạy lại mô phỏng trước khi xuất."
 5. **Footer:** "Đóng" only. No "Export now" button — the simulation must not be a one-click path to export; admin returns to the normal export flow (which will use `if_match_snapshot` under the hood — wire this optionally in a follow-up; for v1 the dialog just informs).
 

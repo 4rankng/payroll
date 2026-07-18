@@ -144,6 +144,16 @@ func (s *LedgerService) GetAccountBalance(ctx context.Context, account domain.Le
 	return s.LedgerRepo.GetBalanceByAccount(ctx, account)
 }
 
+// GetAccountTotalInRange returns SUM(debit − credit) for the given account over
+// the inclusive date range [from, to]. Passthrough to the repository; used by
+// the settlement simulation's reconciliation against the receivable account.
+func (s *LedgerService) GetAccountTotalInRange(ctx context.Context, account domain.LedgerAccount, from, to time.Time) (int64, error) {
+	if !domain.IsValidAccountType(account) {
+		return 0, domain.NewValidationError(fmt.Sprintf("loại tài khoản không hợp lệ: %s", account))
+	}
+	return s.LedgerRepo.GetAccountTotalInRange(ctx, account, from, to)
+}
+
 func (s *LedgerService) GetCashFlowSummary(ctx context.Context, start, end time.Time) (*domain.CashFlowSummary, error) {
 	// Generate cache key: dashboard:cash_flow_summary:{start}:{end}
 	cacheKey := fmt.Sprintf("dashboard:cash_flow_summary:%s:%s",

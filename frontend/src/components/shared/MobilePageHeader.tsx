@@ -45,7 +45,8 @@ export const MobilePageHeader = ({
   return (
     <div
       className={cn(
-        'z-20 bg-white',
+        'z-20',
+        sticky || bordered ? 'bg-white' : 'bg-transparent',
         bordered && 'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)]',
         sticky && 'sticky top-0',
         'px-4 pb-3 pt-4',

@@ -1,10 +1,14 @@
 ---
 phase: 5
-title: "Tests: Unit + Integration + No-Mutation"
-status: pending
+title: 'Tests: Unit + Integration + No-Mutation'
+status: completed
 priority: P1
-effort: "L"
-dependencies: [1, 2, 3, 4]
+effort: L
+dependencies:
+  - 1
+  - 2
+  - 3
+  - 4
 ---
 
 # Phase 5: Tests: Unit + Integration + No-Mutation
@@ -50,8 +54,7 @@ This is the canonical enforcement that Phase 1's "Plan() is pure" invariant stay
 |------|--------|
 | `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go` | Verdict computation: all-`AN_TOAN` case, missing-bank → `CAN_KIEM_TRA`, blocking → `KHONG_THE_TAT_TOAN`; reconciliation delta logic; cycle subtraction; **full-pool verdict** (window-internal clean but full-pool has remainder → `CAN_KIEM_TRA`); uses planner fake |
 | `backend/internal/app/services/payroll/bulktransfer/simulation_validators_test.go` | Each validator: zero/negative, dup-across-batches, broken refs, missing bank code, already-settled, batch>5000 — table-driven |
-| `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go` | Verdict computation: all-`AN_TOAN` case, missing-bank → `CAN_KIEM_TRA`, blocking → `KHONG_THE_TAT_TOAN`; reconciliation delta logic; cycle subtraction; **full-pool verdict** (window-internal clean but full-pool has remainder → `CAN_KIEM_TRA`); uses planner fake |
-| `backend/internal/app/services/payroll/bulktransfer/remainder_classifier_test.go` | Money-flow classification: `UNPAID_WAGES` (no wallet_payment), `OP_LOSS` (wallet_payment=completed, receivable unsettled), `STUCK_IN_FLIGHT` (wallet_payment=authorised); mixed-case aggregation; cites wallet_payment_id in evidence |
+| `backend/internal/app/services/payroll/bulktransfer/simulation_service_test.go` | Verdict computation: clean full-pool coverage → `AN_TOAN_DE_XUAT`; any remainder → `CAN_KIEM_TRA`; missing-bank exclusion → `CAN_KIEM_TRA`; reconciliation delta != 0 → `CAN_KIEM_TRA`; uses planner fake |
 | `backend/internal/app/services/payroll/bulktransfer/planner_test.go` | Phase 1 regression: `Plan()` returns same selection as a snapshot of the pre-refactor `Export()` would have. Uses seeded repo fakes. |
 
 ### Integration tests (Go, `make api-test`)
@@ -95,21 +98,16 @@ func runSettlementSimulationTests(client *APIClient, data *TestData, reporter *R
     //    Assert verdict=AN_TOAN_DE_XUAT, all counts 0, reconciled=true.
     reporter.RunTest(flowSettlementSim, "Zero eligible timesheets → clean empty result", func() error { ... })
 
-    // ── 5b. OP-LOSS DETECTION (acceptance criterion #2, the hard case) ─
-    //    Seed: an approved timesheet from Kỳ 1 (day 3) with payment_status=failed,
-    //    AND a linked wallet_payment in 'completed' state (advance already paid).
-    //    Simulate from Kỳ 2 onward (Kỳ 1 window is past).
-    //    Assert: remainder contains that item, class=OP_LOSS,
-    //            verdict=KHONG_THE_TAT_TOAN, money_flow_evidence cites wallet_payment_id.
-    reporter.RunTest(flowSettlementSim, "Op-loss detection: paid-out advance not recovered → KHONG_THE_TAT_TOAN", func() error { ... })
+    // ── 5b. STRAGGLER DETECTION (acceptance criterion #2) ─────────────
+    //    Seed: an approved timesheet from Kỳ 1 (day 3) with payment_status=pending,
+    //    then simulate from Kỳ 2 onward (Kỳ 1 window is past).
+    //    Assert: the Kỳ 1 timesheet appears in `remainders`, verdict=CAN_KIEM_TRA,
+    //            the prior-cycle-straggler warning is present, and NO catch-up
+    //            batch was added. There is no op-loss class to test — the pool
+    //            is payment_status IN (pending, failed) by construction.
+    reporter.RunTest(flowSettlementSim, "Past-cycle straggler → CAN_KIEM_TRA with remainder row", func() error { ... })
 
-    // ── 5c. STRAGGLER REPORTING (locked decision) ─────────────────────
-    //    Seed: Kỳ 1 unpaid timesheet (no wallet_payment) + sim from Kỳ 2.
-    //    Assert: remainder class=UNPAID_WAGES, verdict=CAN_KIEM_TRA,
-    //            prior-cycle-straggler warning present, NO catch-up batch added.
-    reporter.RunTest(flowSettlementSim, "Past-cycle straggler reported as UNPAID_WAGES, not auto-caught", func() error { ... })
-
-    // ── 5d. FULL-POOL vs WINDOW-INTERNAL VERDICT ──────────────────────
+    // ── 5c. FULL-POOL vs WINDOW-INTERNAL VERDICT ──────────────────────
     //    Construct: 4-cycle window coverage is internally complete (windows
     //    cover all their own items) BUT a Kỳ-1 item remains in the full pool.
     //    Assert: verdict is CAN_KIEM_TRA (NOT AN_TOAN_DE_XUAT), proving
@@ -210,16 +208,14 @@ This test is the **real** enforcement of "strictly read-only" — stronger than 
 
 - [ ] `pay_cycle_test.go`: `NextPayCycleAfter` covers Kỳ 1→2→3→4→(next month)1 wrap + all intermediate transitions.
 - [ ] `simulation_validators_test.go`: every validator code has ≥1 pass + ≥1 fail case.
-- [ ] `simulation_service_test.go`: 3 verdict paths + reconciliation + cycle subtraction + **full-pool verdict override**.
-- [ ] `remainder_classifier_test.go`: all 3 classes + mixed aggregation; every `OP_LOSS` cites a wallet_payment_id.
+- [ ] `simulation_service_test.go`: verdict paths (clean `AN_TOAN_DE_XUAT`, remainder → `CAN_KIEM_TRA`, blocking → `CAN_KIEM_TRA`, delta != 0 → `CAN_KIEM_TRA`) + reconciliation.
 - [ ] `planner_test.go`: Phase 1 regression — selection matches golden snapshot.
 - [ ] Integration: no-mutation test passes (row counts + status map identical before/after).
-- [ ] Integration: parity test passes (sim IDs == exported IDs as sets; totals equal as `int64`).
+- [ ] Integration: parity test passes (sim IDs == planner IDs as sets; totals equal as `int64`).
 - [ ] Integration: stale snapshot → 409.
 - [ ] Integration: cycle count 0→400, 7→6-clamp, 1/3/4/6 → exact count.
 - [ ] Integration: empty pool → clean `AN_TOAN_DE_XUAT` with zero counts.
-- [ ] Integration: op-loss detection (paid-out advance + Kỳ-1 remainder from Kỳ 2) → `KHONG_THE_TAT_TOAN`.
-- [ ] Integration: straggler reported as `UNPAID_WAGES` + prior-cycle warning, no catch-up batch.
+- [ ] Integration: straggler (Kỳ 1 item, sim from Kỳ 2) → `CAN_KIEM_TRA` with remainder row + prior-cycle warning.
 - [ ] Integration: full-pool verdict overrides clean window-internal state.
 - [ ] Integration: non-admin → 403.
 - [ ] Integration: admin → 200 (Casbin policy row proven present).

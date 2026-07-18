@@ -61,6 +61,9 @@ func main() {
 	// Phase 4: Run Flow 5 - Manual bulk transfer export & import
 	runManualBulkTransferTests(client, testData, reporter)
 
+	// Settlement simulation — read-only, safe to run anytime after bulk transfer.
+	runSettlementSimulationTests(client, testData, reporter, cfg)
+
 	// Phase 5: Run Flow 3 - FlexPay Import (must run before advance payment)
 	runFlexPayImportTests(client, testData, reporter)
 
