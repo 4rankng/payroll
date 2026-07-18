@@ -43,23 +43,33 @@ describe('BankTransferHistoryPageContent', () => {
   it('shows every bank posting and the employee-cycle total', () => {
     render(<BankTransferHistoryPageContent />);
 
+    expect(screen.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    expect(screen.getByText('2 bút toán')).toBeInTheDocument();
+    expect(screen.queryByText('FT26198846619959')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i }));
+
     expect(screen.getByText('FT26198846619959')).toBeInTheDocument();
     expect(screen.getByText('FT26198940380850')).toBeInTheDocument();
     expect(screen.getByText('VFIC6d037214')).toBeInTheDocument();
     expect(screen.getByText('VFIC7a193042')).toBeInTheDocument();
-    expect(screen.getAllByText('Ghi chú:')).toHaveLength(2);
-    expect(screen.getAllByText('Mã GD:')).toHaveLength(2);
-    expect(screen.getByText('CCCD: 031189014251')).toBeInTheDocument();
-    expect(screen.getAllByText('Chi tiết thanh toán')).toHaveLength(2);
+    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(2);
+    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(2);
+    expect(screen.getByText('CCCD 031189014251')).toBeInTheDocument();
     expect(screen.getByText(/1\.548\.000\s*₫/)).toBeInTheDocument();
     expect(screen.getByText(/450\.000\s*₫/)).toBeInTheDocument();
-    expect(screen.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 07/2026' })).toHaveTextContent('07/2026');
     expect(screen.queryByText('July 2026')).not.toBeInTheDocument();
     expect(screen.getByText('Kỳ 2')).toBeInTheDocument();
     expect(screen.getByText('08–14/07/2026')).toHaveAttribute('aria-label', 'Từ 08/07/2026 đến 14/07/2026');
     expect(screen.getByText('17/07/2026')).toBeInTheDocument();
-    expect(screen.getByText('2 giao dịch')).toBeInTheDocument();
+    const expandedCard = screen.getByRole('button', { name: /Thu gọn giao dịch/i });
+    expect(expandedCard).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(expandedCard, { key: 'Enter' });
+
+    expect(screen.queryByText('FT26198846619959')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('shows an empty-note fallback when a legacy payment has no transfer code', () => {
@@ -71,12 +81,13 @@ describe('BankTransferHistoryPageContent', () => {
     useBankTransferHistories.mockReturnValue(result);
 
     render(<BankTransferHistoryPageContent />);
+    fireEvent.click(screen.getByRole('button', { name: /Xem chi tiết giao dịch/i }));
 
     expect(screen.getByText('FT-LEGACY-001')).toBeInTheDocument();
-    expect(screen.getByText('Ghi chú:')).toBeInTheDocument();
-    expect(screen.getByText('Mã GD:')).toBeInTheDocument();
+    expect(screen.getByText('Ghi chú chuyển khoản')).toBeInTheDocument();
+    expect(screen.getByText('Mã giao dịch ngân hàng')).toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.getByText('CCCD: —')).toBeInTheDocument();
+    expect(screen.getByText('CCCD —')).toBeInTheDocument();
   });
 
   it('selects a month directly without asking for a day', () => {

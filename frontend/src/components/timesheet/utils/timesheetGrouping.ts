@@ -20,6 +20,16 @@ export interface EmployeeGroupedTimesheet {
   hasMultipleStatuses: boolean;
 }
 
+export interface ProjectTimesheetSection {
+  projectId: number;
+  projectName: string;
+  projectCode?: string;
+  positions: string[];
+  entries: Timesheet[];
+  totalHours: number;
+  totalAmount: number;
+}
+
 export interface GroupedTimesheet {
   employeeId: number;
   employeeName: string;
@@ -262,4 +272,56 @@ export function groupTimesheetsByEmployee(timesheets: Timesheet[]): EmployeeGrou
     hasMultipleStatuses: false, // always false — each group is uniform by design
     hasMultipleProjects: new Set(group.entries.map(e => e.project_id)).size > 1
   }));
+}
+
+function getPaytypePosition(paytype: string): string | null {
+  const position = paytype.split('.')[0]?.trim();
+  return position || null;
+}
+
+/**
+ * Builds the display hierarchy used inside an expanded employee group.
+ * Project facts and positions live on the section, while entries are sorted
+ * by work date so the UI can suppress repeated dates on adjacent rows.
+ */
+export function groupEmployeeEntriesByProject(entries: Timesheet[]): ProjectTimesheetSection[] {
+  const projects = new Map<number, ProjectTimesheetSection>();
+
+  entries.forEach((entry) => {
+    const existing = projects.get(entry.project_id);
+    const position = getPaytypePosition(entry.paytype);
+
+    if (existing) {
+      existing.entries.push(entry);
+      existing.totalHours += entry.hours_worked || 0;
+      existing.totalAmount += entry.amount || 0;
+      if (position && !existing.positions.includes(position)) existing.positions.push(position);
+      return;
+    }
+
+    projects.set(entry.project_id, {
+      projectId: entry.project_id,
+      projectName: entry.projectName || 'Dự án chưa xác định',
+      projectCode: entry.projectCode,
+      positions: position ? [position] : [],
+      entries: [entry],
+      totalHours: entry.hours_worked || 0,
+      totalAmount: entry.amount || 0,
+    });
+  });
+
+  return Array.from(projects.values())
+    .map((project) => ({
+      ...project,
+      entries: [...project.entries].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      ),
+    }))
+    .sort((a, b) => a.projectName.localeCompare(b.projectName, 'vi-VN'));
+}
+
+/** Returns only the variable part of a pay type once position is shown above. */
+export function getPaytypeDetail(paytype: string): string {
+  const [, ...detailParts] = paytype.split('.').map((part) => part.trim()).filter(Boolean);
+  return detailParts.join(' · ') || paytype;
 }

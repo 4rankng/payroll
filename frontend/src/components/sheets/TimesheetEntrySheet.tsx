@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sheet, SheetContent, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, ClipboardPenLine, Building2, UsersRound } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ChevronsUpDown, Check } from 'lucide-react';
@@ -406,12 +406,20 @@ function TimesheetEntrySheetComponent({
       <SheetContent
         side="right"
         title="Thêm chấm công"
-        className="p-0 flex flex-col h-full !w-screen max-w-[1200px] mx-auto"
+        className="p-0 flex flex-col h-full !w-screen max-w-[1200px] mx-auto bg-slate-50"
       >
         {/* Header — title, filters, close */}
-        <div className="flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-4 py-2 flex-shrink-0">
-          <h1 className="text-sm font-semibold text-foreground shrink-0">Thêm chấm công</h1>
-          <div className="w-px h-4 bg-border shrink-0" />
+        <div className="flex min-h-16 flex-wrap items-center gap-2 border-b border-emerald-100 bg-card px-4 py-2.5 shadow-[0_6px_18px_-16px_rgba(6,101,52,0.38)] flex-shrink-0">
+          <div className="mr-1 flex items-center gap-2.5 shrink-0">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <ClipboardPenLine className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <h1 className="text-sm font-bold text-foreground">Nhập chấm công</h1>
+              <p className="text-[10.5px] text-muted-foreground">Thiết lập dự án, nhân viên và khoảng ngày</p>
+            </div>
+          </div>
+          <div className="hidden w-px h-7 bg-border shrink-0 sm:block" />
           {/* Project selector */}
           <Popover open={isProjectDropdownOpen} onOpenChange={setIsProjectDropdownOpen} modal={false}>
             <PopoverTrigger asChild>
@@ -419,8 +427,9 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isProjectDropdownOpen}
-                className="min-h-11 max-w-full justify-between gap-1 border border-transparent px-3 text-xs font-normal hover:bg-accent hover:border-input"
+                className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
               >
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/70" />
                 <span className="min-w-0 truncate">
                   {selectedProject
                     ? <><span className="font-medium">{selectedProject.name}</span>{selectedProject.code && <span className="text-muted-foreground ml-1 text-xs">{selectedProject.code}</span>}</>
@@ -466,9 +475,10 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isEmployeeDropdownOpen}
-                className="min-h-11 max-w-full justify-between gap-1 border border-transparent px-3 text-xs font-normal hover:bg-accent hover:border-input"
+                className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
                 disabled={availableEmployees.length === 0 || !isPayRateReady}
               >
+                <UsersRound className="h-3.5 w-3.5 shrink-0 text-primary/70" />
                 <span className="min-w-0 truncate">
                   {selectedEmployeeFilter && selectedEmployee
                     ? <span className="font-medium">{selectedEmployee.fullname}</span>
@@ -552,11 +562,11 @@ function TimesheetEntrySheetComponent({
         )}
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto bg-muted/40">
+        <div className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.08),transparent_25rem)]">
         {/* Content */}
-        <div className="px-6 pt-4 pb-6">
+        <div className="px-4 pt-4 pb-6 sm:px-6">
           {!isPayRateReady ? (
-            <div className="border rounded-xl p-4 bg-muted/40 text-sm text-muted-foreground">
+            <div className="border border-amber-200 rounded-2xl p-4 bg-amber-50/80 text-sm text-amber-800 shadow-[0_10px_24px_-22px_rgba(180,83,9,0.45)]">
               {isInitialDataLoading
                 ? 'Đang tải cấu hình mức lương cho dự án này...'
                 : 'Dự án này chưa có cấu hình mức lương. Vui lòng cấu hình mức lương trước khi tạo chấm công.'}

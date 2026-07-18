@@ -27,6 +27,8 @@ import {
   Clock,
   X,
   UserPlus,
+  ListFilter,
+  UserRoundCheck,
 } from "lucide-react";
 import {
   Employee,
@@ -124,16 +126,16 @@ const EmployeesPage = () => {
           const bankOk = hasCompleteBankDetails(employee);
           return (
             <div
-              className="flex items-center gap-3 cursor-pointer -mx-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-accent/30 min-w-0 group"
+              className="flex items-center gap-3 cursor-pointer -mx-2 px-2 py-2 rounded-xl transition-all hover:bg-primary/5 min-w-0 group"
               onClick={(e) => {
                 e.stopPropagation();
                 handleEmployeeClick(employee);
               }}
             >
               <UserAvatar name={employee.fullname} email={employee.email} cccd={employee.cccd} size="md" />
-              <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="typography-body-medium font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                  <span className="typography-body-medium font-bold text-foreground truncate group-hover:text-primary transition-colors">
                     {employee.fullname}
                   </span>
                   {pendingCount > 0 && (
@@ -205,7 +207,7 @@ const EmployeesPage = () => {
 
           if (projectCount === 0) {
             return (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/50 px-2 py-1 rounded-md bg-muted/30">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 px-2 py-1 rounded-lg bg-muted/45">
                 Chưa phân công
               </span>
             );
@@ -222,7 +224,7 @@ const EmployeesPage = () => {
                 </span>
                 {first.payment_schedule && !first.last_date && (
                   <span className={cn(
-                    "inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold border shrink-0",
+                    "inline-flex items-center px-1.5 py-px rounded-md text-[10px] font-semibold border shrink-0",
                     SCHEDULE_STYLES[first.payment_schedule],
                   )}>
                     {SCHEDULE_LABELS[first.payment_schedule]}
@@ -395,10 +397,12 @@ const EmployeesPage = () => {
   }
 
   return (
-    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-emerald-100/70" />
+          <div className="relative">
           <PageHeader
             title="Nhân viên dự án"
             description="Danh sách nhân viên trong các dự án được phân quyền"
@@ -419,9 +423,10 @@ const EmployeesPage = () => {
               },
             ]}
           />
+          </div>
         </div>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
+        <div className="rounded-2xl border border-border/60 bg-card p-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)] opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
           <InlineStatStrip
             isLoading={summaryLoading}
             items={
@@ -473,12 +478,18 @@ const EmployeesPage = () => {
         </div>
 
         <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-border/60 bg-white/90 backdrop-blur px-3 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          <div className="flex items-center gap-2.5 flex-wrap rounded-2xl border border-border/60 bg-card px-3 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
+            <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <ListFilter className="h-4 w-4" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc nhân sự</span>
+            </div>
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
-              placeholder="Tìm nhân viên..."
-              className="w-64"
+              placeholder="Tìm tên, CCCD hoặc số điện thoại..."
+              className="w-full min-w-[240px] sm:w-72"
             />
 
             <div className="h-5 w-px bg-border/50 shrink-0 hidden sm:block" />
@@ -512,7 +523,7 @@ const EmployeesPage = () => {
             {hasFilters && (
               <button
                 onClick={clearAllFilters}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-1 px-2 py-1 rounded-md hover:bg-muted/50"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="h-3 w-3" />
                 Xóa lọc
@@ -523,7 +534,17 @@ const EmployeesPage = () => {
 
         <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+          <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><UserRoundCheck className="h-3.5 w-3.5" /></span>
+              <div>
+                <p className="text-[12px] font-bold text-foreground">Danh sách nhân sự</p>
+                <p className="text-[10.5px] text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{pagination?.totalRecords ?? employees.length} người</span>
+          </div>
           <ResponsiveTable
             data={employees}
             columns={columns}

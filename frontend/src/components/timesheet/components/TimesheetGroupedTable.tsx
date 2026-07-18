@@ -1,20 +1,29 @@
 import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { memo, useCallback, useMemo } from "react";
 import {
   Star,
-  CheckCircle,
   ChevronRight,
   ChevronDown,
   Clock,
+  Building2,
+  Moon,
+  SunMedium,
+  TimerReset,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Timesheet } from "@/types/api/timesheet.types";
-import { PaytypeHierarchy } from "./PaytypeHierarchy";
 import {
   TIMESHEET_STRIP_COLORS,
   PAYMENT_STRIP_COLORS,
 } from "../utils/timesheetStatusColors";
-import { groupTimesheetsByEmployee, EmployeeGroupedTimesheet } from "../utils/timesheetGrouping";
+import {
+  groupTimesheetsByEmployee,
+  groupEmployeeEntriesByProject,
+  getPaytypeDetail,
+  EmployeeGroupedTimesheet,
+  ProjectTimesheetSection,
+} from "../utils/timesheetGrouping";
 import {
   Table,
   TableHeader,
@@ -74,29 +83,37 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
     <div className="rounded-xl border border-border/50 overflow-hidden">
       {/* Horizontal scroll wrapper — preserves desktop layout, scrolls when viewport is too narrow */}
       <div className="overflow-x-auto">
-        <Table className="table-fixed min-w-[760px]">
+        <Table className="table-fixed min-w-[980px]">
           <colgroup>
             <col style={{ width: "4px" }} />
-            <col style={{ width: userRole === "partner" ? "200px" : "190px" }} />
-            <col style={{ minWidth: "200px" }} />
-            <col style={{ width: "80px" }} />
-            <col style={{ width: userRole === "partner" ? "130px" : "120px" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "17%" }} />
             <col style={{ width: "36px" }} />
           </colgroup>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/40">
               <TableHead className="p-0" />
               <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                Nhân viên
+                {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
               </TableHead>
               <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                {userRole === "partner" ? "Dự án · Trạng thái" : "Loại ca"}
+                {userRole === "partner" ? "Dự án · Loại ngày" : "Loại ngày"}
+              </TableHead>
+              <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                Ca làm · Trạng thái
+              </TableHead>
+              <TableHead className="border-l border-border/30 py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
+                Giờ
               </TableHead>
               <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
-                {userRole === "partner" ? "Giờ" : "Tổng giờ"}
+                Đơn giá
               </TableHead>
               <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
-                {userRole === "partner" ? "Lương" : "Tổng tiền"}
+                Thành tiền
               </TableHead>
               <TableHead className="py-3 px-2" />
             </TableRow>
@@ -140,6 +157,10 @@ const GroupRow = memo(function GroupRow({
   onRowClick,
 }: GroupRowProps) {
   const groupStripBg = getStatusStripBg(group.aggregatedStatus);
+  const projectSections = useMemo(
+    () => groupEmployeeEntriesByProject(group.entries),
+    [group.entries],
+  );
 
   return (
     <Collapsible asChild open={isExpanded} onOpenChange={onToggle}>
@@ -180,19 +201,27 @@ const GroupRow = memo(function GroupRow({
                 </span>
               )}
             </TableCell>
-            {/* [3] total hours */}
-            <TableCell className="py-3.5 px-3 text-right">
-              <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+            {/* [3] status summary */}
+            <TableCell className="py-3.5 px-4">
+              <GroupStatusSummary group={group} />
+            </TableCell>
+            {/* [4] total hours */}
+            <TableCell className="border-l border-border/30 py-3.5 px-3 text-right">
+              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-background/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {group.totalHours}h
               </span>
             </TableCell>
-            {/* [4] total amount */}
+            {/* [5] rate — not meaningful for an aggregate */}
             <TableCell className="py-3.5 px-3 text-right">
-              <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+              <span className="text-xs text-muted-foreground/35">—</span>
+            </TableCell>
+            {/* [6] total amount */}
+            <TableCell className="py-3.5 px-3 text-right">
+              <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 typography-body-medium font-bold text-emerald-800 tabular-nums whitespace-nowrap">
                 {group.totalAmount.toLocaleString("vi-VN")}đ
               </span>
             </TableCell>
-            {/* [5] chevron */}
+            {/* [7] chevron */}
             <TableCell className="py-3.5 px-2">
               <div className="flex justify-center text-muted-foreground group-hover:text-foreground transition-colors">
                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -203,17 +232,16 @@ const GroupRow = memo(function GroupRow({
 
         <CollapsibleContent asChild>
           <>
-            {group.entries.map((entry, entryIdx) => (
-              <EntryRow
-                key={entry.id}
-                entry={entry}
-                entryIdx={entryIdx}
-                groupStripBg={groupStripBg}
+            {projectSections.map((project, projectIndex) => (
+              <ProjectSection
+                key={project.projectId}
+                project={project}
+                showHeader={projectSections.length > 1}
+                isFirstProject={projectIndex === 0}
                 userRole={userRole}
-                onClick={() => onRowClick(entry)}
+                onRowClick={onRowClick}
               />
             ))}
-            <SubtotalRow entryCount={group.entries.length} totalHours={group.totalHours} totalAmount={group.totalAmount} />
           </>
         </CollapsibleContent>
       </>
@@ -234,7 +262,13 @@ const PartnerGroupColumn = memo(function PartnerGroupColumn({ group }: { group: 
           </p>
         );
       })()}
-      <div className="flex items-center gap-1.5 flex-wrap">
+    </div>
+  );
+});
+
+const GroupStatusSummary = memo(function GroupStatusSummary({ group }: { group: EmployeeGroupedTimesheet }) {
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
         {group.statusBreakdown.pending_approval > 0 && (
           <span className="inline-flex items-center gap-1 text-xs text-amber-700 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
@@ -259,13 +293,70 @@ const PartnerGroupColumn = memo(function PartnerGroupColumn({ group }: { group: 
             {group.statusBreakdown.rejected} loại
           </span>
         )}
+        {group.statusBreakdown.draft > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs text-slate-600 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+            {group.statusBreakdown.draft} nháp
+          </span>
+        )}
         {group.entries.some(e => !e.payrate || e.payrate === 0) && (
           <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold whitespace-nowrap">
             ⚠ đơn giá
           </span>
         )}
-      </div>
     </div>
+  );
+});
+
+const ProjectSection = memo(function ProjectSection({
+  project,
+  showHeader,
+  isFirstProject,
+  userRole,
+  onRowClick,
+}: {
+  project: ProjectTimesheetSection;
+  showHeader: boolean;
+  isFirstProject: boolean;
+  userRole: "admin" | "partner";
+  onRowClick: (timesheet: Timesheet) => void;
+}) {
+  return (
+    <>
+      {showHeader && (
+        <TableRow className={cn("bg-primary/[0.035] hover:bg-primary/[0.035]", isFirstProject && "border-t border-dashed border-border/50")}>
+          <TableCell className="p-0" />
+          <TableCell colSpan={3} className="px-4 py-2.5 pl-8">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Building2 className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold text-foreground">{project.projectName}</p>
+                <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">
+                  {[project.projectCode, project.positions.join(', '), `${project.entries.length} mục`].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            </div>
+          </TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{project.totalHours}h</TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground/35">—</TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{project.totalAmount.toLocaleString("vi-VN")}đ</TableCell>
+          <TableCell className="p-0" />
+        </TableRow>
+      )}
+      {project.entries.map((entry, entryIndex) => (
+        <EntryRow
+          key={entry.id}
+          entry={entry}
+          entryIdx={entryIndex}
+          showDate={entryIndex === 0 || project.entries[entryIndex - 1]?.date !== entry.date}
+          startsAfterProjectHeader={showHeader && entryIndex === 0}
+          userRole={userRole}
+          onClick={() => onRowClick(entry)}
+        />
+      ))}
+    </>
   );
 });
 
@@ -274,110 +365,127 @@ const PartnerGroupColumn = memo(function PartnerGroupColumn({ group }: { group: 
 interface EntryRowProps {
   entry: Timesheet;
   entryIdx: number;
-  groupStripBg: string;
+  showDate: boolean;
+  startsAfterProjectHeader: boolean;
   userRole: "admin" | "partner";
   onClick: () => void;
 }
 
-const EntryRow = memo(function EntryRow({ entry, entryIdx, groupStripBg, userRole, onClick }: EntryRowProps) {
+const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfterProjectHeader, userRole, onClick }: EntryRowProps) {
   const navigate = useNavigate();
+  const entryDate = new Date(entry.date);
+  const hoursWorked = entry.hours_worked || 0;
+  const dayTypeLabel = entry.day_type || "—";
+  const normalizedDayType = dayTypeLabel.toLocaleLowerCase("vi-VN");
+  const shiftLabel = entry.hour_type || getPaytypeDetail(entry.paytype) || "—";
+  const normalizedShift = shiftLabel.toLocaleLowerCase("vi-VN");
+  const isOvertime = normalizedShift.includes("tăng ca");
+  const isNightShift = normalizedShift.includes("đêm");
+  const isShortShift = hoursWorked > 0 && hoursWorked < 8;
 
   return (
     <TableRow
       onClick={onClick}
       className={cn(
-        "cursor-pointer transition-colors bg-muted/[0.03] hover:bg-muted/10",
-        entryIdx === 0 ? "border-t border-dashed border-border/50" : "border-t border-border/20",
+        "cursor-pointer transition-colors hover:bg-primary/[0.045]",
+        entryIdx % 2 === 0 ? "bg-background" : "bg-slate-50/55",
+        entryIdx === 0 && !startsAfterProjectHeader ? "border-t border-dashed border-border/50" : "border-t border-border/20",
       )}
     >
       <TableCell className="p-0 relative">
-        <span className={cn("absolute top-1.5 left-1.5 w-2 h-2 rounded-full", groupStripBg)} />
+        {(!entry.payrate || entry.payrate === 0) && <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />}
       </TableCell>
-      <TableCell className="py-2.5 px-4 pl-12">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1">
-            <p className="text-xs font-medium text-foreground truncate">{entry.projectName || "-"}</p>
-            {entry.force_payroll && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />}
-          </div>
-          <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
-            {format(new Date(entry.date), 'dd/MM/yyyy')}
-          </p>
+      <TableCell className="py-2 px-4 pl-8">
+        <div className="flex min-h-9 items-center gap-2">
+          {showDate ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md bg-slate-100 px-1.5 text-[10px] font-bold uppercase text-slate-600">
+                {format(entryDate, "EEE", { locale: vi }).replace("Th ", "T")}
+              </span>
+              <p className="text-xs font-bold tabular-nums text-foreground">{format(entryDate, "dd/MM/yyyy")}</p>
+            </div>
+          ) : (
+            <span className="ml-4 flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground" aria-label="Cùng ngày">
+              <span className="h-4 w-px bg-border" />
+              <span className="h-1.5 w-1.5 rounded-full bg-border" />
+            </span>
+          )}
+          {entry.force_payroll && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />}
         </div>
       </TableCell>
-      <TableCell className="py-2.5 px-4">
-        {entry.paytype ? (
-          <PaytypeHierarchy paytype={entry.paytype} />
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+      <TableCell className="py-2 px-4">
+        <span
+          className={cn(
+            "inline-flex h-7 items-center rounded-md px-2.5 text-xs font-semibold capitalize ring-1 ring-inset",
+            normalizedDayType.includes("lễ")
+              ? "bg-rose-50 text-rose-800 ring-rose-200"
+              : normalizedDayType.includes("nghỉ")
+                ? "bg-violet-50 text-violet-800 ring-violet-200"
+                : "bg-slate-50 text-slate-700 ring-slate-200",
+          )}
+        >
+          {dayTypeLabel}
+        </span>
       </TableCell>
-      <TableCell className="py-2.5 px-4 text-right">
-        <p className="text-xs font-semibold text-foreground tabular-nums">{entry.hours_worked || 0}h</p>
-        {userRole === "partner" ? (
-          <p className={cn(
-            "text-xs tabular-nums",
-            (!entry.payrate || entry.payrate === 0) ? "text-red-500 font-semibold" : "text-muted-foreground",
-          )}>
-            {(!entry.payrate || entry.payrate === 0) ? (
-              <span
-                className="cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/partner/projects/${entry.project_id}/payrates/new/edit`);
-                }}
-              >
-                ⚠ chưa có đơn giá
-              </span>
-            ) : `${entry.payrate?.toLocaleString("vi-VN")}đ/h`}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {entry.payrate?.toLocaleString("vi-VN")}đ/h
-          </p>
-        )}
+      <TableCell className="py-2 px-4">
+        <span
+          className={cn(
+            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold capitalize",
+            isOvertime
+              ? "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200"
+              : isNightShift
+                ? "bg-indigo-50 text-indigo-800 ring-1 ring-inset ring-indigo-200"
+                : "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200",
+          )}
+        >
+          {isOvertime ? (
+            <TimerReset className="h-3.5 w-3.5" />
+          ) : isNightShift ? (
+            <Moon className="h-3.5 w-3.5" />
+          ) : (
+            <SunMedium className="h-3.5 w-3.5" />
+          )}
+          {shiftLabel}
+        </span>
       </TableCell>
-      <TableCell className="py-2.5 px-4 text-right">
+      <TableCell className="border-l border-border/30 py-2 px-3 text-right">
+        <span
+          className={cn(
+            "inline-flex h-7 min-w-12 items-center justify-end rounded-md px-2 text-xs font-bold tabular-nums",
+            isShortShift ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800",
+          )}
+        >
+          {hoursWorked}h
+        </span>
+      </TableCell>
+      <TableCell className="py-2 px-3 text-right">
+        <p className={cn(
+          "inline-flex h-7 items-center justify-end rounded-md bg-slate-50 px-2 text-xs tabular-nums",
+          (!entry.payrate || entry.payrate === 0) ? "text-red-500 font-semibold" : "font-medium text-muted-foreground",
+        )}>
+          {(!entry.payrate || entry.payrate === 0) && userRole === "partner" ? (
+            <span
+              className="cursor-pointer hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/partner/projects/${entry.project_id}/payrates/new/edit`);
+              }}
+            >
+              ⚠ chưa có
+            </span>
+          ) : `${entry.payrate?.toLocaleString("vi-VN")}đ/h`}
+        </p>
+      </TableCell>
+      <TableCell className="py-2 px-3 text-right">
         <div className="flex items-center justify-end gap-1">
-          {entry.payment_status === "paid" && <CheckCircle className="h-3 w-3 text-green-600 shrink-0" />}
-          <span className="text-xs font-semibold text-foreground tabular-nums">
+          <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 text-xs font-bold text-emerald-800 tabular-nums">
             {(entry.amount || 0).toLocaleString("vi-VN")}đ
           </span>
         </div>
       </TableCell>
-      <TableCell className="py-2.5 px-2">
+      <TableCell className="py-2 px-2">
         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
       </TableCell>
-    </TableRow>
-  );
-});
-
-// ── Sub-total row ──────────────────────────────────────────────────────────
-
-const SubtotalRow = memo(function SubtotalRow({
-  entryCount,
-  totalHours,
-  totalAmount,
-}: {
-  entryCount: number;
-  totalHours: number;
-  totalAmount: number;
-}) {
-  return (
-    <TableRow className="border-t border-border/40 bg-muted/10">
-      <TableCell className="p-0" />
-      <TableCell className="py-2 px-4 pl-12">
-        <span className="text-xs text-muted-foreground">{entryCount} mục</span>
-      </TableCell>
-      <TableCell className="py-2 px-4" />
-      <TableCell className="py-2 px-4 text-right">
-        <span className="text-xs font-bold text-foreground tabular-nums">{totalHours}h</span>
-      </TableCell>
-      <TableCell className="py-2 px-4 text-right">
-        <span className="text-xs font-bold text-foreground tabular-nums">
-          {totalAmount.toLocaleString("vi-VN")}đ
-        </span>
-      </TableCell>
-      <TableCell className="py-2 px-2" />
     </TableRow>
   );
 });

@@ -4,7 +4,6 @@ import {
   Users,
   UserCheck,
   UserX,
-  Banknote,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
@@ -12,6 +11,8 @@ import {
   Medal,
   Award,
   Sparkles,
+  Activity,
+  CalendarDays,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -32,17 +33,17 @@ const ALL_VALUE = 'all';
 // ─── Month selector ────────────────────────────────────────────────────────
 function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 -mb-0.5" aria-label="Chọn kỳ dữ liệu">
+    <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-muted/35 p-1 no-scrollbar" aria-label="Chọn kỳ dữ liệu">
       {monthOptions.slice(0, 4).map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           className={cn(
-            'min-h-[44px] px-3 rounded-full text-xs font-semibold transition-colors shrink-0',
+            'min-h-[40px] px-3 rounded-xl text-xs font-semibold transition-colors shrink-0',
             value === opt.value
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+              ? 'bg-card text-primary shadow-[0_3px_10px_-6px_rgba(6,101,52,0.60)] ring-1 ring-border/50'
+              : 'text-muted-foreground hover:bg-card/75 hover:text-foreground',
           )}
         >
           {opt.label}
@@ -52,7 +53,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
         aria-label="Chọn tháng khác"
         value={monthOptions.slice(4).some((o) => o.value === value) ? value : ''}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="min-h-[44px] rounded-full border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted/60 hover:text-foreground focus:border-primary/30 shrink-0"
+        className="min-h-[40px] rounded-xl border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-card/75 hover:text-foreground focus:border-primary/30 shrink-0"
       >
         <option value="">Tháng khác…</option>
         {monthOptions.slice(4).map((opt) => (
@@ -331,14 +332,21 @@ const PartnerDashboardPage = () => {
   const showMomBadges = selectedMonth !== ALL_VALUE;
 
   return (
-    <div className="p-4 lg:p-8 max-w-[1320px] mx-auto space-y-5">
-      <div className="rounded-2xl border border-white/80 bg-white/85 px-5 py-4 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur">
+    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_27rem)] p-4 lg:p-8">
+    <div className="max-w-[1320px] mx-auto space-y-5">
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card px-5 py-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:px-6">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[24px] border-emerald-100/70" />
+        <div className="relative">
         <PageHeader
           title="Tổng quan"
           description="Theo dõi hoạt động nhân viên và tình hình thanh toán"
         >
-          <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
+          <div className="flex items-center gap-2">
+            <CalendarDays className="hidden h-4 w-4 text-primary sm:block" />
+            <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
+          </div>
         </PageHeader>
+        </div>
       </div>
 
       {/* ── HERO SECTION ── */}
@@ -347,18 +355,21 @@ const PartnerDashboardPage = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in-up">
           {/* Left: big payout hero card */}
-          <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-emerald-200/15 p-6 lg:p-8 text-white shadow-[0_22px_54px_-32px_rgba(6,69,46,0.58)]">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#06452E_0%,#08783E_62%,#15905A_100%)]" />
-            <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/10 blur-3xl" />
-            <div className="absolute inset-0 opacity-[0.08] pointer-events-none [background-image:linear-gradient(90deg,white_1px,transparent_1px),linear-gradient(0deg,white_1px,transparent_1px)] [background-size:28px_28px]" />
+          <div className="lg:col-span-3 relative min-h-[264px] overflow-hidden rounded-3xl border border-emerald-200/15 p-6 lg:p-8 text-white shadow-[0_24px_56px_-30px_rgba(6,69,46,0.64)]">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#043C27_0%,#08783E_56%,#16A05E_100%)]" />
+            <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-200/12 blur-3xl" />
+            <div className="absolute -bottom-28 -left-14 h-64 w-64 rounded-full border-[40px] border-emerald-200/10" />
+            <div className="absolute inset-0 opacity-[0.07] pointer-events-none [background-image:linear-gradient(90deg,white_1px,transparent_1px),linear-gradient(0deg,white_1px,transparent_1px)] [background-size:28px_28px]" />
 
             <div className="relative">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
-                <span className="text-[10.5px] font-bold uppercase tracking-normal text-white/75">
-                  Tổng chi trả · {periodLabel}
-                </span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-emerald-50 backdrop-blur-sm">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
+                  Bảng điều hành
+                </div>
+                <span className="text-[11px] font-medium text-white/65">{periodLabel}</span>
               </div>
+              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-100/75">Tổng chi trả</p>
               <div className="mt-3 flex items-baseline gap-2.5 flex-wrap">
                 <span className="font-display text-4xl font-extrabold tabular-nums tracking-normal leading-none sm:text-5xl">
                   {formatVND(data?.total_paid_vnd ?? 0)}
@@ -380,10 +391,10 @@ const PartnerDashboardPage = () => {
                 )}
               </p>
 
-              <div className="mt-5 flex items-center gap-4 text-[11.5px]">
-                <div className="flex items-center gap-1.5">
-                  <Banknote className="h-3.5 w-3.5 text-emerald-200" />
-                  <span className="text-white/70">Cập nhật theo thời gian thực</span>
+              <div className="mt-6 flex items-center gap-2 text-[11.5px]">
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/10 px-2.5 py-1.5">
+                  <Activity className="h-3.5 w-3.5 text-emerald-200" />
+                  <span className="text-white/75">Dữ liệu cập nhật theo thời gian thực</span>
                 </div>
               </div>
             </div>
@@ -431,11 +442,11 @@ const PartnerDashboardPage = () => {
         />
 
         {/* Top employees leaderboard */}
-        <div className="lg:col-span-2 rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
+        <div className="lg:col-span-2 rounded-3xl border border-border/60 bg-card p-5 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.46)]">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                <Crown className="h-3.5 w-3.5 text-amber-500" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><Crown className="h-3.5 w-3.5" /></span>
                 Top nhân viên được trả lương cao nhất
               </h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -497,6 +508,7 @@ const PartnerDashboardPage = () => {
         month={apiMonth}
         onClose={closeSheet}
       />
+    </div>
     </div>
   );
 };

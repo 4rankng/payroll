@@ -21,7 +21,7 @@ import { useExportApprovedTimesheets } from "@/hooks/api/usePayrolls";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { useCreateEditRequest } from "@/hooks/api/useTimesheetEditRequests";
 import { useTimesheetStatsConfig } from "@/hooks/useTimesheetStatsConfig";
-import { ChevronLeft, ChevronRight, Plus, Download, History, Clock, FileUp, Users, ClipboardList, AlertCircle, Wallet, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Download, History, Clock, FileUp, Users, ClipboardList, AlertCircle, Wallet, CheckCircle2, SlidersHorizontal, Files } from "lucide-react";
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { Button } from "@/components/ui/button";
@@ -138,9 +138,9 @@ function TimesheetStatsRow({
           onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
           aria-pressed={onClick ? active : undefined}
           className={cn(
-            "group relative rounded-xl border bg-card px-3 py-2.5 overflow-hidden shadow-sm transition-colors",
+            "group relative rounded-2xl border bg-card px-3.5 py-3 overflow-hidden shadow-[0_8px_18px_-17px_rgba(15,23,42,0.42)] transition-all",
             active ? "border-primary/40 bg-primary/5" : "border-border/60",
-            onClick && "cursor-pointer hover:bg-muted/40",
+            onClick && "cursor-pointer hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_14px_26px_-20px_rgba(6,101,52,0.38)]",
           )}
         >
           <Icon
@@ -390,14 +390,19 @@ export default function TimesheetsPage() {
   }
 
   return (
-    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-emerald-100/70" />
+          <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 ring-1 ring-inset ring-emerald-100">
+                <ClipboardList className="h-3 w-3" />
+                Không gian chấm công
+              </div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 sm:text-2xl">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Clock className="h-5 w-5" />
                 </span>
@@ -405,20 +410,20 @@ export default function TimesheetsPage() {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Theo dõi bảng công, yêu cầu sửa và lịch sử chi trả theo tháng</p>
             </div>
-            <div className="flex items-center gap-1 rounded-xl border border-slate-200/70 bg-slate-50/80 px-1 py-1 shadow-soft">
+            <div className="flex items-center gap-1 rounded-2xl border border-border/70 bg-muted/35 p-1 shadow-soft">
               <button
                 onClick={handlePrevMonth}
-                className="flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white transition-colors"
+                className="flex items-center justify-center h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
                 aria-label="Tháng trước"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="min-w-[118px] text-center text-sm font-semibold text-foreground tabular-nums px-1">
+              <span className="min-w-[124px] text-center text-sm font-bold text-foreground tabular-nums px-1">
                 {monthLabel}
               </span>
               <button
                 onClick={handleNextMonth}
-                className="flex items-center justify-center h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white transition-colors"
+                className="flex items-center justify-center h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
                 aria-label="Tháng sau"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -444,7 +449,11 @@ export default function TimesheetsPage() {
         )}
 
         {/* Action buttons */}
-        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center rounded-2xl border border-border/60 bg-white/90 p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] backdrop-blur">
+        <div className="opacity-0 animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards] flex flex-wrap gap-2 items-center rounded-2xl border border-border/60 bg-card p-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
+          <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Files className="h-4 w-4" /></div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Tác vụ bảng công</span>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -493,7 +502,7 @@ export default function TimesheetsPage() {
           <Button
             size="sm"
             onClick={() => openTimesheetEntry()}
-            className="gap-1.5"
+            className="gap-1.5 sm:ml-auto"
           >
             <Plus className="h-3.5 w-3.5" />
             Nhập công
@@ -521,12 +530,23 @@ export default function TimesheetsPage() {
         >
           <div className="space-y-3">
             <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-              <div className="flex items-center gap-2 flex-wrap rounded-2xl border border-border/60 bg-white/90 backdrop-blur px-3 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+              <div className="flex items-center gap-2.5 flex-wrap rounded-2xl border border-border/60 bg-card px-3 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
+                <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc dữ liệu</span>
+                </div>
                 <TimesheetFilters />
               </div>
             </div>
 
-            <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+              <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
+                <div>
+                  <p className="text-[12px] font-bold text-foreground">Chi tiết bảng công</p>
+                  <p className="mt-0.5 text-[10.5px] text-muted-foreground">Nhấn vào một dòng để xem hoặc xử lý</p>
+                </div>
+                <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{timesheetManagement.timesheets.length} bản ghi</span>
+              </div>
               {isMobile ? <TimesheetMobileList /> : <TimesheetListTable />}
             </div>
           </div>

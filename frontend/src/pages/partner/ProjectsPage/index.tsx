@@ -2,6 +2,9 @@ import { useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Briefcase,
+  Building2,
+  Clock3,
+  FolderKanban,
   Plus,
   Search,
   Users,
@@ -14,6 +17,7 @@ import {
   CheckCircle2,
   XCircle,
   FileText,
+  FilterX,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -137,7 +141,7 @@ function SalaryPeriodChip({ project }: { project: Project }) {
   return null;
 }
 
-// ─── Project card (replaces table row) ─────────────────────────────────────
+// ─── Project card ──────────────────────────────────────────────────────────
 function ProjectCard({
   project,
   onOpen,
@@ -162,73 +166,57 @@ function ProjectCard({
         }
       }}
       className={cn(
-        'group relative w-full rounded-2xl border border-border/60 bg-card cursor-pointer',
-        'shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_2px_8px_-4px_rgba(15,15,30,0.04)]',
-        'hover:shadow-[0_2px_4px_-1px_rgba(15,15,30,0.08),0_12px_24px_-8px_rgba(15,15,30,0.10)]',
-        'hover:-translate-y-0.5 hover:border-primary/20 transition-all duration-200',
+        'group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card cursor-pointer',
+        'shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_8px_18px_-16px_rgba(15,15,30,0.18)]',
+        'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_18px_34px_-22px_rgba(6,101,52,0.38)] transition-all duration-200',
       )}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-4 p-4 md:p-5 items-center">
-        {/* Avatar */}
-        <ProjectAvatar project={project} />
-
-        {/* Identity + meta */}
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <h3 className="text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
-              {project.name}
-            </h3>
-            {project.code && (
-              <span className="text-[11px] font-mono font-semibold text-muted-foreground/80 px-1.5 py-0.5 rounded bg-muted/60">
-                {project.code}
-              </span>
-            )}
+      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary via-primary/65 to-emerald-300" />
+      <div className="p-4 pl-5 md:p-5 md:pl-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <ProjectAvatar project={project} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold', status.pill)}>
+                  <StatusIcon className="h-3 w-3" />
+                  {status.label}
+                </span>
+                {project.code && <span className="font-mono text-[10.5px] font-semibold tracking-wide text-muted-foreground">{project.code}</span>}
+              </div>
+              <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground">
+                {project.name}
+              </h3>
+            </div>
           </div>
-
-          <p className="text-[12.5px] text-muted-foreground truncate">
-            <span className="text-foreground/80 font-medium">{project.client_name}</span>
-            {project.description ? <span> · {project.description}</span> : null}
-          </p>
-
-          <div className="flex items-center gap-2 flex-wrap pt-1">
-            {/* Status indicator — icon only, with tooltip via title attr */}
-            <span
-              className={cn(
-                'inline-flex items-center justify-center h-5 w-5 rounded-full',
-                status.pill,
-              )}
-              title={status.label}
-              aria-label={status.label}
-            >
-              <StatusIcon className="h-3 w-3" />
-            </span>
-
-            <SalaryPeriodChip project={project} />
-
-            <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground">
-              <Users className="h-3 w-3" />
-              <span className="font-semibold text-foreground tabular-nums">
-                {project.employee_count}
-              </span>
-              nhân viên
-            </span>
-          </div>
+          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary" aria-hidden="true" />
         </div>
 
-        {/* Quick actions (right side) — Bảng công only, hover-revealed.
-            Card itself is the "Mở" target (whole-row click handler). */}
-        <div className="flex items-center justify-end shrink-0">
+        <div className="mt-4 border-y border-border/55 py-3">
+          <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+            <span className="truncate font-medium text-foreground/85">{project.client_name || 'Chưa cập nhật khách hàng'}</span>
+          </div>
+          {project.description && <p className="mt-2 line-clamp-1 text-[11.5px] text-muted-foreground">{project.description}</p>}
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span className="font-bold tabular-nums text-foreground">{project.employee_count}</span>
+              nhân sự
+            </span>
+            <span className="h-3.5 w-px bg-border" />
+            <SalaryPeriodChip project={project} />
+          </div>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onTimesheet();
             }}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-semibold transition-all',
-              'bg-muted/50 text-foreground/70 hover:bg-muted hover:text-foreground',
-              'md:opacity-0 md:group-hover:opacity-100',
-            )}
+            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-[11.5px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <CalendarDays className="h-3.5 w-3.5" />
             Bảng công
@@ -282,9 +270,11 @@ const ProjectsPage = () => {
   const activeCount = allProjects.filter((p) => p.status === 'active').length;
 
   return (
-    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
+    <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-5">
-        <div className="rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_18px_50px_-40px_rgba(8,120,62,0.28)] backdrop-blur">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:p-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border-[28px] border-emerald-100/65" />
+          <div className="relative">
           <PageHeader
             title="Dự án"
             description="Quản lý và theo dõi các dự án được phân quyền"
@@ -297,23 +287,33 @@ const ProjectsPage = () => {
               },
             ]}
           />
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {[
-              { label: 'Tổng dự án', value: allProjects.length },
-              { label: 'Đang hoạt động', value: activeCount },
-              { label: 'Đang hiển thị', value: projects.length },
+              { label: 'Tổng dự án', value: allProjects.length, icon: FolderKanban, tone: 'text-slate-600 bg-slate-100' },
+              { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle2, tone: 'text-emerald-700 bg-emerald-100' },
+              { label: 'Đang xem', value: projects.length, icon: Clock3, tone: 'text-amber-700 bg-amber-100' },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-emerald-100/80 bg-emerald-50/45 px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{item.label}</p>
-                <p className="mt-1 text-lg font-bold tabular-nums text-slate-900">{item.value.toLocaleString('vi-VN')}</p>
+              <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/25 px-3.5 py-3">
+                <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl', item.tone)}>
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">{item.label}</p>
+                  <p className="mt-0.5 text-xl font-bold tabular-nums text-foreground">{item.value.toLocaleString('vi-VN')}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+        </div>
 
       {/* ── UNIFIED TOOLBAR ── */}
-      <div className="rounded-2xl border border-border/60 bg-card p-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-[0_8px_22px_-20px_rgba(15,23,42,0.40)]">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><FolderKanban className="h-4 w-4" /></div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc danh sách</span>
+          </div>
           {/* Status filter pills */}
           <div className="flex items-center gap-1 flex-wrap">
             {STATUS_FILTERS.map((f) => {
@@ -324,7 +324,7 @@ const ProjectsPage = () => {
                   type="button"
                   onClick={() => setStatusFilter(f.value)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all shrink-0',
+                    'min-h-9 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all shrink-0',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-[0_6px_16px_-10px_rgba(8,120,62,0.7)]'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -336,17 +336,17 @@ const ProjectsPage = () => {
             })}
           </div>
 
-          <div className="hidden md:block h-5 w-px bg-border mx-1" />
+          <div className="hidden md:block h-6 w-px bg-border mx-0.5" />
 
           {/* Search */}
-          <div className="relative flex-1 min-w-[280px]">
+          <div className="relative flex-1 min-w-[260px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
               value={filterControls.searchTerm}
               onChange={(e) => filterControls.setSearchTerm(e.target.value)}
               placeholder="Tìm tên dự án, mã, khách hàng…"
-              className="w-full h-9 pl-9 pr-3 rounded-xl bg-muted/40 text-[12.5px] text-foreground placeholder:text-muted-foreground/70 border border-transparent focus:border-primary/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+              className="h-10 w-full rounded-xl border border-transparent bg-muted/45 pl-9 pr-3 text-[12.5px] text-foreground placeholder:text-muted-foreground/70 transition-all focus:border-primary/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/10"
             />
           </div>
 
@@ -354,8 +354,9 @@ const ProjectsPage = () => {
             <button
               type="button"
               onClick={filterControls.clearFilters}
-              className="text-[11.5px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
+              <FilterX className="h-3.5 w-3.5" />
               Xóa lọc
             </button>
           )}
