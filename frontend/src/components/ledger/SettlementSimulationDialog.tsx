@@ -9,7 +9,6 @@ import {
   Info,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,7 +36,7 @@ import {
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSimulateSettlement } from '@/hooks/api/usePayrolls';
-import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import { dateToString } from '@/utils/dateHelpers';
 import type {
   SettlementSimulationResult,
@@ -256,15 +255,8 @@ function ResultView({ result }: { result: SettlementSimulationResult }) {
           ))}
         </div>
       )}
-
-      {/* Snapshot */}
-      {result.snapshot_epoch && result.snapshot_epoch !== '0001-01-01T00:00:00Z' && (
-        <p className="text-xs text-muted-foreground">
-          Dữ liệu chốt tại {formatDateTime(result.snapshot_epoch)}. Nếu có thay đổi, chạy lại mô phỏng.
-        </p>
-      )}
     </div>
-  );
+  )
 }
 
 function StatCard({

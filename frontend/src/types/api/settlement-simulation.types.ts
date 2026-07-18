@@ -2,10 +2,9 @@
 // and dto.SimulationResult (see backend/internal/app/dto/payroll.go).
 //
 // The simulation projects N future "Xuất sao kê" exports starting from an
-// admin-chosen date. It reuses the EXACT same PayrollReportByProjectService
-// selection logic as production (GET /timesheets/payroll/report), so whatever
-// the real export picks up, the sim picks up. Returns a coverage verdict:
-// "will these N exports reconcile every paid-but-unsettled timesheet?"
+// admin-chosen date, reusing the EXACT same PayrollReportByProjectService
+// selection logic as production. Returns a coverage verdict: "will these N
+// exports reconcile every paid-but-unsettled timesheet?"
 
 export type SettlementVerdict =
   | 'AN_TOAN_DE_XUAT' // safe — full pool covered, reconciled
@@ -20,7 +19,6 @@ export interface SettlementSimulationRequest {
 }
 
 export interface SettlementSimulationResult {
-  snapshot_epoch: string;
   start_date: string;
   export_dates: string[];
   verdict: SettlementVerdict;
@@ -36,7 +34,6 @@ export interface SimulationSummary {
   total_eligible_groups: number;
   total_eligible_amount: number;
   total_included_timesheets: number;
-  total_included_groups: number;
   total_included_amount: number;
   remaining_timesheets: number;
   remaining_groups: number;
@@ -54,15 +51,11 @@ export interface ReconciliationResult {
 export interface ExportProjection {
   sequence: number;
   export_date: string;
-  from_date: string;
   to_date: string;
   included_count: number;
   included_amount: number;
-  excluded_count: number;
   remaining_count: number;
-  remaining_amount: number;
   included: SimulationRow[];
-  excluded: SimulationExcludedRow[];
 }
 
 export interface SimulationRow {
@@ -73,19 +66,6 @@ export interface SimulationRow {
   amount: number;
   timesheet_ids: number[];
   timesheet_dates: string[];
-  bank_account_masked?: string;
-}
-
-export interface SimulationExcludedRow {
-  employee_id: number;
-  employee_name: string;
-  project_id: number;
-  project_name: string;
-  amount: number;
-  timesheet_ids: number[];
-  timesheet_dates: string[];
-  reason: string;
-  in_production: boolean;
 }
 
 export interface RemainderRow {
@@ -97,7 +77,6 @@ export interface RemainderRow {
   timesheet_ids: number[];
   timesheet_dates: string[];
   reason: string;
-  bank_account_masked?: string;
 }
 
 export interface SimWarning {

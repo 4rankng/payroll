@@ -47,9 +47,8 @@ type ExportPlan struct {
 //
 // Plan() and its helpers (listTimesheetsForCycle, filterTimesheetsByRequest,
 // aggregateTimesheetData) were moved verbatim from the pre-refactor
-// ExportService — no behavior change. The only additions are:
-//   - the ExportPlan.SnapshotEpoch field + its single SQL computation;
-//   - the req.NoDateFilter mode used by the simulation's full-pool scan.
+// ExportService — no behavior change. The only addition is the
+// ExportPlan.SnapshotEpoch field used by the IfMatchSnapshot guard.
 type ExportPlanner struct {
 	timesheetRepo       TimesheetRepository
 	employeeRepo        EmployeeRepository
@@ -83,17 +82,7 @@ func NewExportPlanner(
 // Plan performs the entire read + aggregate + validate phase of an export.
 // Pure: no INSERTs/UPDATEs/Publish calls. Returns an ExportPlan that the
 // caller can either Persist() (production) or inspect (simulation).
-//
-// req.NoDateFilter (set only by the simulation's full-pool scan) skips date
-// resolution: Plan selects every outstanding approved timesheet with
-// payment_status in (pending, failed), filtered only by project/employee.
 func (p *ExportPlanner) Plan(ctx context.Context, req *dto.ExportBulkTransferRequest) (*ExportPlan, error) {
-	// Full-pool mode: skip date resolution entirely. The cycle label is still
-	// "weekly" so aggregateTimesheetData's PaymentSchedule filter uses the
-	// weekly schedule (matches what production export does for Kỳ cycles).
-	if req.NoDateFilter {
-		return p.planNoDateFilter(ctx, req)
-	}
 	return p.planWithDateRange(ctx, req)
 }
 
@@ -150,42 +139,6 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 		SnapshotEpoch:        snapshot,
 		PaymentPercentage:    paymentPercentage,
 		ForecastOutcomeItems: outcomeItems,
-	}, nil
-}
-
-// planNoDateFilter is the simulation's full-pool path. Same selection logic
-// as planWithDateRange but with no date window — every outstanding approved
-// timesheet (payment_status pending|failed) matching the project/employee
-// filters is included. Cycle is "weekly" so aggregation applies the weekly
-// payment-schedule filter, matching Kỳ-cycle production behavior.
-func (p *ExportPlanner) planNoDateFilter(ctx context.Context, req *dto.ExportBulkTransferRequest) (*ExportPlan, error) {
-	cycle := string(domain.PaymentScheduleWeekly)
-	periodCache := make(map[uint]projectPeriod)
-
-	// Force isMonthly=false and skip date resolution. listTimesheetsForCycle
-	// then issues a single repo.List with no FromDate/ToDate.
-	fullReq := *req // shallow copy; do not mutate caller's request
-	fullReq.ForMonth = ""
-	fullReq.FromDate = ""
-	fullReq.ToDate = ""
-
-	rawAggregated, validated, _, paymentPercentage, err := p.selectAndAggregate(ctx, &fullReq, false, time.Time{}, cycle, periodCache)
-	if err != nil {
-		return nil, err
-	}
-
-	snapshot, err := p.computeSnapshotEpoch(ctx, rawAggregated)
-	if err != nil {
-		snapshot = time.Time{}
-	}
-
-	return &ExportPlan{
-		Cycle:             cycle,
-		IsMonthly:         false,
-		RawAggregated:     rawAggregated,
-		ValidatedData:     validated,
-		SnapshotEpoch:     snapshot,
-		PaymentPercentage: paymentPercentage,
 	}, nil
 }
 
@@ -279,7 +232,7 @@ func buildForecastOutcomeItems(
 	validation *excel.BulkTransferValidationResult,
 	paymentPercentage float64,
 ) []domain.CashForecastOutcomeItem {
-	if req == nil || isMonthly || req.NoDateFilter || req.FromDate == "" || req.ToDate == "" ||
+	if req == nil || isMonthly || req.FromDate == "" || req.ToDate == "" ||
 		validation == nil || validation.ValidData == nil {
 		return nil
 	}

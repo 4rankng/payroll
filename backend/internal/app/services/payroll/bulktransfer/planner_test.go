@@ -250,38 +250,6 @@ func TestPlanner_Plan_Weekly_AggregatesAndValidates(t *testing.T) {
 	assert.Equal(t, "2026-07-14", b.listFilters[0].ToDate.Format(timeutil.DateFormat))
 }
 
-// TestPlanner_Plan_NoDateFilter_FullPool verifies the full-pool scan mode
-// the Phase 2 simulation needs. Same selection logic, no date window.
-func TestPlanner_Plan_NoDateFilter_FullPool(t *testing.T) {
-	b := seedStub()
-	// Add an out-of-window timesheet that would NOT appear in a 7-day cycle
-	// window but SHOULD appear in the full-pool scan.
-	b.timesheets = append(b.timesheets, &domain.Timesheet{
-		ID: 200, EmployeeID: 7, ProjectID: 12, Amount: 1000000,
-		Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending,
-		UpdatedAt: time.Date(2026, 7, 1, 9, 0, 0, 0, pkgClock.DefaultLocation),
-	})
-	b.timesheetByID[200] = b.timesheets[len(b.timesheets)-1]
-
-	p := newPlannerWithStub(b)
-	plan, err := p.Plan(context.Background(), &dto.ExportBulkTransferRequest{
-		NoDateFilter: true,
-		CreatedBy:    1,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, plan)
-
-	assert.Equal(t, "weekly", plan.Cycle)
-	// Employee 7 now aggregates 5M + 3M + 1M = 9M, all three timesheet IDs.
-	key7 := excel.EmployeeProjectKey{EmployeeID: 7, ProjectID: 12}
-	assert.Equal(t, int64(9000000), plan.RawAggregated.EmployeeProjectAmounts[key7])
-	assert.Equal(t, []uint{101, 102, 200}, plan.RawAggregated.EmployeeProjectTimesheets[key7])
-
-	// Date range is zero (full-pool mode has no window).
-	assert.True(t, plan.FromDate.IsZero())
-	assert.True(t, plan.ToDate.IsZero())
-}
-
 // TestPlanner_Plan_EmptyPool_NoError verifies the empty-eligible-pool case:
 // Plan returns a non-nil plan with zero items, no error.
 func TestPlanner_Plan_EmptyPool_NoError(t *testing.T) {

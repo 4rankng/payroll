@@ -15,21 +15,10 @@ type ExportBulkTransferRequest struct {
 	ForMonth    string `json:"for_month,omitempty"`
 	CreatedBy   uint   `json:"-"` // Set from context, not from request body
 
-	// IfMatchSnapshot optionally carries the snapshot_epoch returned by a prior
-	// /payrolls/simulate-settlement call. If set, Export rejects with 409
-	// (domain.ErrStaleSimulation) when any relevant row's updated_at is newer
-	// than this timestamp — preventing an export from silently using stale
-	// simulation results. Absent = today's backward-compatible behavior.
+	// IfMatchSnapshot optionally carries a snapshot timestamp. If set, Export
+	// rejects with 409 when any relevant row's updated_at is newer than this
+	// timestamp. Absent = today's backward-compatible behavior.
 	IfMatchSnapshot *time.Time `json:"if_match_snapshot,omitempty"`
-
-	// NoDateFilter is set ONLY by the settlement simulation's full-pool scan
-	// (Phase 2). Production export never sets it. When true, ExportPlanner.Plan
-	// skips date resolution and selects every outstanding approved timesheet
-	// (payment_status pending|failed) matching only the project/employee
-	// filters — so the simulation can compute the full-pool coverage verdict
-	// without a second selection algorithm. Exported so the simulation service
-	// (different package) can set it; the json:"-" tag keeps it off the wire.
-	NoDateFilter bool `json:"-"`
 }
 
 // ExportBulkTransferResponse represents the response from bulk transfer export
@@ -332,42 +321,29 @@ type EstimateFeeResponse struct {
 }
 
 // ============================================================================
-// Settlement Simulation DTOs (Phase 2-3 — /payrolls/simulate-settlement)
+// Settlement Simulation DTOs (/payrolls/simulate-settlement)
 //
-// The simulation projects the current payroll cycle + next N−1 cycles by
-// reusing the production ExportPlanner.Plan(). It returns a full-pool verdict
-// ("will these N exports cover every outstanding approved timesheet?") plus
-// a remainders list. Payroll-only scope: every remainder is unpaid wages
-// (the eligible pool is payment_status IN (pending, failed) by construction).
+// The simulation projects N future exports starting from an admin-chosen
+// date, reusing the EXACT same PayrollReportByProjectService selection logic
+// as production "Xuáº¥t sao kÃª". Returns a coverage verdict: "will these N
+// exports reconcile every paid-but-unsettled timesheet?"
 // ============================================================================
 
 // SimulateSettlementRequest is the request body for the simulation endpoint.
-//
-// The admin picks a start_date (e.g. "2026-07-26") and the server generates
-// `export_count` (default 4) export dates by stepping forward `cadence_days`
-// (default 7) at a time. Each simulated export uses a ROLLING CATCH-UP date
-// range: from the earliest still-unpaid timesheet date through that export's
-// date. After each export, the items it covered are assumed paid and removed
-// from the pool; the next export sweeps whatever is left.
-//
-// This mirrors the real admin workflow: pick a date, run the export, upload
-// to the bank, repeat. The question answered: "if I do exports on these N
-// dates, will every currently-outstanding approved timesheet get paid?"
 type SimulateSettlementRequest struct {
-	ProjectIDs   []uint `json:"project_ids,omitempty"`
-	EmployeeIDs  []uint `json:"employee_ids,omitempty"`
-	StartDate    string `json:"start_date,omitempty"`    // YYYY-MM-DD; required. First export date.
-	ExportCount  int    `json:"export_count,omitempty"`  // default 4, clamped [1,10]
-	CadenceDays  int    `json:"cadence_days,omitempty"`  // default 7; step between exports
-	CreatedBy    uint   `json:"-"`                       // set from auth context
+	ProjectIDs  []uint `json:"project_ids,omitempty"`
+	EmployeeIDs []uint `json:"employee_ids,omitempty"`
+	StartDate   string `json:"start_date,omitempty"`   // YYYY-MM-DD; required
+	ExportCount int    `json:"export_count,omitempty"` // default 4, clamped [1,10]
+	CadenceDays int    `json:"cadence_days,omitempty"` // default 7; step between exports
+	CreatedBy   uint   `json:"-"`                      // set from auth context
 }
 
 // SimulationResult is the full response payload.
 type SimulationResult struct {
-	SnapshotEpoch  time.Time            `json:"snapshot_epoch"`
 	StartDate      string               `json:"start_date"`
-	ExportDates    []string             `json:"export_dates"` // the N projected export dates
-	Verdict        string               `json:"verdict"`      // AN_TOAN_DE_XUAT | CAN_KIEM_TRA
+	ExportDates    []string             `json:"export_dates"`
+	Verdict        string               `json:"verdict"` // AN_TOAN_DE_XUAT | CAN_KIEM_TRA
 	Summary        SimulationSummary    `json:"summary"`
 	Reconciliation ReconciliationResult `json:"reconciliation"`
 	Exports        []ExportProjection   `json:"exports"`
@@ -376,19 +352,16 @@ type SimulationResult struct {
 }
 
 // SimulationSummary is the answer-first totals block.
-// EligibleCounts/IncludedCounts are reported at the timesheet level (raw rows).
-// The *Groups variants report the employee×project aggregation count.
 type SimulationSummary struct {
-	TotalEligibleTimesheets  int   `json:"total_eligible_timesheets"`
-	TotalEligibleGroups      int   `json:"total_eligible_groups"`
-	TotalEligibleAmount      int64 `json:"total_eligible_amount"`
-	TotalIncludedTimesheets  int   `json:"total_included_timesheets"`
-	TotalIncludedGroups      int   `json:"total_included_groups"`
-	TotalIncludedAmount      int64 `json:"total_included_amount"`
-	RemainingTimesheets      int   `json:"remaining_timesheets"`
-	RemainingGroups          int   `json:"remaining_groups"`
-	RemainingAmount          int64 `json:"remaining_amount"`
-	AllSettled               bool  `json:"all_settled"`
+	TotalEligibleTimesheets int   `json:"total_eligible_timesheets"`
+	TotalEligibleGroups     int   `json:"total_eligible_groups"`
+	TotalEligibleAmount     int64 `json:"total_eligible_amount"`
+	TotalIncludedTimesheets int   `json:"total_included_timesheets"`
+	TotalIncludedAmount     int64 `json:"total_included_amount"`
+	RemainingTimesheets     int   `json:"remaining_timesheets"`
+	RemainingGroups         int   `json:"remaining_groups"`
+	RemainingAmount         int64 `json:"remaining_amount"`
+	AllSettled              bool  `json:"all_settled"`
 }
 
 // ReconciliationResult compares the projected export total against the ledger receivable.
@@ -399,72 +372,41 @@ type ReconciliationResult struct {
 	Reconciled       bool  `json:"reconciled"`
 }
 
-// ExportProjection is one projected export batch (rolling catch-up model).
+// ExportProjection is one projected export batch.
 type ExportProjection struct {
-	Sequence        int                     `json:"sequence"`
-	ExportDate      string                  `json:"export_date"`
-	FromDate        string                  `json:"from_date"` // earliest unpaid at this step
-	ToDate          string                  `json:"to_date"`   // == ExportDate
-	IncludedCount   int                     `json:"included_count"`   // timesheet rows
-	IncludedAmount  int64                   `json:"included_amount"`
-	ExcludedCount   int                     `json:"excluded_count"`
-	RemainingCount  int                     `json:"remaining_count"`   // timesheets left after this export
-	RemainingAmount int64                   `json:"remaining_amount"`
-	Included        []SimulationRow         `json:"included"`
-	Excluded        []SimulationExcludedRow `json:"excluded"`
+	Sequence       int             `json:"sequence"`
+	ExportDate     string          `json:"export_date"`
+	ToDate         string          `json:"to_date"`
+	IncludedCount  int             `json:"included_count"`
+	IncludedAmount int64           `json:"included_amount"`
+	RemainingCount int             `json:"remaining_count"`
+	Included       []SimulationRow `json:"included"`
 }
 
-// SimulationRow is one included (valid, will-be-exported) row, aggregated
-// by employee×project. The TimesheetDates carry each underlying timesheet's
-// work date so the admin can see exactly which days are being paid.
+// SimulationRow is one included row, aggregated by employeeÃproject.
 type SimulationRow struct {
-	EmployeeID        uint     `json:"employee_id"`
-	EmployeeName      string   `json:"employee_name"`
-	ProjectID         uint     `json:"project_id"`
-	ProjectName       string   `json:"project_name"`
-	Amount            int64    `json:"amount"`
-	TimesheetIDs      []uint   `json:"timesheet_ids"`
-	TimesheetDates    []string `json:"timesheet_dates"` // YYYY-MM-DD per timesheet
-	BankAccountMasked string   `json:"bank_account_masked"`
-}
-
-// SimulationExcludedRow is one row filtered out by validation.
-type SimulationExcludedRow struct {
-	EmployeeID    uint     `json:"employee_id"`
-	EmployeeName  string   `json:"employee_name"`
-	ProjectID     uint     `json:"project_id"`
-	ProjectName   string   `json:"project_name"`
-	Amount        int64    `json:"amount"`
-	TimesheetIDs  []uint   `json:"timesheet_ids"`
+	EmployeeID     uint     `json:"employee_id"`
+	EmployeeName   string   `json:"employee_name"`
+	ProjectID      uint     `json:"project_id"`
+	ProjectName    string   `json:"project_name"`
+	Amount         int64    `json:"amount"`
+	TimesheetIDs   []uint   `json:"timesheet_ids"`
 	TimesheetDates []string `json:"timesheet_dates"`
-	Reason        string   `json:"reason"`
-	InProduction  bool     `json:"in_production"`
 }
 
 // RemainderRow is an outstanding item not covered by any projected export.
-// Always unpaid wages in payroll-only scope. TimesheetDates lets the admin
-// identify exactly which unreconciled days need attention.
 type RemainderRow struct {
-	EmployeeID        uint     `json:"employee_id"`
-	EmployeeName      string   `json:"employee_name"`
-	ProjectID         uint     `json:"project_id"`
-	ProjectName       string   `json:"project_name"`
-	Amount            int64    `json:"amount"`
-	TimesheetIDs      []uint   `json:"timesheet_ids"`
-	TimesheetDates    []string `json:"timesheet_dates"`
-	Reason            string   `json:"reason"`
-	BankAccountMasked string   `json:"bank_account_masked"`
+	EmployeeID     uint     `json:"employee_id"`
+	EmployeeName   string   `json:"employee_name"`
+	ProjectID      uint     `json:"project_id"`
+	ProjectName    string   `json:"project_name"`
+	Amount         int64    `json:"amount"`
+	TimesheetIDs   []uint   `json:"timesheet_ids"`
+	TimesheetDates []string `json:"timesheet_dates"`
+	Reason         string   `json:"reason"`
 }
 
-// SimFinding is a validation finding (sim-only or shared with production).
-type SimFinding struct {
-	Severity    string `json:"severity"`              // blocking | warning | info
-	Code        string `json:"code"`
-	Message     string `json:"message"`
-	InProduction bool  `json:"in_production"`
-}
-
-// SimWarning is a top-level warning surfaced above the per-cycle findings.
+// SimWarning is a top-level warning.
 type SimWarning struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
