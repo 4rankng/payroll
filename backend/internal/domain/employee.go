@@ -51,7 +51,7 @@ func CompareEmployees(original, updated *Employee) map[string]FieldChange {
 	if original.BankAccountName != updated.BankAccountName {
 		changes["bank_account_name"] = FieldChange{Before: original.BankAccountName, After: updated.BankAccountName}
 	}
-	if !equalTimePtr(original.DateOfBirth, updated.DateOfBirth) {
+	if !equalDatePtr(original.DateOfBirth, updated.DateOfBirth) {
 		changes["date_of_birth"] = FieldChange{Before: timePtrToStr(original.DateOfBirth), After: timePtrToStr(updated.DateOfBirth)}
 	}
 
@@ -86,6 +86,17 @@ func equalTimePtr(a, b *time.Time) bool {
 		return false
 	}
 	return a.Equal(*b)
+}
+
+func equalDatePtr(a, b *time.Time) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+
+	return a.Year() == b.Year() && a.Month() == b.Month() && a.Day() == b.Day()
 }
 
 func strPtrToStr(p *string) string {

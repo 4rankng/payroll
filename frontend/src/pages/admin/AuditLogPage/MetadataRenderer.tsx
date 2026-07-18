@@ -1,5 +1,12 @@
 import React from 'react';
-import { parseMetadata, formatVND, formatFieldName, formatValue, type MetadataShape } from './utils';
+import {
+  parseMetadata,
+  formatVND,
+  formatFieldName,
+  formatValue,
+  type AuditFieldChange,
+  type MetadataShape,
+} from './utils';
 import { cn } from '@/lib/utils';
 
 interface MetadataRendererProps {
@@ -7,7 +14,7 @@ interface MetadataRendererProps {
   className?: string;
 }
 
-function ChangedFieldsDiff({ fields }: { fields: Record<string, { old: unknown; new: unknown }> }) {
+function ChangedFieldsDiff({ fields }: { fields: Record<string, AuditFieldChange> }) {
   const entries = Object.entries(fields);
   if (entries.length === 0) return null;
 
@@ -30,10 +37,10 @@ function ChangedFieldsDiff({ fields }: { fields: Record<string, { old: unknown; 
               <tr key={key} className="border-b border-border last:border-0 odd:bg-muted/20">
                 <td className="px-3 py-2 text-foreground font-medium">{formatFieldName(key)}</td>
                 <td className="px-3 py-2 text-red-600 line-through opacity-70">
-                  {formatValue(change?.old)}
+                  {formatValue(change.before)}
                 </td>
                 <td className="px-3 py-2 text-emerald-700 font-medium">
-                  {formatValue(change?.new)}
+                  {formatValue(change.after)}
                 </td>
               </tr>
             ))}

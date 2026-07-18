@@ -57,8 +57,13 @@ export function getEntityLabel(entityType: string): string {
 
 // ─── Metadata parsing ────────────────────────────────────────────────────────
 
+export interface AuditFieldChange {
+  before: unknown;
+  after: unknown;
+}
+
 export type MetadataShape =
-  | { kind: 'changed_fields'; fields: Record<string, { old: unknown; new: unknown }> }
+  | { kind: 'changed_fields'; fields: Record<string, AuditFieldChange> }
   | { kind: 'auth'; data: Record<string, unknown> }
   | { kind: 'bulk'; data: Record<string, unknown> }
   | { kind: 'financial'; data: Record<string, unknown> }
@@ -80,9 +85,21 @@ export function parseMetadata(raw: string | null | undefined): MetadataShape {
   if (!parsed || typeof parsed !== 'object') return { kind: 'empty' };
 
   if ('changed_fields' in parsed && typeof parsed.changed_fields === 'object' && parsed.changed_fields !== null) {
+    const fields = Object.fromEntries(
+      Object.entries(parsed.changed_fields).flatMap(([field, value]) => {
+        if (!value || typeof value !== 'object') return [];
+
+        const change = value as Record<string, unknown>;
+        return [[field, {
+          before: 'before' in change ? change.before : change.old,
+          after: 'after' in change ? change.after : change.new,
+        }]];
+      }),
+    );
+
     return {
       kind: 'changed_fields',
-      fields: parsed.changed_fields as Record<string, { old: unknown; new: unknown }>,
+      fields,
     };
   }
 

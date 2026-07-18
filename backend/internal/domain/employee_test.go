@@ -88,6 +88,26 @@ func TestEmployee_ValidateDates(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestCompareEmployees_DateOfBirthUsesCalendarDate(t *testing.T) {
+	originalDate := time.Date(1990, time.January, 2, 0, 0, 0, 0, time.UTC)
+	sameDateDifferentZone := time.Date(1990, time.January, 2, 0, 0, 0, 0, time.FixedZone("ICT", 7*60*60))
+
+	changes := CompareEmployees(
+		&Employee{DateOfBirth: &originalDate},
+		&Employee{DateOfBirth: &sameDateDifferentZone},
+	)
+
+	assert.NotContains(t, changes, "date_of_birth")
+
+	updatedDate := time.Date(1991, time.March, 4, 0, 0, 0, 0, time.UTC)
+	changes = CompareEmployees(
+		&Employee{DateOfBirth: &originalDate},
+		&Employee{DateOfBirth: &updatedDate},
+	)
+
+	assert.Equal(t, FieldChange{Before: "1990-01-02", After: "1991-03-04"}, changes["date_of_birth"])
+}
+
 func TestEmployee_HasBankingInfo(t *testing.T) {
 	bankID := uint(1)
 	e := &Employee{

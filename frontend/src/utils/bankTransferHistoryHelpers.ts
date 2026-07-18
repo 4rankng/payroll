@@ -14,3 +14,14 @@ export function formatBankTransferDate(value: string): string {
   const [year, month, day] = value.split('-');
   return `${day}/${month}/${year}`;
 }
+
+export function formatBankTransferPeriod(fromDate: string, toDate: string): string {
+  const [fromYear, fromMonth, fromDay] = fromDate.split('-');
+  const [toYear, toMonth, toDay] = toDate.split('-');
+
+  if (fromYear === toYear && fromMonth === toMonth) {
+    return `${fromDay}–${toDay}/${toMonth}/${toYear}`;
+  }
+
+  return `${formatBankTransferDate(fromDate)}–${formatBankTransferDate(toDate)}`;
+}

@@ -200,6 +200,7 @@ type ListBankTransferHistoriesRequest struct {
 
 // BankTransferHistoryTransfer is one completed bank posting in an employee cycle.
 type BankTransferHistoryTransfer struct {
+	TransferCode  string `json:"transfer_code"`
 	BankReference string `json:"bank_reference"`
 	Amount        int64  `json:"amount"`
 	PaidAt        string `json:"paid_at,omitempty"`
@@ -209,6 +210,7 @@ type BankTransferHistoryTransfer struct {
 type BankTransferHistoryItem struct {
 	EmployeeID   uint                          `json:"employee_id"`
 	EmployeeName string                        `json:"employee_name"`
+	EmployeeCCCD string                        `json:"employee_cccd"`
 	ProjectIDs   []uint                        `json:"project_ids"`
 	ProjectNames []string                      `json:"project_names"`
 	WorkMonth    string                        `json:"work_month"`

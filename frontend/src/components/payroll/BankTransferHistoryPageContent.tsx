@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { format, parse, startOfMonth } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import {
   Banknote,
   CalendarDays,
@@ -8,43 +10,96 @@ import {
   Landmark,
   ReceiptText,
   Search,
-  ShieldCheck,
   UserRound,
   X,
 } from 'lucide-react';
 
+import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBankTransferHistories } from '@/hooks/api/usePayrolls';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BankTransferHistory } from '@/types/api/payroll.types';
 import {
-  BANK_TRANSFER_CYCLE_LABELS,
   formatBankTransferDate,
+  formatBankTransferPeriod,
   getCurrentMonthValue,
 } from '@/utils/bankTransferHistoryHelpers';
 import { formatCurrency } from '@/utils/formatters';
 
+interface PayrollMonthPickerProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
+  const selectedMonth = startOfMonth(parse(`${value}-01`, 'yyyy-MM-dd', new Date()));
+  const displayValue = format(selectedMonth, 'MM/yyyy');
+
+  const handleSelect = (date: Date | undefined) => {
+    if (date) onValueChange(format(startOfMonth(date), 'yyyy-MM'));
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          aria-label={`Chọn tháng kỳ lương, hiện tại ${displayValue}`}
+          className="mt-0 h-11 w-full justify-between border-slate-200 bg-slate-50/70 px-3 font-sans text-[12px] font-normal tabular-nums text-slate-700 shadow-none hover:border-slate-300 hover:bg-slate-50 focus-visible:bg-white"
+        >
+          {displayValue}
+          <CalendarDays className="h-4 w-4 text-slate-500" aria-hidden="true" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={selectedMonth}
+          defaultMonth={selectedMonth}
+          onSelect={handleSelect}
+          locale={vi}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
-    <div className="space-y-2" aria-label={`${item.transfers.length} bút toán ngân hàng`}>
-      {item.transfers.map((transfer) => (
-        <div
-          key={`${transfer.bank_reference}-${transfer.amount}`}
-          className="group/reference flex min-w-0 flex-col gap-1 rounded-lg border border-slate-200/80 bg-white px-3 py-2.5 transition-colors hover:border-emerald-300 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-        >
-          <span className="min-w-0 break-all font-financial text-[12px] font-semibold tracking-[-0.02em] text-slate-700 group-hover/reference:text-emerald-900">
-            {transfer.bank_reference}
-          </span>
-          <span className="whitespace-nowrap font-financial text-[13px] font-bold tabular-nums text-emerald-700">
-            {formatCurrency(transfer.amount)}
-          </span>
-        </div>
-      ))}
+    <div className="space-y-2" aria-label={`${item.transfers.length} chi tiết thanh toán`}>
+      {item.transfers.map((transfer) => {
+        return (
+          <div
+            key={`${transfer.transfer_code}-${transfer.bank_reference}-${transfer.amount}`}
+            className="group/reference flex min-w-0 flex-col gap-1 rounded-lg border border-slate-200/80 bg-white px-3 py-2.5 transition-colors hover:border-emerald-300 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+          >
+            <div className="min-w-0">
+              <p className="break-all text-[11px] text-slate-500">
+                <span className="font-medium">Ghi chú:</span>{' '}
+                <span className="font-financial font-bold tracking-[-0.02em] text-slate-800 group-hover/reference:text-emerald-900">
+                  {transfer.transfer_code || '—'}
+                </span>
+              </p>
+              <p className="mt-0.5 break-all text-[10px] text-slate-400">
+                <span className="font-medium">Mã GD:</span>{' '}
+                <span className="font-financial text-slate-500">{transfer.bank_reference}</span>
+              </p>
+            </div>
+            <span className="whitespace-nowrap font-financial text-[13px] font-bold tabular-nums text-emerald-700">
+              {formatCurrency(transfer.amount)}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -61,8 +116,11 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
             <p className="break-words font-display text-[14px] font-bold leading-snug text-slate-950">
               {item.employee_name}
             </p>
+            <p className="mt-1 font-financial text-[10px] font-medium tabular-nums text-slate-500">
+              CCCD: {item.employee_cccd || '—'}
+            </p>
             {item.project_names.length > 0 && (
-              <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
                 {item.project_names.join(', ')}
               </p>
             )}
@@ -70,24 +128,34 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
         </div>
 
         <div className="border-t border-slate-100 pt-4 md:border-0 md:pt-0">
-          <Badge className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-display text-[11px] font-bold text-amber-900 hover:bg-amber-50">
-            {BANK_TRANSFER_CYCLE_LABELS[item.cycle]}
-          </Badge>
-          <div className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-slate-500">
-            <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-            <span>
-              {formatBankTransferDate(item.from_date)}–{formatBankTransferDate(item.to_date)}
-              <span className="block font-medium text-slate-700">
-                Trả ngày {formatBankTransferDate(item.payment_date)}
-              </span>
-            </span>
+          <div className="flex items-center gap-2.5">
+            <Badge className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-display text-[11px] font-bold text-emerald-800 hover:bg-emerald-50">
+              Kỳ {item.cycle}
+            </Badge>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium tabular-nums text-slate-700">
+                <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <span
+                  className="whitespace-nowrap"
+                  aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
+                >
+                  {formatBankTransferPeriod(item.from_date, item.to_date)}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-slate-500">
+                Thanh toán{' '}
+                <time dateTime={item.payment_date} className="font-semibold tabular-nums text-emerald-700">
+                  {formatBankTransferDate(item.payment_date)}
+                </time>
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-slate-100 pt-4 md:border-0 md:pt-0">
           <div className="mb-2.5 flex items-center justify-between gap-3 md:hidden">
             <p className="font-display text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-              Bút toán ngân hàng
+              Chi tiết thanh toán
             </p>
             <span className="text-[11px] text-slate-400">{item.transfers.length} giao dịch</span>
           </div>
@@ -149,40 +217,21 @@ export function BankTransferHistoryPageContent() {
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.07),transparent_28%),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-4 sm:px-5 md:p-6">
       <div className="mx-auto max-w-[1480px] space-y-5">
-        <header className="relative isolate overflow-hidden rounded-[24px] bg-emerald-950 px-5 py-6 text-white shadow-[0_20px_55px_-35px_rgba(6,78,59,0.9)] sm:px-7 sm:py-7 md:px-8">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_85%_0%,rgba(251,191,36,0.18),transparent_28%),linear-gradient(115deg,transparent_45%,rgba(255,255,255,0.04))]" />
-          <div className="absolute -right-12 -top-20 -z-10 h-52 w-52 rounded-full border border-white/10" />
-          <div className="absolute -right-3 -top-12 -z-10 h-36 w-36 rounded-full border border-amber-300/20" />
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-amber-300 shadow-inner">
-                <ReceiptText className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h1 className="font-display text-[24px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[28px]">
-                Lịch sử trả lương
-              </h1>
-              <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-emerald-100/75 sm:text-[13px]">
-                Tra cứu các bút toán ngân hàng theo từng nhân viên và kỳ lương tuần.
-              </p>
-            </div>
-
-            <div className="flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-900/70 px-3 py-2 text-[11px] font-semibold text-emerald-100 backdrop-blur-sm">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
-              Chỉ giao dịch đã hoàn tất
-            </div>
-          </div>
+        <header className="rounded-2xl border border-slate-200/80 bg-white px-5 py-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:px-6">
+          <PageHeader
+            icon={ReceiptText}
+            title="Lịch sử trả lương"
+            description="Bút toán ngân hàng theo nhân viên và kỳ lương."
+          />
         </header>
 
-        <Card className="relative z-10 -mt-8 overflow-hidden rounded-2xl border-white/80 bg-white/95 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.55)] backdrop-blur-sm sm:mx-4">
+        <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-[180px_220px_minmax(260px,1fr)]">
             <label className="space-y-2 font-display text-[11px] font-bold text-slate-600">
               Tháng kỳ lương
-              <Input
-                type="month"
+              <PayrollMonthPicker
                 value={month}
-                onChange={(event) => { setMonth(event.target.value); resetPage(); }}
-                className="mt-0 border-slate-200 bg-slate-50/70 font-sans text-[12px] shadow-none hover:border-slate-300 focus-visible:bg-white"
+                onValueChange={(value) => { setMonth(value); resetPage(); }}
               />
             </label>
             <label className="space-y-2 font-display text-[11px] font-bold text-slate-600">
@@ -207,7 +256,7 @@ export function BankTransferHistoryPageContent() {
                 <Input
                   value={search}
                   onChange={(event) => { setSearch(event.target.value); resetPage(); }}
-                  placeholder="Tên nhân viên hoặc mã bút toán"
+                  placeholder="Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng"
                   className="border-slate-200 bg-slate-50/70 pl-9 pr-11 text-[12px] shadow-none hover:border-slate-300 focus-visible:bg-white"
                 />
                 {search && (
@@ -246,7 +295,7 @@ export function BankTransferHistoryPageContent() {
             <div className="hidden grid-cols-[minmax(170px,1.05fr)_minmax(180px,0.9fr)_minmax(280px,1.5fr)_minmax(145px,0.65fr)] gap-5 px-5 py-1 md:grid">
               <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Nhân viên</span>
               <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Kỳ thanh toán</span>
-              <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Bút toán ngân hàng</span>
+              <span className="font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Chi tiết thanh toán</span>
               <span className="text-right font-display text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng cộng</span>
             </div>
           )}

@@ -37,6 +37,7 @@ export interface PaymentHistoryListResponse {
 }
 
 export interface BankTransferHistoryTransfer {
+  transfer_code: string;
   bank_reference: string;
   amount: number;
   paid_at?: string;
@@ -45,6 +46,7 @@ export interface BankTransferHistoryTransfer {
 export interface BankTransferHistory {
   employee_id: number;
   employee_name: string;
+  employee_cccd: string;
   project_ids: number[];
   project_names: string[];
   work_month: string;

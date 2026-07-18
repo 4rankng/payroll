@@ -4,6 +4,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/timeutil"
+	"api-server/internal/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -439,6 +440,7 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 				paidAt = *entry.UploadedAt
 			}
 			agg.item.Transfers = append(agg.item.Transfers, dto.BankTransferHistoryTransfer{
+				TransferCode:  entry.TransactionCode,
 				BankReference: ref,
 				Amount:        entry.Amount,
 				PaidAt:        paidAt,
@@ -472,13 +474,17 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 		return nil, err
 	}
 
-	search := strings.ToLower(strings.TrimSpace(req.Search))
+	search := strings.TrimSpace(req.Search)
+	nameNormalizer := utils.NewVietnameseNormalizer()
+	nameSearch := nameNormalizer.Normalize(search)
+	referenceSearch := strings.ToLower(search)
 	items := make([]dto.BankTransferHistoryItem, 0, len(aggregates))
 	for _, agg := range aggregates {
 		if employee := employeeMap[agg.item.EmployeeID]; employee != nil {
 			agg.item.EmployeeName = employee.Fullname
+			agg.item.EmployeeCCCD = employee.CCCD
 		}
-		if search != "" && !strings.Contains(strings.ToLower(agg.item.EmployeeName), search) && !historyTransfersContain(agg.item.Transfers, search) {
+		if search != "" && !strings.Contains(nameNormalizer.Normalize(agg.item.EmployeeName), nameSearch) && !historyTransfersContain(agg.item.Transfers, referenceSearch) {
 			continue
 		}
 		for id := range agg.projectSet {
@@ -562,7 +568,8 @@ func emptyBankTransferHistory(req *dto.ListBankTransferHistoriesRequest) *dto.Li
 
 func historyTransfersContain(transfers []dto.BankTransferHistoryTransfer, search string) bool {
 	for _, transfer := range transfers {
-		if strings.Contains(strings.ToLower(transfer.BankReference), search) {
+		if strings.Contains(strings.ToLower(transfer.TransferCode), search) ||
+			strings.Contains(strings.ToLower(transfer.BankReference), search) {
 			return true
 		}
 	}

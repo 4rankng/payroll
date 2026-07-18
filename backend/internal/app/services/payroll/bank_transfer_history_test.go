@@ -23,9 +23,13 @@ type bankHistoryProjectRepoStub struct {
 	domain.ProjectRepository
 	accessible []*domain.Project
 	byID       map[uint]*domain.Project
+	onList     func(domain.ProjectFilters)
 }
 
-func (s bankHistoryProjectRepoStub) List(context.Context, domain.ProjectFilters) ([]*domain.Project, error) {
+func (s bankHistoryProjectRepoStub) List(_ context.Context, filters domain.ProjectFilters) ([]*domain.Project, error) {
+	if s.onList != nil {
+		s.onList(filters)
+	}
 	return s.accessible, nil
 }
 
@@ -93,17 +97,20 @@ func TestResolveWeeklyHistoryCycleExcludesDaysAfter28(t *testing.T) {
 	}
 }
 
-func TestHistoryTransfersContainReference(t *testing.T) {
+func TestHistoryTransfersContainPaymentCodes(t *testing.T) {
 	transfers := []dto.BankTransferHistoryTransfer{
-		{BankReference: "FT26198846619959", Amount: 1548000},
-		{BankReference: "FT26198940380850", Amount: 450000},
+		{TransferCode: "VFIC6d037214", BankReference: "FT26198846619959", Amount: 1548000},
+		{TransferCode: "VFIC7a193042", BankReference: "FT26198940380850", Amount: 450000},
 	}
 	if !historyTransfersContain(transfers, "ft26198940380850") {
 		t.Fatal("expected case-insensitive bank-reference match")
 	}
+	if !historyTransfersContain(transfers, "vfic6d037214") {
+		t.Fatal("expected case-insensitive transfer-code match")
+	}
 }
 
-func TestGetBankTransferHistoriesGroupsSplitReferencesAndScopesPartner(t *testing.T) {
+func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVietnameseName(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
 	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
@@ -142,11 +149,16 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesAndScopesPartner(t *testin
 		{ID: 3, Date: historyDate(2026, time.July, 10)},
 		{ID: 4, Date: historyDate(2026, time.July, 11)},
 		{ID: 5, Date: historyDate(2026, time.July, 12)},
-	}, nil)
-	employeeRepo.EXPECT().GetByIDs(gomock.Any(), gomock.Any()).Return([]*domain.Employee{{ID: 82, Fullname: "LÒ THỊ MINH THU"}}, nil)
+	}, nil).AnyTimes()
+	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{{ID: 82, Fullname: "LÒ THỊ MINH THU", CCCD: "031189014251"}}, nil).AnyTimes()
 	projectRepo := bankHistoryProjectRepoStub{
 		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}},
 		byID:       map[uint]*domain.Project{1: {ID: 1, Name: "Dự án A"}},
+		onList: func(filters domain.ProjectFilters) {
+			require.NotNil(t, filters.AccessibleBy)
+			require.Equal(t, uint(44), *filters.AccessibleBy)
+			require.Equal(t, -1, filters.Limit)
+		},
 	}
 
 	service := &PayrollService{
@@ -156,13 +168,20 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesAndScopesPartner(t *testin
 		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{rows: transactionRows},
 		bankTransferHistoryRepo: bankHistoryFileRepoStub{files: []*domain.BulkTransferFile{file}},
 	}
-	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
-		Month: "2026-07", Page: 1, PageSize: 20,
-	}, 44, "partner")
-	require.NoError(t, err)
-	require.Len(t, result.Data, 1)
-	require.Equal(t, uint(82), result.Data[0].EmployeeID)
-	require.Equal(t, 2, result.Data[0].Cycle)
-	require.Len(t, result.Data[0].Transfers, 2)
-	require.Equal(t, int64(1_998_000), result.Data[0].TotalAmount)
+	for _, search := range []string{"lo", "tX-1", "fT26198846619959"} {
+		t.Run(search, func(t *testing.T) {
+			result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+				Month: "2026-07", Search: search, Page: 1, PageSize: 20,
+			}, 44, "partner")
+			require.NoError(t, err)
+			require.Len(t, result.Data, 1)
+			require.Equal(t, uint(82), result.Data[0].EmployeeID)
+			require.Equal(t, "031189014251", result.Data[0].EmployeeCCCD)
+			require.Equal(t, 2, result.Data[0].Cycle)
+			require.Len(t, result.Data[0].Transfers, 2)
+			require.Equal(t, "TX-1", result.Data[0].Transfers[0].TransferCode)
+			require.Equal(t, "TX-2", result.Data[0].Transfers[1].TransferCode)
+			require.Equal(t, int64(1_998_000), result.Data[0].TotalAmount)
+		})
+	}
 }

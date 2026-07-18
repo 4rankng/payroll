@@ -99,7 +99,7 @@ Fixed weekly cycle windows:
 | 3 | Days 15-21 |
 | 4 | Days 22-28 |
 
-The history response is intentionally read-only and history-only. It returns completed transfer rows grouped by employee and cycle, including each bank reference number and amount, the cycle window, payment date, total amount, and pagination. Partner access is filtered to accessible projects server-side.
+The history response is intentionally read-only and history-only. It returns completed transfer rows grouped by employee and cycle, including the employee name and CCCD (`employee_cccd`), each payment transfer code (`transfer_code`), bank reference number, amount, cycle window, payment date, total amount, and pagination. The `search` filter matches Vietnamese employee names without requiring diacritics and matches transfer codes or bank references case-insensitively. Partner access is filtered to accessible projects server-side.
 
 ### Payrates (`/api/v1/payrates`)
 
