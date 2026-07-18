@@ -77,13 +77,12 @@ export function SettlementSimulationDialog({ open, onOpenChange }: SettlementSim
   const today = dateToString(new Date());
   const [startDate, setStartDate] = useState(today);
   const [exportCount, setExportCount] = useState(4);
-  const [cadenceDays, setCadenceDays] = useState(7);
   const [result, setResult] = useState<SettlementSimulationResult | null>(null);
 
   const simulation = useSimulateSettlement();
 
   const handleSubmit = async () => {
-    const data = await simulation.mutateAsync({ start_date: startDate, export_count: exportCount, cadence_days: cadenceDays });
+    const data = await simulation.mutateAsync({ start_date: startDate, export_count: exportCount });
     setResult(data);
   };
 
@@ -102,7 +101,7 @@ export function SettlementSimulationDialog({ open, onOpenChange }: SettlementSim
             Mô phỏng đối soát (dry-run)
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Xem trước các lần xuất sao kê kế tiếp. Không thay đổi dữ liệu. Sử dụng cùng logic chọn dữ liệu như xuất sao kê thật.
+            Xem trước các lần xuất sao kê kế tiếp (ngày 26 và ngày 2 hàng tháng). Không thay đổi dữ liệu.
           </p>
         </DialogHeader>
 
@@ -131,19 +130,6 @@ export function SettlementSimulationDialog({ open, onOpenChange }: SettlementSim
                         {n} lần
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Khoảng cách (ngày)</Label>
-                <Select value={String(cadenceDays)} onValueChange={(v) => setCadenceDays(Number(v))}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 ngày</SelectItem>
-                    <SelectItem value="14">14 ngày</SelectItem>
-                    <SelectItem value="30">30 ngày</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

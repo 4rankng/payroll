@@ -11,9 +11,8 @@ export type SettlementVerdict =
   | 'CAN_KIEM_TRA'; // needs review — remainders or reconciliation drift
 
 export interface SettlementSimulationRequest {
-  start_date: string; // YYYY-MM-DD — first export date (required)
+  start_date: string; // YYYY-MM-DD — first export date (required, day 26 or 2)
   export_count?: number; // default 4, clamped [1,10]
-  cadence_days?: number; // default 7; step between exports
   project_ids?: number[];
   employee_ids?: number[];
 }

@@ -335,7 +335,6 @@ type SimulateSettlementRequest struct {
 	EmployeeIDs []uint `json:"employee_ids,omitempty"`
 	StartDate   string `json:"start_date,omitempty"`   // YYYY-MM-DD; required
 	ExportCount int    `json:"export_count,omitempty"` // default 4, clamped [1,10]
-	CadenceDays int    `json:"cadence_days,omitempty"` // default 7; step between exports
 	CreatedBy   uint   `json:"-"`                      // set from auth context
 }
 

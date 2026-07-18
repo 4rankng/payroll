@@ -75,6 +75,10 @@ func NewSettlementSimulationService(reportService ReportSelector, tsRepo domain.
 }
 
 // Simulate projects N exports and computes a coverage verdict.
+// Simulate projects N future exports starting from an admin-chosen date.
+// Export dates follow the real sao kê cadence: day-26 and day-2 of each month,
+// alternating. The admin picks the first date (must be a 26 or 2); the server
+// generates the next N-1 by walking the 26→2→26→2 sequence forward.
 func (s *SettlementSimulationService) Simulate(ctx context.Context, req *dto.SimulateSettlementRequest) (*dto.SimulationResult, error) {
 	// 1. Resolve + clamp parameters.
 	startDate, err := parseStartDate(req.StartDate, s.clock.Now())
@@ -82,15 +86,12 @@ func (s *SettlementSimulationService) Simulate(ctx context.Context, req *dto.Sim
 		return nil, fmt.Errorf("%w", err)
 	}
 	exportCount := clampInt(req.ExportCount, 1, 10, 4)
-	cadenceDays := clampInt(req.CadenceDays, 1, 60, 7)
 
-	// 2. Generate the N export dates.
+	// 2. Generate the N export dates by alternating day-26 and day-2.
+	exportTimes := generateExportDates(startDate, exportCount)
 	exportDates := make([]string, 0, exportCount)
-	exportTimes := make([]time.Time, 0, exportCount)
-	for i := 0; i < exportCount; i++ {
-		d := startDate.AddDate(0, 0, i*cadenceDays)
-		exportTimes = append(exportTimes, d)
-		exportDates = append(exportDates, d.Format(timeutil.DateFormat))
+	for _, t := range exportTimes {
+		exportDates = append(exportDates, t.Format(timeutil.DateFormat))
 	}
 
 	// 3. Full pool: every paid-but-unreconciled timesheet, across ALL projects.
@@ -229,6 +230,37 @@ func clampInt(v, lo, hi, def int) int {
 		return hi
 	}
 	return v
+}
+
+// generateExportDates produces N export dates starting from startDate, walking
+// the real sao kê cadence forward: day-26 → next-month day-2 → day-26 → ...
+//
+// The admin picks the first date (typically day 26 or day 2 of a month). The
+// generator then alternates: if the current date is ~day 26, the next is day 2
+// of the next month; if the current date is ~day 2, the next is day 26 of the
+// same month. This matches the production export schedule encoded in
+// isProjectEligibleOnDay (only days >= 24 and <= 10 trigger exports).
+func generateExportDates(startDate time.Time, count int) []time.Time {
+	out := make([]time.Time, 0, count)
+	current := startDate
+	for i := 0; i < count; i++ {
+		out = append(out, current)
+		current = nextSaoKeDate(current)
+	}
+	return out
+}
+
+// nextSaoKeDate returns the next export date after t, following the 26↔2 rule:
+//   - If t is on or before day 10 → next is day 26 of the same month.
+//   - Otherwise (day 11–31) → next is day 2 of the next month.
+func nextSaoKeDate(t time.Time) time.Time {
+	loc := t.Location()
+	if t.Day() <= 10 {
+		// Day-2 export done → next is day 26 of same month.
+		return time.Date(t.Year(), t.Month(), 26, 0, 0, 0, 0, loc)
+	}
+	// Day-26 export done → next is day 2 of next month.
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, loc).AddDate(0, 1, 1)
 }
 
 // buildExportProjectionFromReport assembles one export's view from a
