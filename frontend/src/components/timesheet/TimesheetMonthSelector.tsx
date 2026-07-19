@@ -50,79 +50,71 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
   const yearLabel  = format(selectedDate, 'yyyy');
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      {/* "Tất cả" toggle */}
+    <div
+      className={cn(
+        'ct-join grid w-full grid-cols-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm sm:w-auto',
+        className,
+      )}
+    >
       <button
+        type="button"
         onClick={handleShowAll}
         className={cn(
-          'h-8 rounded-lg px-3 text-xs font-semibold transition-colors whitespace-nowrap',
+          'ct-join-item h-11 border-r border-border/70 px-3 text-xs font-semibold transition-colors whitespace-nowrap',
           value === 'all'
             ? 'bg-foreground text-background'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+            : 'bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
         )}
       >
         Tất cả
       </button>
 
-      {/* Unified navigator pill */}
-      <div
-        className={cn(
-          'flex items-center overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md',
-          value === 'all' && 'opacity-50 pointer-events-none',
-        )}
+      <button
+        type="button"
+        onClick={handlePreviousMonth}
+        aria-label="Tháng trước"
+        className="ct-join-item flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-11"
       >
-        {/* ← Prev */}
-        <button
-          onClick={handlePreviousMonth}
-          aria-label="Tháng trước"
-          className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-        </button>
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
 
-        <div className="h-4 w-px bg-border/70" />
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="ct-join-item flex h-11 min-w-0 items-center justify-center gap-1.5 bg-muted/35 px-2.5 transition-colors hover:bg-muted sm:px-3"
+            aria-label="Chọn tháng"
+          >
+            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="hidden items-baseline gap-1 whitespace-nowrap text-sm sm:flex">
+              <span className="capitalize font-medium text-muted-foreground">{monthLabel}</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="font-semibold text-foreground">{yearLabel}</span>
+            </span>
+            <span className="whitespace-nowrap text-sm font-semibold text-foreground sm:hidden">
+              {monthShort}
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            mode="single"
+            selected={value !== 'all' ? selectedDate : undefined}
+            onSelect={handleMonthSelect}
+            defaultMonth={selectedDate}
+            locale={vi}
+          />
+        </PopoverContent>
+      </Popover>
 
-        {/* Month display — opens calendar popover */}
-        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-          <PopoverTrigger asChild>
-            <button
-              className="flex h-8 items-center gap-1.5 px-3 transition-colors hover:bg-muted"
-              aria-label="Chọn tháng"
-            >
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              {/* Full label on sm+, short on xs */}
-              <span className="hidden sm:flex items-baseline gap-1 whitespace-nowrap text-sm">
-                <span className="capitalize font-medium text-muted-foreground">{monthLabel}</span>
-                <span className="text-muted-foreground/40">·</span>
-                <span className="font-semibold text-foreground">{yearLabel}</span>
-              </span>
-              <span className="sm:hidden text-sm font-semibold text-foreground whitespace-nowrap">
-                {monthShort}
-              </span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={value !== 'all' ? selectedDate : undefined}
-              onSelect={handleMonthSelect}
-              defaultMonth={selectedDate}
-              locale={vi}
-            />
-          </PopoverContent>
-        </Popover>
-
-        <div className="h-4 w-px bg-border/70" />
-
-        {/* → Next */}
-        <button
-          onClick={handleNextMonth}
-          aria-label="Tháng sau"
-          className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ChevronRight className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleNextMonth}
+        aria-label="Tháng sau"
+        className="ct-join-item flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-11"
+      >
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 };

@@ -88,4 +88,5 @@ venv/
 .tox/
 .pytest_cache/
 qa/*
-
+frontend/test-results/
+frontend/playwright-report/

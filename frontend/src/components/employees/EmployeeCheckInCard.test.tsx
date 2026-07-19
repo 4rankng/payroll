@@ -1,12 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AttendanceReference, EmployeeCheckInCard } from "./EmployeeCheckInCard";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
 
 const locationMock = vi.hoisted(() => vi.fn());
+const attendanceQueryMock = vi.hoisted(() => ({
+  data: undefined,
+  isLoading: false,
+  isError: false,
+  isFetching: false,
+  refetch: vi.fn(),
+}));
 
 vi.mock("@/hooks/useContinuousLocation", () => ({
   isAbortedSubmitError: () => false,
@@ -17,7 +24,7 @@ vi.mock("@/hooks/api/useAttendance", () => {
   const mutation = () => ({ isPending: false, mutate: vi.fn(), mutateAsync: vi.fn() });
   return {
     ATTENDANCE_QUERY_KEYS: { today: () => ["attendance", "today"] },
-    useTodayAttendance: () => ({ data: undefined, isLoading: false }),
+    useTodayAttendance: () => attendanceQueryMock,
     useCheckIn: mutation,
     useCheckOut: mutation,
     useCancelCurrentAttendance: mutation,
@@ -32,6 +39,14 @@ vi.mock("./EmployeeLocationMap", () => ({
     </div>
   ),
 }));
+
+beforeEach(() => {
+  attendanceQueryMock.data = undefined;
+  attendanceQueryMock.isLoading = false;
+  attendanceQueryMock.isError = false;
+  attendanceQueryMock.isFetching = false;
+  attendanceQueryMock.refetch.mockReset();
+});
 
 const localTime = (iso: string) => format(new Date(iso), "HH:mm");
 
@@ -241,6 +256,32 @@ describe("AttendanceReference", () => {
 });
 
 describe("EmployeeCheckInCard geofence guidance", () => {
+  it("blocks attendance mutations and offers retry when today's state is unknown", () => {
+    attendanceQueryMock.isError = true;
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard onAdvanceRequest={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("heading", { name: "Chưa tải được trạng thái chấm công" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chưa tải được chấm công" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Tải lại chấm công" }));
+    expect(attendanceQueryMock.refetch).toHaveBeenCalledOnce();
+  });
+
   it("shows inward guidance and opens the map for an inside-but-uncertain fix", async () => {
     const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
     const sample = {

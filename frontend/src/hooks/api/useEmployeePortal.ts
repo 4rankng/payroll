@@ -24,6 +24,9 @@ export function useEmployeeProfile() {
   return useQuery({
     queryKey: EMPLOYEE_QUERY_KEYS.profile,
     queryFn: () => employeePortalService.getMyProfile(),
+    // The employee router owns an explicit, guarded retry state. Avoid leaving
+    // mobile users on an indefinite skeleton while transport retries stack up.
+    retry: false,
   });
 }
 

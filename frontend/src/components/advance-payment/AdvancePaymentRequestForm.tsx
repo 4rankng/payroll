@@ -220,7 +220,7 @@ export function AdvancePaymentRequestForm({
 
   return (
     <div
-      className={className ?? "overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"}
+      className={className ?? "employee-surface-card overflow-hidden p-4"}
       style={style}
     >
       <div className="-mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-4 pb-4 pt-4">

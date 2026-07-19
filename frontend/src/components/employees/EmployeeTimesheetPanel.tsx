@@ -52,20 +52,20 @@ export function EmployeeTimesheetPanel({
     <section id="employee-timesheets" className="scroll-mt-4" aria-labelledby="employee-timesheets-title">
       <EmployeeMonthNavigator month={month} className="mb-3" />
 
-      <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[var(--employee-shadow)]">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-[linear-gradient(100deg,#ffffff_0%,#f5fbf7_100%)] px-4 py-3">
+      <div className="employee-surface-card overflow-hidden rounded-[var(--employee-radius-feature)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--employee-border)] bg-[var(--employee-summary-wash)] px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-employee/10 text-employee">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--employee-radius-control)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
               <ClipboardList className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="employee-type-label-caps block text-employee">Bảng công</span>
-              <h2 id="employee-timesheets-title" className="employee-type-card-title mt-0.5 text-slate-950">
+              <span className="employee-type-label-caps block text-[var(--employee-accent)]">Bảng công</span>
+              <h2 id="employee-timesheets-title" className="employee-type-card-title mt-0.5 text-[var(--employee-text)]">
                 Nhật ký công việc
               </h2>
             </span>
           </div>
-          <span className="employee-type-pill shrink-0 rounded-full bg-white px-2.5 py-1 text-slate-600 ring-1 ring-inset ring-slate-200">
+          <span className="employee-type-pill shrink-0 rounded-full bg-white px-2.5 py-1 text-[var(--employee-text-secondary)] ring-1 ring-inset ring-[var(--employee-border)]">
             {totalRecords} mục
           </span>
         </div>
@@ -76,7 +76,7 @@ export function EmployeeTimesheetPanel({
               {[1, 2, 3].map((item) => <div key={item} className="h-28 animate-pulse rounded-[18px] bg-slate-100" />)}
             </div>
           ) : days.length === 0 ? (
-            <div className="relative isolate overflow-hidden rounded-[18px] border border-[#dbeee3] bg-[#f8fcf9] px-5 py-7 text-center">
+            <div className="relative isolate overflow-hidden rounded-[var(--employee-radius-card)] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-5 py-7 text-center">
               <div className="absolute inset-0 -z-10 opacity-70 [background-image:radial-gradient(#b7e4ca_1px,transparent_1px)] [background-size:14px_14px]" />
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-white text-employee shadow-sm ring-1 ring-inset ring-employee/10">
                 <CalendarDays className="h-6 w-6" aria-hidden="true" />

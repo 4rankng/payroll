@@ -41,7 +41,7 @@ export function EmployeePortalHeader({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            className="relative flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--employee-border)] bg-white text-[#475467] transition-transform duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] focus-visible:ring-offset-2"
+            className="employee-icon-button relative"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
@@ -56,7 +56,7 @@ export function EmployeePortalHeader({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] transition-transform duration-200 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] focus-visible:ring-offset-2"
+                className="employee-icon-button border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]"
                 aria-label="Menu tài khoản"
               >
                 <UserRound className="h-5 w-5" strokeWidth={2.1} />

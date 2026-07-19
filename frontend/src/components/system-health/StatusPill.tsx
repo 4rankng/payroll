@@ -32,23 +32,25 @@ interface Props {
 export function StatusPill({ label, value, sub, status, icon: Icon, className }: Props) {
   return (
     <div className={cn(
-      "flex items-start gap-3 rounded-xl border bg-card px-4 py-3.5 shadow-sm",
+      "flex min-w-0 items-start gap-2 rounded-xl border bg-card px-3 py-3 shadow-sm sm:gap-3 sm:px-4 sm:py-3.5",
       borderCls[status],
       className,
     )}>
-      <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", iconBg[status])}>
+      <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:h-9 sm:w-9", iconBg[status])}>
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1.5">
+        <p className="mb-1.5 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-muted-foreground sm:tracking-wider">
           {label}
         </p>
-        <div className="flex items-baseline gap-2">
-          <p className={cn("text-2xl font-bold tabular-nums leading-none", valueCls[status])}>
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className={cn("text-xl font-bold tabular-nums leading-none sm:text-2xl", valueCls[status])}>
             {value}
           </p>
           {sub && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">{sub}</span>
+            <span className="basis-full text-xs leading-none text-muted-foreground sm:basis-auto sm:whitespace-nowrap">
+              {sub}
+            </span>
           )}
         </div>
       </div>

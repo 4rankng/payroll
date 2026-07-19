@@ -26,10 +26,11 @@ Apply the shared visual language to the wage, timesheet, advance, history, and b
 - Regular hierarchy: header, wage hero, quick actions, month, grouped timesheets, bank.
 - Flexible hierarchy: header, month, advance request, request history, bank; check-in employees also retain attendance guidance/history and the action toolbar.
 - Preserve all advance states: available, awaiting payroll, previous month, missing bank, exhausted, pending, fee loading, validation/provider error, cancellation, and confirmation.
+- Propagate the cancelling request ID/pending state so rapid reopen or double-confirm produces one cancellation request and affected controls remain locked through settlement.
 
 ### Non-functional
 
-- Use `card/card-body`, compact `stats`, `list/list-row`, intentional `avatar`, and `btn` semantics where they improve consistency; do not force component classes where semantics differ.
+- Use employee-owned semantic classes patterned after `card/card-body`, compact `stats`, `list/list-row`, intentional `avatar`, and `btn`; never apply unprefixed or `ct-*` daisyUI classes to employee markup.
 - Exactly one 32px primary money value per screen. Use tabular figures for money, hours, dates, times, account numbers, and counts.
 - Status requires text or icon; long Vietnamese names, banks, and values must wrap before truncation.
 
@@ -55,7 +56,8 @@ Keep `.tsx` components render-only and retain the existing `mobileHome.ts`, grou
 4. Normalize bank and advance-request surfaces to the employee tokens; keep fee calculation, missing-bank guidance, confirmation, and validation unchanged.
 5. Make dense three-column summaries collapse or stack below 375px when values collide; avoid nested vertical scrolling.
 6. Align loading, empty, offline/error, pending, success, cancelled, and destructive-confirmation visuals across modules.
-7. Expand component tests across long text, zero/large currency, status labels/icons, keyboard actions, pending mutation, retained error data, and focus restoration.
+7. Add a per-request cancellation-pending contract and same-call-stack guard; keep the confirmation open/busy through settlement, restore focus afterward, and recover cleanly on error.
+8. Expand component tests across long text, zero/large currency, status labels/icons, keyboard actions, pending mutation, rapid double-confirm, retained error data, and focus restoration.
 
 ## Todo
 
@@ -63,6 +65,7 @@ Keep `.tsx` components render-only and retain the existing `mobileHome.ts`, grou
 - [ ] Polish flexible advance and history flow.
 - [ ] Normalize bank and attendance-history surfaces.
 - [ ] Cover state matrices and long-content behavior.
+- [ ] Guard cancellation against rapid reopen/double-submit.
 
 ## Success Criteria
 
@@ -70,6 +73,7 @@ Keep `.tsx` components render-only and retain the existing `mobileHome.ts`, grou
 - [ ] All financial and attendance states remain understandable without color alone.
 - [ ] 320px layouts have no clipped metrics, actions, status pills, or currency values.
 - [ ] Existing interaction tests and new presentation-state tests pass.
+- [ ] Rapid cancellation activation produces one API call; failure re-enables the correct request without losing context.
 
 ## Risk Assessment
 
@@ -81,7 +85,7 @@ Keep `.tsx` components render-only and retain the existing `mobileHome.ts`, grou
 
 ## Security Considerations
 
-- Preserve masking/copy behavior and never expose additional bank or payroll data.
+- Preserve the current self-service display/copy contract and never expose bank or payroll data in any additional surface or artifact. Bank masking is a separate product/privacy decision.
 - Error and offline states must not leak provider diagnostics or authorization details.
 
 ## Next Steps

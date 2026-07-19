@@ -5,6 +5,8 @@ import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import EmployeePage from "@/pages/employee/EmployeePage";
 import FlexiblePayEmployeePage from "@/pages/employee/FlexiblePayEmployeePage";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
+import { cn } from "@/lib/utils";
 
 /**
  * Router component that selects the appropriate employee page
@@ -13,43 +15,26 @@ import { AlertCircle, RefreshCw } from "lucide-react";
  * - "weekly" | "monthly" -> EmployeePage (timesheet view)
  */
 const EmployeeRouter = () => {
-  const { data: profile, isLoading, isError, refetch } = useEmployeeProfile();
+  const { data: profile, isLoading, isError, isFetching, refetch } = useEmployeeProfile();
 
   if (isLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[var(--employee-page)]">
-        <div className="border-b border-[#E4E7EC] bg-white">
-          <div className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-44" />
-              <Skeleton className="h-4 w-28" />
-            </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-11 w-11 rounded-xl" />
-              <Skeleton className="h-11 w-11 rounded-xl" />
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto max-w-lg space-y-5 p-4">
+      <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-5">
           <Skeleton className="h-14 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-2xl" />
           <div className="space-y-2.5">
             <Skeleton className="h-6 w-40" />
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
-        </div>
-      </div>
+      </EmployeeMobileShell>
     );
   }
 
   if (isError || !profile) {
     return (
       <SectionErrorBoundary sectionName="trang nhân viên">
-        <div
-          className="mobile-page min-h-[100dvh] bg-slate-50 px-4 py-8"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 2rem)' }}
-        >
-          <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col items-center justify-center text-center">
+        <EmployeeMobileShell chrome="error" contentClassName="max-w-md">
+          <div className="flex min-h-[calc(100dvh-9rem)] flex-col items-center justify-center text-center" role="alert">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-200/70">
               <AlertCircle className="h-8 w-8" />
             </div>
@@ -62,13 +47,14 @@ const EmployeeRouter = () => {
             <Button
               type="button"
               className="mt-5 h-11 gap-2 rounded-xl"
-              onClick={() => refetch()}
+              onClick={() => { if (!isFetching) void refetch(); }}
+              disabled={isFetching}
             >
-              <RefreshCw className="h-4 w-4" />
-              Tải lại
+              <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
+              {isFetching ? "Đang tải lại…" : "Tải lại"}
             </Button>
           </div>
-        </div>
+        </EmployeeMobileShell>
       </SectionErrorBoundary>
     );
   }

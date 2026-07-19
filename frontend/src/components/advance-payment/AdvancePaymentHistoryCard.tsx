@@ -34,8 +34,17 @@ const safeDate = (date: string | null | undefined) => {
     : format(parsedDate, "dd/MM/yyyy", { locale: vi });
 };
 
-function CancelPendingAction({ itemId, onCancel }: { itemId: number; onCancel?: (id: number) => void }) {
+function CancelPendingAction({
+  itemId,
+  onCancel,
+  isCancelling,
+}: {
+  itemId: number;
+  onCancel?: (id: number) => void | Promise<void>;
+  isCancelling: boolean;
+}) {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const submittingRef = useRef(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
   const dismissButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -57,12 +66,18 @@ function CancelPendingAction({ itemId, onCancel }: { itemId: number; onCancel?: 
     if (resetTimer.current) clearTimeout(resetTimer.current);
   }, []);
 
-  const handleCancelClick = () => {
+  const handleCancelClick = async () => {
+    if (isCancelling || submittingRef.current) return;
     if (showConfirmCancel) {
       if (resetTimer.current) clearTimeout(resetTimer.current);
       resetTimer.current = null;
-      onCancel?.(itemId);
-      setShowConfirmCancel(false);
+      submittingRef.current = true;
+      try {
+        await onCancel?.(itemId);
+      } finally {
+        submittingRef.current = false;
+        setShowConfirmCancel(false);
+      }
       return;
     }
     setShowConfirmCancel(true);
@@ -81,24 +96,24 @@ function CancelPendingAction({ itemId, onCancel }: { itemId: number; onCancel?: 
   if (showConfirmCancel) {
     return (
       <div className="flex min-h-11 items-center justify-end gap-2">
-        <button ref={dismissButtonRef} type="button" onClick={handleDismissCancel} className="employee-type-action min-h-11 rounded-[10px] px-3 text-[#475467] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#667085]">
+        <button ref={dismissButtonRef} type="button" onClick={handleDismissCancel} disabled={isCancelling} className="employee-type-action min-h-11 rounded-[var(--employee-radius-control)] px-3 text-[var(--employee-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-text-secondary)] disabled:opacity-50">
           Không
         </button>
-        <button type="button" onClick={handleCancelClick} className="employee-type-action min-h-11 rounded-[10px] bg-[#FEF3F2] px-4 text-[#B42318] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D92D20]">
-          Xác nhận
+        <button type="button" onClick={() => void handleCancelClick()} disabled={isCancelling} aria-busy={isCancelling} className="employee-type-action min-h-11 rounded-[var(--employee-radius-control)] bg-[var(--employee-error-soft)] px-4 text-[var(--employee-error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-error)] disabled:opacity-60">
+          {isCancelling ? "Đang hủy…" : "Xác nhận"}
         </button>
       </div>
     );
   }
 
   return (
-    <button ref={cancelButtonRef} type="button" onClick={handleCancelClick} className="employee-type-action min-h-11 w-full rounded-[10px] border border-[#FDA29B] bg-white text-[#B42318] transition-colors hover:bg-[#FEF3F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D92D20]">
-      Hủy yêu cầu
+    <button ref={cancelButtonRef} type="button" onClick={() => void handleCancelClick()} disabled={isCancelling} aria-busy={isCancelling} className="employee-type-action min-h-11 w-full rounded-[var(--employee-radius-control)] border border-[#FDA29B] bg-white text-[var(--employee-error)] transition-colors hover:bg-[var(--employee-error-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-error)] disabled:opacity-60">
+      {isCancelling ? "Đang hủy…" : "Hủy yêu cầu"}
     </button>
   );
 }
 
-function HistoryItem({ item, onCancel }: { item: AdvancePaymentHistoryItem; onCancel?: (id: number) => void }) {
+function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePaymentHistoryItem; onCancel?: (id: number) => void | Promise<void>; cancellingRequestId?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
   const config = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.CANCELLED;
@@ -146,7 +161,7 @@ function HistoryItem({ item, onCancel }: { item: AdvancePaymentHistoryItem; onCa
           </div>
           {item.status === "PENDING" && (
             <div className="mt-3 border-t border-[#EAECF0] pt-3">
-              <CancelPendingAction itemId={item.id} onCancel={onCancel} />
+              <CancelPendingAction itemId={item.id} onCancel={onCancel} isCancelling={cancellingRequestId === item.id} />
             </div>
           )}
         </div>
@@ -160,7 +175,8 @@ interface AdvancePaymentHistoryCardProps {
   isLoading: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  onCancel?: (id: number) => void;
+  onCancel?: (id: number) => void | Promise<void>;
+  cancellingRequestId?: number;
   totalCount?: number;
   className?: string;
   style?: React.CSSProperties;
@@ -172,6 +188,7 @@ export function AdvancePaymentHistoryCard({
   isError = false,
   onRetry,
   onCancel,
+  cancellingRequestId,
   totalCount,
   className,
   style,
@@ -195,7 +212,7 @@ export function AdvancePaymentHistoryCard({
           {[1, 2].map((index) => <Skeleton key={index} className="h-32 w-full rounded-xl" />)}
         </div>
       ) : isError ? (
-        <div className="rounded-xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center" role="alert">
+        <div className="employee-surface-card px-4 py-5 text-center" role="alert">
           <p className="employee-type-strong text-[#101828]">Chưa tải được lịch sử</p>
           <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
           {onRetry && (
@@ -223,7 +240,7 @@ export function AdvancePaymentHistoryCard({
       ) : (
         <div
           className={cn(
-            "divide-y divide-[#EAECF0] rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]",
+            "employee-surface-card divide-y divide-[var(--employee-border)]",
             history.length > 5
               ? "max-h-[390px] overflow-y-auto overscroll-contain"
               : "overflow-hidden"
@@ -231,7 +248,7 @@ export function AdvancePaymentHistoryCard({
           tabIndex={history.length > 5 ? 0 : undefined}
           aria-label={history.length > 5 ? "Lịch sử yêu cầu, cuộn để xem thêm" : undefined}
         >
-          {history.map((item) => <HistoryItem key={item.id} item={item} onCancel={onCancel} />)}
+          {history.map((item) => <HistoryItem key={item.id} item={item} onCancel={onCancel} cancellingRequestId={cancellingRequestId} />)}
         </div>
       )}
     </div>

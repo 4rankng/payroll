@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { TimesheetPageHeaderMobile } from "@/components/timesheet/mobile/TimesheetPageHeaderMobile";
-import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { TimesheetDisplaySection } from "@/components/timesheet/TimesheetDisplaySection";
 import { ChuyenLoDialog } from "@/components/timesheet/ChuyenLoDialog";
 import { BulkTransferExportDialog } from "@/components/timesheet/BulkTransferExportDialog";
@@ -351,11 +350,8 @@ const TimesheetPageMobile = () => {
         onBccUpload={() => setBccUploadOpen(true)}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         isPayrollReportPending={exportPayrollReportMutation.isPending}
-      />
-
-      <TimesheetMonthSelector
-        value={timesheetManagement.selectedMonth}
-        onChange={timesheetManagement.setSelectedMonth}
+        monthValue={timesheetManagement.selectedMonth}
+        onMonthChange={timesheetManagement.setSelectedMonth}
       />
 
       {/* ── Payroll Control Center: cash readiness + operational KPIs ── */}

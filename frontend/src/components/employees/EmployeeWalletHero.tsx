@@ -26,15 +26,15 @@ const ACTION_ICONS: Record<EmployeeActionIcon, LucideIcon> = {
 };
 
 const toneClass: Record<EmployeeNudgeTone, string> = {
-  employee: "border-employee/20 bg-employee/10 text-employee",
-  amber: "border-amber-200 bg-amber-50 text-amber-700",
-  slate: "border-slate-200 bg-slate-50 text-slate-600",
+  employee: "border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]",
+  amber: "border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] text-[var(--employee-warning)]",
+  slate: "border-[var(--employee-border)] bg-[var(--employee-page)] text-[var(--employee-text-secondary)]",
 };
 
 const metricToneClass: Record<EmployeeNudgeTone, string> = {
-  employee: "text-employee",
-  amber: "text-amber-700",
-  slate: "text-slate-900",
+  employee: "text-[var(--employee-accent)]",
+  amber: "text-[var(--employee-warning)]",
+  slate: "text-[var(--employee-text)]",
 };
 
 interface EmployeeWalletHeroProps {
@@ -54,12 +54,12 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-employee-100 bg-white shadow-sm",
+        "employee-surface-card overflow-hidden",
         className
       )}
       aria-label={model.title}
     >
-      <div className="bg-employee px-4 pb-9 pt-4 text-white">
+      <div className="bg-[linear-gradient(135deg,var(--employee-accent)_0%,var(--employee-accent-strong)_100%)] px-4 pb-9 pt-4 text-white">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="employee-type-label text-white/80">
@@ -78,14 +78,14 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
       </div>
 
       <div className="-mt-6 px-3 pb-3">
-        <div className="rounded-t-2xl bg-white px-3 pb-1 pt-4">
-          <p className="employee-type-label-caps text-slate-500">
+        <div className="rounded-t-[var(--employee-radius-card)] bg-[var(--employee-surface)] px-3 pb-1 pt-4">
+          <p className="employee-type-label-caps text-[var(--employee-text-secondary)]">
             {model.amountLabel}
           </p>
-          <p className="employee-type-hero-amount mt-1 break-words text-employee tabular-nums">
+          <p className="employee-type-hero-amount mt-1 break-words text-[var(--employee-accent)] tabular-nums">
             {model.amount}
           </p>
-          <p className="employee-type-body mt-1.5 text-slate-500">
+          <p className="employee-type-body mt-1.5 text-[var(--employee-text-secondary)]">
             {model.amountDescription}
           </p>
 
@@ -107,7 +107,7 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
                     key={metric.label}
                     className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2"
                   >
-                    <p className="employee-type-label min-w-0 text-slate-500">
+                    <p className="employee-type-label min-w-0 text-[var(--employee-text-secondary)]">
                       {metric.label}
                     </p>
                     <p
@@ -133,12 +133,12 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
                   type="button"
                   disabled={action.disabled}
                   onClick={() => onAction(action)}
-                  className="group flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors active:bg-employee-50 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="group flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-[var(--employee-radius-control)] px-2 py-1.5 text-left transition-colors active:bg-[var(--employee-accent-soft)] disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-employee/10 text-employee transition-colors group-active:bg-employee group-active:text-white">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] transition-colors group-active:bg-[var(--employee-accent)] group-active:text-white">
                     <Icon className="h-4 w-4" strokeWidth={2.2} />
                   </span>
-                  <span className="employee-type-label min-w-0 text-wrap text-slate-700">
+                  <span className="employee-type-label min-w-0 text-wrap text-[var(--employee-text)]">
                     {action.label}
                   </span>
                 </button>

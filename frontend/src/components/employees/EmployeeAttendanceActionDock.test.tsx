@@ -23,8 +23,8 @@ describe("EmployeeAttendanceActionDock", () => {
     expect(toolbar).not.toHaveClass("lg:hidden");
     const advanceButton = screen.getByRole("button", { name: "Ứng lương" });
     const attendanceButton = screen.getByRole("button", { name: "Tan ca" });
-    expect(advanceButton).toHaveClass("h-11");
-    expect(attendanceButton).toHaveClass("h-11");
+    expect(advanceButton).toHaveClass("min-h-11", "h-auto", "whitespace-normal");
+    expect(attendanceButton).toHaveClass("min-h-11", "h-auto", "whitespace-normal");
 
     fireEvent.click(advanceButton);
     fireEvent.click(attendanceButton);

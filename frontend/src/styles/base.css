@@ -328,6 +328,41 @@
     }
   }
 
+  /* Employee-owned component primitives. They mirror daisyUI's card/button
+     composition without inheriting the admin-only daisyUI theme root. */
+  .employee-surface-card {
+    border: 1px solid var(--employee-border);
+    border-radius: var(--employee-radius-card);
+    background: var(--employee-surface);
+    box-shadow: var(--employee-shadow);
+  }
+
+  .employee-icon-button {
+    display: inline-flex;
+    min-height: 44px;
+    min-width: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--employee-border);
+    border-radius: var(--employee-radius-control);
+    background: var(--employee-surface);
+    color: var(--employee-text-secondary);
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .employee-icon-button:active {
+    transform: scale(0.96);
+  }
+
+  .employee-icon-button:focus-visible {
+    outline: 2px solid var(--employee-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .employee-mobile-page[data-has-action-toolbar="true"] {
+    --employee-action-toolbar-block-size: 5.5rem;
+  }
+
   /* ========================================================================
      MOBILE PAGE STYLES - Touch-friendly, safe-area-aware
      ======================================================================== */

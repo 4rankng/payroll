@@ -60,8 +60,11 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
           )}
         >
           {/* Endpoint */}
-          <div className="mb-1.5 truncate">
-            <EndpointLabel endpoint={row.endpoint} />
+          <div className="mb-1.5 min-w-0">
+            <EndpointLabel
+              endpoint={row.endpoint}
+              className="whitespace-normal break-all text-xs leading-snug"
+            />
           </div>
           {/* Stats row */}
           <div className="flex items-center gap-2 flex-wrap">

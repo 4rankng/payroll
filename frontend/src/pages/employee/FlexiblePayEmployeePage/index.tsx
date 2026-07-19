@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
-import { authManager } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useEmployeeProfile,
   useUpdateEmployeePassword,
@@ -41,6 +41,7 @@ interface AdvanceRequestConfirmation {
 
 const FlexiblePayEmployeePage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [passwordSheetOpen, setPasswordSheetOpen] = useState(false);
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [confirmSheetOpen, setConfirmSheetOpen] = useState(false);
@@ -188,14 +189,14 @@ const FlexiblePayEmployeePage = () => {
   }, [confirmationDataReady, history, info?.canRequest, month.value, requestConfirmation]);
 
   const handleCancelRequest = useCallback(
-    (id: number) => {
-      cancelMutation.mutate(id);
+    async (id: number) => {
+      await cancelMutation.mutateAsync(id);
     },
     [cancelMutation]
   );
 
   const handleLogout = () => {
-    authManager.removeToken();
+    logout();
     localStorage.removeItem("userRole");
     toast({ title: "Đăng xuất thành công", description: "Hẹn gặp lại bạn!" });
     navigate("/login");
@@ -214,30 +215,14 @@ const FlexiblePayEmployeePage = () => {
 
   if (profileLoading || infoLoading) {
     return (
-      <div className="employee-mobile-page min-h-[100dvh] bg-[var(--employee-page)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <div
-          className="flex items-center justify-between border-b border-[#E4E7EC] bg-white px-4 pb-3"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
-        >
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-44" />
-            <Skeleton className="h-4 w-28" />
-          </div>
-          <div className="flex gap-2">
-            {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-11 w-11 rounded-xl" />
-            ))}
-          </div>
-        </div>
-        <div className="mx-auto max-w-lg space-y-5 p-4">
+      <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-5">
           <Skeleton className="h-14 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-2xl" />
           <div className="space-y-2.5">
             <Skeleton className="h-6 w-40" />
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
-        </div>
-      </div>
+      </EmployeeMobileShell>
     );
   }
 
@@ -248,9 +233,10 @@ const FlexiblePayEmployeePage = () => {
         onNotificationClick={() => setNotificationSheetOpen(true)}
         onChangePassword={() => setPasswordSheetOpen(true)}
         onLogout={handleLogout}
+        hasActionToolbar={profile?.check_in_enabled}
         contentClassName={
           profile?.check_in_enabled
-            ? "max-w-lg space-y-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+            ? "max-w-lg space-y-6"
             : "max-w-lg space-y-6"
         }
       >
@@ -286,7 +272,7 @@ const FlexiblePayEmployeePage = () => {
               onBankAction={handleBankAction}
               isPending={requestMutation.isPending}
               requestConfirmation={requestConfirmation}
-              className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]"
+              className="employee-surface-card overflow-hidden p-4"
             />
           </section>
         ) : null}
@@ -298,6 +284,7 @@ const FlexiblePayEmployeePage = () => {
             isError={historyError}
             onRetry={() => refetchHistory()}
             onCancel={handleCancelRequest}
+            cancellingRequestId={cancelMutation.isPending ? cancelMutation.variables : undefined}
             totalCount={historyTotal}
           />
         </section>

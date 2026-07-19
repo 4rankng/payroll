@@ -29,6 +29,10 @@ export const NotificationFAB = () => {
 
   const hasUnread = unreadCount > 0;
 
+  // Mobile navigation already exposes notifications from the account tab.
+  // Keeping a second floating bell covers list content on narrow screens.
+  if (isMobile) return null;
+
   return (
     <>
       {hasUnread && (
@@ -41,7 +45,7 @@ export const NotificationFAB = () => {
               : 'text-white active:opacity-90',
             'active:scale-95',
             'animate-in slide-in-from-bottom-4 fade-in duration-300',
-            isMobile ? 'bottom-20 h-12 w-12' : 'bottom-6 h-12 w-12'
+            'bottom-6 h-12 w-12'
           )}
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >

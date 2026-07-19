@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 import { AdvancePaymentHistoryCard } from "./AdvancePaymentHistoryCard";
@@ -45,7 +45,7 @@ describe("AdvancePaymentHistoryCard", () => {
     expect(screen.getByRole("button", { name: "Hủy yêu cầu" })).toHaveFocus();
   });
 
-  it("confirms cancellation with the pending request id", () => {
+  it("confirms cancellation with the pending request id", async () => {
     const onCancel = vi.fn();
     render(
       <AdvancePaymentHistoryCard
@@ -60,6 +60,32 @@ describe("AdvancePaymentHistoryCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
 
     expect(onCancel).toHaveBeenCalledWith(42);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Hủy yêu cầu" })).toBeInTheDocument());
+  });
+
+  it("keeps cancellation busy and ignores repeat confirmation taps", async () => {
+    let finishCancellation: (() => void) | undefined;
+    const onCancel = vi.fn(() => new Promise<void>((resolve) => { finishCancellation = resolve; }));
+    const { rerender } = render(
+      <AdvancePaymentHistoryCard history={[pendingRequest]} isLoading={false} onCancel={onCancel} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Xem phí và chi tiết/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Hủy yêu cầu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+    rerender(
+      <AdvancePaymentHistoryCard history={[pendingRequest]} isLoading={false} onCancel={onCancel} cancellingRequestId={42} />
+    );
+    expect(screen.getByRole("button", { name: "Đang hủy…" })).toBeDisabled();
+
+    await act(async () => { finishCancellation?.(); });
+    rerender(
+      <AdvancePaymentHistoryCard history={[pendingRequest]} isLoading={false} onCancel={onCancel} />
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Hủy yêu cầu" })).toBeInTheDocument());
   });
 
   it("shows a compact all-time empty state", () => {

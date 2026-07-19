@@ -175,20 +175,20 @@ export function EmployeeAttendanceHistoryCard({
   const hasMoreHistory = history.length > ATTENDANCE_PREVIEW_LIMIT;
 
   return (
-    <section className={className ?? "overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white"} style={style} aria-labelledby="employee-attendance-title">
+    <section className={className ?? "employee-surface-card overflow-hidden"} style={style} aria-labelledby="employee-attendance-title">
       <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF3] text-[#067647]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--employee-radius-control)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
             <History className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 id="employee-attendance-title" className="employee-type-card-title text-[#101828]">Chấm công</h2>
-            <p className="employee-type-body-sm mt-0.5 text-[#667085]">{monthLabel}</p>
+            <h2 id="employee-attendance-title" className="employee-type-card-title text-[var(--employee-text)]">Chấm công</h2>
+            <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">{monthLabel}</p>
           </div>
         </div>
         <div className="flex shrink-0 gap-1.5" aria-label="Tóm tắt chấm công">
-          <span className="employee-type-pill rounded-full bg-[#ECFDF3] px-2.5 py-1.5 text-[#067647]">{isLoading ? "Đang tải" : `${workdayCount} ngày công`}</span>
-          {warningCount > 0 && <span className="employee-type-pill rounded-full bg-[#FFFAEB] px-2.5 py-1.5 text-[#B54708]">{warningCount} cần kiểm tra</span>}
+          <span className="employee-type-pill rounded-full bg-[var(--employee-accent-soft)] px-2.5 py-1.5 text-[var(--employee-accent)]">{isLoading ? "Đang tải" : `${workdayCount} ngày công`}</span>
+          {warningCount > 0 && <span className="employee-type-pill rounded-full bg-[var(--employee-warning-soft)] px-2.5 py-1.5 text-[var(--employee-warning)]">{warningCount} cần kiểm tra</span>}
         </div>
       </div>
 

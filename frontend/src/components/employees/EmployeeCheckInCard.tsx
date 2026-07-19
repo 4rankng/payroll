@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, Moon, RotateCcw, Settings, WalletCards } from "lucide-react";
+import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, Moon, RefreshCw, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -409,7 +409,7 @@ export function EmployeeCheckInCard({
   onAdvanceRequest,
   style,
 }: EmployeeCheckInCardProps) {
-  const { data: attendanceResponse, isLoading } = useTodayAttendance();
+  const { data: attendanceResponse, isLoading, isError: attendanceError, isFetching: attendanceFetching, refetch: refetchAttendance } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
   const cancelCurrentAttendanceMutation = useCancelCurrentAttendance();
@@ -837,6 +837,36 @@ export function EmployeeCheckInCard({
         <EmployeeAttendanceActionDock
           action="loading"
           actionLabel="Đang tải chấm công…"
+          actionDisabled
+          onAdvanceRequest={onAdvanceRequest}
+        />
+      </>
+    );
+  }
+
+  if (attendanceError) {
+    return (
+      <>
+        <section className={`employee-surface-card px-4 py-6 text-center ${className ?? ""}`} style={style} role="alert" aria-labelledby="employee-attendance-error-title">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-[var(--employee-radius-card)] bg-[var(--employee-warning-soft)] text-[var(--employee-warning)]">
+            <AlertCircle className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <h2 id="employee-attendance-error-title" className="employee-type-card-title mt-3 text-[var(--employee-text)]">Chưa tải được trạng thái chấm công</h2>
+          <p className="employee-type-body-sm mx-auto mt-1 max-w-sm text-[var(--employee-text-secondary)]">Tải lại trước khi vào làm hoặc tan ca để tránh ghi nhận sai trạng thái.</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="employee-type-action mt-4 min-h-11 rounded-[var(--employee-radius-control)] border-[var(--employee-border-strong)]"
+            disabled={attendanceFetching}
+            onClick={() => { if (!attendanceFetching) void refetchAttendance(); }}
+          >
+            <RefreshCw className={`h-4 w-4 ${attendanceFetching ? "animate-spin" : ""}`} aria-hidden="true" />
+            {attendanceFetching ? "Đang tải lại…" : "Tải lại chấm công"}
+          </Button>
+        </section>
+        <EmployeeAttendanceActionDock
+          action="attention"
+          actionLabel="Chưa tải được chấm công"
           actionDisabled
           onAdvanceRequest={onAdvanceRequest}
         />

@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
-import { authManager } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useEmployeeProfile,
   useEmployeeSummary,
@@ -32,6 +32,7 @@ import {
 
 const EmployeePage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const month = useEmployeeMonth();
   const statusFilter = "all";
@@ -108,7 +109,7 @@ const EmployeePage = () => {
   const updatePasswordMutation = useUpdateEmployeePassword();
 
   const handleLogout = () => {
-    authManager.removeToken();
+    logout();
     localStorage.removeItem("userRole");
     toast({ title: "Đăng xuất thành công", description: "Hẹn gặp lại bạn!" });
     navigate("/login");
@@ -129,40 +130,24 @@ const EmployeePage = () => {
     }
     if (!action.targetId) return;
     document.getElementById(action.targetId)?.scrollIntoView({
-      behavior: "smooth",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       block: "start",
     });
   }, []);
 
   if (profileLoading || summaryLoading || timesheetsLoading) {
     return (
-      <div className="employee-mobile-page min-h-[100dvh]" style={{ backgroundImage: "url('/employee-bg.avif')", backgroundSize: "cover", backgroundPosition: "center top", paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="sticky top-0 z-10 border-b border-white/30 bg-employee">
-          <div
-            className="max-w-2xl mx-auto px-4 pb-4 flex items-center justify-between"
-            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)" }}
-          >
-            <div className="space-y-1.5">
-              <Skeleton className="h-3 w-24 bg-sky-200/60" />
-              <Skeleton className="h-5 w-36 bg-sky-200/60" />
-            </div>
-            <div className="flex gap-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-10 rounded-full bg-sky-200/60" />)}
-            </div>
-          </div>
-        </div>
-        <div className="max-w-2xl mx-auto p-4 space-y-4">
-          <div className="rounded-2xl border border-white/60 bg-white/75 px-4 py-3 shadow-sm backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-sky-700">Đang tải hồ sơ</p>
-            <p className="mt-1 text-sm text-slate-500">Chuẩn bị bảng công và thông tin thanh toán của bạn.</p>
+      <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-4">
+          <div className="employee-surface-card px-4 py-3">
+            <p className="employee-type-label-caps text-[var(--employee-accent)]">Đang tải hồ sơ</p>
+            <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Chuẩn bị bảng công và thông tin thanh toán của bạn.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-card/50" />)}
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
           </div>
-          <Skeleton className="h-12 w-full rounded-xl bg-card/50" />
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-card/50" />)}
-        </div>
-      </div>
+          <Skeleton className="h-12 w-full rounded-xl" />
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+      </EmployeeMobileShell>
     );
   }
 

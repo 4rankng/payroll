@@ -202,6 +202,8 @@ export default function TimesheetsPageMobile() {
         onPaymentHistory={() => navigate("payment-history")}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         userRole="partner"
+        monthValue={timesheetManagement.selectedMonth}
+        onMonthChange={timesheetManagement.setSelectedMonth}
       />
 
       {/* Summary stats */}

@@ -74,11 +74,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     moreItems?.some((item) => item.path && location.pathname.startsWith(item.path)) ?? false;
 
   const navSlotClass =
-    "group relative flex min-h-[68px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]";
+    "group relative flex min-h-[68px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] max-[359px]:gap-0.5 max-[359px]:px-0.5";
 
   const navIconClass = (isActive: boolean) =>
     cn(
-      "flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200",
+      "flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200 max-[359px]:h-8 max-[359px]:w-8 max-[359px]:rounded-xl",
       isActive
         ? "border-transparent bg-[hsl(var(--primary))] text-white shadow-[0_16px_26px_-20px_hsl(var(--primary)/0.85)]"
         : "border-transparent bg-white/65 text-[hsl(var(--muted-foreground))] group-hover:border-[hsl(var(--border))] group-hover:text-[hsl(var(--foreground))]"
@@ -86,7 +86,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
   const navLabelClass = (isActive: boolean) =>
     cn(
-      "max-w-[4.5rem] truncate text-[11px] font-semibold leading-tight transition-colors",
+      "w-full max-w-full px-0.5 text-center text-[11px] font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words max-[359px]:text-[10px] min-[360px]:truncate",
       isActive ? "text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]"
     );
 
@@ -177,7 +177,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >
-        <div className="relative flex min-h-[72px] items-stretch px-2">
+        <div className="relative flex min-h-[72px] items-stretch px-2 max-[359px]:px-1">
           {groups.map((group) => {
             const isActive = isGroupActive(group);
 

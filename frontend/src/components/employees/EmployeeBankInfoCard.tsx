@@ -37,18 +37,18 @@ export function EmployeeBankInfoCard({
 
   return (
     <div
-      className={className}
+      className={className ?? "employee-surface-card overflow-hidden"}
       role="region"
       aria-labelledby="employee-bank-title"
     >
-      <div className="border-b border-emerald-100 bg-[linear-gradient(105deg,#ffffff_0%,#effaf3_100%)] px-4 py-3.5">
-        <p className="employee-type-label-caps text-employee">Thông tin chi trả</p>
-        <h2 id="employee-bank-title" className="employee-type-section-title mt-0.5 text-[#101828]">
+      <div className="border-b border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-4 py-3.5">
+        <p className="employee-type-label-caps text-[var(--employee-accent)]">Thông tin chi trả</p>
+        <h2 id="employee-bank-title" className="employee-type-section-title mt-0.5 text-[var(--employee-text)]">
           Tài khoản nhận tiền
         </h2>
       </div>
 
-      <div className="m-2 overflow-hidden rounded-[16px] border border-[var(--employee-border)] bg-white" style={style}>
+      <div className="m-2 overflow-hidden rounded-[var(--employee-radius-card)] border border-[var(--employee-border)] bg-white" style={style}>
         {hasBankInfo ? (
           <dl className="divide-y divide-[var(--employee-border)]">
             <div className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-3 px-3.5 py-3">
@@ -77,7 +77,7 @@ export function EmployeeBankInfoCard({
                     <button
                       type="button"
                       onClick={() => handleCopyAccountNumber(profile.bank_account_number!)}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border border-emerald-200 bg-emerald-50 text-[var(--employee-accent)] transition-colors duration-200 hover:bg-emerald-100 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+                      className="employee-icon-button shrink-0 border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]"
                       aria-label="Sao chép số tài khoản"
                       title="Sao chép số tài khoản"
                     >
@@ -105,10 +105,10 @@ export function EmployeeBankInfoCard({
             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-50 text-slate-400">
               <Building2 className="h-5 w-5" aria-hidden="true" />
             </span>
-            <p className="employee-type-strong mt-3 text-[#344054]">
+            <p className="employee-type-strong mt-3 text-[var(--employee-text)]">
               Chưa có thông tin ngân hàng
             </p>
-            <p className="employee-type-body-sm mt-1 text-[#667085]">
+            <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">
               Liên hệ quản lý để cập nhật
             </p>
           </div>

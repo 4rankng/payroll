@@ -92,6 +92,10 @@ async function mockEmployeePortal(page: Page) {
   }));
 }
 
+async function clearPersistedEmployeeQueries(page: Page) {
+  await page.evaluate(() => sessionStorage.removeItem("payroll-query-cache"));
+}
+
 test.describe("mobile employee payroll dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await mockEmployeePortal(page);
@@ -197,6 +201,7 @@ test.describe("mobile employee payroll dashboard", () => {
       },
     }));
 
+    await clearPersistedEmployeeQueries(page);
     await page.reload();
 
     await expect(page.getByText("Đã dùng hết hạn mức")).toBeVisible();
@@ -226,6 +231,7 @@ test.describe("mobile employee payroll dashboard", () => {
       },
     }));
 
+    await clearPersistedEmployeeQueries(page);
     await page.reload();
 
     await expect(page.getByText("7 yêu cầu")).toBeVisible();
@@ -259,5 +265,56 @@ test.describe("mobile employee payroll dashboard", () => {
     await page.getByRole("button", { name: "Yêu cầu ứng lương" }).click();
     await expect(page.getByRole("dialog").getByRole("heading", { name: "Xác nhận yêu cầu ứng lương" }).last()).toBeVisible();
     await expect(page.getByRole("dialog").getByText("123456789012345678901234567890")).toBeVisible();
+  });
+
+  test("keeps failed profile chrome non-interactive and retryable", async ({ page }) => {
+    await page.unroute("**/api/v1/me");
+    // A redacted synthetic null payload exercises the same unresolved-profile
+    // chrome deterministically without coupling the test to transport retries.
+    await page.route("**/api/v1/me", (route) => route.fulfill({ json: json(null) }));
+    await clearPersistedEmployeeQueries(page);
+    await page.reload();
+
+    await expect(page.getByRole("heading", { name: "Chưa tải được hồ sơ" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tải lại" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Thông báo" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Menu tài khoản" })).toHaveCount(0);
+  });
+
+  test("grows the attendance toolbar and reserves content space at 200% text", async ({ page }) => {
+    await page.unroute("**/api/v1/me");
+    await page.route("**/api/v1/me", (route) => route.fulfill({
+      json: json({
+        id: 77,
+        fullname: "Nguyễn An",
+        username: "employee.mobile",
+        payment_schedule: "flexible",
+        check_in_enabled: true,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-07-01T00:00:00Z",
+      }),
+    }));
+    await page.route("**/api/v1/mobile/attendance/today", (route) => route.fulfill({ json: json(null) }));
+    await page.route("**/api/v1/mobile/attendance/history*", (route) => route.fulfill({ json: json([]) }));
+    await clearPersistedEmployeeQueries(page);
+    await page.reload();
+    await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+
+    const toolbar = page.getByRole("toolbar", { name: "Hành động nhân viên" });
+    await expect(toolbar).toBeVisible();
+    const layout = await page.evaluate(() => {
+      const dock = document.querySelector<HTMLElement>(".employee-attendance-action-dock");
+      const main = document.querySelector<HTMLElement>(".employee-portal-card-stack");
+      const label = dock?.querySelectorAll("button")[1]?.querySelector("span");
+      return {
+        dockHeight: dock?.getBoundingClientRect().height ?? 0,
+        reservedBottom: Number.parseFloat(main ? getComputedStyle(main).paddingBottom : "0"),
+        labelOverflow: label ? label.scrollWidth > label.clientWidth : true,
+      };
+    });
+
+    expect(layout.dockHeight).toBeGreaterThan(68);
+    expect(layout.reservedBottom).toBeGreaterThanOrEqual(layout.dockHeight);
+    expect(layout.labelOverflow).toBe(false);
   });
 });

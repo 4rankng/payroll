@@ -21,7 +21,7 @@ define check-docker
 endef
 
 frontend:
-	@cd ../frontend && yarn dev
+	@cd ../frontend && pnpm dev
 
 backend:
 	@echo "🔄 Starting backend with hot-reload..."
@@ -63,7 +63,7 @@ dev:
 	@echo "🔪 Killing any process using port 3000..."
 	@lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 	@echo "🖥️  Starting frontend in detached mode..."
-	@cd ../frontend && yarn dev &
+	@cd ../frontend && pnpm dev &
 	@echo "🔄 Starting backend with hot-reload..."
 	@pwd && \
 	if ! command -v air >/dev/null 2>&1; then \

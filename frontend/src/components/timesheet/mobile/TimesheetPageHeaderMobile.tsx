@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon } from 'lucide-react';
 
 interface TimesheetPageHeaderMobileProps {
@@ -22,6 +23,8 @@ interface TimesheetPageHeaderMobileProps {
   isApprovedExportPending?: boolean;
   isPayrollReportPending?: boolean;
   userRole?: 'admin' | 'partner';
+  monthValue: string;
+  onMonthChange: (value: string) => void;
 }
 
 export function TimesheetPageHeaderMobile({
@@ -39,6 +42,8 @@ export function TimesheetPageHeaderMobile({
   isApprovedExportPending = false,
   isPayrollReportPending = false,
   userRole = 'admin',
+  monthValue,
+  onMonthChange,
 }: TimesheetPageHeaderMobileProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -48,37 +53,42 @@ export function TimesheetPageHeaderMobile({
     : 'Theo dõi và duyệt bảng công';
 
   return (
-    <MobilePageHeader
-      title="Bảng công"
-      subtitle={description}
-      icon={TableIcon}
-      sticky={false}
-      bordered={false}
-      actions={
-        <div className="flex items-center gap-2 shrink-0">
-          <Button onClick={onAddTimesheet} className="h-11 rounded-xl touch-manipulation">
-            <Plus className="h-4 w-4 mr-1" />
-            Nhập
-          </Button>
-
-          {/* Primary "Chuyển lô" action — admin only, mirrors desktop's primary button */}
-          {onChuyenLo && userRole === 'admin' && (
+    <section className="ct-card overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_12px_32px_-28px_hsl(var(--foreground)/0.45)]">
+      <MobilePageHeader
+        title="Bảng công"
+        subtitle={description}
+        icon={TableIcon}
+        sticky={false}
+        bordered={false}
+        className="bg-transparent"
+        actions={
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
             <Button
-              onClick={onChuyenLo}
-              className="h-11 rounded-xl touch-manipulation"
+              onClick={onAddTimesheet}
+              className="h-11 min-w-0 flex-1 rounded-xl px-4 shadow-sm touch-manipulation sm:flex-none"
             >
-              <ArrowRightLeft className="h-4 w-4 mr-1" />
-              Chuyển lô
+              <Plus className="mr-1 h-4 w-4" />
+              Nhập
             </Button>
-          )}
 
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-300 bg-white touch-manipulation" aria-label="Thêm tùy chọn">
-                <MoreHorizontal className="h-4 w-4" />
+            {onChuyenLo && userRole === 'admin' && (
+              <Button
+                variant="outline"
+                onClick={onChuyenLo}
+                className="h-11 min-w-0 flex-[1.25] rounded-xl border-primary/20 bg-primary/[0.04] px-3 text-primary shadow-none hover:bg-primary/[0.08] hover:text-primary touch-manipulation sm:flex-none"
+              >
+                <ArrowRightLeft className="mr-1 h-4 w-4" />
+                Chuyển lô
               </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-auto max-h-[80dvh] overflow-y-auto rounded-t-3xl border-[hsl(var(--surface-border))] bg-white px-4 pt-3">
+            )}
+
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-xl border-border bg-background shadow-none touch-manipulation" aria-label="Thêm tùy chọn">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-auto max-h-[80dvh] overflow-y-auto rounded-t-3xl border-[hsl(var(--surface-border))] bg-white px-4 pt-3">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
               <SheetHeader><SheetTitle>Tùy chọn</SheetTitle></SheetHeader>
               <div className="space-y-1 py-3" style={{ paddingBottom: "max(12px, calc(12px + env(safe-area-inset-bottom)))" }}>
@@ -203,10 +213,22 @@ export function TimesheetPageHeaderMobile({
                   <span className="text-sm font-medium">Đóng</span>
                 </Button>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      }
-    />
+              </SheetContent>
+            </Sheet>
+          </div>
+        }
+      />
+
+      <div className="flex items-center gap-3 border-t border-border/70 bg-muted/25 px-3 py-2.5 sm:px-4">
+        <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground sm:inline">
+          Kỳ công
+        </span>
+        <TimesheetMonthSelector
+          value={monthValue}
+          onChange={onMonthChange}
+          className="min-w-0 flex-1 sm:flex-none"
+        />
+      </div>
+    </section>
   );
 }
