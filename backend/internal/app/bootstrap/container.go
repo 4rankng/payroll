@@ -159,6 +159,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			AsynqClient:     asynqClient,
 			AuditEmitter:    walletBulkAuditAdapter{client: asynqClient}, // C3 fix
 			TxnSvc:          services.Transaction,
+			TxnAdjuster:     services.Transaction,
 			TxRunner:        services.TransactionManager, // C2 fix — atomic CreateTransaction + batch link
 			PartnerInfo:     services.SettingsConfig,
 			LedgerWriter:    services.Ledger,
@@ -281,6 +282,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 				repos.BulkTransferBatch,
 				repos.TxWalletPayment,
 				asynqClient,
+				walletBulkSvc,
 				infra.Logger,
 			)),
 		disbursementPollerWorker,

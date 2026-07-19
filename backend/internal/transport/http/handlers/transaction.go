@@ -374,6 +374,67 @@ func (h *TransactionHandler) SettleTransaction(c *gin.Context) {
 	response.Success(c, resp, "Thanh toán giao dịch thành công")
 }
 
+// DeleteTransaction cancels (soft-deletes) a pending transaction together with its ledger entries.
+// Only transactions in the "pending" status can be deleted — settled transactions must be reversed.
+// @Summary Cancel pending transaction
+// @Description Soft-deletes a pending transaction and its ledger entries. Settled transactions must use reverse instead.
+// @Tags transactions
+// @Produce json
+// @Param id path int true "Transaction ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /transactions/{id} [delete]
+func (h *TransactionHandler) DeleteTransaction(c *gin.Context) {
+	id, ok := helpers.ParseIDParam(c, "id", "ID giao dịch không hợp lệ")
+	if !ok {
+		return
+	}
+
+	// Load transaction first to enforce status guard. Soft-delete is destructive
+	// (cascades to ledger entries), so we must refuse anything that already moved money.
+	txn, err := h.transactionService.GetTransaction(c.Request.Context(), uint(id))
+	if err != nil {
+		if domain.IsNotFoundError(err) {
+			h.logger.Error("Transaction not found for deletion", "transactionID", id)
+			response.NotFound(c, "Không tìm thấy giao dịch")
+			return
+		}
+		h.logger.Error("Failed to get transaction for deletion", "transactionID", id, "error", err)
+		response.InternalServerError(c, "Không thể lấy giao dịch")
+		return
+	}
+
+	if txn.IsReversed() {
+		response.BadRequest(c, "Giao dịch đã được đảo ngược, không thể hủy")
+		return
+	}
+
+	// Domain rule (transaction.go CanReverse): only pending transactions should be deleted;
+	// settled/partially_settled transactions must use reverse to keep the audit trail.
+	if !txn.IsPending() {
+		response.BadRequest(c, "Chỉ có thể hủy giao dịch chờ thanh toán. Giao dịch đã thanh toán vui lòng dùng Đảo ngược.")
+		return
+	}
+
+	h.logger.Info("Canceling pending transaction", "transactionID", id)
+
+	if err := h.transactionService.DeleteTransaction(c.Request.Context(), uint(id)); err != nil {
+		if domain.IsNotFoundError(err) {
+			h.logger.Error("Transaction not found during delete", "transactionID", id)
+			response.NotFound(c, "Không tìm thấy giao dịch")
+			return
+		}
+		h.logger.Error("Failed to delete transaction", "transactionID", id, "error", err)
+		response.InternalServerError(c, "Không thể hủy giao dịch")
+		return
+	}
+
+	h.logger.Info("Transaction canceled successfully", "transactionID", id)
+	response.SuccessEmpty(c, "Hủy giao dịch thành công")
+}
+
 // parseTransactionFilters parses query parameters into TransactionFilters
 // Supported params: page, pageSize, sortBy, sortOrder, account, party, fromDate, toDate, created_by
 func (h *TransactionHandler) parseTransactionFilters(c *gin.Context) domain.TransactionFilters {

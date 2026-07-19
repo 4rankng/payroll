@@ -75,6 +75,7 @@ type WalletBulkTransferService struct {
 	asynqClient     BulkTransferEnqueuer
 	auditEmitter    AuditEventEmitter // C3 fix — nil-safe
 	txnSvc          TransactionCreator
+	txnAdjuster     TransactionAdjuster
 	txRunner        TransactionRunner
 	parser          *YeuCauChuyenTienParser
 	feeProvider     DisbursementFeeProvider
@@ -91,6 +92,14 @@ type WalletBulkTransferService struct {
 // (avoids a cycle when settlement later wants to consume bulk batches).
 type TransactionCreator interface {
 	CreateTransaction(ctx context.Context, txn *domain.Transaction) (*domain.Transaction, []*domain.LedgerEntry, error)
+}
+
+// TransactionAdjuster updates the aggregate receivable when a provider
+// reverses one successful employee transfer after the batch was booked.
+// Both operations honor the transaction carried by ctx.
+type TransactionAdjuster interface {
+	GetTransactionForUpdate(ctx context.Context, id uint) (*domain.Transaction, error)
+	IncrementTransactionAmount(ctx context.Context, id uint, delta int64) error
 }
 
 // WalletPaymentReader is the read-only wallet-payment subset used by this
@@ -132,6 +141,7 @@ type PartnerInfoProvider interface {
 // pulling that package in.
 type LedgerEntryWriter interface {
 	CreateEntries(ctx context.Context, entries []*domain.LedgerEntry, createdBy uint) ([]*domain.LedgerEntry, error)
+	CreateEntriesAtomic(ctx context.Context, entries []*domain.LedgerEntry, createdBy uint) ([]*domain.LedgerEntry, error)
 }
 
 // TimesheetTransactionLinker links timesheets to a transaction by stamping
@@ -139,6 +149,7 @@ type LedgerEntryWriter interface {
 type TimesheetTransactionLinker interface {
 	GetByIDsForUpdate(ctx context.Context, timesheetIDs []uint) ([]*domain.Timesheet, error)
 	BulkUpdateTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
+	ClearTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
 }
 
 // TransactionCodeByVFIC resolves successful VFIC codes in one query so their
@@ -156,6 +167,7 @@ type ServiceDeps struct {
 	AsynqClient     BulkTransferEnqueuer
 	AuditEmitter    AuditEventEmitter // C3 fix; nil-safe
 	TxnSvc          TransactionCreator
+	TxnAdjuster     TransactionAdjuster
 	TxRunner        TransactionRunner
 	Parser          *YeuCauChuyenTienParser
 	FeeProvider     DisbursementFeeProvider
@@ -184,6 +196,9 @@ func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
 	}
 	if deps.TxnSvc == nil {
 		panic("wallet_bulk: TxnSvc is required")
+	}
+	if deps.TxnAdjuster == nil {
+		panic("wallet_bulk: TxnAdjuster is required")
 	}
 	if deps.TxRunner == nil {
 		panic("wallet_bulk: TxRunner is required")
@@ -217,6 +232,7 @@ func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
 		asynqClient:     deps.AsynqClient,
 		auditEmitter:    deps.AuditEmitter,
 		txnSvc:          deps.TxnSvc,
+		txnAdjuster:     deps.TxnAdjuster,
 		txRunner:        deps.TxRunner,
 		parser:          deps.Parser,
 		feeProvider:     deps.FeeProvider,

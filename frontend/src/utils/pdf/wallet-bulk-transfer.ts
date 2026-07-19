@@ -1,4 +1,4 @@
-import type { WalletBulkBatchDetail } from '@/types/wallet-bulk-transfer';
+import { isFTPending, type WalletBulkBatchDetail } from '@/types/wallet-bulk-transfer';
 import { loadPdfMake } from '@/utils/pdf/pdfmake';
 import { sanitizeFilename } from '@/utils/file-naming';
 
@@ -30,7 +30,7 @@ export async function generateWalletBulkTransferPdf(batch: WalletBulkBatchDetail
       String(index + 1), row.request_id, row.recipient_name,
       row.recipient_account_no, row.recipient_bank,
       { text: formatVND(row.requested_amount), alignment: 'right' },
-      row.invoice_no || 'Đang chờ FT', formatDate(row.settled_at),
+      isFTPending(row) ? 'Đang chờ FT' : (row.invoice_no || 'Đang chờ FT'), formatDate(row.settled_at),
     ]),
   ];
 

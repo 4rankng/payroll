@@ -38,7 +38,13 @@ type TransferTimesheetUpdater interface {
 // worker is wired for non-bulk flows (manual disbursement etc.) and the
 // batch finalization is skipped.
 type BulkBatchFinalizer interface {
-	FinalizeBulkBatchForIPN(ctx context.Context, batchID uint64) error
+	FinalizeBulkBatchForIPN(ctx context.Context, payment *domaintx.WalletPayment) error
+}
+
+// BulkPaymentReversalHandler adjusts an already-booked batch when OnePay
+// changes one employee payment from completed to reversed.
+type BulkPaymentReversalHandler interface {
+	HandleReversedPayment(ctx context.Context, payment *domaintx.WalletPayment) error
 }
 
 // IPNProcessWorker drives the FSM transition for a verified disbursement
@@ -85,6 +91,7 @@ type bulkBatchFinalizerAdapter struct {
 	batchRepo   domain.BulkTransferBatchRepository
 	paymentRepo domaintx.WalletPaymentRepository
 	asynqClient wallet_bulk.BulkTransferEnqueuer
+	reversals   BulkPaymentReversalHandler
 	logger      *slog.Logger
 }
 
@@ -94,6 +101,7 @@ func NewBulkBatchFinalizer(
 	batchRepo domain.BulkTransferBatchRepository,
 	paymentRepo domaintx.WalletPaymentRepository,
 	asynqClient wallet_bulk.BulkTransferEnqueuer,
+	reversals BulkPaymentReversalHandler,
 	logger *slog.Logger,
 ) BulkBatchFinalizer {
 	if logger == nil {
@@ -103,12 +111,25 @@ func NewBulkBatchFinalizer(
 		batchRepo:   batchRepo,
 		paymentRepo: paymentRepo,
 		asynqClient: asynqClient,
+		reversals:   reversals,
 		logger:      logger,
 	}
 }
 
-func (a *bulkBatchFinalizerAdapter) FinalizeBulkBatchForIPN(ctx context.Context, batchID uint64) error {
-	return FinalizeBulkBatchForIPN(ctx, batchID, a.batchRepo, a.paymentRepo, a.asynqClient, a.logger)
+func (a *bulkBatchFinalizerAdapter) FinalizeBulkBatchForIPN(ctx context.Context, payment *domaintx.WalletPayment) error {
+	if payment == nil || payment.BulkTransferBatchID == nil {
+		return nil
+	}
+	if payment.Status == domaintx.StateReversed && a.reversals != nil {
+		batch, err := a.batchRepo.GetByID(ctx, *payment.BulkTransferBatchID)
+		if err != nil {
+			return err
+		}
+		if batch.Status == domain.BulkTransferBatchStatusCompleted {
+			return a.reversals.HandleReversedPayment(ctx, payment)
+		}
+	}
+	return FinalizeBulkBatchForIPN(ctx, *payment.BulkTransferBatchID, a.batchRepo, a.paymentRepo, a.asynqClient, a.logger)
 }
 
 func (w *IPNProcessWorker) ProcessJob(ctx context.Context, p IPNJob) (err error) {
@@ -169,7 +190,14 @@ func (w *IPNProcessWorker) ProcessJob(ctx context.Context, p IPNJob) (err error)
 		// 5-minute completing-recovery cron. Non-fatal: finalization is
 		// idempotent and the cron still catches it on failure.
 		if row != nil && row.IsTerminal() && row.BulkTransferBatchID != nil && w.batchFinalizer != nil {
-			if finErr := w.batchFinalizer.FinalizeBulkBatchForIPN(ctx, *row.BulkTransferBatchID); finErr != nil {
+			if finErr := w.batchFinalizer.FinalizeBulkBatchForIPN(ctx, row); finErr != nil {
+				// A late reversal of an already-booked batch has no periodic
+				// finalizer to repair its ledger/timesheet adjustment. Return the
+				// error so Asynq retries the idempotent reconciliation.
+				if row.Status == domaintx.StateReversed {
+					w.markIPN(ctx, p.IPNRecordID, "error", row, finErr.Error())
+					return fmt.Errorf("reconcile reversed bulk payment: %w", finErr)
+				}
 				w.logger.Warn("bulk batch finalize via IPN failed (non-fatal — completing-recovery cron will retry)",
 					"batch_id", *row.BulkTransferBatchID,
 					"request_id", row.RequestID,
@@ -203,6 +231,16 @@ func (w *IPNProcessWorker) ProcessJob(ctx context.Context, p IPNJob) (err error)
 			"invoice_no", p.InvoiceNo,
 			"current_state", terminalErr.State,
 			"trigger", terminalErr.Trigger)
+		// A completed→reversed transition may have committed before a later
+		// reconciliation step failed. Retried IPNs then see an already-terminal
+		// row, so explicitly retry the idempotent batch adjustment here.
+		if current, getErr := w.providerTxs.GetByRequestID(ctx, p.RequestID); getErr == nil &&
+			current.Status == domaintx.StateReversed && current.BulkTransferBatchID != nil && w.batchFinalizer != nil {
+			if finErr := w.batchFinalizer.FinalizeBulkBatchForIPN(ctx, current); finErr != nil {
+				w.markIPN(ctx, p.IPNRecordID, "error", current, finErr.Error())
+				return fmt.Errorf("retry reversed bulk reconciliation: %w", finErr)
+			}
+		}
 		w.markIPN(ctx, p.IPNRecordID, "ignored", nil, "already terminal")
 		return nil
 	}

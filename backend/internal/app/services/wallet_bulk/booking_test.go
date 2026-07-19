@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 	"testing"
@@ -45,7 +46,18 @@ func (r *bookingBatchRepo) GetByIDForUpdate(context.Context, uint64) (*domain.Bu
 }
 func (r *bookingBatchRepo) UpdateColumns(_ context.Context, _ uint64, updates map[string]interface{}) error {
 	r.updates = updates
-	r.batch.Status = domain.BulkTransferBatchStatusCompleted
+	if value, ok := updates["status"].(string); ok {
+		r.batch.Status = domain.BulkTransferBatchStatus(value)
+	}
+	if value, ok := updates["success_count"].(int); ok {
+		r.batch.SuccessCount = value
+	}
+	if value, ok := updates["failed_count"].(int); ok {
+		r.batch.FailedCount = value
+	}
+	if value, ok := updates["transfer_amount"].(int64); ok {
+		r.batch.TransferAmount = value
+	}
 	if value, ok := updates["ledger_txn_id"].(uint64); ok {
 		r.batch.LedgerTxnID = &value
 	}
@@ -78,18 +90,43 @@ func (w *bookingLedgerWriter) CreateEntries(_ context.Context, entries []*domain
 	w.entries = append(w.entries, entries...)
 	return entries, nil
 }
+func (w *bookingLedgerWriter) CreateEntriesAtomic(_ context.Context, entries []*domain.LedgerEntry, _ uint) ([]*domain.LedgerEntry, error) {
+	w.entries = append(w.entries, entries...)
+	return entries, nil
+}
 
 type bookingTimesheetLinker struct {
-	txnID uint
-	ids   []uint
+	txnID       uint
+	ids         []uint
+	linkedTxnID *uint
+	cleared     []uint
 }
 
 func (l *bookingTimesheetLinker) GetByIDsForUpdate(_ context.Context, ids []uint) ([]*domain.Timesheet, error) {
 	result := make([]*domain.Timesheet, 0, len(ids))
 	for _, id := range ids {
-		result = append(result, &domain.Timesheet{ID: id})
+		result = append(result, &domain.Timesheet{ID: id, TransactionID: l.linkedTxnID})
 	}
 	return result, nil
+}
+
+func (l *bookingTimesheetLinker) ClearTransactionID(_ context.Context, transactionID uint, ids []uint) error {
+	if l.linkedTxnID == nil || *l.linkedTxnID != transactionID {
+		return fmt.Errorf("unexpected transaction link")
+	}
+	l.cleared = append([]uint(nil), ids...)
+	l.linkedTxnID = nil
+	return nil
+}
+
+type bookingTxnAdjuster struct{ txn *domain.Transaction }
+
+func (a *bookingTxnAdjuster) GetTransactionForUpdate(context.Context, uint) (*domain.Transaction, error) {
+	return a.txn, nil
+}
+func (a *bookingTxnAdjuster) IncrementTransactionAmount(_ context.Context, _ uint, delta int64) error {
+	a.txn.Amount += delta
+	return nil
 }
 
 func (l *bookingTimesheetLinker) BulkUpdateTransactionID(_ context.Context, transactionID uint, ids []uint) error {
@@ -238,6 +275,114 @@ func TestProcessBookBatchLedger_PartialSuccessExcludesFailedEmployeeFromReceivab
 	}
 	if len(linker.ids) != 2 || linker.ids[0] != 41 || linker.ids[1] != 42 {
 		t.Fatalf("linked timesheets = %v, want only paid employee [41 42]", linker.ids)
+	}
+}
+
+func TestHandleReversedPayment_AdjustsOnlyReversedEmployeeAfterBooking(t *testing.T) {
+	batchID := uint64(8)
+	ledgerTxnID := uint64(501)
+	reversed := &domaintx.WalletPayment{
+		ID: 2, RequestID: "VFICreturned", RequestedAmount: 500_000,
+		Status: domaintx.StateReversed, BulkTransferBatchID: &batchID,
+	}
+	batch := &domain.BulkTransferBatch{
+		ID: batchID, Status: domain.BulkTransferBatchStatusCompleted,
+		TotalCount: 2, SuccessCount: 2, TransferAmount: 1_500_000,
+		LedgerTxnID: &ledgerTxnID, CreatedBy: 9,
+	}
+	linkedTxnID := uint(ledgerTxnID)
+	linker := &bookingTimesheetLinker{linkedTxnID: &linkedTxnID}
+	ledger := &bookingLedgerWriter{}
+	adjuster := &bookingTxnAdjuster{txn: &domain.Transaction{
+		ID: uint(ledgerTxnID), TransactionType: domain.TransactionTypeRevenue,
+		Amount: 1_530_000, Party: "VFIC Manpower",
+	}}
+	service := &WalletBulkTransferService{
+		batchRepo: &bookingBatchRepo{batch: batch},
+		paymentRepo: &bookingPaymentReader{rows: []*domaintx.WalletPayment{
+			{ID: 1, RequestID: "VFICpaid", RequestedAmount: 1_000_000, Status: domaintx.StateCompleted, BulkTransferBatchID: &batchID},
+			reversed,
+		}},
+		txnAdjuster: adjuster, txRunner: &bookingRunner{}, ledgerWriter: ledger,
+		timesheetLinker: linker,
+		txnCodeRepo: &bookingCodeRepo{codes: []*domain.TransactionCode{
+			transactionCode(t, "VFICreturned", 500_000, 71, 72),
+		}},
+		clock: func() time.Time { return time.Date(2026, 7, 19, 18, 0, 0, 0, time.Local) },
+	}
+
+	if err := service.HandleReversedPayment(context.Background(), reversed); err != nil {
+		t.Fatal(err)
+	}
+	if adjuster.txn.Amount != 1_020_000 {
+		t.Fatalf("remaining receivable = %d, want 1020000", adjuster.txn.Amount)
+	}
+	if batch.SuccessCount != 1 || batch.FailedCount != 1 || batch.TransferAmount != 1_000_000 {
+		t.Fatalf("batch totals success=%d failed=%d transfer=%d", batch.SuccessCount, batch.FailedCount, batch.TransferAmount)
+	}
+	if len(linker.cleared) != 2 || linker.cleared[0] != 71 || linker.cleared[1] != 72 {
+		t.Fatalf("cleared timesheets = %v, want [71 72]", linker.cleared)
+	}
+	if len(ledger.entries) != 4 || ledger.entries[0].Credit != 510_000 ||
+		ledger.entries[1].Debit != 510_000 || ledger.entries[2].Debit != 500_000 ||
+		ledger.entries[3].Credit != 500_000 {
+		t.Fatalf("reversal entries = %#v", ledger.entries)
+	}
+
+	if err := service.HandleReversedPayment(context.Background(), reversed); err != nil {
+		t.Fatalf("idempotent reversal retry: %v", err)
+	}
+	if len(ledger.entries) != 4 {
+		t.Fatalf("reversal retry wrote entries again: %d", len(ledger.entries))
+	}
+}
+
+func TestHandleReversedPayment_ReconcilesConcurrentReversalsTogether(t *testing.T) {
+	batchID := uint64(9)
+	ledgerTxnID := uint64(601)
+	reversedA := &domaintx.WalletPayment{ID: 2, RequestID: "VFICreturnA", RequestedAmount: 500_000, Status: domaintx.StateReversed, BulkTransferBatchID: &batchID}
+	reversedB := &domaintx.WalletPayment{ID: 3, RequestID: "VFICreturnB", RequestedAmount: 500_000, Status: domaintx.StateReversed, BulkTransferBatchID: &batchID}
+	batch := &domain.BulkTransferBatch{
+		ID: batchID, Status: domain.BulkTransferBatchStatusCompleted,
+		TotalCount: 3, SuccessCount: 3, TransferAmount: 2_000_000,
+		LedgerTxnID: &ledgerTxnID, CreatedBy: 9,
+	}
+	linkedTxnID := uint(ledgerTxnID)
+	linker := &bookingTimesheetLinker{linkedTxnID: &linkedTxnID}
+	ledger := &bookingLedgerWriter{}
+	adjuster := &bookingTxnAdjuster{txn: &domain.Transaction{
+		ID: uint(ledgerTxnID), TransactionType: domain.TransactionTypeRevenue,
+		Amount: 2_040_000, Party: "VFIC Manpower",
+	}}
+	service := &WalletBulkTransferService{
+		batchRepo: &bookingBatchRepo{batch: batch},
+		paymentRepo: &bookingPaymentReader{rows: []*domaintx.WalletPayment{
+			{ID: 1, RequestID: "VFICpaid", RequestedAmount: 1_000_000, Status: domaintx.StateCompleted, BulkTransferBatchID: &batchID},
+			reversedA, reversedB,
+		}},
+		txnAdjuster: adjuster, txRunner: &bookingRunner{}, ledgerWriter: ledger,
+		timesheetLinker: linker,
+		txnCodeRepo: &bookingCodeRepo{codes: []*domain.TransactionCode{
+			transactionCode(t, "VFICreturnA", 500_000, 81),
+			transactionCode(t, "VFICreturnB", 500_000, 82),
+		}},
+		clock: func() time.Time { return time.Date(2026, 7, 19, 18, 30, 0, 0, time.Local) },
+	}
+
+	if err := service.HandleReversedPayment(context.Background(), reversedA); err != nil {
+		t.Fatal(err)
+	}
+	if adjuster.txn.Amount != 1_020_000 {
+		t.Fatalf("remaining receivable = %d, want 1020000", adjuster.txn.Amount)
+	}
+	if batch.SuccessCount != 1 || batch.FailedCount != 2 || batch.TransferAmount != 1_000_000 {
+		t.Fatalf("batch totals success=%d failed=%d transfer=%d", batch.SuccessCount, batch.FailedCount, batch.TransferAmount)
+	}
+	if len(ledger.entries) != 8 {
+		t.Fatalf("reversal entries = %d, want 8", len(ledger.entries))
+	}
+	if len(linker.cleared) != 2 || linker.cleared[0] != 81 || linker.cleared[1] != 82 {
+		t.Fatalf("cleared timesheets = %v, want [81 82]", linker.cleared)
 	}
 }
 

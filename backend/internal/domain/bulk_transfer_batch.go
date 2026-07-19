@@ -54,6 +54,8 @@ type BulkTransferBatch struct {
 	FailedCount    int                           `json:"failed_count" gorm:"column:failed_count;not null;default:0"`
 	TransferAmount int64                         `json:"transfer_amount" gorm:"column:transfer_amount;type:bigint;not null;default:0"`
 	TotalFee       int64                         `json:"total_fee" gorm:"column:total_fee;type:bigint;not null;default:0"`
+	// LedgerTxnID references the partner receivable transaction when at least
+	// one employee was paid; all-failed fee-only batches reference the fee txn.
 	LedgerTxnID    *uint64                       `json:"ledger_txn_id,omitempty" gorm:"column:ledger_txn_id;type:bigint unsigned"`
 	FeeBookedAt    *time.Time                    `json:"fee_booked_at,omitempty" gorm:"column:fee_booked_at;type:datetime(3)"`
 	Data           string                        `json:"data" gorm:"column:data;type:json;not null"`

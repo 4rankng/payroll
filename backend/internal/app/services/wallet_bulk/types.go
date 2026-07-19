@@ -2,8 +2,9 @@
 // Wallet Bulk Transfer feature: parse the "Yêu cầu chuyển tiền" .xlsx
 // (exported from /admin/timesheet), enqueue one asynq task per row, drive
 // each row through the full 5-step OnePay transfer flow, and on batch
-// completion book ONE aggregate Expense ledger transaction for the OnePay
-// per-row fee.
+// completion book the successful payroll receivable/cash movement plus the
+// aggregate OnePay fee. Failed employees remain visible but are excluded from
+// salary receivable and timesheet links.
 //
 // The package is self-contained: it does NOT touch wallet_payments directly
 // — the row worker goes through WalletPaymentService.Initiate (sole insertion

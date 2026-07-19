@@ -98,19 +98,20 @@ func NewWalletBulkTransferRowWorker(
 //
 // Steps mirror disbursement_execute_worker.go:73-237:
 //
-//	1. Initiate wallet_payment (sole insertion point — fee stamps here).
-//	   - ErrDuplicatePaymentInProgress → return nil (already in-flight).
-//	   - ErrFeeResolution → SkipRetry (config gap, not transient).
-//	2. StatePending guard — if row is already past pending, another worker
-//	   processed it. Stamp batch link and check terminal.
-//	3. Stamp batch link (idempotent).
-//	4. Resolve active provider.
-//	5. Check the beneficiary account when the provider supports it. A rejected
-//	   employee becomes failed with fee=0 and the other rows continue.
-//	6. provider.InitiateTransfer — rate-limited by QueuedProvider (3 TPS).
-//	   - ErrPreflightValidation → markRowFailed(feeWaived=true).
-//	7. Record sync response with explicit Accepted flag.
-//	8. markRowTerminal — atomic completion detection via UpdateWithLock.
+//  1. Initiate wallet_payment (sole insertion point — fee stamps here).
+//     - ErrDuplicatePaymentInProgress → return nil (already in-flight).
+//     - ErrFeeResolution → SkipRetry (config gap, not transient).
+//  2. StatePending guard — if row is already past pending, another worker
+//     processed it. Stamp batch link and check terminal.
+//  3. Stamp batch link (idempotent).
+//  4. Resolve active provider.
+//  5. Check the beneficiary account when the provider supports it. A rejected
+//     employee becomes failed with fee=0 and the other rows continue.
+//  6. provider.InitiateTransfer — rate-limited by QueuedProvider (3 TPS).
+//     - ErrPreflightValidation → markRowFailed(feeWaived=true).
+//  7. Record sync response with explicit Accepted flag.
+//  8. Synchronous rejection calls markRowTerminal immediately; accepted
+//     transfers wait for their terminal IPN/status-poll result.
 func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqlib.Task) error {
 	var p wallet_bulk.RowTaskPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
@@ -241,8 +242,9 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 
 	// === Step 5: Record sync response — EXACT canonical field mapping ===
 	// Accepted MUST be set explicitly (red-team v2 R2-1).
+	accepted := result.Status == infrastructure.TransferStatusPending || result.Status == infrastructure.TransferStatusSuccess
 	if _, err := w.walletPaymentSvc.RecordSyncResponse(ctx, p.Row.VFICCode, disbursement.SyncResult{
-		Accepted: result.Status == infrastructure.TransferStatusPending || result.Status == infrastructure.TransferStatusSuccess,
+		Accepted:     accepted,
 		InvoiceNo:    result.ProviderRef, // canonical mapping
 		RawErrorCode: result.RawErrorCode,
 		RawMessage:   result.RawMessage,
@@ -252,6 +254,12 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 
 	logger.Info("wallet_bulk_row: transfer initiated",
 		"provider_ref", result.ProviderRef, "status", string(result.Status))
+	if !accepted {
+		// The transfer endpoint was called, so the provider fee remains. A
+		// synchronous rejection is already terminal and may not receive an IPN;
+		// count it now so a mixed batch cannot remain processing forever.
+		return w.markRowTerminal(ctx, p.BatchID)
+	}
 
 	// Step 6: terminal state reached later via IPN webhook or status-inquiry poller.
 	return nil

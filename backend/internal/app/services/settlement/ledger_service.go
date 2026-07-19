@@ -57,11 +57,7 @@ func (s *LedgerService) CreateEntry(ctx context.Context, entry *domain.LedgerEnt
 		return nil, fmt.Errorf("failed to create ledger entry: %w", err)
 	}
 
-	// Publish LedgerEntryCreated event
-	event := domain.NewLedgerEntryCreatedEvent(ctx, entry)
-	if err := s.events.Publish(ctx, event); err != nil {
-		s.logger.Warn("Failed to publish LedgerEntryCreated event", "entryID", entry.ID, "error", err)
-	}
+	s.publishEntriesAfterCommit(ctx, []*domain.LedgerEntry{entry})
 
 	return entry, nil
 }
@@ -100,15 +96,46 @@ func (s *LedgerService) CreateEntries(ctx context.Context, entries []*domain.Led
 		return nil, fmt.Errorf("failed to create ledger entries: %w", err)
 	}
 
-	// Publish LedgerEntryCreated events for batch creation
-	for _, entry := range entries {
-		event := domain.NewLedgerEntryCreatedEvent(ctx, entry)
-		if err := s.events.Publish(ctx, event); err != nil {
-			s.logger.Warn("Failed to publish LedgerEntryCreated event", "entryID", entry.ID, "error", err)
-		}
-	}
+	s.publishEntriesAfterCommit(ctx, entries)
 
 	return entries, nil
+}
+
+// CreateEntriesAtomic writes entries without heuristic duplicate suppression.
+// Callers must provide their own transactional idempotency guard. This is used
+// for per-employee reversal adjustments where two employees can legitimately
+// have identical amounts in the same aggregate transaction.
+func (s *LedgerService) CreateEntriesAtomic(ctx context.Context, entries []*domain.LedgerEntry, createdBy uint) ([]*domain.LedgerEntry, error) {
+	if len(entries) == 0 {
+		return nil, domain.NewValidationError(constants.MsgAtLeastOneEntryRequiredVN)
+	}
+	for i, entry := range entries {
+		if err := entry.IsValid(); err != nil {
+			return nil, fmt.Errorf("validation failed for entry %d: %w", i+1, err)
+		}
+		entry.CreatedBy = createdBy
+	}
+	if err := s.LedgerRepo.CreateTransaction(ctx, entries); err != nil {
+		return nil, fmt.Errorf("failed to create ledger entries: %w", err)
+	}
+	s.publishEntriesAfterCommit(ctx, entries)
+	return entries, nil
+}
+
+func (s *LedgerService) publishEntriesAfterCommit(ctx context.Context, entries []*domain.LedgerEntry) {
+	publish := func() {
+		for _, entry := range entries {
+			event := domain.NewLedgerEntryCreatedEvent(ctx, entry)
+			if err := s.events.Publish(ctx, event); err != nil {
+				s.logger.Warn("Failed to publish LedgerEntryCreated event", "entryID", entry.ID, "error", err)
+			}
+		}
+	}
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx != nil && txCtx.IsTransactional {
+		domain.RegisterAfterCommit(ctx, publish)
+		return
+	}
+	publish()
 }
 
 func (s *LedgerService) GetEntry(ctx context.Context, id uint) (*domain.LedgerEntry, error) {

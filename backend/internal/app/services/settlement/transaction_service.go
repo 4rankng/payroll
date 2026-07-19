@@ -71,7 +71,8 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, txn *domain.
 	var finalEntries []*domain.LedgerEntry
 
 	existingTxCtx, ok := domain.GetTransactionFromContext(ctx)
-	if ok && existingTxCtx != nil && existingTxCtx.IsTransactional {
+	insideExistingTransaction := ok && existingTxCtx != nil && existingTxCtx.IsTransactional
+	if insideExistingTransaction {
 		entries, err := s.createTransactionInContextWithEntries(ctx, txn)
 		if err != nil {
 			return nil, nil, err
@@ -95,9 +96,39 @@ func (s *TransactionService) CreateTransaction(ctx context.Context, txn *domain.
 		}
 	}
 
-	s.invalidateTransactionCache(ctx)
+	entityName := encodeTransactionEntityName(txn.Amount, string(txn.TransactionType))
+	auditMessage := s.auditBuilder.BuildMessageWithUser(ctx, txn.CreatedBy, domain.AuditActionCreate, domain.EntityTypeTransaction, entityName)
+	event := domain.NewTransactionCreatedEventWithAudit(ctx, txn, auditMessage)
+	publish := func() {
+		if pubErr := s.events.Publish(ctx, event); pubErr != nil {
+			s.logger.Warn("Failed to publish TransactionCreated event", "transactionID", txn.ID, "error", pubErr)
+		}
+		s.invalidateTransactionCache(ctx)
+	}
+	if insideExistingTransaction {
+		domain.RegisterAfterCommit(ctx, publish)
+	} else {
+		publish()
+	}
 
 	return finalTxn, finalEntries, nil
+}
+
+// GetTransactionForUpdate locks a transaction inside the caller's database
+// transaction. Wallet-bulk reversal reconciliation uses this to adjust only
+// the receivable share of the employee whose transfer was returned.
+func (s *TransactionService) GetTransactionForUpdate(ctx context.Context, id uint) (*domain.Transaction, error) {
+	return s.TransactionRepo.GetByIDForUpdate(ctx, id)
+}
+
+// IncrementTransactionAmount atomically adjusts a transaction amount and
+// invalidates transaction caches only after the surrounding transaction commits.
+func (s *TransactionService) IncrementTransactionAmount(ctx context.Context, id uint, delta int64) error {
+	if err := s.TransactionRepo.IncrementAmount(ctx, id, delta); err != nil {
+		return err
+	}
+	domain.RegisterAfterCommit(ctx, func() { s.invalidateTransactionCache(ctx) })
+	return nil
 }
 
 // createTransactionInContextWithEntries performs the actual transaction creation within a DB
@@ -118,14 +149,6 @@ func (s *TransactionService) createTransactionInContextWithEntries(ctx context.C
 	}
 	if err := s.LedgerRepo.CreateTransaction(ctx, entries); err != nil {
 		return nil, fmt.Errorf("failed to create transaction ledger entries: %w", err)
-	}
-
-	// Fire-and-forget audit event on the in-memory bus.
-	entityName := encodeTransactionEntityName(txn.Amount, string(txn.TransactionType))
-	auditMessage := s.auditBuilder.BuildMessageWithUser(ctx, txn.CreatedBy, domain.AuditActionCreate, domain.EntityTypeTransaction, entityName)
-	event := domain.NewTransactionCreatedEventWithAudit(ctx, txn, auditMessage)
-	if pubErr := s.events.Publish(ctx, event); pubErr != nil {
-		s.logger.Warn("Failed to publish TransactionCreated event", "transactionID", txn.ID, "error", pubErr)
 	}
 
 	return entries, nil

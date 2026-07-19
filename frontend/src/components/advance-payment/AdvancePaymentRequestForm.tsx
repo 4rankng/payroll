@@ -10,6 +10,7 @@ import {
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 import { EmployeePayIllustration } from "@/components/employees/EmployeePayIllustration";
+import { AnimatedCurrency } from "@/components/employees/AnimatedCurrency";
 import { cn } from "@/lib/utils";
 
 const EMPLOYEE_PRIMARY_ACTION = "ct-btn employee-type-action h-auto min-h-12 w-full gap-2 rounded-xl border-0 bg-[var(--employee-accent)] px-5 py-2 text-white normal-case shadow-[var(--employee-cta-shadow)] hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent-ring)] disabled:!border-[var(--employee-border)] disabled:!bg-[var(--employee-page)] disabled:!text-[var(--employee-text-muted)] disabled:!shadow-none disabled:!opacity-100";
@@ -248,7 +249,7 @@ export function AdvancePaymentRequestForm({
         <div className="mt-1 flex items-center gap-2.5">
           <EmployeePayIllustration />
           <p className="employee-type-hero-amount min-w-0 break-words text-[var(--employee-accent)] tabular-nums">
-            {formatCurrency(selectedQuotaRemaining)}
+            <AnimatedCurrency amount={selectedQuotaRemaining} />
           </p>
         </div>
 
