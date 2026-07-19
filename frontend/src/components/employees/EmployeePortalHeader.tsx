@@ -27,9 +27,9 @@ export function EmployeePortalHeader({
   const todayLabel = format(new Date(), "EEEE, d 'tháng' M", { locale: vi });
 
   return (
-    <header className="sticky top-0 z-30 border-b border-base-300 bg-base-100/95 backdrop-blur supports-[backdrop-filter]:bg-base-100/90">
+    <header className="sticky top-0 z-30 border-b border-base-300/80 bg-base-100/90 backdrop-blur-xl supports-[backdrop-filter]:bg-base-100/80">
       <div
-        className="ct-navbar mx-auto min-h-0 max-w-lg gap-3 px-4 pb-3"
+        className="ct-navbar mx-auto min-h-0 max-w-6xl gap-3 px-4 pb-3 sm:px-5 lg:px-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
       >
         <div className="ct-navbar-start min-w-0 flex-1 gap-3">
@@ -37,10 +37,10 @@ export function EmployeePortalHeader({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="ct-avatar ct-placeholder h-12 w-12 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="ct-avatar ct-placeholder h-11 w-11 shrink-0 rounded-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
                 aria-label="Menu tài khoản"
               >
-                <div className="h-12 w-12 overflow-hidden rounded-full bg-primary/10 ring-1 ring-primary/15">
+                <div className="h-11 w-11 overflow-hidden rounded-[15px] bg-primary/10 ring-1 ring-primary/15 sm:h-12 sm:w-12">
                   <img
                     src="/icons/employee-avatar.png"
                     alt=""
@@ -69,11 +69,17 @@ export function EmployeePortalHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="min-w-0">
-            <p className="employee-type-header-greeting text-base-content/60">Xin chào,</p>
-            <h1 className="employee-type-header-name truncate text-base-content" title={employeeName}>
-              {employeeName || "bạn"}
-            </h1>
-            <p className="employee-type-header-date mt-0.5 truncate capitalize text-base-content/60 tabular-nums">{todayLabel}</p>
+            <p className="employee-type-header-greeting flex items-center gap-1.5 uppercase tracking-[0.14em] text-primary">
+              Cổng nhân viên
+            </p>
+            <div className="flex min-w-0 items-baseline gap-2">
+              <h1 className="employee-type-header-name truncate text-base-content" title={employeeName}>
+                {employeeName || "bạn"}
+              </h1>
+              <span className="hidden h-1 w-1 shrink-0 rounded-full bg-secondary sm:block" aria-hidden="true" />
+              <p className="employee-type-header-date hidden truncate capitalize text-base-content/55 tabular-nums sm:block">{todayLabel}</p>
+            </div>
+            <p className="employee-type-header-date mt-0.5 truncate capitalize text-base-content/55 tabular-nums sm:hidden">{todayLabel}</p>
           </div>
         </div>
         <div className="ct-navbar-end w-auto shrink-0 gap-2">

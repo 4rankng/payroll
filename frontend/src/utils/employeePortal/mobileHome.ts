@@ -39,6 +39,7 @@ export interface EmployeeWalletMetric {
   label: string;
   value: string;
   tone?: EmployeeNudgeTone;
+  sensitive?: boolean;
 }
 
 export interface EmployeeHomeViewModel {
@@ -47,11 +48,16 @@ export interface EmployeeHomeViewModel {
   amountLabel: string;
   amount: string;
   amountDescription: string;
+  amountDescriptionLabel?: string;
   periodLabel?: string;
   metricsTitle?: string;
   metrics: EmployeeWalletMetric[];
   quickActions: EmployeeQuickAction[];
   nudges: EmployeeNudge[];
+}
+
+function amountsMatch(left: number, right: number): boolean {
+  return Math.abs(left - right) < 0.5;
 }
 
 interface FlexibleEmployeeHomeInput {
@@ -181,9 +187,24 @@ export function createFlexibleEmployeeHomeModel({
       : blockedDescription,
     metricsTitle: metricsMonthLabel ? `Ứng lương ${metricsMonthLabel}` : undefined,
     metrics: [
-      { label: "Đã nhận", value: formatCurrency(quota.completedAmount), tone: "employee" },
-      { label: "Đang chờ", value: formatCurrency(quota.pendingAmount), tone: "amber" },
-      { label: "Hạn mức", value: formatCurrency(quota.maxAdvanceAmount), tone: "slate" },
+      {
+        label: "Đã nhận",
+        value: formatCurrency(quota.completedAmount),
+        tone: "employee",
+        sensitive: true,
+      },
+      {
+        label: "Đang chờ",
+        value: formatCurrency(quota.pendingAmount),
+        tone: "amber",
+        sensitive: true,
+      },
+      {
+        label: "Hạn mức",
+        value: formatCurrency(quota.maxAdvanceAmount),
+        tone: "slate",
+        sensitive: true,
+      },
     ],
     quickActions,
     nudges,
@@ -200,6 +221,35 @@ export function createRegularEmployeeHomeModel({
   totalRecords,
   unreadCount,
 }: RegularEmployeeHomeInput): EmployeeHomeViewModel {
+  const metrics: EmployeeWalletMetric[] = [
+    {
+      label: "Tổng công",
+      value: `${monthlyTotalHours % 1 === 0 ? monthlyTotalHours : formatNumber(monthlyTotalHours, 1)} giờ`,
+      tone: "employee",
+    },
+  ];
+
+  if (
+    !amountsMatch(totalPayable, monthlyTotalSalary) &&
+    !amountsMatch(totalPayable, totalPaid)
+  ) {
+    metrics.push({
+      label: "Có thể trả",
+      value: formatCurrency(totalPayable),
+      tone: "slate",
+      sensitive: true,
+    });
+  }
+
+  if (!amountsMatch(totalPaid, monthlyTotalSalary)) {
+    metrics.push({
+      label: "Đã nhận",
+      value: formatCurrency(totalPaid),
+      tone: "amber",
+      sensitive: true,
+    });
+  }
+
   const nudges: EmployeeNudge[] = [
     {
       id: "timesheet-current-month",
@@ -227,17 +277,10 @@ export function createRegularEmployeeHomeModel({
     title: "Kỳ lương của bạn",
     amountLabel: "Tổng lương trong kỳ",
     amount: formatCurrency(monthlyTotalSalary),
-    amountDescription: `${workDayCount} ngày làm việc trong ${monthLabel.toLowerCase()}.`,
+    amountDescription: `${workDayCount} ngày`,
+    amountDescriptionLabel: "Ngày làm việc",
     periodLabel: monthLabel,
-    metrics: [
-      {
-        label: "Tổng công",
-        value: `${monthlyTotalHours % 1 === 0 ? monthlyTotalHours : formatNumber(monthlyTotalHours, 1)} giờ`,
-        tone: "employee",
-      },
-      { label: "Có thể trả", value: formatCurrency(totalPayable), tone: "slate" },
-      { label: "Đã nhận", value: formatCurrency(totalPaid), tone: "amber" },
-    ],
+    metrics,
     quickActions: [
       {
         id: "timesheet",

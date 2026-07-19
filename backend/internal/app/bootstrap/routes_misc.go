@@ -92,6 +92,7 @@ func setupTransactionRoutes(protected *gin.RouterGroup, container *Container) {
 		transactions.GET("/export", container.Handlers.Transaction.ExportTransactions)
 		transactions.GET("/:id", container.Handlers.Transaction.GetTransaction)
 		transactions.PUT("/:id", container.Handlers.Transaction.UpdateTransactionEvidence)
+		transactions.DELETE("/:id", container.Handlers.Transaction.DeleteTransaction)
 		transactions.POST("/:id/settle", container.Handlers.Transaction.SettleTransaction)
 		transactions.POST("/:id/reverse", container.Handlers.Transaction.ReverseTransaction)
 	}

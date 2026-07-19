@@ -32,13 +32,12 @@ export function EmployeeBankInfoCard({
       aria-labelledby="employee-bank-title"
     >
       <img
-        src="/employee/bank-security-pattern.webp"
+        src="/employee/bank-security-pattern-v2.webp"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-right transition-transform duration-700 motion-safe:group-hover:scale-[1.02]"
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-right opacity-90 saturate-75 transition-transform duration-700 motion-safe:group-hover:scale-[1.025]"
       />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-base-100/95 via-base-100/75 to-base-100/25" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-base-100/55 via-transparent to-base-100/20" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-base-100/45 via-base-100/10 to-transparent" />
 
       <div className="flex min-h-[188px] flex-col sm:min-h-[202px]">
         <h2 id="employee-bank-title" className="employee-type-card-title text-base-content/75">

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -26,17 +26,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import {
   createRegularEmployeeHomeModel,
   hasEmployeeBankInfo,
-  type EmployeeNudge,
-  type EmployeeQuickAction,
 } from "@/utils/employeePortal/mobileHome";
-
-function scrollToEmployeeSection(sectionId: string) {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.getElementById(sectionId)?.scrollIntoView({
-    behavior: prefersReducedMotion ? "auto" : "smooth",
-    block: "start",
-  });
-}
 
 const EmployeePage = () => {
   const navigate = useNavigate();
@@ -149,15 +139,6 @@ const EmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  const handleHomeAction = useCallback((action: EmployeeQuickAction | EmployeeNudge) => {
-    if (action.intent === "notifications") {
-      setNotificationSheetOpen(true);
-      return;
-    }
-    if (!action.targetId) return;
-    scrollToEmployeeSection(action.targetId);
-  }, []);
-
   const isInitialLoading = profileLoading || summaryLoading || timesheetsLoading;
 
   if (isInitialLoading) {
@@ -184,21 +165,27 @@ const EmployeePage = () => {
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
     >
-      <EmployeeWalletHero model={homeModel} onAction={handleHomeAction} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)] lg:items-start lg:gap-6">
+        <EmployeeWalletHero
+          model={homeModel}
+          className="order-1 lg:sticky lg:top-28 lg:col-start-1 lg:row-start-1"
+        />
 
-      <EmployeeTimesheetPanel
-        month={month}
-        days={groupedDays}
-        totalRecords={totalRecords}
-        bulkTransferPercentage={bulkTransferPercentage}
-        isLoading={timesheetsLoading}
-        isFetchingNextPage={isFetchingNextPage}
-        observerRef={observerRef}
-      />
+        <EmployeeTimesheetPanel
+          month={month}
+          days={groupedDays}
+          totalRecords={totalRecords}
+          bulkTransferPercentage={bulkTransferPercentage}
+          isLoading={timesheetsLoading}
+          isFetchingNextPage={isFetchingNextPage}
+          observerRef={observerRef}
+          className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        />
 
-      <section id="employee-bank" className="scroll-mt-4">
-        <EmployeeBankInfoCard profile={profile!} />
-      </section>
+        <section id="employee-bank" className="order-3 scroll-mt-4 lg:col-start-1 lg:row-start-2">
+          <EmployeeBankInfoCard profile={profile!} />
+        </section>
+      </div>
 
       <ChangePasswordSheet
         open={passwordSheetOpen}

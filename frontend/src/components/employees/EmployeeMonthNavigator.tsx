@@ -51,7 +51,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
   return (
     <div
       className={cn(
-        "ct-card grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-base-300 bg-base-100 p-1.5 shadow-[var(--employee-shadow)]",
+        "ct-card grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-base-300 bg-base-100/90 p-1.5 shadow-[var(--employee-shadow)] backdrop-blur",
         className
       )}
       role="group"
@@ -76,10 +76,10 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
             <span className="flex min-w-0 items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[var(--employee-accent)]" aria-hidden="true" />
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
               <span className="employee-type-month-title truncate tabular-nums">Tháng {month.shortLabel}</span>
             </span>
-            <span className="employee-type-label-caps -mt-0.5 text-slate-400">Kỳ bảng công</span>
+            <span className="employee-type-label-caps -mt-0.5 text-base-content/40">Kỳ bảng công</span>
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-[min(328px,calc(100vw-32px))] rounded-xl p-3" align="center">

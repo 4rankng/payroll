@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createFlexibleEmployeeHomeModel } from "./mobileHome";
+import {
+  createFlexibleEmployeeHomeModel,
+  createRegularEmployeeHomeModel,
+} from "./mobileHome";
 import type { AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 
 const baseInfo: AdvancePaymentInfo = {
@@ -132,6 +135,59 @@ describe("createFlexibleEmployeeHomeModel", () => {
       expect.objectContaining({ label: "Đã nhận", value: expect.stringContaining("9.360.000") }),
       expect.objectContaining({ label: "Đang chờ", value: expect.stringContaining("0") }),
       expect.objectContaining({ label: "Hạn mức", value: expect.stringContaining("9.360.000") }),
+    ]);
+  });
+});
+
+describe("createRegularEmployeeHomeModel", () => {
+  const baseInput = {
+    monthLabel: "Tháng 07/2026",
+    monthlyTotalSalary: 2_772_000,
+    monthlyTotalHours: 61,
+    totalPayable: 2_772_000,
+    totalPaid: 2_772_000,
+    workDayCount: 6,
+    totalRecords: 10,
+    hasBankInfo: true,
+    unreadCount: 1,
+  };
+
+  it("shows a fully received salary amount only once", () => {
+    const model = createRegularEmployeeHomeModel(baseInput);
+
+    expect(model.amountDescriptionLabel).toBe("Ngày làm việc");
+    expect(model.amountDescription).toBe("6 ngày");
+    expect(model.metrics).toEqual([
+      expect.objectContaining({ label: "Tổng công", value: "61 giờ" }),
+    ]);
+  });
+
+  it("keeps monetary metrics when their values add distinct information", () => {
+    const model = createRegularEmployeeHomeModel({
+      ...baseInput,
+      monthlyTotalSalary: 3_000_000,
+      totalPayable: 2_700_000,
+      totalPaid: 1_200_000,
+    });
+
+    expect(model.metrics.map((metric) => metric.label)).toEqual([
+      "Tổng công",
+      "Có thể trả",
+      "Đã nhận",
+    ]);
+  });
+
+  it("does not repeat equal payable and received amounts", () => {
+    const model = createRegularEmployeeHomeModel({
+      ...baseInput,
+      monthlyTotalSalary: 3_000_000,
+      totalPayable: 1_200_000,
+      totalPaid: 1_200_000,
+    });
+
+    expect(model.metrics.map((metric) => metric.label)).toEqual([
+      "Tổng công",
+      "Đã nhận",
     ]);
   });
 });

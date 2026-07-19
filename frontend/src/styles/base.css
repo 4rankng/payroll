@@ -334,7 +334,7 @@
     border: 1px solid var(--employee-border);
     border-radius: var(--employee-radius-card);
     background: var(--employee-surface);
-    box-shadow: none;
+    box-shadow: var(--employee-shadow);
   }
 
   .employee-icon-button {
@@ -363,13 +363,11 @@
     --employee-action-toolbar-block-size: 5.5rem;
   }
 
-  /* Employee portal surfaces are intentionally flat. Keep this scope narrow so
-     admin and partner elevations retain their existing visual language. */
-  .employee-mobile-page,
-  .employee-mobile-page *,
-  .employee-mobile-page *::before,
-  .employee-mobile-page *::after {
-    box-shadow: none !important;
+  .employee-mobile-page {
+    background-color: var(--employee-page);
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.96) 0, rgba(255, 255, 255, 0) 34rem),
+      radial-gradient(circle at 92% 18rem, rgba(8, 120, 62, 0.045) 0, rgba(8, 120, 62, 0) 26rem);
   }
 
   /* ========================================================================

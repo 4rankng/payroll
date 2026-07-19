@@ -61,29 +61,29 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
       className={cn(
         'flex min-h-16 items-center gap-3 rounded-xl border p-3 transition-colors',
         isSubscribed
-          ? 'border-employee-200 bg-employee-50'
-          : 'border-border bg-card',
+          ? 'border-success/20 bg-success/5'
+          : 'border-base-300 bg-base-100',
         isLoading && 'opacity-60',
         className
       )}
     >
       <div className={cn(
         'flex h-9 w-9 items-center justify-center rounded-full',
-        isSubscribed ? 'bg-employee-100' : 'bg-muted'
+        isSubscribed ? 'bg-success/10' : 'bg-base-200'
       )}>
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : isSubscribed ? (
-          <Bell className="h-4 w-4 text-employee-700" />
+          <Bell className="h-4 w-4 text-success" />
         ) : (
           <Bell className="h-4 w-4 text-muted-foreground" />
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-semibold', isSubscribed ? 'text-employee-700' : 'text-foreground')}>
+        <p className={cn('text-sm font-semibold', isSubscribed ? 'text-success' : 'text-base-content')}>
           Thông báo đẩy
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-base-content/55">
           {isSubscribed ? 'Đã bật — nhận thông báo ngay trên thiết bị' : 'Bật thông báo đẩy trên thiết bị'}
         </p>
       </div>

@@ -32,7 +32,7 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
     <div
       className={cn(
         'group flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors',
-        isUnread ? 'bg-white hover:bg-gray-50' : 'bg-white hover:bg-gray-50 opacity-75',
+        isUnread ? 'bg-base-100 hover:bg-base-200/60' : 'bg-base-100 hover:bg-base-200/60 opacity-75',
         className
       )}
       onClick={handleClick}
@@ -53,7 +53,7 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
           </h4>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-xs text-gray-400 tabular-nums">{formatNotificationDate(notification.created_at)}</span>
-            {isUnread && <div className="w-1.5 h-1.5 rounded-full shrink-0 bg-employee" />}
+            {isUnread && <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
           </div>
         </div>
 
@@ -63,12 +63,12 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
           </p>
           {isUnread && showMarkAsRead && (
             <button
-              className="h-6 w-6 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:bg-green-50"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-success/10 group-hover:opacity-100"
               onClick={handleMarkAsRead}
               disabled={markAsRead.isPending}
               aria-label="Đánh dấu đã đọc"
             >
-              <Check className="h-3.5 w-3.5 text-employee" />
+              <Check className="h-3.5 w-3.5 text-success" />
             </button>
           )}
         </div>

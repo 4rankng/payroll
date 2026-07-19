@@ -14,12 +14,23 @@ import { formatCurrency } from '@/utils/formatters';
 import { assetService } from '@/services/api/asset.service';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { Receipt, X, ExternalLink, Calendar, User, FileText, DollarSign, Link2, Download, Pencil } from 'lucide-react';
+import { Receipt, X, ExternalLink, Calendar, User, FileText, DollarSign, Link2, Download, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { UrlInput } from '@/components/ui/UrlInput';
 import { FileUpload } from '@/components/ui/FileUpload';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useUploadAsset, useDownloadAsset } from '@/hooks/api/useAssets';
 import { useUpdateTransactionEvidence } from '@/hooks/transactions/useUpdateTransactionEvidence';
+import { useDeleteTransaction } from '@/hooks/transactions/useDeleteTransaction';
 import { SettlementHistorySection } from '@/components/transaction/SettlementHistorySection';
 import type { ModalConfig } from '@/types/modal-config.types';
 
@@ -76,11 +87,13 @@ function TransactionDetailsSheetComponent({
   const updateEvidence = useUpdateTransactionEvidence();
   const uploadAsset = useUploadAsset();
   const downloadAsset = useDownloadAsset();
+  const deleteTransaction = useDeleteTransaction();
 
   const [isEditingEvidence, setIsEditingEvidence] = useState(false);
   const [evidenceUrl, setEvidenceUrl] = useState('');
   const [selectedEvidenceFile, setSelectedEvidenceFile] = useState<File | null>(null);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!transaction) {
@@ -91,6 +104,7 @@ function TransactionDetailsSheetComponent({
     setSelectedEvidenceFile(null);
     setEvidenceError(null);
     setIsEditingEvidence(false);
+    setIsDeleteDialogOpen(false);
   }, [transaction]);
 
   const isMutatingEvidence = useMemo(() => {
@@ -292,6 +306,20 @@ function TransactionDetailsSheetComponent({
     });
   };
 
+  const handleConfirmDelete = useCallback(() => {
+    if (!transaction) return;
+
+    deleteTransaction.mutate(
+      { id: transaction.id },
+      {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          onClose();
+        },
+      },
+    );
+  }, [transaction, deleteTransaction, onClose]);
+
   if (isLoading || !transaction) {
     return (
       <SlideSheetTemplate
@@ -362,6 +390,19 @@ function TransactionDetailsSheetComponent({
             {transaction.status === 'settled' && !transaction.reversed_transaction_id && (
               <Button type="button" variant="destructive" size="sm" onClick={handleReverseClick} className="min-h-11 flex-1 px-3 min-[420px]:flex-none">
                 Đảo ngược
+              </Button>
+            )}
+            {transaction.status === 'pending' && !transaction.reversed_transaction_id && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                disabled={deleteTransaction.isPending}
+                className="min-h-11 flex-1 px-3 min-[420px]:flex-none"
+              >
+                <Trash2 className="h-4 w-4" />
+                Hủy giao dịch
               </Button>
             )}
           </div>
@@ -615,6 +656,35 @@ function TransactionDetailsSheetComponent({
         {/* Settlement History Section */}
         <SettlementHistorySection transaction={transaction} />
       </div>
+
+      {/* Cancel pending transaction confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy giao dịch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hủy giao dịch sẽ xóa vĩnh viễn giao dịch này và các bút toán sổ cái liên quan. Hành động không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteTransaction.isPending}>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleteTransaction.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteTransaction.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang hủy...
+                </>
+              ) : (
+                'Xác nhận hủy'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SlideSheetTemplate>
   );
 }

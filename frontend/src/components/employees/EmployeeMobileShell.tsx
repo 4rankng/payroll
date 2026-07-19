@@ -113,7 +113,7 @@ export function EmployeeMobileShell({
 
       <main
         className={cn(
-          "employee-portal-card-stack mx-auto max-w-6xl space-y-6 px-4 py-4 pb-[calc(var(--employee-action-toolbar-block-size)+2rem+env(safe-area-inset-bottom))] lg:px-6 lg:py-6",
+          "employee-portal-card-stack mx-auto max-w-6xl space-y-5 px-3.5 py-4 pb-[calc(var(--employee-action-toolbar-block-size)+2rem+env(safe-area-inset-bottom))] sm:px-5 lg:px-8 lg:py-8",
           contentClassName
         )}
       >

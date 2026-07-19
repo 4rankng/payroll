@@ -18,16 +18,16 @@ type NotificationVariant = 'employee' | 'corporate';
 
 const THEME = {
   employee: {
-    headerBg: 'bg-employee',
-    activeTabText: 'text-employee-700',
-    activeTabCount: 'bg-employee-100 text-employee-700',
-    loaderColor: 'text-employee',
+    headerBg: 'bg-neutral',
+    activeTabText: 'text-neutral',
+    activeTabCount: 'bg-success/10 text-success',
+    loaderColor: 'text-success',
   },
   corporate: {
-    headerBg: 'bg-employee',
-    activeTabText: 'text-employee-700',
-    activeTabCount: 'bg-employee-100 text-employee-700',
-    loaderColor: 'text-employee',
+    headerBg: 'bg-primary',
+    activeTabText: 'text-primary',
+    activeTabCount: 'bg-primary/10 text-primary',
+    loaderColor: 'text-primary',
   },
 } as const;
 
@@ -132,9 +132,9 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           side={isMobile ? "bottom" : "right"}
           title="Thông báo"
           description="Danh sách thông báo của bạn"
-          data-theme="congtruong"
+          data-theme={variant === 'employee' ? 'employee' : 'congtruong'}
           className={cn(
-            "!w-full sm:!w-[420px] p-0 flex flex-col overflow-hidden bg-white",
+            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-base-100 p-0 text-base-content",
             isMobile
               ? "h-auto max-h-[92dvh] rounded-t-[1.5rem] shadow-[0_-10px_32px_rgba(16,24,40,0.16)]"
               : "h-full"
@@ -143,30 +143,30 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
 
           {/* Mobile drag handle */}
           {isMobile && (
-            <div className={cn("flex justify-center pt-2.5 pb-1 flex-shrink-0", theme.headerBg)}>
-              <div className="h-1 w-9 rounded-full bg-white/25" />
+            <div className={cn("flex flex-shrink-0 justify-center pb-1 pt-2.5", theme.headerBg)}>
+              <div className="h-1 w-9 rounded-full bg-neutral-content/25" />
             </div>
           )}
 
           {/* Header */}
           <div
-            className={cn("text-white px-4 pb-4", theme.headerBg)}
+            className={cn("px-4 pb-4 text-neutral-content", theme.headerBg)}
             style={{ paddingTop: headerPaddingTop }}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
-                className="ct-btn ct-btn-ghost ct-btn-circle h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-white hover:bg-white/20"
+                className="ct-btn ct-btn-ghost ct-btn-circle h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-neutral-content hover:bg-neutral-content/10"
                 aria-label="Đóng"
               >
-                <ArrowLeft className="h-6 w-6 text-white" />
+                <ArrowLeft className="h-6 w-6" />
               </button>
-              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-white">Thông báo</h2>
+              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-neutral-content">Thông báo</h2>
               {activeView === 'unread' && unreadNotifications.length > 0 ? (
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="ct-btn ct-btn-ghost h-11 min-h-11 max-w-[6.75rem] shrink-0 gap-1.5 border-0 px-2 text-xs font-medium text-white/90 hover:bg-white/20 disabled:bg-transparent"
+                  className="ct-btn ct-btn-ghost h-11 min-h-11 max-w-[6.75rem] shrink-0 gap-1.5 border-0 px-2 text-xs font-medium text-neutral-content/80 hover:bg-neutral-content/10 disabled:bg-transparent"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -180,7 +180,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             </div>
 
             {/* Tab switcher */}
-            <div role="tablist" aria-label="Lọc thông báo" className="ct-tabs ct-tabs-box grid grid-cols-2 gap-1 rounded-xl bg-white/20 p-1">
+            <div role="tablist" aria-label="Lọc thông báo" className="ct-tabs ct-tabs-box grid grid-cols-2 gap-1 rounded-xl bg-neutral-content/10 p-1">
               {([
                 { value: 'unread' as const, label: 'Chưa đọc', count: unreadCount },
                 { value: 'all'    as const, label: 'Tất cả',   count: null },
@@ -193,14 +193,14 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   onClick={() => setActiveView(tab.value)}
                   className={`ct-tab h-11 min-h-11 w-full justify-center gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
-                      ? `ct-tab-active bg-white shadow-sm ${theme.activeTabText}`
-                      : 'text-white/80 hover:text-white'
+                      ? `ct-tab-active bg-base-100 shadow-sm ${theme.activeTabText}`
+                      : 'text-neutral-content/65 hover:text-neutral-content'
                   }`}
                 >
                   {tab.label}
                   {tab.count != null && tab.count > 0 && (
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                      activeView === tab.value ? theme.activeTabCount : 'bg-white/30 text-white'
+                      activeView === tab.value ? theme.activeTabCount : 'bg-neutral-content/15 text-neutral-content'
                     }`}>
                       {tab.count > 99 ? '99+' : tab.count}
                     </span>
@@ -211,13 +211,13 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           </div>
 
           {/* Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-base-100">
             {renderContent()}
           </div>
 
           {/* Push notification toggle — pinned footer */}
           <div
-            className="border-t bg-white px-3 py-2"
+            className="border-t border-base-300 bg-base-100 px-3 py-2"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
           >
             <PushNotificationToggle />

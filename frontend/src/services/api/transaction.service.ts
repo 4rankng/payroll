@@ -378,6 +378,14 @@ class TransactionService {
     }
     return response.data.data;
   }
+
+  /**
+   * Cancel (soft-delete) a pending transaction. Only transactions in "pending"
+   * status can be canceled — settled ones must be reversed.
+   */
+  async deleteTransaction(id: number): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.transactions.byId(id));
+  }
 }
 
 export const transactionService = new TransactionService();
