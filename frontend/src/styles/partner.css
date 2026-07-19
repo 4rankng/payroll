@@ -1,0 +1,96 @@
+/*
+ * partner.css — Partner surface scoped styles.
+ *
+ * Scope strategy (mirrors admin's two-part pattern exactly):
+ *   1. html.partner-route-active  → base/global rules + portal-reach rules.
+ *      The class is added to <html> by PartnerLayout's useEffect (gated on
+ *      isPartner, see PartnerLayout.tsx). Because <html> is an ancestor of
+ *      every node including Radix portals rendered to document.body, this
+ *      selector reaches them. See admin-daisy.css:393-409 for admin's
+ *      equivalent pattern.
+ *   2. [data-partner-ui]           → in-scope content + inline popovers.
+ *      The attribute is set on PartnerLayout's wrapper div. Used for
+ *      presentation rules and popper content rendered inside the wrapper.
+ *      See admin-daisy.css:1-48 for admin's equivalent pattern.
+ *
+ * Token overrides follow admin's dual-scope pattern at variables.css:313-314:
+ *   [data-admin-ui], html.admin-route-active { --background: ...; ... }
+ * Phase 1 ships NO token overrides for partner — `--partner-accent` and
+ * related tokens already live at :root in variables.css:211-213. Phase 2
+ * audit will determine if any token additions are needed.
+ *
+ * Forbidden:
+ *   - :root selectors (would leak globally).
+ *   - Selectors that can match when html.partner-route-active is absent AND
+ *     no [data-partner-ui] node exists.
+ */
+
+/* ============================================================================
+ * Layer 1: in-scope content (under the wrapper attribute).
+ * Matches admin-daisy.css:1-6 pattern.
+ * ======================================================================== */
+
+[data-partner-ui] {
+  color: hsl(var(--foreground));
+  font-feature-settings: "tnum" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+}
+
+[data-partner-ui] ::selection {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* Inline popper content rendered inside the wrapper.
+   Matches admin-daisy.css:35 pattern. Radix popovers that render into the
+   wrapper subtree (e.g. inline dropdowns) get this treatment. Portals that
+   render to document.body are handled below under html.partner-route-active. */
+[data-partner-ui] [data-radix-popper-content-wrapper] {
+  z-index: 80 !important;
+}
+
+/* ============================================================================
+ * Layer 2: base/global + portal-reach rules (under the html class).
+ * Matches admin-daisy.css:393-409 pattern.
+ * ======================================================================== */
+
+/* Focus-visible ring for partner routes — applies to both in-scope content
+   AND dialogs/menus/listboxes rendered as portals to document.body.
+   See admin-daisy.css:392-397 for admin's equivalent. */
+html.partner-route-active :is([role="dialog"], [role="menu"], [role="listbox"])
+  :is(button, a, input, textarea, [role="button"], [role="option"]):focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Portal-reach popover styling. Portals render to document.body, so the
+   [data-partner-ui] wrapper cannot reach them — html.partner-route-active
+   does. See admin-daisy.css:399-409. */
+html.partner-route-active [role="dialog"] {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+}
+
+html.partner-route-active :is([role="menu"], [role="listbox"]) {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+}
+
+/* ============================================================================
+ * Reduced motion (scoped to partner).
+ * Matches admin-daisy.css:39-48 pattern.
+ * ======================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-partner-ui] *,
+  [data-partner-ui] *::before,
+  [data-partner-ui] *::after,
+  html.partner-route-active :is([role="dialog"], [role="menu"], [role="listbox"]) * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

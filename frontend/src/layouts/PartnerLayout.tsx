@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import PartnerSidebar from "@/components/PartnerSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -8,6 +9,7 @@ import { SidebarToggle } from "@/components/SidebarToggle";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { Briefcase, Users, Calendar, LayoutDashboard } from "lucide-react";
 import type { NavGroup } from "@/components/MobileBottomNav";
+import { useAuth } from "@/contexts";
 
 const PARTNER_NAV_GROUPS: NavGroup[] = [
   { title: "Tổng quan", icon: LayoutDashboard, path: "/partner/dashboard", end: true },
@@ -16,9 +18,18 @@ const PARTNER_NAV_GROUPS: NavGroup[] = [
   { title: "Bảng công", icon: Calendar, path: "/partner/timesheet" },
 ];
 
-const PartnerLayoutInner = () => {
+const PartnerLayoutInner = ({ isPartner }: { isPartner: boolean }) => {
+  useEffect(() => {
+    if (!isPartner) return;
+    document.documentElement.classList.add("partner-route-active");
+    return () => document.documentElement.classList.remove("partner-route-active");
+  }, [isPartner]);
+
   return (
-    <div className="relative flex h-dvh w-full group/layout">
+    <div
+      data-partner-ui={isPartner ? "" : undefined}
+      className="relative flex h-dvh w-full group/layout"
+    >
       <PartnerSidebar />
       <SidebarToggle />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -38,10 +49,13 @@ const PartnerLayoutInner = () => {
 };
 
 const PartnerLayout = () => {
+  const { user } = useAuth();
+  const isPartner = user?.role === "partner";
+
   return (
     <ProtectedRoute requiredRole="partner">
       <SidebarProvider defaultOpen={true}>
-        <PartnerLayoutInner />
+        <PartnerLayoutInner isPartner={isPartner} />
         <MobileBottomNav groups={PARTNER_NAV_GROUPS} />
         <NotificationFAB />
       </SidebarProvider>

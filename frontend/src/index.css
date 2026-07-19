@@ -3,6 +3,7 @@
 @import './styles/utilities.css';
 @import './styles/premium.css';
 @import './styles/admin-daisy.css';
+@import './styles/partner.css';
 
 @tailwind base;
 @tailwind components;
