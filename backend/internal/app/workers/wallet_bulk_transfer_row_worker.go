@@ -13,26 +13,33 @@ import (
 	"api-server/internal/app/services/disbursement"
 	"api-server/internal/app/services/wallet_bulk"
 	"api-server/internal/domain"
-	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/domain/ports/infrastructure"
+	domaintx "api-server/internal/domain/transactions"
+	"api-server/internal/domain/wallet"
 	"api-server/internal/pkg/clock"
 )
 
 // WalletBulkTransferRowWorker processes ONE row of an uploaded bulk transfer
 // file. It mirrors disbursement_execute_worker.go:73-237 line-for-line, with
-// two key differences:
+// these key additions:
 //
-//  1. It calls ensureBulkBatchLink to stamp (bulk_transfer_batch_id,
-//     bulk_transfer_order, vfic_code) onto the wallet_payment so SUM(fee)
-//     GROUP BY bulk_transfer_batch_id works at ledger time.
-//  2. When the row reaches a terminal state, it calls markRowTerminal which
-//     atomically detects batch completion (via UpdateWithLock) and enqueues
-//     the book_batch_ledger task if this was the last row.
+//  1. Step 0 pre-flight balance check (C6 fix): if the wallet can't cover
+//     this row's amount, skip without charging a fee. Mirrors canonical Step 0.
+//  2. Terminal-error accounting (C1 fix): when Initiate returns
+//     ErrDuplicatePaymentInProgress or ErrFeeResolution, no wallet_payment
+//     row was inserted. We decrement the batch's total_count so the
+//     completion threshold (success+failed==total) still fires.
+//  3. ensureBulkBatchLink stamps (bulk_transfer_batch_id, bulk_transfer_order,
+//     vfic_code) onto the wallet_payment so SUM(fee) GROUP BY
+//     bulk_transfer_batch_id works at ledger time.
+//  4. markRowTerminal atomically detects batch completion (via UpdateWithLock)
+//     and enqueues the book_batch_ledger task if this was the last row.
 //
 // The wallet_payments insertion is delegated to WalletPaymentService.Initiate
 // (sole insertion point — fee stamps correctly from the schedule at INSERT).
 type WalletBulkTransferRowWorker struct {
 	walletPaymentSvc WalletPaymentInitiator
+	walletSvc        WalletBalanceReader // for Step 0 balance guard; nil = skip guard
 	registry         DisbursementRegistry
 	paymentRepo      domaintx.WalletPaymentRepository
 	batchRepo        domain.BulkTransferBatchRepository
@@ -49,14 +56,24 @@ type WalletPaymentInitiator interface {
 	RecordSyncResponse(ctx context.Context, requestID string, result disbursement.SyncResult) (*domaintx.WalletPayment, error)
 }
 
+// WalletBalanceReader is the narrow port for the Step-0 pre-flight balance
+// check. Implemented by wallet.WalletService; nil-safe (worker skips the
+// guard when nil — useful in tests).
+type WalletBalanceReader interface {
+	GetBalance(ctx context.Context) (*wallet.WalletBalance, error)
+}
+
 // DisbursementRegistry is the narrow port for resolving the active provider.
 type DisbursementRegistry interface {
 	Active(ctx context.Context) (infrastructure.DisbursementProvider, error)
 }
 
-// NewWalletBulkTransferRowWorker wires the worker.
+// NewWalletBulkTransferRowWorker wires the worker. walletSvc may be nil —
+// when nil, the Step-0 balance guard is skipped (mirrors the canonical
+// worker's `if w.walletSvc != nil` guard).
 func NewWalletBulkTransferRowWorker(
 	walletPaymentSvc WalletPaymentInitiator,
+	walletSvc WalletBalanceReader,
 	registry DisbursementRegistry,
 	paymentRepo domaintx.WalletPaymentRepository,
 	batchRepo domain.BulkTransferBatchRepository,
@@ -68,6 +85,7 @@ func NewWalletBulkTransferRowWorker(
 	}
 	return &WalletBulkTransferRowWorker{
 		walletPaymentSvc: walletPaymentSvc,
+		walletSvc:        walletSvc,
 		registry:         registry,
 		paymentRepo:      paymentRepo,
 		batchRepo:        batchRepo,
@@ -102,6 +120,23 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 
 	logger := w.logger.With("batch_id", p.BatchID, "vfic", p.Row.VFICCode)
 
+	// === Step 0: Pre-flight balance check (C6 fix — mirrors canonical worker Step 0).
+	// OnePay charges per call to the transfer endpoint; an underfunded wallet
+	// would still cost 3,850 VND per row at failure. Skip without charging.
+	if w.walletSvc != nil {
+		balance, balErr := w.walletSvc.GetBalance(ctx)
+		if balErr != nil {
+			logger.Warn("wallet_bulk_row: balance check failed, proceeding", "error", balErr)
+		} else if balance != nil && balance.Available < p.Row.Amount {
+			logger.Info("wallet_bulk_row: skipping — insufficient balance",
+				"available", balance.Available, "requested", p.Row.Amount)
+			// Decrement total_count — no row was inserted, no fee charged,
+			// the orphan-recovery path (top-up + manual re-enqueue) is the
+			// admin's remedy.
+			return w.skipRow(ctx, p.BatchID)
+		}
+	}
+
 	// === Step 1: Initiate wallet_payment (sole insertion point — fee stamps here) ===
 	row, err := w.walletPaymentSvc.Initiate(ctx, disbursement.InitiateInput{
 		RequestID:          p.Row.VFICCode, // ≤20 chars
@@ -116,14 +151,21 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 	if err != nil {
 		// === CANONICAL TERMINAL-ERROR BRANCHES ===
 		if errors.Is(err, disbursement.ErrDuplicatePaymentInProgress) {
+			// C1 fix: no wallet_payment row was inserted, so it will never
+			// count toward batch completion. Decrement total_count and run
+			// the completion detector so the batch can still finish.
 			logger.Info("wallet_bulk_row: skipping — duplicate payment already in progress")
-			return nil
+			return w.skipRow(ctx, p.BatchID)
 		}
 		if errors.Is(err, disbursement.ErrFeeResolution) {
 			// Fee schedule misconfigured — config gap, not transient. Don't
-			// retry (schedule/allowlist entry must be added).
+			// retry (schedule/allowlist entry must be added). Also decrement
+			// total_count so the batch doesn't deadlock (C1 fix).
 			logger.Error("wallet_bulk_row: fee resolution failed — terminal (config gap)",
 				"error", err)
+			if decErr := w.batchRepo.DecrementTotalCount(ctx, p.BatchID, 1); decErr != nil {
+				logger.Error("wallet_bulk_row: decrement total_count failed", "error", decErr)
+			}
 			return fmt.Errorf("initiate: %w: fee config gap", asynqlib.SkipRetry)
 		}
 		return fmt.Errorf("initiate: %w", err)
@@ -206,6 +248,21 @@ func (w *WalletBulkTransferRowWorker) ensureBulkBatchLink(ctx context.Context, r
 	}
 }
 
+// skipRow handles the case where a row is skipped BEFORE any wallet_payment
+// is inserted (insufficient balance, ErrDuplicatePaymentInProgress). It
+// atomically decrements the batch's total_count so the success+failed==total
+// threshold still fires, then runs the completion detector.
+//
+// Without this, skipped rows would be invisible to markRowTerminal and the
+// batch would strand in `processing` forever (C1 fix).
+func (w *WalletBulkTransferRowWorker) skipRow(ctx context.Context, batchID uint64) error {
+	if err := w.batchRepo.DecrementTotalCount(ctx, batchID, 1); err != nil {
+		w.logger.Error("wallet_bulk_row: decrement total_count failed", "batch_id", batchID, "error", err)
+		return fmt.Errorf("skipRow: decrement total_count: %w", err)
+	}
+	return w.markRowTerminal(ctx, batchID)
+}
+
 // markRowFailed routes a row through the FSM via RecordSyncResponse, NOT via
 // direct UpdateStatus (red-team v2 Security C5). feeWaived=true zeroes the
 // stamped fee when the failure was a pre-flight rejection.
@@ -223,7 +280,10 @@ func (w *WalletBulkTransferRowWorker) markRowFailed(ctx context.Context, batchID
 
 // extractErrorCode pulls a short error tag from the cause. For
 // ErrPreflightValidation we return the canonical "preflight_validation" tag
-// so KQ column I and admin search can find these rows.
+// so KQ column I and admin search can find these rows. For all other errors
+// we return a fixed "transfer_failed" tag — raw error strings can leak DB
+// driver internals / network details into the KQ Excel column I; the full
+// diagnostic stays in error_message (M3 fix).
 func extractErrorCode(err error) string {
 	if err == nil {
 		return ""
@@ -231,7 +291,7 @@ func extractErrorCode(err error) string {
 	if errors.Is(err, infrastructure.ErrPreflightValidation) {
 		return "preflight_validation"
 	}
-	return err.Error()
+	return "transfer_failed"
 }
 
 // markRowTerminal is the atomic batch-completion detector. Uses

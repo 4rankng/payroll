@@ -96,6 +96,13 @@ type BulkTransferBatchRepository interface {
 	Update(ctx context.Context, b *BulkTransferBatch) error
 	UpdateWithLock(ctx context.Context, id uint64, fn func(*BulkTransferBatch) (shouldBook bool, err error)) (*BulkTransferBatch, bool, error)
 	UpdateEnqueueState(ctx context.Context, id uint64, state BulkTransferBatchEnqueueState) error
+	// DecrementTotalCount atomically subtracts n from total_count. Used by
+	// the row worker when a row fails BEFORE a wallet_payment is created
+	// (ErrDuplicatePaymentInProgress, ErrFeeResolution, pre-flight balance
+	// rejection). Without this, those rows would never be counted as terminal
+	// and the batch would never reach the success+failed==total threshold.
+	// Guarded: refuses to push total_count below success_count+failed_count.
+	DecrementTotalCount(ctx context.Context, id uint64, n int) error
 	List(ctx context.Context, filter BulkTransferBatchFilter) ([]*BulkTransferBatch, int64, error)
 	ListByEnqueueState(ctx context.Context, state BulkTransferBatchEnqueueState, olderThan time.Time, limit int) ([]*BulkTransferBatch, error)
 	ListByStatusAndOlderThan(ctx context.Context, status BulkTransferBatchStatus, olderThan time.Time, limit int) ([]*BulkTransferBatch, error)

@@ -241,6 +241,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		)
 		walletBulkRowWorker = workers.NewWalletBulkTransferRowWorker(
 			services.ProviderTransactions,
+			services.Wallet, // Step-0 balance guard (C6 fix); nil-safe inside worker
 			services.DisbursementRegistry,
 			repos.TxWalletPayment,
 			repos.BulkTransferBatch,

@@ -23,12 +23,12 @@ type SyncDispatcher struct {
 // Implemented by *workers.WalletBulkTransferRowWorker; declared here to
 // avoid importing the workers package (test-only).
 type RowWorkerAdapter interface {
-	ProcessRowTask(ctx context.Context, t *asynqlib.Task) error
+	ProcessJob(ctx context.Context, t *asynqlib.Task) error
 }
 
 // BookLedgerAdapter is the narrow port for ProcessBookBatchLedger.
 type BookLedgerAdapter interface {
-	ProcessBookBatchLedgerTask(ctx context.Context, t *asynqlib.Task) error
+	ProcessBookBatchLedger(ctx context.Context, t *asynqlib.Task) error
 }
 
 // EnqueueBulkTransferRow synchronously invokes the row worker.
@@ -38,7 +38,7 @@ func (d *SyncDispatcher) EnqueueBulkTransferRow(payload RowTaskPayload) error {
 		return nil
 	}
 	task := asynqlib.NewTask(TaskBulkTransferRow, mustJSON(payload))
-	return d.RowWorker.ProcessRowTask(context.Background(), task)
+	return d.RowWorker.ProcessJob(context.Background(), task)
 }
 
 // EnqueueBookBatchLedger synchronously invokes the book-ledger handler.
@@ -48,5 +48,5 @@ func (d *SyncDispatcher) EnqueueBookBatchLedger(payload BookLedgerPayload) error
 		return nil
 	}
 	task := asynqlib.NewTask(TaskBookBatchLedger, mustJSON(payload))
-	return d.BookLedgerSvc.ProcessBookBatchLedgerTask(context.Background(), task)
+	return d.BookLedgerSvc.ProcessBookBatchLedger(context.Background(), task)
 }

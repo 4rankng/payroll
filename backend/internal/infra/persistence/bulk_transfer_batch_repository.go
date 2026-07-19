@@ -129,6 +129,32 @@ func (r *BulkTransferBatchRepository) UpdateEnqueueState(ctx context.Context, id
 	return nil
 }
 
+// DecrementTotalCount atomically subtracts n from total_count, guarded so
+// it can never drop below success_count+failed_count (which would cause
+// markRowTerminal's threshold check to never fire). Returns no error when
+// the guard rejects the decrement — the caller treats that as "nothing to do".
+//
+// Used by the row worker when a row errors BEFORE a wallet_payment row is
+// inserted (ErrDuplicatePaymentInProgress, ErrFeeResolution, pre-flight
+// balance rejection). Without this, those rows would be invisible to the
+// batch completion detector.
+func (r *BulkTransferBatchRepository) DecrementTotalCount(ctx context.Context, id uint64, n int) error {
+	if n <= 0 {
+		return nil
+	}
+	// UPDATE bulk_transfer_batches
+	//   SET total_count = GREATEST(total_count - ?, success_count + failed_count)
+	//   WHERE id = ?
+	res := r.DB.WithContext(ctx).
+		Model(&domain.BulkTransferBatch{}).
+		Where("id = ?", id).
+		UpdateColumn("total_count", gorm.Expr("GREATEST(total_count - ?, success_count + failed_count)", n))
+	if res.Error != nil {
+		return fmt.Errorf("bulk_transfer_batches: decrement total_count: %w", res.Error)
+	}
+	return nil
+}
+
 // List returns batches matching the filter, ordered by created_at DESC.
 // Also returns the total count (ignoring Limit/Offset) for pagination.
 func (r *BulkTransferBatchRepository) List(ctx context.Context, filter domain.BulkTransferBatchFilter) ([]*domain.BulkTransferBatch, int64, error) {
