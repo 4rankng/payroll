@@ -47,6 +47,21 @@ export const useBreakpoint = (breakpoint: BreakpointKey): boolean => {
 export const useIsMobile = (): boolean => useBreakpoint('lg');
 
 /**
+ * Convenience hook: returns true when viewport is in the tablet range
+ * (768px ≤ width ≤ 1023px). Useful for opting into tablet-specific layout
+ * branching inside mobile-rendered pages (since useIsMobile treats tablet
+ * as mobile). Does NOT change routing — purely a presentation hint.
+ */
+export const useIsTablet = (): boolean =>
+  useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+
+/**
+ * Convenience hook: returns true when viewport ≥ 768px (Tailwind md breakpoint).
+ * Useful for "tablet or desktop" branches (e.g., show a two-column grid).
+ */
+export const useIsTabletOrAbove = (): boolean => !useBreakpoint('md');
+
+/**
  * Generic media-query hook — matches any CSS media query string.
  * Drop-in replacement for the old useMediaQuery / use-media-query hook.
  */

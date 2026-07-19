@@ -83,9 +83,11 @@ export default {
 		base: false,
 		darkTheme: false,
 		logs: false,
-		// Scope daisyUI tokens to the two product surfaces that opt into the
+		// Scope daisyUI tokens to the product surfaces that opt into the
 		// component library while keeping the legacy shadcn screens isolated.
-		themeRoot: ":where([data-admin-ui], [data-employee-ui])",
+		// Partner reuses the same `congtruong` theme as admin (the name is
+		// pre-existing debt; renaming is a separate refactor).
+		themeRoot: ":where([data-admin-ui], [data-employee-ui], [data-partner-ui])",
 	},
 	theme: {
 		container: {

@@ -13,11 +13,11 @@
  *      presentation rules and popper content rendered inside the wrapper.
  *      See admin-daisy.css:1-48 for admin's equivalent pattern.
  *
- * Token overrides follow admin's dual-scope pattern at variables.css:313-314:
- *   [data-admin-ui], html.admin-route-active { --background: ...; ... }
- * Phase 1 ships NO token overrides for partner — `--partner-accent` and
- * related tokens already live at :root in variables.css:211-213. Phase 2
- * audit will determine if any token additions are needed.
+ * Token overrides follow admin's dual-scope pattern in variables.css:
+ *   [data-partner-ui], html.partner-route-active { --background: ...; ... }
+ * Partner reuses the `congtruong` daisyUI theme (same as admin) via
+ * data-theme="congtruong" on the wrapper div. The theme name is pre-existing
+ * debt; renaming is out of scope.
  *
  * Forbidden:
  *   - :root selectors (would leak globally).
@@ -32,6 +32,7 @@
 
 [data-partner-ui] {
   color: hsl(var(--foreground));
+  font-family: var(--partner-font-body);
   font-feature-settings: "tnum" 1, "liga" 1;
   text-rendering: optimizeLegibility;
 }
@@ -42,11 +43,292 @@
 }
 
 /* Inline popper content rendered inside the wrapper.
-   Matches admin-daisy.css:35 pattern. Radix popovers that render into the
-   wrapper subtree (e.g. inline dropdowns) get this treatment. Portals that
-   render to document.body are handled below under html.partner-route-active. */
+   Matches admin-daisy.css:35 pattern. */
 [data-partner-ui] [data-radix-popper-content-wrapper] {
   z-index: 80 !important;
+}
+
+/* ============================================================================
+ * Shell scope + layout primitives.
+ * Mirrors admin-daisy.css:50-98 (.admin-shell-scope, .admin-shell,
+ * .admin-main, .admin-page-frame, .admin-page-inner).
+ * ======================================================================== */
+
+[data-partner-ui].partner-shell-scope {
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  color: hsl(var(--foreground));
+}
+
+[data-partner-ui] .partner-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at top left, rgba(8, 120, 62, 0.055), transparent 30rem),
+    linear-gradient(180deg, #f8fafb 0%, #f5f7f9 100%);
+}
+
+[data-partner-ui] .partner-main {
+  position: relative;
+}
+
+[data-partner-ui] .partner-page-frame {
+  position: relative;
+  min-height: 100%;
+  margin: 0 auto;
+  max-width: min(100%, 1440px);
+  padding: 0;
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+
+[data-partner-ui] .partner-page-inner {
+  position: relative;
+  min-height: 100%;
+  border-radius: 1.4rem;
+}
+
+/* ============================================================================
+ * Sidebar surface.
+ * Mirrors admin-daisy.css:100-168 (.admin-sidebar-surface).
+ * ======================================================================== */
+
+[data-partner-ui] .partner-sidebar-surface {
+  background:
+    linear-gradient(180deg, rgba(246, 240, 227, 0.08), transparent 16%),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(149 42% 15%) 100%);
+  border-right: 1px solid hsl(var(--sidebar-border));
+}
+
+[data-partner-ui] .partner-sidebar-surface [data-sidebar="sidebar"] {
+  background:
+    radial-gradient(circle at 35% 0%, rgba(255, 224, 148, 0.09), transparent 14rem),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(149 43% 14%) 100%);
+  box-shadow: none;
+}
+
+[data-partner-ui] .partner-sidebar-surface a[aria-current="page"] > div {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.055));
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.045),
+    0 12px 26px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* ============================================================================
+ * Page header.
+ * Mirrors admin-daisy.css:222-279 (.admin-page-header + data-slot sub-selectors).
+ * Used by components/shared/PageHeader which already has data-slot attributes.
+ * ======================================================================== */
+
+[data-partner-ui] .partner-page-header {
+  position: relative;
+  overflow: visible;
+  gap: 0.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-partner-ui] .partner-page-header [data-slot="page-header-icon"] {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid hsl(var(--primary) / 0.14);
+  border-radius: 1rem;
+  background: hsl(var(--primary) / 0.07);
+  color: hsl(var(--primary));
+}
+
+[data-partner-ui] .partner-page-header [data-slot="page-header-icon"] svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: hsl(var(--primary));
+}
+
+[data-partner-ui] .partner-page-header [data-slot="page-header-eyebrow"] {
+  display: none;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+[data-partner-ui] .partner-page-header h1 {
+  margin-top: 0.3rem;
+  font-family: var(--partner-font-display);
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 750;
+}
+
+[data-partner-ui] .partner-page-header [data-slot="page-header-description"] {
+  max-width: 46rem;
+  margin-top: 0.45rem;
+  line-height: 1.55;
+}
+
+[data-partner-ui] .partner-page-header [data-slot="page-header-controls"] button,
+[data-partner-ui] .partner-page-header [data-slot="page-header-controls"] [role="combobox"] {
+  min-height: 2.75rem;
+  border-radius: 0.8rem;
+}
+
+/* ============================================================================
+ * Filter bar.
+ * Mirrors admin-daisy.css:306-320 (.admin-filter-bar).
+ * ======================================================================== */
+
+[data-partner-ui] .partner-filter-bar {
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.78);
+  border-radius: 1.15rem;
+  background: hsl(var(--card) / 0.9);
+  box-shadow: var(--partner-card-shadow);
+}
+
+[data-partner-ui] .partner-filter-bar button,
+[data-partner-ui] .partner-filter-bar input,
+[data-partner-ui] .partner-filter-bar [role="combobox"] {
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+}
+
+/* ============================================================================
+ * Empty state.
+ * Mirrors admin-daisy.css:322-327 (.admin-empty-state).
+ * ======================================================================== */
+
+[data-partner-ui] .partner-empty-state {
+  padding-inline: 1.25rem;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 1.25rem;
+  background: hsl(var(--card) / 0.72);
+}
+
+/* ============================================================================
+ * Dashboard panel.
+ * Mirrors admin-daisy.css:365-372 (.admin-dashboard-panel).
+ * Generic elevated card surface for dashboard widgets.
+ * ======================================================================== */
+
+[data-partner-ui] .partner-dashboard-panel {
+  position: relative;
+  border: 1px solid hsl(var(--border) / 0.78);
+  border-radius: 1.25rem;
+  background: hsl(var(--card));
+  box-shadow: var(--partner-card-shadow);
+}
+
+[data-partner-ui] .partner-dashboard-ledger-strip {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+/* ============================================================================
+ * Data table (partner-scoped presentation).
+ * Mirrors admin-daisy.css:329-359.
+ * ======================================================================== */
+
+[data-partner-ui] [data-slot="data-table-desktop"] {
+  border-color: hsl(var(--border) / 0.8);
+  border-radius: 1.2rem;
+  background: hsl(var(--card) / 0.95);
+  box-shadow: var(--partner-card-shadow);
+}
+
+[data-partner-ui] [data-slot="data-table-desktop"] thead {
+  background: hsl(var(--muted) / 0.78);
+}
+
+[data-partner-ui] [data-slot="data-table-desktop"] th {
+  height: 3rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+ * Pagination.
+ * Mirrors admin-daisy.css:361-363.
+ * ======================================================================== */
+
+[data-partner-ui] .partner-pagination {
+  border-color: hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+/* ============================================================================
+ * Utility classes.
+ * Mirrors admin-daisy.css:458-476.
+ * ======================================================================== */
+
+[data-partner-ui] .partner-kicker {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+[data-partner-ui] .partner-subtle-copy {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+}
+
+[data-partner-ui] .partner-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ============================================================================
+ * Mobile bottom nav (role-agnostic aliases).
+ * Mirrors admin-daisy.css:184-212. The MobileBottomNav component uses these
+ * class names for ALL roles (admin, partner, employee); admin-daisy.css
+ * defines the same rules under .admin-mobile-* names. Both sets exist for
+ * compatibility; future cleanup can consolidate.
+ * ======================================================================== */
+
+[data-partner-ui] .mobile-nav,
+[data-partner-ui] .admin-mobile-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  border-top: 1px solid hsl(var(--border) / 0.85);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -18px 40px -30px rgba(13, 46, 32, 0.4);
+  backdrop-filter: blur(18px);
+}
+
+[data-partner-ui] .mobile-nav::before,
+[data-partner-ui] .admin-mobile-nav::before { content: none; }
+
+[data-partner-ui] .mobile-sheet,
+[data-partner-ui] .admin-mobile-sheet {
+  display: flex;
+  max-height: 82dvh;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid hsl(var(--border));
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -24px 60px -36px rgba(16, 24, 20, 0.55);
+  backdrop-filter: blur(18px);
+}
+
+[data-partner-ui] .mobile-tile,
+[data-partner-ui] .admin-mobile-tile {
+  border: 1px solid hsl(var(--border) / 0.95);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 28px -24px rgba(22, 31, 22, 0.25);
 }
 
 /* ============================================================================
@@ -54,18 +336,12 @@
  * Matches admin-daisy.css:393-409 pattern.
  * ======================================================================== */
 
-/* Focus-visible ring for partner routes — applies to both in-scope content
-   AND dialogs/menus/listboxes rendered as portals to document.body.
-   See admin-daisy.css:392-397 for admin's equivalent. */
 html.partner-route-active :is([role="dialog"], [role="menu"], [role="listbox"])
   :is(button, a, input, textarea, [role="button"], [role="option"]):focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
-/* Portal-reach popover styling. Portals render to document.body, so the
-   [data-partner-ui] wrapper cannot reach them — html.partner-route-active
-   does. See admin-daisy.css:399-409. */
 html.partner-route-active [role="dialog"] {
   border-color: hsl(var(--border));
   background-color: hsl(var(--popover));
@@ -76,6 +352,62 @@ html.partner-route-active :is([role="menu"], [role="listbox"]) {
   border-color: hsl(var(--border));
   background-color: hsl(var(--popover));
   color: hsl(var(--popover-foreground));
+}
+
+/* ============================================================================
+ * Tablet tuning (768–1023px).
+ * The existing useIsMobile hook treats tablet as mobile (renders mobile pages).
+ * These rules polish the mobile layout for tablet comfort without changing
+ * component rendering: slightly larger tap targets, more padding, balanced
+ * grid columns. Pure presentation — no behavior change.
+ * ======================================================================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Page header h1 — smaller than desktop but bigger than mobile */
+  [data-partner-ui] .partner-page-header h1 {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  }
+
+  /* Page frame gets tablet-friendly horizontal padding */
+  [data-partner-ui] .partner-page-frame {
+    padding-inline: 1.25rem;
+  }
+
+  /* Filter bar: relax min-height so pills fit better in wider tablet width */
+  [data-partner-ui] .partner-filter-bar {
+    padding: 0.875rem;
+  }
+}
+
+/* ============================================================================
+ * Desktop (≥1024px) tuning.
+ * Mirrors admin-daisy.css:411-427.
+ * ======================================================================== */
+
+@media (min-width: 1024px) {
+  [data-partner-ui] .partner-page-frame {
+    padding-bottom: 2rem;
+  }
+}
+
+/* ============================================================================
+ * Small screen (<640px) tuning.
+ * Mirrors admin-daisy.css:429-456.
+ * ======================================================================== */
+
+@media (max-width: 639px) {
+  [data-partner-ui] .partner-page-header {
+    gap: 0.6rem;
+  }
+
+  [data-partner-ui] .partner-filter-bar {
+    border-radius: 1rem;
+    padding: 0.625rem;
+  }
+
+  [data-partner-ui] .partner-pagination {
+    border-radius: 1rem;
+  }
 }
 
 /* ============================================================================

@@ -87,9 +87,9 @@ function TrendChip({
       <span
         className={cn(
           'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm',
-          isUp && 'bg-emerald-300/20 text-emerald-100',
-          !isUp && !isFlat && 'bg-rose-300/20 text-rose-100',
-          isFlat && 'bg-white/10 text-white/80',
+          isUp && 'bg-success/20 text-success-foreground',
+          !isUp && !isFlat && 'bg-destructive/20 text-destructive-foreground',
+          isFlat && 'bg-card/10 text-white/80',
         )}
       >
         <Icon className="h-3 w-3" />
@@ -101,9 +101,9 @@ function TrendChip({
     <span
       className={cn(
         'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
-        isUp && 'bg-emerald-50 text-emerald-700',
-        !isUp && !isFlat && 'bg-rose-50 text-rose-700',
-        isFlat && 'bg-slate-100 text-slate-600',
+        isUp && 'bg-success/10 text-success',
+        !isUp && !isFlat && 'bg-destructive/10 text-destructive',
+        isFlat && 'bg-muted text-muted-foreground',
       )}
     >
       <Icon className="h-2.5 w-2.5" />
@@ -117,9 +117,9 @@ function TrendChip({
 // and a LARGE faint outline icon as decorative art bleeding off the right
 // edge of the card. Inspired by user-provided reference (Stripe/Linear feel).
 const TILE_COLORS = {
-  emerald: { iconText: 'text-emerald-600', watermark: 'text-emerald-500/15' },
-  amber:   { iconText: 'text-amber-600',   watermark: 'text-amber-500/15' },
-  blue:    { iconText: 'text-teal-600',    watermark: 'text-teal-500/15' },
+  emerald: { iconText: 'text-success', watermark: 'text-success/15' },
+  amber:   { iconText: 'text-warning', watermark: 'text-warning/15' },
+  blue:    { iconText: 'text-info',    watermark: 'text-info/15' },
 } as const;
 
 function StatTile({
@@ -195,9 +195,9 @@ function StatTile({
 
 // ─── Top employees leaderboard ────────────────────────────────────────────
 const PODIUM_DECOR = [
-  { icon: Crown, color: 'text-amber-500', ring: 'ring-amber-200', accent: 'bg-amber-100 text-amber-700' },
-  { icon: Medal, color: 'text-slate-400', ring: 'ring-slate-200', accent: 'bg-slate-100 text-slate-700' },
-  { icon: Award, color: 'text-amber-700/70', ring: 'ring-orange-200', accent: 'bg-orange-100 text-orange-700' },
+  { icon: Crown, color: 'text-warning', ring: 'ring-warning/30', accent: 'bg-warning/10 text-warning' },
+  { icon: Medal, color: 'text-muted-foreground', ring: 'ring-border', accent: 'bg-muted text-muted-foreground' },
+  { icon: Award, color: 'text-warning/70', ring: 'ring-warning/20', accent: 'bg-warning/10 text-warning' },
 ];
 
 function PodiumCard({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: number }) {
@@ -246,7 +246,7 @@ function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: numb
         <div className="flex items-center gap-2">
           <span className="text-[13px] font-semibold text-foreground truncate">{item.employee_name}</span>
           {!item.is_active && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 shrink-0">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-semibold text-destructive shrink-0">
               <UserX className="h-2.5 w-2.5" />
               Nghỉ
             </span>
@@ -255,7 +255,7 @@ function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: numb
         <div className="mt-1 flex items-center gap-2">
           <div className="h-1 flex-1 rounded-full bg-muted/50 overflow-hidden max-w-[120px]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-400 to-violet-500"
+              className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -334,8 +334,8 @@ const PartnerDashboardPage = () => {
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_27rem)] p-4 lg:p-8">
     <div className="max-w-[1320px] mx-auto space-y-5">
-      <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card px-5 py-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:px-6">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[24px] border-emerald-100/70" />
+      <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card px-5 py-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:px-6">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[24px] border-primary/15" />
         <div className="relative">
         <PageHeader
           title="Tổng quan"
@@ -353,7 +353,7 @@ const PartnerDashboardPage = () => {
       {isLoading ? (
         <HeroSkeleton />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in-up">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in-up">
           {/* Left: big payout hero card */}
           <div className="lg:col-span-3 relative min-h-[264px] overflow-hidden rounded-3xl border border-emerald-200/15 p-6 lg:p-8 text-white shadow-[0_24px_56px_-30px_rgba(6,69,46,0.64)]">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#043C27_0%,#08783E_56%,#16A05E_100%)]" />
@@ -432,7 +432,7 @@ const PartnerDashboardPage = () => {
       )}
 
       {/* ── ANALYTICS GRID: workforce donut + leaderboard ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Workforce donut */}
         <PartnerWorkforceOverviewCard
           active={data?.active_employees ?? 0}
@@ -446,7 +446,7 @@ const PartnerDashboardPage = () => {
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><Crown className="h-3.5 w-3.5" /></span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-warning/10 text-warning"><Crown className="h-3.5 w-3.5" /></span>
                 Top nhân viên được trả lương cao nhất
               </h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">

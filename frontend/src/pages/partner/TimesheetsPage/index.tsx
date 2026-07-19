@@ -55,7 +55,7 @@ function TimesheetStatsRow({
 }: TimesheetStatsRowProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-2.5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="rounded-xl border border-border/60 bg-card px-3 py-2.5">
             <div className="space-y-1.5">
@@ -74,8 +74,8 @@ function TimesheetStatsRow({
       label: "Nhân viên",
       value: employeeCount,
       icon: Users,
-      iconText: "text-emerald-600",
-      watermark: "text-emerald-500/15",
+      iconText: "text-success",
+      watermark: "text-success/15",
       active: false,
       onClick: undefined as (() => void) | undefined,
     },
@@ -84,8 +84,8 @@ function TimesheetStatsRow({
       label: "Tổng công",
       value: totalEntries,
       icon: ClipboardList,
-      iconText: "text-slate-600",
-      watermark: "text-slate-500/15",
+      iconText: "text-muted-foreground",
+      watermark: "text-muted-foreground/15",
       active: false,
       onClick: undefined,
     },
@@ -94,8 +94,8 @@ function TimesheetStatsRow({
       label: "Chờ duyệt",
       value: pendingCount,
       icon: AlertCircle,
-      iconText: pendingCount > 0 ? "text-amber-600" : "text-muted-foreground",
-      watermark: pendingCount > 0 ? "text-amber-500/15" : "text-slate-500/10",
+      iconText: pendingCount > 0 ? "text-warning" : "text-muted-foreground",
+      watermark: pendingCount > 0 ? "text-warning/15" : "text-muted-foreground/10",
       active: statusFilter === "pending_approval",
       onClick: pendingCount > 0
         ? () => onToggleStatus(statusFilter === "pending_approval" ? "all" : "pending_approval")
@@ -106,8 +106,8 @@ function TimesheetStatsRow({
       label: "NV chờ TT",
       value: pendingEmployees,
       icon: Wallet,
-      iconText: pendingEmployees > 0 ? "text-teal-600" : "text-muted-foreground",
-      watermark: pendingEmployees > 0 ? "text-teal-500/15" : "text-slate-500/10",
+      iconText: pendingEmployees > 0 ? "text-info" : "text-muted-foreground",
+      watermark: pendingEmployees > 0 ? "text-info/15" : "text-muted-foreground/10",
       active: statusFilter === "pending_payment",
       onClick: pendingEmployees > 0
         ? () => onToggleStatus(statusFilter === "pending_payment" ? "all" : "pending_payment")
@@ -118,8 +118,8 @@ function TimesheetStatsRow({
       label: "Đã duyệt",
       value: approvedCount,
       icon: CheckCircle2,
-      iconText: approvedCount > 0 ? "text-emerald-600" : "text-muted-foreground",
-      watermark: approvedCount > 0 ? "text-emerald-500/15" : "text-slate-500/10",
+      iconText: approvedCount > 0 ? "text-success" : "text-muted-foreground",
+      watermark: approvedCount > 0 ? "text-success/15" : "text-muted-foreground/10",
       active: statusFilter === "approved",
       onClick: approvedCount > 0
         ? () => onToggleStatus(statusFilter === "approved" ? "all" : "approved")
@@ -128,7 +128,7 @@ function TimesheetStatsRow({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-2.5">
       {cells.map(({ key, label, value, icon: Icon, iconText, watermark, active, onClick }) => (
         <div
           key={key}
@@ -394,11 +394,11 @@ export default function TimesheetsPage() {
       <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
-          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-emerald-100/70" />
+        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-primary/15" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700 ring-1 ring-inset ring-emerald-100">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-success ring-1 ring-inset ring-success/20">
                 <ClipboardList className="h-3 w-3" />
                 Không gian chấm công
               </div>

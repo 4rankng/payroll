@@ -42,9 +42,9 @@ import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
 const SCHEDULE_STYLES: Record<string, string> = {
-  weekly: "bg-sky-50 text-sky-700 border-sky-200/80",
-  monthly: "bg-violet-50 text-violet-700 border-violet-200/80",
-  flexible: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+  weekly: "bg-info/10 text-info border-info/30",
+  monthly: "bg-primary/10 text-primary border-primary/30",
+  flexible: "bg-success/10 text-success border-success/30",
 };
 
 const SCHEDULE_LABELS: Record<string, string> = {
@@ -147,7 +147,7 @@ const EmployeesPage = () => {
                               e.stopPropagation();
                               navigate(`/partner/timesheet?employee=${employee.id}`);
                             }}
-                            className="inline-flex items-center gap-0.5 shrink-0 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 rounded px-1.5 py-0.5 hover:bg-amber-100 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-0.5 shrink-0 text-[10px] font-semibold text-warning bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
                           >
                             <Clock className="h-2.5 w-2.5" />
                             {pendingCount}
@@ -163,8 +163,8 @@ const EmployeesPage = () => {
                     <TooltipProvider delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="inline-flex items-center justify-center h-4 w-4 rounded bg-amber-50 border border-amber-200/60">
-                            <X className="h-2.5 w-2.5 text-amber-500" />
+                          <span className="inline-flex items-center justify-center h-4 w-4 rounded bg-warning/10 border border-warning/30">
+                            <X className="h-2.5 w-2.5 text-warning" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
@@ -400,8 +400,8 @@ const EmployeesPage = () => {
     <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
-          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-emerald-100/70" />
+        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-primary/15" />
           <div className="relative">
           <PageHeader
             title="Nhân viên dự án"
@@ -537,7 +537,7 @@ const EmployeesPage = () => {
         <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
           <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><UserRoundCheck className="h-3.5 w-3.5" /></span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserRoundCheck className="h-3.5 w-3.5" /></span>
               <div>
                 <p className="text-[12px] font-bold text-foreground">Danh sách nhân sự</p>
                 <p className="text-[10.5px] text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>

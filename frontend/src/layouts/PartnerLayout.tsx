@@ -28,7 +28,8 @@ const PartnerLayoutInner = ({ isPartner }: { isPartner: boolean }) => {
   return (
     <div
       data-partner-ui={isPartner ? "" : undefined}
-      className="relative flex h-dvh w-full group/layout"
+      data-theme={isPartner ? "congtruong" : undefined}
+      className={isPartner ? "partner-shell-scope relative flex h-dvh w-full group/layout" : "relative flex h-dvh w-full group/layout"}
     >
       <PartnerSidebar />
       <SidebarToggle />

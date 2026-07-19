@@ -257,6 +257,55 @@
     --admin-font-display: var(--font-family-display);
     --admin-font-body: var(--font-family-display);
     --admin-font-mono: var(--font-family-financial);
+
+    /* ========================================================================
+       PARTNER LEDGER THEME - Scoped to [data-partner-ui]
+       Mirrors the --admin-* block above. Partner reuses the same green palette
+       as admin (--partner-accent already defined at line 212); this block gives
+       partner its own surface tokens so it can evolve independently.
+       ======================================================================== */
+    --partner-background: 210 25% 97%;
+    --partner-foreground: 148 23% 16%;
+    --partner-card: 0 0% 100%;
+    --partner-card-foreground: 148 23% 16%;
+    --partner-popover: 0 0% 100%;
+    --partner-popover-foreground: 148 23% 16%;
+    --partner-primary: 151 87% 25%;
+    --partner-primary-foreground: 0 0% 100%;
+    --partner-secondary: 36 73% 44%;
+    --partner-secondary-foreground: 43 100% 97%;
+    --partner-muted: 210 20% 95%;
+    --partner-muted-foreground: 145 13% 38%;
+    --partner-accent-soft: 148 38% 90%;
+    --partner-accent-foreground: 151 46% 22%;
+    --partner-border: 214 18% 88%;
+    --partner-input: 214 18% 84%;
+    --partner-ring: 151 49% 38%;
+    --partner-success: 146 63% 39%;
+    --partner-success-foreground: 0 0% 100%;
+    --partner-warning: 35 78% 45%;
+    --partner-warning-foreground: 46 100% 97%;
+    --partner-info: 174 72% 31%;
+    --partner-info-foreground: 0 0% 100%;
+    --partner-destructive: 0 58% 49%;
+    --partner-destructive-foreground: 0 0% 100%;
+    --partner-sidebar-background: 149 38% 18%;
+    --partner-sidebar-foreground: 42 36% 92%;
+    --partner-sidebar-primary: 151 87% 25%;
+    --partner-sidebar-primary-foreground: 0 0% 100%;
+    --partner-sidebar-accent: 148 31% 25%;
+    --partner-sidebar-accent-foreground: 42 36% 92%;
+    --partner-sidebar-border: 149 27% 25%;
+    --partner-sidebar-ring: 43 81% 63%;
+    --partner-shell-shadow: 0 20px 60px -42px rgba(11, 43, 29, 0.5);
+    --partner-card-shadow: 0 12px 30px -26px rgba(15, 23, 42, 0.28);
+    --partner-grid-line: rgba(109, 92, 55, 0.12);
+    --partner-grid-strong: rgba(8, 120, 62, 0.18);
+    --partner-shell-glow: rgba(8, 120, 62, 0.16);
+    --partner-amber-glow: rgba(183, 121, 31, 0.18);
+    --partner-font-display: var(--font-family-display);
+    --partner-font-body: var(--font-family-display);
+    --partner-font-mono: var(--font-family-financial);
   }
 
   .dark {
@@ -344,5 +393,41 @@
     --sidebar-border: var(--admin-sidebar-border);
     --sidebar-ring: var(--admin-sidebar-ring);
     --admin-accent: 43 81% 63%;
+  }
+
+  [data-partner-ui],
+  html.partner-route-active {
+    --background: var(--partner-background);
+    --foreground: var(--partner-foreground);
+    --card: var(--partner-card);
+    --card-foreground: var(--partner-card-foreground);
+    --popover: var(--partner-popover);
+    --popover-foreground: var(--partner-popover-foreground);
+    --primary: var(--partner-primary);
+    --primary-foreground: var(--partner-primary-foreground);
+    --secondary: var(--partner-secondary);
+    --secondary-foreground: var(--partner-secondary-foreground);
+    --muted: var(--partner-muted);
+    --muted-foreground: var(--partner-muted-foreground);
+    --accent: var(--partner-accent-soft);
+    --accent-foreground: var(--partner-accent-foreground);
+    --border: var(--partner-border);
+    --input: var(--partner-input);
+    --ring: var(--partner-ring);
+    --success: var(--partner-success);
+    --success-foreground: var(--partner-success-foreground);
+    --warning: var(--partner-warning);
+    --info: var(--partner-info);
+    --destructive: var(--partner-destructive);
+    --destructive-foreground: var(--partner-destructive-foreground);
+    --sidebar-background: var(--partner-sidebar-background);
+    --sidebar-foreground: var(--partner-sidebar-foreground);
+    --sidebar-primary: var(--partner-sidebar-primary);
+    --sidebar-primary-foreground: var(--partner-sidebar-primary-foreground);
+    --sidebar-accent: var(--partner-sidebar-accent);
+    --sidebar-accent-foreground: var(--partner-sidebar-accent-foreground);
+    --sidebar-border: var(--partner-sidebar-border);
+    --sidebar-ring: var(--partner-sidebar-ring);
+    --partner-accent: 43 81% 63%;
   }
 }

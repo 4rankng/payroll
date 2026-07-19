@@ -37,32 +37,32 @@ const STATUS_META: Record<
 > = {
   active: {
     label: 'Đang hoạt động',
-    pill: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/60',
-    dot: 'bg-emerald-500',
+    pill: 'bg-success/10 text-success ring-1 ring-inset ring-success/30',
+    dot: 'bg-success',
     icon: CheckCircle2,
   },
   draft: {
     label: 'Bản nháp',
-    pill: 'bg-slate-50 text-slate-700 ring-1 ring-inset ring-slate-200',
-    dot: 'bg-slate-400',
+    pill: 'bg-muted text-muted-foreground ring-1 ring-inset ring-border',
+    dot: 'bg-muted-foreground',
     icon: FileText,
   },
   paused: {
     label: 'Tạm dừng',
-    pill: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200/60',
-    dot: 'bg-amber-500',
+    pill: 'bg-warning/10 text-warning ring-1 ring-inset ring-warning/30',
+    dot: 'bg-warning',
     icon: Pause,
   },
   completed: {
     label: 'Hoàn thành',
-    pill: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200/60',
-    dot: 'bg-blue-500',
+    pill: 'bg-info/10 text-info ring-1 ring-inset ring-info/30',
+    dot: 'bg-info',
     icon: CheckCircle2,
   },
   cancelled: {
     label: 'Đã hủy',
-    pill: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200/60',
-    dot: 'bg-rose-500',
+    pill: 'bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/30',
+    dot: 'bg-destructive',
     icon: XCircle,
   },
 };
@@ -71,10 +71,10 @@ const STATUS_META: Record<
 // Restrained project identities: distinct enough to scan, cohesive enough to
 // remain part of the TingTing partner workspace.
 const AVATAR_GRADIENTS = [
-  'from-emerald-600 to-teal-600',
-  'from-teal-600 to-cyan-700',
-  'from-green-700 to-emerald-600',
-  'from-slate-600 to-slate-700',
+  'from-primary to-primary/70',
+  'from-primary/80 to-primary/50',
+  'from-primary to-primary/60',
+  'from-muted-foreground to-muted-foreground/70',
 ];
 
 function hashToGradient(input: string): string {
@@ -121,7 +121,7 @@ function ProjectAvatar({ project, size = 'md' }: { project: Project; size?: 'sm'
 function SalaryPeriodChip({ project }: { project: Project }) {
   if (project.is_weekly) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10.5px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-200/60">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2 py-0.5 text-[10.5px] font-semibold text-info ring-1 ring-inset ring-info/30">
         <CalendarDays className="h-3 w-3" />
         Lương tuần
       </span>
@@ -133,7 +133,7 @@ function SalaryPeriodChip({ project }: { project: Project }) {
         ? `· ngày ${project.salary_period_from}–${project.salary_period_to}`
         : '';
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2 py-0.5 text-[10.5px] font-semibold text-violet-700 ring-1 ring-inset ring-violet-200/60">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-semibold text-primary ring-1 ring-inset ring-primary/30">
         <Calendar className="h-3 w-3" />
         Lương tháng {period}
       </span>
@@ -172,7 +172,7 @@ function ProjectCard({
         'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_18px_34px_-22px_rgba(6,101,52,0.38)] transition-all duration-200',
       )}
     >
-      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary via-primary/65 to-emerald-300" />
+      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary via-primary/65 to-primary/30" />
       <div className="p-4 pl-5 md:p-5 md:pl-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
@@ -273,8 +273,8 @@ const ProjectsPage = () => {
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-5">
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-100 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:p-6">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border-[28px] border-emerald-100/65" />
+        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:p-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border-[28px] border-primary/15" />
           <div className="relative">
           <PageHeader
             title="Dự án"
@@ -290,9 +290,9 @@ const ProjectsPage = () => {
           />
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {[
-              { label: 'Tổng dự án', value: allProjects.length, icon: FolderKanban, tone: 'text-slate-600 bg-slate-100' },
-              { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle2, tone: 'text-emerald-700 bg-emerald-100' },
-              { label: 'Đang xem', value: projects.length, icon: Clock3, tone: 'text-amber-700 bg-amber-100' },
+              { label: 'Tổng dự án', value: allProjects.length, icon: FolderKanban, tone: 'text-muted-foreground bg-muted' },
+              { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle2, tone: 'text-success bg-success/10' },
+              { label: 'Đang xem', value: projects.length, icon: Clock3, tone: 'text-warning bg-warning/10' },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/25 px-3.5 py-3">
                 <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl', item.tone)}>
@@ -355,8 +355,8 @@ const ProjectsPage = () => {
           ))}
         </div>
       ) : projects.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300/80 bg-white/78 py-20 px-6 text-center shadow-[0_18px_48px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 mb-4 ring-1 ring-slate-200">
+        <div className="rounded-2xl border border-dashed border-border/80 bg-card/78 py-20 px-6 text-center shadow-[0_18px_48px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4 ring-1 ring-border">
             <Briefcase className="h-6 w-6 text-muted-foreground/50" />
           </div>
           <p className="text-base font-bold text-foreground">Không có dự án nào</p>
