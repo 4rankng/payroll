@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"api-server/internal/app/dto"
 	"api-server/internal/app/services/payroll/excel"
 	"api-server/internal/domain"
 
@@ -244,5 +245,135 @@ func TestBuildOnePayFilename(t *testing.T) {
 	want := "Yeu_cau_chuyen_tien_weekly_20260719_143045.xlsx"
 	if got != want {
 		t.Errorf("filename: got %q, want %q", got, want)
+	}
+}
+
+// TestCycleLabelVN covers the Vietnamese cycle label used in the empty-pool
+// EMPTY_RESULT message.
+func TestCycleLabelVN(t *testing.T) {
+	tests := []struct {
+		in, want string
+	}{
+		{string(domain.PaymentScheduleWeekly), "tuần"},
+		{string(domain.PaymentScheduleMonthly), "tháng"},
+		{"", "đã chọn"},
+		{"unknown", "đã chọn"},
+	}
+	for _, tc := range tests {
+		if got := cycleLabelVN(tc.in); got != tc.want {
+			t.Errorf("cycleLabelVN(%q): got %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+// TestBuildEmptySwiftMessage_BucketsByReason verifies the EMPTY_RESULT
+// message combines the three skip counts: pre-validation missing
+// account/name, post-validation missing bank linkage, and unresolved SWIFT.
+func TestBuildEmptySwiftMessage_BucketsByReason(t *testing.T) {
+	plan := &ExportPlan{
+		ValidatedData: &excel.BulkTransferValidationResult{
+			SkippedCount: 3, // pre-validation: missing account/name
+		},
+	}
+	skipped := []OnePaySkippedEmployee{
+		{EmployeeID: 1, Reason: skipReasonMissingBankInfo},
+		{EmployeeID: 2, Reason: skipReasonMissingBankInfo},
+		{EmployeeID: 3, Reason: skipReasonUnresolvedSwift},
+		{EmployeeID: 4, Reason: skipReasonUnresolvedSwift},
+		{EmployeeID: 5, Reason: skipReasonUnresolvedSwift},
+	}
+	msg := buildEmptySwiftMessage(plan, skipped)
+
+	// 2 missing bank info, 3 unresolved SWIFT, 3 pre-validation.
+	if !strings.Contains(msg, "2 nhân viên thiếu thông tin ngân hàng") {
+		t.Errorf("missing bank info count: msg=%q", msg)
+	}
+	if !strings.Contains(msg, "3 nhân viên chưa có mã SWIFT") {
+		t.Errorf("unresolved SWIFT count: msg=%q", msg)
+	}
+	if !strings.Contains(msg, "3 nhân viên bị bỏ qua trước đó") {
+		t.Errorf("pre-validation count: msg=%q", msg)
+	}
+}
+
+// TestBuildEmptySwiftMessage_NilPlan guards against a nil plan (defensive —
+// Export never passes nil but the helper must not panic if it ever does).
+func TestBuildEmptySwiftMessage_NilPlan(t *testing.T) {
+	msg := buildEmptySwiftMessage(nil, nil)
+	if !strings.Contains(msg, "0 nhân viên") {
+		t.Errorf("expected zeroed counts, got %q", msg)
+	}
+}
+
+// TestExport_EmptyPool_ReturnsEmptyResultError exercises the full Export
+// pipeline with a stub planner whose pool contains zero eligible timesheets.
+// Asserts the returned error is the typed EMPTY_RESULT domain error so the
+// handler maps it to HTTP 422 (not 500).
+//
+// Note: even with an empty pool, the planner returns a non-nil (but empty)
+// ValidatedData, so the code path that fires is the post-SWIFT-resolution
+// zero-rows branch. Either branch produces EMPTY_RESULT — the test only
+// asserts the error type and that the message is the actionable VN form.
+func TestExport_EmptyPool_ReturnsEmptyResultError(t *testing.T) {
+	// Empty stub bundle — no timesheets, no employees, no projects.
+	bundle := &stubRepoBundle{
+		employees:        map[uint]*domain.Employee{},
+		projects:         map[uint]*domain.Project{},
+		assignments:      map[excel.EmployeeProjectKey]*domain.ProjectEmployee{},
+		timesheetByID:    map[uint]*domain.Timesheet{},
+		weeklyPercentage: 1.0,
+	}
+	planner := newPlannerWithStub(bundle)
+
+	bankRepo := &stubBankRepo{byCode: map[string]*domain.Bank{}}
+	txnRepo := &stubTransactionCodeRepo{}
+	exporter := NewOnePayExporter(planner, bankRepo, txnRepo, nil)
+
+	_, err := exporter.Export(context.Background(), &dto.ExportBulkTransferRequest{
+		FromDate: "2026-07-08",
+		ToDate:   "2026-07-14",
+	})
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if !domain.IsEmptyResultError(err) {
+		t.Fatalf("expected EMPTY_RESULT domain error, got %T: %v", err, err)
+	}
+	if !strings.Contains(err.Error(), "Không có") {
+		t.Errorf("expected actionable VN message, got: %v", err)
+	}
+}
+
+// TestExport_AllSkipped_ReturnsEmptyResultError exercises the path where the
+// planner produces validated data, but every candidate is skipped during
+// SWIFT resolution (missing bank info / unresolved SWIFT). The returned
+// error must be EMPTY_RESULT and carry the SWIFT-resolution message.
+func TestExport_AllSkipped_ReturnsEmptyResultError(t *testing.T) {
+	bundle := seedStub() // 1 valid employee (emp 7), 1 missing account (emp 9)
+	planner := newPlannerWithStub(bundle)
+
+	// bankRepo returns nil for the only bank code "MB" → unresolved_swift for emp 7.
+	bankRepo := &stubBankRepo{byCode: map[string]*domain.Bank{}}
+	txnRepo := &stubTransactionCodeRepo{}
+	exporter := NewOnePayExporter(planner, bankRepo, txnRepo, nil)
+
+	_, err := exporter.Export(context.Background(), &dto.ExportBulkTransferRequest{
+		FromDate: "2026-07-08",
+		ToDate:   "2026-07-14",
+	})
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if !domain.IsEmptyResultError(err) {
+		t.Fatalf("expected EMPTY_RESULT domain error, got %T: %v", err, err)
+	}
+	if !strings.Contains(err.Error(), "sau khi đối chiếu SWIFT") {
+		t.Errorf("expected SWIFT resolution message, got: %v", err)
+	}
+	// txnRepo must NOT have been called — we surface EMPTY_RESULT before persisting.
+	if len(txnRepo.created) != 0 {
+		t.Errorf("CreateBatch must not run on empty export; got %d codes", len(txnRepo.created))
 	}
 }

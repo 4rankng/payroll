@@ -124,6 +124,20 @@ func NewInternalError(message string, cause error) *DomainError {
 	}
 }
 
+// NewEmptyResultError signals that an export produced zero rows. This is a
+// user-correctable condition (no eligible timesheets, or all candidates were
+// filtered out for missing bank info / unresolved SWIFT), NOT a server fault.
+// Handlers map it to HTTP 422 so the frontend can surface actionable guidance
+// instead of a generic "internal error".
+func NewEmptyResultError(message string) *DomainError {
+	return &DomainError{
+		Type:    "EMPTY_RESULT",
+		Code:    "EMPTY_RESULT",
+		Message: message,
+		Cause:   ErrValidation,
+	}
+}
+
 func NewInternalErrorWithCode(code, message string, cause error) *DomainError {
 	return &DomainError{
 		Type:    "INTERNAL_ERROR",
@@ -180,4 +194,16 @@ func IsInternalError(err error) bool {
 		return domainErr.Type == "INTERNAL_ERROR"
 	}
 	return errors.Is(err, ErrInternal)
+}
+
+// IsEmptyResultError reports whether err is an EMPTY_RESULT domain error
+// (export produced zero rows). Used by handlers that want to special-case
+// the response shape and by callers that need to distinguish "no data"
+// from real failures.
+func IsEmptyResultError(err error) bool {
+	var domainErr *DomainError
+	if errors.As(err, &domainErr) {
+		return domainErr.Type == "EMPTY_RESULT"
+	}
+	return false
 }

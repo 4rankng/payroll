@@ -210,6 +210,12 @@ func HandleDomainError(c *gin.Context, err error) {
 			response.HTTPStatus = http.StatusForbidden
 		case "CONFLICT", "conflict":
 			response.HTTPStatus = http.StatusConflict
+		case "EMPTY_RESULT", "empty_result":
+			// Export produced zero rows: well-formed request but unfulfillable
+			// given the current resource state (no eligible timesheets, or all
+			// candidates were filtered out for missing bank info / SWIFT).
+			// 422 — not 400 (body is valid) and not 500 (no server fault).
+			response.HTTPStatus = http.StatusUnprocessableEntity
 		case "INTERNAL_ERROR", "internal_error":
 			response.HTTPStatus = http.StatusInternalServerError
 		default:

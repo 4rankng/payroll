@@ -162,12 +162,16 @@ const TimesheetPage = () => {
     }
   };
 
-  // "Chuyển OnePay" — Stage 1 of the Wallet Bulk Transfer Pipeline. Builds
-  // export params from the current filter state. selectedMonth is a full
-  // "YYYY-MM" so we use the monthly path (for_month) when one is selected;
-  // when the user picks "all" we fall back to the current calendar month
-  // (the export service rejects requests that specify neither for_month
-  // nor a fromDate/toDate pair).
+  // "Chuyển OnePay" — Stage 1 of the Wallet Bulk Transfer Pipeline. This
+  // feature is for WEEKLY timesheet payment only (independent of the
+  // advance-payment/flexpay flow). Always send a weekly date range so the
+  // backend selects weekly-schedule employees. Sending for_month would
+  // switch the backend to its monthly cohort and silently drop every
+  // weekly employee (the bug that produced "0 employees skipped" 422s).
+  //
+  // Source of truth for the range: the month currently selected in the
+  // page filter. If the admin has chosen "all", fall back to the current
+  // calendar month so the backend always receives a well-formed request.
   const handleChuyenOnePay = async () => {
     const projectId =
       timesheetManagement.selectedProject !== 'all'
@@ -176,27 +180,21 @@ const TimesheetPage = () => {
 
     const projectIds = projectId ? [projectId] : undefined;
 
-    const month =
-      timesheetManagement.selectedMonth !== 'all'
-        ? timesheetManagement.selectedMonth
-        : '';
-
-    let params: BulkTransferExportParams;
-    if (month) {
-      params = { for_month: month, project_ids: projectIds };
-    } else if (statsFilters.fromDate && statsFilters.toDate) {
-      params = {
-        fromDate: statsFilters.fromDate,
-        toDate: statsFilters.toDate,
-        project_ids: projectIds,
-      };
-    } else {
-      // No month filter and no explicit range — default to the current
-      // calendar month so the backend always receives a well-formed request.
+    let { fromDate, toDate } = statsFilters;
+    if (!fromDate || !toDate) {
+      // selectedMonth === 'all': default to the current calendar month.
       const now = new Date();
       const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      params = { for_month: ym, project_ids: projectIds };
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      fromDate = `${ym}-01`;
+      toDate = `${ym}-${lastDay.toString().padStart(2, '0')}`;
     }
+
+    const params: BulkTransferExportParams = {
+      fromDate,
+      toDate,
+      project_ids: projectIds,
+    };
 
     try {
       await exportOnePayMutation.mutateAsync(params);

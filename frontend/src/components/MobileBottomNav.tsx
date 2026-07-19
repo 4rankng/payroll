@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Key, LogOut, MoreHorizontal, UserCircle } from "lucide-react";
 import { NotificationBadge, NotificationSheet } from "@/components/notifications";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { MODAL_IDS } from "@/constants/modalRegistry";
 import { useAuth, useBottomNav } from "@/contexts";
@@ -99,22 +99,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-white/70 bg-slate-50/95 px-0 pb-0 pt-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
-  const openGroupDescription =
-    openGroup === ACCOUNT_GROUP ? "Tài khoản và cài đặt cá nhân" : "Mục công việc truy cập nhanh";
-  const moreTitle = "Thêm";
 
-  const renderSheetChrome = (title: string, description: string) => (
-    <>
-      <div className="flex justify-center pt-2.5">
-        <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
-      </div>
-      <SheetHeader className="px-4 pb-2.5 pt-3 text-left sm:px-5">
-        <SheetTitle className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))]">
-          {title}
-        </SheetTitle>
-        <p className="admin-subtle-copy text-sm">{description}</p>
-      </SheetHeader>
-    </>
+  const renderSheetHandle = () => (
+    <div className="flex justify-center pt-2.5">
+      <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
+    </div>
   );
 
   const renderNavTile = (
@@ -283,9 +272,9 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           side="bottom"
           className={sheetSurfaceClass}
           title={openGroupTitle}
-          description={openGroupDescription}
+          description=""
         >
-          {renderSheetChrome(openGroupTitle, openGroupDescription)}
+          {renderSheetHandle()}
 
           {openGroup === ACCOUNT_GROUP ? (
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-5">
@@ -347,7 +336,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         <SheetContent
           side="bottom"
           className={sheetSurfaceClass}
-          title={moreTitle}
+          title=""
         >
           <div className="flex justify-center pt-2.5">
             <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />

@@ -290,7 +290,6 @@ const Login = () => {
                   <img src="/logo-square.png" alt="TingTing logo" className="h-12 w-12 object-contain" />
                   <div>
                     <p className="font-display text-[1.35rem] font-black leading-none tracking-[-0.03em]">TingTing</p>
-                    <p className="mt-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-base-content/45">Nhịp lương thông minh</p>
                   </div>
                 </div>
 
@@ -336,7 +335,7 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <label htmlFor="emailOrUsername" className="block text-xs font-bold text-base-content/65">Tên đăng nhập</label>
-                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:bg-base-100 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
+                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
                         <User className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
                         <input
                           id="emailOrUsername"
@@ -356,7 +355,7 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <label htmlFor="password" className="block text-xs font-bold text-base-content/65">Mật khẩu</label>
-                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:bg-base-100 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
+                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
                         <Lock className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
                         <input
                           id="password"

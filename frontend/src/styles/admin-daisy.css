@@ -10,6 +10,18 @@
     color: hsl(var(--foreground));
   }
 
+  /* Keep browser autofill from painting a contrasting blue strip inside login fields. */
+  [data-login-ui] input:-webkit-autofill,
+  [data-login-ui] input:-webkit-autofill:hover,
+  [data-login-ui] input:-webkit-autofill:focus,
+  [data-login-ui] input:-webkit-autofill:active {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    -webkit-box-shadow: 0 0 0 1000px rgb(248 244 236) inset !important;
+    box-shadow: 0 0 0 1000px rgb(248 244 236) inset !important;
+    caret-color: hsl(var(--foreground));
+    transition: background-color 9999s ease-out;
+  }
+
   [data-admin-ui] .ct-menu li > *:not(ul, details, .ct-menu-title) {
     border-radius: 1rem;
   }

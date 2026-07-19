@@ -134,7 +134,17 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 		return nil, fmt.Errorf("onepay export: plan: %w", err)
 	}
 	if plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil {
-		return nil, fmt.Errorf("onepay export: plan produced no validated data")
+		// No timesheet matched the cohort (approved + pending-payment) for the
+		// requested cycle/range. This is a user-correctable condition, not a
+		// server fault — surface as EMPTY_RESULT (HTTP 422) so the admin gets
+		// actionable guidance instead of a generic 500.
+		cycle := ""
+		if plan != nil {
+			cycle = plan.Cycle
+		}
+		return nil, domain.NewEmptyResultError(
+			fmt.Sprintf("Không có timesheet nào hợp lệ để xuất cho chu kỳ %s. Vui lòng kiểm tra trạng thái duyệt/thanh toán và khoảng ngày rồi thử lại.", cycleLabelVN(cycle)),
+		)
 	}
 	data := plan.ValidatedData.ValidData
 
@@ -144,7 +154,10 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	}
 
 	if len(rows) == 0 {
-		return nil, fmt.Errorf("onepay export: no exportable rows after SWIFT resolution (%d employees skipped)", len(skipped))
+		// Every candidate was filtered out. Surface the three skip buckets so
+		// the admin can tell what to fix: (a) pre-validation missing account
+		// number/name, (b) missing bank linkage, (c) unresolved SWIFT.
+		return nil, domain.NewEmptyResultError(buildEmptySwiftMessage(plan, skipped))
 	}
 
 	// Persist VFIC codes BEFORE generating the workbook so we don't surface a
@@ -326,6 +339,52 @@ func buildOnePayFilename(cycle string, now time.Time) string {
 	}
 	stamp := now.Format("20060102_150405")
 	return fmt.Sprintf("Yeu_cau_chuyen_tien_%s_%s.xlsx", cycle, stamp)
+}
+
+// cycleLabelVN returns a Vietnamese label for a cycle string used in
+// user-facing messages. Falls back to a neutral label when the cycle
+// is empty or unrecognized.
+func cycleLabelVN(cycle string) string {
+	switch strings.TrimSpace(strings.ToLower(cycle)) {
+	case string(domain.PaymentScheduleWeekly):
+		return "tuần"
+	case string(domain.PaymentScheduleMonthly):
+		return "tháng"
+	default:
+		return "đã chọn"
+	}
+}
+
+// buildEmptySwiftMessage composes the EMPTY_RESULT message for the
+// post-SWIFT-resolution zero-rows case. It distinguishes three skip buckets
+// so the admin can tell what to fix:
+//   - preValidationSkipped: planner's ValidateAndFilterBulkTransferData dropped
+//     these (missing account number or name) — surfaced via plan.ValidatedData.SkippedCount
+//   - missingBankInfo:      no bank_id / empty account — surfaced via the
+//     buildRowsWithSwift skipped slice (skipReasonMissingBankInfo)
+//   - unresolvedSwift:      bank exists but SwiftCode empty / lookup failed —
+//     surfaced via the buildRowsWithSwift skipped slice (skipReasonUnresolvedSwift)
+func buildEmptySwiftMessage(plan *ExportPlan, skipped []OnePaySkippedEmployee) string {
+	var missingBank, unresolvedSwift int
+	for _, s := range skipped {
+		switch s.Reason {
+		case skipReasonMissingBankInfo:
+			missingBank++
+		case skipReasonUnresolvedSwift:
+			unresolvedSwift++
+		}
+	}
+	preValidation := 0
+	if plan != nil && plan.ValidatedData != nil {
+		preValidation = plan.ValidatedData.SkippedCount
+	}
+	return fmt.Sprintf(
+		"Không có dòng nào xuất được sau khi đối chiếu SWIFT. "+
+			"%d nhân viên thiếu thông tin ngân hàng (chưa liên kết ngân hàng/số tài khoản), "+
+			"%d nhân viên chưa có mã SWIFT trên hệ thống, "+
+			"%d nhân viên bị bỏ qua trước đó do thiếu số tài khoản hoặc tên thụ hưởng.",
+		missingBank, unresolvedSwift, preValidation,
+	)
 }
 
 // GenerateOnePayExcel builds the .xlsx workbook from scratch (no template

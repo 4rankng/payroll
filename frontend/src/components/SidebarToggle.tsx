@@ -19,7 +19,7 @@ export const SidebarToggle = ({ className }: { className?: string }) => {
       className={cn(
         "admin-toggle-tab ct-btn ct-btn-ghost fixed z-50 top-4 min-h-0 p-0",
         "flex items-center justify-center",
-        "h-7 w-4 -translate-x-px rounded-r-md border border-l-0 border-white/15 bg-[#263d33] text-white/75 shadow-sm",
+        "h-7 w-4 -translate-x-px border border-white/15 bg-[#263d33] text-white/75 shadow-sm",
         "before:absolute before:-inset-y-2 before:-left-3.5 before:-right-3.5 before:content-['']",
         "hover:bg-[#315042] hover:text-white",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
@@ -27,16 +27,18 @@ export const SidebarToggle = ({ className }: { className?: string }) => {
         className
       )}
       style={{
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+        borderTopRightRadius: "0.75rem",
+        borderBottomRightRadius: "0.75rem",
+        borderLeftWidth: 0,
         left: open
           ? "var(--sidebar-width)"
           : "var(--sidebar-width-icon)",
       }}
     >
       <ChevronRight
-        className={cn(
-          "relative z-10 h-3 w-3 shrink-0 transition-transform duration-200",
-          open && "rotate-180"
-        )}
+        className="relative z-10 h-3 w-3 shrink-0"
         aria-hidden="true"
       />
     </button>
