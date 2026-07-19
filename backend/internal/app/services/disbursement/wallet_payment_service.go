@@ -264,6 +264,9 @@ type AccountCheckOutcome struct {
 	Verified     bool
 	RawErrorCode string
 	RawMessage   string
+	// FeeWaived is true when an account rejection prevents any transfer API
+	// call. Account lookup is free, so the stamped transfer fee must be zero.
+	FeeWaived bool
 }
 
 // RecordAccountCheck fires the account-verification FSM trigger after
@@ -293,6 +296,10 @@ func (s *WalletPaymentService) accountCheckPatch(o AccountCheckOutcome) domaintx
 	patch.ErrorCode = &code
 	msg := s.translateMessage(o.RawErrorCode, o.RawMessage)
 	patch.ErrorMessage = &msg
+	if o.FeeWaived {
+		zero := int64(0)
+		patch.Fee = &zero
+	}
 	return patch
 }
 

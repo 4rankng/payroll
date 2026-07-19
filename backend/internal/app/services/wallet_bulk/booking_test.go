@@ -84,6 +84,14 @@ type bookingTimesheetLinker struct {
 	ids   []uint
 }
 
+func (l *bookingTimesheetLinker) GetByIDsForUpdate(_ context.Context, ids []uint) ([]*domain.Timesheet, error) {
+	result := make([]*domain.Timesheet, 0, len(ids))
+	for _, id := range ids {
+		result = append(result, &domain.Timesheet{ID: id})
+	}
+	return result, nil
+}
+
 func (l *bookingTimesheetLinker) BulkUpdateTransactionID(_ context.Context, transactionID uint, ids []uint) error {
 	l.txnID = transactionID
 	l.ids = append([]uint(nil), ids...)
@@ -185,6 +193,51 @@ func TestProcessBookBatchLedger_ZeroProviderFeeStillBooksReceivable(t *testing.T
 	}
 	if runner.calls != 1 || len(txnCreator.created) != 1 {
 		t.Fatalf("rerun booked again: runner=%d txns=%d", runner.calls, len(txnCreator.created))
+	}
+}
+
+func TestProcessBookBatchLedger_PartialSuccessExcludesFailedEmployeeFromReceivableAndTimesheets(t *testing.T) {
+	batch := &domain.BulkTransferBatch{
+		ID: 2, Filename: "mixed.xlsx", Status: domain.BulkTransferBatchStatusCompleting,
+		TotalCount: 2, SuccessCount: 1, FailedCount: 1, CreatedBy: 9,
+	}
+	batchRepo := &bookingBatchRepo{batch: batch}
+	txnCreator := &bookingTxnCreator{}
+	ledger := &bookingLedgerWriter{}
+	linker := &bookingTimesheetLinker{}
+	service := &WalletBulkTransferService{
+		batchRepo: batchRepo,
+		paymentRepo: &bookingPaymentReader{rows: []*domaintx.WalletPayment{
+			{ID: 1, RequestID: "VFICpaid", RequestedAmount: 1_000_000, Fee: 3_850, Status: domaintx.StateCompleted},
+			{ID: 2, RequestID: "VFICfailed", RequestedAmount: 500_000, Fee: 3_850, Status: domaintx.StateFailed},
+		}},
+		txnSvc: txnCreator, txRunner: &bookingRunner{}, partnerInfo: bookingSettings{},
+		ledgerWriter: ledger, timesheetLinker: linker,
+		txnCodeRepo: &bookingCodeRepo{codes: []*domain.TransactionCode{
+			transactionCode(t, "VFICpaid", 1_000_000, 41, 42),
+		}},
+		clock:  func() time.Time { return time.Date(2026, 7, 19, 15, 0, 0, 0, time.Local) },
+		logger: slog.Default(),
+	}
+	payload, _ := json.Marshal(BookLedgerPayload{BatchID: 2})
+
+	if err := service.ProcessBookBatchLedger(context.Background(), asynq.NewTask(TaskBookBatchLedger, payload)); err != nil {
+		t.Fatal(err)
+	}
+	if len(txnCreator.created) != 2 {
+		t.Fatalf("transactions = %d, want receivable + provider fee", len(txnCreator.created))
+	}
+	if txnCreator.created[0].Amount != 1_020_000 {
+		t.Fatalf("receivable = %d, want successful 1000000 + 2%% only", txnCreator.created[0].Amount)
+	}
+	if txnCreator.created[1].TransactionType != domain.TransactionTypeExpense || txnCreator.created[1].Amount != 7_700 {
+		t.Fatalf("provider fee transaction = %#v", txnCreator.created[1])
+	}
+	if len(ledger.entries) != 2 || ledger.entries[0].Credit != 1_000_000 || ledger.entries[1].Debit != 1_000_000 {
+		t.Fatalf("manual entries included failed employee: %#v", ledger.entries)
+	}
+	if len(linker.ids) != 2 || linker.ids[0] != 41 || linker.ids[1] != 42 {
+		t.Fatalf("linked timesheets = %v, want only paid employee [41 42]", linker.ids)
 	}
 }
 

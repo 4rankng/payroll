@@ -39,16 +39,9 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 		return nil
 	}
 
-	booking, err := s.prepareBatchBooking(ctx, batch)
-	if err != nil {
-		return err
-	}
-	partner := s.partnerInfo.GetPartnerCompany(ctx)
-	if partner == "" {
-		return fmt.Errorf("book batch %d: partner company is empty", batch.ID)
-	}
-	plan := bulktransfer.BuildLedgerPlan(ctx, s.partnerInfo, float64(booking.transferAmount), partner, batch.Filename)
 	now := s.clock()
+	var booking *batchBookingData
+	var plan bulktransfer.LedgerPlan
 
 	_, err = s.txRunner.WithTransactionResult(ctx, func(txCtx context.Context) (interface{}, error) {
 		locked, err := s.batchRepo.GetByIDForUpdate(txCtx, batch.ID)
@@ -60,6 +53,23 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 		}
 		if locked.Status != domain.BulkTransferBatchStatusCompleting {
 			return nil, fmt.Errorf("batch %d is %q, expected completing", locked.ID, locked.Status)
+		}
+
+		// Lock the terminal wallet rows after the batch row. A completed payment
+		// cannot race to reversed while we decide which employees were paid.
+		booking, err = s.prepareBatchBooking(txCtx, locked)
+		if err != nil {
+			return nil, err
+		}
+		partner := s.partnerInfo.GetPartnerCompany(txCtx)
+		if partner == "" {
+			return nil, fmt.Errorf("partner company is empty")
+		}
+		plan = bulktransfer.BuildLedgerPlan(txCtx, s.partnerInfo, float64(booking.transferAmount), partner, locked.Filename)
+		if booking.successfulCount > 0 {
+			if err := s.validateTimesheetsForBooking(txCtx, booking.timesheetIDs); err != nil {
+				return nil, err
+			}
 		}
 
 		var bookingTxnID *uint64
@@ -110,13 +120,16 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 			}
 		}
 
-		if err := s.finalizeBatchColumns(txCtx, locked.ID, booking.totalFee, bookingTxnID, &now); err != nil {
+		if err := s.finalizeBatchColumns(txCtx, locked.ID, booking.transferAmount, booking.totalFee, bookingTxnID, &now); err != nil {
 			return nil, fmt.Errorf("finalize batch: %w", err)
 		}
 		return bookingTxnID, nil
 	})
 	if err != nil {
 		return fmt.Errorf("book batch %d: %w", batch.ID, err)
+	}
+	if booking == nil {
+		return nil
 	}
 
 	s.logger.Info("wallet_bulk: payroll batch booked",
@@ -143,7 +156,7 @@ func (s *WalletBulkTransferService) prepareBatchBooking(ctx context.Context, bat
 			booking.transferAmount += payment.RequestedAmount
 			booking.totalFee += payment.Fee
 			successAmounts[payment.RequestID] = payment.RequestedAmount
-		case domaintx.StateFailed:
+		case domaintx.StateFailed, domaintx.StateReversed:
 			booking.totalFee += payment.Fee
 		default:
 			return nil, fmt.Errorf("batch %d payment %d is not terminal: %s", batch.ID, payment.ID, payment.Status)
@@ -195,7 +208,7 @@ func (s *WalletBulkTransferService) prepareBatchBooking(ctx context.Context, bat
 		}
 		for _, id := range ids {
 			if _, exists := seenTimesheets[id]; exists {
-				continue
+				return nil, fmt.Errorf("timesheet %d is referenced by multiple successful transaction codes", id)
 			}
 			seenTimesheets[id] = struct{}{}
 			booking.timesheetIDs = append(booking.timesheetIDs, id)
@@ -213,4 +226,27 @@ func uintPointer(value *uint64) *uint {
 	}
 	converted := uint(*value)
 	return &converted
+}
+
+func (s *WalletBulkTransferService) validateTimesheetsForBooking(ctx context.Context, ids []uint) error {
+	timesheets, err := s.timesheetLinker.GetByIDsForUpdate(ctx, ids)
+	if err != nil {
+		return fmt.Errorf("lock successful timesheets: %w", err)
+	}
+	if len(timesheets) != len(ids) {
+		return fmt.Errorf("successful timesheet count mismatch: expected=%d found=%d", len(ids), len(timesheets))
+	}
+	wanted := make(map[uint]struct{}, len(ids))
+	for _, id := range ids {
+		wanted[id] = struct{}{}
+	}
+	for _, timesheet := range timesheets {
+		if _, ok := wanted[timesheet.ID]; !ok {
+			return fmt.Errorf("locked unexpected timesheet %d", timesheet.ID)
+		}
+		if timesheet.TransactionID != nil {
+			return fmt.Errorf("timesheet %d is already linked to transaction %d", timesheet.ID, *timesheet.TransactionID)
+		}
+	}
+	return nil
 }

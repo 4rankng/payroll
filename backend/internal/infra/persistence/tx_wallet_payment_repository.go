@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"time"
 
+	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TxWalletPaymentRepository persists wallet_payments rows.
@@ -471,7 +473,11 @@ func (r *TxWalletPaymentRepository) SumFeeByBatchAndStatuses(ctx context.Context
 // render rows in original input order.
 func (r *TxWalletPaymentRepository) ListByBatchIDOrdered(ctx context.Context, batchID uint64) ([]*domaintx.WalletPayment, error) {
 	var rows []*domaintx.WalletPayment
-	err := r.DB.WithContext(ctx).
+	db := r.DB.WithContext(ctx)
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		db = txCtx.TX.WithContext(ctx).Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	err := db.
 		Where("bulk_transfer_batch_id = ?", batchID).
 		Order("bulk_transfer_order ASC").
 		Find(&rows).Error

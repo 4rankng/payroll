@@ -137,6 +137,7 @@ type LedgerEntryWriter interface {
 // TimesheetTransactionLinker links timesheets to a transaction by stamping
 // timesheets.transaction_id. Mirrors TimesheetRepository.BulkUpdateTransactionID.
 type TimesheetTransactionLinker interface {
+	GetByIDsForUpdate(ctx context.Context, timesheetIDs []uint) ([]*domain.Timesheet, error)
 	BulkUpdateTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
 }
 
@@ -490,12 +491,13 @@ func persistAsset(ctx context.Context, repo domain.AssetRepository, stored *stor
 	return uint64(created.ID)
 }
 
-func (s *WalletBulkTransferService) finalizeBatchColumns(ctx context.Context, batchID uint64, totalFee int64, ledgerTxnID *uint64, completedAt *time.Time) error {
+func (s *WalletBulkTransferService) finalizeBatchColumns(ctx context.Context, batchID uint64, transferAmount, totalFee int64, ledgerTxnID *uint64, completedAt *time.Time) error {
 	updates := map[string]interface{}{
-		"total_fee":    totalFee,
-		"status":       string(domain.BulkTransferBatchStatusCompleted),
-		"completed_at": completedAt,
-		"updated_at":   s.clock(),
+		"transfer_amount": transferAmount,
+		"total_fee":       totalFee,
+		"status":          string(domain.BulkTransferBatchStatusCompleted),
+		"completed_at":    completedAt,
+		"updated_at":      s.clock(),
 	}
 	if ledgerTxnID != nil {
 		updates["ledger_txn_id"] = *ledgerTxnID

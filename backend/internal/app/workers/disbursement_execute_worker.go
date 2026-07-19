@@ -167,6 +167,7 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 			Verified:     checkResult.Valid,
 			RawErrorCode: checkResult.RawErrorCode,
 			RawMessage:   checkResult.RawMessage,
+			FeeWaived:    !checkResult.Valid,
 		})
 		if err != nil {
 			return fmt.Errorf("record account check: %w", err)

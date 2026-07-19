@@ -105,8 +105,8 @@ func NewWalletBulkTransferRowWorker(
 //	   processed it. Stamp batch link and check terminal.
 //	3. Stamp batch link (idempotent).
 //	4. Resolve active provider.
-//	5. Record account check — auto-verify (no CheckAccount call; the exporter
-//	   already validated bank info at Stage 1).
+//	5. Check the beneficiary account when the provider supports it. A rejected
+//	   employee becomes failed with fee=0 and the other rows continue.
 //	6. provider.InitiateTransfer — rate-limited by QueuedProvider (3 TPS).
 //	   - ErrPreflightValidation → markRowFailed(feeWaived=true).
 //	7. Record sync response with explicit Accepted flag.
@@ -186,13 +186,37 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 		return fmt.Errorf("no active provider: %w", err)
 	}
 
-	// === Step 3: Record account check — auto-verify ===
-	// (No CheckAccount call — the exporter already validated bank info at
-	// Stage 1; this row carries a resolved SWIFT code.)
-	if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{
-		Verified: true,
-	}); err != nil {
-		return w.markRowFailed(ctx, p.BatchID, p.Row.VFICCode, err, false)
+	// === Step 3: Verify beneficiary account when supported ===
+	transferAccountName := p.Row.AccountName
+	if verifier, ok := provider.(infrastructure.AccountVerifier); ok {
+		check, err := verifier.CheckAccount(ctx, infrastructure.AccountCheckRequest{
+			RequestID:   p.Row.VFICCode,
+			BankCode:    p.Row.SwiftCode,
+			SwiftCode:   p.Row.SwiftCode,
+			AccountNo:   p.Row.AccountNo,
+			AccountName: p.Row.AccountName,
+			Amount:      p.Row.Amount,
+			AccountType: infrastructure.AccountTypeBankAccount,
+		})
+		if err != nil {
+			return fmt.Errorf("check account: %w", err)
+		}
+		if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{
+			Verified: check.Valid, RawErrorCode: check.RawErrorCode,
+			RawMessage: check.RawMessage, FeeWaived: !check.Valid,
+		}); err != nil {
+			return fmt.Errorf("record account check: %w", err)
+		}
+		if !check.Valid {
+			logger.Info("wallet_bulk_row: account check rejected",
+				"error_code", check.RawErrorCode, "message", check.RawMessage)
+			return w.markRowTerminal(ctx, p.BatchID)
+		}
+		if check.AccountName != "" {
+			transferAccountName = check.AccountName
+		}
+	} else if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{Verified: true}); err != nil {
+		return fmt.Errorf("record account check: %w", err)
 	}
 
 	// === Step 4: Initiate transfer via provider (rate-limited by QueuedProvider) ===
@@ -201,7 +225,7 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 		Amount:      p.Row.Amount,
 		SwiftCode:   p.Row.SwiftCode,
 		AccountNo:   p.Row.AccountNo,
-		AccountName: p.Row.AccountName,
+		AccountName: transferAccountName,
 		Description: p.Row.PaymentDetail,
 		AccountType: infrastructure.AccountTypeBankAccount,
 	})
@@ -353,7 +377,7 @@ func finalizeBulkBatch(
 		if err != nil {
 			return false, fmt.Errorf("count success: %w", err)
 		}
-		failed, err := paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateFailed})
+		failed, err := paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateFailed, domaintx.StateReversed})
 		if err != nil {
 			return false, fmt.Errorf("count failed: %w", err)
 		}

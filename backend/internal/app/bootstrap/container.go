@@ -162,7 +162,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			TxRunner:        services.TransactionManager, // C2 fix — atomic CreateTransaction + batch link
 			PartnerInfo:     services.SettingsConfig,
 			LedgerWriter:    services.Ledger,
-			TimesheetLinker: repos.Timesheet,
+			TimesheetLinker: walletBulkTimesheetLinker{db: infra.DB.DB, repo: repos.Timesheet},
 			TxnCodeRepo:     repos.TransactionCode,
 			Parser:          walletBulkParser,
 			FeeProvider:     services.DisbursementFeeSchedule,
