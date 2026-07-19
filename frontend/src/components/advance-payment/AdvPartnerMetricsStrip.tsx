@@ -170,8 +170,8 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         icon={DollarSign}
         label="Phí thu trung bình"
         value={formatCurrency(avgFeePerRequest)}
-        iconText="text-violet-600"
-        watermark="text-violet-500/15"
+        iconText="text-teal-600"
+        watermark="text-teal-500/15"
         footer={
           <>
             <span className="whitespace-nowrap rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium text-foreground/70">

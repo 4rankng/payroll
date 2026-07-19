@@ -420,7 +420,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
             normalizedDayType.includes("lễ")
               ? "bg-rose-50 text-rose-800 ring-rose-200"
               : normalizedDayType.includes("nghỉ")
-                ? "bg-violet-50 text-violet-800 ring-violet-200"
+                ? "bg-teal-50 text-teal-800 ring-teal-200"
                 : "bg-slate-50 text-slate-700 ring-slate-200",
           )}
         >
@@ -434,7 +434,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
             isOvertime
               ? "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200"
               : isNightShift
-                ? "bg-indigo-50 text-indigo-800 ring-1 ring-inset ring-indigo-200"
+                ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200"
                 : "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200",
           )}
         >

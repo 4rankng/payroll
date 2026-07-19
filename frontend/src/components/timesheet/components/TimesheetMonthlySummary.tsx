@@ -25,30 +25,30 @@ export function TimesheetMonthlySummary({ summaryData }: TimesheetMonthlySummary
   );
 
   return (
-    <div className="bg-purple-50 rounded-xl p-4">
+    <div className="bg-emerald-50 rounded-xl p-4">
       <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="w-4 h-4 text-purple-600" />
-        <h4 className="typography-body-medium text-purple-700">
+        <TrendingUp className="w-4 h-4 text-emerald-600" />
+        <h4 className="typography-body-medium text-emerald-700">
           Tổng quan tháng
         </h4>
       </div>
       <div className="grid grid-cols-2 gap-3 typography-body-medium">
         <div>
-          <span className="typography-body-small text-purple-600">Tổng giờ</span>
+          <span className="typography-body-small text-emerald-600">Tổng giờ</span>
           <p className="font-medium">{totalHours} giờ</p>
         </div>
         <div>
-          <span className="typography-body-small text-purple-600">Tổng tiền</span>
+          <span className="typography-body-small text-emerald-600">Tổng tiền</span>
           <p className="font-medium">
             {summaryData.totalAmount?.toLocaleString('vi-VN') || '0'}đ
           </p>
         </div>
         <div>
-          <span className="typography-body-small text-purple-600">Ngày làm</span>
+          <span className="typography-body-small text-emerald-600">Ngày làm</span>
           <p className="font-medium">{summaryData.workingDays} ngày</p>
         </div>
         <div>
-          <span className="typography-body-small text-purple-600">TB/ngày</span>
+          <span className="typography-body-small text-emerald-600">TB/ngày</span>
           <p className="font-medium">{summaryData.averageHoursPerDay} giờ</p>
         </div>
       </div>

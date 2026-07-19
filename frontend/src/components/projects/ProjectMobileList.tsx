@@ -70,7 +70,7 @@ const ProjectCard = React.memo(function ProjectCard({
           </Badge>
         )}
         {(project.monthly_salary_employee_count ?? 0) > 0 && (
-          <Badge className="font-semibold bg-violet-50 text-violet-700 border-violet-200 border text-[11px] h-4 px-1 shrink-0">
+          <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
             {project.monthly_salary_employee_count}M
           </Badge>
         )}

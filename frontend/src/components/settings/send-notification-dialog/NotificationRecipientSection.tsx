@@ -44,9 +44,9 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
           className={cn(
             'min-h-11 gap-1.5 rounded-xl border px-3 text-xs transition-all duration-150',
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
-            'data-[state=off]:hover:bg-purple-50 data-[state=off]:hover:border-purple-200 data-[state=off]:hover:text-purple-700',
-            'data-[state=on]:bg-purple-100 data-[state=on]:border-purple-300 data-[state=on]:text-purple-700',
-            'dark:data-[state=on]:bg-purple-950/50[state=on]:border-purple-700[state=on]:text-purple-300'
+            'data-[state=off]:hover:bg-emerald-50 data-[state=off]:hover:border-emerald-200 data-[state=off]:hover:text-emerald-700',
+            'data-[state=on]:bg-emerald-100 data-[state=on]:border-emerald-300 data-[state=on]:text-emerald-700',
+            'dark:data-[state=on]:bg-emerald-950/50[state=on]:border-emerald-700[state=on]:text-emerald-300'
           )}
           aria-label="Gửi đến tất cả Admin"
         >

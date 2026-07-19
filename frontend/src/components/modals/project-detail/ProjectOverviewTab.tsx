@@ -113,7 +113,7 @@ export function ProjectOverviewTab({
             icon={Target}
             value="-"
             label="Tiến độ"
-            color="text-purple-600"
+            color="text-emerald-600"
           />
 
           <ProjectStatusCard

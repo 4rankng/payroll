@@ -140,7 +140,7 @@ const LoansPage = () => {
           label="Khoản vay"
           value={loansSummary.active_loans_count}
           icon={Wallet}
-          color="violet"
+          color="teal"
           variant="stack"
         />
       </div>

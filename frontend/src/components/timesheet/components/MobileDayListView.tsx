@@ -23,7 +23,7 @@ const STATUS_DOT: Record<string, string> = {
   approved: 'bg-green-500',
   pending_approval: 'bg-gray-400',
   rejected: 'bg-red-500',
-  mixed: 'bg-purple-500',
+  mixed: 'bg-teal-500',
   none: 'bg-transparent',
 };
 
@@ -32,7 +32,7 @@ const STATUS_ROW_BG: Record<string, string> = {
   approved: 'bg-green-50 border-green-200',
   pending_approval: 'bg-muted/50 border-border',
   rejected: 'bg-red-50 border-red-200',
-  mixed: 'bg-purple-50 border-purple-200',
+  mixed: 'bg-teal-50 border-teal-200',
   none: 'bg-card border-border'
 };
 

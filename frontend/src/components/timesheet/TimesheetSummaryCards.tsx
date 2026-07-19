@@ -54,8 +54,8 @@ export function TimesheetSummaryCards({ summary }: TimesheetSummaryCardsProps) {
       value: summary.averageHours.toFixed(1),
       sub: 'giờ/người',
       icon: Clock,
-      iconText: 'text-violet-600',
-      watermark: 'text-violet-500/15',
+      iconText: 'text-teal-600',
+      watermark: 'text-teal-500/15',
     },
   ];
 

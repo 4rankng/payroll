@@ -187,8 +187,8 @@ const EmployeesPageMobile = () => {
         label: "Tháng này",
         value: employeesSummary.employees_hired_this_month,
         icon: UserPlus,
-        color: "text-violet-600",
-        bg: "bg-violet-50",
+        color: "text-teal-600",
+        bg: "bg-teal-50",
         filter: null as "working" | "unassigned" | null,
       },
     ];

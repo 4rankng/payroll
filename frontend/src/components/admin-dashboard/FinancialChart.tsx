@@ -144,7 +144,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
           break;
         case 'NV làm việc':
           value = latestPeriod.active_employees;
-          color = 'text-purple-600';
+          color = 'text-emerald-600';
           break;
         default:
           value = 0;

@@ -160,7 +160,7 @@ export function ShiftNamesSection({ project }: ShiftNamesSectionProps) {
                   <span className="font-mono text-[11px] text-muted-foreground truncate">{range}</span>
                   {overnight && (
                     <span
-                      className="inline-flex items-center gap-0.5 rounded bg-indigo-50 px-1 py-0.5 text-[11px] font-medium text-indigo-600 shrink-0"
+                      className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-[11px] font-medium text-emerald-600 shrink-0"
                       title="Ca qua đêm"
                     >
                       <Moon className="h-2.5 w-2.5" />

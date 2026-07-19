@@ -20,7 +20,7 @@ const colorMap = {
   blue:   { iconText: "text-blue-600",    watermark: "text-blue-500/15" },
   red:    { iconText: "text-rose-600",    watermark: "text-rose-500/15" },
   amber:  { iconText: "text-amber-600",   watermark: "text-amber-500/15" },
-  violet: { iconText: "text-violet-600",  watermark: "text-violet-500/15" },
+  teal:   { iconText: "text-teal-600",    watermark: "text-teal-500/15" },
 } as const;
 
 export function LoanSummaryCards({ summary, isLoading }: LoanSummaryCardsProps) {
@@ -45,7 +45,7 @@ export function LoanSummaryCards({ summary, isLoading }: LoanSummaryCardsProps) 
     { title: "Tổng vay", value: formatVND(summary.total_borrowed), icon: DollarSign, color: "blue" as const },
     { title: "Dư nợ hiện tại", value: formatVND(summary.total_outstanding), icon: TrendingDown, color: "red" as const },
     { title: "Lãi đã trả", value: formatVND(summary.total_interest_paid), icon: Percent, color: "amber" as const },
-    { title: "Khoản vay", value: summary.active_loans_count.toLocaleString("vi-VN"), icon: CreditCard, color: "violet" as const },
+    { title: "Khoản vay", value: summary.active_loans_count.toLocaleString("vi-VN"), icon: CreditCard, color: "teal" as const },
   ];
 
   return (

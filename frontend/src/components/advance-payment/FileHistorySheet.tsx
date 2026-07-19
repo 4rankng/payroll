@@ -91,7 +91,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
     { value: 'advance_payment_result', label: 'Kết quả ứng lương', count: typeCounts.advance_payment_result, dotClass: 'bg-emerald-500' },
     { value: 'advance_payment_export', label: 'Xuất chuyển lô', count: typeCounts.advance_payment_export, dotClass: 'bg-amber-500' },
     { value: 'flex_pay_import', label: 'Nhập bảng lương', count: typeCounts.flex_pay_import, dotClass: 'bg-blue-500' },
-    { value: 'advance_payment_sao_ke_export', label: 'Xuất sao kê', count: typeCounts.advance_payment_sao_ke_export, dotClass: 'bg-purple-500' },
+    { value: 'advance_payment_sao_ke_export', label: 'Xuất sao kê', count: typeCounts.advance_payment_sao_ke_export, dotClass: 'bg-teal-500' },
   ], [typeCounts]);
 
   const renderContent = () => {
