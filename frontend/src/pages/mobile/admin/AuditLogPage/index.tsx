@@ -210,7 +210,7 @@ export default function AuditLogPageMobile() {
         ) : (
           <>
             {logs.map((log) => (
-              <AuditLogCard key={log.id} log={log} onClick={setSelectedLogId} />
+              <AuditLogCard key={log.id} log={log} onClick={setSelectedLogId} compact />
             ))}
             {isFetchingNextPage && (
               <>

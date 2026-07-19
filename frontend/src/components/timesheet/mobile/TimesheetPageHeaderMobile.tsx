@@ -61,6 +61,7 @@ export function TimesheetPageHeaderMobile({
         sticky={false}
         bordered={false}
         className="bg-transparent"
+        actionsLayout="stacked"
         actions={
           <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
             <Button

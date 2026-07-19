@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 interface AuditLogCardProps {
   log: BackendAuditLog;
   onClick: (id: number) => void;
+  compact?: boolean;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -38,7 +39,7 @@ function resolveUser(log: BackendAuditLog): { fullname: string; username: string
   return { fullname, username };
 }
 
-export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
+export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProps) {
   const variant = getActionVariant(log.action);
   const location = extractLocation(log.metadata);
   const loginId = log.action === 'LOGIN' ? extractLoginIdentifier(log.metadata) : null;
@@ -48,6 +49,7 @@ export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
   const date = new Date(log.created_at);
   const dateStr = format(date, 'dd/MM/yyyy');
   const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const compactTime = `${format(date, 'dd/MM')} · ${format(date, 'HH:mm')}`;
 
   // Build meta chips for the footer row
   const metaChips: { icon: React.ReactNode; label: string }[] = [];
@@ -59,57 +61,70 @@ export function AuditLogCard({ log, onClick }: AuditLogCardProps) {
     <button
       type="button"
       onClick={() => onClick(log.id)}
-      className="group w-full overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50"
+      className={cn(
+        'group w-full overflow-hidden border text-left transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50',
+        compact
+          ? 'rounded-2xl border-slate-200/90 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
+          : 'rounded-xl border-border bg-card shadow-sm',
+      )}
     >
       {/* Top bar: action badge + role | datetime + chevron */}
-      <div className="flex flex-col gap-2 border-b border-border/60 px-3 pb-2.5 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+      <div className={cn(
+        'flex flex-col gap-2 border-b border-border/60 px-3 pb-2.5 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between',
+        compact && 'flex-row items-center justify-between gap-2 border-slate-100 bg-slate-50/80 px-3.5 py-2.5',
+      )}>
         <div className="flex min-w-0 items-center gap-2">
           <Badge
             variant="outline"
-            className={cn('shrink-0 border px-2 py-0.5 text-xs font-semibold', VARIANT_CLASSES[variant])}
+            className={cn('shrink-0 border px-2 py-0.5 text-xs font-semibold', compact && 'rounded-md text-[11px]', VARIANT_CLASSES[variant])}
           >
             {getActionLabel(log.action)}
           </Badge>
-          <span className="min-w-0 truncate text-xs text-muted-foreground">
+          <span className={cn('min-w-0 truncate text-xs text-muted-foreground', compact && 'font-medium text-slate-500')}>
             {getRoleLabel(log.user_role)}
           </span>
         </div>
-        <div className="flex min-w-0 items-center justify-between gap-1.5 min-[380px]:shrink-0 min-[380px]:justify-end">
-          <span className="min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap">{dateStr} {timeStr}</span>
+        <div className={cn(
+          'flex min-w-0 items-center justify-between gap-1.5 min-[380px]:shrink-0 min-[380px]:justify-end',
+          compact && 'shrink-0 justify-end',
+        )}>
+          <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-[11px] font-medium text-slate-400')}>
+            {compact ? compactTime : `${dateStr} ${timeStr}`}
+          </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
         </div>
       </div>
 
       {/* Body */}
-      <div className="px-3 pt-2.5 pb-3 space-y-2">
+      <div className={cn('space-y-2 px-3 pb-3 pt-2.5', compact && 'space-y-2.5 px-3.5 pb-3.5 pt-3')}>
         {/* User name + username */}
         <div>
           {fullname
-            ? <p className="break-words text-sm font-semibold leading-tight text-foreground">{fullname}</p>
+            ? <p className={cn('break-words text-sm font-semibold leading-tight text-foreground', compact && 'text-[15px]')}>{fullname}</p>
             : <p className="text-sm text-muted-foreground">#{log.user_id}</p>
           }
           {username && (
-            <p className="break-all text-xs leading-tight text-muted-foreground">@{username}</p>
+            <p className={cn('break-all text-xs leading-tight text-muted-foreground', compact && 'mt-0.5 text-slate-400')}>@{username}</p>
           )}
         </div>
 
         {/* Message */}
-        <p className="break-words text-sm leading-snug text-foreground">
+        <p className={cn('break-words text-sm leading-snug text-foreground', compact && 'text-slate-600')}>
           {log.message}
         </p>
 
         {/* Login identifier */}
         {showLoginId && (
-          <p className="break-words text-xs font-medium text-amber-600">
+          <p className={cn('break-words text-xs font-medium text-amber-600', compact && 'rounded-lg bg-amber-50 px-2.5 py-2 text-amber-700')}>
             Đăng nhập bằng: {loginId}
           </p>
         )}
 
         {/* Meta footer: IP · location · device as a single wrapping row of chips */}
         {metaChips.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-slate-100 pt-2.5')}>
             {metaChips.map((chip, i) => (
-              <span key={i} className="inline-flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground/70">
+              <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground/70', compact && 'text-slate-400')}>
                 {chip.icon}
                 <span className="min-w-0 break-all">{chip.label}</span>
               </span>

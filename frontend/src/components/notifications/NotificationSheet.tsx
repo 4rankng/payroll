@@ -136,18 +136,10 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           className={cn(
             "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-base-100 p-0 text-base-content",
             isMobile
-              ? "h-auto max-h-[92dvh] rounded-t-[1.5rem] shadow-[0_-10px_32px_rgba(16,24,40,0.16)]"
+              ? "h-[100dvh] max-h-none rounded-none shadow-none"
               : "h-full"
           )}
         >
-
-          {/* Mobile drag handle */}
-          {isMobile && (
-            <div className={cn("flex flex-shrink-0 justify-center pb-1 pt-2.5", theme.headerBg)}>
-              <div className="h-1 w-9 rounded-full bg-neutral-content/25" />
-            </div>
-          )}
-
           {/* Header */}
           <div
             className={cn("px-4 pb-4 text-neutral-content", theme.headerBg)}
