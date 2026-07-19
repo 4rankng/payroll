@@ -118,7 +118,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
       >
         {/* Gliding active pill — slides in with a scale animation */}
         {isActive && !isCollapsed && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[hsl(var(--admin-accent))] rounded-r-full animate-pill-appear" />
+          <span className="absolute inset-y-2 left-0 w-[3px] origin-center rounded-r-full bg-[hsl(var(--admin-accent))] animate-pill-appear" />
         )}
         <item.icon
           className={cn(

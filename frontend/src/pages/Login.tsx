@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Lock, User, Eye, EyeOff, AlertCircle, Loader2, ChevronRight, RefreshCw } from "lucide-react";
+import {
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2,
+  ChevronRight,
+  RefreshCw,
+  CalendarDays,
+  ShieldCheck,
+  WalletCards,
+} from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
 import { useLogin, useGoogleLogin } from "@/hooks/api/useAuth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiClient } from "@/services/api/client";
 import type { ApiError } from "@/services/api/client";
 
@@ -197,7 +205,15 @@ const Login = () => {
   const togglePassword = useCallback(() => setShowPassword((v) => !v), []);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div
+        data-admin-ui=""
+        data-theme="congtruong"
+        className="flex min-h-dvh items-center justify-center bg-base-200 text-base-content"
+      >
+        <span className="ct-loading ct-loading-spinner ct-loading-lg text-primary" aria-label="Đang tải" />
+      </div>
+    );
   }
 
   if (isAuthenticated) {
@@ -207,238 +223,264 @@ const Login = () => {
   return (
     <div
       id="main-content"
-      className="min-h-[100dvh] w-full flex items-center justify-center relative overflow-hidden"
+      data-admin-ui=""
+      data-login-ui=""
+      data-theme="congtruong"
+      className="relative min-h-dvh w-full overflow-x-hidden bg-base-200 text-base-content"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/login-bg-employee.png')" }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-white/20 to-emerald-50/20" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.42] [background-image:linear-gradient(to_right,hsl(var(--border)/0.45)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.45)_1px,transparent_1px)] [background-size:32px_32px]" />
 
-      {/* Brand Logo — desktop: top left */}
-      <div className="hidden md:absolute md:z-20 md:top-6 md:left-6 md:flex md:items-center md:gap-3 md:animate-fade-in-up md:delay-100">
-        <img src="/logo-square.png" alt="TingTing logo" className="h-10 w-10 rounded-lg object-contain" />
-        <h1 className="font-display font-extrabold text-xl text-emerald-800 tracking-tight">TingTing</h1>
-      </div>
+      <main className="relative mx-auto grid min-h-dvh w-full max-w-[1600px] lg:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] lg:p-4 xl:p-6">
+        <section
+          aria-labelledby="login-brand-heading"
+          className="relative hidden min-h-[calc(100dvh-3rem)] overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 lg:block"
+        >
+          <img
+            src="/login-payroll-hero.webp"
+            alt="Ví lương, lịch tuần và bảng công minh họa cho ứng lương nhanh"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-base-100/15 via-transparent to-neutral/10" />
 
-      <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center px-4 py-6 md:py-0">
+          <div className="absolute left-8 top-8 flex items-center gap-3 rounded-2xl border border-base-300/80 bg-base-100/90 px-4 py-3 shadow-sm backdrop-blur-md xl:left-10 xl:top-10">
+            <img src="/logo-square.png" alt="" className="h-10 w-10 object-contain" />
+            <div>
+              <p className="font-display text-xl font-extrabold leading-none tracking-tight text-base-content">TingTing</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-base-content/55">Nhịp lương thông minh</p>
+            </div>
+          </div>
 
-        {/* Brand Logo — mobile: above card */}
-        <div className="flex md:hidden items-center gap-3 mb-7 animate-fade-in-up delay-100">
-          <img src="/logo-square.png" alt="TingTing logo" className="h-11 w-11 rounded-xl object-contain shadow-lg" />
-          <h1 className="font-display font-extrabold text-2xl text-emerald-800 tracking-tight">TingTing</h1>
-        </div>
-
-        {/* Login Card */}
-        <div className="w-full animate-hero-reveal delay-200 rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,120,70,0.16)] bg-white">
-
-          {/* Card header */}
-          <div className="bg-white px-8 pt-8 pb-6">
-            <h2 className="font-display font-bold text-[22px] text-gray-900 tracking-tight mb-1">
-              Chào mừng trở lại
-            </h2>
-            <p className="text-sm text-gray-400 font-normal">
-              Đăng nhập để truy cập bảng lương của bạn
+          <div className="absolute right-8 top-10 max-w-[390px] text-right xl:right-12 xl:top-14 xl:max-w-[470px]">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-base-content/55">Dòng tiền chủ động</p>
+            <h1 id="login-brand-heading" className="font-display text-4xl font-black leading-[0.98] tracking-[-0.045em] text-neutral xl:text-6xl">
+              Ứng lương nhanh.
+              <span className="mt-2 block text-primary">Trả lương tuần.</span>
+            </h1>
+            <p className="ml-auto mt-5 max-w-sm text-sm font-medium leading-6 text-base-content/65 xl:text-base">
+              Một nhịp lương rõ ràng cho người lao động chủ động và doanh nghiệp vận hành nhẹ nhàng hơn.
             </p>
           </div>
 
-          {/* Error alerts */}
-          {(loginMutation.error || googleLoginMutation.error) && (
-            <div className="bg-white px-8 pb-1">
-              <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-700 animate-fade-in">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <AlertDescription className="font-medium text-sm">
-                  {loginMutation.error
-                    ? (((loginMutation.error as unknown) as ApiError)?.http_status === 429
-                      ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
-                      : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")
-                    : (((googleLoginMutation.error as unknown) as ApiError)?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.")}
-                </AlertDescription>
-              </Alert>
+          <div className="absolute bottom-7 left-7 right-7 grid grid-cols-3 overflow-hidden rounded-2xl border border-base-300/80 bg-base-100/88 shadow-lg backdrop-blur-xl xl:bottom-9 xl:left-9 xl:right-9">
+            {[
+              { icon: WalletCards, label: "Ứng lương", value: "Chủ động" },
+              { icon: CalendarDays, label: "Lương tuần", value: "Đúng nhịp" },
+              { icon: ShieldCheck, label: "Dữ liệu", value: "Bảo mật" },
+            ].map(({ icon: Icon, label, value }, index) => (
+              <div key={label} className={`flex items-center gap-3 px-4 py-4 xl:px-6 ${index > 0 ? "border-l border-base-300/80" : ""}`}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-base-content/45">{label}</span>
+                  <span className="mt-0.5 block truncate text-sm font-bold text-base-content">{value}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="relative flex min-h-dvh flex-col bg-base-100 lg:min-h-[calc(100dvh-3rem)] lg:rounded-[2rem] lg:bg-base-100/96">
+          <div className="relative h-56 overflow-hidden border-b border-base-300 lg:hidden">
+            <img
+              src="/login-payroll-hero.webp"
+              alt="Ví lương và lịch trả lương tuần"
+              className="h-full w-full object-cover object-[38%_68%]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-base-100/30 via-base-100/5 to-neutral/45" />
+            <div className="absolute left-5 top-5 flex items-center gap-2.5 rounded-2xl border border-base-300/80 bg-base-100/92 px-3 py-2 shadow-sm backdrop-blur-md">
+              <img src="/logo-square.png" alt="TingTing logo" className="h-9 w-9 object-contain" />
+              <span className="font-display text-lg font-extrabold tracking-tight">TingTing</span>
             </div>
-          )}
-
-          {/* Google button — PRIMARY action */}
-          <div className="bg-white px-8 pb-6">
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isDisabled}
-              className="group relative w-full h-[52px] flex items-center gap-3.5 px-4 rounded-xl
-                bg-white border border-gray-200
-                shadow-[0_1px_4px_rgba(0,0,0,0.07),0_2px_8px_rgba(0,0,0,0.04)]
-                hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)]
-                hover:border-gray-300
-                hover:-translate-y-[1px]
-                transition-all duration-150 ease-out
-                disabled:pointer-events-none disabled:opacity-40
-                cursor-pointer select-none"
-            >
-              {/* Icon badge */}
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 shrink-0">
-                {googleLoginMutation.isPending
-                  ? <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                  : <GoogleIcon />}
-              </div>
-              <span className="flex-1 text-left text-sm font-semibold text-gray-700">
-                {googleLoginMutation.isPending ? "Đang đăng nhập..." : "Tiếp tục bằng Google"}
-              </span>
-              <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-400 group-hover:translate-x-px transition-all duration-150 shrink-0" />
-            </button>
+            <div className="absolute bottom-5 left-5 right-5 text-primary-content">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary-content/75">Lương về đúng nhịp</p>
+              <p className="mt-1 font-display text-2xl font-black leading-tight tracking-[-0.03em]">Ứng lương nhanh. Trả lương tuần.</p>
+            </div>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center bg-white px-8 mb-5">
-            <div className="h-px flex-1 bg-gray-100" />
-            <span className="px-4 text-xs font-medium text-gray-400 tracking-wide">hoặc</span>
-            <div className="h-px flex-1 bg-gray-100" />
-          </div>
-
-          {/* Username / password form */}
-          <div className="bg-white px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <div className="space-y-1.5">
-                <Label htmlFor="emailOrUsername" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Tên đăng nhập
-                </Label>
-                <div className="relative group">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 group-focus-within:text-primary transition-colors pointer-events-none z-10" />
-                  <Input
-                    id="emailOrUsername"
-                    type="text"
-                    placeholder="CCCD, số điện thoại hoặc tên đăng nhập"
-                    value={emailOrUsername}
-                    onChange={(e) => setEmailOrUsername(e.target.value)}
-                    onBlur={() => void syncCaptchaRequirement()}
-                    className="premium-input pl-10 pr-4 h-11 text-sm bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
-                    required
-                    autoComplete="username"
-                    autoCapitalize="none"
-                    disabled={isDisabled}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Mật khẩu
-                </Label>
-                <div className="relative group">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 group-focus-within:text-primary transition-colors pointer-events-none z-10" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Nhập mật khẩu của bạn"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="premium-input pl-10 pr-12 h-11 text-sm bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
-                    required
-                    autoComplete="current-password"
-                    disabled={isDisabled}
-                  />
-                  <button
-                    type="button"
-                    onClick={togglePassword}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-gray-300 hover:text-gray-500 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    tabIndex={0}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* CAPTCHA — shown after 3 failed login attempts */}
-              {needsCaptcha && (
-                <div className="space-y-1.5 animate-fade-in-up">
-                  <Label htmlFor="captchaCode" className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Mã xác nhận
-                  </Label>
-                  <div className="flex items-center gap-3">
-                    {/* Image + inline loading skeleton. Same h-11 + rounded-lg as
-                        the inputs so the row stays visually aligned. */}
-                    {captchaImage ? (
-                      <img
-                        src={captchaImage}
-                        alt="Hình ảnh mã xác nhận 5 chữ số — nhấn để tải hình khác"
-                        className="h-11 rounded-lg border border-gray-200 bg-white select-none"
-                        onClick={() => refreshCaptcha()}
-                        style={{ cursor: "pointer" }}
-                      />
-                    ) : (
-                      <div
-                        className="h-11 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center"
-                        aria-hidden="true"
-                      >
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
-                      </div>
-                    )}
-                    <Input
-                      id="captchaCode"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Nhập mã"
-                      value={captchaCode}
-                      onChange={(e) => setCaptchaCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                      className="premium-input flex-1 h-11 text-sm tracking-widest text-center bg-gray-50 border-gray-200 focus:bg-white focus:border-primary/50 transition-colors"
-                      autoComplete="off"
-                      required={needsCaptcha}
-                      disabled={isDisabled || captchaLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => refreshCaptcha()}
-                      disabled={captchaLoading || isDisabled}
-                      aria-label="Tải hình mã xác nhận khác"
-                      className="shrink-0 h-11 w-11 flex items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:pointer-events-none"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${captchaLoading ? "animate-spin" : ""}`} />
-                    </button>
+          <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 lg:px-10 xl:px-16">
+            <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_rgba(13,63,39,0.48)] lg:border-0 lg:bg-transparent lg:shadow-none">
+              <div className="ct-card-body gap-0 p-6 sm:p-8 lg:p-4">
+                <div className="mb-7 hidden items-center gap-3 lg:flex">
+                  <img src="/logo-square.png" alt="TingTing logo" className="h-11 w-11 object-contain" />
+                  <div>
+                    <p className="font-display text-xl font-extrabold leading-none tracking-tight">TingTing</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-base-content/45">Cổng lương thông minh</p>
                   </div>
                 </div>
-              )}
 
-              <Button
-                type="submit"
-                variant="default"
-                className="w-full h-11 font-bold text-sm rounded-xl mt-2 premium-button bg-employee-600 text-white shadow-[0_8px_24px_rgba(0,158,69,0.22)] hover:bg-employee-700 hover:shadow-[0_10px_28px_rgba(0,122,55,0.28)]"
-                disabled={isDisabled}
-              >
-                {loginMutation.isPending
-                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Đang đăng nhập...</>
-                  : "Đăng nhập"}
-              </Button>
-            </form>
+                <div className="mb-7">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_5px_hsl(var(--su)/0.12)]" />
+                    Hệ thống đang hoạt động
+                  </div>
+                  <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.035em] sm:text-4xl">Chào mừng trở lại</h2>
+                  <p className="mt-2 text-sm leading-6 text-base-content/55">Đăng nhập để quản lý ứng lương và chu kỳ trả lương của bạn.</p>
+                </div>
+
+                {(loginMutation.error || googleLoginMutation.error) && (
+                  <div role="alert" className="ct-alert ct-alert-error mb-5 items-start rounded-xl text-sm shadow-none animate-fade-in">
+                    <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="font-semibold leading-5">
+                      {loginMutation.error
+                        ? (((loginMutation.error as unknown) as ApiError)?.http_status === 429
+                          ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
+                          : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")
+                        : (((googleLoginMutation.error as unknown) as ApiError)?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.")}
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={isDisabled}
+                  className="ct-btn ct-btn-outline ct-btn-lg group h-12 w-full justify-start rounded-xl border-base-300 bg-base-100 px-3 text-sm normal-case shadow-sm hover:border-base-content/20 hover:bg-base-200"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-base-300 bg-base-100">
+                    {googleLoginMutation.isPending
+                      ? <span className="ct-loading ct-loading-spinner ct-loading-sm text-base-content/45" />
+                      : <GoogleIcon />}
+                  </span>
+                  <span className="flex-1 text-left font-bold">
+                    {googleLoginMutation.isPending ? "Đang đăng nhập..." : "Tiếp tục bằng Google"}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-base-content/35 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </button>
+
+                <div className="ct-divider my-5 text-[10px] font-bold uppercase tracking-[0.2em] text-base-content/35">hoặc đăng nhập bằng tài khoản</div>
+
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                  <fieldset className="space-y-4">
+                    <legend className="sr-only">Thông tin đăng nhập</legend>
+
+                    <div className="space-y-2">
+                      <label htmlFor="emailOrUsername" className="block text-xs font-bold text-base-content/65">Tên đăng nhập</label>
+                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:bg-base-100 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
+                        <User className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                        <input
+                          id="emailOrUsername"
+                          type="text"
+                          placeholder="CCCD, số điện thoại hoặc tên đăng nhập"
+                          value={emailOrUsername}
+                          onChange={(e) => setEmailOrUsername(e.target.value)}
+                          onBlur={() => void syncCaptchaRequirement()}
+                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+                          required
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          disabled={isDisabled}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="password" className="block text-xs font-bold text-base-content/65">Mật khẩu</label>
+                      <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:bg-base-100 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
+                        <Lock className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Nhập mật khẩu của bạn"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+                          required
+                          autoComplete="current-password"
+                          disabled={isDisabled}
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePassword}
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                          className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content/40 hover:text-base-content"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </label>
+                    </div>
+
+                    {needsCaptcha && (
+                      <div className="space-y-2 animate-fade-in-up">
+                        <label htmlFor="captchaCode" className="block text-xs font-bold text-base-content/65">Mã xác nhận</label>
+                        <div className="flex items-center gap-2">
+                          {captchaImage ? (
+                            <button
+                              type="button"
+                              onClick={() => refreshCaptcha()}
+                              className="h-12 overflow-hidden rounded-xl border border-base-300 bg-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                              aria-label="Tải hình mã xác nhận khác"
+                            >
+                              <img src={captchaImage} alt="Hình ảnh mã xác nhận 5 chữ số" className="h-full w-auto select-none" />
+                            </button>
+                          ) : (
+                            <div className="flex h-12 min-w-24 items-center justify-center rounded-xl border border-base-300 bg-base-200" aria-hidden="true">
+                              <span className="ct-loading ct-loading-spinner ct-loading-sm text-base-content/35" />
+                            </div>
+                          )}
+                          <input
+                            id="captchaCode"
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="Nhập mã"
+                            value={captchaCode}
+                            onChange={(e) => setCaptchaCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                            className="ct-input ct-input-bordered h-12 min-w-0 flex-1 rounded-xl border-base-300 bg-base-200/55 text-center text-sm tracking-[0.3em] focus:border-primary focus:bg-base-100 focus:outline-none"
+                            autoComplete="off"
+                            required={needsCaptcha}
+                            disabled={isDisabled || captchaLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => refreshCaptcha()}
+                            disabled={captchaLoading || isDisabled}
+                            aria-label="Tải hình mã xác nhận khác"
+                            className="ct-btn ct-btn-outline ct-btn-square h-12 min-h-12 w-12 rounded-xl border-base-300"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${captchaLoading ? "animate-spin" : ""}`} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </fieldset>
+
+                  <button
+                    type="submit"
+                    className="ct-btn ct-btn-primary ct-btn-lg mt-2 h-12 w-full rounded-xl text-sm font-extrabold normal-case shadow-[0_12px_28px_-14px_rgba(8,120,62,0.8)]"
+                    disabled={isDisabled}
+                  >
+                    {loginMutation.isPending ? (
+                      <>
+                        <span className="ct-loading ct-loading-spinner ct-loading-sm" />
+                        Đang đăng nhập...
+                      </>
+                    ) : (
+                      "Đăng nhập"
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-base-content/45">
+                  <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" />
+                  <span>Phiên đăng nhập được bảo vệ và mã hóa</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Card footer */}
-          <div className="bg-gray-50 border-t border-gray-100 px-8 py-4">
-            <p className="text-xs text-gray-400 text-center whitespace-nowrap">
-              Ứng lương với{" "}
-              <span className="font-semibold text-primary">TingTing</span>
-              {" · "}An toàn{" · "}Bảo mật{" · "}Tiện lợi
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Page footer */}
-      <div className="absolute bottom-6 left-0 right-0 z-10">
-        <div className="flex flex-col items-center gap-1.5">
-          <p className="text-center text-xs text-gray-600 font-medium">
-            © {new Date().getFullYear()} TingTing. Enterprise Payroll Solutions.
-          </p>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <span>Điều khoản</span>
-            <span>·</span>
-            <span>Quyền riêng tư</span>
-            <span>·</span>
-            <span>Hỗ trợ</span>
-          </div>
-        </div>
-      </div>
+          <footer className="px-5 pb-6 text-center text-[11px] text-base-content/40 lg:px-10">
+            <p>© {new Date().getFullYear()} TingTing · Ứng lương nhanh · Trả lương tuần</p>
+            <div className="mt-2 flex items-center justify-center gap-3">
+              <span>Điều khoản</span>
+              <span aria-hidden="true">·</span>
+              <span>Quyền riêng tư</span>
+              <span aria-hidden="true">·</span>
+              <span>Hỗ trợ</span>
+            </div>
+          </footer>
+        </section>
+      </main>
     </div>
   );
 };

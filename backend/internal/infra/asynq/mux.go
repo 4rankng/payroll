@@ -37,6 +37,13 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 		srv.Mux().Handle(TaskStatusInquiry, asynqlib.HandlerFunc(h.HandleStatusInquiry))
 	}
 
+	if h.walletBulkRowWorker != nil && h.walletBulkSvc != nil {
+		srv.Mux().Handle(TaskWalletBulkTransferRow, asynqlib.HandlerFunc(h.HandleWalletBulkTransferRow))
+		srv.Mux().Handle(TaskWalletBookBatchLedger, asynqlib.HandlerFunc(h.HandleWalletBookBatchLedger))
+		srv.Mux().Handle(TaskWalletStaleEnqueueSweeper, asynqlib.HandlerFunc(h.HandleWalletStaleEnqueueSweeper))
+		srv.Mux().Handle(TaskWalletCompletingRecovery, asynqlib.HandlerFunc(h.HandleWalletCompletingRecovery))
+	}
+
 	registered := []string{
 		TaskEmployeeImport, TaskImportJob, TaskIPNProcess,
 		TaskBulkTransferTransaction, TaskBulkTransferPayment,
@@ -54,6 +61,11 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	}
 	if h.statusInquiryPollerWorker != nil {
 		registered = append(registered, TaskStatusInquiry)
+	}
+	if h.walletBulkRowWorker != nil && h.walletBulkSvc != nil {
+		registered = append(registered,
+			TaskWalletBulkTransferRow, TaskWalletBookBatchLedger,
+			TaskWalletStaleEnqueueSweeper, TaskWalletCompletingRecovery)
 	}
 
 	logger.Info("Registered asynq task handlers", "tasks", registered)
@@ -143,5 +155,32 @@ func RegisterStatusInquiryPoller(srv *Server) error {
 	}
 
 	logger.Info("Registered status inquiry poller periodic task", "interval", "2m")
+	return nil
+}
+
+// RegisterWalletBulkSweepers registers the two periodic sweepers for the
+// wallet bulk transfer pipeline:
+//   - stale-enqueue sweeper (@every 1m): re-enqueues per-row tasks for batches
+//     whose outbox state is still 'pending' (worker crashed between batch
+//     INSERT and enqueue).
+//   - completing-batch recovery (@every 5m): re-attempts ledger booking for
+//     batches stuck in 'completing' >10min.
+//
+// Both are idempotent — safe to run repeatedly.
+func RegisterWalletBulkSweepers(srv *Server) error {
+	if _, err := srv.Scheduler().Register("@every 1m",
+		asynqlib.NewTask(TaskWalletStaleEnqueueSweeper, nil),
+		asynqlib.Queue(QueueLow),
+	); err != nil {
+		return fmt.Errorf("register stale-enqueue sweeper: %w", err)
+	}
+	if _, err := srv.Scheduler().Register("@every 5m",
+		asynqlib.NewTask(TaskWalletCompletingRecovery, nil),
+		asynqlib.Queue(QueueLow),
+	); err != nil {
+		return fmt.Errorf("register completing-batch recovery: %w", err)
+	}
+	logger.Info("Registered wallet bulk transfer periodic sweepers",
+		"intervals", "stale_enqueue=1m, completing_recovery=5m")
 	return nil
 }

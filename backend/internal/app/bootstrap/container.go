@@ -14,6 +14,7 @@ import (
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/scheduler"
+	"api-server/internal/app/services/wallet_bulk"
 	"api-server/internal/app/workers"
 	"api-server/internal/config"
 	"api-server/internal/domain"
@@ -98,6 +99,7 @@ type Handlers struct {
 	ReconciliationExport *disbursementHandlers.ReconciliationExportHandler
 	ProviderTransactions *adminHandlers.WalletPaymentStatsHandler
 	Wallet               *handlers.WalletHandler
+	WalletBulkTransfer   *handlers.WalletBulkTransferHandler
 	AdvPartnerUser       *advPartnerHandlers.UserHandler
 	BCCImport            *timesheetHandlers.BCCImportHandler
 	Attendance           *attendanceHandlers.Handler
@@ -142,7 +144,27 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 
 	services := bootstrapServices.Initialize(repos, cfg, infra.Logger, infra.DB, infra.Redis, eventBus, asynqClient, clk)
 
-	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk)
+	// wallet_bulk service is constructed here (before initHandlers) so the
+	// HTTP handler can capture it. The row worker is constructed later with
+	// the rest of the asynq workers.
+	var walletBulkSvc *wallet_bulk.WalletBulkTransferService
+	if cfg.Disbursement.EmployeeDisbursementEnabled() {
+		walletBulkFileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
+		walletBulkParser := wallet_bulk.NewYeuCauChuyenTienParser(infra.Logger)
+		walletBulkSvc = wallet_bulk.NewWalletBulkTransferService(wallet_bulk.ServiceDeps{
+			BatchRepo:   repos.BulkTransferBatch,
+			PaymentRepo: repos.TxWalletPayment,
+			FileStorage: walletBulkFileStorage,
+			AssetRepo:   repos.Asset,
+			AsynqClient: asynqClient,
+			TxnSvc:      services.Transaction,
+			Parser:      walletBulkParser,
+			FeeProvider: services.DisbursementFeeSchedule,
+			Logger:      infra.Logger,
+		})
+	}
+
+	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk, walletBulkSvc)
 	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, repos.APIMetric, cfg)
 	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, cfg, infra.Logger)
 	sched.SetRepo(repos.CronJobStatus)
@@ -198,6 +220,9 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	// Wallet settlement worker — only when employee disbursement is enabled
 	var walletSettlementWorker *workers.WalletSettlementWorker
 	var statusInquiryPollerWorker *workers.StatusInquiryPollerWorker
+	// wallet_bulk row worker. The service itself is constructed earlier
+	// (above initHandlers) so the HTTP handler can capture it.
+	var walletBulkRowWorker *workers.WalletBulkTransferRowWorker
 	if cfg.Disbursement.EmployeeDisbursementEnabled() {
 		walletSettlementWorker = workers.NewWalletSettlementWorker(
 			repos.WalletPayment,
@@ -214,6 +239,21 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.BulkTransferPayment,
 			infra.Logger,
 		)
+		walletBulkRowWorker = workers.NewWalletBulkTransferRowWorker(
+			services.ProviderTransactions,
+			services.DisbursementRegistry,
+			repos.TxWalletPayment,
+			repos.BulkTransferBatch,
+			asynqClient,
+			infra.Logger,
+		)
+	}
+
+	// OTP default is OFF (config.go:421). Bulk upload is money-moving — surface
+	// a startup warning so production doesn't ship without OTP enforcement.
+	if walletBulkSvc != nil && !cfg.OTP.Enabled {
+		infra.Logger.Warn("SECURITY: /wallet/bulk-transfer routes registered without OTP enforcement. " +
+			"Set OTP_ENABLE=true in production before enabling this feature.")
 	}
 
 	// Register Asynq handlers and periodic tasks
@@ -243,6 +283,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		workers.NewAutoRejectSweepWorker(services.Attendance),
 		workers.NewCreditQuotaWorker(services.Attendance),
 		workers.NewCreditQuotaSweepWorker(services.Attendance),
+		walletBulkRowWorker,
+		walletBulkSvc,
 	)
 	asynqinfra.RegisterHandlers(asynqServer, asynqHandlers)
 	if err := asynqinfra.RegisterPeriodicTasks(asynqServer, asynqClient); err != nil {
@@ -282,6 +324,13 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		return nil, err
 	}
 
+	// Register wallet bulk transfer sweepers (only when bulk pipeline is wired).
+	if walletBulkSvc != nil {
+		if err := asynqinfra.RegisterWalletBulkSweepers(asynqServer); err != nil {
+			return nil, err
+		}
+	}
+
 	return &Container{
 		Config:             cfg,
 		Logger:             infra.Logger,
@@ -298,13 +347,13 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	}, nil
 }
 
-func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Repositories, db *persistence.Database, redis *persistence.RedisClient, logger *slog.Logger, version string, eventBus domain.EventBus, cfg *config.Config, asynqClient *asynqinfra.Client, clk clock.Clock) *Handlers {
+func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Repositories, db *persistence.Database, redis *persistence.RedisClient, logger *slog.Logger, version string, eventBus domain.EventBus, cfg *config.Config, asynqClient *asynqinfra.Client, clk clock.Clock, walletBulkSvc *wallet_bulk.WalletBulkTransferService) *Handlers {
 	healthCheckers := map[string]handlers.HealthChecker{
 		"database": db,
 		"redis":    redis,
 	}
 
-	// Create fileStorage for handlers
+	// Create fileStorage for handlers (used by employee/advance/timesheet import).
 	fileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
 
 	// Create employee import handler with Asynq client
@@ -328,7 +377,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Bank:                 handlers.NewBankHandler(services.Bank),
 		Timesheet:            handlers.NewTimesheetHandler(services.Timesheet, services.PayrollReport, services.SettingsConfig, services.PayrollReportExporter, services.PayrollReportByProjectService, services.PayrollReportByProjectExporter, services.Project, services.ProjectEmployee, services.Payrate, services.ProjectPermission, services.EmployeePermission, services.SettlementUpload, repos.Timesheet, services.Audit, clk, services.CashReadiness),
 		TimesheetEditRequest: handlers.NewTimesheetEditRequestHandler(services.TimesheetEditRequest),
-		Payroll:              handlers.NewPayrollHandler(services.Payroll, services.AutoBulkTransfer, services.Cache, repos.BulkTransferFile, repos.Asset, fileStorage, eventBus),
+		Payroll:              handlers.NewPayrollHandler(services.Payroll, services.AutoBulkTransfer, services.OnePayExporter, services.Cache, repos.BulkTransferFile, repos.Asset, fileStorage, eventBus),
 		Payrate:              handlers.NewPayrateHandler(services.Payrate, services.Project, services.ProjectPermission, clk),
 		Ledger:               handlers.NewLedgerHandler(services.Ledger, services.OnePayFeeImport, clk),
 		Transaction:          handlers.NewTransactionHandler(services.Transaction, repos.BulkTransferFile, repos.Timesheet, services.Notification, eventBus, clk),
@@ -377,6 +426,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
+		WalletBulkTransfer:   handlers.NewWalletBulkTransferHandler(walletBulkSvc, logger),
 		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
 		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
 		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),

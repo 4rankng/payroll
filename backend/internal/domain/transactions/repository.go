@@ -58,6 +58,35 @@ type WalletPaymentRepository interface {
 	// one is already in flight. Terminal rows (completed/failed/reversed) and
 	// rows with a NULL entity_id are ignored.
 	HasNonTerminalByEntityID(ctx context.Context, entityID uint64) (bool, error)
+
+	// Bulk-transfer worker helpers (Phase 3 of the wallet bulk transfer pipeline).
+	// All operate on wallet_payments rows linked to a bulk_transfer_batch via
+	// bulk_transfer_batch_id (migration 093).
+
+	// UpdateBulkBatchLink stamps the (batch_id, order, vfic_code) linkage onto
+	// an existing row. Idempotent — safe to call on retry. Does NOT touch
+	// entity_id (notification path is handled separately in notifyEmployee).
+	UpdateBulkBatchLink(ctx context.Context, rowID uint64, batchID uint64, order uint, vficCode string) error
+
+	// CountByBatchAndStatuses returns SELECT COUNT(*) WHERE bulk_transfer_batch_id=?
+	// AND status IN (?). Used by markRowTerminal to detect batch completion
+	// inside the lock transaction.
+	CountByBatchAndStatuses(ctx context.Context, batchID uint64, statuses []State) (int64, error)
+
+	// SumFeeByBatchAndStatuses returns SELECT COALESCE(SUM(fee),0) WHERE
+	// bulk_transfer_batch_id=? AND status IN (?). Used by book_batch_ledger
+	// to compute the aggregate Expense amount. Includes failed rows whose
+	// fee wasn't waived (OnePay charges per call to the transfer endpoint
+	// regardless of success), excludes pre-flight rejections (fee=0).
+	SumFeeByBatchAndStatuses(ctx context.Context, batchID uint64, statuses []State) (int64, error)
+
+	// ListByBatchIDOrdered returns all wallet_payments rows for a batch ordered
+	// by bulk_transfer_order ASC. Used by KQ generation.
+	ListByBatchIDOrdered(ctx context.Context, batchID uint64) ([]*WalletPayment, error)
+
+	// IncrementSweeperRetry bumps sweeper_retry_count and returns the new value.
+	// Used by the stale-enqueue sweeper to cap retries at 3 per row.
+	IncrementSweeperRetry(ctx context.Context, rowID uint64) (uint, error)
 }
 
 // UpdatePatch captures the mutable fields of a WalletPayment.

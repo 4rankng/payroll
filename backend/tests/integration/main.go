@@ -49,6 +49,9 @@ func main() {
 	// Phase 2: Run Flow 1 - Bulk Transfer (9Pay auto)
 	runBulkTransferTests(client, testData, reporter)
 
+	// Phase 2.5: Wallet Bulk Transfer Pipeline (OnePay) — Stage 2 upload/process.
+	runWalletBulkTransferTests(client, testData, reporter)
+
 	// Phase 3: Run Flow 4 - Partner creates timesheets → Admin approves
 	runPartnerTimesheetTests(client, testData, reporter)
 

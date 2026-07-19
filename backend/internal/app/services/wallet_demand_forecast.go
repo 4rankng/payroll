@@ -127,6 +127,17 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		UncertaintyFactor: s.cfg.UncertaintyFactor,
 	}
 	recommended, coverage := newsvendorRecommendation(leadDist, sl)
+	// Pre-period fallback: when today is outside the active request window
+	// (todayCycleDay == 0) but the lead window reaches into the upcoming period
+	// (horizonCycleDay > 0), the narrow 2-day JIT target often collapses to 0
+	// because the batch-at-payday approval pattern leaves early cycle days empty
+	// in history. Fall back to the full-cycle reserve (cycleDist) so the admin
+	// sees a meaningful top-up target on the eve of period start instead of a
+	// misleading zero. Days 9–17 keep returning 0 because horizonCycleDay == 0
+	// there (the lead window hasn't reached the period yet).
+	if recommended <= 0 && todayCycleDay == 0 && horizonCycleDay > 0 && cycleDist.method != "no-history" {
+		recommended, coverage = newsvendorRecommendation(cycleDist, sl)
+	}
 	recommended += knownUnpaid
 
 	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and

@@ -247,6 +247,24 @@ func (r *fakeOnePayFeeWalletPayments) HasNonTerminalByEntityID(context.Context, 
 	return false, nil
 }
 
+// Bulk-transfer worker helpers (Phase 3 of wallet bulk transfer pipeline).
+// No-op stubs — the OnePay fee import flow doesn't touch bulk batches.
+func (r *fakeOnePayFeeWalletPayments) UpdateBulkBatchLink(context.Context, uint64, uint64, uint, string) error {
+	return nil
+}
+func (r *fakeOnePayFeeWalletPayments) CountByBatchAndStatuses(context.Context, uint64, []domaintx.State) (int64, error) {
+	return 0, nil
+}
+func (r *fakeOnePayFeeWalletPayments) SumFeeByBatchAndStatuses(context.Context, uint64, []domaintx.State) (int64, error) {
+	return 0, nil
+}
+func (r *fakeOnePayFeeWalletPayments) ListByBatchIDOrdered(context.Context, uint64) ([]*domaintx.WalletPayment, error) {
+	return nil, nil
+}
+func (r *fakeOnePayFeeWalletPayments) IncrementSweeperRetry(context.Context, uint64) (uint, error) {
+	return 0, nil
+}
+
 type fakeOnePayFeeBankRepo struct {
 	banks []*domain.Bank
 }

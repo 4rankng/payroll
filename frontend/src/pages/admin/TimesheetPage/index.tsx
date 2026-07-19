@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet } from 'lucide-react';
+import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
 import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
 import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
+import { useExportOnePayBulk } from '@/hooks/api/useOnePayExport';
 import { PayrollControlCenter } from '@/components/timesheet/PayrollControlCenter';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { useSettingByKey } from '@/hooks/api/useSettings';
@@ -24,6 +25,7 @@ import { MODAL_IDS } from '@/constants/modalRegistry';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Timesheet } from '@/types/api/timesheet.types';
+import type { BulkTransferExportParams } from '@/services/api/bulk-transfer.service';
 
 const TimesheetPage = () => {
   const [chuyenLoDialogOpen, setChuyenLoDialogOpen] = useState(false);
@@ -104,6 +106,7 @@ const TimesheetPage = () => {
 
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
+  const exportOnePayMutation = useExportOnePayBulk();
 
   const handleAddTimesheet = () => {
     openModal(MODAL_IDS.TIMESHEET_ENTRY);
@@ -156,6 +159,49 @@ const TimesheetPage = () => {
       setApprovedTimesheetsDialogOpen(false);
     } catch {
       // Error is handled by the mutation's onError callback
+    }
+  };
+
+  // "Chuyển OnePay" — Stage 1 of the Wallet Bulk Transfer Pipeline. Builds
+  // export params from the current filter state. selectedMonth is a full
+  // "YYYY-MM" so we use the monthly path (for_month) when one is selected;
+  // when the user picks "all" we fall back to the current calendar month
+  // (the export service rejects requests that specify neither for_month
+  // nor a fromDate/toDate pair).
+  const handleChuyenOnePay = async () => {
+    const projectId =
+      timesheetManagement.selectedProject !== 'all'
+        ? parseInt(timesheetManagement.selectedProject, 10)
+        : undefined;
+
+    const projectIds = projectId ? [projectId] : undefined;
+
+    const month =
+      timesheetManagement.selectedMonth !== 'all'
+        ? timesheetManagement.selectedMonth
+        : '';
+
+    let params: BulkTransferExportParams;
+    if (month) {
+      params = { for_month: month, project_ids: projectIds };
+    } else if (statsFilters.fromDate && statsFilters.toDate) {
+      params = {
+        fromDate: statsFilters.fromDate,
+        toDate: statsFilters.toDate,
+        project_ids: projectIds,
+      };
+    } else {
+      // No month filter and no explicit range — default to the current
+      // calendar month so the backend always receives a well-formed request.
+      const now = new Date();
+      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      params = { for_month: ym, project_ids: projectIds };
+    }
+
+    try {
+      await exportOnePayMutation.mutateAsync(params);
+    } catch {
+      // Error + toast handled by useExportOnePayBulk onError.
     }
   };
 
@@ -279,6 +325,10 @@ const TimesheetPage = () => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {/* Group 3: Báo cáo / Reports */}
+              <DropdownMenuItem onClick={handleChuyenOnePay} disabled={exportOnePayMutation.isPending}>
+                <Banknote className="w-4 h-4 mr-2" />
+                {exportOnePayMutation.isPending ? 'Đang xuất...' : 'Chuyển OnePay'}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleApprovedTimesheetsExport} disabled={exportApprovedTimesheetsMutation.isPending}>
                 <FileText className="w-4 h-4 mr-2" />
                 {exportApprovedTimesheetsMutation.isPending ? 'Đang xuất...' : 'Xuất bảng công'}

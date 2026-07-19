@@ -8,6 +8,7 @@ import (
 	asynqlib "github.com/hibiken/asynq"
 
 	"api-server/internal/app/services/payroll/bulktransfer"
+	"api-server/internal/app/services/wallet_bulk"
 	"api-server/internal/app/workers"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
@@ -66,6 +67,12 @@ const (
 	// TaskStatusInquiry is the periodic task type for polling stuck authorised
 	// payments via the provider's inquiry endpoint. Re-exported from workers package.
 	TaskStatusInquiry = workers.TaskStatusInquiry
+	// Wallet bulk transfer task types (re-exported from the wallet_bulk package
+	// so the mux and the service share the same constants without an import cycle).
+	TaskWalletBulkTransferRow     = wallet_bulk.TaskBulkTransferRow
+	TaskWalletBookBatchLedger     = wallet_bulk.TaskBookBatchLedger
+	TaskWalletStaleEnqueueSweeper = wallet_bulk.TaskStaleEnqueueSweeper
+	TaskWalletCompletingRecovery  = wallet_bulk.TaskCompletingRecovery
 )
 
 // Queue name constants
@@ -117,6 +124,19 @@ type Handlers struct {
 	autoRejectSweepWorker         *workers.AutoRejectSweepWorker
 	creditQuotaWorker             *workers.CreditQuotaWorker
 	creditQuotaSweepWorker        *workers.CreditQuotaSweepWorker
+	// wallet_bulk: per-row worker + the service (which hosts the ledger
+	// booking + sweeper handlers — they share the same batch_repo/txnSvc).
+	walletBulkRowWorker           *workers.WalletBulkTransferRowWorker
+	walletBulkSvc                 WalletBulkServiceHandler
+}
+
+// WalletBulkServiceHandler is the narrow port for the wallet_bulk service's
+// asynq handlers (ProcessBookBatchLedger, ProcessStaleEnqueueSweeper,
+// ProcessCompletingRecovery).
+type WalletBulkServiceHandler interface {
+	ProcessBookBatchLedger(ctx context.Context, t *asynqlib.Task) error
+	ProcessStaleEnqueueSweeper(ctx context.Context, t *asynqlib.Task) error
+	ProcessCompletingRecovery(ctx context.Context, t *asynqlib.Task) error
 }
 
 // NewHandlers creates a new Handlers instance
@@ -137,6 +157,8 @@ func NewHandlers(
 	autoRejectSweepWorker *workers.AutoRejectSweepWorker,
 	creditQuotaWorker *workers.CreditQuotaWorker,
 	creditQuotaSweepWorker *workers.CreditQuotaSweepWorker,
+	walletBulkRowWorker *workers.WalletBulkTransferRowWorker,
+	walletBulkSvc WalletBulkServiceHandler,
 ) *Handlers {
 	return &Handlers{
 		employeeImportWorker:          employeeImportWorker,
@@ -155,7 +177,41 @@ func NewHandlers(
 		autoRejectSweepWorker:         autoRejectSweepWorker,
 		creditQuotaWorker:             creditQuotaWorker,
 		creditQuotaSweepWorker:        creditQuotaSweepWorker,
+		walletBulkRowWorker:           walletBulkRowWorker,
+		walletBulkSvc:                 walletBulkSvc,
 	}
+}
+
+// HandleWalletBulkTransferRow processes one wallet:bulk_transfer_row task.
+func (h *Handlers) HandleWalletBulkTransferRow(ctx context.Context, t *asynqlib.Task) error {
+	if h.walletBulkRowWorker == nil {
+		return nil
+	}
+	return h.walletBulkRowWorker.ProcessJob(ctx, t)
+}
+
+// HandleWalletBookBatchLedger processes a wallet:book_batch_ledger task.
+func (h *Handlers) HandleWalletBookBatchLedger(ctx context.Context, t *asynqlib.Task) error {
+	if h.walletBulkSvc == nil {
+		return nil
+	}
+	return h.walletBulkSvc.ProcessBookBatchLedger(ctx, t)
+}
+
+// HandleWalletStaleEnqueueSweeper processes the periodic stale-enqueue sweeper.
+func (h *Handlers) HandleWalletStaleEnqueueSweeper(ctx context.Context, t *asynqlib.Task) error {
+	if h.walletBulkSvc == nil {
+		return nil
+	}
+	return h.walletBulkSvc.ProcessStaleEnqueueSweeper(ctx, t)
+}
+
+// HandleWalletCompletingRecovery processes the periodic completing-batch recovery.
+func (h *Handlers) HandleWalletCompletingRecovery(ctx context.Context, t *asynqlib.Task) error {
+	if h.walletBulkSvc == nil {
+		return nil
+	}
+	return h.walletBulkSvc.ProcessCompletingRecovery(ctx, t)
 }
 
 // HandlePayrollReportEmail processes an async payroll report email task.

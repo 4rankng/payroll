@@ -35,6 +35,17 @@ type WalletPayment struct {
 	CreatedBy *uint64 `gorm:"column:created_by;type:bigint unsigned;index:idx_wp_created_by"`
 	BatchID   *string `gorm:"column:batch_id;type:varchar(64);index:idx_wallet_payments_batch_id"`
 
+	// Bulk-transfer linkage (migration 093). Populated by the bulk-transfer
+	// row worker via WalletPaymentRepository.UpdateBulkBatchLink so we can
+	// SUM(fee) GROUP BY bulk_transfer_batch_id and render KQ rows in input
+	// order via bulk_transfer_order. vfic_code mirrors request_id for the
+	// admin search index (request_id already has idx_wp_request_id UNIQUE).
+	BulkTransferBatchID *uint64 `gorm:"column:bulk_transfer_batch_id;type:bigint unsigned;index:idx_wp_bulk_batch"`
+	BulkTransferOrder   *uint   `gorm:"column:bulk_transfer_order;type:int unsigned"`
+	VFICCode            *string `gorm:"column:vfic_code;type:varchar(32);index:idx_wp_vfic_code"`
+	EnqueueState        *string `gorm:"column:enqueue_state;type:varchar(16);default:'enqueued'"`
+	SweeperRetryCount   uint    `gorm:"column:sweeper_retry_count;type:int unsigned;not null;default:0"`
+
 	Version int64 `gorm:"column:version;not null;default:0"`
 
 	CreatedAt        time.Time  `gorm:"column:created_at;type:datetime(3);not null;autoCreateTime"`

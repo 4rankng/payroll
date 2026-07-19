@@ -366,6 +366,15 @@ export const QueryKeys = {
     all: ['wallet'] as const,
     balance: () => [...QueryKeys.wallet.all, 'balance'] as const,
     demandForecast: () => [...QueryKeys.wallet.all, 'demand-forecast'] as const,
+    // Wallet Bulk Transfer Pipeline (Stage 2): upload + per-batch progress +
+    // paginated history.
+    bulkTransfer: {
+      all: () => [...QueryKeys.wallet.all, 'bulk-transfer'] as const,
+      list: (params?: Record<string, unknown>) =>
+        [...QueryKeys.wallet.all, 'bulk-transfer', 'list', params] as const,
+      detail: (id: number) =>
+        [...QueryKeys.wallet.all, 'bulk-transfer', 'detail', id] as const,
+    },
   },
 } as const;
 

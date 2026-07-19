@@ -1,6 +1,8 @@
 package bootstrap
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func setupWalletRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container == nil || container.Handlers == nil || container.Handlers.Wallet == nil {
@@ -11,6 +13,10 @@ func setupWalletRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container.Middleware.Authorization != nil {
 		w.Use(container.Middleware.Authorization.Authorize())
 	}
+	// Note: the 10MB upload cap is enforced in the handler via
+	// http.MaxBytesReader BEFORE c.FormFile reads the body. Gin's default
+	// MaxMultipartMemory (32MB) is above our limit, so requests that exceed
+	// 10MB are rejected by MaxBytesReader before they spill to disk.
 	{
 		w.GET("/balance", container.Handlers.Wallet.GetBalance)
 		w.GET("/demand-forecast", container.Handlers.Wallet.GetDemandForecast)
@@ -30,5 +36,18 @@ func setupWalletRoutes(v1 *gin.RouterGroup, container *Container) {
 		w.POST("/reconcile/auto", container.Handlers.Wallet.AutoReconcile)
 		w.GET("/reconcile/jobs/:id", container.Handlers.Wallet.GetReconciliationJobStatus)
 		w.GET("/reconcile/export", container.Handlers.Wallet.ExportReconciliationReport)
+	}
+
+	// Bulk-transfer sub-group: /wallet/bulk-transfer/*
+	// Inherits Authenticate + Authorize middleware from the parent group.
+	// Casbin policy in configs/casbin_policy.csv denies partner access.
+	if container.Handlers.WalletBulkTransfer != nil {
+		bt := w.Group("/bulk-transfer")
+		{
+			bt.POST("/upload", container.Handlers.WalletBulkTransfer.UploadBulkTransfer)
+			bt.GET("/batches", container.Handlers.WalletBulkTransfer.ListBatches)
+			bt.GET("/batches/:id", container.Handlers.WalletBulkTransfer.GetBatch)
+			bt.GET("/batches/:id/kq", container.Handlers.WalletBulkTransfer.DownloadKQ)
+		}
 	}
 }

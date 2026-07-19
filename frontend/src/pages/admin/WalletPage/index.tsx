@@ -7,6 +7,7 @@ import {
   TrendingDown,
   Wallet as WalletIcon,
   CheckCircle2,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -22,6 +23,12 @@ import {
 import { Button } from "@/components/ui/button";
 import WalletTransactionsList from "@/components/wallet/WalletTransactionsList";
 import CreateManualDisbursementDialog from "@/components/wallet/CreateManualDisbursementDialog";
+import {
+  BulkTransferBatchList,
+} from "@/components/wallet/BulkTransferBatchList";
+import {
+  BulkTransferUploadDialog,
+} from "@/components/wallet/BulkTransferUploadDialog";
 import { walletService } from "@/services/api/wallet.service";
 import type { WalletBalance } from "@/types/api/wallet.types";
 import { showErrorNotification } from "@/utils/error-handler";
@@ -148,6 +155,7 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
 export default function WalletPage() {
   const queryClient = useQueryClient();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
+  const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const [mismatch, setMismatch] = useState<{ provider: number; local: number } | null>(null);
@@ -239,6 +247,14 @@ export default function WalletPage() {
             </Button>
             <Button
               size="sm"
+              onClick={() => setBulkTransferDialogOpen(true)}
+              className="gap-1.5 h-9"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Tải lên chuyển tiền
+            </Button>
+            <Button
+              size="sm"
               onClick={() => setDisbursementOpen(true)}
               className="gap-1.5 h-9"
             >
@@ -266,6 +282,9 @@ export default function WalletPage() {
 
         {/* Transactions */}
         <WalletTransactionsList />
+
+        {/* Wallet Bulk Transfer Pipeline — Stage 2 history */}
+        <BulkTransferBatchList />
       </div>
 
       {/* Dialogs */}
@@ -273,6 +292,11 @@ export default function WalletPage() {
         open={disbursementOpen}
         onOpenChange={setDisbursementOpen}
         onSuccess={invalidateAll}
+      />
+
+      <BulkTransferUploadDialog
+        open={bulkTransferDialogOpen}
+        onOpenChange={setBulkTransferDialogOpen}
       />
 
       {/* Mismatch confirmation */}

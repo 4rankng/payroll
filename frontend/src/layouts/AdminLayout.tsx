@@ -110,7 +110,9 @@ const AdminLayout = () => {
           data-theme={isAdmin ? "congtruong" : undefined}
           className={isAdmin ? "admin-shell-scope" : "w-full min-w-0"}
         >
-          <AdminLayoutInner />
+          <div className="w-full min-w-0 [container-type:inline-size]">
+            <AdminLayoutInner />
+          </div>
           <MobileBottomNav
             groups={isAdvPartner ? ADV_PARTNER_NAV_GROUPS : ADMIN_NAV_GROUPS}
             moreItems={isAdvPartner ? undefined : ADMIN_MORE_ITEMS}

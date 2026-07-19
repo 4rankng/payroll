@@ -118,6 +118,7 @@ type Services struct {
 	NinepayCloser                     io.Closer
 	NinePayBulkTransfer               *bulktransfer.NinePayBulkTransferService
 	NinePayBatchCompletion            *bulktransfer.NinePayBatchCompletionChecker
+	OnePayExporter                    *bulktransfer.OnePayExporter
 	AutoBulkTransfer                  bulktransfer.AutoBulkTransferService
 	BulkTransferPayment               workers.TransferTimesheetUpdater
 	BCCImport                         *services.BCCImportService
@@ -544,6 +545,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// Create auto bulk transfer service (enabled when any disbursement provider is registered)
 	var autoBulkTransferSvc *bulktransfer.NinePayBulkTransferService
 	var ninePayBatchCompletion *bulktransfer.NinePayBatchCompletionChecker
+	var onePayExporter *bulktransfer.OnePayExporter
 	if len(disbursementRegistry.Names()) > 0 {
 		btSvc := payrollSvc.BulkTransferSvc()
 		autoBulkTransferSvc = bulktransfer.NewNinePayBulkTransferService(
@@ -563,6 +565,15 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			repos.TxWalletPayment,
 			idempotencyService,
 			eventBus,
+			logger,
+		)
+		// OnePay exporter reuses the same planner + transaction code repo as
+		// the 9Pay export path so selection logic stays identical. The only
+		// addition is bankRepo for SWIFT resolution.
+		onePayExporter = bulktransfer.NewOnePayExporter(
+			btSvc.ExportService().Planner(),
+			repos.Bank,
+			repos.TransactionCode,
 			logger,
 		)
 	}
@@ -678,6 +689,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		NinePayBulkTransfer:               autoBulkTransferSvc,
 		AutoBulkTransfer:                  autoBulkTransferSvc,
 		NinePayBatchCompletion:            ninePayBatchCompletion,
+		OnePayExporter:                    onePayExporter,
 		BulkTransferPayment:               bulkTransferPaymentWorker,
 		BCCImport: services.NewBCCImportService(
 			repos.Payrate,

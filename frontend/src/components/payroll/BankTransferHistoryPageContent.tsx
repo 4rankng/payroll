@@ -184,12 +184,12 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
   );
 }
 
-function HistoryRecord({ item }: { item: BankTransferHistory }) {
+function HistoryRecord({ item, isAdmin }: { item: BankTransferHistory; isAdmin: boolean }) {
   const detailsId = `payment-details-${item.employee_id}-${item.work_month}-${item.cycle}`;
 
   return (
     <article>
-      <details className="group/record overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_30px_-28px_rgba(15,23,42,0.38)] transition-[border-color,box-shadow] duration-200 open:border-emerald-200 open:shadow-[0_20px_46px_-34px_rgba(6,101,52,0.46)] hover:border-slate-300">
+      <details className={`${isAdmin ? 'ct-card admin-payment-history-record ' : ''}group/record overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_30px_-28px_rgba(15,23,42,0.38)] transition-[border-color,box-shadow] duration-200 open:border-emerald-200 open:shadow-[0_20px_46px_-34px_rgba(6,101,52,0.46)] hover:border-slate-300`}>
         <summary
           aria-controls={detailsId}
           aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
@@ -276,7 +276,12 @@ function HistorySkeleton() {
   );
 }
 
-export function BankTransferHistoryPageContent() {
+interface BankTransferHistoryPageContentProps {
+  variant?: 'admin' | 'partner';
+}
+
+export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTransferHistoryPageContentProps) {
+  const isAdmin = variant === 'admin';
   const [month, setMonth] = useState(getCurrentMonthValue);
   const [cycle, setCycle] = useState('all');
   const [search, setSearch] = useState('');
@@ -302,10 +307,10 @@ export function BankTransferHistoryPageContent() {
   };
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-3 sm:px-5 sm:py-4 md:p-6">
+    <div className="admin-payment-history-page min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-3 sm:px-5 sm:py-4 md:p-6">
       <div className="mx-auto max-w-[1480px] space-y-4 sm:space-y-5">
-        <header className="relative overflow-hidden px-1 py-2 sm:rounded-3xl sm:border sm:border-emerald-100 sm:bg-white sm:px-6 sm:py-5 sm:shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)]">
-          <div className="pointer-events-none absolute -right-14 -top-16 hidden h-48 w-48 rounded-full border-[26px] border-emerald-100/70 sm:block" />
+        <header className="admin-payment-history-header relative overflow-hidden px-1 py-2 sm:rounded-3xl sm:border sm:border-emerald-100 sm:bg-white sm:px-6 sm:py-5 sm:shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)]">
+          <div className="admin-payment-history-decoration pointer-events-none absolute -right-14 -top-16 hidden h-48 w-48 rounded-full border-[26px] border-emerald-100/70 sm:block" />
           <PageHeader
             className="relative"
             icon={ReceiptText}
@@ -314,7 +319,7 @@ export function BankTransferHistoryPageContent() {
           />
         </header>
 
-        <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.40)] sm:rounded-3xl">
+        <Card className={`${isAdmin ? 'ct-card admin-payment-history-filters ' : ''}overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.40)] sm:rounded-3xl`}>
           <CardContent className="grid grid-cols-2 gap-3 p-3 sm:gap-4 sm:p-5 md:grid-cols-[180px_220px_minmax(260px,1fr)]">
             <label className="space-y-2 font-display text-[11px] font-bold text-slate-600">
               Tháng kỳ lương
@@ -426,7 +431,7 @@ export function BankTransferHistoryPageContent() {
           {!isLoading && !isError && records.length > 0 && (
             <div className="space-y-3">
               {records.map((item) => (
-                <HistoryRecord key={`${item.work_month}-${item.cycle}-${item.employee_id}`} item={item} />
+                <HistoryRecord key={`${item.work_month}-${item.cycle}-${item.employee_id}`} item={item} isAdmin={isAdmin} />
               ))}
             </div>
           )}

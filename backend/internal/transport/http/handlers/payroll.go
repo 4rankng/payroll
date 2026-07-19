@@ -27,6 +27,7 @@ import (
 type PayrollHandler struct {
 	payrollService       *payroll.PayrollService
 	autoBulkTransferSvc  bulktransfer.AutoBulkTransferService
+	onePayExporter       *bulktransfer.OnePayExporter
 	cacheService         domain.CacheServiceUseCase
 	bulkTransferFileRepo domain.BulkTransferFileRepository
 	assetRepo            domain.AssetRepository
@@ -38,6 +39,7 @@ type PayrollHandler struct {
 func NewPayrollHandler(
 	payrollService *payroll.PayrollService,
 	autoBulkTransferSvc bulktransfer.AutoBulkTransferService,
+	onePayExporter *bulktransfer.OnePayExporter,
 	cacheService domain.CacheServiceUseCase,
 	bulkTransferFileRepo domain.BulkTransferFileRepository,
 	assetRepo domain.AssetRepository,
@@ -47,6 +49,7 @@ func NewPayrollHandler(
 	return &PayrollHandler{
 		payrollService:       payrollService,
 		autoBulkTransferSvc:  autoBulkTransferSvc,
+		onePayExporter:       onePayExporter,
 		cacheService:         cacheService,
 		bulkTransferFileRepo: bulkTransferFileRepo,
 		assetRepo:            assetRepo,
@@ -143,6 +146,75 @@ func (h *PayrollHandler) ExportBulkTransfer(c *gin.Context) {
 	c.Header("X-Content-Type-Options", "nosniff")
 
 	c.Data(http.StatusOK, contentType, exportResponse.Data)
+}
+
+// ExportOnePayBulk exports approved timesheets to a "Yêu cầu chuyển tiền"
+// .xlsx in OnePay-API-compatible eMB_BulkPayment format, enriched with a
+// SWIFT code column resolved from each employee's bank record. The output
+// file is the canonical input for the wallet-page upload pipeline.
+//
+// Admin-only. Returns the .xlsx as a blob with metadata in X- headers:
+//   - X-Total-Count: number of rows in the export
+//   - X-Transfer-Amount: total VND across rows
+//   - X-Skipped-Count: employees skipped (missing bank info / unresolved SWIFT)
+//   - X-Cycle: weekly | monthly
+//   - X-Export-Cycle-Id: cycle tag for the file
+//
+// Frontend reads headers to show a toast + skipped-employees dialog.
+func (h *PayrollHandler) ExportOnePayBulk(c *gin.Context) {
+	if !isAdmin(c) {
+		response.Forbidden(c, constants.MsgForbiddenVN)
+		return
+	}
+	if h.onePayExporter == nil {
+		response.InternalServerError(c, "OnePay exporter not configured")
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+		return
+	}
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		response.InternalServerError(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	var req dto.ExportBulkTransferRequest
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	if err := validateExportBulkTransferRequest(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	req.CreatedBy = userIDUint
+
+	result, err := h.onePayExporter.Export(c.Request.Context(), &req)
+	if err != nil {
+		h.logger.Error("ExportOnePayBulk error", "error", err)
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	contentType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	contentDisposition := mime.FormatMediaType("attachment", map[string]string{"filename": result.Filename})
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", contentDisposition)
+	c.Header("Content-Length", strconv.Itoa(len(result.ExcelBytes)))
+	c.Header("Cache-Control", "no-store")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("X-Total-Count", strconv.Itoa(result.TotalCount))
+	c.Header("X-Transfer-Amount", strconv.FormatInt(result.TransferAmount, 10))
+	c.Header("X-Skipped-Count", strconv.Itoa(len(result.SkippedEmployees)))
+	c.Header("X-Cycle", result.Cycle)
+	// Expose all custom headers to the browser (so the SPA can read them).
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition, X-Total-Count, X-Transfer-Amount, X-Skipped-Count, X-Cycle")
+
+	c.Data(http.StatusOK, contentType, result.ExcelBytes)
 }
 
 // SimulateSettlement handles POST /payrolls/simulate-settlement.

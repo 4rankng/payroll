@@ -37,7 +37,6 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(precacheUrls))
   );
-  self.skipWaiting();
 });
 
 // Activate event — clean old caches
@@ -51,14 +50,6 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
           .map((name) => caches.delete(name))
       );
       await self.clients.claim();
-
-      // A newly activated development worker may have replaced one that was
-      // serving stale Vite modules. Reload controlled tabs once so they rebuild
-      // from the live module graph immediately instead of keeping stale DOM.
-      if (IS_DEVELOPMENT) {
-        const clients = await self.clients.matchAll({ type: 'window' });
-        await Promise.all(clients.map((client) => client.navigate(client.url)));
-      }
     })()
   );
 });
@@ -80,21 +71,20 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   // back to the cached app shell when the network is unavailable.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(event.request).then(
-          (cached) =>
-            cached ??
-            caches.match('/index.html') ??
-            new Response('Offline', { status: 503, statusText: 'Service Unavailable' })
-        )
-      )
+      fetch(event.request).catch(async () => {
+        const appCache = await caches.open(CACHE_NAME);
+        const cached = await appCache.match(event.request);
+        return cached ??
+          await appCache.match('/index.html') ??
+          new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      })
     );
     return;
   }
 
   // Static assets (Vite hashed files are immutable) — cache first, then network.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.open(CACHE_NAME).then((appCache) => appCache.match(event.request)).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).catch(() => new Response('Offline', { status: 503, statusText: 'Service Unavailable' }));
     })

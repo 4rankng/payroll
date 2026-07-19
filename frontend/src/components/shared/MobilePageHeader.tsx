@@ -15,6 +15,8 @@ interface MobilePageHeaderProps {
   back?: () => void;
   /** Action buttons rendered on the right side */
   actions?: React.ReactNode;
+  /** Keep short actions beside the title instead of moving them to a second row. */
+  actionsLayout?: 'stacked' | 'inline';
   /** Whether the header sticks to top on scroll (default: true) */
   sticky?: boolean;
   /** Whether to show the bottom border (default: true) */
@@ -38,6 +40,7 @@ export const MobilePageHeader = ({
   icon: Icon,
   back,
   actions,
+  actionsLayout = 'stacked',
   sticky = true,
   bordered = true,
   className,
@@ -58,7 +61,12 @@ export const MobilePageHeader = ({
           : 'var(--mobile-nonsticky-header-top-padding, var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem)))',
       }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
+      <div
+        className={cn(
+          'ct-navbar min-h-0 p-0 flex items-center justify-between gap-3',
+          actionsLayout === 'inline' ? 'flex-nowrap' : 'flex-wrap sm:flex-nowrap',
+        )}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           {back && (
             <Button
@@ -77,7 +85,12 @@ export const MobilePageHeader = ({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="break-words font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
+            <h1
+              className={cn(
+                'font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950',
+                actionsLayout === 'inline' ? 'truncate' : 'break-words',
+              )}
+            >
               {title}
             </h1>
             {subtitle && (
@@ -88,7 +101,14 @@ export const MobilePageHeader = ({
           </div>
         </div>
         {actions && (
-          <div className="flex basis-full max-w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:basis-auto sm:max-w-[56%] [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl">
+          <div
+            className={cn(
+              'flex shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl',
+              actionsLayout === 'inline'
+                ? 'basis-auto max-w-[52%]'
+                : 'basis-full max-w-full sm:basis-auto sm:max-w-[56%]',
+            )}
+          >
             {actions}
           </div>
         )}

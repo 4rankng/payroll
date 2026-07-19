@@ -34,4 +34,22 @@ describe('MobilePageHeader', () => {
     expect(header).toHaveClass('bg-transparent');
     expect(header).not.toHaveClass('bg-white');
   });
+
+  it('keeps a short action beside the title when inline layout is requested', () => {
+    render(
+      <MobilePageHeader
+        title="Dự án"
+        actionsLayout="inline"
+        actions={<button type="button">Tạo dự án</button>}
+      />,
+    );
+
+    const action = screen.getByRole('button', { name: 'Tạo dự án' });
+    const actionsContainer = action.parentElement;
+    const headerRow = screen.getByRole('heading', { name: 'Dự án' }).parentElement?.parentElement?.parentElement;
+
+    expect(actionsContainer).toHaveClass('basis-auto', 'max-w-[52%]');
+    expect(headerRow).toHaveClass('flex-nowrap');
+    expect(headerRow).not.toHaveClass('flex-wrap');
+  });
 });

@@ -127,16 +127,21 @@ const ProjectsPageMobile = () => {
       <MobilePageHeader
         title="Dự án"
         icon={Briefcase}
+        actionsLayout="inline"
         actions={
-          <Button className="btn-admin-primary shrink-0" onClick={() => openCreateProject()}>
-            <Plus className="h-4 w-4 mr-1" />
+          <Button
+            size="sm"
+            className="ct-btn ct-btn-primary ct-btn-sm h-11 min-h-11 shrink-0 rounded-xl px-3 normal-case shadow-sm"
+            onClick={() => openCreateProject()}
+          >
+            <Plus className="h-4 w-4" />
             Tạo dự án
           </Button>
         }
       />
 
       {/* Search + filter */}
-      <div className="px-4 pb-3 flex gap-2">
+      <div className="flex gap-2 px-4 py-3">
         <MobileSearchInput
           value={filterControls.searchTerm}
           onSearch={filterControls.setSearchTerm}

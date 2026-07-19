@@ -101,6 +101,7 @@ func setupPayrollRoutes(protected *gin.RouterGroup, container *Container) {
 	{
 		payrolls.GET("/bulk-transfer-template", container.Handlers.Payroll.GetPayrollTemplate)
 		payrolls.POST("/export-bulk-transfer", container.Handlers.Payroll.ExportBulkTransfer)
+		payrolls.POST("/export-onepay-bulk", container.Handlers.Payroll.ExportOnePayBulk)
 		payrolls.POST("/simulate-settlement", container.Handlers.Payroll.SimulateSettlement)
 		payrolls.POST("/bulk-transfer-external-mark", container.Handlers.Payroll.MarkExternallyPaid)
 		payrolls.GET("/auto-bulk-transfer/config", container.Handlers.Payroll.GetAutoBulkTransferConfig)

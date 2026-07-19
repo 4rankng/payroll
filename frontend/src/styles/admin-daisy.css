@@ -269,6 +269,31 @@
     border-radius: 0.8rem;
   }
 
+  [data-admin-ui] .admin-payment-history-page {
+    background: transparent;
+  }
+
+  [data-admin-ui] .admin-payment-history-header {
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  [data-admin-ui] .admin-payment-history-decoration {
+    display: none;
+  }
+
+  [data-admin-ui] .admin-payment-history-filters,
+  [data-admin-ui] .admin-payment-history-record {
+    border-color: hsl(var(--border));
+    border-radius: 0.9rem;
+    background: hsl(var(--card));
+    box-shadow: var(--admin-card-shadow);
+  }
+
   [data-admin-ui] .admin-filter-bar {
     gap: 0.55rem;
     padding: 0.75rem;

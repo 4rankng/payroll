@@ -105,4 +105,16 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 08/2026' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Chọn tháng 08 năm 2026' })).not.toBeInTheDocument();
   });
+
+  it('scopes daisyUI card behavior to the admin variant', () => {
+    const { container, rerender } = render(<BankTransferHistoryPageContent />);
+
+    expect(container.querySelector('.admin-payment-history-filters')).not.toBeInTheDocument();
+    expect(container.querySelector('.admin-payment-history-record')).not.toBeInTheDocument();
+
+    rerender(<BankTransferHistoryPageContent variant="admin" />);
+
+    expect(container.querySelector('.admin-payment-history-filters')).toHaveClass('ct-card');
+    expect(container.querySelector('.admin-payment-history-record')).toHaveClass('ct-card');
+  });
 });

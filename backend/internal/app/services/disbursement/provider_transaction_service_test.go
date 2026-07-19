@@ -132,6 +132,25 @@ func (r *fakeProviderTxRepo) HasNonTerminalByEntityID(_ context.Context, entityI
 	return false, nil
 }
 
+// Bulk-transfer worker helpers — no-op stubs. The disbursement service
+// tests don't exercise the bulk pathway; these exist only to satisfy the
+// WalletPaymentRepository interface after Phase 3 added the methods.
+func (r *fakeProviderTxRepo) UpdateBulkBatchLink(context.Context, uint64, uint64, uint, string) error {
+	return nil
+}
+func (r *fakeProviderTxRepo) CountByBatchAndStatuses(context.Context, uint64, []domaintx.State) (int64, error) {
+	return 0, nil
+}
+func (r *fakeProviderTxRepo) SumFeeByBatchAndStatuses(context.Context, uint64, []domaintx.State) (int64, error) {
+	return 0, nil
+}
+func (r *fakeProviderTxRepo) ListByBatchIDOrdered(context.Context, uint64) ([]*domaintx.WalletPayment, error) {
+	return nil, nil
+}
+func (r *fakeProviderTxRepo) IncrementSweeperRetry(context.Context, uint64) (uint, error) {
+	return 0, nil
+}
+
 // fakeFee is a stub DisbursementFeeProvider that always returns the
 // fixed VND amount it was constructed with. Lets tests assert the
 // fee landed on the row without spinning up the settings stack.

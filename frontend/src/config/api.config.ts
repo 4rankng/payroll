@@ -154,6 +154,13 @@ export const API_ENDPOINTS = {
     exportHistories: '/payrolls/histories/export',
     bulkTransferTemplate: '/payrolls/bulk-transfer-template',
     exportBulkTransfer: '/payrolls/export-bulk-transfer',
+    /**
+     * Stage 1 of the Wallet Bulk Transfer Pipeline — exports a OnePay-API-
+     * compatible "Yêu cầu chuyển tiền" .xlsx with a SWIFT code column resolved
+     * from each employee's bank record. Output is the canonical input for
+     * /wallet/bulk-transfer/upload (Stage 2).
+     */
+    exportOnePayBulk: '/payrolls/export-onepay-bulk',
     simulateSettlement: '/payrolls/simulate-settlement',
     importBulkTransferResult: '/payrolls/bulk-transfer-result',
     bulkTransferUploadHistories: '/payrolls/bulk-transfer-upload-histories',
@@ -222,6 +229,17 @@ export const API_ENDPOINTS = {
   // consolidation that groups completed wallet payments into ledger records.
   walletSettlement: {
     run: '/admin/wallet-settlement/run',
+  },
+
+  // Wallet Bulk Transfer Pipeline (Stage 2: upload + process).
+  // POST /wallet/bulk-transfer/upload parses the .xlsx and enqueues per-row
+  // OnePay transfer tasks. GET endpoints return batch state for the
+  // progress UI; /kq returns the result .xlsx.
+  walletBulkTransfer: {
+    upload: '/wallet/bulk-transfer/upload',
+    batches: '/wallet/bulk-transfer/batches',
+    batchById: (id: number) => `/wallet/bulk-transfer/batches/${id}`,
+    batchKQ: (id: number) => `/wallet/bulk-transfer/batches/${id}/kq`,
   },
 
   // Transactions (Revenue/Expense management)

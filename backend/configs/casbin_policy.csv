@@ -159,3 +159,12 @@ p, *, /api/v1/notifications/read-all, PUT, allow
 # Push notifications - all authenticated users can subscribe/unsubscribe
 p, *, /api/v1/push/subscribe, POST, allow
 p, *, /api/v1/push/unsubscribe, POST, allow
+
+# Wallet Bulk Transfer Pipeline — admin-only.
+# The /wallet/bulk-transfer/* routes move money (OnePay API calls) and
+# must never be reachable by partner or employee roles. The admin role
+# inherits allow via its wildcard policy; this explicit deny is defense-
+# in-depth so a future wildcard grant can't accidentally expose these.
+p, partner, /api/v1/wallet/bulk-transfer/*, *, deny
+p, adv_partner, /api/v1/wallet/bulk-transfer/*, *, deny
+p, employee, /api/v1/wallet/bulk-transfer/*, *, deny

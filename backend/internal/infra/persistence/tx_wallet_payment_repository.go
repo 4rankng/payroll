@@ -400,3 +400,101 @@ func (r *TxWalletPaymentRepository) HasNonTerminalByEntityID(ctx context.Context
 	}
 	return count > 0, nil
 }
+
+// UpdateBulkBatchLink stamps the (bulk_transfer_batch_id, bulk_transfer_order,
+// vfic_code) linkage columns onto an existing row. Idempotent — safe to call
+// on asynq retry. Used by the bulk-transfer row worker after Initiate returns
+// the row, so SUM(fee) GROUP BY bulk_transfer_batch_id works at ledger time.
+// Does NOT touch entity_id (notification path is resolved separately in
+// notifyEmployee).
+func (r *TxWalletPaymentRepository) UpdateBulkBatchLink(ctx context.Context, rowID uint64, batchID uint64, order uint, vficCode string) error {
+	updates := map[string]interface{}{
+		"bulk_transfer_batch_id": batchID,
+		"bulk_transfer_order":    order,
+		"vfic_code":              vficCode,
+	}
+	if err := r.DB.WithContext(ctx).
+		Model(&domaintx.WalletPayment{}).
+		Where("id = ?", rowID).
+		Updates(updates).Error; err != nil {
+		return fmt.Errorf("wallet_payments: update bulk batch link: %w", err)
+	}
+	return nil
+}
+
+// CountByBatchAndStatuses returns SELECT COUNT(*) WHERE
+// bulk_transfer_batch_id=? AND status IN (?). Used by the bulk-transfer row
+// worker's markRowTerminal to detect batch completion inside the lock tx.
+func (r *TxWalletPaymentRepository) CountByBatchAndStatuses(ctx context.Context, batchID uint64, statuses []domaintx.State) (int64, error) {
+	if len(statuses) == 0 {
+		return 0, nil
+	}
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domaintx.WalletPayment{}).
+		Where("bulk_transfer_batch_id = ? AND status IN ?", batchID, statuses).
+		Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("wallet_payments: count by batch+statuses: %w", err)
+	}
+	return count, nil
+}
+
+// SumFeeByBatchAndStatuses returns SELECT COALESCE(SUM(fee),0) WHERE
+// bulk_transfer_batch_id=? AND status IN (?). Used by book_batch_ledger to
+// compute the aggregate Expense amount. Includes failed rows whose fee wasn't
+// waived (OnePay charges per call to the transfer endpoint regardless of
+// outcome); pre-flight rejections carry fee=0 (syncPatch zeroes it via
+// FeeWaived=true) so they contribute 0 naturally.
+func (r *TxWalletPaymentRepository) SumFeeByBatchAndStatuses(ctx context.Context, batchID uint64, statuses []domaintx.State) (int64, error) {
+	if len(statuses) == 0 {
+		return 0, nil
+	}
+	var total sql.NullInt64
+	err := r.DB.WithContext(ctx).
+		Model(&domaintx.WalletPayment{}).
+		Where("bulk_transfer_batch_id = ? AND status IN ?", batchID, statuses).
+		Select("COALESCE(SUM(fee), 0)").
+		Scan(&total).Error
+	if err != nil {
+		return 0, fmt.Errorf("wallet_payments: sum fee by batch+statuses: %w", err)
+	}
+	return total.Int64, nil
+}
+
+// ListByBatchIDOrdered returns all wallet_payments rows for a batch ordered
+// by bulk_transfer_order ASC (NULLS LAST), used by the KQ Excel generator to
+// render rows in original input order.
+func (r *TxWalletPaymentRepository) ListByBatchIDOrdered(ctx context.Context, batchID uint64) ([]*domaintx.WalletPayment, error) {
+	var rows []*domaintx.WalletPayment
+	err := r.DB.WithContext(ctx).
+		Where("bulk_transfer_batch_id = ?", batchID).
+		Order("bulk_transfer_order ASC").
+		Find(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("wallet_payments: list by batch ordered: %w", err)
+	}
+	return rows, nil
+}
+
+// IncrementSweeperRetry bumps sweeper_retry_count and returns the new value.
+// Used by the stale-enqueue sweeper to cap per-row retries at 3.
+func (r *TxWalletPaymentRepository) IncrementSweeperRetry(ctx context.Context, rowID uint64) (uint, error) {
+	var result struct {
+		Count uint `gorm:"column:count"`
+	}
+	err := r.DB.WithContext(ctx).
+		Model(&domaintx.WalletPayment{}).
+		Where("id = ?", rowID).
+		UpdateColumn("sweeper_retry_count", gorm.Expr("sweeper_retry_count + 1")).Error
+	if err != nil {
+		return 0, fmt.Errorf("wallet_payments: increment sweeper retry: %w", err)
+	}
+	if err := r.DB.WithContext(ctx).
+		Model(&domaintx.WalletPayment{}).
+		Where("id = ?", rowID).
+		Select("sweeper_retry_count AS count").
+		Scan(&result).Error; err != nil {
+		return 0, fmt.Errorf("wallet_payments: read sweeper retry count: %w", err)
+	}
+	return result.Count, nil
+}
