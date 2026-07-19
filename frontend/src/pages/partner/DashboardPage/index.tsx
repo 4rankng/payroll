@@ -4,19 +4,16 @@ import {
   Users,
   UserCheck,
   UserX,
+  Banknote,
+  CalendarDays,
+  Crown,
+  Sparkles,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  Crown,
-  Medal,
-  Award,
-  Sparkles,
-  Activity,
-  CalendarDays,
 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { PageHeader } from '@/components/shared/PageHeader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
@@ -33,17 +30,17 @@ const ALL_VALUE = 'all';
 // ─── Month selector ────────────────────────────────────────────────────────
 function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-muted/35 p-1 no-scrollbar" aria-label="Chọn kỳ dữ liệu">
+    <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-card/80 p-1 no-scrollbar" aria-label="Chọn kỳ dữ liệu">
       {monthOptions.slice(0, 4).map((opt) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           className={cn(
-            'min-h-[40px] px-3 rounded-xl text-xs font-semibold transition-colors shrink-0',
+            'min-h-[36px] px-3 rounded-xl text-xs font-semibold transition-colors shrink-0',
             value === opt.value
-              ? 'bg-card text-primary shadow-[0_3px_10px_-6px_rgba(6,101,52,0.60)] ring-1 ring-border/50'
-              : 'text-muted-foreground hover:bg-card/75 hover:text-foreground',
+              ? 'bg-primary text-primary-foreground shadow-soft'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
           )}
         >
           {opt.label}
@@ -53,7 +50,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
         aria-label="Chọn tháng khác"
         value={monthOptions.slice(4).some((o) => o.value === value) ? value : ''}
         onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="min-h-[40px] rounded-xl border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-card/75 hover:text-foreground focus:border-primary/30 shrink-0"
+        className="min-h-[36px] rounded-xl border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus:border-primary/30 shrink-0"
       >
         <option value="">Tháng khác…</option>
         {monthOptions.slice(4).map((opt) => (
@@ -66,14 +63,8 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
-// ─── Trend chip (used in hero + tiles) ─────────────────────────────────────
-function TrendChip({
-  change,
-  variant = 'on-dark',
-}: {
-  change: PartnerDashboardMoMChange | undefined;
-  variant?: 'on-dark' | 'on-light';
-}) {
+// ─── Trend chip ────────────────────────────────────────────────────────────
+function TrendChip({ change }: { change: PartnerDashboardMoMChange | undefined }) {
   if (!change || !Number.isFinite(change.change_pct)) return null;
   const pct = change.change_pct;
   const isUp = pct > 0;
@@ -81,165 +72,135 @@ function TrendChip({
   const Icon = isFlat ? Minus : isUp ? ArrowUpRight : ArrowDownRight;
   const sign = pct >= 0 ? '+' : '';
   const label = `${sign}${pct.toFixed(0)}%`;
-
-  if (variant === 'on-dark') {
-    return (
-      <span
-        className={cn(
-          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm',
-          isUp && 'bg-success/20 text-success-foreground',
-          !isUp && !isFlat && 'bg-destructive/20 text-destructive-foreground',
-          isFlat && 'bg-card/10 text-white/80',
-        )}
-      >
-        <Icon className="h-3 w-3" />
-        {label}
-      </span>
-    );
-  }
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
-        isUp && 'bg-success/10 text-success',
-        !isUp && !isFlat && 'bg-destructive/10 text-destructive',
-        isFlat && 'bg-muted text-muted-foreground',
+        'inline-flex items-center gap-0.5 text-xs font-semibold',
+        isUp && 'text-success',
+        !isUp && !isFlat && 'text-destructive',
+        isFlat && 'text-muted-foreground',
       )}
     >
-      <Icon className="h-2.5 w-2.5" />
+      <Icon className="h-3 w-3" />
       {label}
     </span>
   );
 }
 
-// ─── Compact stat tile (used in hero side column) ───────────────────────────
-// Watermark style: small inline icon-label at top-left, big number below,
-// and a LARGE faint outline icon as decorative art bleeding off the right
-// edge of the card. Inspired by user-provided reference (Stripe/Linear feel).
-const TILE_COLORS = {
-  emerald: { iconText: 'text-success', watermark: 'text-success/15' },
-  amber:   { iconText: 'text-warning', watermark: 'text-warning/15' },
-  blue:    { iconText: 'text-info',    watermark: 'text-info/15' },
-} as const;
+// ─── Decorative sparkline (NOT backed by real time-series data) ────────────
+// Visual reference only. The dashboard API exposes point-in-time values + a
+// single MoM delta — not a daily/weekly series. These SVGs are static curves
+// tinted by `currentColor` so they inherit the card's semantic tone.
+// Marked aria-hidden so screen readers don't announce fake data.
+const SPARK_PATHS = [
+  'M0 602.49c80-41.832 240-108.916 400-209.159C560 293.09 640 21.354 800 101.278c160 79.923 240 652.286 400 691.67 160 39.384 240-473.81 400-494.752 160-20.943 320 312.03 400 390.038',
+  'M0 623.854c80-59.416 240-298.176 400-297.076 160 1.1 240 343.78 400 302.574 160-41.206 240-415.29 400-508.605 160-93.314 240-22.06 400 42.033 160 64.095 320 222.751 400 278.439',
+  'M0 449.109c80 24.34 240 157.918 400 121.701 160-36.216 240-233.648 400-302.785 160-69.137 240-128.846 400-42.9s240 420.493 400 472.63 320-169.555 400-211.943',
+  'M0 131.28c80 52.463 240 237.611 400 262.315 160 24.703 240-137.143 400-138.8 160-1.656 240 25.982 400 130.517s240 438.49 400 392.16c160-46.33 320-499.048 400-623.81',
+];
+const SPARK_FILL_PATHS = [
+  'M0 602.49c80-41.832 240-108.916 400-209.159C560 293.09 640 21.354 800 101.278c160 79.923 240 652.286 400 691.67 160 39.384 240-473.81 400-494.752 160-20.943 320 312.03 400 390.038V1000H0Z',
+  'M0 623.854c80-59.416 240-298.176 400-297.076 160 1.1 240 343.78 400 302.574 160-41.206 240-415.29 400-508.605 160-93.314 240-22.06 400 42.033 160 64.095 320 222.751 400 278.439V1000H0Z',
+  'M0 449.109c80 24.34 240 157.918 400 121.701 160-36.216 240-233.648 400-302.785 160-69.137 240-128.846 400-42.9s240 420.493 400 472.63 320-169.555 400-211.943V1000H0Z',
+  'M0 131.28c80 52.463 240 237.611 400 262.315 160 24.703 240-137.143 400-138.8 160-1.656 240 25.982 400 130.517s240 438.49 400 392.16c160-46.33 320-499.048 400-623.81V1000H0Z',
+];
 
-function StatTile({
-  label,
-  value,
-  icon: Icon,
-  color,
-  sublabel,
-  change,
-  onClick,
-}: {
+function Sparkline({ index, className }: { index: number; className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={cn('w-full max-w-[112px] h-auto', className)}
+      viewBox="0 0 2000 1000"
+      preserveAspectRatio="none"
+    >
+      <path d={SPARK_FILL_PATHS[index]} fill="currentColor" opacity={0.12} />
+      <path
+        d={SPARK_PATHS[index]}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={28}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// ─── Stat card (a-c-statistics-11 inspired) ────────────────────────────────
+type Tone = 'primary' | 'success' | 'warning' | 'info';
+
+const TONE_TEXT: Record<Tone, string> = {
+  primary: 'text-primary',
+  success: 'text-success',
+  warning: 'text-warning',
+  info: 'text-info',
+};
+
+interface StatCardProps {
   label: string;
-  value: number;
-  icon: typeof UserCheck;
-  color: keyof typeof TILE_COLORS;
-  sublabel?: string;
+  value: string;
+  icon: typeof Users;
+  tone: Tone;
+  sparkIndex: number;
   change?: PartnerDashboardMoMChange;
+  caption?: string;
   onClick?: () => void;
-}) {
-  const c = TILE_COLORS[color];
+}
+
+function StatCard({ label, value, icon: Icon, tone, sparkIndex, change, caption, onClick }: StatCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
+      aria-label={`${label}: ${value}`}
       className={cn(
-        'group relative w-full min-h-[88px] text-left rounded-2xl border border-border/60 bg-card px-4 py-4 overflow-hidden transition-all',
-        'shadow-soft',
-        onClick &&
-          'hover:shadow-card hover:-translate-y-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'group relative flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card p-4 text-left transition-all',
+        'shadow-soft hover:shadow-card hover:-translate-y-0.5',
+        onClick && 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         !onClick && 'cursor-default',
       )}
     >
-      {/* Watermark decoration — large faint icon fully inside the card on the
-          right side. Sits behind content; pointer-events-none keeps it from
-          blocking clicks. */}
-      <Icon
-        className={cn(
-          'absolute right-3 top-1/2 -translate-y-1/2 h-16 w-16 pointer-events-none',
-          'transition-transform duration-300 group-hover:scale-105',
-          c.watermark,
-        )}
-        strokeWidth={1.5}
-      />
-
-      <div className="relative">
-        {/* Label row with small icon prefix */}
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <Icon className={cn('h-3 w-3', c.iconText)} strokeWidth={2.2} />
-          <span className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
+          <Icon className={cn('h-3.5 w-3.5 shrink-0', TONE_TEXT[tone])} strokeWidth={2.2} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground truncate">
             {label}
           </span>
         </div>
-
-        {/* Big number */}
-        <p className="mt-1.5 text-2xl font-extrabold tabular-nums leading-none text-foreground tracking-normal">
-          {value.toLocaleString('vi-VN')}
+        <p className="mt-2 font-display text-2xl font-extrabold tabular-nums tracking-tight text-foreground leading-none">
+          {value}
         </p>
-
-        {/* Trend / sublabel */}
-        {(change || sublabel) && (
-          <div className="mt-2 flex items-center gap-1.5">
-            {change ? <TrendChip change={change} variant="on-light" /> : null}
-            {sublabel && (
-              <span className="text-[10.5px] text-muted-foreground leading-tight">{sublabel}</span>
-            )}
-          </div>
-        )}
+        <div className="mt-2 flex items-center gap-2">
+          {change ? <TrendChip change={change} /> : null}
+          {caption && (
+            <span className="text-[11px] text-muted-foreground truncate">{caption}</span>
+          )}
+        </div>
+      </div>
+      {/* Sparkline — decorative, inherits tone color via currentColor */}
+      <div className={cn('relative w-[112px] shrink-0 self-stretch flex items-end', TONE_TEXT[tone])}>
+        <div className="absolute inset-0 bg-linear-to-t from-card via-card/0 to-transparent pointer-events-none" />
+        <Sparkline index={sparkIndex} className="relative" />
       </div>
     </button>
   );
 }
 
-// ─── Top employees leaderboard ────────────────────────────────────────────
-const PODIUM_DECOR = [
-  { icon: Crown, color: 'text-warning', ring: 'ring-warning/30', accent: 'bg-warning/10 text-warning' },
-  { icon: Medal, color: 'text-muted-foreground', ring: 'ring-border', accent: 'bg-muted text-muted-foreground' },
-  { icon: Award, color: 'text-warning/70', ring: 'ring-warning/20', accent: 'bg-warning/10 text-warning' },
+// ─── Leaderboard row (simplified, single-tier) ─────────────────────────────
+const RANK_BADGE = [
+  'bg-warning/15 text-warning ring-1 ring-warning/30',
+  'bg-muted text-muted-foreground ring-1 ring-border',
+  'bg-warning/10 text-warning/80 ring-1 ring-warning/20',
 ];
 
-function PodiumCard({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: number }) {
-  const decor = PODIUM_DECOR[item.rank - 1];
-  const Icon = decor.icon;
+function LeaderRow({ item, rank, maxPaid }: { item: TopPaidEmployeeItem; rank: number; maxPaid: number }) {
   const pct = maxPaid > 0 ? Math.round((item.total_paid_vnd / maxPaid) * 100) : 0;
+  const badge = RANK_BADGE[rank - 1] ?? 'bg-muted/60 text-muted-foreground ring-1 ring-border/60';
   return (
-    <div className="relative flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-b from-card to-muted/30 px-3 py-4 transition-all hover:from-card hover:to-muted/50">
-      <div className="absolute top-2 right-2">
-        <Icon className={cn('h-4 w-4', decor.color)} />
-      </div>
-      <UserAvatar
-        name={item.employee_name}
-        size="md"
-        className={cn('ring-2 ring-offset-2 ring-offset-card shrink-0', decor.ring)}
-      />
-      <div className="text-center min-w-0 w-full">
-        <p className="text-[12px] font-semibold text-foreground truncate leading-tight" title={item.employee_name}>
-          {item.employee_name}
-        </p>
-        <p className="text-[14px] font-extrabold tabular-nums text-foreground leading-tight mt-0.5">
-          {formatVND(item.total_paid_vnd)}
-        </p>
-        <div
-          className={cn(
-            'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 mt-1.5 text-[9.5px] font-semibold',
-            decor.accent,
-          )}
-        >
-          {pct}% top
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: number }) {
-  const pct = maxPaid > 0 ? Math.round((item.total_paid_vnd / maxPaid) * 100) : 0;
-  return (
-    <div className="group flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg transition-colors hover:bg-muted/40">
-      <span className="w-6 text-center text-[11px] font-bold tabular-nums text-muted-foreground">
-        #{item.rank}
+    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/40">
+      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums', badge)}>
+        {rank}
       </span>
       <UserAvatar name={item.employee_name} size="sm" className="shrink-0" />
       <div className="min-w-0 flex-1">
@@ -252,11 +213,11 @@ function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: numb
             </span>
           )}
         </div>
-        <div className="mt-1 flex items-center gap-2">
-          <div className="h-1 flex-1 rounded-full bg-muted/50 overflow-hidden max-w-[120px]">
+        <div className="mt-1.5 flex items-center gap-2">
+          <div className="h-1 flex-1 rounded-full bg-muted/60 overflow-hidden max-w-[140px]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary"
-              style={{ width: `${pct}%` }}
+              className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary transition-all duration-500"
+              style={{ width: `${Math.max(pct, 2)}%` }}
             />
           </div>
           <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
@@ -269,42 +230,86 @@ function LeaderRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid: numb
   );
 }
 
-// ─── Skeletons ────────────────────────────────────────────────────────────
-function HeroSkeleton() {
+// ─── Skeletons ─────────────────────────────────────────────────────────────
+function StatRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      <div className="lg:col-span-3 rounded-2xl bg-muted/30 p-6 lg:p-8 space-y-3">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-12 w-48" />
-        <Skeleton className="h-4 w-36" />
-      </div>
-      <div className="lg:col-span-2 space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[88px] w-full rounded-2xl" />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-card p-4">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-12 w-24 rounded" />
+        </div>
+      ))}
     </div>
   );
 }
 
 function LeaderboardSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[120px] rounded-2xl" />
-        ))}
-      </div>
-      <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full rounded-lg" />
-        ))}
+    <div className="space-y-2 pt-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-2 py-2.5">
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-1.5 w-full rounded-full max-w-[140px]" />
+          </div>
+          <Skeleton className="h-3.5 w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Banner header (a-c-page-headings-06 inspired, brand emerald only) ─────
+function BannerHeader({
+  periodLabel,
+  monthValue,
+  onMonthChange,
+}: {
+  periodLabel: string;
+  monthValue: string;
+  onMonthChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/15 via-primary/5 to-transparent">
+      {/* Faint grid pattern overlay */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(0deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:24px_24px]"
+      />
+      <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-primary ring-1 ring-inset ring-primary/20">
+            <Sparkles className="h-3.5 w-3.5" />
+            Bảng điều hành
+          </div>
+          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+            Tổng quan
+          </h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Theo dõi hoạt động nhân viên và tình hình thanh toán · <span className="font-medium text-foreground/80">{periodLabel}</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <CalendarDays className="hidden h-4 w-4 text-muted-foreground sm:block" />
+          <MonthSelector value={monthValue} onChange={onMonthChange} />
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────
+// ─── Quick actions strip (mirrors mobile quickActions) ─────────────────────
+// Skipped per plan deferral: the 4-card stat row already provides the primary
+// navigation via onClick. Adding a separate quick-actions strip would duplicate.
+
+// ─── Main page ─────────────────────────────────────────────────────────────
 const PartnerDashboardPage = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(
     format(startOfMonth(new Date()), 'yyyy-MM'),
@@ -326,189 +331,123 @@ const PartnerDashboardPage = () => {
 
   const topEmployees = useMemo(() => data?.top_paid_employees ?? [], [data?.top_paid_employees]);
   const maxPaid = topEmployees[0]?.total_paid_vnd ?? 0;
-  const podiumItems = topEmployees.slice(0, 3);
-  const restItems = topEmployees.slice(3);
 
   const showMomBadges = selectedMonth !== ALL_VALUE;
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_27rem)] p-4 lg:p-8">
-    <div className="max-w-[1320px] mx-auto space-y-5">
-      <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card px-5 py-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:px-6">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[24px] border-primary/15" />
-        <div className="relative">
-        <PageHeader
-          title="Tổng quan"
-          description="Theo dõi hoạt động nhân viên và tình hình thanh toán"
-        >
-          <div className="flex items-center gap-2">
-            <CalendarDays className="hidden h-4 w-4 text-primary sm:block" />
-            <MonthSelector value={selectedMonth} onChange={handleMonthChange} />
-          </div>
-        </PageHeader>
-        </div>
-      </div>
+    <div className="min-h-full p-4 lg:p-6">
+      <div className="mx-auto max-w-[1320px] space-y-5">
+        <BannerHeader
+          periodLabel={periodLabel}
+          monthValue={selectedMonth}
+          onMonthChange={handleMonthChange}
+        />
 
-      {/* ── HERO SECTION ── */}
-      {isLoading ? (
-        <HeroSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in-up">
-          {/* Left: big payout hero card */}
-          <div className="lg:col-span-3 relative min-h-[264px] overflow-hidden rounded-3xl border border-emerald-200/15 p-6 lg:p-8 text-white shadow-[0_24px_56px_-30px_rgba(6,69,46,0.64)]">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#043C27_0%,#08783E_56%,#16A05E_100%)]" />
-            <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-200/12 blur-3xl" />
-            <div className="absolute -bottom-28 -left-14 h-64 w-64 rounded-full border-[40px] border-emerald-200/10" />
-            <div className="absolute inset-0 opacity-[0.07] pointer-events-none [background-image:linear-gradient(90deg,white_1px,transparent_1px),linear-gradient(0deg,white_1px,transparent_1px)] [background-size:28px_28px]" />
-
-            <div className="relative">
-              <div className="flex items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-emerald-50 backdrop-blur-sm">
-                  <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
-                  Bảng điều hành
-                </div>
-                <span className="text-[11px] font-medium text-white/65">{periodLabel}</span>
-              </div>
-              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-100/75">Tổng chi trả</p>
-              <div className="mt-3 flex items-baseline gap-2.5 flex-wrap">
-                <span className="font-display text-4xl font-extrabold tabular-nums tracking-normal leading-none sm:text-5xl">
-                  {formatVND(data?.total_paid_vnd ?? 0)}
-                </span>
-                {showMomBadges && <TrendChip change={data?.mom_paid_amount} variant="on-dark" />}
-              </div>
-              <p className="mt-3 max-w-2xl text-[13px] text-white/75 leading-relaxed">
-                Đã thanh toán cho{' '}
-                <span className="font-semibold text-white">{data?.paid_employees ?? 0}</span> nhân viên trong{' '}
-                {periodLabel}.{' '}
-                {data?.mom_paid_employees && showMomBadges && (
-                  <>
-                    {data.mom_paid_employees.change_amount >= 0 ? 'Tăng' : 'Giảm'}{' '}
-                    <span className="font-semibold text-white">
-                      {Math.abs(data.mom_paid_employees.change_amount)}
-                    </span>{' '}
-                    người so với tháng trước.
-                  </>
-                )}
-              </p>
-
-              <div className="mt-6 flex items-center gap-2 text-[11.5px]">
-                <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/10 px-2.5 py-1.5">
-                  <Activity className="h-3.5 w-3.5 text-emerald-200" />
-                  <span className="text-white/75">Dữ liệu cập nhật theo thời gian thực</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: 3 stat tiles stacked */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
-            <StatTile
+        {/* ── Stat row (4 cards) ── */}
+        {isLoading ? (
+          <StatRowSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 animate-fade-in-up">
+            <StatCard
+              label="Tổng chi trả"
+              value={formatVND(data?.total_paid_vnd ?? 0)}
+              icon={Banknote}
+              tone="primary"
+              sparkIndex={0}
+              change={showMomBadges ? data?.mom_paid_amount : undefined}
+              caption={!showMomBadges ? periodLabel : undefined}
+              onClick={(data?.total_paid_vnd ?? 0) > 0 ? () => openSheet('paid') : undefined}
+            />
+            <StatCard
               label="Đang làm việc"
-              value={data?.active_employees ?? 0}
+              value={(data?.active_employees ?? 0).toLocaleString('vi-VN')}
               icon={UserCheck}
-              color="emerald"
-              sublabel="bảng công 14 ngày qua"
+              tone="success"
+              sparkIndex={1}
+              caption="bảng công 14 ngày qua"
               onClick={() => openSheet('active')}
             />
-            <StatTile
+            <StatCard
               label="Có thể nghỉ"
-              value={data?.dropped_employees ?? 0}
+              value={(data?.dropped_employees ?? 0).toLocaleString('vi-VN')}
               icon={UserX}
-              color="amber"
-              sublabel="không bảng công 14 ngày"
+              tone="warning"
+              sparkIndex={2}
+              caption="không bảng công 14 ngày"
               onClick={(data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined}
             />
-            <StatTile
+            <StatCard
               label="Đã thanh toán"
-              value={data?.paid_employees ?? 0}
+              value={(data?.paid_employees ?? 0).toLocaleString('vi-VN')}
               icon={Users}
-              color="blue"
+              tone="info"
+              sparkIndex={3}
               change={showMomBadges ? data?.mom_paid_employees : undefined}
-              sublabel={!showMomBadges ? 'tất cả thời gian' : undefined}
+              caption={!showMomBadges ? 'tất cả thời gian' : undefined}
               onClick={(data?.paid_employees ?? 0) > 0 ? () => openSheet('paid') : undefined}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── ANALYTICS GRID: workforce donut + leaderboard ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Workforce donut */}
-        <PartnerWorkforceOverviewCard
-          active={data?.active_employees ?? 0}
-          dropped={data?.dropped_employees ?? 0}
-          paid={data?.paid_employees ?? 0}
-          isLoading={isLoading}
-        />
+        {/* ── Analytics grid: workforce donut + leaderboard ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Workforce donut — preserved unchanged */}
+          <PartnerWorkforceOverviewCard
+            active={data?.active_employees ?? 0}
+            dropped={data?.dropped_employees ?? 0}
+            paid={data?.paid_employees ?? 0}
+            isLoading={isLoading}
+          />
 
-        {/* Top employees leaderboard */}
-        <div className="lg:col-span-2 rounded-3xl border border-border/60 bg-card p-5 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.46)]">
-          <div className="mb-4 flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-warning/10 text-warning"><Crown className="h-3.5 w-3.5" /></span>
-                Top nhân viên được trả lương cao nhất
-              </h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Xếp hạng theo tổng chi trả {periodLabel}
-              </p>
+          {/* Leaderboard — simplified (no podium) */}
+          <div className="md:col-span-2 rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning ring-1 ring-warning/20">
+                  <Crown className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Top nhân viên được trả lương</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Xếp hạng theo tổng chi trả {periodLabel}
+                  </p>
+                </div>
+              </div>
+              {!isLoading && topEmployees.length > 0 && (
+                <span className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                  {topEmployees.length} nhân viên
+                </span>
+              )}
             </div>
-            {!isLoading && topEmployees.length > 0 && (
-              <span className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                {topEmployees.length} nhân viên
-              </span>
+
+            {isLoading ? (
+              <LeaderboardSkeleton />
+            ) : topEmployees.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 mb-3">
+                  <Crown className="h-5 w-5 text-muted-foreground/40" />
+                </div>
+                <p className="text-[13px] font-medium text-foreground">Chưa có dữ liệu thanh toán</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Sẽ hiển thị khi có nhân viên được thanh toán trong {periodLabel}.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {topEmployees.map((item, idx) => (
+                  <LeaderRow key={item.employee_id} item={item} rank={idx + 1} maxPaid={maxPaid} />
+                ))}
+              </div>
             )}
           </div>
-
-          {isLoading ? (
-            <LeaderboardSkeleton />
-          ) : topEmployees.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 mb-3">
-                <Crown className="h-5 w-5 text-muted-foreground/40" />
-              </div>
-              <p className="text-[13px] font-medium text-foreground">Chưa có dữ liệu thanh toán</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Sẽ hiển thị khi có nhân viên được thanh toán trong {periodLabel}.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Podium: top 3 special cards */}
-              {podiumItems.length > 0 && (
-                <div
-                  className={cn(
-                    'grid gap-2',
-                    podiumItems.length === 1 && 'grid-cols-1',
-                    podiumItems.length === 2 && 'grid-cols-2',
-                    podiumItems.length === 3 && 'grid-cols-3',
-                  )}
-                >
-                  {podiumItems.map((item) => (
-                    <PodiumCard key={item.employee_id} item={item} maxPaid={maxPaid} />
-                  ))}
-                </div>
-              )}
-
-              {/* Rest: compact rows */}
-              {restItems.length > 0 && (
-                <div className="space-y-0.5 pt-2 border-t border-border/40">
-                  {restItems.map((item) => (
-                    <LeaderRow key={item.employee_id} item={item} maxPaid={maxPaid} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </div>
 
-      <PartnerEmployeeListSheet
-        type={sheetType}
-        month={apiMonth}
-        onClose={closeSheet}
-      />
-    </div>
+        <PartnerEmployeeListSheet
+          type={sheetType}
+          month={apiMonth}
+          onClose={closeSheet}
+        />
+      </div>
     </div>
   );
 };

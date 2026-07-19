@@ -6,17 +6,16 @@ import {
   UserCheck,
   UserX,
   Banknote,
-  BarChart3,
   ChevronLeft,
   ChevronRight,
   FolderKanban,
   ClipboardList,
   History,
+  Sparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { MobilePageShell, MobileSurface } from '@/components/shared/MobilePageShell';
 import {
   MobileOperationsPanel,
@@ -212,6 +211,14 @@ const PartnerDashboardMobile = () => {
 
   const operationMetrics = useMemo<MobileOperationMetric[]>(() => [
     {
+      label: 'Tổng chi trả',
+      value: formatVND(data?.total_paid_vnd ?? 0, { useVietnamese: true }),
+      helper: momAmountSublabel,
+      icon: Banknote,
+      tone: 'primary',
+      onClick: (data?.total_paid_vnd ?? 0) > 0 ? () => openSheet('paid') : undefined,
+    },
+    {
       label: 'Đang làm việc',
       value: (data?.active_employees ?? 0).toLocaleString('vi-VN'),
       helper: 'Có bảng công 14 ngày qua',
@@ -220,7 +227,7 @@ const PartnerDashboardMobile = () => {
       onClick: () => openSheet('active'),
     },
     {
-      label: 'Cần kiểm tra',
+      label: 'Có thể nghỉ',
       value: (data?.dropped_employees ?? 0).toLocaleString('vi-VN'),
       helper: 'Không bảng công 14 ngày qua',
       icon: UserX,
@@ -228,26 +235,14 @@ const PartnerDashboardMobile = () => {
       onClick: (data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined,
     },
     {
-      label: 'Được trả lương',
+      label: 'Đã thanh toán',
       value: (data?.paid_employees ?? 0).toLocaleString('vi-VN'),
       helper: momEmployeesSublabel,
       icon: Users,
-      tone: 'primary',
+      tone: 'neutral',
       onClick: (data?.paid_employees ?? 0) > 0 ? () => openSheet('paid') : undefined,
     },
-    {
-      label: 'Chi trả bình quân',
-      value: formatVND(
-        (data?.paid_employees ?? 0) > 0
-          ? Math.round((data?.total_paid_vnd ?? 0) / (data?.paid_employees ?? 1))
-          : 0,
-        { useVietnamese: true },
-      ),
-      helper: periodLabel,
-      icon: Banknote,
-      tone: 'neutral',
-    },
-  ], [data, momEmployeesSublabel, openSheet, periodLabel]);
+  ], [data, momAmountSublabel, momEmployeesSublabel, openSheet]);
 
   const taskRows = useMemo<MobileTaskRow[]>(() => [
     {
@@ -278,13 +273,25 @@ const PartnerDashboardMobile = () => {
 
   return (
     <MobilePageShell className="space-y-4">
-      <MobilePageHeader
-        title="Tổng quan"
-        subtitle="Theo dõi nhân viên và thanh toán"
-        icon={BarChart3}
-        sticky={false}
-        bordered={false}
-      />
+      {/* Slim gradient banner — mirrors desktop's BannerHeader (scaled down for mobile) */}
+      <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/15 via-primary/5 to-transparent">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(0deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:20px_20px]"
+        />
+        <div className="relative p-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-primary ring-1 ring-inset ring-primary/20">
+            <Sparkles className="h-3 w-3" />
+            Bảng điều hành
+          </div>
+          <h1 className="mt-1.5 font-display text-xl font-extrabold tracking-tight text-foreground">
+            Tổng quan
+          </h1>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
+            Theo dõi nhân viên và thanh toán · <span className="font-medium text-foreground/80">{periodLabel}</span>
+          </p>
+        </div>
+      </div>
 
       <MobileSurface className="p-3">
         <MonthNavigator value={selectedMonth} onChange={handleMonthChange} />
