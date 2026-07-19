@@ -235,3 +235,64 @@ func (bp *BatchProcessor) GetBatchSizeForIDs(idCount int) int {
 func (bp *BatchProcessor) GetConfig() BatchConfig {
 	return bp.config
 }
+
+// DefaultChunkSize is the safe chunk size for `WHERE id IN (?)` queries,
+// staying well under MySQL's max_allowed_packet for typical bigint IDs.
+const DefaultChunkSize = 1000
+
+// Chunk runs fn over ids in chunks of size, concatenating the returned slices.
+// Use for "SELECT ... WHERE id IN (?)" patterns that would otherwise exceed
+// MySQL's packet limit at >1000 IDs.
+//
+// `db` MUST be the context-and-transaction-aware session handle (typically
+// r.getDB(ctx) or r.db.WithContext(ctx)), NOT bare r.db — otherwise chunks
+// run outside the caller's transaction and see inconsistent MVCC snapshots
+// (red-team F6).
+//
+// size ≤ 0 defaults to DefaultChunkSize. Empty input returns nil with no call.
+func Chunk[T any](ctx context.Context, db *gorm.DB, ids []uint, size int,
+	fn func(tx *gorm.DB, batch []uint) ([]T, error)) ([]T, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	if size <= 0 {
+		size = DefaultChunkSize
+	}
+	var out []T
+	for i := 0; i < len(ids); i += size {
+		end := i + size
+		if end > len(ids) {
+			end = len(ids)
+		}
+		batch, err := fn(db, ids[i:end])
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, batch...)
+	}
+	return out, nil
+}
+
+// ChunkStrings is the string-keyed analogue of Chunk (e.g. for transaction codes).
+func ChunkStrings[T any](ctx context.Context, db *gorm.DB, keys []string, size int,
+	fn func(tx *gorm.DB, batch []string) ([]T, error)) ([]T, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	if size <= 0 {
+		size = DefaultChunkSize
+	}
+	var out []T
+	for i := 0; i < len(keys); i += size {
+		end := i + size
+		if end > len(keys) {
+			end = len(keys)
+		}
+		batch, err := fn(db, keys[i:end])
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, batch...)
+	}
+	return out, nil
+}

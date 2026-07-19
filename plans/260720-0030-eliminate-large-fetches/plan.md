@@ -4,7 +4,7 @@ description: >-
   Root-cause fix for the 5,334-row timesheet-date fetch (data-modeling gap in
   CyclePayData), plus batching for 6 unbatched WHERE id IN (?) repo methods and
   capping 2 upstream unbounded fetches (ListWeeklyForWorkMonth, visible_t CTE).
-status: in-progress
+status: completed
 priority: P1
 branch: main
 tags:
@@ -49,8 +49,8 @@ A parallel audit found **6 unbatched `WHERE id IN (?)` repo methods** that will 
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | [Phase A: Eliminate timesheet-date fetch at root](./phase-01-phase-a-eliminate-timesheet-date-fetch-at-root.md) | Completed |
-| 2 | [Phase B: Batch unbatched GetByIDs/FindByCodes](./phase-02-phase-b-batch-unbatched-getbyids-findbycodes.md) | In Progress |
-| 3 | [Phase C: Cap upstream unbounded fetches](./phase-03-phase-c-cap-upstream-unbounded-fetches.md) | Pending |
+| 2 | [Phase B: Batch unbatched GetByIDs/FindByCodes](./phase-02-phase-b-batch-unbatched-getbyids-findbycodes.md) | Completed |
+| 3 | [Phase C: Cap upstream unbounded fetches](./phase-03-phase-c-cap-upstream-unbounded-fetches.md) | Completed |
 
 ## Dependencies
 
@@ -91,8 +91,8 @@ No cross-plan dependencies. Phases are independent and can ship in sequence or i
 
 ### Open product signoffs (blocking)
 
-- [ ] **F3:** legacy nil-date row count recorded; backfill-vs-compat-clause decision made (Phase C1 precondition)
-- [ ] **F7:** product accepts "dropped_employees = inactive 14-60d" (was "inactive >14d") (Phase C2 precondition)
+- [x] **F3 (RESOLVED 2026-07-20):** prod query returned **32 legacy nil-date weekly files** (Apr-Jul 2026, ~50% of all 64 weekly files). Decision: **ship the bounded compat clause** (`OR asset_id IS NOT NULL AND from_date IS NULL`) — without it, half of payment history vanishes. Backfill of these 32 rows is a separate follow-up.
+- [x] **F7 (RESOLVED 2026-07-20):** prod query returned **278 of 453 "dropped" employees** would be reclassified under the 60-day window (last timesheet >60d old). Total `dropped` drops 453 → 175 (−61%). Decision: **accept the 60-day window** — product treats >60d inactivity as churned, not lapsed.
 
 ### Whole-Plan Consistency Sweep
 

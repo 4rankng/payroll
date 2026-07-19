@@ -50,7 +50,7 @@ const menuItems = [
   { title: "Dự án", icon: Briefcase, path: "/partner/projects", end: false },
   { title: "Nhân viên", icon: Users, path: "/partner/employees" },
   { title: "Bảng công", icon: Calendar, path: "/partner/timesheet", end: true },
-  { title: "Lịch sử trả lương", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
+  { title: "Bút toán ngân hàng", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
 ];
 
 interface NavItemProps {

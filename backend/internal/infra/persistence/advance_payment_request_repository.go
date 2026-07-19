@@ -390,16 +390,23 @@ func (r *AdvancePaymentRequestRepository) GetByIDs(ctx context.Context, ids []ui
 		return []*domain.AdvancePaymentRequest{}, nil
 	}
 
+	// Chunk at DefaultChunkSize to stay under MySQL's packet limit at >1000 IDs.
 	var requests []*domain.AdvancePaymentRequest
-	err := r.DB.WithContext(ctx).
-		Where("id IN ?", ids).
-		Preload("AdvancePayment").
-		Preload("Project").
-		Preload("Employee").
-		Find(&requests).Error
-
-	if err != nil {
-		return nil, r.errorHandler.HandleListError(err, "advance_payment_request")
+	for i := 0; i < len(ids); i += common.DefaultChunkSize {
+		end := i + common.DefaultChunkSize
+		if end > len(ids) {
+			end = len(ids)
+		}
+		var batchReqs []*domain.AdvancePaymentRequest
+		if err := r.getDB(ctx).
+			Where("id IN ?", ids[i:end]).
+			Preload("AdvancePayment").
+			Preload("Project").
+			Preload("Employee").
+			Find(&batchReqs).Error; err != nil {
+			return nil, r.errorHandler.HandleListError(err, "advance_payment_request")
+		}
+		requests = append(requests, batchReqs...)
 	}
 
 	return requests, nil
@@ -413,12 +420,18 @@ func (r *AdvancePaymentRequestRepository) GetByIDsLean(ctx context.Context, ids 
 	}
 
 	var requests []*domain.AdvancePaymentRequest
-	err := r.getDB(ctx).
-		Where("id IN ?", ids).
-		Find(&requests).Error
-
-	if err != nil {
-		return nil, r.errorHandler.HandleListError(err, "advance_payment_request")
+	for i := 0; i < len(ids); i += common.DefaultChunkSize {
+		end := i + common.DefaultChunkSize
+		if end > len(ids) {
+			end = len(ids)
+		}
+		var batchReqs []*domain.AdvancePaymentRequest
+		if err := r.getDB(ctx).
+			Where("id IN ?", ids[i:end]).
+			Find(&batchReqs).Error; err != nil {
+			return nil, r.errorHandler.HandleListError(err, "advance_payment_request")
+		}
+		requests = append(requests, batchReqs...)
 	}
 
 	return requests, nil

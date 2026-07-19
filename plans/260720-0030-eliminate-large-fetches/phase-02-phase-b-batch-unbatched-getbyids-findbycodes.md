@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: 'Phase B: Batch unbatched GetByIDs/FindByCodes'
-status: in-progress
+status: completed
 priority: P1
 effort: M
 dependencies: []

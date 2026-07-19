@@ -137,12 +137,19 @@ func (r *BulkTransferFileRepository) ListWithFilters(ctx context.Context, cycle 
 
 // ListWeeklyForWorkMonth returns bounded weekly batch data for one work month.
 // Completion is evaluated per stored transaction row by the application service.
+//
+// Predicate (Phase C1, red-team F3): in-month dated files surface via the
+// `from_date BETWEEN ?` branch. Legacy result-upload files created before
+// Phase A have nil `from_date`; the bounded `AND from_date IS NULL` compat
+// clause still surfaces them so partners don't lose visibility into historical
+// payments. TODO(backfill): once legacy nil-date rows are backfilled from
+// their transaction_codes.Data.WeeklyPay.FromDate, drop the compat clause.
 func (r *BulkTransferFileRepository) ListWeeklyForWorkMonth(ctx context.Context, monthStart, monthEnd time.Time) ([]*domain.BulkTransferFile, error) {
 	var files []*domain.BulkTransferFile
 	err := r.DB.WithContext(ctx).
 		Where("cycle = ?", "weekly").
 		Where(r.DB.Where("from_date >= ? AND from_date <= ?", monthStart, monthEnd).
-			Or("asset_id IS NOT NULL")).
+			Or("asset_id IS NOT NULL AND from_date IS NULL")).
 		Where("data IS NOT NULL AND data != '' AND data != '{}' ").
 		Order("from_date DESC, created_at DESC").
 		Find(&files).Error

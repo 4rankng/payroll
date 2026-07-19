@@ -6,6 +6,8 @@ import (
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
+
+	"gorm.io/gorm"
 )
 
 type TransactionCodeRepository struct {
@@ -59,19 +61,24 @@ func (r *TransactionCodeRepository) CreateBatch(ctx context.Context, tcs []*doma
 	return r.DB.WithContext(ctx).CreateInBatches(tcs, 100).Error
 }
 
-// FindByCodes returns transaction codes matching the provided codes in a single indexed query
+// FindByCodes returns transaction codes matching the provided codes.
+// Chunked at DefaultChunkSize to stay under MySQL's packet limit for large
+// code sets (e.g. bank-transfer-histories with hundreds of codes per month).
 func (r *TransactionCodeRepository) FindByCodes(ctx context.Context, codes []string) ([]*domain.TransactionCode, error) {
 	if len(codes) == 0 {
 		return []*domain.TransactionCode{}, nil
 	}
 
-	var tcs []*domain.TransactionCode
-	err := r.DB.WithContext(ctx).
-		Where("code IN ?", codes).
-		Find(&tcs).Error
-
+	tcs, err := common.ChunkStrings[*domain.TransactionCode](ctx, r.DB.WithContext(ctx), codes, common.DefaultChunkSize,
+		func(tx *gorm.DB, batch []string) ([]*domain.TransactionCode, error) {
+			var batchTCs []*domain.TransactionCode
+			if err := tx.Where("code IN ?", batch).Find(&batchTCs).Error; err != nil {
+				return nil, r.errorHandler.HandleListError(err, "transaction_codes")
+			}
+			return batchTCs, nil
+		})
 	if err != nil {
-		return nil, r.errorHandler.HandleListError(err, "transaction_codes")
+		return nil, err
 	}
 
 	return tcs, nil

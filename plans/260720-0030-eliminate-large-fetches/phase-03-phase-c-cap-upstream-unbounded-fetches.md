@@ -1,9 +1,9 @@
 ---
 phase: 3
-title: "Phase C: Cap upstream unbounded fetches"
-status: pending
+title: 'Phase C: Cap upstream unbounded fetches'
+status: completed
 priority: P2
-effort: "M"
+effort: M
 dependencies: []
 ---
 

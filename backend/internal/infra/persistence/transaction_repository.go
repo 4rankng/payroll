@@ -112,21 +112,32 @@ func (r *transactionRepository) GetByIDs(ctx context.Context, ids []uint) ([]*do
 		return []*domain.Transaction{}, nil
 	}
 
-	var transactions []*domain.Transaction
-	err := r.db.WithContext(ctx).
-		Select(allFields).
-		Preload("Asset").
-		Preload("Creator").
-		Preload("LedgerEntries").
-		Preload("Settlements").
-		Where("id IN ?", ids).
-		Find(&transactions).Error
-
+	// F6 (red-team): use getDB(ctx) so tx-scoped callers share one MVCC
+	// snapshot across all chunks. Previously this used bare r.db, which
+	// ignored any domain.TransactionContext and widened the snapshot window
+	// once chunked.
+	db := r.getDB(ctx)
+	transactions, err := common.Chunk[*domain.Transaction](ctx, db, ids, common.DefaultChunkSize,
+		func(tx *gorm.DB, batch []uint) ([]*domain.Transaction, error) {
+			var batchTxns []*domain.Transaction
+			if err := tx.
+				Select(allFields).
+				Preload("Asset").
+				Preload("Creator").
+				Preload("LedgerEntries").
+				Preload("Settlements").
+				Where("id IN ?", batch).
+				Find(&batchTxns).Error; err != nil {
+				return nil, fmt.Errorf("failed to get transactions: %w", err)
+			}
+			return batchTxns, nil
+		})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get transactions: %w", err)
+		return nil, err
 	}
 
-	// Calculate settled_amount from settlements for each transaction
+	// Calculate settled_amount from settlements for each transaction.
+	// Order-independent: keyed by transaction identity, not slice position.
 	for i := range transactions {
 		r.calculateSettledAmount(transactions[i])
 	}

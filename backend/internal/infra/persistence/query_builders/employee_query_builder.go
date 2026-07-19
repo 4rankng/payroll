@@ -4,6 +4,7 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"api-server/internal/domain"
@@ -229,10 +230,17 @@ func (b *EmployeeQueryBuilder) BuildGetByIDsQuery(ctx context.Context, ids []int
 
 	const batchSize = 1000 // Safe batch size to stay under MySQL's 32KB query limit
 
-	// For large ID lists, we'll need to fetch in batches
-	// This method returns the base query, batching should be handled by the caller
+	// For large ID lists, this method returns a query covering ONLY the first
+	// batchSize IDs — silent truncation. The sole production caller
+	// (EmployeeRepository.GetByIDs) pre-chunks to batchSize so it never hits
+	// this branch. Per red-team F8 we intentionally do NOT change the return
+	// signature to (*gorm.DB, error) — that would break the existing caller.
+	// Instead, emit a warning so ops can detect any future direct caller that
+	// overflows. The correct fix for such a caller is to use common.Chunk.
 	if len(ids) > batchSize {
-		// Return query with first batch
+		slog.Warn("employee_query_builder_truncated_ids",
+			"requested", len(ids), "cap", batchSize,
+			"note", "caller must pre-chunk via common.Chunk; returning first batch only")
 		return query.Where("id IN ?", ids[:batchSize])
 	}
 

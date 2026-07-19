@@ -117,7 +117,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "-mx-4 -mt-4 flex flex-col space-y-1.5 bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
+      "-mx-4 -mt-4 flex flex-col space-y-1.5 rounded-t-2xl bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
       className
     )}
     style={{

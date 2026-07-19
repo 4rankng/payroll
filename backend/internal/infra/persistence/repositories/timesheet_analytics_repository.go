@@ -658,6 +658,14 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 		return &PartnerEmployeeStatsRow{PartnerID: 0}, nil
 	}
 	cutoff := clock.Now().AddDate(0, 0, -14)
+	// Phase C2 (red-team F7): bound the CTE to ~60 days so the materialised
+	// visible set doesn't span years of partner history. This covers the
+	// active window (14d) plus recently-dropped employees plus the selected
+	// month. SEMANTICS CHANGE: employees inactive >60 days are no longer
+	// counted as "dropped" (they are effectively churned). Product must
+	// sign off — see plan F7. The regression test
+	// (TestGetPartnerEmployeeStatsWindow) pins the new semantics.
+	historyStart := clock.Now().AddDate(0, 0, -60)
 
 	accessCond, accessArgs := partnerScopeCondition(scope)
 
@@ -680,12 +688,25 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 	// The CTE no longer needs the employees join — the scope ID set already
 	// encodes the employee-visible paths, so the predicate is a simple
 	// employee_id/project_id IN-list against an index.
+	//
+	// ARG ORDERING (red-team F7/CRIT-2): positional placeholders appear in
+	// the query in this exact order —
+	//   1. accessCond's 2 IN (?) placeholders  → accessArgs (EmployeeIDs, ProjectIDs)
+	//   2. CTE bound `t.date >= ?`             → historyStart
+	//   3. active `vt.date >= ?`               → cutoff
+	//   4. dropped `vt.date < ?`               → cutoff
+	//   5. dropped NOT EXISTS `vt2.date >= ?`  → cutoff
+	//   6+. paidDateFilter's 2 placeholders     → paidArgs
+	// The args slice below MUST match this order. The regression test
+	// pins it; any future edit that re-orders placeholders or args without
+	// updating the other will fail that test.
 	query := `
 		WITH visible_t AS (
 			SELECT t.id, t.employee_id, t.date, t.payment_status, t.paid_amount, t.project_id
 			FROM timesheets t
 			WHERE t.deleted_at IS NULL
 			  AND ` + accessCond + `
+			  AND t.date >= ?
 		)
 		SELECT
 			(SELECT COUNT(DISTINCT vt.employee_id)
@@ -707,6 +728,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 		WHERE 1 = 1` + strings.ReplaceAll(paidDateFilter, "t.date", "vt.date")
 
 	args := append([]interface{}{}, accessArgs...)
+	args = append(args, historyStart)
 	args = append(args, cutoff, cutoff, cutoff)
 	args = append(args, paidArgs...)
 	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&result).Error; err != nil {
