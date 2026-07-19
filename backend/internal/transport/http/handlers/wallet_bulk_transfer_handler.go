@@ -170,7 +170,11 @@ func (h *WalletBulkTransferHandler) GetBatch(c *gin.Context) {
 		response.InternalServerError(c, "Không thể tải lô chuyển tiền")
 		return
 	}
-	c.JSON(http.StatusOK, detail)
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		Status:  "success",
+		Data:    detail,
+		Message: "",
+	})
 }
 
 // ListBatches handles GET /wallet/bulk-transfer/batches.
@@ -187,7 +191,11 @@ func (h *WalletBulkTransferHandler) ListBatches(c *gin.Context) {
 		response.InternalServerError(c, "Không thể tải danh sách lô")
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		Status:  "success",
+		Data:    result,
+		Message: "",
+	})
 }
 
 // DownloadKQ handles GET /wallet/bulk-transfer/batches/:id/kq.

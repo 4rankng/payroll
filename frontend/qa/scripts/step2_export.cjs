@@ -40,15 +40,27 @@ const DL_DIR = '/tmp/qa-downloads';
   await page.screenshot({ path: '/tmp/qa-04-timesheets.png' });
   console.log('Timesheet URL:', page.url());
 
-  // Click "Chuyển OnePay" (header button — not in dropdown)
-  console.log('--- Click Chuyển OnePay ---');
+  // Open the ellipsis (3-dot) dropdown — aria-label "Thêm tùy chọn"
+  console.log('--- Open ellipsis dropdown ---');
+  const ellipsisBtn = await page.$('button[aria-label="Thêm tùy chọn"]');
+  if (!ellipsisBtn) {
+    console.log('!!! Ellipsis button NOT FOUND — aborting');
+    await browser.close();
+    return;
+  }
+  await ellipsisBtn.click();
+  await new Promise(r => setTimeout(r, 1000));
+  await page.screenshot({ path: '/tmp/qa-05-dropdown.png' });
+
+  // Click Chuyển OnePay menu item (div[role="menuitem"])
+  console.log('--- Click Chuyển OnePay menu item ---');
   const clicked = await page.evaluate(() => {
-    const btns = Array.from(document.querySelectorAll('button'));
-    const t = btns.find(b => /chuyển.*onepay/i.test(b.innerText || ''));
+    const items = Array.from(document.querySelectorAll('[role="menuitem"]'));
+    const t = items.find(el => /chuyển.*onepay/i.test(el.innerText || ''));
     if (t) { t.click(); return t.innerText.trim(); }
     return null;
   });
-  console.log('Clicked button:', clicked);
+  console.log('Clicked menu item:', clicked);
   await new Promise(r => setTimeout(r, 5000));
   await page.screenshot({ path: '/tmp/qa-06-after-chuyen.png' });
 
