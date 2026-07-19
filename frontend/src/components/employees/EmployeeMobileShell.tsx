@@ -8,6 +8,10 @@ const employeeMobileBackground: CSSProperties = {
   paddingBottom: "env(safe-area-inset-bottom)",
 };
 
+const employeeShellHeaderStyle = {
+  paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
+} as const;
+
 export const employeeCardShadow = {
   boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
 } as const;
@@ -53,14 +57,9 @@ export function EmployeeMobileShell({
   hasActionToolbar = false,
   chrome = "interactive",
 }: EmployeeMobileShellProps) {
-  return (
-    <div
-      className={cn("employee-mobile-page min-h-[100dvh] overflow-x-hidden", className)}
-      style={{ ...employeeMobileBackground, ...style }}
-      data-employee-ui="true"
-      data-has-action-toolbar={hasActionToolbar}
-    >
-      {chrome === "interactive" ? (
+  const renderChrome = () => {
+    if (chrome === "interactive") {
+      return (
         <EmployeePortalHeader
           employeeName={employeeName}
           unreadCount={unreadCount}
@@ -68,20 +67,48 @@ export function EmployeeMobileShell({
           onChangePassword={onChangePassword}
           onLogout={onLogout}
         />
-      ) : chrome === "skeleton" ? (
-        <div className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]" aria-label="Đang tải thông tin nhân viên">
-          <div className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-            <div className="space-y-2"><Skeleton className="h-7 w-44" /><Skeleton className="h-4 w-28" /></div>
-            <div className="flex gap-2"><Skeleton className="h-11 w-11 rounded-xl" /><Skeleton className="h-11 w-11 rounded-xl" /></div>
+      );
+    }
+
+    if (chrome === "skeleton") {
+      return (
+        <div
+          className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]"
+          aria-label="Đang tải thông tin nhân viên"
+        >
+          <div
+            className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3"
+            style={employeeShellHeaderStyle}
+          >
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-44" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-11 w-11 rounded-xl" />
+              <Skeleton className="h-11 w-11 rounded-xl" />
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]">
-          <div className="mx-auto max-w-lg px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}>
-            <p className="employee-type-header-name text-[var(--employee-text)]">Cổng nhân viên</p>
-          </div>
+      );
+    }
+
+    return (
+      <div className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]">
+        <div className="mx-auto max-w-lg px-4 pb-3" style={employeeShellHeaderStyle}>
+          <p className="employee-type-header-name text-[var(--employee-text)]">Cổng nhân viên</p>
         </div>
-      )}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className={cn("employee-mobile-page min-h-[100dvh] overflow-x-hidden", className)}
+      style={{ ...employeeMobileBackground, ...style }}
+      data-has-action-toolbar={hasActionToolbar}
+    >
+      {renderChrome()}
 
       <main
         className={cn(

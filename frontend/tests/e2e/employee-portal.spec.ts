@@ -24,9 +24,11 @@ async function mockEmployeePortal(page: Page) {
     localStorage.setItem("userName", "Nguyễn Thị Nhân Viên Có Tên Rất Dài");
   }, employeeToken());
 
-  // Keep background portal queries isolated from the live backend. More
-  // specific handlers registered below take precedence over this fallback.
-  await page.route("**/api/v1/**", (route) => route.fulfill({ json: json({}) }));
+  // Keep the suite isolated from live services and fail loudly when the portal
+  // gains an API dependency that is not represented by a synthetic fixture.
+  await page.route("**/api/v1/**", (route) => {
+    throw new Error(`Unexpected employee portal API request: ${route.request().url()}`);
+  });
 
   await page.route("**/api/v1/me", (route) => route.fulfill({
     json: json({
@@ -89,6 +91,12 @@ async function mockEmployeePortal(page: Page) {
 
   await page.route("**/api/v1/notifications/unread", (route) => route.fulfill({
     json: json({ notifications: [], count: 0 }),
+  }));
+  await page.route("**/api/v1/notifications?*", (route) => route.fulfill({
+    json: {
+      ...json([]),
+      pagination: { page: 1, pageSize: 20, totalPages: 0, totalRecords: 0 },
+    },
   }));
 }
 

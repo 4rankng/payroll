@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -34,24 +34,31 @@ const safeDate = (date: string | null | undefined) => {
     : format(parsedDate, "dd/MM/yyyy", { locale: vi });
 };
 
+type CancelRequestHandler = (id: number) => void | Promise<void>;
+
 function CancelPendingAction({
   itemId,
   onCancel,
   isCancelling,
 }: {
   itemId: number;
-  onCancel?: (id: number) => void | Promise<void>;
+  onCancel?: CancelRequestHandler;
   isCancelling: boolean;
 }) {
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
   const submittingRef = useRef(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
   const dismissButtonRef = useRef<HTMLButtonElement | null>(null);
   const confirmationWasOpen = useRef(false);
+  const clearResetTimer = useCallback(() => {
+    if (!resetTimer.current) return;
+    clearTimeout(resetTimer.current);
+    resetTimer.current = null;
+  }, []);
 
   useEffect(() => {
-    if (showConfirmCancel) {
+    if (isConfirmingCancel) {
       confirmationWasOpen.current = true;
       dismissButtonRef.current?.focus();
       return;
@@ -60,40 +67,36 @@ function CancelPendingAction({
       confirmationWasOpen.current = false;
       cancelButtonRef.current?.focus();
     }
-  }, [showConfirmCancel]);
+  }, [isConfirmingCancel]);
 
-  useEffect(() => () => {
-    if (resetTimer.current) clearTimeout(resetTimer.current);
-  }, []);
+  useEffect(() => clearResetTimer, [clearResetTimer]);
 
   const handleCancelClick = async () => {
     if (isCancelling || submittingRef.current) return;
-    if (showConfirmCancel) {
-      if (resetTimer.current) clearTimeout(resetTimer.current);
-      resetTimer.current = null;
+    if (isConfirmingCancel) {
+      clearResetTimer();
       submittingRef.current = true;
       try {
         await onCancel?.(itemId);
       } finally {
         submittingRef.current = false;
-        setShowConfirmCancel(false);
+        setIsConfirmingCancel(false);
       }
       return;
     }
-    setShowConfirmCancel(true);
+    setIsConfirmingCancel(true);
     resetTimer.current = setTimeout(() => {
       resetTimer.current = null;
-      setShowConfirmCancel(false);
+      setIsConfirmingCancel(false);
     }, 3000);
   };
 
   const handleDismissCancel = () => {
-    if (resetTimer.current) clearTimeout(resetTimer.current);
-    resetTimer.current = null;
-    setShowConfirmCancel(false);
+    clearResetTimer();
+    setIsConfirmingCancel(false);
   };
 
-  if (showConfirmCancel) {
+  if (isConfirmingCancel) {
     return (
       <div className="flex min-h-11 items-center justify-end gap-2">
         <button ref={dismissButtonRef} type="button" onClick={handleDismissCancel} disabled={isCancelling} className="employee-type-action min-h-11 rounded-[var(--employee-radius-control)] px-3 text-[var(--employee-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-text-secondary)] disabled:opacity-50">
@@ -113,7 +116,7 @@ function CancelPendingAction({
   );
 }
 
-function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePaymentHistoryItem; onCancel?: (id: number) => void | Promise<void>; cancellingRequestId?: number }) {
+function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePaymentHistoryItem; onCancel?: CancelRequestHandler; cancellingRequestId?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
   const config = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.CANCELLED;
@@ -175,7 +178,7 @@ interface AdvancePaymentHistoryCardProps {
   isLoading: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  onCancel?: (id: number) => void | Promise<void>;
+  onCancel?: CancelRequestHandler;
   cancellingRequestId?: number;
   totalCount?: number;
   className?: string;
@@ -193,6 +196,9 @@ export function AdvancePaymentHistoryCard({
   className,
   style,
 }: AdvancePaymentHistoryCardProps) {
+  const requestCount = totalCount ?? history.length;
+  const isScrollable = history.length > 5;
+
   return (
     <div className={className} style={style} aria-labelledby="employee-advance-history-title">
       <div className="mb-3 flex items-start justify-between gap-3 px-0.5">
@@ -202,7 +208,7 @@ export function AdvancePaymentHistoryCard({
         </div>
         {!isLoading && !isError && (
           <span className="employee-type-pill shrink-0 rounded-full bg-[var(--employee-accent-soft)] px-2.5 py-1 text-[var(--employee-accent)] tabular-nums">
-            {totalCount ?? history.length} yêu cầu
+            {requestCount} yêu cầu
           </span>
         )}
       </div>
@@ -241,12 +247,12 @@ export function AdvancePaymentHistoryCard({
         <div
           className={cn(
             "employee-surface-card divide-y divide-[var(--employee-border)]",
-            history.length > 5
+            isScrollable
               ? "max-h-[390px] overflow-y-auto overscroll-contain"
               : "overflow-hidden"
           )}
-          tabIndex={history.length > 5 ? 0 : undefined}
-          aria-label={history.length > 5 ? "Lịch sử yêu cầu, cuộn để xem thêm" : undefined}
+          tabIndex={isScrollable ? 0 : undefined}
+          aria-label={isScrollable ? "Lịch sử yêu cầu, cuộn để xem thêm" : undefined}
         >
           {history.map((item) => <HistoryItem key={item.id} item={item} onCancel={onCancel} cancellingRequestId={cancellingRequestId} />)}
         </div>

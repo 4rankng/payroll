@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: Employee Design Foundation and Shell
-status: in-progress
+status: completed
 priority: P1
 dependencies: []
 effort: 2-3 days

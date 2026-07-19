@@ -32,11 +32,22 @@ import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/Advance
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { formatPayrollMonthRange } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
+import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 
 interface AdvanceRequestConfirmation {
   amount: number;
   forMonth: string;
   submittedAt: string;
+}
+
+const EMPTY_HISTORY: AdvancePaymentHistoryItem[] = [];
+
+function scrollToEmployeeSection(sectionId: string) {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById(sectionId)?.scrollIntoView({
+    behavior: prefersReducedMotion ? "auto" : "smooth",
+    block: "start",
+  });
 }
 
 const FlexiblePayEmployeePage = () => {
@@ -59,7 +70,8 @@ const FlexiblePayEmployeePage = () => {
   const month = useEmployeeMonth();
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
   // (70% advanceable cap, calendar-month window); others use the admin-upload flow.
-  const isCheckIn = !!profile?.check_in_enabled;
+  const isCheckInEnabled = Boolean(profile?.check_in_enabled);
+  const isCheckIn = isCheckInEnabled;
   const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckIn });
   const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckIn });
   const {
@@ -85,7 +97,7 @@ const FlexiblePayEmployeePage = () => {
   const updatePasswordMutation = useUpdateEmployeePassword();
 
   const info = infoResponse?.data;
-  const history = useMemo(() => historyResponse?.data ?? [], [historyResponse?.data]);
+  const history = historyResponse?.data ?? EMPTY_HISTORY;
   const historyTotal = historyResponse?.pagination?.totalRecords ?? history.length;
 
   // Debounced server-side fee calculation
@@ -130,21 +142,11 @@ const FlexiblePayEmployeePage = () => {
   }, []);
 
   const handleBankAction = useCallback(() => {
-    const section = document.getElementById("employee-bank");
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    section?.scrollIntoView({
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-      block: "start",
-    });
+    scrollToEmployeeSection("employee-bank");
   }, []);
 
   const handleAdvanceRequestAction = useCallback(() => {
-    const section = document.getElementById("employee-advance-request");
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    section?.scrollIntoView({
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-      block: "start",
-    });
+    scrollToEmployeeSection("employee-advance-request");
   }, []);
 
   const handleConfirmSubmit = useCallback(async () => {
@@ -213,112 +215,110 @@ const FlexiblePayEmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  if (profileLoading || infoLoading) {
+  const isInitialLoading = profileLoading || infoLoading;
+
+  if (isInitialLoading) {
     return (
       <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-5">
-          <Skeleton className="h-14 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <div className="space-y-2.5">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-          </div>
+        <Skeleton className="h-14 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+        <div className="space-y-2.5">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
       </EmployeeMobileShell>
     );
   }
 
   return (
     <EmployeeMobileShell
-        employeeName={profile?.fullname}
-        unreadCount={unreadNotifications?.count}
-        onNotificationClick={() => setNotificationSheetOpen(true)}
-        onChangePassword={() => setPasswordSheetOpen(true)}
-        onLogout={handleLogout}
-        hasActionToolbar={profile?.check_in_enabled}
-        contentClassName={
-          profile?.check_in_enabled
-            ? "max-w-lg space-y-6"
-            : "max-w-lg space-y-6"
-        }
-      >
-        <EmployeeMonthNavigator month={month} />
+      employeeName={profile?.fullname}
+      unreadCount={unreadNotifications?.count}
+      onNotificationClick={() => setNotificationSheetOpen(true)}
+      onChangePassword={() => setPasswordSheetOpen(true)}
+      onLogout={handleLogout}
+      hasActionToolbar={isCheckInEnabled}
+      contentClassName="max-w-lg space-y-6"
+    >
+      <EmployeeMonthNavigator month={month} />
 
-        {infoError ? (
-          <section id="employee-advance-request" className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]" role="alert">
-            <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
-            <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
-            <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
-            <button
-              type="button"
-              onClick={() => refetchInfo()}
-              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
-            >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Tải lại
-            </button>
-          </section>
-        ) : info ? (
-          <section id="employee-advance-request" className="scroll-mt-24">
-            <AdvancePaymentRequestForm
-              key={`${formKey}-${month.value}`}
-              info={info}
-              viewMonth={month.value}
-              isPastMonth={!month.isCurrentMonth}
-              isSelfCheckInFlow={isCheckIn}
-              history={history}
-              feeDetails={feeDetails}
-              hasBankDestination={hasEmployeeBankInfo(profile)}
-              onSubmit={handleRequestSubmit}
-              onAmountChange={handleAmountChange}
-              onBankAction={handleBankAction}
-              isPending={requestMutation.isPending}
-              requestConfirmation={requestConfirmation}
-              className="employee-surface-card overflow-hidden p-4"
-            />
-          </section>
-        ) : null}
-
-        <section id="employee-history" className="scroll-mt-24">
-          <AdvancePaymentHistoryCard
+      {infoError ? (
+        <section id="employee-advance-request" className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)]" role="alert">
+          <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
+          <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
+          <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
+          <button
+            type="button"
+            onClick={() => { void refetchInfo(); }}
+            className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            Tải lại
+          </button>
+        </section>
+      ) : info ? (
+        <section id="employee-advance-request" className="scroll-mt-24">
+          <AdvancePaymentRequestForm
+            key={`${formKey}-${month.value}`}
+            info={info}
+            viewMonth={month.value}
+            isPastMonth={!month.isCurrentMonth}
+            isSelfCheckInFlow={isCheckIn}
             history={history}
-            isLoading={historyLoading}
-            isError={historyError}
-            onRetry={() => refetchHistory()}
-            onCancel={handleCancelRequest}
-            cancellingRequestId={cancelMutation.isPending ? cancelMutation.variables : undefined}
-            totalCount={historyTotal}
+            feeDetails={feeDetails}
+            hasBankDestination={hasEmployeeBankInfo(profile)}
+            onSubmit={handleRequestSubmit}
+            onAmountChange={handleAmountChange}
+            onBankAction={handleBankAction}
+            isPending={requestMutation.isPending}
+            requestConfirmation={requestConfirmation}
+            className="employee-surface-card overflow-hidden p-4"
           />
         </section>
+      ) : null}
 
-        <section id="employee-bank" className="scroll-mt-24">
-          <EmployeeBankInfoCard profile={profile!} />
-        </section>
+      <section id="employee-history" className="scroll-mt-24">
+        <AdvancePaymentHistoryCard
+          history={history}
+          isLoading={historyLoading}
+          isError={historyError}
+          onRetry={() => { void refetchHistory(); }}
+          onCancel={handleCancelRequest}
+          cancellingRequestId={cancelMutation.isPending ? cancelMutation.variables : undefined}
+          totalCount={historyTotal}
+        />
+      </section>
 
-        {profile?.check_in_enabled && (
-          <section id="employee-check-in" className="scroll-mt-24">
-            <EmployeeCheckInCard
-              checkInTarget={profile.check_in_target}
-              shiftStart={profile.shift_start}
-              shiftEnd={profile.shift_end}
-              checkInWindowStart={profile.check_in_window_start}
-              checkInWindowEnd={profile.check_in_window_end}
-              checkOutWindowStart={profile.check_out_window_start}
-              checkOutWindowEnd={profile.check_out_window_end}
-              scheduleWindows={profile.schedule_windows}
-              activeScheduleWindow={profile.active_schedule_window}
-              onAdvanceRequest={handleAdvanceRequestAction}
-            />
-          </section>
-        )}
+      <section id="employee-bank" className="scroll-mt-24">
+        <EmployeeBankInfoCard profile={profile!} />
+      </section>
 
-        {profile?.check_in_enabled && (
-          <EmployeeAttendanceHistoryCard
-            fromDate={month.fromDate}
-            toDate={month.toDate}
-            monthLabel={month.shortLabel}
-            className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white"
-            style={employeeCardShadow}
+      {isCheckInEnabled && (
+        <section id="employee-check-in" className="scroll-mt-24">
+          <EmployeeCheckInCard
+            checkInTarget={profile.check_in_target}
+            shiftStart={profile.shift_start}
+            shiftEnd={profile.shift_end}
+            checkInWindowStart={profile.check_in_window_start}
+            checkInWindowEnd={profile.check_in_window_end}
+            checkOutWindowStart={profile.check_out_window_start}
+            checkOutWindowEnd={profile.check_out_window_end}
+            scheduleWindows={profile.schedule_windows}
+            activeScheduleWindow={profile.active_schedule_window}
+            onAdvanceRequest={handleAdvanceRequestAction}
           />
-        )}
+        </section>
+      )}
+
+      {isCheckInEnabled && (
+        <EmployeeAttendanceHistoryCard
+          fromDate={month.fromDate}
+          toDate={month.toDate}
+          monthLabel={month.shortLabel}
+          className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white"
+          style={employeeCardShadow}
+        />
+      )}
 
       <ChangePasswordSheet
         open={passwordSheetOpen}

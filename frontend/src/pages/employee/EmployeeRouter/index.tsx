@@ -16,21 +16,25 @@ import { cn } from "@/lib/utils";
  */
 const EmployeeRouter = () => {
   const { data: profile, isLoading, isError, isFetching, refetch } = useEmployeeProfile();
+  const handleRetry = () => {
+    if (isFetching) return;
+    void refetch();
+  };
 
   if (isLoading) {
     return (
       <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-5">
-          <Skeleton className="h-14 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <div className="space-y-2.5">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-          </div>
+        <Skeleton className="h-14 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+        <div className="space-y-2.5">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
       </EmployeeMobileShell>
     );
   }
 
-  if (isError || !profile) {
+  if (!profile) {
     return (
       <SectionErrorBoundary sectionName="trang nhân viên">
         <EmployeeMobileShell chrome="error" contentClassName="max-w-md">
@@ -47,7 +51,7 @@ const EmployeeRouter = () => {
             <Button
               type="button"
               className="mt-5 h-11 gap-2 rounded-xl"
-              onClick={() => { if (!isFetching) void refetch(); }}
+              onClick={handleRetry}
               disabled={isFetching}
             >
               <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
@@ -59,18 +63,13 @@ const EmployeeRouter = () => {
     );
   }
 
-  // Route based on payment schedule
-  if (profile?.payment_schedule === "flexible") {
-    return (
-      <SectionErrorBoundary sectionName="trang nhân viên">
-        <div className="mobile-page"><FlexiblePayEmployeePage /></div>
-      </SectionErrorBoundary>
-    );
-  }
+  const employeePage = profile.payment_schedule === "flexible"
+    ? <FlexiblePayEmployeePage />
+    : <EmployeePage />;
 
   return (
     <SectionErrorBoundary sectionName="trang nhân viên">
-      <div className="mobile-page"><EmployeePage /></div>
+      <div className="mobile-page">{employeePage}</div>
     </SectionErrorBoundary>
   );
 };

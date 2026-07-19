@@ -8,7 +8,7 @@ import type { LocationSample } from "@/utils/geolocation";
 
 const locationMock = vi.hoisted(() => vi.fn());
 const attendanceQueryMock = vi.hoisted(() => ({
-  data: undefined,
+  data: undefined as unknown,
   isLoading: false,
   isError: false,
   isFetching: false,
@@ -280,6 +280,41 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     expect(screen.getByRole("button", { name: "Chưa tải được chấm công" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Tải lại chấm công" }));
     expect(attendanceQueryMock.refetch).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a retained attendance state usable when a background refetch fails", () => {
+    attendanceQueryMock.data = {
+      data: {
+        id: 9,
+        project_id: 2,
+        employee_id: 77,
+        date: "2026-07-19",
+        check_in_time: "2026-07-19T08:00:00+07:00",
+        check_in_gate: "Cổng chính",
+        status: "checked_in",
+      },
+    };
+    attendanceQueryMock.isError = true;
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard onAdvanceRequest={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    expect(screen.queryByRole("heading", { name: "Chưa tải được trạng thái chấm công" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Tan ca" }).some((button) => !button.hasAttribute("disabled"))).toBe(true);
   });
 
   it("shows inward guidance and opens the map for an inside-but-uncertain fix", async () => {

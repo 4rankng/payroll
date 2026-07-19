@@ -844,7 +844,7 @@ export function EmployeeCheckInCard({
     );
   }
 
-  if (attendanceError) {
+  if (attendanceError && attendanceResponse === undefined) {
     return (
       <>
         <section className={`employee-surface-card px-4 py-6 text-center ${className ?? ""}`} style={style} role="alert" aria-labelledby="employee-attendance-error-title">

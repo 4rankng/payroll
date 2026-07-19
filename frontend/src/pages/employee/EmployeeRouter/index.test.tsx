@@ -48,4 +48,13 @@ describe("EmployeeRouter", () => {
 
     expect(screen.getByText("Trang ứng lương")).toBeInTheDocument();
   });
+
+  it("keeps rendering a retained profile after a background refetch fails", () => {
+    profileQuery.data = { payment_schedule: "flexible" };
+    profileQuery.isError = true;
+    render(<EmployeeRouter />);
+
+    expect(screen.getByText("Trang ứng lương")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Chưa tải được hồ sơ" })).not.toBeInTheDocument();
+  });
 });

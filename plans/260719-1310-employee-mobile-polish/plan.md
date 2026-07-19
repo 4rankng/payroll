@@ -4,7 +4,7 @@ description: >-
   Polish the employee self-service mobile experience with a scoped
   daisyUI-compatible presentation layer, unified states, and regression-safe
   attendance actions.
-status: in-progress
+status: completed
 priority: P2
 branch: main
 tags:
@@ -46,9 +46,9 @@ Refine `/employee` into one calm, pay-first mobile experience for regular, flexi
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Employee Design Foundation and Shell](./phase-01-employee-design-foundation-and-shell.md) | In Progress |
-| 2 | [Core Employee Surface Polish](./phase-02-core-employee-surface-polish.md) | Pending |
-| 3 | [Attendance Dock Accessibility and Visual QA](./phase-03-attendance-dock-accessibility-and-visual-qa.md) | Pending |
+| 1 | [Employee Design Foundation and Shell](./phase-01-employee-design-foundation-and-shell.md) | Completed |
+| 2 | [Core Employee Surface Polish](./phase-02-core-employee-surface-polish.md) | Completed |
+| 3 | [Attendance Dock Accessibility and Visual QA](./phase-03-attendance-dock-accessibility-and-visual-qa.md) | Completed |
 
 ## Dependencies
 
