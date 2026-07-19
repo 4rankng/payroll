@@ -457,6 +457,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) GetByIDsWithoutRelations(ctx, ids
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDsWithoutRelations", reflect.TypeOf((*MockTimesheetRepository)(nil).GetByIDsWithoutRelations), ctx, ids)
 }
 
+// GetTimesheetDatesByIDs mocks base method.
+func (m *MockTimesheetRepository) GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTimesheetDatesByIDs", ctx, ids)
+	ret0, _ := ret[0].(map[uint]time.Time)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTimesheetDatesByIDs indicates an expected call of GetTimesheetDatesByIDs.
+func (mr *MockTimesheetRepositoryMockRecorder) GetTimesheetDatesByIDs(ctx, ids interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTimesheetDatesByIDs", reflect.TypeOf((*MockTimesheetRepository)(nil).GetTimesheetDatesByIDs), ctx, ids)
+}
+
 // GetByProject mocks base method.
 func (m *MockTimesheetRepository) GetByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) ([]*domain.Timesheet, error) {
 	m.ctrl.T.Helper()

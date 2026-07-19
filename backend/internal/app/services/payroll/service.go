@@ -356,16 +356,15 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 	for id := range timesheetIDSet {
 		timesheetIDs = append(timesheetIDs, id)
 	}
-	timesheets := []*domain.Timesheet{}
+	// Only the timesheet date is needed downstream (in resolveWeeklyHistoryCycle),
+	// so use the lightweight date-only projection instead of GetByIDs, which would
+	// load full rows + relationship preloads for thousands of timesheets.
+	timesheetDates := map[uint]time.Time{}
 	if len(timesheetIDs) > 0 {
-		timesheets, err = s.timesheetRepo.GetByIDs(ctx, timesheetIDs)
+		timesheetDates, err = s.timesheetRepo.GetTimesheetDatesByIDs(ctx, timesheetIDs)
 		if err != nil {
 			return nil, err
 		}
-	}
-	timesheetMap := make(map[uint]*domain.Timesheet, len(timesheets))
-	for _, timesheet := range timesheets {
-		timesheetMap[timesheet.ID] = timesheet
 	}
 
 	for _, file := range files {
@@ -389,7 +388,7 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 			if entryEmployeeID == 0 || entryProjectID == 0 {
 				continue
 			}
-			cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(file, weeklyData, timesheetMap, monthStart)
+			cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(file, weeklyData, timesheetDates, monthStart)
 			if !ok || (req.Cycle != 0 && req.Cycle != cycle) {
 				continue
 			}
@@ -540,7 +539,7 @@ func fixedWeeklyCycle(fromDate, toDate time.Time) (int, bool) {
 	return 0, false
 }
 
-func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain.CyclePayData, timesheets map[uint]*domain.Timesheet, workMonth time.Time) (int, time.Time, time.Time, bool) {
+func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain.CyclePayData, timesheetDates map[uint]time.Time, workMonth time.Time) (int, time.Time, time.Time, bool) {
 	if file.FromDate != nil && file.ToDate != nil {
 		if cycle, ok := fixedWeeklyCycle(*file.FromDate, *file.ToDate); ok && file.FromDate.Year() == workMonth.Year() && file.FromDate.Month() == workMonth.Month() {
 			return cycle, file.FromDate.In(clock.DefaultLocation), file.ToDate.In(clock.DefaultLocation), true
@@ -550,11 +549,11 @@ func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain
 		return 0, time.Time{}, time.Time{}, false
 	}
 	for _, id := range weeklyData.TimesheetIDs {
-		timesheet := timesheets[id]
-		if timesheet == nil || timesheet.Date.Year() != workMonth.Year() || timesheet.Date.Month() != workMonth.Month() || timesheet.Date.Day() > 28 {
+		date, ok := timesheetDates[id]
+		if !ok || date.Year() != workMonth.Year() || date.Month() != workMonth.Month() || date.Day() > 28 {
 			continue
 		}
-		cycle := clock.KyFromWorkDay(timesheet.Date.Day())
+		cycle := clock.KyFromWorkDay(date.Day())
 		fromDate := time.Date(workMonth.Year(), workMonth.Month(), clock.WorkStartDay(cycle), 0, 0, 0, 0, clock.DefaultLocation)
 		return cycle, fromDate, fromDate.AddDate(0, 0, 6), true
 	}

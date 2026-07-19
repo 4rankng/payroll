@@ -314,7 +314,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           <PageHeader
             className="relative"
             icon={ReceiptText}
-            title="Lịch sử trả lương"
+            title={isAdmin ? 'Lịch sử trả lương' : 'Bút toán ngân hàng'}
             description="Bút toán ngân hàng theo nhân viên và kỳ lương."
           />
         </header>

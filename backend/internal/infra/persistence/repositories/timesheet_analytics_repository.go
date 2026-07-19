@@ -630,20 +630,36 @@ func partnerAccessCondition() (string, func(partnerID uint) []interface{}) {
 	return cond, args
 }
 
+// partnerScopeCondition is the precomputed equivalent of partnerAccessCondition().
+// It substitutes the 3 correlated EXISTS subqueries with a simple
+// `t.employee_id IN (...) OR t.project_id IN (...)` predicate against the
+// materialised PartnerScope ID sets. The optimiser serves this via index lookups
+// on timesheets(employee_id, ...) and timesheets(project_id, ...), which is far
+// cheaper than re-running the EXISTS branches for every row of a large scan.
+//
+// The caller must ensure scope.EmployeeIDs and scope.ProjectIDs are non-nil
+// (empty slices are fine — GORM expands `IN (?)` with an empty slice into a
+// always-false predicate). Use PartnerScope.Empty() to short-circuit callers
+// that want to skip the query entirely when the partner can see nothing.
+func partnerScopeCondition(scope *PartnerScope) (string, []interface{}) {
+	return "(t.employee_id IN (?) OR t.project_id IN (?))", []interface{}{scope.EmployeeIDs, scope.ProjectIDs}
+}
+
 // GetPartnerEmployeeStats returns active, dropped, and paid employee counts for a given partner.
 // Active = has a timesheet in the last 14 days.
 // Dropped = had a timesheet before 14 days ago but none in the last 14 days.
 //
-// Scope: covers ALL employees accessible to the partner — not just those
-// whose timesheets the partner created. See partnerAccessCondition() for the
-// exact access semantics (matches /partner/employees and /partner/timesheets
-// pages). Previously only `t.created_by = partnerID` was used, which
-// under-counted whenever an admin or other user created timesheets on behalf
-// of the partner's employees.
-func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Context, partnerID uint, startDate, endDate *time.Time) (*PartnerEmployeeStatsRow, error) {
+// Scope: the caller precomputes the set of employee/project IDs visible to the
+// partner via PartnerScopeResolver and passes it as `scope`. This replaces the
+// correlated EXISTS subqueries that the previous implementation re-evaluated per
+// row. See partnerScopeCondition() for the predicate shape.
+func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Context, scope *PartnerScope, startDate, endDate *time.Time) (*PartnerEmployeeStatsRow, error) {
+	if scope == nil || scope.Empty() {
+		return &PartnerEmployeeStatsRow{PartnerID: 0}, nil
+	}
 	cutoff := clock.Now().AddDate(0, 0, -14)
 
-	accessCond, accessArgs := partnerAccessCondition()
+	accessCond, accessArgs := partnerScopeCondition(scope)
 
 	paidDateFilter := ""
 	paidArgs := []interface{}{}
@@ -661,12 +677,13 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 
 	// Single query using a CTE that materialises the "timesheets visible to
 	// this partner" set once, then aggregates 4 different metrics from it.
-	// Each metric only needs its own date/payment-status filter on top.
+	// The CTE no longer needs the employees join — the scope ID set already
+	// encodes the employee-visible paths, so the predicate is a simple
+	// employee_id/project_id IN-list against an index.
 	query := `
 		WITH visible_t AS (
 			SELECT t.id, t.employee_id, t.date, t.payment_status, t.paid_amount, t.project_id
 			FROM timesheets t
-			JOIN employees e ON e.id = t.employee_id AND e.deleted_at IS NULL
 			WHERE t.deleted_at IS NULL
 			  AND ` + accessCond + `
 		)
@@ -689,7 +706,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 		FROM visible_t vt
 		WHERE 1 = 1` + strings.ReplaceAll(paidDateFilter, "t.date", "vt.date")
 
-	args := append([]interface{}{}, accessArgs(partnerID)...)
+	args := append([]interface{}{}, accessArgs...)
 	args = append(args, cutoff, cutoff, cutoff)
 	args = append(args, paidArgs...)
 	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&result).Error; err != nil {
@@ -697,7 +714,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 	}
 
 	return &PartnerEmployeeStatsRow{
-		PartnerID:        partnerID,
+		PartnerID:        scope.PartnerID,
 		ActiveEmployees:  int(result.ActiveEmployees),
 		DroppedEmployees: int(result.DroppedEmployees),
 		PaidEmployees:    int(result.PaidEmployees),
@@ -714,14 +731,18 @@ type PartnerTopPaidEmployeeRow struct {
 }
 
 // GetPartnerTopPaidEmployees returns top N employees by paid amount for a given partner.
-func (r *TimesheetAnalyticsRepository) GetPartnerTopPaidEmployees(ctx context.Context, partnerID uint, startDate, endDate *time.Time, limit int) ([]PartnerTopPaidEmployeeRow, error) {
+// Scope: the caller precomputes the partner's visible IDs (see PartnerScopeResolver).
+func (r *TimesheetAnalyticsRepository) GetPartnerTopPaidEmployees(ctx context.Context, scope *PartnerScope, startDate, endDate *time.Time, limit int) ([]PartnerTopPaidEmployeeRow, error) {
 	if limit <= 0 {
 		limit = 10
 	}
+	if scope == nil || scope.Empty() {
+		return []PartnerTopPaidEmployeeRow{}, nil
+	}
 
-	// Use the full partner-access scope. The access condition references aliases
+	// Use the precomputed partner-access scope. The condition references aliases
 	// `t` and `e`, so we alias the tables explicitly in the GORM query.
-	accessCond, accessArgs := partnerAccessCondition()
+	accessCond, accessArgs := partnerScopeCondition(scope)
 
 	q := r.db.WithContext(ctx).
 		Table("timesheets t").
@@ -733,7 +754,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerTopPaidEmployees(ctx context.Co
 		`).
 		Joins("JOIN employees e ON e.id = t.employee_id AND e.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL AND t.payment_status = ?", domain.PaymentStatusPaid).
-		Where(accessCond, accessArgs(partnerID)...)
+		Where(accessCond, accessArgs...)
 
 	if startDate != nil && endDate != nil {
 		q = q.Where("t.date >= ? AND t.date < ?", *startDate, *endDate)
@@ -756,13 +777,16 @@ type PartnerWeeklyPaidStats struct {
 }
 
 // GetPartnerWeeklyPaidStats returns weekly paid stats for the last N weeks for a partner.
-// Scope: all timesheets accessible to the partner (see partnerAccessCondition).
-func (r *TimesheetAnalyticsRepository) GetPartnerWeeklyPaidStats(ctx context.Context, partnerID uint, weeks int) ([]PartnerWeeklyPaidStats, error) {
+// Scope: the caller precomputes the partner's visible IDs (see PartnerScopeResolver).
+func (r *TimesheetAnalyticsRepository) GetPartnerWeeklyPaidStats(ctx context.Context, scope *PartnerScope, weeks int) ([]PartnerWeeklyPaidStats, error) {
 	if weeks <= 0 {
 		weeks = 8
 	}
+	if scope == nil || scope.Empty() {
+		return []PartnerWeeklyPaidStats{}, nil
+	}
 	startDate := clock.Now().AddDate(0, 0, -weeks*7)
-	accessCond, accessArgs := partnerAccessCondition()
+	accessCond, accessArgs := partnerScopeCondition(scope)
 
 	var rows []PartnerWeeklyPaidStats
 	err := r.db.WithContext(ctx).
@@ -775,7 +799,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerWeeklyPaidStats(ctx context.Con
 		Joins("JOIN employees e ON e.id = t.employee_id AND e.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL AND t.payment_status = ? AND t.date >= ?",
 			domain.PaymentStatusPaid, startDate).
-		Where(accessCond, accessArgs(partnerID)...).
+		Where(accessCond, accessArgs...).
 		Group("week_start").
 		Order("week_start ASC").
 		Scan(&rows).Error
@@ -790,13 +814,16 @@ type PartnerMonthlyPaidStats struct {
 }
 
 // GetPartnerMonthlyPaidStats returns monthly paid stats for the last N months for a partner.
-// Scope: all timesheets accessible to the partner (see partnerAccessCondition).
-func (r *TimesheetAnalyticsRepository) GetPartnerMonthlyPaidStats(ctx context.Context, partnerID uint, months int) ([]PartnerMonthlyPaidStats, error) {
+// Scope: the caller precomputes the partner's visible IDs (see PartnerScopeResolver).
+func (r *TimesheetAnalyticsRepository) GetPartnerMonthlyPaidStats(ctx context.Context, scope *PartnerScope, months int) ([]PartnerMonthlyPaidStats, error) {
 	if months <= 0 {
 		months = 6
 	}
+	if scope == nil || scope.Empty() {
+		return []PartnerMonthlyPaidStats{}, nil
+	}
 	startDate := clock.Now().AddDate(0, -months, 0)
-	accessCond, accessArgs := partnerAccessCondition()
+	accessCond, accessArgs := partnerScopeCondition(scope)
 
 	var rows []PartnerMonthlyPaidStats
 	err := r.db.WithContext(ctx).
@@ -809,7 +836,7 @@ func (r *TimesheetAnalyticsRepository) GetPartnerMonthlyPaidStats(ctx context.Co
 		Joins("JOIN employees e ON e.id = t.employee_id AND e.deleted_at IS NULL").
 		Where("t.deleted_at IS NULL AND t.payment_status = ? AND t.date >= ?",
 			domain.PaymentStatusPaid, startDate).
-		Where(accessCond, accessArgs(partnerID)...).
+		Where(accessCond, accessArgs...).
 		Group("month").
 		Order("month ASC").
 		Scan(&rows).Error

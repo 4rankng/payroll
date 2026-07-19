@@ -39,6 +39,15 @@ func (f *fakeReader) GetByID(context.Context, uint) (*domain.Timesheet, error) {
 func (f *fakeReader) GetByIDsWithoutRelations(context.Context, []uint) ([]*domain.Timesheet, error) {
 	return nil, nil
 }
+func (f *fakeReader) GetTimesheetDatesByIDs(_ context.Context, ids []uint) (map[uint]time.Time, error) {
+	out := make(map[uint]time.Time, len(ids))
+	for _, id := range ids {
+		if t, ok := f.ts[id]; ok {
+			out[id] = t.Date
+		}
+	}
+	return out, nil
+}
 func (f *fakeReader) List(context.Context, domain.TimesheetFilters) ([]*domain.Timesheet, error) {
 	return nil, nil
 }

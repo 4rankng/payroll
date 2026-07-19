@@ -78,9 +78,9 @@ func TestFixedWeeklyCycle(t *testing.T) {
 func TestResolveWeeklyHistoryCycleFromTimesheets(t *testing.T) {
 	workMonth := historyDate(2026, time.July, 1)
 	weekly := &domain.CyclePayData{TimesheetIDs: []uint{10}}
-	timesheets := map[uint]*domain.Timesheet{10: {ID: 10, Date: historyDate(2026, time.July, 23)}}
+	timesheetDates := map[uint]time.Time{10: historyDate(2026, time.July, 23)}
 
-	cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheets, workMonth)
+	cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
 	if !ok || cycle != 4 || fromDate.Day() != 22 || toDate.Day() != 28 {
 		t.Fatalf("got cycle=%d from=%v to=%v ok=%v", cycle, fromDate, toDate, ok)
 	}
@@ -89,9 +89,9 @@ func TestResolveWeeklyHistoryCycleFromTimesheets(t *testing.T) {
 func TestResolveWeeklyHistoryCycleExcludesDaysAfter28(t *testing.T) {
 	workMonth := historyDate(2026, time.July, 1)
 	weekly := &domain.CyclePayData{TimesheetIDs: []uint{10}}
-	timesheets := map[uint]*domain.Timesheet{10: {ID: 10, Date: historyDate(2026, time.July, 29)}}
+	timesheetDates := map[uint]time.Time{10: historyDate(2026, time.July, 29)}
 
-	_, _, _, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheets, workMonth)
+	_, _, _, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
 	if ok {
 		t.Fatal("day 29 must not be assigned to a payroll cycle")
 	}
@@ -143,12 +143,12 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 		transactionRows = append(transactionRows, &domain.TransactionCode{Code: code, Data: codeData})
 	}
 
-	timesheetRepo.EXPECT().GetByIDs(gomock.Any(), gomock.Any()).Return([]*domain.Timesheet{
-		{ID: 1, Date: historyDate(2026, time.July, 8)},
-		{ID: 2, Date: historyDate(2026, time.July, 9)},
-		{ID: 3, Date: historyDate(2026, time.July, 10)},
-		{ID: 4, Date: historyDate(2026, time.July, 11)},
-		{ID: 5, Date: historyDate(2026, time.July, 12)},
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Return(map[uint]time.Time{
+		1: historyDate(2026, time.July, 8),
+		2: historyDate(2026, time.July, 9),
+		3: historyDate(2026, time.July, 10),
+		4: historyDate(2026, time.July, 11),
+		5: historyDate(2026, time.July, 12),
 	}, nil).AnyTimes()
 	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{{ID: 82, Fullname: "LÒ THỊ MINH THU", CCCD: "031189014251"}}, nil).AnyTimes()
 	projectRepo := bankHistoryProjectRepoStub{

@@ -199,7 +199,7 @@ export function TimesheetPageHeaderMobile({
                     onClick={() => { onPaymentHistory(); close(); }}
                   >
                     <History className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">Lịch sử trả lương</span>
+                    <span className="text-sm font-medium">{userRole === 'partner' ? 'Bút toán ngân hàng' : 'Lịch sử trả lương'}</span>
                   </Button>
                 )}
 

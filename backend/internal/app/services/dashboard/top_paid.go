@@ -3,6 +3,7 @@ package dashboard
 import (
 	"api-server/internal/pkg/clock"
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -120,7 +121,17 @@ func (s *Service) GetPartnerDashboard(ctx context.Context, partnerID uint, req *
 		}
 	}
 
-	// Run all 4 independent data fetches concurrently
+	// Resolve the partner's visible employee/project ID set ONCE for the whole
+	// request. Previously each of the 4 analytics queries below re-derived this
+	// set via correlated EXISTS subqueries on every row. The scope is cached in
+	// Redis for a few seconds so concurrent dashboard refreshes reuse it.
+	scope, err := s.PartnerScopeResolver.Resolve(ctx, partnerID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve partner scope: %w", err)
+	}
+
+	// Run all 4 independent data fetches concurrently. They share the same
+	// precomputed scope.
 	var (
 		stats        *repositories.PartnerEmployeeStatsRow
 		topRows      []repositories.PartnerTopPaidEmployeeRow
@@ -132,7 +143,7 @@ func (s *Service) GetPartnerDashboard(ctx context.Context, partnerID uint, req *
 
 	g.Go(func() error {
 		var err error
-		stats, err = s.TimesheetAnalyticsRepo.GetPartnerEmployeeStats(gctx, partnerID, startDate, endDate)
+		stats, err = s.TimesheetAnalyticsRepo.GetPartnerEmployeeStats(gctx, scope, startDate, endDate)
 		if err != nil {
 			s.logger.Error("Failed to get partner employee stats", "error", err)
 		}
@@ -141,7 +152,7 @@ func (s *Service) GetPartnerDashboard(ctx context.Context, partnerID uint, req *
 
 	g.Go(func() error {
 		var err error
-		topRows, err = s.TimesheetAnalyticsRepo.GetPartnerTopPaidEmployees(gctx, partnerID, startDate, endDate, 10)
+		topRows, err = s.TimesheetAnalyticsRepo.GetPartnerTopPaidEmployees(gctx, scope, startDate, endDate, 10)
 		if err != nil {
 			s.logger.Error("Failed to get partner top paid employees", "error", err)
 		}
@@ -150,7 +161,7 @@ func (s *Service) GetPartnerDashboard(ctx context.Context, partnerID uint, req *
 
 	g.Go(func() error {
 		var err error
-		weeklyStats, err = s.TimesheetAnalyticsRepo.GetPartnerWeeklyPaidStats(gctx, partnerID, 4)
+		weeklyStats, err = s.TimesheetAnalyticsRepo.GetPartnerWeeklyPaidStats(gctx, scope, 4)
 		if err != nil {
 			s.logger.Warn("Failed to get partner weekly stats", "error", err)
 			return nil // non-critical, don't fail the whole request
@@ -160,7 +171,7 @@ func (s *Service) GetPartnerDashboard(ctx context.Context, partnerID uint, req *
 
 	g.Go(func() error {
 		var err error
-		monthlyStats, err = s.TimesheetAnalyticsRepo.GetPartnerMonthlyPaidStats(gctx, partnerID, 3)
+		monthlyStats, err = s.TimesheetAnalyticsRepo.GetPartnerMonthlyPaidStats(gctx, scope, 3)
 		if err != nil {
 			s.logger.Warn("Failed to get partner monthly stats", "error", err)
 			return nil // non-critical, don't fail the whole request

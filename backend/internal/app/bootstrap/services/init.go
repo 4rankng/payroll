@@ -184,7 +184,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	timesheetQueryRepo := repositories.NewTimesheetQueryRepository(db.DB)
 	timesheetAnalyticsRepo := repositories.NewTimesheetAnalyticsRepository(db.DB)
 
-	dashboardService := dashboard.NewService(repos.User, repos.Project, repos.Employee, repos.Timesheet, timesheetQueryRepo, timesheetAnalyticsRepo, repos.Ledger, repos.Notification, repos.AuditLog, repos.ProjectEmployee, repos.BulkTransferFile, repos.AdvancePaymentRequest, repos.AdvancePayment, repos.Attendance, repos.AttendanceFailedAttempt, settingsConfigService, cacheService, salaryCalculationService, logger)
+	dashboardService := dashboard.NewService(repos.User, repos.Project, repos.Employee, repos.Timesheet, timesheetQueryRepo, timesheetAnalyticsRepo, repos.Ledger, repos.Notification, repos.AuditLog, repos.ProjectEmployee, repos.BulkTransferFile, repos.AdvancePaymentRequest, repos.AdvancePayment, repos.Attendance, repos.AttendanceFailedAttempt, settingsConfigService, cacheService, salaryCalculationService, db.DB, logger)
 	// Create remaining services
 	settlementUploadService := settlement.NewSettlementUploadService(db.DB, repos.Timesheet, repos.Transaction, assetService, repos.Ledger, eventBus, repos.AdvancePaymentRequest, repos.AdvancePayment, repos.Notification)
 	projectPermissionService := project.NewProjectPermissionService(repos.Project, repos.ProjectUser, repos.ProjectEmployee, repos.EmployeeUser, repos.User, eventBus)

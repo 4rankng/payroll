@@ -11,6 +11,11 @@ type TimesheetRepository interface {
 	GetByID(ctx context.Context, id uint) (*Timesheet, error)
 	GetByIDs(ctx context.Context, ids []uint) ([]*Timesheet, error)
 	GetByIDsWithoutRelations(ctx context.Context, ids []uint) ([]*Timesheet, error)
+	// GetTimesheetDatesByIDs returns id → date for the given IDs without loading
+	// full rows or any relationships. Callers that only need the date (e.g. the
+	// bank-transfer-histories cycle resolution) use this to avoid SELECT * and
+	// relationship preloads on thousands of rows.
+	GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error)
 	Update(ctx context.Context, timesheet *Timesheet) error
 	Delete(ctx context.Context, id uint) error
 	HardDelete(ctx context.Context, id uint) error
@@ -118,6 +123,7 @@ type TimesheetReader interface {
 	GetByID(ctx context.Context, id uint) (*Timesheet, error)
 	GetByIDs(ctx context.Context, ids []uint) ([]*Timesheet, error)
 	GetByIDsWithoutRelations(ctx context.Context, ids []uint) ([]*Timesheet, error)
+	GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error)
 	List(ctx context.Context, filters TimesheetFilters) ([]*Timesheet, error)
 	Count(ctx context.Context, filters TimesheetFilters) (int64, error)
 	GetByProjectAndEmployee(ctx context.Context, projectID, employeeID uint, fromDate, toDate time.Time) ([]*Timesheet, error)

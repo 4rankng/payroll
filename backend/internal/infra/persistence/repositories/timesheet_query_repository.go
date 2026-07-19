@@ -66,6 +66,46 @@ func (r *TimesheetQueryRepository) GetByIDsWithoutRelations(ctx context.Context,
 	return r.getByIDsInternal(ctx, ids, false)
 }
 
+// GetTimesheetDatesByIDs returns id → date for the given IDs without loading full
+// rows or any relationships. This is the lightest possible lookup for callers that
+// only need the timesheet date — e.g. bank-transfer-histories cycle resolution,
+// which previously loaded ~5,000 full rows + relations just to read Date.Year/Month/Day.
+//
+// Uses the BatchProcessor to stay under MySQL's packet limit. Ordering is not
+// applied because callers consume the result via map lookup.
+func (r *TimesheetQueryRepository) GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error) {
+	result := make(map[uint]time.Time, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	type idDate struct {
+		ID   uint      `gorm:"column:id"`
+		Date time.Time `gorm:"column:date"`
+	}
+
+	err := r.batchProcessor.ProcessInBatches(ctx, ids, func(batch interface{}) error {
+		batchIDs := batch.([]uint)
+		var rows []idDate
+		if err := r.db.WithContext(ctx).
+			Table("timesheets").
+			Select("id, date").
+			Where("id IN ?", batchIDs).
+			Where("deleted_at IS NULL").
+			Find(&rows).Error; err != nil {
+			return err
+		}
+		for _, row := range rows {
+			result[row.ID] = row.Date
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // getByIDsInternal is the shared implementation for GetByIDs methods
 func (r *TimesheetQueryRepository) getByIDsInternal(ctx context.Context, ids []uint, includeRelations bool) ([]*domain.Timesheet, error) {
 	if len(ids) == 0 {

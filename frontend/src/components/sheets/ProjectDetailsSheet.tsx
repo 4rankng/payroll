@@ -12,6 +12,7 @@ import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
 import ProjectEditSheet from "./ProjectEditSheet";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useProject, usePauseProject, useResumeProject, useStartProject, useCompleteProject, useCancelProject, useDeleteProject, useProjectApprovedTimesheets } from "@/hooks/api/useProjects";
 import { useCanEditProject, useCanManageProjectEmployees } from "@/hooks/useCanEditProject";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -20,8 +21,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authManager } from "@/lib/auth";
 import { GeofenceSection } from "@/components/projects/details/GeofenceSection";
 import { ShiftNamesSection } from "@/components/projects/details/ShiftNamesSection";
-import { Edit3, Trash2, Plus } from "lucide-react";
+import { Edit3, Trash2, Plus, LayoutGrid, Users, DollarSign, ShieldCheck } from "lucide-react";
 import type { ModalConfig } from "@/types/modal-config.types";
+
+// Internal tab ids. External callers (URL ?tab=, useProjectModals) use a legacy
+// vocabulary ('info' | 'employees' | 'payrates' | 'timesheet' | 'settings') which
+// we normalize via `mapInitialTab` so existing deep-links keep working.
+type ProjectTab = 'overview' | 'employees' | 'payrates' | 'access';
+
+const mapInitialTab = (raw?: string): ProjectTab => {
+  switch (raw) {
+    case 'employees': return 'employees';
+    case 'payrates': return 'payrates';
+    case 'settings': return 'access';
+    case 'info':
+    case 'timesheet':
+    default: return 'overview';
+  }
+};
 
 interface ProjectDetailsSheetProps {
   project?: Project | null;
@@ -38,11 +55,13 @@ function ProjectDetailsSheet({
   isOpen,
   onClose,
   id,
-  onProjectDeleted
+  onProjectDeleted,
+  initialTab
 }: ProjectDetailsSheetProps) {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const { closeModal } = useModalNavigation();
+  const [activeTab, setActiveTab] = useState<ProjectTab>(() => mapInitialTab(initialTab));
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
@@ -289,6 +308,10 @@ function ProjectDetailsSheet({
   const isProjectCreator = project.created_by === authManager.getUserId();
   const canManageProjectAccess = isAdmin || isProjectCreator;
 
+  // Clamp tab: if a deep-link points to 'access' but the viewer lacks permission,
+  // fall back to overview so the sheet never opens on an invisible tab.
+  const effectiveTab: ProjectTab = activeTab === 'access' && !canManageProjectAccess ? 'overview' : activeTab;
+
   return (
     <>
       <SlideSheetTemplate
@@ -297,11 +320,54 @@ function ProjectDetailsSheet({
         avatar={avatar}
         size="large"
       >
-        <div className="space-y-0 py-2">
+        <Tabs
+          value={effectiveTab}
+          onValueChange={(v) => setActiveTab(v as ProjectTab)}
+          className="flex flex-col gap-4"
+        >
+          {/* Sticky pill tab bar — breaks out of template's content padding, re-pads.
+              'info' value kept for the overview tab so URL deep-links remain stable. */}
+          <div className="-mx-4 sm:-mx-6 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b px-4 sm:px-6 pb-2 pt-0.5">
+            <TabsList className="bg-transparent p-0 h-auto w-full inline-flex gap-1 overflow-x-auto">
+              <TabsTrigger
+                value="overview"
+                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">Tổng quan</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="employees"
+                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">Nhân viên</span>
+                <span className="ml-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-muted px-1.5 py-px text-[10px] font-bold tabular-nums leading-none">
+                  {activeEmployeesCount}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="payrates"
+                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <DollarSign className="h-3.5 w-3.5" />
+                <span className="text-xs font-semibold">Lương</span>
+              </TabsTrigger>
+              {canManageProjectAccess && (
+                <TabsTrigger
+                  value="access"
+                  className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span className="text-xs font-semibold">Phân quyền</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
-          {/* ── Info section ── */}
-          <div className="pb-2">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
+          {/* ── Overview tab ── */}
+          <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+            <div className="flex items-center justify-between gap-3 mb-2">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Thông tin dự án
               </p>
@@ -309,7 +375,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="min-h-11 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  className="min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsEditProjectOpen(true)}
                 >
                   <Edit3 className="h-3 w-3" />
@@ -318,11 +384,43 @@ function ProjectDetailsSheet({
               )}
             </div>
             <ProjectInfoTab project={project} />
-          </div>
 
-          {/* ── Employees section ── */}
-          <div className="border-t pt-2 pb-4">
-            <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
+            {project.is_flexible && (
+              <div className="mt-4 space-y-4">
+                <GeofenceSection project={project} />
+                <ShiftNamesSection project={project} />
+              </div>
+            )}
+
+            {canDeleteProject && (
+              <div className="mt-5">
+                <div className="py-2 mb-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Vùng nguy hiểm
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-destructive">Xóa dự án</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Hành động này không thể hoàn tác</p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="min-h-11 shrink-0"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    Xóa
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Employees tab ── */}
+          <TabsContent value="employees" className="mt-0 focus-visible:outline-none">
+            <div className="flex items-center justify-between gap-3 mb-3">
               <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Nhân viên ({activeEmployeesCount})
               </p>
@@ -330,7 +428,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="min-h-11 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  className="min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsAddEmployeeOpen(true)}
                 >
                   <Plus className="h-3 w-3" />
@@ -338,7 +436,7 @@ function ProjectDetailsSheet({
                 </Button>
               )}
             </div>
-            <div className="px-4 sm:px-6 mb-3">
+            <div className="mb-3">
               <GroupedStatCard
                 title="Nhân viên"
                 stats={statsConfig.map(s => ({ label: s.title, value: s.value }))}
@@ -350,68 +448,25 @@ function ProjectDetailsSheet({
               onAddEmployees={() => setIsAddEmployeeOpen(true)}
               onTotalCountChange={setListEmployeeCount}
             />
-          </div>
+          </TabsContent>
 
-          {/* ── Payrates section ── */}
-          <div className="border-t pt-2 pb-4">
-            <div className="px-4 sm:px-6">
-              <PayrateConfigTab
-                project={project}
-              />
-            </div>
-          </div>
+          {/* ── Payrates tab ── */}
+          <TabsContent value="payrates" className="mt-0 focus-visible:outline-none">
+            <PayrateConfigTab project={project} />
+          </TabsContent>
 
-          {/* ── Geofence section (flexible projects only) ── */}
-          {project.is_flexible && (
-            <GeofenceSection project={project} />
-          )}
-
-          {/* ── Shift names section (flexible projects only) ── */}
-          {project.is_flexible && (
-            <ShiftNamesSection project={project} />
-          )}
-
-          {/* ── Permissions section ── */}
+          {/* ── Access tab ── */}
           {canManageProjectAccess && (
-            <div className="border-t pt-2 pb-4">
-              <div className="flex items-center justify-between gap-3 px-4 py-2 sm:px-6">
+            <TabsContent value="access" className="mt-0 focus-visible:outline-none">
+              <div className="flex items-center justify-between gap-3 mb-3">
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Phân quyền
                 </p>
               </div>
-              <div className="px-4 sm:px-6">
-                <ProjectUserAccessTab project={project} />
-              </div>
-            </div>
+              <ProjectUserAccessTab project={project} />
+            </TabsContent>
           )}
-
-          {/* ── Danger zone ── */}
-          {canDeleteProject && (
-            <div className="border-t pt-2 pb-4 px-4 sm:px-6">
-              <div className="py-2 mb-2">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Vùng nguy hiểm
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-destructive">Xóa dự án</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Hành động này không thể hoàn tác</p>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="min-h-11 shrink-0"
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                  Xóa
-                </Button>
-              </div>
-            </div>
-          )}
-
-        </div>
+        </Tabs>
       </SlideSheetTemplate>
 
       {/* Add Employee Sheet */}
@@ -537,7 +592,7 @@ export const modalConfig: ModalConfig = {
   deeplink: {
     enabled: true,
     params: ['id', 'tab'],
-    example: '?modal=project_details_sheet&id=123&tab=employees',
+    example: '?modal=project_details_sheet&id=123&tab=overview',
     validateParams: (params) => {
       if (!params || Object.keys(params).length === 0) return true;
       return !!(params.id && !isNaN(Number(params.id)));

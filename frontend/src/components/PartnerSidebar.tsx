@@ -50,7 +50,7 @@ const menuItems = [
   { title: "Dự án", icon: Briefcase, path: "/partner/projects", end: false },
   { title: "Nhân viên", icon: Users, path: "/partner/employees" },
   { title: "Bảng công", icon: Calendar, path: "/partner/timesheet", end: true },
-  { title: "Lịch sử trả lương", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
+  { title: "Bút toán ngân hàng", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
 ];
 
 interface NavItemProps {
@@ -66,7 +66,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
     : location.pathname.startsWith(item.path);
 
   const inner = (
-    <NavLink to={item.path} className="block w-full" onClick={onNavigate}>
+    <NavLink to={item.path} end={item.end} className="block w-full" onClick={onNavigate}>
       <div
         className={cn(
           "relative flex items-center gap-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none",
@@ -74,7 +74,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "h-9 px-3",
+            : "min-h-9 py-1.5 px-3",
           isActive
             ? "bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--partner-accent)/0.15)]"
             : "text-white/50 hover:bg-card/10 hover:text-white/80 hover:translate-x-0.5"
@@ -92,7 +92,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
         />
         {!isCollapsed && (
           <span className={cn(
-            "text-base leading-none truncate flex-1",
+            "text-base leading-snug truncate flex-1",
             isActive ? "font-semibold text-white" : "font-medium"
           )}>
             {item.title}

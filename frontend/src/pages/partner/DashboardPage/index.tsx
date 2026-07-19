@@ -7,7 +7,6 @@ import {
   Banknote,
   CalendarDays,
   Crown,
-  Sparkles,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
@@ -285,11 +284,7 @@ function BannerHeader({
       />
       <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-primary ring-1 ring-inset ring-primary/20">
-            <Sparkles className="h-3.5 w-3.5" />
-            Bảng điều hành
-          </div>
-          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
             Tổng quan
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">

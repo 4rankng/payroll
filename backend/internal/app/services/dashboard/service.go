@@ -13,6 +13,8 @@ import (
 	"api-server/internal/domain"
 	"api-server/internal/domain/services"
 	"api-server/internal/infra/persistence/repositories"
+
+	"gorm.io/gorm"
 )
 
 type Service struct {
@@ -35,6 +37,7 @@ type Service struct {
 	SettingsConfigSvc           *config.SettingsConfigService
 	CacheService                *infrastructure.CacheService
 	SalaryCalculationSvc        *services.SalaryCalculationService
+	PartnerScopeResolver        *PartnerScopeResolver
 	logger                      *slog.Logger
 }
 
@@ -57,6 +60,7 @@ func NewService(
 	settingsConfigSvc *config.SettingsConfigService,
 	cacheSvc *infrastructure.CacheService,
 	salaryCalculationSvc *services.SalaryCalculationService,
+	db *gorm.DB,
 	logger *slog.Logger,
 ) *Service {
 	return &Service{
@@ -79,6 +83,7 @@ func NewService(
 		SettingsConfigSvc:           settingsConfigSvc,
 		CacheService:                cacheSvc,
 		SalaryCalculationSvc:        salaryCalculationSvc,
+		PartnerScopeResolver:        NewPartnerScopeResolver(db, cacheSvc, logger),
 		logger:                      logger,
 	}
 }

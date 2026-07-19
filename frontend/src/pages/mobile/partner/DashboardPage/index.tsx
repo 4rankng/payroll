@@ -11,7 +11,6 @@ import {
   FolderKanban,
   ClipboardList,
   History,
-  Sparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -280,11 +279,7 @@ const PartnerDashboardMobile = () => {
           className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(0deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:20px_20px]"
         />
         <div className="relative p-4">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-primary ring-1 ring-inset ring-primary/20">
-            <Sparkles className="h-3 w-3" />
-            Bảng điều hành
-          </div>
-          <h1 className="mt-1.5 font-display text-xl font-extrabold tracking-tight text-foreground">
+          <h1 className="font-display text-xl font-extrabold tracking-tight text-foreground">
             Tổng quan
           </h1>
           <p className="mt-0.5 text-[12px] text-muted-foreground">

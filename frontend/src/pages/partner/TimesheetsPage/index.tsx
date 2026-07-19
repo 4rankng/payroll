@@ -398,10 +398,6 @@ export default function TimesheetsPage() {
           <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-primary/15" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-success ring-1 ring-inset ring-success/20">
-                <ClipboardList className="h-3 w-3" />
-                Không gian chấm công
-              </div>
               <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 sm:text-2xl">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Clock className="h-5 w-5" />
@@ -461,7 +457,7 @@ export default function TimesheetsPage() {
             className="gap-1.5"
           >
             <History className="h-3.5 w-3.5" />
-            Lịch sử trả lương
+            Bút toán ngân hàng
           </Button>
           <Button
             variant="outline"

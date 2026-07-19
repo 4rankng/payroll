@@ -65,7 +65,79 @@ func (s *EmployeeService) ListEmployeesWithAllProjects(ctx context.Context, filt
 }
 
 func (s *EmployeeService) CountEmployees(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
+	// Mirror the list microcache: counts are recomputed from the same accessible
+	// set as the list and change at the same cadence, so a short TTL dedupes the
+	// partner fan-out without going stale on permission changes.
+	//
+	// The count key deliberately ignores Limit/Offset/Sort — two list queries
+	// that differ only in pagination share the same total count, so a single
+	// cache entry serves both.
+	if filters.Limit > 0 {
+		cacheKey := s.generateEmployeeCountCacheKey(filters)
+
+		var cached int64
+		if err := s.cache.Get(ctx, cacheKey, &cached); err == nil {
+			return cached, nil
+		}
+
+		count, err := s.EmployeeRepo.Count(ctx, filters)
+		if err != nil {
+			return 0, err
+		}
+
+		_ = s.cache.Set(ctx, cacheKey, count, constants.EmployeeListCacheTTL)
+		return count, nil
+	}
+
 	return s.EmployeeRepo.Count(ctx, filters)
+}
+
+// generateEmployeeCountCacheKey mirrors generateEmployeeListCacheKey but omits
+// Limit/Offset/SortBy/SortOrder, since the total count is invariant under
+// pagination and ordering.
+func (s *EmployeeService) generateEmployeeCountCacheKey(filters domain.EmployeeFilters) string {
+	var b strings.Builder
+	b.WriteString("employees:count")
+
+	if filters.CreatedBy != nil {
+		b.WriteString(":created_by:")
+		b.WriteString(strconv.FormatUint(uint64(*filters.CreatedBy), 10))
+	}
+	if filters.ProjectID != nil {
+		b.WriteString(":project_id:")
+		b.WriteString(strconv.FormatUint(uint64(*filters.ProjectID), 10))
+	}
+	if len(filters.ProjectIDs) > 0 {
+		b.WriteString(":project_ids:")
+		for i, id := range filters.ProjectIDs {
+			if i > 0 {
+				b.WriteByte(',')
+			}
+			b.WriteString(strconv.FormatUint(uint64(id), 10))
+		}
+	}
+	if filters.AccessibleBy != nil {
+		b.WriteString(":accessible_by:")
+		b.WriteString(strconv.FormatUint(uint64(*filters.AccessibleBy), 10))
+	}
+	if filters.Search != "" {
+		b.WriteString(":search:")
+		b.WriteString(strings.ToLower(strings.TrimSpace(filters.Search)))
+	}
+	if filters.Status != "" {
+		b.WriteString(":status:")
+		b.WriteString(filters.Status)
+	}
+	if filters.FromDate != nil {
+		b.WriteString(":from:")
+		b.WriteString(filters.FromDate.Format("2006-01-02"))
+	}
+	if filters.ToDate != nil {
+		b.WriteString(":to:")
+		b.WriteString(filters.ToDate.Format("2006-01-02"))
+	}
+
+	return b.String()
 }
 
 func (s *EmployeeService) GetEmployeeByCCCD(ctx context.Context, cccd string) (*domain.Employee, error) {

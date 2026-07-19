@@ -221,7 +221,63 @@ func (s *ProjectService) ListProjectsWithEmployeeCount(ctx context.Context, filt
 }
 
 func (s *ProjectService) CountProjects(ctx context.Context, filters domain.ProjectFilters) (int64, error) {
+	// Mirror the list microcache: counts are recomputed from the same accessible
+	// set as the list and change at the same cadence, so a short TTL dedupes the
+	// partner fan-out (multiple components calling /projects within the same
+	// page burst) without going stale on permission changes.
+	//
+	// The count key deliberately ignores Limit/Offset — two list queries that
+	// differ only in pagination share the same total count, so a single cache
+	// entry serves both.
+	if filters.Limit > 0 {
+		cacheKey := s.generateProjectCountCacheKey(filters)
+
+		var cached int64
+		if err := s.cache.Get(ctx, cacheKey, &cached); err == nil {
+			return cached, nil
+		}
+
+		count, err := s.ProjectRepo.Count(ctx, filters)
+		if err != nil {
+			return 0, err
+		}
+
+		_ = s.cache.Set(ctx, cacheKey, count, constants.ProjectListCacheTTL)
+		return count, nil
+	}
+
 	return s.ProjectRepo.Count(ctx, filters)
+}
+
+// generateProjectCountCacheKey mirrors generateProjectListCacheKey but omits
+// Limit/Offset, since the total count is invariant under pagination.
+func (s *ProjectService) generateProjectCountCacheKey(filters domain.ProjectFilters) string {
+	key := "projects:count"
+
+	if len(filters.ProjectStatus) > 0 {
+		var statuses []string
+		for _, status := range filters.ProjectStatus {
+			statuses = append(statuses, string(status))
+		}
+		key = fmt.Sprintf("%s:status:%s", key, strings.Join(statuses, ","))
+	}
+	if filters.CreatedBy != nil {
+		key = fmt.Sprintf("%s:created_by:%d", key, *filters.CreatedBy)
+	}
+	if filters.AccessibleBy != nil {
+		key = fmt.Sprintf("%s:accessible_by:%d", key, *filters.AccessibleBy)
+	}
+	if filters.Search != "" {
+		key = fmt.Sprintf("%s:search:%s", key, strings.ToLower(strings.TrimSpace(filters.Search)))
+	}
+	if filters.FromDate != nil {
+		key = fmt.Sprintf("%s:from:%s", key, filters.FromDate.Format("2006-01-02"))
+	}
+	if filters.ToDate != nil {
+		key = fmt.Sprintf("%s:to:%s", key, filters.ToDate.Format("2006-01-02"))
+	}
+
+	return key
 }
 
 func (s *ProjectService) GetProjectSummary(ctx context.Context) (*domain.ProjectSummary, error) {

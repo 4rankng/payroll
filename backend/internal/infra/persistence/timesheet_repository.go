@@ -54,6 +54,10 @@ func (r *TimesheetRepository) GetByIDsWithoutRelations(ctx context.Context, ids 
 	return r.queryRepo.GetByIDsWithoutRelations(ctx, ids)
 }
 
+func (r *TimesheetRepository) GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error) {
+	return r.queryRepo.GetTimesheetDatesByIDs(ctx, ids)
+}
+
 func (r *TimesheetRepository) GetByTransactionID(ctx context.Context, transactionID uint) ([]*domain.Timesheet, error) {
 	var timesheets []*domain.Timesheet
 	db := r.getDB(ctx)

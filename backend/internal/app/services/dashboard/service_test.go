@@ -29,6 +29,7 @@ func TestNewService(t *testing.T) {
 		nil, // SettingsConfigSvc
 		nil, // CacheService
 		nil, // SalaryCalculationSvc
+		nil, // db (PartnerScopeResolver is constructed lazily; nil is fine for this wiring test)
 		slog.Default(),
 	)
 
