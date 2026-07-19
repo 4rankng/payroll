@@ -226,7 +226,7 @@ export function AdvancePaymentRequestForm({
       className={cn("ct-card employee-surface-card overflow-hidden bg-[var(--employee-surface)] p-4", className)}
       style={style}
     >
-      <div className="-mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-4 pb-4 pt-4">
+      <div className="-mx-4 -mt-4 rounded-t-2xl bg-[var(--employee-summary-wash)] px-4 pb-4 pt-4">
         <div className="flex items-start justify-between gap-3">
           <p className="employee-type-label-caps pt-1 text-[var(--employee-accent)]">Số tiền có thể ứng</p>
           {!awaitingPayroll && (
@@ -294,18 +294,23 @@ export function AdvancePaymentRequestForm({
           </div>
         </div>
       ) : requestUnavailable ? showUnavailableContext ? (
-        <div className="mt-4 border-t border-[#EAECF0] pt-4" role="status">
-          <div className="ct-alert ct-alert-warning items-start gap-2.5 rounded-[10px] px-3 py-2.5 shadow-none">
-            <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--employee-warning)]" aria-hidden="true" />
+        <div className="mt-4" role="status">
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--employee-border)] bg-[var(--employee-page)] px-3 py-3">
+            <img
+              src="/illustrations/payroll-timesheet-pending-compact.png"
+              alt=""
+              aria-hidden="true"
+              className="h-16 w-16 shrink-0 object-contain"
+            />
             <div className="min-w-0">
-              <p className="employee-type-warning-title text-[var(--employee-warning-strong)]">
+              <p className="employee-type-warning-title text-[var(--employee-text)]">
                 {awaitingPayroll
                   ? `Đang chờ bảng công tháng ${viewedMonthLabel}`
                   : !hasBankDestination
                   ? "Chưa có tài khoản nhận tiền"
                   : info.canRequestTitle || "Chưa thể ứng lương"}
               </p>
-              <p className="employee-type-body-sm mt-0.5 text-[var(--employee-warning)]">
+              <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">
                 {awaitingPayroll
                   ? `Hạn mức ứng lương sẽ hiển thị sau khi bảng công tháng ${viewedMonthLabel} được cập nhật.`
                   : !hasBankDestination
