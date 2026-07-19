@@ -15,6 +15,7 @@ import {
 } from "@/components/system-health";
 import { useAPISummary, useRecentErrors } from "@/hooks/api/useSystemHealth";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobilePageShell } from "@/components/shared/MobilePageShell";
 
 type HealthLevel = "healthy" | "degraded" | "critical";
 
@@ -56,16 +57,18 @@ export default function SystemHealthPage() {
   }, [summaryData, recentErrors]);
 
   return (
-    <div className="space-y-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <MobilePageShell className="space-y-3">
       <MobilePageHeader
         title="Tình trạng API"
         icon={Activity}
+        sticky={false}
+        className="[--mobile-nonsticky-header-top-padding:0px] border-0 bg-transparent px-0 pb-1 pt-0 shadow-none"
         actions={
-          <div className="flex items-center gap-1.5">
+          <div className="flex w-full items-center justify-between gap-2">
             <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
             {healthMeta && (
               <div className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border shrink-0",
+                "ct-badge h-10 shrink-0 gap-1.5 rounded-full px-3 text-xs font-semibold",
                 healthMeta.pill,
               )}>
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", healthMeta.dot)} />
@@ -118,6 +121,6 @@ export default function SystemHealthPage() {
         <BrowserPlatformStats days={30} />
       </div>
 
-    </div>
+    </MobilePageShell>
   );
 }

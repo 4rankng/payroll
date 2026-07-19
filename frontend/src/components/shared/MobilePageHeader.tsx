@@ -15,7 +15,7 @@ interface MobilePageHeaderProps {
   back?: () => void;
   /** Action buttons rendered on the right side */
   actions?: React.ReactNode;
-  /** Keep short actions beside the title instead of moving them to a second row. */
+  /** Layout for header actions. Compact inline placement is the default for mobile. */
   actionsLayout?: 'stacked' | 'inline';
   /** Whether the header sticks to top on scroll (default: true) */
   sticky?: boolean;
@@ -40,7 +40,7 @@ export const MobilePageHeader = ({
   icon: Icon,
   back,
   actions,
-  actionsLayout = 'stacked',
+  actionsLayout = 'inline',
   sticky = true,
   bordered = true,
   className,
@@ -52,7 +52,7 @@ export const MobilePageHeader = ({
         sticky || bordered ? 'bg-white' : 'bg-transparent',
         bordered && 'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)]',
         sticky && 'sticky top-0',
-        'px-4 pb-3 pt-4',
+        'px-4 pb-2 pt-3',
         className,
       )}
       style={{

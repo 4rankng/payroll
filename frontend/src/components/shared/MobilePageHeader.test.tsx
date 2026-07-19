@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MobilePageHeader } from './MobilePageHeader';
 
 describe('MobilePageHeader', () => {
-  it('gives actions a full-width row below the title on narrow screens', () => {
+  it('keeps a short action beside the title by default on mobile', () => {
     render(
       <MobilePageHeader
         title="Bảng công"
@@ -15,8 +15,9 @@ describe('MobilePageHeader', () => {
     const actionsContainer = action.parentElement;
     const headerRow = screen.getByRole('heading', { name: 'Bảng công' }).parentElement?.parentElement?.parentElement;
 
-    expect(actionsContainer).toHaveClass('basis-full', 'max-w-full', 'sm:basis-auto');
-    expect(headerRow).toHaveClass('flex-wrap', 'sm:flex-nowrap');
+    expect(actionsContainer).toHaveClass('basis-auto', 'max-w-[52%]');
+    expect(headerRow).toHaveClass('flex-nowrap');
+    expect(headerRow).not.toHaveClass('flex-wrap');
   });
 
   it('uses the page canvas when rendered as an embedded borderless header', () => {
@@ -35,11 +36,11 @@ describe('MobilePageHeader', () => {
     expect(header).not.toHaveClass('bg-white');
   });
 
-  it('keeps a short action beside the title when inline layout is requested', () => {
+  it('moves actions below the title only when a page explicitly requests it', () => {
     render(
       <MobilePageHeader
         title="Dự án"
-        actionsLayout="inline"
+        actionsLayout="stacked"
         actions={<button type="button">Tạo dự án</button>}
       />,
     );
@@ -48,8 +49,7 @@ describe('MobilePageHeader', () => {
     const actionsContainer = action.parentElement;
     const headerRow = screen.getByRole('heading', { name: 'Dự án' }).parentElement?.parentElement?.parentElement;
 
-    expect(actionsContainer).toHaveClass('basis-auto', 'max-w-[52%]');
-    expect(headerRow).toHaveClass('flex-nowrap');
-    expect(headerRow).not.toHaveClass('flex-wrap');
+    expect(actionsContainer).toHaveClass('basis-full', 'max-w-full', 'sm:basis-auto');
+    expect(headerRow).toHaveClass('flex-wrap', 'sm:flex-nowrap');
   });
 });
