@@ -9,9 +9,7 @@ import {
   Loader2,
   ChevronRight,
   RefreshCw,
-  CalendarDays,
   ShieldCheck,
-  WalletCards,
 } from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
@@ -237,8 +235,8 @@ const Login = () => {
           className="ct-hero relative hidden min-h-[calc(100dvh-2.5rem)] overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 shadow-[0_24px_70px_-50px_hsl(var(--neutral)/0.34)] lg:flex"
         >
           <img
-            src="/login-employee-horizon-hero.webp"
-            alt="Bảy bước sắc màu hướng tới một chân trời rộng mở"
+            src="/login-employee-wallet-app-hero.webp"
+            alt="Ứng dụng lương tuần bên cạnh ví và lịch trả lương"
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
           <div className="ct-hero-overlay absolute inset-0 !bg-base-100/10" />
@@ -260,37 +258,25 @@ const Login = () => {
               </p>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-2.5">
-              {[
-                { icon: WalletCards, label: "Ứng lương linh hoạt" },
-                { icon: CalendarDays, label: "Chu kỳ hàng tuần" },
-                { icon: ShieldCheck, label: "Dữ liệu minh bạch" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2 rounded-full border border-base-300/80 bg-base-100/75 px-3.5 py-2.5 text-sm font-bold text-base-content shadow-sm backdrop-blur-xl">
-                  <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <span>{label}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
         <section className="relative flex min-h-dvh flex-col bg-base-100 lg:min-h-[calc(100dvh-2.5rem)] lg:rounded-[2rem] lg:border lg:border-base-300/70">
           <div className="ct-hero relative h-44 min-h-44 overflow-hidden border-b border-base-300 bg-base-100 sm:h-52 sm:min-h-52 lg:hidden">
             <img
-              src="/login-employee-horizon-hero.webp"
-              alt="Bảy bước sắc màu hướng tới một chân trời rộng mở"
-              className="absolute inset-0 h-full w-full object-cover object-[60%_64%]"
+              src="/login-employee-wallet-app-hero.webp"
+              alt="Ứng dụng lương tuần bên cạnh ví và lịch trả lương"
+              className="absolute inset-y-0 right-0 h-full w-[56%] object-cover object-[54%_68%]"
             />
             <div className="ct-hero-overlay absolute inset-0 !bg-base-100/10" />
-            <div className="absolute inset-0 bg-gradient-to-r from-base-100/92 via-base-100/45 to-transparent" />
+            <div className="absolute inset-y-0 left-0 w-[62%] bg-gradient-to-r from-base-100 via-base-100/95 to-transparent" />
             <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none items-start justify-start px-5 py-5 text-base-content sm:px-8 sm:py-7">
-              <div>
+              <div className="max-w-[56%]">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Lương về đúng nhịp</p>
                 <p className="mt-1.5 max-w-[280px] font-display text-2xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl">
                   Ứng lương khi cần.<br /><span className="text-primary">Trả lương mỗi tuần.</span>
                 </p>
-                <p className="mt-2.5 max-w-[245px] text-[10.5px] font-medium leading-[1.45] text-base-content/60 sm:max-w-sm sm:text-xs">
+                <p className="mt-2.5 text-[10.5px] font-medium leading-[1.45] text-base-content/60 sm:text-xs">
                   Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
                 </p>
               </div>
