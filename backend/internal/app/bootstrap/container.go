@@ -157,7 +157,9 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			FileStorage: walletBulkFileStorage,
 			AssetRepo:   repos.Asset,
 			AsynqClient: asynqClient,
+			AuditEmitter: walletBulkAuditAdapter{client: asynqClient}, // C3 fix
 			TxnSvc:      services.Transaction,
+			TxRunner:    services.TransactionManager, // C2 fix — atomic CreateTransaction + batch link
 			Parser:      walletBulkParser,
 			FeeProvider: services.DisbursementFeeSchedule,
 			Logger:      infra.Logger,

@@ -519,34 +519,63 @@ func (s *WalletPaymentService) buildHooks(row *domaintx.WalletPayment) domaintx.
 	}
 }
 
-// notifyEmployee resolves the recipient user_id (via
-// advance_payment_requests → employees → user_id) and fires a push
-// notification. Best-effort: any failure is logged, never returned.
+// notifyEmployee resolves the recipient user_id and fires a push notification.
+// Best-effort: any failure is logged, never returned.
+//
+// Resolution path depends on what links the row to an employee:
+//   - Advance-payment / FlexPay rows (EntityID != nil): advance_payment_requests
+//     → employees → user_id.
+//   - Wallet bulk-transfer rows (EntityID == nil, per Phase 3 of the wallet
+//     bulk transfer pipeline): recipient_account_no →
+//     employees.bank_account_number → user_id. (H6 fix — Validation Decision V6.)
 func (s *WalletPaymentService) notifyEmployee(ctx context.Context, row *domaintx.WalletPayment, msg notificationMessage) {
-	if row.EntityID == nil {
-		s.logger.Info("provider_transactions: entity_id nil, skipping notification",
-			"txn_id", row.TxnID.String(), "request_id", row.RequestID, "status", row.Status)
-		return
-	}
-	if s.advancePaymentReqs == nil || s.employees == nil || s.notifications == nil {
+	if s.notifications == nil {
 		return // not wired (tests / dormant deployments)
 	}
 
-	req, err := s.advancePaymentReqs.GetByID(ctx, uint64(*row.EntityID))
-	if err != nil {
-		s.logger.Warn("provider_transactions: notification skipped — advance payment request not found",
-			"entity_id", *row.EntityID, "error", err)
+	var userID *uint
+
+	if row.EntityID != nil {
+		// Advance-payment path.
+		if s.advancePaymentReqs == nil || s.employees == nil {
+			return
+		}
+		req, err := s.advancePaymentReqs.GetByID(ctx, uint64(*row.EntityID))
+		if err != nil {
+			s.logger.Warn("provider_transactions: notification skipped — advance payment request not found",
+				"entity_id", *row.EntityID, "error", err)
+			return
+		}
+		emp, err := s.employees.GetByID(ctx, uint(req.EmployeeID))
+		if err != nil || emp == nil || emp.UserID == nil {
+			s.logger.Warn("provider_transactions: notification skipped — employee or user not found",
+				"employee_id", req.EmployeeID, "error", err)
+			return
+		}
+		userID = emp.UserID
+	} else {
+		// Bulk-transfer path — resolve via bank account number (H6 fix).
+		// Skipped silently when recipient_account_no is empty or no employee
+		// matches; bulk rows for non-employee recipients (partner invoices,
+		// test fixtures) have nobody to notify.
+		if s.employees == nil || row.RecipientAccountNo == "" {
+			return
+		}
+		emp, err := s.employees.GetByBankAccountNumber(ctx, row.RecipientAccountNo)
+		if err != nil || emp == nil || emp.UserID == nil {
+			s.logger.Info("provider_transactions: bulk row notification skipped — no employee matches account_no",
+				"txn_id", row.TxnID.String(), "request_id", row.RequestID, "account_no", row.RecipientAccountNo)
+			return
+		}
+		userID = emp.UserID
+	}
+
+	if userID == nil {
 		return
 	}
-	emp, err := s.employees.GetByID(ctx, uint(req.EmployeeID))
-	if err != nil || emp == nil || emp.UserID == nil {
-		s.logger.Warn("provider_transactions: notification skipped — employee or user not found",
-			"employee_id", req.EmployeeID, "error", err)
-		return
-	}
-	if err := s.notifications.CreateNotification(ctx, *emp.UserID, domain.NotificationTypeAdvancePaymentStatusChanged, msg.Title, msg.Body); err != nil {
+	if err := s.notifications.CreateNotification(ctx, *userID, domain.NotificationTypeAdvancePaymentStatusChanged, msg.Title, msg.Body); err != nil {
 		s.logger.Warn("provider_transactions: notification failed",
-			"user_id", *emp.UserID, "txn_id", row.TxnID.String(), "error", err)
+			"user_id", *userID, "txn_id", row.TxnID.String(), "error", err)
 	}
 }
 

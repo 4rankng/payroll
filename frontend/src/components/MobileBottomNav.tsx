@@ -102,7 +102,6 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   const openGroupDescription =
     openGroup === ACCOUNT_GROUP ? "Tài khoản và cài đặt cá nhân" : "Mục công việc truy cập nhanh";
   const moreTitle = "Thêm";
-  const moreDescription = "Các mục quản trị ít dùng hơn";
 
   const renderSheetChrome = (title: string, description: string) => (
     <>
@@ -349,10 +348,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           side="bottom"
           className={sheetSurfaceClass}
           title={moreTitle}
-          description={moreDescription}
         >
-          {renderSheetChrome(moreTitle, moreDescription)}
-          <ul className="ct-menu ct-menu-sm !grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-0 sm:grid-cols-3 sm:px-5">
+          <div className="flex justify-center pt-2.5">
+            <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
+          </div>
+          <ul className="ct-menu ct-menu-sm !grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 sm:grid-cols-3 sm:px-5">
             {moreItems?.map((item) => {
               const isActive = item.path ? location.pathname.startsWith(item.path) : false;
               return renderNavTile(item, isActive, () => {

@@ -229,94 +229,87 @@ const Login = () => {
       className="relative min-h-dvh w-full overflow-x-hidden bg-base-200 text-base-content"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="pointer-events-none absolute inset-0 opacity-[0.42] [background-image:linear-gradient(to_right,hsl(var(--border)/0.45)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.45)_1px,transparent_1px)] [background-size:32px_32px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_8%,hsl(var(--info)/0.14),transparent_28%),radial-gradient(circle_at_8%_88%,hsl(var(--primary)/0.12),transparent_30%)]" />
 
-      <main className="relative mx-auto grid min-h-dvh w-full max-w-[1600px] lg:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] lg:p-4 xl:p-6">
+      <main className="relative mx-auto grid min-h-dvh w-full max-w-[1560px] lg:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] lg:gap-3 lg:p-3 xl:gap-4 xl:p-5">
         <section
           aria-labelledby="login-brand-heading"
-          className="relative hidden min-h-[calc(100dvh-3rem)] overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 lg:block"
+          className="ct-hero relative hidden min-h-[calc(100dvh-2.5rem)] overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 shadow-[0_24px_70px_-50px_hsl(var(--neutral)/0.34)] lg:flex"
         >
           <img
-            src="/login-payroll-hero.webp"
-            alt="Ví lương, lịch tuần và bảng công minh họa cho ứng lương nhanh"
+            src="/login-employee-horizon-hero.webp"
+            alt="Bảy bước sắc màu hướng tới một chân trời rộng mở"
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-base-100/15 via-transparent to-neutral/10" />
+          <div className="ct-hero-overlay absolute inset-0 !bg-base-100/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-base-100/90 via-base-100/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-base-100/5 via-transparent to-base-100/15" />
 
-          <div className="absolute left-8 top-8 flex items-center gap-3 rounded-2xl border border-base-300/80 bg-base-100/90 px-4 py-3 shadow-sm backdrop-blur-md xl:left-10 xl:top-10">
-            <img src="/logo-square.png" alt="" className="h-10 w-10 object-contain" />
-            <div>
-              <p className="font-display text-xl font-extrabold leading-none tracking-tight text-base-content">TingTing</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-base-content/55">Nhịp lương thông minh</p>
+          <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none flex-col items-start justify-start px-8 py-12 text-left text-base-content xl:px-12 xl:py-16">
+            <div className="max-w-[610px]">
+              <p className="mb-4 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.22em] text-primary">
+                <span className="h-px w-8 bg-primary" aria-hidden="true" />
+                Lương về đúng nhịp
+              </p>
+              <h1 id="login-brand-heading" className="font-display text-[clamp(2.75rem,4.7vw,4.9rem)] font-black leading-[0.94] tracking-[-0.055em] text-base-content">
+                Ứng lương khi cần.
+                <span className="mt-2 block text-primary">Trả lương mỗi tuần.</span>
+              </h1>
+              <p className="mt-6 max-w-lg text-base font-medium leading-7 text-base-content/65 xl:text-lg">
+                Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
+              </p>
             </div>
-          </div>
 
-          <div className="absolute right-8 top-10 max-w-[390px] text-right xl:right-12 xl:top-14 xl:max-w-[470px]">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-base-content/55">Dòng tiền chủ động</p>
-            <h1 id="login-brand-heading" className="font-display text-4xl font-black leading-[0.98] tracking-[-0.045em] text-neutral xl:text-6xl">
-              Ứng lương nhanh.
-              <span className="mt-2 block text-primary">Trả lương tuần.</span>
-            </h1>
-            <p className="ml-auto mt-5 max-w-sm text-sm font-medium leading-6 text-base-content/65 xl:text-base">
-              Một nhịp lương rõ ràng cho người lao động chủ động và doanh nghiệp vận hành nhẹ nhàng hơn.
-            </p>
-          </div>
-
-          <div className="absolute bottom-7 left-7 right-7 grid grid-cols-3 overflow-hidden rounded-2xl border border-base-300/80 bg-base-100/88 shadow-lg backdrop-blur-xl xl:bottom-9 xl:left-9 xl:right-9">
-            {[
-              { icon: WalletCards, label: "Ứng lương", value: "Chủ động" },
-              { icon: CalendarDays, label: "Lương tuần", value: "Đúng nhịp" },
-              { icon: ShieldCheck, label: "Dữ liệu", value: "Bảo mật" },
-            ].map(({ icon: Icon, label, value }, index) => (
-              <div key={label} className={`flex items-center gap-3 px-4 py-4 xl:px-6 ${index > 0 ? "border-l border-base-300/80" : ""}`}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-base-content/45">{label}</span>
-                  <span className="mt-0.5 block truncate text-sm font-bold text-base-content">{value}</span>
-                </span>
-              </div>
-            ))}
+            <div className="mt-8 flex flex-wrap gap-2.5">
+              {[
+                { icon: WalletCards, label: "Ứng lương linh hoạt" },
+                { icon: CalendarDays, label: "Chu kỳ hàng tuần" },
+                { icon: ShieldCheck, label: "Dữ liệu minh bạch" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2 rounded-full border border-base-300/80 bg-base-100/75 px-3.5 py-2.5 text-sm font-bold text-base-content shadow-sm backdrop-blur-xl">
+                  <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="relative flex min-h-dvh flex-col bg-base-100 lg:min-h-[calc(100dvh-3rem)] lg:rounded-[2rem] lg:bg-base-100/96">
-          <div className="relative h-56 overflow-hidden border-b border-base-300 lg:hidden">
+        <section className="relative flex min-h-dvh flex-col bg-base-100 lg:min-h-[calc(100dvh-2.5rem)] lg:rounded-[2rem] lg:border lg:border-base-300/70">
+          <div className="ct-hero relative h-44 min-h-44 overflow-hidden border-b border-base-300 bg-base-100 sm:h-52 sm:min-h-52 lg:hidden">
             <img
-              src="/login-payroll-hero.webp"
-              alt="Ví lương và lịch trả lương tuần"
-              className="h-full w-full object-cover object-[38%_68%]"
+              src="/login-employee-horizon-hero.webp"
+              alt="Bảy bước sắc màu hướng tới một chân trời rộng mở"
+              className="absolute inset-0 h-full w-full object-cover object-[60%_64%]"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-base-100/30 via-base-100/5 to-neutral/45" />
-            <div className="absolute left-5 top-5 flex items-center gap-2.5 rounded-2xl border border-base-300/80 bg-base-100/92 px-3 py-2 shadow-sm backdrop-blur-md">
-              <img src="/logo-square.png" alt="TingTing logo" className="h-9 w-9 object-contain" />
-              <span className="font-display text-lg font-extrabold tracking-tight">TingTing</span>
-            </div>
-            <div className="absolute bottom-5 left-5 right-5 text-primary-content">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary-content/75">Lương về đúng nhịp</p>
-              <p className="mt-1 font-display text-2xl font-black leading-tight tracking-[-0.03em]">Ứng lương nhanh. Trả lương tuần.</p>
+            <div className="ct-hero-overlay absolute inset-0 !bg-base-100/10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-base-100/92 via-base-100/45 to-transparent" />
+            <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none items-start justify-start px-5 py-5 text-base-content sm:px-8 sm:py-7">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Lương về đúng nhịp</p>
+                <p className="mt-1.5 max-w-[280px] font-display text-2xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl">
+                  Ứng lương khi cần.<br /><span className="text-primary">Trả lương mỗi tuần.</span>
+                </p>
+                <p className="mt-2.5 max-w-[245px] text-[10.5px] font-medium leading-[1.45] text-base-content/60 sm:max-w-sm sm:text-xs">
+                  Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 lg:px-10 xl:px-16">
-            <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_rgba(13,63,39,0.48)] lg:border-0 lg:bg-transparent lg:shadow-none">
-              <div className="ct-card-body gap-0 p-6 sm:p-8 lg:p-4">
-                <div className="mb-7 hidden items-center gap-3 lg:flex">
-                  <img src="/logo-square.png" alt="TingTing logo" className="h-11 w-11 object-contain" />
+          <div className="flex flex-1 items-center justify-center px-4 py-6 sm:px-8 sm:py-8 lg:px-10 xl:px-16">
+            <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_hsl(var(--neutral)/0.38)] lg:border-0 lg:bg-transparent lg:shadow-none">
+              <div className="ct-card-body gap-0 p-5 sm:p-8 lg:p-4">
+                <div className="mb-7 flex items-center gap-3">
+                  <img src="/logo-square.png" alt="TingTing logo" className="h-12 w-12 object-contain" />
                   <div>
-                    <p className="font-display text-xl font-extrabold leading-none tracking-tight">TingTing</p>
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-base-content/45">Cổng lương thông minh</p>
+                    <p className="font-display text-[1.35rem] font-black leading-none tracking-[-0.03em]">TingTing</p>
+                    <p className="mt-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-base-content/45">Nhịp lương thông minh</p>
                   </div>
                 </div>
 
                 <div className="mb-7">
-                  <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                    <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_5px_hsl(var(--su)/0.12)]" />
-                    Hệ thống đang hoạt động
-                  </div>
-                  <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.035em] sm:text-4xl">Chào mừng trở lại</h2>
-                  <p className="mt-2 text-sm leading-6 text-base-content/55">Đăng nhập để quản lý ứng lương và chu kỳ trả lương của bạn.</p>
+                  <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">Chào mừng trở lại</h2>
                 </div>
 
                 {(loginMutation.error || googleLoginMutation.error) && (

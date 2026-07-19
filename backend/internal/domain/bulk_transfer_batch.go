@@ -94,6 +94,11 @@ type BulkTransferBatchRepository interface {
 	GetByID(ctx context.Context, id uint64) (*BulkTransferBatch, error)
 	GetByContentHash(ctx context.Context, hash string) (*BulkTransferBatch, error)
 	Update(ctx context.Context, b *BulkTransferBatch) error
+	// UpdateColumns writes only the given column→value map (targeted update,
+	// avoids overwriting concurrent bumps to unrelated columns). Used by
+	// ProcessBookBatchLedger to stamp total_fee + ledger_txn_id + status
+	// without clobbering success_count/failed_count (M1 fix).
+	UpdateColumns(ctx context.Context, id uint64, columns map[string]interface{}) error
 	UpdateWithLock(ctx context.Context, id uint64, fn func(*BulkTransferBatch) (shouldBook bool, err error)) (*BulkTransferBatch, bool, error)
 	UpdateEnqueueState(ctx context.Context, id uint64, state BulkTransferBatchEnqueueState) error
 	// DecrementTotalCount atomically subtracts n from total_count. Used by

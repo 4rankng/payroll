@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,6 +46,12 @@ type UploadResponse struct {
 	TransferAmount      int64  `json:"transfer_amount"`
 	EstimatedFeeTotal   int64  `json:"estimated_fee_total"`
 	EstimatedFeePerRow  int64  `json:"estimated_fee_per_row,omitempty"`
+	// FeeResolutionOK is false when the fee schedule lookup failed at upload
+	// time (H2 fix). When false, every row will terminal-fail with
+	// ErrFeeResolution in the worker; admin should fix the schedule before
+	// re-uploading. The upload still succeeds (parsed + batch row created)
+	// so admin sees the warning in the UI rather than getting a 4xx.
+	FeeResolutionOK bool `json:"fee_resolution_ok"`
 }
 
 // WalletBulkTransferService orchestrates the Stage 2 wallet-page pipeline:
@@ -64,7 +72,9 @@ type WalletBulkTransferService struct {
 	fileStorage   storage.FileStorage
 	assetRepo     domain.AssetRepository
 	asynqClient   BulkTransferEnqueuer
+	auditEmitter  AuditEventEmitter // C3 fix — nil-safe
 	txnSvc        TransactionCreator
+	txRunner      TransactionRunner
 	parser        *YeuCauChuyenTienParser
 	feeProvider   DisbursementFeeProvider
 	clock         func() time.Time
@@ -76,6 +86,15 @@ type WalletBulkTransferService struct {
 // (avoids a cycle when settlement later wants to consume bulk batches).
 type TransactionCreator interface {
 	CreateTransaction(ctx context.Context, txn *domain.Transaction) (*domain.Transaction, []*domain.LedgerEntry, error)
+}
+
+// TransactionRunner is the narrow port for executing a function inside a
+// single DB transaction. Implemented by infraServices.TransactionManager;
+// declared here so the wallet_bulk package stays decoupled. Used by
+// ProcessBookBatchLedger to make the (CreateTransaction + batch link)
+// pair atomic — closes the C2 double-booking race.
+type TransactionRunner interface {
+	WithTransactionResult(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error)
 }
 
 // DisbursementFeeProvider mirrors disbursement.DisbursementFeeProvider.
@@ -92,7 +111,13 @@ type ServiceDeps struct {
 	FileStorage  storage.FileStorage
 	AssetRepo    domain.AssetRepository
 	AsynqClient  BulkTransferEnqueuer
+	AuditEmitter AuditEventEmitter // C3 fix; nil-safe
 	TxnSvc       TransactionCreator
+	// TxRunner, when non-nil, wraps ProcessBookBatchLedger's CreateTransaction
+	// + batch link in a single DB transaction (C2 fix — closes the double-
+	// booking race when the recovery cron fires in the window between
+	// CreateTransaction committing and batchRepo.Update committing).
+	TxRunner      TransactionRunner
 	Parser       *YeuCauChuyenTienParser
 	FeeProvider  DisbursementFeeProvider
 	Clock        func() time.Time
@@ -100,8 +125,27 @@ type ServiceDeps struct {
 }
 
 // NewWalletBulkTransferService wires the service. Nil clock defaults to
-// clock.Now; nil logger defaults to slog.Default().
+// clock.Now; nil logger defaults to slog.Default(). Nil TxRunner falls back
+// to the legacy non-atomic path (kept for tests that don't need atomicity).
+//
+// M7 fix: fail-fast on nil critical deps so a misconfigured bootstrap NPEs
+// here at construction rather than at first request.
 func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
+	if deps.BatchRepo == nil {
+		panic("wallet_bulk: BatchRepo is required")
+	}
+	if deps.PaymentRepo == nil {
+		panic("wallet_bulk: PaymentRepo is required")
+	}
+	if deps.AsynqClient == nil {
+		panic("wallet_bulk: AsynqClient is required")
+	}
+	if deps.TxnSvc == nil {
+		panic("wallet_bulk: TxnSvc is required")
+	}
+	if deps.Parser == nil {
+		panic("wallet_bulk: Parser is required")
+	}
 	if deps.Clock == nil {
 		deps.Clock = clock.Now
 	}
@@ -114,7 +158,9 @@ func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
 		fileStorage:  deps.FileStorage,
 		assetRepo:    deps.AssetRepo,
 		asynqClient:  deps.AsynqClient,
+		auditEmitter: deps.AuditEmitter,
 		txnSvc:       deps.TxnSvc,
+		txRunner:     deps.TxRunner,
 		parser:       deps.Parser,
 		feeProvider:  deps.FeeProvider,
 		clock:        deps.Clock,
@@ -170,7 +216,10 @@ func (s *WalletBulkTransferService) Upload(ctx context.Context, fileBytes []byte
 	for _, r := range rows {
 		transferAmount += r.Amount
 	}
-	estimatedFeePerRow, _, _ := s.lookupFee(ctx)
+	// H2 fix: track fee-resolution failure so the upload response can warn
+	// admin that every row will terminal-fail in the worker (ErrFeeResolution).
+	estimatedFeePerRow, _, feeLookupErr := s.lookupFee(ctx)
+	feeResolutionOK := feeLookupErr == nil
 	estimatedFeeTotal := estimatedFeePerRow * int64(len(rows))
 
 	// Step 7: persist the uploaded file as an asset (audit trail).
@@ -210,21 +259,41 @@ func (s *WalletBulkTransferService) Upload(ctx context.Context, fileBytes []byte
 		return nil, fmt.Errorf("create batch: %w", err)
 	}
 
-	// Steps 9-10: enqueue per-row tasks, then flip enqueue_state. If the
-	// process crashes between Create and UpdateEnqueueState, the sweeper
-	// will recover by reading batch.data and re-enqueuing.
+	// Steps 9-10: enqueue per-row tasks, then flip enqueue_state ONLY when
+	// all rows enqueued successfully. On partial failure, leave enqueue_state
+	// 'pending' so the stale-enqueue sweeper re-enqueues ALL rows (asynq's
+	// TaskID dedup absorbs the retries for rows that already landed).
+	//
+	// C5 fix: the previous version unconditionally flipped to 'enqueued'
+	// even on partial failure, hiding the unenqueued rows from the sweeper
+	// (which only looks at 'pending') and silently dropping them.
+	enqueuedAll := true
 	for _, row := range rows {
 		payload := RowTaskPayload{BatchID: batch.ID, Row: row}
 		if err := s.asynqClient.EnqueueBulkTransferRow(payload); err != nil {
 			s.logger.Error("wallet_bulk: enqueue row failed (sweeper will recover)",
 				"batch_id", batch.ID, "vfic", row.VFICCode, "error", err)
-			// Don't return — leave enqueue_state='pending' so the sweeper
-			// picks it up. Other rows may still enqueue successfully.
+			enqueuedAll = false
+			// Continue trying the rest — they may succeed.
 		}
 	}
-	if err := s.batchRepo.UpdateEnqueueState(ctx, batch.ID, domain.BulkTransferEnqueueEnqueued); err != nil {
-		s.logger.Warn("wallet_bulk: flip enqueue_state failed (sweeper will recover)",
-			"batch_id", batch.ID, "error", err)
+	if enqueuedAll {
+		if err := s.batchRepo.UpdateEnqueueState(ctx, batch.ID, domain.BulkTransferEnqueueEnqueued); err != nil {
+			s.logger.Warn("wallet_bulk: flip enqueue_state failed (sweeper will recover)",
+				"batch_id", batch.ID, "error", err)
+		}
+	} else {
+		s.logger.Warn("wallet_bulk: partial enqueue failure — leaving enqueue_state=pending for sweeper",
+			"batch_id", batch.ID, "row_count", len(rows))
+	}
+
+	// C3 fix: emit an audit event for every money-moving upload. Best-effort
+	// (failures are logged, never returned — the upload already succeeded).
+	s.emitUploadAudit(ctx, batch, userID)
+
+	if !feeResolutionOK {
+		s.logger.Warn("wallet_bulk: upload succeeded but fee schedule lookup failed — rows will terminal-fail",
+			"batch_id", batch.ID, "error", feeLookupErr)
 	}
 
 	return &UploadResponse{
@@ -233,7 +302,57 @@ func (s *WalletBulkTransferService) Upload(ctx context.Context, fileBytes []byte
 		TransferAmount:     transferAmount,
 		EstimatedFeeTotal:  estimatedFeeTotal,
 		EstimatedFeePerRow: estimatedFeePerRow,
+		FeeResolutionOK:    feeResolutionOK,
 	}, nil
+}
+
+// emitUploadAudit publishes the audit row for a money-moving upload. Best-effort:
+// any failure is logged but never returned (the upload itself already succeeded).
+func (s *WalletBulkTransferService) emitUploadAudit(ctx context.Context, batch *domain.BulkTransferBatch, userID uint64) {
+	if s.auditEmitter == nil {
+		return
+	}
+	batchID := uint(batch.ID)
+	payload := AuditLogPayload{
+		UserID:     uint(userID),
+		Action:     "BULK_CREATE",
+		EntityType: "bulk_transfer_batch",
+		EntityID:   &batchID,
+		Message:    fmt.Sprintf("Tải lên lô chuyển tiền %s (%d giao dịch, %s VND)", batch.Filename, batch.TotalCount, formatVND(batch.TransferAmount)),
+		CreatedAt:  s.clock(),
+	}
+	if err := s.auditEmitter.EnqueueAuditLogWrite(payload); err != nil {
+		s.logger.Warn("wallet_bulk: audit emit failed (non-fatal)", "batch_id", batch.ID, "error", err)
+	}
+}
+
+// formatVND is a tiny local helper to keep the audit message readable.
+// Imported from utils elsewhere; we inline a minimal version here to avoid
+// pulling the utils package (which depends on settings).
+func formatVND(v int64) string {
+	// Group thousands with '.'. 1234567 → "1.234.567".
+	negative := v < 0
+	if negative {
+		v = -v
+	}
+	s := strconv.FormatInt(v, 10)
+	if len(s) <= 3 {
+		if negative {
+			return "-" + s
+		}
+		return s
+	}
+	out := ""
+	for i, ch := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			out += "."
+		}
+		out += string(ch)
+	}
+	if negative {
+		return "-" + out
+	}
+	return out
 }
 
 // DuplicateVFICError carries the conflict list to the handler.
@@ -313,13 +432,18 @@ func persistAsset(ctx context.Context, repo domain.AssetRepository, stored *stor
 
 // ProcessBookBatchLedger is the asynq handler for TaskBookBatchLedger.
 //
-// Idempotent: re-enqueueing a completed batch hits LedgerTxnID != nil → nil.
+// Idempotency (C2 fix): the CreateTransaction + batch link run inside a
+// single DB transaction (via TxRunner). If `txRunner` is nil (tests), falls
+// back to the legacy non-atomic path — but in production TxRunner is always
+// wired. The LedgerTxnID != nil guard at the top is the outer idempotency
+// check; the tx is the inner atomicity guarantee.
+//
 // On zero-fee batches (all rows failed at pre-flight), no Expense txn is
 // created and the batch transitions directly to completed.
 //
 // The ledger write happens OUTSIDE the lock transaction that decided to book
 // (markRowTerminal in the worker) so we never hold a row lock across the
-// external CreateTransaction call.
+// CreateTransaction call.
 func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, t *asynqlib.Task) error {
 	var p BookLedgerPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
@@ -331,7 +455,7 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 		return fmt.Errorf("get batch: %w", err)
 	}
 
-	// Idempotency: already booked (or zero-fee already finalized).
+	// Outer idempotency guard: already booked (or zero-fee finalized).
 	if batch.LedgerTxnID != nil || batch.IsTerminal() {
 		s.logger.Info("wallet_bulk: book_batch_ledger no-op (already finalized)",
 			"batch_id", batch.ID, "status", batch.Status, "ledger_txn_id", batch.LedgerTxnID)
@@ -351,17 +475,48 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 
 	// Zero-fee batch (e.g. all rows failed at pre-flight): no Expense txn.
 	if totalFee == 0 {
-		batch.TotalFee = 0
-		batch.Status = domain.BulkTransferBatchStatusCompleted
-		batch.CompletedAt = &now
-		if err := s.batchRepo.Update(ctx, batch); err != nil {
+		// Use targeted column updates, not Save (M1 fix — avoids overwriting
+		// concurrent success_count/failed_count bumps).
+		if err := s.finalizeBatchColumns(ctx, batch.ID, 0, nil, &now); err != nil {
 			return fmt.Errorf("finalize zero-fee batch: %w", err)
 		}
 		s.logger.Info("wallet_bulk: zero-fee batch finalized", "batch_id", batch.ID)
 		return nil
 	}
 
-	// Book the aggregate Expense transaction.
+	// Non-zero fee: book the Expense txn + link atomically.
+	// C2 fix: with TxRunner wired, CreateTransaction and the batchRepo
+	// link update commit in the same DB transaction — closing the window
+	// where the completing-recovery cron could fire between the two and
+	// create a duplicate Expense txn.
+	if s.txRunner != nil {
+		_, err = s.txRunner.WithTransactionResult(ctx, func(txCtx context.Context) (interface{}, error) {
+			createdTxn, _, err := s.txnSvc.CreateTransaction(txCtx, &domain.Transaction{
+				Description:     fmt.Sprintf("Phí OnePay đợt chuyển tiền %s - batch #%d", batch.Filename, batch.ID),
+				TransactionType: domain.TransactionTypeExpense,
+				Amount:          totalFee,
+				Party:           "OnePay",
+				Status:          domain.TransactionStatusSettled,
+				CreatedBy:       uint(batch.CreatedBy),
+			})
+			if err != nil {
+				return nil, fmt.Errorf("create expense txn: %w", err)
+			}
+			ledgerID := uint64(createdTxn.ID)
+			if err := s.finalizeBatchColumns(txCtx, batch.ID, totalFee, &ledgerID, &now); err != nil {
+				return nil, fmt.Errorf("link ledger txn: %w", err)
+			}
+			s.logger.Info("wallet_bulk: aggregate fee booked (atomic)",
+				"batch_id", batch.ID, "txn_id", createdTxn.ID, "total_fee", totalFee)
+			return createdTxn, nil
+		})
+		return err
+	}
+
+	// Fallback path (no TxRunner — tests only). Mirrors the legacy non-atomic
+	// behavior; documented in plan.md Risk Assessment as the rare double-book
+	// window. NOT used in production.
+	s.logger.Warn("wallet_bulk: ProcessBookBatchLedger running without TxRunner (non-atomic)", "batch_id", batch.ID)
 	createdTxn, _, err := s.txnSvc.CreateTransaction(ctx, &domain.Transaction{
 		Description:     fmt.Sprintf("Phí OnePay đợt chuyển tiền %s - batch #%d", batch.Filename, batch.ID),
 		TransactionType: domain.TransactionTypeExpense,
@@ -373,28 +528,33 @@ func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("create expense txn: %w", err)
 	}
-
-	// Stamp ledger_txn_id + transition to completed. Idempotent via the
-	// LedgerTxnID != nil guard at the top of this function.
 	ledgerID := uint64(createdTxn.ID)
-	batch.TotalFee = totalFee
-	batch.LedgerTxnID = &ledgerID
-	batch.Status = domain.BulkTransferBatchStatusCompleted
-	batch.CompletedAt = &now
-	if err := s.batchRepo.Update(ctx, batch); err != nil {
-		// CRITICAL: the txn was created but we failed to link it. The
-		// completing-recovery cron will find this batch still in 'completing'
-		// (Update failed so status wasn't bumped) and re-attempt — but the
-		// txn already exists. The recovery handler must detect this case
-		// (see ProcessCompletingRecovery) and link the existing txn rather
-		// than creating a duplicate.
+	if err := s.finalizeBatchColumns(ctx, batch.ID, totalFee, &ledgerID, &now); err != nil {
 		s.logger.Error("wallet_bulk: CRITICAL — expense txn created but batch update failed",
 			"batch_id", batch.ID, "txn_id", createdTxn.ID, "error", err)
 		return fmt.Errorf("update batch with ledger_txn_id: %w", err)
 	}
-
-	s.logger.Info("wallet_bulk: aggregate fee booked",
+	s.logger.Info("wallet_bulk: aggregate fee booked (non-atomic)",
 		"batch_id", batch.ID, "txn_id", createdTxn.ID, "total_fee", totalFee)
+	return nil
+}
+
+// finalizeBatchColumns writes only the booking-related columns via a targeted
+// update (avoids overwriting concurrent success_count/failed_count bumps —
+// M1 fix). Pass ledgerTxnID=nil for the zero-fee path.
+func (s *WalletBulkTransferService) finalizeBatchColumns(ctx context.Context, batchID uint64, totalFee int64, ledgerTxnID *uint64, completedAt *time.Time) error {
+	updates := map[string]interface{}{
+		"total_fee":    totalFee,
+		"status":       string(domain.BulkTransferBatchStatusCompleted),
+		"completed_at": completedAt,
+		"updated_at":   s.clock(),
+	}
+	if ledgerTxnID != nil {
+		updates["ledger_txn_id"] = *ledgerTxnID
+	}
+	if err := s.batchRepo.UpdateColumns(ctx, batchID, updates); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -478,12 +638,11 @@ func (s *WalletBulkTransferService) ProcessCompletingRecovery(ctx context.Contex
 func computeContentHash(rows []BulkTransferRow) string {
 	sorted := make([]BulkTransferRow, len(rows))
 	copy(sorted, rows)
-	// Sort by VFIC for determinism (input order may vary between exports).
-	for i := 1; i < len(sorted); i++ {
-		for j := i; j > 0 && sorted[j-1].VFICCode > sorted[j].VFICCode; j-- {
-			sorted[j-1], sorted[j] = sorted[j], sorted[j-1]
-		}
-	}
+	// Sort by VFIC for determinism. sort.Slice is O(N log N) — M4 fix
+	// (the prior insertion sort was O(N²) at 5,000 rows = 25M comparisons).
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].VFICCode < sorted[j].VFICCode
+	})
 	h := sha256.New()
 	enc := json.NewEncoder(h)
 	enc.SetEscapeHTML(false)

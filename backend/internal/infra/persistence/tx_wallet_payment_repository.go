@@ -408,10 +408,15 @@ func (r *TxWalletPaymentRepository) HasNonTerminalByEntityID(ctx context.Context
 // Does NOT touch entity_id (notification path is resolved separately in
 // notifyEmployee).
 func (r *TxWalletPaymentRepository) UpdateBulkBatchLink(ctx context.Context, rowID uint64, batchID uint64, order uint, vficCode string) error {
+	// H5 fix: explicitly bump updated_at. GORM's autoUpdateTime tag only
+	// fires on struct-based Saves; map-based Updates skip it. Without this
+	// bump, ListStaleAuthorised (which keys off updated_at) could mis-classify
+	// a freshly-stamped row as stale.
 	updates := map[string]interface{}{
 		"bulk_transfer_batch_id": batchID,
 		"bulk_transfer_order":    order,
 		"vfic_code":              vficCode,
+		"updated_at":             clock.Now(),
 	}
 	if err := r.DB.WithContext(ctx).
 		Model(&domaintx.WalletPayment{}).

@@ -8,9 +8,9 @@ description: >-
   row); (2) Admin uploads that exported file to /admin/wallet → system parses
   each row, initiates a OnePay transfer via the full 5-step worker pattern,
   records success/failure per row, books the aggregate OnePay fee (3,850
-  VND/txn from DB schedule) as one Expense ledger entry per batch, and
+  Vnd/txn from DB schedule) as one Expense ledger entry per batch, and
   produces a downloadable "KQ Chuyen Tien" Excel.
-status: pending
+status: implemented
 priority: P1
 branch: "main"
 tags:
@@ -141,12 +141,55 @@ This is the **write-side companion** to the read-only bank-transfer-history plan
 
 | Phase | Name | Stage | Status |
 |-------|------|-------|--------|
-| 1 | [Domain & Migrations](./phase-01-domain-parser.md) | 2 | Pending |
-| 2 | [Timesheet Exporter (Chuyển OnePay)](./phase-02-timesheet-exporter.md) | 1 | Pending |
-| 3 | [Backend Pipeline, Worker & Ledger](./phase-03-backend-pipeline-ledger.md) | 2 | Pending |
-| 4 | [KQ Excel & Routes](./phase-04-kq-excel-routes.md) | 2 | Pending |
-| 5 | [Frontend UI (Timesheet + Wallet)](./phase-05-frontend-ui.md) | 1+2 | Pending |
-| 6 | [Verification](./phase-06-verification.md) | both | Pending |
+| 1 | [Domain & Migrations](./phase-01-domain-parser.md) | 2 | ✅ Implemented |
+| 2 | [Timesheet Exporter (Chuyển OnePay)](./phase-02-timesheet-exporter.md) | 1 | ✅ Implemented |
+| 3 | [Backend Pipeline, Worker & Ledger](./phase-03-backend-pipeline-ledger.md) | 2 | ✅ Implemented |
+| 4 | [KQ Excel & Routes](./phase-04-kq-excel-routes.md) | 2 | ✅ Implemented |
+| 5 | [Frontend UI (Timesheet + Wallet)](./phase-05-frontend-ui.md) | 1+2 | ✅ Implemented |
+| 6 | [Verification](./phase-06-verification.md) | both | ✅ Implemented (7 integration scenarios; full 18-scenario suite requires live OnePay provider) |
+
+## Implementation Notes (post-review)
+
+Implemented by `/ck:cook` across Phases 1-6, then hardened after a 6-CRITICAL
+code review pass. The review caught genuine money-moving safety gaps that
+were fixed before any app code shipped (migrations 092+093 are deployed to
+prod + demo; backend image not yet pushed).
+
+**Critical fixes applied (post-review):**
+- **C1**: terminal-error rows (ErrDuplicatePaymentInProgress, ErrFeeResolution)
+  now decrement total_count via DecrementTotalCount so batches no longer
+  deadlock waiting for rows that never reach a terminal state.
+- **C2**: ledger booking now runs CreateTransaction + batch link inside a
+  single DB transaction via TxRunner, closing the double-booking window the
+  completing-recovery cron could hit.
+- **C3**: every upload emits an audit row via the audit:log:write asynq task.
+- **C4**: SyncDispatcher test helper interface methods renamed to match the
+  concrete worker/service signatures so it's actually usable.
+- **C5**: enqueue_state flips to 'enqueued' only on full success; partial
+  failures leave it 'pending' for the stale-enqueue sweeper.
+- **C6**: row worker now performs a Step-0 wallet balance pre-check (mirrors
+  canonical disbursement_execute_worker.go); underfunded rows are skipped
+  without burning a OnePay fee.
+
+**High fixes:** H1 (real excelize-built xlsx fixture for the missing-SWIFT
+integration test), H2 (upload response carries fee_resolution_ok=false when
+the schedule lookup fails), H4 (dropped NOWAIT from UpdateWithLock to reduce
+retry churn), H5 (UpdateBulkBatchLink bumps updated_at explicitly), H6
+(notifyEmployee now resolves bulk rows via recipient_account_no →
+employees.bank_account_number per Validation Decision V6).
+
+**Medium fixes:** M1 (targeted column updates not full-row Save),
+M3 (extractErrorCode returns fixed "transfer_failed" tag, raw err stays in
+error_message), M4 (sort.Slice for computeContentHash), M7 (fail-fast nil
+guards in NewWalletBulkTransferService).
+
+**Outstanding (deferred):**
+- Full 18-scenario integration suite requires a live OnePay provider +
+  seeded export file; the runbook `docs/runbooks/wallet-bulk-transfer-smoke-test.md`
+  documents the manual end-to-end path.
+- App code (backend image + frontend bundle) is NOT yet deployed — migrations
+  only. Deploy via `make deploy` once the team is ready to enable the feature
+  flag (set OTP_ENABLE=true in production first).
 
 ## Dependencies
 

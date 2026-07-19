@@ -24,10 +24,10 @@ const THEME = {
     loaderColor: 'text-employee',
   },
   corporate: {
-    headerBg: 'bg-[hsl(220,90%,12%)]',
-    activeTabText: 'text-blue-700',
-    activeTabCount: 'bg-blue-100 text-blue-700',
-    loaderColor: 'text-[hsl(220,90%,12%)]',
+    headerBg: 'bg-employee',
+    activeTabText: 'text-green-700',
+    activeTabCount: 'bg-green-100 text-green-700',
+    loaderColor: 'text-employee',
   },
 } as const;
 

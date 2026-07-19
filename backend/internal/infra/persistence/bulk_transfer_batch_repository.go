@@ -68,6 +68,22 @@ func (r *BulkTransferBatchRepository) Update(ctx context.Context, b *domain.Bulk
 	return nil
 }
 
+// UpdateColumns writes only the named columns. Targeted (not full-row Save)
+// so concurrent success_count/failed_count bumps from markRowTerminal don't
+// get overwritten by a Save that re-reads stale counts.
+func (r *BulkTransferBatchRepository) UpdateColumns(ctx context.Context, id uint64, columns map[string]interface{}) error {
+	if len(columns) == 0 {
+		return nil
+	}
+	if err := r.DB.WithContext(ctx).
+		Model(&domain.BulkTransferBatch{}).
+		Where("id = ?", id).
+		Updates(columns).Error; err != nil {
+		return fmt.Errorf("bulk_transfer_batches: update columns: %w", err)
+	}
+	return nil
+}
+
 // UpdateWithLock acquires SELECT ... FOR UPDATE on the batch row, runs fn
 // (which may mutate SuccessCount/FailedCount/Status and decide whether to
 // transition to `completing`), saves, and returns whether the caller should
@@ -92,7 +108,12 @@ func (r *BulkTransferBatchRepository) UpdateWithLock(
 	)
 	err := r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var b domain.BulkTransferBatch
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "NOWAIT"}).
+		// H4 fix: drop Options: "NOWAIT". The default SELECT ... FOR UPDATE
+		// blocks until the lock is acquired; contention is bounded (one
+		// batch is processed by one row-worker at a time) and the wait is
+		// short. NOWAIT caused two racing workers to error with 1205 and
+		// create retry churn via asynq for no real benefit.
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			First(&b, "id = ?", id).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return domain.ErrBulkTransferBatchNotFound

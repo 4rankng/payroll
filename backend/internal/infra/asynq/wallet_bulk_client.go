@@ -54,3 +54,20 @@ func (c *Client) EnqueueBookBatchLedger(payload wallet_bulk.BookLedgerPayload) e
 	_ = info
 	return nil
 }
+
+// EnqueueWalletBulkAudit satisfies wallet_bulk.AuditEventEmitter by delegating
+// to the existing audit:log:write task. Distinct name from EnqueueAuditLogWrite
+// to avoid colliding with the exported AuditLogWritePayload method.
+func (c *Client) EnqueueWalletBulkAudit(p wallet_bulk.AuditLogPayload) error {
+	return c.EnqueueAuditLogWrite(AuditLogWritePayload{
+		UserID:       p.UserID,
+		Action:       p.Action,
+		EntityType:   p.EntityType,
+		EntityID:     p.EntityID,
+		Message:      p.Message,
+		IPAddress:    p.IPAddress,
+		UserAgent:    p.UserAgent,
+		MetadataJSON: p.MetadataJSON,
+		CreatedAt:    p.CreatedAt,
+	})
+}

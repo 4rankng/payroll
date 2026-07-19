@@ -8,6 +8,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/xuri/excelize/v2"
 )
 
 const flowWalletBulk = "WalletBulkTransfer"
@@ -181,19 +183,43 @@ func uploadBulkTransferFile(client *APIClient, filename, contentType string, con
 	return http.DefaultClient.Do(req)
 }
 
-// buildXlsxWithoutSwiftColumn constructs a minimal valid .xlsx with the
+// buildXlsxWithoutSwiftColumn constructs a valid .xlsx with the
 // eMB_BulkPayment sheet but headers WITHOUT the Mã SWIFT column. Used to
 // verify the parser's ErrMissingSwiftColumn path via the HTTP API.
 //
-// Implementation note: this builds the workbook in-process to avoid
-// committing a binary fixture. Mirrors the test helper pattern in
-// wallet_bulk/parser_test.go.
+// H1 fix: this builds the workbook in-process via excelize (the prior
+// version returned an empty byte slice and the test would never reach
+// ErrMissingSwiftColumn — it'd hit ErrInvalidSheet or open-xlsx error).
 func buildXlsxWithoutSwiftColumn() []byte {
-	// Defer to the Go-side helper — we share the same excelize layout as
-	// the parser tests. Importing the wallet_bulk package from main is
-	// not possible (cycle), so we hand-roll a minimal xlsx via the
-	// mime/multipart path. For now, return a tiny placeholder that the
-	// server will reject as invalid_excel_format (parser can't open it).
-	// A proper binary fixture can be added later if needed.
-	return []byte{}
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+
+	const sheet = "eMB_BulkPayment"
+	if idx, _ := f.GetSheetIndex("Sheet1"); idx == 0 {
+		_ = f.SetSheetName("Sheet1", sheet)
+	} else {
+		_, _ = f.NewSheet(sheet)
+	}
+
+	// Headers WITHOUT "Mã SWIFT" — only 6 columns.
+	headers := []string{
+		"STT", "Số tài khoản", "Tên người thụ hưởng",
+		"Ngân hàng thụ hưởng/Chi nhánh", "Số tiền", "Nội dung chuyển khoản",
+	}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 2)
+		_ = f.SetCellValue(sheet, cell, h)
+	}
+	// One data row at row 3.
+	data := []interface{}{1, "99990001", "Test A", "Quân đội (MB)", 1500000, "VFIC3ba3ec31LUONG"}
+	for i, v := range data {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 3)
+		_ = f.SetCellValue(sheet, cell, v)
+	}
+
+	var buf bytes.Buffer
+	if err := f.Write(&buf); err != nil {
+		return nil
+	}
+	return buf.Bytes()
 }

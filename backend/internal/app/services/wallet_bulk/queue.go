@@ -46,6 +46,27 @@ type BulkTransferEnqueuer interface {
 	EnqueueBookBatchLedger(payload BookLedgerPayload) error
 }
 
+// AuditEventEmitter is the narrow port for emitting audit log entries.
+// Implemented by the asynq client wrapper (EnqueueAuditLogWrite); nil-safe
+// in tests. Required for C3 fix — every upload emits an audit row.
+type AuditEventEmitter interface {
+	EnqueueAuditLogWrite(p AuditLogPayload) error
+}
+
+// AuditLogPayload mirrors asynq.AuditLogWritePayload but lives in the
+// wallet_bulk package to keep the service decoupled from infra.
+type AuditLogPayload struct {
+	UserID       uint      `json:"user_id"`
+	Action       string    `json:"action"`
+	EntityType   string    `json:"entity_type"`
+	EntityID     *uint     `json:"entity_id,omitempty"`
+	Message      string    `json:"message"`
+	IPAddress    string    `json:"ip_address,omitempty"`
+	UserAgent    string    `json:"user_agent,omitempty"`
+	MetadataJSON string    `json:"metadata_json,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 // RowTaskHandler is the port the asynq mux calls into. Implemented by the
 // worker; defined here so the mux doesn't depend on the concrete struct.
 type RowTaskHandler interface {
