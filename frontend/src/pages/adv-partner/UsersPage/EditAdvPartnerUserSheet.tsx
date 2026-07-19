@@ -109,12 +109,12 @@ function Avatar({ name, username }: { name: string; username?: string }) {
     .join("")
     .toUpperCase();
   const colors = [
-    "from-violet-500 to-purple-600",
+    "from-teal-500 to-cyan-600",
     "from-sky-500 to-blue-600",
     "from-emerald-500 to-green-600",
     "from-amber-500 to-orange-600",
     "from-rose-500 to-red-600",
-    "from-indigo-500 to-blue-700",
+    "from-lime-500 to-emerald-600",
   ];
   const gradient = colors[name.charCodeAt(0) % colors.length];
   return (

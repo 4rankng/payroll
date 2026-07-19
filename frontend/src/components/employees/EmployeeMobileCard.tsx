@@ -16,7 +16,7 @@ const getPaymentScheduleBadgeConfig = (
     case "weekly":
       return { className: "bg-sky-50 text-sky-700 border-border", label: "Tuần" };
     case "monthly":
-      return { className: "bg-violet-50 text-violet-700 border-violet-200", label: "Tháng" };
+      return { className: "bg-teal-50 text-teal-700 border-teal-200", label: "Tháng" };
     case "flexible":
       return { className: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Linh động" };
   }

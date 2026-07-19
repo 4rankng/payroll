@@ -295,7 +295,7 @@ export default function PayrateEditPage() {
             {isNew ? 'Tạo cấu hình lương mới' : 'Chỉnh sửa cấu hình lương'}
           </h1>
           {isFlexible && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
               <Zap className="h-3 w-3" />
               Linh hoạt
             </span>

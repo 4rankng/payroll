@@ -16,8 +16,8 @@ import type { ProjectProfitabilityItem, ProjectWeeklySeries } from '@/types/api/
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const CHART_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#0d9488',
+  '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#0ea5e9',
 ];
 
 function buildColorMap(series: ProjectWeeklySeries[]): Map<number, string> {

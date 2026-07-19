@@ -249,7 +249,7 @@ export default function PayrateEditPageMobile() {
           <>
             {/* Flexible badge */}
             {isFlexible && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                 <Zap className="h-3 w-3" />
                 Linh hoạt
               </span>

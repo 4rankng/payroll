@@ -792,7 +792,7 @@ const MONOGRAM_PALETTE = [
   'bg-blue-500/10 text-blue-600',
   'bg-emerald-500/10 text-emerald-600',
   'bg-amber-500/10 text-amber-600',
-  'bg-violet-500/10 text-violet-600',
+  'bg-teal-500/10 text-teal-600',
   'bg-rose-500/10 text-rose-600',
   'bg-sky-500/10 text-sky-600',
   'bg-slate-500/10 text-slate-600',
@@ -835,7 +835,7 @@ function AttemptTypeBadge({ attemptType }: { attemptType: string }) {
     attemptType === 'check_in'
       ? 'bg-primary/10 text-primary border-primary/20'
       : attemptType === 'check_out'
-        ? 'bg-violet-500/10 text-violet-600 border-violet-500/20'
+        ? 'bg-teal-500/10 text-teal-600 border-teal-500/20'
         : 'bg-muted text-muted-foreground border-border/60';
   return (
     <span className={cn('inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-tight', tone)}>

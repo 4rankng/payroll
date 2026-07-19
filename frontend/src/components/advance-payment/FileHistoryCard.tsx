@@ -26,7 +26,7 @@ const TYPE_CONFIG = {
   },
   advance_payment_sao_ke_export: {
     label: "Xuất sao kê",
-    badgeClass: "bg-purple-100 text-purple-800 border-purple-200",
+    badgeClass: "bg-teal-100 text-teal-800 border-teal-200",
     Icon: FileSpreadsheet,
   },
   advance_payment_sao_ke_result: {

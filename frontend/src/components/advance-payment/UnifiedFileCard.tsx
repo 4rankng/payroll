@@ -50,9 +50,9 @@ const TYPE_CONFIG = {
   },
   advance_payment_sao_ke_export: {
     label: 'Xuất sao kê',
-    iconboxClass: 'bg-purple-100 text-purple-600',
-    textClass: 'text-purple-600',
-    dotClass: 'bg-purple-500',
+    iconboxClass: 'bg-teal-100 text-teal-600',
+    textClass: 'text-teal-600',
+    dotClass: 'bg-teal-500',
     Icon: FileSpreadsheet,
   },
   advance_payment_sao_ke_result: {

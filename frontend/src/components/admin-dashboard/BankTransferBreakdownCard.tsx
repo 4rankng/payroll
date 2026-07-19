@@ -15,7 +15,7 @@ const PALETTE = [
   '#fbbf24', // amber      (rank 4)
   '#f87171', // rose       (rank 5)
   '#94a3b8', // slate      (others)
-  '#a78bfa', // violet
+  '#14b8a6', // teal
   '#fb923c', // orange
   '#4ade80', // green
   '#38bdf8', // light sky

@@ -141,8 +141,8 @@ const SettingsPage = () => {
 
           <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-violet-500/10">
-                <Building2 className="h-3.5 w-3.5 text-violet-600" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/10">
+                <Building2 className="h-3.5 w-3.5 text-emerald-600" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold">Thông tin đối tác</h2>

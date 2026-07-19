@@ -133,12 +133,12 @@ export function EmployeeSummaryCard({ employee, className }: EmployeeSummaryCard
           {/* Average Weekly Earnings */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-600" />
+              <TrendingUp className="h-4 w-4 text-teal-600" />
               <span className="typography-body-medium typography-label-medium text-muted-foreground">
                 Thu nhập TB/tuần
               </span>
             </div>
-            <div className="typography-title-large text-purple-600">
+            <div className="typography-title-large text-teal-600">
               {formatCurrency(summary.avg_weekly_earnings_vnd)}
             </div>
           </div>
