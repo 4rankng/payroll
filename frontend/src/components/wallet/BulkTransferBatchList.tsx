@@ -166,7 +166,11 @@ export const BulkTransferBatchList = memo(function BulkTransferBatchList({
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             {selectedId !== null ? (
-              <BulkTransferProgress batchId={selectedId} />
+              // key forces a fresh component instance (and fresh prevStatus
+              // ref) whenever the admin opens a different batch — otherwise
+              // the auto-download transition guard would carry state across
+              // batch selections (reviewer W2).
+              <BulkTransferProgress key={selectedId} batchId={selectedId} />
             ) : null}
           </div>
         </SheetContent>

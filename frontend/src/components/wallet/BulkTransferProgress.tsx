@@ -75,15 +75,26 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
     downloadKQ.mutate(batchId);
   }, [downloadKQ, batchId]);
 
-  // Auto-download the KQ Excel exactly once when the batch reaches a
-  // terminal "completed" state. The async per-row worker + IPN handshake
-  // take a few seconds, so we can only fetch KQ after the batch flips to
-  // completed — never at upload time. The ref guards against StrictMode
-  // double-effect firing and re-fetches on the same completion event.
+  // Auto-download the KQ Excel exactly once, ONLY when the batch
+  // transitions INTO "completed" while this view is open. Without the
+  // transition check, opening any historical completed batch from the
+  // wallet list would trigger an unsolicited download (reviewer W2).
+  //
+  // The transition is detected by tracking the previous status in a ref
+  // and firing only when prev !== 'completed' && curr === 'completed'.
+  // This also covers StrictMode's simulated unmount/remount: on remount,
+  // prevStatusRef starts at undefined; if the batch is ALREADY completed
+  // when the sheet opens, we treat that as "historical" and skip.
+  const prevStatusRef = useRef<string | undefined>(undefined);
   const autoDownloadFired = useRef(false);
   useEffect(() => {
     if (!batchQuery.data) return;
-    if (batchQuery.data.status !== 'completed') return;
+    const prev = prevStatusRef.current;
+    const curr = batchQuery.data.status;
+    prevStatusRef.current = curr;
+    // Fire only on the live processing → completed transition.
+    if (prev !== 'processing' && prev !== 'completing' && prev !== 'pending') return;
+    if (curr !== 'completed') return;
     if (autoDownloadFired.current) return;
     if (downloadKQ.isPending) return;
     autoDownloadFired.current = true;
