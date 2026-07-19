@@ -9,7 +9,7 @@ FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(TAG)
 
 # Buildx builder (shared with backend) — persistent docker-container builder.
 # The builder's own volume caches layers; BUILD_CACHE_DIR adds an on-host cache
-# export/import so builds skip the slow `yarn install` step WITHOUT a ~100s
+# export/import so builds skip the slow `pnpm install` step WITHOUT a ~100s
 # registry manifest round-trip (type=registry,ref=...) on every build.
 BUILDER ?= bb
 BUILD_CACHE_DIR ?= $(HOME)/.cache/payroll-frontend-buildx

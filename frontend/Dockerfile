@@ -14,23 +14,25 @@
 FROM --platform=$BUILDPLATFORM node:22-alpine AS deps
 WORKDIR /app
 
-# Configure yarn for better performance
-RUN yarn config set network-timeout 600000 && \
-    yarn config set cache-folder /yarn-cache
+# Enable corepack to use pnpm (version pinned via package.json's packageManager field)
+RUN corepack enable
 
 # Copy package files first for better layer caching
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies with cache mount for faster rebuilds
-RUN --mount=type=cache,target=/yarn-cache \
-    --mount=type=cache,target=/root/.yarn \
-    yarn install --frozen-lockfile --network-timeout 600000
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Builder stage - runs the Vite/Workbox toolchain natively ($BUILDPLATFORM) to
 # avoid the QEMU-emulation SIGSEGV. Output (dist/) is static, copied into the
 # linux/amd64 production stage below.
 FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 WORKDIR /app
+
+# Enable corepack so pnpm (pinned via package.json#packageManager) is available
+# for the build step. Dependencies themselves come from the deps stage.
+RUN corepack enable
 
 # Build arguments for environment variables
 ARG VITE_API_BASE_URL=https://tingting.vip
@@ -46,14 +48,14 @@ ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json /app/yarn.lock ./
+COPY --from=deps /app/package.json /app/pnpm-lock.yaml ./
 
 # Copy source code (excluding files in .dockerignore)
 COPY . .
 
 # Build the application with build cache
 RUN --mount=type=cache,target=/app/.vite \
-    yarn build
+    pnpm build
 
 # Production stage - static files only
 FROM node:22-alpine AS production
@@ -68,7 +70,7 @@ COPY --from=builder /app/dist ./dist
 COPY serve.json ./dist/serve.json
 
 # Install serve to serve static files
-RUN yarn global add serve
+RUN npm install -g serve
 
 # Expose port 3000
 EXPOSE 3000
