@@ -67,7 +67,7 @@ function MonthNavigator({ value, onChange }: { value: string; onChange: (v: stri
       <button
         onClick={goPrev}
         disabled={currentIdx <= 0}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-[transform,background-color,color] duration-150 hover:bg-muted/80 hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
         aria-label="Tháng trước"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -80,7 +80,7 @@ function MonthNavigator({ value, onChange }: { value: string; onChange: (v: stri
       <button
         onClick={goNext}
         disabled={currentIdx >= monthOnlyOptions.length - 1}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-[transform,background-color,color] duration-150 hover:bg-muted/80 hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
         aria-label="Tháng sau"
       >
         <ChevronRight className="h-4 w-4" />
@@ -344,9 +344,9 @@ const PartnerDashboardMobile = () => {
               </div>
             ))
           ) : topEmployees.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <Users className="w-5 h-5 text-muted-foreground/40" />
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted ring-1 ring-border/60">
+                <Users className="w-6 h-6 text-muted-foreground/50" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">Chưa có dữ liệu thanh toán</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Chọn tháng khác để xem</p>

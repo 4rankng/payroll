@@ -86,8 +86,8 @@ function DashboardDisclosureSection({
           </span>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="px-4 pb-4 pt-0">
-        <div className="space-y-4">{children}</div>
+      <AccordionContent className="ct-card-body gap-4 px-4 pb-4 pt-0">
+        {children}
       </AccordionContent>
     </AccordionItem>
   );
@@ -255,7 +255,7 @@ const AdminDashboardMobile = () => {
           pendingApprovals > 0 ? (
             <button
               onClick={dashboardNav.navigateToPendingApprovals}
-              className="flex min-h-11 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-700 transition-colors active:bg-amber-100 motion-reduce:transition-none"
+              className="ct-badge ct-badge-warning ct-badge-lg min-h-11 gap-1.5 border-warning/30 bg-warning/10 px-3 font-bold normal-case motion-reduce:transition-none"
             >
               <AlertCircle className="h-3.5 w-3.5" />
               {pendingApprovals} chờ duyệt
@@ -269,15 +269,17 @@ const AdminDashboardMobile = () => {
           <button
             onClick={() => setSelectedMonth('all')}
             className={cn(
-              'min-h-11 rounded-full px-3.5 text-xs font-semibold transition-colors motion-reduce:transition-none',
-              selectedMonth === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-muted-foreground',
+              'ct-btn ct-btn-sm h-11 min-h-11 rounded-full border-0 px-3.5 text-xs font-semibold normal-case shadow-none',
+              selectedMonth === 'all'
+                ? 'ct-btn-active bg-primary text-primary-foreground'
+                : 'bg-muted/60 text-muted-foreground hover:bg-muted',
             )}
           >
             Tất cả
           </button>
           <button
             onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/60 text-muted-foreground active:bg-muted"
+            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
             aria-label="Tháng trước"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -293,7 +295,7 @@ const AdminDashboardMobile = () => {
           </div>
           <button
             onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/60 text-muted-foreground active:bg-muted"
+            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
             aria-label="Tháng sau"
           >
             <ChevronRight className="h-4 w-4" />
