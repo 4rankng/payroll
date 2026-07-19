@@ -1,9 +1,9 @@
 ---
 phase: 1
-title: "Phase A: Eliminate timesheet-date fetch at root"
-status: pending
+title: 'Phase A: Eliminate timesheet-date fetch at root'
+status: completed
 priority: P1
-effort: "L"
+effort: L
 dependencies: []
 ---
 

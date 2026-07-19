@@ -14,6 +14,7 @@ import (
 	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/clock"
 
 	"github.com/google/uuid"
 
@@ -231,10 +232,21 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 
 	// Create BulkTransferFile (source='ninepay')
 	fileDataJSON, _ := json.Marshal(fileDataArray)
+	// Populate FromDate/ToDate/ForMonth so the history view's file-dates fast
+	// path resolves without a timesheet fetch (Phase A, red-team F1/H2).
+	fromDateCopy := fromDate
+	toDateCopy := toDate
+	forMonthStr := ""
+	if isMonthly {
+		forMonthStr = monthStart.Format("2006-01")
+	}
 	btf := &domain.BulkTransferFile{
 		Filename:          batchID,
 		Cycle:             &cycle,
 		CreatedBy:         req.CreatedBy,
+		FromDate:          &fromDateCopy,
+		ToDate:            &toDateCopy,
+		ForMonth:          stringPtrOrNil(forMonthStr),
 		TransactionsCount: len(fileDataArray),
 		CompletedCount:    0,
 		FailedCount:       0,
@@ -247,7 +259,7 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 	}
 
 	// Create transaction codes with FileID set
-	transactionCodes := buildTransactionCodes(validData, cycle, btf.ID)
+	transactionCodes := buildTransactionCodes(validData, cycle, btf.ID, fromDate, toDate)
 	if len(transactionCodes) > 0 {
 		if err := s.transactionCodeRepo.CreateBatch(ctx, transactionCodes); err != nil {
 			return nil, fmt.Errorf("failed to create transaction codes: %w", err)
@@ -495,8 +507,15 @@ func (s *NinePayBulkTransferService) buildFileData(data *excel.BulkTransferData)
 }
 
 // buildTransactionCodes creates TransactionCode records with FileID pre-set.
-func buildTransactionCodes(data *excel.BulkTransferData, cycle string, fileID uint) []*domain.TransactionCode {
+// fromDate/toDate populate CyclePayData.FromDate/ToDate so the history view
+// resolves the cycle without a timesheet fetch (Phase A).
+func buildTransactionCodes(data *excel.BulkTransferData, cycle string, fileID uint, fromDate, toDate time.Time) []*domain.TransactionCode {
 	var codes []*domain.TransactionCode
+
+	cycleNum := 1
+	if cycle != string(domain.PaymentScheduleMonthly) {
+		cycleNum = clock.KyFromWorkDay(fromDate.Day())
+	}
 
 	for key := range data.EmployeeProjectAmounts {
 		transactionCode := data.TransactionCodes[key]
@@ -509,6 +528,8 @@ func buildTransactionCodes(data *excel.BulkTransferData, cycle string, fileID ui
 		project := data.ProjectData[key.ProjectID]
 		amount := data.EmployeeProjectAmounts[key]
 
+		// Copy loop-local date values so each pointer address is stable.
+		fd, td := fromDate, toDate
 		var tcData domain.TransactionCodeData
 		payData := &domain.CyclePayData{
 			TimesheetIDs: timesheetIDs,
@@ -516,6 +537,9 @@ func buildTransactionCodes(data *excel.BulkTransferData, cycle string, fileID ui
 			ProjectID:    project.ID,
 			Amount:       amount,
 			FileID:       &fileID,
+			FromDate:     &fd,
+			ToDate:       &td,
+			CycleNum:     cycleNum,
 		}
 
 		if cycle == string(domain.PaymentScheduleMonthly) {
@@ -532,4 +556,12 @@ func buildTransactionCodes(data *excel.BulkTransferData, cycle string, fileID ui
 	}
 
 	return codes
+}
+
+// stringPtrOrNil returns a pointer to s when non-empty, else nil.
+func stringPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

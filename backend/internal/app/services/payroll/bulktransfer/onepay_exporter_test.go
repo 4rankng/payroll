@@ -88,7 +88,7 @@ func TestBuildRowsWithSwift_HappyPath(t *testing.T) {
 		},
 	}
 
-	rows, skipped, txnCodes, err := e.buildRowsWithSwift(context.Background(), data, "weekly")
+	rows, skipped, txnCodes, err := e.buildRowsWithSwift(context.Background(), data, "weekly", time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 7, 7, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("buildRowsWithSwift: %v", err)
 	}
@@ -140,7 +140,7 @@ func TestBuildRowsWithSwift_SkipPaths(t *testing.T) {
 		},
 	}
 
-	rows, skipped, txnCodes, err := e.buildRowsWithSwift(context.Background(), data, "weekly")
+	rows, skipped, txnCodes, err := e.buildRowsWithSwift(context.Background(), data, "weekly", time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 7, 7, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("buildRowsWithSwift: %v", err)
 	}
@@ -183,7 +183,7 @@ func TestBuildRowsWithSwift_BankRepoError(t *testing.T) {
 		ProjectData:     map[uint]excel.Project{10: {ID: 10, Name: "P"}},
 		TransactionCodes: map[excel.EmployeeProjectKey]string{{EmployeeID: 1, ProjectID: 10}: "VFICxxx"},
 	}
-	rows, skipped, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly")
+	rows, skipped, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly", time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 7, 7, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -282,7 +282,7 @@ func TestBuildRowsWithSwift_PaymentDetailIsBareVFIC(t *testing.T) {
 		},
 	}
 
-	rows, _, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly")
+	rows, _, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly", time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 7, 7, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("buildRowsWithSwift: %v", err)
 	}

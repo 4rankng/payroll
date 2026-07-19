@@ -1,9 +1,9 @@
 ---
 phase: 2
-title: "Phase B: Batch unbatched GetByIDs/FindByCodes"
-status: pending
+title: 'Phase B: Batch unbatched GetByIDs/FindByCodes'
+status: in-progress
 priority: P1
-effort: "M"
+effort: M
 dependencies: []
 ---
 

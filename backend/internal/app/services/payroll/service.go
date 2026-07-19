@@ -342,28 +342,42 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 	}
 	codeData := make(map[string]domain.TransactionCodeData, len(codeRows))
 	timesheetIDSet := make(map[uint]struct{})
+	// Phase A (red-team F1/F5): if every parsed transaction code carries its
+	// own persisted FromDate, the resolver's per-entry branch resolves every
+	// cycle without a timesheet lookup, so we skip the union fetch entirely.
+	// If any code lacks FromDate (legacy data), fall back to today's behavior:
+	// one batched union fetch over all referenced timesheet IDs.
+	allCodesHavePersistedFromDate := len(codeRows) > 0
 	for _, row := range codeRows {
 		var data domain.TransactionCodeData
 		if json.Unmarshal(row.Data, &data) != nil || data.WeeklyPay == nil {
+			allCodesHavePersistedFromDate = false
 			continue
 		}
 		codeData[row.Code] = data
-		for _, id := range data.WeeklyPay.TimesheetIDs {
-			timesheetIDSet[id] = struct{}{}
+		if data.WeeklyPay.FromDate == nil {
+			allCodesHavePersistedFromDate = false
+		}
+		if !allCodesHavePersistedFromDate {
+			for _, id := range data.WeeklyPay.TimesheetIDs {
+				timesheetIDSet[id] = struct{}{}
+			}
 		}
 	}
-	timesheetIDs := make([]uint, 0, len(timesheetIDSet))
-	for id := range timesheetIDSet {
-		timesheetIDs = append(timesheetIDs, id)
-	}
-	// Only the timesheet date is needed downstream (in resolveWeeklyHistoryCycle),
-	// so use the lightweight date-only projection instead of GetByIDs, which would
-	// load full rows + relationship preloads for thousands of timesheets.
 	timesheetDates := map[uint]time.Time{}
-	if len(timesheetIDs) > 0 {
-		timesheetDates, err = s.timesheetRepo.GetTimesheetDatesByIDs(ctx, timesheetIDs)
-		if err != nil {
-			return nil, err
+	if !allCodesHavePersistedFromDate {
+		timesheetIDs := make([]uint, 0, len(timesheetIDSet))
+		for id := range timesheetIDSet {
+			timesheetIDs = append(timesheetIDs, id)
+		}
+		// Only the timesheet date is needed downstream (in resolveWeeklyHistoryCycle),
+		// so use the lightweight date-only projection instead of GetByIDs, which would
+		// load full rows + relationship preloads for thousands of timesheets.
+		if len(timesheetIDs) > 0 {
+			timesheetDates, err = s.timesheetRepo.GetTimesheetDatesByIDs(ctx, timesheetIDs)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -540,6 +554,24 @@ func fixedWeeklyCycle(fromDate, toDate time.Time) (int, bool) {
 }
 
 func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain.CyclePayData, timesheetDates map[uint]time.Time, workMonth time.Time) (int, time.Time, time.Time, bool) {
+	// NEW (Phase A, red-team F2): when the transaction code carries its own
+	// persisted FromDate, derive the cycle directly via KyFromWorkDay and
+	// reconstruct canonical cycle boundaries. This avoids fixedWeeklyCycle,
+	// which rejects off-boundary export ranges (e.g. 2026-07-03..07-09), and
+	// lets the history view resolve with zero timesheet queries for new data.
+	// Per-entry resolution: each weeklyData carries its own range, so a file
+	// mixing Ky1+Ky2 entries resolves correctly (red-team F4).
+	if weeklyData != nil && weeklyData.FromDate != nil {
+		fd := weeklyData.FromDate.In(clock.DefaultLocation)
+		if fd.Year() == workMonth.Year() && fd.Month() == workMonth.Month() && fd.Day() >= 1 && fd.Day() <= 28 {
+			if cycle := clock.KyFromWorkDay(fd.Day()); cycle >= 1 && cycle <= 4 {
+				fromDate := time.Date(workMonth.Year(), workMonth.Month(), clock.WorkStartDay(cycle), 0, 0, 0, 0, clock.DefaultLocation)
+				return cycle, fromDate, fromDate.AddDate(0, 0, 6), true
+			}
+		}
+		// FromDate present but out of range / zero-value (red-team F-MEDIUM-1):
+		// fall through to the file-dates and timesheet paths rather than fail.
+	}
 	if file.FromDate != nil && file.ToDate != nil {
 		if cycle, ok := fixedWeeklyCycle(*file.FromDate, *file.ToDate); ok && file.FromDate.Year() == workMonth.Year() && file.FromDate.Month() == workMonth.Month() {
 			return cycle, file.FromDate.In(clock.DefaultLocation), file.ToDate.In(clock.DefaultLocation), true

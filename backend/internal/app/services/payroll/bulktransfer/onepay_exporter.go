@@ -148,7 +148,7 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	}
 	data := plan.ValidatedData.ValidData
 
-	rows, skipped, txnCodes, err := e.buildRowsWithSwift(ctx, data, plan.Cycle)
+	rows, skipped, txnCodes, err := e.buildRowsWithSwift(ctx, data, plan.Cycle, plan.FromDate, plan.ToDate)
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +203,7 @@ func (e *OnePayExporter) buildRowsWithSwift(
 	ctx context.Context,
 	data *excel.BulkTransferData,
 	cycle string,
+	fromDate, toDate time.Time,
 ) ([]OnePayExportRow, []OnePaySkippedEmployee, []*domain.TransactionCode, error) {
 	// Deterministic iteration order: by (employee_id, project_id) ascending.
 	keys := make([]excel.EmployeeProjectKey, 0, len(data.EmployeeProjectAmounts))
@@ -309,7 +310,7 @@ func (e *OnePayExporter) buildRowsWithSwift(
 		}
 		rows = append(rows, row)
 
-		txnCodes = append(txnCodes, buildTransactionCode(vfic, emp, project, timesheetIDs, amount, cycle))
+		txnCodes = append(txnCodes, buildTransactionCode(vfic, emp, project, timesheetIDs, amount, cycle, fromDate, toDate))
 	}
 
 	return rows, skipped, txnCodes, nil
@@ -318,7 +319,14 @@ func (e *OnePayExporter) buildRowsWithSwift(
 // buildTransactionCode constructs one TransactionCode row linking the VFIC
 // back to its source timesheets so the worker (Phase 3) can resolve the
 // employee + project for notification purposes. Mirrors export_service.go:172.
-func buildTransactionCode(vfic string, emp excel.Employee, project excel.Project, timesheetIDs []uint, amount int64, cycle string) *domain.TransactionCode {
+// fromDate/toDate populate CyclePayData so the history view resolves the cycle
+// without a timesheet fetch (Phase A, red-team M1).
+func buildTransactionCode(vfic string, emp excel.Employee, project excel.Project, timesheetIDs []uint, amount int64, cycle string, fromDate, toDate time.Time) *domain.TransactionCode {
+	cycleNum := 1
+	if cycle != string(domain.PaymentScheduleMonthly) {
+		cycleNum = clock.KyFromWorkDay(fromDate.Day())
+	}
+	fd, td := fromDate, toDate
 	var tcData domain.TransactionCodeData
 	if cycle == string(domain.PaymentScheduleMonthly) {
 		tcData = domain.TransactionCodeData{
@@ -327,6 +335,9 @@ func buildTransactionCode(vfic string, emp excel.Employee, project excel.Project
 				EmployeeID:   emp.ID,
 				ProjectID:    project.ID,
 				Amount:       amount,
+				FromDate:     &fd,
+				ToDate:       &td,
+				CycleNum:     cycleNum,
 			},
 		}
 	} else {
@@ -336,6 +347,9 @@ func buildTransactionCode(vfic string, emp excel.Employee, project excel.Project
 				EmployeeID:   emp.ID,
 				ProjectID:    project.ID,
 				Amount:       amount,
+				FromDate:     &fd,
+				ToDate:       &td,
+				CycleNum:     cycleNum,
 			},
 		}
 	}

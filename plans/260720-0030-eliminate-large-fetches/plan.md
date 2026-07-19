@@ -1,14 +1,21 @@
 ---
-title: "Eliminate >=1000-row fetches: bank-transfer-history + unbatched GetByIDs"
-description: "Root-cause fix for the 5,334-row timesheet-date fetch (data-modeling gap in CyclePayData), plus batching for 6 unbatched WHERE id IN (?) repo methods and capping 2 upstream unbounded fetches (ListWeeklyForWorkMonth, visible_t CTE)."
-status: pending
+title: 'Eliminate >=1000-row fetches: bank-transfer-history + unbatched GetByIDs'
+description: >-
+  Root-cause fix for the 5,334-row timesheet-date fetch (data-modeling gap in
+  CyclePayData), plus batching for 6 unbatched WHERE id IN (?) repo methods and
+  capping 2 upstream unbounded fetches (ListWeeklyForWorkMonth, visible_t CTE).
+status: in-progress
 priority: P1
-branch: "main"
-tags: ["performance", "db-query", "bank-transfer-history", "partner-dashboard"]
+branch: main
+tags:
+  - performance
+  - db-query
+  - bank-transfer-history
+  - partner-dashboard
 blockedBy: []
 blocks: []
-created: "2026-07-19T17:21:47.832Z"
-createdBy: "ck:plan"
+created: '2026-07-19T17:21:47.832Z'
+createdBy: 'ck:plan'
 source: skill
 ---
 
@@ -41,8 +48,8 @@ A parallel audit found **6 unbatched `WHERE id IN (?)` repo methods** that will 
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Phase A: Eliminate timesheet-date fetch at root](./phase-01-phase-a-eliminate-timesheet-date-fetch-at-root.md) | Pending |
-| 2 | [Phase B: Batch unbatched GetByIDs/FindByCodes](./phase-02-phase-b-batch-unbatched-getbyids-findbycodes.md) | Pending |
+| 1 | [Phase A: Eliminate timesheet-date fetch at root](./phase-01-phase-a-eliminate-timesheet-date-fetch-at-root.md) | Completed |
+| 2 | [Phase B: Batch unbatched GetByIDs/FindByCodes](./phase-02-phase-b-batch-unbatched-getbyids-findbycodes.md) | In Progress |
 | 3 | [Phase C: Cap upstream unbounded fetches](./phase-03-phase-c-cap-upstream-unbounded-fetches.md) | Pending |
 
 ## Dependencies

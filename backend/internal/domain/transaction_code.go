@@ -51,6 +51,14 @@ type CyclePayData struct {
 	ProjectID    uint   `json:"project_id"`
 	Amount       int64  `json:"amount"`
 	FileID       *uint  `json:"file_id"`
+	// FromDate / ToDate / CycleNum are populated at transaction-code creation
+	// time so the bank-transfer-history view can resolve the weekly cycle
+	// WITHOUT fetching timesheet dates. Legacy rows decode these as nil/0 and
+	// fall through to the month-level union timesheet-date fetch.
+	// Pointers + omitempty so legacy JSON deserialises cleanly (red-team F-MEDIUM-1).
+	FromDate *time.Time `json:"from_date,omitempty"`
+	ToDate   *time.Time `json:"to_date,omitempty"`
+	CycleNum int        `json:"cycle_num,omitempty"` // 1-4 weekly, 1 monthly
 }
 
 // GetTimesheetIDs returns timesheet IDs from whichever pay field is set

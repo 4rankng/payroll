@@ -12,6 +12,7 @@ import (
 	"api-server/internal/app/services/payroll/excel"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/clock"
 	pkgConstants "api-server/internal/pkg/constants"
 	"api-server/internal/pkg/timeutil"
 
@@ -168,7 +169,15 @@ func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransfe
 		totalAmount += amount
 		stt++
 
-		// Prepare transaction code data
+		// Prepare transaction code data.
+		// Populate FromDate/ToDate/CycleNum so the bank-transfer-history view
+		// can resolve the cycle WITHOUT fetching timesheet dates (Phase A).
+		fromDate := plan.FromDate
+		toDate := plan.ToDate
+		cycleNum := 1
+		if plan.Cycle != string(domain.PaymentScheduleMonthly) {
+			cycleNum = clock.KyFromWorkDay(plan.FromDate.Day())
+		}
 		var tcData domain.TransactionCodeData
 		if plan.Cycle == string(domain.PaymentScheduleMonthly) {
 			tcData = domain.TransactionCodeData{
@@ -177,6 +186,9 @@ func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransfe
 					EmployeeID:   employee.ID,
 					ProjectID:    project.ID,
 					Amount:       amount,
+					FromDate:     &fromDate,
+					ToDate:       &toDate,
+					CycleNum:     cycleNum,
 				},
 			}
 		} else {
@@ -186,6 +198,9 @@ func (es *ExportService) Persist(ctx context.Context, req *dto.ExportBulkTransfe
 					EmployeeID:   employee.ID,
 					ProjectID:    project.ID,
 					Amount:       amount,
+					FromDate:     &fromDate,
+					ToDate:       &toDate,
+					CycleNum:     cycleNum,
 				},
 			}
 		}

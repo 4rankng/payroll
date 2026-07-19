@@ -97,6 +97,76 @@ func TestResolveWeeklyHistoryCycleExcludesDaysAfter28(t *testing.T) {
 	}
 }
 
+// TestResolveWeeklyHistoryCycleFromPersistedFromDate covers the Phase A fast
+// path: CyclePayData carries FromDate, so the cycle resolves via KyFromWorkDay
+// WITHOUT consulting timesheetDates and WITHOUT fixedWeeklyCycle (which would
+// reject off-boundary export ranges — red-team F2).
+func TestResolveWeeklyHistoryCycleFromPersistedFromDate(t *testing.T) {
+	workMonth := historyDate(2026, time.July, 1)
+	tests := []struct {
+		name     string
+		day      int // FromDate day-of-month (off-boundary allowed)
+		wantKy   int
+		wantFrom int // expected canonical cycle start day
+		wantTo   int // expected canonical cycle end day
+	}{
+		{"canonical Ky1 (day 1)", 1, 1, 1, 7},
+		{"off-boundary Ky1 (day 3, red-team F2)", 3, 1, 1, 7},
+		{"off-boundary Ky2 (day 10)", 10, 2, 8, 14},
+		{"canonical Ky3 (day 15)", 15, 3, 15, 21},
+		{"canonical Ky4 (day 22)", 22, 4, 22, 28},
+		{"off-boundary Ky4 (day 25)", 25, 4, 22, 28},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fromDate := historyDate(2026, time.July, tc.day)
+			weekly := &domain.CyclePayData{FromDate: &fromDate, TimesheetIDs: []uint{999}}
+			// timesheetDates intentionally has NO entry for 999 — the persisted
+			// path must resolve without consulting it.
+			cycle, from, to, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, map[uint]time.Time{}, workMonth)
+			require.True(t, ok, "expected cycle to resolve from persisted FromDate")
+			require.Equal(t, tc.wantKy, cycle, "cycle mismatch")
+			require.Equal(t, tc.wantFrom, from.Day(), "fromDate day mismatch")
+			require.Equal(t, tc.wantTo, to.Day(), "toDate day mismatch")
+		})
+	}
+}
+
+// TestResolveWeeklyHistoryCyclePerEntryMixedKy covers red-team F4: a file with
+// Ky1 and Ky3 entries must resolve each entry to its own cycle, not the first
+// entry's cycle. Per-entry resolution from weeklyData.FromDate handles this.
+func TestResolveWeeklyHistoryCyclePerEntryMixedKy(t *testing.T) {
+	workMonth := historyDate(2026, time.July, 1)
+	ky1From := historyDate(2026, time.July, 1)
+	ky3From := historyDate(2026, time.July, 15)
+	ky1 := &domain.CyclePayData{FromDate: &ky1From, TimesheetIDs: []uint{1}}
+	ky3 := &domain.CyclePayData{FromDate: &ky3From, TimesheetIDs: []uint{2}}
+
+	cycle1, _, _, ok1 := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, ky1, map[uint]time.Time{}, workMonth)
+	require.True(t, ok1)
+	require.Equal(t, 1, cycle1, "Ky1 entry must resolve to cycle 1")
+
+	cycle3, _, _, ok3 := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, ky3, map[uint]time.Time{}, workMonth)
+	require.True(t, ok3)
+	require.Equal(t, 3, cycle3, "Ky3 entry must resolve to cycle 3 (not the file's first entry's cycle)")
+}
+
+// TestResolveWeeklyHistoryCycleZeroValueFromDate covers red-team F-MEDIUM-1:
+// a Go zero-value time.Time (year 1) must fall through to the legacy path
+// rather than producing a bogus cycle. The Year()==workMonth.Year() guard
+// rejects it.
+func TestResolveWeeklyHistoryCycleZeroValueFromDate(t *testing.T) {
+	workMonth := historyDate(2026, time.July, 1)
+	zero := time.Time{}
+	weekly := &domain.CyclePayData{FromDate: &zero, TimesheetIDs: []uint{10}}
+	// Legacy path: timesheet date present → resolves via timesheet lookup.
+	timesheetDates := map[uint]time.Time{10: historyDate(2026, time.July, 23)}
+
+	cycle, _, _, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
+	require.True(t, ok, "zero-value FromDate must fall through to timesheet path")
+	require.Equal(t, 4, cycle, "timesheet on day 23 → Ky4")
+}
+
 func TestHistoryTransfersContainPaymentCodes(t *testing.T) {
 	transfers := []dto.BankTransferHistoryTransfer{
 		{TransferCode: "VFIC6d037214", BankReference: "FT26198846619959", Amount: 1548000},
@@ -131,6 +201,11 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 	file := &domain.BulkTransferFile{ID: 5, Cycle: &cycle, AssetID: &assetID, Data: string(data), UploadedAt: &uploadedAt, CreatedAt: historyDate(2026, time.September, 1)}
 
 	transactionRows := make([]*domain.TransactionCode, 0, 5)
+	// Phase A: all codes carry persisted FromDate, so the union fetch is skipped.
+	// Each code's FromDate determines its cycle (TX-1..TX-4 → Ky2 day 8-11;
+	// TX-5 → Ky2 day 10). All resolve to Ky2.
+	fromDate := historyDate(2026, time.July, 8)
+	toDate := historyDate(2026, time.July, 14)
 	for index, code := range []string{"TX-1", "TX-2", "TX-3", "TX-4", "TX-5"} {
 		employeeID, projectID := uint(82), uint(1)
 		if code == "TX-5" {
@@ -138,18 +213,14 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 		}
 		codeData, marshalErr := json.Marshal(domain.TransactionCodeData{WeeklyPay: &domain.CyclePayData{
 			TimesheetIDs: []uint{uint(index + 1)}, EmployeeID: employeeID, ProjectID: projectID,
+			FromDate: &fromDate, ToDate: &toDate, CycleNum: 2,
 		}})
 		require.NoError(t, marshalErr)
 		transactionRows = append(transactionRows, &domain.TransactionCode{Code: code, Data: codeData})
 	}
 
-	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Return(map[uint]time.Time{
-		1: historyDate(2026, time.July, 8),
-		2: historyDate(2026, time.July, 9),
-		3: historyDate(2026, time.July, 10),
-		4: historyDate(2026, time.July, 11),
-		5: historyDate(2026, time.July, 12),
-	}, nil).AnyTimes()
+	// Phase A: GetTimesheetDatesByIDs MUST NOT be called when all codes carry FromDate.
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Times(0)
 	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{{ID: 82, Fullname: "LÒ THỊ MINH THU", CCCD: "031189014251"}}, nil).AnyTimes()
 	projectRepo := bankHistoryProjectRepoStub{
 		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}},
