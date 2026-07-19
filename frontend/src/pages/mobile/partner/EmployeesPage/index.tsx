@@ -118,15 +118,15 @@ const EmployeesPageMobile = () => {
           value: employeesSummary.total_employees,
           icon: Users,
           color: "text-primary",
-          bg: "bg-[#E7EEF6]",
+          bg: "bg-primary/10",
           filter: null as "working" | "unassigned" | null,
         },
         {
           label: "Đang làm",
           value: employeesSummary.total_working_employees,
           icon: UserCheck,
-          color: "text-emerald-600",
-          bg: "bg-[#DDF7EC]",
+          color: "text-success",
+          bg: "bg-success/10",
           filter: "working" as const,
         },
         {
@@ -135,16 +135,16 @@ const EmployeesPageMobile = () => {
             employeesSummary.total_employees -
             employeesSummary.total_working_employees,
           icon: UserX,
-          color: "text-amber-600",
-          bg: "bg-[#FFF0C2]",
+          color: "text-warning",
+          bg: "bg-warning/10",
           filter: "unassigned" as const,
         },
         {
           label: "Tháng này",
           value: employeesSummary.employees_hired_this_month,
           icon: UserPlus,
-          color: "text-violet-600",
-          bg: "bg-[#EEE7FF]",
+          color: "text-info",
+          bg: "bg-info/10",
           filter: null as "working" | "unassigned" | null,
         },
       ];
@@ -193,7 +193,7 @@ const EmployeesPageMobile = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-11 px-3 shrink-0 rounded-xl border-slate-300 bg-white"
+              className="h-11 px-3 shrink-0 rounded-xl border-border bg-card"
               onClick={() => setExportModalOpen(true)}
               disabled={isExporting}
             >
@@ -233,8 +233,8 @@ const EmployeesPageMobile = () => {
                   }}
                   className={`flex min-h-16 min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-2xl border px-2.5 py-2 transition-all duration-200 ${
                     isActive
-                      ? "border-primary bg-[#E7EEF6]"
-                      : "border-[#D8E2EE] bg-white"
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card"
                   } ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
                 >
                   <div className={`p-1.5 rounded-xl ${stat.bg}`}>
@@ -275,7 +275,7 @@ const EmployeesPageMobile = () => {
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 rounded-2xl border-[#D8E2EE] bg-white shrink-0 relative shadow-sm"
+          className="h-11 w-11 rounded-2xl border-border bg-card shrink-0 relative shadow-sm"
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
@@ -362,9 +362,9 @@ const EmployeesPageMobile = () => {
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-[#D8E2EE] bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-border bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2"
         >
-          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" />
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30" />
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>

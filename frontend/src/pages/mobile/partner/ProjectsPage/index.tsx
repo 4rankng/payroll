@@ -162,16 +162,16 @@ const ProjectsPageMobile = () => {
         <MobileSurface className="p-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
             {[
-              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-[#E7EEF6]" },
-              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-emerald-700", bg: "bg-[#DDF7EC]" },
-              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-violet-700", bg: "bg-[#EEE7FF]" },
-              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-amber-700", bg: "bg-[#FFF0C2]" },
+              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-primary/10" },
+              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
+              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-info", bg: "bg-info/10" },
+              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-warning", bg: "bg-warning/10" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="flex min-h-16 min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-2xl border border-[#D8E2EE] bg-white px-2.5 py-2 transition-all duration-200 active:scale-95"
+                  className="flex min-h-16 min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-2xl border border-border bg-card px-2.5 py-2 transition-all duration-200 active:scale-95"
                 >
                   <div className={`p-1.5 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3 w-3 ${stat.color}`} />
@@ -205,7 +205,7 @@ const ProjectsPageMobile = () => {
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 rounded-2xl border-[#D8E2EE] bg-white shrink-0 relative shadow-sm"
+          className="h-11 w-11 rounded-2xl border-border bg-card shrink-0 relative shadow-sm"
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
@@ -257,7 +257,7 @@ const ProjectsPageMobile = () => {
           onRowClick={handleProjectClick}
           emptyState={
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E7EEF6]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                 <Briefcase className="h-7 w-7 text-muted-foreground/50" />
               </div>
               <div className="text-center">
@@ -288,9 +288,9 @@ const ProjectsPageMobile = () => {
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-[#D8E2EE] bg-white px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-border bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2"
         >
-          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-slate-300" />
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30" />
           <SheetHeader className="pb-3">
             <SheetTitle className="text-base font-semibold text-center">Bộ lọc</SheetTitle>
           </SheetHeader>

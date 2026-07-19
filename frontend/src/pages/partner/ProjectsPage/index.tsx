@@ -6,7 +6,6 @@ import {
   Clock3,
   FolderKanban,
   Plus,
-  Search,
   Users,
   Calendar,
   ArrowRight,
@@ -21,6 +20,8 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { SearchBar } from '@/components/shared/SearchBar';
+import { FilterPill } from '@/components/shared/FilterPill';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useProjectFilters } from '@/hooks/projects/useProjectFilters';
 import { useProjectModals } from '@/hooks/useModalNavigation';
@@ -314,41 +315,24 @@ const ProjectsPage = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><FolderKanban className="h-4 w-4" /></div>
             <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc danh sách</span>
           </div>
-          {/* Status filter pills */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {STATUS_FILTERS.map((f) => {
-              const isActive = statusFilter === f.value;
-              return (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setStatusFilter(f.value)}
-                  className={cn(
-                    'min-h-9 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all shrink-0',
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-[0_6px_16px_-10px_rgba(8,120,62,0.7)]'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                  )}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
+
+          {/* Status filter (single-select, matches D3's FilterPill pattern) */}
+          <FilterPill
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v as ProjectStatus | 'all')}
+            placeholder="Trạng thái"
+            options={STATUS_FILTERS.filter(f => f.value !== 'all').map(f => ({ value: f.value, label: f.label }))}
+          />
 
           <div className="hidden md:block h-6 w-px bg-border mx-0.5" />
 
-          {/* Search */}
-          <div className="relative flex-1 min-w-[260px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              value={filterControls.searchTerm}
-              onChange={(e) => filterControls.setSearchTerm(e.target.value)}
-              placeholder="Tìm tên dự án, mã, khách hàng…"
-              className="h-10 w-full rounded-xl border border-transparent bg-muted/45 pl-9 pr-3 text-[12.5px] text-foreground placeholder:text-muted-foreground/70 transition-all focus:border-primary/40 focus:bg-card focus:outline-none focus:ring-2 focus:ring-primary/10"
-            />
-          </div>
+          {/* Search — shared SearchBar primitive (matches D3 Employees) */}
+          <SearchBar
+            searchTerm={filterControls.searchTerm}
+            onSearchChange={filterControls.setSearchTerm}
+            placeholder="Tìm tên dự án, mã, khách hàng…"
+            className="h-10 min-w-[260px] flex-1 rounded-xl bg-muted/45 text-[12.5px]"
+          />
 
           {filterControls.hasFilters && (
             <button

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Verification"
-status: pending
+status: completed
 priority: P2
 dependencies: [1, 2, 3]
 ---

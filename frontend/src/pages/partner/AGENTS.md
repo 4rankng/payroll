@@ -46,10 +46,9 @@ Page-level route components for the Partner role. Partners have a scoped view: t
 ## Dependencies
 
 ### Internal
-- `../../components/partner-dashboard/` for dashboard components
-- `../../components/partner-employees/` for employee list
-- `../../components/partner-projects/` for project list
-- `../../components/partner-timesheet/` for timesheet views
+- `../../components/partner-dashboard/` for dashboard components (PartnerEmployeeListSheet, PartnerWorkforceOverviewCard)
+- `../../components/shared/` for primitives (PageHeader, InlineStatStrip, FilterPill, SearchBar, EmptyState, etc.)
+- `../../components/ui/responsive-table` for tabular data
 - `../../hooks/` for partner-scoped data hooks
 
 ### External

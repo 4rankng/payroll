@@ -7,7 +7,7 @@ description: >-
   is the visual reference catalog only. Built on a corrected codebase survey
   after v1 of this plan was rejected by red-team for targeting dead-code folders
   and missing the real mobile routes.
-status: pending
+status: completed
 priority: P2
 branch: main
 tags:
@@ -151,10 +151,10 @@ These are NOT touched in v1's planned way (migrate-then-delete). v2 deletes them
 
 | Phase | Name | Status | Purpose |
 |-------|------|--------|---------|
-| 1 | [Foundation](./phase-01-foundation.md) | Pending | Completed |
-| 2 | [Audit and Primitives Parity](./phase-02-audit-and-primitives-parity.md) | Pending | Per-route audit: which `shared/*` primitives are used, which patterns drift, dead-code confirmation |
-| 3 | [Route Polish](./phase-03-route-polish.md) | Pending | Apply consistency fixes per route (desktop + mobile together), delete confirmed dead code per-file (mobile Payment History wiring is OUT — v2.1 H2) |
-| 4 | [Verification](./phase-04-verification.md) | Pending | Lint, type-check, build, `cd backend && make api-test`, partner Playwright, cross-surface isolation, dead-code-removal verification, `graphify update .` |
+| 1 | [Foundation](./phase-01-foundation.md) | Completed | Completed |
+| 2 | [Audit and Primitives Parity](./phase-02-audit-and-primitives-parity.md) | Completed | Per-route audit: which `shared/*` primitives are used, which patterns drift, dead-code confirmation. Output: `reports/phase-02-audit.md` |
+| 3 | [Route Polish](./phase-03-route-polish.md) | Completed | Apply consistency fixes per route (desktop + mobile together), delete confirmed dead code per-file (mobile Payment History wiring is OUT — v2.1 H2). Output: `reports/phase-03-deletion-log.md` |
+| 4 | [Verification](./phase-04-verification.md) | Completed | Lint, type-check, build, cross-surface isolation, dead-code-removal verification, `graphify update .` |
 
 ## Dependencies
 
@@ -281,3 +281,46 @@ Reviewer reports (preserved for traceability in `reports/`):
   - `phase-02:43` said "32 files" for shared/ — corrected to 31 + barrel.
 - **Unresolved contradictions:** 0.
 - **Recommendation:** v2.1 is internally consistent and addresses every verified Critical/High finding from both red-team sessions. Eligible for `/ck:cook` or another validation pass per user preference.
+
+### Phase 4 Verification Report (Session 2026-07-19, cook all-phases)
+
+**Phase 1 (already complete from prior session):** Portal-scope mechanism in place — `html.partner-route-active` classList effect (guarded on `isPartner`) at `PartnerLayout.tsx:24-25`; `data-partner-ui` attribute at `PartnerLayout.tsx:30`. `partner.css` skeleton + `index.css` import. Code-reviewer APPROVED previously.
+
+**Phase 2 (completed this session):** `reports/phase-02-audit.md` written. Per-route audit table for all 8 in-scope files; adoption map; 3-grep dead-code manifest for 21 files across 4 folders; cross-surface blast-radius map; gap analysis (2 optional primitives, both skipped as YAGNI); Tailkit reference selections.
+
+**Phase 3 (completed this session):** `reports/phase-03-deletion-log.md` written. Deleted 21 dead-code files; updated 2 AGENTS.md files; D2 Projects migrated to shared `SearchBar` + `FilterPill`; M2 + M3 stat strips migrated from literal hex (`bg-[#E7EEF6]`, `bg-[#DDF7EC]`, `bg-[#EEE7FF]`, `bg-[#FFF0C2]`) + `border-[#D8E2EE]` + `bg-slate-300` to semantic tokens (`bg-{primary,success,info,warning}/10`, `border-border`, `bg-card`, `bg-muted-foreground/30`). Skipped (justified): D4 PageHeader/InlineStatStrip migration (would lose eyebrow/icon-chip/month-pager + 5-cell watermark + active state), D1/D2 empty-state migration (would lose multi-state copy).
+
+**Phase 4 gates (this session):**
+
+| Gate | Result |
+|---|---|
+| `pnpm lint` | ✅ 0 errors, 3 pre-existing coverage warnings only |
+| `tsc -p tsconfig.json --noEmit` (via lint) | ✅ exit 0 |
+| `pnpm build` | ✅ exit 0, built in 6.95s + SW in 12ms |
+| Tailkit literal-class delta grep | ✅ **zero NEW additions** (also removed 16+ pre-existing literals via M2/M3 token migration — bonus improvement) |
+| Dead-code removal §3a | ✅ `partner-employees/`, `partner-projects/`, `partner-timesheet/` folders absent; `partner-dashboard/` reduced to 2 live files |
+| Dead-code removal §3b (orphaned imports) | ✅ `grep -rln 'from "@/components/partner-{employees,projects,timesheet}'` → empty |
+| Modal-registry / dynamic-import scan §3c | ✅ zero hits |
+| `BankTransferHistoryPageContent.tsx` byte-unchanged (H3) | ✅ `git diff main` → empty |
+| `App.tsx` byte-unchanged (H2) | ✅ `git diff main` → empty |
+| `pages/partner/PaymentHistoryPage/` byte-unchanged | ✅ `git diff main` → empty |
+| Phase 1 portal scope preserved | ✅ `PartnerLayout.tsx:24-25,30` intact |
+| Shared primitive blast radius | ✅ `git diff main --stat -- frontend/src/components/shared/ frontend/src/components/ui/` → empty (no API changes, no admin/employee consumer regression possible) |
+
+**Gates not run (with justification):**
+
+| Gate | Status | Reason |
+|---|---|---|
+| `cd backend && make api-test` | SKIPPED | No backend changes in this plan (all 4 phases are frontend-only). Running `api-test` would test unrelated existing functionality, not anything this plan touched. |
+| `pnpm test:run -- partner` | VACUOUS | `find frontend/src -name "*.test.tsx" -path "*partner*"` → only `MobilePageHeader.test.tsx` exists (shared primitive, not partner-route). Documented per v2.1 H5. |
+| Playwright partner specs | VACUOUS | Zero partner `*.spec.*` files exist (confirmed in v2 red-team). Per v2.1 H5, visual QA would normally substitute but is outside this codebase session's tooling. |
+| Visual QA at 320/390/768/1440 | DEFERRED | Requires running dev server + browser interaction; outside this codebase session's tooling. Recommend user run `make dev` and visually spot-check `/partner/{dashboard,projects,employees,timesheet}` + `/admin/dashboard` (regression) on each viewport before merging. |
+
+### Whole-Plan Consistency Sweep (v3, post-completion)
+
+- **Files reread:** `plan.md`, all four `phase-*.md`, `reports/phase-02-audit.md`, `reports/phase-03-deletion-log.md`.
+- **Stale references checked:** none found. The 4 v2.1 corrections (mobile Payment History wiring, App.tsx NOT MODIFIED, "32 files", phase-03 wiring mention) all hold.
+- **Phase 3 deviations from audit §7:** 4 justified skips documented in `reports/phase-03-deletion-log.md` §3 (D4 PageHeader, D4 InlineStatStrip, D1/D2 EmptyState, Gap A/B primitive extraction). All conservative — would-be migrations were over-DRY or lossy.
+- **Bonus improvement over plan:** Phase 3's M2/M3 token migration removed 16+ pre-existing C2-baseline literals (the plan only required delta-zero; we shipped delta-negative).
+- **Unresolved contradictions:** 0.
+- **Final status:** All 4 phases complete. Plan ready for commit + manual visual QA pass.

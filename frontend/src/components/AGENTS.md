@@ -44,12 +44,9 @@ Reusable React components organized by feature domain. Contains shadcn/ui base p
 | `shared/` | Shared utility components (PageHeader, FilterBar, StatsCards, etc.) |
 | `dashboard/` | Admin dashboard widgets and charts |
 | `admin-dashboard/` | Dashboard hero cards, KPI cards, financial charts |
-| `partner-dashboard/` | Partner-specific dashboard header and project list |
+| `partner-dashboard/` | Partner-specific dashboard components (employee list sheet, workforce overview card) |
 | `admin/` | Admin-specific fee schedule components and partner project header |
 | `partner/` | Partner-specific components |
-| `partner-employees/` | Partner employee list, filters, stats |
-| `partner-projects/` | Partner project list, filters, stats |
-| `partner-timesheet/` | Partner timesheet list, filters, table |
 | `project-employees/` | Add employees to project, check-in toggle, payment schedule |
 | `approvals/` | Approval flow components |
 | `loans/` | Loan management components |
