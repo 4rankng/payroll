@@ -51,7 +51,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
   return (
     <div
       className={cn(
-        "grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-slate-200 bg-white p-1.5 shadow-[var(--employee-shadow)]",
+        "ct-card grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-base-300 bg-base-100 p-1.5 shadow-[var(--employee-shadow)]",
         className
       )}
       role="group"
@@ -63,7 +63,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         disabled={!month.canGoPrev}
         aria-label="Xem tháng trước"
         title="Tháng trước"
-        className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-50 text-[#475467] transition-colors duration-200 hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:bg-transparent disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
+        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-[14px] text-base-content/70 shadow-none active:scale-[0.94] disabled:bg-transparent disabled:opacity-40"
       >
         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -72,7 +72,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="mx-auto flex min-h-11 min-w-0 max-w-full flex-col items-center justify-center rounded-[14px] px-2 text-[var(--employee-text)] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full flex-col gap-0 rounded-[14px] px-2 font-normal normal-case text-base-content shadow-none active:scale-[0.98]"
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
             <span className="flex min-w-0 items-center gap-1.5">
@@ -136,7 +136,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         aria-label="Xem tháng sau"
         title="Tháng sau"
         disabled={!month.canGoNext}
-        className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-50 text-[#475467] transition-colors duration-200 hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)] disabled:cursor-not-allowed disabled:bg-transparent disabled:text-[var(--employee-text-muted)] disabled:opacity-70 disabled:active:scale-100"
+        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-[14px] text-base-content/70 shadow-none active:scale-[0.94] disabled:bg-transparent disabled:opacity-40"
       >
         <ChevronRight className="h-5 w-5" aria-hidden="true" />
       </button>

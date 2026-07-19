@@ -88,18 +88,18 @@ const DialogNavyHeader = React.forwardRef<HTMLDivElement, DialogNavyHeaderProps>
   ({ title, description, action, className, children }, ref) => (
     <div
       ref={ref}
-      className={cn("bg-slate-900 px-5 pt-5 pb-4 text-white flex-shrink-0", className)}
-      style={{ '--foreground': '0 0% 100%', '--muted-foreground': '215 20% 70%' } as React.CSSProperties}
+      className={cn("bg-emerald-950 px-5 pt-5 pb-4 text-white flex-shrink-0", className)}
+      style={{ '--foreground': '0 0% 100%', '--muted-foreground': '152 30% 78%' } as React.CSSProperties}
     >
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold tracking-tight text-white leading-tight">{title}</p>
           {description && (
-            <p className="text-slate-400 text-xs mt-1">{description}</p>
+            <p className="text-emerald-200/75 text-xs mt-1">{description}</p>
           )}
         </div>
         {action && <div className="flex items-center flex-shrink-0 pt-0.5">{action}</div>}
-        <DialogPrimitive.Close className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 outline-none focus:ring-2 focus:ring-white/30">
+        <DialogPrimitive.Close className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-emerald-800 outline-none focus:ring-2 focus:ring-emerald-200/50">
           <X className="w-4 h-4 text-white" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
@@ -117,7 +117,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "-mx-4 -mt-4 flex flex-col space-y-1.5 bg-slate-900 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
+      "-mx-4 -mt-4 flex flex-col space-y-1.5 bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
       className
     )}
     style={{
@@ -125,7 +125,7 @@ const DialogHeader = ({
       // resolve to light colours inside the dark navy header, fixing
       // invisible-text bugs across all dialogs without touching each one.
       '--foreground': '0 0% 100%',          // white
-      '--muted-foreground': '215 20% 70%',  // light slate
+      '--muted-foreground': '152 30% 78%',  // light emerald
       ...style,
     } as React.CSSProperties}
     {...props}
@@ -168,7 +168,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-slate-400 mt-1", className)}
+    className={cn("text-sm text-emerald-200/75 mt-1", className)}
     {...props}
   />
 ))

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User2, Mail, Shield, Calendar, Clock, Edit2, Save, X, Key, CreditCard, Phone } from 'lucide-react';
+import { User2, Mail, Shield, Calendar, Clock, Edit2, Save, X, KeyRound, CreditCard, Phone } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -16,9 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts';
 import { useProfile } from '@/hooks/api/useProfile';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
@@ -52,13 +50,15 @@ interface InfoRowProps {
 }
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => (
-  <div className="flex items-start gap-3 rounded-lg px-2 py-2.5 -mx-2 hover:bg-muted/40 transition-colors">
-    <span className="text-muted-foreground flex-shrink-0">{icon}</span>
-    <div className="flex min-w-0 flex-1 flex-col gap-1 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between min-[380px]:gap-3">
-      <span className="text-xs text-muted-foreground flex-shrink-0">{label}</span>
-      <span className="text-sm font-medium break-all min-[380px]:text-right">{value}</span>
+  <li className="ct-list-row grid-cols-[2.5rem_minmax(0,1fr)] gap-2 px-0 py-3 first:pt-0 last:pb-0">
+    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+      {icon}
+    </span>
+    <div className="ct-list-col-grow min-w-0">
+      <p className="employee-type-label text-[var(--employee-text-secondary)]">{label}</p>
+      <p className="employee-type-body mt-0.5 break-all font-semibold text-[var(--employee-text)]">{value}</p>
     </div>
-  </div>
+  </li>
 );
 
 interface UserProfileSheetProps {
@@ -165,10 +165,6 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
     return 'Nhân viên';
   };
 
-  const getRoleBadgeVariant = (role: 'admin' | 'partner' | 'employee' | 'adv_partner') => {
-    return role === 'admin' ? 'default' : 'secondary';
-  };
-
   const formatLastLogin = (lastLogin?: string) => {
     if (!lastLogin) return 'Chưa có thông tin';
 
@@ -196,44 +192,55 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col h-full p-0 gap-0">
-        {/* Hero header */}
-        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background px-6 pt-10 pb-6 border-b">
-          <div className="flex items-end gap-4">
-            <UserAvatar
-              email={displayUser.email}
-              name={displayUser.name}
-              size="xl"
-              className="h-16 w-16 flex-shrink-0 ring-4 ring-background shadow-md"
-            />
-            <div className="flex-1 min-w-0 pb-1">
-              <h2 className="text-lg font-semibold leading-tight break-words">{displayUser.name}</h2>
-              <div className="mt-1.5">
-                <Badge variant={getRoleBadgeVariant(displayUser.role)} className="text-xs">
+      <SheetContent
+        title="Thông tin cá nhân"
+        description="Xem và chỉnh sửa thông tin tài khoản"
+        data-theme="congtruong"
+        className="flex h-full w-full flex-col gap-0 bg-[var(--employee-page)] p-0 sm:max-w-md"
+      >
+        <div className="ct-hero relative min-h-0 overflow-hidden bg-gradient-to-br from-employee-800 via-employee-700 to-employee-500 px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top,0px))] text-white">
+          <div className="ct-hero-content w-full max-w-none justify-between p-0">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="ct-avatar shrink-0">
+                <div className="h-16 w-16 rounded-2xl ring-4 ring-white/20 ring-offset-2 ring-offset-employee-700">
+                  <UserAvatar
+                    email={displayUser.email}
+                    name={displayUser.name}
+                    size="xl"
+                    className="h-16 w-16"
+                  />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <p className="employee-type-label-caps text-white/70">Tài khoản của bạn</p>
+                <h2 className="employee-type-section-title mt-0.5 break-words text-white">{displayUser.name}</h2>
+                <span className="ct-badge ct-badge-sm mt-2 border-white/20 bg-white/15 px-2.5 text-white">
                   {getRoleText(displayUser.role)}
-                </Badge>
+                </span>
               </div>
             </div>
             {!isEditing && (
-              <Button
-                size="icon"
-                variant="ghost"
+              <button
+                type="button"
                 onClick={handleEditToggle}
-                className="h-11 w-11 flex-shrink-0 text-muted-foreground hover:text-foreground"
-                title="Chỉnh sửa"
+                className="ct-btn ct-btn-circle ct-btn-ghost h-11 min-h-11 w-11 shrink-0 border-0 bg-white/10 p-0 text-white hover:bg-white/20"
+                aria-label="Chỉnh sửa thông tin cá nhân"
               >
                 <Edit2 className="h-4 w-4" />
-              </Button>
+              </button>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4 py-5">
           {isEditing ? (
             <Form {...form}>
-              <form className="p-6 space-y-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Chỉnh sửa thông tin</p>
+              <form className="ct-card ct-card-border space-y-4 border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]">
+                <div>
+                  <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Chỉnh sửa hồ sơ</p>
+                  <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Cập nhật các thông tin liên hệ của bạn.</p>
+                </div>
                 <FormField
                   control={form.control}
                   name="name"
@@ -310,13 +317,18 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               </form>
             </Form>
           ) : (
-            <div className="divide-y">
-              {/* Contact section */}
-              <div className="px-6 pt-5 pb-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Liên hệ</p>
-                <div className="space-y-1">
-                  <InfoRow icon={<User2 className="h-4 w-4" />} label="Họ và tên" value={displayUser.name} />
-                  <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser.email} />
+            <div className="space-y-4">
+              <section className="ct-card ct-card-border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+                <div className="ct-card-body gap-3 p-4">
+                  <div>
+                    <div>
+                      <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Liên hệ</p>
+                      <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Thông tin dùng để liên lạc với bạn</p>
+                    </div>
+                  </div>
+                  <ul className="ct-list p-0">
+                    <InfoRow icon={<User2 className="h-4 w-4" />} label="Họ và tên" value={displayUser.name} />
+                    <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser.email || 'Chưa cập nhật'} />
                   {completeUser?.cccd && (
                     <InfoRow icon={<CreditCard className="h-4 w-4" />} label="Số CCCD" value={completeUser.cccd} />
                   )}
@@ -324,65 +336,66 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                     <InfoRow icon={<Phone className="h-4 w-4" />} label="Số điện thoại" value={completeUser.mobile} />
                   )}
                   <InfoRow icon={<Shield className="h-4 w-4" />} label="Vai trò" value={getRoleText(displayUser.role)} />
+                  </ul>
                 </div>
-              </div>
+              </section>
 
-              {/* Account section */}
-              <div className="px-6 pt-5 pb-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Tài khoản</p>
-                <div className="space-y-1">
+              <section className="ct-card ct-card-border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+                <div className="ct-card-body gap-3 p-4">
+                  <div>
+                    <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Tài khoản</p>
+                    <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Trạng thái và hoạt động gần đây</p>
+                  </div>
+                  <ul className="ct-list p-0">
                   <InfoRow icon={<Calendar className="h-4 w-4" />} label="Ngày tạo" value={formatCreatedAt(displayUser.created_at)} />
                   <InfoRow icon={<Clock className="h-4 w-4" />} label="Đăng nhập cuối" value={formatLastLogin(displayUser.last_login)} />
+                  </ul>
                 </div>
-              </div>
+              </section>
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        <div className="flex-shrink-0 border-t bg-background px-6 py-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))]">
+        <div className="flex-shrink-0 border-t border-[var(--employee-border)] bg-white px-4 py-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom)))]">
           {isEditing ? (
             <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={handleEditToggle}
-                className="min-h-11"
+                className="ct-btn ct-btn-ghost min-h-11"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 Hủy
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={form.handleSubmit(handleSave)}
-                className="min-h-11"
+                className="ct-btn ct-btn-primary min-h-11"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 <Save className="h-4 w-4 mr-1.5" />
                 {(form.formState.isSubmitting || updateProfileMutation.isPending) ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </Button>
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={handleChangePassword}
-                className="min-h-11 flex-1"
+                className="ct-btn ct-btn-outline ct-btn-primary min-h-11 flex-1"
               >
-                <Key className="h-4 w-4 mr-1.5" />
+                <KeyRound className="h-4 w-4 mr-1.5" />
                 Đổi mật khẩu
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant="ghost"
-                size="icon"
                 onClick={onClose}
-                className="h-11 w-11 text-muted-foreground"
-                title="Đóng"
+                className="ct-btn ct-btn-circle ct-btn-ghost h-11 min-h-11 w-11 p-0 text-[var(--employee-text-secondary)]"
+                aria-label="Đóng thông tin cá nhân"
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
           )}
         </div>

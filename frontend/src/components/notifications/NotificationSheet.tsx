@@ -19,14 +19,14 @@ type NotificationVariant = 'employee' | 'corporate';
 const THEME = {
   employee: {
     headerBg: 'bg-employee',
-    activeTabText: 'text-green-700',
-    activeTabCount: 'bg-green-100 text-green-700',
+    activeTabText: 'text-employee-700',
+    activeTabCount: 'bg-employee-100 text-employee-700',
     loaderColor: 'text-employee',
   },
   corporate: {
     headerBg: 'bg-employee',
-    activeTabText: 'text-green-700',
-    activeTabCount: 'bg-green-100 text-green-700',
+    activeTabText: 'text-employee-700',
+    activeTabCount: 'bg-employee-100 text-employee-700',
     loaderColor: 'text-employee',
   },
 } as const;
@@ -41,12 +41,7 @@ interface NotificationSheetProps {
 
 export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: NotificationSheetProps) => {
   const isMobile = useIsMobile();
-  const isEmployeeMobile = isMobile && variant === 'employee';
-  // Employee full-screen sheet hugs the top safe-area tighter than the
-  // rounded bottom-sheet variant.
-  const headerPaddingTop = `calc(env(safe-area-inset-top, 0px) + ${
-    isEmployeeMobile ? '0.875rem' : '1.25rem'
-  })`;
+  const headerPaddingTop = `calc(env(safe-area-inset-top, 0px) + 0.875rem)`;
   const theme = THEME[variant];
   const [activeView, setActiveView] = useState<NotificationView>('unread');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -137,18 +132,17 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           side={isMobile ? "bottom" : "right"}
           title="Thông báo"
           description="Danh sách thông báo của bạn"
+          data-theme="congtruong"
           className={cn(
             "!w-full sm:!w-[420px] p-0 flex flex-col overflow-hidden bg-white",
             isMobile
-              ? isEmployeeMobile
-                ? "h-[100dvh] max-h-[100dvh] !rounded-none shadow-none"
-                : "h-full max-h-[94dvh] rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+              ? "h-auto max-h-[92dvh] rounded-t-[1.5rem] shadow-[0_-10px_32px_rgba(16,24,40,0.16)]"
               : "h-full"
           )}
         >
 
           {/* Mobile drag handle */}
-          {isMobile && !isEmployeeMobile && (
+          {isMobile && (
             <div className={cn("flex justify-center pt-2.5 pb-1 flex-shrink-0", theme.headerBg)}>
               <div className="h-1 w-9 rounded-full bg-white/25" />
             </div>
@@ -156,13 +150,13 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
 
           {/* Header */}
           <div
-            className={cn("text-white px-4 pb-4", theme.headerBg, isEmployeeMobile && "px-5")}
+            className={cn("text-white px-4 pb-4", theme.headerBg)}
             style={{ paddingTop: headerPaddingTop }}
           >
-            <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="mb-3 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
-                className="h-11 w-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                className="ct-btn ct-btn-ghost ct-btn-circle h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-white hover:bg-white/20"
                 aria-label="Đóng"
               >
                 <ArrowLeft className="h-6 w-6 text-white" />
@@ -172,7 +166,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="flex min-h-11 max-w-[6.75rem] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-medium text-white/90 transition-colors hover:bg-white/20 disabled:opacity-50"
+                  className="ct-btn ct-btn-ghost h-11 min-h-11 max-w-[6.75rem] shrink-0 gap-1.5 border-0 px-2 text-xs font-medium text-white/90 hover:bg-white/20 disabled:bg-transparent"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -186,17 +180,20 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             </div>
 
             {/* Tab switcher */}
-            <div className="flex bg-white/20 rounded-xl p-1 gap-1">
+            <div role="tablist" aria-label="Lọc thông báo" className="ct-tabs ct-tabs-box grid grid-cols-2 gap-1 rounded-xl bg-white/20 p-1">
               {([
                 { value: 'unread' as const, label: 'Chưa đọc', count: unreadCount },
                 { value: 'all'    as const, label: 'Tất cả',   count: null },
               ]).map((tab) => (
                 <button
                   key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeView === tab.value}
                   onClick={() => setActiveView(tab.value)}
-                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+                  className={`ct-tab h-11 min-h-11 w-full justify-center gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
-                      ? `bg-white shadow-sm ${theme.activeTabText}`
+                      ? `ct-tab-active bg-white shadow-sm ${theme.activeTabText}`
                       : 'text-white/80 hover:text-white'
                   }`}
                 >
@@ -214,7 +211,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-h-0 overflow-y-auto bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
             {renderContent()}
           </div>
 

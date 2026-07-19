@@ -5,8 +5,6 @@ import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
@@ -18,9 +16,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, X } from 'lucide-react';
 import { useProfile } from '@/hooks/api/useProfile';
 
 const changePasswordSchema = z.object({
@@ -79,108 +76,117 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Đổi mật khẩu
-          </DialogTitle>
-          <DialogDescription>
-            Nhập mật khẩu hiện tại và mật khẩu mới để thay đổi mật khẩu của bạn.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent
+        title="Đổi mật khẩu"
+        description="Cập nhật mật khẩu để giữ tài khoản an toàn"
+        hideCloseButton
+        contentPadding="none"
+        data-theme="congtruong"
+        className="max-h-[88dvh] gap-0 overflow-hidden border-0 bg-[var(--employee-page)] p-0 shadow-[0_-10px_32px_rgba(16,24,40,0.16)] sm:max-w-md sm:rounded-2xl"
+      >
+        <header className="relative shrink-0 bg-gradient-to-br from-employee-800 via-employee-700 to-employee-500 px-5 pb-5 pt-[max(1rem,env(safe-area-inset-top,0px))] text-white sm:pt-5">
+          <div className="mb-3 h-1 w-9 rounded-full bg-white/25 sm:hidden" />
+          <div className="flex items-start gap-3 pr-11">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
+              <LockKeyhole className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <DialogTitle className="employee-type-section-title text-white">Đổi mật khẩu</DialogTitle>
+              <p className="employee-type-body-sm mt-1 text-white/75">Cập nhật mật khẩu để giữ tài khoản an toàn.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="ct-btn ct-btn-circle ct-btn-ghost absolute right-4 top-[max(0.75rem,env(safe-area-inset-top,0px))] h-11 min-h-11 w-11 border-0 bg-white/10 p-0 text-white hover:bg-white/20 sm:top-4"
+            aria-label="Đóng đổi mật khẩu"
+            disabled={changePasswordMutation.isPending}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </header>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mật khẩu hiện tại</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type={showCurrentPassword ? 'text' : 'password'}
-                        placeholder="Nhập mật khẩu hiện tại"
-                        className="pr-10"
-                        disabled={changePasswordMutation.isPending}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        disabled={changePasswordMutation.isPending}
-                      >
-                        {showCurrentPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-white px-5 py-5">
+              <FormField
+                control={form.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem className="ct-fieldset gap-1">
+                    <FormLabel className="ct-fieldset-legend text-[var(--employee-text)]">Mật khẩu hiện tại</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          placeholder="Nhập mật khẩu hiện tại"
+                          className="ct-input ct-input-bordered h-12 rounded-xl border-[var(--employee-border-strong)] bg-white pr-12 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:ring-[var(--employee-accent-ring)]"
+                          disabled={changePasswordMutation.isPending}
+                        />
+                        <button
+                          type="button"
+                          className="ct-btn ct-btn-circle ct-btn-ghost absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)]"
+                          onClick={() => setShowCurrentPassword((visible) => !visible)}
+                          disabled={changePasswordMutation.isPending}
+                          aria-label={showCurrentPassword ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mật khẩu mới</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type={showNewPassword ? 'text' : 'password'}
-                        placeholder="Nhập mật khẩu mới"
-                        className="pr-10"
-                        disabled={changePasswordMutation.isPending}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        disabled={changePasswordMutation.isPending}
-                      >
-                        {showNewPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  {newPassword && (
-                    <PasswordStrengthIndicator password={newPassword} />
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem className="ct-fieldset gap-1">
+                    <FormLabel className="ct-fieldset-legend text-[var(--employee-text)]">Mật khẩu mới</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type={showNewPassword ? 'text' : 'password'}
+                          placeholder="Tối thiểu 8 ký tự"
+                          className="ct-input ct-input-bordered h-12 rounded-xl border-[var(--employee-border-strong)] bg-white pr-12 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:ring-[var(--employee-accent-ring)]"
+                          disabled={changePasswordMutation.isPending}
+                        />
+                        <button
+                          type="button"
+                          className="ct-btn ct-btn-circle ct-btn-ghost absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)]"
+                          onClick={() => setShowNewPassword((visible) => !visible)}
+                          disabled={changePasswordMutation.isPending}
+                          aria-label={showNewPassword ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
+                        >
+                          {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    {newPassword && <PasswordStrengthIndicator password={newPassword} showRequirements={false} />}
+                    <p className="ct-label px-0 text-[var(--employee-text-secondary)]">Gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-
-            <div className="flex justify-end gap-2">
+            <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--employee-border)] bg-white px-5 py-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom)))]">
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={changePasswordMutation.isPending}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="ct-btn ct-btn-ghost min-h-11"
               >
                 Đóng
               </button>
               <button
                 type="submit"
                 disabled={changePasswordMutation.isPending}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="ct-btn ct-btn-primary min-h-11"
               >
                 {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
               </button>

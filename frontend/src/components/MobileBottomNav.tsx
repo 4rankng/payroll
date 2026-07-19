@@ -114,12 +114,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   ) => (
     <li key={item.title} className="min-w-0">
       <button
+        type="button"
         className={cn(
           "admin-mobile-tile group grid min-h-14 w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left shadow-sm transition-all touch-manipulation",
           "active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
           tone === "default" &&
             isActive &&
-            "border-[hsl(var(--primary))/0.25] bg-[hsl(var(--primary))] text-white shadow-[0_14px_26px_-22px_hsl(var(--primary)/0.9)]",
+            "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-white shadow-[0_14px_26px_-22px_hsl(var(--primary)/0.9)]",
           tone === "default" &&
             !isActive &&
             "text-[hsl(var(--foreground))] hover:border-[hsl(var(--border))] hover:bg-white",
@@ -298,7 +299,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                 </div>
               )}
 
-              <ul className="ct-menu ct-menu-sm !grid grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4">
+              <ul className="grid grid-cols-2 gap-2 bg-transparent p-0 sm:grid-cols-4">
                 {renderNavTile({ title: "Thông báo", icon: Bell }, false, () => {
                   setOpenGroup(null);
                   setIsNotificationSheetOpen(true);
@@ -318,7 +319,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
               </ul>
             </div>
           ) : (
-            <ul className="ct-menu ct-menu-sm !grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-0 sm:px-5">
+            <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-0 sm:px-5">
               {openGroup?.submenu?.map((item) => {
                 const isActive = item.path ? location.pathname.startsWith(item.path) : false;
                 return renderNavTile(item, isActive, () => {
@@ -341,7 +342,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           <div className="flex justify-center pt-2.5">
             <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
           </div>
-          <ul className="ct-menu ct-menu-sm !grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 sm:grid-cols-3 sm:px-5">
+          <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 sm:grid-cols-3 sm:px-5">
             {moreItems?.map((item) => {
               const isActive = item.path ? location.pathname.startsWith(item.path) : false;
               return renderNavTile(item, isActive, () => {

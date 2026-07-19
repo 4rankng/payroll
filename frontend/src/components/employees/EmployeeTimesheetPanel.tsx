@@ -52,7 +52,7 @@ export function EmployeeTimesheetPanel({
     <section id="employee-timesheets" className="scroll-mt-4" aria-labelledby="employee-timesheets-title">
       <EmployeeMonthNavigator month={month} className="mb-3" />
 
-      <div className="employee-surface-card overflow-hidden rounded-[var(--employee-radius-feature)]">
+      <div className="ct-card employee-surface-card overflow-hidden rounded-[var(--employee-radius-feature)] bg-base-100">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--employee-border)] bg-[var(--employee-summary-wash)] px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--employee-radius-control)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
@@ -65,7 +65,7 @@ export function EmployeeTimesheetPanel({
               </h2>
             </span>
           </div>
-          <span className="employee-type-pill shrink-0 rounded-full bg-white px-2.5 py-1 text-[var(--employee-text-secondary)] ring-1 ring-inset ring-[var(--employee-border)]">
+          <span className="ct-badge ct-badge-ghost employee-type-pill h-auto shrink-0 rounded-full px-2.5 py-1">
             {totalRecords} mục
           </span>
         </div>
@@ -105,7 +105,7 @@ export function EmployeeTimesheetPanel({
                           {format(new Date(day.date), "EEEE, dd/MM", { locale: vi })}
                         </span>
                       </div>
-                      <span className={cn("employee-type-pill shrink-0 rounded-full px-2.5 py-1", status.badge)}>
+                      <span className={cn("ct-badge employee-type-pill h-auto shrink-0 rounded-full px-2.5 py-1", status.badge)}>
                         {status.label}
                       </span>
                     </div>

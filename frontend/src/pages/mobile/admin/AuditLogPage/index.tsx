@@ -130,16 +130,18 @@ export default function AuditLogPageMobile() {
       <MobilePageHeader
         title="Nhật ký hoạt động"
         icon={ClipboardList}
+        sticky={false}
+        actionsLayout="inline"
+        className="[--mobile-nonsticky-header-top-padding:0px] border-0 px-0 pb-3 pt-0 shadow-none"
         subtitle={
           !isLoading && totalRecords > 0
             ? `${totalRecords.toLocaleString('vi-VN')} bản ghi`
             : undefined
         }
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-h-11 gap-1.5 border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"
+          <button
+            type="button"
+            className="ct-btn ct-btn-outline h-11 min-h-11 gap-1.5 rounded-xl border-slate-200 bg-white px-3 text-xs font-semibold normal-case text-slate-700 shadow-none"
             onClick={() => setIsFilterOpen(true)}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -149,7 +151,7 @@ export default function AuditLogPageMobile() {
                 {activeCount}
               </Badge>
             )}
-          </Button>
+          </button>
         }
       />
 

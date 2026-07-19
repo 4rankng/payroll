@@ -20,6 +20,9 @@ describe("EmployeePortalHeader", () => {
 
     expect(screen.getByText("Nguyễn An")).toBeInTheDocument();
     expect(screen.getByText("9+")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menu tài khoản" }).querySelector("img"))
+      .toHaveAttribute("src", "/icons/employee-avatar.png");
+    expect(screen.queryByText("NA")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Thông báo" }));
     expect(onNotificationClick).toHaveBeenCalledOnce();
 

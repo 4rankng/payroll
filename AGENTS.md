@@ -3,7 +3,7 @@
 # Payroll
 
 ## Purpose
-Payroll management system for Vietnamese construction companies. Monorepo with a Go backend (DDD / Clean Architecture) and a React frontend (Vite + TanStack Query + shadcn/ui). Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay/9Pay, double-entry wallet/ledger accounting, and web push notifications. Three user roles: Admin, Partner, Employee (with mobile-first views).
+Payroll management system for Vietnamese companies. Monorepo with a Go backend (DDD / Clean Architecture) and a React frontend (Vite + TanStack Query + shadcn/ui). Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay/9Pay, double-entry wallet/ledger accounting, and web push notifications. Three user roles: Admin, Partner, Employee (with mobile-first views).
 
 ## Key Files
 | File | Description |

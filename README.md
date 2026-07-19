@@ -1,6 +1,6 @@
 # Payroll
 
-Payroll management system for Vietnamese construction companies. Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay, double-entry wallet/ledger accounting, attendance check-in/out with geofencing, and web push notifications.
+Payroll management system for Vietnamese companies. Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay, double-entry wallet/ledger accounting, attendance check-in/out with geofencing, and web push notifications.
 
 Three roles: **Admin** (full access), **Partner** (project-scoped), **Employee** (mobile-first views). All user-facing text is in Vietnamese.
 

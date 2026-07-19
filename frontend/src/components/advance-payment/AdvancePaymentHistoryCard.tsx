@@ -123,7 +123,7 @@ function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePay
   const StatusIcon = config.icon;
 
   return (
-    <article className="bg-white">
+    <article className="bg-[var(--employee-surface)]">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -133,7 +133,7 @@ function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePay
       >
         <span className="flex items-center gap-3">
           <span className="min-w-0 flex-1">
-            <span className={cn("employee-type-pill inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 ring-1 ring-inset", config.tone)}>
+            <span className={cn("ct-badge employee-type-pill h-auto max-w-full gap-1.5 rounded-full px-2.5 py-1 ring-1 ring-inset", config.tone)}>
               <StatusIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{getVietnameseAdvancePaymentStatus(item.status)}</span>
             </span>
@@ -207,7 +207,7 @@ export function AdvancePaymentHistoryCard({
           <p className="employee-type-body mt-0.5 text-[var(--employee-text-secondary)]">Theo dõi trạng thái các yêu cầu ứng lương</p>
         </div>
         {!isLoading && !isError && (
-          <span className="employee-type-pill shrink-0 rounded-full bg-[var(--employee-accent-soft)] px-2.5 py-1 text-[var(--employee-accent)] tabular-nums">
+          <span className="ct-badge ct-badge-success ct-badge-outline employee-type-pill h-auto shrink-0 rounded-full px-2.5 py-1 tabular-nums">
             {requestCount} yêu cầu
           </span>
         )}
@@ -218,11 +218,11 @@ export function AdvancePaymentHistoryCard({
           {[1, 2].map((index) => <Skeleton key={index} className="h-32 w-full rounded-xl" />)}
         </div>
       ) : isError ? (
-        <div className="employee-surface-card px-4 py-5 text-center" role="alert">
+        <div className="ct-card employee-surface-card bg-[var(--employee-surface)] px-4 py-5 text-center" role="alert">
           <p className="employee-type-strong text-[#101828]">Chưa tải được lịch sử</p>
           <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
           {onRetry && (
-            <button type="button" onClick={onRetry} className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]">
+            <button type="button" onClick={onRetry} className="ct-btn ct-btn-outline employee-type-action mt-3 h-auto min-h-11 gap-2 rounded-[10px] px-4 normal-case">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại
             </button>
@@ -246,7 +246,7 @@ export function AdvancePaymentHistoryCard({
       ) : (
         <div
           className={cn(
-            "employee-surface-card divide-y divide-[var(--employee-border)]",
+            "ct-card employee-surface-card divide-y divide-[var(--employee-border)] bg-[var(--employee-surface)]",
             isScrollable
               ? "max-h-[390px] overflow-y-auto overscroll-contain"
               : "overflow-hidden"

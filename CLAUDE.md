@@ -6,7 +6,7 @@
 
 ## Project Summary
 
-Payroll management system for Vietnamese construction companies. Monorepo with a Go backend (DDD / Clean Architecture) and a React frontend (Vite + TanStack Query + shadcn/ui). Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay/9Pay, double-entry wallet/ledger accounting, attendance with geofencing, and web push notifications.
+Payroll management system for Vietnamese companies. Monorepo with a Go backend (DDD / Clean Architecture) and a React frontend (Vite + TanStack Query + shadcn/ui). Handles employee timesheets, advance payments (FlexPay), salary disbursements via OnePay/9Pay, double-entry wallet/ledger accounting, attendance with geofencing, and web push notifications.
 
 **Three roles:** Admin (full access), Partner (project-scoped), Employee (mobile-first). All user-facing text is in Vietnamese.
 

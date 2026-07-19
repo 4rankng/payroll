@@ -114,6 +114,8 @@
 - Use only 400, 500, 600, and 700 weights in the employee portal. Prefer borders, spacing, and surface contrast over repeated shadows.
 - Employee disclosures and sheets use the same semantic classes so portalled content does not fall back to the larger admin typography scale.
 - Employee self-service surfaces use the `--employee-*` semantic tokens: a neutral `#F5F7F9` canvas, white surfaces, accessible dark emerald actions, soft emerald summaries, and amber only for actionable warnings. Financial status must also include text or an icon.
+- Never use initials, letter monograms, or realistic human portraits as default user avatars. Use a supplied profile image when available; otherwise use the neutral abstract profile glyph.
+- Keep employee identity visuals industry- and occupation-neutral. Do not infer uniforms, equipment, roles, or workplace imagery from backend domain context.
 
 **Spacing:**
 ```css

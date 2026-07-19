@@ -10,6 +10,9 @@ import {
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import type { AdvancePaymentHistoryItem, AdvancePaymentInfo } from "@/types/api/advance-payment.types";
 import { EmployeePayIllustration } from "@/components/employees/EmployeePayIllustration";
+import { cn } from "@/lib/utils";
+
+const EMPLOYEE_PRIMARY_ACTION = "ct-btn employee-type-action h-auto min-h-12 w-full gap-2 rounded-xl border-0 bg-[var(--employee-accent)] px-5 py-2 text-white normal-case shadow-[var(--employee-cta-shadow)] hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent-ring)] disabled:!border-[var(--employee-border)] disabled:!bg-[var(--employee-page)] disabled:!text-[var(--employee-text-muted)] disabled:!shadow-none disabled:!opacity-100";
 
 interface AdvancePaymentRequestFormProps {
   info: AdvancePaymentInfo;
@@ -220,7 +223,7 @@ export function AdvancePaymentRequestForm({
 
   return (
     <div
-      className={className ?? "employee-surface-card overflow-hidden p-4"}
+      className={cn("ct-card employee-surface-card overflow-hidden bg-[var(--employee-surface)] p-4", className)}
       style={style}
     >
       <div className="-mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-accent-border)] bg-[var(--employee-summary-wash)] px-4 pb-4 pt-4">
@@ -228,12 +231,12 @@ export function AdvancePaymentRequestForm({
           <p className="employee-type-label-caps pt-1 text-[var(--employee-accent)]">Số tiền có thể ứng</p>
           {!awaitingPayroll && (
             <span
-              className={`employee-type-pill inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 ${
+              className={`ct-badge employee-type-pill h-auto shrink-0 gap-1.5 rounded-full px-2.5 py-1.5 ${
                 status.tone === "success"
-                  ? "bg-white/90 text-[var(--employee-accent)] ring-1 ring-[var(--employee-accent-border)]"
+                  ? "ct-badge-success ct-badge-outline bg-white/90"
                   : status.tone === "warning"
-                    ? "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-1 ring-[var(--employee-warning-border)]"
-                    : "bg-white/90 text-[var(--employee-text-secondary)] ring-1 ring-[var(--employee-border)]"
+                    ? "ct-badge-warning ct-badge-outline"
+                    : "ct-badge-ghost"
               }`}
             >
               {status.tone === "success" && <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />}
@@ -257,19 +260,16 @@ export function AdvancePaymentRequestForm({
         </div>
 
         <div className="mt-3">
-          <div
-            className="h-2 overflow-hidden rounded-full bg-white/90 ring-1 ring-inset ring-[var(--employee-accent-border)]"
+          <progress
+            className="ct-progress ct-progress-primary h-2 w-full bg-white/90"
             role="progressbar"
             aria-label="Hạn mức ứng lương đã sử dụng"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progressValue)}
-          >
-            <span
-              className="block h-full origin-left rounded-full bg-[var(--employee-accent)] transition-transform duration-300"
-              style={{ transform: `scaleX(${progressValue / 100})` }}
-            />
-          </div>
+            value={progressValue}
+            max={100}
+          />
           <div className="employee-type-body-sm mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[var(--employee-text-secondary)]">
             <span>Đã dùng {formatCurrency(allowanceUsedAmount)}</span>
             <span className="font-medium text-[var(--employee-text)]">Hạn mức {formatCurrency(quotaSummary.maxAdvanceAmount)}</span>
@@ -295,7 +295,7 @@ export function AdvancePaymentRequestForm({
         </div>
       ) : requestUnavailable ? showUnavailableContext ? (
         <div className="mt-4 border-t border-[#EAECF0] pt-4" role="status">
-          <div className="flex items-start gap-2.5 rounded-[10px] border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] px-3 py-2.5">
+          <div className="ct-alert ct-alert-warning items-start gap-2.5 rounded-[10px] px-3 py-2.5 shadow-none">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--employee-warning)]" aria-hidden="true" />
             <div className="min-w-0">
               <p className="employee-type-warning-title text-[var(--employee-warning-strong)]">
@@ -319,7 +319,7 @@ export function AdvancePaymentRequestForm({
               type="button"
               onClick={onBankAction}
               disabled={!onBankAction}
-              className="employee-type-action mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--employee-accent)] px-5 py-2 text-white shadow-[var(--employee-cta-shadow)] transition-transform duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-[#D0D5DD] disabled:shadow-none"
+              className={`${EMPLOYEE_PRIMARY_ACTION} mt-3`}
             >
               Xem tài khoản nhận tiền
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -342,10 +342,10 @@ export function AdvancePaymentRequestForm({
                 placeholder="0"
                 value={formatAmountInput(amount)}
                 onChange={handleAmountChange}
-                className={`employee-type-card-amount h-14 w-full rounded-xl border bg-white px-3.5 pr-16 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] transition-all duration-200 focus:outline-none focus:ring-2 ${
+                className={`ct-input ct-input-bordered employee-type-card-amount h-14 w-full rounded-xl bg-white px-3.5 pr-16 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] ${
                   validationError
-                    ? "border-[#FDA29B] focus:ring-[#FECDCA]"
-                    : "border-[#D0D5DD] focus:border-[var(--employee-accent)] focus:ring-[var(--employee-accent-ring)]"
+                    ? "ct-input-error"
+                    : "focus:border-primary"
                 }`}
               />
               <span className="employee-type-label absolute right-3 top-1/2 -translate-y-1/2 text-[#667085]">
@@ -362,10 +362,10 @@ export function AdvancePaymentRequestForm({
                   type="button"
                   aria-pressed={numericAmount === quickAmount.amount}
                   onClick={() => setAmountFromNumber(quickAmount.amount)}
-                  className={`employee-type-action min-h-11 rounded-lg border px-2 py-2 transition-all active:scale-[0.97] ${
+                  className={`ct-btn ct-btn-sm employee-type-action h-auto min-h-11 rounded-lg px-2 py-2 normal-case ${
                     numericAmount === quickAmount.amount
-                      ? "border-[var(--employee-accent)] bg-[var(--employee-accent)] text-white"
-                      : "border-[#D0D5DD] bg-white text-[#475467]"
+                      ? "border-0 bg-[var(--employee-accent)] text-white hover:bg-[var(--employee-accent-strong)]"
+                      : "ct-btn-outline"
                   }`}
                 >
                   {quickAmount.label}
@@ -375,7 +375,7 @@ export function AdvancePaymentRequestForm({
           )}
 
           {validationError && (
-            <p className="employee-type-body mt-3 flex items-start gap-1.5 rounded-lg bg-[#FEF3F2] px-3 py-2 text-[#B42318]">
+            <p className="ct-alert ct-alert-error employee-type-body mt-3 items-start gap-1.5 rounded-lg px-3 py-2 shadow-none">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               {validationError}
             </p>
@@ -402,7 +402,7 @@ export function AdvancePaymentRequestForm({
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className={`employee-type-action mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 py-2 text-white transition-transform duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 ${canSubmit ? "bg-[var(--employee-accent)] shadow-[var(--employee-cta-shadow)]" : "bg-[var(--employee-text-muted)]"}`}
+            className={`${EMPLOYEE_PRIMARY_ACTION} mt-4`}
           >
             {isPending ? (
               <>

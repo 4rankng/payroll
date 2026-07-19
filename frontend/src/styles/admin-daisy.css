@@ -102,16 +102,13 @@
       linear-gradient(180deg, rgba(246, 240, 227, 0.08), transparent 16%),
       linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(149 42% 15%) 100%);
     border-right: 1px solid hsl(var(--sidebar-border));
-    box-shadow: var(--admin-shell-shadow);
   }
 
   [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
     background:
       radial-gradient(circle at 35% 0%, rgba(255, 224, 148, 0.09), transparent 14rem),
       linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(149 43% 14%) 100%);
-    box-shadow:
-      inset -1px 0 rgba(255, 255, 255, 0.025),
-      18px 0 45px -34px rgba(5, 24, 17, 0.88);
+    box-shadow: none;
   }
 
   [data-admin-ui] .admin-sidebar-logo {

@@ -260,50 +260,50 @@
   }
 
   .dark {
-    /* Deep Navy Background - Not Pure Black */
-    --background: 220 40% 12%;
-    --foreground: 220 10% 95%;
+    /* Deep emerald background — not pure black */
+    --background: 153 40% 12%;
+    --foreground: 145 20% 95%;
 
     /* Cards - Subtle Depth */
-    --card: 220 30% 15%;
-    --card-foreground: 220 10% 95%;
-    --popover: 220 30% 15%;
-    --popover-foreground: 220 10% 95%;
+    --card: 153 30% 15%;
+    --card-foreground: 145 20% 95%;
+    --popover: 153 30% 15%;
+    --popover-foreground: 145 20% 95%;
 
-    /* Primary - Light Navy for Dark Mode */
-    --primary: 220 50% 65%;
-    --primary-foreground: 220 90% 12%;
+    /* Primary - Light emerald for dark mode */
+    --primary: 148 60% 58%;
+    --primary-foreground: 153 76% 13%;
 
     /* Muted States */
-    --muted: 220 30% 20%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 153 30% 20%;
+    --muted-foreground: 145 15% 70%;
 
     /* Accents */
-    --accent: 220 30% 20%;
-    --accent-foreground: 220 10% 95%;
+    --accent: 153 30% 20%;
+    --accent-foreground: 145 20% 95%;
 
     /* Secondary */
-    --secondary: 220 30% 20%;
-    --secondary-foreground: 220 10% 95%;
+    --secondary: 153 30% 20%;
+    --secondary-foreground: 145 20% 95%;
 
     /* Destructive */
     --destructive: 0 84% 70%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
-    --border: 220 30% 22%;
-    --input: 220 30% 22%;
-    --ring: 220 50% 65%;
+    --border: 153 30% 24%;
+    --input: 153 30% 24%;
+    --ring: 148 60% 58%;
 
     /* Sidebar */
-    --sidebar-background: 220 50% 8%;
-    --sidebar-foreground: 220 10% 90%;
-    --sidebar-primary: 220 50% 65%;
-    --sidebar-primary-foreground: 220 90% 12%;
-    --sidebar-accent: 220 30% 18%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 30% 15%;
-    --sidebar-ring: 220 50% 65%;
+    --sidebar-background: 153 50% 8%;
+    --sidebar-foreground: 145 20% 90%;
+    --sidebar-primary: 148 60% 58%;
+    --sidebar-primary-foreground: 153 76% 13%;
+    --sidebar-accent: 153 30% 18%;
+    --sidebar-accent-foreground: 145 20% 90%;
+    --sidebar-border: 153 30% 15%;
+    --sidebar-ring: 148 60% 58%;
 
     /* Green stays vibrant on Dark */
     --success: 142 60% 55%;

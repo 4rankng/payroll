@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Payroll management system for Vietnamese construction companies. Replaces manual spreadsheet-based payroll tracking with an automated system handling timesheets, advance payments, disbursements, attendance tracking, and financial reporting.
+Payroll management system for Vietnamese companies. Replaces manual spreadsheet-based payroll tracking with an automated system handling timesheets, advance payments, disbursements, attendance tracking, and financial reporting.
 
 ## Problem Space
 
-Vietnamese construction companies manage workers across multiple projects with complex pay structures:
+Vietnamese companies manage employees across multiple projects with complex pay structures:
 
-- Workers assigned to projects with varying pay rates and schedules
+- Employees assigned to projects with varying pay rates and schedules
 - Weekly and monthly timesheet tracking with approval workflows
 - Employees need advance payment access between salary cycles
 - Disbursement to bank accounts requires integration with Vietnamese payment providers
@@ -97,7 +97,7 @@ Vietnamese construction companies manage workers across multiple projects with c
 | **Settlement** | Quyet toan | Final payroll calculation and fund allocation for a salary period |
 | **Check-in/Check-out** | Cham vao / Cham ra | Employee attendance recording via mobile GPS with geofence validation |
 | **IPN** | - | Instant Payment Notification — webhook from payment provider confirming transfer status |
-| **Geofence** | - | GPS boundary around a project site used to validate employee location at check-in/out |
+| **Geofence** | - | GPS boundary around a project location used to validate employee location at check-in/out |
 
 ## Technical Constraints
 

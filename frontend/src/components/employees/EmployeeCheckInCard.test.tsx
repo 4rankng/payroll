@@ -227,7 +227,7 @@ describe("AttendanceReference", () => {
     expect(screen.queryByRole("tab", { name: "Ca ngày" })).not.toBeInTheDocument();
   });
 
-  it("shows an overnight badge on cross-midnight shifts and not on day shifts", () => {
+  it("shows only shift names without an overnight badge", () => {
     const day = {
       shift_start: "2026-07-12T09:00:00+07:00",
       shift_end: "2026-07-12T18:00:00+07:00",
@@ -247,11 +247,11 @@ describe("AttendanceReference", () => {
 
     render(<AttendanceReference scheduleWindows={[day, night]} activeScheduleWindow={night} />);
 
-    // The night tab carries the overnight badge ("Qua đêm"); the day tab does not.
-    const nightTab = screen.getByRole("tab", { name: /Ca đêm/ });
-    expect(nightTab).toHaveTextContent("Qua đêm");
+    const nightTab = screen.getByRole("tab", { name: "Ca đêm" });
+    expect(nightTab).toHaveTextContent("Ca đêm");
     const dayTab = screen.getByRole("tab", { name: "Ca ngày" });
-    expect(dayTab).not.toHaveTextContent("Qua đêm");
+    expect(dayTab).toHaveTextContent("Ca ngày");
+    expect(screen.queryByText("Qua đêm")).not.toBeInTheDocument();
   });
 });
 

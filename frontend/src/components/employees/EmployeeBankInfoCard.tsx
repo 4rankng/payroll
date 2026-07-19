@@ -1,6 +1,7 @@
 import { Building2, Copy, CreditCard, UserRound } from "lucide-react";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { toast } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 
 interface EmployeeBankInfoCardProps {
   profile: EmployeeProfile;
@@ -37,7 +38,7 @@ export function EmployeeBankInfoCard({
 
   return (
     <div
-      className={className ?? "employee-surface-card overflow-hidden"}
+      className={cn("ct-card employee-surface-card overflow-hidden bg-base-100", className)}
       role="region"
       aria-labelledby="employee-bank-title"
     >
@@ -48,7 +49,7 @@ export function EmployeeBankInfoCard({
         </h2>
       </div>
 
-      <div className="m-2 overflow-hidden rounded-[var(--employee-radius-card)] border border-[var(--employee-border)] bg-white" style={style}>
+      <div className="m-2 overflow-hidden rounded-[var(--employee-radius-card)] border border-base-300 bg-base-100" style={style}>
         {hasBankInfo ? (
           <dl className="divide-y divide-[var(--employee-border)]">
             <div className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-3 px-3.5 py-3">
@@ -77,7 +78,7 @@ export function EmployeeBankInfoCard({
                     <button
                       type="button"
                       onClick={() => handleCopyAccountNumber(profile.bank_account_number!)}
-                      className="employee-icon-button shrink-0 border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]"
+                      className="ct-btn ct-btn-ghost ct-btn-circle employee-icon-button shrink-0 border border-primary/20 bg-primary/10 text-primary"
                       aria-label="Sao chép số tài khoản"
                       title="Sao chép số tài khoản"
                     >

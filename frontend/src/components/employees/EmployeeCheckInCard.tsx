@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, Moon, RefreshCw, RotateCcw, Settings, WalletCards } from "lucide-react";
+import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, RefreshCw, RotateCcw, Settings, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -262,17 +262,6 @@ export function AttendanceReference({
   const resolveShiftLabel = (schedule: AttendanceScheduleWindow, index: number) =>
     schedule.shift_name?.trim() || (index === 0 ? "Ca ngày" : "Ca đêm");
 
-  // isOvernightShift reports whether a shift's time range crosses midnight
-  // (end time-of-day <= start time-of-day), so we can show a "Qua đêm" badge.
-  const isOvernightShift = (schedule: AttendanceScheduleWindow) => {
-    const start = schedule.shift_start;
-    const end = schedule.shift_end;
-    if (!start || !end) return false;
-    const s = start.slice(11, 16);
-    const e = end.slice(11, 16);
-    return e <= s;
-  };
-
   return (
     <section className="mt-6 space-y-6 border-t border-slate-200/80 pt-5" aria-label="Thông tin chấm công">
       {schedules.length > 0 ? (
@@ -296,18 +285,7 @@ export function AttendanceReference({
                   onClick={() => setSelectedShiftIndex(index)}
                   className={`employee-type-action min-h-12 rounded-xl font-semibold transition-all duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.22)]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
                 >
-                  <span className="inline-flex items-center gap-1.5">
-                    {resolveShiftLabel(schedule, index)}
-                    {isOvernightShift(schedule) && (
-                      <span
-                        className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[11px] font-medium ${selectedShiftIndex === index ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-600"}`}
-                        title="Ca qua đêm"
-                      >
-                        <Moon className="h-2.5 w-2.5" aria-hidden="true" />
-                        Qua đêm
-                      </span>
-                    )}
-                  </span>
+                  {resolveShiftLabel(schedule, index)}
                 </button>
               ))}
             </div>

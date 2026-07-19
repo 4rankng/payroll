@@ -4,7 +4,6 @@ import { EmployeePortalHeader } from "@/components/employees/EmployeePortalHeade
 import { Skeleton } from "@/components/ui/skeleton";
 
 const employeeMobileBackground: CSSProperties = {
-  backgroundColor: "var(--employee-page)",
   paddingBottom: "env(safe-area-inset-bottom)",
 };
 
@@ -104,8 +103,10 @@ export function EmployeeMobileShell({
 
   return (
     <div
-      className={cn("employee-mobile-page min-h-[100dvh] overflow-x-hidden", className)}
+      className={cn("employee-mobile-page min-h-[100dvh] overflow-x-hidden bg-[var(--employee-page)] text-[var(--employee-text)]", className)}
       style={{ ...employeeMobileBackground, ...style }}
+      data-employee-ui=""
+      data-theme="employee"
       data-has-action-toolbar={hasActionToolbar}
     >
       {renderChrome()}

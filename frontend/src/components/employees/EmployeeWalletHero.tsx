@@ -54,23 +54,23 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
   return (
     <section
       className={cn(
-        "employee-surface-card overflow-hidden",
+        "ct-card employee-surface-card overflow-hidden bg-base-100",
         className
       )}
       aria-label={model.title}
     >
-      <div className="bg-[linear-gradient(135deg,var(--employee-accent)_0%,var(--employee-accent-strong)_100%)] px-4 pb-9 pt-4 text-white">
+      <div className="bg-gradient-to-br from-primary to-neutral px-4 pb-9 pt-4 text-primary-content">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="employee-type-label text-white/80">
+            <p className="employee-type-label text-primary-content/80">
               {model.eyebrow}
             </p>
-            <h2 className="employee-type-hero-title mt-0.5 text-white">
+            <h2 className="employee-type-hero-title mt-0.5 text-primary-content">
               {model.title}
             </h2>
           </div>
           {model.periodLabel && (
-            <span className="employee-type-pill shrink-0 rounded-full bg-white/15 px-2.5 py-1.5 text-white">
+            <span className="ct-badge ct-badge-outline employee-type-pill h-auto shrink-0 border-primary-content/25 bg-primary-content/10 px-2.5 py-1.5 text-primary-content">
               {model.periodLabel}
             </span>
           )}
@@ -78,7 +78,7 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
       </div>
 
       <div className="-mt-6 px-3 pb-3">
-        <div className="rounded-t-[var(--employee-radius-card)] bg-[var(--employee-surface)] px-3 pb-1 pt-4">
+        <div className="ct-card-body gap-0 rounded-t-[var(--employee-radius-card)] bg-base-100 px-3 pb-1 pt-4">
           <p className="employee-type-label-caps text-[var(--employee-text-secondary)]">
             {model.amountLabel}
           </p>
@@ -133,7 +133,7 @@ export function EmployeeWalletHero({ model, onAction, className }: EmployeeWalle
                   type="button"
                   disabled={action.disabled}
                   onClick={() => onAction(action)}
-                  className="group flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-[var(--employee-radius-control)] px-2 py-1.5 text-left transition-colors active:bg-[var(--employee-accent-soft)] disabled:cursor-not-allowed disabled:opacity-45"
+                  className="ct-btn ct-btn-ghost group h-auto min-h-11 min-w-0 justify-center gap-2 rounded-[var(--employee-radius-control)] px-2 py-1.5 text-left font-normal normal-case shadow-none disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] transition-colors group-active:bg-[var(--employee-accent)] group-active:text-white">
                     <Icon className="h-4 w-4" strokeWidth={2.2} />
