@@ -93,7 +93,7 @@ Organized by domain, each with its own subdirectory:
 | `advance-payment/` | FlexPay requests, approvals |
 | `dashboard/` | Main dashboard (employee view) |
 | `disbursement/` | Disbursement management |
-| `employees/` | Employee list, profiles |
+| `employees/` | Employee list, profiles, and employee self-service shell/header/attendance surfaces |
 | `ledger/` | Ledger entries view |
 | `lenders/`, `loans/` | Lender and loan management |
 | `partner/`, `partner-dashboard/`, `partner-employees/`, `partner-projects/`, `partner-timesheet/` | Partner-scoped views |
@@ -113,11 +113,15 @@ TanStack Query API wrappers in `hooks/api/` (admin, admin-dashboard, advance-pay
 
 ### `pages/` (18K LOC) -- Route Pages
 
-`admin/`, `adv-partner/`, `employee/`, `mobile/`, `partner/` -- each role has its own page set. `Login.tsx`, `NotFound.tsx`, `Index.tsx` at root.
+`admin/`, `adv-partner/`, `employee/`, `mobile/`, `partner/` -- each role has its own page set. The employee area now routes regular and flexible workers through a shared mobile shell with explicit loading/error chrome before selecting the page variant. `Login.tsx`, `NotFound.tsx`, `Index.tsx` at root.
 
 ### `contexts/` (1K LOC) -- React Contexts
 
-`AuthContext`, `AppStateContext`, `BottomNavContext`, `CommandPaletteContext`, `MetadataContext`, `ShortcutContext`, `UserPreferencesContext`.
+`AuthContext`, `AppStateContext`, `BottomNavContext`, `CommandPaletteContext`, `MetadataContext`, `ShortcutContext`, `UserPreferencesContext`. `AuthContext` also clears TanStack Query state and the persisted session query cache on logout or invalid-session bootstrap to avoid cross-user employee data bleed on shared devices.
+
+### `tests/` -- Playwright E2E
+
+`tests/e2e/employee-portal.spec.ts` exercises the mobile employee portal with fully synthetic auth/profile/payroll/attendance fixtures. The suite fails on unexpected employee API requests, and Playwright artifacts are written under `frontend/test-results/` and `frontend/playwright-report/` (gitignored).
 
 ### `config/` & `constants/`
 
@@ -170,3 +174,5 @@ Background workers in `backend/internal/app/workers/` and `backend/internal/infr
 | Add a frontend modal | `frontend/src/components/dialogs/` or `sheets/` |
 | Change Vietnamese UI text | Directly in `.tsx` files (no i18n layer) |
 | Change API config | `frontend/src/config/api.config.ts` |
+| Work on employee mobile shell or attendance toolbar | `frontend/src/components/employees/` + `frontend/src/pages/employee/` |
+| Update synthetic employee E2E coverage | `frontend/tests/e2e/employee-portal.spec.ts` + `frontend/playwright.config.ts` |

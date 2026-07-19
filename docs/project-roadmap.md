@@ -1,8 +1,8 @@
 # Project Roadmap
 
-Direction and priorities inferred from recent commit history (186 commits since June 2026) and codebase signals. Sections are marked as **inferred** or **stated** based on evidence.
+Direction and priorities inferred from recent commit history and codebase signals. Sections are marked as **inferred** or **stated** based on evidence.
 
-> Last analyzed: 2026-07-04. This is a snapshot, not a commitment. The repo has no formal roadmap file.
+> Last analyzed: 2026-07-19. This is a snapshot, not a commitment. The repo has no formal roadmap file.
 
 ## Active Development Areas (Inferred from Recent Work)
 
@@ -44,7 +44,10 @@ Most actively developed feature. Recent work includes:
 
 - Mobile admin pages refined
 - Desktop advance payment filter labels updated
-- Mobile-first attendance components
+- Employee self-service mobile shell unified across regular, flexible, and check-in-enabled variants
+- Employee profile failure/loading states now use non-interactive mobile chrome with guarded retry and session-safe cache clearing
+- Mobile-first attendance components now reserve measured toolbar height for safe areas and large-text layouts
+- Employee advance-request cancellation and attendance recovery flows hardened against rapid repeat actions
 - Responsive component variants (desktop/mobile table columns)
 
 ### 5. Notifications & Communication
@@ -59,7 +62,7 @@ Most actively developed feature. Recent work includes:
 
 - Attendance service tests expanded significantly (auto-reject, admin review, concurrency, geofence)
 - Integration test suite exists at `backend/tests/`
-- Frontend has minimal test coverage; E2E tests (Playwright) planned but not yet realized
+- Frontend unit coverage is still light, but employee mobile Playwright coverage now exists with synthetic fixtures and unexpected-request failure gates
 
 ### Code Quality
 
@@ -91,4 +94,4 @@ Most actively developed feature. Recent work includes:
 - **Dual lockfile**: Frontend has both `yarn.lock` (Docker builds) and `pnpm-lock.yaml` (local dev). Requires manual sync.
 - **Migration application**: `schema_migrations` table reported empty on some deployments; manual DDL application documented as workaround.
 - **Demo server resources**: 1GB droplet requires 2GB swap; OOM risk documented.
-- **Frontend test coverage**: Minimal unit tests; Playwright E2E setup planned but not implemented.
+- **Frontend test coverage**: Unit/integration coverage on the frontend is still thin, even though a synthetic employee mobile Playwright suite is now checked in.

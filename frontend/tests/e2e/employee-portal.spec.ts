@@ -69,6 +69,26 @@ async function mockEmployeePortal(page: Page) {
       }],
     }),
   }));
+  await page.route("**/api/v1/me/check-in-advance", (route) => route.fulfill({
+    json: json({
+      forMonth: "2026-07",
+      maxAdvanceAmount: 5_000_000,
+      completedAmount: 1_000_000,
+      pendingAmount: 0,
+      remainingAmount: 4_000_000,
+      canRequest: true,
+      feePercentage: 2,
+      minFee: 10_000,
+      hasFlexible: true,
+      quotas: [{
+        forMonth: "2026-07",
+        maxAdvanceAmount: 5_000_000,
+        completedAmount: 1_000_000,
+        pendingAmount: 0,
+        remainingAmount: 4_000_000,
+      }],
+    }),
+  }));
 
   await page.route("**/api/v1/me/advance-payment/history*", (route) => route.fulfill({
     json: {
@@ -101,6 +121,7 @@ async function mockEmployeePortal(page: Page) {
 }
 
 async function clearPersistedEmployeeQueries(page: Page) {
+  await page.addInitScript(() => sessionStorage.removeItem("payroll-query-cache"));
   await page.evaluate(() => sessionStorage.removeItem("payroll-query-cache"));
 }
 
