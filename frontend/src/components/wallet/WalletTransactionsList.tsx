@@ -72,7 +72,7 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
   authorised: "bg-blue-100 text-blue-800 hover:bg-blue-100",
   completed: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   failed: "bg-rose-100 text-rose-800 hover:bg-rose-100",
-  reversed: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  reversed: "bg-teal-100 text-teal-800 hover:bg-teal-100",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {

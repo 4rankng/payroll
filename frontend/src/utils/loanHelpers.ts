@@ -39,7 +39,7 @@ export function getLoanTypeLabel(type: LoanType): string {
 export function getLoanTypeBadgeColor(type: LoanType): string {
   const colorMap: Record<LoanType, string> = {
     bullet_loan: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    custom_schedule: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    custom_schedule: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
   };
   return colorMap[type] || 'bg-gray-100 text-gray-800';
 }

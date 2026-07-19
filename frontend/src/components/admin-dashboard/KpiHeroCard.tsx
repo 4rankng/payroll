@@ -9,7 +9,7 @@ export interface KpiHeroCardProps {
   unit?: string;
   formattedValue?: string;
   icon: LucideIcon;
-  color: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose';
+  color: 'blue' | 'emerald' | 'amber' | 'teal' | 'violet' | 'rose';
   sublabel?: string;
   trend?: { value: string; positive: boolean };
   badge?: { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' };
@@ -50,6 +50,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
     blue:    { iconText: 'text-blue-600',    watermark: 'text-blue-500/15' },
     emerald: { iconText: 'text-emerald-600', watermark: 'text-emerald-500/15' },
     amber:   { iconText: 'text-amber-600',   watermark: 'text-amber-500/15' },
+    teal:    { iconText: 'text-teal-600',    watermark: 'text-teal-500/15' },
     violet:  { iconText: 'text-violet-600',  watermark: 'text-violet-500/15' },
     rose:    { iconText: 'text-rose-600',     watermark: 'text-rose-500/15' },
   };

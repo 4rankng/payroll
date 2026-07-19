@@ -109,10 +109,10 @@ export const PAYMENT_STATUS_COLORS: Partial<Record<PaymentStatus, StatusColors>>
  * Mixed status colors (for calendar cells with multiple statuses)
  */
 export const MIXED_STATUS_COLORS: StatusColors = {
-  bg: 'bg-purple-100',
-  text: 'text-purple-700',
-  border: 'border-purple-300',
-  hover: 'hover:bg-purple-200/70',
+  bg: 'bg-teal-100',
+  text: 'text-teal-700',
+  border: 'border-teal-300',
+  hover: 'hover:bg-teal-200/70',
 };
 
 /**

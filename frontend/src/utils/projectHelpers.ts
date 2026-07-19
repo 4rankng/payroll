@@ -77,7 +77,7 @@ export const getEmployeeCountColor = (count: number): string => {
   if (count <= 20) {
     return "text-green-600 dark:text-green-400";
   }
-  return "text-purple-600 dark:text-purple-400";
+  return "text-teal-600 dark:text-teal-400";
 };
 
 /**

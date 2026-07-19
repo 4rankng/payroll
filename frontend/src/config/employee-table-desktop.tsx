@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const SCHEDULE_STYLES: Record<string, string> = {
   weekly: "bg-sky-50 text-sky-700 border-sky-200/80",
-  monthly: "bg-violet-50 text-violet-700 border-violet-200/80",
+  monthly: "bg-teal-50 text-teal-700 border-teal-200/80",
   flexible: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
 };
 

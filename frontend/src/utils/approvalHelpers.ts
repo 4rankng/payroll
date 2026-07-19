@@ -33,7 +33,7 @@ export const getTypeLabel = (type: ApprovalType): string => {
 export const getTypeColor = (type: ApprovalType): string => {
   const colors = {
     timesheet: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    payrate: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+    payrate: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300',
     payroll: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
     employee: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
   };

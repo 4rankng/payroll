@@ -457,7 +457,7 @@ export default function TimesheetsPage() {
             className="gap-1.5"
           >
             <History className="h-3.5 w-3.5" />
-            Bút toán ngân hàng
+            Lịch sử trả lương
           </Button>
           <Button
             variant="outline"

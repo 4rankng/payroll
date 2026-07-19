@@ -207,7 +207,7 @@ export function PaymentHistorySheet({ isOpen, onClose }: PaymentHistorySheetProp
     <SlideSheetTemplate
       isOpen={isOpen}
       onClose={onClose}
-      title="Bút toán ngân hàng"
+      title="Lịch sử trả lương"
       description="Danh sách các lần thanh toán lương cho nhân viên"
       size="full"
       className="w-full max-w-[2000px]"

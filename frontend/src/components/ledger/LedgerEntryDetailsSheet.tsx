@@ -113,7 +113,7 @@ function LedgerEntryDetailsSheetComponent({
       cash: 'bg-emerald-100 text-emerald-800',
       receivable: 'bg-blue-100 text-blue-800',
       payable: 'bg-red-100 text-red-800',
-      revenue: 'bg-purple-100 text-purple-800',
+      revenue: 'bg-teal-100 text-teal-800',
       expense: 'bg-orange-100 text-orange-800',
     };
 

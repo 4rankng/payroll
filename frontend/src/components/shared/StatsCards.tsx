@@ -17,12 +17,12 @@ interface StatsCardsProps {
   columns?: 1 | 2 | 3 | 4;
 }
 
-const COLOR_MAP: Record<string, 'blue' | 'emerald' | 'amber' | 'violet' | 'rose'> = {
+const COLOR_MAP: Record<string, 'blue' | 'emerald' | 'amber' | 'teal' | 'rose'> = {
   blue: 'blue',
   green: 'emerald',
   red: 'rose',
   yellow: 'amber',
-  purple: 'violet',
+  purple: 'teal',
   gray: 'blue',
 };
 

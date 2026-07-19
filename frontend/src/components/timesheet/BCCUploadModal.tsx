@@ -359,7 +359,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
         hideCloseButton
       >
         {/* ── Navy Header ─────────────────────────────────────────────────── */}
-        <div className="relative flex items-center gap-3.5 px-6 py-5 bg-gradient-to-br from-[#0e2038] to-[#15294a]">
+        <div className="relative flex items-center gap-3.5 px-6 py-5 bg-gradient-to-br from-emerald-800 to-emerald-950">
           <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-white/[.14] bg-white/[.08]">
             <FileText className="h-5 w-5 stroke-white" />
           </div>
@@ -367,7 +367,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
             <h2 className="text-[17px] font-bold tracking-tight text-white leading-tight">
               Tải lên Bảng Chấm Công
             </h2>
-            <p className="mt-0.5 text-[12.5px] font-medium text-[#a9bdd9]">
+            <p className="mt-0.5 text-[12.5px] font-medium text-emerald-100/70">
               Nhập dữ liệu chấm công từ file Excel
             </p>
           </div>
@@ -434,11 +434,11 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               {/* Info callout */}
               <Callout variant="info">
                 Các ngày trong file Excel sẽ được gán vào tháng đã chọn — ví dụ ngày{' '}
-                <code className="rounded-[4px] bg-[rgba(31,78,121,.1)] px-[5px] py-px font-mono text-[11.5px]">
+                <code className="rounded-[4px] bg-emerald-600/10 px-[5px] py-px font-mono text-[11.5px]">
                   22
                 </code>{' '}
                 sẽ thành{' '}
-                <code className="rounded-[4px] bg-[rgba(31,78,121,.1)] px-[5px] py-px font-mono text-[11.5px]">
+                <code className="rounded-[4px] bg-emerald-600/10 px-[5px] py-px font-mono text-[11.5px]">
                   22/{selectedMonth.split('-')[1]}/{selectedMonth.split('-')[0]}
                 </code>
                 .

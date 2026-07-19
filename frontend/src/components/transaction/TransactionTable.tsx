@@ -28,7 +28,7 @@ interface TransactionTableProps {
 const STATUS_BADGE: Record<string, { badge: string; remaining: string }> = {
   settled:           { badge: 'bg-emerald-50 text-emerald-700', remaining: 'text-emerald-600/60' },
   pending:           { badge: 'bg-amber-50 text-amber-700',     remaining: 'text-amber-600/60'   },
-  partially_settled: { badge: 'bg-indigo-50 text-indigo-700',   remaining: 'text-indigo-600/60'  },
+  partially_settled: { badge: 'bg-teal-50 text-teal-700',   remaining: 'text-teal-600/60'  },
 };
 const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text-muted-foreground/60' };
 
@@ -36,7 +36,7 @@ const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text
 const TYPE_COLORS: Record<string, string> = {
   revenue:   'bg-emerald-50 text-emerald-700',
   expense:   'bg-red-50 text-red-700',
-  capital:   'bg-violet-50 text-violet-700',
+  capital:   'bg-teal-50 text-teal-700',
   write_off: 'bg-amber-50 text-amber-700',
 };
 
@@ -57,7 +57,7 @@ const TRANSACTION_STRIP_BASE = "relative before:absolute before:left-0 before:to
 const TRANSACTION_STRIP_COLOR: Record<string, string> = {
   settled:           'before:bg-emerald-500',
   pending:           'before:bg-amber-400',
-  partially_settled: 'before:bg-indigo-400',
+  partially_settled: 'before:bg-teal-500',
 };
 
 export function TransactionTable({
@@ -212,7 +212,7 @@ export function TransactionTable({
         {[
           { dot: 'bg-emerald-500', label: 'Đã thanh toán' },
           { dot: 'bg-amber-400',   label: 'Chờ thanh toán' },
-          { dot: 'bg-indigo-400',  label: 'Thanh toán thiếu' },
+          { dot: 'bg-teal-500',    label: 'Thanh toán thiếu' },
         ].map(({ dot, label }) => (
           <div key={label} className="flex items-center gap-1">
             <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', dot)} />

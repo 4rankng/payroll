@@ -123,7 +123,7 @@ function TransactionDetailsSheetComponent({
     const variants = {
       revenue: 'bg-emerald-100 text-emerald-800',
       expense: 'bg-red-100 text-red-800',
-      capital: 'bg-purple-100 text-purple-800',
+      capital: 'bg-teal-100 text-teal-800',
       write_off: 'bg-amber-100 text-amber-800',
     };
 
@@ -142,7 +142,7 @@ function TransactionDetailsSheetComponent({
     const variants: Record<string, { className: string; variant?: 'outline' }> = {
       settled: { className: 'bg-emerald-600 text-white border-emerald-600', variant: undefined },
       pending: { className: 'border-yellow-600 text-yellow-900', variant: 'outline' },
-      partially_settled: { className: 'border-indigo-600 text-indigo-800', variant: 'outline' },
+      partially_settled: { className: 'border-teal-600 text-teal-800', variant: 'outline' },
     };
 
     const label = transactionService.getStatusDisplay(status, metadata);

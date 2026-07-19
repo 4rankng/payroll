@@ -39,14 +39,14 @@ export function TransactionMobileList({
   const typeColors: Record<string, string> = {
     revenue: 'bg-emerald-100 text-emerald-800',
     expense: 'bg-red-100 text-red-800',
-    capital: 'bg-purple-100 text-purple-800',
+    capital: 'bg-teal-100 text-teal-800',
     write_off: 'bg-amber-100 text-amber-800',
   };
 
   const statusColors: Record<string, string> = {
     settled: 'bg-emerald-600 text-white',
     pending: 'border border-yellow-500 text-yellow-800 bg-yellow-50',
-    partially_settled: 'border border-indigo-400 text-indigo-800 bg-indigo-50',
+    partially_settled: 'border border-teal-500 text-teal-800 bg-teal-50',
   };
 
   if (isLoading) {

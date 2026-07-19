@@ -273,9 +273,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
         .fpe *::-webkit-scrollbar { height:8px; width:8px; }
         .fpe *::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:6px; border:2px solid #fff; }
         @keyframes shift-ping {
-          0%   { box-shadow: 0 0 0 0 rgba(79,70,229,.5), 0 0 0 3px rgba(79,70,229,.15); border-color: #4f46e5; }
-          65%  { box-shadow: 0 0 0 8px rgba(79,70,229,0), 0 0 0 3px rgba(79,70,229,.1); }
-          100% { box-shadow: 0 0 0 0 rgba(79,70,229,0), 0 0 0 0 rgba(79,70,229,0); border-color: #e2e8f0; }
+          0%   { box-shadow: 0 0 0 0 rgba(8,120,62,.5), 0 0 0 3px rgba(8,120,62,.15); border-color: #08783e; }
+          65%  { box-shadow: 0 0 0 8px rgba(8,120,62,0), 0 0 0 3px rgba(8,120,62,.1); }
+          100% { box-shadow: 0 0 0 0 rgba(8,120,62,0), 0 0 0 0 rgba(8,120,62,0); border-color: #e2e8f0; }
         }
         .shift-highlight { animation: shift-ping 1.1s cubic-bezier(.2,.7,.2,1) forwards; }
       `}</style>
@@ -307,7 +307,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             <div className="flex items-center justify-between gap-1.5">
                               {editingShiftIdx === i ? (
                                 <input
-                                  className="fpe-mono h-11 w-[120px] rounded border border-indigo-400 bg-white px-2 text-sm font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                                  className="fpe-mono h-11 w-[120px] rounded border border-emerald-400 bg-white px-2 text-sm font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-200"
                                   value={editingShiftValue}
                                   onChange={e => setEditingShiftValue(e.target.value)}
                                   onKeyDown={e => {
@@ -319,7 +319,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 />
                               ) : (
                                 <span
-                                  className={`fpe-mono text-sm font-bold tracking-tight ${!readOnly ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                                  className={`fpe-mono text-sm font-bold tracking-tight ${!readOnly ? 'cursor-pointer hover:text-emerald-600 transition-colors' : ''}`}
                                   onClick={() => startShiftEdit(i)}
                                   title={readOnly ? undefined : 'Nhấn để đổi thời gian ca'}
                                 >
@@ -332,7 +332,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             </div>
                             <div className="flex items-center gap-1.5">
                               {s.label && <span className="text-[11px] text-muted-foreground">{s.label}</span>}
-                              <span className={`text-[11px] font-semibold ${ov?'text-purple-600':'text-muted-foreground/50'}`}>
+                              <span className={`text-[11px] font-semibold ${ov?'text-emerald-600':'text-muted-foreground/50'}`}>
                                 {ov && '🌙'}{durH(s.start,s.end)}h
                               </span>
                             </div>
@@ -350,7 +350,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             setShiftHighlight(true);
                             setTimeout(() => setShiftHighlight(false), 1200);
                           }}
-                          className="flex min-h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-bold text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50/50">
+                          className="flex min-h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-bold text-emerald-700 transition-colors hover:border-emerald-400 hover:bg-emerald-50/50">
                           + Thêm ca
                         </button>
                       </th>
@@ -365,7 +365,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         <div className="flex items-center justify-between gap-2">
                           {editingPositionName === pos ? (
                             <input
-                              className="h-11 w-full max-w-[140px] rounded border border-indigo-400 bg-white px-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                              className="h-11 w-full max-w-[140px] rounded border border-emerald-400 bg-white px-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-200"
                               value={editingPositionValue}
                               onChange={e => setEditingPositionValue(e.target.value)}
                               onKeyDown={e => {
@@ -377,7 +377,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             />
                           ) : (
                             <span
-                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-indigo-600 transition-colors' : ''}`}
+                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-emerald-600 transition-colors' : ''}`}
                               onClick={() => startPositionEdit(pos)}
                               title={readOnly ? undefined : 'Nhấn để đổi tên vị trí'}
                             >
@@ -386,7 +386,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           )}
                           {!readOnly && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-indigo-400 hover:text-indigo-600">→</button>
+                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-emerald-400 hover:text-emerald-600">→</button>
                               <button onClick={()=>togglePos(pos)} title="Xoá vị trí" className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
                             </div>
                           )}
@@ -411,8 +411,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 onBlur={() => setFocusKey(null)}
                                 onChange={e => setRate(pos, s, e.target.value)}
                                 style={{
-                                  border: `1px solid ${focused ? '#4f46e5' : 'transparent'}`,
-                                  boxShadow: focused ? '0 0 0 3px #eef1ff' : 'none',
+                                  border: `1px solid ${focused ? '#08783e' : 'transparent'}`,
+                                  boxShadow: focused ? '0 0 0 3px #e6f5ed' : 'none',
                                   background: focused ? '#fff' : 'transparent',
                                   color: has ? '#047857' : '#0f172a',
                                   fontWeight: has ? 600 : 400,
@@ -444,8 +444,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
           ) : (
             /* empty state */
             <div className="flex flex-col items-center justify-center py-12 gap-3 border-t border-border">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
               </div>
               <p className="text-sm font-bold text-foreground">Ma trận đang trống</p>
               <p className="text-xs text-muted-foreground text-center max-w-xs">
@@ -462,7 +462,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
               {/* positions */}
               <div className="rounded-xl border border-border p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
                   <span className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</span>
                   <span className="ml-auto text-xs text-muted-foreground/60">chạm để thêm / bỏ</span>
                 </div>
@@ -471,9 +471,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     <button key={name} onClick={()=>togglePos(name)}
                       className="fpe-sans inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                       style={{
-                        border: `1px solid ${hasPos(name)?'#c7d0fc':'#e2e8f0'}`,
-                        background: hasPos(name)?'#eef1ff':'#fff',
-                        color: hasPos(name)?'#4338ca':'#334155',
+                        border: `1px solid ${hasPos(name)?'#bfe0cc':'#e2e8f0'}`,
+                        background: hasPos(name)?'#e8f3ec':'#fff',
+                        color: hasPos(name)?'#08783e':'#334155',
                       }}>
                       {hasPos(name) && <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>}
                       {name}
@@ -485,7 +485,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
               {/* shifts */}
               <div className="rounded-xl border border-border p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                   <span className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</span>
                   <span className="ml-auto text-xs text-muted-foreground/60">mẫu phổ biến</span>
                 </div>
@@ -496,9 +496,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       <button key={p.start+p.end} onClick={()=>togglePreset(p)}
                         className="fpe-mono inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                         style={{
-                          border:`1px solid ${on?'#c7d0fc':'#e2e8f0'}`,
-                          background: on?'#eef1ff':'#fff',
-                          color: on?'#4338ca':'#334155',
+                          border:`1px solid ${on?'#bfe0cc':'#e2e8f0'}`,
+                          background: on?'#e8f3ec':'#fff',
+                          color: on?'#08783e':'#334155',
                         }}>
                         {on && <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>}
                         {p.start}–{p.end}
@@ -525,7 +525,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     />
                     <button onClick={addCustomShift}
                       className="fpe-sans h-11 rounded-lg px-4 text-sm font-bold text-white transition-colors"
-                      style={{ background:'#4f46e5' }}>
+                      style={{ background:'#08783e' }}>
                       Thêm ca
                     </button>
                   </div>
@@ -535,7 +535,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       {typeof shiftErr === 'object' && shiftErr.fix && (
                         <button
                           onClick={() => { setCustomShift(shiftErr.fix); setShiftErr(null); shiftInputRef.current?.focus(); }}
-                          className="fpe-mono font-bold text-indigo-600 underline underline-offset-2 ml-1">
+                          className="fpe-mono font-bold text-emerald-600 underline underline-offset-2 ml-1">
                           Dùng: {shiftErr.fix}
                         </button>
                       )}
