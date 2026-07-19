@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { CircleHelp, Loader2, TriangleAlert } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -72,19 +72,33 @@ export function ConfirmDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-sm">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+        <AlertDialogHeader className="pb-5">
+          <div className="flex items-start gap-3.5">
+            <span
+              className={
+                confirmVariant === "destructive"
+                  ? "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-error/10 text-error"
+                  : "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
+              }
+            >
+              {confirmVariant === "destructive" ? (
+                <TriangleAlert className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <CircleHelp className="h-5 w-5" aria-hidden="true" />
+              )}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <AlertDialogTitle>{title}</AlertDialogTitle>
+              {typeof description === "string" && (
+                <AlertDialogDescription>{description}</AlertDialogDescription>
+              )}
+            </div>
+          </div>
         </AlertDialogHeader>
 
-        <div className="px-4 pb-2 pt-4 sm:px-6">
-          {typeof description === 'string' ? (
-            <AlertDialogDescription className="text-muted-foreground">
-              {description}
-            </AlertDialogDescription>
-          ) : (
-            <div>{description}</div>
-          )}
-        </div>
+        {typeof description !== "string" && (
+          <div className="px-5 pb-5 sm:px-6">{description}</div>
+        )}
 
         <AlertDialogFooter className="w-full gap-2">
           <AlertDialogCancel
@@ -98,14 +112,12 @@ export function ConfirmDialog({
             <AlertDialogAction
               onClick={handleConfirm}
               disabled={isDisabled}
-              className={cn(
-                "flex-1",
-                confirmVariant === "destructive" ? "bg-destructive hover:bg-destructive/90" : ""
-              )}
+              variant={confirmVariant}
+              className="flex-1"
             >
               {isLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   Đang xử lý...
                 </>
               ) : (

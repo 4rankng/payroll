@@ -982,12 +982,12 @@ export function EmployeeCheckInCard({
         </div>
       ) : null}
       <AlertDialog open={showNoSalaryConfirm} onOpenChange={setShowNoSalaryConfirm}>
-        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-employee-100 bg-white shadow-2xl shadow-employee-900/20 sm:max-w-md">
-          <AlertDialogHeader className="bg-employee-900 px-5 pb-4 pt-5 text-left">
-            <AlertDialogTitle className="employee-type-hero-title font-semibold text-white">
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="employee-type-hero-title">
               Tan ca ngoài giờ hợp lệ
             </AlertDialogTitle>
-            <AlertDialogDescription className="mt-1 text-sm leading-5 text-employee-100">
+            <AlertDialogDescription>
               Tan ca đúng khung giờ để hệ thống ghi nhận lương.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1033,13 +1033,14 @@ export function EmployeeCheckInCard({
           <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
             <AlertDialogCancel
               disabled={isPending}
-              className="employee-type-action mt-0 h-12 w-full rounded-lg border-employee-200 bg-white font-semibold text-employee-900 hover:bg-employee-50 hover:text-employee-900"
+              className="employee-type-action mt-0 h-12 w-full rounded-lg"
             >
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               disabled={isPending}
-              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-semibold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
+              className="employee-type-action h-12 w-full rounded-lg"
               onClick={(event) => {
                 event.preventDefault();
                 handleAction("check_out", { confirmNoSalary: true });
@@ -1057,19 +1058,19 @@ export function EmployeeCheckInCard({
           if (!open) setTimingGuidance(null);
         }}
       >
-        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-amber-200 bg-white shadow-2xl shadow-amber-900/10 sm:max-w-md">
-          <AlertDialogHeader className="bg-amber-50 px-5 pb-4 pt-5 text-left">
-            <AlertDialogTitle className="employee-type-hero-title text-amber-950">
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="employee-type-hero-title">
               {timingGuidance?.title}
             </AlertDialogTitle>
-            <AlertDialogDescription className="mt-1 text-sm leading-5 text-amber-900">
+            <AlertDialogDescription>
               {timingGuidance?.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {timingGuidance?.windowStart && timingGuidance.windowEnd ? (
             <div className="px-5 py-4">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
-                <p className="employee-type-label-caps font-semibold text-amber-800">
+              <div className="ct-alert block rounded-xl border-warning/20 bg-warning/10 p-4 text-base-content shadow-none">
+                <p className="employee-type-label-caps font-semibold text-warning">
                   {timingGuidance.actionLabel}
                 </p>
                 <p className="employee-type-strong mt-1 text-slate-950">
@@ -1080,7 +1081,7 @@ export function EmployeeCheckInCard({
           ) : null}
           <AlertDialogFooter className="px-5 pb-5">
             <AlertDialogAction
-              className="employee-type-action h-12 w-full rounded-lg bg-[#07883F] font-semibold text-white hover:bg-[#067647]"
+              className="employee-type-action h-12 w-full rounded-lg"
               onClick={() => setTimingGuidance(null)}
             >
               Đã hiểu
@@ -1089,12 +1090,12 @@ export function EmployeeCheckInCard({
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={showCancelShiftConfirm} onOpenChange={setShowCancelShiftConfirm}>
-        <AlertDialogContent className="max-w-[calc(100vw-32px)] border-red-100 bg-white shadow-2xl shadow-red-900/20 sm:max-w-md">
-          <AlertDialogHeader className="bg-red-600 px-5 pb-4 pt-5 text-left">
-            <AlertDialogTitle className="employee-type-hero-title font-semibold text-white">
+        <AlertDialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="employee-type-hero-title">
               Hủy ca đang làm?
             </AlertDialogTitle>
-            <AlertDialogDescription className="mt-1 text-sm leading-5 text-red-50">
+            <AlertDialogDescription>
               Dùng khi bạn đã vào nhầm ca và muốn vào làm lại đúng ca.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1112,13 +1113,14 @@ export function EmployeeCheckInCard({
           <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
             <AlertDialogCancel
               disabled={isPending}
-              className="employee-type-action mt-0 h-12 w-full rounded-lg border-slate-200 bg-white font-semibold text-slate-900 hover:bg-slate-50"
+              className="employee-type-action mt-0 h-12 w-full rounded-lg"
             >
               Quay lại
             </AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               disabled={isPending}
-              className="employee-type-action h-12 w-full rounded-lg bg-red-600 font-semibold text-white shadow-sm shadow-red-900/15 hover:bg-red-700"
+              className="employee-type-action h-12 w-full rounded-lg"
               onClick={(event) => {
                 event.preventDefault();
                 handleCancelCurrentShift();

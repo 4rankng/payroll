@@ -237,27 +237,26 @@ const Login = () => {
           <img
             src="/login-employee-wallet-app-hero.webp"
             alt="Ứng dụng lương tuần bên cạnh ví và lịch trả lương"
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute bottom-0 right-0 h-full w-auto max-w-none object-contain object-bottom-right"
           />
-          <div className="ct-hero-overlay absolute inset-0 !bg-base-100/10" />
-          <div className="absolute inset-0 bg-gradient-to-r from-base-100/90 via-base-100/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-base-100/5 via-transparent to-base-100/15" />
+          <div className="ct-hero-overlay absolute inset-0 !bg-base-100/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-base-100 via-base-100/95 via-[46%] to-transparent to-[78%]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-base-100/55 via-transparent via-[46%] to-base-100/10" />
 
-          <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none flex-col items-start justify-start px-8 py-12 text-left text-base-content xl:px-12 xl:py-16">
-            <div className="max-w-[610px]">
-              <p className="mb-4 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.22em] text-primary">
+          <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none items-start justify-start px-8 py-[clamp(3.5rem,8vh,7rem)] text-left text-base-content xl:px-12 2xl:px-14">
+            <div className="max-w-[540px]">
+              <p className="mb-4 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.22em] text-primary">
                 <span className="h-px w-8 bg-primary" aria-hidden="true" />
                 Lương về đúng nhịp
               </p>
-              <h1 id="login-brand-heading" className="font-display text-[clamp(2.75rem,4.7vw,4.9rem)] font-black leading-[0.94] tracking-[-0.055em] text-base-content">
+              <h1 id="login-brand-heading" className="font-display text-[clamp(2.65rem,3.8vw,4.1rem)] font-black leading-[0.96] tracking-[-0.05em] text-base-content">
                 Ứng lương khi cần.
                 <span className="mt-2 block text-primary">Trả lương mỗi tuần.</span>
               </h1>
-              <p className="mt-6 max-w-lg text-base font-medium leading-7 text-base-content/65 xl:text-lg">
+              <p className="mt-6 max-w-[470px] text-base font-medium leading-7 text-base-content/65 xl:text-lg">
                 Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
               </p>
             </div>
-
           </div>
         </section>
 

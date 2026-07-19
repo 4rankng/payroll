@@ -496,8 +496,8 @@ const AdvPartnerAdvancePaymentsPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Thoát</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={page.confirmCancelRequest}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {page.cancelMutation.isPending
                 ? "Đang hủy..."

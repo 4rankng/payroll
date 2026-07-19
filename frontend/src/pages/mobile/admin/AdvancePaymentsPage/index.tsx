@@ -500,6 +500,7 @@ const AdvancePaymentsPageMobile = () => {
               Giữ lại
             </AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={handleConfirmCancel}
               disabled={page.cancelMutation.isPending}
               className="min-h-11 gap-1.5 text-xs"

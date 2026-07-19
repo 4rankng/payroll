@@ -669,9 +669,9 @@ function TransactionDetailsSheetComponent({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteTransaction.isPending}>Hủy bỏ</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={handleConfirmDelete}
               disabled={deleteTransaction.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteTransaction.isPending ? (
                 <>

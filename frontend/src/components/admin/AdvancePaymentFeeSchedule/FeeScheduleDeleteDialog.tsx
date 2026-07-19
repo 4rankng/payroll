@@ -76,9 +76,9 @@ export const FeeScheduleDeleteDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             onClick={onConfirm}
             disabled={!matches || isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Đang xóa..." : "Xóa cấu hình"}
           </AlertDialogAction>
