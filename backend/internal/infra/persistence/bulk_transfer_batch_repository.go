@@ -46,6 +46,21 @@ func (r *BulkTransferBatchRepository) GetByID(ctx context.Context, id uint64) (*
 	return &b, nil
 }
 
+// GetByIDForUpdate returns and locks a batch row in the transaction carried
+// by ctx. Callers must invoke this inside a TransactionManager transaction.
+func (r *BulkTransferBatchRepository) GetByIDForUpdate(ctx context.Context, id uint64) (*domain.BulkTransferBatch, error) {
+	var b domain.BulkTransferBatch
+	if err := r.getDB(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&b, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrBulkTransferBatchNotFound
+		}
+		return nil, fmt.Errorf("bulk_transfer_batches: get by id for update: %w", err)
+	}
+	return &b, nil
+}
+
 // GetByContentHash looks up by the SHA-256 content hash. Returns
 // ErrBulkTransferBatchNotFound when no batch matches — the caller treats this
 // as "no duplicate detected" and proceeds with INSERT.
@@ -75,13 +90,20 @@ func (r *BulkTransferBatchRepository) UpdateColumns(ctx context.Context, id uint
 	if len(columns) == 0 {
 		return nil
 	}
-	if err := r.DB.WithContext(ctx).
+	if err := r.getDB(ctx).
 		Model(&domain.BulkTransferBatch{}).
 		Where("id = ?", id).
 		Updates(columns).Error; err != nil {
 		return fmt.Errorf("bulk_transfer_batches: update columns: %w", err)
 	}
 	return nil
+}
+
+func (r *BulkTransferBatchRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
 }
 
 // UpdateWithLock acquires SELECT ... FOR UPDATE on the batch row, runs fn

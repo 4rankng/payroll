@@ -16,6 +16,7 @@ import { walletBulkTransferService } from '@/services/api/wallet-bulk-transfer.s
 import { QueryKeys } from '@/lib/queryKeys';
 import { triggerBlobDownload } from '@/utils/file-download';
 import { showErrorNotification, showSuccessNotification } from '@/utils/error-handler';
+import type { WalletBulkKQScope } from '@/types/wallet-bulk-transfer';
 
 export function useUploadWalletBulkTransfer() {
   const qc = useQueryClient();
@@ -60,7 +61,10 @@ export function useWalletBulkTransferBatches(page = 1, pageSize = 20) {
 
 export function useDownloadWalletBulkTransferKQ() {
   return useMutation({
-    mutationFn: (id: number) => walletBulkTransferService.downloadKQ(id),
+    mutationFn: (input: number | { id: number; scope: WalletBulkKQScope }) => {
+      const request = typeof input === 'number' ? { id: input, scope: 'all' as const } : input;
+      return walletBulkTransferService.downloadKQ(request.id, request.scope);
+    },
     onSuccess: async (data) => {
       triggerBlobDownload(data.blob, data.filename);
       showSuccessNotification('Đã tải file KQ');

@@ -34,18 +34,18 @@ var (
 
 // DuplicateConflict carries the conflict details when ErrDuplicateVFIC fires.
 type DuplicateConflict struct {
-	VFICCode    string `json:"vfic_code"`
-	ExistingID  uint64 `json:"existing_id"`
-	StatusCode  string `json:"status"`
+	VFICCode   string `json:"vfic_code"`
+	ExistingID uint64 `json:"existing_id"`
+	StatusCode string `json:"status"`
 }
 
 // UploadResponse is returned to the frontend on a successful upload (HTTP 202).
 type UploadResponse struct {
-	BatchID             uint64 `json:"batch_id"`
-	TotalCount          int    `json:"total_count"`
-	TransferAmount      int64  `json:"transfer_amount"`
-	EstimatedFeeTotal   int64  `json:"estimated_fee_total"`
-	EstimatedFeePerRow  int64  `json:"estimated_fee_per_row,omitempty"`
+	BatchID            uint64 `json:"batch_id"`
+	TotalCount         int    `json:"total_count"`
+	TransferAmount     int64  `json:"transfer_amount"`
+	EstimatedFeeTotal  int64  `json:"estimated_fee_total"`
+	EstimatedFeePerRow int64  `json:"estimated_fee_per_row,omitempty"`
 	// FeeResolutionOK is false when the fee schedule lookup failed at upload
 	// time (H2 fix). When false, every row will terminal-fail with
 	// ErrFeeResolution in the worker; admin should fix the schedule before
@@ -60,25 +60,30 @@ type UploadResponse struct {
 // asynq task per row. Each row task drives the full 5-step transfer flow
 // (see wallet_bulk_transfer_row_worker.go).
 //
-// On batch completion, ProcessBookBatchLedger books ONE aggregate Expense
-// transaction via txnSvc.CreateTransaction (idempotent via ledger_txn_id IS NULL).
+// On batch completion, ProcessBookBatchLedger books the partner receivable,
+// salary cash outflow, revenue offset, successful-timesheet links, and the
+// aggregate provider fee in one database transaction.
 //
 // The service NEVER calls paymentRepo.Create or WalletPaymentService.Initiate
 // directly — the worker is the SOLE wallet_payments insertion point so the
 // fee schedule stamps correctly at INSERT time.
 type WalletBulkTransferService struct {
-	batchRepo     domain.BulkTransferBatchRepository
-	paymentRepo   domaintx.WalletPaymentRepository
-	fileStorage   storage.FileStorage
-	assetRepo     domain.AssetRepository
-	asynqClient   BulkTransferEnqueuer
-	auditEmitter  AuditEventEmitter // C3 fix — nil-safe
-	txnSvc        TransactionCreator
-	txRunner      TransactionRunner
-	parser        *YeuCauChuyenTienParser
-	feeProvider   DisbursementFeeProvider
-	clock         func() time.Time
-	logger        *slog.Logger
+	batchRepo       domain.BulkTransferBatchRepository
+	paymentRepo     WalletPaymentReader
+	fileStorage     storage.FileStorage
+	assetRepo       domain.AssetRepository
+	asynqClient     BulkTransferEnqueuer
+	auditEmitter    AuditEventEmitter // C3 fix — nil-safe
+	txnSvc          TransactionCreator
+	txRunner        TransactionRunner
+	parser          *YeuCauChuyenTienParser
+	feeProvider     DisbursementFeeProvider
+	clock           func() time.Time
+	logger          *slog.Logger
+	partnerInfo     PartnerInfoProvider
+	ledgerWriter    LedgerEntryWriter
+	timesheetLinker TimesheetTransactionLinker
+	txnCodeRepo     TransactionCodeByVFIC
 }
 
 // TransactionCreator is the narrow port we need from settlement.TransactionService.
@@ -86,6 +91,13 @@ type WalletBulkTransferService struct {
 // (avoids a cycle when settlement later wants to consume bulk batches).
 type TransactionCreator interface {
 	CreateTransaction(ctx context.Context, txn *domain.Transaction) (*domain.Transaction, []*domain.LedgerEntry, error)
+}
+
+// WalletPaymentReader is the read-only wallet-payment subset used by this
+// service for duplicate checks, progress/export reads, and completion booking.
+type WalletPaymentReader interface {
+	GetByRequestID(ctx context.Context, requestID string) (*domaintx.WalletPayment, error)
+	ListByBatchIDOrdered(ctx context.Context, batchID uint64) ([]*domaintx.WalletPayment, error)
 }
 
 // TransactionRunner is the narrow port for executing a function inside a
@@ -104,29 +116,58 @@ type DisbursementFeeProvider interface {
 	GetDisbursementFeeVND(ctx context.Context, provider string) (fee int64, waived bool, err error)
 }
 
+// PartnerInfoProvider supplies the partner company name + the advance cash
+// fee percentage used to compute the receivable side of a wallet_bulk
+// batch (what the partner owes the operator = transfer × (1 + fee%)).
+// Mirrors the legacy BuildLedgerPlan logic in payroll/bulktransfer.
+type PartnerInfoProvider interface {
+	GetPartnerCompany(ctx context.Context) string
+	GetAdvanceCashFeePercentage(ctx context.Context) float64
+}
+
+// LedgerEntryWriter writes additional ledger entries for a transaction.
+// Used by ProcessBookBatchLedger to append the cash-outflow + revenue-offset
+// entries that complement the auto-generated receivable/revenue pair from
+// CreateTransaction. Mirrors settlement.LedgerService.CreateEntries without
+// pulling that package in.
+type LedgerEntryWriter interface {
+	CreateEntries(ctx context.Context, entries []*domain.LedgerEntry, createdBy uint) ([]*domain.LedgerEntry, error)
+}
+
+// TimesheetTransactionLinker links timesheets to a transaction by stamping
+// timesheets.transaction_id. Mirrors TimesheetRepository.BulkUpdateTransactionID.
+type TimesheetTransactionLinker interface {
+	BulkUpdateTransactionID(ctx context.Context, transactionID uint, timesheetIDs []uint) error
+}
+
+// TransactionCodeByVFIC resolves successful VFIC codes in one query so their
+// linked timesheets can be attached to the receivable transaction.
+type TransactionCodeByVFIC interface {
+	FindByCodes(ctx context.Context, codes []string) ([]*domain.TransactionCode, error)
+}
+
 // ServiceDeps bundles the constructor params for readability.
 type ServiceDeps struct {
-	BatchRepo    domain.BulkTransferBatchRepository
-	PaymentRepo  domaintx.WalletPaymentRepository
-	FileStorage  storage.FileStorage
-	AssetRepo    domain.AssetRepository
-	AsynqClient  BulkTransferEnqueuer
-	AuditEmitter AuditEventEmitter // C3 fix; nil-safe
-	TxnSvc       TransactionCreator
-	// TxRunner, when non-nil, wraps ProcessBookBatchLedger's CreateTransaction
-	// + batch link in a single DB transaction (C2 fix — closes the double-
-	// booking race when the recovery cron fires in the window between
-	// CreateTransaction committing and batchRepo.Update committing).
-	TxRunner      TransactionRunner
-	Parser       *YeuCauChuyenTienParser
-	FeeProvider  DisbursementFeeProvider
-	Clock        func() time.Time
-	Logger       *slog.Logger
+	BatchRepo       domain.BulkTransferBatchRepository
+	PaymentRepo     WalletPaymentReader
+	FileStorage     storage.FileStorage
+	AssetRepo       domain.AssetRepository
+	AsynqClient     BulkTransferEnqueuer
+	AuditEmitter    AuditEventEmitter // C3 fix; nil-safe
+	TxnSvc          TransactionCreator
+	TxRunner        TransactionRunner
+	Parser          *YeuCauChuyenTienParser
+	FeeProvider     DisbursementFeeProvider
+	Clock           func() time.Time
+	Logger          *slog.Logger
+	PartnerInfo     PartnerInfoProvider
+	LedgerWriter    LedgerEntryWriter
+	TimesheetLinker TimesheetTransactionLinker
+	TxnCodeRepo     TransactionCodeByVFIC
 }
 
 // NewWalletBulkTransferService wires the service. Nil clock defaults to
-// clock.Now; nil logger defaults to slog.Default(). Nil TxRunner falls back
-// to the legacy non-atomic path (kept for tests that don't need atomicity).
+// clock.Now; nil logger defaults to slog.Default().
 //
 // M7 fix: fail-fast on nil critical deps so a misconfigured bootstrap NPEs
 // here at construction rather than at first request.
@@ -143,6 +184,21 @@ func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
 	if deps.TxnSvc == nil {
 		panic("wallet_bulk: TxnSvc is required")
 	}
+	if deps.TxRunner == nil {
+		panic("wallet_bulk: TxRunner is required")
+	}
+	if deps.PartnerInfo == nil {
+		panic("wallet_bulk: PartnerInfo is required")
+	}
+	if deps.LedgerWriter == nil {
+		panic("wallet_bulk: LedgerWriter is required")
+	}
+	if deps.TimesheetLinker == nil {
+		panic("wallet_bulk: TimesheetLinker is required")
+	}
+	if deps.TxnCodeRepo == nil {
+		panic("wallet_bulk: TxnCodeRepo is required")
+	}
 	if deps.Parser == nil {
 		panic("wallet_bulk: Parser is required")
 	}
@@ -153,35 +209,39 @@ func NewWalletBulkTransferService(deps ServiceDeps) *WalletBulkTransferService {
 		deps.Logger = slog.Default()
 	}
 	return &WalletBulkTransferService{
-		batchRepo:    deps.BatchRepo,
-		paymentRepo:  deps.PaymentRepo,
-		fileStorage:  deps.FileStorage,
-		assetRepo:    deps.AssetRepo,
-		asynqClient:  deps.AsynqClient,
-		auditEmitter: deps.AuditEmitter,
-		txnSvc:       deps.TxnSvc,
-		txRunner:     deps.TxRunner,
-		parser:       deps.Parser,
-		feeProvider:  deps.FeeProvider,
-		clock:        deps.Clock,
-		logger:       deps.Logger,
+		batchRepo:       deps.BatchRepo,
+		paymentRepo:     deps.PaymentRepo,
+		fileStorage:     deps.FileStorage,
+		assetRepo:       deps.AssetRepo,
+		asynqClient:     deps.AsynqClient,
+		auditEmitter:    deps.AuditEmitter,
+		txnSvc:          deps.TxnSvc,
+		txRunner:        deps.TxRunner,
+		parser:          deps.Parser,
+		feeProvider:     deps.FeeProvider,
+		clock:           deps.Clock,
+		logger:          deps.Logger,
+		partnerInfo:     deps.PartnerInfo,
+		ledgerWriter:    deps.LedgerWriter,
+		timesheetLinker: deps.TimesheetLinker,
+		txnCodeRepo:     deps.TxnCodeRepo,
 	}
 }
 
 // Upload is the entry point for POST /wallet/bulk-transfer/upload.
 // 14-step pipeline per plan.md:
 //
-//	 1. (handler) http.MaxBytesReader + size check + ZIP magic sniff
-//	 2. parse bytes
-//	 3. sanitize filename
-//	 4. compute content_hash
-//	 5. dup-check by content_hash → 409
-//	 6. per-row VFIC dup-check via request_id → 409
-//	 7. store uploaded bytes → asset_id
-//	 8. create BulkTransferBatch (data = JSON []BulkTransferRow)
-//	 9. enqueue one asynq task per row
-//	10. flip enqueue_state = 'enqueued'
-//	11. return 202 { batch_id, total_count, transfer_amount, estimated_fee_total }
+//  1. (handler) http.MaxBytesReader + size check + ZIP magic sniff
+//  2. parse bytes
+//  3. sanitize filename
+//  4. compute content_hash
+//  5. dup-check by content_hash → 409
+//  6. per-row VFIC dup-check via request_id → 409
+//  7. store uploaded bytes → asset_id
+//  8. create BulkTransferBatch (data = JSON []BulkTransferRow)
+//  9. enqueue one asynq task per row
+//  10. flip enqueue_state = 'enqueued'
+//  11. return 202 { batch_id, total_count, transfer_amount, estimated_fee_total }
 //
 // NEVER creates wallet_payments rows.
 func (s *WalletBulkTransferService) Upload(ctx context.Context, fileBytes []byte, filename string, userID uint64) (*UploadResponse, error) {
@@ -417,10 +477,10 @@ func persistAsset(ctx context.Context, repo domain.AssetRepository, stored *stor
 		return 0
 	}
 	asset := &domain.Asset{
-		Filename:     stored.OriginalFilename,
-		FilePath:     stored.FilePath,
-		UploadType:   "wallet_bulk_transfer",
-		UploadedBy:   uint(userID),
+		Filename:   stored.OriginalFilename,
+		FilePath:   stored.FilePath,
+		UploadType: "wallet_bulk_transfer",
+		UploadedBy: uint(userID),
 	}
 	created, err := repo.Create(ctx, asset)
 	if err != nil || created == nil {
@@ -430,118 +490,6 @@ func persistAsset(ctx context.Context, repo domain.AssetRepository, stored *stor
 	return uint64(created.ID)
 }
 
-// ProcessBookBatchLedger is the asynq handler for TaskBookBatchLedger.
-//
-// Idempotency (C2 fix): the CreateTransaction + batch link run inside a
-// single DB transaction (via TxRunner). If `txRunner` is nil (tests), falls
-// back to the legacy non-atomic path — but in production TxRunner is always
-// wired. The LedgerTxnID != nil guard at the top is the outer idempotency
-// check; the tx is the inner atomicity guarantee.
-//
-// On zero-fee batches (all rows failed at pre-flight), no Expense txn is
-// created and the batch transitions directly to completed.
-//
-// The ledger write happens OUTSIDE the lock transaction that decided to book
-// (markRowTerminal in the worker) so we never hold a row lock across the
-// CreateTransaction call.
-func (s *WalletBulkTransferService) ProcessBookBatchLedger(ctx context.Context, t *asynqlib.Task) error {
-	var p BookLedgerPayload
-	if err := json.Unmarshal(t.Payload(), &p); err != nil {
-		return fmt.Errorf("unmarshal: %w: %w", err, asynqlib.SkipRetry)
-	}
-
-	batch, err := s.batchRepo.GetByID(ctx, p.BatchID)
-	if err != nil {
-		return fmt.Errorf("get batch: %w", err)
-	}
-
-	// Outer idempotency guard: already booked (or zero-fee finalized).
-	if batch.LedgerTxnID != nil || batch.IsTerminal() {
-		s.logger.Info("wallet_bulk: book_batch_ledger no-op (already finalized)",
-			"batch_id", batch.ID, "status", batch.Status, "ledger_txn_id", batch.LedgerTxnID)
-		return nil
-	}
-
-	// Sum fees across ALL terminal rows. Includes failed rows whose fee wasn't
-	// waived (OnePay charges per call to the transfer endpoint); pre-flight
-	// rejections carry fee=0 via syncPatch so they contribute 0 naturally.
-	terminalStates := []domaintx.State{domaintx.StateCompleted, domaintx.StateFailed}
-	totalFee, err := s.paymentRepo.SumFeeByBatchAndStatuses(ctx, batch.ID, terminalStates)
-	if err != nil {
-		return fmt.Errorf("sum fee: %w", err)
-	}
-
-	now := s.clock()
-
-	// Zero-fee batch (e.g. all rows failed at pre-flight): no Expense txn.
-	if totalFee == 0 {
-		// Use targeted column updates, not Save (M1 fix — avoids overwriting
-		// concurrent success_count/failed_count bumps).
-		if err := s.finalizeBatchColumns(ctx, batch.ID, 0, nil, &now); err != nil {
-			return fmt.Errorf("finalize zero-fee batch: %w", err)
-		}
-		s.logger.Info("wallet_bulk: zero-fee batch finalized", "batch_id", batch.ID)
-		return nil
-	}
-
-	// Non-zero fee: book the Expense txn + link atomically.
-	// C2 fix: with TxRunner wired, CreateTransaction and the batchRepo
-	// link update commit in the same DB transaction — closing the window
-	// where the completing-recovery cron could fire between the two and
-	// create a duplicate Expense txn.
-	if s.txRunner != nil {
-		_, err = s.txRunner.WithTransactionResult(ctx, func(txCtx context.Context) (interface{}, error) {
-			createdTxn, _, err := s.txnSvc.CreateTransaction(txCtx, &domain.Transaction{
-				Description:     fmt.Sprintf("Phí OnePay đợt chuyển tiền %s - batch #%d", batch.Filename, batch.ID),
-				TransactionType: domain.TransactionTypeExpense,
-				Amount:          totalFee,
-				Party:           "OnePay",
-				Status:          domain.TransactionStatusSettled,
-				CreatedBy:       uint(batch.CreatedBy),
-			})
-			if err != nil {
-				return nil, fmt.Errorf("create expense txn: %w", err)
-			}
-			ledgerID := uint64(createdTxn.ID)
-			if err := s.finalizeBatchColumns(txCtx, batch.ID, totalFee, &ledgerID, &now); err != nil {
-				return nil, fmt.Errorf("link ledger txn: %w", err)
-			}
-			s.logger.Info("wallet_bulk: aggregate fee booked (atomic)",
-				"batch_id", batch.ID, "txn_id", createdTxn.ID, "total_fee", totalFee)
-			return createdTxn, nil
-		})
-		return err
-	}
-
-	// Fallback path (no TxRunner — tests only). Mirrors the legacy non-atomic
-	// behavior; documented in plan.md Risk Assessment as the rare double-book
-	// window. NOT used in production.
-	s.logger.Warn("wallet_bulk: ProcessBookBatchLedger running without TxRunner (non-atomic)", "batch_id", batch.ID)
-	createdTxn, _, err := s.txnSvc.CreateTransaction(ctx, &domain.Transaction{
-		Description:     fmt.Sprintf("Phí OnePay đợt chuyển tiền %s - batch #%d", batch.Filename, batch.ID),
-		TransactionType: domain.TransactionTypeExpense,
-		Amount:          totalFee,
-		Party:           "OnePay",
-		Status:          domain.TransactionStatusSettled,
-		CreatedBy:       uint(batch.CreatedBy),
-	})
-	if err != nil {
-		return fmt.Errorf("create expense txn: %w", err)
-	}
-	ledgerID := uint64(createdTxn.ID)
-	if err := s.finalizeBatchColumns(ctx, batch.ID, totalFee, &ledgerID, &now); err != nil {
-		s.logger.Error("wallet_bulk: CRITICAL — expense txn created but batch update failed",
-			"batch_id", batch.ID, "txn_id", createdTxn.ID, "error", err)
-		return fmt.Errorf("update batch with ledger_txn_id: %w", err)
-	}
-	s.logger.Info("wallet_bulk: aggregate fee booked (non-atomic)",
-		"batch_id", batch.ID, "txn_id", createdTxn.ID, "total_fee", totalFee)
-	return nil
-}
-
-// finalizeBatchColumns writes only the booking-related columns via a targeted
-// update (avoids overwriting concurrent success_count/failed_count bumps —
-// M1 fix). Pass ledgerTxnID=nil for the zero-fee path.
 func (s *WalletBulkTransferService) finalizeBatchColumns(ctx context.Context, batchID uint64, totalFee int64, ledgerTxnID *uint64, completedAt *time.Time) error {
 	updates := map[string]interface{}{
 		"total_fee":    totalFee,
@@ -551,6 +499,9 @@ func (s *WalletBulkTransferService) finalizeBatchColumns(ctx context.Context, ba
 	}
 	if ledgerTxnID != nil {
 		updates["ledger_txn_id"] = *ledgerTxnID
+	}
+	if totalFee > 0 {
+		updates["fee_booked_at"] = completedAt
 	}
 	if err := s.batchRepo.UpdateColumns(ctx, batchID, updates); err != nil {
 		return err

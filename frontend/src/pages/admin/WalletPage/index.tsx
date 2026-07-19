@@ -156,6 +156,7 @@ export default function WalletPage() {
   const queryClient = useQueryClient();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
+  const [selectedBulkTransferBatchId, setSelectedBulkTransferBatchId] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const [mismatch, setMismatch] = useState<{ provider: number; local: number } | null>(null);
@@ -284,7 +285,10 @@ export default function WalletPage() {
         <WalletTransactionsList />
 
         {/* Wallet Bulk Transfer Pipeline — Stage 2 history */}
-        <BulkTransferBatchList />
+        <BulkTransferBatchList
+          selectedBatchId={selectedBulkTransferBatchId}
+          onSelectedBatchIdChange={setSelectedBulkTransferBatchId}
+        />
       </div>
 
       {/* Dialogs */}
@@ -297,6 +301,7 @@ export default function WalletPage() {
       <BulkTransferUploadDialog
         open={bulkTransferDialogOpen}
         onOpenChange={setBulkTransferDialogOpen}
+        onViewProgress={setSelectedBulkTransferBatchId}
       />
 
       {/* Mismatch confirmation */}

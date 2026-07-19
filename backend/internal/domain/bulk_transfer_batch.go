@@ -8,7 +8,8 @@ import (
 
 // BulkTransferBatchStatus is the lifecycle state of a bulk transfer batch.
 // pending → processing → completing → completed
-//                              ↘ failed
+//
+//	↘ failed
 //
 // `completing` is a transient state set inside the lock transaction when all
 // rows have reached terminal status; it triggers the book_batch_ledger asynq
@@ -42,25 +43,25 @@ const (
 // This entity is separate from BulkTransferFile (the existing 9Pay timesheet-
 // driven flow) — they coexist and never share rows.
 type BulkTransferBatch struct {
-	ID              uint64                    `json:"id" gorm:"primaryKey;type:bigint unsigned;autoIncrement"`
-	Filename        string                    `json:"filename" gorm:"column:filename;type:varchar(255);not null"`
-	ContentHash     string                    `json:"content_hash" gorm:"column:content_hash;type:char(64);not null;uniqueIndex:uq_bulk_transfer_batches_content_hash"`
-	Source          string                    `json:"source" gorm:"column:source;type:varchar(16);not null;default:'wallet_upload'"`
-	Status          BulkTransferBatchStatus   `json:"status" gorm:"column:status;type:varchar(32);not null;default:'pending'"`
-	EnqueueState    BulkTransferBatchEnqueueState `json:"enqueue_state" gorm:"column:enqueue_state;type:varchar(16);not null;default:'pending'"`
-	TotalCount      int                       `json:"total_count" gorm:"column:total_count;not null;default:0"`
-	SuccessCount    int                       `json:"success_count" gorm:"column:success_count;not null;default:0"`
-	FailedCount     int                       `json:"failed_count" gorm:"column:failed_count;not null;default:0"`
-	TransferAmount  int64                     `json:"transfer_amount" gorm:"column:transfer_amount;type:bigint;not null;default:0"`
-	TotalFee        int64                     `json:"total_fee" gorm:"column:total_fee;type:bigint;not null;default:0"`
-	LedgerTxnID     *uint64                   `json:"ledger_txn_id,omitempty" gorm:"column:ledger_txn_id;type:bigint unsigned"`
-	FeeBookedAt     *time.Time                `json:"fee_booked_at,omitempty" gorm:"column:fee_booked_at;type:datetime(3)"`
-	Data            string                    `json:"data" gorm:"column:data;type:json;not null"`
-	AssetID         *uint64                   `json:"asset_id,omitempty" gorm:"column:asset_id;type:bigint unsigned"`
-	CreatedBy       uint64                    `json:"created_by" gorm:"column:created_by;not null;type:bigint unsigned"`
-	CreatedAt       time.Time                 `json:"created_at" gorm:"column:created_at;type:datetime(3);not null;autoCreateTime"`
-	UpdatedAt       time.Time                 `json:"updated_at" gorm:"column:updated_at;type:datetime(3);not null;autoUpdateTime"`
-	CompletedAt     *time.Time                `json:"completed_at,omitempty" gorm:"column:completed_at;type:datetime(3)"`
+	ID             uint64                        `json:"id" gorm:"primaryKey;type:bigint unsigned;autoIncrement"`
+	Filename       string                        `json:"filename" gorm:"column:filename;type:varchar(255);not null"`
+	ContentHash    string                        `json:"content_hash" gorm:"column:content_hash;type:char(64);not null;uniqueIndex:uq_bulk_transfer_batches_content_hash"`
+	Source         string                        `json:"source" gorm:"column:source;type:varchar(16);not null;default:'wallet_upload'"`
+	Status         BulkTransferBatchStatus       `json:"status" gorm:"column:status;type:varchar(32);not null;default:'pending'"`
+	EnqueueState   BulkTransferBatchEnqueueState `json:"enqueue_state" gorm:"column:enqueue_state;type:varchar(16);not null;default:'pending'"`
+	TotalCount     int                           `json:"total_count" gorm:"column:total_count;not null;default:0"`
+	SuccessCount   int                           `json:"success_count" gorm:"column:success_count;not null;default:0"`
+	FailedCount    int                           `json:"failed_count" gorm:"column:failed_count;not null;default:0"`
+	TransferAmount int64                         `json:"transfer_amount" gorm:"column:transfer_amount;type:bigint;not null;default:0"`
+	TotalFee       int64                         `json:"total_fee" gorm:"column:total_fee;type:bigint;not null;default:0"`
+	LedgerTxnID    *uint64                       `json:"ledger_txn_id,omitempty" gorm:"column:ledger_txn_id;type:bigint unsigned"`
+	FeeBookedAt    *time.Time                    `json:"fee_booked_at,omitempty" gorm:"column:fee_booked_at;type:datetime(3)"`
+	Data           string                        `json:"data" gorm:"column:data;type:json;not null"`
+	AssetID        *uint64                       `json:"asset_id,omitempty" gorm:"column:asset_id;type:bigint unsigned"`
+	CreatedBy      uint64                        `json:"created_by" gorm:"column:created_by;not null;type:bigint unsigned"`
+	CreatedAt      time.Time                     `json:"created_at" gorm:"column:created_at;type:datetime(3);not null;autoCreateTime"`
+	UpdatedAt      time.Time                     `json:"updated_at" gorm:"column:updated_at;type:datetime(3);not null;autoUpdateTime"`
+	CompletedAt    *time.Time                    `json:"completed_at,omitempty" gorm:"column:completed_at;type:datetime(3)"`
 }
 
 // TableName binds the entity to its physical table.
@@ -74,11 +75,11 @@ func (b *BulkTransferBatch) IsTerminal() bool {
 
 // BulkTransferBatchFilter carries the optional list filters.
 type BulkTransferBatchFilter struct {
-	Status  BulkTransferBatchStatus
-	From    *time.Time
-	To      *time.Time
-	Limit   int
-	Offset  int
+	Status BulkTransferBatchStatus
+	From   *time.Time
+	To     *time.Time
+	Limit  int
+	Offset int
 }
 
 // BulkTransferBatchRepository persists bulk_transfer_batches rows.
@@ -92,6 +93,9 @@ type BulkTransferBatchFilter struct {
 type BulkTransferBatchRepository interface {
 	Create(ctx context.Context, b *BulkTransferBatch) error
 	GetByID(ctx context.Context, id uint64) (*BulkTransferBatch, error)
+	// GetByIDForUpdate locks the batch row inside the caller's transaction.
+	// Completion booking uses it to prevent recovery tasks from double-booking.
+	GetByIDForUpdate(ctx context.Context, id uint64) (*BulkTransferBatch, error)
 	GetByContentHash(ctx context.Context, hash string) (*BulkTransferBatch, error)
 	Update(ctx context.Context, b *BulkTransferBatch) error
 	// UpdateColumns writes only the given column→value map (targeted update,

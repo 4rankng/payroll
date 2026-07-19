@@ -17,8 +17,15 @@ type LedgerPlan struct {
 	RevenueOffset    int64
 }
 
+// AdvanceCashFeeProvider is the only settings contract needed to build a
+// ledger plan. Keeping it narrow lets every payroll-disbursement path reuse
+// the same accounting calculation.
+type AdvanceCashFeeProvider interface {
+	GetAdvanceCashFeePercentage(ctx context.Context) float64
+}
+
 // BuildLedgerPlan computes amounts for receivable, cash out, and revenue offset
-func BuildLedgerPlan(ctx context.Context, cfg SettingsConfigService, totalTransfer float64, partnerCompany, filename string) LedgerPlan {
+func BuildLedgerPlan(ctx context.Context, cfg AdvanceCashFeeProvider, totalTransfer float64, partnerCompany, filename string) LedgerPlan {
 	feePct := cfg.GetAdvanceCashFeePercentage(ctx)
 	fee := totalTransfer * feePct
 	receivable := int64(math.Round(totalTransfer + fee))

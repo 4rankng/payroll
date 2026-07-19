@@ -18,6 +18,7 @@ import {
   WalletBulkBatchListResponse,
   WalletBulkUploadError,
   WalletBulkUploadResponse,
+  WalletBulkKQScope,
 } from '@/types/wallet-bulk-transfer';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MiB — must match backend MaxBulkUploadBytes
@@ -68,11 +69,14 @@ class WalletBulkTransferService {
    * (the public method on ApiClient that handles blob responses correctly).
    * Returns { blob, filename } — caller triggers the download.
    */
-  async downloadKQ(id: number): Promise<{ blob: Blob; filename: string }> {
-    const blob = await apiClient.downloadBlob(API_ENDPOINTS.walletBulkTransfer.batchKQ(id));
+  async downloadKQ(id: number, scope: WalletBulkKQScope = 'all'): Promise<{ blob: Blob; filename: string }> {
+    const endpoint = `${API_ENDPOINTS.walletBulkTransfer.batchKQ(id)}?scope=${scope}`;
+    const blob = await apiClient.downloadBlob(endpoint);
     return {
       blob,
-      filename: `KQ_Chuyen_Tien_${id}.xlsx`,
+      filename: scope === 'successful'
+        ? `KQ_Thanh_Cong_${id}.xlsx`
+        : `KQ_Chuyen_Tien_${id}.xlsx`,
     };
   }
 }

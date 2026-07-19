@@ -179,11 +179,12 @@ func (r *LedgerEntryRepository) BatchCheckDuplicates(ctx context.Context, entrie
 
 	// --- Pass 2: check by field tuple for unmatched entries without asset_id ---
 	type fieldKey struct {
-		Date    string
-		Account string
-		Party   string
-		Debit   int64
-		Credit  int64
+		Date          string
+		Account       string
+		Party         string
+		Debit         int64
+		Credit        int64
+		TransactionID uint
 	}
 	type fieldCheck struct {
 		idx int
@@ -205,14 +206,25 @@ func (r *LedgerEntryRepository) BatchCheckDuplicates(ctx context.Context, entrie
 				Party:   e.Party,
 				Debit:   e.Debit,
 				Credit:  e.Credit,
+				TransactionID: func() uint {
+					if e.TransactionID == nil {
+						return 0
+					}
+					return *e.TransactionID
+				}(),
 			},
 		})
 	}
 	if len(fieldChecks) > 0 {
 		query := r.DB.WithContext(ctx).Model(&domain.LedgerEntry{})
 		for _, fc := range fieldChecks {
-			query = query.Or("date = ? AND account = ? AND party = ? AND debit = ? AND credit = ?",
-				fc.key.Date, fc.key.Account, fc.key.Party, fc.key.Debit, fc.key.Credit)
+			if fc.key.TransactionID > 0 {
+				query = query.Or("date = ? AND account = ? AND party = ? AND debit = ? AND credit = ? AND transaction_id = ?",
+					fc.key.Date, fc.key.Account, fc.key.Party, fc.key.Debit, fc.key.Credit, fc.key.TransactionID)
+			} else {
+				query = query.Or("date = ? AND account = ? AND party = ? AND debit = ? AND credit = ?",
+					fc.key.Date, fc.key.Account, fc.key.Party, fc.key.Debit, fc.key.Credit)
+			}
 		}
 		var found []domain.LedgerEntry
 		if err := query.Find(&found).Error; err != nil {
@@ -227,6 +239,15 @@ func (r *LedgerEntryRepository) BatchCheckDuplicates(ctx context.Context, entrie
 				Debit:   found[i].Debit,
 				Credit:  found[i].Credit,
 			}
+			if found[i].TransactionID != nil {
+				k.TransactionID = *found[i].TransactionID
+			}
+			byField[k] = &found[i]
+			// Preserve the legacy field-only duplicate behavior for callers that
+			// do not associate entries with a transaction. Transaction-linked
+			// callers use the exact key above, so equal payroll amounts in two
+			// different transactions are not false positives.
+			k.TransactionID = 0
 			byField[k] = &found[i]
 		}
 		for _, fc := range fieldChecks {

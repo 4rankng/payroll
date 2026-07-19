@@ -152,17 +152,21 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		walletBulkFileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
 		walletBulkParser := wallet_bulk.NewYeuCauChuyenTienParser(infra.Logger)
 		walletBulkSvc = wallet_bulk.NewWalletBulkTransferService(wallet_bulk.ServiceDeps{
-			BatchRepo:   repos.BulkTransferBatch,
-			PaymentRepo: repos.TxWalletPayment,
-			FileStorage: walletBulkFileStorage,
-			AssetRepo:   repos.Asset,
-			AsynqClient: asynqClient,
-			AuditEmitter: walletBulkAuditAdapter{client: asynqClient}, // C3 fix
-			TxnSvc:      services.Transaction,
-			TxRunner:    services.TransactionManager, // C2 fix — atomic CreateTransaction + batch link
-			Parser:      walletBulkParser,
-			FeeProvider: services.DisbursementFeeSchedule,
-			Logger:      infra.Logger,
+			BatchRepo:       repos.BulkTransferBatch,
+			PaymentRepo:     repos.TxWalletPayment,
+			FileStorage:     walletBulkFileStorage,
+			AssetRepo:       repos.Asset,
+			AsynqClient:     asynqClient,
+			AuditEmitter:    walletBulkAuditAdapter{client: asynqClient}, // C3 fix
+			TxnSvc:          services.Transaction,
+			TxRunner:        services.TransactionManager, // C2 fix — atomic CreateTransaction + batch link
+			PartnerInfo:     services.SettingsConfig,
+			LedgerWriter:    services.Ledger,
+			TimesheetLinker: repos.Timesheet,
+			TxnCodeRepo:     repos.TransactionCode,
+			Parser:          walletBulkParser,
+			FeeProvider:     services.DisbursementFeeSchedule,
+			Logger:          infra.Logger,
 		})
 	}
 

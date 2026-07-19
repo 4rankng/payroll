@@ -22,7 +22,7 @@ DELIMITER $$
 CREATE PROCEDURE backfill_wallet_bulk_receivable_proc()
 main: BEGIN
     DECLARE v_target_batch_id BIGINT UNSIGNED DEFAULT 1;
-    DECLARE v_expected_filename VARCHAR(255)
+    DECLARE v_expected_filename VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         DEFAULT 'Yeu_cau_chuyen_tien_weekly_20260719_140904.xlsx';
 
     DECLARE v_filename VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -79,7 +79,7 @@ main: BEGIN
      WHERE b.id = v_target_batch_id
      FOR UPDATE;
 
-    IF v_filename <> v_expected_filename THEN
+    IF v_filename COLLATE utf8mb4_unicode_ci <> v_expected_filename THEN
         SET v_error_message = CONCAT('Batch #', v_target_batch_id,
             ' filename mismatch: ', v_filename);
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_message;

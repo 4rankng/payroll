@@ -15,8 +15,8 @@ const (
 	// TaskBulkTransferRow drives ONE row through the full 5-step OnePay
 	// transfer flow. One task per parsed row, enqueued by Upload.
 	TaskBulkTransferRow = "wallet:bulk_transfer_row"
-	// TaskBookBatchLedger books the aggregate OnePay fee as one Expense
-	// transaction. Enqueued when all rows reach terminal status.
+	// TaskBookBatchLedger books payroll receivable/cash-out accounting,
+	// successful-timesheet links, and the aggregate OnePay fee.
 	TaskBookBatchLedger = "wallet:book_batch_ledger"
 	// TaskStaleEnqueueSweeper is the periodic cron (@every 1m) that
 	// re-enqueues per-row tasks for batches whose outbox state is still
@@ -90,6 +90,6 @@ const MaxRowRetry = 3
 // Default task scheduling hints. The real asynq client uses these; the test
 // SyncDispatcher ignores them.
 var (
-	DefaultRowTaskTimeout     = 2 * time.Minute
-	DefaultLedgerTaskTimeout  = 30 * time.Second
+	DefaultRowTaskTimeout    = 2 * time.Minute
+	DefaultLedgerTaskTimeout = 30 * time.Second
 )

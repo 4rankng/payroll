@@ -8,7 +8,7 @@
  *
  * Mobile-friendly: cards fall back to a stacked layout via useIsMobile.
  */
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -27,7 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Clock3, Download, Loader2 } from 'lucide-react';
+import { Clock3, Download, FileText, Loader2 } from 'lucide-react';
 import { useWalletBulkTransferBatch, useDownloadWalletBulkTransferKQ } from '@/hooks/api/useWalletBulkTransfer';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { formatCurrency } from '@/utils/formatters';
@@ -39,6 +39,8 @@ import {
   type WalletPaymentStatus,
 } from '@/types/wallet-bulk-transfer';
 import { cn } from '@/lib/utils';
+import { generateWalletBulkTransferPdf } from '@/utils/pdf/wallet-bulk-transfer';
+import { showErrorNotification, showSuccessNotification } from '@/utils/error-handler';
 
 interface BulkTransferProgressProps {
   batchId: number;
@@ -70,10 +72,29 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
   const isMobile = useIsMobile();
   const batchQuery = useWalletBulkTransferBatch(batchId);
   const downloadKQ = useDownloadWalletBulkTransferKQ();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleDownloadKQ = useCallback(() => {
-    downloadKQ.mutate(batchId);
+    const scope = batchQuery.data?.status === 'completed' ? 'successful' : 'all';
+    downloadKQ.mutate({ id: batchId, scope });
+  }, [downloadKQ, batchId, batchQuery.data?.status]);
+
+  const handleDownloadAllKQ = useCallback(() => {
+    downloadKQ.mutate({ id: batchId, scope: 'all' });
   }, [downloadKQ, batchId]);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!batchQuery.data) return;
+    setIsGeneratingPdf(true);
+    try {
+      await generateWalletBulkTransferPdf(batchQuery.data);
+      showSuccessNotification('Đã tải PDF giao dịch thành công');
+    } catch (error) {
+      showErrorNotification(error, 'Xuất PDF thất bại');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  }, [batchQuery.data]);
 
   // Auto-download the KQ Excel exactly once, ONLY when the batch
   // transitions INTO "completed" while this view is open. Without the
@@ -98,7 +119,7 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
     if (autoDownloadFired.current) return;
     if (downloadKQ.isPending) return;
     autoDownloadFired.current = true;
-    downloadKQ.mutate(batchId);
+    downloadKQ.mutate({ id: batchId, scope: 'successful' });
   }, [batchQuery.data, batchId, downloadKQ]);
 
   if (batchQuery.isLoading) {
@@ -123,6 +144,9 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
     batch.status === 'pending' ||
     batch.status === 'processing' ||
     batch.status === 'completing';
+  const successfulRows = batch.rows.filter((row) => row.status === 'completed');
+  const failedRows = batch.rows.filter((row) => row.status === 'failed' || row.status === 'reversed');
+  const displayedRows = batch.status === 'completed' ? successfulRows : batch.rows;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -138,20 +162,46 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
                 Lô #{batch.id} · {batch.filename}
               </span>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownloadKQ}
-              disabled={downloadKQ.isPending}
-              className="h-8 gap-1.5"
-            >
-              {downloadKQ.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownloadKQ}
+                disabled={downloadKQ.isPending || (batch.status === 'completed' && successfulRows.length === 0)}
+                className="h-8 gap-1.5"
+              >
+                {downloadKQ.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                {batch.status === 'completed' ? 'Excel thành công' : 'Tải KQ Excel'}
+              </Button>
+              {batch.status === 'completed' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadAllKQ}
+                  disabled={downloadKQ.isPending}
+                  className="h-8 gap-1.5"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Excel toàn bộ
+                </Button>
               )}
-              Tải KQ Excel
-            </Button>
+              {batch.status === 'completed' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={isGeneratingPdf || successfulRows.length === 0}
+                  className="h-8 gap-1.5"
+                >
+                  {isGeneratingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  PDF thành công
+                </Button>
+              )}
+            </div>
           </div>
 
           <Progress value={pct} className="h-2" />
@@ -171,42 +221,73 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
           )}
         </div>
 
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">
+            {batch.status === 'completed'
+              ? `Giao dịch thành công (${successfulRows.length})`
+              : `Chi tiết giao dịch (${batch.rows.length})`}
+          </h3>
+        </div>
+
         {/* Rows */}
-        {isMobile ? (
-          <MobileRowList rows={batch.rows} />
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12 text-right">STT</TableHead>
-                  <TableHead>Số TK</TableHead>
-                  <TableHead>Tên</TableHead>
-                  <TableHead>Ngân hàng</TableHead>
-                  <TableHead className="text-right">Số tiền</TableHead>
-                  <TableHead className="text-center">Trạng thái</TableHead>
-                  <TableHead className="text-center">FT</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {batch.rows.map((row) => (
-                  <ProgressRow key={row.id} row={row} />
-                ))}
-                {batch.rows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="py-6 text-center text-xs text-muted-foreground">
-                      Chưa có dòng nào trong lô này.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+        <RowsView
+          rows={displayedRows}
+          isMobile={isMobile}
+          emptyMessage={batch.status === 'completed'
+            ? 'Không có giao dịch thành công trong lô này.'
+            : 'Chưa có dòng nào trong lô này.'}
+        />
+
+        {batch.status === 'completed' && failedRows.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-rose-700">
+              Giao dịch thất bại ({failedRows.length})
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Các giao dịch này không được tính vào khoản phải thu và không liên kết bảng công.
+            </p>
+            <RowsView rows={failedRows} isMobile={isMobile} emptyMessage="Không có giao dịch thất bại." />
           </div>
         )}
       </div>
     </TooltipProvider>
   );
 });
+
+function RowsView({
+  rows,
+  isMobile,
+  emptyMessage,
+}: {
+  rows: WalletBulkPaymentRow[];
+  isMobile: boolean;
+  emptyMessage: string;
+}) {
+  if (rows.length === 0) {
+    return <div className="rounded-xl border border-border/60 p-4 text-center text-xs text-muted-foreground">{emptyMessage}</div>;
+  }
+  if (isMobile) return <MobileRowList rows={rows} />;
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/60">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12 text-right">STT</TableHead>
+            <TableHead>Số TK</TableHead>
+            <TableHead>Tên</TableHead>
+            <TableHead>Ngân hàng</TableHead>
+            <TableHead className="text-right">Số tiền</TableHead>
+            <TableHead className="text-center">Trạng thái</TableHead>
+            <TableHead className="text-center">FT</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => <ProgressRow key={row.id} row={row} />)}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 interface ProgressRowProps {
   row: WalletBulkPaymentRow;

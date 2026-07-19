@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
@@ -13,7 +14,26 @@ import (
 // Returned by GetBatch for the frontend detail view.
 type BatchDetail struct {
 	*domain.BulkTransferBatch
-	Rows []*domaintx.WalletPayment `json:"rows"`
+	Rows []*BatchPaymentRow `json:"rows"`
+}
+
+// BatchPaymentRow is the stable JSON contract used by the wallet progress
+// screen and client-side PDF export. Do not expose the persistence entity:
+// its field names are Go/PascalCase and it contains provider-only details.
+type BatchPaymentRow struct {
+	ID                 uint64         `json:"id"`
+	RequestID          string         `json:"request_id"`
+	InvoiceNo          *string        `json:"invoice_no"`
+	RecipientName      string         `json:"recipient_name"`
+	RecipientAccountNo string         `json:"recipient_account_no"`
+	RecipientBank      string         `json:"recipient_bank"`
+	RequestedAmount    int64          `json:"requested_amount"`
+	Fee                int64          `json:"fee"`
+	Status             domaintx.State `json:"status"`
+	ErrorMessage       *string        `json:"error_message"`
+	BulkTransferOrder  *uint          `json:"bulk_transfer_order"`
+	CreatedAt          time.Time      `json:"created_at"`
+	SettledAt          *time.Time     `json:"settled_at"`
 }
 
 // BatchListEntry is the list projection (no rows — fetched on demand).
@@ -23,10 +43,10 @@ type BatchListEntry struct {
 
 // BatchListResponse carries paginated batches + totals.
 type BatchListResponse struct {
-	Batches []*domain.BulkTransferBatch `json:"batches"`
-	Total   int64                       `json:"total"`
-	Page    int                         `json:"page"`
-	PageSize int                       `json:"page_size"`
+	Batches  []*domain.BulkTransferBatch `json:"batches"`
+	Total    int64                       `json:"total"`
+	Page     int                         `json:"page"`
+	PageSize int                         `json:"page_size"`
 }
 
 // GetBatch returns the batch + its wallet_payments rows ordered by
@@ -40,7 +60,18 @@ func (s *WalletBulkTransferService) GetBatch(ctx context.Context, id uint64) (*B
 	if err != nil {
 		return nil, fmt.Errorf("list rows: %w", err)
 	}
-	return &BatchDetail{BulkTransferBatch: batch, Rows: rows}, nil
+	projection := make([]*BatchPaymentRow, 0, len(rows))
+	for _, row := range rows {
+		projection = append(projection, &BatchPaymentRow{
+			ID: row.ID, RequestID: row.RequestID, InvoiceNo: row.InvoiceNo,
+			RecipientName: row.RecipientName, RecipientAccountNo: row.RecipientAccountNo,
+			RecipientBank: row.RecipientBank, RequestedAmount: row.RequestedAmount,
+			Fee: row.Fee, Status: row.Status, ErrorMessage: row.ErrorMessage,
+			BulkTransferOrder: row.BulkTransferOrder, CreatedAt: row.CreatedAt,
+			SettledAt: row.SettledAt,
+		})
+	}
+	return &BatchDetail{BulkTransferBatch: batch, Rows: projection}, nil
 }
 
 // ListBatches returns paginated batches newest-first.
@@ -70,6 +101,12 @@ func (s *WalletBulkTransferService) ListBatches(ctx context.Context, page, pageS
 // DownloadKQ generates the KQ Excel for a batch and returns (bytes, filename).
 // Works at any batch status — the KQ reflects the current state of each row.
 func (s *WalletBulkTransferService) DownloadKQ(ctx context.Context, id uint64) ([]byte, string, error) {
+	return s.DownloadKQScoped(ctx, id, false)
+}
+
+// DownloadKQScoped generates the canonical KQ workbook. successfulOnly keeps
+// only provider-completed rows for the post-upload success report.
+func (s *WalletBulkTransferService) DownloadKQScoped(ctx context.Context, id uint64, successfulOnly bool) ([]byte, string, error) {
 	batch, err := s.batchRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, "", fmt.Errorf("get batch: %w", err)
@@ -78,12 +115,24 @@ func (s *WalletBulkTransferService) DownloadKQ(ctx context.Context, id uint64) (
 	if err != nil {
 		return nil, "", fmt.Errorf("list rows: %w", err)
 	}
+	if successfulOnly {
+		successful := rows[:0]
+		for _, row := range rows {
+			if row.Status == domaintx.StateCompleted {
+				successful = append(successful, row)
+			}
+		}
+		rows = successful
+	}
 	gen := NewKQExcelGenerator(s.clock)
 	bytes, err := gen.Generate(ctx, batch, rows)
 	if err != nil {
 		return nil, "", fmt.Errorf("generate kq: %w", err)
 	}
 	filename := FilenameForKQ(id, s.clock())
+	if successfulOnly {
+		filename = "KQ_Thanh_Cong_" + filename[len("KQ_"):]
+	}
 	return bytes, filename, nil
 }
 

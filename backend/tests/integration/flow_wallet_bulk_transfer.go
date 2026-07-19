@@ -20,6 +20,7 @@ const flowWalletBulk = "WalletBulkTransfer"
 // existing runBulkTransferTests.
 func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter) {
 	reporter.PrintSection("FLOW: Wallet Bulk Transfer Pipeline (OnePay)")
+	var knownBatchID uint64
 
 	// Probe the upload endpoint — if it 404s, the whole flow is skipped.
 	_, probeStatus, _ := client.Get("/api/v1/wallet/bulk-transfer/batches")
@@ -32,10 +33,12 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 	// Test 1: List batches returns 200 + paginated shape.
 	reporter.RunTest(flowWalletBulk, "List batches returns paginated response", func() error {
 		var resp struct {
-			Batches  []map[string]any `json:"batches"`
-			Total    int64            `json:"total"`
-			Page     int              `json:"page"`
-			PageSize int              `json:"page_size"`
+			Batches []struct {
+				ID uint64 `json:"id"`
+			} `json:"batches"`
+			Total    int64 `json:"total"`
+			Page     int   `json:"page"`
+			PageSize int   `json:"page_size"`
 		}
 		_, err := client.GetInto("/api/v1/wallet/bulk-transfer/batches?page=1&page_size=10", &resp)
 		if err != nil {
@@ -46,6 +49,9 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 		}
 		if resp.PageSize != 10 {
 			return fmt.Errorf("page_size: got %d, want 10", resp.PageSize)
+		}
+		if len(resp.Batches) > 0 {
+			knownBatchID = resp.Batches[0].ID
 		}
 		return nil
 	})
@@ -137,7 +143,22 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 		return nil
 	})
 
-	// Test 7: Casbin — partner role is denied.
+	// Test 7: KQ scope is explicit and validated before generation.
+	reporter.RunTest(flowWalletBulk, "KQ download rejects invalid scope", func() error {
+		if knownBatchID == 0 {
+			return fmt.Errorf("no existing wallet bulk batch available")
+		}
+		_, status, err := client.Get(fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d/kq?scope=invalid", knownBatchID))
+		if err != nil {
+			return fmt.Errorf("download invalid scope: %w", err)
+		}
+		if status != http.StatusBadRequest {
+			return fmt.Errorf("status: got %d, want 400", status)
+		}
+		return nil
+	})
+
+	// Test 8: Casbin — partner role is denied.
 	reporter.RunTest(flowWalletBulk, "Partner role denied by Casbin", func() error {
 		if data == nil || len(data.Partners) == 0 {
 			return fmt.Errorf("no partner user available — set up a partner to validate Casbin denial")

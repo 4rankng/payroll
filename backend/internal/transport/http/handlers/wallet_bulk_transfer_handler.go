@@ -210,7 +210,12 @@ func (h *WalletBulkTransferHandler) DownloadKQ(c *gin.Context) {
 		response.BadRequest(c, "Invalid batch id")
 		return
 	}
-	bytes, filename, err := h.svc.DownloadKQ(c.Request.Context(), id)
+	scope := c.DefaultQuery("scope", "all")
+	if scope != "all" && scope != "successful" {
+		response.BadRequest(c, "scope must be all or successful")
+		return
+	}
+	bytes, filename, err := h.svc.DownloadKQScoped(c.Request.Context(), id, scope == "successful")
 	if err != nil {
 		if errors.Is(err, domain.ErrBulkTransferBatchNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "batch_not_found"})

@@ -37,6 +37,8 @@ const PAGE_SIZE = 10;
 interface BulkTransferBatchListProps {
   /** Optional controlled page size — defaults to 10. */
   pageSize?: number;
+  selectedBatchId?: number | null;
+  onSelectedBatchIdChange?: (batchId: number | null) => void;
 }
 
 /**
@@ -61,9 +63,16 @@ function batchStatusBadgeClass(status: BulkTransferBatchStatus): string {
 
 export const BulkTransferBatchList = memo(function BulkTransferBatchList({
   pageSize = PAGE_SIZE,
+  selectedBatchId,
+  onSelectedBatchIdChange,
 }: BulkTransferBatchListProps) {
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [internalSelectedId, setInternalSelectedId] = useState<number | null>(null);
+  const selectedId = selectedBatchId === undefined ? internalSelectedId : selectedBatchId;
+  const setSelectedId = (id: number | null) => {
+    if (selectedBatchId === undefined) setInternalSelectedId(id);
+    onSelectedBatchIdChange?.(id);
+  };
   const listQuery = useWalletBulkTransferBatches(page, pageSize);
 
   // Drop the user back to page 1 if their current page runs off the end

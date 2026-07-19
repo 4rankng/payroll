@@ -75,7 +75,10 @@ export interface WalletBulkPaymentRow {
   error_message: string | null;
   bulk_transfer_order: number | null;
   created_at: string;
+  settled_at: string | null;
 }
+
+export type WalletBulkKQScope = 'all' | 'successful';
 
 /** GET /wallet/bulk-transfer/batches/:id response. */
 export interface WalletBulkBatchDetail {
