@@ -305,7 +305,42 @@ func extractErrorCode(err error) string {
 // The ledger write happens in the book_batch_ledger asynq task AFTER the
 // lock releases so we never hold the row lock across CreateTransaction.
 func (w *WalletBulkTransferRowWorker) markRowTerminal(ctx context.Context, batchID uint64) error {
-	batch, shouldBook, err := w.batchRepo.UpdateWithLock(ctx, batchID, func(b *domain.BulkTransferBatch) (bool, error) {
+	return finalizeBulkBatch(ctx, batchID, w.batchRepo, w.paymentRepo, w.asynqClient, w.logger)
+}
+
+// FinalizeBulkBatchForIPN is the package-level entry point the IPN worker
+// calls when a bulk-row wallet_payment reaches its terminal state via IPN
+// (the async OnePay path — sync Initiate returns "initiated" without a
+// terminal status, so markRowTerminal never runs from the row worker).
+//
+// Same atomic flow as markRowTerminal (lock → recount → flip to completing
+// → enqueue book_batch_ledger). Idempotent — UpdateWithLock no-ops when
+// the batch is already terminal or fee_booked_at is set, so multiple
+// terminal rows in the same batch racing through IPN won't double-book.
+func FinalizeBulkBatchForIPN(
+	ctx context.Context,
+	batchID uint64,
+	batchRepo domain.BulkTransferBatchRepository,
+	paymentRepo domaintx.WalletPaymentRepository,
+	asynqClient wallet_bulk.BulkTransferEnqueuer,
+	logger *slog.Logger,
+) error {
+	return finalizeBulkBatch(ctx, batchID, batchRepo, paymentRepo, asynqClient, logger)
+}
+
+// finalizeBulkBatch is the shared body of markRowTerminal + the IPN path.
+// Kept package-local so the row worker's markRowTerminal stays a thin
+// receiver wrapper while the IPN worker can call it without needing the
+// full WalletBulkTransferRowWorker wiring (it has no Initiate/registry deps).
+func finalizeBulkBatch(
+	ctx context.Context,
+	batchID uint64,
+	batchRepo domain.BulkTransferBatchRepository,
+	paymentRepo domaintx.WalletPaymentRepository,
+	asynqClient wallet_bulk.BulkTransferEnqueuer,
+	logger *slog.Logger,
+) error {
+	batch, shouldBook, err := batchRepo.UpdateWithLock(ctx, batchID, func(b *domain.BulkTransferBatch) (bool, error) {
 		// Already finalized by an earlier worker — no-op.
 		if b.Status == domain.BulkTransferBatchStatusCompleted ||
 			b.Status == domain.BulkTransferBatchStatusFailed ||
@@ -314,11 +349,11 @@ func (w *WalletBulkTransferRowWorker) markRowTerminal(ctx context.Context, batch
 		}
 
 		// Recount terminal rows for this batch.
-		success, err := w.paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateCompleted})
+		success, err := paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateCompleted})
 		if err != nil {
 			return false, fmt.Errorf("count success: %w", err)
 		}
-		failed, err := w.paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateFailed})
+		failed, err := paymentRepo.CountByBatchAndStatuses(ctx, batchID, []domaintx.State{domaintx.StateFailed})
 		if err != nil {
 			return false, fmt.Errorf("count failed: %w", err)
 		}
@@ -338,15 +373,15 @@ func (w *WalletBulkTransferRowWorker) markRowTerminal(ctx context.Context, batch
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("markRowTerminal: update_with_lock: %w", err)
+		return fmt.Errorf("finalize_bulk_batch: update_with_lock: %w", err)
 	}
 	if !shouldBook {
 		return nil
 	}
 
 	// Enqueue the book_batch_ledger task. It runs OUTSIDE the lock.
-	if err := w.asynqClient.EnqueueBookBatchLedger(wallet_bulk.BookLedgerPayload{BatchID: batch.ID}); err != nil {
-		return fmt.Errorf("markRowTerminal: enqueue book_ledger: %w", err)
+	if err := asynqClient.EnqueueBookBatchLedger(wallet_bulk.BookLedgerPayload{BatchID: batch.ID}); err != nil {
+		return fmt.Errorf("finalize_bulk_batch: enqueue book_ledger: %w", err)
 	}
 	return nil
 }

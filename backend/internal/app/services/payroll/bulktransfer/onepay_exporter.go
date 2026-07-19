@@ -289,7 +289,22 @@ func (e *OnePayExporter) buildRowsWithSwift(
 			Bank:          bank.BranchName,
 			SwiftCode:     bank.SwiftCode,
 			Amount:        amount,
-			PaymentDetail: fmt.Sprintf("CT %s %s %s", vfic, emp.Fullname, project.Name),
+			// PaymentDetail MUST be the bare VFIC code only.
+			//
+			// This string flows: xlsx column G → wallet_bulk parser →
+			// WalletPayment.Description → OnePay FundsTransferRequest.Remark.
+			//
+			// OnePay rejects remarks containing hyphens (mirrored by our sandbox
+			// mock at sandbox/onepay/handler.go:hasHyphen). A verbose format
+			// like "CT VFICxxx Lâm Văn Bách Hilex - KCN nomura" picks up the
+			// project name's hyphen and OnePay returns INVALID_PARAMETERS.
+			//
+			// Reconciliation already keys off the VFIC code (regex
+			// `VFIC[0-9a-f]+` in wallet_bulk/parser.go + bulk_transfer_batches
+			// lookup) — including the name/project adds no matching value and
+			// actively breaks the transfer. Employee + project context is
+			// preserved via the TransactionCode row (buildTransactionCode).
+			PaymentDetail: vfic,
 			VFICCode:      vfic,
 		}
 		rows = append(rows, row)

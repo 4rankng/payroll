@@ -272,7 +272,13 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.ImportProgress,
 			cfg.Asset.StoragePath,
 		),
-		workers.NewIPNProcessWorker(services.ProviderTransactions, repos.WalletIPN, services.BulkTransferPayment, infra.Logger),
+		workers.NewIPNProcessWorker(services.ProviderTransactions, repos.WalletIPN, services.BulkTransferPayment, infra.Logger).
+			WithBulkBatchFinalizer(workers.NewBulkBatchFinalizer(
+				repos.BulkTransferBatch,
+				repos.TxWalletPayment,
+				asynqClient,
+				infra.Logger,
+			)),
 		disbursementPollerWorker,
 		disbursementExecuteWorker,
 		ninePayBulkExecuteWorker,

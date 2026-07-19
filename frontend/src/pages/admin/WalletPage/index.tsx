@@ -251,7 +251,7 @@ export default function WalletPage() {
               className="gap-1.5 h-9"
             >
               <Upload className="h-3.5 w-3.5" />
-              Tải lên chuyển tiền
+              Tải File
             </Button>
             <Button
               size="sm"

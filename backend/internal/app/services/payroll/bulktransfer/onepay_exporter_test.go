@@ -199,8 +199,8 @@ func TestBuildRowsWithSwift_BankRepoError(t *testing.T) {
 // (header row 2, data row 3, 7 columns, SWIFT at column E).
 func TestGenerateOnePayExcel_LayoutAndColumns(t *testing.T) {
 	rows := []OnePayExportRow{
-		{OrderNo: 1, AccountNo: "99990001", AccountName: "NGUYEN TEST A", Bank: "Quân đội (MB)", SwiftCode: "MBBEVNVX", Amount: 1_500_000, PaymentDetail: "VFIC3ba3ec31LUONGT1", VFICCode: "VFIC3ba3ec31"},
-		{OrderNo: 2, AccountNo: "99990002", AccountName: "NGUYEN TEST B", Bank: "Vietcombank", SwiftCode: "BFTVVNVX", Amount: 2_500_000, PaymentDetail: "VFIC4cd5ef62LUONGT2", VFICCode: "VFIC4cd5ef62"},
+		{OrderNo: 1, AccountNo: "99990001", AccountName: "NGUYEN TEST A", Bank: "Quân đội (MB)", SwiftCode: "MBBEVNVX", Amount: 1_500_000, PaymentDetail: "VFIC3ba3ec31", VFICCode: "VFIC3ba3ec31"},
+		{OrderNo: 2, AccountNo: "99990002", AccountName: "NGUYEN TEST B", Bank: "Vietcombank", SwiftCode: "BFTVVNVX", Amount: 2_500_000, PaymentDetail: "VFIC4cd5ef62", VFICCode: "VFIC4cd5ef62"},
 	}
 	b, err := GenerateOnePayExcel(rows)
 	if err != nil {
@@ -245,6 +245,57 @@ func TestBuildOnePayFilename(t *testing.T) {
 	want := "Yeu_cau_chuyen_tien_weekly_20260719_143045.xlsx"
 	if got != want {
 		t.Errorf("filename: got %q, want %q", got, want)
+	}
+}
+
+// TestBuildRowsWithSwift_PaymentDetailIsBareVFIC guards against the
+// INVALID_PARAMETERS bug: OnePay rejects remarks containing hyphens
+// (sandbox/onepay/handler.go:hasHyphen), and a verbose PaymentDetail
+// like "CT VFICxxx Lâm Văn Bách Hilex - KCN nomura" picks up the hyphen
+// from a project name and fails the transfer. PaymentDetail MUST be the
+// bare VFIC code only — reconciliation keys off the VFIC code anyway.
+//
+// This test deliberately uses a hyphenated project name ("Hilex - KCN nomura")
+// so any future regression that re-introduces the verbose format fails here.
+func TestBuildRowsWithSwift_PaymentDetailIsBareVFIC(t *testing.T) {
+	bankRepo := &stubBankRepo{byCode: map[string]*domain.Bank{
+		"VCB": {ID: 2, BankCode: "VCB", SwiftCode: "BFTVVNVX", BranchName: "Vietcombank"},
+	}}
+	txnRepo := &stubTransactionCodeRepo{}
+	e := NewOnePayExporter(nil, bankRepo, txnRepo, nil)
+
+	const vfic = "VFICe1f37125"
+	data := &excel.BulkTransferData{
+		EmployeeProjectAmounts: map[excel.EmployeeProjectKey]int64{
+			{EmployeeID: 1, ProjectID: 10}: 1_192_500,
+		},
+		EmployeeProjectTimesheets: map[excel.EmployeeProjectKey][]uint{
+			{EmployeeID: 1, ProjectID: 10}: {101},
+		},
+		EmployeeData: map[uint]excel.Employee{
+			1: {ID: 1, Fullname: "Lâm Văn Bách", BankAccountNumber: "1043541997", BankAccountName: "Lâm Văn Bách", Bank: &excel.Bank{ID: 2, BankCode: "VCB", BranchName: "Vietcombank"}},
+		},
+		// Hyphenated project name — this is what triggered the original bug.
+		ProjectData: map[uint]excel.Project{10: {ID: 10, Name: "Hilex - KCN nomura"}},
+		TransactionCodes: map[excel.EmployeeProjectKey]string{
+			{EmployeeID: 1, ProjectID: 10}: vfic,
+		},
+	}
+
+	rows, _, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly")
+	if err != nil {
+		t.Fatalf("buildRowsWithSwift: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(rows))
+	}
+
+	if rows[0].PaymentDetail != vfic {
+		t.Errorf("PaymentDetail: got %q, want bare VFIC %q (no hyphens, no name/project suffix)",
+			rows[0].PaymentDetail, vfic)
+	}
+	if rows[0].VFICCode != vfic {
+		t.Errorf("VFICCode: got %q, want %q", rows[0].VFICCode, vfic)
 	}
 }
 

@@ -52,6 +52,13 @@ export interface WalletBulkUploadResponse {
   transfer_amount: number;
   estimated_fee_total: number;
   estimated_fee_per_row?: number;
+  /**
+   * False when the fee schedule lookup failed at upload time. When false,
+   * every row will terminal-fail with ErrFeeResolution in the worker —
+   * admin should fix the fee schedule before re-uploading. UI surfaces a
+   * warning so admin knows the upload will not produce successful transfers.
+   */
+  fee_resolution_ok?: boolean;
 }
 
 /** One wallet_payment row linked to a batch (subset of fields the UI needs). */

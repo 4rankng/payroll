@@ -136,7 +136,17 @@ func (h *WalletBulkTransferHandler) UploadBulkTransfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, result)
+	// Wrap in the standard {status, data, message} envelope so the
+	// frontend's apiClient.upload<T>() → res.data unwrapping works (it
+	// expects ApiResponse<T>, not a bare struct). All other upload handlers
+	// (e.g. employee/import_handler.go) wrap via response.Success; we keep
+	// HTTP 202 Accepted here because the batch is processed asynchronously
+	// per-row — the upload is "accepted", not yet "completed".
+	c.JSON(http.StatusAccepted, response.SuccessResponse{
+		Status:  "success",
+		Data:    result,
+		Message: "Đã nhận file — đang xử lý hàng loạt",
+	})
 }
 
 // GetBatch handles GET /wallet/bulk-transfer/batches/:id.

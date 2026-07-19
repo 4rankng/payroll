@@ -136,7 +136,7 @@ export const BulkTransferUploadDialog = memo(function BulkTransferUploadDialog({
           title={
             <span className="flex items-center gap-2">
               <Upload className="h-4 w-4 text-white/70" />
-              Tải lên chuyển tiền hàng loạt
+              Tải File
             </span>
           }
           description="Tải lên file Yêu cầu chuyển tiền (.xlsx) đã xuất từ Bảng công để xử lý."
@@ -241,7 +241,7 @@ export const BulkTransferUploadDialog = memo(function BulkTransferUploadDialog({
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Tải lên
+                    Tải File
                   </>
                 )}
               </Button>

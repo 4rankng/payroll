@@ -8,7 +8,7 @@
  *
  * Mobile-friendly: cards fall back to a stacked layout via useIsMobile.
  */
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import {
   Table,
   TableBody,
@@ -74,6 +74,21 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
   const handleDownloadKQ = useCallback(() => {
     downloadKQ.mutate(batchId);
   }, [downloadKQ, batchId]);
+
+  // Auto-download the KQ Excel exactly once when the batch reaches a
+  // terminal "completed" state. The async per-row worker + IPN handshake
+  // take a few seconds, so we can only fetch KQ after the batch flips to
+  // completed — never at upload time. The ref guards against StrictMode
+  // double-effect firing and re-fetches on the same completion event.
+  const autoDownloadFired = useRef(false);
+  useEffect(() => {
+    if (!batchQuery.data) return;
+    if (batchQuery.data.status !== 'completed') return;
+    if (autoDownloadFired.current) return;
+    if (downloadKQ.isPending) return;
+    autoDownloadFired.current = true;
+    downloadKQ.mutate(batchId);
+  }, [batchQuery.data, batchId, downloadKQ]);
 
   if (batchQuery.isLoading) {
     return <ProgressSkeleton />;
