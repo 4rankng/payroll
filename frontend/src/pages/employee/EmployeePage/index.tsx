@@ -197,10 +197,7 @@ const EmployeePage = () => {
       />
 
       <section id="employee-bank" className="scroll-mt-4">
-        <EmployeeBankInfoCard
-          profile={profile!}
-          className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-        />
+        <EmployeeBankInfoCard profile={profile!} />
       </section>
 
       <ChangePasswordSheet

@@ -93,8 +93,8 @@
     --employee-info: #175cd3;
     --employee-info-soft: #eff8ff;
     --employee-info-border: #b2ddff;
-    --employee-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 28px -24px rgba(16, 24, 40, 0.28);
-    --employee-cta-shadow: 0 8px 16px -12px rgba(8, 120, 62, 0.72);
+    --employee-shadow: none;
+    --employee-cta-shadow: none;
     --employee-radius-control: 0.75rem;
     --employee-radius-card: 1rem;
     --employee-radius-feature: 1.25rem;

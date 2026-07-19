@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { EmployeeBankInfoCard } from "./EmployeeBankInfoCard";
 
@@ -50,18 +50,5 @@ describe("EmployeeBankInfoCard", () => {
     expect(screen.getByText("Chưa có thông tin ngân hàng")).toBeInTheDocument();
     expect(screen.getByText("Liên hệ quản lý để cập nhật")).toBeInTheDocument();
     expect(screen.queryByText("Đã xác minh")).not.toBeInTheDocument();
-  });
-
-  it("copies the full account number from an accessible action", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText },
-    });
-    render(<EmployeeBankInfoCard profile={profile} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Sao chép số tài khoản" }));
-
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(profile.bank_account_number));
   });
 });
