@@ -492,7 +492,7 @@ const AdvancePaymentsPageMobile = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-sm">Hủy yêu cầu ứng lương?</AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              Hành động này không thể hoàn tác. Yêu cầu sẽ được chuyển sang trạng thái đã hủy.
+              Yêu cầu sẽ được chuyển sang trạng thái đã hủy.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

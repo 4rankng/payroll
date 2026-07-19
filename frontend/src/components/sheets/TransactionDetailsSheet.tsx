@@ -663,11 +663,11 @@ function TransactionDetailsSheetComponent({
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận hủy giao dịch</AlertDialogTitle>
             <AlertDialogDescription>
-              Hủy giao dịch sẽ xóa vĩnh viễn giao dịch này và các bút toán sổ cái liên quan. Hành động không thể hoàn tác.
+              Giao dịch và các bút toán sổ cái liên quan sẽ bị xóa vĩnh viễn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteTransaction.isPending}>Hủy bỏ</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteTransaction.isPending}>Quay lại</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleConfirmDelete}
@@ -679,7 +679,7 @@ function TransactionDetailsSheetComponent({
                   Đang hủy...
                 </>
               ) : (
-                'Xác nhận hủy'
+                'Hủy giao dịch'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

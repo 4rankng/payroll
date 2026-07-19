@@ -2,13 +2,11 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Activity,
   CreditCard,
-  ShieldCheck,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
 import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useCheckInHealth } from '@/hooks/api/useDashboard';
 import { HealthDrilldownSheet } from './HealthDrilldownSheet';
@@ -122,17 +120,8 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
   ), [data, isLoading, openFailedAttempts]);
 
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="flex items-center gap-2 px-0.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/5 border border-primary/10">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary/70" />
-        </div>
-        <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-          Tự chấm công
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+    <div className={cn('space-y-3', className)}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
         <SectionCard
           title="Chấm công"
           icon={Activity}
@@ -178,22 +167,24 @@ interface SectionCardProps {
 
 const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoading, className }: SectionCardProps) {
   return (
-    <div className={cn('space-y-2', className)}>
-      <div className="flex items-center gap-2 px-0.5">
-        <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
-          <Icon className="h-3.5 w-3.5 text-primary/70" />
+    <section className={cn('ct-card ct-card-border min-w-0 border-base-300 bg-base-100 shadow-none', className)}>
+      <div className="ct-card-body min-w-0 gap-3 p-3 sm:p-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/5 text-primary">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </div>
+          <h3 className="ct-card-title min-w-0 text-sm font-semibold leading-snug text-base-content">
+            {title}
+          </h3>
         </div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </span>
+        <InlineStatStrip
+          items={isLoading ? LOADING_PLACEHOLDER_ITEMS : items}
+          isLoading={isLoading}
+          variant="premium"
+          direction="vertical"
+        />
       </div>
-      <InlineStatStrip
-        items={isLoading ? LOADING_PLACEHOLDER_ITEMS : items}
-        isLoading={isLoading}
-        variant="premium"
-        direction="vertical"
-      />
-    </div>
+    </section>
   );
 });
 

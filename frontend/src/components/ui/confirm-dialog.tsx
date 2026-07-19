@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { CircleHelp, Loader2, TriangleAlert } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmText = "Xác nhận",
-  cancelText = "Hủy",
+  cancelText = "Quay lại",
   onConfirm,
   onCancel,
   confirmVariant = "default",
@@ -73,27 +73,10 @@ export function ConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader className="pb-5">
-          <div className="flex items-start gap-3.5">
-            <span
-              className={
-                confirmVariant === "destructive"
-                  ? "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-error/10 text-error"
-                  : "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
-              }
-            >
-              {confirmVariant === "destructive" ? (
-                <TriangleAlert className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <CircleHelp className="h-5 w-5" aria-hidden="true" />
-              )}
-            </span>
-            <div className="min-w-0 pt-0.5">
-              <AlertDialogTitle>{title}</AlertDialogTitle>
-              {typeof description === "string" && (
-                <AlertDialogDescription>{description}</AlertDialogDescription>
-              )}
-            </div>
-          </div>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          {typeof description === "string" && (
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          )}
         </AlertDialogHeader>
 
         {typeof description !== "string" && (

@@ -489,19 +489,18 @@ const AdvPartnerAdvancePaymentsPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Hủy yêu cầu ứng lương?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Yêu cầu ứng lương sẽ bị hủy
-              vĩnh viễn.
+              Yêu cầu ứng lương sẽ bị hủy vĩnh viễn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Thoát</AlertDialogCancel>
+            <AlertDialogCancel>Giữ lại</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={page.confirmCancelRequest}
             >
               {page.cancelMutation.isPending
                 ? "Đang hủy..."
-                : "Xác nhận hủy"}
+                : "Hủy yêu cầu"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
