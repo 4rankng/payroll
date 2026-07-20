@@ -92,13 +92,7 @@ export function EmployeeMobileShell({
       );
     }
 
-    return (
-      <div className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]">
-        <div className="mx-auto max-w-lg px-4 pb-3" style={employeeShellHeaderStyle}>
-          <p className="employee-type-header-name text-[var(--employee-text)]">Cổng nhân viên</p>
-        </div>
-      </div>
-    );
+    return null;
   };
 
   return (

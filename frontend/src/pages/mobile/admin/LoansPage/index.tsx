@@ -126,7 +126,7 @@ const LoansPageMobile = () => {
           <Skeleton className="h-7 w-28" />
           <div className="flex gap-2"><Skeleton className="h-11 w-20" /><Skeleton className="h-11 w-20" /></div>
         </div>
-        <div className="flex gap-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 w-20 shrink-0 rounded-xl" />)}</div>
+        <div className="grid grid-cols-2 gap-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}</div>
         <Skeleton className="h-11 w-full rounded-xl" />
         <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
       </div>
@@ -154,14 +154,14 @@ const LoansPageMobile = () => {
 
       {/* Stats strip */}
       <div className="px-4 pb-3">
-        <div className="flex gap-2 overflow-x-auto scrollbar-none">
+        <div className="grid grid-cols-2 gap-2">
           {[
             { label: "Tổng vay", value: formatVND(loansSummary.total_borrowed) },
             { label: "Dư nợ", value: formatVND(loansSummary.total_outstanding) },
             { label: "Lãi đã trả", value: formatVND(loansSummary.total_interest_paid) },
             { label: "Khoản vay", value: String(loansSummary.active_loans_count) },
           ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl border border-border bg-card shrink-0 min-w-[80px]">
+            <div key={stat.label} className="flex min-w-0 flex-col items-center gap-1 rounded-xl border border-border bg-card px-3 py-2.5">
               <span className="text-sm font-bold tabular-nums leading-none text-foreground">{stat.value}</span>
               <span className="text-[11px] leading-none text-muted-foreground">{stat.label}</span>
             </div>

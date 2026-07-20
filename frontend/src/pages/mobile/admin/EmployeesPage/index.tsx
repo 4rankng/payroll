@@ -204,9 +204,9 @@ const EmployeesPageMobile = () => {
             <Skeleton className="h-9 w-16" />
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
         </div>
         <Skeleton className="h-11 w-full rounded-xl" />
@@ -250,7 +250,7 @@ const EmployeesPageMobile = () => {
       {/* Stats strip */}
       {!summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-none">
+          <div className="grid grid-cols-2 gap-2">
             {stats.map((stat) => {
               const Icon = stat.icon;
               const isActive =
@@ -264,7 +264,7 @@ const EmployeesPageMobile = () => {
                       status: isActive ? undefined : stat.filter,
                     });
                   }}
-                  className={`flex min-h-16 flex-col items-center gap-1 px-3 py-2.5 rounded-xl border shrink-0 min-w-[72px] transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card"} ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
+                  className={`flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-xl border px-3 py-2.5 transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card"} ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
                 >
                   <div className={`p-1 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -286,9 +286,9 @@ const EmployeesPageMobile = () => {
         </div>
       )}
       {summaryLoading && (
-        <div className="px-4 pb-3 flex gap-2">
+        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
         </div>
       )}

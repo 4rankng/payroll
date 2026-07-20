@@ -114,9 +114,9 @@ const UsersPageMobile = () => {
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-9 w-16" />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
         </div>
         <Skeleton className="h-11 w-full rounded-xl" />
@@ -152,7 +152,7 @@ const UsersPageMobile = () => {
       {/* Stats strip */}
       {!isAdvPartner && !summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-none">
+          <div className="grid grid-cols-2 gap-2">
             {stats.map((stat) => {
               const Icon = stat.icon;
               const isActive =
@@ -167,7 +167,7 @@ const UsersPageMobile = () => {
                     }
                     handleRoleSelect(isActive ? undefined : stat.role);
                   }}
-                  className={`flex min-h-16 flex-col items-center gap-1 px-3 py-2.5 rounded-xl border shrink-0 min-w-[72px] transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+                  className={`flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-xl border px-3 py-2.5 transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
                 >
                   <div className={`p-1 rounded-xl ${stat.bg}`}>
                     <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -189,9 +189,9 @@ const UsersPageMobile = () => {
         </div>
       )}
       {summaryLoading && !isAdvPartner && (
-        <div className="px-4 pb-3 flex gap-2">
+        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-[72px] shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
         </div>
       )}

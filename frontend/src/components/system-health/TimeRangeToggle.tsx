@@ -14,7 +14,7 @@ const OPTIONS: { value: TimeRange; label: string }[] = [
 
 export function TimeRangeToggle({ value, onChange }: TimeRangeToggleProps) {
   return (
-    <div role="tablist" aria-label="Khoảng thời gian" className="ct-tabs ct-tabs-box h-10 rounded-xl border border-border bg-muted/50 p-0.5">
+    <div role="tablist" aria-label="Khoảng thời gian" className="ct-tabs ct-tabs-box inline-flex h-10 shrink-0 rounded-xl border border-border bg-muted/50 p-0.5">
       {OPTIONS.map((opt) => (
         <button
           type="button"
@@ -23,7 +23,7 @@ export function TimeRangeToggle({ value, onChange }: TimeRangeToggleProps) {
           role="tab"
           aria-selected={value === opt.value}
           className={cn(
-            "ct-tab h-9 min-h-9 rounded-lg px-3 text-xs font-semibold transition-colors",
+            "ct-tab h-9 min-h-9 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-colors",
             value === opt.value
               ? "ct-tab-active bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",

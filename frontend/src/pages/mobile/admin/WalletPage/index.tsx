@@ -86,9 +86,9 @@ export default function WalletPageMobile() {
   };
 
   return (
-    <div className="ct-hero min-h-dvh bg-neutral text-neutral-content">
+    <div className="min-h-dvh bg-neutral text-neutral-content">
       {/* Dark hero zone */}
-      <div className="ct-hero-content px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-10">
+      <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-10">
         <div className="relative z-10 flex items-start justify-between gap-3 mb-6">
           <div className="min-w-0 flex flex-1 items-center gap-2 pt-1">
             <WalletIcon className="h-5 w-5 shrink-0 text-neutral-content/60" />

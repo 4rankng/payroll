@@ -69,9 +69,6 @@ export function EmployeePortalHeader({
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="min-w-0">
-            <p className="employee-type-header-greeting flex items-center gap-1.5 uppercase tracking-[0.14em] text-primary">
-              Cổng nhân viên
-            </p>
             <div className="flex min-w-0 items-baseline gap-2">
               <h1 className="employee-type-header-name truncate text-base-content" title={employeeName}>
                 {employeeName || "bạn"}
