@@ -85,7 +85,9 @@ const AlertDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-tight tracking-tight text-base-content", className)}
+    // `text-card-foreground` (not `text-base-content`) — see AlertDialogContent
+    // comment about daisyUI scoped variables and the Radix portal.
+    className={cn("text-lg font-semibold leading-tight tracking-tight text-card-foreground", className)}
     {...props}
   />
 ))
@@ -97,7 +99,8 @@ const AlertDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Description
     ref={ref}
-    className={cn("mt-1 text-sm leading-relaxed text-base-content/60", className)}
+    // `text-muted-foreground` (not `text-base-content/60`) — see comment above.
+    className={cn("mt-1 text-sm leading-relaxed text-muted-foreground", className)}
     {...props}
   />
 ))
@@ -116,8 +119,13 @@ const AlertDialogAction = React.forwardRef<
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(
-      "ct-btn min-h-11 border-0 px-4 font-semibold normal-case shadow-none",
-      variant === "destructive" ? "ct-btn-error" : "ct-btn-primary",
+      // Avoid daisyUI's `ct-btn`/`ct-btn-primary`/`ct-btn-error` — those
+      // resolve through scoped `--p`/`--er` variables that are undefined
+      // inside the Radix portal (see AlertDialogContent comment).
+      "inline-flex items-center justify-center gap-2 min-h-11 rounded-md border-0 px-4 text-sm font-semibold normal-case shadow-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+      variant === "destructive"
+        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        : "bg-primary text-primary-foreground hover:bg-primary/90",
       className
     )}
     {...props}
@@ -132,7 +140,9 @@ const AlertDialogCancel = React.forwardRef<
   <AlertDialogPrimitive.Cancel
     ref={ref}
     className={cn(
-      "ct-btn ct-btn-ghost min-h-11 border border-base-300 bg-base-100 px-4 font-semibold normal-case text-base-content shadow-none hover:bg-base-200",
+      // Avoid daisyUI's `ct-btn-ghost`/`bg-base-100`/`hover:bg-base-200` —
+      // scoped variables are undefined in the portal.
+      "inline-flex items-center justify-center gap-2 min-h-11 rounded-md border border-border bg-card px-4 text-sm font-semibold normal-case text-card-foreground shadow-none transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       className
     )}
     {...props}

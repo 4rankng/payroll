@@ -98,7 +98,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
           <button
             type="button"
             onClick={handleClose}
-            className="ct-btn ct-btn-circle ct-btn-ghost absolute right-4 top-[max(0.75rem,env(safe-area-inset-top,0px))] h-11 min-h-11 w-11 border-0 bg-white/10 p-0 text-white hover:bg-white/20 sm:top-4"
+            className="inline-flex items-center justify-center rounded-full absolute right-4 top-[max(0.75rem,env(safe-area-inset-top,0px))] h-11 min-h-11 w-11 border-0 bg-white/10 p-0 text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:top-4"
             aria-label="Đóng đổi mật khẩu"
             disabled={changePasswordMutation.isPending}
           >
@@ -126,7 +126,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         />
                         <button
                           type="button"
-                          className="ct-btn ct-btn-circle ct-btn-ghost absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)]"
+                          className="inline-flex items-center justify-center rounded-full absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)] transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
                           onClick={() => setShowCurrentPassword((visible) => !visible)}
                           disabled={changePasswordMutation.isPending}
                           aria-label={showCurrentPassword ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
@@ -157,7 +157,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         />
                         <button
                           type="button"
-                          className="ct-btn ct-btn-circle ct-btn-ghost absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)]"
+                          className="inline-flex items-center justify-center rounded-full absolute right-0 top-0 h-12 min-h-12 w-12 p-0 text-[var(--employee-text-secondary)] transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
                           onClick={() => setShowNewPassword((visible) => !visible)}
                           disabled={changePasswordMutation.isPending}
                           aria-label={showNewPassword ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
@@ -179,14 +179,14 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                 type="button"
                 onClick={handleClose}
                 disabled={changePasswordMutation.isPending}
-                className="ct-btn ct-btn-ghost min-h-11"
+                className="inline-flex items-center justify-center rounded-md min-h-11 border border-[var(--employee-border)] bg-white text-sm font-semibold normal-case text-[var(--employee-text)] shadow-none transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
               >
                 Đóng
               </button>
               <button
                 type="submit"
                 disabled={changePasswordMutation.isPending}
-                className="ct-btn ct-btn-primary min-h-11"
+                className="inline-flex items-center justify-center rounded-md min-h-11 border-0 bg-[var(--employee-accent)] px-4 text-sm font-semibold normal-case text-white shadow-[var(--employee-cta-shadow)] transition-colors hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
               >
                 {changePasswordMutation.isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
               </button>

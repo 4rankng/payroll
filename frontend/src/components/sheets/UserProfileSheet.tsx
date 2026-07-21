@@ -223,7 +223,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <button
                 type="button"
                 onClick={handleEditToggle}
-                className="ct-btn ct-btn-circle ct-btn-ghost h-11 min-h-11 w-11 shrink-0 border-0 bg-white/10 p-0 text-white hover:bg-white/20"
+                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 shrink-0 border-0 bg-white/10 p-0 text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 aria-label="Chỉnh sửa thông tin cá nhân"
               >
                 <Edit2 className="h-4 w-4" />
@@ -236,7 +236,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
         <div className="flex-1 overflow-y-auto px-4 py-5">
           {isEditing ? (
             <Form {...form}>
-              <form className="ct-card ct-card-border space-y-4 border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]">
+              <form className="rounded-xl space-y-4 border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]">
                 <div>
                   <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Chỉnh sửa hồ sơ</p>
                   <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Cập nhật các thông tin liên hệ của bạn.</p>
@@ -318,8 +318,8 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
             </Form>
           ) : (
             <div className="space-y-4">
-              <section className="ct-card ct-card-border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
-                <div className="ct-card-body gap-3 p-4">
+              <section className="rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+                <div className="gap-3 p-4">
                   <div>
                     <div>
                       <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Liên hệ</p>
@@ -340,8 +340,8 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 </div>
               </section>
 
-              <section className="ct-card ct-card-border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
-                <div className="ct-card-body gap-3 p-4">
+              <section className="rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+                <div className="gap-3 p-4">
                   <div>
                     <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Tài khoản</p>
                     <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Trạng thái và hoạt động gần đây</p>
@@ -363,7 +363,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <button
                 type="button"
                 onClick={handleEditToggle}
-                className="ct-btn ct-btn-ghost min-h-11"
+                className="inline-flex items-center justify-center rounded-md min-h-11 border border-[var(--employee-border)] bg-white text-sm font-semibold normal-case text-[var(--employee-text)] shadow-none transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 Hủy
@@ -371,7 +371,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <button
                 type="button"
                 onClick={form.handleSubmit(handleSave)}
-                className="ct-btn ct-btn-primary min-h-11"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md min-h-11 border-0 bg-[var(--employee-accent)] px-4 text-sm font-semibold normal-case text-white shadow-[var(--employee-cta-shadow)] transition-colors hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 <Save className="h-4 w-4 mr-1.5" />
@@ -383,7 +383,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <button
                 type="button"
                 onClick={handleChangePassword}
-                className="ct-btn ct-btn-outline ct-btn-primary min-h-11 flex-1"
+                className="inline-flex items-center justify-center gap-1.5 min-h-11 flex-1 rounded-md border border-[var(--employee-accent)] bg-transparent px-4 text-sm font-semibold normal-case text-[var(--employee-accent)] transition-colors hover:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
               >
                 <KeyRound className="h-4 w-4 mr-1.5" />
                 Đổi mật khẩu
@@ -391,7 +391,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <button
                 type="button"
                 onClick={onClose}
-                className="ct-btn ct-btn-circle ct-btn-ghost h-11 min-h-11 w-11 p-0 text-[var(--employee-text-secondary)]"
+                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 p-0 text-[var(--employee-text-secondary)] transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
                 aria-label="Đóng thông tin cá nhân"
               >
                 <X className="h-4 w-4" />

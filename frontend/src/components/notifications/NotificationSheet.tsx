@@ -134,7 +134,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           description="Danh sách thông báo của bạn"
           data-theme={variant === 'employee' ? 'employee' : 'congtruong'}
           className={cn(
-            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-base-100 p-0 text-base-content",
+            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-card p-0 text-card-foreground",
             isMobile
               ? "h-[100dvh] max-h-none rounded-none shadow-none"
               : "h-full"
@@ -148,7 +148,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             <div className="mb-3 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
-                className="ct-btn ct-btn-ghost ct-btn-circle h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-neutral-content hover:bg-neutral-content/10"
+                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-neutral-content transition-colors hover:bg-neutral-content/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
                 aria-label="Đóng"
               >
                 <ArrowLeft className="h-6 w-6" />
@@ -158,7 +158,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="ct-btn ct-btn-ghost h-11 min-h-11 max-w-[6.75rem] shrink-0 gap-1.5 border-0 px-2 text-xs font-medium text-neutral-content/80 hover:bg-neutral-content/10 disabled:bg-transparent"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-neutral-content/80 transition-colors hover:bg-neutral-content/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -183,9 +183,9 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   role="tab"
                   aria-selected={activeView === tab.value}
                   onClick={() => setActiveView(tab.value)}
-                  className={`ct-tab h-11 min-h-11 w-full justify-center gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
+                  className={`inline-flex items-center justify-center h-11 min-h-11 w-full gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
-                      ? `ct-tab-active bg-base-100 shadow-sm ${theme.activeTabText}`
+                      ? `bg-card shadow-sm ${theme.activeTabText}`
                       : 'text-neutral-content/65 hover:text-neutral-content'
                   }`}
                 >
@@ -203,13 +203,13 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           </div>
 
           {/* Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto bg-base-100">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-card">
             {renderContent()}
           </div>
 
           {/* Push notification toggle — pinned footer */}
           <div
-            className="border-t border-base-300 bg-base-100 px-3 py-2"
+            className="border-t border-border bg-card px-3 py-2"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
           >
             <PushNotificationToggle />

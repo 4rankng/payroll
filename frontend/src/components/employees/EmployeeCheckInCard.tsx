@@ -1069,7 +1069,7 @@ export function EmployeeCheckInCard({
           </AlertDialogHeader>
           {timingGuidance?.windowStart && timingGuidance.windowEnd ? (
             <div className="px-5 py-4">
-              <div className="ct-alert block rounded-xl border-warning/20 bg-warning/10 p-4 text-base-content shadow-none">
+              <div className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-none">
                 <p className="employee-type-label-caps font-semibold text-warning">
                   {timingGuidance.actionLabel}
                 </p>

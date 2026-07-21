@@ -176,7 +176,7 @@ export default function WalletPageMobile() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11 text-xs" disabled={adjusting}>Bỏ qua</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAdjust} disabled={adjusting} className="ct-btn ct-btn-primary min-h-11 h-11 border-0 bg-primary text-xs font-semibold text-primary-content shadow-none hover:bg-primary/90">
+            <AlertDialogAction onClick={handleAdjust} disabled={adjusting} className="inline-flex items-center justify-center min-h-11 h-11 rounded-md border-0 bg-primary px-4 text-xs font-semibold text-primary-content shadow-none transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
               {adjusting ? <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Đang xử lý...</> : 'Điều chỉnh'}
             </AlertDialogAction>
           </AlertDialogFooter>
