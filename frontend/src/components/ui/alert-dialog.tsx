@@ -33,7 +33,14 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
-        "ct-modal-box fixed left-[50%] top-[50%] z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] scale-100 flex-col gap-0 overflow-hidden rounded-2xl border border-base-300 bg-base-100 p-0 text-base-content shadow-2xl shadow-neutral/20 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:w-full",
+        // Note: intentionally NOT using `ct-modal-box` or `bg-base-100` here.
+        // Both reference daisyUI's `--b1` which is scoped to
+        // `[data-admin-ui]/[data-employee-ui]/[data-partner-ui]` via
+        // `themeRoot`, but Radix renders this in a Portal at the end of
+        // <body> — outside those containers — so the variable is undefined
+        // and the surface renders transparent. `bg-card` uses our own
+        // `--card` token (defined on `:root`) so it stays opaque everywhere.
+        "fixed left-[50%] top-[50%] z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] scale-100 flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl shadow-neutral/20 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:w-full",
         className
       )}
       {...props}
@@ -48,7 +55,8 @@ const AlertDialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 bg-base-100 px-5 pb-3 pt-5 text-left sm:px-6 sm:pt-6",
+      // `bg-card` (not `bg-base-100`) — see AlertDialogContent comment.
+      "flex flex-col space-y-1.5 bg-card px-5 pb-3 pt-5 text-left sm:px-6 sm:pt-6",
       className
     )}
     {...props}
@@ -62,7 +70,8 @@ const AlertDialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 border-t border-base-300/70 bg-base-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6",
+      // `bg-card` (not `bg-base-100`) — see AlertDialogContent comment.
+      "flex flex-col-reverse gap-2 border-t border-border bg-card px-5 py-4 sm:flex-row sm:justify-end sm:px-6",
       className
     )}
     {...props}

@@ -317,13 +317,13 @@ export default function WalletPage() {
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-lg border border-border/60 bg-muted/40 p-2.5">
+                  <div className="rounded-lg border border-border/60 bg-muted p-2.5">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Nhà cung cấp</p>
                     <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
                       {formatVND(mismatch?.provider ?? 0)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-border/60 bg-muted/40 p-2.5">
+                  <div className="rounded-lg border border-border/60 bg-muted p-2.5">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Hệ thống</p>
                     <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
                       {formatVND(mismatch?.local ?? 0)}

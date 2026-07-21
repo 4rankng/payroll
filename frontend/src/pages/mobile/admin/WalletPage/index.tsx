@@ -156,17 +156,17 @@ export default function WalletPageMobile() {
             <AlertDialogTitle className="text-sm">Phát hiện chênh lệch số dư</AlertDialogTitle>
             <AlertDialogDescription className="text-xs space-y-2">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="rounded-md bg-base-200 p-2">
+                <div className="rounded-md bg-muted p-2">
                   <p className="text-[11px] text-muted-foreground">Nhà cung cấp</p>
                   <p className="font-semibold tabular-nums text-foreground">{formatVND(mismatch?.provider ?? 0)}</p>
                 </div>
-                <div className="rounded-md bg-base-200 p-2">
+                <div className="rounded-md bg-muted p-2">
                   <p className="text-[11px] text-muted-foreground">Hệ thống</p>
                   <p className="font-semibold tabular-nums text-foreground">{formatVND(mismatch?.local ?? 0)}</p>
                 </div>
-                <div className={`rounded-md p-2 ${diff > 0 ? 'bg-success/10' : 'bg-error/10'}`}>
+                <div className={`rounded-md p-2 ${diff > 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                   <p className="text-[11px] text-muted-foreground">Chênh lệch</p>
-                  <p className={`font-semibold tabular-nums ${diff > 0 ? 'text-success' : 'text-error'}`}>
+                  <p className={`font-semibold tabular-nums ${diff > 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                     {diff > 0 ? '+' : ''}{formatVND(diff)}
                   </p>
                 </div>
