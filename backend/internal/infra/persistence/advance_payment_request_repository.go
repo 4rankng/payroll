@@ -713,6 +713,24 @@ func (r *AdvancePaymentRequestRepository) GetTotalFeeEarned(ctx context.Context)
 	return total, err
 }
 
+// GetTotalPayableAmount returns every actionable advance-payment obligation,
+// independent of the bounded history window used by statistical forecasting.
+func (r *AdvancePaymentRequestRepository) GetTotalPayableAmount(ctx context.Context) (int64, error) {
+	var total int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Select("COALESCE(SUM(net_amount), 0)").
+		Where("status IN ?", []domain.AdvancePaymentRequestStatus{
+			domain.AdvancePaymentStatusPending,
+			domain.AdvancePaymentStatusApproved,
+		}).
+		Scan(&total).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", "total_payable_amount")
+	}
+	return total, nil
+}
+
 // ResetToPending atomically resets APPROVED requests back to PENDING.
 // Used by the poller when wallet balance is insufficient to process claimed requests.
 // Only resets requests that are still APPROVED (idempotent, safe for concurrent pollers).

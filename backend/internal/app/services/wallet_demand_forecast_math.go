@@ -60,10 +60,9 @@ func maxCycleDay(forMonth string) int {
 	return (daysInMonth(m.Year(), m.Month()) - clock.PeriodCycleStartDay + 1) + clock.RequestCutoffDay
 }
 
-// forecastHorizonCycleDay returns the cycle day covered by the top-up lead
-// window. A 0 result means the lead window does not overlap the request window,
-// so the just-in-time funding target should be zero unless known unpaid demand
-// already exists.
+// forecastHorizonCycleDay returns the cycle day covered by the configured lead
+// window. It is retained as response metadata; the remaining-cycle wallet target
+// is not limited by this horizon.
 func forecastHorizonCycleDay(now time.Time, forMonth string, leadDays int) int {
 	if leadDays < 0 {
 		leadDays = 0
@@ -409,10 +408,9 @@ func forecastDemandDistribution(
 }
 
 // forecastDemandDistributionBetween projects the distribution of net cash-out
-// between two cycle-day positions. It is used by the Wallet page's just-in-time
-// top-up reminder: fromCycleDay is the observed boundary, throughCycleDay is the
-// lead-window horizon. When the horizon is not ahead of the observed boundary,
-// the future-demand distribution is zero.
+// between two cycle-day positions. fromCycleDay is the observed boundary and
+// throughCycleDay is the forecast horizon. When the horizon is not ahead of the
+// observed boundary, the future-demand distribution is zero.
 func forecastDemandDistributionBetween(
 	historical []cohortSeries,
 	fromCycleDay int,
@@ -442,6 +440,54 @@ func forecastDemandDistributionBetween(
 		}
 		rem = append(rem, r)
 	}
+	return forecastDemandDistributionFromRemaining(historical, rem, nSim, rngSeed, pf)
+}
+
+// forecastRemainingCycleDistribution keeps the unobserved part of the current
+// cycle day in the forecast without counting demand already seen today twice.
+// Future cycle days are always included in full.
+func forecastRemainingCycleDistribution(
+	historical []cohortSeries,
+	todayCycleDay int,
+	throughCycleDay int,
+	observedToday int64,
+	nSim int,
+	rngSeed int64,
+	paidFrac float64,
+) demandDistribution {
+	pf := clampF(paidFrac, 0, 1)
+	var rem []float64
+	for _, h := range historical {
+		if h.grandTotal <= 0 {
+			continue
+		}
+
+		futureAmount := int64(0)
+		if throughCycleDay > todayCycleDay {
+			endAmount := h.cumulativeAt(throughCycleDay)
+			if throughCycleDay > h.maxCycleDay {
+				endAmount = h.grandTotal
+			}
+			futureAmount = endAmount - h.cumulativeAt(todayCycleDay)
+		}
+
+		sameDayResidual := int64(0)
+		if todayCycleDay >= 1 && todayCycleDay <= throughCycleDay {
+			sameDayResidual = max(int64(0), h.dailyAmount[todayCycleDay]-observedToday)
+		}
+		rem = append(rem, float64(max(int64(0), futureAmount)+sameDayResidual))
+	}
+	return forecastDemandDistributionFromRemaining(historical, rem, nSim, rngSeed, pf)
+}
+
+func forecastDemandDistributionFromRemaining(
+	historical []cohortSeries,
+	rem []float64,
+	nSim int,
+	rngSeed int64,
+	paidFrac float64,
+) demandDistribution {
+	pf := clampF(paidFrac, 0, 1)
 	if len(rem) == 0 {
 		return demandDistribution{samples: []float64{0}, method: "no-history"}
 	}

@@ -32,10 +32,9 @@ type WalletDemandPoint struct {
 // WalletDemandPrediction is the advisory balance forecast for the current
 // period. DISPLAY ONLY — must not feed SyncBalance or any auto top-up.
 //
-// RecommendedBalance is the just-in-time wallet balance target for the near-term
-// top-up window. P50/P90/P99Reference describe the remaining-cycle forecast
-// through the cutoff day so the statistical forecast does not collapse to zero
-// when the near-term wallet window has no request days.
+// RecommendedBalance and P50/P90/P99Reference describe the remaining-cycle
+// forecast through the cutoff day. LeadDays and HorizonCycleDay remain in the
+// response for backward compatibility but do not limit the balance target.
 type WalletDemandPrediction struct {
 	ActualSoFar        int64   `json:"actual_so_far"`
 	ProjectedTotal     int64   `json:"projected_total"` // p50 projection of full-period net demand

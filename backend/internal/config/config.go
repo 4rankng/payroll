@@ -193,14 +193,14 @@ func (d DisbursementConfig) EmployeeDisbursementEnabled() bool {
 //   - else → 0.95.
 //
 // All fields optional; defaults give p*=0.95, a 5000-draw Monte Carlo, a 6-month
-// cohort lookback, a 2-day top-up lead window, and no extra safety stock.
+// cohort lookback, 2-day lead-window metadata, and no extra safety stock.
 type WalletForecastConfig struct {
 	ServiceLevel      float64 // env WALLET_FORECAST_SERVICE_LEVEL, default 0.95
 	CostUnder         float64 // env WALLET_FORECAST_COST_UNDER (Cu), default 0
 	CostOver          float64 // env WALLET_FORECAST_COST_OVER (Co), default 0
 	NSim              int     // env WALLET_FORECAST_N_SIM, default 5000
 	HistoryMonths     int     // env WALLET_FORECAST_HISTORY_MONTHS, default 6
-	LeadDays          int     // env WALLET_FORECAST_LEAD_DAYS, default 2
+	LeadDays          int     // response metadata; env WALLET_FORECAST_LEAD_DAYS, default 2
 	UncertaintyFactor float64 // env WALLET_FORECAST_UNCERTAINTY_FACTOR, default 0
 }
 

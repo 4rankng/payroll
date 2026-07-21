@@ -154,7 +154,7 @@ export interface WalletDemandPrediction {
   projected_paid: number;
   already_paid: number;
   remaining_to_pay: number;
-  recommended_balance: number;
+  recommended_balance: number; // reserve target for the remaining flexible-pay period
   current_available: number;
   shortfall: number;
   surplus: number;

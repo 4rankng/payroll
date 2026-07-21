@@ -159,6 +159,9 @@ type AdvancePaymentRequestRepository interface {
 	GetTotalProviderFee(ctx context.Context) (uint64, error)
 	// GetTotalFeeEarned returns the all-time sum of (fee - provider_fee) for COMPLETED requests.
 	GetTotalFeeEarned(ctx context.Context) (uint64, error)
+	// GetTotalPayableAmount returns the all-time net cash obligation for requests
+	// that can still be disbursed (PENDING + APPROVED).
+	GetTotalPayableAmount(ctx context.Context) (int64, error)
 	// CreateWithBudgetCheck atomically creates a request only if the employee's
 	// budget is not exceeded. Uses SELECT FOR UPDATE to prevent TOCTOU races.
 	CreateWithBudgetCheck(ctx context.Context, req *AdvancePaymentRequest, employeeID uint64, forMonth string) error

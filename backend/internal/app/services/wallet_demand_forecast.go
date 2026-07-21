@@ -51,7 +51,7 @@ func NewWalletDemandForecastService(
 }
 
 // GetDemandForecast builds the cohort series for the effective period + recent
-// completed periods and the just-in-time balance prediction.
+// completed periods and the remaining-cycle balance prediction.
 func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*wallet.WalletDemandForecastResponse, error) {
 	now := s.clock.Now()
 	currentForMonth := forecastForMonth(now)
@@ -92,7 +92,10 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	current := byMonth[currentForMonth]
 	actualSoFar := current.cumulativeAt(todayCycleDay)
 	alreadyPaid := current.completedTotal
-	knownUnpaid := max(int64(0), actualSoFar-alreadyPaid)
+	knownUnpaid, err := s.requestRepo.GetTotalPayableAmount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("lấy tổng nghĩa vụ ứng lương chờ chi trả: %w", err)
+	}
 
 	rate := completionRate(historical)
 	paidFrac := rate
@@ -107,42 +110,22 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		nSim = 5000
 	}
 
-	forecastStartCycleDay := 0
-	if todayCycleDay > 0 {
-		forecastStartCycleDay = todayCycleDay - 1
-	}
-	cycleDist := forecastDemandDistributionBetween(
-		historical, forecastStartCycleDay, maxDay, nSim,
+	cycleDist := forecastRemainingCycleDistribution(
+		historical, todayCycleDay, maxDay, current.dailyAmount[todayCycleDay], nSim,
 		forecastSeed(currentForMonth, maxDay), paidFrac,
 	)
-	leadDist := forecastDemandDistributionBetween(
-		historical, todayCycleDay, horizonCycleDay, nSim,
-		forecastSeed(currentForMonth, horizonCycleDay), paidFrac,
-	)
-
 	sl := serviceLevelConfig{
 		Quantile:          s.cfg.ServiceLevel,
 		CostUnder:         s.cfg.CostUnder,
 		CostOver:          s.cfg.CostOver,
 		UncertaintyFactor: s.cfg.UncertaintyFactor,
 	}
-	recommended, coverage := newsvendorRecommendation(leadDist, sl)
-	// Pre-period fallback: when today is outside the active request window
-	// (todayCycleDay == 0) but the lead window reaches into the upcoming period
-	// (horizonCycleDay > 0), the narrow 2-day JIT target often collapses to 0
-	// because the batch-at-payday approval pattern leaves early cycle days empty
-	// in history. Fall back to the full-cycle reserve (cycleDist) so the admin
-	// sees a meaningful top-up target on the eve of period start instead of a
-	// misleading zero. Days 9–17 keep returning 0 because horizonCycleDay == 0
-	// there (the lead window hasn't reached the period yet).
-	if recommended <= 0 && todayCycleDay == 0 && horizonCycleDay > 0 && cycleDist.method != "no-history" {
-		recommended, coverage = newsvendorRecommendation(cycleDist, sl)
-	}
+	recommended, coverage := newsvendorRecommendation(cycleDist, sl)
 	recommended += knownUnpaid
 
 	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and
-	// remaining-to-pay fields for API continuity. The top-up recommendation above
-	// intentionally uses the lead-window distribution, not the full-cycle reserve.
+	// remaining-to-pay fields for API continuity. The recommendation above uses
+	// the same remaining-cycle distribution as the reference fields below.
 	projectionCycleDay := todayCycleDay
 	if projectionCycleDay < 1 {
 		projectionCycleDay = horizonCycleDay
