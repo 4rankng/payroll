@@ -32,14 +32,12 @@ describe('WalletDemandCard', () => {
   it('describes the recommendation as the amount needed for the remaining period', () => {
     render(<WalletDemandCard data={forecast} />);
 
-    expect(screen.getByText('Cần cho phần còn lại của kỳ')).toBeInTheDocument();
-    expect(
-      screen.getByText('Nạp thêm để đạt mức cần giữ cho phần còn lại của kỳ.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Phần còn lại của kỳ')).toBeInTheDocument();
+    expect(screen.queryByText(/Nạp thêm để đạt mức/)).not.toBeInTheDocument();
     expect(screen.queryByText(/2 ngày tới/)).not.toBeInTheDocument();
   });
 
-  it('uses remaining-period wording when the wallet is sufficiently funded', () => {
+  it('does not repeat the top-up guidance when the wallet is sufficiently funded', () => {
     render(
       <WalletDemandCard
         data={{
@@ -54,7 +52,8 @@ describe('WalletDemandCard', () => {
       />,
     );
 
-    expect(screen.getByText('Đủ chi trả cho phần còn lại của kỳ.')).toBeInTheDocument();
+    expect(screen.getByText('Phần còn lại của kỳ')).toBeInTheDocument();
+    expect(screen.queryByText(/Đủ chi trả cho phần còn lại/)).not.toBeInTheDocument();
   });
 
   it('keeps current-demand wording when there is no historical forecast', () => {

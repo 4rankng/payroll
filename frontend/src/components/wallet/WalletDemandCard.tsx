@@ -43,7 +43,7 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
             <p className="text-[11px] text-muted-foreground mt-2">
               {noHistory
                 ? 'Chưa đủ dữ liệu các kỳ trước. Hiển thị nhu cầu hiện tại chờ chi trả.'
-                : 'Cần cho phần còn lại của kỳ'}
+                : 'Phần còn lại của kỳ'}
             </p>
 
             <div
@@ -81,13 +81,9 @@ export function WalletDemandCard({ data }: WalletDemandCardProps) {
                   {needsTopUp ? 'Chưa đủ' : 'Đủ chi trả'}
                 </span>
               </div>
-              <p className={`mt-2 text-[11px] ${needsTopUp ? 'text-rose-700' : 'text-emerald-700'}`}>
-                {needsTopUp
-                  ? 'Nạp thêm để đạt mức cần giữ cho phần còn lại của kỳ.'
-                  : noHistory
-                    ? 'Đủ chi trả theo nhu cầu hiện tại.'
-                    : 'Đủ chi trả cho phần còn lại của kỳ.'}
-              </p>
+              {noHistory && (
+                <p className="mt-2 text-[11px] text-emerald-700">Đủ chi trả theo nhu cầu hiện tại.</p>
+              )}
             </div>
 
           </>
