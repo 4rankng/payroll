@@ -20,8 +20,11 @@ describe("EmployeePortalHeader", () => {
 
     expect(screen.getByText("Nguyễn An")).toBeInTheDocument();
     expect(screen.getByText("9+")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Menu tài khoản" }).querySelector("img"))
-      .toHaveAttribute("src", "/icons/employee-avatar.png");
+    const accountButton = screen.getByRole("button", { name: "Menu tài khoản" });
+    const avatarImage = accountButton.querySelector("img");
+    expect(avatarImage).toHaveAttribute("src", "/icons/employee-avatar.png");
+    expect(avatarImage).toHaveClass("rounded-full");
+    expect(accountButton.firstElementChild).toBe(avatarImage);
     expect(screen.queryByText("NA")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Thông báo" }));
     expect(onNotificationClick).toHaveBeenCalledOnce();

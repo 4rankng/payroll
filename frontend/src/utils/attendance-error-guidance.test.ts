@@ -36,6 +36,9 @@ describe("attendance error guidance", () => {
     const element = document.createElement("div");
     const scrollIntoView = vi.fn();
     Object.defineProperty(element, "scrollIntoView", { value: scrollIntoView });
+    // Explicitly assert the non-reduced-motion branch — the global setup mock
+    // treats `prefers-reduced-motion` as matched, so we override it here.
+    const matchMedia = vi.spyOn(window, "matchMedia").mockReturnValue({ matches: false } as MediaQueryList);
     const requestAnimationFrame = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback) => {
@@ -47,6 +50,7 @@ describe("attendance error guidance", () => {
 
     expect(requestAnimationFrame).toHaveBeenCalledOnce();
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
+    matchMedia.mockRestore();
     requestAnimationFrame.mockRestore();
   });
 

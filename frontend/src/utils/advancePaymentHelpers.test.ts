@@ -3,6 +3,7 @@ import {
   formatPayrollMonthRange,
   formatMonthShort,
   getAdvanceQuotaSummary,
+  getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
 } from "./advancePaymentHelpers";
 import type {
@@ -150,6 +151,70 @@ describe("getAdvanceQuotaSummary", () => {
     expect(summary.completedAmount).toBe(9_360_000);
     expect(summary.maxAdvanceAmount).toBe(9_360_000);
     expect(summary.remainingAmount).toBe(0);
+  });
+});
+
+describe("getAdvanceQuotaSummaryForMonth", () => {
+  it("does not reuse top-level June totals when July has no quota row", () => {
+    const summary = getAdvanceQuotaSummaryForMonth(
+      {
+        ...baseInfo,
+        forMonth: "2026-07",
+        maxAdvanceAmount: 9_900_000,
+        completedAmount: 8_040_000,
+        remainingAmount: 1_860_000,
+        canRequest: false,
+        quotas: [
+          {
+            forMonth: "2026-06",
+            maxAdvanceAmount: 9_900_000,
+            completedAmount: 8_040_000,
+            pendingAmount: 0,
+            remainingAmount: 1_860_000,
+          },
+        ],
+      },
+      "2026-07",
+    );
+
+    expect(summary).toEqual({
+      forMonth: "2026-07",
+      maxAdvanceAmount: 0,
+      completedAmount: 0,
+      pendingAmount: 0,
+      remainingAmount: 0,
+      usedAmount: 0,
+      usedPercentage: 0,
+    });
+  });
+
+  it("attributes legacy untagged history only to the resolved June quota", () => {
+    const info: AdvancePaymentInfo = {
+      ...baseInfo,
+      forMonth: "2026-07",
+      maxAdvanceAmount: 6_060_000,
+      completedAmount: 4_200_000,
+      remainingAmount: 1_860_000,
+      canRequest: false,
+      quotas: [
+        {
+          forMonth: "2026-06",
+          maxAdvanceAmount: 6_060_000,
+          completedAmount: 4_200_000,
+          pendingAmount: 0,
+          remainingAmount: 1_860_000,
+        },
+      ],
+    };
+    const history = completedHistory.map(({ forMonth: _forMonth, ...item }) => item);
+
+    const june = getAdvanceQuotaSummaryForMonth(info, "2026-06", history);
+    const july = getAdvanceQuotaSummaryForMonth(info, "2026-07", history);
+
+    expect(june.usedAmount).toBe(9_360_000);
+    expect(june.maxAdvanceAmount).toBe(11_220_000);
+    expect(july.usedAmount).toBe(0);
+    expect(july.maxAdvanceAmount).toBe(0);
   });
 });
 

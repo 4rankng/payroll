@@ -249,13 +249,23 @@ export function getAdvanceQuotaSummaryForMonth(
   forMonth: string,
   history?: AdvancePaymentHistoryItem[],
 ): AdvanceQuotaSummary {
-  const exactQuota = (info.quotas ?? []).find((quota) => quota.forMonth === forMonth);
-  const usesTopLevel = !exactQuota && info.forMonth === forMonth;
+  const quotas = info.quotas ?? [];
+  const exactQuota = quotas.find((quota) => quota.forMonth === forMonth);
+  // The top-level values are a backward-compatible fallback only. Once the
+  // API supplies month-specific quota rows, those rows are authoritative: a
+  // missing July row must not inherit totals from the closed June cycle even
+  // when the top-level `forMonth` has already rolled over to July.
+  const usesTopLevel = quotas.length === 0 && info.forMonth === forMonth;
   const rawMaxAdvanceAmount = exactQuota?.maxAdvanceAmount ?? (usesTopLevel ? info.maxAdvanceAmount : 0);
   const quotaCompleted = exactQuota?.completedAmount ?? (usesTopLevel ? info.completedAmount : 0);
   const quotaPending = exactQuota?.pendingAmount ?? (usesTopLevel ? info.pendingAmount : 0);
+  // Older history responses have no `forMonth`. Attribute those records only
+  // to the one quota cycle resolved as actionable; otherwise the same legacy
+  // requests would leak into every month selected in the navigator.
+  const legacyHistoryMonth = getAdvanceQuotaSummary(info, history).forMonth;
+  const acceptsLegacyHistory = usesTopLevel || legacyHistoryMonth === forMonth;
   const matchingHistory = history?.filter(
-    (item) => item.forMonth === forMonth || (!item.forMonth && usesTopLevel),
+    (item) => item.forMonth === forMonth || (!item.forMonth && acceptsLegacyHistory),
   );
   const historyUsed = getHistoryUsedAmount(matchingHistory, forMonth);
   const usedAmount = Math.max(quotaCompleted + quotaPending, historyUsed);

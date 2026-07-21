@@ -37,18 +37,16 @@ export function EmployeePortalHeader({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="ct-avatar ct-placeholder h-11 w-11 shrink-0 rounded-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
+                className="flex h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
                 aria-label="Menu tài khoản"
               >
-                <div className="h-11 w-11 overflow-hidden rounded-[15px] bg-primary/10 ring-1 ring-primary/15 sm:h-12 sm:w-12">
-                  <img
-                    src="/icons/employee-avatar.png"
-                    alt=""
-                    width={48}
-                    height={48}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+                <img
+                  src="/icons/employee-avatar.png"
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="h-full w-full rounded-full object-contain"
+                />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
