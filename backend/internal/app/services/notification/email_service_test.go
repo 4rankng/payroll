@@ -20,18 +20,18 @@ func TestEmailServiceResolveFromAddressUsesApprovedIdentities(t *testing.T) {
 		if err != nil {
 			t.Fatalf("resolve default sender: %v", err)
 		}
-		if address.Name != "Ting Ting" || address.Address != "noreply@tingting.vip" {
+		if address.Name != "Ting Ting" || address.Address != "marketing@tingting.vip" {
 			t.Fatalf("unexpected default sender: %#v", address)
 		}
 	})
 
-	t.Run("uses canonical approved marketing sender", func(t *testing.T) {
+	t.Run("uses canonical approved sender", func(t *testing.T) {
 		address, err := service.resolveFromAddress("marketing@tingting.vip")
 		if err != nil {
-			t.Fatalf("resolve marketing sender: %v", err)
+			t.Fatalf("resolve approved sender: %v", err)
 		}
-		if address.Name != "Ting Ting Software Solution" || address.Address != "marketing@tingting.vip" {
-			t.Fatalf("unexpected marketing sender: %#v", address)
+		if address.Name != "Ting Ting" || address.Address != "marketing@tingting.vip" {
+			t.Fatalf("unexpected sender: %#v", address)
 		}
 	})
 
@@ -85,11 +85,10 @@ func TestEmailServiceAvailableSendersReturnsApprovedIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list senders: %v", err)
 	}
-	if len(senders) != 2 {
-		t.Fatalf("expected 2 senders, got %#v", senders)
+	if len(senders) != 1 {
+		t.Fatalf("expected 1 sender, got %#v", senders)
 	}
-	if senders[0].Name != "Ting Ting" || senders[0].Address != "noreply@tingting.vip" ||
-		senders[1].Name != "Ting Ting Software Solution" || senders[1].Address != "marketing@tingting.vip" {
-		t.Fatalf("unexpected sender order: %#v", senders)
+	if senders[0].Name != "Ting Ting" || senders[0].Address != "marketing@tingting.vip" {
+		t.Fatalf("unexpected sender: %#v", senders)
 	}
 }

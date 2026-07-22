@@ -35,13 +35,11 @@ type EmailService struct {
 }
 
 const (
-	defaultEmailSender   = constants.DefaultEmailSenderName + " <" + constants.DefaultEmailSenderAddress + ">"
-	marketingEmailSender = constants.MarketingEmailSenderName + " <" + constants.MarketingEmailSenderEmail + ">"
+	defaultEmailSender = constants.DefaultEmailSenderName + " <" + constants.DefaultEmailSenderAddress + ">"
 )
 
 var approvedEmailSenders = []string{
 	defaultEmailSender,
-	marketingEmailSender,
 }
 
 // AssetStoragePort is a minimal interface for saving files as assets.

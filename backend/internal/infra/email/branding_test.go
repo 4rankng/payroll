@@ -86,7 +86,7 @@ func TestSandboxProviderCapturesMessageWithPublicBanner(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse recipient: %v", err)
 	}
-	from, err := domain.ParseEmailAddress("TingTing <noreply@tingting.vip>")
+	from, err := domain.ParseEmailAddress("TingTing <marketing@tingting.vip>")
 	if err != nil {
 		t.Fatalf("parse sender: %v", err)
 	}
