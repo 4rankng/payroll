@@ -22,6 +22,11 @@ type TimesheetAnalyticsRepository struct {
 	errorHandler *common.RepoErrorHandler
 }
 
+type pendingPaymentSummaryResult struct {
+	PendingPaymentAmount    int64 `gorm:"column:pending_payment_amount"`
+	PendingPaymentEmployees int   `gorm:"column:pending_payment_employees"`
+}
+
 // NewTimesheetAnalyticsRepository creates a new analytics repository
 func NewTimesheetAnalyticsRepository(db *gorm.DB) *TimesheetAnalyticsRepository {
 	return &TimesheetAnalyticsRepository{
@@ -80,22 +85,7 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 		stats.LastUpdated = main.LastUpdated
 	}
 
-	// Query 2: pending payment amount + employee count. Keep this cohort aligned
-	// with payroll export: approved entries whose payment is pending or failed.
-	type pendingPaymentResult struct {
-		PendingPaymentAmount    int64 `gorm:"column:pending_payment_amount"`
-		PendingPaymentEmployees int   `gorm:"column:pending_payment_employees"`
-	}
-	var pending pendingPaymentResult
-	pendingPaymentFilters := domain.NewPendingPaymentTimesheetFilters()
-	err = r.queryBuilder.BuildSummaryQuery(filters).
-		Where("timesheet_status IN ?", pendingPaymentFilters.TimesheetStatus).
-		Where("payment_status IN ?", pendingPaymentFilters.PaymentStatus).
-		Select(`
-			COALESCE(SUM(amount), 0)                       AS pending_payment_amount,
-			COUNT(DISTINCT timesheets.employee_id)         AS pending_payment_employees
-		`).
-		Scan(&pending).Error
+	pending, err := r.getPendingPaymentSummary(filters)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +93,20 @@ func (r *TimesheetAnalyticsRepository) GetSummaryStats(ctx context.Context, filt
 	stats.PendingEmployees = pending.PendingPaymentEmployees
 
 	return &stats, nil
+}
+
+func (r *TimesheetAnalyticsRepository) getPendingPaymentSummary(filters domain.TimesheetFilters) (pendingPaymentSummaryResult, error) {
+	var pending pendingPaymentSummaryResult
+	pendingPaymentFilters := domain.NewOperationalPaymentBacklogTimesheetFilters()
+	err := r.queryBuilder.BuildSummaryQuery(filters).
+		Where("timesheet_status IN ?", pendingPaymentFilters.TimesheetStatus).
+		Where("payment_status IN ?", pendingPaymentFilters.PaymentStatus).
+		Select(`
+			COALESCE(SUM(amount), 0)                       AS pending_payment_amount,
+			COUNT(DISTINCT timesheets.employee_id)         AS pending_payment_employees
+		`).
+		Scan(&pending).Error
+	return pending, err
 }
 
 // GetAccrualCohort returns row-level point-in-time facts for the cash-readiness

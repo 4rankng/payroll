@@ -66,10 +66,14 @@ CRUD, bulk approve/reject/reset, approve-all, preview, export, grouped view, pay
 | POST | `/bulk-approve` | Bulk approve timesheets |
 | POST | `/export-entries-template` | Download export template |
 
-`GET /summary` and the shared `status=pending_payment` filter use the same cohort:
-approved timesheets whose `payment_status` is `pending` or `failed`. That
-cohort also powers the frontend "Chờ thanh toán" filter label and the
-bulk-transfer planner/export flow.
+`GET /summary` reports the operational payment backlog in `pendingPaymentAmount`
+and `pendingEmployees`: pending-approval or approved timesheets whose
+`payment_status` is `pending` or `failed`. This lets the dashboard show accrued
+salary before approval without making it eligible for disbursement.
+
+The `status=pending_payment` list filter and bulk-transfer planner use the
+stricter payroll-ready cohort: approved timesheets whose `payment_status` is
+`pending` or `failed`. Pending-approval rows never enter payment exports.
 
 `GET /cash-readiness` keeps the legacy percentile fields and adds a transparent
 cash decomposition: `observed_approved`, `pending_target_amount`,

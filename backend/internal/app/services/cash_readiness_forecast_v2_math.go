@@ -11,7 +11,7 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const cashReadinessModelVersion = "cash-readiness-v3"
+const cashReadinessModelVersion = "cash-readiness-v4"
 
 type cashReadinessV2Projection struct {
 	approved           int64
@@ -94,6 +94,13 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 	if len(observations) > 52 {
 		observations = observations[len(observations)-52:]
 	}
+	completedFallbacks := 0
+	for _, observation := range observations {
+		if observation.completedOnlyFallback {
+			completedFallbacks++
+		}
+	}
+	bootstrapCompletedTotals := !targetHasRows || completedFallbacks == len(observations)
 	pendingRate := betaSmoothedRate(pendingSuccesses, pendingFailures)
 	if len(observations) == 0 {
 		expectedPending := int64(math.Round(float64(pending) * pendingRate))
@@ -108,8 +115,8 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 	}
 
 	targetHeadcount := len(targetEmployees)
-	if !targetHasRows {
-		targetHeadcount = recentWorkforceLevel(observations, 0, cfg.GrowthEWMAlpha)
+	if bootstrapCompletedTotals {
+		targetHeadcount = recentWorkforceLevel(observations, targetHeadcount, cfg.GrowthEWMAlpha)
 	} else if targetHeadcount == 0 {
 		// Compatibility for legacy aggregate rows without employee identity.
 		targetHeadcount = medianObservedHeadcount(observations)
@@ -127,13 +134,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 	var futureSampleTotal float64
 	useProjects := targetHasRows && projectBasisSufficient(observations, targetProjectEmployees, 6)
 	method := "normalized-bootstrap"
-	completedFallbacks := 0
-	for _, observation := range observations {
-		if observation.completedOnlyFallback {
-			completedFallbacks++
-		}
-	}
-	if !targetHasRows || completedFallbacks == len(observations) {
+	if bootstrapCompletedTotals {
 		method = "completed-cycle-bootstrap"
 	}
 	for i := range samples {
@@ -145,9 +146,10 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		}
 
 		var futureSample int64
-		if !targetHasRows {
+		if bootstrapCompletedTotals {
 			obs := observations[rng.IntN(len(observations))]
-			futureSample = int64(math.Round(obs.finalApprovedPerHead * float64(targetHeadcount)))
+			completedTotal := int64(math.Round(obs.finalApprovedPerHead * float64(targetHeadcount)))
+			futureSample = max(int64(0), completedTotal-approved-pending)
 		} else if useProjects {
 			for projectID, employees := range targetProjectEmployees {
 				choices := projectRates(observations, projectID)
@@ -368,10 +370,10 @@ func medianObservedHeadcount(observations []cashCycleObservation) int {
 }
 
 // recentWorkforceLevel estimates the employee participation level for the
-// target Ky when it has no rows. The current observed headcount parameter is a
-// defensive floor; the level is an EWMA of final participation in completed
-// cycles. This preserves scale without changing the established partial-cycle
-// normalization once target rows begin arriving.
+// target Ky when completed-cycle totals are the only usable historical shape.
+// The current observed headcount parameter is a defensive floor; the level is
+// an EWMA of final participation in completed cycles. This preserves scale when
+// the target is empty or only a sparse first batch has arrived.
 func recentWorkforceLevel(observations []cashCycleObservation, currentObserved int, alpha float64) int {
 	if len(observations) == 0 {
 		return currentObserved

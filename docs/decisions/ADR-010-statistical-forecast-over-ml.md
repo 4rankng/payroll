@@ -34,6 +34,14 @@ KPI remains an operational backlog metric and is never a forecast input.
 3. **Makridakis M-competition evidence.** Simple statistical methods and ensembles match or beat complex ML on aggregate, low-frequency business series. ML wins concentrate in high-frequency, high-dimensional data — the opposite of weekly payroll.
 4. **ML needs ≥18 months clean history + a retraining/drift pipeline.** On a short horizon it overfits, and you cannot explain a 40M VND miss — which is exactly what matters when cash is short.
 
+### Sparse-target v4 semantics (2026-07-22)
+
+Model version `cash-readiness-v4` tightens the completed-cycle fallback so sparse target rows do not collapse the forecast scale:
+
+- When the usable historical shapes are all completed-cycle fallbacks, the target headcount keeps the recent final workforce scale instead of dropping to the first observed target row count.
+- The projected future amount is sampled as the completed-cycle total minus the current approved amount and the full pending exposure, so the forecast does not double count amounts already visible in the target cycle.
+- The existing `ModelVersion` partition keeps v4 accuracy and residuals isolated from the earlier v3 history.
+
 ### Validation
 
 Synthetic tests validate the calculation and time boundaries, but do not claim
@@ -57,14 +65,14 @@ This prevents a misleading all-zero projection while preserving an explicit
 low-confidence state.
 
 For an entirely empty target Kỳ, the bootstrap uses full completed-cycle totals
-normalized per final participating employee. When the target is empty, its
-workforce scale is an EWMA of recent completed-cycle participation; once target
-rows exist, their observed participants anchor the established partial-cycle
-model. This is deliberately recency-sensitive: using the median headcount across
+normalized per final participating employee. When the target is empty, or when
+only completed-cycle fallback shapes are available for a sparse target, its
+workforce scale is an EWMA of recent completed-cycle participation. Target rows
+anchor the partial-cycle model only when history contains a valid partial-cycle
+shape. This is deliberately recency-sensitive: using the median headcount across
 the whole six-month window materially underforecasts during rapid workforce
-growth. The corrected contract is model version
-`cash-readiness-v3`; earlier resolved snapshots are not mixed into its accuracy
-metrics.
+growth. The corrected contract is model version `cash-readiness-v4`; the existing
+`ModelVersion` filter keeps earlier resolved snapshots out of its accuracy metrics.
 
 ### Escalation Path
 
@@ -96,6 +104,6 @@ The forecast is advisory-only and never feeds `SyncBalance`. A `WalletBalanceRea
 
 ## References
 
-- [Journal: Cash-readiness forecast](../journals/2026-07-11-cash-readiness-forecast.md)
+- [Journal: Reliable cash-readiness forecast](../journals/2026-07-17-reliable-cash-readiness-forecast.md)
 - [Lesson: Statistical forecast over ML](../lessons/2026-07-11-statistical-forecast-over-ml.md)
 - Plan: `plans/260710-2235-cash-readiness-forecast/`

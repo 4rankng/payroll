@@ -267,6 +267,22 @@ func NewPendingPaymentTimesheetFilters() TimesheetFilters {
 	}
 }
 
+// NewOperationalPaymentBacklogTimesheetFilters returns all accrued salary that
+// still needs operational processing. Pending-approval rows belong in the
+// dashboard backlog, but remain excluded from the payroll-ready cohort above.
+func NewOperationalPaymentBacklogTimesheetFilters() TimesheetFilters {
+	return TimesheetFilters{
+		TimesheetStatus: []TimesheetStatus{
+			TimesheetStatusPendingApproval,
+			TimesheetStatusApproved,
+		},
+		PaymentStatus: []PaymentStatus{
+			PaymentStatusPending,
+			PaymentStatusFailed,
+		},
+	}
+}
+
 // GetStatuses implements common.StatusFilter interface for TimesheetStatus
 func (tf *TimesheetFilters) GetStatuses() []string {
 	if len(tf.TimesheetStatus) == 0 {

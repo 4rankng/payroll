@@ -20,6 +20,8 @@ This was maddening because the system was not “slightly off” - it was confid
 - Root cause: `buildCashCycleObservations` filtered out target cycles with no observed rows, so the forecast could degenerate into `no-history` and a zero band.
 - Fix: add a `completed-cycle-bootstrap` fallback that uses the final approved total from completed Ky when the target cycle has no rows yet.
 - The weekly payment percentage now scales the whole forecast basis through `scaleCashReadinessProjection`, so approved, pending, expected future, reserve, and the legacy band all use the same payable basis.
+- v4 keeps sparse target cycles on the recent final workforce scale whenever the only usable historical shapes are completed-cycle fallbacks, and its future sample subtracts the current approved amount plus the full pending exposure before adding anything new.
+- The existing `ModelVersion` partition keeps the new v4 calibration set from mixing with the earlier v3 residual history.
 - Forecast snapshots are persisted through `cash_forecast_snapshots` with a unique company-cycle identity, and `Upsert` now refuses to rewrite resolved history.
 - Weekly export reconciliation now deduplicates by exact work-date range plus `TimesheetID`, so split exports and retries do not double-count the actual payout.
 
@@ -54,8 +56,11 @@ had 279 and 285. The partial-cycle remainder model reused that stale median even
 when the target had no rows at all, producing a 135M payable expectation against
 recent payable cycles around 363M-418M.
 
-Model v3 now bootstraps full completed-cycle totals when the target is empty and
-normalizes them to a recency-weighted workforce level. Against the same
-production cohort, the expected 70% payable amount is approximately 382M. The
-733M outstanding-payment KPI remains separate because it contains unpaid prior
-Kỳ rather than new Ky3 work.
+Model v4 now bootstraps full completed-cycle totals when the target is empty and
+keeps that completed-cycle scale when the target only has a sparse first batch
+and every usable historical shape is still a completed-cycle fallback. The
+projected future subtracts the currently approved amount plus full pending
+exposure before sampling any remainder, which avoids double counting visible
+target-cycle amounts. Against the same production cohort, the expected 70%
+payable amount is approximately 382M. The 733M outstanding-payment KPI remains
+separate because it contains unpaid prior Kỳ rather than new Ky3 work.
