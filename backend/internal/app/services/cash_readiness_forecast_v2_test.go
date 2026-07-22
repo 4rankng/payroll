@@ -269,6 +269,37 @@ func TestCashReadinessV2_SparseTargetKeepsCompletedCycleScale(t *testing.T) {
 	}
 }
 
+func TestCashReadinessV2_SparseTargetUsesCompletedTotalsWithMixedHistory(t *testing.T) {
+	rows := make([]domain.TimesheetAccrualDailyRow, 0, 21)
+	for employee := 1; employee <= 10; employee++ {
+		rows = append(rows,
+			// This cycle has a valid partial shape at the analogous forecast day.
+			forecastRow("2026-05-15", "2026-05-15", "2026-05-16", domain.TimesheetStatusApproved, uint(employee), 10, 100),
+			// This cycle was entered only after the analogous forecast day.
+			forecastRow("2026-06-15", "2026-06-23", "2026-06-24", domain.TimesheetStatusApproved, uint(employee), 10, 100),
+		)
+	}
+	rows = append(rows,
+		forecastRow("2026-07-15", "2026-07-22", "", domain.TimesheetStatusPendingApproval, 1, 10, 100),
+	)
+
+	now, _ := time.ParseInLocation("2006-01-02", "2026-07-22", clock.DefaultLocation)
+	projection := forecastCashReadinessV2(
+		rows,
+		now,
+		clock.NextTimesheetPayCycle(now),
+		42,
+		config.CashForecastConfig{NSim: 1000},
+	)
+
+	if projection.expectedFuture != 900 || projection.expectedPayout != 950 || projection.recommendedReserve != 1_000 {
+		t.Fatalf("mixed-history sparse projection=%#v, want future=900 expected=950 reserve=1000", projection)
+	}
+	if projection.method != "completed-cycle-bootstrap" {
+		t.Fatalf("method=%q, want completed-cycle-bootstrap while target participation is sparse", projection.method)
+	}
+}
+
 func TestGetCashReadinessV2_CalibrationAndSnapshotAreAdvisory(t *testing.T) {
 	measurement := &fakeCashMeasurement{
 		accuracy:  domain.CashForecastAccuracy{SampleCount: 24, WAPE: .08, Bias: .02, IntervalCoverage: .90, ReserveShortfallRate: .05},
@@ -359,8 +390,8 @@ func TestGetCashReadinessV2_UsesWeeklyPayableCashPercentage(t *testing.T) {
 	if got.ObservedApproved != 70 || got.CashToPrepare != 70 || got.ExpectedPayout != 70 {
 		t.Fatalf("payable cash amounts = approved %d, prepare %d, expected %d; want 70 each", got.ObservedApproved, got.CashToPrepare, got.ExpectedPayout)
 	}
-	if got.ModelVersion != "cash-readiness-v4" {
-		t.Fatalf("model version=%q, want v4 after sparse-target correction", got.ModelVersion)
+	if got.ModelVersion != "cash-readiness-v5" {
+		t.Fatalf("model version=%q, want v5 after mixed-history sparse-target correction", got.ModelVersion)
 	}
 }
 

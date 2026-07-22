@@ -11,7 +11,7 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const cashReadinessModelVersion = "cash-readiness-v4"
+const cashReadinessModelVersion = "cash-readiness-v5"
 
 type cashReadinessV2Projection struct {
 	approved           int64
@@ -100,7 +100,10 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 			completedFallbacks++
 		}
 	}
-	bootstrapCompletedTotals := !targetHasRows || completedFallbacks == len(observations)
+	currentHeadcount := len(targetEmployees)
+	estimatedWorkforce := recentWorkforceLevel(observations, currentHeadcount, cfg.GrowthEWMAlpha)
+	sparseTarget := targetHasRows && currentHeadcount < estimatedWorkforce
+	bootstrapCompletedTotals := !targetHasRows || sparseTarget || completedFallbacks == len(observations)
 	pendingRate := betaSmoothedRate(pendingSuccesses, pendingFailures)
 	if len(observations) == 0 {
 		expectedPending := int64(math.Round(float64(pending) * pendingRate))
@@ -114,9 +117,9 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		}
 	}
 
-	targetHeadcount := len(targetEmployees)
+	targetHeadcount := currentHeadcount
 	if bootstrapCompletedTotals {
-		targetHeadcount = recentWorkforceLevel(observations, targetHeadcount, cfg.GrowthEWMAlpha)
+		targetHeadcount = estimatedWorkforce
 	} else if targetHeadcount == 0 {
 		// Compatibility for legacy aggregate rows without employee identity.
 		targetHeadcount = medianObservedHeadcount(observations)
