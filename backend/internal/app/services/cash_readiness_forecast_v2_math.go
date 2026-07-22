@@ -11,7 +11,10 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const cashReadinessModelVersion = "cash-readiness-v5"
+const (
+	cashReadinessModelVersion         = "cash-readiness-v5"
+	cashReadinessCompletedCycleWindow = 6
+)
 
 type cashReadinessV2Projection struct {
 	approved           int64
@@ -101,7 +104,11 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		}
 	}
 	currentHeadcount := len(targetEmployees)
-	estimatedWorkforce := recentWorkforceLevel(observations, currentHeadcount, cfg.GrowthEWMAlpha)
+	completedTotalBasis := observations
+	if len(completedTotalBasis) > cashReadinessCompletedCycleWindow {
+		completedTotalBasis = completedTotalBasis[len(completedTotalBasis)-cashReadinessCompletedCycleWindow:]
+	}
+	estimatedWorkforce := recentWorkforceLevel(completedTotalBasis, currentHeadcount, cfg.GrowthEWMAlpha)
 	sparseTarget := targetHasRows && currentHeadcount < estimatedWorkforce
 	bootstrapCompletedTotals := !targetHasRows || sparseTarget || completedFallbacks == len(observations)
 	pendingRate := betaSmoothedRate(pendingSuccesses, pendingFailures)
@@ -150,7 +157,7 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 
 		var futureSample int64
 		if bootstrapCompletedTotals {
-			obs := observations[rng.IntN(len(observations))]
+			obs := completedTotalBasis[rng.IntN(len(completedTotalBasis))]
 			completedTotal := int64(math.Round(obs.finalApprovedPerHead * float64(targetHeadcount)))
 			futureSample = max(int64(0), completedTotal-approved-pending)
 		} else if useProjects {
@@ -191,8 +198,15 @@ func forecastCashReadinessV2(rows []domain.TimesheetAccrualDailyRow, now time.Ti
 		recommendedReserve: reserve, intervalLower: lower, intervalUpper: upper,
 		legacyMedian: cashQuantile(samples, 0.50), legacyExpected: expected,
 		legacyP95:   cashQuantile(samples, 0.95),
-		pendingRate: pendingRate, basisCycles: len(observations), method: method,
+		pendingRate: pendingRate, basisCycles: basisCycleCount(bootstrapCompletedTotals, observations, completedTotalBasis), method: method,
 	}
+}
+
+func basisCycleCount(bootstrapCompletedTotals bool, observations, completedTotalBasis []cashCycleObservation) int {
+	if bootstrapCompletedTotals {
+		return len(completedTotalBasis)
+	}
+	return len(observations)
 }
 
 func normalizeForecastRow(row domain.TimesheetAccrualDailyRow) domain.TimesheetAccrualDailyRow {

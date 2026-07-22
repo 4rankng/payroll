@@ -84,22 +84,6 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         </p>
       )}
 
-      {display.drivers.length > 0 && (
-        <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-2 border-t border-border/60 pt-3 sm:grid-cols-2">
-          {display.drivers.map((driver) => (
-            <div key={driver.label} className="flex min-w-0 items-baseline justify-between gap-3">
-              <dt className="text-[11px] text-muted-foreground">
-                {driver.label}
-                {driver.description && <span className="block text-[10px] text-muted-foreground/80">{driver.description}</span>}
-              </dt>
-              <dd className="whitespace-nowrap font-financial text-[12px] font-semibold tabular-nums text-foreground">
-                {formatCurrency(driver.amount)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
-
       <div className="mt-3 border-t border-border/60 pt-3 lg:mt-auto">
         <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
         <dl

@@ -300,6 +300,40 @@ func TestCashReadinessV2_SparseTargetUsesCompletedTotalsWithMixedHistory(t *test
 	}
 }
 
+func TestCashReadinessV2_CompletedTotalBootstrapUsesRecentCycles(t *testing.T) {
+	rows := make([]domain.TimesheetAccrualDailyRow, 0, 81)
+	months := []time.Month{time.November, time.December, time.January, time.February, time.March, time.April, time.May, time.June}
+	for index, month := range months {
+		year := 2025
+		if month <= time.June {
+			year = 2026
+		}
+		amount := int64(100)
+		if index < 2 {
+			amount = 300
+		}
+		work := time.Date(year, month, 15, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		created := time.Date(year, month, 23, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		approved := time.Date(year, month, 24, 0, 0, 0, 0, clock.DefaultLocation).Format("2006-01-02")
+		for employee := 1; employee <= 10; employee++ {
+			rows = append(rows, forecastRow(work, created, approved, domain.TimesheetStatusApproved, uint(employee), 10, amount))
+		}
+	}
+	rows = append(rows,
+		forecastRow("2026-07-15", "2026-07-22", "", domain.TimesheetStatusPendingApproval, 1, 10, 100),
+	)
+
+	now, _ := time.ParseInLocation("2006-01-02", "2026-07-22", clock.DefaultLocation)
+	projection := forecastCashReadinessV2(rows, now, clock.NextTimesheetPayCycle(now), 42, config.CashForecastConfig{NSim: 1000})
+
+	if projection.expectedFuture != 900 || projection.expectedPayout != 950 || projection.recommendedReserve != 1_000 {
+		t.Fatalf("recent-cycle projection=%#v, want stale high cycles excluded", projection)
+	}
+	if projection.basisCycles != cashReadinessCompletedCycleWindow {
+		t.Fatalf("basis cycles=%d, want recent window %d", projection.basisCycles, cashReadinessCompletedCycleWindow)
+	}
+}
+
 func TestGetCashReadinessV2_CalibrationAndSnapshotAreAdvisory(t *testing.T) {
 	measurement := &fakeCashMeasurement{
 		accuracy:  domain.CashForecastAccuracy{SampleCount: 24, WAPE: .08, Bias: .02, IntervalCoverage: .90, ReserveShortfallRate: .05},
