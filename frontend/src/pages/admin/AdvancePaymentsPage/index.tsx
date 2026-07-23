@@ -334,7 +334,7 @@ const AdvancePaymentsPage = () => {
         <section
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
-          className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)]"
+          className="grid gap-3 sm:gap-4"
         >
           <AdvPartnerStatusOverview
             {...statusProps}
@@ -343,7 +343,6 @@ const AdvancePaymentsPage = () => {
           <AdvPartnerMetricsStrip
             {...metricsProps}
             isLoading={page.summaryLoading}
-            className="sm:grid-cols-3 xl:grid-cols-1"
           />
         </section>
 

@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Bell, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,8 +10,7 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
-import { SendNotificationDialog } from '@/components/settings/SendNotificationDialog';
-import { Button } from '@/components/ui/button';
+import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
@@ -22,7 +21,6 @@ const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICA
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const requestedTab = searchParams.get('tab');
   const activeTab = requestedTab && VALID_TABS.has(requestedTab) ? requestedTab : TAB_GENERAL;
 
@@ -131,31 +129,10 @@ const SettingsPageMobile = () => {
           </TabsContent>
 
           <TabsContent value={TAB_NOTIFICATIONS} className="mt-0">
-            <section className="space-y-4 rounded-xl border bg-card p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <Bell className="h-4 w-4 text-primary" />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-sm font-semibold">Gửi Thông Báo</h2>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Soạn và gửi thông báo đến người dùng trong hệ thống.
-                  </p>
-                </div>
-              </div>
-              <Button className="min-h-11 w-full" onClick={() => setIsNotificationDialogOpen(true)}>
-                <Bell className="mr-2 h-4 w-4" />
-                Gửi thông báo
-              </Button>
-            </section>
+            <SendNotificationComposer />
           </TabsContent>
         </Tabs>
       </div>
-
-      <SendNotificationDialog
-        open={isNotificationDialogOpen}
-        onOpenChange={setIsNotificationDialogOpen}
-      />
     </div>
   );
 };

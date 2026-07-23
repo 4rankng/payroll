@@ -5,27 +5,27 @@
 
 ## Purpose
 
-Components for the settings page including individual setting cards and the send notification dialog. Settings cards follow a consistent layout pattern with title, description, and action.
+Components for the settings page including individual setting cards and the embedded notification composer. Settings cards follow a consistent layout pattern with title, description, and action.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
 | `SettingCard.tsx` | Reusable setting card with title, description, and action slot |
-| `send-notification-dialog/SendNotificationDialog.tsx` | Dialog for sending push notifications to users |
+| `SendNotificationComposer.tsx` | Embedded form for sending push notifications from the settings tab |
 
 ## Subdirectories
 
 | Directory | Purpose |
 |-----------|---------|
-| `send-notification-dialog/` | Send notification dialog sub-components |
+| `send-notification-dialog/` | Shared notification recipient and title field components |
 
 ## For AI Agents
 
 ### Working In This Directory
 
 - `SettingCard` is the standard layout for all settings items.
-- Send notification dialog uses the push notification system (VAPID).
+- The notification composer uses the push notification system (VAPID).
 
 ### Testing Requirements
 

@@ -1,40 +1,101 @@
-import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
-import { transactionService } from '@/services/api/transaction.service';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/utils/formatters';
 import type { LedgerSummary } from '@/types/api/financial.types';
 import { useMemo, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { Landmark, TrendingUp } from 'lucide-react';
-import { Masonry } from 'masonic';
 
-// ── masonry ────────────────────────────────────────────────────────────────
-
-interface SummaryCardData {
-  id: string;
-  icon?: React.ComponentType<{ className?: string }>;
+interface SupportingMetric {
   label: string;
-  isLoading?: boolean;
-  items: InlineStatItem[];
-  customNode?: ReactNode;
+  value: string;
+  valueClassName?: string;
 }
 
-const SummaryMasonryCard = ({ data }: { index: number; data: SummaryCardData; width: number }) => {
-  if (data.customNode) return <div className="w-full">{data.customNode}</div>;
-  const Icon = data.icon;
+function SupportingMetrics({
+  title,
+  items,
+}: {
+  title: string;
+  items: SupportingMetric[];
+}) {
   return (
-    <div className="w-full space-y-2">
-      {Icon && (
-        <div className="flex items-center gap-2 px-0.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5 border border-primary/10">
-            <Icon className="h-3.5 w-3.5 text-primary/70" />
+    <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+      <div className="border-b border-border/60 px-5 py-4">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {title}
+        </h3>
+      </div>
+      <dl className="divide-y divide-border/50">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="flex min-h-14 items-center justify-between gap-4 px-5 py-3"
+          >
+            <dt className="text-sm text-muted-foreground">{item.label}</dt>
+            <dd
+              className={cn(
+                'min-w-0 break-words text-right font-financial text-base font-semibold tabular-nums text-foreground',
+                item.valueClassName,
+              )}
+            >
+              {item.value}
+            </dd>
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-foreground">{data.label}</span>
+        ))}
+      </dl>
+    </article>
+  );
+}
+
+function SummarySkeleton({ showCapital }: { showCapital: boolean }) {
+  return (
+    <div
+      className="grid gap-3 lg:grid-cols-2"
+      aria-busy="true"
+      aria-label="Đang tải tổng quan tài chính"
+    >
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+        <div className="space-y-3 px-5 py-5 sm:px-6 sm:py-6">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-52" />
+        </div>
+        <div className="grid grid-cols-1 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-border/60">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="space-y-2 border-b border-border/60 px-5 py-4 last:border-b-0 sm:border-b-0">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+        <div className="border-b border-border/60 px-5 py-4">
+          <Skeleton className="h-3 w-20" />
+        </div>
+        {Array.from({ length: 3 }).map((_, rowIndex) => (
+          <div key={rowIndex} className="flex min-h-14 items-center justify-between border-b border-border/50 px-5 py-3 last:border-b-0">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        ))}
+      </div>
+      {showCapital && (
+        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card lg:col-span-2">
+          <div className="border-b border-border/60 px-5 py-4">
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="space-y-2 border-b border-border/50 px-5 py-4 last:border-b-0 min-[420px]:border-b-0 min-[420px]:border-r min-[420px]:last:border-r-0">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-5 w-32" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      <InlineStatStrip items={data.items} isLoading={data.isLoading} direction="vertical" />
     </div>
   );
-};
+}
 
 interface TransactionSummaryCardProps {
   ledgerSummary?: LedgerSummary;
@@ -44,7 +105,7 @@ interface TransactionSummaryCardProps {
 }
 
 export function TransactionSummaryCard({ ledgerSummary, isLoading, className, renderCapitalCard }: TransactionSummaryCardProps) {
-  const liabilityItems = useMemo<InlineStatItem[]>(() => {
+  const liabilityItems = useMemo<SupportingMetric[]>(() => {
     if (!ledgerSummary) return [];
     const { by_account } = ledgerSummary;
     const payable = by_account.payable?.net_amount ?? 0;
@@ -55,77 +116,80 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     ];
   }, [ledgerSummary]);
 
-  const performanceItems = useMemo<InlineStatItem[]>(() => {
-    if (!ledgerSummary) return [];
+  const performance = useMemo(() => {
+    if (!ledgerSummary) return null;
     const { by_account } = ledgerSummary;
     const revenue = by_account.revenue?.net_amount ?? 0;
     const expense = by_account.expense?.net_amount ?? 0;
     const cash    = by_account.cash?.net_amount ?? 0;
-    return [
-      { label: 'Tiền mặt',        value: formatCurrency(cash),            highlight: true },
-      { label: 'Doanh thu',       value: formatCurrency(revenue) },
-      { label: 'Chi phí',         value: formatCurrency(expense) },
-      { label: 'Lợi nhuận',       value: formatCurrency(revenue - expense) },
-    ];
+    return {
+      cash: formatCurrency(cash),
+      revenue: formatCurrency(revenue),
+      expense: formatCurrency(expense),
+      profit: formatCurrency(revenue - expense),
+    };
   }, [ledgerSummary]);
-
-  const loadingItems = useMemo<SummaryCardData[]>(() => {
-    const emptyItems = (n: number) => Array.from({ length: n }, () => ({ label: '', value: '' }));
-    const items: SummaryCardData[] = [
-      { id: 'liability', icon: Landmark, label: 'Công nợ', isLoading: true, items: emptyItems(3) },
-      { id: 'performance', icon: TrendingUp, label: 'Hiệu quả', isLoading: true, items: emptyItems(4) },
-    ];
-    if (renderCapitalCard) {
-      items.push({ id: 'capital', icon: Landmark, label: 'Vốn', isLoading: true, items: emptyItems(3) });
-    }
-    return items;
-  }, [renderCapitalCard]);
-
-  const loadedItems = useMemo<SummaryCardData[]>(() => {
-    const items: SummaryCardData[] = [];
-    if (liabilityItems.length > 0) {
-      items.push({ id: 'liability', icon: Landmark, label: 'Công nợ', items: liabilityItems });
-    }
-    if (performanceItems.length > 0) {
-      items.push({ id: 'performance', icon: TrendingUp, label: 'Hiệu quả', items: performanceItems });
-    }
-    if (renderCapitalCard) {
-      items.push({ id: 'capital', label: 'Vốn', items: [], customNode: renderCapitalCard() });
-    }
-    return items;
-  }, [liabilityItems, performanceItems, renderCapitalCard]);
 
   if (isLoading) {
     return (
       <div className={cn(className)}>
-        <Masonry
-          items={loadingItems}
-          render={SummaryMasonryCard}
-          columnWidth={350}
-          columnGutter={16}
-          rowGutter={16}
-          maxColumnCount={2}
-          overscanBy={Infinity}
-          itemKey={data => data.id}
-        />
+        <SummarySkeleton showCapital={Boolean(renderCapitalCard)} />
       </div>
     );
   }
 
-  if (!ledgerSummary) return null;
+  if (!ledgerSummary || !performance) return null;
 
   return (
-    <div className={cn(className)}>
-      <Masonry
-        items={loadedItems}
-        render={SummaryMasonryCard}
-        columnWidth={350}
-        columnGutter={16}
-        rowGutter={16}
-        maxColumnCount={2}
-        overscanBy={Infinity}
-        itemKey={data => data.id}
-      />
-    </div>
+    <section
+      aria-label="Tổng quan tài chính"
+      className={cn(
+        'grid gap-3 lg:grid-cols-2',
+        className,
+      )}
+    >
+      <h2 className="sr-only">Tổng quan tài chính</h2>
+      <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+        <div className="px-5 py-5 sm:px-6 sm:py-6">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Thanh khoản hiện tại
+          </h3>
+          <p className="mt-2 break-words font-financial text-2xl font-semibold tabular-nums tracking-tight text-primary sm:text-3xl">
+            {performance.cash}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Tiền mặt khả dụng trên sổ cái</p>
+        </div>
+
+        <dl className="grid grid-cols-1 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-border/60">
+          {[
+            { label: 'Doanh thu', value: performance.revenue },
+            { label: 'Chi phí', value: performance.expense },
+            { label: 'Lợi nhuận', value: performance.profit, highlight: true },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="border-b border-border/60 px-5 py-4 last:border-b-0 sm:border-b-0"
+            >
+              <dt className="text-xs text-muted-foreground">{item.label}</dt>
+              <dd
+                className={cn(
+                  'mt-1 break-words font-financial text-base font-semibold tabular-nums text-foreground',
+                  item.highlight && 'text-primary',
+                )}
+              >
+                {item.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </article>
+
+      {liabilityItems.length > 0 && (
+        <SupportingMetrics title="Công nợ" items={liabilityItems} />
+      )}
+      {renderCapitalCard && (
+        <div className="lg:col-span-2">{renderCapitalCard()}</div>
+      )}
+    </section>
   );
 }

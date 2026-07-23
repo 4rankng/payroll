@@ -112,10 +112,12 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
           <div className="rounded-md bg-muted px-2 py-0.5 font-financial text-[12px] font-medium text-muted-foreground">
             {totalRequests}
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 font-financial text-[11.5px] font-medium text-foreground/70">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {successRate.toFixed(0)}%
-          </div>
+          {totalRequests > 0 && (
+            <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 font-financial text-[11.5px] font-medium text-foreground/70">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {successRate.toFixed(0)}%
+            </div>
+          )}
         </div>
       </div>
 
@@ -128,6 +130,12 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
             <Skeleton className="h-[58px] rounded-lg" />
             <Skeleton className="h-[58px] rounded-lg" />
           </div>
+        </div>
+      ) : totalRequests === 0 ? (
+        <div className="flex min-h-11 items-center rounded-lg border border-dashed border-border/70 bg-muted/30 px-3 py-2.5">
+          <p className="text-sm text-muted-foreground">
+            Chưa có yêu cầu trong kỳ đã chọn
+          </p>
         </div>
       ) : (
         <>
