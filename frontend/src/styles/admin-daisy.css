@@ -371,6 +371,20 @@
     box-shadow: var(--admin-card-shadow);
   }
 
+  [data-admin-ui] .admin-dashboard-bento .admin-dashboard-panel,
+  [data-admin-ui] .admin-dashboard-bento :where([class*="shadow"]),
+  [data-admin-ui] .admin-dashboard-bento :where([class*="ring-border"]) {
+    box-shadow: none !important;
+  }
+
+  [data-admin-ui] .admin-dashboard-bento :where(
+    [class*="hover:-translate"],
+    [class*="hover:scale"],
+    [class*="active:scale"]
+  ) {
+    transform: none !important;
+  }
+
   [data-admin-ui] .admin-dashboard-section-header {
     padding-left: 0.15rem;
   }
@@ -379,6 +393,10 @@
     border-top: 1px solid hsl(var(--border) / 0.68);
     border-bottom: 1px solid hsl(var(--border) / 0.68);
     background: hsl(var(--muted) / 0.42);
+  }
+
+  [data-admin-ui] .admin-dashboard-bento :is(button, [role="button"]) {
+    min-height: 2.75rem;
   }
 
   [data-admin-ui] .admin-page-inner .bg-white {

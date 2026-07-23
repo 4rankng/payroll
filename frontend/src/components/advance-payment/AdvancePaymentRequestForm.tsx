@@ -369,7 +369,7 @@ export function AdvancePaymentRequestForm({
           "-mx-4 -mt-4 rounded-t-2xl px-4 pb-4 pt-4",
           isOpen
             ? "bg-[var(--employee-summary-wash)]"
-            : "bg-[var(--employee-page)]",
+            : "bg-[var(--employee-surface)]",
         )}
       >
         <div className="flex items-start justify-between gap-3">

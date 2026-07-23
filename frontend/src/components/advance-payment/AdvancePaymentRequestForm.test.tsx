@@ -299,7 +299,7 @@ describe("AdvancePaymentRequestForm", () => {
   });
 
   it("treats an empty past month as closed instead of waiting for attendance", () => {
-    render(
+    const { container } = render(
       <AdvancePaymentRequestForm
         {...baseProps}
         info={info}
@@ -315,6 +315,10 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByText("Kỳ ứng lương này đã kết thúc")).not.toBeInTheDocument();
     expect(screen.queryByText("Đang chờ bảng công tháng 05/2026")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+
+    const periodSummary = container.querySelector(".rounded-t-2xl");
+    expect(periodSummary).toHaveClass("bg-[var(--employee-surface)]");
+    expect(periodSummary).not.toHaveClass("bg-[var(--employee-page)]");
   });
 
   it("shows June quota and used amount when the closed June month is selected", () => {

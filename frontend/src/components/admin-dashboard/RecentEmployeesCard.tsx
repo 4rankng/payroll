@@ -121,8 +121,9 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
               <div className="flex items-center gap-2">
                 {hasMore && (
                   <button
+                    type="button"
                     onClick={() => setShowAll(prev => !prev)}
-                    className="text-primary text-xs font-semibold active:opacity-70"
+                    className="min-h-11 rounded-lg text-xs font-semibold text-primary active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {showAll ? 'Thu gọn' : `Xem tất cả (${employeesArray.length})`}
                   </button>

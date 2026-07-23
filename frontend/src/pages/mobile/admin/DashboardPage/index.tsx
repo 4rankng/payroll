@@ -254,12 +254,14 @@ const AdminDashboardMobile = () => {
         actions={
           pendingApprovals > 0 ? (
             <button
+              type="button"
               onClick={dashboardNav.navigateToPendingApprovals}
-              className="ct-badge min-h-11 gap-1.5 border border-warning/40 bg-warning/15 px-3 text-warning shadow-xs transition-colors hover:bg-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/40 focus-visible:ring-offset-2 font-bold normal-case motion-reduce:transition-none"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 shadow-xs ring-1 ring-inset ring-amber-200/70 transition-colors hover:bg-amber-100 hover:border-amber-300 hover:ring-amber-300/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:scale-[0.98] normal-case motion-reduce:transition-none"
               aria-label={`${pendingApprovals} bảng công chờ duyệt`}
             >
-              <AlertCircle className="h-3.5 w-3.5" strokeWidth={2.25} />
-              {pendingApprovals} chờ duyệt
+              <AlertCircle className="h-3 w-3 shrink-0 text-amber-500" strokeWidth={2.5} aria-hidden="true" />
+              <span className="tabular-nums">{pendingApprovals}</span>
+              <span>chờ duyệt</span>
             </button>
           ) : undefined
         }

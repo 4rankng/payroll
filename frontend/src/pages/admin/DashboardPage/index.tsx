@@ -79,7 +79,7 @@ function DashboardLedgerPanel({
     <section
       data-slot="dashboard-bento-tile"
       className={cn(
-        'admin-dashboard-panel min-w-0 rounded-xl border border-border/80 bg-card shadow-xs',
+        'admin-dashboard-panel min-w-0 rounded-xl border border-border/80 bg-card',
         className,
       )}
     >
@@ -319,7 +319,7 @@ const AdminDashboard = () => {
                   color="blue"
                   sublabel={`Tổng: ${data.dashboardSummary.total_employees.toLocaleString('vi-VN')} NV`}
                   onClick={dashboardNav.navigateToActiveEmployees}
-                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 motion-reduce:transition-none"
                 />
                 <KpiHeroCard
                   label="Lợi nhuận tháng này"
@@ -328,7 +328,7 @@ const AdminDashboard = () => {
                   icon={TrendingUp}
                   color="emerald"
                   sublabel={`Tổng: ${formatVND(data.dashboardSummary.total_profit)}`}
-                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 motion-reduce:transition-none"
                 />
                 <KpiHeroCard
                   label={`Nhân viên mới (${monthLabel})`}
@@ -337,7 +337,7 @@ const AdminDashboard = () => {
                   color="amber"
                   sublabel="Theo kỳ đang xem"
                   onClick={dashboardNav.navigateToNewEmployees}
-                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 motion-reduce:transition-none"
                 />
               </>
             )}
