@@ -190,8 +190,7 @@ func (r *TimesheetRepository) GetApprovedSalaryTotal(ctx context.Context, startD
 		Model(&domain.Timesheet{}).
 		Where("timesheet_status = ? AND date BETWEEN ? AND ?", domain.TimesheetStatusApproved, startDate, endDate).
 		Select("COALESCE(SUM(amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -552,8 +551,7 @@ func (r *TimesheetRepository) GetTotalPaidSalary(ctx context.Context) (int64, er
 		Model(&domain.Timesheet{}).
 		Where("payment_status = ? AND deleted_at IS NULL", domain.PaymentStatusPaid).
 		Select("COALESCE(SUM(paid_amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -571,8 +569,7 @@ func (r *TimesheetRepository) GetPendingSalaryForMonth(ctx context.Context, star
 		}).
 		Where("payment_status = ?", domain.PaymentStatusPending).
 		Select("COALESCE(SUM(amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -631,8 +628,7 @@ func (r *TimesheetRepository) sumPendingBySchedule(
 		Where("t.payment_status <> ?", domain.PaymentStatusPaid).
 		Where("pe.payment_schedule = ?", schedule).
 		Select("COALESCE(SUM(t.amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 	return total, err
 }
 
@@ -652,8 +648,7 @@ func (r *TimesheetRepository) GetPaidSalaryForMonth(ctx context.Context, startDa
 		Where("payment_status = ?", domain.PaymentStatusPaid).
 		Where("date BETWEEN ? AND ?", startDate, endDate).
 		Select("COALESCE(SUM(paid_amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -674,23 +669,24 @@ func (r *TimesheetRepository) CountEmployeesPaidInLast30Days(ctx context.Context
 
 // GetFirstPaidTimesheetDate returns the earliest paid_at date
 func (r *TimesheetRepository) GetFirstPaidTimesheetDate(ctx context.Context) (*time.Time, error) {
-	var firstDate time.Time
+	var res struct {
+		PaidAt *time.Time
+	}
 	err := r.DB.WithContext(ctx).
 		Model(&domain.Timesheet{}).
 		Where("payment_status = ?", domain.PaymentStatusPaid).
 		Order("paid_at ASC").
 		Limit(1).
 		Select("paid_at").
-		Row().
-		Scan(&firstDate)
+		Scan(&res).Error
 
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	if err != nil {
 		return nil, err
 	}
-	return &firstDate, nil
+	if res.PaidAt == nil {
+		return nil, nil
+	}
+	return res.PaidAt, nil
 }
 
 // GetPaidSalaryByEmployee returns total paid salary for each employee in the given period
@@ -829,10 +825,7 @@ func (r *TimesheetRepository) GetEmployeeTimesheetSummaryAggregated(ctx context.
 			COUNT(DISTINCT DATE(date)) as working_days,
 			MAX(date) as last_entry_date
 		`, domain.TimesheetStatusPendingApproval, domain.TimesheetStatusApproved, domain.TimesheetStatusRejected).
-		Row().
-		Scan(&result.TotalEntries, &result.TotalHours, &result.TotalAmount,
-			&result.PendingEntries, &result.ApprovedEntries, &result.RejectedEntries,
-			&result.WorkingDays, &result.LastEntryDate)
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, err
@@ -868,8 +861,7 @@ func (r *TimesheetRepository) GetEmployeeCurrentWeekHours(ctx context.Context, e
 		Where("employee_id = ? AND deleted_at IS NULL AND date BETWEEN ? AND ?",
 			employeeID, startOfWeek, endOfWeek).
 		Select("COALESCE(SUM(hours_worked), 0)").
-		Row().
-		Scan(&totalHours)
+		Scan(&totalHours).Error
 
 	return totalHours, err
 }
@@ -892,8 +884,7 @@ func (r *TimesheetRepository) GetEmployeeMonthlyPayrollSummary(ctx context.Conte
 			COALESCE(SUM(paid_amount), 0) as total_paid_amount,
 			MAX(paid_at) as last_payment_date
 		`).
-		Row().
-		Scan(&result.TotalPayments, &result.TotalPaidAmount, &result.LastPaymentDate)
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, err

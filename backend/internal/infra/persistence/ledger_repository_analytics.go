@@ -78,8 +78,7 @@ func (r *LedgerEntryRepository) GetTotalByAccountType(ctx context.Context, accou
 
 	if err := query.
 		Select("CAST(COALESCE(SUM(debit), 0) AS SIGNED) as total_debit, CAST(COALESCE(SUM(credit), 0) AS SIGNED) as total_credit").
-		Row().
-		Scan(&res.TotalDebit, &res.TotalCredit); err != nil {
+		Scan(&res).Error; err != nil {
 		return 0, err
 	}
 

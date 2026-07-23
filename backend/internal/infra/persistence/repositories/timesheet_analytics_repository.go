@@ -4,7 +4,6 @@ import (
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/timeutil"
 	"context"
-	"database/sql"
 	"strings"
 	"time"
 
@@ -233,8 +232,7 @@ func (r *TimesheetAnalyticsRepository) GetApprovedSalaryTotal(ctx context.Contex
 		Model(&domain.Timesheet{}).
 		Where("timesheet_status = ? AND date BETWEEN ?", domain.TimesheetStatusApproved, startDate, endDate).
 		Select("COALESCE(SUM(amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -246,8 +244,7 @@ func (r *TimesheetAnalyticsRepository) GetTotalPaidSalary(ctx context.Context) (
 		Model(&domain.Timesheet{}).
 		Where("payment_status = ? AND deleted_at IS NULL", domain.PaymentStatusPaid).
 		Select("COALESCE(SUM(paid_amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -264,8 +261,7 @@ func (r *TimesheetAnalyticsRepository) GetPendingSalaryForMonth(ctx context.Cont
 		}).
 		Where("payment_status != ?", domain.PaymentStatusPaid).
 		Select("COALESCE(SUM(amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
@@ -278,31 +274,31 @@ func (r *TimesheetAnalyticsRepository) GetPaidSalaryForMonth(ctx context.Context
 		Where("payment_status = ?", domain.PaymentStatusPaid).
 		Where("date BETWEEN ?", startDate, endDate).
 		Select("COALESCE(SUM(paid_amount), 0)").
-		Row().
-		Scan(&total)
+		Scan(&total).Error
 
 	return total, err
 }
 
 // GetFirstPaidTimesheetDate returns the earliest paid_at date
 func (r *TimesheetAnalyticsRepository) GetFirstPaidTimesheetDate(ctx context.Context) (*time.Time, error) {
-	var firstDate time.Time
+	var res struct {
+		PaidAt *time.Time
+	}
 	err := r.db.WithContext(ctx).
 		Model(&domain.Timesheet{}).
 		Where("payment_status = ?", domain.PaymentStatusPaid).
 		Order("paid_at ASC").
 		Limit(1).
 		Select("paid_at").
-		Row().
-		Scan(&firstDate)
+		Scan(&res).Error
 
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	if err != nil {
 		return nil, err
 	}
-	return &firstDate, nil
+	if res.PaidAt == nil {
+		return nil, nil
+	}
+	return res.PaidAt, nil
 }
 
 // GetPaidSalaryByEmployee returns total paid salary for each employee in the given period

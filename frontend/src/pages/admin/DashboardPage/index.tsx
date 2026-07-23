@@ -77,8 +77,9 @@ function DashboardLedgerPanel({
 }: DashboardLedgerPanelProps) {
   return (
     <section
+      data-slot="dashboard-bento-tile"
       className={cn(
-        'admin-dashboard-panel rounded-2xl border border-border/70 bg-white shadow-sm',
+        'admin-dashboard-panel min-w-0 rounded-xl border border-border/80 bg-card shadow-xs',
         className,
       )}
     >
@@ -192,6 +193,7 @@ const AdminDashboard = () => {
           title: 'Sổ chi trả',
           subtitle: 'Khoản đang chờ, đã trả và hàng đợi duyệt công.',
           icon: Clock,
+          gridClassName: 'xl:col-span-6 2xl:col-span-4',
           items: buildInlineItems(salaryStats),
         },
         {
@@ -200,6 +202,7 @@ const AdminDashboard = () => {
           title: 'Tài chính',
           subtitle: 'Tiền ứng và lợi nhuận theo kỳ đang xem.',
           icon: TrendingUp,
+          gridClassName: 'xl:col-span-6 2xl:col-span-4',
           items: buildInlineItems(profitStats),
         },
         {
@@ -208,6 +211,7 @@ const AdminDashboard = () => {
           title: 'Biên chế công trường',
           subtitle: 'Tổng quân số, đang làm và nhân viên mới.',
           icon: Users,
+          gridClassName: 'xl:col-span-6 2xl:col-span-2',
           items: buildInlineItems(employeeStats),
         },
         {
@@ -216,6 +220,7 @@ const AdminDashboard = () => {
           title: 'Hoạt động tài khoản',
           subtitle: 'Nhấn để xem nhân viên hoạt động theo hình thức trả lương.',
           icon: Activity,
+          gridClassName: 'xl:col-span-6 2xl:col-span-2',
           items: buildInlineItems(activityStats),
         },
       ].filter((group) => group.items.length > 0),
@@ -273,17 +278,21 @@ const AdminDashboard = () => {
           <DashboardHeader value={selectedMonth} onChange={handleMonthChange} />
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+        <div
+          data-slot="admin-dashboard-bento"
+          className="admin-dashboard-bento grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start"
+        >
           <DashboardLedgerPanel
             eyebrow="Cần xử lý"
             title="Việc cần xử lý"
             subtitle="Các mục đang chờ xử lý trong bảng công, giải ngân và nhân sự."
             icon={AlertTriangle}
+            className="xl:col-span-8"
             actions={
               <button
                 type="button"
                 onClick={handleRefresh}
-                className="min-h-11 rounded-2xl border border-border/70 px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
+                className="min-h-11 rounded-lg border border-border/80 px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
               >
                 Làm mới số liệu
               </button>
@@ -296,7 +305,11 @@ const AdminDashboard = () => {
             </div>
           </DashboardLedgerPanel>
 
-          <section className="admin-dashboard-kpis grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+          <section
+            data-slot="dashboard-bento-tile"
+            aria-label="Chỉ số nổi bật"
+            className="admin-dashboard-kpis grid min-w-0 gap-3 sm:grid-cols-3 xl:col-span-4 xl:grid-cols-1"
+          >
             {data.dashboardSummary && (
               <>
                 <KpiHeroCard
@@ -306,7 +319,7 @@ const AdminDashboard = () => {
                   color="blue"
                   sublabel={`Tổng: ${data.dashboardSummary.total_employees.toLocaleString('vi-VN')} NV`}
                   onClick={dashboardNav.navigateToActiveEmployees}
-                  className="motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
                 />
                 <KpiHeroCard
                   label="Lợi nhuận tháng này"
@@ -315,7 +328,7 @@ const AdminDashboard = () => {
                   icon={TrendingUp}
                   color="emerald"
                   sublabel={`Tổng: ${formatVND(data.dashboardSummary.total_profit)}`}
-                  className="motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
                 />
                 <KpiHeroCard
                   label={`Nhân viên mới (${monthLabel})`}
@@ -324,14 +337,12 @@ const AdminDashboard = () => {
                   color="amber"
                   sublabel="Theo kỳ đang xem"
                   onClick={dashboardNav.navigateToNewEmployees}
-                  className="motion-reduce:transition-none"
+                  className="rounded-xl border-border/80 shadow-xs hover:translate-y-0 hover:shadow-sm motion-reduce:transition-none"
                 />
               </>
             )}
           </section>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
           {statGroups.map((group) => (
             <DashboardLedgerPanel
               key={group.key}
@@ -339,7 +350,7 @@ const AdminDashboard = () => {
               title={group.title}
               subtitle={group.subtitle}
               icon={group.icon}
-              className="admin-dashboard-ledger-surface"
+              className={cn('admin-dashboard-ledger-surface', group.gridClassName)}
             >
               <InlineStatStrip
                 items={group.items}
@@ -349,102 +360,117 @@ const AdminDashboard = () => {
               />
             </DashboardLedgerPanel>
           ))}
-        </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,1fr)]">
-          <div className="space-y-6">
-            <section className="admin-dashboard-finance-group space-y-3">
+          <div
+            data-slot="dashboard-finance-bento"
+            className="grid min-w-0 gap-4 xl:col-span-12 xl:grid-cols-12 xl:items-start"
+          >
+            <div className="min-w-0 space-y-4 xl:col-span-7">
+              <section data-slot="dashboard-financial-history" className="admin-dashboard-finance-group min-w-0 space-y-3">
+                <DashboardSectionHeader
+                  eyebrow="Sổ dòng tiền"
+                  title="Lịch sử tài chính"
+                  subtitle="Sổ chi phí, doanh thu và lợi nhuận tích lũy 12 tháng gần nhất."
+                  icon={TrendingUp}
+                />
+                <MonthlyFinancialTable />
+              </section>
+
+              <section data-slot="dashboard-bank-distribution" className="admin-dashboard-finance-group min-w-0 space-y-3">
+                <DashboardSectionHeader
+                  eyebrow="Chi trả"
+                  title="Ngân hàng nhận lương"
+                  subtitle="Phân bổ nhân sự theo ngân hàng để rà soát dữ liệu nhận tiền."
+                  icon={Building2}
+                  actions={
+                    bankData && bankData.projects.length > 0 ? (
+                      <ProjectSelector
+                        projects={bankData.projects}
+                        selectedId={bankProjectId}
+                        onSelect={setBankProjectId}
+                      />
+                    ) : undefined
+                  }
+                />
+                <BankTransferBreakdownCard selectedProjectId={bankProjectId} />
+              </section>
+            </div>
+
+            <section
+              data-slot="dashboard-project-profitability"
+              className="admin-dashboard-finance-group min-w-0 space-y-3 xl:col-span-5"
+            >
               <DashboardSectionHeader
-                eyebrow="Sổ dòng tiền"
-                title="Lịch sử tài chính"
-                subtitle="Sổ chi phí, doanh thu và lợi nhuận tích lũy 12 tháng gần nhất."
-                icon={TrendingUp}
+                eyebrow="Công trường"
+                title="Lợi nhuận dự án"
+                subtitle="Theo dõi đà lợi nhuận và dự án đang kéo kết quả kỳ lương."
+                icon={FolderKanban}
               />
-              <MonthlyFinancialTable />
-            </section>
-
-            <section className="admin-dashboard-finance-group space-y-3">
-              <DashboardSectionHeader
-                eyebrow="Chi trả"
-                title="Ngân hàng nhận lương"
-                subtitle="Phân bổ nhân sự theo ngân hàng để rà soát dữ liệu nhận tiền."
-                icon={Building2}
-                actions={
-                  bankData && bankData.projects.length > 0 ? (
-                    <ProjectSelector
-                      projects={bankData.projects}
-                      selectedId={bankProjectId}
-                      onSelect={setBankProjectId}
-                    />
-                  ) : undefined
-                }
-              />
-              <BankTransferBreakdownCard selectedProjectId={bankProjectId} />
-            </section>
-          </div>
-
-          <section className="admin-dashboard-finance-group space-y-3">
-            <DashboardSectionHeader
-              eyebrow="Công trường"
-              title="Lợi nhuận dự án"
-              subtitle="Theo dõi đà lợi nhuận và dự án đang kéo kết quả kỳ lương."
-              icon={FolderKanban}
-            />
-            <ProjectProfitabilityCard />
-          </section>
-        </div>
-
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,1fr)]">
-          <section className="admin-dashboard-workforce-group space-y-3">
-            <DashboardSectionHeader
-              eyebrow="Phân tích chi trả"
-              title="Phân bổ lương"
-              subtitle="Các khoảng lương điển hình để kiểm tra độ lệch trước khi giải ngân."
-              icon={BarChart3}
-            />
-            <SalaryDistributionChart />
-          </section>
-
-          <div className="space-y-6">
-            <section className="admin-dashboard-workforce-group space-y-3">
-              <DashboardSectionHeader
-                eyebrow="Nhân sự"
-                title={`Chi trả theo nhân viên — ${monthLabel}`}
-                subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
-                icon={Trophy}
-              />
-              <TopPaidEmployeesCard month={monthParam} />
-            </section>
-
-            <section className="admin-dashboard-workforce-group space-y-3">
-              <DashboardSectionHeader
-                eyebrow="Nhân sự"
-                title="Nhân viên mới nhất"
-                subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế công trường."
-                icon={Users}
-              />
-              <RecentEmployeesCard
-                employees={employees.employees}
-                isLoading={employees.isLoading}
-                isLoadingMore={employees.isLoadingMore}
-                totalEmployees={employees.totalEmployees}
-                weeks={employees.weeks}
-                onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
-                onLoadMore={employees.loadMore}
-              />
+              <ProjectProfitabilityCard />
             </section>
           </div>
-        </div>
 
-        <section className="admin-dashboard-health-group space-y-3">
-          <DashboardSectionHeader
-            eyebrow="Sức khỏe vận hành"
-            title="Tự chấm công và hạn mức ứng lương"
-            subtitle="Đặt kiểm soát vận hành ở cuối sổ để rà soát trước khi chốt kỳ."
-            icon={ShieldCheck}
-          />
-          <CheckInHealthStrip month={monthParam} />
-        </section>
+          <div
+            data-slot="dashboard-workforce-bento"
+            className="grid min-w-0 gap-4 xl:col-span-12 xl:grid-cols-12 xl:items-start"
+          >
+            <section
+              data-slot="dashboard-salary-distribution"
+              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7"
+            >
+              <DashboardSectionHeader
+                eyebrow="Phân tích chi trả"
+                title="Phân bổ lương"
+                subtitle="Các khoảng lương điển hình để kiểm tra độ lệch trước khi giải ngân."
+                icon={BarChart3}
+              />
+              <SalaryDistributionChart />
+            </section>
+
+            <div className="min-w-0 space-y-4 xl:col-span-5">
+              <section data-slot="dashboard-top-paid" className="admin-dashboard-workforce-group min-w-0 space-y-3">
+                <DashboardSectionHeader
+                  eyebrow="Nhân sự"
+                  title={`Chi trả theo nhân viên — ${monthLabel}`}
+                  subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
+                  icon={Trophy}
+                />
+                <TopPaidEmployeesCard month={monthParam} />
+              </section>
+
+              <section data-slot="dashboard-recent-employees" className="admin-dashboard-workforce-group min-w-0 space-y-3">
+                <DashboardSectionHeader
+                  eyebrow="Nhân sự"
+                  title="Nhân viên mới nhất"
+                  subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế công trường."
+                  icon={Users}
+                />
+                <RecentEmployeesCard
+                  employees={employees.employees}
+                  isLoading={employees.isLoading}
+                  isLoadingMore={employees.isLoadingMore}
+                  totalEmployees={employees.totalEmployees}
+                  weeks={employees.weeks}
+                  onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
+                  onLoadMore={employees.loadMore}
+                />
+              </section>
+            </div>
+          </div>
+
+          <section
+            data-slot="dashboard-operational-health"
+            className="admin-dashboard-health-group min-w-0 space-y-3 xl:col-span-12"
+          >
+            <DashboardSectionHeader
+              eyebrow="Sức khỏe vận hành"
+              title="Tự chấm công và hạn mức ứng lương"
+              subtitle="Đặt kiểm soát vận hành ở cuối sổ để rà soát trước khi chốt kỳ."
+              icon={ShieldCheck}
+            />
+            <CheckInHealthStrip month={monthParam} />
+          </section>
+        </div>
       </div>
 
       <ActivityUsersSheet
