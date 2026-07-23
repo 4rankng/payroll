@@ -11,10 +11,6 @@ const employeeShellHeaderStyle = {
   paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)",
 } as const;
 
-export const employeeCardShadow = {
-  boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
-} as const;
-
 interface EmployeeMobileShellBaseProps {
   employeeName?: string;
   unreadCount?: number;
@@ -107,7 +103,7 @@ export function EmployeeMobileShell({
 
       <main
         className={cn(
-          "employee-portal-card-stack mx-auto max-w-6xl space-y-5 px-3.5 py-5 pb-[calc(var(--employee-action-toolbar-block-size)+2.5rem+env(safe-area-inset-bottom))] sm:px-5 sm:py-6 lg:px-8 lg:py-8",
+          "employee-portal-card-stack mx-auto max-w-6xl space-y-5 px-4 py-5 pb-[calc(var(--employee-action-toolbar-block-size)+2.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6 lg:px-8 lg:py-8",
           contentClassName
         )}
       >

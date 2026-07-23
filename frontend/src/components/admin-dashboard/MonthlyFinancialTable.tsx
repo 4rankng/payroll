@@ -31,7 +31,7 @@ export const MonthlyFinancialTable = memo(() => {
   const hasMore = sortedMonths.length > 5;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col shadow-none">
       <CardContent className="p-0 pb-1">
         {isLoading ? (
           <div className="px-3 py-3 space-y-2">

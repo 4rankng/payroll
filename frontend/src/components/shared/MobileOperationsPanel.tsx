@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { type LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type MobileOperationTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -109,14 +109,14 @@ export function MobileOperationsPanel({
       </div>
 
       {metrics.length > 0 && (
-        <div className="grid grid-cols-1 border-t border-border/60 min-[380px]:grid-cols-2">
+        <div className="grid grid-cols-1 border-t border-border/60 min-[340px]:grid-cols-2">
           {metrics.map((metric, index) => (
             <OperationMetricCell
               key={`${metric.label}-${index}`}
               metric={metric}
               className={cn(
-                index % 2 === 1 && 'min-[380px]:border-l',
-                index < 2 && 'min-[380px]:border-t-0',
+                index % 2 === 1 && 'min-[340px]:border-l',
+                index < 2 && 'min-[340px]:border-t-0',
               )}
             />
           ))}
@@ -247,9 +247,14 @@ function TaskRow({ item }: { item: MobileTaskRow }) {
           </span>
         )}
       </span>
-      {item.value && (
-        <span className={cn('shrink-0 text-right text-sm font-extrabold tabular-nums', tone.value)}>
-          {item.value}
+      {(item.value || item.onClick) && (
+        <span className="flex shrink-0 items-center gap-1.5">
+          {item.value && (
+            <span className={cn('text-right text-sm font-extrabold tabular-nums', tone.value)}>
+              {item.value}
+            </span>
+          )}
+          {item.onClick && <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
         </span>
       )}
     </>

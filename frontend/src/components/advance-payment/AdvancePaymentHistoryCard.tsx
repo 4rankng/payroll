@@ -6,6 +6,7 @@ import {
   CheckCircle,
   ChevronDown,
   Clock,
+  ReceiptText,
   RefreshCw,
   XCircle,
 } from "lucide-react";
@@ -16,11 +17,11 @@ import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
-  PENDING: { icon: Clock, tone: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)] ring-[var(--employee-warning-border)]" },
-  APPROVED: { icon: CheckCircle, tone: "bg-[var(--employee-info-soft)] text-[var(--employee-info)] ring-[var(--employee-info-border)]" },
-  COMPLETED: { icon: CheckCircle, tone: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] ring-[var(--employee-accent-border)]" },
-  FAILED: { icon: XCircle, tone: "bg-[var(--employee-error-soft)] text-[var(--employee-error)] ring-[#FECDCA]" },
-  CANCELLED: { icon: Ban, tone: "bg-[#F2F4F7] text-[#475467] ring-[#E4E7EC]" },
+  PENDING: { icon: Clock, tone: "border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)]" },
+  APPROVED: { icon: CheckCircle, tone: "border-[var(--employee-info-border)] bg-[var(--employee-info-soft)] text-[var(--employee-info)]" },
+  COMPLETED: { icon: CheckCircle, tone: "border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]" },
+  FAILED: { icon: XCircle, tone: "border-[#FECDCA] bg-[var(--employee-error-soft)] text-[var(--employee-error)]" },
+  CANCELLED: { icon: Ban, tone: "border-[#E4E7EC] bg-[#F2F4F7] text-[#475467]" },
 } as const;
 
 const safeFormat = (value: number | null | undefined) =>
@@ -132,7 +133,7 @@ function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePay
         className="w-full px-4 py-4 text-left transition-colors duration-200 hover:bg-[var(--employee-surface-muted)] active:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
       >
         <span className="flex items-center gap-3">
-          <span className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset", config.tone)}>
+          <span className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border", config.tone)}>
             <StatusIcon className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
@@ -205,8 +206,15 @@ export function AdvancePaymentHistoryCard({
   const isScrollable = history.length > 5;
 
   return (
-    <div className={className} style={style} aria-labelledby="employee-advance-history-title">
-      <div className="mb-3 flex items-start justify-between gap-3 px-0.5">
+    <div
+      className={cn(
+        "employee-surface-card overflow-hidden bg-[var(--employee-surface)]",
+        className,
+      )}
+      style={style}
+      aria-labelledby="employee-advance-history-title"
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--employee-border)] px-4 py-4 sm:px-5">
         <div className="min-w-0">
           <h2 id="employee-advance-history-title" className="employee-type-section-title text-[#101828]">Lịch sử yêu cầu</h2>
           <p className="employee-type-body mt-0.5 text-[var(--employee-text-secondary)]">Theo dõi trạng thái các yêu cầu ứng lương</p>
@@ -219,11 +227,11 @@ export function AdvancePaymentHistoryCard({
       </div>
 
       {isLoading ? (
-        <div className="space-y-2.5" aria-label="Đang tải lịch sử yêu cầu">
-          {[1, 2].map((index) => <Skeleton key={index} className="h-32 w-full rounded-xl" />)}
+        <div className="space-y-2.5 p-4 sm:p-5" aria-label="Đang tải lịch sử yêu cầu">
+          {[1, 2].map((index) => <Skeleton key={index} className="h-20 w-full rounded-xl" />)}
         </div>
       ) : isError ? (
-        <div className="ct-card employee-surface-card bg-[var(--employee-surface)] px-4 py-5 text-center" role="alert">
+        <div className="px-4 py-6 text-center" role="alert">
           <p className="employee-type-strong text-[#101828]">Chưa tải được lịch sử</p>
           <p className="employee-type-body-sm mt-1 text-[#667085]">Kiểm tra kết nối rồi thử lại.</p>
           {onRetry && (
@@ -234,27 +242,20 @@ export function AdvancePaymentHistoryCard({
           )}
         </div>
       ) : history.length === 0 ? (
-        <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-4 py-5 text-center">
-          <img
-            src="/advance-payment-empty-state.png"
-            alt=""
-            width={72}
-            height={72}
-            loading="lazy"
-            decoding="async"
-            className="employee-empty-art mb-2 h-[72px] w-[72px] rounded-2xl object-cover"
-            aria-hidden="true"
-          />
-          <p className="employee-type-card-title text-[#344054]">Chưa có yêu cầu ứng lương</p>
+        <div className="flex min-h-40 flex-col items-center justify-center bg-[var(--employee-surface-muted)] px-4 py-6 text-center">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--employee-border)] bg-white text-[var(--employee-text-secondary)]">
+            <ReceiptText className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <p className="employee-type-card-title mt-3 text-[#344054]">Chưa có yêu cầu ứng lương</p>
           <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Yêu cầu mới sẽ xuất hiện tại đây.</p>
         </div>
       ) : (
         <div
           className={cn(
-            "ct-card employee-surface-card divide-y divide-[var(--employee-border)] bg-[var(--employee-surface)]",
+            "divide-y divide-[var(--employee-border)] bg-[var(--employee-surface)]",
             isScrollable
               ? "max-h-[390px] overflow-y-auto overscroll-contain"
-              : "overflow-hidden"
+              : ""
           )}
           tabIndex={isScrollable ? 0 : undefined}
           aria-label={isScrollable ? "Lịch sử yêu cầu, cuộn để xem thêm" : undefined}

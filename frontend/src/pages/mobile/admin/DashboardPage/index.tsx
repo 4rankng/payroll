@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addMonths, format, parse, startOfMonth, subMonths } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Clock,
   FolderKanban,
+  RefreshCcw,
   TrendingUp,
   UserPlus,
   Users,
@@ -55,6 +56,7 @@ interface DashboardDisclosureProps {
   eyebrow: string;
   title: string;
   summary: string;
+  meta?: ReactNode;
   icon: LucideIcon;
   children: ReactNode;
 }
@@ -64,13 +66,14 @@ function DashboardDisclosureSection({
   eyebrow,
   title,
   summary,
+  meta,
   icon: Icon,
   children,
 }: DashboardDisclosureProps) {
   return (
     <AccordionItem
       value={value}
-      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-sm"
+      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none"
     >
       <AccordionTrigger className="min-h-11 px-4 py-4 no-underline hover:no-underline">
         <div className="flex min-w-0 items-start gap-3 pr-2 text-left">
@@ -83,6 +86,11 @@ function DashboardDisclosureSection({
             </span>
             <span className="mt-1 block text-sm font-semibold text-foreground">{title}</span>
             <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{summary}</span>
+            {meta && (
+              <span className="mt-2 inline-flex min-h-7 items-center rounded-full border border-border/70 bg-muted/50 px-2.5 text-[11px] font-semibold text-foreground tabular-nums">
+                {meta}
+              </span>
+            )}
           </span>
         </div>
       </AccordionTrigger>
@@ -114,7 +122,7 @@ const AdminDashboardMobile = () => {
       ? startOfMonth(parse(`${selectedMonth}-01`, 'yyyy-MM-dd', new Date()))
       : startOfMonth(new Date());
 
-  const { data, loading, employees } = useDashboardData(monthParam);
+  const { data, loading, employees, refetch } = useDashboardData(monthParam);
   const actions = useDashboardActions();
   const { data: pendingData } = useTimesheets({ status: 'pending_approval', page: 1, pageSize: 20 });
   const { data: activityData } = useEmployeeActivityStats(monthParam);
@@ -123,6 +131,11 @@ const AdminDashboardMobile = () => {
   const { openAddEmployee } = useEmployeeModals();
 
   const pendingApprovals = pendingData?.pagination?.totalRecords || 0;
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+    actions.handleRefresh?.();
+  }, [actions, refetch]);
 
   const { employeeStats, salaryStats, profitStats, activityStats } = useDashboardStats({
     dashboardSummary: data.dashboardSummary,
@@ -203,8 +216,10 @@ const AdminDashboardMobile = () => {
     ];
   }, [dashboardNav, data.dashboardSummary, monthLabel, pendingApprovals]);
 
-  const priorityRows = useMemo<MobileTaskRow[]>(
-    () => [
+  const priorityRows = useMemo<MobileTaskRow[]>(() => {
+    const dashboardSummary = data.dashboardSummary;
+
+    return [
       {
         title: 'Duyệt bảng công',
         description: pendingApprovals > 0 ? 'Xem các bảng công đang chờ xác nhận' : 'Không có bảng công cần xử lý',
@@ -213,6 +228,16 @@ const AdminDashboardMobile = () => {
         tone: pendingApprovals > 0 ? 'warning' : 'success',
         onClick: pendingApprovals > 0 ? dashboardNav.navigateToPendingApprovals : undefined,
       },
+      ...(dashboardSummary
+        ? [{
+            title: 'Lương chưa giải ngân',
+            description: `Đã trả ${formatVND(dashboardSummary.paid_salary_this_month)} trong kỳ ${monthLabel}`,
+            value: formatVND(dashboardSummary.pending_salary_this_month),
+            icon: ArrowRightLeft,
+            tone: dashboardSummary.pending_salary_this_month > 0 ? 'primary' as const : 'success' as const,
+            onClick: dashboardNav.navigateToSalaryLedger,
+          }]
+        : []),
       {
         title: 'Đối soát ví trả lương',
         description: 'Kiểm tra số dư và lịch chuyển tiền',
@@ -229,9 +254,8 @@ const AdminDashboardMobile = () => {
         tone: 'neutral',
         onClick: () => navigate('/admin/projects'),
       },
-    ],
-    [bankData, dashboardNav, navigate, pendingApprovals],
-  );
+    ];
+  }, [bankData, dashboardNav, data.dashboardSummary, monthLabel, navigate, pendingApprovals]);
 
   if (loading) {
     return (
@@ -251,24 +275,35 @@ const AdminDashboardMobile = () => {
         icon={BarChart3}
         sticky={false}
         bordered={false}
+        className="[&_.shadow-sm]:shadow-none"
         actions={
-          pendingApprovals > 0 ? (
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={dashboardNav.navigateToPendingApprovals}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 shadow-xs ring-1 ring-inset ring-amber-200/70 transition-colors hover:bg-amber-100 hover:border-amber-300 hover:ring-amber-300/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:scale-[0.98] normal-case motion-reduce:transition-none"
-              aria-label={`${pendingApprovals} bảng công chờ duyệt`}
+              onClick={handleRefresh}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
+              aria-label="Làm mới số liệu"
             >
-              <AlertCircle className="h-3 w-3 shrink-0 text-amber-500" strokeWidth={2.5} aria-hidden="true" />
-              <span className="tabular-nums">{pendingApprovals}</span>
-              <span>chờ duyệt</span>
+              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
             </button>
-          ) : undefined
+            {pendingApprovals > 0 && (
+              <button
+                type="button"
+                onClick={dashboardNav.navigateToPendingApprovals}
+                className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-warning/35 bg-warning/10 px-2.5 text-xs font-semibold text-warning transition-colors hover:bg-warning/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 normal-case motion-reduce:transition-none"
+                aria-label={`${pendingApprovals} bảng công chờ duyệt`}
+              >
+                <AlertCircle className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />
+                <span className="tabular-nums">{pendingApprovals}</span>
+                <span>chờ duyệt</span>
+              </button>
+            )}
+          </div>
         }
       />
 
       <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
-        <div className="flex items-center gap-1.5 overflow-x-auto px-2 py-2">
+        <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px] items-center gap-1.5 px-2 py-2">
           <button
             onClick={() => setSelectedMonth('all')}
             className={cn(
@@ -289,7 +324,7 @@ const AdminDashboardMobile = () => {
           </button>
           <div
             className={cn(
-              'flex min-h-11 items-center gap-1.5 rounded-full bg-muted/60 px-3 text-xs font-semibold text-foreground',
+              'flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-2 text-xs font-semibold text-foreground',
               selectedMonth === 'all' && 'opacity-50',
             )}
           >
@@ -327,7 +362,6 @@ const AdminDashboardMobile = () => {
 
       <Accordion
         type="multiple"
-        defaultValue={['salary-workforce']}
         className="space-y-3 motion-reduce:[&_[data-state=open]]:animate-none motion-reduce:[&_[data-state=closed]]:animate-none"
       >
         <DashboardDisclosureSection
@@ -335,6 +369,7 @@ const AdminDashboardMobile = () => {
           eyebrow="Sổ vận hành"
           title="Lương và nhân sự"
           summary="Giữ phần lõi ở một khối gọn: bảng công, quân số và người mới."
+          meta={`${pendingApprovals.toLocaleString('vi-VN')} chờ duyệt · ${dashboardSummary?.total_working_employees.toLocaleString('vi-VN') ?? '--'} đang làm`}
           icon={Users}
         >
           <div className="space-y-3">
@@ -364,6 +399,7 @@ const AdminDashboardMobile = () => {
           eyebrow="Phân tích"
           title="Chi trả và biến động"
           summary="Mở khi cần soi sâu phân bổ lương, lãi lỗ và người nhận lương cao."
+          meta={`${formatVND(dashboardSummary?.total_profit_this_month ?? 0)} lợi nhuận`}
           icon={TrendingUp}
         >
           <div className="space-y-3">
@@ -391,6 +427,7 @@ const AdminDashboardMobile = () => {
           eyebrow="Kiểm soát"
           title="Dự án, ngân hàng và sức khỏe hệ thống"
           summary="Theo dõi phần phụ trợ và kiểm tra vận hành khi cần xác minh sâu hơn."
+          meta={`${bankData?.projects.length.toLocaleString('vi-VN') ?? '--'} dự án`}
           icon={Building2}
         >
           <div className="space-y-2">

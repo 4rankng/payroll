@@ -26,7 +26,7 @@ export function GradientBar({ label, count, maxCount, binRange }: GradientBarPro
         role="tooltip"
         className="pointer-events-none absolute -top-8 left-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
       >
-        <div className="bg-foreground/90 text-background text-xs font-medium rounded-md px-2.5 py-1 whitespace-nowrap shadow-lg">
+        <div className="bg-foreground/90 text-background text-xs font-medium rounded-md px-2.5 py-1 whitespace-nowrap">
           {binRange}: <span className="font-bold">{count}</span> nhân viên
         </div>
         {/* Arrow */}

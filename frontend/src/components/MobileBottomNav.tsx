@@ -74,13 +74,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     moreItems?.some((item) => item.path && location.pathname.startsWith(item.path)) ?? false;
 
   const navSlotClass =
-    "group relative flex min-h-[68px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] max-[359px]:gap-0.5 max-[359px]:px-0.5";
+    "group relative flex min-h-[68px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] max-[359px]:gap-0.5 max-[359px]:px-0.5";
 
   const navIconClass = (isActive: boolean) =>
     cn(
-      "flex h-9 w-9 items-center justify-center rounded-2xl border transition-all duration-200 max-[359px]:h-8 max-[359px]:w-8 max-[359px]:rounded-xl",
+      "flex h-9 w-9 items-center justify-center rounded-2xl border transition-colors duration-200 max-[359px]:h-8 max-[359px]:w-8 max-[359px]:rounded-xl",
       isActive
-        ? "border-transparent bg-[hsl(var(--primary))] text-white shadow-[0_16px_26px_-20px_hsl(var(--primary)/0.85)]"
+        ? "border-transparent bg-[hsl(var(--primary))] text-white"
         : "border-transparent bg-white/65 text-[hsl(var(--muted-foreground))] group-hover:border-[hsl(var(--border))] group-hover:text-[hsl(var(--foreground))]"
     );
 
@@ -96,7 +96,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     ) : null;
 
   const sheetSurfaceClass =
-    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-white/70 bg-slate-50/95 px-0 pb-0 pt-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl";
+    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-slate-200 bg-slate-50/95 px-0 pb-0 pt-0 backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
 
@@ -116,11 +116,11 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
       <button
         type="button"
         className={cn(
-          "admin-mobile-tile group grid min-h-14 w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left shadow-sm transition-all touch-manipulation",
-          "active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
+          "admin-mobile-tile group grid min-h-14 w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-left transition-colors touch-manipulation",
+          "active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
           tone === "default" &&
             isActive &&
-            "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-white shadow-[0_14px_26px_-22px_hsl(var(--primary)/0.9)]",
+            "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-white",
           tone === "default" &&
             !isActive &&
             "text-[hsl(var(--foreground))] hover:border-[hsl(var(--border))] hover:bg-white",
@@ -163,7 +163,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   if (override) {
     return (
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex min-h-[64px] items-center px-4">{override.content}</div>
@@ -174,7 +174,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   return (
     <>
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 shadow-[0_-10px_30px_-18px_hsl(var(--primary)/0.35)] backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >

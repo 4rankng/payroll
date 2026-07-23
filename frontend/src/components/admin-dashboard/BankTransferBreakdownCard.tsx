@@ -93,7 +93,7 @@ export const ProjectSelector = memo(function ProjectSelector({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-lg min-w-[180px] max-h-60 overflow-y-auto py-1">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl min-w-[180px] max-h-60 overflow-y-auto py-1">
           <button
             onClick={() => { onSelect(null); setOpen(false); }}
             className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${selectedId === null ? 'font-semibold text-primary' : 'text-foreground'}`}
@@ -147,7 +147,7 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
   }, [selectedProjectId, allData]);
 
   return (
-    <Card className="shadow-card">
+    <Card className="shadow-none">
       <CardContent className="pt-0">
         {isLoading ? (
           <div>

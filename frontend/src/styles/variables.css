@@ -71,11 +71,9 @@
 
     /* Employee payroll-fintech surfaces. These aliases keep the employee
        portal cohesive without changing the admin and partner themes. */
-    --employee-page: #f4f6f8;
+    --employee-page: #f5f7f9;
     --employee-surface: #ffffff;
-    --employee-surface-muted: #f8fbf9;
-    --employee-surface-deep: #081c14;
-    --employee-surface-deep-raised: #0b3323;
+    --employee-surface-muted: #f7f9f8;
     --employee-text: #101828;
     --employee-text-secondary: #667085;
     --employee-text-muted: #98a2b3;
@@ -86,9 +84,6 @@
     --employee-accent-soft: #eaf8f0;
     --employee-accent-border: #b7e4ca;
     --employee-accent-ring: #c8f0d8;
-    --employee-accent-glow: rgba(8, 120, 62, 0.14);
-    --employee-grid-line: rgba(8, 120, 62, 0.045);
-    --employee-summary-wash: linear-gradient(145deg, #ffffff 0%, #eefaf3 100%);
     --employee-warning: #b54708;
     --employee-warning-strong: #93370d;
     --employee-warning-soft: #fff7e8;
@@ -98,12 +93,12 @@
     --employee-info: #175cd3;
     --employee-info-soft: #eff8ff;
     --employee-info-border: #b2ddff;
-    --employee-shadow: 0 24px 56px -42px rgba(16, 24, 40, 0.38), 0 2px 8px -6px rgba(16, 24, 40, 0.18);
-    --employee-shadow-raised: 0 30px 70px -44px rgba(8, 52, 34, 0.42), 0 8px 24px -18px rgba(8, 120, 62, 0.28);
-    --employee-cta-shadow: 0 16px 30px -20px rgba(8, 120, 62, 0.72);
-    --employee-radius-control: 0.875rem;
-    --employee-radius-card: 1.25rem;
-    --employee-radius-feature: 1.5rem;
+    --employee-shadow: none;
+    --employee-shadow-raised: none;
+    --employee-cta-shadow: none;
+    --employee-radius-control: 0.75rem;
+    --employee-radius-card: 1rem;
+    --employee-radius-feature: 1.25rem;
     --employee-focus-ring: #08783e;
     --employee-action-toolbar-block-size: 0px;
 

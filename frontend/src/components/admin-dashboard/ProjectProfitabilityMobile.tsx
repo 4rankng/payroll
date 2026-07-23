@@ -52,7 +52,7 @@ const MiniTooltip = ({ active, payload, label }: TooltipProps) => {
   const sorted = [...payload].filter(e => e.value !== 0).sort((a, b) => b.value - a.value);
   if (!sorted.length) return null;
   return (
-    <div className="bg-card border border-border/60 rounded-xl p-2 shadow-sm max-w-[200px]">
+    <div className="bg-card border border-border/60 rounded-xl p-2 max-w-[200px]">
       <p className="text-muted-foreground mb-1" style={{ fontSize: 11 }}>Lũy kế đến {label && typeof label === 'string' && label.includes('-') ? formatTooltipDate(label) : label}</p>
       {sorted.map((e, i) => (
         <div key={i} className="flex items-center justify-between gap-1.5 mb-0.5">
@@ -74,7 +74,7 @@ interface ChipProps { label: string; color: string; active: boolean; onPress: ()
 const Chip = memo(({ label, color, active, onPress }: ChipProps) => (
   <button
     onClick={onPress}
-    className="flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition-opacity active:scale-95"
+    className="flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition-opacity active:opacity-70"
     style={{ opacity: active ? 1 : 0.3, fontSize: 11, lineHeight: '16px', padding: '1px 5px' }}
   >
     <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, backgroundColor: color }} />
@@ -161,7 +161,7 @@ export const ProjectProfitabilityMobile = memo(() => {
     <div className="space-y-3">
 
       {/* ── Chart card ── */}
-      <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/40">
           <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Lợi Nhuận Tuần</span>
@@ -213,7 +213,7 @@ export const ProjectProfitabilityMobile = memo(() => {
       </div>
 
       {/* ── Ranking table ── */}
-      <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/40">
           <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Xếp Hạng Lợi Nhuận</span>

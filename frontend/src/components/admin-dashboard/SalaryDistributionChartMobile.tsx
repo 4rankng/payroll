@@ -24,7 +24,7 @@ export function SalaryDistributionChartMobile() {
 
   if (!isVisible || isLoading) {
     return (
-      <div ref={ref} className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+      <div ref={ref} className="bg-card border border-border/60 rounded-xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/40">
           <BarChart3 className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Phân Bổ Lương</span>
@@ -41,7 +41,7 @@ export function SalaryDistributionChartMobile() {
 
   if (isError || !data?.data) {
     return (
-      <div ref={ref} className="bg-card border border-border/60 rounded-xl p-4 shadow-sm">
+      <div ref={ref} className="bg-card border border-border/60 rounded-xl p-4">
         <p className="text-sm text-muted-foreground text-center py-8">Không thể tải dữ liệu</p>
       </div>
     );
@@ -50,7 +50,7 @@ export function SalaryDistributionChartMobile() {
   const { meta } = data;
 
   return (
-    <div ref={ref} className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+    <div ref={ref} className="bg-card border border-border/60 rounded-xl overflow-hidden">
       <div className="p-4 space-y-4">
         {cycleSections.length > 0 ? cycleSections.map((section) => (
           <MobileCycleSection key={section.cycle} section={section} />

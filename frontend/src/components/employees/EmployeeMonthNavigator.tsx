@@ -51,7 +51,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
   return (
     <div
       className={cn(
-        "ct-card employee-fintech-surface grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_44px] items-center rounded-[20px] border border-[var(--employee-accent-border)] p-1.5 shadow-[var(--employee-shadow)]",
+        "ct-card employee-surface-card grid min-h-16 grid-cols-[44px_minmax(0,1fr)_44px] items-center p-1.5",
         className
       )}
       role="group"
@@ -63,7 +63,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         disabled={!month.canGoPrev}
         aria-label="Xem tháng trước"
         title="Tháng trước"
-        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-[14px] text-base-content/70 shadow-none active:scale-[0.94] disabled:bg-transparent disabled:opacity-40"
+        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-xl text-base-content/70 shadow-none transition-colors active:bg-[var(--employee-accent-soft)] disabled:bg-transparent disabled:opacity-40"
       >
         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
       </button>
@@ -72,10 +72,10 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full gap-2.5 rounded-[14px] px-2 font-normal normal-case text-base-content shadow-none active:scale-[0.98]"
+            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full gap-2.5 rounded-xl px-2 font-normal normal-case text-base-content shadow-none transition-colors active:bg-[var(--employee-accent-soft)]"
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-primary">
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
             </span>
             <span className="min-w-0 text-left">
@@ -84,7 +84,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
             </span>
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-[min(328px,calc(100vw-32px))] rounded-xl p-3" align="center">
+        <PopoverContent className="w-[min(328px,calc(100vw-32px))] rounded-xl border-[var(--employee-border)] p-3 shadow-none" align="center">
           <div className="flex items-center justify-between gap-3 border-b border-[#EAECF0] pb-3">
             <div>
               <p className="employee-type-strong text-[#101828]">Chọn tháng</p>
@@ -138,7 +138,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         aria-label="Xem tháng sau"
         title="Tháng sau"
         disabled={!month.canGoNext}
-        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-[14px] text-base-content/70 shadow-none active:scale-[0.94] disabled:bg-transparent disabled:opacity-40"
+        className="ct-btn ct-btn-ghost ct-btn-square h-11 min-h-11 w-11 rounded-xl text-base-content/70 shadow-none transition-colors active:bg-[var(--employee-accent-soft)] disabled:bg-transparent disabled:opacity-40"
       >
         <ChevronRight className="h-5 w-5" aria-hidden="true" />
       </button>

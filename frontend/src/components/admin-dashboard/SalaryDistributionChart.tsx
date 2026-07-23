@@ -34,7 +34,7 @@ export function SalaryDistributionChart() {
   // Loading state
   if (!isVisible || isLoading) {
     return (
-      <Card ref={cardRef}>
+      <Card ref={cardRef} className="shadow-none">
         <CardContent className="p-3 sm:p-4">
           <div className="h-[280px] flex items-center justify-center">
             <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
@@ -47,7 +47,7 @@ export function SalaryDistributionChart() {
   // Error state
   if (isError || !data?.data) {
     return (
-      <Card ref={cardRef}>
+      <Card ref={cardRef} className="shadow-none">
         <CardContent className="p-3 sm:p-4">
           <div className="h-[280px] flex items-center justify-center">
             <p className="text-sm text-financial-negative">Không thể tải dữ liệu</p>
@@ -58,7 +58,7 @@ export function SalaryDistributionChart() {
   }
 
   return (
-    <Card ref={cardRef}>
+    <Card ref={cardRef} className="shadow-none">
       <CardContent className="p-3 sm:p-4">
         {cycleSections.length > 0 ? (
           <div className="space-y-6">

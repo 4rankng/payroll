@@ -112,8 +112,8 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
               : "h-9 w-9 justify-center mx-auto"
             : "h-11 px-2.5 lg:h-9",
           isActive
-            ? "bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--admin-accent)/0.15)]"
-            : "text-white/65 hover:bg-card/10 hover:text-white/90 hover:translate-x-0.5"
+            ? "bg-card/[0.08] text-white"
+            : "text-white/65 hover:bg-card/10 hover:text-white/90"
         )}
       >
         {/* Gliding active pill — slides in with a scale animation */}

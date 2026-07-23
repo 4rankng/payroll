@@ -63,8 +63,6 @@ function createLabelPlugin(banks: BankSlice[]) {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = 'rgba(0,0,0,0.35)';
         ctx.fillStyle = '#ffffff';
         ctx.font = '500 13px system-ui,sans-serif';
         ctx.fillText(b.shortName, lx, ly - 7);
@@ -149,7 +147,7 @@ function createLabelPlugin(banks: BankSlice[]) {
 // ── detect card background ─────────────────────────────────────────────────────
 function getCardBg(): string {
   const el = document.querySelector('[data-card-bg]')?.parentElement
-    ?? document.querySelector('.shadow-card');
+    ?? document.querySelector('.bg-card');
   if (el) {
     const bg = getComputedStyle(el).backgroundColor;
     if (bg && bg !== 'rgba(0, 0, 0, 0)') return bg;

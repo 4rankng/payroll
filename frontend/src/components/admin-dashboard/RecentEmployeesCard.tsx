@@ -61,7 +61,7 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
   const weekLabel = weeks === 1 ? '1 tuần gần đây' : `${weeks} tuần gần đây`;
 
   return (
-    <Card className="hover:shadow-elevated transition-all">
+    <Card className="shadow-none transition-colors">
       <CardContent className="p-3 sm:p-4">
         {isLoading && (
           <div className="flex items-center justify-center py-8">
@@ -84,15 +84,15 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
                   type="button"
                   onClick={() => handleEmployeeClick(employee)}
                   className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left
-                    transition-all duration-150 ease-out
-                    hover:bg-accent/50 hover:scale-[1.02] hover:shadow-sm
+                    transition-colors duration-150 ease-out
+                    hover:bg-accent/50
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <UserAvatar
                     name={employee.fullname}
                     email={employee.email}
                     size="sm"
-                    className="flex-shrink-0 ring-2 ring-border/60 transition-transform duration-150 group-hover:scale-105"
+                    className="flex-shrink-0 ring-2 ring-border/60"
                   />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate leading-tight">
@@ -134,7 +134,7 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
                     disabled={isLoadingMore}
                     variant="outline"
                     size="sm"
-                    className="text-xs transition-all duration-150 hover:scale-[1.02]"
+                    className="text-xs transition-colors duration-150"
                   >
                     {isLoadingMore ? (
                       <>

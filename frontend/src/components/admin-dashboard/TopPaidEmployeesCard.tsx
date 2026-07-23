@@ -92,7 +92,7 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
   const maxPaid = employees[0]?.total_paid_vnd ?? 0;
 
   return (
-    <Card className="shadow-card">
+    <Card className="shadow-none">
       <CardContent>
         {isLoading ? (
           <div className="space-y-3">

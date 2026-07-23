@@ -75,7 +75,7 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!sorted.length) return null;
   return (
     <div
-      className="bg-card border border-border rounded-xl p-3 shadow-sm text-xs max-w-[220px]"
+      className="bg-card border border-border rounded-xl p-3 text-xs max-w-[220px]"
       style={{ transition: 'transform 80ms ease-out' }}
     >
       <p className="text-muted-foreground mb-2 font-medium tracking-wide uppercase" style={{ fontSize: 11 }}>
@@ -245,7 +245,7 @@ export const ProjectProfitabilityCard = memo(() => {
   return (
     <div className="space-y-4">
       {/* ── Weekly line chart ── */}
-      <Card>
+      <Card className="shadow-none">
         <CardHeader className="p-3 sm:p-4 pb-3">
           <div className="flex items-center justify-between gap-2">
             {(hasHidden || hasFocus) && (
@@ -282,7 +282,7 @@ export const ProjectProfitabilityCard = memo(() => {
                         ? 'border-border/30 bg-muted/30 text-muted-foreground/40'
                         : dimmed
                           ? 'border-border/20 bg-card text-muted-foreground/40 opacity-50'
-                          : 'border-border bg-card text-foreground hover:border-primary/30 hover:scale-[1.03]'
+                          : 'border-border bg-card text-foreground hover:border-primary/30'
                       }`}
                     title={hidden ? 'Hiện dòng này' : hasFocus && focusedId === s.project_id ? 'Bỏ lọc' : 'Lọc dự án này'}
                   >
@@ -393,7 +393,7 @@ export const ProjectProfitabilityCard = memo(() => {
 
       {/* ── Ranking table ── */}
       <DashboardSectionHeader title="Xếp Hạng Lợi Nhuận" subtitle="12 tháng gần nhất" icon={TrendingUp} />
-      <Card>
+      <Card className="shadow-none">
         <CardContent className="p-0">
           {tableLoading ? (
             <div className="px-3 pb-3 space-y-2">

@@ -20,7 +20,7 @@ import { AnimatedCurrency } from "@/components/employees/AnimatedCurrency";
 import { cn } from "@/lib/utils";
 
 const EMPLOYEE_PRIMARY_ACTION =
-  "ct-btn employee-type-action h-auto min-h-12 w-full gap-2 rounded-xl border-0 bg-[var(--employee-accent)] px-5 py-2 text-white normal-case shadow-[var(--employee-cta-shadow)] hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent-ring)] disabled:!border-[var(--employee-border)] disabled:!bg-[var(--employee-page)] disabled:!text-[var(--employee-text-muted)] disabled:!shadow-none disabled:!opacity-100";
+  "ct-btn employee-type-action h-auto min-h-12 w-full gap-2 rounded-xl border-0 bg-[var(--employee-accent)] px-5 py-2 text-white normal-case shadow-none transition-colors hover:bg-[var(--employee-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent-ring)] disabled:!border-[var(--employee-border)] disabled:!bg-[var(--employee-page)] disabled:!text-[var(--employee-text-muted)] disabled:!shadow-none disabled:!opacity-100";
 
 const EMPLOYEE_DISABLED_ACTION =
   "ct-btn employee-type-action h-auto min-h-12 w-full gap-2 rounded-xl border border-[var(--employee-border)] bg-[var(--employee-page)] px-5 py-2 text-[var(--employee-text-muted)] normal-case shadow-none cursor-not-allowed";
@@ -247,7 +247,7 @@ export function AdvancePaymentRequestForm({
     return {
       variant: "open",
       chipLabel: "Đang mở",
-      chipClassName: "ct-badge-success ct-badge-outline bg-white/90",
+      chipClassName: "ct-badge-success ct-badge-outline bg-[var(--employee-accent-soft)]",
       chipIcon: "check",
       amount: selectedQuotaRemaining,
       amountClassName: "text-[var(--employee-accent)]",
@@ -363,6 +363,8 @@ export function AdvancePaymentRequestForm({
         className,
       )}
       style={style}
+      role="region"
+      aria-labelledby="employee-advance-title"
     >
       {/* ============== Section A — primary card (selected month) ============== */}
       <div
@@ -371,10 +373,13 @@ export function AdvancePaymentRequestForm({
       >
         <div className="flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between">
           <div className="min-w-0">
-            <p className="employee-type-label-caps flex items-center gap-2 text-[var(--employee-text-secondary)]">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--employee-accent)] shadow-[0_0_0_4px_var(--employee-accent-soft)]" aria-hidden="true" />
+            <h2
+              id="employee-advance-title"
+              className="employee-type-label-caps flex items-center gap-2 text-[var(--employee-text-secondary)]"
+            >
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
               Ứng lương tháng {viewedMonthLabel}
-            </p>
+            </h2>
             <p className="employee-type-payroll-value mt-1 text-[var(--employee-text)] tabular-nums">
               {formatPayrollMonthRange(selectedMonth)}
             </p>
@@ -420,7 +425,7 @@ export function AdvancePaymentRequestForm({
             </p>
           </div>
           {showQuotaProgress && (
-            <div className="flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+            <div className="flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-white px-3 py-2">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
                 <Gauge className="h-4 w-4" aria-hidden="true" />
               </span>
@@ -438,7 +443,7 @@ export function AdvancePaymentRequestForm({
 
         {/* Historical quota details stay visible only for the selected month. */}
         {showQuotaProgress && (
-          <div className="mt-4 rounded-xl border border-[var(--employee-border)] bg-white/75 p-3 backdrop-blur">
+          <div className="mt-4 rounded-xl border border-[var(--employee-border)] bg-white p-3">
             <div className="employee-type-label mb-2 text-[var(--employee-text-secondary)]">
               <span>Tiến độ hạn mức</span>
             </div>
@@ -622,9 +627,14 @@ export function AdvancePaymentRequestForm({
 
       {/* ============== One short helper line ============== */}
       {status.helperLine && !visibleConfirmation && (
-        <p className="employee-type-body-sm mt-3 text-center text-[var(--employee-text-secondary)]">
-          {status.helperLine}
-        </p>
+        <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--employee-surface-muted)] px-3 py-2.5 text-[var(--employee-text-secondary)]">
+          {status.chipIcon === "lock" ? (
+            <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Clock3 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          )}
+          <p className="employee-type-body-sm">{status.helperLine}</p>
+        </div>
       )}
     </div>
   );

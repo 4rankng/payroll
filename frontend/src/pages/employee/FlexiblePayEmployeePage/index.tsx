@@ -20,7 +20,7 @@ import {
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
-import { EmployeeMobileShell, employeeCardShadow } from "@/components/employees/EmployeeMobileShell";
+import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
 import { EmployeeCheckInCard } from "@/components/employees/EmployeeCheckInCard";
 import { EmployeeAttendanceHistoryCard } from "@/components/employees/EmployeeAttendanceHistoryCard";
 import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavigator";
@@ -238,15 +238,15 @@ const FlexiblePayEmployeePage = () => {
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
       hasActionToolbar={isCheckInEnabled}
-      contentClassName="max-w-6xl space-y-5 lg:space-y-7"
+      contentClassName="max-w-6xl space-y-4 sm:space-y-5 lg:space-y-6"
     >
-      <EmployeeMonthNavigator month={month} className="lg:min-h-[76px]" />
+      <EmployeeMonthNavigator month={month} className="lg:min-h-[68px]" />
 
-      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start lg:gap-7">
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] lg:items-start lg:gap-6">
         {infoError ? (
           <section
             id="employee-advance-request"
-            className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center shadow-[var(--employee-shadow)] lg:col-start-1 lg:row-start-1"
+            className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center lg:col-start-1 lg:row-start-1"
             role="alert"
           >
             <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
@@ -255,7 +255,7 @@ const FlexiblePayEmployeePage = () => {
             <button
               type="button"
               onClick={() => { void refetchInfo(); }}
-              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-transform duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-colors duration-200 hover:bg-[var(--employee-surface-muted)] active:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại
@@ -277,12 +277,19 @@ const FlexiblePayEmployeePage = () => {
               onBankAction={handleBankAction}
               isPending={requestMutation.isPending}
               requestConfirmation={requestConfirmation}
-              className="employee-surface-card overflow-hidden p-4 sm:p-5"
+              className="overflow-hidden p-4 sm:p-5"
             />
           </section>
         ) : null}
 
-        <section id="employee-history" className="scroll-mt-24 lg:col-start-2 lg:row-start-1">
+        <section
+          id="employee-history"
+          className={
+            isCheckInEnabled
+              ? "scroll-mt-24 lg:col-start-2 lg:row-start-1"
+              : "scroll-mt-24 lg:col-span-2 lg:row-start-2"
+          }
+        >
           <AdvancePaymentHistoryCard
             history={history}
             isLoading={historyLoading}
@@ -298,7 +305,7 @@ const FlexiblePayEmployeePage = () => {
           id="employee-bank"
           className={isCheckInEnabled
             ? "scroll-mt-24 lg:col-start-2 lg:row-start-2"
-            : "scroll-mt-24 lg:col-start-1 lg:row-start-2"}
+            : "scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:self-stretch"}
         >
           <EmployeeBankInfoCard profile={profile!} />
         </section>
@@ -326,7 +333,6 @@ const FlexiblePayEmployeePage = () => {
             toDate={month.toDate}
             monthLabel={month.shortLabel}
             className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white lg:col-start-1 lg:row-start-3"
-            style={employeeCardShadow}
           />
         )}
       </div>
