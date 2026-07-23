@@ -24,7 +24,7 @@ export function PartnerWorkforceOverviewCard({
   className,
 }: PartnerWorkforceOverviewCardProps) {
   return (
-    <div className={cn('rounded-2xl border border-border/60 bg-card p-5 shadow-soft', className)}>
+    <div className={cn('rounded-2xl border border-border/40 bg-card p-5 shadow-soft', className)}>
       <div className="mb-4">
         <h3 className="text-sm font-bold text-foreground">Cơ cấu nhân sự</h3>
         <p className="text-[11px] text-muted-foreground mt-0.5">

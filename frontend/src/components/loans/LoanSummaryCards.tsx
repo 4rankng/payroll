@@ -1,7 +1,7 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatVND } from "@/utils/loanHelpers";
-import { DollarSign, TrendingDown, Percent, CreditCard } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatVND } from '@/utils/loanHelpers';
+import { DollarSign, TrendingDown, Percent, CreditCard, type LucideIcon } from 'lucide-react';
 
 interface LoansSummary {
   total_borrowed: number;
@@ -15,24 +15,16 @@ interface LoanSummaryCardsProps {
   isLoading?: boolean;
 }
 
-// Watermark tokens — small inline icon + large faint icon decoration.
-const colorMap = {
-  blue:   { iconText: "text-blue-600",    watermark: "text-blue-500/15" },
-  red:    { iconText: "text-rose-600",    watermark: "text-rose-500/15" },
-  amber:  { iconText: "text-amber-600",   watermark: "text-amber-500/15" },
-  teal:   { iconText: "text-teal-600",    watermark: "text-teal-500/15" },
-} as const;
-
+// Compose the shared KpiHeroCard (used across admin/partner dashboards) instead
+// of a loans-only watermark clone, so every summary strip stays consistent.
 export function LoanSummaryCards({ summary, isLoading }: LoanSummaryCardsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="relative rounded-xl border border-border/60 bg-card px-3 py-2.5 overflow-hidden">
-            <div className="space-y-1.5">
-              <Skeleton className="h-2.5 w-20" />
-              <Skeleton className="h-4 w-16" />
-            </div>
+          <div key={i} className="rounded-xl border border-border/40 bg-card px-4 py-3 shadow-soft">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="mt-3 h-6 w-24" />
           </div>
         ))}
       </div>
@@ -41,44 +33,23 @@ export function LoanSummaryCards({ summary, isLoading }: LoanSummaryCardsProps) 
 
   if (!summary) return null;
 
-  const cards = [
-    { title: "Tổng vay", value: formatVND(summary.total_borrowed), icon: DollarSign, color: "blue" as const },
-    { title: "Dư nợ hiện tại", value: formatVND(summary.total_outstanding), icon: TrendingDown, color: "red" as const },
-    { title: "Lãi đã trả", value: formatVND(summary.total_interest_paid), icon: Percent, color: "amber" as const },
-    { title: "Khoản vay", value: summary.active_loans_count.toLocaleString("vi-VN"), icon: CreditCard, color: "teal" as const },
+  const cards: Array<{
+    title: string;
+    value: string | number;
+    icon: LucideIcon;
+    color: 'blue' | 'rose' | 'amber' | 'teal';
+  }> = [
+    { title: 'Tổng vay', value: formatVND(summary.total_borrowed), icon: DollarSign, color: 'blue' },
+    { title: 'Dư nợ hiện tại', value: formatVND(summary.total_outstanding), icon: TrendingDown, color: 'rose' },
+    { title: 'Lãi đã trả', value: formatVND(summary.total_interest_paid), icon: Percent, color: 'amber' },
+    { title: 'Khoản vay', value: summary.active_loans_count, icon: CreditCard, color: 'teal' },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-      {cards.map(({ title, value, icon: Icon, color }) => {
-        const c = colorMap[color];
-        return (
-          <div
-            key={title}
-            className="group relative rounded-xl border border-border/60 bg-card px-3 py-2.5 overflow-hidden shadow-sm transition-colors hover:bg-muted/40"
-          >
-            <Icon
-              className={cn(
-                "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 pointer-events-none",
-                "transition-transform duration-300 group-hover:scale-105",
-                c.watermark,
-              )}
-              strokeWidth={1.5}
-            />
-            <div className="relative min-w-0 pr-10">
-              <div className="flex items-center gap-1.5">
-                <Icon className={cn("h-3 w-3 shrink-0", c.iconText)} strokeWidth={2.2} />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight line-clamp-2">
-                  {title}
-                </span>
-              </div>
-              <p className="mt-1 break-words text-[15px] font-semibold tabular-nums text-foreground leading-tight">
-                {value}
-              </p>
-            </div>
-          </div>
-        );
-      })}
+      {cards.map(({ title, value, icon, color }) => (
+        <KpiHeroCard key={title} label={title} value={value} icon={icon} color={color} className="h-full" />
+      ))}
     </div>
   );
 }

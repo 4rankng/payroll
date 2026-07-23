@@ -13,6 +13,8 @@ export interface KpiHeroCardProps {
   sublabel?: string;
   trend?: { value: string; positive: boolean };
   badge?: { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' };
+  /** Optional rich footer (secondary stats) rendered below the value block */
+  footer?: React.ReactNode;
   isActive?: boolean;
   onClick?: () => void;
   className?: string;
@@ -36,6 +38,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   sublabel,
   trend,
   badge,
+  footer,
   isActive,
   onClick,
   className,
@@ -54,6 +57,12 @@ export const KpiHeroCard = memo(function KpiHeroCard({
     rose:    { iconText: 'text-rose-600',     watermark: 'text-rose-500/15' },
   };
   const c = colorMap[color] ?? colorMap.blue;
+
+  const footerNode = footer ? (
+    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+      {footer}
+    </div>
+  ) : null;
 
   const displayValue = formattedValue
     ? formattedValue
@@ -159,6 +168,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
                 )}
               </div>
             )}
+            {footerNode}
           </div>
           {/* sm+ horizontal layout */}
           <div className="hidden sm:block pr-14">
@@ -197,6 +207,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
                 )}
               </div>
             )}
+            {footerNode}
           </div>
         </div>
       ) : (
@@ -208,6 +219,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
             </span>
           </div>
           {stackValueBlock}
+          {footerNode}
         </div>
       )}
 

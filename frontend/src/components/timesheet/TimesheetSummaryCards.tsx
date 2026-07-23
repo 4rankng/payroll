@@ -1,5 +1,5 @@
-import { Clock, CheckCircle, AlertTriangle, DollarSign } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
+import { Clock, CheckCircle, AlertTriangle, DollarSign, type LucideIcon } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 
 interface ValidationError {
@@ -21,72 +21,59 @@ interface TimesheetSummaryCardsProps {
   summary: TimesheetSummary;
 }
 
+// Compose the shared KpiHeroCard; each card's descriptive `sub` becomes the
+// `unit` slot so "5/10 người", "8.5 giờ/người" still read inline with the value.
 export function TimesheetSummaryCards({ summary }: TimesheetSummaryCardsProps) {
   const warningCount = summary.validationErrors.length;
 
-  const cards = [
+  const cards: Array<{
+    label: string;
+    value: string | number;
+    unit?: string;
+    icon: LucideIcon;
+    color: 'blue' | 'emerald' | 'amber' | 'teal' | 'rose';
+  }> = [
     {
       label: 'Đã nhập',
       value: `${summary.entriesCompleted}/${summary.totalEmployees}`,
-      sub: 'người',
+      unit: 'người',
       icon: CheckCircle,
-      iconText: 'text-emerald-600',
-      watermark: 'text-emerald-500/15',
+      color: 'emerald',
     },
     {
       label: 'Cảnh báo',
-      value: warningCount.toLocaleString('vi-VN'),
-      sub: 'nhân viên',
+      value: warningCount,
+      unit: 'nhân viên',
       icon: AlertTriangle,
-      iconText: warningCount > 0 ? 'text-rose-600' : 'text-muted-foreground',
-      watermark: warningCount > 0 ? 'text-rose-500/15' : 'text-slate-500/10',
+      color: warningCount > 0 ? 'rose' : 'blue',
     },
     {
       label: 'Tổng chi phí',
       value: formatCurrency(summary.totalCost),
-      sub: '',
       icon: DollarSign,
-      iconText: 'text-blue-600',
-      watermark: 'text-blue-500/15',
+      color: 'blue',
     },
     {
       label: 'Giờ trung bình',
       value: summary.averageHours.toFixed(1),
-      sub: 'giờ/người',
+      unit: 'giờ/người',
       icon: Clock,
-      iconText: 'text-teal-600',
-      watermark: 'text-teal-500/15',
+      color: 'teal',
     },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-      {cards.map(({ label, value, sub, icon: Icon, iconText, watermark }) => (
-        <div
+      {cards.map(({ label, value, unit, icon, color }) => (
+        <KpiHeroCard
           key={label}
-          className="group relative rounded-xl border border-border/60 bg-card px-3 py-2.5 overflow-hidden shadow-sm transition-colors hover:bg-muted/40"
-        >
-          <Icon
-            className={cn(
-              'absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 pointer-events-none',
-              'transition-transform duration-300 group-hover:scale-105',
-              watermark,
-            )}
-            strokeWidth={1.5}
-          />
-          <div className="relative min-w-0 pr-10">
-            <div className="flex items-center gap-1.5">
-              <Icon className={cn('h-3 w-3 shrink-0', iconText)} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight line-clamp-2">
-                {label}
-              </span>
-            </div>
-            <p className="mt-1 break-words text-[15px] font-semibold tabular-nums text-foreground leading-tight">
-              {value}
-              {sub && <span className="text-[11px] font-normal text-muted-foreground ml-1">{sub}</span>}
-            </p>
-          </div>
-        </div>
+          label={label}
+          value={value}
+          unit={unit}
+          icon={icon}
+          color={color}
+          className="h-full"
+        />
       ))}
     </div>
   );
