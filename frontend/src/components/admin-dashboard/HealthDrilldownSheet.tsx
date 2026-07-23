@@ -36,7 +36,7 @@ import { vi } from 'date-fns/locale';
 
 import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
 import { useAdminAttendances } from '@/hooks/api/useAdminAttendance';
-import { formatCompactCurrency } from '@/utils/formatters';
+import { formatFullCurrency } from '@/utils/formatters';
 import { getFailedAttemptOverrideViewState } from '@/utils/failedAttemptOverride';
 import { formatDistanceMeters, formatGeofenceDistanceDelta } from '@/utils/geoDistance';
 import type { AdminFailedAttempt, QuotaAnomalyRow } from '@/types/api/dashboard.types';
@@ -383,9 +383,9 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
               <TableRow key={`${row.employee_id}-${row.project_id}-${row.for_month}-${i}`} className="border-border/50 transition-colors hover:bg-muted/30">
                 <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
-                <Td className="whitespace-nowrap tabular-nums">{formatCompactCurrency(row.salary)}</Td>
-                <Td className="whitespace-nowrap tabular-nums">{formatCompactCurrency(row.max_adv_amount)}</Td>
-                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">{formatCompactCurrency(row.expected_max)}</Td>
+                <Td className="whitespace-nowrap tabular-nums">{formatFullCurrency(row.salary)}</Td>
+                <Td className="whitespace-nowrap tabular-nums">{formatFullCurrency(row.max_adv_amount)}</Td>
+                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">{formatFullCurrency(row.expected_max)}</Td>
                 <Td className="text-muted-foreground">
                   <span className="block whitespace-normal break-words leading-relaxed">{row.reason}</span>
                 </Td>
@@ -541,7 +541,7 @@ function AttendanceRowsTable({
                     </Td>
                     <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
                       {row.earning_amount != null && row.earning_amount > 0
-                        ? formatCompactCurrency(row.earning_amount)
+                        ? formatFullCurrency(row.earning_amount)
                         : '—'}
                     </Td>
                   </>
@@ -671,7 +671,7 @@ function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceRespon
         </div>
         {row.earning_amount != null && row.earning_amount > 0 && (
           <span className="shrink-0 rounded-full bg-success/10 px-2 py-1 text-xs font-semibold text-financial-positive">
-            {formatCompactCurrency(row.earning_amount)}
+            {formatFullCurrency(row.earning_amount)}
           </span>
         )}
       </div>
@@ -1100,9 +1100,9 @@ function QuotaAnomalyCard({ row }: { row: QuotaAnomalyRow }) {
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-3">
-        <Metric label="Lương" value={formatCompactCurrency(row.salary)} />
-        <Metric label="Max adv" value={formatCompactCurrency(row.max_adv_amount)} />
-        <Metric label="Mong đợi" value={formatCompactCurrency(row.expected_max)} />
+        <Metric label="Lương" value={formatFullCurrency(row.salary)} />
+        <Metric label="Max adv" value={formatFullCurrency(row.max_adv_amount)} />
+        <Metric label="Mong đợi" value={formatFullCurrency(row.expected_max)} />
       </div>
       <DetailLine label="Lý do">{row.reason}</DetailLine>
     </div>

@@ -138,7 +138,7 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
       <DialogContent className="flex max-h-[92dvh] w-full max-w-2xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
 
         {/* Header */}
-        <div className="shrink-0 bg-slate-900 px-4 pt-4 pb-3 text-white">
+        <div className="shrink-0 bg-emerald-950 px-4 pt-4 pb-3 text-white">
           <div className="flex items-start gap-3">
             {/* Back button */}
             <button
@@ -152,7 +152,7 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
             {/* Title */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-tight">Chi tiết kết quả chuyển tiền</p>
-              <p className="mt-0.5 break-all text-xs text-slate-400" title={filename}>{filename}</p>
+              <p className="mt-0.5 break-all text-xs text-emerald-200/75" title={filename}>{filename}</p>
             </div>
 
             {/* Actions */}

@@ -50,7 +50,7 @@ import {
   type MobileOperationMetric,
   type MobileTaskRow,
 } from '@/components/shared/MobileOperationsPanel';
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 interface DashboardDisclosureProps {
   value: string;

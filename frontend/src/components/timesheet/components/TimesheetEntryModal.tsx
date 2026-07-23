@@ -43,15 +43,15 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
     <Dialog open={isOpen} onOpenChange={f.isLoading ? undefined : onClose}>
       <DialogContent className="sm:max-w-[480px] gap-0 overflow-hidden rounded-2xl shadow-2xl" contentPadding="none" hideCloseButton>
         {/* Header */}
-        <div className="bg-slate-900 px-5 pt-5 pb-4 text-white flex-shrink-0">
+        <div className="bg-emerald-950 px-5 pt-5 pb-4 text-white flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-lg font-semibold tracking-tight text-white leading-tight">
                 {f.isReadOnly ? "Chi tiết bảng công" : f.isEditing ? "Chỉnh sửa bảng công" : "Nhập bảng công"}
               </p>
               <div className="flex items-center gap-1.5 mt-1">
-                <Calendar className="h-3 w-3 text-slate-400" />
-                <p className="text-xs text-slate-400">{format(date, "EEEE, dd/MM/yyyy", { locale: vi })}</p>
+                <Calendar className="h-3 w-3 text-emerald-200/75" />
+                <p className="text-xs text-emerald-200/75">{format(date, "EEEE, dd/MM/yyyy", { locale: vi })}</p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -233,7 +233,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                     className="min-h-11 rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-40">
                     Bỏ qua
                   </button>
-                  <Button className="flex min-h-11 items-center gap-2 bg-slate-900 px-5 text-white shadow-md shadow-slate-200/80 hover:bg-slate-800"
+                  <Button className="flex min-h-11 items-center gap-2 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
                     onClick={f.canSaveAndApprove ? f.handleSaveAndApprove : f.handleSave}
                     disabled={f.isLoading || f.isPayrateLoading || f.formData.hoursWorked <= 0 || !f.formData.hourType || !f.isHourTypeValid || f.availableHourTypes.length === 0 || !f.dateValidation.isValid}>
                     {f.isLoading ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Check className="w-3.5 h-3.5" />}

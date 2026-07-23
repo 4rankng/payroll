@@ -38,7 +38,7 @@ import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
 import { useTimesheets } from '@/hooks/api/useTimesheets';
 import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));

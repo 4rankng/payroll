@@ -10,7 +10,7 @@ export interface PayrollMetricCardProps {
   supportText?: string;
   /** Headline KPI — gets a navy base tint + larger figure. */
   primary?: boolean;
-  /** Span both columns below the full desktop layout so long currency values stay readable. */
+  /** Span both columns once the KPI grid has enough width for a two-column layout. */
   mobileSpan?: boolean;
   selected?: boolean;
   disabled?: boolean;
@@ -31,14 +31,12 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
   onClick,
   className,
 }: PayrollMetricCardProps) {
-  // Long-value tiles keep two tracks at desktop widths so VND values remain
-  // readable instead of protruding beyond their card.
-  const spanCls = mobileSpan ? 'col-span-2 lg:col-span-2' : '';
+  const spanCls = mobileSpan ? 'min-[480px]:col-span-2 lg:col-span-2' : '';
   if (isLoading) {
     return (
       <div
         className={cn(
-          'flex h-full min-h-[76px] flex-col justify-center gap-2 rounded-lg border border-border bg-card px-3.5 py-3',
+          'flex h-full min-h-[76px] flex-col justify-center gap-2 rounded-lg border border-border/70 bg-card px-3.5 py-3',
           spanCls,
           className,
         )}
@@ -62,7 +60,7 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
       aria-label={`${label}: ${value}${supportText ? `. ${supportText}` : ''}`}
       title={supportText ? `${label} — ${supportText}` : undefined}
       className={cn(
-        'group flex h-full min-h-[76px] min-w-0 flex-col justify-center gap-2 rounded-lg border bg-card px-3.5 py-3 text-left',
+        'group flex h-full min-h-[76px] min-w-0 overflow-hidden flex-col justify-center gap-2 rounded-lg border border-border/70 bg-card px-3.5 py-3 text-left',
         'transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         spanCls,

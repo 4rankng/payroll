@@ -54,12 +54,6 @@ export const calculateProjectStats = (projects: Project[]) => {
 };
 
 export const formatBudgetDisplay = (amount: number): string => {
-  if (amount >= 1000000000) {
-    return `${Math.round(amount / 1000000000)}B`;
-  }
-  if (amount >= 1000000) {
-    return `${Math.round(amount / 1000000)}M`;
-  }
   return formatProjectCurrency(amount);
 };
 

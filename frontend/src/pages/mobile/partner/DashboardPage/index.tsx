@@ -28,7 +28,7 @@ import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/Partner
 import { generateMonthOptions } from '@/utils/dateHelpers';
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
 
@@ -130,18 +130,20 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
             </Badge>
           )}
         </div>
-        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/80 transition-all duration-700 ease-out"
-            style={{ width: `${Math.max(pct, 2)}%` }}
-          />
+        <div className="mt-1.5 flex items-end gap-3">
+          <div className="min-w-0 flex-1 pb-1">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/80 transition-all duration-700 ease-out"
+                style={{ width: `${Math.max(pct, 2)}%` }}
+              />
+            </div>
+          </div>
+          <span className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-foreground">
+            {formatVND(item.total_paid_vnd)}
+          </span>
         </div>
       </div>
-
-      {/* Amount */}
-      <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0 pl-1">
-        {formatVND(item.total_paid_vnd, { useVietnamese: true })}
-      </span>
     </div>
   );
 }
@@ -211,7 +213,7 @@ const PartnerDashboardMobile = () => {
   const operationMetrics = useMemo<MobileOperationMetric[]>(() => [
     {
       label: 'Tổng chi trả',
-      value: formatVND(data?.total_paid_vnd ?? 0, { useVietnamese: true }),
+      value: formatVND(data?.total_paid_vnd ?? 0),
       helper: momAmountSublabel,
       icon: Banknote,
       tone: 'primary',
@@ -310,7 +312,7 @@ const PartnerDashboardMobile = () => {
           title="Theo dõi chi trả"
           subtitle="Tình hình nhân sự và lương theo kỳ đang xem"
           primaryLabel="Tổng chi trả"
-          primaryValue={formatVND(data?.total_paid_vnd ?? 0, { useVietnamese: true })}
+          primaryValue={formatVND(data?.total_paid_vnd ?? 0)}
           primaryHint={momAmountSublabel}
           metrics={operationMetrics}
           actions={quickActions}

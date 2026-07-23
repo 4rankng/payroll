@@ -138,28 +138,17 @@ export const formatNumber = (value: number, decimals = 1) => {
 };
 
 /**
- * Compact currency formatter for chart axes, tooltips, legends, and small card contexts.
- * Uses K/M/B notation with optional " đ" suffix.
- * Replaces the old local formatVND functions that were consolidated from admin-dashboard components.
+ * Full currency formatter for chart axes, tooltips, legends, and small card contexts.
+ * Monetary values must always keep their full digits instead of K/M/B abbreviations.
  */
-export const formatCompactCurrency = (
+export const formatFullCurrency = (
   value: number,
-  options: { showSymbol?: boolean; useVietnamese?: boolean } = {}
+  options: { showSymbol?: boolean } = {}
 ): string => {
-  const { showSymbol = true, useVietnamese = false } = options;
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
+  const { showSymbol = true } = options;
+  const formattedValue = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+  }).format(value);
 
-  if (abs >= 1e9) {
-    const suffix = useVietnamese ? 'tỷ' : 'B';
-    return `${sign}${(abs / 1e9).toFixed(1)}${suffix}${showSymbol ? ' đ' : ''}`;
-  }
-  if (abs >= 1e6) {
-    const suffix = useVietnamese ? 'tr' : 'M';
-    return `${sign}${(abs / 1e6).toFixed(1)}${suffix}${showSymbol ? ' đ' : ''}`;
-  }
-  if (abs >= 1e3) {
-    return `${sign}${(abs / 1e3).toFixed(0)}K${showSymbol ? ' đ' : ''}`;
-  }
-  return `${sign}${abs.toLocaleString('vi-VN')}${showSymbol ? ' đ' : ''}`;
+  return `${formattedValue}${showSymbol ? ' đ' : ''}`;
 };

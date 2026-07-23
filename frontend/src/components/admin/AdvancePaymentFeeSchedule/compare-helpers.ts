@@ -91,9 +91,9 @@ export function buildPendingSummary(state: FeeScheduleFormState): string {
   }
   const parts = state.tiers.map((tier, idx) => {
     if (idx === 0) {
-      return `< ${formatVndShort(state.tiers[1].minAmount)}: ${formatPct(tier.percentage)}`;
+      return `< ${formatVndFull(state.tiers[1].minAmount)}: ${formatPct(tier.percentage)}`;
     }
-    return `≥ ${formatVndShort(tier.minAmount)}: ${formatPct(tier.percentage)}`;
+    return `≥ ${formatVndFull(tier.minAmount)}: ${formatPct(tier.percentage)}`;
   });
   return `Phân tầng — ${parts.join(" · ")}`;
 }
@@ -102,16 +102,8 @@ function formatPct(pct: number): string {
   return `${pct.toString().replace(".", ",")}%`;
 }
 
-function formatVndShort(vnd: number): string {
-  if (vnd >= 1_000_000) {
-    const m = vnd / 1_000_000;
-    const trimmed = Number.isInteger(m) ? m.toString() : m.toFixed(1).replace(".", ",");
-    return `${trimmed}tr`;
-  }
-  if (vnd >= 1_000) {
-    return `${Math.round(vnd / 1_000)}k`;
-  }
-  return vnd.toString();
+function formatVndFull(vnd: number): string {
+  return vnd.toLocaleString("vi-VN");
 }
 
 // Detects unsafe configurations the live preview might surface. Used to

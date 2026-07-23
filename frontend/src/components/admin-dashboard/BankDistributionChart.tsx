@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { formatCompactCurrency } from '@/utils/formatters';
+import { formatFullCurrency } from '@/utils/formatters';
 
 import type { BankDistributionItem } from './bank-distribution';
 
@@ -38,7 +38,7 @@ const BankDistributionRow = memo(function BankDistributionRow({
                 <span>{item.transferCount.toLocaleString('vi-VN')} lần</span>
               ) : null}
               {item.totalPaidVnd > 0 ? (
-                <span>{formatCompactCurrency(item.totalPaidVnd, { useVietnamese: true })}</span>
+                <span>{formatFullCurrency(item.totalPaidVnd)}</span>
               ) : null}
             </div>
           </div>

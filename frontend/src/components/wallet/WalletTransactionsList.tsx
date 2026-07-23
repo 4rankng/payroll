@@ -434,118 +434,130 @@ export default function WalletTransactionsList(
     setPage(1);
   };
 
-  return (
-    <>
-      <Card className="border-border/40 shadow-sm">
-        <div className="flex flex-col gap-3 p-4 md:p-5">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-semibold text-slate-800 tracking-tight">Lịch sử giao dịch</h2>
-              {total > 0 && (
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold text-slate-600 tabular-nums tracking-wide">
-                  {total.toLocaleString("vi-VN")}
-                </span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="h-8 px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
-              Làm mới
-            </Button>
-          </div>
-
-          {/* Filters — single compact row for both desktop and mobile */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            {!isMobile && (
-              <DateRangePicker
-                variant="default"
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
-                onEndDateChange={(d) => { setEndDate(d); setPage(1); }}
-              />
-            )}
-            <FilterPill
-              value={typeFilter}
-              onChange={(v) => { setTypeFilter(v as TypeFilter); setPage(1); }}
-              placeholder="Loại"
-              options={[
-                { value: "topup", label: "Nạp tiền" },
-                { value: "payment", label: "Chi trả" },
-              ]}
-            />
-            <FilterPill
-              value={statusFilter}
-              onChange={(v) => { setStatusFilter(v as StatusFilter); setPage(1); }}
-              placeholder="Trạng thái"
-              options={[
-                { value: "pending",    label: "Đang chờ" },
-                { value: "authorised", label: "Đã duyệt" },
-                { value: "completed",  label: "Hoàn thành" },
-                { value: "failed",     label: "Thất bại" },
-              ]}
-            />
-            {isMobile && (
-              <DateRangePicker
-                variant="default"
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
-                onEndDateChange={(d) => { setEndDate(d); setPage(1); }}
-              />
-            )}
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={onResetFilters}
-                className="text-xs text-slate-400 hover:text-slate-700 transition-colors ml-auto"
-              >
-                Xoá lọc
-              </button>
-            )}
-          </div>
-
-          {/* Body */}
-          {isLoading ? (
-            isMobile ? <SkeletonCards /> : <SkeletonTable />
-          ) : isError ? (
-            <ErrorState onRetry={() => refetch()} />
-          ) : transactions.length === 0 ? (
-            <EmptyState hasFilters={hasFilters} onResetFilters={onResetFilters} />
-          ) : isMobile ? (
-            <CardList transactions={transactions} onSelect={setSelectedTx} />
-          ) : (
-            <DesktopTable transactions={transactions} onSelect={setSelectedTx} />
-          )}
-
-          {/* Pagination */}
-          {transactions.length > 0 && totalPages > 1 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
-              <p className="text-sm text-slate-500">
-                {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} / {total} giao dịch
-              </p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isFetching}>
-                  Trước
-                </Button>
-                <span className="text-sm text-slate-500 tabular-nums">
-                  {page} / {totalPages}
-                </span>
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isFetching}>
-                  Sau
-                </Button>
-              </div>
-            </div>
+  const content = (
+    <div className={isMobile ? "flex flex-col gap-4" : "flex flex-col gap-3 p-4 md:p-5"}>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 id="wallet-transaction-history-title" className="text-[15px] font-semibold text-slate-800 tracking-tight">
+            Lịch sử giao dịch
+          </h2>
+          {total > 0 && (
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold text-slate-600 tabular-nums tracking-wide">
+              {total.toLocaleString("vi-VN")}
+            </span>
           )}
         </div>
-      </Card>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="h-8 px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+          Làm mới
+        </Button>
+      </div>
+
+      {/* Filters — single compact row for both desktop and mobile */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+        {!isMobile && (
+          <DateRangePicker
+            variant="default"
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
+            onEndDateChange={(d) => { setEndDate(d); setPage(1); }}
+          />
+        )}
+        <FilterPill
+          value={typeFilter}
+          onChange={(v) => { setTypeFilter(v as TypeFilter); setPage(1); }}
+          placeholder="Loại"
+          options={[
+            { value: "topup", label: "Nạp tiền" },
+            { value: "payment", label: "Chi trả" },
+          ]}
+        />
+        <FilterPill
+          value={statusFilter}
+          onChange={(v) => { setStatusFilter(v as StatusFilter); setPage(1); }}
+          placeholder="Trạng thái"
+          options={[
+            { value: "pending",    label: "Đang chờ" },
+            { value: "authorised", label: "Đã duyệt" },
+            { value: "completed",  label: "Hoàn thành" },
+            { value: "failed",     label: "Thất bại" },
+          ]}
+        />
+        {isMobile && (
+          <DateRangePicker
+            variant="default"
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
+            onEndDateChange={(d) => { setEndDate(d); setPage(1); }}
+          />
+        )}
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="text-xs text-slate-400 hover:text-slate-700 transition-colors ml-auto"
+          >
+            Xoá lọc
+          </button>
+        )}
+      </div>
+
+      {/* Body */}
+      {isLoading ? (
+        isMobile ? <SkeletonCards /> : <SkeletonTable />
+      ) : isError ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : transactions.length === 0 ? (
+        <EmptyState hasFilters={hasFilters} onResetFilters={onResetFilters} />
+      ) : isMobile ? (
+        <MobileTransactionList transactions={transactions} onSelect={setSelectedTx} />
+      ) : (
+        <DesktopTable transactions={transactions} onSelect={setSelectedTx} />
+      )}
+
+      {/* Pagination */}
+      {transactions.length > 0 && totalPages > 1 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
+          <p className="text-sm text-slate-500">
+            {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} / {total} giao dịch
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isFetching}>
+              Trước
+            </Button>
+            <span className="text-sm text-slate-500 tabular-nums">
+              {page} / {totalPages}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isFetching}>
+              Sau
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <section aria-labelledby="wallet-transaction-history-title">
+          {content}
+        </section>
+      ) : (
+        <Card className="border-border/40 shadow-sm">
+          {content}
+        </Card>
+      )}
 
       {/* Transaction detail sheet */}
       <TransactionDetailSheet tx={selectedTx} onClose={() => setSelectedTx(null)} />
@@ -636,9 +648,9 @@ function DesktopTable({
   );
 }
 
-// ── Mobile card list ──────────────────────────────────────────────────────────
+// ── Mobile transaction list ───────────────────────────────────────────────────
 
-function CardList({
+function MobileTransactionList({
   transactions,
   onSelect,
 }: {
@@ -646,7 +658,7 @@ function CardList({
   onSelect: (tx: UnifiedTransaction) => void;
 }) {
   return (
-    <div className="flex flex-col divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+    <div className="-mx-4 flex flex-col divide-y divide-slate-100 border-y border-slate-200">
       {transactions.map((tx) => {
         const isInflow = tx.amount > 0;
         const cpName = tx.counterparty
@@ -719,7 +731,7 @@ function SkeletonTable() {
 
 function SkeletonCards() {
   return (
-    <div className="flex flex-col divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+    <div className="-mx-4 flex flex-col divide-y divide-slate-100 border-y border-slate-200">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-3.5">
           <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
@@ -782,4 +794,3 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
     </div>
   );
 }
-

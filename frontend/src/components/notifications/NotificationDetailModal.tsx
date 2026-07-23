@@ -36,14 +36,14 @@ export const NotificationDetailModal = memo(function NotificationDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-lg w-[90vw] bg-slate-900 border-slate-700"
+        className="max-w-lg w-[90vw] bg-background border-border"
         contentPadding="none"
         title={notification.title}
         description={notification.message}
         hideCloseButton
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-white/10">
+        <div className="flex items-center gap-3 border-b border-emerald-900 bg-emerald-950 px-6 pb-4 pt-5">
           <div className={`flex-shrink-0 w-10 h-10 ${style.bgColor} rounded-full flex items-center justify-center`}>
             <Bell className={`h-5 w-5 ${style.iconColor}`} />
           </div>
@@ -51,7 +51,7 @@ export const NotificationDetailModal = memo(function NotificationDetailModal({
             <p className="text-base font-semibold text-white leading-tight">
               {notification.title}
             </p>
-            <p className="text-xs text-white/50 mt-0.5">
+            <p className="mt-0.5 text-xs text-emerald-200/75">
               {formatNotificationDetailDate(notification.created_at)}
             </p>
           </div>
@@ -66,13 +66,13 @@ export const NotificationDetailModal = memo(function NotificationDetailModal({
 
         {/* Body */}
         <div className="px-6 py-5">
-          <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
             {notification.message}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end px-6 pb-5 pt-3 border-t border-white/10">
+        <div className="flex justify-end border-t border-border px-6 pb-5 pt-3">
           <Button
             onClick={handleClose}
             disabled={markAsReadSilent.isPending}

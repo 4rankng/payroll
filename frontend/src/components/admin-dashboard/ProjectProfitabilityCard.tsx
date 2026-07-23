@@ -42,7 +42,7 @@ function formatTooltipDate(label: string): string {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 // ─── Rank badge ───────────────────────────────────────────────────────────────
 
@@ -340,8 +340,8 @@ export const ProjectProfitabilityCard = memo(() => {
                   fontSize={10}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v: number) => formatVND(v)}
-                  width={48}
+                  tickFormatter={(v: number) => formatVND(v, { showSymbol: false })}
+                  width={86}
                 />
                 <Tooltip
                   content={<ChartTooltip />}

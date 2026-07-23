@@ -7,6 +7,7 @@ import { TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjectProfitability, useProjectWeeklyProfit } from '@/hooks/api/useDashboard';
+import { formatFullCurrency } from '@/utils/formatters';
 import type { ProjectProfitabilityItem, ProjectWeeklySeries } from '@/types/api/dashboard.types';
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -31,12 +32,7 @@ function formatTooltipDate(label: string): string {
 }
 
 function fmtVND(v: number): string {
-  const abs = Math.abs(v);
-  const sign = v < 0 ? '-' : '';
-  if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(0)}K`;
-  return `${sign}${abs.toLocaleString('vi-VN')}`;
+  return formatFullCurrency(v, { showSymbol: false });
 }
 
 // ─── Tooltip ─────────────────────────────────────────────────────────────────
@@ -204,7 +200,7 @@ export const ProjectProfitabilityMobile = memo(() => {
                 <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={9} tickLine={false}
                   tickFormatter={v => (v as string).slice(5)} interval="preserveStartEnd" />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={9} tickLine={false} axisLine={false}
-                  tickFormatter={fmtVND} width={38} />
+                  tickFormatter={fmtVND} width={76} />
                 <Tooltip content={<MiniTooltip />} allowEscapeViewBox={{ x: false, y: true }} position={{ y: 0 }} />
                 {allSeries.map(s => (
                   <Line key={s.project_id} type="monotone" dataKey={s.project_name}
@@ -235,7 +231,7 @@ export const ProjectProfitabilityMobile = memo(() => {
           <p className="py-6 text-center text-muted-foreground text-xs">Chưa có dữ liệu</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[760px]">
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="py-1.5 pl-4 pr-2 text-left text-muted-foreground font-medium" style={{ fontSize: 11 }}>#</th>

@@ -274,6 +274,34 @@ describe("EmployeeLocationMap", () => {
     expect(screen.getByTestId("map").parentElement).toHaveClass("h-80", "sm:h-96");
   });
 
+  it("keeps the complete checkpoint summary readable on narrow mobile cards", async () => {
+    const checkpointName = "Ting Ting Soft Headquarters";
+    const narrowCardTarget: CheckInTarget = {
+      ...singleGateTarget,
+      gates: [{ ...singleGateTarget.gates[0], name: checkpointName }],
+    };
+    const sample = { lat: 20.82, lng: 106.69, accuracy: 22, timestamp: Date.now() };
+
+    render(<EmployeeLocationMap target={narrowCardTarget} sample={sample} />);
+    await screen.findAllByTestId("source");
+
+    const mapCard = screen.getByRole("group", { name: /Bản đồ/ });
+    const summary = mapCard.firstElementChild;
+    const status = screen.getByText("Ngoài khu vực");
+    const checkpointLabel = screen.getAllByText(checkpointName)[0];
+    const radius = screen.getByText("150 m").parentElement;
+    const gpsAccuracy = screen.getByText("GPS ±22m").closest("span");
+
+    expect(summary).toHaveClass("grid", "grid-cols-[minmax(0,1fr)_auto]");
+    expect(status).toHaveClass("min-w-0", "break-words");
+    expect(status).not.toHaveClass("truncate");
+    expect(checkpointLabel).toHaveClass("min-w-0", "flex-1", "break-words");
+    expect(checkpointLabel).not.toHaveClass("truncate", "max-w-16");
+    expect(gpsAccuracy).toHaveClass("shrink-0");
+    expect(radius).toHaveClass("shrink-0", "whitespace-nowrap");
+    expect(summary).toHaveTextContent("Bán kính 150 m");
+  });
+
   it("renders MapLibre with the approved light style", async () => {
     render(<EmployeeLocationMap target={target} />);
 

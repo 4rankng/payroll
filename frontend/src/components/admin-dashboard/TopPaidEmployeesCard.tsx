@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useTopPaidEmployees } from '@/hooks/api/useDashboard';
 import type { TopPaidEmployeeItem } from '@/types/api/dashboard.types';
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 interface TopPaidEmployeesCardProps {
   month?: string; // YYYY-MM; if undefined shows all-time

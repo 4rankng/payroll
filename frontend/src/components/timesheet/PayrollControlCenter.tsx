@@ -86,7 +86,6 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       key: 'paid',
       label: 'Đã thanh toán',
       value: formatCurrency(summary?.paidAmount ?? 0),
-      mobileSpan: true,
       className: 'lg:col-span-3',
       filter: 'paid',
     },
@@ -125,7 +124,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+          <div className="grid auto-rows-fr grid-cols-1 gap-2.5 min-[480px]:grid-cols-2 sm:gap-3 lg:grid-cols-4">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}

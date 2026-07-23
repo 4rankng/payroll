@@ -30,7 +30,7 @@ export const FEE_SCHEDULE_PRESETS: FeeSchedulePreset[] = [
   {
     key: "tiered-2-1.3",
     label: "Phân tầng 2% / 1,3%",
-    description: "≥ 3,5 triệu xuống 1,3%",
+    description: "Từ 3.500.000 đ: phí giảm còn 1,3%",
     build: () => ({
       effectiveDate: tomorrowISO(),
       structure: "tiered",
@@ -45,7 +45,7 @@ export const FEE_SCHEDULE_PRESETS: FeeSchedulePreset[] = [
   {
     key: "tiered-2.5-2-1.5",
     label: "Phân tầng 2,5% / 2% / 1,5%",
-    description: "≥ 3 triệu, ≥ 10 triệu",
+    description: "Mốc 3.000.000 đ và 10.000.000 đ",
     build: () => ({
       effectiveDate: tomorrowISO(),
       structure: "tiered",

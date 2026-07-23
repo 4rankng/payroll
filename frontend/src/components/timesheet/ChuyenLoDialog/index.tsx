@@ -209,11 +209,11 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
           <DialogContent className="max-w-4xl w-full max-h-[85vh] flex flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
             {/* Header */}
-            <div className="shrink-0 bg-slate-900 px-4 pt-4 pb-3 text-white">
+            <div className="shrink-0 bg-emerald-950 px-4 pt-4 pb-3 text-white">
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white leading-tight">Kết quả chuyển lô</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-emerald-200/75 mt-0.5">
                     {ninePayStatus?.completed ?? 0} thành công · {ninePayStatus?.failed ?? 0} thất bại
                   </p>
                 </div>

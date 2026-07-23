@@ -9,20 +9,18 @@ import { vi } from 'date-fns/locale';
 export const formatVietnameseCurrency = (
   amount: number,
   options: {
-    compact?: boolean;
     showSymbol?: boolean;
   } = {}
 ): string => {
-  const { compact = false, showSymbol = true } = options;
+  const { showSymbol = true } = options;
 
   const formatter = new Intl.NumberFormat('vi-VN', {
     style: 'decimal',
-    notation: compact ? 'compact' : 'standard',
-    compactDisplay: 'short',
+    notation: 'standard',
   });
 
   const formattedAmount = formatter.format(amount);
-  return showSymbol ? `${formattedAmount} d` : formattedAmount;
+  return showSymbol ? `${formattedAmount} đ` : formattedAmount;
 };
 
 /**

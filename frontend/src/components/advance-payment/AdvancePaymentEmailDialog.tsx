@@ -196,12 +196,12 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
         hideCloseButton
       >
 
-        {/* Navy header with inline actions */}
-        <div className="bg-slate-900 px-4 pt-4 pb-3 text-white flex-shrink-0">
+        {/* Emerald header with inline actions */}
+        <div className="bg-emerald-950 px-4 pt-4 pb-3 text-white flex-shrink-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-tight">Email Sao kê ứng lương</p>
-              <p className="text-xs text-slate-400 mt-0.5">Gửi báo cáo sao kê ứng lương tháng qua email</p>
+              <p className="text-xs text-emerald-200/75 mt-0.5">Gửi báo cáo sao kê ứng lương tháng qua email</p>
             </div>
             <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
               <Button

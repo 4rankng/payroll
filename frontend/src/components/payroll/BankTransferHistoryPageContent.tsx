@@ -307,7 +307,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   };
 
   return (
-    <div className="admin-payment-history-page min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 py-3 sm:px-5 sm:py-4 md:p-6">
+    <div className="admin-payment-history-page min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.12),transparent_29rem),linear-gradient(to_bottom,#f8faf9,#f8fafc_36rem)] px-3 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] sm:px-5 sm:pb-4 sm:pt-[calc(env(safe-area-inset-top,0px)+1rem)] md:px-6 md:pb-6 md:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">
       <div className="mx-auto max-w-[1480px] space-y-4 sm:space-y-5">
         <header className="admin-payment-history-header relative overflow-hidden px-1 py-2 sm:rounded-3xl sm:border sm:border-emerald-100 sm:bg-white sm:px-6 sm:py-5 sm:shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)]">
           <div className="admin-payment-history-decoration pointer-events-none absolute -right-14 -top-16 hidden h-48 w-48 rounded-full border-[26px] border-emerald-100/70 sm:block" />

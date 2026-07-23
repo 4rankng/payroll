@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { X, Phone, Hash, Briefcase, Calendar, DollarSign, UserCheck, UserX, Search } from 'lucide-react';
 import { usePartnerEmployeeList } from '@/hooks/api/useDashboard';
 import { normalizeVietnamese } from '@/utils/vietnamese';
-import { formatDate, formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatDate, formatFullCurrency as formatVND } from '@/utils/formatters';
 import type { PartnerEmployeeListType, PartnerEmployeeDetailItem } from '@/types/api/dashboard.types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -90,8 +90,8 @@ const EmployeeCard = memo(function EmployeeCard({
         )}
         {item.cccd && <InfoRow icon={Hash} label="CCCD">{item.cccd}</InfoRow>}
         {item.last_paid_date && <InfoRow icon={Calendar} label="Trả gần nhất">{formatDate(item.last_paid_date)}</InfoRow>}
-        {item.last_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tiền gần nhất">{formatVND(item.last_paid_vnd, { useVietnamese: true })}</InfoRow>}
-        {item.total_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tổng đã trả">{formatVND(item.total_paid_vnd, { useVietnamese: true })}</InfoRow>}
+        {item.last_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tiền gần nhất">{formatVND(item.last_paid_vnd)}</InfoRow>}
+        {item.total_paid_vnd > 0 && <InfoRow icon={DollarSign} label="Tổng đã trả">{formatVND(item.total_paid_vnd)}</InfoRow>}
       </div>
     </div>
   );

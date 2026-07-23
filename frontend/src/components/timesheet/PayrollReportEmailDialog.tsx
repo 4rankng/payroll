@@ -166,11 +166,11 @@ export const PayrollReportEmailDialog = memo(function PayrollReportEmailDialog({
       >
 
         {/* ── header with actions inline ── */}
-        <div className="bg-slate-900 px-4 pt-4 pb-3 text-white flex-shrink-0">
+        <div className="bg-emerald-950 px-4 pt-4 pb-3 text-white flex-shrink-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-tight">Email Thanh Toán</p>
-              <p className="text-xs text-slate-400 mt-0.5">Gửi sao kê qua email</p>
+              <p className="text-xs text-emerald-200/75 mt-0.5">Gửi sao kê qua email</p>
             </div>
             <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
               <Button

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, User as UserIcon, Calendar, Building, X, Hash, RotateCcw } from 'lucide-react';
+import { FileText, User as UserIcon, Calendar, Building, Hash, RotateCcw } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/utils/formatters';
 import { ledgerService } from '@/services/api/ledger.service';
 import { projectService } from '@/services/api/project.service';
@@ -110,11 +110,11 @@ function LedgerEntryDetailsSheetComponent({
 
   const getAccountBadge = useCallback((account: string) => {
     const variants = {
-      cash: 'bg-emerald-100 text-emerald-800',
-      receivable: 'bg-blue-100 text-blue-800',
-      payable: 'bg-red-100 text-red-800',
-      revenue: 'bg-teal-100 text-teal-800',
-      expense: 'bg-orange-100 text-orange-800',
+      cash: 'border-success/20 bg-success/10 text-success',
+      receivable: 'border-info/20 bg-info/10 text-info',
+      payable: 'border-destructive/20 bg-destructive/10 text-destructive',
+      revenue: 'border-primary/20 bg-primary/10 text-primary',
+      expense: 'border-warning/20 bg-warning/10 text-warning',
     };
 
     // Use backend label only - no fallback
@@ -122,14 +122,17 @@ function LedgerEntryDetailsSheetComponent({
     if (!meta) {
       console.error(`Missing metadata for account: ${account}`);
       return (
-        <Badge className="bg-red-100 text-red-800">
+        <Badge className="border-destructive/20 bg-destructive/10 text-destructive">
           ERROR: {account}
         </Badge>
       );
     }
 
     return (
-      <Badge className={variants[account as keyof typeof variants] || 'bg-muted text-gray-800'}>
+      <Badge
+        variant="outline"
+        className={variants[account as keyof typeof variants] || 'border-border bg-muted text-muted-foreground'}
+      >
         {meta.label}
       </Badge>
     );
@@ -163,43 +166,55 @@ function LedgerEntryDetailsSheetComponent({
         onClose={onClose}
         avatar={{
           custom: (
-            <div className="flex flex-col gap-2 w-full">
-              <div className="flex items-center justify-between gap-2">
-                <div className={`text-lg font-bold ${
-                  entry && entry.credit > entry.debit ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {entry ? `${entry.credit > entry.debit ? '+' : ''}${ledgerService.formatCurrencyShort(Math.max(entry.debit, entry.credit))}` : '--'}
-                </div>
-                {entry && getAccountBadge(entry.account)}
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-sm font-medium line-clamp-2 leading-tight">
-                  {entry?.party || 'Chi tiết bút toán'}
-                </h1>
-                {entry && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3 flex-shrink-0" />
-                    <span>{formatDate(entry.date)}</span>
+            <div className="w-full min-w-0">
+              <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:justify-between min-[360px]:gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Giá trị bút toán
+                  </p>
+                  <div className={`mt-1 max-w-full whitespace-nowrap font-financial text-xl font-bold leading-none tabular-nums min-[360px]:text-2xl ${
+                    entry && entry.credit > entry.debit ? 'text-success' : 'text-destructive'
+                  }`}>
+                    {entry
+                      ? `${entry.credit > entry.debit ? '+' : ''}${ledgerService.formatCurrencyShort(Math.max(entry.debit, entry.credit))}`
+                      : '--'}
                   </div>
+                </div>
+                <div className="shrink-0">
+                  {entry && getAccountBadge(entry.account)}
+                </div>
+              </div>
+              <div className="mt-3 flex min-w-0 items-center gap-2 text-sm">
+                <span className="truncate font-semibold text-foreground">
+                  {entry?.party || 'Chi tiết bút toán'}
+                </span>
+                {entry && (
+                  <>
+                    <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+                    <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                      {formatDate(entry.date)}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
           )
         }}
+        compact
         footer={
           entry && (
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <Button variant="outline" onClick={onClose} className="w-full">
-                <X className="w-4 h-4 mr-2" />
+            <div className="grid w-full grid-cols-2 gap-3">
+              <Button variant="outline" onClick={onClose} className="h-11 w-full">
                 Đóng
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setShowReverseDialog(true)}
                 disabled={reverseEntry.isPending}
-                className="w-full"
+                className="h-11 w-full"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
+                <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đảo ngược
               </Button>
             </div>
@@ -241,90 +256,126 @@ function LedgerEntryDetailsSheetComponent({
             </div>
           </div>
         ) : (
-          <div className="space-y-3 overflow-hidden">
-            {/* Basic Info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 p-2 bg-muted/20 rounded">
-                <Hash className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs text-muted-foreground">ID</div>
-                  <div className="font-medium text-sm">#{entry.id}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 p-2 bg-muted/20 rounded">
-                <Building className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs text-muted-foreground">Bên liên quan</div>
-                  <div className="font-medium text-sm line-clamp-2 leading-tight">{entry.party}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="flex items-start gap-2 p-2 bg-muted/20 rounded">
-              <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-muted-foreground">Diễn giải</div>
-                <div className="text-sm font-medium line-clamp-3 leading-tight">{entry.description}</div>
-              </div>
-            </div>
-
-            {/* Project Info */}
-            {entry.project_id && projectName && (
-              <div className="flex items-center gap-2 p-2 bg-muted/20 rounded">
-                <UserIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs text-muted-foreground">Dự án</div>
-                  <div className="text-sm font-medium line-clamp-2 leading-tight">{projectName}</div>
-                </div>
-              </div>
-            )}
-
-            {/* Financial Info - Compact */}
-            <div className="bg-muted/30 p-3 rounded-xl">
-              <div className="text-xs text-muted-foreground mb-2">Thông tin tài chính</div>
-              <div className="grid grid-cols-1 gap-2 text-left sm:grid-cols-3 sm:text-center">
-                <div className="rounded bg-red-50 p-2 text-xs">
-                  <div className="text-muted-foreground">Nợ</div>
-                  <div className="font-semibold text-red-600 leading-tight">
-                    {ledgerService.formatCurrencyShort(entry.debit)}
+          <div className="space-y-3">
+            <section
+              className="ct-card ct-card-border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              aria-labelledby="ledger-entry-overview"
+            >
+              <div className="ct-card-body gap-0 p-0">
+                <h2 id="ledger-entry-overview" className="sr-only">
+                  Thông tin bút toán
+                </h2>
+                <div className="divide-y divide-border/60">
+                  <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+                    <Hash className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span className="text-sm text-muted-foreground">Mã bút toán</span>
+                    <span className="font-semibold tabular-nums text-foreground">#{entry.id}</span>
                   </div>
-                </div>
-                <div className="rounded bg-green-50 p-2 text-xs">
-                  <div className="text-muted-foreground">Có</div>
-                  <div className="font-semibold text-green-600 leading-tight">
-                    {ledgerService.formatCurrencyShort(entry.credit)}
+                  <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3">
+                    <Building className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Bên liên quan</p>
+                      <p className="mt-0.5 break-words text-sm font-semibold text-foreground">
+                        {entry.party || 'Chưa có thông tin'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="rounded bg-blue-50 p-2 text-xs">
-                  <div className="text-muted-foreground">Số dư</div>
-                  <div className={`font-semibold leading-tight ${
-                    entry.balance >= 0 ? 'text-blue-600' : 'text-red-600'
-                  }`}>
-                    {ledgerService.formatCurrencyShort(entry.balance)}
+                  {entry.project_id && projectName && (
+                    <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3">
+                      <UserIcon className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Dự án</p>
+                        <p className="mt-0.5 break-words text-sm font-semibold text-foreground">
+                          {projectName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3">
+                    <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Diễn giải</p>
+                      <p className="mt-0.5 whitespace-pre-wrap break-words text-sm font-medium leading-relaxed text-foreground">
+                        {entry.description || 'Không có diễn giải'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* System Info - Compact */}
-            <div className="bg-muted/30 p-3 rounded-xl">
-              <div className="text-xs text-muted-foreground mb-2">Thông tin hệ thống</div>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">Người tạo:</span>
-                  <span className="font-medium text-right min-w-0 break-words">{creatorName || `ID #${entry.created_by}`}</span>
-                </div>
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">Ngày tạo:</span>
-                  <span className="font-medium text-right min-w-0">{formatDateTime(entry.created_at)}</span>
-                </div>
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-muted-foreground flex-shrink-0">Cập nhật:</span>
-                  <span className="font-medium text-right min-w-0">{formatDateTime(entry.updated_at)}</span>
-                </div>
+            <section
+              className="ct-card ct-card-border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              aria-labelledby="ledger-financial-info"
+            >
+              <div className="ct-card-body gap-3 p-4">
+                <h2 id="ledger-financial-info" className="text-sm font-semibold text-foreground">
+                  Thông tin tài chính
+                </h2>
+                <dl className="grid w-full grid-cols-2 overflow-hidden rounded-xl border border-border/70 bg-muted/20 min-[440px]:grid-cols-3">
+                  <div className="ct-stat min-w-0 border-r border-border/60 px-3 py-3">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden="true" />
+                      Nợ
+                    </dt>
+                    <dd className="ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-destructive min-[360px]:text-sm">
+                      {ledgerService.formatCurrencyShort(entry.debit)}
+                    </dd>
+                  </div>
+                  <div className="ct-stat min-w-0 px-3 py-3 min-[440px]:border-r min-[440px]:border-border/60">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+                      Có
+                    </dt>
+                    <dd className="ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-success min-[360px]:text-sm">
+                      {ledgerService.formatCurrencyShort(entry.credit)}
+                    </dd>
+                  </div>
+                  <div className="ct-stat col-span-2 min-w-0 border-t border-border/60 px-3 py-3 min-[440px]:col-span-1 min-[440px]:border-t-0">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-info" aria-hidden="true" />
+                      Số dư
+                    </dt>
+                    <dd className={`ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums min-[360px]:text-sm ${
+                      entry.balance >= 0 ? 'text-info' : 'text-destructive'
+                    }`}>
+                      {ledgerService.formatCurrencyShort(entry.balance)}
+                    </dd>
+                  </div>
+                </dl>
               </div>
-            </div>
+            </section>
+
+            <section
+              className="ct-card ct-card-border border-border/80 bg-card text-card-foreground shadow-none"
+              aria-labelledby="ledger-system-info"
+            >
+              <div className="ct-card-body gap-3 p-4">
+                <h2 id="ledger-system-info" className="text-sm font-semibold text-foreground">
+                  Thông tin hệ thống
+                </h2>
+                <dl className="space-y-2.5 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="shrink-0 text-muted-foreground">Người tạo</dt>
+                    <dd className="min-w-0 break-words text-right font-medium text-foreground">
+                      {creatorName || `ID #${entry.created_by}`}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="shrink-0 text-muted-foreground">Ngày tạo</dt>
+                    <dd className="text-right font-medium tabular-nums text-foreground">
+                      {formatDateTime(entry.created_at)}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="shrink-0 text-muted-foreground">Cập nhật</dt>
+                    <dd className="text-right font-medium tabular-nums text-foreground">
+                      {formatDateTime(entry.updated_at)}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
           </div>
         )}
       </SlideSheetTemplate>

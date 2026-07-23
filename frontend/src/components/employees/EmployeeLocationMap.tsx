@@ -60,13 +60,9 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
       role="group"
       aria-label={mapAriaLabel(guidance, hasRoute, isAtGate, nearestGateName)}
     >
-      <div className="employee-type-body-sm flex items-center gap-2 px-3 py-2.5 text-slate-700">
-        <span className="truncate font-semibold text-slate-950">{statusTitle(guidance)}</span>
-        <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
-        <span className="max-w-16 truncate font-semibold text-slate-500">{nearestGateName}</span>
-        <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
-        <span className="shrink-0 font-semibold text-slate-500">{formatDistanceMeters(target.radius_meters)}</span>
-        <span className={`employee-type-pill ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700" : "border-sky-100 bg-sky-50/80 text-sky-700"}`}>
+      <div className="employee-type-body-sm grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 px-3 py-2.5 text-slate-700">
+        <span className="min-w-0 break-words font-semibold text-slate-950">{statusTitle(guidance)}</span>
+        <span className={`employee-type-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700" : "border-sky-100 bg-sky-50/80 text-sky-700"}`}>
           <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
           {sample?.accuracy ? (
             <>GPS ±{Math.round(sample.accuracy)}m</>
@@ -74,6 +70,13 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
             <>GPS</>
           )}
         </span>
+        <div className="col-span-2 flex min-w-0 items-start gap-2 text-slate-500">
+          <span className="min-w-0 flex-1 break-words font-semibold">{nearestGateName}</span>
+          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
+          <span className="shrink-0 whitespace-nowrap font-semibold">
+            Bán kính <span>{formatDistanceMeters(target.radius_meters)}</span>
+          </span>
+        </div>
       </div>
       {canRenderMap ? (
         <div className="relative h-80 w-full border-y border-slate-100 bg-slate-100 sm:h-96">

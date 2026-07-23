@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp } from 'lucide-react';
-import { formatCompactCurrency, formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatFullCurrency } from '@/utils/formatters';
 import type { WalletDemandForecastResponse } from '@/types/api/wallet.types';
 
 interface WalletDemandChartProps {
@@ -176,8 +176,8 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
               fontSize={10}
               tickLine={false}
               axisLine={false}
-              width={56}
-              tickFormatter={(v) => formatCompactCurrency(Number(v), { showSymbol: false })}
+              width={86}
+              tickFormatter={(v) => formatFullCurrency(Number(v), { showSymbol: false })}
             />
             <Tooltip
               formatter={(value: number, name: string) => [formatCurrency(Number(value)), name]}

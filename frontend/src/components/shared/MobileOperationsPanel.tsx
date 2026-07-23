@@ -76,7 +76,7 @@ export function MobileOperationsPanel({
       )}
     >
       <div className="px-4 pb-4 pt-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:justify-between">
           <div className="min-w-0">
             {eyebrow && (
               <div className="mb-2 inline-flex min-h-7 items-center rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground">
@@ -92,15 +92,15 @@ export function MobileOperationsPanel({
               </p>
             )}
           </div>
-          <div className="shrink-0 text-right">
+          <div className="min-w-0 w-full text-left min-[420px]:w-auto min-[420px]:shrink-0 min-[420px]:text-right">
             <p className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">
               {primaryLabel}
             </p>
-            <p className="mt-1 font-display text-2xl font-extrabold leading-none tracking-normal text-primary tabular-nums">
+            <p className="mt-1 break-words font-display text-xl font-extrabold leading-tight tracking-normal text-primary tabular-nums min-[420px]:text-2xl min-[420px]:leading-none">
               {primaryValue}
             </p>
             {primaryHint && (
-              <p className="mt-1 max-w-[9.5rem] text-xs leading-snug text-muted-foreground">
+              <p className="mt-1 text-xs leading-snug text-muted-foreground min-[420px]:ml-auto min-[420px]:max-w-[12rem]">
                 {primaryHint}
               </p>
             )}
@@ -109,14 +109,14 @@ export function MobileOperationsPanel({
       </div>
 
       {metrics.length > 0 && (
-        <div className="grid grid-cols-1 border-t border-border/60 min-[340px]:grid-cols-2">
+        <div className="grid grid-cols-1 border-t border-border/60 min-[420px]:grid-cols-2">
           {metrics.map((metric, index) => (
             <OperationMetricCell
               key={`${metric.label}-${index}`}
               metric={metric}
               className={cn(
-                index % 2 === 1 && 'min-[340px]:border-l',
-                index < 2 && 'min-[340px]:border-t-0',
+                index % 2 === 1 && 'min-[420px]:border-l',
+                index < 2 && 'min-[420px]:border-t-0',
               )}
             />
           ))}

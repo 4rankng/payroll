@@ -82,15 +82,15 @@ function MobileCycleSection({ section }: { section: CycleSection }) {
     <div>
       <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="mb-3 grid grid-cols-1 gap-2 min-[520px]:grid-cols-3">
         {[
           { label: 'Trung bình', value: formatCurrency(summary.mean) },
           { label: 'Thấp nhất', value: formatCurrency(summary.min) },
           { label: 'Cao nhất', value: formatCurrency(summary.max) },
         ].map(({ label: l, value }) => (
-          <div key={l} className="bg-muted/30 rounded-xl px-3 py-2.5 border border-border/30">
+          <div key={l} className="min-w-0 rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5">
             <p className="text-xs text-muted-foreground leading-none mb-1">{l}</p>
-            <p className="text-xs font-bold text-foreground tabular-nums leading-snug">{value}</p>
+            <p className="break-words text-xs font-bold leading-snug text-foreground tabular-nums">{value}</p>
           </div>
         ))}
       </div>
@@ -106,7 +106,7 @@ function MobileCycleSection({ section }: { section: CycleSection }) {
           <ResponsiveContainer width="100%" height={chartData.length * 36 + 24} minWidth={0}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 32, left: 4, bottom: 0 }} barSize={18}>
               <XAxis type="number" domain={[0, maxCount]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickCount={4} />
-              <YAxis type="category" dataKey="label" width={90} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', width: 90 }} tickLine={false} axisLine={false} />
+              <YAxis type="category" dataKey="label" width={135} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', width: 135 }} tickLine={false} axisLine={false} />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
                 contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '11px', padding: '6px 10px' }}

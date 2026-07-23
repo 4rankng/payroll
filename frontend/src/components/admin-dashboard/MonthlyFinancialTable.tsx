@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMonthlyFinancials } from '@/hooks/admin-dashboard/useMonthlyFinancials';
-import { formatCompactCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 function formatMonthLabel(month: string): string {
   try {
@@ -56,7 +56,7 @@ export const MonthlyFinancialTable = memo(() => {
                 {formatVND(data.total.fee_earned)}
               </span>
             </div>
-            <table className="w-full text-xs">
+            <table className="w-full min-w-[640px] text-xs">
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="text-left px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">Tháng</th>

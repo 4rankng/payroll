@@ -117,4 +117,14 @@ describe('BankTransferHistoryPageContent', () => {
     expect(container.querySelector('.admin-payment-history-filters')).toHaveClass('ct-card');
     expect(container.querySelector('.admin-payment-history-record')).toHaveClass('ct-card');
   });
+
+  it.each(['admin', 'partner'] as const)('keeps the %s header below the iOS safe area at every breakpoint', (variant) => {
+    const { container } = render(<BankTransferHistoryPageContent variant={variant} />);
+
+    expect(container.querySelector('.admin-payment-history-page')).toHaveClass(
+      'pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]',
+      'sm:pt-[calc(env(safe-area-inset-top,0px)+1rem)]',
+      'md:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]',
+    );
+  });
 });

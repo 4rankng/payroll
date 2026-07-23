@@ -143,8 +143,8 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
               <YAxis
                 type="category"
                 dataKey="label"
-                width={90}
-                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', width: 90 }}
+                width={150}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', width: 150 }}
                 tickLine={false}
                 axisLine={false}
               />
