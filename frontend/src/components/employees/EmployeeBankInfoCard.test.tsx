@@ -51,4 +51,19 @@ describe("EmployeeBankInfoCard", () => {
     expect(screen.getByText("Liên hệ quản lý để cập nhật")).toBeInTheDocument();
     expect(screen.queryByText("Đã xác minh")).not.toBeInTheDocument();
   });
+
+  it("keeps partial bank data in the incomplete state used by request eligibility", () => {
+    render(
+      <EmployeeBankInfoCard
+        profile={{
+          fullname: "Nguyễn Văn An",
+          bank_account_number: "11122111918888",
+          bank_account_name: "Nguyễn Văn An",
+        } as EmployeeProfile}
+      />
+    );
+
+    expect(screen.getByText("Chưa có thông tin ngân hàng")).toBeInTheDocument();
+    expect(screen.queryByText("11122111918888")).not.toBeInTheDocument();
+  });
 });

@@ -44,6 +44,7 @@ const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
   const [activitySchedule, setActivitySchedule] = useState<'weekly' | 'monthly' | 'flexible' | null>(null);
   const [bankProjectId, setBankProjectId] = useState<number | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const { data: bankData } = useBankUsageAllProjects();
 
@@ -62,20 +63,43 @@ const AdminDashboard = () => {
 
   const { data, loading, employees, refetch, isRefreshing } = useDashboardData(monthParam);
   const actions = useDashboardActions();
-  const { data: pendingData } = useTimesheets({ status: 'pending_approval', page: 1, pageSize: 20 });
-  const { data: activityData } = useEmployeeActivityStats(monthParam);
+  const {
+    data: pendingData,
+    isError: hasPendingError,
+    isFetching: isPendingFetching,
+    refetch: refetchPending,
+  } = useTimesheets({ status: 'pending_approval', page: 1, pageSize: 20 });
+  const {
+    data: activityData,
+    isLoading: isActivityLoading,
+    isError: hasActivityError,
+    isFetching: isActivityFetching,
+    refetch: refetchActivity,
+  } = useEmployeeActivityStats(monthParam);
   const dashboardNav = useDashboardNavigation();
 
-  const pendingApprovals = pendingData?.pagination?.totalRecords || 0;
+  const pendingApprovals = pendingData?.pagination?.totalRecords ?? null;
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-    actions.handleRefresh?.();
-  }, [actions, refetch]);
+  const handleRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refetch(),
+        refetchPending(),
+        refetchActivity(),
+        Promise.resolve(actions.handleRefresh?.()),
+      ]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [actions, refetch, refetchActivity, refetchPending]);
+
+  const isDashboardRefreshing =
+    isManualRefreshing || isRefreshing || isPendingFetching || isActivityFetching;
 
   const { activityStats } = useDashboardStats({
     dashboardSummary: data.dashboardSummary,
-    totalPendingApprovals: pendingApprovals,
+    totalPendingApprovals: pendingApprovals ?? 0,
     dashboardNav,
     activityStats: activityData ?? null,
     onActivityClick: setActivitySchedule,
@@ -108,7 +132,11 @@ const AdminDashboard = () => {
       {
         label: 'Chờ giải ngân',
         value: formatVND(data.dashboardSummary.pending_salary_this_month),
-        context: `${pendingApprovals.toLocaleString('vi-VN')} bảng công đang chờ duyệt`,
+        context: hasPendingError
+          ? 'Không thể tải hàng đợi bảng công'
+          : pendingApprovals === null
+            ? 'Đang tải hàng đợi bảng công'
+            : `${pendingApprovals.toLocaleString('vi-VN')} bảng công chờ duyệt trên toàn hệ thống`,
         icon: ArrowRightLeft,
         tone: data.dashboardSummary.pending_salary_this_month > 0 ? 'warning' : 'neutral',
         onClick: dashboardNav.navigateToSalaryLedger,
@@ -129,7 +157,7 @@ const AdminDashboard = () => {
         onClick: dashboardNav.navigateToActiveEmployees,
       },
     ];
-  }, [dashboardNav, data.dashboardSummary, pendingApprovals]);
+  }, [dashboardNav, data.dashboardSummary, hasPendingError, pendingApprovals]);
 
   const priorityItems = useMemo<DashboardPriorityItem[]>(() => {
     if (!data.dashboardSummary) {
@@ -140,14 +168,32 @@ const AdminDashboard = () => {
       {
         title: 'Bảng công chờ duyệt',
         detail:
-          pendingApprovals > 0
-            ? 'Xử lý các bảng công này trước khi khóa sổ lương kỳ hiện tại.'
-            : 'Không có bảng công đang chờ xử lý trong kỳ hiện tại.',
-        value: pendingApprovals.toLocaleString('vi-VN'),
-        statusLabel: pendingApprovals > 0 ? 'Cần duyệt' : 'Đã xử lý',
+          hasPendingError
+            ? 'Không thể tải hàng đợi toàn hệ thống. Làm mới số liệu để thử lại.'
+            : pendingApprovals === null
+              ? 'Đang tải hàng đợi bảng công trên toàn hệ thống.'
+              : pendingApprovals > 0
+                ? 'Xử lý các bảng công này trước khi khóa sổ lương.'
+                : 'Không có bảng công đang chờ xử lý trên toàn hệ thống.',
+        value: pendingApprovals === null ? '--' : pendingApprovals.toLocaleString('vi-VN'),
+        statusLabel: hasPendingError
+          ? 'Không thể tải'
+          : pendingApprovals === null
+            ? 'Đang tải'
+            : pendingApprovals > 0
+              ? 'Cần duyệt'
+              : 'Đã xử lý',
         icon: AlertTriangle,
-        tone: pendingApprovals > 0 ? 'warning' : 'success',
-        onClick: pendingApprovals > 0 ? dashboardNav.navigateToPendingApprovals : undefined,
+        tone:
+          hasPendingError || pendingApprovals === null
+            ? 'neutral'
+            : pendingApprovals > 0
+              ? 'warning'
+              : 'success',
+        onClick:
+          pendingApprovals !== null && pendingApprovals > 0
+            ? dashboardNav.navigateToPendingApprovals
+            : undefined,
       },
       {
         title: 'Lương chờ giải ngân',
@@ -160,7 +206,7 @@ const AdminDashboard = () => {
         onClick: dashboardNav.navigateToSalaryLedger,
       },
     ];
-  }, [dashboardNav, data.dashboardSummary, monthLabel, pendingApprovals]);
+  }, [dashboardNav, data.dashboardSummary, hasPendingError, monthLabel, pendingApprovals]);
 
   if (loading) {
     return (
@@ -186,7 +232,7 @@ const AdminDashboard = () => {
           <div className="min-w-0 xl:col-span-7">
             <DashboardPriorityList
               items={priorityItems}
-              isRefreshing={isRefreshing}
+              isRefreshing={isDashboardRefreshing}
               onRefresh={handleRefresh}
             />
           </div>
@@ -194,8 +240,10 @@ const AdminDashboard = () => {
           <div className="min-w-0 xl:col-span-5">
             <DashboardActivityPanel
               monthLabel={monthLabel}
-              totalActive={activityData?.active_total ?? 0}
+              totalActive={activityData?.active_total}
               items={activityItems}
+              isLoading={isActivityLoading && !activityData}
+              hasError={hasActivityError}
             />
           </div>
 
@@ -268,7 +316,7 @@ const AdminDashboard = () => {
           >
             <section
               data-slot="dashboard-salary-distribution"
-              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7"
+              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7 xl:col-start-1 xl:row-start-1"
             >
               <DashboardSectionHeader
                 eyebrow="Phân tích chi trả"
@@ -279,35 +327,39 @@ const AdminDashboard = () => {
               <SalaryDistributionChart />
             </section>
 
-            <div className="min-w-0 space-y-4 xl:col-span-5">
-              <section data-slot="dashboard-top-paid" className="admin-dashboard-workforce-group min-w-0 space-y-3">
-                <DashboardSectionHeader
-                  eyebrow="Nhân sự"
-                  title={`Chi trả theo nhân viên — ${monthLabel}`}
-                  subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
-                  icon={Trophy}
-                />
-                <TopPaidEmployeesCard month={monthParam} />
-              </section>
+            <section
+              data-slot="dashboard-top-paid"
+              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-5 xl:col-start-8 xl:row-span-2 xl:row-start-1"
+            >
+              <DashboardSectionHeader
+                eyebrow="Nhân sự"
+                title={`Chi trả theo nhân viên — ${monthLabel}`}
+                subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
+                icon={Trophy}
+              />
+              <TopPaidEmployeesCard month={monthParam} />
+            </section>
 
-              <section data-slot="dashboard-recent-employees" className="admin-dashboard-workforce-group min-w-0 space-y-3">
-                <DashboardSectionHeader
-                  eyebrow="Nhân sự"
-                  title="Nhân viên mới nhất"
-                  subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế công trường."
-                  icon={Users}
-                />
-                <RecentEmployeesCard
-                  employees={employees.employees}
-                  isLoading={employees.isLoading}
-                  isLoadingMore={employees.isLoadingMore}
-                  totalEmployees={employees.totalEmployees}
-                  weeks={employees.weeks}
-                  onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
-                  onLoadMore={employees.loadMore}
-                />
-              </section>
-            </div>
+            <section
+              data-slot="dashboard-recent-employees"
+              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7 xl:col-start-1 xl:row-start-2"
+            >
+              <DashboardSectionHeader
+                eyebrow="Nhân sự"
+                title="Nhân viên mới nhất"
+                subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế công trường."
+                icon={Users}
+              />
+              <RecentEmployeesCard
+                employees={employees.employees}
+                isLoading={employees.isLoading}
+                isLoadingMore={employees.isLoadingMore}
+                totalEmployees={employees.totalEmployees}
+                weeks={employees.weeks}
+                onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
+                onLoadMore={employees.loadMore}
+              />
+            </section>
           </div>
 
           <section

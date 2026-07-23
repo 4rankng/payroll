@@ -134,9 +134,9 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           description="Danh sách thông báo của bạn"
           data-theme={variant === 'employee' ? 'employee' : 'congtruong'}
           className={cn(
-            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-card p-0 text-card-foreground",
+            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-card p-0 text-card-foreground shadow-none",
             isMobile
-              ? "h-[100dvh] max-h-none rounded-none shadow-none"
+              ? "h-[100dvh] max-h-none rounded-none"
               : "h-full"
           )}
         >
@@ -185,7 +185,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   onClick={() => setActiveView(tab.value)}
                   className={`inline-flex items-center justify-center h-11 min-h-11 w-full gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
-                      ? `bg-card shadow-sm ${theme.activeTabText}`
+                      ? `bg-card ${theme.activeTabText}`
                       : 'text-neutral-content/65 hover:text-neutral-content'
                   }`}
                 >

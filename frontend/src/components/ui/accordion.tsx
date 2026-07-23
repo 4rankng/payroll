@@ -21,13 +21,20 @@ AccordionItem.displayName = "AccordionItem"
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & { hideChevron?: boolean }
->(({ className, children, hideChevron, ...props }, ref) => (
+>(({ className, children, hideChevron, disabled, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
-    {/* Render trigger as a child element (div) to avoid native button nesting issues when callers include buttons inside the header */}
-    <AccordionPrimitive.Trigger asChild {...props}>
+    {/* Keep a non-button wrapper for callers that include nested controls, while restoring button semantics and keyboard activation. */}
+    <AccordionPrimitive.Trigger asChild disabled={disabled} {...props}>
       <div
-        // attach the forwarded ref to the child element
         ref={ref as unknown as React.Ref<HTMLDivElement>}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled || undefined}
+        onKeyDown={(event) => {
+          if (disabled || (event.key !== "Enter" && event.key !== " ")) return
+          event.preventDefault()
+          event.currentTarget.click()
+        }}
         className={cn(
           "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
           className

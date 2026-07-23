@@ -42,8 +42,10 @@ interface DashboardPriorityListProps {
 
 interface DashboardActivityPanelProps {
   monthLabel: string;
-  totalActive: number;
+  totalActive?: number;
   items: DashboardActivityItem[];
+  isLoading?: boolean;
+  hasError?: boolean;
 }
 
 interface DashboardAreaHeaderProps {
@@ -235,6 +237,8 @@ export function DashboardActivityPanel({
   monthLabel,
   totalActive,
   items,
+  isLoading = false,
+  hasError = false,
 }: DashboardActivityPanelProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
@@ -251,15 +255,32 @@ export function DashboardActivityPanel({
           </div>
           <div className="text-right">
             <p className="font-display text-2xl font-semibold text-foreground tabular-nums">
-              {totalActive.toLocaleString('vi-VN')}
+              {isLoading || hasError || totalActive === undefined
+                ? '--'
+                : totalActive.toLocaleString('vi-VN')}
             </p>
             <p className="text-[11px] text-muted-foreground">tổng hoạt động</p>
           </div>
         </div>
       </div>
 
-      <div className="divide-y divide-border/60">
-        {items.map((item) => (
+      <div
+        className="divide-y divide-border/60"
+        aria-busy={isLoading}
+        aria-live="polite"
+      >
+        {hasError ? (
+          <p className="px-4 py-5 text-sm text-destructive sm:px-5">
+            Không thể tải dữ liệu hoạt động. Vui lòng làm mới để thử lại.
+          </p>
+        ) : isLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="flex min-h-11 items-center justify-between px-4 py-3 sm:px-5">
+              <span className="h-3 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+              <span className="h-4 w-8 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+            </div>
+          ))
+        ) : items.map((item) => (
           <button
             key={item.label}
             type="button"

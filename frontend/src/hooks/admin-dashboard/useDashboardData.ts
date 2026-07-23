@@ -71,11 +71,11 @@ export const useDashboardData = (month?: string) => {
     recentEmployees,
     employees, // New employees pagination object
     activities, // Expose activities pagination
-    refetch: () => {
-      activitiesPaginationQuery.refetch();
-      newEmployeesQuery.refetch();
-      dashboardSummaryQuery.refetch();
-    },
+    refetch: () => Promise.all([
+      activitiesPaginationQuery.refetch(),
+      newEmployeesQuery.refetch(),
+      dashboardSummaryQuery.refetch(),
+    ]),
     isRefreshing: activitiesPaginationQuery.isFetching ||
                   newEmployeesQuery.isFetching ||
                   dashboardSummaryQuery.isFetching

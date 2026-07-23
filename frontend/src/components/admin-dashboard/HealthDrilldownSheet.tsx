@@ -145,8 +145,8 @@ export function HealthDrilldownSheet({ target, month, periodStart, periodEnd, on
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
-          'w-full p-0 flex flex-col sm:w-[min(920px,calc(100vw-2rem))]',
-          isMobile && 'rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]',
+          'flex w-full flex-col p-0 shadow-none sm:w-[min(920px,calc(100vw-2rem))]',
+          isMobile && 'max-h-[94dvh] rounded-t-2xl',
         )}
       >
         {/* Mobile drag handle */}
@@ -280,7 +280,7 @@ function FailedAttemptsTable({
     <div className="space-y-3">
       <CountSummary total={total} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.06)] sm:block">
+      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-none sm:block">
         <div className="grid grid-cols-[minmax(160px,1.15fr)_minmax(220px,1.55fr)_minmax(112px,.75fr)_minmax(180px,1.35fr)_minmax(90px,.55fr)] border-b border-slate-200 bg-slate-50/80 px-4 py-3">
           <FailedAttemptHeader>Nhân viên</FailedAttemptHeader>
           <FailedAttemptHeader>Lý do</FailedAttemptHeader>
@@ -322,7 +322,7 @@ function FailedAttemptMapDialog({ row, onClose }: { row: AdminFailedAttempt | nu
       <DialogContent
         title="Bản đồ lần chấm công"
         hideCloseButton
-        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 gap-0"
+        className="inset-0 max-h-none max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 shadow-none"
         contentPadding="none"
       >
         {row ? (
@@ -358,7 +358,7 @@ function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?
     <div className="space-y-3">
       <CountSummary total={rows.length} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-none sm:block">
         <Table className="table-fixed">
           <colgroup>
             <col className="w-[16%]" />
@@ -462,7 +462,7 @@ function AttendanceRowsTable({
     <div className="space-y-3">
       <CountSummary total={total} isFetching={isFetching} noun="nhân viên" />
 
-      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm sm:block">
+      <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card shadow-none sm:block">
         <Table className="table-fixed">
           {isRejected ? (
             <colgroup>
@@ -619,7 +619,7 @@ function AttendanceMapDialog({
       <DialogContent
         title="Bản đồ chấm công"
         hideCloseButton
-        className="inset-0 translate-x-0 translate-y-0 max-w-none max-h-none rounded-none border-0 gap-0"
+        className="inset-0 max-h-none max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 shadow-none"
         contentPadding="none"
       >
         {row ? (
@@ -660,7 +660,7 @@ function formatDateTime(value?: string | null): string {
 
 function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceResponse; onOpenMap: () => void }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-none">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <Monogram name={row.employee_name} />
@@ -698,7 +698,7 @@ function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceRespon
 
 function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceResponse; onOpenMap: () => void }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-none">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <Monogram name={row.employee_name} />
@@ -764,7 +764,7 @@ function EmptyState({ label }: { label: string }) {
 function CountSummary({ total, isFetching, noun }: { total: number; isFetching: boolean; noun: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 shadow-sm">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 shadow-none">
         <span className="text-xs font-medium text-muted-foreground">Tổng</span>
         <span className="font-display text-sm font-bold tabular-nums text-foreground">
           {total.toLocaleString('vi-VN')}
@@ -1034,7 +1034,7 @@ function FailedAttemptCard({
   const meta = reasonMeta(row.reason_category);
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.07)]">
+    <article className="rounded-xl border border-slate-200 bg-white p-3 shadow-none">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <Monogram name={row.employee_name} />
@@ -1091,7 +1091,7 @@ function FailedAttemptCard({
 
 function QuotaAnomalyCard({ row }: { row: QuotaAnomalyRow }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border/60 bg-card p-3 shadow-none">
       <div className="mb-2 flex items-center gap-2.5">
         <Monogram name={row.employee_name} />
         <div className="min-w-0">

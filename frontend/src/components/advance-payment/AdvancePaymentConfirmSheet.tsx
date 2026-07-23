@@ -35,7 +35,7 @@ export function AdvancePaymentConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="mx-auto flex h-auto max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-white p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] sm:max-w-lg"
+        className="mx-auto flex h-auto max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white p-0 shadow-none sm:max-w-lg"
         title="Xác nhận yêu cầu ứng lương"
         description="Kiểm tra số tiền thực nhận và tài khoản nhận tiền"
       >
@@ -115,14 +115,14 @@ export function AdvancePaymentConfirmSheet({
           <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}
-              className="employee-type-action min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-slate-600 transition-transform active:scale-[0.97]"
+              className="employee-type-action min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-slate-600 transition-colors active:bg-slate-100"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
               disabled={isPending || !feeDetails}
-              className="employee-type-action min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-white shadow-[0_14px_30px_-18px_rgba(0,177,79,0.9)] transition-transform active:scale-[0.97] disabled:opacity-50"
+              className="employee-type-action min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-white shadow-none transition-colors active:bg-employee-700 disabled:opacity-50"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">

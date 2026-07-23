@@ -273,7 +273,7 @@ export function AttendanceReference({
             Ca làm việc
           </h3>
           {schedules.length > 1 ? (
-            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 shadow-inner shadow-slate-200/60" role="tablist" aria-label="Chọn ca làm">
+            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5" role="tablist" aria-label="Chọn ca làm">
               {schedules.map((schedule, index) => (
                 <button
                   key={`${schedule.shift_start}-${schedule.shift_end}`}
@@ -283,7 +283,7 @@ export function AttendanceReference({
                   aria-controls={selectedShiftPanelId}
                   aria-selected={selectedShiftIndex === index}
                   onClick={() => setSelectedShiftIndex(index)}
-                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-all duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.22)]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
+                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-colors duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
                 >
                   {resolveShiftLabel(schedule, index)}
                 </button>
@@ -294,7 +294,7 @@ export function AttendanceReference({
             <div
               id={selectedShiftPanelId}
               aria-labelledby={selectedShiftTabId}
-              className="mt-5 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+              className="mt-5 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white"
               role="tabpanel"
             >
               <div role="table" aria-label="Khung giờ ca làm">
@@ -335,7 +335,7 @@ export function AttendanceReference({
             {gates.slice(0, 2).map((gate, index) => (
               <li
                 key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-3 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
+                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-3 font-semibold leading-5 text-slate-900"
               >
                 {gate.name || `Điểm chấm công ${index + 1}`}
               </li>
@@ -348,7 +348,7 @@ export function AttendanceReference({
                   aria-controls={additionalGatesId}
                   aria-expanded={showAdditionalGates}
                   onClick={() => setShowAdditionalGates((visible) => !visible)}
-                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950 shadow-inner shadow-slate-200/70" : "border-slate-200/80 bg-whtie text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)] hover:border-slate-300 hover:bg-white"}`}
+                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950" : "border-slate-200/80 bg-white text-slate-900 hover:border-slate-300"}`}
                 >
                   <strong className="text-xl leading-none">+{gates.length - 2}</strong>
                 </button>
@@ -360,7 +360,7 @@ export function AttendanceReference({
               {gates.slice(2).map((gate, index) => (
                 <li
                   key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-whtie px-4 font-semibold leading-5 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.04)]"
+                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-4 font-semibold leading-5 text-slate-900"
                 >
                   {gate.name || `Điểm chấm công ${index + 3}`}
                 </li>
@@ -804,7 +804,7 @@ export function EmployeeCheckInCard({
     return (
       <>
         <div
-          className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${className ?? ""}`}
+          className={`rounded-2xl border border-slate-200 bg-white p-4 ${className ?? ""}`}
           style={style}
         >
           <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
@@ -1214,7 +1214,7 @@ export function EmployeeCheckInCard({
         </div>
       ) : null}
       {attendance?.status === "completed" ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
                 <BadgeCheck className="h-5 w-5" />
@@ -1259,7 +1259,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{
                   boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
                 }}
@@ -1277,7 +1277,7 @@ export function EmployeeCheckInCard({
           ) : null}
         </div>
       ) : attendance?.status === "checked_in" ? (
-        <div className="rounded-2xl border border-[#B7E5C7] bg-white p-4 shadow-[0_2px_8px_rgba(16,24,40,0.06)]">
+        <div className="rounded-2xl border border-[#B7E5C7] bg-white p-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF3] text-[#067647]">
                 <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
@@ -1306,7 +1306,7 @@ export function EmployeeCheckInCard({
             </Button>
             <Button
               size="lg"
-              className="employee-type-action hidden h-12 rounded-xl bg-[#07883F] font-semibold text-white shadow-[0_8px_16px_-10px_rgba(6,118,71,0.7)] hover:bg-[#067647] lg:inline-flex"
+              className="employee-type-action hidden h-12 rounded-xl bg-[#07883F] font-semibold text-white hover:bg-[#067647] lg:inline-flex"
               disabled={isPending || checkoutCoolingDown}
               onClick={() => handleAction("check_out")}
             >
@@ -1322,7 +1322,7 @@ export function EmployeeCheckInCard({
           </div>
         </div>
       ) : attendance?.status === "orphaned" ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-3 shadow-sm">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-red-600">
               <AlertCircle className="h-5 w-5" />
@@ -1336,7 +1336,7 @@ export function EmployeeCheckInCard({
           </div>
         </div>
       ) : attendance?.status === "rejected" ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3 shadow-sm">
+        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-orange-600">
               <AlertCircle className="h-5 w-5" />
@@ -1356,9 +1356,9 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700 shadow-sm">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700">
                   <Clock className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -1370,7 +1370,7 @@ export function EmployeeCheckInCard({
                       : "Chưa có ca làm việc được cấu hình."}
                   </p>
                   {secondsUntilWindow != null && (
-                    <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 font-semibold text-amber-800 shadow-sm">
+                    <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 font-semibold text-amber-800">
                       {(() => {
                         const m = Math.floor(secondsUntilWindow / 60);
                         const s = secondsUntilWindow % 60;
@@ -1389,7 +1389,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
             </div>
           ) : gpsReady ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 shadow-sm">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-employee">
                     <MapPin className="h-5 w-5" />
@@ -1403,7 +1403,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className={`employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                className={`employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1417,7 +1417,7 @@ export function EmployeeCheckInCard({
               </Button>
             </div>
           ) : geofenceInstruction ? (
-              <div className="rounded-2xl border border-amber-200 bg-white p-3 shadow-sm">
+              <div className="rounded-2xl border border-amber-200 bg-white p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
                     <MapPin className="h-5 w-5" />
@@ -1435,7 +1435,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1449,7 +1449,7 @@ export function EmployeeCheckInCard({
               </Button>
             </div>
           ) : gpsAcquiring ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
                     <MapPin className="h-5 w-5 animate-pulse" />
@@ -1469,7 +1469,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action check-in-warming mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md lg:inline-flex"
+                className="employee-type-action check-in-warming mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled
               >
@@ -1478,7 +1478,7 @@ export function EmployeeCheckInCard({
               </Button>
             </div>
           ) : location.fatalError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-3 shadow-sm">
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
                   <MapPin className="h-5 w-5" />
@@ -1494,7 +1494,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
             </div>
           ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
                     <MapPin className="h-5 w-5" />
@@ -1508,7 +1508,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white shadow-md hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}

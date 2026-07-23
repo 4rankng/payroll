@@ -65,8 +65,8 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
         <SheetContent
           side={isMobile ? "bottom" : "right"}
           className={cn(
-            "admin-dashboard-activity-sheet flex w-full flex-col p-0 sm:w-[480px]",
-            isMobile && "max-h-[94dvh] rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.08)]",
+            "admin-dashboard-activity-sheet flex w-full flex-col p-0 shadow-none sm:w-[480px]",
+            isMobile && "max-h-[94dvh] rounded-t-2xl",
           )}
         >
           {/* Mobile drag handle */}

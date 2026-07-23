@@ -66,7 +66,7 @@ export function EmployeeAttendanceActionDock({
   return (
     <div
       ref={dockRef}
-      className="employee-attendance-action-dock fixed inset-x-0 bottom-0 z-40 min-h-[calc(4.25rem+env(safe-area-inset-bottom))] border-t border-base-300 bg-base-100/95 shadow-[0_-12px_32px_-24px_rgba(16,24,40,0.35)] backdrop-blur"
+      className="employee-attendance-action-dock fixed inset-x-0 bottom-0 z-40 min-h-[calc(4.25rem+env(safe-area-inset-bottom))] border-t border-base-300 bg-base-100 shadow-none"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       role="toolbar"
       aria-label="Hành động nhân viên"
@@ -83,7 +83,7 @@ export function EmployeeAttendanceActionDock({
 
         <button
           type="button"
-          className="ct-btn ct-btn-primary employee-type-action h-auto min-h-11 min-w-0 whitespace-normal rounded-[var(--employee-radius-control)] px-3 py-2 text-center text-sm font-semibold leading-tight normal-case shadow-[var(--employee-cta-shadow)]"
+          className="ct-btn ct-btn-primary employee-type-action h-auto min-h-11 min-w-0 whitespace-normal rounded-[var(--employee-radius-control)] px-3 py-2 text-center text-sm font-semibold leading-tight normal-case shadow-none"
           disabled={disabled}
           onClick={onAttendanceAction}
         >

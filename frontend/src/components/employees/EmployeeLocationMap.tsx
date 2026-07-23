@@ -45,7 +45,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
 
   return (
     <div
-      className="relative isolate z-0 overflow-hidden rounded-xl border border-sky-100 bg-white shadow-sm"
+      className="relative isolate z-0 overflow-hidden rounded-xl border border-sky-100 bg-white"
       role="group"
       aria-label={hasRoute
         ? `Bản đồ hướng tới ${nearestGateName}, cách ${formatDistanceMeters(guidance.distanceMeters)} theo đường thẳng`
@@ -76,7 +76,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
       ) : (
         <div className="relative h-60 w-full border-t border-slate-100 bg-slate-100">
           {hasRoute || isAtGate ? (
-            <div className="employee-type-body pointer-events-none absolute bottom-3 left-1/2 z-[500] inline-flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-full bg-white/95 px-3 py-2 font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-200/80 backdrop-blur-sm">
+            <div className="employee-type-body pointer-events-none absolute bottom-3 left-1/2 z-[500] inline-flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-2 font-semibold text-emerald-800">
               <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span className="truncate">{nearestGateName}</span>
             </div>

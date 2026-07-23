@@ -73,9 +73,11 @@ interface ChipProps { label: string; color: string; active: boolean; onPress: ()
 
 const Chip = memo(({ label, color, active, onPress }: ChipProps) => (
   <button
+    type="button"
+    aria-pressed={active}
     onClick={onPress}
-    className="flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition-opacity active:opacity-70"
-    style={{ opacity: active ? 1 : 0.3, fontSize: 11, lineHeight: '16px', padding: '1px 5px' }}
+    className="flex min-h-11 items-center gap-1 whitespace-nowrap flex-shrink-0 transition-opacity active:opacity-70"
+    style={{ opacity: active ? 1 : 0.3, fontSize: 11, lineHeight: '16px', padding: '4px 8px' }}
   >
     <span className="rounded-full flex-shrink-0" style={{ width: 6, height: 6, backgroundColor: color }} />
     <span style={{ color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', fontWeight: active ? 600 : 400 }}>
@@ -192,8 +194,12 @@ export const ProjectProfitabilityMobile = memo(() => {
           ) : !chartData.length ? (
             <div className="h-[140px] flex items-center justify-center text-muted-foreground text-xs">Chưa có dữ liệu</div>
           ) : (
-            <ResponsiveContainer width="100%" height={140} minWidth={0}>
-              <LineChart data={chartData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
+            <div
+              role="img"
+              aria-label="Biểu đồ đường thể hiện lợi nhuận lũy kế theo tuần của tối đa tám dự án trong 84 ngày gần nhất. Có thể dùng các nút tên dự án phía trên để hiện hoặc ẩn từng dòng."
+            >
+              <ResponsiveContainer width="100%" height={140} minWidth={0}>
+                <LineChart data={chartData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
                 <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={9} tickLine={false}
                   tickFormatter={v => (v as string).slice(5)} interval="preserveStartEnd" />
@@ -206,8 +212,9 @@ export const ProjectProfitabilityMobile = memo(() => {
                     dot={false} activeDot={hiddenIds.has(s.project_id) ? false : { r: 2.5 }}
                     hide={hiddenIds.has(s.project_id)} />
                 ))}
-              </LineChart>
-            </ResponsiveContainer>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
       </div>

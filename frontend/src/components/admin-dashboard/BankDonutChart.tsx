@@ -27,6 +27,15 @@ interface BankDonutChartProps {
 // ── constants ──────────────────────────────────────────────────────────────────
 const INSIDE_THRESHOLD = 15;
 
+function getContrastText(hexColor: string): '#0f172a' | '#ffffff' {
+  const hex = hexColor.replace('#', '');
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+  return luminance > 0.56 ? '#0f172a' : '#ffffff';
+}
+
 // ── custom plugin: inside + outside labels with polyline connectors ────────────
 function createLabelPlugin(banks: BankSlice[]) {
   // Chart.js's chart.getDatasetMeta(0).data is typed as the generic Element
@@ -63,7 +72,7 @@ function createLabelPlugin(banks: BankSlice[]) {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = getContrastText(b.color);
         ctx.font = '500 13px system-ui,sans-serif';
         ctx.fillText(b.shortName, lx, ly - 7);
         ctx.font = '500 12px system-ui,sans-serif';
@@ -113,6 +122,7 @@ function createLabelPlugin(banks: BankSlice[]) {
       }
 
       // Draw connectors and labels
+      const foregroundColor = getComputedStyle(chart.canvas).color || '#334155';
       items.forEach(({ b, edgeX, edgeY, elbowX, elbowY, x, y }) => {
         const isRight = elbowX > cx;
         const textX = x + (isRight ? 6 : -6);
@@ -128,7 +138,7 @@ function createLabelPlugin(banks: BankSlice[]) {
 
         ctx.beginPath();
         ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = b.color;
+        ctx.fillStyle = foregroundColor;
         ctx.fill();
 
         ctx.textAlign = isRight ? 'left' : 'right';
@@ -223,11 +233,11 @@ export const BankDonutChart = memo(function BankDonutChart({
   return (
     <div>
       <div className="flex justify-center">
-        <div className="relative" style={{ width: 320, height: 320 }}>
+        <div className="relative aspect-square w-full max-w-[320px]">
           <canvas
             ref={canvasRef}
             role="img"
-            aria-label={`Donut chart: ${slices.map((b) => `${b.shortName} ${b.pct}%`).join(', ')}`}
+            aria-label={`Biểu đồ phân bổ ngân hàng: ${slices.map((b) => `${b.shortName} ${b.pct}%`).join(', ')}`}
           />
           <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none"
@@ -276,7 +286,7 @@ const LegendItem = memo(function LegendItem({ slice, isTop }: { slice: BankSlice
           </span>
         )}
       </div>
-      <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: slice.color }}>
+      <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
         {slice.pct}%
       </span>
     </div>

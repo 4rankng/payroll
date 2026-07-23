@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from 'react';
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Building2, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,12 +79,48 @@ export const ProjectSelector = memo(function ProjectSelector({
 }: ProjectSelectorProps) {
   const [open, setOpen] = useState(false);
   const selected = projects.find((p) => p.project_id === selectedId);
+  const listboxId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const focusFrame = requestAnimationFrame(() => {
+      listboxRef.current?.querySelector<HTMLButtonElement>('[role="option"]')?.focus();
+    });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!listboxRef.current?.contains(target) && !triggerRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [open]);
 
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs border border-border/60 rounded-lg px-2.5 py-1.5 bg-card hover:bg-muted/40 transition-colors"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-haspopup="listbox"
+        className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2.5 py-1.5 text-xs transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <span className="max-w-[140px] truncate text-foreground">
           {selected ? selected.project_name : 'Tất cả dự án'}
@@ -93,18 +129,30 @@ export const ProjectSelector = memo(function ProjectSelector({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-xl min-w-[180px] max-h-60 overflow-y-auto py-1">
+        <div
+          ref={listboxRef}
+          id={listboxId}
+          role="listbox"
+          aria-label="Chọn dự án"
+          className="absolute right-0 top-full z-50 mt-1 max-h-60 min-w-[180px] overflow-y-auto rounded-xl border border-border bg-card py-1 shadow-none"
+        >
           <button
+            type="button"
+            role="option"
+            aria-selected={selectedId === null}
             onClick={() => { onSelect(null); setOpen(false); }}
-            className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${selectedId === null ? 'font-semibold text-primary' : 'text-foreground'}`}
+            className={`min-h-11 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedId === null ? 'font-semibold text-primary' : 'text-foreground'}`}
           >
             Tất cả dự án
           </button>
           {projects.map((p) => (
             <button
               key={p.project_id}
+              type="button"
+              role="option"
+              aria-selected={selectedId === p.project_id}
               onClick={() => { onSelect(p.project_id); setOpen(false); }}
-              className={`w-full text-left px-3 py-2 text-xs hover:bg-muted/50 transition-colors ${selectedId === p.project_id ? 'font-semibold text-primary' : 'text-foreground'}`}
+              className={`min-h-11 w-full px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${selectedId === p.project_id ? 'font-semibold text-primary' : 'text-foreground'}`}
             >
               <span className="truncate block">{p.project_name}</span>
               <span className="text-[11px] text-muted-foreground">{p.total_employees} NV</span>

@@ -72,9 +72,9 @@ export function EmployeePortalHeader({
                 {employeeName || "bạn"}
               </h1>
               <span className="hidden h-1 w-1 shrink-0 rounded-full bg-secondary sm:block" aria-hidden="true" />
-              <p className="employee-type-header-date hidden truncate capitalize text-base-content/55 tabular-nums sm:block">{todayLabel}</p>
+              <p className="employee-type-header-date hidden truncate capitalize text-[var(--employee-text-secondary)] tabular-nums sm:block">{todayLabel}</p>
             </div>
-            <p className="employee-type-header-date mt-0.5 truncate capitalize text-base-content/55 tabular-nums sm:hidden">{todayLabel}</p>
+            <p className="employee-type-header-date mt-0.5 truncate capitalize text-[var(--employee-text-secondary)] tabular-nums sm:hidden">{todayLabel}</p>
           </div>
         </div>
         <div className="ct-navbar-end w-auto shrink-0 gap-2">

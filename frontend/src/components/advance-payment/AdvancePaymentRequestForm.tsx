@@ -181,7 +181,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "ct-badge-ghost bg-[var(--employee-page)] text-[var(--employee-text-secondary)] border border-[var(--employee-border)]",
         chipIcon: "lock",
         amount: null,
-        amountClassName: "text-[var(--employee-text-muted)]",
+        amountClassName: "text-[var(--employee-text-secondary)]",
         amountLabel: `Kỳ ứng lương ${viewedMonthLabel} kết thúc`,
         helperLine: "Kỳ ứng lương này đã đóng, chọn kỳ hiện tại để tiếp tục.",
         actionEnabled: false,
@@ -195,7 +195,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "ct-badge-warning ct-badge-outline",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-[var(--employee-text-muted)]",
+        amountClassName: "text-[var(--employee-text-secondary)]",
         amountLabel: "Chưa có tài khoản nhận tiền",
         helperLine: "Liên hệ quản lý cập nhật thông tin ngân hàng để ứng lương.",
         actionEnabled: false,
@@ -209,7 +209,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "ct-badge-warning ct-badge-outline",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-[var(--employee-text-muted)]",
+        amountClassName: "text-[var(--employee-text-secondary)]",
         amountLabel: "Chưa có hạn mức",
         helperLine: `Chờ bảng lương tháng ${viewedMonthLabel}`,
         actionEnabled: false,
@@ -223,7 +223,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "ct-badge-warning ct-badge-outline",
         chipIcon: "clock",
         amount: 0,
-        amountClassName: "text-[var(--employee-text-muted)]",
+        amountClassName: "text-[var(--employee-text-secondary)]",
         amountLabel: "Đã dùng hết hạn mức",
         helperLine: null,
         actionEnabled: false,
@@ -237,7 +237,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "ct-badge-warning ct-badge-outline",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-[var(--employee-text-muted)]",
+        amountClassName: "text-[var(--employee-text-secondary)]",
         amountLabel: info.canRequestTitle || "Chưa thể ứng lương",
         helperLine: info.canRequestReason || "Vui lòng quay lại trong kỳ ứng lương tiếp theo.",
         actionEnabled: false,
@@ -418,7 +418,7 @@ export function AdvancePaymentRequestForm({
                 "employee-type-label mt-2",
                 isOpen
                   ? "text-[var(--employee-text-secondary)]"
-                  : "text-[var(--employee-text-muted)]",
+                  : "text-[var(--employee-text-secondary)]",
               )}
             >
               {status.amountLabel}

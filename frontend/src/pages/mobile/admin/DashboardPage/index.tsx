@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Clock,
   FolderKanban,
+  Loader2,
   RefreshCcw,
   TrendingUp,
   UserPlus,
@@ -105,6 +106,7 @@ const AdminDashboardMobile = () => {
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
   const [bankProjectId, setBankProjectId] = useState<number | null>(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const { data: bankData } = useBankUsageAllProjects();
 
@@ -122,24 +124,56 @@ const AdminDashboardMobile = () => {
       ? startOfMonth(parse(`${selectedMonth}-01`, 'yyyy-MM-dd', new Date()))
       : startOfMonth(new Date());
 
-  const { data, loading, employees, refetch } = useDashboardData(monthParam);
+  const {
+    data,
+    loading,
+    employees,
+    refetch,
+    isRefreshing: isDashboardDataRefreshing,
+  } = useDashboardData(monthParam);
   const actions = useDashboardActions();
-  const { data: pendingData } = useTimesheets({ status: 'pending_approval', page: 1, pageSize: 20 });
-  const { data: activityData } = useEmployeeActivityStats(monthParam);
+  const {
+    data: pendingData,
+    isError: hasPendingError,
+    isFetching: isPendingFetching,
+    refetch: refetchPending,
+  } = useTimesheets({ status: 'pending_approval', page: 1, pageSize: 20 });
+  const {
+    data: activityData,
+    isLoading: isActivityLoading,
+    isError: hasActivityError,
+    isFetching: isActivityFetching,
+    refetch: refetchActivity,
+  } = useEmployeeActivityStats(monthParam);
   const dashboardNav = useDashboardNavigation();
   const { openTimesheetEntry } = useTimesheetModals();
   const { openAddEmployee } = useEmployeeModals();
 
-  const pendingApprovals = pendingData?.pagination?.totalRecords || 0;
+  const pendingApprovals = pendingData?.pagination?.totalRecords ?? null;
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-    actions.handleRefresh?.();
-  }, [actions, refetch]);
+  const handleRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refetch(),
+        refetchPending(),
+        refetchActivity(),
+        Promise.resolve(actions.handleRefresh?.()),
+      ]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [actions, refetch, refetchActivity, refetchPending]);
+
+  const isDashboardRefreshing =
+    isManualRefreshing ||
+    isDashboardDataRefreshing ||
+    isPendingFetching ||
+    isActivityFetching;
 
   const { employeeStats, salaryStats, profitStats, activityStats } = useDashboardStats({
     dashboardSummary: data.dashboardSummary,
-    totalPendingApprovals: pendingApprovals,
+    totalPendingApprovals: pendingApprovals ?? 0,
     dashboardNav,
     activityStats: activityData ?? null,
     onActivityClick: (schedule) => {
@@ -149,6 +183,14 @@ const AdminDashboardMobile = () => {
       navigate(`/admin/dashboard/activity?${params.toString()}`);
     },
   });
+
+  const resolvedSalaryStats = useMemo(
+    () =>
+      pendingApprovals === null
+        ? salaryStats.filter((item) => item.label !== 'Chờ duyệt')
+        : salaryStats,
+    [pendingApprovals, salaryStats],
+  );
 
   const quickActions = useMemo<MobileOperationAction[]>(
     () => [
@@ -161,7 +203,7 @@ const AdminDashboardMobile = () => {
         label: 'Duyệt công',
         icon: Clock,
         onClick: dashboardNav.navigateToPendingApprovals,
-        badge: pendingApprovals > 0 ? pendingApprovals : undefined,
+        badge: pendingApprovals !== null && pendingApprovals > 0 ? pendingApprovals : undefined,
       },
       {
         label: 'Ví tiền',
@@ -190,14 +232,6 @@ const AdminDashboardMobile = () => {
         onClick: dashboardNav.navigateToActiveEmployees,
       },
       {
-        label: 'Bảng công chờ duyệt',
-        value: pendingApprovals.toLocaleString('vi-VN'),
-        helper: pendingApprovals > 0 ? 'Cần xử lý trước trả lương' : 'Không có mục đang chờ',
-        icon: AlertCircle,
-        tone: pendingApprovals > 0 ? 'warning' : 'success',
-        onClick: pendingApprovals > 0 ? dashboardNav.navigateToPendingApprovals : undefined,
-      },
-      {
         label: 'Đã trả kỳ này',
         value: formatVND(data.dashboardSummary.paid_salary_this_month),
         helper: monthLabel,
@@ -214,30 +248,32 @@ const AdminDashboardMobile = () => {
         onClick: dashboardNav.navigateToNewEmployees,
       },
     ];
-  }, [dashboardNav, data.dashboardSummary, monthLabel, pendingApprovals]);
+  }, [dashboardNav, data.dashboardSummary, monthLabel]);
 
   const priorityRows = useMemo<MobileTaskRow[]>(() => {
-    const dashboardSummary = data.dashboardSummary;
-
     return [
       {
         title: 'Duyệt bảng công',
-        description: pendingApprovals > 0 ? 'Xem các bảng công đang chờ xác nhận' : 'Không có bảng công cần xử lý',
-        value: pendingApprovals.toLocaleString('vi-VN'),
+        description: hasPendingError
+          ? 'Không thể tải hàng đợi toàn hệ thống. Làm mới để thử lại.'
+          : pendingApprovals === null
+            ? 'Đang tải hàng đợi bảng công trên toàn hệ thống'
+            : pendingApprovals > 0
+              ? 'Xem hàng đợi bảng công trên toàn hệ thống'
+              : 'Không có bảng công đang chờ xử lý',
+        value: pendingApprovals === null ? '--' : pendingApprovals.toLocaleString('vi-VN'),
         icon: AlertCircle,
-        tone: pendingApprovals > 0 ? 'warning' : 'success',
-        onClick: pendingApprovals > 0 ? dashboardNav.navigateToPendingApprovals : undefined,
+        tone:
+          hasPendingError || pendingApprovals === null
+            ? 'neutral'
+            : pendingApprovals > 0
+              ? 'warning'
+              : 'success',
+        onClick:
+          pendingApprovals !== null && pendingApprovals > 0
+            ? dashboardNav.navigateToPendingApprovals
+            : undefined,
       },
-      ...(dashboardSummary
-        ? [{
-            title: 'Lương chưa giải ngân',
-            description: `Đã trả ${formatVND(dashboardSummary.paid_salary_this_month)} trong kỳ ${monthLabel}`,
-            value: formatVND(dashboardSummary.pending_salary_this_month),
-            icon: ArrowRightLeft,
-            tone: dashboardSummary.pending_salary_this_month > 0 ? 'primary' as const : 'success' as const,
-            onClick: dashboardNav.navigateToSalaryLedger,
-          }]
-        : []),
       {
         title: 'Đối soát ví trả lương',
         description: 'Kiểm tra số dư và lịch chuyển tiền',
@@ -255,7 +291,7 @@ const AdminDashboardMobile = () => {
         onClick: () => navigate('/admin/projects'),
       },
     ];
-  }, [bankData, dashboardNav, data.dashboardSummary, monthLabel, navigate, pendingApprovals]);
+  }, [bankData, dashboardNav, hasPendingError, navigate, pendingApprovals]);
 
   if (loading) {
     return (
@@ -276,34 +312,10 @@ const AdminDashboardMobile = () => {
         sticky={false}
         bordered={false}
         className="[&_.shadow-sm]:shadow-none"
-        actions={
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRefresh}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-reduce:transition-none"
-              aria-label="Làm mới số liệu"
-            >
-              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
-            </button>
-            {pendingApprovals > 0 && (
-              <button
-                type="button"
-                onClick={dashboardNav.navigateToPendingApprovals}
-                className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-warning/35 bg-warning/10 px-2.5 text-xs font-semibold text-warning transition-colors hover:bg-warning/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 normal-case motion-reduce:transition-none"
-                aria-label={`${pendingApprovals} bảng công chờ duyệt`}
-              >
-                <AlertCircle className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />
-                <span className="tabular-nums">{pendingApprovals}</span>
-                <span>chờ duyệt</span>
-              </button>
-            )}
-          </div>
-        }
       />
 
       <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
-        <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px] items-center gap-1.5 px-2 py-2">
+        <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px_44px] items-center gap-1.5 px-2 py-2">
           <button
             onClick={() => setSelectedMonth('all')}
             className={cn(
@@ -338,6 +350,20 @@ const AdminDashboardMobile = () => {
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isDashboardRefreshing}
+            aria-busy={isDashboardRefreshing}
+            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
+            aria-label="Làm mới số liệu"
+          >
+            {isDashboardRefreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            ) : (
+              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -369,15 +395,25 @@ const AdminDashboardMobile = () => {
           eyebrow="Sổ vận hành"
           title="Lương và nhân sự"
           summary="Giữ phần lõi ở một khối gọn: bảng công, quân số và người mới."
-          meta={`${pendingApprovals.toLocaleString('vi-VN')} chờ duyệt · ${dashboardSummary?.total_working_employees.toLocaleString('vi-VN') ?? '--'} đang làm`}
+          meta={`${dashboardSummary?.total_working_employees.toLocaleString('vi-VN') ?? '--'} đang làm`}
           icon={Users}
         >
           <div className="space-y-3">
-            {salaryStats.length > 0 && <GroupedStatCard title="Bảng công" icon={Clock} stats={salaryStats} />}
-            {employeeStats.length > 0 && <GroupedStatCard title="Nhân viên" icon={Users} stats={employeeStats} />}
-            {activityStats.length > 0 && (
-              <GroupedStatCard title={`Hoạt động (${monthLabel})`} icon={Activity} stats={activityStats} />
+            {resolvedSalaryStats.length > 0 && (
+              <GroupedStatCard title="Bảng công" icon={Clock} stats={resolvedSalaryStats} />
             )}
+            {employeeStats.length > 0 && <GroupedStatCard title="Nhân viên" icon={Users} stats={employeeStats} />}
+            {isActivityLoading && !activityData ? (
+              <p className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
+                Đang tải hoạt động nhân sự…
+              </p>
+            ) : hasActivityError ? (
+              <p className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
+                Không thể tải hoạt động nhân sự. Hãy làm mới để thử lại.
+              </p>
+            ) : activityData && activityStats.length > 0 ? (
+              <GroupedStatCard title={`Hoạt động (${monthLabel})`} icon={Activity} stats={activityStats} />
+            ) : null}
           </div>
 
           <div className="space-y-2">

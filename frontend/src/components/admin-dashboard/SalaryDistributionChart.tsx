@@ -119,7 +119,12 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
 
       {/* Horizontal bar chart */}
       {chartData.length > 0 && (
-        <div className="w-full" style={{ height: chartData.length * 32 + 16, minWidth: 1 }}>
+        <div
+          className="w-full"
+          role="img"
+          aria-label={`${label}: phân bổ ${values.length} nhân viên theo khung lương. Trung bình ${formatCurrency(summary.mean)}, thấp nhất ${formatCurrency(summary.min)}, cao nhất ${formatCurrency(summary.max)}. ${chartData.map((item) => `${item.label}: ${item.count} nhân viên`).join('; ')}.`}
+          style={{ height: chartData.length * 32 + 16, minWidth: 1 }}
+        >
           <ResponsiveContainer width="100%" height={chartData.length * 32 + 16} minWidth={0}>
             <BarChart
               data={chartData}
@@ -150,7 +155,7 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '6px',
                   fontSize: '12px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  boxShadow: 'none',
                 }}
                 formatter={(value: number) => [`${value} nhân viên`, 'Số lượng']}
                 labelFormatter={(label) => `Khung lương: ${label}`}

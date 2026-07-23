@@ -59,10 +59,6 @@ function RankBadge({ rank }: { rank: number }) {
   return <span className="text-xs text-muted-foreground tabular-nums w-6 text-center inline-block">{rank}</span>;
 }
 
-// ─── Magnetic tooltip ─────────────────────────────────────────────────────────
-// Recharts renders the tooltip at the cursor position. We add a CSS transition
-// so it glides ("magnetic lag") rather than snapping instantly.
-
 interface ChartTooltipProps {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
@@ -74,10 +70,7 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   const sorted = [...payload].filter(e => e.value !== 0).sort((a, b) => b.value - a.value);
   if (!sorted.length) return null;
   return (
-    <div
-      className="bg-card border border-border rounded-xl p-3 text-xs max-w-[220px]"
-      style={{ transition: 'transform 80ms ease-out' }}
-    >
+    <div className="bg-card border border-border rounded-xl p-3 text-xs max-w-[220px]">
       <p className="text-muted-foreground mb-2 font-medium tracking-wide uppercase" style={{ fontSize: 11 }}>
         Lũy kế đến {label && typeof label === 'string' && label.includes('-') ? formatTooltipDate(label) : label}
       </p>
@@ -269,6 +262,8 @@ export const ProjectProfitabilityCard = memo(() => {
                 return (
                   <button
                     key={s.project_id}
+                    type="button"
+                    aria-pressed={!hidden && focusedId === s.project_id}
                     onClick={() => {
                       if (hidden) {
                         toggleId(s.project_id);
@@ -276,7 +271,7 @@ export const ProjectProfitabilityCard = memo(() => {
                         handleLegendClick(s.project_id);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs border select-none
+                    className={`flex min-h-11 items-center gap-1.5 rounded-xl border px-2 py-1 text-xs select-none
                       transition-all duration-200
                       ${hidden
                         ? 'border-border/30 bg-muted/30 text-muted-foreground/40'
@@ -306,8 +301,12 @@ export const ProjectProfitabilityCard = memo(() => {
               Chưa có dữ liệu
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={240} minWidth={0}>
-              <LineChart
+            <div
+              role="img"
+              aria-label="Biểu đồ đường thể hiện lợi nhuận lũy kế theo tuần của các dự án trong 12 tháng gần nhất. Có thể dùng các nút tên dự án phía trên để lọc dữ liệu."
+            >
+              <ResponsiveContainer width="100%" height={240} minWidth={0}>
+                <LineChart
                 data={chartData}
                 margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                 onMouseMove={(e) => {
@@ -385,8 +384,9 @@ export const ProjectProfitabilityCard = memo(() => {
                     />
                   );
                 })}
-              </LineChart>
-            </ResponsiveContainer>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </CardContent>
       </Card>

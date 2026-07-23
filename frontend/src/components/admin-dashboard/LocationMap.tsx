@@ -254,7 +254,7 @@ export function LocationMap({
 
       {/* Top floating context panel */}
       <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[500] flex justify-start sm:inset-x-auto sm:left-4 sm:top-4 sm:max-w-sm">
-        <div className="pointer-events-auto w-full overflow-hidden rounded-xl border border-white/60 bg-background/90 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-md">
+        <div className="pointer-events-auto w-full overflow-hidden rounded-xl border border-white/60 bg-background/90 shadow-none backdrop-blur-md">
           <div className="flex items-start justify-between gap-3 px-3.5 pb-2 pt-3 sm:px-4">
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
@@ -370,7 +370,7 @@ export function LocationMap({
       {/* Bottom-left marker legend */}
       {showMap ? (
         <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 z-[500] sm:bottom-4 sm:left-4">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 shadow-none backdrop-blur-md">
             {effectiveCheckpoints.map((item, i) => {
               const checkpointTone = item.tone ?? 'emerald';
               return (
@@ -485,7 +485,7 @@ function LayerButton({
       aria-pressed={active}
       className={cn(
         'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
-        active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+        active ? 'bg-primary text-primary-foreground shadow-none' : 'text-muted-foreground hover:text-foreground',
       )}
     >
       <Icon className="h-3 w-3" />

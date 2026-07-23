@@ -97,7 +97,12 @@ function MobileCycleSection({ section }: { section: CycleSection }) {
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div className="w-full" style={{ height: chartData.length * 36 + 24, minWidth: 1 }}>
+        <div
+          className="w-full"
+          role="img"
+          aria-label={`${label}: phân bổ ${values.length} nhân viên theo khung lương. Trung bình ${formatCurrency(summary.mean)}, thấp nhất ${formatCurrency(summary.min)}, cao nhất ${formatCurrency(summary.max)}. ${chartData.map((item) => `${item.label}: ${item.count} nhân viên`).join('; ')}.`}
+          style={{ height: chartData.length * 36 + 24, minWidth: 1 }}
+        >
           <ResponsiveContainer width="100%" height={chartData.length * 36 + 24} minWidth={0}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 32, left: 4, bottom: 0 }} barSize={18}>
               <XAxis type="number" domain={[0, maxCount]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} tickCount={4} />

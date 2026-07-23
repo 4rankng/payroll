@@ -167,13 +167,13 @@ interface SectionCardProps {
 
 const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoading, className }: SectionCardProps) {
   return (
-    <section className={cn('ct-card ct-card-border min-w-0 border-base-300 bg-base-100 shadow-none', className)}>
+    <section className={cn('ct-card ct-card-border min-w-0 border-border/80 bg-card text-card-foreground shadow-none', className)}>
       <div className="ct-card-body min-w-0 gap-3 p-3 sm:p-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/5 text-primary">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </div>
-          <h3 className="ct-card-title min-w-0 text-sm font-semibold leading-snug text-base-content">
+          <h3 className="ct-card-title min-w-0 text-sm font-semibold leading-snug text-foreground">
             {title}
           </h3>
         </div>

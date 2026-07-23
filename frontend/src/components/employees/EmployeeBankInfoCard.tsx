@@ -1,6 +1,6 @@
-import { Landmark } from "lucide-react";
 import type { EmployeeProfile } from "@/types/api/auth.types";
 import { cn } from "@/lib/utils";
+import { hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 
 interface EmployeeBankInfoCardProps {
   profile: EmployeeProfile;
@@ -16,82 +16,66 @@ export function EmployeeBankInfoCard({
   if (!profile) return null;
 
   const accountOwner = profile.bank_account_name?.trim();
-  const hasBankInfo = !!(
-    profile.bank_account_number ||
-    profile.bank ||
-    accountOwner
-  );
+  const hasBankInfo = hasEmployeeBankInfo(profile);
 
   return (
     <div
       className={cn(
-        "ct-card employee-surface-card h-full min-h-[228px] overflow-hidden bg-[var(--employee-surface)] text-[var(--employee-text)]",
+        "ct-card employee-surface-card group relative isolate min-h-[228px] overflow-hidden border-base-300 bg-base-100 p-5 text-base-content sm:min-h-[250px] sm:p-6",
         className
       )}
       style={style}
       role="region"
       aria-labelledby="employee-bank-title"
     >
-      <div className="flex items-center gap-3 border-b border-[var(--employee-border)] px-4 py-4 sm:px-5">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
-          <Landmark className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <p className="employee-type-label-caps text-[var(--employee-text-secondary)]">
-            Cổng nhận lương
-          </p>
-          <h2
-            id="employee-bank-title"
-            className="employee-type-card-title mt-0.5 text-[var(--employee-text)]"
-          >
-            Tài khoản nhận tiền
-          </h2>
-        </div>
+      <img
+        src="/employee/bank-security-pattern-v2.webp"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-right opacity-90 saturate-75 transition-transform duration-700 motion-safe:group-hover:scale-[1.025]"
+      />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-base-100/45 via-base-100/10 to-transparent" />
+
+      <div className="flex min-h-[188px] flex-col sm:min-h-[202px]">
+        <h2 id="employee-bank-title" className="employee-type-card-title text-base-content/75">
+          Tài khoản nhận tiền
+        </h2>
+
+        {hasBankInfo ? (
+          <dl className="mt-5 flex flex-1 flex-col sm:mt-6">
+            <div className="min-w-0">
+              <dt className="employee-type-label-caps text-base-content/55">Số tài khoản</dt>
+              <dd className="mt-1.5 min-w-0 break-all font-financial text-xl font-semibold leading-tight tracking-[0.055em] text-base-content tabular-nums sm:text-2xl">
+                {profile.bank_account_number || "—"}
+              </dd>
+            </div>
+
+            <div className="mt-auto grid grid-cols-2 gap-4 border-t border-base-content/10 pt-4">
+              <div className="min-w-0">
+                <dt className="employee-type-label-caps text-base-content/55">Ngân hàng</dt>
+                <dd className="employee-type-bank-value mt-1 break-words text-base-content">
+                  {profile.bank?.branch_name || "—"}
+                </dd>
+              </div>
+              <div className="min-w-0 text-right">
+                <dt className="employee-type-label-caps text-base-content/55">Chủ tài khoản</dt>
+                <dd className="employee-type-bank-value mt-1 break-words text-base-content">
+                  {accountOwner || "—"}
+                </dd>
+              </div>
+            </div>
+          </dl>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
+            <p className="employee-type-strong text-base-content">
+              Chưa có thông tin ngân hàng
+            </p>
+            <p className="employee-type-body-sm mt-1 max-w-xs text-base-content/60">
+              Liên hệ quản lý để cập nhật
+            </p>
+          </div>
+        )}
       </div>
-
-      {hasBankInfo ? (
-        <dl>
-          <div className="border-b border-[var(--employee-border)] bg-[var(--employee-accent-soft)] px-4 py-4 sm:px-5">
-            <dt className="employee-type-label-caps text-[var(--employee-text-secondary)]">
-              Số tài khoản
-            </dt>
-            <dd className="mt-1.5 min-w-0 break-all font-financial text-xl font-semibold leading-tight tracking-[0.035em] text-[var(--employee-text)] tabular-nums sm:text-2xl">
-              {profile.bank_account_number || "—"}
-            </dd>
-          </div>
-
-          <div className="grid grid-cols-2 divide-x divide-[var(--employee-border)]">
-            <div className="min-w-0 px-4 py-4 sm:px-5">
-              <dt className="employee-type-label-caps text-[var(--employee-text-secondary)]">
-                Ngân hàng
-              </dt>
-              <dd className="employee-type-bank-value mt-1 break-words text-[var(--employee-text)]">
-                {profile.bank?.branch_name || "—"}
-              </dd>
-            </div>
-            <div className="min-w-0 px-4 py-4 text-right sm:px-5">
-              <dt className="employee-type-label-caps text-[var(--employee-text-secondary)]">
-                Chủ tài khoản
-              </dt>
-              <dd className="employee-type-bank-value mt-1 break-words text-[var(--employee-text)]">
-                {accountOwner || "—"}
-              </dd>
-            </div>
-          </div>
-        </dl>
-      ) : (
-        <div className="flex min-h-[150px] flex-col items-center justify-center px-4 py-6 text-center">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--employee-surface-muted)] text-[var(--employee-text-secondary)]">
-            <Landmark className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <p className="employee-type-strong mt-3 text-[var(--employee-text)]">
-            Chưa có thông tin ngân hàng
-          </p>
-          <p className="employee-type-body-sm mt-1 max-w-xs text-[var(--employee-text-secondary)]">
-            Liên hệ quản lý để cập nhật
-          </p>
-        </div>
-      )}
     </div>
   );
 }
