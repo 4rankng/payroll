@@ -3,6 +3,7 @@ import * as maplibregl from "maplibre-gl";
 import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { Navigation } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Button } from "@/components/ui/button";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
 import {
@@ -38,48 +39,66 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
     [guidance, sample, target]
   );
   const geofenceData = useMemo(() => buildGeofenceFeatureCollection(target), [target]);
+  const displayGate =
+    guidance.nearestGate ?? target.gates.find(isRenderableCoordinate);
   const gateData = useMemo(
-    () => buildGatePointFeatureCollection(target, guidance.nearestGate),
-    [guidance.nearestGate, target]
+    () => buildGatePointFeatureCollection(target, displayGate),
+    [displayGate, target]
   );
   const routeFeature = useMemo(
     () => buildRouteFeature(sample, guidance.nearestGate, shouldShowRoute),
     [guidance.nearestGate, sample, shouldShowRoute]
   );
-  const firstGate = target.gates[0];
-  const nearestGateName = guidance.nearestGate?.name || firstGate?.name || "cổng chấm công";
+  const nearestGateName = displayGate?.name || "Cổng chấm công";
   const hasRoute = Boolean(routeFeature);
   const isAtGate = Boolean(
     sample && guidance.nearestGate && guidance.distanceMeters != null && guidance.distanceMeters <= 1
   );
-  const canRenderMap = !mapFailed && isWebGLAvailable();
+  const webGLAvailable = isWebGLAvailable();
+  const canRenderMap = !mapFailed && webGLAvailable;
 
   return (
-    <div
-      className="relative isolate z-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
+    <section
+      className="relative isolate z-0 overflow-hidden"
       role="group"
       aria-label={mapAriaLabel(guidance, hasRoute, isAtGate, nearestGateName)}
     >
-      <div className="employee-type-body-sm grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 px-3 py-2.5 text-slate-700">
-        <span className="min-w-0 break-words font-semibold text-slate-950">{statusTitle(guidance)}</span>
-        <span className={`employee-type-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700" : "border-sky-100 bg-sky-50/80 text-sky-700"}`}>
-          <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
-          {sample?.accuracy ? (
-            <>GPS ±{Math.round(sample.accuracy)}m</>
-          ) : (
-            <>GPS</>
-          )}
-        </span>
-        <div className="col-span-2 flex min-w-0 items-start gap-2 text-slate-500">
-          <span className="min-w-0 flex-1 break-words font-semibold">{nearestGateName}</span>
-          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
-          <span className="shrink-0 whitespace-nowrap font-semibold">
+      <ul className="employee-type-body-sm divide-y divide-slate-100 border-y border-slate-200 bg-white text-slate-700">
+        <li className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <span className="min-w-0 break-words font-semibold text-slate-950">
+            {statusTitle(guidance)}
+          </span>
+          <span
+            className={`badge employee-type-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${
+              sample?.accuracy != null && sample.accuracy < 50
+                ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700"
+                : "border-sky-100 bg-sky-50/80 text-sky-700"
+            }`}
+          >
+            <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
+            {sample?.accuracy != null ? (
+              <>GPS ±{Math.round(sample.accuracy)}m</>
+            ) : (
+              <>GPS</>
+            )}
+          </span>
+        </li>
+        <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5">
+          <div className="min-w-0">
+            <span className="employee-type-label-caps block text-slate-400">
+              Điểm gần nhất
+            </span>
+            <span className="mt-0.5 block break-words font-semibold text-slate-700">
+              {nearestGateName}
+            </span>
+          </div>
+          <span className="shrink-0 whitespace-nowrap font-semibold text-slate-500">
             Bán kính <span>{formatDistanceMeters(target.radius_meters)}</span>
           </span>
-        </div>
-      </div>
+        </li>
+      </ul>
       {canRenderMap ? (
-        <div className="relative h-80 w-full border-y border-slate-100 bg-slate-100 sm:h-96">
+        <div className="relative h-80 w-full bg-slate-100 sm:h-96">
           <EmployeeMapCanvas
             gateData={gateData}
             geofenceData={geofenceData}
@@ -92,9 +111,15 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
           />
         </div>
       ) : (
-        <MapFallback />
+        <MapFallback
+          onRetry={
+            mapFailed && webGLAvailable
+              ? () => setMapFailed(false)
+              : undefined
+          }
+        />
       )}
-    </div>
+    </section>
   );
 }
 
@@ -124,6 +149,7 @@ function EmployeeMapCanvas({
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const onMapFailedRef = useRef(onMapFailed);
   const fittedConfigRef = useRef<string | null>(null);
+  const initialViewportRef = useRef(viewport);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -137,8 +163,8 @@ function EmployeeMapCanvas({
       const map = new maplibregl.Map({
         container: containerRef.current,
         style: EMPLOYEE_MAP_STYLE,
-        center: viewport.initialCenter,
-        zoom: viewport.initialZoom,
+        center: initialViewportRef.current.initialCenter,
+        zoom: initialViewportRef.current.initialZoom,
         attributionControl: false,
         interactive: true,
         dragRotate: false,
@@ -160,7 +186,7 @@ function EmployeeMapCanvas({
     } catch {
       onMapFailedRef.current();
     }
-  }, [viewport.initialCenter, viewport.initialZoom]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -179,7 +205,7 @@ function EmployeeMapCanvas({
       if (fittedConfigRef.current !== viewport.configKey && viewport.bounds) {
         map.resize();
         map.fitBounds(viewport.bounds, {
-          padding: 28,
+          padding: { top: 64, right: 96, bottom: 48, left: 96 },
           maxZoom: 17,
           duration: prefersReducedMotion() ? 0 : 300,
         });
@@ -207,26 +233,38 @@ function EmployeeMapCanvas({
     markersRef.current = [];
 
     const nextMarkers: maplibregl.Marker[] = [];
+    const displayGate =
+      guidance.nearestGate ?? target.gates.find(isRenderableCoordinate);
     for (const gate of target.gates.filter(isRenderableCoordinate)) {
-      const isNearestGate = guidance.nearestGate?.lat === gate.lat && guidance.nearestGate?.lng === gate.lng;
+      const isDisplayGate =
+        displayGate?.lat === gate.lat && displayGate?.lng === gate.lng;
       const gateName = gate.name || "Cổng chấm công";
       const element = document.createElement("span");
       element.className = "relative grid h-4 w-4 place-items-center overflow-visible";
       element.title = gateName;
       element.dataset.checkpointName = gateName;
+      element.setAttribute("aria-label", gateName);
 
       const dot = document.createElement("span");
       dot.className = `block h-4 w-4 rounded-full border-[3px] border-emerald-700 bg-white shadow-sm ${
-        isNearestGate ? "checkpoint-marker-emphasis" : ""
+        isDisplayGate ? "checkpoint-marker-emphasis" : ""
       }`;
       element.appendChild(dot);
 
-      const label = document.createElement("span");
-      label.className = `employee-type-pill pointer-events-none absolute bottom-5 left-1/2 z-10 max-w-24 -translate-x-1/2 whitespace-nowrap rounded-full border bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur ${
-        isNearestGate ? "border-emerald-200 text-emerald-800" : "border-slate-200 text-slate-700"
-      }`;
-      label.textContent = gateName;
-      element.appendChild(label);
+      if (isDisplayGate) {
+        const connector = document.createElement("span");
+        connector.className =
+          "pointer-events-none absolute bottom-4 left-1/2 h-3 w-px -translate-x-1/2 bg-emerald-700/80";
+        connector.setAttribute("aria-hidden", "true");
+        element.appendChild(connector);
+
+        const label = document.createElement("span");
+        label.className =
+          "employee-type-pill pointer-events-none absolute bottom-7 left-1/2 z-10 w-max max-w-44 -translate-x-1/2 whitespace-normal break-words rounded-md border border-emerald-200 bg-white/95 px-2 py-1 text-center text-[11px] font-semibold leading-4 text-emerald-900 shadow-sm backdrop-blur";
+        label.dataset.checkpointLabel = "true";
+        label.textContent = gateName;
+        element.appendChild(label);
+      }
 
       nextMarkers.push(new maplibregl.Marker({ element, anchor: "center" }).setLngLat([gate.lng, gate.lat]).addTo(map));
     }
@@ -361,10 +399,21 @@ function removeLayerAndSource(map: maplibregl.Map, layerIds: string[], sourceId:
   if (map.getSource(sourceId)) map.removeSource(sourceId);
 }
 
-function MapFallback() {
+function MapFallback({ onRetry }: { onRetry?: () => void }) {
   return (
-    <div className="employee-type-body-sm border-t border-slate-100 bg-slate-50 px-3 py-3 text-slate-600">
-      Không tải được bản đồ.
+    <div className="employee-type-body-sm flex min-h-12 items-center justify-between gap-3 bg-slate-50 px-3 py-2 text-slate-600">
+      <span>Không tải được bản đồ.</span>
+      {onRetry ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 bg-white text-sky-700"
+          onClick={onRetry}
+        >
+          Thử tải lại bản đồ
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -379,6 +428,9 @@ function mapAriaLabel(
     return `Bản đồ hướng tới ${nearestGateName}, cách ${formatDistanceMeters(guidance.distanceMeters)} theo đường thẳng`;
   }
   if (isAtGate) return `Bạn đang ở ${nearestGateName}`;
+  if (guidance.nearestGate && guidance.distanceMeters != null) {
+    return `Bản đồ hiển thị vị trí của bạn và ${nearestGateName}, cách ${formatDistanceMeters(guidance.distanceMeters)}`;
+  }
   return "Bản đồ khu vực chấm công";
 }
 

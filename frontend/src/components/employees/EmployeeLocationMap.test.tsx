@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import { getCheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
@@ -11,6 +11,7 @@ import {
 } from "./employee-location-map-model";
 
 const fitBoundsMock = vi.hoisted(() => vi.fn());
+const mapRemoveMock = vi.hoisted(() => vi.fn());
 const webglContextMock = vi.hoisted(() => vi.fn((contextId: string) => (contextId === "webgl" ? {} : null)));
 const mapRenderShouldThrow = vi.hoisted(() => ({ value: false }));
 const mapInstances = vi.hoisted(() => [] as Array<{
@@ -133,7 +134,7 @@ vi.mock("maplibre-gl", () => {
 
     resize() {}
     fitBounds = fitBoundsMock;
-    remove() {}
+    remove = mapRemoveMock;
   }
 
   return {
@@ -235,7 +236,7 @@ describe("employee-location-map-model", () => {
     expect(viewport.bounds?.[1][1]).toBeLessThan(11);
   });
 
-  it("does not widen far outside or no-position views to unrelated distant gates", () => {
+  it("keeps a far current position and its nearest checkpoint in view", () => {
     const multiGateTarget: CheckInTarget = {
       ...singleGateTarget,
       gates: [
@@ -252,8 +253,9 @@ describe("employee-location-map-model", () => {
       null
     );
 
-    expect(farViewport.includeSampleInBounds).toBe(false);
-    expect(farViewport.bounds?.[1][1]).toBeLessThan(11);
+    expect(farViewport.includeSampleInBounds).toBe(true);
+    expect(farViewport.bounds?.[1][1]).toBeGreaterThanOrEqual(farSample.lat);
+    expect(farViewport.bounds?.[0][1]).toBeLessThan(singleGateTarget.gates[0].lat);
     expect(noPositionViewport.bounds?.[1][1]).toBeLessThan(11);
   });
 });
@@ -261,16 +263,19 @@ describe("employee-location-map-model", () => {
 describe("EmployeeLocationMap", () => {
   beforeEach(() => {
     fitBoundsMock.mockClear();
+    mapRemoveMock.mockClear();
     mapInstances.length = 0;
     mapRenderShouldThrow.value = false;
     webglContextMock.mockImplementation((contextId: string) => (contextId === "webgl" ? {} : null));
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(webglContextMock as never);
   });
 
-  it("keeps the map within a stacking context below the fixed action dock", () => {
+  it("keeps the map within a stacking context below the fixed action dock", async () => {
     const { container } = render(<EmployeeLocationMap target={target} />);
+    await screen.findAllByTestId("source");
 
     expect(container.firstElementChild).toHaveClass("relative", "isolate", "z-0");
+    expect(container.firstElementChild).not.toHaveClass("rounded-2xl", "shadow-[0_12px_30px_rgba(15,23,42,0.06)]");
     expect(screen.getByTestId("map").parentElement).toHaveClass("h-80", "sm:h-96");
   });
 
@@ -292,14 +297,27 @@ describe("EmployeeLocationMap", () => {
     const radius = screen.getByText("150 m").parentElement;
     const gpsAccuracy = screen.getByText("GPS ±22m").closest("span");
 
-    expect(summary).toHaveClass("grid", "grid-cols-[minmax(0,1fr)_auto]");
+    expect(summary).toHaveClass("divide-y", "border-y");
     expect(status).toHaveClass("min-w-0", "break-words");
     expect(status).not.toHaveClass("truncate");
-    expect(checkpointLabel).toHaveClass("min-w-0", "flex-1", "break-words");
+    expect(checkpointLabel).toHaveClass("break-words");
     expect(checkpointLabel).not.toHaveClass("truncate", "max-w-16");
     expect(gpsAccuracy).toHaveClass("shrink-0");
     expect(radius).toHaveClass("shrink-0", "whitespace-nowrap");
     expect(summary).toHaveTextContent("Bán kính 150 m");
+
+    await waitFor(() =>
+      expect(document.querySelector("[data-checkpoint-label='true']")).toBeInTheDocument()
+    );
+    const mapLabel = document.querySelector("[data-checkpoint-label='true']");
+    expect(mapLabel).toHaveTextContent(checkpointName);
+    expect(mapLabel).toHaveClass(
+      "bottom-7",
+      "max-w-44",
+      "whitespace-normal",
+      "break-words"
+    );
+    expect(mapLabel?.parentElement?.querySelector(".bottom-4.h-3.w-px")).toBeInTheDocument();
   });
 
   it("renders MapLibre with the approved light style", async () => {
@@ -325,12 +343,10 @@ describe("EmployeeLocationMap", () => {
       expect(
         screen
           .getAllByTestId("marker")
-          .some(
-            (marker) =>
-              marker.querySelector(`[data-checkpoint-name="${gate.name}"]`)?.textContent === gate.name
-          )
+          .some((marker) => marker.querySelector(`[data-checkpoint-name="${gate.name}"]`))
       ).toBe(true);
     }
+    expect(document.querySelectorAll("[data-checkpoint-label='true']")).toHaveLength(1);
   });
 
   it("shows a compact straight-line route toward the nearest checkpoint for local samples", async () => {
@@ -401,6 +417,12 @@ describe("EmployeeLocationMap", () => {
         .getAllByTestId("source")
         .some((source) => source.getAttribute("data-source-id") === "employee-route")
     ).toBe(false);
+    expect(document.querySelector("[data-user-location='true']")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", {
+        name: /Bản đồ hiển thị vị trí của bạn và Cổng D/,
+      })
+    ).toBeInTheDocument();
   });
 
   it("fits configured geofence first, then only the first usable route view", async () => {
@@ -420,16 +442,77 @@ describe("EmployeeLocationMap", () => {
     expect(fitBoundsMock).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps one MapLibre instance while repeated location attempts update the sample", async () => {
+    const firstSample = {
+      lat: 10.7758,
+      lng: 106.7009,
+      accuracy: 35,
+      timestamp: 1,
+    };
+    const { rerender } = render(
+      <EmployeeLocationMap target={target} sample={firstSample} />
+    );
+
+    await waitFor(() => expect(mapInstances).toHaveLength(1));
+
+    for (let attempt = 2; attempt <= 4; attempt += 1) {
+      rerender(
+        <EmployeeLocationMap
+          target={target}
+          sample={{
+            ...firstSample,
+            lat: firstSample.lat + attempt / 100_000,
+            timestamp: attempt,
+          }}
+        />
+      );
+    }
+
+    await waitFor(() => expect(screen.getByTestId("map")).toBeInTheDocument());
+    expect(mapInstances).toHaveLength(1);
+    expect(screen.queryByText("Không tải được bản đồ.")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-user-location='true']")?.parentElement
+      ).toHaveAttribute(
+        "data-position",
+        JSON.stringify([firstSample.lng, firstSample.lat + 4 / 100_000])
+      )
+    );
+  });
+
   it("falls back without hiding status details when MapLibre reports an error", async () => {
     render(<EmployeeLocationMap target={target} sample={{ lat: 10.7758, lng: 106.7009, accuracy: 35, timestamp: 1 }} />);
 
     await waitFor(() => expect(mapInstances).toHaveLength(1));
-    mapInstances[0].emit("error");
+    act(() => mapInstances[0].emit("error"));
 
     expect(await screen.findByText("Không tải được bản đồ.")).toBeInTheDocument();
     expect(screen.getByText("GPS yếu")).toBeInTheDocument();
     expect(screen.getByText("Cổng D")).toBeInTheDocument();
     expect(screen.getByText("150 m")).toBeInTheDocument();
+  });
+
+  it("can retry after a transient MapLibre error instead of remaining stuck", async () => {
+    render(
+      <EmployeeLocationMap
+        target={target}
+        sample={{ lat: 10.7758, lng: 106.7009, accuracy: 35, timestamp: 1 }}
+      />
+    );
+
+    await waitFor(() => expect(mapInstances).toHaveLength(1));
+    act(() => mapInstances[0].emit("error"));
+
+    const retryButton = await screen.findByRole("button", {
+      name: "Thử tải lại bản đồ",
+    });
+    fireEvent.click(retryButton);
+
+    await waitFor(() => expect(mapInstances).toHaveLength(2));
+    expect(mapRemoveMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("map")).toBeInTheDocument();
+    expect(screen.queryByText("Không tải được bản đồ.")).not.toBeInTheDocument();
   });
 
   it("isolates MapLibre render failures inside the map card", async () => {

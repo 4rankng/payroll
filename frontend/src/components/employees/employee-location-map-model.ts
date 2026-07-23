@@ -224,16 +224,12 @@ export function getEmployeeMapViewport(
   target: CheckInTarget,
   sample?: LocationSample | null
 ): EmployeeMapViewport {
-  const includeSampleInBounds = Boolean(
-    sample &&
-      isValidCoordinate(sample) &&
-      guidance.nearestGate &&
-      shouldShowEmployeeRouteForDisplay(guidance)
-  );
   const primaryGate =
     guidance.nearestGate && isValidGate(guidance.nearestGate)
       ? guidance.nearestGate
       : target.gates.find(isValidGate);
+  const validSample = sample && isValidCoordinate(sample) ? sample : null;
+  const includeSampleInBounds = Boolean(validSample);
   const geofenceFeatures = primaryGate
     ? [buildGeofencePolygon(primaryGate, target.radius_meters)].filter(
         (feature): feature is Exclude<typeof feature, null> => Boolean(feature)
@@ -241,8 +237,8 @@ export function getEmployeeMapViewport(
     : buildGeofenceFeatureCollection(target).features;
   const coordinates: MapCoordinate[] = geofenceFeatures.flatMap((feature) => feature.geometry.coordinates[0]);
 
-  if (includeSampleInBounds && sample) {
-    coordinates.push([sample.lng, sample.lat]);
+  if (validSample) {
+    coordinates.push([validSample.lng, validSample.lat]);
   }
 
   if (coordinates.length === 0 && target.gates[0] && isValidGate(target.gates[0])) {
@@ -251,6 +247,9 @@ export function getEmployeeMapViewport(
 
   const bounds = getBounds(coordinates);
   const firstCenter = coordinates[0] ?? DEFAULT_CENTER;
+  const sampleViewportKey = validSample
+    ? `${validSample.lat.toFixed(3)}:${validSample.lng.toFixed(3)}`
+    : "gate-only";
 
   return {
     bounds,
@@ -263,7 +262,7 @@ export function getEmployeeMapViewport(
       primaryGate?.name,
       primaryGate?.lat,
       primaryGate?.lng,
-      includeSampleInBounds ? "with-sample" : "gate-only",
+      sampleViewportKey,
     ].join(":"),
     includeSampleInBounds,
   };
