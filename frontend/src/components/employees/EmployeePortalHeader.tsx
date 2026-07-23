@@ -80,7 +80,6 @@ export function EmployeePortalHeader({
         <div className="ct-navbar-end w-auto shrink-0 gap-2">
           <span className="employee-type-pill hidden min-h-9 items-center gap-2 rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-3 text-primary lg:inline-flex">
             <ScanLine className="h-4 w-4" aria-hidden="true" />
-            Cổng nhân viên
           </span>
           <button
             type="button"

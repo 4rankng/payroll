@@ -21,7 +21,7 @@ const Index = () => {
             </div>
             <div className="space-y-4">
               <h1 className="font-display text-4xl font-extrabold leading-tight tracking-normal text-foreground sm:text-5xl">
-                Bảng điều hành lương cho đội ngũ công trường
+                Bảng điều hành lương cho đội ngũ dự án
               </h1>
               <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 Theo dõi nhân sự, bảng công, ví lương và thanh toán trong một hệ thống vận hành rõ ràng cho admin, đối tác và nhân viên.

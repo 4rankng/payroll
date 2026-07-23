@@ -20,7 +20,7 @@ describe('BankTransferHistoryPageContent', () => {
           employee_name: 'LÒ THỊ MINH THU',
           employee_cccd: '031189014251',
           project_ids: [1],
-          project_names: ['Công trường Việt Nam'],
+          project_names: ['Dự án Việt Nam'],
           work_month: '2026-07',
           cycle: 2,
           from_date: '2026-07-08',

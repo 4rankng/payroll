@@ -177,7 +177,7 @@ func TestRejectZeroesEarningAndStampsReason(t *testing.T) {
 	}
 	svc, repo := newReviewService(att, nil, nil)
 
-	res, err := svc.Reject(context.Background(), 7, 9, "NV rời công trường sớm")
+	res, err := svc.Reject(context.Background(), 7, 9, "NV rời dự án sớm")
 	if err != nil {
 		t.Fatalf("expected reject to succeed, got %v", err)
 	}
@@ -190,10 +190,10 @@ func TestRejectZeroesEarningAndStampsReason(t *testing.T) {
 	if repo.reviewedEarn == nil || *repo.reviewedEarn != 0 {
 		t.Fatalf("expected earning forced to 0, got %v", repo.reviewedEarn)
 	}
-	if repo.reviewedNote != "NV rời công trường sớm" {
+	if repo.reviewedNote != "NV rời dự án sớm" {
 		t.Fatalf("expected note stored, got %q", repo.reviewedNote)
 	}
-	if res.SalaryRejectReason == nil || *res.SalaryRejectReason != "NV rời công trường sớm" {
+	if res.SalaryRejectReason == nil || *res.SalaryRejectReason != "NV rời dự án sớm" {
 		t.Fatalf("expected salary_reject_reason set to note, got %v", res.SalaryRejectReason)
 	}
 	if res.ReviewAction == nil || *res.ReviewAction != "rejected" {

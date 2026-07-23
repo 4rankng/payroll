@@ -250,7 +250,7 @@ const AdminDashboard = () => {
           <DashboardAreaHeader
             eyebrow="Tài chính"
             title="Dòng tiền và hiệu quả"
-            description="Rà soát lịch sử tài chính, cơ cấu ngân hàng và lợi nhuận theo từng công trường."
+            description="Rà soát lịch sử tài chính, cơ cấu ngân hàng và lợi nhuận theo từng dự án."
             className="mt-2 xl:col-span-12"
           />
 
@@ -294,7 +294,7 @@ const AdminDashboard = () => {
               className="admin-dashboard-finance-group min-w-0 space-y-3 xl:col-span-5"
             >
               <DashboardSectionHeader
-                eyebrow="Công trường"
+                eyebrow="Dự án"
                 title="Lợi nhuận dự án"
                 subtitle="Theo dõi đà lợi nhuận và dự án đang kéo kết quả kỳ lương."
                 icon={FolderKanban}
@@ -347,7 +347,7 @@ const AdminDashboard = () => {
               <DashboardSectionHeader
                 eyebrow="Nhân sự"
                 title="Nhân viên mới nhất"
-                subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế công trường."
+                subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế dự án."
                 icon={Users}
               />
               <RecentEmployeesCard

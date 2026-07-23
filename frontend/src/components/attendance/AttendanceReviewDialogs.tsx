@@ -123,7 +123,7 @@ export function AttendanceReviewDialogs({
               autoFocus
               value={rejectNote}
               onChange={(e) => setRejectNote(e.target.value)}
-              placeholder="VD: Nhân viên rời công trường sớm"
+              placeholder="VD: Nhân viên rời dự án sớm"
               className="min-h-[112px]"
             />
             <p className="text-[11px] text-muted-foreground">
