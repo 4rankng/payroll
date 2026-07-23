@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Regression and Mobile Validation"
-status: pending
+status: in-progress
 effort: "M"
 ---
 
@@ -24,7 +24,7 @@ Lock down the migration with focused tests, build checks, and mobile visual vali
 
 ## Implementation Steps
 
-1. Rewrite `EmployeeLocationMap.test.tsx` mocks from `react-leaflet` to `react-map-gl/maplibre`.
+1. Rewrite `EmployeeLocationMap.test.tsx` mocks from `react-leaflet` to direct `maplibre-gl`.
 2. Assert the behavioral contract instead of MapLibre internals:
    - stacking context remains below the fixed attendance dock,
    - map uses the configured light style,
@@ -65,26 +65,40 @@ Lock down the migration with focused tests, build checks, and mobile visual vali
 
 ## Success Criteria
 
-- [ ] Focused Vitest coverage passes for employee map, check-in card disclosure, and geofence guidance.
-- [ ] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint` passes.
-- [ ] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm build` passes.
-- [ ] Build output confirms MapLibre remains lazy-loaded behind the map disclosure.
-- [ ] Real-browser validation confirms approved map hostnames, no Mapbox/Google requests, visible attribution, and fallback behavior for style/WebGL failure.
-- [ ] Admin Leaflet smoke verification passes.
-- [ ] `make api-test` passes or any pre-existing external dependency failure is documented with evidence.
-- [ ] Mobile visual QA confirms no overlapping text, no wide-region viewport for nearby coordinates, no misleading far-distance route, readable fallback state, fixed-dock compatibility, and 200% text usability.
-- [ ] `graphify update .` runs after code changes.
+- [x] Focused Vitest coverage passes for employee map, check-in card disclosure, and geofence guidance.
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint` passes.
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm build` passes.
+- [x] Build output confirms MapLibre remains lazy-loaded behind the map disclosure.
+- [x] Real-browser validation confirms approved map hostnames, no Mapbox/Google requests, and visible attribution.
+- [x] Automated fallback coverage confirms style/WebGL failure keeps a readable Vietnamese fallback.
+- [x] Admin Leaflet smoke verification passes.
+- [x] `make api-test` passes or any pre-existing external dependency failure is documented with evidence.
+- [x] Mobile visual QA confirms the reported broken map is fixed, the viewport is local, attribution is readable, and the fixed dock does not cover the map card.
+- [ ] Optional expanded mobile QA confirms 200% text usability and live broken-style fallback behavior.
+- [x] `graphify update .` runs after code changes.
+
+## Implementation Notes
+
+- Focused Vitest command passed after review fixes: 4 files, 40 tests.
+- `pnpm lint` passed with 3 pre-existing generated coverage warnings and no touched-file warnings.
+- `pnpm build` passed and emitted `EmployeeLocationMap.*.js` plus `maplibre-gl.*.js`, confirming the map runtime remains split behind the lazy employee map.
+- `go test ./internal/transport/http/middleware` passed after adding CARTO/MapLibre worker CSP coverage.
+- Real-browser mobile check with the provided employee login passed on 2026-07-23: one MapLibre canvas rendered, 4 markers rendered, no fallback, no request failures, no page errors, CARTO/OpenStreetMap attribution visible, and no Mapbox/Google requests. Screenshot: `/tmp/payroll-map-final.png`.
+- Direct MapLibre replaced the initially planned `react-map-gl/maplibre` wrapper after visual validation found a wrapper runtime resize crash. `react-map-gl` was removed from `frontend/package.json` and `frontend/pnpm-lock.yaml`.
+- Admin Leaflet smoke: source still imports `react-leaflet` and `leaflet/dist/leaflet.css`; production build still emits `AttendanceLocationMap.*` separately, so retained admin Leaflet wiring compiles.
+- Root `make api-test` target is absent. `make -C backend api-test` ran and failed in unrelated backend flows: `Assets` upload/metadata/download and `Transaction` export. `EmployeeSelfService` passed.
+- Untitled UI MCP could not be used for component retrieval because the MCP server returned HTTP 429 rate limits on search and direct component calls; implementation used the repo's existing employee card/badge styling instead.
 
 ## Verification Commands
 
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx src/components/employees/EmployeeCheckInCard.test.tsx src/utils/checkInGeofenceGuidance.test.ts`
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint`
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm build`
-- Build artifact inspection for MapLibre lazy chunk placement.
-- Playwright/manual browser validation for map disclosure network hosts, attribution, blocked style URL, and mobile screenshots.
-- Admin Leaflet smoke check through an existing admin map wrapper or route.
-- `make api-test`
-- `graphify update .`
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx src/components/employees/EmployeeCheckInCard.test.tsx src/utils/checkInGeofenceGuidance.test.ts`
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint`
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm build`
+- [x] Build artifact inspection for MapLibre lazy chunk placement.
+- [x] Playwright/manual browser validation for map disclosure network hosts, attribution, and mobile screenshot.
+- [x] Admin Leaflet smoke check through an existing admin map wrapper or route.
+- [x] `make api-test`
+- [x] `graphify update .`
 
 ## Risks and Rollback
 

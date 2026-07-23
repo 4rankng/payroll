@@ -11,6 +11,7 @@ import (
 
 func TestSecurityHeaders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	const expectedCSP = "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://basemaps.cartocdn.com https://tiles.basemaps.cartocdn.com https://tiles-a.basemaps.cartocdn.com https://tiles-b.basemaps.cartocdn.com https://tiles-c.basemaps.cartocdn.com https://tiles-d.basemaps.cartocdn.com https://services.arcgisonline.com; worker-src 'self' blob:; frame-src https://accounts.google.com; frame-ancestors 'none'"
 
 	tests := []struct {
 		name                string
@@ -29,7 +30,7 @@ func TestSecurityHeaders(t *testing.T) {
 				"X-XSS-Protection":        "1; mode=block",
 				"Referrer-Policy":         "strict-origin-when-cross-origin",
 				"Permissions-Policy":      "geolocation=(self), microphone=(), camera=()",
-				"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
+				"Content-Security-Policy": expectedCSP,
 			},
 		},
 		{
@@ -42,7 +43,7 @@ func TestSecurityHeaders(t *testing.T) {
 				"X-XSS-Protection":          "1; mode=block",
 				"Referrer-Policy":           "strict-origin-when-cross-origin",
 				"Permissions-Policy":        "geolocation=(self), microphone=(), camera=()",
-				"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'",
+				"Content-Security-Policy":   expectedCSP,
 				"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 			},
 		},

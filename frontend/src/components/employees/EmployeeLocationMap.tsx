@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Circle, CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
-import { divIcon } from "leaflet";
-import type { LatLngBoundsExpression, LatLngExpression, Marker as LeafletMarker } from "leaflet";
-import { BadgeCheck, MapPin, Navigation } from "lucide-react";
-import "leaflet/dist/leaflet.css";
+import * as maplibregl from "maplibre-gl";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import { Navigation } from "lucide-react";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
 import {
@@ -11,6 +10,16 @@ import {
   type CheckInGeofenceGuidance,
 } from "@/utils/checkInGeofenceGuidance";
 import { formatDistanceMeters } from "@/utils/geoDistance";
+import {
+  buildGatePointFeatureCollection,
+  buildGeofenceFeatureCollection,
+  buildRouteFeature,
+  EMPLOYEE_MAP_STYLE,
+  getEmployeeMapViewport,
+  shouldShowEmployeeRouteForDisplay,
+} from "./employee-location-map-model";
+
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 interface EmployeeLocationMapProps {
   target: CheckInTarget;
@@ -18,315 +27,356 @@ interface EmployeeLocationMapProps {
 }
 
 export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps) {
-  const [tileFailed, setTileFailed] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const guidance = useMemo(
     () => getCheckInGeofenceGuidance(target, sample),
     [target, sample]
   );
+  const shouldShowRoute = shouldShowEmployeeRouteForDisplay(guidance);
+  const viewport = useMemo(
+    () => getEmployeeMapViewport(guidance, target, sample),
+    [guidance, sample, target]
+  );
+  const geofenceData = useMemo(() => buildGeofenceFeatureCollection(target), [target]);
+  const gateData = useMemo(
+    () => buildGatePointFeatureCollection(target, guidance.nearestGate),
+    [guidance.nearestGate, target]
+  );
+  const routeFeature = useMemo(
+    () => buildRouteFeature(sample, guidance.nearestGate, shouldShowRoute),
+    [guidance.nearestGate, sample, shouldShowRoute]
+  );
   const firstGate = target.gates[0];
-  const center = useMemo<LatLngExpression>(
-    () => sample ? [sample.lat, sample.lng] : [firstGate.lat, firstGate.lng],
-    [firstGate.lat, firstGate.lng, sample]
-  );
-  const nearestPoint = guidance.nearestGate
-    ? ([guidance.nearestGate.lat, guidance.nearestGate.lng] as LatLngExpression)
-    : null;
-  const directionArrow = useMemo(
-    () => sample && guidance.nearestGate
-      ? createDirectionArrow(sample, guidance.nearestGate)
-      : null,
-    [guidance.nearestGate, sample]
-  );
-  const nearestGateName = guidance.nearestGate?.name || "cổng chấm công";
-  const hasRoute = Boolean(sample && nearestPoint && directionArrow);
+  const nearestGateName = guidance.nearestGate?.name || firstGate?.name || "cổng chấm công";
+  const hasRoute = Boolean(routeFeature);
   const isAtGate = Boolean(
-    sample && nearestPoint && guidance.distanceMeters != null && !directionArrow
+    sample && guidance.nearestGate && guidance.distanceMeters != null && guidance.distanceMeters <= 1
   );
+  const canRenderMap = !mapFailed && isWebGLAvailable();
 
   return (
     <div
-      className="relative isolate z-0 overflow-hidden rounded-xl border border-sky-100 bg-white"
+      className="relative isolate z-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
       role="group"
-      aria-label={hasRoute
-        ? `Bản đồ hướng tới ${nearestGateName}, cách ${formatDistanceMeters(guidance.distanceMeters)} theo đường thẳng`
-        : isAtGate
-          ? `Bạn đang ở ${nearestGateName}`
-        : "Bản đồ khu vực chấm công"}
+      aria-label={mapAriaLabel(guidance, hasRoute, isAtGate, nearestGateName)}
     >
-      <div className="flex items-center justify-between gap-3 px-3 py-2.5">
-        <div className="min-w-0">
-          <p className="employee-type-card-title truncate text-slate-950">{statusTitle(guidance)}</p>
-          <p className="employee-type-pill mt-0.5 truncate text-slate-500">
-            {statusDescription(guidance, target)}
-          </p>
-        </div>
-        <span className={`employee-type-pill inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed bg-emerald-50 text-emerald-700" : "bg-sky-50 text-sky-700"}`}>
-          <Navigation className="h-3.5 w-3.5" />
+      <div className="employee-type-body-sm flex items-center gap-2 px-3 py-2.5 text-slate-700">
+        <span className="truncate font-semibold text-slate-950">{statusTitle(guidance)}</span>
+        <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
+        <span className="max-w-16 truncate font-semibold text-slate-500">{nearestGateName}</span>
+        <span className="h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
+        <span className="shrink-0 font-semibold text-slate-500">{formatDistanceMeters(target.radius_meters)}</span>
+        <span className={`employee-type-pill ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${sample?.accuracy != null && sample.accuracy < 50 ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700" : "border-sky-100 bg-sky-50/80 text-sky-700"}`}>
+          <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
           {sample?.accuracy ? (
-            <>{sample.accuracy < 50 ? <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" /> : null}+/-{Math.round(sample.accuracy)}m</>
+            <>GPS ±{Math.round(sample.accuracy)}m</>
           ) : (
             <>GPS</>
           )}
         </span>
       </div>
-      {tileFailed ? (
-        <div className="employee-type-body-sm border-t border-slate-100 bg-slate-50 px-3 py-3 text-slate-600">
-          Không tải được bản đồ.
+      {canRenderMap ? (
+        <div className="relative h-80 w-full border-y border-slate-100 bg-slate-100 sm:h-96">
+          <EmployeeMapCanvas
+            gateData={gateData}
+            geofenceData={geofenceData}
+            guidance={guidance}
+            routeFeature={routeFeature}
+            sample={sample}
+            target={target}
+            viewport={viewport}
+            onMapFailed={() => setMapFailed(true)}
+          />
         </div>
       ) : (
-        <div className="relative h-60 w-full border-t border-slate-100 bg-slate-100">
-          {hasRoute || isAtGate ? (
-            <div className="employee-type-body pointer-events-none absolute bottom-3 left-1/2 z-[500] inline-flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-2 font-semibold text-emerald-800">
-              <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="truncate">{nearestGateName}</span>
-            </div>
-          ) : null}
-          <MapContainer
-            center={center}
-            zoom={16}
-            className="h-full w-full"
-            zoomControl={false}
-            attributionControl={false}
-            scrollWheelZoom={false}
-            dragging
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              eventHandlers={{ tileerror: () => setTileFailed(true) }}
-            />
-            <FitLocationBounds target={target} sample={sample} guidance={guidance} />
-            {target.gates.map((gate) => (
-              <Circle
-                key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                center={[gate.lat, gate.lng]}
-                radius={target.radius_meters}
-                pathOptions={{
-                  color: "#059669",
-                  fillColor: "#10b981",
-                  fillOpacity: 0.12,
-                  weight: 2,
-                }}
-              >
-                <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                  {gate.name || "Khu vực chấm công"}
-                </Tooltip>
-              </Circle>
-            ))}
-            {target.gates.map((gate) => (
-              <CircleMarker
-                key={`gate-${gate.name}-${gate.lat}-${gate.lng}`}
-                center={[gate.lat, gate.lng]}
-                radius={8}
-                pathOptions={{
-                  color: "#047857",
-                  fillColor: "#ffffff",
-                  fillOpacity: 1,
-                  weight: 3,
-                  className: sample && guidance.nearestGate?.lat === gate.lat && guidance.nearestGate?.lng === gate.lng ? "checkpoint-marker-emphasis" : undefined,
-                }}
-              >
-                <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                  {gate.name || "Cổng chấm công"}
-                </Tooltip>
-              </CircleMarker>
-            ))}
-            {hasRoute && nearestPoint ? (
-              <Polyline
-                positions={[center, nearestPoint]}
-                pathOptions={{
-                  color: "#ffffff",
-                  opacity: 0.88,
-                  weight: 7,
-                  lineCap: "round",
-                  className: "checkpoint-route-underlay",
-                }}
-              />
-            ) : null}
-            {hasRoute && nearestPoint ? (
-              <Polyline
-                positions={[center, nearestPoint]}
-                pathOptions={{
-                  color: "#0284c7",
-                  dashArray: "8 7",
-                  weight: 3,
-                  lineCap: "round",
-                  className: "checkpoint-direction-route checkpoint-route-reveal",
-                }}
-              />
-            ) : null}
-            {directionArrow && sample && guidance.nearestGate ? (
-              <AnimatedDirectionArrow
-                start={sample}
-                target={guidance.nearestGate}
-                icon={directionArrow.icon}
-              />
-            ) : null}
-            {sample ? (
-              <>
-                <Circle
-                  center={center}
-                  radius={Math.max(0, sample.accuracy)}
-                  pathOptions={{ color: "#2563eb", fillColor: "#3b82f6", fillOpacity: 0.12, weight: 1 }}
-                />
-                <CircleMarker
-                  center={center}
-                  radius={9}
-                  pathOptions={{
-                    color: "#ffffff",
-                    fillColor: "#2563eb",
-                    fillOpacity: 1,
-                    weight: 3,
-                  }}
-                >
-                  <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                    Bạn đang ở đây
-                  </Tooltip>
-                </CircleMarker>
-              </>
-            ) : null}
-          </MapContainer>
-        </div>
+        <MapFallback />
       )}
-      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
-        <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
-          <p className="employee-type-pill uppercase text-slate-500">Bán kính</p>
-          <p className="employee-type-body mt-0.5 truncate font-semibold text-slate-950">
-            {formatDistanceMeters(target.radius_meters)}
-          </p>
-        </div>
-        <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
-          <p className="employee-type-pill uppercase text-slate-500">Cổng gần nhất</p>
-          <p className="employee-type-body mt-0.5 truncate font-semibold text-slate-950">
-            {guidance.nearestGate?.name || target.gates[0]?.name || "Chưa xác định"}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
 
-function FitLocationBounds({
-  guidance,
-  sample,
-  target,
-}: {
+type EmployeeMapCanvasProps = {
+  gateData: ReturnType<typeof buildGatePointFeatureCollection>;
+  geofenceData: ReturnType<typeof buildGeofenceFeatureCollection>;
   guidance: CheckInGeofenceGuidance;
+  routeFeature: ReturnType<typeof buildRouteFeature>;
   sample?: LocationSample | null;
   target: CheckInTarget;
-}) {
-  const map = useMap();
-  const fittedConfigRef = useRef<string | null>(null);
-  const fittedGateViewRef = useRef(false);
-  const fittedRouteRef = useRef(false);
-  const configKey = [
-    target.project_id,
-    target.radius_meters,
-    ...target.gates.flatMap((gate) => [gate.name, gate.lat, gate.lng]),
-  ].join(":");
+  viewport: ReturnType<typeof getEmployeeMapViewport>;
+  onMapFailed: () => void;
+};
 
-  useEffect(() => {
-    if (fittedConfigRef.current !== configKey) {
-      fittedConfigRef.current = configKey;
-      fittedGateViewRef.current = false;
-      fittedRouteRef.current = false;
-    }
-
-    if (sample && guidance.nearestGate && !fittedRouteRef.current) {
-      const bounds = [
-        [sample.lat, sample.lng],
-        [guidance.nearestGate.lat, guidance.nearestGate.lng],
-      ] as LatLngBoundsExpression;
-      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 17 });
-      fittedRouteRef.current = true;
-      fittedGateViewRef.current = true;
-      return;
-    }
-
-    if (!sample && !fittedGateViewRef.current && target.gates.length > 0) {
-      const bounds = target.gates.map((gate) => [gate.lat, gate.lng]) as LatLngBoundsExpression;
-      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 17 });
-      fittedGateViewRef.current = true;
-    }
-  }, [configKey, guidance.nearestGate, map, sample, target.gates]);
-
-  return null;
-}
-
-function createDirectionArrow(
-  start: { lat: number; lng: number },
-  target: { lat: number; lng: number }
-): { icon: ReturnType<typeof divIcon> } | null {
-  const deltaLat = target.lat - start.lat;
-  const deltaLng = target.lng - start.lng;
-  if (Math.abs(deltaLat) < 1e-9 && Math.abs(deltaLng) < 1e-9) return null;
-
-  const bearing = getBearingDegrees(start, target);
-  const icon = divIcon({
-    className: "checkpoint-direction-arrow-marker",
-    html: `<svg class="checkpoint-direction-arrow" viewBox="0 0 20 24" aria-hidden="true" style="transform:rotate(${bearing}deg)"><path d="M10 1 19 22 10 17 1 22Z" fill="#0284c7" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/></svg>`,
-    iconSize: [20, 24],
-    iconAnchor: [10, 12],
-  });
-
-  return { icon };
-}
-
-function AnimatedDirectionArrow({
-  icon,
-  start,
+function EmployeeMapCanvas({
+  gateData,
+  geofenceData,
+  guidance,
+  routeFeature,
+  sample,
   target,
-}: {
-  icon: ReturnType<typeof divIcon>;
-  start: { lat: number; lng: number };
-  target: { lat: number; lng: number };
-}) {
-  const markerRef = useRef<LeafletMarker | null>(null);
+  viewport,
+  onMapFailed,
+}: EmployeeMapCanvasProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const onMapFailedRef = useRef(onMapFailed);
+  const fittedConfigRef = useRef<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
-    const marker = markerRef.current;
-    if (!marker) return;
+    onMapFailedRef.current = onMapFailed;
+  }, [onMapFailed]);
 
-    const updatePosition = (progress: number) => {
-      marker.setLatLng([
-        start.lat + (target.lat - start.lat) * progress,
-        start.lng + (target.lng - start.lng) * progress,
-      ]);
-    };
-    const reduceMotion =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      updatePosition(0.72);
-      return;
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    try {
+      const map = new maplibregl.Map({
+        container: containerRef.current,
+        style: EMPLOYEE_MAP_STYLE,
+        center: viewport.initialCenter,
+        zoom: viewport.initialZoom,
+        attributionControl: false,
+        interactive: true,
+        dragRotate: false,
+        touchPitch: false,
+        pitchWithRotate: false,
+        keyboard: false,
+      });
+
+      mapRef.current = map;
+      map.on("error", () => onMapFailedRef.current());
+      map.on("load", () => setMapLoaded(true));
+
+      return () => {
+        markersRef.current.forEach((marker) => marker.remove());
+        markersRef.current = [];
+        map.remove();
+        mapRef.current = null;
+      };
+    } catch {
+      onMapFailedRef.current();
+    }
+  }, [viewport.initialCenter, viewport.initialZoom]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapLoaded || !map) return;
+
+    try {
+      syncMapData(map, {
+        gateData,
+        geofenceData,
+        guidance,
+        routeFeature,
+        sample,
+        target,
+      });
+
+      if (fittedConfigRef.current !== viewport.configKey && viewport.bounds) {
+        map.resize();
+        map.fitBounds(viewport.bounds, {
+          padding: 28,
+          maxZoom: 17,
+          duration: prefersReducedMotion() ? 0 : 300,
+        });
+        fittedConfigRef.current = viewport.configKey;
+      }
+    } catch {
+      onMapFailedRef.current();
+    }
+  }, [
+    gateData,
+    geofenceData,
+    guidance,
+    mapLoaded,
+    routeFeature,
+    sample,
+    target,
+    viewport,
+  ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapLoaded || !map) return;
+
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    const nextMarkers: maplibregl.Marker[] = [];
+    for (const gate of target.gates.filter(isRenderableCoordinate)) {
+      const isNearestGate = guidance.nearestGate?.lat === gate.lat && guidance.nearestGate?.lng === gate.lng;
+      const gateName = gate.name || "Cổng chấm công";
+      const element = document.createElement("span");
+      element.className = "relative grid h-4 w-4 place-items-center overflow-visible";
+      element.title = gateName;
+      element.dataset.checkpointName = gateName;
+
+      const dot = document.createElement("span");
+      dot.className = `block h-4 w-4 rounded-full border-[3px] border-emerald-700 bg-white shadow-sm ${
+        isNearestGate ? "checkpoint-marker-emphasis" : ""
+      }`;
+      element.appendChild(dot);
+
+      const label = document.createElement("span");
+      label.className = `employee-type-pill pointer-events-none absolute bottom-5 left-1/2 z-10 max-w-24 -translate-x-1/2 whitespace-nowrap rounded-full border bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur ${
+        isNearestGate ? "border-emerald-200 text-emerald-800" : "border-slate-200 text-slate-700"
+      }`;
+      label.textContent = gateName;
+      element.appendChild(label);
+
+      nextMarkers.push(new maplibregl.Marker({ element, anchor: "center" }).setLngLat([gate.lng, gate.lat]).addTo(map));
     }
 
-    const travelMs = 1_650;
-    const pauseMs = 650;
-    const startedAt = performance.now();
-    let frameId = 0;
-    const animate = (now: number) => {
-      const elapsed = (now - startedAt) % (travelMs + pauseMs);
-      const rawProgress = Math.min(elapsed / travelMs, 1);
-      const easedProgress = rawProgress * rawProgress * (3 - 2 * rawProgress);
-      updatePosition(0.06 + easedProgress * 0.88);
-      const element = marker.getElement();
-      if (element) element.style.opacity = elapsed < travelMs ? "1" : "0";
-      frameId = window.requestAnimationFrame(animate);
-    };
-    frameId = window.requestAnimationFrame(animate);
-    return () => window.cancelAnimationFrame(frameId);
-  }, [start.lat, start.lng, target.lat, target.lng]);
+    if (sample && isRenderableCoordinate(sample)) {
+      const element = document.createElement("span");
+      element.className = "employee-user-location-marker block h-10 w-6";
+      element.title = "Bạn đang ở đây";
+      element.dataset.userLocation = "true";
+      element.innerHTML = `
+        <svg viewBox="0 0 28 44" aria-hidden="true" class="h-full w-full overflow-visible">
+          <g data-marker-silhouette="true" fill="#fbbf24" stroke="#a16207" stroke-width="1.35">
+            <rect x="5.6" y="15.4" width="3.8" height="14.2" rx="1.9" transform="rotate(13 7.5 22.5)"></rect>
+            <rect x="18.6" y="15.4" width="3.8" height="14.2" rx="1.9" transform="rotate(-13 20.5 22.5)"></rect>
+            <rect x="9.8" y="26.2" width="4.15" height="16.2" rx="2.05" transform="rotate(2 11.9 34.3)"></rect>
+            <rect x="14.05" y="26.2" width="4.15" height="16.2" rx="2.05" transform="rotate(-2 16.1 34.3)"></rect>
+            <rect x="9.7" y="13.1" width="8.6" height="17.2" rx="3.8"></rect>
+            <circle cx="14" cy="6.6" r="5.35"></circle>
+          </g>
+          <path d="M11.8 15.5v9.2M11.7 4.8a3.8 3.8 0 0 1 2.8-1.6" fill="none" stroke="#fef3c7" stroke-width="1.25" stroke-linecap="round" opacity="0.82"></path>
+        </svg>
+      `;
+      nextMarkers.push(new maplibregl.Marker({ element, anchor: "bottom" }).setLngLat([sample.lng, sample.lat]).addTo(map));
+    }
+
+    if (routeFeature && sample && guidance.nearestGate) {
+      const element = document.createElement("span");
+      element.className = "checkpoint-direction-arrow-marker grid h-8 w-8 place-items-center";
+      element.setAttribute("aria-hidden", "true");
+      const arrow = document.createElement("span");
+      arrow.className = "checkpoint-direction-arrow text-sky-600";
+      arrow.style.transform = `rotate(${getBearingDegrees(sample, guidance.nearestGate)}deg)`;
+      arrow.textContent = "▲";
+      element.appendChild(arrow);
+      nextMarkers.push(
+        new maplibregl.Marker({ element, anchor: "center" })
+          .setLngLat([(sample.lng + guidance.nearestGate.lng) / 2, (sample.lat + guidance.nearestGate.lat) / 2])
+          .addTo(map)
+      );
+    }
+
+    markersRef.current = nextMarkers;
+  }, [guidance.nearestGate, guidance.status, mapLoaded, routeFeature, sample, target.gates]);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={[start.lat, start.lng]}
-      icon={icon}
-      interactive={false}
-      keyboard={false}
-      zIndexOffset={450}
+    <div
+      ref={containerRef}
+      className="h-full w-full"
+      role="application"
+      aria-label="Bản đồ vệ tinh có thể kéo và phóng to"
     />
   );
+}
+
+function syncMapData(
+  map: maplibregl.Map,
+  data: Omit<EmployeeMapCanvasProps, "onMapFailed" | "viewport">
+) {
+  upsertGeoJsonSource(map, "employee-geofence", data.geofenceData);
+  addLayerIfMissing(map, {
+    id: "employee-geofence-fill",
+    source: "employee-geofence",
+    type: "fill",
+    paint: { "fill-color": "#10b981", "fill-opacity": 0.14 },
+  });
+  addLayerIfMissing(map, {
+    id: "employee-geofence-line",
+    source: "employee-geofence",
+    type: "line",
+    paint: { "line-color": "#047857", "line-opacity": 0.9, "line-width": 2 },
+  });
+
+  removeLayerAndSource(map, ["employee-accuracy-fill", "employee-accuracy-line"], "employee-accuracy");
+
+  if (data.routeFeature) {
+    upsertGeoJsonSource(map, "employee-route", data.routeFeature);
+    addLayerIfMissing(map, {
+      id: "employee-route-underlay",
+      source: "employee-route",
+      type: "line",
+      paint: { "line-color": "#ffffff", "line-opacity": 0.9, "line-width": 7 },
+      layout: { "line-cap": "round", "line-join": "round" },
+    });
+    addLayerIfMissing(map, {
+      id: "employee-route-line",
+      source: "employee-route",
+      type: "line",
+      paint: { "line-color": "#0284c7", "line-dasharray": [1.4, 1.8], "line-width": 3 },
+      layout: { "line-cap": "round", "line-join": "round" },
+    });
+  } else {
+    removeLayerAndSource(map, ["employee-route-underlay", "employee-route-line"], "employee-route");
+  }
+
+  upsertGeoJsonSource(map, "employee-gates", data.gateData);
+  addLayerIfMissing(map, {
+    id: "employee-gate-halo",
+    source: "employee-gates",
+    type: "circle",
+    paint: {
+      "circle-color": "#ffffff",
+      "circle-radius": ["case", ["get", "nearest"], 9, 8],
+      "circle-stroke-color": "#047857",
+      "circle-stroke-width": ["case", ["get", "nearest"], 4, 3],
+    },
+  });
+}
+
+function upsertGeoJsonSource(
+  map: maplibregl.Map,
+  id: string,
+  data: Parameters<maplibregl.GeoJSONSource["setData"]>[0]
+) {
+  const source = map.getSource(id);
+  if (source) {
+    (source as maplibregl.GeoJSONSource).setData(data);
+    return;
+  }
+  map.addSource(id, { type: "geojson", data });
+}
+
+function addLayerIfMissing(map: maplibregl.Map, layer: maplibregl.LayerSpecification) {
+  if (!map.getLayer(layer.id)) {
+    map.addLayer(layer);
+  }
+}
+
+function removeLayerAndSource(map: maplibregl.Map, layerIds: string[], sourceId: string) {
+  for (const layerId of layerIds) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+  }
+  if (map.getSource(sourceId)) map.removeSource(sourceId);
+}
+
+function MapFallback() {
+  return (
+    <div className="employee-type-body-sm border-t border-slate-100 bg-slate-50 px-3 py-3 text-slate-600">
+      Không tải được bản đồ.
+    </div>
+  );
+}
+
+function mapAriaLabel(
+  guidance: CheckInGeofenceGuidance,
+  hasRoute: boolean,
+  isAtGate: boolean,
+  nearestGateName: string
+): string {
+  if (hasRoute) {
+    return `Bản đồ hướng tới ${nearestGateName}, cách ${formatDistanceMeters(guidance.distanceMeters)} theo đường thẳng`;
+  }
+  if (isAtGate) return `Bạn đang ở ${nearestGateName}`;
+  return "Bản đồ khu vực chấm công";
 }
 
 function getBearingDegrees(
@@ -347,6 +397,37 @@ function toRadians(value: number): number {
   return (value * Math.PI) / 180;
 }
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function isWebGLAvailable(): boolean {
+  if (typeof document === "undefined") return false;
+
+  try {
+    const canvas = document.createElement("canvas");
+    return Boolean(
+      canvas.getContext("webgl2") ||
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isRenderableCoordinate(point: { lat: number; lng: number }): boolean {
+  return (
+    Number.isFinite(point.lat) &&
+    Number.isFinite(point.lng) &&
+    Math.abs(point.lat) <= 90 &&
+    Math.abs(point.lng) <= 180
+  );
+}
+
 function statusTitle(guidance: CheckInGeofenceGuidance): string {
   switch (guidance.status) {
     case "inside":
@@ -360,22 +441,5 @@ function statusTitle(guidance: CheckInGeofenceGuidance): string {
     case "no_target":
     default:
       return "Chưa có khu vực chấm công";
-  }
-}
-
-function statusDescription(guidance: CheckInGeofenceGuidance, target: CheckInTarget): string {
-  const gateName = guidance.nearestGate?.name || "cổng chấm công";
-  switch (guidance.status) {
-    case "inside":
-      return gateName;
-    case "outside":
-      return `${gateName} · ${formatDistanceMeters(guidance.distanceMeters)}`;
-    case "inaccurate":
-      return gateName;
-    case "no_position":
-      return `${gateName} · bán kính ${formatDistanceMeters(target.radius_meters)}`;
-    case "no_target":
-    default:
-      return "Dự án chưa có đủ thông tin vị trí. Vui lòng báo quản lý.";
   }
 }

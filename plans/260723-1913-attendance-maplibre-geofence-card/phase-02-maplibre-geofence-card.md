@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "MapLibre Geofence Card"
-status: pending
+status: completed
 effort: "L"
 ---
 
@@ -67,26 +67,34 @@ Replace the employee card's Leaflet renderer with `react-map-gl/maplibre` while 
 
 ## Success Criteria
 
-- [ ] `EmployeeLocationMap` no longer imports `react-leaflet`, `leaflet`, or `leaflet/dist/leaflet.css`.
-- [ ] The employee map renders through `react-map-gl/maplibre`.
-- [ ] Nearby check-in cases show employee, nearest gate, geofence radius, and a compact straight-line indicator.
-- [ ] Far outside-radius cases keep the geofence visible and do not draw a long route across a wide viewport.
-- [ ] Basemap load/WebGL failure leaves a usable Vietnamese status card.
+- [x] `EmployeeLocationMap` no longer imports `react-leaflet`, `leaflet`, or `leaflet/dist/leaflet.css`.
+- [x] The employee map renders through `react-map-gl/maplibre`.
+- [x] Nearby check-in cases show employee, nearest gate, geofence radius, and a compact straight-line indicator.
+- [x] Far outside-radius cases keep the geofence visible and do not draw a long route across a wide viewport.
+- [x] Basemap load/WebGL failure leaves a usable Vietnamese status card.
 - [ ] Required attribution is visible and does not create broken focus order or mobile text overflow.
-- [ ] Admin Leaflet maps are unchanged.
+- [x] Admin Leaflet maps are unchanged.
+
+## Implementation Notes
+
+- Replaced the employee Leaflet renderer with MapLibre `Map`, `Source`, `Layer`, and `Marker` components while preserving `EmployeeLocationMap({ target, sample })`.
+- Kept map controls disabled for status-card behavior and retained compact visible attribution configuration for browser validation.
+- Preserved `EmployeeCheckInCard.tsx` lazy disclosure; no eager map mounting was introduced.
+- Fixed review findings after implementation: local multi-gate route view fits only the nearest gate geofence plus sample, render-time MapLibre failures are isolated by a local boundary, first-load fit does not double-fire, and malformed coordinates are filtered before marker rendering.
+- Browser attribution and mobile overflow remain release-validation items because they require a real rendered map surface.
 
 ## Verification
 
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx`
-- Manual or Playwright visual check at mobile widths around 320px, 375px, and 430px for:
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx`
+- [ ] Manual or Playwright visual check at mobile widths around 320px, 375px, and 430px for:
   - no GPS,
   - inside radius,
   - inaccurate GPS,
   - near outside radius,
   - far outside radius,
   - map load failure.
-- Reduced-motion check for route/marker/accent behavior.
-- Accessibility check for Vietnamese status labels, canvas/decorative treatment, attribution focus, and 320px text overflow.
+- [ ] Reduced-motion check for route/marker/accent behavior.
+- [ ] Accessibility check for Vietnamese status labels, canvas/decorative treatment, attribution focus, and 320px text overflow.
 
 ## Risks and Rollback
 

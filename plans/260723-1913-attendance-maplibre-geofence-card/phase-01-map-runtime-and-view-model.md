@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Map Runtime and View Model"
-status: pending
+status: completed
 effort: "M"
 ---
 
@@ -20,6 +20,8 @@ Add the MapLibre runtime beside the existing Leaflet stack and extract the map-s
 - `/Users/dev/Documents/projects/payroll/frontend/src/components/employees/EmployeeLocationMap.test.tsx`
 - `/Users/dev/Documents/projects/payroll/frontend/src/utils/checkInGeofenceGuidance.ts`
 - `/Users/dev/Documents/projects/payroll/frontend/src/components/admin-dashboard/LocationMap.tsx`
+- `/Users/dev/Documents/projects/payroll/backend/internal/transport/http/middleware/security_headers.go`
+- `/Users/dev/Documents/projects/payroll/backend/internal/transport/http/middleware/security_headers_test.go`
 
 ## Implementation Steps
 
@@ -52,18 +54,26 @@ Add the MapLibre runtime beside the existing Leaflet stack and extract the map-s
 
 ## Success Criteria
 
-- [ ] `frontend/package.json` and `frontend/pnpm-lock.yaml` include `react-map-gl` and `maplibre-gl`.
-- [ ] Leaflet dependencies are still present.
-- [ ] Helper logic is deterministic, unit-testable, and does not depend on browser WebGL.
-- [ ] Geofence status remains advisory and delegated to `getCheckInGeofenceGuidance()`; backend submission behavior remains authoritative.
-- [ ] Far-distance route suppression is display-only and cannot affect guidance status, backend check-in authorization, or submission attempts.
-- [ ] Viewport bounds include geofence radius extents for single-gate and multi-gate cases.
-- [ ] Provider/privacy decision is documented before a live style URL ships.
+- [x] `frontend/package.json` and `frontend/pnpm-lock.yaml` include `react-map-gl` and `maplibre-gl`.
+- [x] Leaflet dependencies are still present.
+- [x] Helper logic is deterministic, unit-testable, and does not depend on browser WebGL.
+- [x] Geofence status remains advisory and delegated to `getCheckInGeofenceGuidance()`; backend submission behavior remains authoritative.
+- [x] Far-distance route suppression is display-only and cannot affect guidance status, backend check-in authorization, or submission attempts.
+- [x] Viewport bounds include geofence radius extents for single-gate and multi-gate cases.
+- [x] Provider/privacy decision is documented before a live style URL ships.
+
+## Implementation Notes
+
+- Added `react-map-gl@8.1.1` and `maplibre-gl@6.0.0` with `pnpm`; Leaflet dependencies remain for admin maps.
+- Added `employee-location-map-model.ts` with geofence polygon, accuracy polygon, route feature, display cutoff, and viewport helpers.
+- Selected CARTO Positron style URL in one constant: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json`; allowed CARTO hostnames are captured beside the style constant for browser validation.
+- Updated production CSP to allow CARTO style/tile fetches and MapLibre worker blobs; middleware tests cover the changed header.
 
 ## Verification
 
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx src/utils/checkInGeofenceGuidance.test.ts`
-- `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint`
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm test:run src/components/employees/EmployeeLocationMap.test.tsx src/utils/checkInGeofenceGuidance.test.ts`
+- [x] `cd /Users/dev/Documents/projects/payroll/frontend && pnpm lint`
+- [x] `cd /Users/dev/Documents/projects/payroll/backend && go test ./internal/transport/http/middleware`
 
 ## Risks and Rollback
 

@@ -37,8 +37,9 @@ func SecurityHeaders() gin.HandlerFunc {
 		// - script-src: allow 'unsafe-eval' for pdfmake and CDN sources for xlsx/pdfmake lazy loading
 		// - style-src: allow Google Fonts stylesheets
 		// - font-src: allow Google Fonts
-		// - connect-src: allow CDN fetches for xlsx and pdfmake
-		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; frame-ancestors 'none'")
+		// - connect-src: allow CDN fetches for xlsx/pdfmake and approved map style/tile data
+		// - worker-src: allow MapLibre's bundled Web Worker blob
+		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://fonts.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://basemaps.cartocdn.com https://tiles.basemaps.cartocdn.com https://tiles-a.basemaps.cartocdn.com https://tiles-b.basemaps.cartocdn.com https://tiles-c.basemaps.cartocdn.com https://tiles-d.basemaps.cartocdn.com https://services.arcgisonline.com; worker-src 'self' blob:; frame-src https://accounts.google.com; frame-ancestors 'none'")
 
 		c.Next()
 	}

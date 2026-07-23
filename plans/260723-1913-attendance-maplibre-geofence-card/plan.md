@@ -1,7 +1,7 @@
 ---
 title: "Attendance MapLibre Geofence Card"
-description: "Migrate the employee attendance geofence card from Leaflet rendering to react-map-gl with MapLibre while preserving geofence authority and mobile status behavior."
-status: pending
+description: "Migrate the employee attendance geofence card from Leaflet rendering to direct MapLibre GL while preserving geofence authority and mobile status behavior."
+status: in-progress
 priority: P2
 branch: "main"
 tags:
@@ -21,7 +21,7 @@ source: skill
 
 ## Overview
 
-Migrate only the employee attendance/geofence map card to `react-map-gl` with MapLibre GL. The current screenshot problem is a viewport and status-presentation issue: the card should keep the office/geofence legible, show the employee position when useful, and avoid drawing a continent-scale route when the employee is far outside the permitted radius.
+Migrate only the employee attendance/geofence map card to MapLibre GL. The current screenshot problem is a viewport and status-presentation issue: the card should keep the office/geofence legible, show the employee position when useful, and avoid drawing a continent-scale route when the employee is far outside the permitted radius.
 
 The implementation must keep backend/API geofence authority unchanged. `frontend/src/utils/checkInGeofenceGuidance.ts` remains advisory/status-only UI guidance for `inside`, `outside`, `inaccurate`, `no_position`, and `no_target`; it must not become the client-side authorization gate for check-in submission.
 
@@ -33,8 +33,8 @@ The implementation must keep backend/API geofence authority unchanged. `frontend
 
 ## Key Decisions
 
-- Add `react-map-gl` and `maplibre-gl` with `pnpm` in `frontend/`; do not use `npm install`. Versions verified on 2026-07-23 were `react-map-gl@8.1.1` and `maplibre-gl@6.0.0`; implementation should pin those or rerun package metadata checks and record the resolved versions before install.
-- Import MapLibre through `react-map-gl/maplibre`, not the Mapbox entrypoint.
+- Add `maplibre-gl` with `pnpm` in `frontend/`; do not use `npm install`. Version verified on 2026-07-23 was `maplibre-gl@6.0.0`.
+- Use direct MapLibre GL for the employee card canvas. The initially planned `react-map-gl/maplibre` wrapper was removed after real-browser validation reproduced a runtime resize crash in the employee card (`Cannot read properties of undefined (reading 'center')`).
 - Keep `leaflet`, `react-leaflet`, and `@types/leaflet` because `frontend/src/components/admin-dashboard/LocationMap.tsx` and its wrappers still use Leaflet.
 - Render geofence radius as GeoJSON polygon approximations, not a visual-only pixel circle, so the 150 m radius stays meter-based.
 - Use fit-bounds only for coordinates that should be compared visually. For very far samples, fit the office/geofence and show the employee as an outside-radius status instead of drawing a misleading long route.
@@ -47,9 +47,9 @@ The implementation must keep backend/API geofence authority unchanged. `frontend
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Map Runtime and View Model](./phase-01-map-runtime-and-view-model.md) | Pending |
-| 2 | [MapLibre Geofence Card](./phase-02-maplibre-geofence-card.md) | Pending |
-| 3 | [Regression and Mobile Validation](./phase-03-regression-and-mobile-validation.md) | Pending |
+| 1 | [Map Runtime and View Model](./phase-01-map-runtime-and-view-model.md) | Completed |
+| 2 | [MapLibre Geofence Card](./phase-02-maplibre-geofence-card.md) | Completed |
+| 3 | [Regression and Mobile Validation](./phase-03-regression-and-mobile-validation.md) | In Progress |
 
 ## Dependencies
 
@@ -59,12 +59,18 @@ The implementation must keep backend/API geofence authority unchanged. `frontend
 
 ## Acceptance Criteria
 
-- The employee attendance map uses `react-map-gl/maplibre` and `maplibre-gl` while admin attendance maps continue to render through Leaflet.
-- Nearby employee and gate coordinates are fit tightly, with the geofence radius visible and no Southeast Asia-scale viewport for local check-in cases.
-- Far outside-radius samples do not render as a long dashed navigation route; the card communicates outside status and distance compactly.
-- WebGL/style load failures show a readable Vietnamese fallback and do not block the rest of the check-in card.
-- The selected basemap provider, attribution display, and network hostnames are verified before release; no Mapbox, Google, or unapproved map hosts are contacted.
-- Focused employee map tests, geofence guidance tests, lint/type-check/build, employee mobile visual checks, `make api-test`, and `graphify update .` are accounted for in implementation verification.
+- [x] The employee attendance map uses direct `maplibre-gl` while admin attendance maps continue to render through Leaflet.
+- [x] Nearby employee and gate coordinates are fit tightly, with the geofence radius visible and no Southeast Asia-scale viewport for local check-in cases.
+- [x] Far outside-radius samples do not render as a long dashed navigation route; the card communicates outside status and distance compactly.
+- [x] WebGL/style load failures show a readable Vietnamese fallback and do not block the rest of the check-in card.
+- [x] The selected basemap provider, attribution display, and network hostnames are verified before release; no Mapbox, Google, or unapproved map hosts are contacted.
+- [x] Focused employee map tests, geofence guidance tests, lint/type-check/build, employee mobile visual checks, `make api-test`, and `graphify update .` are accounted for in implementation verification.
+
+## Implementation Status
+
+- Completed 2026-07-23: MapLibre dependency, employee map model helpers, direct employee MapLibre renderer, far-route suppression, WebGL/style fallback test coverage, production CSP allowance for CARTO/MapLibre worker loading, focused Vitest coverage, lint/type-check, production build, live mobile browser visual QA for the broken employee map, style/tile host capture, attribution check, admin Leaflet source/build smoke check, backend middleware tests, and `graphify update .`.
+- Remaining before release: disposition of unrelated backend `api-test` failures if release policy requires the full backend integration suite to be green; optional expanded visual QA for explicit 200% browser text and live broken-style fallback.
+- Verification note: root `make api-test` target is absent; `make -C backend api-test` ran and failed in unrelated backend flows (`Assets`, `Transaction export`) while `EmployeeSelfService` passed.
 
 ## Research
 
