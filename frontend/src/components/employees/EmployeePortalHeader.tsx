@@ -1,4 +1,4 @@
-import { Bell, LogOut, ScanLine, Settings } from "lucide-react";
+import { Bell, LogOut, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -78,9 +78,6 @@ export function EmployeePortalHeader({
           </div>
         </div>
         <div className="ct-navbar-end w-auto shrink-0 gap-2">
-          <span className="employee-type-pill hidden min-h-9 items-center gap-2 rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-3 text-primary lg:inline-flex">
-            <ScanLine className="h-4 w-4" aria-hidden="true" />
-          </span>
           <button
             type="button"
             className="ct-btn ct-btn-ghost ct-btn-circle ct-indicator employee-icon-button"
