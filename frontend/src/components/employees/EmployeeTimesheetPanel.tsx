@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { CalendarDays, LoaderCircle } from "lucide-react";
+import { CalendarDays, ClipboardList, LoaderCircle } from "lucide-react";
 import type { AggregatedDay } from "@/utils/employeePortal/timesheetGrouping";
 import type { EmployeeMonth } from "@/hooks/useEmployeeMonth";
 import { cn } from "@/lib/utils";
@@ -56,9 +56,14 @@ export function EmployeeTimesheetPanel({
 
       <div className="ct-card employee-surface-card overflow-hidden rounded-[var(--employee-radius-feature)] bg-base-100">
         <div className="flex items-center justify-between gap-3 border-b border-base-300 px-4 py-4 sm:px-5">
-          <h2 id="employee-timesheets-title" className="employee-type-card-title text-base-content">
-            Bảng công
-          </h2>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+              <ClipboardList className="h-4.5 w-4.5" strokeWidth={1.9} aria-hidden="true" />
+            </span>
+            <h2 id="employee-timesheets-title" className="employee-type-card-title text-base-content">
+              Bảng công
+            </h2>
+          </div>
           <span className="ct-badge ct-badge-ghost employee-type-pill h-auto shrink-0 px-2.5 py-1 text-base-content/60">
             {totalRecords} mục
           </span>
