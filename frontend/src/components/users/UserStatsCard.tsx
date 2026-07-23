@@ -6,7 +6,7 @@ export interface StatItemProps {
   label: string;
   value: number;
   icon?: LucideIcon;
-  color?: 'blue' | 'emerald' | 'amber' | 'violet';
+  color?: 'blue' | 'emerald' | 'amber' | 'teal';
   onClick?: () => void;
   isActive?: boolean;
 }
@@ -15,7 +15,7 @@ interface UserStatsCardProps {
   stats: StatItemProps[];
 }
 
-const DEFAULT_COLORS: Array<'blue' | 'emerald' | 'amber' | 'violet'> = ['blue', 'violet', 'emerald', 'amber'];
+const DEFAULT_COLORS: Array<'blue' | 'emerald' | 'amber' | 'teal'> = ['blue', 'teal', 'emerald', 'amber'];
 
 export const UserStatsCard = ({ stats }: UserStatsCardProps) => {
   return (

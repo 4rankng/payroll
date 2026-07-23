@@ -5,6 +5,7 @@ import {
   PieChart,
   ResponsiveContainer,
 } from 'recharts';
+import { CircleDollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -24,10 +25,10 @@ export function PartnerWorkforceOverviewCard({
   className,
 }: PartnerWorkforceOverviewCardProps) {
   return (
-    <div className={cn('rounded-2xl border border-border/40 bg-card p-5 shadow-soft', className)}>
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-foreground">Cơ cấu nhân sự</h3>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
+    <section className={cn('rounded-2xl border border-border/60 bg-card p-5 shadow-soft', className)}>
+      <div className="mb-2">
+        <h2 className="text-base font-bold text-foreground">Cơ cấu nhân sự</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Phân loại theo trạng thái hoạt động
         </p>
       </div>
@@ -36,7 +37,7 @@ export function PartnerWorkforceOverviewCard({
       ) : (
         <PartnerWorkforceDonut active={active} dropped={dropped} paid={paid} />
       )}
-    </div>
+    </section>
   );
 }
 
@@ -52,12 +53,11 @@ function PartnerWorkforceDonut({
   const chartData = useMemo(
     () => [
       { name: 'Đang làm', value: active, color: 'hsl(var(--success))' },
-      { name: 'Đã thanh toán', value: paid, color: 'hsl(var(--primary))' },
       { name: 'Có thể nghỉ', value: dropped, color: 'hsl(var(--warning))' },
     ],
-    [active, dropped, paid],
+    [active, dropped],
   );
-  const total = active + dropped + paid;
+  const total = active + dropped;
 
   if (total === 0) {
     return (
@@ -68,17 +68,17 @@ function PartnerWorkforceDonut({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="relative h-[180px]" aria-label="Biểu đồ cơ cấu nhân sự">
+    <div>
+      <div className="relative h-[190px]" aria-label="Biểu đồ cơ cấu nhân sự">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart accessibilityLayer>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={55}
-              outerRadius={80}
-              paddingAngle={2}
+              innerRadius={58}
+              outerRadius={82}
+              paddingAngle={3}
               dataKey="value"
               startAngle={90}
               endAngle={-270}
@@ -91,26 +91,39 @@ function PartnerWorkforceDonut({
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-2xl font-extrabold tabular-nums text-foreground leading-none">
-            {(active + dropped).toLocaleString('vi-VN')}
+          <span className="text-3xl font-extrabold tabular-nums leading-none text-foreground">
+            {total.toLocaleString('vi-VN')}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground mt-1">
-            Tổng nhân viên
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            Nhân viên
           </span>
         </div>
       </div>
-      <div className="space-y-1.5">
+      <div className="grid grid-cols-2 gap-2">
         {chartData.map((item) => (
-          <div key={item.name} className="flex items-center justify-between text-[12px]">
-            <div className="flex items-center gap-2">
+          <div key={item.name} className="rounded-xl bg-muted/40 p-3">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-              <span className="text-foreground">{item.name}</span>
+              <span>{item.name}</span>
             </div>
-            <span className="font-semibold tabular-nums text-foreground">
+            <span className="mt-1 block text-lg font-bold tabular-nums text-foreground">
               {item.value.toLocaleString('vi-VN')}
             </span>
           </div>
         ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <CircleDollarSign className="h-4 w-4" />
+          </span>
+          <span className="text-xs leading-snug text-muted-foreground">
+            Đã thanh toán trong kỳ
+          </span>
+        </div>
+        <span className="shrink-0 text-lg font-bold tabular-nums text-foreground">
+          {paid.toLocaleString('vi-VN')}
+        </span>
       </div>
     </div>
   );

@@ -255,11 +255,11 @@ export function TimesheetEntryTable({
       cellFilled: 'bg-[#e3f2fd] text-[#0d47a1]',
       cellEmpty: 'bg-[#f1f8ff]'
     },
-    // Lavender - Medium-low cost
+    // Teal - Medium-low cost
     {
-      header: 'bg-[#f3e5f5]',
-      cellFilled: 'bg-[#f3e5f5] text-[#4a148c]',
-      cellEmpty: 'bg-[#f9f2fa]'
+      header: 'bg-teal-100',
+      cellFilled: 'bg-teal-100 text-teal-900',
+      cellEmpty: 'bg-teal-50'
     },
     // Golden Yellow - Medium cost
     {

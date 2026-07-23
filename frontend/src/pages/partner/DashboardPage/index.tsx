@@ -12,6 +12,13 @@ import {
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
@@ -24,39 +31,62 @@ import type {
 import { monthOptions, formatVND } from './utils';
 
 const ALL_VALUE = 'all';
+const OTHER_MONTH_VALUE = 'other-month';
 
 // ─── Month selector ────────────────────────────────────────────────────────
 function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const primaryOptions = monthOptions.slice(0, 4);
+  const otherOptions = monthOptions.slice(4);
+  const isOtherMonth = otherOptions.some((option) => option.value === value);
+
   return (
-    <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-card/80 p-1 no-scrollbar" aria-label="Chọn kỳ dữ liệu">
-      {monthOptions.slice(0, 4).map((opt) => (
+    <div
+      className="flex flex-wrap items-center gap-1 rounded-xl bg-muted/60 p-1"
+      role="group"
+      aria-label="Chọn kỳ dữ liệu"
+    >
+      {primaryOptions.map((opt) => (
         <button
+          type="button"
           key={opt.value}
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           className={cn(
-            'min-h-[36px] px-3 rounded-xl text-xs font-semibold transition-colors shrink-0',
+            'min-h-11 shrink-0 rounded-lg px-3 text-xs font-semibold transition-[background-color,color,box-shadow]',
             value === opt.value
-              ? 'bg-primary text-primary-foreground shadow-soft'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
+              : 'text-muted-foreground hover:bg-card/70 hover:text-foreground',
           )}
         >
           {opt.label}
         </button>
       ))}
-      <select
-        aria-label="Chọn tháng khác"
-        value={monthOptions.slice(4).some((o) => o.value === value) ? value : ''}
-        onChange={(e) => e.target.value && onChange(e.target.value)}
-        className="min-h-[36px] rounded-xl border border-transparent bg-transparent px-2.5 text-xs font-semibold text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus:border-primary/30 shrink-0"
+      <Select
+        value={isOtherMonth ? value : OTHER_MONTH_VALUE}
+        onValueChange={(nextValue) => {
+          if (nextValue !== OTHER_MONTH_VALUE) onChange(nextValue);
+        }}
       >
-        <option value="">Tháng khác…</option>
-        {monthOptions.slice(4).map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          aria-label="Chọn tháng khác"
+          className={cn(
+            'h-11 min-h-11 w-[132px] shrink-0 border-0 bg-transparent px-3 text-xs font-semibold shadow-none focus:ring-1 focus:ring-ring focus:ring-offset-0',
+            isOtherMonth && 'bg-card text-foreground shadow-sm ring-1 ring-border/60',
+          )}
+        >
+          <SelectValue placeholder="Tháng khác" />
+        </SelectTrigger>
+        <SelectContent align="end">
+          <SelectItem value={OTHER_MONTH_VALUE} disabled>
+            Tháng khác
+          </SelectItem>
+          {otherOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -118,18 +148,17 @@ const RANK_BADGE = [
   'bg-warning/10 text-warning/80 ring-1 ring-warning/20',
 ];
 
-function LeaderRow({ item, rank, maxPaid }: { item: TopPaidEmployeeItem; rank: number; maxPaid: number }) {
-  const pct = maxPaid > 0 ? Math.round((item.total_paid_vnd / maxPaid) * 100) : 0;
+function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) {
   const badge = RANK_BADGE[rank - 1] ?? 'bg-muted/60 text-muted-foreground ring-1 ring-border/60';
   return (
-    <div className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/40">
+    <div className="group grid grid-cols-[2rem_2.25rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-border/60 hover:bg-muted/30">
       <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums', badge)}>
         {rank}
       </span>
       <UserAvatar name={item.employee_name} size="sm" className="shrink-0" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold text-foreground truncate">{item.employee_name}</span>
+          <span className="truncate text-[13px] font-semibold text-foreground">{item.employee_name}</span>
           {!item.is_active && (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-semibold text-destructive shrink-0">
               <UserX className="h-2.5 w-2.5" />
@@ -137,19 +166,10 @@ function LeaderRow({ item, rank, maxPaid }: { item: TopPaidEmployeeItem; rank: n
             </span>
           )}
         </div>
-        <div className="mt-1.5 flex items-center gap-2">
-          <div className="h-1 flex-1 rounded-full bg-muted/60 overflow-hidden max-w-[140px]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary transition-all duration-500"
-              style={{ width: `${Math.max(pct, 2)}%` }}
-            />
-          </div>
-          <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
-        </div>
+        <span className="mt-0.5 block text-xs font-bold tabular-nums text-foreground">
+          {formatVND(item.total_paid_vnd)}
+        </span>
       </div>
-      <span className="text-[13px] font-bold tabular-nums text-foreground shrink-0">
-        {formatVND(item.total_paid_vnd)}
-      </span>
     </div>
   );
 }
@@ -159,7 +179,7 @@ function StatRowSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[92px] rounded-xl border border-border/40 bg-card px-4 py-3 shadow-soft">
+        <div key={i} className="h-[140px] rounded-2xl border border-border/60 bg-card px-4 py-4 shadow-soft">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="mt-3 h-6 w-24" />
           <Skeleton className="mt-2 h-3 w-20" />
@@ -198,22 +218,25 @@ function BannerHeader({
   onMonthChange: (v: string) => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/15 via-primary/5 to-transparent">
-      <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+    <header className="rounded-2xl border border-border/60 bg-card px-5 py-4 shadow-soft sm:px-6 sm:py-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+            <CalendarDays className="h-4 w-4" />
+            Kỳ báo cáo
+          </div>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-[2rem]">
             Tổng quan
           </h1>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            Theo dõi hoạt động nhân viên và tình hình thanh toán · <span className="font-medium text-foreground/80">{periodLabel}</span>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hoạt động nhân viên và tình hình thanh toán · <span className="font-semibold text-foreground">{periodLabel}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <CalendarDays className="hidden h-4 w-4 text-muted-foreground sm:block" />
+        <div className="flex items-center lg:justify-end">
           <MonthSelector value={monthValue} onChange={onMonthChange} />
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -238,13 +261,11 @@ const PartnerDashboardPage = () => {
   }, [selectedMonth]);
 
   const topEmployees = useMemo(() => data?.top_paid_employees ?? [], [data?.top_paid_employees]);
-  const maxPaid = topEmployees[0]?.total_paid_vnd ?? 0;
-
   const showMomBadges = selectedMonth !== ALL_VALUE;
 
   return (
     <div className="min-h-full p-4 lg:p-6">
-      <div className="mx-auto max-w-[1320px] space-y-5">
+      <div className="mx-auto max-w-[1400px] space-y-5">
         <BannerHeader
           periodLabel={periodLabel}
           monthValue={selectedMonth}
@@ -294,7 +315,7 @@ const PartnerDashboardPage = () => {
         )}
 
         {/* ── Analytics grid: workforce donut + leaderboard ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,2.2fr)]">
           {/* Workforce donut */}
           <PartnerWorkforceOverviewCard
             active={data?.active_employees ?? 0}
@@ -304,21 +325,21 @@ const PartnerDashboardPage = () => {
           />
 
           {/* Leaderboard */}
-          <div className="md:col-span-2 rounded-2xl border border-border/40 bg-card p-5 shadow-soft">
+          <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning ring-1 ring-warning/20">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning">
                   <Crown className="h-4 w-4" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Top nhân viên được trả lương</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <h2 className="text-base font-bold text-foreground">Top nhân viên được trả lương</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Xếp hạng theo tổng chi trả {periodLabel}
                   </p>
                 </div>
               </div>
               {!isLoading && topEmployees.length > 0 && (
-                <span className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                   {topEmployees.length} nhân viên
                 </span>
               )}
@@ -337,13 +358,13 @@ const PartnerDashboardPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-0.5">
+              <div className="grid grid-cols-1 gap-x-4 gap-y-0.5 min-[1120px]:grid-cols-2">
                 {topEmployees.map((item, idx) => (
-                  <LeaderRow key={item.employee_id} item={item} rank={idx + 1} maxPaid={maxPaid} />
+                  <LeaderRow key={item.employee_id} item={item} rank={idx + 1} />
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
 
         <PartnerEmployeeListSheet

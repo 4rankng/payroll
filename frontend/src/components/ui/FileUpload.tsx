@@ -192,12 +192,31 @@ export function FileUpload({
         />
 
         {children ? (
-          <div onClick={openFileDialog} className="cursor-pointer">
+          <div
+          onClick={openFileDialog}
+          onKeyDown={(e) => {
+            if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              openFileDialog();
+            }
+          }}
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          className="cursor-pointer"
+        >
             {children}
           </div>
         ) : (
           <div
             onClick={openFileDialog}
+            onKeyDown={(e) => {
+              if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                openFileDialog();
+              }
+            }}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
             className={cn(
               "flex flex-col items-center justify-center text-center space-y-2 py-2",
               !disabled && "cursor-pointer"

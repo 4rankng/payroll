@@ -50,7 +50,7 @@ const CHART_GROUPS: ReadonlyArray<{
     label: 'Hoạt động',
     description: 'NV làm việc, Doanh thu, Phải thu',
     lines: ['NV làm việc', 'Doanh thu', 'Công nợ phải thu'],
-    color: 'hsl(270 60% 50%)'
+    color: 'hsl(174 72% 31%)'
   },
 ];
 
@@ -483,7 +483,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 yAxisId="right"
                 type="monotone"
                 dataKey="NV làm việc"
-                stroke="hsl(270 60% 50%)"
+                stroke="hsl(174 72% 31%)"
                 strokeWidth={2.5}
                 dot={false}
                 activeDot={{ r: 4 }}

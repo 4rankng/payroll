@@ -9,7 +9,7 @@ export interface TimesheetStatsConfig {
   description?: string;
   change?: string;
   trend?: 'up' | 'down' | 'neutral';
-  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray';
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'teal' | 'gray';
 }
 
 export const createTimesheetStatsConfig = (summary: EmployeeTimesheetSummary): TimesheetStatsConfig[] => {
@@ -35,7 +35,7 @@ export const createTimesheetStatsConfig = (summary: EmployeeTimesheetSummary): T
       value: summary.workingDays,
       icon: Calendar,
       description: 'Số ngày có chấm công',
-      color: 'purple'
+      color: 'teal'
     },
     {
       title: 'Chờ duyệt',
@@ -53,16 +53,16 @@ export const createHourTypeBreakdownStats = (totalHours: Record<string, number>)
   const hourTypeStats: TimesheetStatsConfig[] = [];
 
   // Color palette for dynamic assignment (7+ colors)
-  const colorPalette: Array<'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray'> = [
-    'blue', 'green', 'yellow', 'purple', 'red', 'gray'
+  const colorPalette: Array<'blue' | 'green' | 'red' | 'yellow' | 'teal' | 'gray'> = [
+    'blue', 'green', 'yellow', 'teal', 'red', 'gray'
   ];
 
   // Track color assignments for hour types
-  const hourTypeColorMap = new Map<string, 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray'>();
+  const hourTypeColorMap = new Map<string, 'blue' | 'green' | 'red' | 'yellow' | 'teal' | 'gray'>();
   let colorIndex = 0;
 
   // Group hour types by category
-  const hourTypeGroups: Record<string, { hours: number; color: 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray' }> = {};
+  const hourTypeGroups: Record<string, { hours: number; color: 'blue' | 'green' | 'red' | 'yellow' | 'teal' | 'gray' }> = {};
 
   Object.entries(totalHours).forEach(([hourType, hours]) => {
     if (hours === 0) return;

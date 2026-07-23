@@ -5,7 +5,7 @@ import { VIETNAMESE_AUDIT_LABELS } from '@/types/api/audit.types';
 // ─── Action badge colours ────────────────────────────────────────────────────
 
 export type ActionVariant =
-  | 'green' | 'blue' | 'red' | 'yellow' | 'purple' | 'orange' | 'gray';
+  | 'green' | 'blue' | 'red' | 'yellow' | 'teal' | 'orange' | 'gray';
 
 const ACTION_VARIANT_MAP: Record<string, ActionVariant> = {
   CREATE: 'green',
@@ -22,9 +22,9 @@ const ACTION_VARIANT_MAP: Record<string, ActionVariant> = {
   LOGOUT: 'yellow',
   CHANGE_PASSWORD: 'yellow',
   FAILED_LOGIN: 'red',
-  IMPORT: 'purple',
-  EXPORT: 'purple',
-  DATA_EXPORT: 'purple',
+  IMPORT: 'teal',
+  EXPORT: 'teal',
+  DATA_EXPORT: 'teal',
   VIEW: 'gray',
   BULK_RESET: 'orange',
   SUSPICIOUS_ACTIVITY: 'red',
@@ -39,7 +39,7 @@ export const VARIANT_CLASSES: Record<ActionVariant, string> = {
   blue:   'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
   red:    'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
   yellow: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-  purple: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800',
+  teal:   'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800',
   orange: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
   gray:   'bg-muted text-muted-foreground border-border',
 };

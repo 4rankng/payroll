@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type AccentColor = 'amber' | 'blue' | 'green' | 'red' | 'gray' | 'orange' | 'purple';
+export type AccentColor = 'amber' | 'blue' | 'green' | 'red' | 'gray' | 'orange' | 'teal';
 
 export interface AccentStripCardProps {
   accentColor: AccentColor;

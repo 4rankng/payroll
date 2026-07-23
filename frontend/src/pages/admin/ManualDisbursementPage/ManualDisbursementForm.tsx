@@ -513,7 +513,7 @@ export function ManualDisbursementForm(props: Props) {
           <Button
             type="submit"
             disabled={!submitReady || disabled}
-            className="min-h-11 bg-[#2a3b58] px-4 text-xs font-bold uppercase tracking-tight text-white hover:bg-[#1e293b]"
+            className="min-h-11 bg-slate-700 px-4 text-xs font-bold uppercase tracking-tight text-white hover:bg-slate-800"
           >
             {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Chuyển tiền

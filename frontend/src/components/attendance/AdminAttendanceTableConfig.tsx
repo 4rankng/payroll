@@ -119,7 +119,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
       cell: ({ row }) => {
         const amount = row.original.earning_amount;
         if (amount == null) return <span className="text-xs text-muted-foreground">-</span>;
-        return <span className="text-xs font-bold text-[#00B14F]">{formatCurrency(amount)}</span>;
+        return <span className="text-xs font-bold text-success">{formatCurrency(amount)}</span>;
       },
     },
     {

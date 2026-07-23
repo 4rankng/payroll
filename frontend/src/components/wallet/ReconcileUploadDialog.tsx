@@ -261,13 +261,13 @@ export default function ReconcileUploadDialog({
               ) : (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border border-dashed border-slate-300 rounded bg-white py-4 flex flex-col items-center justify-center gap-1.5 hover:border-[#3b82f6] transition-colors cursor-pointer"
+                  className="border border-dashed border-slate-300 rounded bg-white py-4 flex flex-col items-center justify-center gap-1.5 hover:border-blue-500 transition-colors cursor-pointer"
                 >
                   <div className="w-7 h-7 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center">
                     <Upload size={14} />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-bold text-[#3b82f6] block">
+                    <span className="text-xs font-bold text-blue-500 block">
                       Nhấn để chọn file
                     </span>
                     <p className="text-[11px] text-slate-400">CSV (Max 10MB)</p>
@@ -328,7 +328,7 @@ export default function ReconcileUploadDialog({
             {job?.status === "completed" && (job?.unmatched ?? 0) > 0 && job?.raw_rows?.length && (
               <button
                 onClick={() => walletService.downloadBreakTransactionsCsv(job)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-[#3b82f6] hover:text-[#2563eb] transition-colors mt-1"
+                className="flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors mt-1"
               >
                 <Download size={12} />
                 Tải giao dịch không khớp
@@ -352,7 +352,7 @@ export default function ReconcileUploadDialog({
             onClick={tab === "auto" ? handleAutoConfirm : handleUpload}
             disabled={tab === "auto" ? !!dateError || busy : !file || busy}
             onMouseDown={(e) => e.stopPropagation()}
-            className="px-3.5 py-1 h-auto text-xs font-bold bg-[#2a3b58] hover:bg-[#1e293b] text-white uppercase tracking-tight shadow-sm flex items-center gap-1.5"
+            className="px-3.5 py-1 h-auto text-xs font-bold bg-slate-700 hover:bg-slate-800 text-white uppercase tracking-tight shadow-sm flex items-center gap-1.5"
           >
             {busy ? (
               <Loader2 size={12} className="animate-spin" />

@@ -9,7 +9,7 @@ interface StatCardData {
   description?: string;
   change?: string;
   trend?: 'up' | 'down' | 'neutral';
-  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray';
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'teal' | 'gray';
 }
 
 interface StatsCardsProps {
@@ -22,7 +22,7 @@ const COLOR_MAP: Record<string, 'blue' | 'emerald' | 'amber' | 'teal' | 'rose'> 
   green: 'emerald',
   red: 'rose',
   yellow: 'amber',
-  purple: 'teal',
+  teal: 'teal',
   gray: 'blue',
 };
 
