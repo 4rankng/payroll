@@ -238,11 +238,11 @@ const FlexiblePayEmployeePage = () => {
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
       hasActionToolbar={isCheckInEnabled}
-      contentClassName="max-w-6xl space-y-5 lg:space-y-6"
+      contentClassName="max-w-6xl space-y-5 lg:space-y-7"
     >
       <EmployeeMonthNavigator month={month} className="lg:min-h-[76px]" />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:items-start">
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-start lg:gap-7">
         {infoError ? (
           <section
             id="employee-advance-request"

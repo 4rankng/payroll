@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock3,
+  Gauge,
   Lock,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/utils/formatters";
@@ -365,23 +366,20 @@ export function AdvancePaymentRequestForm({
     >
       {/* ============== Section A — primary card (selected month) ============== */}
       <div
-        className={cn(
-          "-mx-4 -mt-4 rounded-t-2xl px-4 pb-4 pt-4",
-          isOpen
-            ? "bg-[var(--employee-summary-wash)]"
-            : "bg-[var(--employee-surface)]",
-        )}
+        className="employee-fintech-surface -mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-border)] px-4 pb-4 pt-4"
+        data-period-state={status.variant}
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between">
           <div className="min-w-0">
-            <p className="employee-type-label-caps text-[var(--employee-text-secondary)]">
+            <p className="employee-type-label-caps flex items-center gap-2 text-[var(--employee-text-secondary)]">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--employee-accent)] shadow-[0_0_0_4px_var(--employee-accent-soft)]" aria-hidden="true" />
               Ứng lương tháng {viewedMonthLabel}
             </p>
             <p className="employee-type-payroll-value mt-1 text-[var(--employee-text)] tabular-nums">
               {formatPayrollMonthRange(selectedMonth)}
             </p>
           </div>
-          <span className={cn(PERIOD_CHIP_BASE, status.chipClassName)} aria-label={status.chipLabel}>
+          <span className={cn(PERIOD_CHIP_BASE, "self-start", status.chipClassName)} aria-label={status.chipLabel}>
             {status.chipIcon === "check" && (
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
             )}
@@ -395,35 +393,57 @@ export function AdvancePaymentRequestForm({
           </span>
         </div>
 
-        <p
-          className={cn(
-            "employee-type-hero-amount mt-4 break-words tabular-nums",
-            status.amountClassName,
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p
+              className={cn(
+                "employee-type-hero-amount break-words tabular-nums",
+                status.amountClassName,
+              )}
+              aria-live="polite"
+            >
+              {status.amount === null ? (
+                "—"
+              ) : (
+                <AnimatedCurrency amount={status.amount} />
+              )}
+            </p>
+            <p
+              className={cn(
+                "employee-type-label mt-2",
+                isOpen
+                  ? "text-[var(--employee-text-secondary)]"
+                  : "text-[var(--employee-text-muted)]",
+              )}
+            >
+              {status.amountLabel}
+            </p>
+          </div>
+          {showQuotaProgress && (
+            <div className="flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+                <Gauge className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="employee-type-strong block text-[var(--employee-text)] tabular-nums">
+                  {progressValue}%
+                </span>
+                <span className="employee-type-label-caps block text-[var(--employee-text-secondary)]">
+                  Đã dùng
+                </span>
+              </span>
+            </div>
           )}
-          aria-live="polite"
-        >
-          {status.amount === null ? (
-            "—"
-          ) : (
-            <AnimatedCurrency amount={status.amount} />
-          )}
-        </p>
-        <p
-          className={cn(
-            "employee-type-label mt-2",
-            isOpen
-              ? "text-[var(--employee-text-secondary)]"
-              : "text-[var(--employee-text-muted)]",
-          )}
-        >
-          {status.amountLabel}
-        </p>
+        </div>
 
         {/* Historical quota details stay visible only for the selected month. */}
         {showQuotaProgress && (
-          <div className="mt-4">
+          <div className="mt-4 rounded-xl border border-[var(--employee-border)] bg-white/75 p-3 backdrop-blur">
+            <div className="employee-type-label mb-2 text-[var(--employee-text-secondary)]">
+              <span>Tiến độ hạn mức</span>
+            </div>
             <progress
-              className="ct-progress ct-progress-primary h-2 w-full bg-white/90"
+              className="ct-progress ct-progress-primary h-2 w-full bg-[var(--employee-page)]"
               role="progressbar"
               aria-label="Hạn mức ứng lương đã sử dụng"
               aria-valuemin={0}
@@ -432,7 +452,7 @@ export function AdvancePaymentRequestForm({
               value={progressValue}
               max={100}
             />
-            <div className="employee-type-body-sm mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[var(--employee-text-secondary)]">
+            <div className="employee-type-body-sm mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[var(--employee-text-secondary)]">
               <span>Đã dùng {formatCurrency(allowanceUsedAmount)}</span>
               <span className="font-medium text-[var(--employee-text)]">
                 Hạn mức {formatCurrency(quotaSummary.maxAdvanceAmount)}

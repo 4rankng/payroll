@@ -129,16 +129,19 @@ function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePay
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((current) => !current)}
-        className="w-full px-4 py-3.5 text-left transition-transform duration-200 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
+        className="w-full px-4 py-4 text-left transition-colors duration-200 hover:bg-[var(--employee-surface-muted)] active:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--employee-accent)]"
       >
         <span className="flex items-center gap-3">
+          <span className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset", config.tone)}>
+            <StatusIcon className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
           <span className="min-w-0 flex-1">
-            <span className={cn("ct-badge employee-type-pill h-auto max-w-full gap-1.5 rounded-full px-2.5 py-1 ring-1 ring-inset", config.tone)}>
-              <StatusIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{getVietnameseAdvancePaymentStatus(item.status)}</span>
+            <span className="employee-type-strong block truncate text-[var(--employee-text)]">
+              {getVietnameseAdvancePaymentStatus(item.status)}
             </span>
-            <span className="employee-type-body-sm mt-1.5 block text-[var(--employee-text-secondary)] tabular-nums">
-              Yêu cầu ngày {safeDate(item.createdAt)}
+            <span className="employee-type-body-sm mt-1 block text-[var(--employee-text-secondary)] tabular-nums">
+              <span className="sr-only">Yêu cầu ngày </span>
+              {safeDate(item.createdAt)}
             </span>
           </span>
           <span className="min-w-0 text-right">
@@ -147,13 +150,15 @@ function HistoryItem({ item, onCancel, cancellingRequestId }: { item: AdvancePay
             </span>
             <span className="employee-type-body-sm mt-1 block text-[var(--employee-text-secondary)]">Số tiền yêu cầu</span>
           </span>
-          <ChevronDown className={cn("h-5 w-5 shrink-0 text-[var(--employee-text-muted)] transition-transform", isOpen && "rotate-180")} aria-hidden="true" />
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--employee-border)] bg-white text-[var(--employee-text-muted)]">
+            <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} aria-hidden="true" />
+          </span>
           <span className="sr-only">{isOpen ? "Thu gọn chi tiết" : "Xem phí và chi tiết"}</span>
         </span>
       </button>
 
       {isOpen && (
-        <div id={panelId} className="border-t border-[#EAECF0] bg-[#F9FAFB] px-4 py-3">
+        <div id={panelId} className="border-t border-[var(--employee-border)] bg-[var(--employee-surface-muted)] px-4 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <span className="employee-type-label text-[#667085]">Thực nhận</span>
             <span className="employee-type-row-amount text-[var(--employee-accent)] tabular-nums">{safeFormat(item.netAmount)}</span>

@@ -1,4 +1,4 @@
-import { Bell, Settings, LogOut } from "lucide-react";
+import { Bell, LogOut, ScanLine, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -27,7 +27,7 @@ export function EmployeePortalHeader({
   const todayLabel = format(new Date(), "EEEE, d 'tháng' M", { locale: vi });
 
   return (
-    <header className="sticky top-0 z-30 border-b border-base-300/80 bg-base-100/90 backdrop-blur-xl supports-[backdrop-filter]:bg-base-100/80">
+    <header className="sticky top-0 z-30 border-b border-base-300/80 bg-base-100/90 shadow-[0_12px_36px_-32px_rgba(16,24,40,0.55)] backdrop-blur-xl supports-[backdrop-filter]:bg-base-100/80">
       <div
         className="ct-navbar mx-auto min-h-0 max-w-6xl gap-3 px-4 pb-3 sm:px-5 lg:px-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
@@ -37,7 +37,7 @@ export function EmployeePortalHeader({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/5 p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
                 aria-label="Menu tài khoản"
               >
                 <img
@@ -78,6 +78,10 @@ export function EmployeePortalHeader({
           </div>
         </div>
         <div className="ct-navbar-end w-auto shrink-0 gap-2">
+          <span className="employee-type-pill hidden min-h-9 items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 text-primary lg:inline-flex">
+            <ScanLine className="h-4 w-4" aria-hidden="true" />
+            Cổng nhân viên
+          </span>
           <button
             type="button"
             className="ct-btn ct-btn-ghost ct-btn-circle ct-indicator employee-icon-button"

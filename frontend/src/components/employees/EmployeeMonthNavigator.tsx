@@ -51,7 +51,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
   return (
     <div
       className={cn(
-        "ct-card grid min-h-[68px] grid-cols-[44px_minmax(0,1fr)_44px] items-center overflow-hidden rounded-[20px] border border-base-300 bg-base-100/90 p-1.5 shadow-[var(--employee-shadow)] backdrop-blur",
+        "ct-card employee-fintech-surface grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_44px] items-center rounded-[20px] border border-[var(--employee-accent-border)] p-1.5 shadow-[var(--employee-shadow)]",
         className
       )}
       role="group"
@@ -72,14 +72,16 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full flex-col gap-0 rounded-[14px] px-2 font-normal normal-case text-base-content shadow-none active:scale-[0.98]"
+            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full gap-2.5 rounded-[14px] px-2 font-normal normal-case text-base-content shadow-none active:scale-[0.98]"
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
-            <span className="flex min-w-0 items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
-              <span className="employee-type-month-title truncate tabular-nums">Tháng {month.shortLabel}</span>
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
             </span>
-            <span className="employee-type-label-caps -mt-0.5 text-base-content/40">Kỳ bảng công</span>
+            <span className="min-w-0 text-left">
+              <span className="employee-type-month-title block truncate tabular-nums">Tháng {month.shortLabel}</span>
+              <span className="employee-type-label-caps -mt-0.5 block text-[var(--employee-text-secondary)]">Kỳ bảng công</span>
+            </span>
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-[min(328px,calc(100vw-32px))] rounded-xl p-3" align="center">

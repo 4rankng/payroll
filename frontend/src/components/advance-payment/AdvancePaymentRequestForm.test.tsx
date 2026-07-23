@@ -298,6 +298,50 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByText("Tháng 06/2026")).not.toBeInTheDocument();
   });
 
+  it("shows July as waiting when the quota list is empty and legacy history has no month", () => {
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        history={[
+          {
+            id: 2,
+            requestAmount: 5_340_000,
+            fee: 0,
+            netAmount: 5_340_000,
+            status: "COMPLETED",
+            createdAt: "2026-04-27T09:00:00+08:00",
+          },
+          {
+            id: 1,
+            requestAmount: 6_000_000,
+            fee: 0,
+            netAmount: 6_000_000,
+            status: "COMPLETED",
+            createdAt: "2026-04-26T09:00:00+08:00",
+          },
+        ]}
+        info={{
+          ...info,
+          forMonth: "2026-07",
+          maxAdvanceAmount: 0,
+          completedAmount: 0,
+          pendingAmount: 0,
+          remainingAmount: 0,
+          canRequest: false,
+          quotas: [],
+        }}
+        viewMonth="2026-07"
+      />
+    );
+
+    expect(screen.getByText("Chưa mở")).toBeInTheDocument();
+    expect(screen.getByText("Chưa có hạn mức")).toBeInTheDocument();
+    expect(screen.getByText("Chờ bảng lương tháng 07/2026")).toBeInTheDocument();
+    expect(screen.queryByText("Đã dùng hết hạn mức")).not.toBeInTheDocument();
+    expect(screen.queryByText("100%")).not.toBeInTheDocument();
+    expect(screen.queryByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).not.toBeInTheDocument();
+  });
+
   it("treats an empty past month as closed instead of waiting for attendance", () => {
     const { container } = render(
       <AdvancePaymentRequestForm
@@ -317,7 +361,8 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
 
     const periodSummary = container.querySelector(".rounded-t-2xl");
-    expect(periodSummary).toHaveClass("bg-[var(--employee-surface)]");
+    expect(periodSummary).toHaveClass("employee-fintech-surface");
+    expect(periodSummary).toHaveAttribute("data-period-state", "closed");
     expect(periodSummary).not.toHaveClass("bg-[var(--employee-page)]");
   });
 
