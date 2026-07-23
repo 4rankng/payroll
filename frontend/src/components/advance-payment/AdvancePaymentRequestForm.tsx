@@ -250,7 +250,9 @@ export function AdvancePaymentRequestForm({
       chipClassName: "ct-badge-success ct-badge-outline bg-[var(--employee-accent-soft)]",
       chipIcon: "check",
       amount: selectedQuotaRemaining,
-      amountClassName: "text-[var(--employee-accent)]",
+      // Neutral ink for the hero number — keep the brand color for status/badge
+      // accents only so the open state doesn't read as a green hero block.
+      amountClassName: "text-[var(--employee-text)]",
       amountLabel: "Có thể ứng",
       helperLine: null,
       actionEnabled: true,

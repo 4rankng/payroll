@@ -346,8 +346,11 @@
     background: var(--employee-surface);
   }
 
+  /* Open period — keep the card surface white so the heavy emerald treatment
+     doesn't bleed across the entire upper half. Brand color is preserved via
+     smaller accents (status badge, progress bar, gauge icon). */
   .employee-fintech-surface[data-period-state="open"] {
-    background: var(--employee-accent-soft);
+    background: var(--employee-surface);
   }
 
   .employee-icon-button {
