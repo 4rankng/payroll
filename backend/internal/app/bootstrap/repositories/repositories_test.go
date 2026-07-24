@@ -4,10 +4,17 @@ import (
 	"testing"
 
 	"api-server/internal/infra/persistence"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func TestInitialize(t *testing.T) {
-	db := &persistence.Database{}
+	gormDB, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+	db := &persistence.Database{DB: gormDB}
 
 	repos := Initialize(db, nil)
 	if repos == nil {
@@ -105,5 +112,9 @@ func TestInitialize(t *testing.T) {
 
 	if repos.EmployeeUser == nil {
 		t.Error("EmployeeUser repository is nil")
+	}
+
+	if repos.TimesheetImportJob == nil {
+		t.Error("TimesheetImportJob repository is nil")
 	}
 }

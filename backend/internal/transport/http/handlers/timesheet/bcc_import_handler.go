@@ -341,10 +341,3 @@ func assetToImportItem(a *domain.Asset) *bccImportItem {
 		CreatedAt:      a.CreatedAt,
 	}
 }
-
-func buildImportSummaryMessage(r *appservices.BCCImportResult) string {
-	return "Import thành công: " +
-		strconv.Itoa(r.CreatedCount) + " timesheet tạo mới, " +
-		strconv.Itoa(r.SkippedCount) + " bỏ qua, " +
-		strconv.Itoa(r.ErrorCount) + " lỗi"
-}
