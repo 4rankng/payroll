@@ -36,6 +36,10 @@ type EmployeeService struct {
 	TransactionManager domain.TransactionManager
 	events             domain.EventBus
 	cache              domain.CacheServiceUseCase
+
+	// bankAccountValidator performs live OnePay account verification.
+	// May be nil when no disbursement provider is configured.
+	bankAccountValidator *BankAccountValidator
 }
 
 func NewEmployeeService(cfg *Config) *EmployeeService {
@@ -51,7 +55,16 @@ func NewEmployeeService(cfg *Config) *EmployeeService {
 		TransactionManager:    cfg.TransactionManager,
 		events:                cfg.Events,
 		cache:                 cfg.Cache,
+		bankAccountValidator:  cfg.BankAccountValidator,
 	}
+}
+
+// BankAccountValidator exposes the validator so co-located services
+// (e.g. ImportService) that already depend on EmployeeService can perform
+// account validation without a separate constructor parameter. Returns
+// nil when validation is disabled.
+func (s *EmployeeService) BankAccountValidator() *BankAccountValidator {
+	return s.bankAccountValidator
 }
 
 // CreateEmployee orchestrates employee creation using domain services and transaction management
@@ -108,6 +121,11 @@ func (s *EmployeeService) createEmployeeCore(ctx context.Context, employee *doma
 	if err := employee.IsValid(); err != nil {
 		return nil, err
 	}
+
+	// 1b. Live OnePay account verification. Non-blocking on invalid
+	// (decision: allow + flag) — the outcome is persisted on the entity
+	// so the warning list can surface the reason to admins/partners.
+	applyBankAccountValidation(ctx, s.bankAccountValidator, employee)
 
 	// 2. Validate bank reference if provided (infrastructure validation)
 	if employee.BankID != nil {
@@ -202,6 +220,19 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		// 1. Validate employee data (domain entity validation)
 		if err := employee.IsValid(); err != nil {
 			return err
+		}
+
+		// 1b. Live OnePay account verification. Only re-validate when the
+		// bank fields actually changed, to avoid a redundant OnePay call
+		// on every unrelated profile edit.
+		if bankFieldsChanged(originalEmployee, employee) {
+			applyBankAccountValidation(txCtx, s.bankAccountValidator, employee)
+		} else if originalEmployee != nil {
+			// Preserve the previous validation outcome on the entity so
+			// the repository Update doesn't clobber it with the zero value.
+			employee.BankAccountStatus = originalEmployee.BankAccountStatus
+			employee.BankAccountInvalidReason = originalEmployee.BankAccountInvalidReason
+			employee.BankAccountValidatedAt = originalEmployee.BankAccountValidatedAt
 		}
 
 		// 2. Validate bank reference if provided (infrastructure validation)

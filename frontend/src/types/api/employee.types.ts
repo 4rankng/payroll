@@ -55,6 +55,17 @@ export interface Employee {
   bank?: Bank | null;
   bank_account_number?: string;
   bank_account_name?: string;
+  /**
+   * Outcome of the last OnePay account verification.
+   * - `valid`     : account confirmed good (default for pre-existing rows)
+   * - `invalid`   : OnePay confirmed account bad or holder-name mismatch
+   * - `unverified`: OnePay unreachable / timed out (not shown in warning list)
+   */
+  bank_account_status?: "valid" | "invalid" | "unverified";
+  /** Vietnamese human-readable reason, set only when status === "invalid". */
+  bank_account_invalid_reason?: string | null;
+  /** RFC3339 timestamp of the last OnePay validation. */
+  bank_account_validated_at?: string | null;
   date_of_birth?: string;
   current_projects: CurrentProject[];
   timesheet_summary?: TimesheetSummary;

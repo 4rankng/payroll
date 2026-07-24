@@ -122,21 +122,29 @@ func timePtrToStr(t *time.Time) string {
 
 // Employee represents an employee in the domain
 type Employee struct {
-	ID                uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	Fullname          string         `json:"fullname" gorm:"type:varchar(255);not null"`
-	Email             *string        `json:"email" gorm:"type:varchar(255);uniqueIndex:unique_email_deleted_at"`
-	CCCD              string         `json:"cccd" gorm:"type:varchar(255);not null;uniqueIndex:unique_cccd_deleted_at;comment:'Citizen ID - Can cong cong dan (12 digits)'"`
-	Address           string         `json:"address" gorm:"type:text"`
-	Mobile            string         `json:"mobile" gorm:"type:varchar(15)"`
-	BankID            *uint          `json:"bank_id" gorm:"type:bigint unsigned"`
-	BankAccountNumber string         `json:"bank_account_number" gorm:"type:varchar(30)"`
-	BankAccountName   string         `json:"bank_account_name" gorm:"type:varchar(255)"`
-	DateOfBirth       *time.Time     `json:"date_of_birth" gorm:"type:date"`
-	UserID            *uint          `json:"user_id" gorm:"type:bigint unsigned;index"`
-	DeletedAt         gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_email_deleted_at;uniqueIndex:unique_cccd_deleted_at"`
-	CreatedBy         uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
+	ID                uint    `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	Fullname          string  `json:"fullname" gorm:"type:varchar(255);not null"`
+	Email             *string `json:"email" gorm:"type:varchar(255);uniqueIndex:unique_email_deleted_at"`
+	CCCD              string  `json:"cccd" gorm:"type:varchar(255);not null;uniqueIndex:unique_cccd_deleted_at;comment:'Citizen ID - Can cong cong dan (12 digits)'"`
+	Address           string  `json:"address" gorm:"type:text"`
+	Mobile            string  `json:"mobile" gorm:"type:varchar(15)"`
+	BankID            *uint   `json:"bank_id" gorm:"type:bigint unsigned"`
+	BankAccountNumber string  `json:"bank_account_number" gorm:"type:varchar(30)"`
+	BankAccountName   string  `json:"bank_account_name" gorm:"type:varchar(255)"`
+
+	// BankAccountStatus reflects the outcome of the last OnePay account
+	// verification (see BankAccountStatus* constants). Defaults to "valid"
+	// so pre-existing rows are treated as valid without a backfill.
+	BankAccountStatus        string     `json:"bank_account_status" gorm:"type:varchar(20);not null;default:'valid';column:bank_account_status"`
+	BankAccountInvalidReason *string    `json:"bank_account_invalid_reason,omitempty" gorm:"type:varchar(500);column:bank_account_invalid_reason"`
+	BankAccountValidatedAt   *time.Time `json:"bank_account_validated_at,omitempty" gorm:"type:datetime;column:bank_account_validated_at"`
+
+	DateOfBirth *time.Time     `json:"date_of_birth" gorm:"type:date"`
+	UserID      *uint          `json:"user_id" gorm:"type:bigint unsigned;index"`
+	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:unique_email_deleted_at;uniqueIndex:unique_cccd_deleted_at"`
+	CreatedBy   uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 
 	// Relationships
 	Creator User  `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
@@ -364,9 +372,39 @@ func (e *Employee) IsValid() error {
 	return nil
 }
 
+// BankAccountStatus* enumerate the possible outcomes of a OnePay account
+// verification stored on Employee.BankAccountStatus.
+const (
+	// BankAccountStatusValid means OnePay confirmed the account exists and
+	// the holder name matches. This is also the default for rows that
+	// predate this feature (assumption: existing accounts are valid).
+	BankAccountStatusValid = "valid"
+	// BankAccountStatusInvalid means OnePay confirmed the account does not
+	// exist OR the holder name does not match the employee name. Such
+	// employees appear in the missing-bank-details warning list with the
+	// reason populated.
+	BankAccountStatusInvalid = "invalid"
+	// BankAccountStatusUnverified means the verification could not be
+	// completed (OnePay unreachable, 5xx, timeout). Fail-open: these
+	// employees are NOT shown in the warning list to avoid false alarms
+	// during provider outages.
+	BankAccountStatusUnverified = "unverified"
+)
+
 // HasBankingInfo returns true if employee has complete banking information
 func (e *Employee) HasBankingInfo() bool {
 	return e.BankID != nil && e.BankAccountNumber != "" && e.BankAccountName != ""
+}
+
+// NeedsBankAccountReview reports whether the employee should appear in the
+// admin/partner bank-account warning list: either the banking info is
+// missing entirely, OR OnePay has confirmed the account is invalid.
+// Unverified accounts are deliberately excluded (fail-open).
+func (e *Employee) NeedsBankAccountReview() bool {
+	if !e.HasBankingInfo() {
+		return true
+	}
+	return e.BankAccountStatus == BankAccountStatusInvalid
 }
 
 // GetAge calculates the employee's age in years

@@ -121,6 +121,7 @@ func (h *Handler) buildEmployeeResponse(ctx context.Context, employee *domain.Em
 		UpdatedAt:         employee.UpdatedAt,
 		CurrentProjects:   []dto.EmployeeProjectInfo{}, // Initialize empty array
 	}
+	response.BankAccountStatus, response.BankAccountInvalidReason, response.BankAccountValidatedAt = bankAccountStatusFields(employee)
 
 	// Get current project assignments if service is available
 	if h.projectEmployeeService != nil {
@@ -192,6 +193,7 @@ func (h *Handler) buildDetailedEmployeeResponse(ctx context.Context, emp *domain
 		CreatedAt:         emp.CreatedAt,
 		UpdatedAt:         emp.UpdatedAt,
 	}
+	resp.BankAccountStatus, resp.BankAccountInvalidReason, resp.BankAccountValidatedAt = bankAccountStatusFields(emp)
 
 	// Fetch payroll summary, timesheet summary, and project assignments concurrently.
 	type payrollResult struct {

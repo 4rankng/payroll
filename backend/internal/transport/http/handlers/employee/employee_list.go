@@ -32,6 +32,30 @@ func formatDatePointer(t *time.Time) *string {
 	return &formatted
 }
 
+// formatDateTimePointer formats a *time.Time as RFC3339 for response DTOs.
+// Used for timestamps like bank_account_validated_at where the time-of-day
+// component matters (not just the date).
+func formatDateTimePointer(t *time.Time) *string {
+	if t == nil {
+		return nil
+	}
+	formatted := t.Format(time.RFC3339)
+	return &formatted
+}
+
+// bankAccountStatusFields builds the three validation-outcome fields for an
+// EmployeeResponse from a domain.Employee. Centralised so every mapper
+// (list, detail, etc.) emits identical JSON.
+func bankAccountStatusFields(e *domain.Employee) (status string, reason *string, validatedAt *string) {
+	status = e.BankAccountStatus
+	if status == "" {
+		status = domain.BankAccountStatusValid
+	}
+	reason = e.BankAccountInvalidReason
+	validatedAt = formatDateTimePointer(e.BankAccountValidatedAt)
+	return
+}
+
 func buildProjectInfo(project domain.CurrentProject) dto.EmployeeProjectInfo {
 	startDate := ""
 	if !project.StartDate.IsZero() {
@@ -158,6 +182,8 @@ func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects) []dto.E
 			UpdatedAt:         emp.UpdatedAt,
 			CurrentProjects:   make([]dto.EmployeeProjectInfo, 0, len(emp.CurrentProjects)),
 		}
+		// emp is *domain.EmployeeWithProjects which embeds domain.Employee.
+		r.BankAccountStatus, r.BankAccountInvalidReason, r.BankAccountValidatedAt = bankAccountStatusFields(&emp.Employee)
 		for _, p := range emp.CurrentProjects {
 			r.CurrentProjects = append(r.CurrentProjects, buildProjectInfo(p))
 		}

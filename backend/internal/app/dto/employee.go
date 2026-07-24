@@ -43,21 +43,27 @@ type EmployeeBankInfo struct {
 
 // EmployeeResponse represents the response containing employee data
 type EmployeeResponse struct {
-	ID                uint                  `json:"id"`
-	Username          *string               `json:"username,omitempty"`
-	Fullname          string                `json:"fullname"`
-	Email             *string               `json:"email"`
-	CCCD              string                `json:"cccd"`
-	Address           string                `json:"address"`
-	Mobile            string                `json:"mobile"`
-	Bank              *EmployeeBankInfo     `json:"bank,omitempty"`
-	BankAccountNumber string                `json:"bank_account_number"`
-	BankAccountName   string                `json:"bank_account_name"`
-	DateOfBirth       *string               `json:"date_of_birth"`
-	CreatedBy         uint                  `json:"created_by"`
-	CreatedAt         time.Time             `json:"created_at"`
-	UpdatedAt         time.Time             `json:"updated_at"`
-	CurrentProjects   []EmployeeProjectInfo `json:"current_projects"`
+	ID                uint              `json:"id"`
+	Username          *string           `json:"username,omitempty"`
+	Fullname          string            `json:"fullname"`
+	Email             *string           `json:"email"`
+	CCCD              string            `json:"cccd"`
+	Address           string            `json:"address"`
+	Mobile            string            `json:"mobile"`
+	Bank              *EmployeeBankInfo `json:"bank,omitempty"`
+	BankAccountNumber string            `json:"bank_account_number"`
+	BankAccountName   string            `json:"bank_account_name"`
+	// BankAccountStatus / InvalidReason / ValidatedAt surface the OnePay
+	// verification outcome so the warning-list UI can show why an account
+	// is flagged. status is "valid" by default (also for pre-existing rows).
+	BankAccountStatus        string                `json:"bank_account_status"`
+	BankAccountInvalidReason *string               `json:"bank_account_invalid_reason,omitempty"`
+	BankAccountValidatedAt   *string               `json:"bank_account_validated_at,omitempty"`
+	DateOfBirth              *string               `json:"date_of_birth"`
+	CreatedBy                uint                  `json:"created_by"`
+	CreatedAt                time.Time             `json:"created_at"`
+	UpdatedAt                time.Time             `json:"updated_at"`
+	CurrentProjects          []EmployeeProjectInfo `json:"current_projects"`
 }
 
 // EmployeeProjectInfo represents project information for an employee
@@ -181,6 +187,11 @@ type EmployeeDetailedResponse struct {
 	CreatedBy         uint              `json:"created_by"`
 	CreatedAt         time.Time         `json:"created_at"`
 	UpdatedAt         time.Time         `json:"updated_at"`
+
+	// Bank account validation outcome (mirrors EmployeeResponse).
+	BankAccountStatus        string  `json:"bank_account_status"`
+	BankAccountInvalidReason *string `json:"bank_account_invalid_reason,omitempty"`
+	BankAccountValidatedAt   *string `json:"bank_account_validated_at,omitempty"`
 
 	// Current project assignments
 	CurrentProjects []EmployeeCurrentProject `json:"current_projects"`

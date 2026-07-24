@@ -28,7 +28,15 @@ type ImportService struct {
 	logger              *slog.Logger
 }
 
-// NewImportService creates a new employee import service
+// bankAccountValidator returns the validator from the underlying
+// EmployeeService, if any. Returns nil when validation is disabled
+// (no provider configured).
+func (s *ImportService) bankAccountValidator() *BankAccountValidator {
+	if s.employeeService == nil {
+		return nil
+	}
+	return s.employeeService.BankAccountValidator()
+}
 func NewImportService(
 	employeeService *EmployeeService,
 	employeeRepo domain.EmployeeRepository,
@@ -301,6 +309,12 @@ func (s *ImportService) getOrCreateEmployee(ctx context.Context, row dto.Employe
 
 		if needsUpdate {
 			s.updateEmployeeFields(employee, row)
+			// Re-validate bank account if bank fields were touched by the
+			// update (parallel to the manual UpdateEmployee path, which
+			// only re-validates on bank-field change).
+			if rowBankFieldsPresent(row) {
+				applyBankAccountValidation(ctx, s.bankAccountValidator(), employee)
+			}
 			if err := s.employeeRepo.Update(ctx, employee); err != nil {
 				s.logger.Warn("failed to update employee", "employee_id", employee.ID, "error", err)
 			} else {
@@ -336,6 +350,12 @@ func (s *ImportService) getOrCreateEmployee(ctx context.Context, row dto.Employe
 		DateOfBirth:       dateOfBirth,
 		CreatedBy:         createdBy,
 	}
+
+	// Live OnePay account verification before persist. This path bypasses
+	// the EmployeeService layer (it calls the repo directly), so the
+	// validation must be invoked explicitly. Non-blocking: invalid
+	// accounts are still created and surface in the warning list.
+	applyBankAccountValidation(ctx, s.bankAccountValidator(), employee)
 
 	if err := s.employeeRepo.Create(ctx, employee); err != nil {
 		return nil, false, false, err

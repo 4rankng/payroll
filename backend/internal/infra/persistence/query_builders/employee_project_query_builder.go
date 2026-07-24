@@ -240,8 +240,14 @@ func (b *EmployeeProjectQueryBuilder) buildMissingBankDetailsBaseQuery(filters d
 
 	query = b.applyFilters(query, filters)
 
-	// Missing banking information
-	query = query.Where("employees.bank_id IS NULL OR (employees.bank_account_number = '' AND employees.bank_account_name = '')")
+	// Missing banking information OR OnePay-confirmed invalid account.
+	// `unverified` is deliberately excluded so OnePay outages don't flood
+	// admins with false alarms.
+	query = query.Where(`(
+		employees.bank_id IS NULL
+		OR (employees.bank_account_number = '' AND employees.bank_account_name = '')
+		OR employees.bank_account_status = 'invalid'
+	)`)
 
 	// Currently assigned to active projects
 	query = query.Where("employees.id IN (?)", activeProjectSubquery)
