@@ -408,6 +408,9 @@ func (c *APIClient) UploadBytes(path, fileField, filename string, data []byte) (
 		return nil, 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if strings.HasSuffix(path, "/timesheets/partner-import") {
+		req.Header.Set("Idempotency-Key", fmt.Sprintf("integration-%d", time.Now().UnixNano()))
+	}
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
@@ -459,6 +462,9 @@ func (c *APIClient) UploadFile(path, fileField, filePath string, fields map[stri
 		return nil, 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if strings.HasSuffix(path, "/timesheets/partner-import") {
+		req.Header.Set("Idempotency-Key", fmt.Sprintf("integration-%d", time.Now().UnixNano()))
+	}
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}

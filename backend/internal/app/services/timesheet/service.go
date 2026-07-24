@@ -736,6 +736,34 @@ func (s *TimesheetService) BulkCreateTimesheets(ctx context.Context, requests []
 	return result, nil
 }
 
+// BulkCreateTimesheetsInTransaction applies the bulk operation to an existing
+// transaction supplied through ctx. It is used by BCC replacement so deleting
+// stale rows and inserting replacements share one commit boundary.
+func (s *TimesheetService) BulkCreateTimesheetsInTransaction(
+	ctx context.Context,
+	requests []domainServices.BulkCreateTimesheetEntry,
+	createdBy uint,
+	userRole string,
+) (*domainServices.BulkCreateTimesheetResult, error) {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); !ok || txCtx.TX == nil {
+		return nil, fmt.Errorf("BulkCreateTimesheetsInTransaction requires an active transaction")
+	}
+	result, err := s.timesheetDomainService.BulkCreateTimesheets(ctx, requests, createdBy, userRole)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.CreatedTimesheets) > 0 {
+		createdCount := len(result.CreatedTimesheets)
+		domain.RegisterAfterCommit(ctx, func() {
+			event := domain.NewTimesheetBulkCreatedEvent(context.Background(), createdCount, nil, createdBy)
+			if err := s.events.Publish(context.Background(), event); err != nil {
+				s.logger.Warn("Failed to publish TimesheetBulkCreatedEvent", "count", createdCount, "error", err)
+			}
+		})
+	}
+	return result, nil
+}
+
 // PreviewTimesheets performs dry-run validation for bulk timesheet creation
 func (s *TimesheetService) PreviewTimesheets(ctx context.Context, requests []domainServices.BulkCreateTimesheetEntry, createdBy uint, userRole string) (*domainServices.PreviewTimesheetResult, error) {
 	// Call domain service for validation (no transaction needed since no DB operations)

@@ -1,9 +1,12 @@
 package timesheet
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	appservices "api-server/internal/app/services"
@@ -11,7 +14,6 @@ import (
 	"api-server/internal/app/services/project"
 	"api-server/internal/domain"
 	"api-server/internal/infra/storage"
-	auditctx "api-server/internal/pkg/context"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
 
@@ -82,6 +84,11 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		response.BadRequest(c, "for_month là bắt buộc (YYYY-MM)")
 		return
 	}
+	if parsedMonth, err := time.Parse("2006-01", forMonth); err != nil ||
+		parsedMonth.Format("2006-01") != forMonth {
+		response.BadRequest(c, "for_month không hợp lệ (YYYY-MM)")
+		return
+	}
 
 	// Partner users must have write access to the target project.
 	if userRole == string(domain.RolePartner) {
@@ -103,49 +110,49 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		response.BadRequest(c, "File phải có định dạng .xlsx")
 		return
 	}
+	if header.Size > 10<<20 {
+		response.BadRequest(c, "File quá lớn (tối đa 10MB)")
+		return
+	}
 
-	importCtx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 5*time.Minute)
-	defer cancel()
+	idempotencyKey := strings.TrimSpace(c.GetHeader("Idempotency-Key"))
+	if idempotencyKey == "" || len(idempotencyKey) > 128 {
+		response.BadRequest(c, "Idempotency-Key là bắt buộc và không được vượt quá 128 ký tự")
+		return
+	}
 
-	result, err := h.bccImportService.ProcessUpload(
-		importCtx,
+	result, err := h.bccImportService.AcceptUpload(
+		c.Request.Context(),
 		file,
 		header.Filename,
 		projectID,
 		userID,
 		userRole,
 		forMonth,
+		idempotencyKey,
 	)
-	if err != nil && result == nil {
-		response.InternalServerError(c, err.Error())
+	if errors.Is(err, appservices.ErrBCCIdempotencyConflict) {
+		c.JSON(http.StatusUnprocessableEntity, response.ErrorResponse{
+			Status: "error", HTTPStatus: http.StatusUnprocessableEntity, Message: err.Error(),
+		})
+		return
+	}
+	if errors.Is(err, appservices.ErrBCCImportScopeBusy) {
+		response.Conflict(c, err.Error())
+		return
+	}
+	if err != nil {
+		slog.Error("BCC import acceptance failed", "project_id", projectID, "user_id", userID, "error", err)
+		response.InternalServerError(c, "Không thể nhận tệp BCC. Vui lòng thử lại.")
 		return
 	}
 
-	// Capture audit context before spawning goroutines — gin recycles the
-	// request context after the handler returns, and header.Filename is
-	// borrowed from the multipart form which is tied to the request body.
-	auditCtx := auditctx.WithUserID(context.Background(), userID)
-	auditCtx = auditctx.WithIPAddress(auditCtx, c.ClientIP())
-	auditCtx = auditctx.WithUserAgent(auditCtx, c.GetHeader("User-Agent"))
-	filename := header.Filename
-
-	if result.Status == "failed" {
-		if h.auditService != nil {
-			go func() {
-				_ = h.auditService.LogFileImport(auditCtx, "partner_bcc_import_failed", result.ErrorCount, filename)
-			}()
-		}
-		response.Success(c, result, "Import thất bại: "+appservices.FirstErrorReason(result.ErrorDetail))
-		return
-	}
-
-	if h.auditService != nil {
-		go func() {
-			_ = h.auditService.LogFileImport(auditCtx, "partner_bcc_import", result.CreatedCount, filename)
-		}()
-	}
-	msg := buildImportSummaryMessage(result)
-	response.Success(c, result, msg)
+	c.Header("Location", "/api/v1/timesheets/partner-import/"+strconv.FormatUint(uint64(result.ID), 10))
+	c.JSON(http.StatusAccepted, response.SuccessResponse{
+		Status:  "success",
+		Data:    result,
+		Message: "Đã nhận tệp BCC. Hệ thống đang xử lý trong nền.",
+	})
 }
 
 // ListPartnerImports handles GET /timesheets/partner-import

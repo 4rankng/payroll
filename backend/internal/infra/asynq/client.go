@@ -64,6 +64,27 @@ func (c *Client) EnqueueEmployeeImport(importID string) error {
 	return nil
 }
 
+// EnqueueBCCImport enqueues one durable BCC import by asset/job ID.
+func (c *Client) EnqueueBCCImport(assetID uint) error {
+	payload, _ := json.Marshal(bccImportPayload{AssetID: assetID})
+	task := asynqlib.NewTask(
+		TaskBCCImport,
+		payload,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(c.cfg.RetryMax),
+		asynqlib.Timeout(10*time.Minute),
+		asynqlib.Unique(time.Minute),
+	)
+	_, err := c.client.Enqueue(task)
+	if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to enqueue BCC import task: %w", err)
+	}
+	return nil
+}
+
 // EnqueueImportJob enqueues an import job task (advance payment)
 func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
 	payload, _ := json.Marshal(importJobPayload{JobID: jobID, ForMonth: forMonth})

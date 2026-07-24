@@ -455,7 +455,7 @@ export interface PartnerImportFile {
   uploaded_by: number;
   original_name: string;
   for_month: string; // "2026-05"
-  status: 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   total_rows: number;
   created_count: number;
   skipped_count: number;

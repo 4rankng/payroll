@@ -702,6 +702,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			employeeService,
 			employeeUserService,
 			projectEmployeeSvc,
+			repos.TimesheetImportJob,
+			asynqClient,
 		),
 		Attendance:         attendanceService,
 		TransactionManager: transactionManager,

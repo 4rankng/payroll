@@ -47,6 +47,7 @@ type Repositories struct {
 	SettlementUpload        domain.SettlementUploadRepository
 	CashForecastSnapshot    domain.CashForecastSnapshotRepository
 	BulkTransferBatch       domain.BulkTransferBatchRepository
+	TimesheetImportJob      domain.TimesheetImportJobRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -87,6 +88,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		SettlementUpload:        persistence.NewSettlementUploadRepository(db),
 		CashForecastSnapshot:    persistence.NewCashForecastSnapshotRepository(db.DB),
 		BulkTransferBatch:       persistence.NewBulkTransferBatchRepository(db),
+		TimesheetImportJob:      persistence.NewTimesheetImportJobRepository(db),
 	}
 
 	// Wallet repositories need *sql.DB for raw SQL queries

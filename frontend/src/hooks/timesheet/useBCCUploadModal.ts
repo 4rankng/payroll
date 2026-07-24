@@ -1,5 +1,8 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUploadBCCTimesheet } from '@/hooks/timesheet/useUploadBCCTimesheet';
+import { timesheetService } from '@/services/api/timesheet.service';
+import { QueryKeys } from '@/lib/queryKeys';
 import { parseImportErrors } from '@/utils/import-errors';
 import type { PartnerImportFile, ImportError } from '@/types/api/timesheet.types';
 
@@ -115,6 +118,8 @@ export function useBCCUploadModal({
     projectId > 0 ? String(projectId) : '',
   );
   const [isDragging, setIsDragging] = useState(false);
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Sync selectedProjectId when parent changes projectId (e.g. user switches project filter)
   const prevProjectIdRef = useRef(projectId);
@@ -150,6 +155,35 @@ export function useBCCUploadModal({
   // ── Mutation ────────────────────────────────────────────────────────────
 
   const { mutate: upload, isPending } = useUploadBCCTimesheet();
+  const isImportActive =
+    result?.status === 'pending' || result?.status === 'processing';
+  const { data: polledResult } = useQuery({
+    queryKey: ['partner-import', result?.id],
+    queryFn: () => timesheetService.getPartnerImport(result!.id),
+    enabled: !!result?.id && isImportActive,
+    refetchInterval: (query) => {
+      const current = query.state.data;
+      return current?.status === 'pending' || current?.status === 'processing'
+        ? 2_000
+        : false;
+    },
+    retry: 3,
+  });
+
+  useEffect(() => {
+    if (!polledResult) return;
+    setResult(polledResult);
+    if (polledResult.status === 'completed' || polledResult.status === 'failed') {
+      queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
+      if (polledResult.status === 'completed') {
+        queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });
+      }
+    }
+  }, [polledResult, queryClient]);
+
+  useEffect(() => {
+    idempotencyKeyRef.current = null;
+  }, [effectiveProjectId, selectedMonth]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
@@ -157,6 +191,7 @@ export function useBCCUploadModal({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setFile(e.target.files?.[0] ?? null);
       setResult(null);
+      idempotencyKeyRef.current = null;
     },
     [],
   );
@@ -164,8 +199,11 @@ export function useBCCUploadModal({
   const handleUpload = useCallback(() => {
     if (!file || effectiveProjectId === 0) return;
     setResult(null);
+    const idempotencyKey =
+      idempotencyKeyRef.current ?? crypto.randomUUID();
+    idempotencyKeyRef.current = idempotencyKey;
     upload(
-      { file, projectId: effectiveProjectId, forMonth: selectedMonth },
+      { file, projectId: effectiveProjectId, forMonth: selectedMonth, idempotencyKey },
       {
         onSuccess: (data) => {
           setResult(data);
@@ -179,11 +217,10 @@ export function useBCCUploadModal({
   }, [file, effectiveProjectId, selectedMonth, upload]);
 
   const handleClose = useCallback(() => {
-    if (isPending) return;
     setFile(null);
     setResult(null);
     onClose();
-  }, [isPending, onClose]);
+  }, [onClose]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -207,6 +244,7 @@ export function useBCCUploadModal({
       if (dropped && dropped.name.endsWith('.xlsx')) {
         setFile(dropped);
         setResult(null);
+        idempotencyKeyRef.current = null;
       }
     },
     [isPending],
@@ -214,10 +252,12 @@ export function useBCCUploadModal({
 
   const handleReset = useCallback(() => {
     setResult(null);
+    idempotencyKeyRef.current = null;
   }, []);
 
   const handleRemoveFile = useCallback(() => {
     setFile(null);
+    idempotencyKeyRef.current = null;
   }, []);
 
   // ── Return ──────────────────────────────────────────────────────────────
@@ -230,6 +270,7 @@ export function useBCCUploadModal({
     selectedMonth,
     isDragging,
     isPending,
+    isImportActive,
 
     // Derived
     effectiveProjectId,

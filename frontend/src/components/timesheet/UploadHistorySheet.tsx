@@ -10,6 +10,7 @@ import {
   UploadCloud,
   CheckCircle2,
   AlertCircle,
+  Loader2,
   MinusCircle,
   Calendar,
   History,
@@ -32,6 +33,17 @@ function statusBadge(status: PartnerImportFile['status']) {
     completed: (
       <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-0">
         Thành công
+      </Badge>
+    ),
+    pending: (
+      <Badge className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50">
+        Đang chờ
+      </Badge>
+    ),
+    processing: (
+      <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50">
+        <Loader2 className="mr-1 h-3 w-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+        Đang xử lý
       </Badge>
     ),
     failed: <Badge variant="destructive">Thất bại</Badge>,

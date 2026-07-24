@@ -223,7 +223,8 @@ func (r *TimesheetQueryRepository) GetByProjectAndEmployee(ctx context.Context, 
 func (r *TimesheetQueryRepository) GetByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) ([]*domain.Timesheet, error) {
 	var timesheets []*domain.Timesheet
 
-	query := r.queryBuilder.BuildProjectRangeQuery(projectID, fromDate, toDate).
+	query := r.getDB(ctx).Model(&domain.Timesheet{}).
+		Where("project_id = ? AND date >= ? AND date <= ?", projectID, fromDate, toDate).
 		Preload("Project").
 		Preload("Employee").
 		Preload("CreatedUser").
@@ -275,7 +276,11 @@ func (r *TimesheetQueryRepository) GetByProjectEmployeeDatePaytype(ctx context.C
 func (r *TimesheetQueryRepository) GetByProjectEmployeeDateHourType(ctx context.Context, projectID, employeeID uint, date time.Time, hourType string) (*domain.Timesheet, error) {
 	var timesheet domain.Timesheet
 
-	query := r.queryBuilder.BuildProjectEmployeeDateHourTypeQuery(projectID, employeeID, date, hourType)
+	startOfDay, endOfDay := dayBoundsInDateLocation(date)
+	escapedHourType := strings.ReplaceAll(strings.ReplaceAll(hourType, "%", "\\%"), "_", "\\_")
+	query := r.getDB(ctx).
+		Where("project_id = ? AND employee_id = ? AND date >= ? AND date < ? AND paytype LIKE ?",
+			projectID, employeeID, startOfDay, endOfDay, "%."+escapedHourType)
 	err := query.First(&timesheet).Error
 
 	if err != nil {
@@ -286,6 +291,13 @@ func (r *TimesheetQueryRepository) GetByProjectEmployeeDateHourType(ctx context.
 	}
 
 	return &timesheet, nil
+}
+
+func (r *TimesheetQueryRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.db.WithContext(ctx)
 }
 
 // dayBoundsInDateLocation returns the half-open [start, end) 24-hour window for the
@@ -334,7 +346,7 @@ func (r *TimesheetQueryRepository) GetByEmployeeDateCombos(ctx context.Context, 
 	var timesheets []*domain.Timesheet
 
 	// Build the query with OR conditions for each combo
-	query := r.db.WithContext(ctx).Model(&domain.Timesheet{})
+	query := r.getDB(ctx).Model(&domain.Timesheet{})
 
 	for i, combo := range combos {
 		startOfDay, endOfDay := dayBoundsInDateLocation(combo.Date)

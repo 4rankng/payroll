@@ -13,5 +13,11 @@ export function usePartnerImportHistory({ params, enabled = true }: UsePartnerIm
     queryFn: () => timesheetService.listPartnerImports(params),
     staleTime: 30_000,
     enabled: enabled && !!params,
+    refetchInterval: (query) => {
+      const items = query.state.data?.data ?? [];
+      return items.some((item) => item.status === 'pending' || item.status === 'processing')
+        ? 2_000
+        : false;
+    },
   });
 }

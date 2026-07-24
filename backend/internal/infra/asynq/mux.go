@@ -9,6 +9,8 @@ import (
 // RegisterHandlers registers all task handlers on the server's mux
 func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskEmployeeImport, asynqlib.HandlerFunc(h.HandleEmployeeImport))
+	srv.Mux().Handle(TaskBCCImport, asynqlib.HandlerFunc(h.HandleBCCImport))
+	srv.Mux().Handle(TaskBCCImportSweep, asynqlib.HandlerFunc(h.HandleBCCImportSweep))
 	srv.Mux().Handle(TaskImportJob, asynqlib.HandlerFunc(h.HandleImportJob))
 	srv.Mux().Handle(TaskIPNProcess, asynqlib.HandlerFunc(h.HandleIPNProcess))
 	srv.Mux().Handle(TaskBulkTransferTransaction, asynqlib.HandlerFunc(h.HandleBulkTransferTransaction))
@@ -45,7 +47,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	}
 
 	registered := []string{
-		TaskEmployeeImport, TaskImportJob, TaskIPNProcess,
+		TaskEmployeeImport, TaskBCCImport, TaskBCCImportSweep, TaskImportJob, TaskIPNProcess,
 		TaskBulkTransferTransaction, TaskBulkTransferPayment,
 		TaskAuditLogWrite, TaskPayrollReportEmail, TaskAutoRejectCheckout, TaskAutoRejectSweep,
 		TaskCreditQuota, TaskCreditQuotaSweep,
@@ -73,7 +75,14 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 
 // RegisterPeriodicTasks registers periodic tasks on the scheduler
 func RegisterPeriodicTasks(srv *Server, _ *Client) error {
-	logger.Info("Registered asynq periodic tasks")
+	if _, err := srv.Scheduler().Register(
+		"@every 1m",
+		asynqlib.NewTask(TaskBCCImportSweep, nil),
+		asynqlib.Queue(QueueLow),
+	); err != nil {
+		return fmt.Errorf("failed to register BCC import recovery sweep: %w", err)
+	}
+	logger.Info("Registered asynq periodic tasks", "bcc_import_recovery", "1m")
 	return nil
 }
 

@@ -3,10 +3,13 @@ package services
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -36,7 +39,14 @@ type BCCImportService struct {
 	employeeService     *employee.EmployeeService
 	employeeUserService *employee.EmployeeUserService
 	projectEmployeeSvc  *project.ProjectEmployeeService
+	importJobRepo       domain.TimesheetImportJobRepository
+	importEnqueuer      domain.TimesheetImportEnqueuer
 }
+
+var (
+	ErrBCCIdempotencyConflict = errors.New("idempotency key đã được dùng cho một tệp khác")
+	ErrBCCImportScopeBusy     = errors.New("dự án và tháng này đang có một tệp BCC được xử lý")
+)
 
 func NewBCCImportService(
 	payrateRepo domain.PayrateRepository,
@@ -49,6 +59,8 @@ func NewBCCImportService(
 	employeeService *employee.EmployeeService,
 	employeeUserService *employee.EmployeeUserService,
 	projectEmployeeSvc *project.ProjectEmployeeService,
+	importJobRepo domain.TimesheetImportJobRepository,
+	importEnqueuer domain.TimesheetImportEnqueuer,
 ) *BCCImportService {
 	return &BCCImportService{
 		payrateRepo:         payrateRepo,
@@ -62,7 +74,352 @@ func NewBCCImportService(
 		employeeService:     employeeService,
 		employeeUserService: employeeUserService,
 		projectEmployeeSvc:  projectEmployeeSvc,
+		importJobRepo:       importJobRepo,
+		importEnqueuer:      importEnqueuer,
 	}
+}
+
+const maxBCCUploadSize = 10 << 20
+
+type deferBCCTerminalMetadataKey struct{}
+
+// AcceptUpload durably stores a BCC upload and returns before spreadsheet
+// processing starts. The idempotency key belongs to one uploader and one exact
+// project/month/file fingerprint.
+func (s *BCCImportService) AcceptUpload(
+	ctx context.Context,
+	fileData io.Reader,
+	filename string,
+	projectID uint,
+	uploaderID uint,
+	uploaderRole string,
+	forMonth string,
+	idempotencyKey string,
+) (*BCCImportResult, error) {
+	data, err := io.ReadAll(io.LimitReader(fileData, maxBCCUploadSize+1))
+	if err != nil {
+		return nil, fmt.Errorf("BCCImportService.AcceptUpload: read file: %w", err)
+	}
+	if len(data) > maxBCCUploadSize {
+		return nil, fmt.Errorf("file quá lớn (tối đa 10MB)")
+	}
+	if _, _, err := parseForMonth(forMonth); err != nil {
+		return nil, fmt.Errorf("tháng không hợp lệ: %w", err)
+	}
+
+	fingerprint := bccRequestFingerprint(projectID, forMonth, data)
+	if existing, lookupErr := s.importJobRepo.GetByIdempotencyKey(ctx, uploaderID, idempotencyKey); lookupErr == nil {
+		if existing.RequestFingerprint != fingerprint {
+			return nil, ErrBCCIdempotencyConflict
+		}
+		return s.resultForAsset(ctx, existing.AssetID)
+	} else if !domain.IsNotFoundError(lookupErr) {
+		return nil, lookupErr
+	}
+
+	stored, err := s.fileStorage.StoreBytes(data, filename, domain.UploadTypePartnerBCCImport)
+	if err != nil {
+		return nil, fmt.Errorf("BCCImportService.AcceptUpload: store file: %w", err)
+	}
+
+	now := clock.Now()
+	stats := BCCImportStats{
+		ProjectID:    projectID,
+		OriginalName: filename,
+		ForMonth:     forMonth,
+		Status:       domain.TimesheetImportStatusPending,
+	}
+	metadata, err := json.Marshal(stats)
+	if err != nil {
+		_ = s.fileStorage.Delete(stored.FilePath)
+		return nil, fmt.Errorf("BCCImportService.AcceptUpload: metadata: %w", err)
+	}
+	checksum := fmt.Sprintf("%x", sha256.Sum256(data))
+	activeScope := fmt.Sprintf("%d:%s", projectID, forMonth)
+	asset := &domain.Asset{
+		Filename:   stored.OriginalFilename,
+		FilePath:   stored.FilePath,
+		UploadType: domain.UploadTypePartnerBCCImport,
+		Checksum:   &checksum,
+		UploadedBy: uploaderID,
+		Metadata:   stringPointer(string(metadata)),
+	}
+
+	err = s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		created, createErr := s.assetRepo.Create(txCtx, asset)
+		if createErr != nil {
+			return createErr
+		}
+		asset = created
+		return s.importJobRepo.Create(txCtx, &domain.TimesheetImportJob{
+			AssetID:            asset.ID,
+			ProjectID:          projectID,
+			ForMonth:           forMonth,
+			UploadedBy:         uploaderID,
+			UploaderRole:       uploaderRole,
+			Status:             domain.TimesheetImportStatusPending,
+			IdempotencyKey:     idempotencyKey,
+			RequestFingerprint: fingerprint,
+			ActiveScopeKey:     &activeScope,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		})
+	})
+	if err != nil {
+		_ = s.fileStorage.Delete(stored.FilePath)
+		if existing, lookupErr := s.importJobRepo.GetByIdempotencyKey(ctx, uploaderID, idempotencyKey); lookupErr == nil {
+			if existing.RequestFingerprint != fingerprint {
+				return nil, ErrBCCIdempotencyConflict
+			}
+			return s.resultForAsset(ctx, existing.AssetID)
+		}
+		if strings.Contains(strings.ToLower(err.Error()), "active_scope") ||
+			strings.Contains(strings.ToLower(err.Error()), "duplicate") {
+			return nil, ErrBCCImportScopeBusy
+		}
+		return nil, err
+	}
+
+	if enqueueErr := s.importEnqueuer.EnqueueBCCImport(asset.ID); enqueueErr != nil {
+		// The durable pending row is an outbox. The periodic recovery task will
+		// enqueue it after a transient Redis/queue outage.
+		slog.Error("BCCImport: initial enqueue failed; recovery will retry",
+			"asset_id", asset.ID, "error", enqueueErr)
+	}
+	return buildResult(stats, asset.ID, uploaderID, asset.CreatedAt), nil
+}
+
+// ProcessPendingJob claims and processes one durable import. Duplicate Asynq
+// deliveries are harmless because only one pending/expired job can be claimed.
+func (s *BCCImportService) ProcessPendingJob(ctx context.Context, assetID uint) error {
+	job, err := s.importJobRepo.GetByAssetID(ctx, assetID)
+	if err != nil {
+		return err
+	}
+	if job.IsTerminal() {
+		return nil
+	}
+	attempt, claimed, err := s.importJobRepo.Claim(ctx, assetID, clock.Now().Add(15*time.Minute))
+	if err != nil || !claimed {
+		return err
+	}
+
+	asset, err := s.assetRepo.GetByID(ctx, assetID)
+	if err != nil {
+		if domain.IsNotFoundError(err) {
+			return s.importJobRepo.Fail(ctx, assetID, attempt, err.Error(), clock.Now())
+		}
+		_ = s.importJobRepo.ReleaseForRetry(ctx, assetID, attempt, err.Error())
+		return err
+	}
+	if asset.Metadata != nil {
+		var persisted BCCImportStats
+		if json.Unmarshal([]byte(*asset.Metadata), &persisted) == nil {
+			switch persisted.Status {
+			case domain.TimesheetImportStatusCompleted:
+				return s.importJobRepo.Complete(ctx, assetID, attempt, clock.Now())
+			case domain.TimesheetImportStatusFailed:
+				return s.importJobRepo.Fail(ctx, assetID, attempt, FirstErrorReason(persisted.ErrorDetail), clock.Now())
+			}
+		}
+	}
+	data, err := os.ReadFile(s.fileStorage.GetFilePath(asset.FilePath))
+	if err != nil {
+		result := failedBCCImportResult(
+			asset,
+			job,
+			fmt.Sprintf("không thể đọc tệp BCC đã lưu: %v", err),
+		)
+		return s.finalizeImportJob(ctx, assetID, attempt, result)
+	}
+	processingStats := BCCImportStats{
+		ProjectID:    job.ProjectID,
+		OriginalName: asset.Filename,
+		ForMonth:     job.ForMonth,
+		Status:       domain.TimesheetImportStatusProcessing,
+	}
+	if err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		if err := s.importJobRepo.LockProcessingAttempt(txCtx, assetID, attempt); err != nil {
+			return err
+		}
+		return s.updateAssetMetadata(txCtx, assetID, &processingStats)
+	}); err != nil {
+		_ = s.importJobRepo.ReleaseForRetry(ctx, assetID, attempt, err.Error())
+		return err
+	}
+
+	var result *BCCImportResult
+	processErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		if err := s.importJobRepo.LockProcessingAttempt(txCtx, assetID, attempt); err != nil {
+			return err
+		}
+		processingCtx := context.WithValue(txCtx, deferBCCTerminalMetadataKey{}, true)
+		var importErr error
+		result, importErr = s.processAssetData(
+			processingCtx,
+			data,
+			asset.Filename,
+			job.ProjectID,
+			job.UploadedBy,
+			job.UploaderRole,
+			asset,
+			job.ForMonth,
+		)
+		if importErr != nil && result == nil {
+			return importErr
+		}
+		return s.finalizeImportJob(txCtx, assetID, attempt, result)
+	})
+	if processErr != nil {
+		_ = s.importJobRepo.ReleaseForRetry(ctx, assetID, attempt, processErr.Error())
+		return processErr
+	}
+	return nil
+}
+
+func failedBCCImportResult(
+	asset *domain.Asset,
+	job *domain.TimesheetImportJob,
+	reason string,
+) *BCCImportResult {
+	now := clock.Now()
+	detail := marshalErrors([]domain.ImportError{{Reason: reason}})
+	stats := BCCImportStats{
+		ProjectID:    job.ProjectID,
+		OriginalName: asset.Filename,
+		ForMonth:     job.ForMonth,
+		Status:       domain.TimesheetImportStatusFailed,
+		ErrorCount:   1,
+		ErrorDetail:  detail,
+		ProcessedAt:  &now,
+	}
+	return buildResult(stats, asset.ID, job.UploadedBy, asset.CreatedAt)
+}
+
+func (s *BCCImportService) finalizeImportJob(
+	ctx context.Context,
+	assetID uint,
+	attempt uint,
+	result *BCCImportResult,
+) error {
+	if result == nil {
+		return fmt.Errorf("BCCImportService.finalizeImportJob: missing result")
+	}
+	processedAt := clock.Now()
+	return s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		if err := s.importJobRepo.LockProcessingAttempt(txCtx, assetID, attempt); err != nil {
+			return err
+		}
+		stats := BCCImportStats{
+			ProjectID:    result.ProjectID,
+			OriginalName: result.OriginalName,
+			ForMonth:     result.ForMonth,
+			Status:       result.Status,
+			TotalRows:    result.TotalRows,
+			CreatedCount: result.CreatedCount,
+			SkippedCount: result.SkippedCount,
+			ErrorCount:   result.ErrorCount,
+			ErrorDetail:  result.ErrorDetail,
+			ProcessedAt:  result.ProcessedAt,
+		}
+		if err := s.updateAssetMetadata(txCtx, assetID, &stats); err != nil {
+			return err
+		}
+		if result.Status == domain.TimesheetImportStatusFailed {
+			return s.importJobRepo.Fail(txCtx, assetID, attempt, FirstErrorReason(result.ErrorDetail), processedAt)
+		}
+		return s.importJobRepo.Complete(txCtx, assetID, attempt, processedAt)
+	})
+}
+
+func (s *BCCImportService) RecoverPendingJobs(ctx context.Context) error {
+	jobs, err := s.importJobRepo.ListRecoverable(ctx, 100, clock.Now())
+	if err != nil {
+		return err
+	}
+	for _, job := range jobs {
+		if err := s.importEnqueuer.EnqueueBCCImport(job.AssetID); err != nil {
+			slog.Warn("BCCImport: recovery enqueue failed", "asset_id", job.AssetID, "error", err)
+		}
+	}
+	return nil
+}
+
+func (s *BCCImportService) resultForAsset(ctx context.Context, assetID uint) (*BCCImportResult, error) {
+	asset, err := s.assetRepo.GetByID(ctx, assetID)
+	if err != nil {
+		return nil, err
+	}
+	if asset.Metadata == nil {
+		return nil, fmt.Errorf("BCC import %d has no metadata", assetID)
+	}
+	var stats BCCImportStats
+	if err := json.Unmarshal([]byte(*asset.Metadata), &stats); err != nil {
+		return nil, err
+	}
+	return buildResult(stats, asset.ID, asset.UploadedBy, asset.CreatedAt), nil
+}
+
+func (s *BCCImportService) PendingTerminalAudit(ctx context.Context, assetID uint) (*BCCImportResult, bool, error) {
+	job, err := s.importJobRepo.GetByAssetID(ctx, assetID)
+	if err != nil {
+		return nil, false, err
+	}
+	if !job.IsTerminal() || job.AuditLoggedAt != nil {
+		return nil, false, nil
+	}
+	result, err := s.resultForAsset(ctx, assetID)
+	return result, true, err
+}
+
+func (s *BCCImportService) MarkTerminalAuditLogged(ctx context.Context, assetID uint) error {
+	_, err := s.importJobRepo.MarkTerminalAuditLogged(ctx, assetID, clock.Now())
+	return err
+}
+
+func stringPointer(value string) *string { return &value }
+
+func bccRequestFingerprint(projectID uint, forMonth string, data []byte) string {
+	hash := sha256.New()
+	_, _ = fmt.Fprintf(hash, "%d:%s:", projectID, forMonth)
+	_, _ = hash.Write(data)
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (s *BCCImportService) applyTimesheetReplacement(
+	ctx context.Context,
+	staleIDs []uint,
+	entries []domainservices.BulkCreateTimesheetEntry,
+	uploaderID uint,
+	uploaderRole string,
+) (*domainservices.BulkCreateTimesheetResult, error) {
+	var result *domainservices.BulkCreateTimesheetResult
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		for _, id := range staleIDs {
+			if err := s.timesheetWriter.HardDelete(txCtx, id); err != nil {
+				return fmt.Errorf("xóa bảng chấm công cũ %d: %w", id, err)
+			}
+		}
+
+		var err error
+		result, err = s.timesheetService.BulkCreateTimesheetsInTransaction(
+			txCtx,
+			entries,
+			uploaderID,
+			uploaderRole,
+		)
+		if err != nil {
+			return err
+		}
+		if len(result.FailedEntries) > 0 {
+			return fmt.Errorf("không thể thay thế an toàn: %d dòng không hợp lệ", len(result.FailedEntries))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // ProcessUpload saves the BCC file, parses it, and creates timesheets.
@@ -78,12 +435,11 @@ func (s *BCCImportService) ProcessUpload(
 	forMonth string,
 ) (*BCCImportResult, error) {
 	// 1. Read file bytes (needed for both storage and parsing).
-	const maxUploadSize = 10 << 20
-	data, err := io.ReadAll(io.LimitReader(fileData, maxUploadSize+1))
+	data, err := io.ReadAll(io.LimitReader(fileData, maxBCCUploadSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: read file: %w", err)
 	}
-	if len(data) > maxUploadSize {
+	if len(data) > maxBCCUploadSize {
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: file quá lớn (tối đa 10MB)")
 	}
 
@@ -106,6 +462,20 @@ func (s *BCCImportService) ProcessUpload(
 		_ = s.fileStorage.Delete(stored.FilePath)
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: create asset: %w", err)
 	}
+
+	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth)
+}
+
+func (s *BCCImportService) processAssetData(
+	ctx context.Context,
+	data []byte,
+	filename string,
+	projectID uint,
+	uploaderID uint,
+	uploaderRole string,
+	createdAsset *domain.Asset,
+	forMonth string,
+) (*BCCImportResult, error) {
 
 	// effectiveMonth is captured by the fail() closure.
 	effectiveMonth := forMonth
@@ -496,6 +866,7 @@ func (s *BCCImportService) ProcessUpload(
 	// 9. "Latest wins" overwrite: for any (employee, date) in the new import,
 	// delete previously-imported unapproved entries so the latest upload
 	// fully replaces them. Approved or paid entries are protected.
+	var staleIDs []uint
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -514,8 +885,6 @@ func (s *BCCImportService) ProcessUpload(
 		}
 
 		blocked := make(map[dk]string)
-		var staleIDs []uint
-		isAdmin := uploaderRole == string(domain.RoleAdmin)
 		for _, ts := range existingTS {
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
 			if !importDates[k] {
@@ -529,7 +898,7 @@ func (s *BCCImportService) ProcessUpload(
 			switch {
 			case isPaid:
 				blocked[k] = "đã thanh toán"
-			case ts.Status == domain.TimesheetStatusApproved && !isAdmin:
+			case ts.Status == domain.TimesheetStatusApproved:
 				blocked[k] = "đã được phê duyệt"
 			default:
 				staleIDs = append(staleIDs, ts.ID)
@@ -560,16 +929,6 @@ func (s *BCCImportService) ProcessUpload(
 			entries = filtered
 		}
 
-		for _, id := range staleIDs {
-			if delErr := s.timesheetWriter.HardDelete(ctx, id); delErr != nil {
-				slog.Warn("BCCImport: failed to hard-delete stale timesheet for overwrite",
-					"timesheet_id", id, "error", delErr)
-			}
-		}
-		if len(staleIDs) > 0 {
-			slog.Warn("BCCImport: hard-deleted stale unapproved timesheets",
-				"deleted_count", len(staleIDs), "project_id", projectID)
-		}
 	}
 
 	// 10. Call BulkCreateTimesheets.
@@ -597,7 +956,7 @@ func (s *BCCImportService) ProcessUpload(
 		return fail("failed", reason)
 	}
 
-	result, err := s.timesheetService.BulkCreateTimesheets(ctx, entries, uploaderID, uploaderRole)
+	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
@@ -642,6 +1001,11 @@ func (s *BCCImportService) ProcessUpload(
 }
 
 func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint, meta *bccImportMetadata) error {
+	if deferTerminal, _ := ctx.Value(deferBCCTerminalMetadataKey{}).(bool); deferTerminal &&
+		(meta.Status == domain.TimesheetImportStatusCompleted ||
+			meta.Status == domain.TimesheetImportStatusFailed) {
+		return nil
+	}
 	b, err := json.Marshal(meta)
 	if err != nil {
 		return fmt.Errorf("BCCImport: failed to marshal metadata: %w", err)

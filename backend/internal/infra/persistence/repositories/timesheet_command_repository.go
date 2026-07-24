@@ -30,12 +30,12 @@ func NewTimesheetCommandRepository(db *gorm.DB) *TimesheetCommandRepository {
 
 // Create creates a new timesheet
 func (r *TimesheetCommandRepository) Create(ctx context.Context, timesheet *domain.Timesheet) error {
-	return r.db.WithContext(ctx).Create(timesheet).Error
+	return r.getDB(ctx).Create(timesheet).Error
 }
 
 // Update updates an existing timesheet
 func (r *TimesheetCommandRepository) Update(ctx context.Context, timesheet *domain.Timesheet) error {
-	return r.db.WithContext(ctx).Save(timesheet).Error
+	return r.getDB(ctx).Save(timesheet).Error
 }
 
 // Delete soft deletes a timesheet
@@ -46,7 +46,18 @@ func (r *TimesheetCommandRepository) Delete(ctx context.Context, id uint) error 
 // HardDelete permanently removes a timesheet (no soft-delete).
 // Used by BCC import "latest wins" overwrite to avoid accumulation of stale soft-deleted rows.
 func (r *TimesheetCommandRepository) HardDelete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Unscoped().Delete(&domain.Timesheet{}, id).Error
+	result := r.getDB(ctx).
+		Unscoped().
+		Where("id = ? AND timesheet_status <> ? AND payment_status = ?",
+			id, domain.TimesheetStatusApproved, domain.PaymentStatusPending).
+		Delete(&domain.Timesheet{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return fmt.Errorf("timesheet %d became protected during replacement", id)
+	}
+	return nil
 }
 
 // BulkCreate creates multiple timesheets in batches
@@ -55,7 +66,7 @@ func (r *TimesheetCommandRepository) BulkCreate(ctx context.Context, timesheets 
 		return nil
 	}
 
-	return r.db.WithContext(ctx).CreateInBatches(timesheets, 100).Error
+	return r.getDB(ctx).CreateInBatches(timesheets, 100).Error
 }
 
 // BulkUpdate updates multiple timesheets in batches

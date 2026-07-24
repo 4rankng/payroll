@@ -588,6 +588,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	}
 
 	// 8. "Latest wins" overwrite (same logic as other formats).
+	var staleIDs []uint
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -609,8 +610,6 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		}
 
 		blocked := make(map[dk]string)
-		var staleIDs []uint
-		isAdmin := uploaderRole == string(domain.RoleAdmin)
 		for _, ts := range existingTS {
 			// Extract hourType (last segment) from the timesheet's PayType path.
 			tsHourType := ""
@@ -629,7 +628,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 			switch {
 			case isPaid:
 				blocked[k] = "đã thanh toán"
-			case ts.Status == domain.TimesheetStatusApproved && !isAdmin:
+			case ts.Status == domain.TimesheetStatusApproved:
 				blocked[k] = "đã được phê duyệt"
 			default:
 				staleIDs = append(staleIDs, ts.ID)
@@ -660,15 +659,6 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 			entries = filtered
 		}
 
-		for _, id := range staleIDs {
-			if delErr := s.timesheetWriter.HardDelete(ctx, id); delErr != nil {
-				slog.Warn("BCCImport(WBCC): failed to hard-delete stale timesheet", "timesheet_id", id, "error", delErr)
-			}
-		}
-		if len(staleIDs) > 0 {
-			slog.Warn("BCCImport(WBCC): hard-deleted stale unapproved timesheets",
-				"deleted_count", len(staleIDs), "project_id", projectID)
-		}
 	}
 
 	// 9. Bulk create or return failure.
@@ -697,7 +687,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		return fail("failed", reason)
 	}
 
-	result, err := s.timesheetService.BulkCreateTimesheets(ctx, entries, uploaderID, uploaderRole)
+	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}

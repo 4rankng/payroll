@@ -60,12 +60,17 @@ func runWeeklyBCCImportTests(client *APIClient, data *TestData, reporter *Report
 		fmt.Printf("    import_id=%d status=%s created=%d skipped=%d errors=%d for_month=%s total_rows=%d\n",
 			result.ID, result.Status, result.CreatedCount, result.SkippedCount, result.ErrorCount, result.ForMonth, result.TotalRows)
 
-		if status != 200 && status != 201 {
-			return fmt.Errorf("expected 200/201, got %d", status)
+		if status != 202 {
+			return fmt.Errorf("expected 202, got %d", status)
 		}
 		if result.ID == 0 {
 			return fmt.Errorf("import ID must be > 0")
 		}
+		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
+		if err != nil {
+			return err
+		}
+		result = *terminal
 		// Import should succeed with at least some timesheets created.
 		// Employees are auto-created from BCC sheets.
 		if result.Status == "failed" {
@@ -130,12 +135,17 @@ func runWeeklyBCCImportTests(client *APIClient, data *TestData, reporter *Report
 			fmt.Printf("    Partner lacks upload access (403) — skipping\n")
 			return nil
 		}
-		if status != 200 && status != 201 {
-			return fmt.Errorf("expected 200/201, got %d", status)
+		if status != 202 {
+			return fmt.Errorf("expected 202, got %d", status)
 		}
 		var result bccImportResponse
 		raw, _ := json.Marshal(apiResp.Data)
 		_ = json.Unmarshal(raw, &result)
+		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
+		if err != nil {
+			return err
+		}
+		result = *terminal
 		fmt.Printf("    re-upload: status=%s created=%d errors=%d\n",
 			result.Status, result.CreatedCount, result.ErrorCount)
 		// Second upload should also succeed (overwriting unapproved entries).
@@ -161,6 +171,13 @@ func runWeeklyBCCImportTests(client *APIClient, data *TestData, reporter *Report
 		var result bccImportResponse
 		raw, _ := json.Marshal(apiResp.Data)
 		_ = json.Unmarshal(raw, &result)
+		if status == 202 && result.ID > 0 {
+			terminal, waitErr := waitForBCCImport(partnerClient, endpoint, result.ID)
+			if waitErr != nil {
+				return waitErr
+			}
+			result = *terminal
+		}
 		fmt.Printf("    EPE upload: status=%d import_id=%d created=%d errors=%d for_month=%s\n",
 			status, result.ID, result.CreatedCount, result.ErrorCount, result.ForMonth)
 		// EPE file might be a different format (legacy or multi-position) — just verify no crash.

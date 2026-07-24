@@ -322,6 +322,40 @@ const ResultFailure = memo(function ResultFailure({ result }: ResultFailureProps
 
 // ─── Main Component (UI only) ─────────────────────────────────────────────────
 
+function ImportProcessingState({ status }: { status: 'pending' | 'processing' }) {
+  const isQueued = status === 'pending';
+  return (
+    <div
+      className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-800 dark:bg-emerald-950/30"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-busy="true"
+    >
+      <Loader2
+        className="mx-auto h-8 w-8 animate-spin text-emerald-700 motion-reduce:animate-none dark:text-emerald-300"
+        aria-hidden="true"
+      />
+      <div>
+        <p className="font-semibold text-slate-900 dark:text-slate-100">
+          {isQueued ? 'Đã nhận tệp. Đang chờ xử lý…' : 'Đang xử lý bảng chấm công…'}
+        </p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          Bạn có thể đóng cửa sổ này. Hệ thống vẫn tiếp tục xử lý.
+        </p>
+      </div>
+      <div
+        className="h-1.5 overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-900"
+        role="progressbar"
+        aria-label={isQueued ? 'Tệp đang chờ xử lý' : 'Bảng chấm công đang được xử lý'}
+        aria-valuetext={isQueued ? 'Đang chờ' : 'Đang xử lý'}
+      >
+        <div className="h-full w-1/3 animate-pulse rounded-full bg-emerald-600 motion-reduce:animate-none" />
+      </div>
+    </div>
+  );
+}
+
 export const BCCUploadModal = memo(function BCCUploadModal({
   open,
   onClose,
@@ -335,6 +369,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
     selectedMonth,
     isDragging,
     isPending,
+    isImportActive,
     needsProjectSelect,
     hasProject,
     canUpload,
@@ -378,7 +413,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           </DialogTitle>
           <button
             onClick={handleClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-500 transition-colors hover:bg-slate-200/60 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-slate-500 transition-colors hover:bg-slate-200/60 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             title="Đóng"
             aria-label="Đóng"
           >
@@ -514,7 +549,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       onClick={handleRemoveFile}
                       title="Xóa file"
                       aria-label="Xóa file"
-                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -544,6 +579,8 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           {result &&
             (result.status === 'completed' ? (
               <ResultSuccess result={result} />
+            ) : result.status === 'pending' || result.status === 'processing' ? (
+              <ImportProcessingState status={result.status} />
             ) : (
               <ResultFailure result={result} />
             ))}
@@ -570,10 +607,9 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 
           <button
             onClick={handleClose}
-            disabled={isPending}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-5 font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
           >
-            {result ? 'Đóng' : 'Hủy'}
+            {isImportActive ? 'Đóng cửa sổ' : result ? 'Đóng' : 'Hủy'}
           </button>
 
           {!result && (
@@ -585,7 +621,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  Đang tải tệp lên…
                 </>
               ) : (
                 <>
@@ -596,7 +632,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
             </button>
           )}
 
-          {result && (
+          {result && !isImportActive && (
             <button
               onClick={handleReset}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm leading-5 font-semibold text-white transition-colors hover:border-emerald-600 hover:bg-emerald-600"

@@ -782,7 +782,12 @@ class TimesheetService {
 
   // ─── BCC Partner Import ─────────────────────────────────────────────────
 
-  async uploadBCCFile(file: File, projectId: number, forMonth: string): Promise<PartnerImportFile> {
+  async uploadBCCFile(
+    file: File,
+    projectId: number,
+    forMonth: string,
+    idempotencyKey: string,
+  ): Promise<PartnerImportFile> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('project_id', String(projectId));
@@ -790,7 +795,10 @@ class TimesheetService {
     const response = await apiClient.post<PartnerImportFile>(
       API_ENDPOINTS.timesheets.partnerImport,
       formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      { headers: {
+        'Content-Type': 'multipart/form-data',
+        'Idempotency-Key': idempotencyKey,
+      } }
     );
     if (!response.data) throw new Error(response.message || 'Upload thất bại');
     return response.data;

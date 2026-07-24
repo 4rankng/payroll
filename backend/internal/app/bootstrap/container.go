@@ -271,6 +271,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.EmployeeImportProgress,
 			cfg.Asset.StoragePath,
 		),
+		workers.NewBCCImportWorker(services.BCCImport, services.Audit),
 		workers.NewImportJobWorker(
 			repos.Asset,
 			services.AdvancePayment,

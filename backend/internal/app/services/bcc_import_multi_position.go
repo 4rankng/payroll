@@ -395,6 +395,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 
 	// 9. "Latest wins" overwrite (same logic as legacy path).
+	var staleIDs []uint
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -413,8 +414,6 @@ func (s *BCCImportService) processMultiPositionUpload(
 		}
 
 		blocked := make(map[dk]string)
-		var staleIDs []uint
-		isAdmin := uploaderRole == string(domain.RoleAdmin)
 		for _, ts := range existingTS {
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
 			if !importDates[k] {
@@ -428,7 +427,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 			switch {
 			case isPaid:
 				blocked[k] = "đã thanh toán"
-			case ts.Status == domain.TimesheetStatusApproved && !isAdmin:
+			case ts.Status == domain.TimesheetStatusApproved:
 				blocked[k] = "đã được phê duyệt"
 			default:
 				staleIDs = append(staleIDs, ts.ID)
@@ -459,15 +458,6 @@ func (s *BCCImportService) processMultiPositionUpload(
 			entries = filtered
 		}
 
-		for _, id := range staleIDs {
-			if delErr := s.timesheetWriter.HardDelete(ctx, id); delErr != nil {
-				slog.Warn("BCCImport(MP): failed to hard-delete stale timesheet", "timesheet_id", id, "error", delErr)
-			}
-		}
-		if len(staleIDs) > 0 {
-			slog.Warn("BCCImport(MP): hard-deleted stale unapproved timesheets",
-				"deleted_count", len(staleIDs), "project_id", projectID)
-		}
 	}
 
 	// 10. Bulk create or return failure.
@@ -496,7 +486,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 		return fail("failed", reason)
 	}
 
-	result, err := s.timesheetService.BulkCreateTimesheets(ctx, entries, uploaderID, uploaderRole)
+	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}

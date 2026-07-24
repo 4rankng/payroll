@@ -27,7 +27,7 @@ func NewAssetRepository(db *Database, eventBus domain.EventBus) domain.AssetRepo
 }
 
 func (r *AssetRepository) Create(ctx context.Context, asset *domain.Asset) (*domain.Asset, error) {
-	if err := r.DB.WithContext(ctx).Create(asset).Error; err != nil {
+	if err := r.db(ctx).Create(asset).Error; err != nil {
 		return nil, domain.NewInternalError("failed to create asset", err)
 	}
 
@@ -145,13 +145,20 @@ func (r *AssetRepository) Update(ctx context.Context, asset *domain.Asset) error
 }
 
 func (r *AssetRepository) UpdateMetadata(ctx context.Context, id uint, metadata string) error {
-	if err := r.DB.WithContext(ctx).
+	if err := r.db(ctx).
 		Model(&domain.Asset{}).
 		Where("id = ?", id).
 		Update("metadata", metadata).Error; err != nil {
 		return domain.NewInternalError("failed to update asset metadata", err)
 	}
 	return nil
+}
+
+func (r *AssetRepository) db(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
 }
 
 func (r *AssetRepository) FindOrphaned(ctx context.Context, olderThan time.Time) ([]*domain.Asset, error) {

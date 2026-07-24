@@ -19,6 +19,8 @@ var logger = observability.GetLogger().With("component", "asynq")
 // Task type constants
 const (
 	TaskEmployeeImport = "employee:import"
+	TaskBCCImport      = "timesheet:bcc_import"
+	TaskBCCImportSweep = "timesheet:bcc_import_sweep"
 	TaskImportJob      = "import:job"
 	// TaskIPNProcess is the provider-agnostic task type for verified
 	// disbursement IPN events. The wire payload carries the provider
@@ -109,6 +111,7 @@ func payloadToBulkTransferEvent(p bulktransfer.BulkTransferTaskPayload) domain.B
 // Handlers holds all task handler dependencies
 type Handlers struct {
 	employeeImportWorker          *workers.EmployeeImportWorker
+	bccImportWorker               *workers.BCCImportWorker
 	importJobWorker               *workers.ImportJobWorker
 	ipnProcessWorker              *workers.IPNProcessWorker
 	disbursementPollerWorker      *workers.DisbursementPollerWorker
@@ -126,8 +129,8 @@ type Handlers struct {
 	creditQuotaSweepWorker        *workers.CreditQuotaSweepWorker
 	// wallet_bulk: per-row worker + the service (which hosts the ledger
 	// booking + sweeper handlers — they share the same batch_repo/txnSvc).
-	walletBulkRowWorker           *workers.WalletBulkTransferRowWorker
-	walletBulkSvc                 WalletBulkServiceHandler
+	walletBulkRowWorker *workers.WalletBulkTransferRowWorker
+	walletBulkSvc       WalletBulkServiceHandler
 }
 
 // WalletBulkServiceHandler is the narrow port for the wallet_bulk service's
@@ -142,6 +145,7 @@ type WalletBulkServiceHandler interface {
 // NewHandlers creates a new Handlers instance
 func NewHandlers(
 	employeeImportWorker *workers.EmployeeImportWorker,
+	bccImportWorker *workers.BCCImportWorker,
 	importJobWorker *workers.ImportJobWorker,
 	ipnProcessWorker *workers.IPNProcessWorker,
 	disbursementPollerWorker *workers.DisbursementPollerWorker,
@@ -162,6 +166,7 @@ func NewHandlers(
 ) *Handlers {
 	return &Handlers{
 		employeeImportWorker:          employeeImportWorker,
+		bccImportWorker:               bccImportWorker,
 		importJobWorker:               importJobWorker,
 		ipnProcessWorker:              ipnProcessWorker,
 		disbursementPollerWorker:      disbursementPollerWorker,
@@ -180,6 +185,28 @@ func NewHandlers(
 		walletBulkRowWorker:           walletBulkRowWorker,
 		walletBulkSvc:                 walletBulkSvc,
 	}
+}
+
+type bccImportPayload struct {
+	AssetID uint `json:"asset_id"`
+}
+
+func (h *Handlers) HandleBCCImport(ctx context.Context, t *asynqlib.Task) error {
+	var payload bccImportPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil || payload.AssetID == 0 {
+		return asynqlib.SkipRetry
+	}
+	if h.bccImportWorker == nil {
+		return nil
+	}
+	return h.bccImportWorker.ProcessJob(ctx, payload.AssetID)
+}
+
+func (h *Handlers) HandleBCCImportSweep(ctx context.Context, _ *asynqlib.Task) error {
+	if h.bccImportWorker == nil {
+		return nil
+	}
+	return h.bccImportWorker.Recover(ctx)
 }
 
 // HandleWalletBulkTransferRow processes one wallet:bulk_transfer_row task.

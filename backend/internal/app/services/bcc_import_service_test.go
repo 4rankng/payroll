@@ -167,6 +167,22 @@ func TestBuildResult(t *testing.T) {
 	}
 }
 
+func TestBCCRequestFingerprintBindsScopeAndContent(t *testing.T) {
+	base := bccRequestFingerprint(10, "2026-07", []byte("same workbook"))
+	if base != bccRequestFingerprint(10, "2026-07", []byte("same workbook")) {
+		t.Fatal("same request must have a stable fingerprint")
+	}
+	if base == bccRequestFingerprint(11, "2026-07", []byte("same workbook")) {
+		t.Fatal("project must be part of the fingerprint")
+	}
+	if base == bccRequestFingerprint(10, "2026-08", []byte("same workbook")) {
+		t.Fatal("month must be part of the fingerprint")
+	}
+	if base == bccRequestFingerprint(10, "2026-07", []byte("different workbook")) {
+		t.Fatal("file content must be part of the fingerprint")
+	}
+}
+
 func TestSTKCrossCheckLooseMatch(t *testing.T) {
 	// Simulate the STK cross-check logic from ProcessUpload
 	bccName := "Lò Thị Dương"

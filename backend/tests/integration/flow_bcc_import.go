@@ -12,15 +12,39 @@ import (
 const flowBCC = "BCCImport"
 
 type bccImportResponse struct {
-	ID           uint   `json:"id"`
-	ForMonth     string `json:"for_month"`
-	Status       string `json:"status"`
-	TotalRows    int    `json:"total_rows"`
-	CreatedCount int    `json:"created_count"`
-	SkippedCount int    `json:"skipped_count"`
-	ErrorCount   int    `json:"error_count"`
-	OriginalName string `json:"original_name"`
-	ProjectID    uint   `json:"project_id"`
+	ID           uint    `json:"id"`
+	ForMonth     string  `json:"for_month"`
+	Status       string  `json:"status"`
+	TotalRows    int     `json:"total_rows"`
+	CreatedCount int     `json:"created_count"`
+	SkippedCount int     `json:"skipped_count"`
+	ErrorCount   int     `json:"error_count"`
+	OriginalName string  `json:"original_name"`
+	ProjectID    uint    `json:"project_id"`
+	ErrorDetail  *string `json:"error_detail"`
+}
+
+func waitForBCCImport(client *APIClient, endpoint string, importID uint) (*bccImportResponse, error) {
+	apiResp, err := client.PollUntil(
+		fmt.Sprintf("%s/%d", endpoint, importID),
+		500*time.Millisecond,
+		2*time.Minute,
+		func(resp *APIResponse) bool {
+			var result bccImportResponse
+			raw, _ := json.Marshal(resp.Data)
+			_ = json.Unmarshal(raw, &result)
+			return result.Status == "completed" || result.Status == "failed"
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	var result bccImportResponse
+	raw, _ := json.Marshal(apiResp.Data)
+	if err := json.Unmarshal(raw, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
@@ -69,8 +93,8 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 			fmt.Printf("    Partner lacks upload access (403) — skipping BCC upload tests\n")
 			return nil
 		}
-		if status != 200 {
-			return fmt.Errorf("expected 200, got %d", status)
+		if status != 202 {
+			return fmt.Errorf("expected 202, got %d", status)
 		}
 		var result bccImportResponse
 		raw, _ := json.Marshal(apiResp.Data)
@@ -86,6 +110,12 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		if result.ForMonth == "" {
 			return fmt.Errorf("for_month must not be empty")
 		}
+		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("    terminal status=%s created=%d skipped=%d errors=%d\n",
+			terminal.Status, terminal.CreatedCount, terminal.SkippedCount, terminal.ErrorCount)
 		return nil
 	})
 
@@ -107,13 +137,20 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 			fmt.Printf("    Partner lacks upload access (403) — skipping boundary test\n")
 			return nil
 		}
-		if status != 200 {
-			return fmt.Errorf("expected 200, got %d", status)
+		if status != 202 {
+			return fmt.Errorf("expected 202, got %d", status)
 		}
-		// A payrate-boundary failure returns HTTP 200 with Status="failed" and a message
-		// carrying "không tìm thấy bảng lương ... no active payrate". Other import errors
-		// (e.g. employee mismatch) must NOT trip this assertion.
-		msg := apiResp.Message
+		var accepted bccImportResponse
+		raw, _ := json.Marshal(apiResp.Data)
+		_ = json.Unmarshal(raw, &accepted)
+		terminal, err := waitForBCCImport(partnerClient, endpoint, accepted.ID)
+		if err != nil {
+			return err
+		}
+		msg := ""
+		if terminal.ErrorDetail != nil {
+			msg = *terminal.ErrorDetail
+		}
 		if strings.Contains(msg, "no active payrate") || strings.Contains(msg, "bảng lương") {
 			return fmt.Errorf("import rejected on month/payrate boundary (TZ regression): %s", msg)
 		}
@@ -177,7 +214,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 	// ── 6. Re-upload after approval → rejected entirely ───────────────────────
 	reporter.RunTest(flowBCC, "Re-upload after timesheet approval is rejected", func() error {
 		// First upload to get some timesheets.
-		apiResp1, _, err := partnerClient.UploadFile(endpoint, "file", bccFile,
+		apiResp1, status1, err := partnerClient.UploadFile(endpoint, "file", bccFile,
 			map[string]string{"project_id": projectIDStr, "for_month": time.Now().Format("2006-01")})
 		if err != nil {
 			return fmt.Errorf("first upload: %w", err)
@@ -185,6 +222,14 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		var r1 bccImportResponse
 		raw, _ := json.Marshal(apiResp1.Data)
 		_ = json.Unmarshal(raw, &r1)
+		if status1 != 202 {
+			return fmt.Errorf("expected first upload 202, got %d", status1)
+		}
+		terminal1, err := waitForBCCImport(partnerClient, endpoint, r1.ID)
+		if err != nil {
+			return err
+		}
+		r1 = *terminal1
 		if r1.Status != "completed" || r1.CreatedCount == 0 {
 			fmt.Println("    sub-test skipped: no timesheets created on first upload")
 			return nil
@@ -195,7 +240,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 			map[string]any{"project_id": projectID, "approve_all": true})
 
 		// Re-upload — must be rejected.
-		apiResp2, _, err2 := partnerClient.UploadFile(endpoint, "file", bccFile,
+		apiResp2, status2, err2 := partnerClient.UploadFile(endpoint, "file", bccFile,
 			map[string]string{"project_id": projectIDStr, "for_month": time.Now().Format("2006-01")})
 		if err2 != nil {
 			return fmt.Errorf("second upload: %w", err2)
@@ -203,6 +248,14 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		var r2 bccImportResponse
 		raw2, _ := json.Marshal(apiResp2.Data)
 		_ = json.Unmarshal(raw2, &r2)
+		if status2 != 202 {
+			return fmt.Errorf("expected second upload 202, got %d", status2)
+		}
+		terminal2, err := waitForBCCImport(partnerClient, endpoint, r2.ID)
+		if err != nil {
+			return err
+		}
+		r2 = *terminal2
 		fmt.Printf("    re-upload after approval: status=%s\n", r2.Status)
 		return AssertEqual("status_after_approval", "failed", r2.Status)
 	})
