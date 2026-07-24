@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
 import { ChuyenLoDialog } from '@/components/timesheet/ChuyenLoDialog';
+import { BulkTransferExportDialog } from '@/components/timesheet/BulkTransferExportDialog';
 import { TimesheetsExportDialog, TimesheetsExportParams } from '@/components/timesheet/TimesheetsExportDialog';
 import { BulkTransferResultUploadDialog } from '@/components/timesheet/BulkTransferResultUploadDialog';
 import { BulkTransferHistoryDialog } from '@/components/transaction/BulkTransferHistoryDialog';
@@ -29,6 +30,7 @@ import type { BulkTransferExportParams } from '@/services/api/bulk-transfer.serv
 
 const TimesheetPage = () => {
   const [chuyenLoDialogOpen, setChuyenLoDialogOpen] = useState(false);
+  const [onePayDialogOpen, setOnePayDialogOpen] = useState(false);
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] = useState(false);
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
   const [bulkTransferResultDialogOpen, setBulkTransferResultDialogOpen] = useState(false);
@@ -162,46 +164,28 @@ const TimesheetPage = () => {
     }
   };
 
-  // "Chuyển OnePay" — Stage 1 of the Wallet Bulk Transfer Pipeline. This
-  // feature is for WEEKLY timesheet payment only (independent of the
-  // advance-payment/flexpay flow). Always send a weekly date range so the
-  // backend selects weekly-schedule employees. Sending for_month would
-  // switch the backend to its monthly cohort and silently drop every
-  // weekly employee (the bug that produced "0 employees skipped" 422s).
-  //
-  // Source of truth for the range: the month currently selected in the
-  // page filter. If the admin has chosen "all", fall back to the current
-  // calendar month so the backend always receives a well-formed request.
-  const handleChuyenOnePay = async () => {
-    const projectId =
-      timesheetManagement.selectedProject !== 'all'
-        ? parseInt(timesheetManagement.selectedProject, 10)
-        : undefined;
+  // OnePay uses weekly date ranges. Sending for_month switches the backend
+  // to the monthly employee cohort, so this action reuses the weekly period
+  // selector from "Chuyển lô" without exposing the monthly toggle.
+  const handleChuyenOnePay = () => {
+    setOnePayDialogOpen(true);
+  };
 
-    const projectIds = projectId ? [projectId] : undefined;
-
-    let { fromDate, toDate } = statsFilters;
-    if (!fromDate || !toDate) {
-      // selectedMonth === 'all': default to the current calendar month.
-      const now = new Date();
-      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      fromDate = `${ym}-01`;
-      toDate = `${ym}-${lastDay.toString().padStart(2, '0')}`;
-    }
-
-    const params: BulkTransferExportParams = {
-      fromDate,
-      toDate,
-      project_ids: projectIds,
-    };
-
+  const handleChuyenOnePaySubmit = async (params: BulkTransferExportParams) => {
     try {
       await exportOnePayMutation.mutateAsync(params);
+      setOnePayDialogOpen(false);
     } catch {
       // Error + toast handled by useExportOnePayBulk onError.
+      // Keep the selected period in place so the admin can retry.
     }
   };
+
+  const onePayProjectIds = useMemo(() => {
+    if (timesheetManagement.selectedProject === 'all') return [];
+    const projectId = parseInt(timesheetManagement.selectedProject, 10);
+    return Number.isNaN(projectId) ? [] : [projectId];
+  }, [timesheetManagement.selectedProject]);
 
   const handleApprove = async (timesheet: Timesheet) => {
     await timesheetManagement.handleApprove(timesheet);
@@ -377,6 +361,15 @@ const TimesheetPage = () => {
       <ChuyenLoDialog
         open={chuyenLoDialogOpen}
         onOpenChange={setChuyenLoDialogOpen}
+      />
+
+      <BulkTransferExportDialog
+        open={onePayDialogOpen}
+        onOpenChange={setOnePayDialogOpen}
+        onExport={handleChuyenOnePaySubmit}
+        isLoading={exportOnePayMutation.isPending}
+        mode="onepay"
+        preselectedProjectIds={onePayProjectIds}
       />
 
       <TimesheetsExportDialog

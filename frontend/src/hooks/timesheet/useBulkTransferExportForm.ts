@@ -21,6 +21,7 @@ interface UseBulkTransferExportFormProps {
   onOpenChange: (open: boolean) => void;
   projects: Project[];
   employees: Employee[];
+  initialProjectIds?: number[];
 }
 
 function getDefaultWeeklyDates() {
@@ -55,7 +56,8 @@ export function useBulkTransferExportForm({
   isOpen,
   onOpenChange,
   projects,
-  employees
+  employees,
+  initialProjectIds,
 }: UseBulkTransferExportFormProps) {
   const [paymentSchedule, setPaymentScheduleState] = useState<'weekly' | 'monthly'>('weekly');
   const [fromDate, setFromDate] = useState<Date>();
@@ -65,6 +67,8 @@ export function useBulkTransferExportForm({
   const [selectedCustomRange, setSelectedCustomRange] = useState<string>('');
 
   const prevIsOpen = useRef(false);
+  const initialProjectIdsRef = useRef(initialProjectIds);
+  initialProjectIdsRef.current = initialProjectIds;
 
   // Period calculations
   const weekPeriods = useMemo(() => getAvailableWeekPeriods(), []);
@@ -85,6 +89,7 @@ export function useBulkTransferExportForm({
         setToDate(new Date(currentMonthPeriods.defaultPeriod.to));
         setSelectedCustomRange('');
       }
+      setSelectedProjects(initialProjectIdsRef.current ?? []);
     } else if (!isOpen && prevIsOpen.current) {
       setFromDate(undefined);
       setToDate(undefined);
@@ -221,7 +226,10 @@ export function useBulkTransferExportForm({
       params.for_month = format(validToDate, 'yyyy-MM');
     }
 
-    if (selectedProjects.length > 0 && selectedProjects.length < projects.length) {
+    if (
+      selectedProjects.length > 0 &&
+      (projects.length === 0 || selectedProjects.length < projects.length)
+    ) {
       params.project_ids = selectedProjects;
     } else if (selectedProjects.length === 0 || selectedProjects.length === projects.length) {
       params.project_ids = [];

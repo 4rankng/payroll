@@ -14,7 +14,7 @@ import { type BulkTransferExportParams } from '@/services/api/bulk-transfer.serv
 import { BulkTransferDateRangeSection } from './bulk-transfer-export/BulkTransferDateRangeSection';
 import { BulkTransferFiltersSection } from './bulk-transfer-export/BulkTransferFiltersSection';
 
-export type BulkTransferMode = 'export' | 'provider';
+export type BulkTransferMode = 'export' | 'provider' | 'onepay';
 
 interface BulkTransferExportDialogProps {
   open: boolean;
@@ -23,6 +23,7 @@ interface BulkTransferExportDialogProps {
   isLoading?: boolean;
   mode?: BulkTransferMode;
   ninePayBatchId?: string | null;
+  preselectedProjectIds?: number[];
 }
 
 export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
@@ -32,6 +33,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
   isLoading = false,
   mode = 'export',
   ninePayBatchId = null,
+  preselectedProjectIds,
 }: BulkTransferExportDialogProps) {
   const { data: projectsResponse } = useProjects();
   const { data: employeesResponse } = useEmployees();
@@ -43,11 +45,23 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
     isOpen: open,
     onOpenChange,
     projects,
-    employees
+    employees,
+    initialProjectIds: preselectedProjectIds,
   });
 
   const isMobile = useIsMobile();
   const isProvider = mode === 'provider';
+  const isOnePay = mode === 'onepay';
+  const dialogTitle = isProvider
+    ? 'Chuyển lô qua nhà cung cấp'
+    : isOnePay
+      ? 'Chuyển OnePay'
+      : 'Xuất file chuyển lô';
+  const dialogDescription = isProvider
+    ? 'Chọn khoảng thời gian để chuyển tiền tự động qua nhà cung cấp'
+    : isOnePay
+      ? 'Chọn kỳ lương tuần để tạo file chuyển tiền OnePay'
+      : 'Chọn khoảng thời gian và bộ lọc để xuất file Excel';
 
   const handleExport = useCallback(() => {
     const params = form.buildExportParams();
@@ -162,36 +176,43 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
     <Dialog open={open} onOpenChange={form.handleDialogOpen}>
       <DialogContent
         className="max-h-[92dvh] overflow-y-auto sm:max-w-lg shadow-none"
-        title={isProvider ? 'Chuyển lô qua nhà cung cấp' : 'Xuất file chuyển lô'}
-        description={isProvider ? 'Chọn khoảng thời gian để chuyển tiền tự động qua nhà cung cấp' : 'Chọn khoảng thời gian và bộ lọc để xuất file Excel'}
+        title={dialogTitle}
+        description={dialogDescription}
       >
         <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2">
-            {isProvider ? (
+            {isProvider || isOnePay ? (
               <CreditCard className="w-5 h-5 text-white/80" />
             ) : (
               <FileSpreadsheet className="w-5 h-5 text-white/80" />
             )}
-            {isProvider ? 'Chuyển lô qua nhà cung cấp' : 'Xuất file chuyển lô'}
+            {dialogTitle}
           </DialogTitle>
+          {isOnePay && (
+            <p className="text-sm text-emerald-200/75">
+              {dialogDescription}
+            </p>
+          )}
         </DialogHeader>
 
-        <div className="space-y-4">
+        <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">
           {/* Payment Schedule */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Chu kỳ trả lương <span className="text-red-500">*</span>
-            </Label>
-            <ButtonGroup
-              options={[
-                { value: 'weekly', label: 'Lương tuần' },
-                { value: 'monthly', label: 'Lương tháng' }
-              ]}
-              value={form.paymentSchedule}
-              onChange={form.setPaymentSchedule}
-              fullWidth
-            />
-          </div>
+          {!isOnePay && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Chu kỳ trả lương <span className="text-red-500">*</span>
+              </Label>
+              <ButtonGroup
+                options={[
+                  { value: 'weekly', label: 'Lương tuần' },
+                  { value: 'monthly', label: 'Lương tháng' }
+                ]}
+                value={form.paymentSchedule}
+                onChange={form.setPaymentSchedule}
+                fullWidth
+              />
+            </div>
+          )}
 
           {/* Date Range */}
           <div className="space-y-2">
@@ -222,7 +243,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
             onProjectChange={form.setSelectedProjects}
             onEmployeeChange={form.setSelectedEmployees}
           />
-        </div>
+        </fieldset>
 
         <DialogFooter className="flex-col gap-2.5 pt-2 sm:flex-row sm:gap-3">
           <Button
@@ -241,12 +262,17 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {isProvider ? 'Đang xử lý...' : 'Đang xuất...'}
+                {isProvider ? 'Đang xử lý...' : isOnePay ? 'Đang tạo file...' : 'Đang xuất...'}
               </>
             ) : isProvider ? (
               <>
                 <CreditCard className="w-4 h-4 mr-2" />
                 Chuyển khoản tự động
+              </>
+            ) : isOnePay ? (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Tạo file OnePay
               </>
             ) : (
               <>
