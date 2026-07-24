@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Lock,
   User,
@@ -376,6 +376,12 @@ const Login = () => {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </label>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Link to="/forgot-password" className="text-xs font-bold text-primary hover:underline">
+                        Quên mật khẩu?
+                      </Link>
                     </div>
 
                     {needsCaptcha && (

@@ -57,6 +57,15 @@ func HashPassword(password, hashSecret, hashSalt string, cfg HashConfig) (string
 	), nil
 }
 
+// HashNewPassword exposes the internal Argon2id hasher for use by the
+// self-service password-reset service (Red Team H8: only this one delegator is
+// needed — ValidatePassword is already exported and called directly by the
+// reset service). Matches the codebase precedent of AuthService reaching into
+// UserService (auth_service.go: VerifyPasswordHash).
+func (s *UserService) HashNewPassword(password string) (string, error) {
+	return s.hashPassword(password)
+}
+
 // hashPassword generates a secure hash for the given password using Argon2ID
 func (s *UserService) hashPassword(password string) (string, error) {
 	s.logger.Info("Hashing password", "method", "argon2id")
@@ -66,7 +75,6 @@ func (s *UserService) hashPassword(password string) (string, error) {
 		s.logger.Error("Failed to hash password", "error", err)
 		return "", err
 	}
-
 	s.logger.Info("Password hashed successfully")
 	return encodedHash, nil
 }

@@ -79,6 +79,9 @@ func main() {
 	// Phase 7: Auth & User Management
 	runAuthUserTests(client, testData, reporter, cfg)
 
+	// Phase 7.5: Self-service password reset (no-token contracts; see flow file)
+	runPasswordResetTests(client, testData, reporter, cfg)
+
 	// Phase 8: CRUD flows
 	runBankCRUDTests(client, testData, reporter, cfg)
 	runEmployeeCRUDTests(client, testData, reporter, cfg)

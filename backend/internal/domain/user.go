@@ -77,6 +77,14 @@ type UserRepository interface {
 	// UpdateTokensInvalidBefore sets the timestamp before which all of the user's
 	// JWTs are considered invalid. Passing a nil timestamp clears the field.
 	UpdateTokensInvalidBefore(ctx context.Context, userID uint, invalidBefore time.Time) error
+	// UpdatePasswordAndInvalidateSessions sets the user's password hash AND
+	// tokens_invalid_before in a single DB transaction. Used by self-service
+	// password reset so the two writes commit atomically — a partial commit
+	// (password changed but sessions not killed) would leave stolen JWTs valid
+	// for up to 14 days (Red Team C1). The password is written via a column-
+	// scoped UPDATE (not full-row Save) so concurrent profile edits aren't
+	// clobbered (Red Team Failure-Mode-F8).
+	UpdatePasswordAndInvalidateSessions(ctx context.Context, userID uint, hashedPassword string, invalidBefore time.Time) error
 	// UpdateOTPLockout sets the user's consecutive failed-OTP-attempt count and
 	// the optional lockout expiry. Pass lockedUntil=nil to clear an active lockout
 	// (e.g. on successful verify, which also resets failedAttempts to 0).

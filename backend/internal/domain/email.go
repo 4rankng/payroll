@@ -32,6 +32,7 @@ const (
 	EmailKindPayrollReport        EmailMessageKind = "payroll_report"
 	EmailKindAdvancePaymentReport EmailMessageKind = "advance_payment_report"
 	EmailKindOTP                  EmailMessageKind = "otp"
+	EmailKindPasswordReset        EmailMessageKind = "password_reset"
 )
 
 // EmailAddress represents an email address with optional display name.

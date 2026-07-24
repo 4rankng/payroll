@@ -157,6 +157,21 @@ type ResetUserPasswordRequest struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
+// PasswordResetRequestDTO is the body of POST /auth/password-reset/request.
+// The endpoint returns the SAME success response whether or not the email
+// exists, to prevent email enumeration (Red Team anti-enumeration contract).
+type PasswordResetRequestDTO struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// PasswordResetConfirmDTO is the body of POST /auth/password-reset/confirm.
+// Token is the opaque value from the magic-link query string; NewPassword is
+// validated against the same strength rules as account creation.
+type PasswordResetConfirmDTO struct {
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
 // UserActivitiesRequest represents the request parameters for user activities
 type UserActivitiesRequest struct {
 	Days int `form:"days,default=30" binding:"min=1,max=365"`

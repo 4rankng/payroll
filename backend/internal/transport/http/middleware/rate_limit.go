@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -18,6 +19,8 @@ import (
 	"github.com/ulule/limiter/v3"
 	limiterGin "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	limiterRedis "github.com/ulule/limiter/v3/drivers/store/redis"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/unicode/norm"
 )
 
 // RateLimitConfig holds configuration for rate limiting using ulule/limiter
@@ -183,4 +186,65 @@ func CreateEndpointRateLimit(rate string, redisURL string) gin.HandlerFunc {
 		Rate:     rate,
 		RedisURL: redisURL,
 	})
+}
+
+// CreatePasswordResetRateLimit caps password-reset requests per EMAIL ADDRESS
+// (read from the request body), not per IP — a rotating-IP attacker must not
+// bypass the cap. Falls back to the client IP when the body has no email.
+// perHour is the allowed requests per normalized email per hour.
+func CreatePasswordResetRateLimit(redisURL string, perHour int) gin.HandlerFunc {
+	if perHour <= 0 {
+		perHour = 3
+	}
+	rate := fmt.Sprintf("%d-H", perHour)
+	return createRateLimiterWithKey(RateLimitConfig{Rate: rate, RedisURL: redisURL}, passwordResetEmailKeyGetter)
+}
+
+// passwordResetEmailKeyGetter extracts the email from the request body and
+// returns a per-email limiter key. Red Team H1: the email is Unicode case-folded
+// + NFKC-normalized + zero-width-stripped so it matches the DB's
+// utf8mb4_unicode_ci comparison (Alice@ / Álice@ / alice@\u200b collapse to one
+// bucket). Red Team M1: the body is restored after reading or the downstream
+// handler's BindJSON sees EOF and 400s every reset request.
+func passwordResetEmailKeyGetter(c *gin.Context) string {
+	const maxBody = 4 << 10
+	if c.Request != nil && c.Request.Body != nil {
+		raw, err := io.ReadAll(io.LimitReader(c.Request.Body, maxBody))
+		c.Request.Body = io.NopCloser(bytes.NewReader(raw)) // CRITICAL: restore body
+		if err == nil {
+			var payload struct {
+				Email string `json:"email"`
+			}
+			if json.Unmarshal(raw, &payload) == nil {
+				if e := strings.TrimSpace(payload.Email); e != "" {
+					normalized := normalizeEmailForRateLimit(e)
+					if len(normalized) > 255 {
+						normalized = normalized[:255]
+					}
+					return "pwreset-email:" + normalized
+				}
+			}
+		}
+	}
+	return "ip:" + c.ClientIP()
+}
+
+// normalizeEmailForRateLimit applies NFKC normalization + Unicode case-folding +
+// zero-width stripping so the limiter key matches MySQL's utf8mb4_unicode_ci
+// comparison semantics. strings.ToLower alone is ASCII-only and would let
+// "Alice@x" / "Álice@x" / "alice@\u200bx" bypass the per-email cap.
+func normalizeEmailForRateLimit(email string) string {
+	// NFKC first so compatibility chars fold (e.g. fullwidth ＠ → @).
+	n := norm.NFKC.String(email)
+	// Unicode case-fold (broader than ASCII ToLower — handles İ, ı, ß, etc.).
+	n = cases.Fold().String(n)
+	// Strip zero-width chars TrimSpace misses.
+	n = strings.Map(func(r rune) rune {
+		switch r {
+		case '\u200b', '\u200c', '\u200d', '\ufeff': // ZWSP, ZWNJ, ZWJ, BOM
+			return -1
+		}
+		return r
+	}, n)
+	return strings.TrimSpace(n)
 }

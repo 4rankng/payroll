@@ -16,6 +16,8 @@ export const API_ENDPOINTS = {
     updateProfile: '/auth/me',
     changePassword: '/auth/change-password',
     google: '/auth/google',
+    passwordResetRequest: '/auth/password-reset/request',
+    passwordResetConfirm: '/auth/password-reset/confirm',
   },
 
   // Users

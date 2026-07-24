@@ -11,6 +11,14 @@ func setupAuthRoutes(v1 *gin.RouterGroup, container *Container) {
 		auth.POST("/login/verify", container.Middleware.LoginRateLimit, container.Handlers.Auth.VerifyLoginOTP)
 		auth.POST("/login/resend", container.Middleware.LoginRateLimit, container.Handlers.Auth.ResendOTPCode)
 		auth.POST("/google", container.Middleware.LoginRateLimit, container.Handlers.Auth.GoogleLogin)
+
+		// Self-service email password reset (Red Team H6: register only when
+		// enabled — disabled means 404, not a misleading 200).
+		if container.Config.PasswordReset.Enabled {
+			auth.POST("/password-reset/request", container.Middleware.PasswordResetRateLimit, container.Handlers.Auth.RequestPasswordReset)
+			auth.POST("/password-reset/confirm", container.Middleware.PasswordResetRateLimit, container.Handlers.Auth.ConfirmPasswordReset)
+		}
+
 		auth.POST("/logout", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.Logout)
 
 		auth.GET("/me", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.GetProfile)

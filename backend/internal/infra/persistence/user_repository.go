@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
 	"api-server/internal/infra/persistence/common"
@@ -202,6 +203,30 @@ func (r *UserRepository) UpdateTokensInvalidBefore(ctx context.Context, userID u
 		Where("id = ?", userID).
 		Update("tokens_invalid_before", invalidBefore).Error; err != nil {
 		return domain.NewInternalError("failed to update tokens_invalid_before", err)
+	}
+	return nil
+}
+
+// UpdatePasswordAndInvalidateSessions sets the user's password hash AND
+// tokens_invalid_before in a single DB transaction (Red Team C1). Both writes
+// commit atomically — a partial commit (password changed but sessions not
+// killed) would leave stolen JWTs valid for up to 14 days. The password is
+// written via a column-scoped UPDATE (not full-row Save) so concurrent profile
+// edits aren't clobbered (Red Team Failure-Mode-F8).
+func (r *UserRepository) UpdatePasswordAndInvalidateSessions(ctx context.Context, userID uint, hashedPassword string, invalidBefore time.Time) error {
+	ops := func(tx *gorm.DB) error {
+		if err := tx.Model(&domain.User{}).Where("id = ?", userID).
+			Update("password", hashedPassword).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&domain.User{}).Where("id = ?", userID).
+			Update("tokens_invalid_before", invalidBefore).Error; err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := r.ExecuteInTransaction(ctx, ops); err != nil {
+		return domain.NewInternalError(constants.MsgFailedToUpdateUserPasswordVN, err)
 	}
 	return nil
 }

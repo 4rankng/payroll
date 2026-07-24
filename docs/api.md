@@ -38,6 +38,8 @@ Routes are registered in `backend/internal/app/bootstrap/routes.go` and split ac
 | GET | `/me` | Get current user profile |
 | PUT | `/me` | Update profile |
 | POST | `/change-password` | Change password |
+| POST | `/password-reset/request` | Email a single-use password-reset magic link (30-min TTL). Always 200 (anti-enumeration). Rate-limited 3/hr per normalized email. Only registered when `PASSWORD_RESET_ENABLE=true`. |
+| POST | `/password-reset/confirm` | Set a new password with a magic-link token. Invalidates all existing sessions for the user. |
 
 ### Users (`/api/v1/users`)
 

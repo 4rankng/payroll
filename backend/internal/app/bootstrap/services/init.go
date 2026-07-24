@@ -23,6 +23,7 @@ import (
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/otp"
+	"api-server/internal/app/services/passwordreset"
 	"api-server/internal/app/services/payroll"
 	"api-server/internal/app/services/payroll/bulktransfer"
 	"api-server/internal/app/services/project"
@@ -58,6 +59,7 @@ import (
 type Services struct {
 	User                              *user.UserService
 	PasswordResetJobManager           *user.PasswordResetJobManager
+	EmailPasswordReset                *passwordreset.Service // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
 	Dashboard                         *dashboard.Service
@@ -515,6 +517,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Events:                eventBus,
 		Cache:                 cacheService,
 		Logger:                logger,
+		BankAccountValidator:  employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, logger),
 	}
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
@@ -612,6 +615,14 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
 	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, constants.DefaultEmailSenderAddress, cfg.OTP, clk, logger)
 
+	// Self-service email password-reset (Red Team C4: reuse otpEmailSender so
+	// reset emails reach real inboxes under the same env-gating as OTP).
+	pwresetTokenStore := cache.NewPasswordResetTokenStore(redis.Client, cfg.PasswordReset.TokenTTL)
+	emailPasswordResetService := passwordreset.NewService(
+		pwresetTokenStore, repos.User, userService, otpEmailSender, eventBus,
+		constants.DefaultEmailSenderAddress, cfg.PasswordReset.ResetURL, clk, logger,
+	)
+
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
 
@@ -628,6 +639,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	servicesStruct := &Services{
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
+		EmailPasswordReset:                emailPasswordResetService,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),
 		Authorization:                     authorizationService,
 		Dashboard:                         dashboardService,

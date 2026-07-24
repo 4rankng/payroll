@@ -106,13 +106,14 @@ type Handlers struct {
 }
 
 type Middleware struct {
-	Auth            *middleware.AuthMiddleware
-	Authorization   *middleware.AuthorizationMiddleware
-	LoginRateLimit  gin.HandlerFunc
-	APIRateLimit    gin.HandlerFunc
-	StrictRateLimit gin.HandlerFunc
-	TenantSemaphore *middleware.TenantSemaphoreMiddleware
-	APIMetrics      gin.HandlerFunc
+	Auth                 *middleware.AuthMiddleware
+	Authorization        *middleware.AuthorizationMiddleware
+	LoginRateLimit       gin.HandlerFunc
+	PasswordResetRateLimit gin.HandlerFunc // Red Team H1: per-normalized-email cap
+	APIRateLimit         gin.HandlerFunc
+	StrictRateLimit      gin.HandlerFunc
+	TenantSemaphore      *middleware.TenantSemaphoreMiddleware
+	APIMetrics           gin.HandlerFunc
 }
 
 func NewContainer(cfg *config.Config, version string) (*Container, error) {
@@ -383,7 +384,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 
 	return &Handlers{
 		User:                 handlers.NewUserHandler(services.User, services.PasswordResetJobManager),
-		Auth:                 handlers.NewAuthHandler(services.Auth, services.User),
+		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset),
 		Dashboard:            handlers.NewDashboardHandler(services.Dashboard),
 		Project:              handlers.NewProjectHandlerWithServices(services.Project, services.Payrate, services.Timesheet, services.ProjectEmployee, services.ProjectPermission, clk),
 		Employee:             handlers.NewEmployeeHandlerWithServices(services.Employee, services.Timesheet, services.ProjectEmployee, services.Audit, clk),
@@ -463,13 +464,14 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 
 	return &Middleware{
-		Auth:            middleware.NewAuthMiddleware(authService),
-		Authorization:   authorizationMiddleware,
-		LoginRateLimit:  middleware.CreateLoginRateLimit(cfg.Redis.Addr),
-		APIRateLimit:    middleware.CreateAPIRateLimit(cfg.Redis.Addr),
-		StrictRateLimit: middleware.CreateStrictRateLimit(cfg.Redis.Addr),
-		TenantSemaphore: middleware.NewTenantSemaphoreMiddleware(tenantLimit),
-		APIMetrics:      middleware.APIMetrics(apiMetricRepo),
+		Auth:                   middleware.NewAuthMiddleware(authService),
+		Authorization:          authorizationMiddleware,
+		LoginRateLimit:         middleware.CreateLoginRateLimit(cfg.Redis.Addr),
+		PasswordResetRateLimit: middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),
+		APIRateLimit:           middleware.CreateAPIRateLimit(cfg.Redis.Addr),
+		StrictRateLimit:        middleware.CreateStrictRateLimit(cfg.Redis.Addr),
+		TenantSemaphore:        middleware.NewTenantSemaphoreMiddleware(tenantLimit),
+		APIMetrics:             middleware.APIMetrics(apiMetricRepo),
 	}
 }
 

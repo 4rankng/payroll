@@ -313,6 +313,22 @@ class AuthService {
     return this.isAuthenticated();
   }
 
+  /**
+   * Request a password-reset magic link. The backend ALWAYS returns the same
+   * success message whether or not the email exists (anti-enumeration).
+   */
+  async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(API_ENDPOINTS.auth.passwordResetRequest, { email });
+  }
+
+  /**
+   * Confirm a password reset with a single-use magic-link token + new password.
+   * On success the backend invalidates all existing sessions for the user.
+   */
+  async confirmPasswordReset(payload: { token: string; new_password: string }): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(API_ENDPOINTS.auth.passwordResetConfirm, payload);
+  }
+
 }
 
 export const authService = new AuthService();

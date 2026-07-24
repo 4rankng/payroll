@@ -5,6 +5,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/auth"
+	passwordreset "api-server/internal/app/services/passwordreset"
 	"api-server/internal/app/services/user"
 	"api-server/internal/constants"
 	"api-server/internal/transport/http/helpers"
@@ -14,14 +15,16 @@ import (
 )
 
 type AuthHandler struct {
-	authService *auth.AuthService
-	userService *user.UserService
+	authService          *auth.AuthService
+	userService          *user.UserService
+	passwordResetService *passwordreset.Service
 }
 
-func NewAuthHandler(authService *auth.AuthService, userService *user.UserService) *AuthHandler {
+func NewAuthHandler(authService *auth.AuthService, userService *user.UserService, passwordResetService *passwordreset.Service) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
-		userService: userService,
+		authService:          authService,
+		userService:          userService,
+		passwordResetService: passwordResetService,
 	}
 }
 
@@ -161,6 +164,49 @@ func (h *AuthHandler) ResendOTPCode(c *gin.Context) {
 		"otp_session_id": sessionID,
 		"expires_in":     expiresIn,
 	}, "Mã mới đã được gửi")
+}
+
+// @Summary Request password reset
+// @Description Email a single-use password-reset magic link (30-min TTL) to the user. Always returns 200 with the same message whether or not the email exists, to prevent email enumeration.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body dto.PasswordResetRequestDTO true "Email to send the reset link to"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Router /auth/password-reset/request [post]
+func (h *AuthHandler) RequestPasswordReset(c *gin.Context) {
+	var req dto.PasswordResetRequestDTO
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	// Service ALWAYS returns nil (generic success). Anti-enumeration: the
+	// response body is identical whether the email exists or not; the email
+	// is only actually dispatched for known accounts.
+	_ = h.passwordResetService.RequestReset(c.Request.Context(), req.Email)
+	response.Success(c, nil, constants.MsgPasswordResetRequestedVN)
+}
+
+// @Summary Confirm password reset
+// @Description Set a new password using a single-use magic-link token. Invalidates all existing sessions for the user.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body dto.PasswordResetConfirmDTO true "Reset token + new password"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Router /auth/password-reset/confirm [post]
+func (h *AuthHandler) ConfirmPasswordReset(c *gin.Context) {
+	var req dto.PasswordResetConfirmDTO
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	if err := h.passwordResetService.ConfirmReset(c.Request.Context(), req.Token, req.NewPassword); err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.Success(c, nil, constants.MsgPasswordResetSuccessVN)
 }
 
 // @Description Get the profile of the currently authenticated user

@@ -29,6 +29,7 @@ type Config struct {
 	OTP            OTPConfig
 	Google         GoogleConfig
 	Captcha        CaptchaConfig
+	PasswordReset  PasswordResetConfig
 	WalletForecast WalletForecastConfig
 	CashForecast   CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
@@ -76,6 +77,17 @@ type OTPConfig struct {
 	MaxAttempts    int           // per-account failed-verify cap (default 5)
 	LockDuration   time.Duration // lockout window once cap hit (default 15m)
 	ResendCooldown time.Duration // min gap between resend requests (default 30s)
+}
+
+// PasswordResetConfig backs the self-service email password-reset feature.
+// Users with an email on file can request a single-use magic link (30-min TTL)
+// to set a new password; the flow reuses the existing Resend email infra and
+// Redis for token storage. See plans/260724-2100-password-reset-email/.
+type PasswordResetConfig struct {
+	Enabled          bool          // PASSWORD_RESET_ENABLE (default true — low-risk self-service)
+	TokenTTL         time.Duration // PASSWORD_RESET_TOKEN_TTL (default 30m)
+	RateLimitPerHour int           // PASSWORD_RESET_RATE_LIMIT (default 3, per normalized email)
+	ResetURL         string        // PASSWORD_RESET_URL (default "https://tingting.vip/reset-password")
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -427,6 +439,12 @@ func Load() (*Config, error) {
 		Google: GoogleConfig{
 			OAuthEnabled: parseBool(getEnv("GOOGLE_OAUTH_ENABLED", "true")),
 			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		},
+		PasswordReset: PasswordResetConfig{
+			Enabled:          parseBool(getEnv("PASSWORD_RESET_ENABLE", "true")),
+			TokenTTL:         parseDuration(getEnv("PASSWORD_RESET_TOKEN_TTL", "30m")),
+			RateLimitPerHour: parseInt(getEnv("PASSWORD_RESET_RATE_LIMIT", "3")),
+			ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

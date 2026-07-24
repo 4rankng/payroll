@@ -369,6 +369,12 @@ const (
 	MsgUserActivitySummaryFetchedSuccessfullyVN = "Lấy tóm tắt hoạt động người dùng thành công"
 	MsgEmployeePasswordChangedSuccessfullyVN    = "Mật khẩu đã đổi thành công"
 
+	// Password reset (self-service email flow) — Red Team C2/H2/H5/H6
+	MsgPasswordResetRequestedVN        = "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu trong vài phút."
+	MsgPasswordResetSuccessVN          = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới."
+	MsgPasswordResetTokenInvalidVN     = "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới."
+	MsgPasswordResetStoreUnavailableVN = "Đã có lỗi xảy ra, vui lòng thử lại."
+
 	// Bank Messages - Vietnamese
 	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"
 	MsgBankNotFoundVN              = "Không tìm thấy ngân hàng"

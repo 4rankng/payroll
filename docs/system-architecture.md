@@ -175,6 +175,8 @@ graph TB
 
 JWT tokens issued on login. Middleware extracts token from `Authorization: Bearer <token>` header, validates, and injects user ID and role into Gin context.
 
+**Self-service password reset:** Users with an email on file can request a single-use magic link (30-min TTL, SHA-256-hashed token in Redis under `pwreset:*`) from `/forgot-password`. Clicking the link opens `/reset-password`, which sets a new password. The confirm flow consumes the token atomically (Redis `GETDEL`) and updates the password + invalidates all existing sessions (`tokens_invalid_before`) in a single DB transaction. The request endpoint always returns 200 (anti-enumeration) and rate-limits per normalized email (3/hr). Gated behind `PASSWORD_RESET_ENABLE`.
+
 ### Authorization
 
 Three roles defined in Casbin policy:
