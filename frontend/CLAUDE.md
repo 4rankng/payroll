@@ -829,3 +829,18 @@ pnpm test -u
 **Last Updated:** 2026-05-06
 **Maintained By:** Orbit (AI Agent)
 **Version:** 1.0
+
+
+QA Testing
+
+localhost:3000
+
+admin login
+frankng
+Admin123
+
+partner login
+cuongnv
+Admin123
+
+all accounts have password Admin123

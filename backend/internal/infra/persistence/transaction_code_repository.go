@@ -22,13 +22,23 @@ func NewTransactionCodeRepository(db *Database) domain.TransactionCodeRepository
 	}
 }
 
+// getDB keeps transaction-code reads and writes in the transaction propagated
+// by application services. This is required by result uploads, where the new
+// bulk-transfer history ID must commit or roll back together with its asset.
+func (r *TransactionCodeRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 func (r *TransactionCodeRepository) Create(ctx context.Context, tc *domain.TransactionCode) error {
-	return r.DB.WithContext(ctx).Create(tc).Error
+	return r.getDB(ctx).Create(tc).Error
 }
 
 func (r *TransactionCodeRepository) GetByCode(ctx context.Context, code string) (*domain.TransactionCode, error) {
 	var tc domain.TransactionCode
-	err := r.DB.WithContext(ctx).
+	err := r.getDB(ctx).
 		Where("code = ?", code).
 		First(&tc).Error
 
@@ -42,7 +52,7 @@ func (r *TransactionCodeRepository) GetByCode(ctx context.Context, code string) 
 // GetAllCodes returns all existing transaction codes as a set for uniqueness checking
 func (r *TransactionCodeRepository) GetAllCodes(ctx context.Context) (map[string]struct{}, error) {
 	var codes []string
-	if err := r.DB.WithContext(ctx).Model(&domain.TransactionCode{}).Pluck("code", &codes).Error; err != nil {
+	if err := r.getDB(ctx).Model(&domain.TransactionCode{}).Pluck("code", &codes).Error; err != nil {
 		return nil, r.errorHandler.HandleListError(err, "transaction_codes")
 	}
 
@@ -58,7 +68,7 @@ func (r *TransactionCodeRepository) CreateBatch(ctx context.Context, tcs []*doma
 	if len(tcs) == 0 {
 		return nil
 	}
-	return r.DB.WithContext(ctx).CreateInBatches(tcs, 100).Error
+	return r.getDB(ctx).CreateInBatches(tcs, 100).Error
 }
 
 // FindByCodes returns transaction codes matching the provided codes.
@@ -69,7 +79,7 @@ func (r *TransactionCodeRepository) FindByCodes(ctx context.Context, codes []str
 		return []*domain.TransactionCode{}, nil
 	}
 
-	tcs, err := common.ChunkStrings[*domain.TransactionCode](ctx, r.DB.WithContext(ctx), codes, common.DefaultChunkSize,
+	tcs, err := common.ChunkStrings[*domain.TransactionCode](ctx, r.getDB(ctx), codes, common.DefaultChunkSize,
 		func(tx *gorm.DB, batch []string) ([]*domain.TransactionCode, error) {
 			var batchTCs []*domain.TransactionCode
 			if err := tx.Where("code IN ?", batch).Find(&batchTCs).Error; err != nil {
@@ -116,5 +126,5 @@ func (r *TransactionCodeRepository) UpdateFileIDByCodes(ctx context.Context, cod
 		tc.Data = updatedBytes
 	}
 
-	return r.DB.WithContext(ctx).Save(tcs).Error
+	return r.getDB(ctx).Save(tcs).Error
 }

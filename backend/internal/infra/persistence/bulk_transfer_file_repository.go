@@ -30,9 +30,20 @@ func NewBulkTransferFileRepository(db *gorm.DB, tcRepo domain.TransactionCodeRep
 	}
 }
 
+// getDB returns the transaction-scoped session when the caller propagates one
+// through the context. Result uploads create the asset, history metadata, and
+// transaction-code links atomically, so these writes must use the same DB
+// transaction instead of opening a second connection.
+func (r *BulkTransferFileRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 // Create creates a new bulk transfer file record
 func (r *BulkTransferFileRepository) Create(ctx context.Context, file *domain.BulkTransferFile) error {
-	return r.DB.WithContext(ctx).Create(file).Error
+	return r.getDB(ctx).Create(file).Error
 }
 
 // GetByID retrieves a bulk transfer file by ID with related entities
@@ -82,7 +93,7 @@ func (r *BulkTransferFileRepository) GetByFilename(ctx context.Context, filename
 // GetByAssetID retrieves a bulk transfer file by asset_id
 func (r *BulkTransferFileRepository) GetByAssetID(ctx context.Context, assetID uint) (*domain.BulkTransferFile, error) {
 	var file domain.BulkTransferFile
-	err := r.DB.WithContext(ctx).
+	err := r.getDB(ctx).
 		Preload("Creator").
 		Preload("Asset").
 		Where("asset_id = ?", assetID).
@@ -297,7 +308,7 @@ func (r *BulkTransferFileRepository) UpdateTransactionData(ctx context.Context, 
 
 // UpdateWithLock updates a bulk transfer file with row-level locking
 func (r *BulkTransferFileRepository) UpdateWithLock(ctx context.Context, id uint, updates map[string]interface{}) error {
-	return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	update := func(tx *gorm.DB) error {
 		var file domain.BulkTransferFile
 		if err := tx.Clauses(
 			clause.Locking{
@@ -312,7 +323,12 @@ func (r *BulkTransferFileRepository) UpdateWithLock(ctx context.Context, id uint
 		}
 
 		return nil
-	})
+	}
+
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return update(r.getDB(ctx))
+	}
+	return r.DB.WithContext(ctx).Transaction(update)
 }
 
 // ListForPayrollReport retrieves processed bulk transfer files for payroll report

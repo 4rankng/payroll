@@ -132,3 +132,18 @@ pnpm test:e2e         # Playwright E2E tests
 - **workbox** PWA service worker
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
+
+
+QA Testing
+
+localhost:3000
+
+admin login
+frankng
+Admin123
+
+partner login
+cuongnv
+Admin123
+
+all accounts have password Admin123
