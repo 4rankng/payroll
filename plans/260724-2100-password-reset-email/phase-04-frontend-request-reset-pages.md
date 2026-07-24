@@ -43,14 +43,14 @@ Two new pages, both matching the visual language of the existing `Login.tsx` and
 
 ### Strength meter
 
-The existing `change-password` UI has a strength meter component (search `frontend/src` for `PasswordStrength` / `GetPasswordStrength`). Reuse the same component/hook rather than rebuilding. The backend already exposes `GET /auth/password-strength` — the change-password page calls it; mirror that.
+**Red Team H7:** The existing `change-password` UI has a **client-side** strength indicator at `frontend/src/components/ui/password-strength-indicator.tsx:12` (used by `ChangePasswordModal.tsx:19` and `ResetPasswordModal.tsx:6`). It uses `validatePassword` from `@/lib/validation` — **no backend call**. There is NO `GET /auth/password-strength` endpoint (`routes_auth.go` has no such route — the earlier draft's reference was a phantom). Reuse this component directly; do not add a backend strength call.
 
 ## Related Code Files
 
 - **Create:** `frontend/src/pages/ForgotPassword.tsx`
 - **Create:** `frontend/src/pages/ResetPassword.tsx`
 - **Modify:** `frontend/src/pages/Login.tsx` — add "Quên mật khẩu?" link below the password field, linking to `/forgot-password`.
-- **Read (for reference):** `frontend/src/pages/Login.tsx`, `frontend/src/pages/OTPLogin.tsx`, and the change-password component for the strength-meter pattern.
+- **Read (for reference):** `frontend/src/pages/Login.tsx`, `frontend/src/pages/OTPLogin.tsx`, and **`frontend/src/components/ui/password-strength-indicator.tsx`** (Red Team H7 — the client-side strength component to reuse; used by `ChangePasswordModal.tsx:19` and `ResetPasswordModal.tsx:6`).
 
 ## Implementation Steps
 
@@ -62,13 +62,22 @@ The existing `change-password` UI has a strength meter component (search `fronte
    - Layout: centered card, logo, heading "Quên mật khẩu?", subtext "Nhập email đăng ký, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.", the email input (same `ct-input` styling), submit button, and a "Quay lại đăng nhập" link.
    - When `done`, replace the form with the success alert + back-to-login link.
 
-3. **Write `ResetPassword.tsx`:**
+3. **Write `ResetPassword.tsx`** with **Red Team H3 (token-URL hardening)** applied:
    - Read token on mount: `const token = new URLSearchParams(window.location.search).get("token")`.
+   - **Strip the token from the URL immediately on mount** (keep it in component state) so it doesn't linger in browser history, leak via Referer on sub-resource loads, or persist in screenshots:
+     ```tsx
+     useEffect(() => {
+       if (token) {
+         window.history.replaceState({}, "", "/reset-password");  // clean URL
+       }
+     }, [token]);
+     ```
+   - **Add a `<meta name="referrer" content="no-referrer" />` tag** (or set it via a `useEffect` that manipulates `document.head`) for the duration of this page, so no Referer header leaks the token to any third-party resource. The backend's global `Referrer-Policy: strict-origin-when-cross-origin` (`security_headers.go:20`) is not sufficient — it strips path/query on cross-origin but not same-origin, and older browsers ignore it.
    - If no token → render the "invalid link" state immediately.
-   - State: `newPassword`, `confirmPassword`, `showPassword`, `strength` (from backend hook), `submitting`, `success`, `error`.
-   - Form: new password input (with show/hide toggle + strength meter), confirm password input (with match validation), submit button "Đặt lại mật khẩu".
+   - State: `newPassword`, `confirmPassword`, `showPassword`, `submitting`, `success`, `error` (strength is computed **client-side** via the `PasswordStrengthIndicator` component — Red Team H7, no backend call).
+   - Form: new password input (with show/hide toggle + `PasswordStrengthIndicator`), confirm password input (with match validation), submit button "Đặt lại mật khẩu".
    - Client validation: passwords match, min length 8 (matches the DTO binding). Show inline VN errors.
-   - On submit: call `useConfirmPasswordReset()` hook with `{ token, new_password }`.
+   - On submit: call `useConfirmPasswordReset()` hook with `{ token, new_password }` (token from state, not from URL).
    - On success: show green alert "Đặt lại mật khẩu thành công", then `setTimeout(() => navigate('/login', { replace: true }), 2000)`.
    - On error: if message contains the token-invalid constant → show a "link expired" alert with a button to `/forgot-password`. Otherwise show the raw VN error message.
 
@@ -95,6 +104,6 @@ The existing `change-password` UI has a strength meter component (search `fronte
 
 ## Risk Assessment
 
-- **Strength meter differs from change-password page:** Mitigation: locate and reuse the exact same component/hook rather than reimplementing. If it's not reusable, build a minimal meter but keep the visual consistent.
-- **Anti-enumeration leak via timing:** The `done` flag flips regardless of success/error, but if a 404 (should never happen — backend always 200s) had different timing than a 200, a sophisticated attacker could distinguish. Mitigation: backend always returns 200 (Phase 2), so the client only ever sees 200 or network-error.
-- **Token in URL is sensitive:** It's a single-use token with 30-min TTL; being in the URL is the standard magic-link pattern. The reset page clears it from the URL on success (`navigate('/login', { replace: true })`).
+- **Strength meter:** Red Team H7 — reuse the existing **client-side** `PasswordStrengthIndicator` (`components/ui/password-strength-indicator.tsx:12`); there is no backend strength endpoint. No rebuild needed.
+- **Anti-enumeration leak via timing:** The `done` flag flips regardless of success/error. Mitigation: backend always returns 200 (Phase 2) + performs timing equalization (Red Team H2), so the client only ever sees 200 or network-error.
+- **Red Team H3 (token-in-URL leakage):** The earlier draft dismissed this as "standard magic-link pattern." That was wrong — the token is live for 30 minutes before first use, so any leak (Referer header, proxy log, browser history, inbox screenshot) gives an attacker a takeover window. Mitigations applied: (a) strip token from URL on mount via `replaceState`, (b) `Referrer-Policy: no-referrer` meta on the page, (c) clear on success. **Residual risk** (proxy logs capturing the click before the page strips it, inbox malware) is documented and accepted given the single-use + 30-min TTL constraint — this matches industry magic-link implementations (e.g. GitHub, Notion).

@@ -33,7 +33,7 @@ async confirmPasswordReset(payload: { token: string; new_password: string }): Pr
 
 ### Endpoint config
 
-Add to `frontend/src/config/api.config.ts` (find the `auth` block — it already has `login`, `loginVerify`, `loginResend`, `changePassword`):
+Add to `frontend/src/config/api.config.ts` (find the `auth` block — it already has `login`, `loginVerifyOtp`, `loginResendOtp`, `changePassword` — confirmed names per `api.config.ts:11-17`):
 
 ```ts
 auth: {

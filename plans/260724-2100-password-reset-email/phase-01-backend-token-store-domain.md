@@ -72,6 +72,8 @@ type PasswordResetConfirmDTO struct {
 - **Modify:** `backend/internal/config/config.go` — add `PasswordResetConfig` struct + env parsing
 - **Modify:** `backend/internal/app/dto/user.go` — add the two DTOs
 - **Modify:** `backend/internal/constants/messages.go` — add VN message constants
+- **Modify:** `backend/internal/domain/user.go` — add `UpdatePasswordAndInvalidateSessions` to `UserRepository` interface (Red Team C1: transactional write so password + session-kill commit atomically)
+- **Modify:** `backend/internal/infra/persistence/user_repository.go` — implement `UpdatePasswordAndInvalidateSessions` inside a single `db.Transaction` (column-scoped `Update`, NOT full-row `Save` — avoids lost-update on concurrent profile edits)
 
 ## Implementation Steps
 
@@ -86,10 +88,15 @@ type PasswordResetConfirmDTO struct {
    - `Consume(ctx, token string) (userID uint, err error)`:
      - `sha256.Sum256(token)` → `hashHex`.
      - Lua script: `return redis.call("GETDEL", KEYS[1])` with `KEYS[1] = pwreset:<hashHex>`.
-     - If result is nil (`redis.Nil` or empty) → return `ErrPasswordResetTokenNotFound`.
-     - Else parse `strconv.ParseUint(result, 10, 64)` → `uint` → return.
+     - **Red Team H5 (distinguish outage from not-found):** If `script.Run()` returns an error:
+       - If `errors.Is(err, redis.Nil)` → the key genuinely doesn't exist → return `ErrPasswordResetTokenNotFound`.
+       - Otherwise (connection refused, timeout, network partition) → return `ErrPasswordResetStoreUnavailable` wrapped: `fmt.Errorf("password reset: consume: %w", err)`. The service maps this to a 500, NOT to "invalid token" — so a Redis hiccup doesn't lie to the user that their valid link is expired.
+     - If result is non-nil → parse `strconv.ParseUint(result, 10, 64)` → `uint` → return.
+     - (Mirror the error-distinction pattern in `OTPPendingStore.GetSession` at `otp_pending_store.go:186-191`, which already separates `redis.Nil` from wrapped connection errors.)
    - `Delete(ctx, token string) error` — non-atomic delete for admin/teardown use; same hash path.
-   - Define sentinel errors: `ErrPasswordResetTokenNotFound = errors.New("password reset token not found or expired")`.
+   - Define sentinel errors:
+     - `ErrPasswordResetTokenNotFound = errors.New("password reset token not found or expired")`
+     - `ErrPasswordResetStoreUnavailable = errors.New("password reset token store unavailable")` (Red Team H5)
    - Mirrors the package-level comment style of `otp_pending_store.go` (package doc explaining purpose + RT notes).
 
 2. **Modify `backend/internal/config/config.go`**:
@@ -104,7 +111,7 @@ type PasswordResetConfirmDTO struct {
          ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
      },
      ```
-   - Note: `parseBool`, `parseDuration`, `parseInt` helpers already exist in this file.
+   - Note: `parseBool`, `parseDuration`, `parseInt`, `getEnv` helpers already exist in this file (verified at `config.go:696,714,729,734`).
 
 3. **Modify `backend/internal/app/dto/user.go`** — append the two DTOs near the existing password DTOs (after `ResetUserPasswordRequest`):
    ```go
@@ -129,21 +136,53 @@ type PasswordResetConfirmDTO struct {
    MsgPasswordResetRequestedVN          = "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu trong vài phút."
    MsgPasswordResetSuccessVN            = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới."
    MsgPasswordResetTokenInvalidVN       = "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới."
+   MsgPasswordResetStoreUnavailableVN   = "Đã có lỗi xảy ra, vui lòng thử lại."  // Red Team H5: distinguish outage from invalid
    MsgPasswordResetDisabledVN           = "Tính năng đặt lại mật khẩu đang bị tắt. Vui lòng liên hệ quản trị viên."
    MsgPasswordResetRateLimitedVN        = "Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau."
    MsgPasswordResetTokenMissingVN       = "Thiếu mã đặt lại mật khẩu."
    ```
 
+5. **Add `UpdatePasswordAndInvalidateSessions` to `UserRepository`** (Red Team C1 — transactional atomicity; Red Team Failure-Mode-F8 — column-scoped update avoids lost-update):
+   - In `backend/internal/domain/user.go`, add to the `UserRepository` interface:
+     ```go
+     // UpdatePasswordAndInvalidateSessions sets the user's password hash AND
+     // tokens_invalid_before in a single DB transaction. Used by self-service
+     // password reset so the two writes commit atomically — a partial commit
+     // (password changed but sessions not killed) would leave stolen JWTs valid
+     // for up to 14 days. The password is written via a column-scoped UPDATE
+     // (not full-row Save) so concurrent profile edits aren't clobbered.
+     UpdatePasswordAndInvalidateSessions(ctx context.Context, userID uint, hashedPassword string, invalidBefore time.Time) error
+     ```
+   - In `backend/internal/infra/persistence/user_repository.go`, implement it:
+     ```go
+     func (r *userRepository) UpdatePasswordAndInvalidateSessions(ctx context.Context, userID uint, hashedPassword string, invalidBefore time.Time) error {
+         return r.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+             // Column-scoped updates — do NOT use Save (full-row write).
+             if err := tx.Model(&domain.User{}).Where("id = ?", userID).
+                 Update("password", hashedPassword).Error; err != nil {
+                 return err
+             }
+             return tx.Model(&domain.User{}).Where("id = ?", userID).
+                 Update("tokens_invalid_before", invalidBefore).Error
+         })
+     }
+     ```
+   - This mirrors the column-scoped style of the existing `UpdateTokensInvalidBefore` (`user_repository.go:199-207`), which already uses `.Update("tokens_invalid_before", ...)` rather than `Save`.
+
 ## Success Criteria
 
-- [ ] `password_reset_token_store.go` compiles, with `Create`, `Consume`, `Delete`, and `ErrPasswordResetTokenNotFound`.
+- [ ] `password_reset_token_store.go` compiles, with `Create`, `Consume`, `Delete`, `ErrPasswordResetTokenNotFound`, and `ErrPasswordResetStoreUnavailable` (Red Team H5).
 - [ ] `Create` returns a base64url token of ~43 chars; the same input is **not** stored in Redis (only its SHA-256 hex).
 - [ ] `Consume` is atomic: two concurrent calls with the same token return exactly one `userID` and one `ErrPasswordResetTokenNotFound`.
+- [ ] `Consume` distinguishes `redis.Nil` (→ `ErrPasswordResetTokenNotFound`) from a connection error (→ `ErrPasswordResetStoreUnavailable`). (Red Team H5)
+- [ ] `UpdatePasswordAndInvalidateSessions` commits password + `tokens_invalid_before` in a single DB transaction. (Red Team C1)
 - [ ] `Config.PasswordReset` parses from env with the documented defaults.
 - [ ] DTOs and message constants exist and are referenced (compile check).
 - [ ] `cd backend && go build ./...` passes.
 
 ## Risk Assessment
 
-- **Redis version:** `GETDEL` requires Redis ≥ 6.2. The project runs Redis 7 (`docker-compose.yml`). If an older Redis were in use, fall back to a `WATCH/MULTI/GET/DEL` Lua block — but that is not needed here.
+- **Redis version:** `GETDEL` requires Redis ≥ 6.2. The project runs Redis 7 (`docker-compose.dev.yml`: `redis:7-alpine` — verified by Security reviewer). miniredis v2.38.0 (present in `go.mod`) also supports GETDEL (verified).
 - **Token length vs. hash collision:** 32-byte tokens have 256 bits of entropy; SHA-256 collisions are computationally infeasible. No collision-handling code is needed.
+- **Red Team H5 (Redis outage UX):** Mitigated by the two distinct sentinels — the user sees "try again" (500) on an outage, not "your link is expired" (401).
+- **Red Team C1 (partial-failure window):** The transactional `UpdatePasswordAndInvalidateSessions` makes password + session-kill atomic. If the transaction fails, the token is already consumed (GETDEL) but the account is unchanged — the user requests a new link. That's the least-bad outcome.
