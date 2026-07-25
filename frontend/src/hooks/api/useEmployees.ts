@@ -240,12 +240,12 @@ export const useCreateEmployee = () => {
           showSuccessNotification(response.message);
         }
 
-        // If OnePay flagged the new employee's bank account invalid, show
-        // a modal dialog requiring acknowledgement.
+        // If account validation flagged the new employee's bank details,
+        // show a modal dialog requiring acknowledgement.
         if (newEmployee.bank_account_status === 'invalid') {
           showBankAccountWarning({
-            employeeName: newEmployee.fullname,
-            reason: newEmployee.bank_account_invalid_reason ?? 'OnePay xác nhận tài khoản không hợp lệ',
+            accountName: newEmployee.bank_account_name,
+            reason: newEmployee.bank_account_invalid_reason ?? 'Thông tin tài khoản không hợp lệ',
           });
         }
       } catch (error) {
@@ -304,14 +304,14 @@ export const useUpdateEmployee = () => {
         showSuccessNotification(response.message);
       }
 
-      // If OnePay flagged the bank account invalid, show a modal dialog
+      // If account validation flagged the bank details, show a modal dialog
       // requiring acknowledgement. The save still succeeded (decision:
       // allow + flag), but the admin must know payments will fail until
       // the account is corrected.
       if (employeeData.bank_account_status === 'invalid') {
         showBankAccountWarning({
-          employeeName: employeeData.fullname,
-          reason: employeeData.bank_account_invalid_reason ?? 'OnePay xác nhận tài khoản không hợp lệ',
+          accountName: employeeData.bank_account_name,
+          reason: employeeData.bank_account_invalid_reason ?? 'Thông tin tài khoản không hợp lệ',
         });
       }
 

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,19 +8,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getBankAccountNameMismatch } from "@/utils/bank-account-warning";
 
 /**
  * BankAccountWarningContext surfaces a click-to-dismiss modal dialog when a
- * saved employee has an OnePay-confirmed invalid bank account. The save
- * itself succeeds (HTTP 200); this dialog forces the admin/partner to
- * acknowledge the problem so payments don't silently fail later.
+ * saved employee has an invalid bank account. The save itself succeeds
+ * (HTTP 200); this dialog forces the admin/partner to acknowledge the
+ * problem so payments don't silently fail later.
  *
  * Unlike a toast (which auto-dismisses and is easily missed), this is a
- * centered modal that requires an explicit "Đã hiểu" click.
+ * centered modal that requires an explicit close action.
  */
 
 interface BankAccountWarning {
-  employeeName?: string;
+  accountName?: string;
   reason: string;
 }
 
@@ -33,6 +34,9 @@ const BankAccountWarningContext = createContext<BankAccountWarningContextValue |
 export function BankAccountWarningProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [warning, setWarning] = useState<BankAccountWarning | null>(null);
+  const nameMismatch = warning
+    ? getBankAccountNameMismatch(warning.reason, warning.accountName)
+    : null;
 
   const showBankAccountWarning = useCallback((w: BankAccountWarning) => {
     setWarning(w);
@@ -43,35 +47,67 @@ export function BankAccountWarningProvider({ children }: { children: React.React
     <BankAccountWarningContext.Provider value={{ showBankAccountWarning }}>
       {children}
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader className="items-center text-center sm:text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <AlertTriangle className="h-6 w-6 text-amber-600" aria-hidden="true" />
+        <AlertDialogContent
+          className="max-w-lg border-0"
+          overlayClassName="bg-slate-950/85 backdrop-blur-sm"
+        >
+          <AlertDialogHeader className="flex-row items-start gap-3 space-y-0 pb-4 text-left sm:px-6">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-8 ring-rose-50/60">
+              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
-            <AlertDialogTitle className="text-lg font-semibold text-foreground">
-              Tài khoản ngân hàng không hợp lệ
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-muted-foreground text-center">
-              Đã lưu thông tin nhân viên
-              {warning?.employeeName ? ` (${warning.employeeName})` : ""}, nhưng
-              OnePay xác nhận tài khoản ngân hàng không hợp lệ. Bạn cần kiểm tra
-              lại để tránh lỗi khi thanh toán.
-            </AlertDialogDescription>
+            <div className="min-w-0 pt-0.5">
+              <AlertDialogTitle className="text-xl">
+                {nameMismatch
+                  ? "Tên chủ tài khoản không khớp"
+                  : "Tài khoản ngân hàng không hợp lệ"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="sr-only">
+                {nameMismatch
+                  ? "So sánh tên đã nhập với tên do ngân hàng cung cấp."
+                  : warning?.reason ?? "Thông tin tài khoản cần được kiểm tra lại."}
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
 
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-xs font-medium text-amber-900">Lý do</p>
-            <p className="mt-1 text-sm text-amber-800">
-              {warning?.reason ?? "Không xác định"}
-            </p>
-          </div>
+          {nameMismatch ? (
+            <div className="grid gap-3 border-y border-border bg-muted/35 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6">
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700">
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  Tên đã nhập
+                </div>
+                <p className="break-words text-base font-semibold text-foreground">
+                  {nameMismatch.enteredName}
+                </p>
+              </div>
 
-          <div className="mt-5 flex justify-center">
+              <ArrowRight
+                className="h-5 w-5 rotate-90 text-muted-foreground sm:rotate-0"
+                aria-hidden="true"
+              />
+
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                  Ngân hàng ghi
+                </div>
+                <p className="break-words text-base font-semibold text-foreground">
+                  {nameMismatch.bankName}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="border-y border-border bg-muted/35 px-5 py-4 text-sm font-medium text-foreground sm:px-6">
+              {warning?.reason ?? "Thông tin tài khoản cần được kiểm tra lại."}
+            </p>
+          )}
+
+          <div className="px-5 py-4 sm:px-6">
             <AlertDialogAction
-              className="min-w-[120px]"
+              className="w-full"
               onClick={() => setOpen(false)}
             >
-              Đã hiểu
+              Đóng
             </AlertDialogAction>
           </div>
         </AlertDialogContent>
