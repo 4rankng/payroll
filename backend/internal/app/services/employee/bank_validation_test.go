@@ -2,8 +2,12 @@ package employee
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/disbursement"
@@ -71,7 +75,84 @@ func (s *stubBankRepo) GetByID(_ context.Context, id uint) (*domain.Bank, error)
 	return s.byID[id], nil
 }
 
+// stubCache is a minimal in-memory CacheServiceUseCase for dedup tests.
+// Embeds the interface so only Get/Set are exercised; the rest no-op.
+// stubCache is a minimal in-memory CacheServiceUseCase for dedup tests.
+// Goroutine-safe (sync.Mutex) so it can back concurrent dedup tests under
+// -race. Embeds the interface so only Get/Set are exercised.
+type stubCache struct {
+	domain.CacheServiceUseCase
+	mu         sync.Mutex
+	store      map[string]string // raw JSON payloads
+	getErr     error
+	setErr     error
+	setCallCnt int
+}
+
+func newStubCache() *stubCache {
+	return &stubCache{store: map[string]string{}}
+}
+
+func (s *stubCache) Get(_ context.Context, key string, dest interface{}) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.getErr != nil {
+		return s.getErr
+	}
+	raw, ok := s.store[key]
+	if !ok {
+		return fmt.Errorf("not found")
+	}
+	return json.Unmarshal([]byte(raw), dest)
+}
+
+func (s *stubCache) Set(_ context.Context, key string, value interface{}, _ time.Duration) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.setCallCnt++
+	if s.setErr != nil {
+		return s.setErr
+	}
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	s.store[key] = string(payload)
+	return nil
+}
+
+// setCallCount exposes the write counter under the lock for assertions.
+func (s *stubCache) setCallCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.setCallCnt
+}
+
+// resetSetCallCount zeroes the write counter under the lock.
+func (s *stubCache) resetSetCallCount() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.setCallCnt = 0
+}
+
+// seed stores a ValidationResult under the dedup key for the given bank
+// info, mirroring what Validate's writeCachedResult would produce. Routes
+// through Set so the JSON encoding matches the read path exactly.
+func (s *stubCache) seed(swiftCode, accountNo, accountName string, r ValidationResult) {
+	_ = s.Set(context.Background(), cacheKey(swiftCode, accountNo, accountName), r, 0)
+}
+
+// hasEntry reports whether a cached verdict exists for the bank info.
+func (s *stubCache) hasEntry(swiftCode, accountNo, accountName string) bool {
+	_, ok := s.store[cacheKey(swiftCode, accountNo, accountName)]
+	return ok
+}
+
 func newTestValidator(p infrastructure.DisbursementProvider, bank *domain.Bank, bankErr error) *BankAccountValidator {
+	return newTestValidatorWithCache(p, bank, bankErr, nil)
+}
+
+func newTestValidatorWithCache(p infrastructure.DisbursementProvider, bank *domain.Bank, bankErr error, cache domain.CacheServiceUseCase) *BankAccountValidator {
 	reg := disbursement.NewRegistry()
 	if p != nil {
 		reg.Register(p)
@@ -81,7 +162,7 @@ func newTestValidator(p infrastructure.DisbursementProvider, bank *domain.Bank, 
 		repo.byID = map[uint]*domain.Bank{bank.ID: bank}
 	}
 	repo.err = bankErr
-	return NewBankAccountValidator(reg, repo, nil)
+	return NewBankAccountValidator(reg, repo, cache, nil)
 }
 
 func uintPtr(u uint) *uint { return &u }
@@ -231,7 +312,7 @@ func TestValidate_ProviderWithoutAccountVerifier_DegradesToValid(t *testing.T) {
 	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
 	reg := disbursement.NewRegistry(&noVerifierProvider{name: "9pay-noop"})
 	repo := &stubBankRepo{byID: map[uint]*domain.Bank{1: bank}}
-	v := NewBankAccountValidator(reg, repo, nil)
+	v := NewBankAccountValidator(reg, repo, nil, nil)
 
 	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
 	assert.Equal(t, domain.BankAccountStatusValid, r.Status)
@@ -446,4 +527,168 @@ func TestHasBankColumns(t *testing.T) {
 	assert.True(t, hasBankColumns(map[string]any{"bank_id": uint(1)}))
 	assert.True(t, hasBankColumns(map[string]any{"bank_account_number": "x"}))
 	assert.True(t, hasBankColumns(map[string]any{"bank_account_name": "x"}))
+}
+
+// --- Dedup cache ------------------------------------------------------------
+//
+// The next six tests cover the Redis-backed dedup layer: identical bank
+// info (swift code + account number + holder name) checked within the TTL
+// must reuse the cached verdict and skip the OnePay call. Different bank
+// info must NOT collide. Cache failures fall through to OnePay.
+
+func TestValidate_CacheHit_SkipsOnePayCall(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+	// Seed a cached "invalid" verdict for the exact bank info we'll check.
+	cachedReason := "Tên chủ tài khoản không khớp"
+	cache.seed("ICBVVNVX", "123456789", "Nguyen Van A", ValidationResult{
+		Status: domain.BankAccountStatusInvalid, Reason: &cachedReason,
+	})
+	// Reset the Set counter so the assertion below measures only writes
+	// performed by Validate (not the seed).
+	cache.resetSetCallCount()
+
+	// Provider's checkFunc must never run on a cache hit.
+	p := &verifierProvider{name: "onepay", checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		t.Fatal("CheckAccount must not be called on a cache hit")
+		return nil, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.Equal(t, domain.BankAccountStatusInvalid, r.Status)
+	assert.NotNil(t, r.Reason)
+	assert.Equal(t, cachedReason, *r.Reason)
+	assert.Equal(t, 0, cache.setCallCount(), "cache hit must not trigger a re-write")
+}
+
+func TestValidate_CacheMiss_CallsOnePayAndStoresResult(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache() // empty → miss
+
+	callCount := 0
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, _ infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		callCount++
+		return &infrastructure.AccountCheckResult{Valid: true}, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.Equal(t, domain.BankAccountStatusValid, r.Status)
+	assert.Equal(t, 1, callCount, "cache miss must call OnePay exactly once")
+	assert.True(t, cache.hasEntry("ICBVVNVX", "123456789", "Nguyen Van A"),
+		"verdict must be stored in the cache for future dedup")
+}
+
+func TestValidate_SecondCallHitsCache_NoSecondOnePayCall(t *testing.T) {
+	// The end-to-end dedup story: two Validate calls with identical bank
+	// info must result in exactly ONE OnePay call.
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+
+	callCount := 0
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, _ infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		callCount++
+		return &infrastructure.AccountCheckResult{Valid: true}, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	id := bank.ID
+	_ = v.Validate(context.Background(), &id, "123456789", "Nguyen Van A")
+	_ = v.Validate(context.Background(), &id, "123456789", "Nguyen Van A")
+	_ = v.Validate(context.Background(), &id, "123456789", "Nguyen Van A")
+
+	assert.Equal(t, 1, callCount, "three identical checks → one OnePay call (dedup)")
+}
+
+func TestValidate_DifferentAccountInfo_DifferentCacheKeys(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+	// Seed a verdict for (acct=1, name=X).
+	cache.seed("ICBVVNVX", "1", "Nguyen Van A", ValidationResult{Status: domain.BankAccountStatusValid})
+
+	// Different name → different key → must call OnePay.
+	called := false
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, req infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		called = true
+		assert.Equal(t, "Tran Thi B", req.AccountName, "must reach OnePay with the new name")
+		return &infrastructure.AccountCheckResult{Valid: true}, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "1", "Tran Thi B")
+	assert.True(t, called, "different holder name must miss the cache and call OnePay")
+	assert.Equal(t, domain.BankAccountStatusValid, r.Status)
+}
+
+func TestValidate_CacheGetError_FailsOpenToOnePay(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+	cache.getErr = errors.New("redis down")
+
+	called := false
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, _ infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		called = true
+		return &infrastructure.AccountCheckResult{Valid: true}, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.True(t, called, "Redis Get error must fall through to OnePay (fail-open dedup)")
+	assert.Equal(t, domain.BankAccountStatusValid, r.Status)
+}
+
+func TestValidate_CacheSetError_IgnoredNotBlocking(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+	cache.setErr = errors.New("redis write failure")
+
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, _ infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		return &infrastructure.AccountCheckResult{Valid: true}, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	// Must NOT error — Set failure is swallowed, the OnePay verdict still returns.
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.Equal(t, domain.BankAccountStatusValid, r.Status)
+}
+
+func TestValidate_SwiftMissing_NotCached(t *testing.T) {
+	// The swift-missing config error returns early BEFORE the cache layer,
+	// so it must neither read from nor write to the cache. This matters
+	// because caching it would mask an admin fix to the bank record within
+	// the TTL window.
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: ""}
+	cache := newStubCache()
+
+	p := &verifierProvider{name: "onepay", checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		t.Fatal("CheckAccount must not run when swift code is missing")
+		return nil, nil
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.Equal(t, domain.BankAccountStatusInvalid, r.Status)
+	assert.Equal(t, 0, cache.setCallCount(), "swift-missing early return must not touch the cache")
+}
+
+// TestValidate_UnverifiedNotCached locks in the design decision that a
+// provider outage/timeout verdict is NOT cached. A transient OnePay blip
+// cached for 15 min would leave accounts silently unvalidated long after
+// recovery — defeating the fail-open design. The 2 TPS accountLimiter
+// already bounds re-hammering during a real outage.
+func TestValidate_UnverifiedNotCached(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	cache := newStubCache()
+
+	p := &verifierProvider{name: "onepay", checkFunc: func(_ context.Context, _ infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+		return nil, errors.New("onepay 503")
+	}}
+	v := newTestValidatorWithCache(p, bank, nil, cache)
+
+	r := v.Validate(context.Background(), &bank.ID, "123456789", "Nguyen Van A")
+	assert.Equal(t, domain.BankAccountStatusUnverified, r.Status)
+	assert.False(t, cache.hasEntry("ICBVVNVX", "123456789", "Nguyen Van A"),
+		"unverified verdict must NOT be cached so recovery re-validates immediately")
+	assert.Equal(t, 0, cache.setCallCount(), "unverified must not trigger a cache write")
 }

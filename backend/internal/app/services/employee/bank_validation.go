@@ -2,8 +2,10 @@ package employee
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -26,6 +28,20 @@ const bankValidationTimeout = 5 * time.Second
 // used by manual_disbursement_handler.CheckAccount ("0").
 const accountTypeBankAccount = "0"
 
+// bankValidationCacheTTL bounds how long a OnePay verdict is reused to
+// deduplicate calls for the same bank info within and across import
+// jobs. 15 min covers within-chunk duplicates (rows processed seconds
+// apart) and the re-upload race window (user re-uploads while a prior
+// job is still running). Note: very large imports (>~2000 fully-distinct
+// rows at 2 TPS) exceed this window, so cross-row duplicates processed
+// >15 min apart will miss the cache and re-call OnePay — acceptable,
+// since dedup is an optimization and the verdict is still correct.
+const bankValidationCacheTTL = 15 * time.Minute
+
+// bankValidationCacheKeyPrefix namespaces the dedup keys in Redis so
+// they don't collide with other consumers of the shared cache.
+const bankValidationCacheKeyPrefix = "bankval"
+
 // BankAccountValidator is the single DRY chokepoint that turns a set of
 // employee bank fields into a persisted validation outcome by calling
 // the active disbursement provider's AccountVerifier (OnePay today).
@@ -35,24 +51,43 @@ const accountTypeBankAccount = "0"
 // write paths (manual create, manual update, XLSX import, BCC import via
 // UpdateBankInfo) share identical semantics without re-implementing the
 // provider-resolution / error-mapping logic.
+//
+// The optional cache deduplicates OnePay calls by bank info (swift code
+// + account number + account holder name): when the same bank info is
+// checked multiple times within bankValidationCacheTTL — across rows in
+// a single import, or across overlapping import jobs — the cached
+// verdict is reused and OnePay is not called again. A nil cache disables
+// dedup (used in tests).
 type BankAccountValidator struct {
 	registry *disbursement.Registry
 	bankRepo domain.BankRepository
+	cache    domain.CacheServiceUseCase // nil = dedup disabled
 	logger   *slog.Logger
 }
 
 // NewBankAccountValidator constructs a validator. registry may be nil in
 // environments without a configured provider; Validate degrades to
-// Status=valid in that case.
-func NewBankAccountValidator(registry *disbursement.Registry, bankRepo domain.BankRepository, logger *slog.Logger) *BankAccountValidator {
+// Status=valid in that case. cache may be nil to disable dedup.
+func NewBankAccountValidator(registry *disbursement.Registry, bankRepo domain.BankRepository, cache domain.CacheServiceUseCase, logger *slog.Logger) *BankAccountValidator {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	return &BankAccountValidator{
 		registry: registry,
 		bankRepo: bankRepo,
+		cache:    cache,
 		logger:   logger.With("component", "BankAccountValidator"),
 	}
+}
+
+// cacheKey returns a deterministic Redis key from the three fields that
+// uniquely define a OnePay account check: swift code, account number,
+// and account holder name. Same inputs MUST return the same verdict, so
+// they key the cache together. SHA-256 keeps the key compact and avoids
+// leaking raw account numbers in the Redis keyspace.
+func cacheKey(swiftCode, accountNo, accountName string) string {
+	h := sha256.Sum256([]byte(strings.Join([]string{swiftCode, accountNo, accountName}, "|")))
+	return fmt.Sprintf("%s:%x", bankValidationCacheKeyPrefix, h[:16])
 }
 
 // ValidationResult is the outcome of validating one account.
@@ -111,6 +146,19 @@ func (v *BankAccountValidator) Validate(ctx context.Context, bankID *uint, accou
 		return ValidationResult{Status: domain.BankAccountStatusInvalid, Reason: &reason}
 	}
 
+	// Dedup: within the TTL window, reuse the cached verdict for the same
+	// bank info. This collapses both within-import duplicates (same person
+	// on multiple rows) and across-job duplicates (user re-uploads the same
+	// Excel before the first job finishes) into a single OnePay call. Cache
+	// failures (Redis down, decode error) fall through to OnePay — dedup is
+	// an optimization, never a blocker.
+	key := cacheKey(bank.SwiftCode, accountNo, accountName)
+	if v.cache != nil {
+		if cached, ok := readCachedResult(ctx, v.cache, key); ok {
+			return cached
+		}
+	}
+
 	provider, err := v.registry.Active(ctx)
 	if err != nil {
 		v.logger.Warn("no active disbursement provider; skipping account validation",
@@ -136,19 +184,63 @@ func (v *BankAccountValidator) Validate(ctx context.Context, bankID *uint, accou
 		AccountName: accountName,
 		AccountType: accountTypeBankAccount,
 	})
-	if err != nil {
+
+	// Map the provider outcome to a ValidationResult (single point so the
+	// cache-write below covers every branch).
+	var r ValidationResult
+	switch {
+	case err != nil:
 		// Network / 5xx / timeout → fail-open. Do NOT mark invalid: we
 		// don't know the account is bad, only that we couldn't check.
 		v.logger.Warn("account validation call failed; marking unverified",
 			"bank_id", *bankID, "account_no", accountNo, "error", err)
-		return ValidationResult{Status: domain.BankAccountStatusUnverified}
+		r = ValidationResult{Status: domain.BankAccountStatusUnverified}
+	case res.Valid:
+		r = ValidationResult{Status: domain.BankAccountStatusValid}
+	default:
+		r = ValidationResult{Status: domain.BankAccountStatusInvalid, Reason: translateInvalidReason(res)}
 	}
 
-	if res.Valid {
-		return ValidationResult{Status: domain.BankAccountStatusValid}
+	// Best-effort cache of the OnePay outcome so the next check of the
+	// same bank info (within TTL) skips OnePay entirely. Errors are
+	// ignored: a flaky Redis must not break the employee write.
+	//
+	// Only cache provider *answers* (valid / invalid). Do NOT cache
+	// `unverified` (outage/timeout): a transient OnePay blip cached for 15
+	// min would leave accounts silently unvalidated for up to 15 min after
+	// OnePay recovers — defeating the fail-open design. The 2 TPS
+	// accountLimiter already bounds how hard we hammer a down provider on
+	// immediate retries, so skipping the unverified cache costs nothing in
+	// outage protection.
+	if v.cache != nil && r.Status != domain.BankAccountStatusUnverified {
+		writeCachedResult(ctx, v.cache, key, r)
 	}
+	return r
+}
 
-	return ValidationResult{Status: domain.BankAccountStatusInvalid, Reason: translateInvalidReason(res)}
+// readCachedResult fetches a ValidationResult from the cache. Returns
+// (zero, false) on miss or any error (decode failure, Redis down) so the
+// caller falls through to a fresh OnePay call. The cache abstraction
+// (CacheServiceUseCase.Get) JSON-unmarshals the stored payload directly
+// into dest, so we hand it a pointer to the struct.
+func readCachedResult(ctx context.Context, c domain.CacheServiceUseCase, key string) (ValidationResult, bool) {
+	var r ValidationResult
+	if err := c.Get(ctx, key, &r); err != nil {
+		return ValidationResult{}, false
+	}
+	// Defensive: an empty Status would corrupt the entity. Treat as miss.
+	if r.Status == "" {
+		return ValidationResult{}, false
+	}
+	return r, true
+}
+
+// writeCachedResult stores a ValidationResult under key with the standard
+// TTL. Errors are swallowed — dedup is best-effort. The cache abstraction
+// (CacheServiceUseCase.Set) JSON-marshals the value itself, so we hand it
+// the struct directly (double-encoding would corrupt readCachedResult).
+func writeCachedResult(ctx context.Context, c domain.CacheServiceUseCase, key string, r ValidationResult) {
+	_ = c.Set(ctx, key, r, bankValidationCacheTTL)
 }
 
 // translateInvalidReason maps a provider AccountCheckResult to a
