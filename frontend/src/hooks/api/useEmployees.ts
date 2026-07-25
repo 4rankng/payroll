@@ -36,6 +36,7 @@ import {
 import { useBankAccountWarning } from "@/contexts/BankAccountWarningContext";
 import { invalidateCache } from "@/lib/cache/invalidationService";
 import { authManager } from "@/lib/auth";
+import { getRejectedBankAccountWarning } from "@/utils/bank-account-warning";
 
 // Get employees summary
 export const useEmployeesSummary = () => {
@@ -240,14 +241,6 @@ export const useCreateEmployee = () => {
           showSuccessNotification(response.message);
         }
 
-        // If account validation flagged the new employee's bank details,
-        // show a modal dialog requiring acknowledgement.
-        if (newEmployee.bank_account_status === 'invalid') {
-          showBankAccountWarning({
-            accountName: newEmployee.bank_account_name,
-            reason: newEmployee.bank_account_invalid_reason ?? 'Thông tin tài khoản không hợp lệ',
-          });
-        }
       } catch (error) {
         console.error("Error in onSuccess handler:", error);
 
@@ -257,7 +250,17 @@ export const useCreateEmployee = () => {
         // No fallback message - only show notification if response.message exists
       }
     },
-    // Error handling is now done globally in React Query
+    onError: (error, data) => {
+      const warning = getRejectedBankAccountWarning(
+        error,
+        data.bank_account_name,
+      );
+      if (warning) {
+        showBankAccountWarning(warning);
+        return;
+      }
+      showErrorNotification(error);
+    },
   });
 };
 
@@ -304,20 +307,22 @@ export const useUpdateEmployee = () => {
         showSuccessNotification(response.message);
       }
 
-      // If account validation flagged the bank details, show a modal dialog
-      // requiring acknowledgement. The save still succeeded (decision:
-      // allow + flag), but the admin must know payments will fail until
-      // the account is corrected.
-      if (employeeData.bank_account_status === 'invalid') {
-        showBankAccountWarning({
-          accountName: employeeData.bank_account_name,
-          reason: employeeData.bank_account_invalid_reason ?? 'Thông tin tài khoản không hợp lệ',
-        });
-      }
-
       return employeeData;
     },
-    // Error handling is now done globally in React Query
+    onError: (error, { id, data }) => {
+      const currentEmployee = queryClient.getQueryData<Employee>(
+        QueryKeys.employees.detail(id),
+      );
+      const warning = getRejectedBankAccountWarning(
+        error,
+        data.bank_account_name ?? currentEmployee?.bank_account_name,
+      );
+      if (warning) {
+        showBankAccountWarning(warning);
+        return;
+      }
+      showErrorNotification(error);
+    },
   });
 };
 

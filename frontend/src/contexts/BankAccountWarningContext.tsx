@@ -8,7 +8,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getBankAccountNameMismatch } from "@/utils/bank-account-warning";
+import {
+  getBankAccountNameMismatch,
+  getBankAccountWarningTitle,
+  type BankAccountWarning,
+} from "@/utils/bank-account-warning";
 
 /**
  * BankAccountWarningContext surfaces a click-to-dismiss modal dialog when a
@@ -19,11 +23,6 @@ import { getBankAccountNameMismatch } from "@/utils/bank-account-warning";
  * Unlike a toast (which auto-dismisses and is easily missed), this is a
  * centered modal that requires an explicit close action.
  */
-
-interface BankAccountWarning {
-  accountName?: string;
-  reason: string;
-}
 
 interface BankAccountWarningContextValue {
   showBankAccountWarning: (warning: BankAccountWarning) => void;
@@ -37,6 +36,9 @@ export function BankAccountWarningProvider({ children }: { children: React.React
   const nameMismatch = warning
     ? getBankAccountNameMismatch(warning.reason, warning.accountName)
     : null;
+  const warningTitle = warning
+    ? getBankAccountWarningTitle(warning.reason)
+    : "Tài khoản ngân hàng cần kiểm tra";
 
   const showBankAccountWarning = useCallback((w: BankAccountWarning) => {
     setWarning(w);
@@ -57,19 +59,17 @@ export function BankAccountWarningProvider({ children }: { children: React.React
             </div>
             <div className="min-w-0 pt-0.5">
               <AlertDialogTitle className="text-xl">
-                {nameMismatch
-                  ? "Tên chủ tài khoản không khớp"
-                  : "Tài khoản ngân hàng không hợp lệ"}
+                {warningTitle}
               </AlertDialogTitle>
               <AlertDialogDescription className="sr-only">
                 {nameMismatch
                   ? "So sánh tên đã nhập với tên do ngân hàng cung cấp."
-                  : warning?.reason ?? "Thông tin tài khoản cần được kiểm tra lại."}
+                  : "Vui lòng kiểm tra và cập nhật thông tin tài khoản."}
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
 
-          {nameMismatch ? (
+          {nameMismatch && (
             <div className="grid gap-3 border-y border-border bg-muted/35 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6">
               <div className="min-w-0">
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700">
@@ -96,13 +96,9 @@ export function BankAccountWarningProvider({ children }: { children: React.React
                 </p>
               </div>
             </div>
-          ) : (
-            <p className="border-y border-border bg-muted/35 px-5 py-4 text-sm font-medium text-foreground sm:px-6">
-              {warning?.reason ?? "Thông tin tài khoản cần được kiểm tra lại."}
-            </p>
           )}
 
-          <div className="px-5 py-4 sm:px-6">
+          <div className="border-t border-border px-5 py-4 sm:px-6">
             <AlertDialogAction
               className="w-full"
               onClick={() => setOpen(false)}

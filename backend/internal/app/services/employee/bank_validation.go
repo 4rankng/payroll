@@ -42,6 +42,8 @@ const bankValidationCacheTTL = 15 * time.Minute
 // they don't collide with other consumers of the shared cache.
 const bankValidationCacheKeyPrefix = "bankval"
 
+const bankAccountInvalidErrorCode = "BANK_ACCOUNT_INVALID"
+
 // BankAccountValidator is the single DRY chokepoint that turns a set of
 // employee bank fields into a persisted validation outcome by calling
 // the active disbursement provider's AccountVerifier (OnePay today).
@@ -255,9 +257,6 @@ func translateInvalidReason(res *infrastructure.AccountCheckResult) *string {
 		return &msg
 	default:
 		msg := "Số tài khoản không hợp lệ"
-		if res.RawMessage != "" {
-			msg = fmt.Sprintf("%s: %s", msg, res.RawMessage)
-		}
 		return &msg
 	}
 }
@@ -278,6 +277,24 @@ func applyBankAccountValidation(ctx context.Context, v *BankAccountValidator, e 
 	e.BankAccountInvalidReason = r.Reason
 	now := clock.Now()
 	e.BankAccountValidatedAt = &now
+}
+
+// validateManualBankAccount rejects a confirmed-invalid account before a
+// single create or update reaches persistence. Provider outages remain
+// fail-open as "unverified"; batch imports keep their separate allow-and-flag
+// behavior through applyBankAccountValidation.
+func validateManualBankAccount(ctx context.Context, v *BankAccountValidator, e *domain.Employee) error {
+	applyBankAccountValidation(ctx, v, e)
+	if e.BankAccountStatus != domain.BankAccountStatusInvalid {
+		return nil
+	}
+
+	reason := "Tài khoản ngân hàng cần kiểm tra"
+	if e.BankAccountInvalidReason != nil && *e.BankAccountInvalidReason != "" {
+		reason = *e.BankAccountInvalidReason
+	}
+
+	return domain.NewValidationErrorWithCode(bankAccountInvalidErrorCode, reason)
 }
 
 // bankFieldsChanged reports whether any of the three banking fields

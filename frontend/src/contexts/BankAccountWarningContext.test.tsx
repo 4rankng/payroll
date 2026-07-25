@@ -24,6 +24,23 @@ function NameMismatchTrigger() {
   );
 }
 
+function InvalidAccountTrigger() {
+  const { showBankAccountWarning } = useBankAccountWarning();
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        showBankAccountWarning({
+          reason: "Số tài khoản không hợp lệ: Invalid account info",
+        })
+      }
+    >
+      Mở cảnh báo số tài khoản
+    </button>
+  );
+}
+
 describe("BankAccountWarningProvider", () => {
   it("shows a concise name comparison without naming the payment provider", () => {
     render(
@@ -45,5 +62,28 @@ describe("BankAccountWarningProvider", () => {
     expect(screen.getByText("PHAM THI THUY HANG")).toBeInTheDocument();
     expect(screen.queryByText(/OnePay/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Đã lưu thông tin nhân viên/i)).not.toBeInTheDocument();
+  });
+
+  it("shows one Vietnamese message without exposing provider diagnostics", () => {
+    render(
+      <BankAccountWarningProvider>
+        <InvalidAccountTrigger />
+      </BankAccountWarningProvider>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mở cảnh báo số tài khoản" }),
+    );
+
+    expect(
+      screen.getByRole("alertdialog", {
+        name: "Số tài khoản không hợp lệ",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Số tài khoản không hợp lệ")).toHaveLength(1);
+    expect(screen.queryByText(/Invalid account info/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Tài khoản ngân hàng không hợp lệ"),
+    ).not.toBeInTheDocument();
   });
 });

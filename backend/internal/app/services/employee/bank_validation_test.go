@@ -15,6 +15,7 @@ import (
 	infrastructure "api-server/internal/domain/ports/infrastructure"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // --- test doubles ------------------------------------------------------------
@@ -264,8 +265,36 @@ func TestValidate_AccountNotFound_InvalidGenericReason(t *testing.T) {
 	if r.Reason == nil {
 		t.Fatal("expected a reason")
 	}
-	assert.Contains(t, *r.Reason, "không hợp lệ")
-	assert.Contains(t, *r.Reason, "no such account")
+	assert.Equal(t, "Số tài khoản không hợp lệ", *r.Reason)
+	assert.NotContains(t, *r.Reason, "no such account")
+}
+
+func TestValidateManualBankAccount_ConfirmedInvalidReturnsTypedError(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	p := &verifierProvider{
+		name: "onepay",
+		checkFunc: func(ctx context.Context, req infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+			return &infrastructure.AccountCheckResult{
+				Valid:        false,
+				RawErrorCode: "account_not_found",
+				RawMessage:   "Invalid account info",
+			}, nil
+		},
+	}
+	v := newTestValidator(p, bank, nil)
+	employee := &domain.Employee{
+		BankID:            &bank.ID,
+		BankAccountNumber: "000000000",
+		BankAccountName:   "Nguyen Van A",
+	}
+
+	err := validateManualBankAccount(context.Background(), v, employee)
+
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
+	assert.Equal(t, "Số tài khoản không hợp lệ", domainErr.Message)
+	assert.Equal(t, domain.BankAccountStatusInvalid, employee.BankAccountStatus)
 }
 
 func TestValidate_ProviderError_UnverifiedFailOpen(t *testing.T) {
@@ -374,11 +403,12 @@ func TestRowBankFieldsPresent(t *testing.T) {
 // in-memory map. Embeds the interface so we only override what we use.
 type stubEmployeeRepo struct {
 	domain.EmployeeRepository
-	byID      map[uint]*domain.Employee
-	getErr    error
-	updatedID uint
-	cols      map[string]any
-	updateErr error
+	byID        map[uint]*domain.Employee
+	getErr      error
+	updatedID   uint
+	cols        map[string]any
+	updateErr   error
+	updateCalls int
 }
 
 func (s *stubEmployeeRepo) GetByID(_ context.Context, id uint) (*domain.Employee, error) {
@@ -397,6 +427,21 @@ func (s *stubEmployeeRepo) UpdateColumns(_ context.Context, id uint, cols map[st
 	return nil
 }
 
+func (s *stubEmployeeRepo) Update(_ context.Context, _ *domain.Employee) error {
+	s.updateCalls++
+	return s.updateErr
+}
+
+type directTransactionManager struct{}
+
+func (directTransactionManager) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+func (directTransactionManager) WithTransactionResult(ctx context.Context, fn func(context.Context) (interface{}, error)) (interface{}, error) {
+	return fn(ctx)
+}
+
 // newEmployeeServiceWithValidator builds an EmployeeService whose only wired
 // dependencies are the repo + validator, enough to drive UpdateBankInfo.
 func newEmployeeServiceWithValidator(repo domain.EmployeeRepository, v *BankAccountValidator) *EmployeeService {
@@ -404,6 +449,55 @@ func newEmployeeServiceWithValidator(repo domain.EmployeeRepository, v *BankAcco
 		EmployeeRepo:         repo,
 		bankAccountValidator: v,
 	}
+}
+
+func TestUpdateEmployee_InvalidManualBankEditDoesNotPersist(t *testing.T) {
+	bank := &domain.Bank{ID: 5, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	id := uint(1)
+	original := &domain.Employee{
+		ID:                id,
+		Fullname:          "Nguyen Van A",
+		CCCD:              "123456789012",
+		BankID:            &bank.ID,
+		BankAccountNumber: "VALID123",
+		BankAccountName:   "Nguyen Van A",
+		BankAccountStatus: domain.BankAccountStatusValid,
+	}
+	repo := &stubEmployeeRepo{byID: map[uint]*domain.Employee{id: original}}
+	provider := &verifierProvider{
+		name: "onepay",
+		checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+			return &infrastructure.AccountCheckResult{
+				Valid:        false,
+				AccountName:  "NGUYEN VAN A",
+				RawErrorCode: "name_mismatch",
+			}, nil
+		},
+	}
+	validator := newTestValidator(provider, bank, nil)
+	service := &EmployeeService{
+		EmployeeRepo:         repo,
+		BankRepo:             &stubBankRepo{byID: map[uint]*domain.Bank{bank.ID: bank}},
+		TransactionManager:   directTransactionManager{},
+		bankAccountValidator: validator,
+	}
+	edited := &domain.Employee{
+		ID:                id,
+		Fullname:          original.Fullname,
+		CCCD:              original.CCCD,
+		BankID:            &bank.ID,
+		BankAccountNumber: "INVALID456",
+		BankAccountName:   "Wrong Name",
+	}
+
+	err := service.UpdateEmployee(context.Background(), edited, 99)
+
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
+	assert.Zero(t, repo.updateCalls, "invalid bank details must not reach repository persistence")
+	assert.Equal(t, "VALID123", original.BankAccountNumber)
+	assert.Equal(t, "Nguyen Van A", original.BankAccountName)
 }
 
 func TestUpdateBankInfo_NoBankColumns_SkipsValidation(t *testing.T) {

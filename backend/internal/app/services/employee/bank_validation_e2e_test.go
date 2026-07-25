@@ -16,19 +16,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestManualEdit_NameMismatch_EndToEnd proves the full chain that fires
-// when an admin manually edits an employee's bank account holder name to a
-// WRONG value against a (mocked) OnePay that returns a different holder.
-//
-// This is the scenario the user tested in prod and saw no warning for. The
-// test pins down what the BACKEND returns so we can confirm the frontend
-// warning condition (bank_account_status === "invalid") is met.
+// TestManualEdit_NameMismatch_EndToEnd proves that a manual edit with a wrong
+// account holder name is rejected before persistence.
 //
 // Chain exercised:
-//   mock OnePay /customers (returns holder_name="PHAM THI THUY HANG")
-//   → onepay.Provider.CheckAccount (detects mismatch, returns Valid=false)
-//   → BankAccountValidator.Validate (maps to status=invalid + VN reason)
-//   → applyBankAccountValidation (writes the 3 fields on the entity)
+//
+//	mock OnePay /customers (returns holder_name="PHAM THI THUY HANG")
+//	→ onepay.Provider.CheckAccount (detects mismatch, returns Valid=false)
+//	→ BankAccountValidator.Validate (maps to status=invalid + VN reason)
+//	→ validateManualBankAccount (returns a typed validation error)
 //
 // The mock returns a CONFLICTING holder name (not empty) so the provider's
 // name-matching branch fires — unlike the local sandbox which returns "" and
@@ -75,47 +71,20 @@ func TestManualEdit_NameMismatch_EndToEnd(t *testing.T) {
 
 	// Simulate the manual edit: admin sets a WRONG holder name.
 	employee := &domain.Employee{
-		ID:                  1175,
-		BankID:              &bank.ID,
-		BankAccountNumber:   "0984218060",
-		BankAccountName:     "WRONG NAME HERE", // ← intentionally mismatched
-		BankAccountStatus:   domain.BankAccountStatusValid,
+		ID:                1175,
+		BankID:            &bank.ID,
+		BankAccountNumber: "0984218060",
+		BankAccountName:   "WRONG NAME HERE", // ← intentionally mismatched
+		BankAccountStatus: domain.BankAccountStatusValid,
 	}
 
-	// This is exactly what the UpdateEmployee service path calls.
-	applyBankAccountValidation(context.Background(), validator, employee)
+	err = validateManualBankAccount(context.Background(), validator, employee)
 
-	// ── Assertions: what the backend persists + returns to the frontend ──
-
-	// 1. Status must be "invalid" (the frontend warning condition).
-	assert.Equal(t, domain.BankAccountStatusInvalid, employee.BankAccountStatus,
-		"mismatched name must flag the account invalid")
-
-	// 2. Reason must be present, Vietnamese, and mention the mismatch.
-	require.NotNil(t, employee.BankAccountInvalidReason, "reason must be set")
-	t.Logf("reason returned: %q", *employee.BankAccountInvalidReason)
-	assert.Contains(t, *employee.BankAccountInvalidReason, "không khớp",
-		"reason must mention the mismatch in Vietnamese")
-
-	// 3. Validated-at timestamp must be set.
-	require.NotNil(t, employee.BankAccountValidatedAt, "validated_at must be set")
-
-	// ── Simulate the JSON the frontend would receive ──
-	// (This is what buildEmployeeResponse serializes.)
-	dto := struct {
-		BankAccountStatus        string  `json:"bank_account_status"`
-		BankAccountInvalidReason *string `json:"bank_account_invalid_reason,omitempty"`
-	}{
-		BankAccountStatus:        employee.BankAccountStatus,
-		BankAccountInvalidReason: employee.BankAccountInvalidReason,
-	}
-	payload, err := json.Marshal(dto)
-	require.NoError(t, err)
-	t.Logf("frontend would receive: %s", payload)
-
-	// The frontend warning condition: bank_account_status === "invalid".
-	assert.Contains(t, string(payload), `"bank_account_status":"invalid"`,
-		"the JSON response must carry bank_account_status=invalid for the frontend warning to fire")
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
+	assert.Contains(t, domainErr.Message, "không khớp")
+	assert.Contains(t, domainErr.Message, "PHAM THI THUY HANG")
 }
 
 // TestManualEdit_NameMatches_EndToEnd is the control: when the admin enters
@@ -152,10 +121,11 @@ func TestManualEdit_NameMatches_EndToEnd(t *testing.T) {
 		BankAccountNumber: "0984218060",
 		BankAccountName:   "Pham Thi Thuy Hang",
 	}
-	applyBankAccountValidation(context.Background(), validator, employee)
+	err = validateManualBankAccount(context.Background(), validator, employee)
 
+	require.NoError(t, err)
 	assert.Equal(t, domain.BankAccountStatusValid, employee.BankAccountStatus,
-		"matching name must keep the account valid")
+		"matching name must allow the edit")
 	assert.Nil(t, employee.BankAccountInvalidReason,
 		"no reason when valid")
 }

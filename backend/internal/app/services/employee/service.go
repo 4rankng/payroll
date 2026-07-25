@@ -122,10 +122,11 @@ func (s *EmployeeService) createEmployeeCore(ctx context.Context, employee *doma
 		return nil, err
 	}
 
-	// 1b. Live OnePay account verification. Non-blocking on invalid
-	// (decision: allow + flag) — the outcome is persisted on the entity
-	// so the warning list can surface the reason to admins/partners.
-	applyBankAccountValidation(ctx, s.bankAccountValidator, employee)
+	// 1b. Live account verification. A confirmed-invalid account rejects this
+	// manual create before any user or employee data is persisted.
+	if err := validateManualBankAccount(ctx, s.bankAccountValidator, employee); err != nil {
+		return nil, err
+	}
 
 	// 2. Validate bank reference if provided (infrastructure validation)
 	if employee.BankID != nil {
@@ -226,7 +227,9 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		// bank fields actually changed, to avoid a redundant OnePay call
 		// on every unrelated profile edit.
 		if bankFieldsChanged(originalEmployee, employee) {
-			applyBankAccountValidation(txCtx, s.bankAccountValidator, employee)
+			if err := validateManualBankAccount(txCtx, s.bankAccountValidator, employee); err != nil {
+				return err
+			}
 		} else if originalEmployee != nil {
 			// Preserve the previous validation outcome on the entity so
 			// the repository Update doesn't clobber it with the zero value.

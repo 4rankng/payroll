@@ -1,5 +1,53 @@
 import { describe, expect, it } from "vitest";
-import { getBankAccountNameMismatch } from "./bank-account-warning";
+import {
+  getBankAccountNameMismatch,
+  getBankAccountWarningTitle,
+  getRejectedBankAccountWarning,
+} from "./bank-account-warning";
+
+describe("getRejectedBankAccountWarning", () => {
+  it("maps the typed save rejection to a dialog warning", () => {
+    expect(
+      getRejectedBankAccountWarning(
+        {
+          code: "BANK_ACCOUNT_INVALID",
+          message:
+            "Tên chủ tài khoản không khớp với ngân hàng (ngân hàng ghi: NGUYEN VAN AN)",
+        },
+        "Nguyễn Văn Ân",
+      ),
+    ).toEqual({
+      accountName: "Nguyễn Văn Ân",
+      reason:
+        "Tên chủ tài khoản không khớp với ngân hàng (ngân hàng ghi: NGUYEN VAN AN)",
+    });
+  });
+
+  it("leaves unrelated save errors to normal error handling", () => {
+    expect(
+      getRejectedBankAccountWarning({
+        code: "VALIDATION_ERROR",
+        message: "CCCD không hợp lệ",
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("getBankAccountWarningTitle", () => {
+  it("removes provider diagnostics from an invalid account number warning", () => {
+    expect(
+      getBankAccountWarningTitle(
+        "Số tài khoản không hợp lệ: Invalid account info",
+      ),
+    ).toBe("Số tài khoản không hợp lệ");
+  });
+
+  it("uses a safe Vietnamese title for an unknown provider reason", () => {
+    expect(getBankAccountWarningTitle("Unexpected provider response")).toBe(
+      "Tài khoản ngân hàng cần kiểm tra",
+    );
+  });
+});
 
 describe("getBankAccountNameMismatch", () => {
   it("extracts the entered and bank-reported account holder names", () => {
