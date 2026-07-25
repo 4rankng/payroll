@@ -5,6 +5,8 @@ export interface BankAccountNameMismatch {
 
 export interface BankAccountWarning {
   accountName?: string;
+  originalAccountNumber?: string;
+  attemptedAccountNumber?: string;
   reason: string;
 }
 
@@ -22,13 +24,28 @@ export function getRejectedBankAccountWarning(
     return null;
   }
 
-  const apiError = error as { code?: unknown; message?: unknown };
+  const apiError = error as {
+    code?: unknown;
+    message?: unknown;
+    details?: {
+      original_account_number?: unknown;
+      attempted_account_number?: unknown;
+    };
+  };
   if (apiError.code !== BANK_ACCOUNT_INVALID_ERROR_CODE) {
     return null;
   }
 
   return {
     accountName,
+    originalAccountNumber:
+      typeof apiError.details?.original_account_number === "string"
+        ? apiError.details.original_account_number
+        : undefined,
+    attemptedAccountNumber:
+      typeof apiError.details?.attempted_account_number === "string"
+        ? apiError.details.attempted_account_number
+        : undefined,
     reason:
       typeof apiError.message === "string" && apiError.message.trim()
         ? apiError.message

@@ -32,6 +32,8 @@ function InvalidAccountTrigger() {
       type="button"
       onClick={() =>
         showBankAccountWarning({
+          originalAccountNumber: "0123456789",
+          attemptedAccountNumber: "0987654321",
           reason: "Số tài khoản không hợp lệ: Invalid account info",
         })
       }
@@ -81,6 +83,10 @@ describe("BankAccountWarningProvider", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Số tài khoản không hợp lệ")).toHaveLength(1);
+    expect(screen.getByText("Đang lưu")).toBeInTheDocument();
+    expect(screen.getByText("0123456789")).toBeInTheDocument();
+    expect(screen.getByText("Vừa nhập")).toBeInTheDocument();
+    expect(screen.getByText("0987654321")).toBeInTheDocument();
     expect(screen.queryByText(/Invalid account info/i)).not.toBeInTheDocument();
     expect(
       screen.queryByText("Tài khoản ngân hàng không hợp lệ"),

@@ -39,6 +39,13 @@ export function BankAccountWarningProvider({ children }: { children: React.React
   const warningTitle = warning
     ? getBankAccountWarningTitle(warning.reason)
     : "Tài khoản ngân hàng cần kiểm tra";
+  const accountNumberComparison =
+    !nameMismatch && warning?.attemptedAccountNumber
+      ? {
+          original: warning.originalAccountNumber,
+          attempted: warning.attemptedAccountNumber,
+        }
+      : null;
 
   const showBankAccountWarning = useCallback((w: BankAccountWarning) => {
     setWarning(w);
@@ -69,15 +76,25 @@ export function BankAccountWarningProvider({ children }: { children: React.React
             </div>
           </AlertDialogHeader>
 
-          {nameMismatch && (
+          {(nameMismatch || accountNumberComparison) && (
             <div className="grid gap-3 border-y border-border bg-muted/35 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-4 sm:px-6">
               <div className="min-w-0">
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700">
-                  <X className="h-4 w-4" aria-hidden="true" />
-                  Tên đã nhập
+                <div
+                  className={`mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${
+                    nameMismatch ? "text-rose-700" : "text-emerald-700"
+                  }`}
+                >
+                  {nameMismatch ? (
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {nameMismatch ? "Tên đã nhập" : "Đang lưu"}
                 </div>
                 <p className="break-words text-base font-semibold text-foreground">
-                  {nameMismatch.enteredName}
+                  {nameMismatch
+                    ? nameMismatch.enteredName
+                    : accountNumberComparison?.original || "Chưa có"}
                 </p>
               </div>
 
@@ -87,12 +104,22 @@ export function BankAccountWarningProvider({ children }: { children: React.React
               />
 
               <div className="min-w-0">
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  <Check className="h-4 w-4" aria-hidden="true" />
-                  Ngân hàng ghi
+                <div
+                  className={`mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${
+                    nameMismatch ? "text-emerald-700" : "text-rose-700"
+                  }`}
+                >
+                  {nameMismatch ? (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {nameMismatch ? "Ngân hàng ghi" : "Vừa nhập"}
                 </div>
                 <p className="break-words text-base font-semibold text-foreground">
-                  {nameMismatch.bankName}
+                  {nameMismatch
+                    ? nameMismatch.bankName
+                    : accountNumberComparison?.attempted}
                 </p>
               </div>
             </div>

@@ -228,6 +228,9 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		// on every unrelated profile edit.
 		if bankFieldsChanged(originalEmployee, employee) {
 			if err := validateManualBankAccount(txCtx, s.bankAccountValidator, employee); err != nil {
+				if domainErr, ok := err.(*domain.DomainError); ok {
+					domainErr.WithContext("original_account_number", originalEmployee.BankAccountNumber)
+				}
 				return err
 			}
 		} else if originalEmployee != nil {

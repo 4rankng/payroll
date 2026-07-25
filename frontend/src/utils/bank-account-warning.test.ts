@@ -13,11 +13,17 @@ describe("getRejectedBankAccountWarning", () => {
           code: "BANK_ACCOUNT_INVALID",
           message:
             "Tên chủ tài khoản không khớp với ngân hàng (ngân hàng ghi: NGUYEN VAN AN)",
+          details: {
+            original_account_number: "0123456789",
+            attempted_account_number: "0987654321",
+          },
         },
         "Nguyễn Văn Ân",
       ),
     ).toEqual({
       accountName: "Nguyễn Văn Ân",
+      originalAccountNumber: "0123456789",
+      attemptedAccountNumber: "0987654321",
       reason:
         "Tên chủ tài khoản không khớp với ngân hàng (ngân hàng ghi: NGUYEN VAN AN)",
     });

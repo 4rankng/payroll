@@ -294,6 +294,7 @@ func TestValidateManualBankAccount_ConfirmedInvalidReturnsTypedError(t *testing.
 	require.ErrorAs(t, err, &domainErr)
 	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
 	assert.Equal(t, "Số tài khoản không hợp lệ", domainErr.Message)
+	assert.Equal(t, "000000000", domainErr.Context["attempted_account_number"])
 	assert.Equal(t, domain.BankAccountStatusInvalid, employee.BankAccountStatus)
 }
 
@@ -495,6 +496,8 @@ func TestUpdateEmployee_InvalidManualBankEditDoesNotPersist(t *testing.T) {
 	var domainErr *domain.DomainError
 	require.ErrorAs(t, err, &domainErr)
 	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
+	assert.Equal(t, "VALID123", domainErr.Context["original_account_number"])
+	assert.Equal(t, "INVALID456", domainErr.Context["attempted_account_number"])
 	assert.Zero(t, repo.updateCalls, "invalid bank details must not reach repository persistence")
 	assert.Equal(t, "VALID123", original.BankAccountNumber)
 	assert.Equal(t, "Nguyen Van A", original.BankAccountName)

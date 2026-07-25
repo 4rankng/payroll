@@ -294,7 +294,8 @@ func validateManualBankAccount(ctx context.Context, v *BankAccountValidator, e *
 		reason = *e.BankAccountInvalidReason
 	}
 
-	return domain.NewValidationErrorWithCode(bankAccountInvalidErrorCode, reason)
+	return domain.NewValidationErrorWithCode(bankAccountInvalidErrorCode, reason).
+		WithContext("attempted_account_number", e.BankAccountNumber)
 }
 
 // bankFieldsChanged reports whether any of the three banking fields

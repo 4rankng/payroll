@@ -256,7 +256,11 @@ export const useCreateEmployee = () => {
         data.bank_account_name,
       );
       if (warning) {
-        showBankAccountWarning(warning);
+        showBankAccountWarning({
+          ...warning,
+          attemptedAccountNumber:
+            warning.attemptedAccountNumber ?? data.bank_account_number,
+        });
         return;
       }
       showErrorNotification(error);
@@ -318,7 +322,16 @@ export const useUpdateEmployee = () => {
         data.bank_account_name ?? currentEmployee?.bank_account_name,
       );
       if (warning) {
-        showBankAccountWarning(warning);
+        showBankAccountWarning({
+          ...warning,
+          originalAccountNumber:
+            warning.originalAccountNumber ??
+            currentEmployee?.bank_account_number,
+          attemptedAccountNumber:
+            warning.attemptedAccountNumber ??
+            data.bank_account_number ??
+            currentEmployee?.bank_account_number,
+        });
         return;
       }
       showErrorNotification(error);
