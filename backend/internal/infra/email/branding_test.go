@@ -33,6 +33,31 @@ func TestWithPublicEmailBannerDoesNotDuplicateExistingBanner(t *testing.T) {
 	}
 }
 
+func TestWithPublicEmailBannerPreservesExistingBannerPlacement(t *testing.T) {
+	body := withPublicEmailBanner(
+		`<!doctype html><html><body><table><tr><td>`+
+			`<img src="https://tingting.vip/email-banner.jpg?v=old" alt="Old banner">`+
+			`</td></tr><tr><td><p>Nội dung</p></td></tr></table></body></html>`,
+		"",
+	)
+
+	tableIdx := strings.Index(body, "<table>")
+	bannerIdx := strings.Index(body, publicEmailBannerHTML)
+	contentIdx := strings.Index(body, "<p>Nội dung</p>")
+	if tableIdx < 0 || bannerIdx < 0 || contentIdx < 0 {
+		t.Fatalf("expected table, canonical banner, and content in normalized HTML: %q", body)
+	}
+	if tableIdx >= bannerIdx || bannerIdx >= contentIdx {
+		t.Fatalf("expected the canonical banner to remain inside its original table cell")
+	}
+	if count := strings.Count(body, publicEmailBannerURL); count != 1 {
+		t.Fatalf("expected exactly one canonical banner, got %d", count)
+	}
+	if strings.Contains(body, `<div style="max-width:640px;margin:0 auto 16px;">`) {
+		t.Fatalf("expected an existing banner not to be detached into a second layout wrapper")
+	}
+}
+
 func TestWithPublicEmailBannerReplacesDuplicateOrNonImageReferences(t *testing.T) {
 	body := withPublicEmailBanner(
 		`<img src="https://tingting.vip/email-banner.jpg?v=old"><img src='https://tingting.vip/email-banner.jpg?v=older'><a href="https://tingting.vip/email-banner.jpg">Tải banner</a><!-- tingting.vip/email-banner.jpg -->`,

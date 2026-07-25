@@ -444,6 +444,21 @@ export const showSuccessNotification = (messageOrResponse: string | unknown): vo
 };
 
 /**
+ * Shows a persistent warning toast when a saved employee has an
+ * OnePay-confirmed invalid bank account (wrong account number or holder-
+ * name mismatch). The save itself succeeded (HTTP 200); this warning
+ * tells the admin/partner the account needs fixing so payments don't
+ * fail later. Uses a long duration + warning styling so it's not
+ * dismissed unseen.
+ */
+export const showBankAccountInvalidWarning = (reason?: string | null): void => {
+  toast.warning('Tài khoản ngân hàng không hợp lệ', {
+    description: reason ?? 'OnePay xác nhận tài khoản không hợp lệ. Vui lòng kiểm tra lại số tài khoản và tên chủ tài khoản.',
+    duration: 10000,
+  });
+};
+
+/**
  * Shows notification for bulk operations with detailed results
  */
 export const showBulkOperationNotification = (result: {

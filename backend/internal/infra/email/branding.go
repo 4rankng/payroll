@@ -23,14 +23,31 @@ func withPublicEmailBanner(htmlBody, textBody string) string {
 	if body == "" {
 		return body
 	}
-	// Always supply the canonical banner exactly once. A pasted email may
-	// contain an old, duplicated, or malformed banner image; remove only those
-	// image tags before inserting the maintained public asset below.
-	body = publicEmailBannerImagePattern.ReplaceAllString(body, "")
-
 	lowerBody := strings.ToLower(body)
 	if !strings.Contains(lowerBody, "<html") && !strings.Contains(lowerBody, "<body") {
+		// Fragments are wrapped in the maintained shell, which supplies the
+		// canonical banner. Remove any pasted copies before wrapping.
+		body = publicEmailBannerImagePattern.ReplaceAllString(body, "")
 		return brandedEmailShell(body)
+	}
+
+	// Complete templates already position their banner within an email-safe
+	// table layout. Canonicalize the first banner in place and remove duplicates
+	// instead of detaching it above the table, which adds empty vertical space
+	// and can push content behind fixed controls in mobile mail clients.
+	if matches := publicEmailBannerImagePattern.FindAllStringIndex(body, -1); len(matches) > 0 {
+		var normalized strings.Builder
+		normalized.Grow(len(body) + len(publicEmailBannerHTML))
+		cursor := 0
+		for i, match := range matches {
+			normalized.WriteString(body[cursor:match[0]])
+			if i == 0 {
+				normalized.WriteString(publicEmailBannerHTML)
+			}
+			cursor = match[1]
+		}
+		normalized.WriteString(body[cursor:])
+		return normalized.String()
 	}
 
 	if bodyIdx := strings.Index(lowerBody, "<body"); bodyIdx >= 0 {

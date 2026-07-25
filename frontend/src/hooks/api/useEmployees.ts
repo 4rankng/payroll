@@ -32,6 +32,7 @@ import {
 import {
   showErrorNotification,
   showSuccessNotification,
+  showBankAccountInvalidWarning,
 } from "@/utils/error-handler";
 import { invalidateCache } from "@/lib/cache/invalidationService";
 import { authManager } from "@/lib/auth";
@@ -237,6 +238,12 @@ export const useCreateEmployee = () => {
         if (response.message) {
           showSuccessNotification(response.message);
         }
+
+        // If OnePay flagged the new employee's bank account invalid, warn
+        // the user. The employee was still created (decision: allow + flag).
+        if (newEmployee.bank_account_status === 'invalid') {
+          showBankAccountInvalidWarning(newEmployee.bank_account_invalid_reason);
+        }
       } catch (error) {
         console.error("Error in onSuccess handler:", error);
 
@@ -290,6 +297,13 @@ export const useUpdateEmployee = () => {
 
       if (response.message) {
         showSuccessNotification(response.message);
+      }
+
+      // If OnePay flagged the bank account invalid, warn the user. The
+      // save still succeeded (decision: allow + flag), but the admin
+      // needs to know the account won't receive payments until fixed.
+      if (employeeData.bank_account_status === 'invalid') {
+        showBankAccountInvalidWarning(employeeData.bank_account_invalid_reason);
       }
 
       return employeeData;
