@@ -6,6 +6,7 @@ import { AppStateProvider } from './AppStateContext';
 import { MetadataProvider } from './MetadataContext';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { BottomNavProvider } from './BottomNavContext';
+import { BankAccountWarningProvider } from './BankAccountWarningContext';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -38,9 +39,11 @@ export const AppProviders = ({ children }: AppProvidersProps) => {
           <AppStateProvider>
             <ConditionalMetadataProvider>
               <NotificationProvider>
-                <BottomNavProvider>
-                  {children}
-                </BottomNavProvider>
+                <BankAccountWarningProvider>
+                  <BottomNavProvider>
+                    {children}
+                  </BottomNavProvider>
+                </BankAccountWarningProvider>
               </NotificationProvider>
             </ConditionalMetadataProvider>
           </AppStateProvider>

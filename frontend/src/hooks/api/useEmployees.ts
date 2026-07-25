@@ -32,8 +32,8 @@ import {
 import {
   showErrorNotification,
   showSuccessNotification,
-  showBankAccountInvalidWarning,
 } from "@/utils/error-handler";
+import { useBankAccountWarning } from "@/contexts/BankAccountWarningContext";
 import { invalidateCache } from "@/lib/cache/invalidationService";
 import { authManager } from "@/lib/auth";
 
@@ -208,6 +208,7 @@ export const useEmployeeTimesheet = (
 // Create employee
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
+  const { showBankAccountWarning } = useBankAccountWarning();
 
   return useMutation({
     mutationFn: (data: CreateEmployeeData) =>
@@ -239,10 +240,13 @@ export const useCreateEmployee = () => {
           showSuccessNotification(response.message);
         }
 
-        // If OnePay flagged the new employee's bank account invalid, warn
-        // the user. The employee was still created (decision: allow + flag).
+        // If OnePay flagged the new employee's bank account invalid, show
+        // a modal dialog requiring acknowledgement.
         if (newEmployee.bank_account_status === 'invalid') {
-          showBankAccountInvalidWarning(newEmployee.bank_account_invalid_reason);
+          showBankAccountWarning({
+            employeeName: newEmployee.fullname,
+            reason: newEmployee.bank_account_invalid_reason ?? 'OnePay xác nhận tài khoản không hợp lệ',
+          });
         }
       } catch (error) {
         console.error("Error in onSuccess handler:", error);
@@ -260,6 +264,7 @@ export const useCreateEmployee = () => {
 // Update employee
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
+  const { showBankAccountWarning } = useBankAccountWarning();
 
   return useMutation({
     mutationFn: ({
@@ -299,11 +304,15 @@ export const useUpdateEmployee = () => {
         showSuccessNotification(response.message);
       }
 
-      // If OnePay flagged the bank account invalid, warn the user. The
-      // save still succeeded (decision: allow + flag), but the admin
-      // needs to know the account won't receive payments until fixed.
+      // If OnePay flagged the bank account invalid, show a modal dialog
+      // requiring acknowledgement. The save still succeeded (decision:
+      // allow + flag), but the admin must know payments will fail until
+      // the account is corrected.
       if (employeeData.bank_account_status === 'invalid') {
-        showBankAccountInvalidWarning(employeeData.bank_account_invalid_reason);
+        showBankAccountWarning({
+          employeeName: employeeData.fullname,
+          reason: employeeData.bank_account_invalid_reason ?? 'OnePay xác nhận tài khoản không hợp lệ',
+        });
       }
 
       return employeeData;

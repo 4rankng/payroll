@@ -289,7 +289,12 @@ func (s *Server) getAccountInfo(w http.ResponseWriter, r *http.Request) {
 	// every transfer. OnePay's GET /customers doesn't carry the expected name
 	// (unlike 9Pay's check-account, which echoes account_name), so empty is the
 	// permissive choice — the backend keeps the employee's own recorded name.
-	holderName := ""
+	//
+	// To test the name-mismatch warning flow locally, set
+	// MOCK_ONEPAY_HOLDER_NAME to a non-empty value (e.g. "BANK CONFIRMED NAME").
+	// The provider's CheckAccount will then compare it against the employee's
+	// recorded name and flag a mismatch when they differ.
+	holderName := os.Getenv("MOCK_ONEPAY_HOLDER_NAME")
 	writeJSON(w, http.StatusOK, map[string]any{
 		"response_code":  "00",
 		"message":        "SUCCESSFUL",
