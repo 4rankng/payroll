@@ -25,7 +25,7 @@ Page-level route components for the Admin role. Admins have full access to all f
 | `TimesheetPage/` | Timesheet entry, approval, export, import |
 | `PayrateEditPage/` | Payrate editor (flexible and matrix modes) |
 | `AdvancePaymentsPage/` | Advance payment management and approval |
-| `TransactionsPage/` | Transaction and desktop Sổ Cái history with settlement tracking |
+| `TransactionsPage/` | Transaction history and settlement tracking |
 | `WalletPage/` | Wallet balance and disbursement management |
 | `ManualDisbursementPage/` | Shared manual disbursement form/dialog components used by wallet flows |
 | `UsersPage/` | User management with role assignments |
@@ -86,7 +86,7 @@ Page-level route components for the Admin role. Admins have full access to all f
 
 | File | Description |
 |------|-------------|
-| `index.tsx` | Transaction history and desktop `/admin/ledger` page |
+| `index.tsx` | Transaction history at `/admin/transactions` |
 | `constants.ts` | Transaction page constants |
 | `utils.ts` | Transaction page utility functions |
 

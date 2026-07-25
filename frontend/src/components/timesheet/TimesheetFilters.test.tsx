@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimesheetFilters } from './TimesheetFilters';
 
 const useTimesheetContextMock = vi.hoisted(() => vi.fn());
+const useIsMobileMock = vi.hoisted(() => vi.fn(() => false));
 
 vi.mock('@/hooks/useBreakpoint', () => ({
-  useIsMobile: () => false,
+  useIsMobile: useIsMobileMock,
 }));
 
 vi.mock('@/components/timesheet/TimesheetContext', () => ({
@@ -26,6 +27,7 @@ vi.mock('@/components/timesheet/EmployeeDropdownAdapter', () => ({
 
 describe('TimesheetFilters', () => {
   beforeEach(() => {
+    useIsMobileMock.mockReturnValue(false);
     useTimesheetContextMock.mockReturnValue({
       filters: {
         selectedMonth: '2026-07',
@@ -59,5 +61,13 @@ describe('TimesheetFilters', () => {
       expect(trigger).toHaveClass('min-h-11');
       expect(trigger).toHaveClass('bg-card');
     }
+  });
+
+  it('keeps the mobile month and filter controls at least 44px tall', () => {
+    useIsMobileMock.mockReturnValue(true);
+    render(<TimesheetFilters />);
+
+    expect(screen.getByRole('combobox')).toHaveClass('h-11');
+    expect(screen.getByRole('button', { name: 'Bộ lọc' })).toHaveClass('h-11', 'w-11');
   });
 });

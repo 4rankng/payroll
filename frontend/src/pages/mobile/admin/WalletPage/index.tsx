@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2, TrendingDown } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2, TrendingDown, Upload } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import WalletTransactionsList from '@/components/wallet/WalletTransactionsList';
 import CreateManualDisbursementDialog from '@/components/wallet/CreateManualDisbursementDialog';
+import { BulkTransferBatchList } from '@/components/wallet/BulkTransferBatchList';
+import { BulkTransferUploadDialog } from '@/components/wallet/BulkTransferUploadDialog';
 import { walletService } from '@/services/api/wallet.service';
 import type { WalletBalance } from '@/types/api/wallet.types';
 import { showErrorNotification } from '@/utils/error-handler';
@@ -31,6 +33,9 @@ function BalanceFigure({ value }: { value: number | undefined }) {
 export default function WalletPageMobile() {
   const queryClient = useQueryClient();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
+  const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
+  const [selectedBulkTransferBatchId, setSelectedBulkTransferBatchId] =
+    useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const [mismatch, setMismatch] = useState<{ provider: number; local: number } | null>(null);
@@ -128,19 +133,34 @@ export default function WalletPageMobile() {
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setDisbursementOpen(true)}
-          className="ct-btn ct-btn-primary ct-btn-block h-11 min-h-11 gap-2 rounded-xl text-sm font-semibold normal-case shadow-[0_12px_28px_-14px_rgba(8,120,62,0.8)]"
-        >
-          <ArrowRightLeft className="h-4 w-4" />Chuyển tiền
-        </button>
+        <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setBulkTransferDialogOpen(true)}
+            className="ct-btn ct-btn-outline h-11 min-h-11 gap-2 rounded-xl border-base-100/20 bg-base-100/5 text-sm font-semibold normal-case text-neutral-content shadow-none"
+          >
+            <Upload className="h-4 w-4" />
+            Tải file
+          </button>
+          <button
+            type="button"
+            onClick={() => setDisbursementOpen(true)}
+            className="ct-btn ct-btn-primary h-11 min-h-11 gap-2 rounded-xl text-sm font-semibold normal-case shadow-none"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            Chuyển tiền
+          </button>
+        </div>
       </div>
 
       {/* Light transaction panel */}
       <div className="ct-card rounded-t-3xl -mt-4 min-h-[60dvh] bg-base-100 shadow-lg">
         <div className="ct-card-body space-y-4 px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <WalletTransactionsList />
+          <BulkTransferBatchList
+            selectedBatchId={selectedBulkTransferBatchId}
+            onSelectedBatchIdChange={setSelectedBulkTransferBatchId}
+          />
         </div>
       </div>
 
@@ -148,6 +168,11 @@ export default function WalletPageMobile() {
         open={disbursementOpen}
         onOpenChange={setDisbursementOpen}
         onSuccess={invalidateAll}
+      />
+      <BulkTransferUploadDialog
+        open={bulkTransferDialogOpen}
+        onOpenChange={setBulkTransferDialogOpen}
+        onViewProgress={setSelectedBulkTransferBatchId}
       />
 
       <AlertDialog open={!!mismatch} onOpenChange={(open) => !open && setMismatch(null)}>

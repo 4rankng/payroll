@@ -41,6 +41,7 @@ import {
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { FilterPill } from "@/components/shared/FilterPill";
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { cn } from "@/lib/utils";
 import { walletService } from "@/services/api/wallet.service";
 import { formatDateTime, formatCurrency as formatVND } from "@/utils/formatters";
 import type {
@@ -453,7 +454,10 @@ export default function WalletTransactionsList(
           size="sm"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="h-8 px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide"
+          className={cn(
+            "px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide",
+            isMobile ? "h-11 min-h-11" : "h-8",
+          )}
         >
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
           Làm mới
@@ -494,7 +498,7 @@ export default function WalletTransactionsList(
         />
         {isMobile && (
           <DateRangePicker
-            variant="default"
+            variant="mobile"
             startDate={startDate}
             endDate={endDate}
             onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
@@ -505,7 +509,10 @@ export default function WalletTransactionsList(
           <button
             type="button"
             onClick={onResetFilters}
-            className="text-xs text-slate-400 hover:text-slate-700 transition-colors ml-auto"
+            className={cn(
+              "text-xs text-slate-400 hover:text-slate-700 transition-colors ml-auto",
+              isMobile && "min-h-11 px-2",
+            )}
           >
             Xoá lọc
           </button>
@@ -532,13 +539,25 @@ export default function WalletTransactionsList(
             {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} / {total} giao dịch
           </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || isFetching}>
+            <Button
+              variant="outline"
+              size="sm"
+              className={isMobile ? "min-h-11" : undefined}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1 || isFetching}
+            >
               Trước
             </Button>
             <span className="text-sm text-slate-500 tabular-nums">
               {page} / {totalPages}
             </span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isFetching}>
+            <Button
+              variant="outline"
+              size="sm"
+              className={isMobile ? "min-h-11" : undefined}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || isFetching}
+            >
               Sau
             </Button>
           </div>

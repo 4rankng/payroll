@@ -5,10 +5,12 @@ import TimesheetsPageMobile from "./index";
 const navigate = vi.fn();
 const setSearchParams = vi.fn();
 const setStatusFilter = vi.fn();
+const setSelectedProject = vi.fn();
+let routeSearchParams = new URLSearchParams();
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigate,
-  useSearchParams: () => [new URLSearchParams(), setSearchParams],
+  useSearchParams: () => [routeSearchParams, setSearchParams],
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -20,10 +22,12 @@ vi.mock("@/components/timesheet/mobile/TimesheetPageHeaderMobile", () => ({
     onPayrollReportExport,
     onBccUpload,
     onBccHistory,
+    onPaymentHistory,
   }: {
     onPayrollReportExport?: () => void;
     onBccUpload?: () => void;
     onBccHistory?: () => void;
+    onPaymentHistory?: () => void;
   }) => (
     <div>
       {onPayrollReportExport && (
@@ -31,6 +35,9 @@ vi.mock("@/components/timesheet/mobile/TimesheetPageHeaderMobile", () => ({
       )}
       {onBccUpload && <button onClick={onBccUpload}>Tải lên BCC</button>}
       {onBccHistory && <button onClick={onBccHistory}>Lịch sử BCC</button>}
+      {onPaymentHistory && (
+        <button onClick={onPaymentHistory}>Lịch sử trả lương</button>
+      )}
     </div>
   ),
 }));
@@ -56,6 +63,11 @@ vi.mock("@/components/timesheet/BCCUploadModal", () => ({
 vi.mock("@/components/timesheet/UploadHistorySheet", () => ({
   UploadHistorySheet: ({ open }: { open: boolean }) =>
     open ? <div>Lịch sử tải BCC</div> : null,
+}));
+
+vi.mock("@/components/payroll/PaymentHistorySheet", () => ({
+  PaymentHistorySheet: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div>Danh sách lịch sử trả lương</div> : null,
 }));
 
 vi.mock("@/components/employees/MissingBankDetailsSection", () => ({
@@ -104,6 +116,7 @@ vi.mock("@/hooks/timesheet/useTimesheetManagement", () => ({
     selectedEmployee: "all",
     statusFilter: "all",
     setSelectedEmployee: vi.fn(),
+    setSelectedProject,
     setSelectedMonth: vi.fn(),
     setStatusFilter,
     timesheets: [],
@@ -156,6 +169,8 @@ describe("partner mobile timesheet actions", () => {
     navigate.mockClear();
     setSearchParams.mockClear();
     setStatusFilter.mockClear();
+    setSelectedProject.mockClear();
+    routeSearchParams = new URLSearchParams();
   });
 
   it("opens the restored partner workflows and applies the approved filter", () => {
@@ -170,7 +185,19 @@ describe("partner mobile timesheet actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lịch sử BCC" }));
     expect(screen.getByText("Lịch sử tải BCC")).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: "Lịch sử trả lương" }));
+    expect(screen.getByText("Danh sách lịch sử trả lương")).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalledWith("payment-history");
+
     fireEvent.click(screen.getByRole("button", { name: "Đã duyệt" }));
     expect(setStatusFilter).toHaveBeenCalledWith("approved");
+  });
+
+  it("applies the project scope from the project-list shortcut", () => {
+    routeSearchParams = new URLSearchParams("project=42");
+
+    render(<TimesheetsPageMobile />);
+
+    expect(setSelectedProject).toHaveBeenCalledWith("42");
   });
 });

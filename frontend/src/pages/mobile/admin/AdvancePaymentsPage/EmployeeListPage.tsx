@@ -92,6 +92,35 @@ const EmployeeListPage = () => {
           </SelectContent>
         </Select>
 
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <Select
+            value={page.flexPayFilters.sortBy ?? "max_advance_amount"}
+            onValueChange={page.handleFlexPaySort}
+          >
+            <SelectTrigger className="h-11 min-w-0">
+              <SelectValue placeholder="Sắp xếp theo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="max_advance_amount">Hạn mức</SelectItem>
+              <SelectItem value="utilized_amount">Đã dùng</SelectItem>
+              <SelectItem value="pending_amount">Chờ xử lý</SelectItem>
+              <SelectItem value="available_amount">Có thể ứng</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 min-w-20"
+            onClick={() =>
+              page.handleFlexPaySort(
+                page.flexPayFilters.sortBy ?? "max_advance_amount",
+              )
+            }
+          >
+            {page.flexPayFilters.sortOrder === "ASC" ? "Tăng" : "Giảm"}
+          </Button>
+        </div>
+
         {/* Employee list */}
         <AdvancePaymentMobileEmployeeList
           employees={page.flexPayEmployees}

@@ -51,7 +51,16 @@ class ProjectService {
    * Get paginated list of projects
    */
   async getProjects(filters?: ProjectFilters) {
-    const queryString = filters ? buildQueryString(filters) : '';
+    const queryString = filters
+      ? (() => {
+          const { sortBy, sortOrder, ...rest } = filters;
+          return buildQueryString({
+            ...rest,
+            sort_by: sortBy,
+            sort_order: sortOrder,
+          });
+        })()
+      : '';
     const response = await apiClient.get<Project[]>(
       `${API_ENDPOINTS.projects.base}${queryString}`
     );

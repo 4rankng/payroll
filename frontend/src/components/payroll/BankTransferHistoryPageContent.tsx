@@ -72,7 +72,7 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
             type="button"
             onClick={() => setPickerYear((year) => year - 1)}
             aria-label="Năm trước"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -81,7 +81,7 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
             type="button"
             onClick={() => setPickerYear((year) => year + 1)}
             aria-label="Năm sau"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -99,7 +99,7 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
                 onClick={() => handleMonthSelect(monthNumber)}
                 aria-label={`Chọn tháng ${monthLabel} năm ${pickerYear}`}
                 aria-pressed={isSelected}
-                className={`h-10 rounded-lg border text-[12px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+                className={`min-h-11 rounded-lg border text-[12px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   isSelected
                     ? 'border-emerald-700 bg-emerald-700 text-white'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50'

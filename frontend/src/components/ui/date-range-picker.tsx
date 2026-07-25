@@ -293,7 +293,7 @@ function SinglePicker({
       locale="vi"
       placeholderText={placeholderText}
       className={inputClassName}
-      aria-label={ariaLabel}
+      customInput={<input aria-label={ariaLabel} />}
       disabled={disabled}
       renderCustomHeader={renderHeader}
       calendarClassName={view !== "day" ? "dp-grid-view" : undefined}
@@ -328,7 +328,7 @@ export function DateRangePicker({
     const base = "bg-transparent border-0 p-0 font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 cursor-pointer";
     switch (variant) {
       case "compact": return cn(base, "w-[76px] text-xs");
-      case "mobile":  return cn(base, "flex-1 text-sm w-[95px]");
+      case "mobile":  return cn(base, "h-11 flex-1 text-sm w-[95px]");
       default:        return cn(base, "w-[72px] text-xs");
     }
   }, [variant]);

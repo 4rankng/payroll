@@ -82,15 +82,29 @@ const EmployeesPageMobile = () => {
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
 
   useEffect(() => {
+    const action = searchParams.get("action");
     const status = searchParams.get("status") as
       | "working"
       | "unassigned"
       | null;
+
+    const nextParams = new URLSearchParams(searchParams);
+    let paramsChanged = false;
+
+    if (action === "add") {
+      nextParams.delete("action");
+      nextParams.set("modal", "add_employee");
+      paramsChanged = true;
+    }
+
     if (status) {
       updateFilters({ status });
-      const p = new URLSearchParams(searchParams);
-      p.delete("status");
-      setSearchParams(p, { replace: true });
+      nextParams.delete("status");
+      paramsChanged = true;
+    }
+
+    if (paramsChanged) {
+      setSearchParams(nextParams, { replace: true });
     }
   }, [searchParams, updateFilters, setSearchParams]);
 

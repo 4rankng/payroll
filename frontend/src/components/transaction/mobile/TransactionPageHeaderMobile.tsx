@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   Plus, MoreHorizontal, FileUp, History, Mail, Loader2, ArrowRightLeft,
-  FileDown, FileText, CreditCard, Zap,
+  FileDown, FileText, CreditCard, Zap, ClipboardCheck,
 } from 'lucide-react';
 
 interface TransactionPageHeaderMobileProps {
@@ -29,6 +29,7 @@ interface TransactionPageHeaderMobileProps {
   isImportingOnePayFee?: boolean;
   onRunWalletSettlement?: () => void;
   isRunningWalletSettlement?: boolean;
+  onSimulateSettlement?: () => void;
 }
 
 export function TransactionPageHeaderMobile({
@@ -47,6 +48,7 @@ export function TransactionPageHeaderMobile({
   isImportingOnePayFee = false,
   onRunWalletSettlement,
   isRunningWalletSettlement = false,
+  onSimulateSettlement,
 }: TransactionPageHeaderMobileProps) {
   const [showActionsSheet, setShowActionsSheet] = useState(false);
   const close = () => setShowActionsSheet(false);
@@ -196,6 +198,15 @@ export function TransactionPageHeaderMobile({
                     <span className="text-sm font-medium">
                       {isRunningWalletSettlement ? 'Đang chốt...' : 'Chốt lương'}
                     </span>
+                  </button>
+                )}
+                {onSimulateSettlement && (
+                  <button
+                    className={actionClass}
+                    onClick={() => { onSimulateSettlement(); close(); }}
+                  >
+                    <ClipboardCheck className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    <span className="text-sm font-medium">Mô phỏng đối soát</span>
                   </button>
                 )}
 

@@ -22,6 +22,7 @@ import {
   Clock,
   ClipboardList,
   ReceiptText,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -65,7 +66,7 @@ type MenuItem = {
   group: string;
 };
 
-const menuItems: MenuItem[] = [
+export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { title: "Tổng quan", icon: Home, path: "/admin", end: true, group: "top" },
   { title: "Người dùng", icon: UserCog, path: "/admin/users", group: "quan-ly" },
   { title: "Dự án", icon: Briefcase, path: "/admin/projects", group: "quan-ly" },
@@ -74,6 +75,7 @@ const menuItems: MenuItem[] = [
   { title: "Ứng lương", icon: HandCoins, path: "/admin/advance-payments", group: "quan-ly" },
   { title: "Lịch sử trả lương", icon: ReceiptText, path: "/admin/payment-history", group: "tai-chinh" },
   { title: "Sổ Cái", icon: BookOpen, path: "/admin/ledger", group: "tai-chinh" },
+  { title: "Giao dịch", icon: ArrowRightLeft, path: "/admin/transactions", group: "tai-chinh" },
   { title: "Khoản vay", icon: Landmark, path: "/admin/loans", group: "tai-chinh" },
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },
   { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health", group: "he-thong" },
@@ -263,16 +265,16 @@ const AdminSidebar = () => {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const topItems = useMemo(() => {
-    const items = menuItems.filter((i) => i.group === "top");
+    const items = ADMIN_MENU_ITEMS.filter((i) => i.group === "top");
     if (isAdvPartner) return [];
     return items;
   }, [isAdvPartner]);
 
   const filteredMenuItems = useMemo(() => {
-    if (!isAdvPartner) return menuItems;
+    if (!isAdvPartner) return ADMIN_MENU_ITEMS;
     const basePath = "/adv-partner";
     const allowed = ["/admin/advance-payments", "/admin/users"];
-    return menuItems
+    return ADMIN_MENU_ITEMS
       .filter((i) => allowed.includes(i.path))
       .map((i) => ({
         ...i,

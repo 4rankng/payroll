@@ -29,7 +29,7 @@ export function useDashboardNavigation() {
     if (filter) {
       params.set('period', filter);
     }
-    navigate(`/admin/transactions?${params.toString()}`);
+    navigate(`/admin/ledger?${params.toString()}`);
   }, [navigate]);
 
   return {

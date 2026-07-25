@@ -336,6 +336,40 @@ const UsersPageMobile = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Sắp xếp</label>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <Select
+                  value={filterState.sortBy}
+                  onValueChange={(value) =>
+                    filterState.onSortChange(value, filterState.sortOrder)
+                  }
+                >
+                  <SelectTrigger className="h-11 min-w-0">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="username">Người dùng</SelectItem>
+                    <SelectItem value="role">Vai trò</SelectItem>
+                    <SelectItem value="last_login">Hoạt động cuối</SelectItem>
+                    <SelectItem value="created_at">Ngày tạo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 min-w-20"
+                  onClick={() =>
+                    filterState.onSortChange(
+                      filterState.sortBy,
+                      filterState.sortOrder === "asc" ? "desc" : "asc",
+                    )
+                  }
+                >
+                  {filterState.sortOrder === "asc" ? "Tăng" : "Giảm"}
+                </Button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 gap-3 pt-2 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"

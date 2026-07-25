@@ -79,7 +79,7 @@ export const TimesheetFilters = () => {
         )}
         <div className="flex items-center gap-1.5">
         <Select value={selectedMonth} onValueChange={onMonthChange}>
-          <SelectTrigger className="h-7 w-[100px] shrink-0 text-xs border-border/60">
+          <SelectTrigger className="h-11 w-[112px] shrink-0 text-xs border-border/60">
             <SelectValue placeholder="Tháng" />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +90,7 @@ export const TimesheetFilters = () => {
         <Sheet>
           <SheetTrigger asChild>
             <button
-              className="relative inline-flex items-center justify-center h-7 w-7 rounded-xl border border-border/60 text-muted-foreground hover:border-border hover:text-foreground transition-colors"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
               aria-label="Bộ lọc"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />

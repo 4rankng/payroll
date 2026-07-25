@@ -200,7 +200,7 @@ const LedgerEntriesPageMobile = () => {
   const hasFilters = !!(filters.project_id || filters.account || filters.party || filters.created_by || filters.has_evidence !== undefined);
 
   return (
-    <MobilePageShell className="space-y-4">
+    <MobilePageShell className="mx-auto w-full max-w-[1280px] space-y-4 lg:px-6">
       <LedgerPageHeader
         overallBalance={overallBalance}
         netCashFlow={netCashFlow}

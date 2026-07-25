@@ -7,6 +7,7 @@ import { TransactionFiltersMobile } from "@/components/transaction/mobile/Transa
 import { BulkTransferResultUploadDialog } from "@/components/timesheet/BulkTransferResultUploadDialog";
 import { SettlementResultUploadDialog } from "@/components/transaction/SettlementResultUploadDialog";
 import { OnePayFeeReportDialog } from "@/components/ledger/OnePayFeeReportDialog";
+import { SettlementSimulationDialog } from "@/components/ledger/SettlementSimulationDialog";
 import { ExportSaoKeDialog } from "@/components/transaction/ExportSaoKeDialog";
 import { AdvancePaymentExportDialog } from "@/components/advance-payment/AdvancePaymentExportDialog";
 import { BulkTransferHistoryDialog } from "@/components/transaction/BulkTransferHistoryDialog";
@@ -81,6 +82,7 @@ const TransactionsPageMobile = () => {
   const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
   const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
   const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
+  const [simulationDialogOpen, setSimulationDialogOpen] = useState(false);
 
   const { data: transactionsData, isLoading: isLoadingTransactions } =
     useTransactions(filters);
@@ -194,6 +196,7 @@ const TransactionsPageMobile = () => {
         isImportingOnePayFee={isImportingOnePayFeeReport}
         onRunWalletSettlement={handleRunWalletSettlement}
         isRunningWalletSettlement={isRunningWalletSettlement}
+        onSimulateSettlement={() => setSimulationDialogOpen(true)}
       />
 
       <TransactionSummaryCardMobile
@@ -351,6 +354,10 @@ const TransactionsPageMobile = () => {
         onOpenChange={setAdvanceEmailDialogOpen}
         onSendEmail={handleAdvanceEmailSend}
         isLoading={sendAdvanceEmailMutation.isPending}
+      />
+      <SettlementSimulationDialog
+        open={simulationDialogOpen}
+        onOpenChange={setSimulationDialogOpen}
       />
     </div>
   );

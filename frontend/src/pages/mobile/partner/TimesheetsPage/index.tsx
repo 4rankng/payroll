@@ -10,6 +10,7 @@ import {
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { ExportSaoKeDialog } from "@/components/transaction/ExportSaoKeDialog";
+import { PaymentHistorySheet } from "@/components/payroll/PaymentHistorySheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
@@ -30,6 +31,7 @@ export default function TimesheetsPageMobile() {
   const [exportSaoKeOpen, setExportSaoKeOpen] = useState(false);
   const [bccUploadOpen, setBccUploadOpen] = useState(false);
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
+  const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { openTimesheetEntry, openTimesheetDetails } = useTimesheetModals();
@@ -43,6 +45,7 @@ export default function TimesheetsPageMobile() {
   // Full-page entry mode when modal=timesheet_entry
   const isEntryMode = searchParams.get("modal") === "timesheet_entry";
   const urlProjectId = searchParams.get("projectId");
+  const urlProjectFilter = searchParams.get("project");
   const entryEmployeeId = searchParams.get("employeeId");
 
   const urlViewMode = searchParams.get("view") as "table" | "calendar" | null;
@@ -87,6 +90,19 @@ export default function TimesheetsPageMobile() {
   }), [timesheetManagement.selectedProject, timesheetManagement.selectedMonth]);
 
   const timesheetStats = useTimesheetStatsConfig(statsFilters);
+
+  // Preserve the project-scoped shortcut used by the desktop project list.
+  useEffect(() => {
+    if (
+      urlProjectFilter &&
+      urlProjectFilter !== timesheetManagement.selectedProject
+    ) {
+      timesheetManagement.setSelectedProject(urlProjectFilter);
+    }
+    // Only initialize from the incoming route; subsequent changes are owned by
+    // the page filters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync employee selection from URL
   useEffect(() => {
@@ -208,7 +224,7 @@ export default function TimesheetsPageMobile() {
         onPayrollReportExport={() => setExportSaoKeOpen(true)}
         onBccUpload={() => setBccUploadOpen(true)}
         onBccHistory={() => setBccHistoryOpen(true)}
-        onPaymentHistory={() => navigate("payment-history")}
+        onPaymentHistory={() => setPaymentHistoryOpen(true)}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         userRole="partner"
         monthValue={timesheetManagement.selectedMonth}
@@ -324,6 +340,11 @@ export default function TimesheetsPageMobile() {
             ? parseInt(timesheetManagement.selectedProject, 10)
             : undefined
         }
+      />
+
+      <PaymentHistorySheet
+        isOpen={paymentHistoryOpen}
+        onClose={() => setPaymentHistoryOpen(false)}
       />
     </MobilePageShell>
   );

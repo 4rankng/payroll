@@ -73,7 +73,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         type="button"
         onClick={handlePreviousMonth}
         aria-label="Tháng trước"
-        className="ct-join-item flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-11"
+        className="ct-join-item flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
       </button>
@@ -111,7 +111,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         type="button"
         onClick={handleNextMonth}
         aria-label="Tháng sau"
-        className="ct-join-item flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:w-11"
+        className="ct-join-item flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronRight className="h-3.5 w-3.5" />
       </button>

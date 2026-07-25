@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Briefcase,
@@ -25,6 +25,7 @@ import { FilterPill } from '@/components/shared/FilterPill';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useProjectFilters } from '@/hooks/projects/useProjectFilters';
 import { useProjectModals } from '@/hooks/useModalNavigation';
+import { usePartnerProjectSummary } from '@/hooks/partner/usePartnerProjectSummary';
 import type { Project } from '@/types/api/project.types';
 import { cn } from '@/lib/utils';
 
@@ -244,16 +245,15 @@ const ProjectsPage = () => {
     initialFilters: { page: 1, pageSize: 10 },
   });
   const { data: response, isLoading } = useProjects(filterControls.apiFilters);
+  const { data: summary } = usePartnerProjectSummary();
   const { openCreateProject, openPartnerProjectDetails } = useProjectModals();
 
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
-
   const allProjects = useMemo(() => response?.data || [], [response?.data]);
-  // Client-side status filter (on top of search/server pagination)
-  const projects = useMemo(() => {
-    if (statusFilter === 'all') return allProjects;
-    return allProjects.filter((p) => p.status === statusFilter);
-  }, [allProjects, statusFilter]);
+  const projects = allProjects;
+  const statusFilter =
+    filterControls.statusFilter === 'all'
+      ? 'all'
+      : filterControls.statusFilter[0] ?? 'all';
 
   const handleProjectClick = useCallback(
     (project: Project) => openPartnerProjectDetails(project.id.toString()),
@@ -268,7 +268,9 @@ const ProjectsPage = () => {
   const pagination = response?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
   const currentPage = pagination?.page ?? 1;
-  const activeCount = allProjects.filter((p) => p.status === 'active').length;
+  const totalProjectCount = summary?.total_projects ?? pagination?.totalRecords ?? 0;
+  const activeCount = summary?.active_projects ?? 0;
+  const visibleProjectCount = pagination?.totalRecords ?? projects.length;
 
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7">
@@ -290,9 +292,9 @@ const ProjectsPage = () => {
           />
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {[
-              { label: 'Tổng dự án', value: allProjects.length, icon: FolderKanban, tone: 'text-muted-foreground bg-muted' },
+              { label: 'Tổng dự án', value: totalProjectCount, icon: FolderKanban, tone: 'text-muted-foreground bg-muted' },
               { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle2, tone: 'text-success bg-success/10' },
-              { label: 'Đang xem', value: projects.length, icon: Clock3, tone: 'text-warning bg-warning/10' },
+              { label: 'Đang xem', value: visibleProjectCount, icon: Clock3, tone: 'text-warning bg-warning/10' },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/25 px-3.5 py-3">
                 <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl', item.tone)}>
@@ -319,7 +321,11 @@ const ProjectsPage = () => {
           {/* Status filter (single-select, matches D3's FilterPill pattern) */}
           <FilterPill
             value={statusFilter}
-            onChange={(v) => setStatusFilter(v as ProjectStatus | 'all')}
+            onChange={(v) =>
+              filterControls.setStatusFilter(
+                v === 'all' ? 'all' : [v as ProjectStatus],
+              )
+            }
             placeholder="Trạng thái"
             options={STATUS_FILTERS.filter(f => f.value !== 'all').map(f => ({ value: f.value, label: f.label }))}
           />
@@ -361,15 +367,14 @@ const ProjectsPage = () => {
           </div>
           <p className="text-base font-bold text-foreground">Không có dự án nào</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-            {statusFilter !== 'all' || filterControls.hasFilters
+            {filterControls.hasFilters
               ? 'Thử bỏ bộ lọc hoặc đổi từ khoá tìm kiếm.'
               : 'Bạn chưa được phân quyền truy cập vào dự án nào.'}
           </p>
-          {(statusFilter !== 'all' || filterControls.hasFilters) && (
+          {filterControls.hasFilters && (
             <button
               type="button"
               onClick={() => {
-                setStatusFilter('all');
                 filterControls.clearFilters();
               }}
               className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-muted/60 px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-muted transition-colors"

@@ -136,7 +136,7 @@ export const BulkTransferBatchList = memo(function BulkTransferBatchList({
               <Button
                 size="icon"
                 variant="outline"
-                className="h-8 w-8"
+                className="h-11 w-11"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={!canPrev}
                 aria-label="Trang trước"
@@ -149,7 +149,7 @@ export const BulkTransferBatchList = memo(function BulkTransferBatchList({
               <Button
                 size="icon"
                 variant="outline"
-                className="h-8 w-8"
+                className="h-11 w-11"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={!canNext}
                 aria-label="Trang sau"

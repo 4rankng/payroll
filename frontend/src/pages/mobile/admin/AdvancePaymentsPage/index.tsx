@@ -18,8 +18,12 @@ import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
 import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
+import {
+  useApproveAttendance,
+  useRejectAttendance,
+} from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt } from "lucide-react";
+import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
@@ -38,6 +42,11 @@ import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
 import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
+import { AttendanceMapDialog } from "@/components/attendance/AttendanceMapDialog";
+import {
+  AttendanceReviewDialogs,
+  type ReviewMode,
+} from "@/components/attendance/AttendanceReviewDialogs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -58,16 +67,30 @@ const ATTENDANCE_STATUS_LABEL: Record<string, string> = {
 };
 
 /** Mobile card for a single attendance row — mirrors desktop's mobileFields. */
-function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
+export function AttendanceMobileCard({
+  row,
+  onViewMap,
+  onApprove,
+  onReject,
+}: {
+  row: AdminAttendanceResponse;
+  onViewMap: (row: AdminAttendanceResponse) => void;
+  onApprove: (row: AdminAttendanceResponse) => void;
+  onReject: (row: AdminAttendanceResponse) => void;
+}) {
   const fmtTime = (t?: string) =>
     t ? (() => { try { return format(new Date(t), "HH:mm"); } catch { return "-"; } })() : "-";
   const fmtDate = (d: string) => {
     try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
   };
   const statusLabel = ATTENDANCE_STATUS_LABEL[row.status] ?? row.status;
+  const showApprove =
+    row.status !== "completed" && row.review_action !== "approved";
+  const showReject =
+    row.status !== "rejected" && row.review_action !== "rejected";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{row.employee_name}</p>
@@ -84,6 +107,39 @@ function AttendanceMobileCard({ row }: { row: AdminAttendanceResponse }) {
         <AttendanceMetric label="Thu nhập" value={row.earning_amount != null ? formatCurrency(row.earning_amount) : "—"} strong />
         <AttendanceMetric label="Vào" value={fmtTime(row.check_in_time)} />
         <AttendanceMetric label="Ra" value={fmtTime(row.check_out_time)} />
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 gap-1.5 px-2 text-xs"
+          onClick={() => onViewMap(row)}
+        >
+          <MapPin className="h-4 w-4" />
+          Bản đồ
+        </Button>
+        {showApprove && (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5 px-2 text-xs text-emerald-700"
+            onClick={() => onApprove(row)}
+          >
+            <Check className="h-4 w-4" />
+            Duyệt
+          </Button>
+        )}
+        {showReject && (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5 px-2 text-xs text-rose-700"
+            onClick={() => onReject(row)}
+          >
+            <X className="h-4 w-4" />
+            Từ chối
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -114,9 +170,16 @@ const AdvancePaymentsPageMobile = () => {
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("requests");
   const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
+  const [selectedAttendance, setSelectedAttendance] =
+    useState<AdminAttendanceResponse | null>(null);
+  const [reviewMode, setReviewMode] = useState<ReviewMode>(null);
+  const [reviewRow, setReviewRow] =
+    useState<AdminAttendanceResponse | null>(null);
 
   const page = useAdvancePaymentsPage({ employeesTabActive: false });
   const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
+  const approveAttendanceMutation = useApproveAttendance();
+  const rejectAttendanceMutation = useRejectAttendance();
   const exportBatchMutation = useExportAdvancePayments();
   const sendEmailMutation = useSendPayrollReportEmail();
 
@@ -185,6 +248,31 @@ const AdvancePaymentsPageMobile = () => {
       setCancelTargetId(null);
     }
   }, [cancelTargetId, page.cancelMutation]);
+
+  const handleReviewClose = useCallback(() => {
+    setReviewMode(null);
+    setReviewRow(null);
+  }, []);
+
+  const handleApproveAttendance = useCallback(
+    (row: AdminAttendanceResponse, note: string) => {
+      approveAttendanceMutation.mutate(
+        { id: row.id, note },
+        { onSuccess: handleReviewClose },
+      );
+    },
+    [approveAttendanceMutation, handleReviewClose],
+  );
+
+  const handleRejectAttendance = useCallback(
+    (row: AdminAttendanceResponse, note: string) => {
+      rejectAttendanceMutation.mutate(
+        { id: row.id, note },
+        { onSuccess: handleReviewClose },
+      );
+    },
+    [rejectAttendanceMutation, handleReviewClose],
+  );
 
   if (page.summaryLoading && page.requests.length === 0) {
     return (
@@ -437,7 +525,19 @@ const AdvancePaymentsPageMobile = () => {
             <>
               <div className="space-y-2">
                 {attendance.attendances.map((row) => (
-                  <AttendanceMobileCard key={row.id} row={row} />
+                  <AttendanceMobileCard
+                    key={row.id}
+                    row={row}
+                    onViewMap={setSelectedAttendance}
+                    onApprove={(attendanceRow) => {
+                      setReviewRow(attendanceRow);
+                      setReviewMode("approve");
+                    }}
+                    onReject={(attendanceRow) => {
+                      setReviewRow(attendanceRow);
+                      setReviewMode("reject");
+                    }}
+                  />
                 ))}
               </div>
               {attendance.pagination && (
@@ -468,6 +568,19 @@ const AdvancePaymentsPageMobile = () => {
       <CheckInBulkDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} />
       <StatementDialog open={isStatementSheetOpen} onOpenChange={setIsStatementSheetOpen} forMonth={page.flexPayMonth} />
       <FileHistorySheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen} />
+      <AttendanceReviewDialogs
+        mode={reviewMode}
+        row={reviewRow}
+        onClose={handleReviewClose}
+        onApprove={handleApproveAttendance}
+        onReject={handleRejectAttendance}
+        approveLoading={approveAttendanceMutation.isPending}
+        rejectLoading={rejectAttendanceMutation.isPending}
+      />
+      <AttendanceMapDialog
+        row={selectedAttendance}
+        onClose={() => setSelectedAttendance(null)}
+      />
 
       <PayrollReportEmailDialog
         open={isEmailDialogOpen}

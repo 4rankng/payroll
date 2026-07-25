@@ -9,6 +9,7 @@ import { formatDate } from '@/utils/formatters';
 interface ProjectMobileListProps {
   projects: Project[];
   onRowClick?: (project: Project) => void;
+  onTimesheet?: (project: Project) => void;
   emptyState?: React.ReactNode;
 }
 
@@ -20,61 +21,70 @@ function formatDateShort(dateStr: string | null | undefined): string {
 const ProjectCard = React.memo(function ProjectCard({
   project,
   onRowClick,
+  onTimesheet,
 }: {
   project: Project;
   onRowClick?: (project: Project) => void;
+  onTimesheet?: (project: Project) => void;
 }) {
   return (
     <div
-      onClick={() => onRowClick?.(project)}
-      role="button"
-      tabIndex={0}
-      aria-label={`Xem chi tiết dự án ${project.name}`}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onRowClick?.(project);
-        }
-      }}
-      className="border border-border rounded-xl bg-card px-3.5 py-3 shadow-sm card-lift active:bg-muted/50 transition-all cursor-pointer touch-manipulation"
+      className="rounded-xl border border-border bg-card p-3.5 transition-colors"
     >
-      {/* Line 1: name + status badge */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold truncate leading-tight">
-          {project.name}
-        </span>
-        <ProjectStatusBadge status={project.status} className="shrink-0 text-[11px] h-5 px-1.5" />
-      </div>
+      <button
+        type="button"
+        onClick={() => onRowClick?.(project)}
+        aria-label={`Xem chi tiết dự án ${project.name}`}
+        className="min-h-11 w-full text-left touch-manipulation"
+      >
+        {/* Line 1: name + status badge */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold truncate leading-tight">
+            {project.name}
+          </span>
+          <ProjectStatusBadge status={project.status} className="shrink-0 text-[11px] h-5 px-1.5" />
+        </div>
 
-      {/* Line 2: code · dates · employee badges */}
-      <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-        {project.code && (
-          <>
-            <span className="text-xs font-mono text-muted-foreground shrink-0">{project.code}</span>
-            <span className="text-gray-300 shrink-0">·</span>
-          </>
-        )}
-        <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
-        <span className="text-xs text-muted-foreground shrink-0">
-          {formatDateShort(project.start_date)}
-          {project.end_date ? ` – ${formatDateShort(project.end_date)}` : ''}
-        </span>
-        <span className="text-gray-300 shrink-0">·</span>
-        <Users className="h-3 w-3 text-muted-foreground shrink-0" />
-        <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
-          {project.employee_count || 0}
-        </Badge>
-        {(project.weekly_salary_employee_count ?? 0) > 0 && (
-          <Badge className="font-semibold bg-sky-50 text-sky-700 border-border border text-[11px] h-4 px-1 shrink-0">
-            {project.weekly_salary_employee_count}T
-          </Badge>
-        )}
-        {(project.monthly_salary_employee_count ?? 0) > 0 && (
+        {/* Line 2: code · dates · employee badges */}
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 mt-0.5">
+          {project.code && (
+            <>
+              <span className="text-xs font-mono text-muted-foreground shrink-0">{project.code}</span>
+              <span className="text-gray-300 shrink-0">·</span>
+            </>
+          )}
+          <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
+          <span className="min-w-0 break-words text-xs text-muted-foreground">
+            {formatDateShort(project.start_date)}
+            {project.end_date ? ` – ${formatDateShort(project.end_date)}` : ''}
+          </span>
+          <span className="text-gray-300 shrink-0">·</span>
+          <Users className="h-3 w-3 text-muted-foreground shrink-0" />
           <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
-            {project.monthly_salary_employee_count}M
+            {project.employee_count || 0}
           </Badge>
-        )}
-      </div>
+          {(project.weekly_salary_employee_count ?? 0) > 0 && (
+            <Badge className="font-semibold bg-sky-50 text-sky-700 border-border border text-[11px] h-4 px-1 shrink-0">
+              {project.weekly_salary_employee_count}T
+            </Badge>
+          )}
+          {(project.monthly_salary_employee_count ?? 0) > 0 && (
+            <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
+              {project.monthly_salary_employee_count}M
+            </Badge>
+          )}
+        </div>
+      </button>
+      {onTimesheet && (
+        <button
+          type="button"
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground"
+          onClick={() => onTimesheet(project)}
+        >
+          <Calendar className="h-4 w-4" />
+          Bảng công
+        </button>
+      )}
     </div>
   );
 });
@@ -82,6 +92,7 @@ const ProjectCard = React.memo(function ProjectCard({
 export function ProjectMobileList({
   projects,
   onRowClick,
+  onTimesheet,
   emptyState,
 }: ProjectMobileListProps) {
   if (projects.length === 0) {
@@ -103,7 +114,12 @@ export function ProjectMobileList({
   return (
     <div className="w-full flex flex-col gap-3">
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} onRowClick={onRowClick} />
+        <ProjectCard
+          key={project.id}
+          project={project}
+          onRowClick={onRowClick}
+          onTimesheet={onTimesheet}
+        />
       ))}
     </div>
   );

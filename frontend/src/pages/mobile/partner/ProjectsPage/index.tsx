@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +32,8 @@ import {
   Plus,
   SlidersHorizontal,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { Project } from "@/types/api/project.types";
 
@@ -46,52 +48,22 @@ const STATUS_OPTIONS: { value: Project["status"]; label: string }[] = [
 ];
 
 const ProjectsPageMobile = () => {
+  const navigate = useNavigate();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
   const filterControls = useProjectFilters({
-    initialFilters: { page: 1, pageSize: 100 },
+    initialFilters: { page: 1, pageSize: ITEMS_PER_PAGE },
   });
 
   const { data: response, isLoading } = useProjects(filterControls.apiFilters);
   const { data: summary, isLoading: summaryLoading } = usePartnerProjectSummary();
   const projects = response?.data || [];
+  const pagination = response?.pagination;
+  const currentPage = pagination?.page ?? filterControls.page;
+  const totalPages = pagination?.totalPages ?? 1;
   const monthOptions = useMemo(() => generateMonthOptions(), []);
 
   const { openCreateProject, openPartnerProjectDetails } = useProjectModals();
-
-  const paginatedProjects = projects.slice(0, displayCount);
-  const hasMore = displayCount < projects.length;
-
-  // Reset display count when filters change
-  useEffect(() => {
-    setDisplayCount(ITEMS_PER_PAGE);
-  }, [
-    filterControls.searchTerm,
-    filterControls.statusFilter,
-    filterControls.monthFilter,
-  ]);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-          setIsLoadingMore(true);
-          setTimeout(() => {
-            setDisplayCount((prev) => prev + ITEMS_PER_PAGE);
-            setIsLoadingMore(false);
-          }, 300);
-        }
-      },
-      { threshold: 0.1 },
-    );
-    const el = loaderRef.current;
-    if (el) observer.observe(el);
-    return () => { if (el) observer.unobserve(el); };
-  }, [hasMore, isLoadingMore, isLoading]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -222,24 +194,26 @@ const ProjectsPageMobile = () => {
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {currentStatusLabel && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer rounded-xl"
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground touch-manipulation"
               onClick={() => filterControls.setStatusFilter("all")}
+              aria-label={`Xóa lọc trạng thái ${currentStatusLabel}`}
             >
               {currentStatusLabel}
               <X className="h-3 w-3" />
-            </Badge>
+            </button>
           )}
           {currentMonthLabel && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer rounded-xl"
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground touch-manipulation"
               onClick={() => filterControls.setMonthFilter(undefined)}
+              aria-label={`Xóa lọc tháng ${currentMonthLabel}`}
             >
               {currentMonthLabel}
               <X className="h-3 w-3" />
-            </Badge>
+            </button>
           )}
           <button
             onClick={filterControls.clearFilters}
@@ -253,8 +227,11 @@ const ProjectsPageMobile = () => {
       {/* ── Project list ── */}
       <div className="flex-1">
         <ProjectMobileList
-          projects={paginatedProjects}
+          projects={projects}
           onRowClick={handleProjectClick}
+          onTimesheet={(project) =>
+            navigate(`/partner/timesheet?project=${project.id}`)
+          }
           emptyState={
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
@@ -272,14 +249,39 @@ const ProjectsPageMobile = () => {
           }
         />
 
-        {hasMore && (
-          <div ref={loaderRef} className="flex justify-center py-4">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        {pagination && pagination.totalRecords > pagination.pageSize && (
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 min-w-11 rounded-xl px-3"
+              onClick={() => filterControls.setPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage <= 1 || isLoading}
+              aria-label="Trang dự án trước"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only min-[360px]:not-sr-only">Trước</span>
+            </Button>
+            <p className="text-center text-xs text-muted-foreground tabular-nums">
+              Trang {currentPage} / {totalPages}
+              <span className="block">{pagination.totalRecords} dự án</span>
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 min-w-11 rounded-xl px-3"
+              onClick={() => filterControls.setPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage >= totalPages || isLoading}
+              aria-label="Trang dự án sau"
+            >
+              <span className="sr-only min-[360px]:not-sr-only">Sau</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         )}
-        {!hasMore && paginatedProjects.length > 0 && (
-          <p className="text-center py-3 text-xs text-muted-foreground">
-            {projects.length} dự án
+        {pagination && pagination.totalRecords <= pagination.pageSize && projects.length > 0 && (
+          <p className="py-3 text-center text-xs text-muted-foreground">
+            {pagination.totalRecords} dự án
           </p>
         )}
       </div>

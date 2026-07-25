@@ -140,7 +140,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   disabled={isSyncing}
                   title="Đồng bộ số dư với nhà cung cấp"
                   aria-label="Đồng bộ số dư"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
                 </button>
@@ -252,7 +252,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-9 text-xs" disabled={adjusting}>
+            <AlertDialogCancel className="min-h-11 text-xs" disabled={adjusting}>
               Bỏ qua
             </AlertDialogCancel>
             <AlertDialogAction
@@ -265,7 +265,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 handleAdjust();
               }}
               disabled={adjusting}
-              className="h-9 text-xs gap-1.5"
+              className="min-h-11 text-xs gap-1.5"
             >
               {adjusting ? (
                 <>

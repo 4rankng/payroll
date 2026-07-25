@@ -147,7 +147,7 @@ const ProjectsPageMobile = () => {
           onSearch={filterControls.setSearchTerm}
           placeholder="Tìm kiếm dự án..."
         />
-        <Button variant="outline" size="icon" className="rounded-xl border-border bg-card shrink-0 relative" onClick={() => setFilterSheetOpen(true)} aria-label="Bộ lọc">
+        <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-border bg-card shrink-0 relative" onClick={() => setFilterSheetOpen(true)} aria-label="Bộ lọc">
           <SlidersHorizontal className="h-4 w-4" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[11px] text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
@@ -205,16 +205,34 @@ const ProjectsPageMobile = () => {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Trạng thái</label>
-              <Select
-                value={filterControls.statusFilter === "all" || !Array.isArray(filterControls.statusFilter) || filterControls.statusFilter.length === 0 ? "all" : filterControls.statusFilter[0]}
-                onValueChange={(v) => filterControls.setStatusFilter(v === "all" ? "all" : [v as Project["status"]])}
-              >
-                <SelectTrigger className="h-11"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  {STATUS_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+                {STATUS_OPTIONS.map((option) => {
+                  const selected =
+                    Array.isArray(filterControls.statusFilter) &&
+                    filterControls.statusFilter.includes(option.value);
+                  return (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={selected ? "default" : "outline"}
+                      className="min-h-11 justify-start"
+                      onClick={() => {
+                        const current = Array.isArray(filterControls.statusFilter)
+                          ? filterControls.statusFilter
+                          : [];
+                        const next = selected
+                          ? current.filter((status) => status !== option.value)
+                          : [...current, option.value];
+                        filterControls.setStatusFilter(
+                          next.length === 0 ? "all" : next,
+                        );
+                      }}
+                    >
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Tháng</label>
@@ -225,6 +243,36 @@ const ProjectsPageMobile = () => {
                   {monthOptions.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Sắp xếp</label>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <Select
+                  value={filterControls.sortBy}
+                  onValueChange={filterControls.setSortBy}
+                >
+                  <SelectTrigger className="h-11 min-w-0">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Tên dự án</SelectItem>
+                    <SelectItem value="client_name">Khách hàng</SelectItem>
+                    <SelectItem value="created_at">Ngày tạo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 min-w-20"
+                  onClick={() =>
+                    filterControls.setSortOrder(
+                      filterControls.sortOrder === "asc" ? "desc" : "asc",
+                    )
+                  }
+                >
+                  {filterControls.sortOrder === "asc" ? "Tăng" : "Giảm"}
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-3 pt-2 min-[380px]:grid-cols-2">
               <Button variant="outline" className="flex-1 h-11" onClick={() => { filterControls.clearFilters(); setFilterSheetOpen(false); }}>Xóa bộ lọc</Button>

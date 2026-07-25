@@ -1,7 +1,9 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
+import { MobilePagination } from "@/components/shared/MobilePagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,14 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { InfiniteScrollContainer } from "@/components/ui/infinite-scroll-container";
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { usePartnerEmployeesData } from "@/hooks/partner-employees/usePartnerEmployeesData";
 import { useEmployeesSummary } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
-import { useEmployeeInfiniteScroll } from "@/hooks/employees/useEmployeeInfiniteScroll";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
@@ -57,6 +57,7 @@ const getMonthOptions = () => {
 const monthOptions = getMonthOptions();
 
 const EmployeesPageMobile = () => {
+  const navigate = useNavigate();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const {
@@ -72,6 +73,11 @@ const EmployeesPageMobile = () => {
     updateStatusFilter,
     updateMonth,
     clearAllFilters,
+    sortBy,
+    sortOrder,
+    handleSortChange,
+    pagination,
+    handlePageChange,
   } = usePartnerEmployeesData();
 
   const { data: employeesSummary, isLoading: summaryLoading } =
@@ -80,10 +86,6 @@ const EmployeesPageMobile = () => {
   const { exportEmployees, isExporting } = useEmployeeExport();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
-
-  const infiniteScroll = useEmployeeInfiniteScroll({
-    filteredEmployees: employees,
-  });
 
   const handleEmployeeClick = useCallback(
     (employee: Employee) => {
@@ -340,21 +342,24 @@ const EmployeesPageMobile = () => {
             onAddEmployee={() => openAddEmployee()}
           />
         ) : (
-          <InfiniteScrollContainer
-            onLoadMore={infiniteScroll.loadMore}
-            hasMore={infiniteScroll.hasMore}
-            isLoading={infiniteScroll.isLoadingMore}
-          >
+          <>
             <div className="space-y-2">
-              {infiniteScroll.dataToDisplay.map((employee) => (
+              {employees.map((employee) => (
                 <EmployeeMobileCard
                   key={employee.id}
                   employee={employee}
                   onClick={handleEmployeeClick}
+                  onPendingTimesheets={(selectedEmployee) =>
+                    navigate(`/partner/timesheet?employee=${selectedEmployee.id}`)
+                  }
                 />
               ))}
             </div>
-          </InfiniteScrollContainer>
+            <MobilePagination
+              pagination={pagination}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </div>
 
@@ -445,6 +450,39 @@ const EmployeesPageMobile = () => {
                 </Select>
               </div>
             )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Sắp xếp
+              </label>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) => handleSortChange(value, sortOrder)}
+                >
+                  <SelectTrigger className="h-11 min-w-0 rounded-xl">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fullname">Tên nhân viên</SelectItem>
+                    <SelectItem value="created_at">Ngày tạo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 min-w-20 rounded-xl"
+                  onClick={() =>
+                    handleSortChange(
+                      sortBy,
+                      sortOrder === "asc" ? "desc" : "asc",
+                    )
+                  }
+                >
+                  {sortOrder === "asc" ? "Tăng" : "Giảm"}
+                </Button>
+              </div>
+            </div>
 
             {/* Actions */}
             <div className="grid grid-cols-1 gap-3 pt-4 min-[380px]:grid-cols-2">
