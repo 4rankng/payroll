@@ -67,6 +67,7 @@ func (h *AdvancePaymentHandler) GetMyAdvancePaymentHistory(c *gin.Context) {
 			Fee:           item.Fee,
 			NetAmount:     item.NetAmount,
 			Status:        string(item.Status),
+			ForMonth:      item.ForMonth,
 			CreatedAt:     item.CreatedAt,
 			PaidAt:        item.PaidAt,
 			ProjectName:   item.ProjectName,

@@ -395,9 +395,9 @@ describe("AdvancePaymentRequestForm", () => {
 
     expect(screen.getByText("01/06 – 30/06/2026")).toBeInTheDocument();
     expect(screen.getByText("Kỳ ứng lương 06/2026 kết thúc")).toBeInTheDocument();
-    expect(screen.getByText("Đã dùng 8.040.000 ₫")).toBeInTheDocument();
-    expect(screen.getByText("Hạn mức 9.900.000 ₫")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "81");
+    expect(screen.getByText("Đã dùng 4.200.000 ₫")).toBeInTheDocument();
+    expect(screen.getByText("Hạn mức 6.060.000 ₫")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Hạn mức ứng lương đã sử dụng" })).toHaveAttribute("aria-valuenow", "69");
     expect(screen.getByRole("button", { name: /Ứng lương/ })).toBeDisabled();
   });
 

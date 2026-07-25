@@ -217,7 +217,12 @@ export function getAdvanceQuotaSummary(
   const rawMaxAdvanceAmount = activeQuota?.maxAdvanceAmount ?? info.maxAdvanceAmount;
   const quotaCompleted = activeQuota?.completedAmount ?? info.completedAmount;
   const quotaPending = activeQuota?.pendingAmount ?? info.pendingAmount;
-  const historyUsed = getHistoryUsedAmount(history, forMonth);
+  // When the API provides an explicit monthly quota, trust its usage fields
+  // over legacy all-time history rows that have no payroll-month tag.
+  const scopedHistory = activeQuota
+    ? history?.filter((item) => item.forMonth === forMonth)
+    : history;
+  const historyUsed = getHistoryUsedAmount(scopedHistory, forMonth);
   const usedAmount = Math.max(quotaCompleted + quotaPending, historyUsed);
   const remainingAmount =
     activeQuota?.remainingAmount ??
@@ -259,12 +264,10 @@ export function getAdvanceQuotaSummaryForMonth(
   const rawMaxAdvanceAmount = exactQuota?.maxAdvanceAmount ?? (usesTopLevel ? info.maxAdvanceAmount : 0);
   const quotaCompleted = exactQuota?.completedAmount ?? (usesTopLevel ? info.completedAmount : 0);
   const quotaPending = exactQuota?.pendingAmount ?? (usesTopLevel ? info.pendingAmount : 0);
-  // Older history responses have no `forMonth`. Attribute those records only
-  // to the one quota cycle resolved as actionable; otherwise the same legacy
-  // requests would leak into every month selected in the navigator.
-  const legacyHistoryMonth = getAdvanceQuotaSummary(info, history).forMonth;
-  const acceptsLegacyHistory =
-    usesTopLevel || (!!exactQuota && legacyHistoryMonth === forMonth);
+  // Older history responses have no `forMonth`. They may supplement the
+  // backward-compatible top-level response, but an explicit monthly quota is
+  // authoritative and must never be enlarged by all-time untagged history.
+  const acceptsLegacyHistory = usesTopLevel;
   const matchingHistory = history?.filter(
     (item) => item.forMonth === forMonth || (!item.forMonth && acceptsLegacyHistory),
   );

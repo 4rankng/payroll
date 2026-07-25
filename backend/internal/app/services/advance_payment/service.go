@@ -345,9 +345,13 @@ func (s *Service) GetRequestHistory(ctx context.Context, employeeID uint64, limi
 	for i, req := range requests {
 		projectName := ""
 		projectCode := ""
-		if req.Project.ID != 0 {
+		forMonth := ""
+		if req.Project != nil && req.Project.ID != 0 {
 			projectName = req.Project.Name
 			projectCode = req.Project.Code
+		}
+		if req.AdvancePayment != nil {
+			forMonth = req.AdvancePayment.ForMonth
 		}
 
 		items[i] = domain.AdvancePaymentHistoryItem{
@@ -356,6 +360,7 @@ func (s *Service) GetRequestHistory(ctx context.Context, employeeID uint64, limi
 			Fee:           req.Fee,
 			NetAmount:     req.NetAmount,
 			Status:        req.Status,
+			ForMonth:      forMonth,
 			CreatedAt:     req.CreatedAt,
 			PaidAt:        req.PaidAt,
 			ProjectName:   projectName,

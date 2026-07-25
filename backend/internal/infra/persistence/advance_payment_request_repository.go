@@ -81,6 +81,7 @@ func (r *AdvancePaymentRequestRepository) GetByEmployee(ctx context.Context, emp
 	}
 
 	err := query.
+		Preload("AdvancePayment").
 		Preload("Project").
 		Order("advance_payment_requests.created_at DESC").
 		Limit(limit).

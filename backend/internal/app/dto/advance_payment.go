@@ -75,6 +75,7 @@ type AdvancePaymentHistoryItem struct {
 	Fee           uint64     `json:"fee"`
 	NetAmount     uint64     `json:"netAmount"`
 	Status        string     `json:"status"`
+	ForMonth      string     `json:"forMonth"`
 	CreatedAt     time.Time  `json:"createdAt"`
 	PaidAt        *time.Time `json:"paidAt,omitempty"`
 	ProjectName   string     `json:"projectName"`

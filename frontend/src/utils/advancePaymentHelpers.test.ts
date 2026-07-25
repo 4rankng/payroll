@@ -152,6 +152,35 @@ describe("getAdvanceQuotaSummary", () => {
     expect(summary.maxAdvanceAmount).toBe(9_360_000);
     expect(summary.remainingAmount).toBe(0);
   });
+
+  it("keeps an explicit July quota authoritative over untagged all-time history", () => {
+    const summary = getAdvanceQuotaSummary(
+      {
+        ...baseInfo,
+        forMonth: "2026-07",
+        maxAdvanceAmount: 1_260_000,
+        completedAmount: 1_260_000,
+        pendingAmount: 0,
+        remainingAmount: 0,
+        canRequest: false,
+        quotas: [
+          {
+            forMonth: "2026-07",
+            maxAdvanceAmount: 1_260_000,
+            completedAmount: 1_260_000,
+            pendingAmount: 0,
+            remainingAmount: 0,
+          },
+        ],
+      },
+      completedHistory.map(({ forMonth: _forMonth, ...item }) => item),
+    );
+
+    expect(summary.maxAdvanceAmount).toBe(1_260_000);
+    expect(summary.completedAmount).toBe(1_260_000);
+    expect(summary.usedAmount).toBe(1_260_000);
+    expect(summary.usedPercentage).toBe(100);
+  });
 });
 
 describe("getAdvanceQuotaSummaryForMonth", () => {
@@ -188,7 +217,7 @@ describe("getAdvanceQuotaSummaryForMonth", () => {
     });
   });
 
-  it("attributes legacy untagged history only to the resolved June quota", () => {
+  it("keeps an explicit June quota authoritative over legacy untagged history", () => {
     const info: AdvancePaymentInfo = {
       ...baseInfo,
       forMonth: "2026-07",
@@ -211,10 +240,64 @@ describe("getAdvanceQuotaSummaryForMonth", () => {
     const june = getAdvanceQuotaSummaryForMonth(info, "2026-06", history);
     const july = getAdvanceQuotaSummaryForMonth(info, "2026-07", history);
 
-    expect(june.usedAmount).toBe(9_360_000);
-    expect(june.maxAdvanceAmount).toBe(11_220_000);
+    expect(june.usedAmount).toBe(4_200_000);
+    expect(june.maxAdvanceAmount).toBe(6_060_000);
     expect(july.usedAmount).toBe(0);
     expect(july.maxAdvanceAmount).toBe(0);
+  });
+
+  it("does not inflate July quota with untagged all-time history", () => {
+    const info: AdvancePaymentInfo = {
+      ...baseInfo,
+      forMonth: "2026-07",
+      maxAdvanceAmount: 1_260_000,
+      completedAmount: 1_260_000,
+      pendingAmount: 0,
+      remainingAmount: 0,
+      canRequest: false,
+      quotas: [
+        {
+          forMonth: "2026-07",
+          maxAdvanceAmount: 1_260_000,
+          completedAmount: 1_260_000,
+          pendingAmount: 0,
+          remainingAmount: 0,
+        },
+      ],
+    };
+    const allTimeHistory: AdvancePaymentHistoryItem[] = [
+      {
+        id: 3,
+        requestAmount: 1_260_000,
+        netAmount: 1_234_800,
+        fee: 25_200,
+        status: "COMPLETED",
+        createdAt: "2026-07-25T00:00:00Z",
+      },
+      {
+        id: 2,
+        requestAmount: 880_000,
+        netAmount: 862_400,
+        fee: 17_600,
+        status: "COMPLETED",
+        createdAt: "2026-07-01T00:00:00Z",
+      },
+      {
+        id: 1,
+        requestAmount: 4_100_000,
+        netAmount: 4_018_000,
+        fee: 82_000,
+        status: "COMPLETED",
+        createdAt: "2026-06-26T00:00:00Z",
+      },
+    ];
+
+    const july = getAdvanceQuotaSummaryForMonth(info, "2026-07", allTimeHistory);
+
+    expect(july.maxAdvanceAmount).toBe(1_260_000);
+    expect(july.completedAmount).toBe(1_260_000);
+    expect(july.usedAmount).toBe(1_260_000);
+    expect(july.usedPercentage).toBe(100);
   });
 });
 

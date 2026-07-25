@@ -242,6 +242,14 @@ func TestGetByEmployee_DateRange(t *testing.T) {
 	if totalAll < 2 || len(all) < 2 {
 		t.Fatalf("expected >=2 rows without filter, got total=%d len=%d", totalAll, len(all))
 	}
+	for _, request := range all {
+		if request.ID != reqThisMonth.ID && request.ID != reqLastMonth.ID {
+			continue
+		}
+		if request.AdvancePayment == nil || request.AdvancePayment.ForMonth != "2020-01" {
+			t.Fatalf("request id=%d must preload payroll month 2020-01, got %#v", request.ID, request.AdvancePayment)
+		}
+	}
 
 	// Filter to the previous month only → reqLastMonth, not reqThisMonth.
 	prevEnd := endOfMonth(lastMonthTime)
