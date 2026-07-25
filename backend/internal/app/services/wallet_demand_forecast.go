@@ -96,6 +96,10 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	if err != nil {
 		return nil, fmt.Errorf("lấy tổng nghĩa vụ ứng lương chờ chi trả: %w", err)
 	}
+	cycleState, err := s.requestRepo.GetCycleForecastState(ctx, currentForMonth)
+	if err != nil {
+		return nil, fmt.Errorf("lấy trạng thái kỳ ứng lương hiện tại: %w", err)
+	}
 
 	rate := completionRate(historical)
 	paidFrac := rate
@@ -110,10 +114,35 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		nSim = 5000
 	}
 
+	// The legacy pace projection is also the conditioning signal for an active
+	// cycle. Before enough of the cycle is observable it remains an avg-final
+	// display estimate and the reserve keeps the unconditioned historical shape.
+	projectionCycleDay := todayCycleDay
+	if projectionCycleDay < 1 {
+		projectionCycleDay = horizonCycleDay
+	}
+	paceTotal, paceMethod, _, _ := forecastProjectedTotal(actualSoFar, historical, projectionCycleDay)
+	projectedPaid := int64(float64(paceTotal) * rate)
+
 	cycleDist := forecastRemainingCycleDistribution(
 		historical, todayCycleDay, maxDay, current.dailyAmount[todayCycleDay], nSim,
 		forecastSeed(currentForMonth, maxDay), paidFrac,
 	)
+	// On the cutoff day the current day is still incomplete. Re-centring on its
+	// partial cumulative amount would erase the same-day residual that the
+	// historical distribution intentionally preserves.
+	if paceMethod == "cohort-median" && actualSoFar > 0 && todayCycleDay < maxDay {
+		projectedFuture := max(int64(0), projectedPaid-alreadyPaid-current.payableTotal)
+		maxFuture := int64(-1)
+		if cycleState != nil && cycleState.MaxAdvanceAmount > 0 {
+			if cycleState.UsedRequestAmount >= cycleState.MaxAdvanceAmount {
+				maxFuture = 0
+			} else {
+				maxFuture = int64(cycleState.MaxAdvanceAmount - cycleState.UsedRequestAmount)
+			}
+		}
+		cycleDist = conditionDistributionOnCurrentPace(cycleDist, projectedFuture, maxFuture)
+	}
 	sl := serviceLevelConfig{
 		Quantile:          s.cfg.ServiceLevel,
 		CostUnder:         s.cfg.CostUnder,
@@ -123,15 +152,8 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 	recommended, coverage := newsvendorRecommendation(cycleDist, sl)
 	recommended += knownUnpaid
 
-	// Legacy pace-projection (cohort-median) feeds the p50 reference fields and
-	// remaining-to-pay fields for API continuity. The recommendation above uses
-	// the same remaining-cycle distribution as the reference fields below.
-	projectionCycleDay := todayCycleDay
-	if projectionCycleDay < 1 {
-		projectionCycleDay = horizonCycleDay
-	}
-	paceTotal, _, _, _ := forecastProjectedTotal(actualSoFar, historical, projectionCycleDay)
-	projectedPaid := int64(float64(paceTotal) * rate)
+	// Pace-projection fields remain for API continuity. The recommendation and
+	// reference ladder above now use the same current-state conditioning signal.
 	if cycleDist.method == "no-history" {
 		projectedPaid = paceTotal
 	}

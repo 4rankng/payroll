@@ -13,8 +13,9 @@ import (
 
 type walletDemandForecastRequestRepoStub struct {
 	domain.AdvancePaymentRequestRepository
-	rows   []domain.CohortRow
-	months []string
+	rows       []domain.CohortRow
+	months     []string
+	cycleState domain.AdvancePaymentCycleForecastState
 }
 
 func (r *walletDemandForecastRequestRepoStub) GetCohortByMonths(_ context.Context, forMonths []string) ([]domain.CohortRow, error) {
@@ -31,6 +32,14 @@ func (r *walletDemandForecastRequestRepoStub) GetTotalPayableAmount(context.Cont
 		}
 	}
 	return total, nil
+}
+
+func (r *walletDemandForecastRequestRepoStub) GetCycleForecastState(
+	context.Context,
+	string,
+) (*domain.AdvancePaymentCycleForecastState, error) {
+	state := r.cycleState
+	return &state, nil
 }
 
 type walletDemandForecastWalletStub struct {
@@ -449,6 +458,100 @@ func TestWalletDemandForecastIncludesPayableOlderThanForecastHistory(t *testing.
 	if got.Prediction.RecommendedBalance != 40_000_000 {
 		t.Fatalf(
 			"RecommendedBalance = %d, want 40M all-time payable obligation",
+			got.Prediction.RecommendedBalance,
+		)
+	}
+}
+
+func TestWalletDemandForecastConditionsActiveCycleOnObservedPaceAndUploadedCapacity(t *testing.T) {
+	now := time.Date(2026, 7, 25, 12, 0, 0, 0, clock.DefaultLocation)
+	repo := &walletDemandForecastRequestRepoStub{
+		rows: []domain.CohortRow{
+			{ForMonth: "2026-07", CycleDay: 6, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 45_323_040},
+			{ForMonth: "2026-06", CycleDay: 2, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 8_624_000},
+			{ForMonth: "2026-06", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 82_242_060},
+			{ForMonth: "2026-06", CycleDay: 17, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 15_323_280},
+			{ForMonth: "2026-05", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 75_056_870},
+			{ForMonth: "2026-05", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 22_957_760},
+			{ForMonth: "2026-04", CycleDay: 5, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 1_960_000},
+			{ForMonth: "2026-04", CycleDay: 6, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 8_820_000},
+			{ForMonth: "2026-04", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 39_631_200},
+			{ForMonth: "2026-04", CycleDay: 19, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 3_234_000},
+		},
+		cycleState: domain.AdvancePaymentCycleForecastState{
+			MaxAdvanceAmount:  342_900_000,
+			UsedRequestAmount: 45_920_000,
+		},
+	}
+	walletSvc := &walletDemandForecastWalletStub{
+		balance: &walletdomain.WalletBalance{Available: 53_516_340},
+	}
+	svc := NewWalletDemandForecastService(repo, walletSvc, clock.NewFake(now), config.WalletForecastConfig{
+		ServiceLevel:  0.95,
+		NSim:          1000,
+		HistoryMonths: 4,
+		LeadDays:      2,
+	})
+
+	got, err := svc.GetDemandForecast(context.Background())
+	if err != nil {
+		t.Fatalf("GetDemandForecast returned error: %v", err)
+	}
+
+	maxRemainingCapacity := int64(342_900_000 - 45_920_000)
+	if got.Prediction.RecommendedBalance <= 138_104_313 {
+		t.Fatalf(
+			"RecommendedBalance = %d, want current pace to raise it above the stale historical-only 138104313",
+			got.Prediction.RecommendedBalance,
+		)
+	}
+	if got.Prediction.RecommendedBalance > maxRemainingCapacity {
+		t.Fatalf(
+			"RecommendedBalance = %d, want <= remaining uploaded capacity %d",
+			got.Prediction.RecommendedBalance,
+			maxRemainingCapacity,
+		)
+	}
+	if got.Prediction.P50Reference > maxRemainingCapacity ||
+		got.Prediction.P90Reference > maxRemainingCapacity ||
+		got.Prediction.P99Reference > maxRemainingCapacity {
+		t.Fatalf(
+			"reference ladder p50=%d p90=%d p99=%d exceeds remaining uploaded capacity %d",
+			got.Prediction.P50Reference,
+			got.Prediction.P90Reference,
+			got.Prediction.P99Reference,
+			maxRemainingCapacity,
+		)
+	}
+}
+
+func TestWalletDemandForecastDoesNotTreatNoRequestsAsZeroFutureDemand(t *testing.T) {
+	now := time.Date(2026, 7, 25, 12, 0, 0, 0, clock.DefaultLocation)
+	repo := &walletDemandForecastRequestRepoStub{
+		rows: []domain.CohortRow{
+			{ForMonth: "2026-06", CycleDay: 2, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 8_624_000},
+			{ForMonth: "2026-06", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 82_242_060},
+			{ForMonth: "2026-05", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 75_056_870},
+			{ForMonth: "2026-05", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 22_957_760},
+		},
+	}
+	walletSvc := &walletDemandForecastWalletStub{
+		balance: &walletdomain.WalletBalance{Available: 0},
+	}
+	svc := NewWalletDemandForecastService(repo, walletSvc, clock.NewFake(now), config.WalletForecastConfig{
+		ServiceLevel:  0.95,
+		NSim:          1000,
+		HistoryMonths: 3,
+		LeadDays:      2,
+	})
+
+	got, err := svc.GetDemandForecast(context.Background())
+	if err != nil {
+		t.Fatalf("GetDemandForecast returned error: %v", err)
+	}
+	if got.Prediction.RecommendedBalance <= 0 {
+		t.Fatalf(
+			"RecommendedBalance = %d, want historical remaining demand before the first current request",
 			got.Prediction.RecommendedBalance,
 		)
 	}

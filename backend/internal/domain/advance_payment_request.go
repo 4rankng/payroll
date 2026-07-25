@@ -184,6 +184,10 @@ type AdvancePaymentRequestRepository interface {
 	// from the period start (day 20 of for_month); the persistence layer derives it in
 	// Asia/Ho_Chi_Minh so prod UTC created_at values resolve to the correct local day.
 	GetCohortByMonths(ctx context.Context, forMonths []string) ([]CohortRow, error)
+	// GetCycleForecastState returns the current uploaded advance capacity and the
+	// gross amount already consuming it. The capacity is a ceiling for projected
+	// future demand, never a substitute for demand from actual requests.
+	GetCycleForecastState(ctx context.Context, forMonth string) (*AdvancePaymentCycleForecastState, error)
 }
 
 // CohortRow is one cell of the advance-payment request cohort matrix: the request
@@ -196,6 +200,13 @@ type CohortRow struct {
 	Status       string `gorm:"column:status"`
 	RequestCount int64  `gorm:"column:request_count"`
 	TotalAmount  int64  `gorm:"column:total_amount"`
+}
+
+// AdvancePaymentCycleForecastState is the authoritative in-progress cycle state
+// used to bound a pace-adjusted wallet forecast.
+type AdvancePaymentCycleForecastState struct {
+	MaxAdvanceAmount  uint64 `gorm:"column:max_advance_amount"`
+	UsedRequestAmount uint64 `gorm:"column:used_request_amount"`
 }
 
 type AdvancePaymentStatsSummary struct {

@@ -33,7 +33,7 @@ export function buildFailureSummary(
   errors: ImportError[],
   forMonth?: string,
 ): string {
-  if (errors.length === 0) return 'File không thể xử lý. Vui lòng kiểm tra lại định dạng.';
+  if (errors.length === 0) return 'Không thể xử lý tệp. Vui lòng kiểm tra lại định dạng.';
 
   const approvedErrors = errors.filter(
     (e) =>
@@ -55,10 +55,10 @@ export function buildFailureSummary(
   );
 
   if (duplicateErrors.length > 0) {
-    return `Phát hiện ${duplicateErrors.length} bản chấm công trùng lặp. Vui lòng kiểm tra lại dữ liệu trong file.`;
+    return `Phát hiện ${duplicateErrors.length} bản chấm công trùng lặp. Vui lòng kiểm tra lại dữ liệu trong tệp.`;
   }
 
-  return `Phát hiện ${errors.length} lỗi khi xử lý file. Vui lòng kiểm tra chi tiết bên dưới.`;
+  return `Phát hiện ${errors.length} lỗi khi xử lý tệp. Vui lòng kiểm tra chi tiết bên dưới.`;
 }
 
 /** Group errors by employee name for display. */
@@ -103,6 +103,24 @@ export function computeHintText(hasProject: boolean, hasFile: boolean): string {
   if (!hasProject && !hasFile) return 'Cần chọn dự án và tệp để tiếp tục';
   if (!hasProject) return 'Còn thiếu: dự án';
   return 'Còn thiếu: tệp bảng chấm công';
+}
+
+function invalidateTerminalImportQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  result: PartnerImportFile,
+) {
+  if (result.status !== 'completed' && result.status !== 'failed') {
+    return;
+  }
+
+  queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
+  queryClient.invalidateQueries({
+    queryKey: QueryKeys.employees.missingBankDetails(),
+  });
+
+  if (result.status === 'completed') {
+    queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });
+  }
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -173,12 +191,7 @@ export function useBCCUploadModal({
   useEffect(() => {
     if (!polledResult) return;
     setResult(polledResult);
-    if (polledResult.status === 'completed' || polledResult.status === 'failed') {
-      queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
-      if (polledResult.status === 'completed') {
-        queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });
-      }
-    }
+    invalidateTerminalImportQueries(queryClient, polledResult);
   }, [polledResult, queryClient]);
 
   useEffect(() => {
@@ -208,13 +221,14 @@ export function useBCCUploadModal({
         onSuccess: (data) => {
           setResult(data);
           setFile(null);
+          invalidateTerminalImportQueries(queryClient, data);
         },
         onError: () => {
           // Error already handled by useUploadBCCTimesheet
         },
       },
     );
-  }, [file, effectiveProjectId, selectedMonth, upload]);
+  }, [file, effectiveProjectId, queryClient, selectedMonth, upload]);
 
   const handleClose = useCallback(() => {
     setFile(null);

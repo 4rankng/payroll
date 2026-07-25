@@ -17,14 +17,14 @@ import (
 // KQ sheet/column layout (matches the reference KQ Chuyen Tien.xlsx).
 // Sheet `data`, rows 1-4 header, row 5+ data, 9 columns A-I.
 const (
-	kqSheetName        = "data"
-	kqTitleRow         = 1
-	kqRefRow           = 2
-	kqDateRow          = 3
-	kqHeaderRow        = 4
-	kqFirstDataRow     = 5
-	vficInvoicePrefix  = "VFIC"
-	ftPendingMessage   = "Đang chờ FT"
+	kqSheetName       = "data"
+	kqTitleRow        = 1
+	kqRefRow          = 2
+	kqDateRow         = 3
+	kqHeaderRow       = 4
+	kqFirstDataRow    = 5
+	vficInvoicePrefix = "VFIC"
+	ftPendingMessage  = "Đang chờ FT"
 )
 
 // kqHeaders is the row-4 header set.

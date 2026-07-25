@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -43,12 +42,11 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { formatCurrency } from "@/utils/formatters";
-import { QueryKeys } from "@/lib/queryKeys";
-import { walletService } from "@/services/api/wallet.service";
 import { cn } from "@/lib/utils";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
+import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
 
 type AdminTab = "requests" | "attendances";
 
@@ -124,13 +122,8 @@ const AdvancePaymentsPageMobile = () => {
 
   // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
   // gating the query prevents a 403 storm on this shared mobile component.
-  const { data: demandForecast, isLoading: demandForecastLoading } = useQuery({
-    queryKey: QueryKeys.wallet.demandForecast(),
-    queryFn: () => walletService.getDemandForecast(),
-    enabled: !isAdvPartner,
-    staleTime: 5 * 60_000,
-    refetchInterval: 5 * 60_000,
-  });
+  const { data: demandForecast, isLoading: demandForecastLoading } =
+    useWalletDemandForecast(!isAdvPartner);
 
   const summaryData = page.summary?.data;
 

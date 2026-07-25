@@ -284,12 +284,12 @@ func (e *OnePayExporter) buildRowsWithSwift(
 		}
 
 		row := OnePayExportRow{
-			OrderNo:       i + 1, // 1-indexed after skips (KQ display order)
-			AccountNo:     emp.BankAccountNumber,
-			AccountName:   emp.BankAccountName,
-			Bank:          bank.BranchName,
-			SwiftCode:     bank.SwiftCode,
-			Amount:        amount,
+			OrderNo:     i + 1, // 1-indexed after skips (KQ display order)
+			AccountNo:   emp.BankAccountNumber,
+			AccountName: emp.BankAccountName,
+			Bank:        bank.BranchName,
+			SwiftCode:   bank.SwiftCode,
+			Amount:      amount,
 			// PaymentDetail MUST be the bare VFIC code only.
 			//
 			// This string flows: xlsx column G → wallet_bulk parser →

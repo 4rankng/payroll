@@ -437,6 +437,21 @@ type WalletBalanceResponse struct {
 	LastSyncedAt string `json:"lastSyncedAt,omitempty"`
 }
 
+type WalletDemandForecastResponse struct {
+	CurrentForMonth string `json:"current_for_month"`
+	CurrentCycleDay int    `json:"current_cycle_day"`
+	MaxCycleDay     int    `json:"max_cycle_day"`
+	Periods         []struct {
+		ForMonth string `json:"for_month"`
+	} `json:"periods"`
+	Prediction struct {
+		RecommendedBalance int64 `json:"recommended_balance"`
+		P50Reference       int64 `json:"p50_reference"`
+		P90Reference       int64 `json:"p90_reference"`
+		P99Reference       int64 `json:"p99_reference"`
+	} `json:"prediction"`
+}
+
 type WalletPaymentItem struct {
 	ID           uint       `json:"id"`
 	Amount       int64      `json:"amount"`

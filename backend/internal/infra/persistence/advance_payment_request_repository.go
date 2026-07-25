@@ -850,6 +850,52 @@ func (r *AdvancePaymentRequestRepository) GetCohortByMonths(ctx context.Context,
 	return rows, nil
 }
 
+// GetCycleForecastState returns the uploaded advance ceiling and the gross
+// request amount that currently consumes it for one salary period. Cancelled
+// and failed requests do not consume the employee's request budget.
+func (r *AdvancePaymentRequestRepository) GetCycleForecastState(
+	ctx context.Context,
+	forMonth string,
+) (*domain.AdvancePaymentCycleForecastState, error) {
+	const query = `
+		SELECT
+		  COALESCE((
+		    SELECT SUM(ap.max_adv_amount)
+		    FROM advance_payments ap
+		    WHERE ap.for_month = ?
+		      AND EXISTS (
+		        SELECT 1
+		        FROM project_employees pe
+		        WHERE pe.employee_id = ap.employee_id
+		          AND pe.project_id = ap.project_id
+		          AND pe.deleted_at IS NULL
+		          AND pe.payment_schedule = 'flexible'
+		      )
+		  ), 0) AS max_advance_amount,
+		  COALESCE((
+		    SELECT SUM(apr.request_amount)
+		    FROM advance_payment_requests apr
+		    JOIN advance_payments ap ON ap.id = apr.adv_pay_id
+		    WHERE ap.for_month = ?
+		      AND apr.status IN ('PENDING', 'APPROVED', 'COMPLETED')
+		      AND EXISTS (
+		        SELECT 1
+		        FROM project_employees pe
+		        WHERE pe.employee_id = apr.employee_id
+		          AND pe.project_id = apr.project_id
+		          AND pe.deleted_at IS NULL
+		          AND pe.payment_schedule = 'flexible'
+		      )
+		  ), 0) AS used_request_amount
+	`
+
+	var state domain.AdvancePaymentCycleForecastState
+	if err := r.DB.WithContext(ctx).Raw(query, forMonth, forMonth).Scan(&state).Error; err != nil {
+		return nil, r.errorHandler.HandleGetError(err, "advance_payment_request", "cycle_forecast_state")
+	}
+	return &state, nil
+}
+
 // CreateWithBudgetCheck atomically creates an advance payment request only if the
 // employee's total active requests (PENDING + APPROVED + COMPLETED) + the new request
 // amount do not exceed the max advance limit for the given month.

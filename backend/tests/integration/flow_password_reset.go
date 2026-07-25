@@ -14,6 +14,7 @@ const flowPasswordReset = "PasswordReset"
 //   - anti-enumeration: request returns 200 for known AND unknown emails
 //   - confirm with a garbage token → 401
 //   - confirm with a missing token → 400
+//
 // The single-use, transactional, and session-invalidation guarantees are
 // covered by the unit tests in internal/app/services/passwordreset/.
 func runPasswordResetTests(client *APIClient, data *TestData, reporter *Reporter, cfg *TestConfig) {

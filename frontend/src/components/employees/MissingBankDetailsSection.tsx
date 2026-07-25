@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useMissingBankDetails } from '@/hooks/employees/useMissingBankDetails';
 import { VIETNAMESE_EMPLOYEE_LABELS } from '@/types/api/employee.types';
 import type { Employee, CurrentProject } from '@/types/api/employee.types';
+import { getBankInformationWarningReason } from '@/utils/bank-information-warning';
 
 interface MissingBankDetailsSectionProps {
   onEmployeeClick?: (employee: Employee) => void;
@@ -46,25 +47,16 @@ export const MissingBankDetailsSection = ({
 
   const rows = useMemo(() => employees, [employees]);
 
-  // The list now covers two cases: (a) missing bank info entirely, and
-  // (b) OnePay-confirmed invalid account. Adjust the title to match.
-  const hasInvalid = useMemo(
-    () => rows.some(e => e.bank_account_status === 'invalid'),
-    [rows],
-  );
-
   if (isLoading || totalCount === 0) return null;
 
   return (
-    <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(217,119,6,0.08)' }}>
+    <div className="overflow-hidden rounded-xl border border-amber-200/80 bg-amber-50/50">
       {/* Header row */}
-      <div className="flex items-center justify-between px-4 py-3 gap-3">
+      <div className="flex flex-col items-stretch gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span className="text-sm font-semibold text-amber-900 truncate">
-            {hasInvalid
-              ? 'Nhân viên cần kiểm tra thông tin ngân hàng'
-              : 'Nhân viên thiếu thông tin ngân hàng'}
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+          <span className="min-w-0 text-pretty text-sm font-semibold text-amber-900">
+            Thông tin ngân hàng không hợp lệ
           </span>
           <Badge className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 text-xs font-semibold shrink-0">
             {totalCount}
@@ -74,21 +66,26 @@ export const MissingBankDetailsSection = ({
           variant="ghost"
           size="sm"
           onClick={toggle}
-          className="h-7 gap-1.5 text-amber-700 hover:text-amber-900 hover:bg-amber-100 text-xs shrink-0"
+          aria-expanded={isExpanded}
+          aria-controls="missing-bank-details-table"
+          className="h-11 shrink-0 gap-1.5 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 sm:h-9"
         >
           {isExpanded ? (
-            <><ChevronUp className="h-3.5 w-3.5" />Ẩn</>
+            <><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />Ẩn</>
           ) : (
-            <><ChevronDown className="h-3.5 w-3.5" />Xem danh sách</>
+            <><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />Xem danh sách</>
           )}
         </Button>
       </div>
 
       {/* Expandable table */}
       {isExpanded && rows.length > 0 && (
-        <div className="border-t border-amber-200">
-          <div className="max-h-80 overflow-y-auto">
-            <table className="w-full text-sm">
+        <div id="missing-bank-details-table" className="border-t border-amber-200">
+          <div className="max-h-80 overflow-auto overscroll-contain">
+            <table className="w-full min-w-[760px] text-sm">
+              <caption className="sr-only">
+                Danh sách nhân viên có thông tin ngân hàng không hợp lệ
+              </caption>
               <thead className="sticky top-0 z-10 bg-amber-100/80 backdrop-blur-sm">
                 <tr>
                   <th className="text-left px-4 py-2.5 text-xs font-semibold text-amber-900 w-12">STT</th>
@@ -102,14 +99,27 @@ export const MissingBankDetailsSection = ({
               <tbody className="bg-card divide-y divide-amber-100">
                 {rows.map((employee, index) => {
                   const hasPending = (employee.timesheet_summary?.pending_timesheets ?? 0) > 0;
-                  const isInvalid = employee.bank_account_status === 'invalid';
+                  const warningReason = getBankInformationWarningReason(employee);
                   return (
                     <tr
                       key={employee.id}
                       onClick={() => onEmployeeClick?.(employee)}
+                      onKeyDown={(event) => {
+                        if (!onEmployeeClick) return;
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onEmployeeClick(employee);
+                        }
+                      }}
+                      tabIndex={onEmployeeClick ? 0 : undefined}
+                      aria-label={
+                        onEmployeeClick
+                          ? `Mở thông tin nhân viên ${employee.fullname}`
+                          : undefined
+                      }
                       className={
                         onEmployeeClick
-                          ? 'hover:bg-amber-50 cursor-pointer transition-colors'
+                          ? 'cursor-pointer transition-colors hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-600'
                           : ''
                       }
                     >
@@ -122,7 +132,7 @@ export const MissingBankDetailsSection = ({
                               title={`${employee.timesheet_summary!.pending_timesheets} bảng công chờ duyệt`}
                               className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 bg-orange-100 border border-orange-200 rounded px-1.5 py-0.5"
                             >
-                              <Clock className="h-2.5 w-2.5" />
+                              <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                               {employee.timesheet_summary!.pending_timesheets} chờ duyệt
                             </span>
                           )}
@@ -130,23 +140,10 @@ export const MissingBankDetailsSection = ({
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{employee.cccd}</td>
                       <td className="px-4 py-3">
-                        {isInvalid ? (
-                          // OnePay-confirmed invalid: red badge + reason.
-                          <span
-                            title={employee.bank_account_invalid_reason ?? undefined}
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5 max-w-[220px] truncate"
-                          >
-                            <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
-                            <span className="truncate">
-                              {employee.bank_account_invalid_reason ?? 'Tài khoản không hợp lệ'}
-                            </span>
-                          </span>
-                        ) : (
-                          // Missing banking info entirely: amber badge.
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5">
-                            Chưa có thông tin ngân hàng
-                          </span>
-                        )}
+                        <span className="inline-flex max-w-[240px] items-start gap-1 rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium leading-4 text-amber-900">
+                          <AlertTriangle className="mt-0.5 h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+                          <span className="break-words">{warningReason}</span>
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <ProjectCell projects={employee.current_projects} />

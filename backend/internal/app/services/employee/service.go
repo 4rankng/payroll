@@ -69,11 +69,28 @@ func (s *EmployeeService) BankAccountValidator() *BankAccountValidator {
 
 // CreateEmployee orchestrates employee creation using domain services and transaction management
 func (s *EmployeeService) CreateEmployee(ctx context.Context, employee *domain.Employee, createdBy uint) (*domain.Employee, error) {
+	return s.createEmployee(ctx, employee, createdBy, false)
+}
+
+// CreateEmployeeFromImport creates an employee from a trusted bulk-import
+// workflow. Unlike a manual write, confirmed-invalid bank details are persisted
+// with their validation status so the import can continue and the employee can
+// be corrected from the unified bank-warning list.
+func (s *EmployeeService) CreateEmployeeFromImport(ctx context.Context, employee *domain.Employee, createdBy uint) (*domain.Employee, error) {
+	return s.createEmployee(ctx, employee, createdBy, true)
+}
+
+func (s *EmployeeService) createEmployee(
+	ctx context.Context,
+	employee *domain.Employee,
+	createdBy uint,
+	allowInvalidBankAccount bool,
+) (*domain.Employee, error) {
 	// Orchestrate employee creation within a transaction
 	result, err := s.TransactionManager.WithTransactionResult(ctx, func(txCtx context.Context) (any, error) {
 		// Set created by
 		employee.CreatedBy = createdBy
-		return s.createEmployeeCore(txCtx, employee)
+		return s.createEmployeeCore(txCtx, employee, allowInvalidBankAccount)
 	})
 
 	if err != nil {
@@ -96,7 +113,11 @@ func (s *EmployeeService) CreateEmployee(ctx context.Context, employee *domain.E
 // createEmployeeCore contains the core transactional logic for creating an employee.
 // It is shared between the main CreateEmployee flow and any asynchronous handlers that
 // may need to participate in the same transaction in the future.
-func (s *EmployeeService) createEmployeeCore(ctx context.Context, employee *domain.Employee) (*domain.Employee, error) {
+func (s *EmployeeService) createEmployeeCore(
+	ctx context.Context,
+	employee *domain.Employee,
+	allowInvalidBankAccount bool,
+) (*domain.Employee, error) {
 	// Sanitize CCCD and email before persistence
 	// Sanitize identifiers and contact fields
 	employee.CCCD = strings.TrimSpace(employee.CCCD)
@@ -122,9 +143,15 @@ func (s *EmployeeService) createEmployeeCore(ctx context.Context, employee *doma
 		return nil, err
 	}
 
-	// 1b. Live account verification. A confirmed-invalid account rejects this
-	// manual create before any user or employee data is persisted.
-	if err := validateManualBankAccount(ctx, s.bankAccountValidator, employee); err != nil {
+	// 1b. Live account verification. Manual writes reject confirmed-invalid
+	// accounts before persistence; bulk imports persist the same verdict so the
+	// employee can be corrected without blocking timesheet ingestion.
+	if err := validateBankAccountForCreate(
+		ctx,
+		s.bankAccountValidator,
+		employee,
+		allowInvalidBankAccount,
+	); err != nil {
 		return nil, err
 	}
 

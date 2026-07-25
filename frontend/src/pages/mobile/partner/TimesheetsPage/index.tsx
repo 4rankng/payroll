@@ -7,6 +7,9 @@ import {
   TimesheetsExportDialog,
   TimesheetsExportParams,
 } from "@/components/timesheet/TimesheetsExportDialog";
+import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
+import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
+import { ExportSaoKeDialog } from "@/components/transaction/ExportSaoKeDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
@@ -24,6 +27,9 @@ import type { Timesheet } from "@/types/api/timesheet.types";
 export default function TimesheetsPageMobile() {
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] =
     useState(false);
+  const [exportSaoKeOpen, setExportSaoKeOpen] = useState(false);
+  const [bccUploadOpen, setBccUploadOpen] = useState(false);
+  const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { openTimesheetEntry, openTimesheetDetails } = useTimesheetModals();
@@ -199,6 +205,9 @@ export default function TimesheetsPageMobile() {
       <TimesheetPageHeaderMobile
         onAddTimesheet={() => openTimesheetEntry()}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}
+        onPayrollReportExport={() => setExportSaoKeOpen(true)}
+        onBccUpload={() => setBccUploadOpen(true)}
+        onBccHistory={() => setBccHistoryOpen(true)}
         onPaymentHistory={() => navigate("payment-history")}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         userRole="partner"
@@ -215,7 +224,21 @@ export default function TimesheetsPageMobile() {
             stats={[
               { label: "Nhân viên", value: timesheetStats.summary.totalEmployees ?? 0 },
               { label: "Tổng công", value: timesheetStats.summary.totalEntries },
-              { label: "Đã duyệt", value: timesheetStats.summary.approvedEntries },
+              {
+                label: "Đã duyệt",
+                value: timesheetStats.summary.approvedEntries,
+                variant: timesheetManagement.statusFilter === "approved"
+                  ? "accent" as const
+                  : "default" as const,
+                isPressed: timesheetManagement.statusFilter === "approved",
+                onClick: timesheetStats.summary.approvedEntries > 0
+                  ? () => timesheetManagement.setStatusFilter(
+                      timesheetManagement.statusFilter === "approved"
+                        ? "all"
+                        : "approved",
+                    )
+                  : undefined,
+              },
             ]}
           />
           {(timesheetStats.summary.pendingApproval > 0 || (timesheetStats.summary.pendingEmployees ?? 0) > 0) && (
@@ -275,6 +298,32 @@ export default function TimesheetsPageMobile() {
         onOpenChange={setApprovedTimesheetsDialogOpen}
         onExport={handleApprovedTimesheetsExportSubmit}
         isLoading={exportApprovedTimesheetsMutation.isPending}
+      />
+
+      <ExportSaoKeDialog
+        open={exportSaoKeOpen}
+        onOpenChange={setExportSaoKeOpen}
+      />
+
+      <BCCUploadModal
+        open={bccUploadOpen}
+        onClose={() => setBccUploadOpen(false)}
+        projectId={
+          timesheetManagement.selectedProject !== "all"
+            ? parseInt(timesheetManagement.selectedProject, 10)
+            : 0
+        }
+        projects={timesheetManagement.projects}
+      />
+
+      <UploadHistorySheet
+        open={bccHistoryOpen}
+        onClose={() => setBccHistoryOpen(false)}
+        projectId={
+          timesheetManagement.selectedProject !== "all"
+            ? parseInt(timesheetManagement.selectedProject, 10)
+            : undefined
+        }
       />
     </MobilePageShell>
   );

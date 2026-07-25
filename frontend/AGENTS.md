@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-06-07 | Updated: 2026-06-07 -->
+<!-- Generated: 2026-06-07 | Updated: 2026-07-25 -->
 
 # Frontend — Payroll Management System
 
@@ -33,6 +33,18 @@ React 18 + TypeScript + Vite 6 frontend for a Vietnamese payroll management syst
 
 - **`.tsx` files** — UI/UX rendering only. No business logic, no API calls, no data transformation.
 - **`.ts` files** — Business logic, data manipulation, API calls, type definitions, utilities.
+
+### Desktop and Mobile Parity (NON-NEGOTIABLE)
+
+- Develop every frontend feature and bug fix for desktop and mobile in the same task for both Admin and Partner. A change is incomplete until both views of every affected role are implemented and verified.
+- Audit Admin and Partner independently. Desktop/mobile parity is required within each role, while role-specific capabilities and permissions must remain intentionally distinct between roles.
+- Before editing, identify whether the route uses shared responsive markup or swaps to dedicated desktop/mobile pages, components, headers, tables, cards, dialogs, sheets, or navigation. Update every active render path.
+- Keep feature capabilities aligned across views: actions, buttons, filters, states, data, validation, permissions, error handling, and workflow outcomes must remain equivalent unless the user explicitly approves a platform-specific difference.
+- Mobile may use a different presentation—cards, bottom sheets, overflow menus, stacked controls—but must not silently omit desktop functionality. Put space-constrained actions in an accessible menu or sheet.
+- Share hooks, services, mutations, query keys, authorization rules, and domain behavior wherever possible so desktop and mobile cannot drift independently.
+- Add regression coverage when desktop and mobile use separate components or callback wiring. Tests must fail if an Admin or Partner workflow disappears from either view.
+- Verify authenticated Admin and Partner desktop views at 1280px or wider and their mobile views at 390px for every shared or role-sensitive change. Also test 320px for dense content, long Vietnamese text, full currency values, tables, dialogs, sheets, and other overflow-prone UI.
+- Browser QA must confirm feature/action parity, correct data and permissions, readable wrapping, no horizontal scrolling, keyboard and screen-reader semantics, visible focus, and touch targets of at least 44px.
 
 ### DOs
 

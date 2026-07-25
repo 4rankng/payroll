@@ -5,11 +5,11 @@ package repositories
 // partnerAccessCondition() SQL fragment:
 //
 //   - EmployeeIDs covers the three employee-scoped access paths:
-//       (a) employees.created_by = partnerID
-//       (b) project_employees.created_by = partnerID  (DISTINCT employee_id)
-//       (c) employee_users.user_id = partnerID        (employee_id)
+//     (a) employees.created_by = partnerID
+//     (b) project_employees.created_by = partnerID  (DISTINCT employee_id)
+//     (c) employee_users.user_id = partnerID        (employee_id)
 //   - ProjectIDs covers the project-scoped access path:
-//       (d) project_users.user_id = partnerID         (project_id)
+//     (d) project_users.user_id = partnerID         (project_id)
 //
 // Once materialised, the per-row access predicate collapses from 3 correlated
 // EXISTS subqueries into a simple `employee_id IN (...) OR project_id IN (...)`,

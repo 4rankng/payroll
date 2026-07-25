@@ -116,7 +116,7 @@ func (s *PasswordResetTokenStore) Delete(ctx context.Context, token string) erro
 	return s.client.Del(ctx, tokenKey(tokenHashHex(token))).Err()
 }
 
-func tokenKey(hashHex string) string  { return "pwreset:" + hashHex }
+func tokenKey(hashHex string) string { return "pwreset:" + hashHex }
 func tokenHashHex(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])

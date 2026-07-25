@@ -28,7 +28,14 @@ interface UploadHistorySheetProps {
   projects?: { id: number; name: string }[];
 }
 
-function statusBadge(status: PartnerImportFile['status']) {
+function statusBadge(item: PartnerImportFile) {
+  if (item.status === 'completed' && item.error_count > 0) {
+    return (
+      <Badge className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50">
+        Hoàn tất một phần
+      </Badge>
+    );
+  }
   const map = {
     completed: (
       <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-0">
@@ -48,7 +55,7 @@ function statusBadge(status: PartnerImportFile['status']) {
     ),
     failed: <Badge variant="destructive">Thất bại</Badge>,
   } as const;
-  return map[status] ?? <Badge variant="outline">{status}</Badge>;
+  return map[item.status] ?? <Badge variant="outline">{item.status}</Badge>;
 }
 
 function ErrorDetail({ detail }: { detail?: string | null }) {
@@ -69,7 +76,11 @@ function ErrorDetail({ detail }: { detail?: string | null }) {
           {errors.map((e, i) => (
             <li key={i} className="flex gap-1.5">
               <span className="shrink-0 mt-px">•</span>
-              <span>{e.employee ? <strong>{e.employee}:</strong> : ''} {e.reason}</span>
+              <span>
+                {e.row > 0 && <strong>Dòng {e.row}: </strong>}
+                {e.employee ? <strong>{e.employee}: </strong> : ''}
+                {e.reason}
+              </span>
             </li>
           ))}
         </ul>
@@ -160,9 +171,9 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
             <div className="rounded-full bg-muted p-5 mb-4">
               <UploadCloud className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-foreground">Chưa có file nào được tải lên</p>
+            <p className="text-sm font-medium text-foreground">Chưa có tệp nào được tải lên</p>
             <p className="text-xs text-muted-foreground mt-1.5 max-w-xs">
-              Sử dụng nút "Tải lên BCC" để nhập dữ liệu bảng công từ file Excel
+              Sử dụng nút "Tải lên BCC" để nhập dữ liệu bảng công từ tệp Excel
             </p>
           </div>
         )}
@@ -198,13 +209,13 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {statusBadge(item.status)}
+                {statusBadge(item)}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 text-muted-foreground hover:text-foreground"
                   onClick={() => handleDownload(item.id, item.original_name)}
-                  title="Tải về file gốc"
+                  title="Tải về tệp gốc"
                 >
                   <Download className="h-3.5 w-3.5" />
                 </Button>

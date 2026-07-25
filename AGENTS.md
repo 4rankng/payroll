@@ -1,4 +1,4 @@
-<!-- Generated: 2026-06-07 | Updated: 2026-06-07 -->
+<!-- Generated: 2026-06-07 | Updated: 2026-07-25 -->
 
 # Payroll
 
@@ -29,6 +29,8 @@ Payroll management system for Vietnamese companies. Monorepo with a Go backend (
 - Production server is **x86_64/amd64** — never build arm64 Docker images
 - Production uses **OnePay** (NOT 9Pay); system is provider-agnostic
 - Work on main branch directly, no worktrees
+- Treat desktop and mobile as one frontend delivery scope for **both Admin and Partner**: every frontend feature or fix must be implemented for both views of every affected role unless the user explicitly requests a narrower exception
+- When routes or responsive wrappers render separate desktop and mobile components, trace and update both paths; never assume a desktop change automatically reaches mobile
 - Commit format: `<type>(<scope>): <subject>` — e.g. `feat(timesheet): add bulk export`
 - `make dev` starts backend (air hot-reload on :8080) and frontend (vite dev on :5173)
 - `make deploy` builds and deploys to production server via SSH
@@ -37,6 +39,8 @@ Payroll management system for Vietnamese companies. Monorepo with a Go backend (
 - `make api-test` — integration tests against live backend
 - Backend unit tests: `cd backend && go test ./... -v -race -cover`
 - Frontend: `cd frontend && pnpm lint && pnpm type-check`
+- Frontend UI changes: verify authenticated desktop and mobile views for every affected role, including separate Admin and Partner checks; test at least 1280px desktop and 390px mobile, plus 320px when content density, long text, money, tables, dialogs, or sheets may cause overflow
+- Desktop/mobile verification must cover feature and action parity, data and permission parity, readable wrapping, no horizontal overflow, accessible controls, and minimum 44px mobile touch targets
 - Update `backend/tests/integration` with test scenarios for new features
 
 ### Common Patterns

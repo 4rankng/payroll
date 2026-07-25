@@ -33,11 +33,11 @@ const (
 // tolerated. Each header cell is trimmed + lowercased before lookup.
 var headerAliases = map[string]string{
 	// OrderNo
-	"stt":            "order_no",
-	"ord. no.":       "order_no",
-	"ord.no":         "order_no",
-	"(ord. no.)":     "order_no",
-	"(ord.no)":       "order_no",
+	"stt":        "order_no",
+	"ord. no.":   "order_no",
+	"ord.no":     "order_no",
+	"(ord. no.)": "order_no",
+	"(ord.no)":   "order_no",
 	// AccountNo
 	"số tài khoản":  "account_no",
 	"so tai khoan":  "account_no",
@@ -51,11 +51,11 @@ var headerAliases = map[string]string{
 	"beneficiary":         "account_name",
 	"(beneficiary)":       "account_name",
 	// Bank (Vietnamese display name)
-	"ngân hàng thụ hưởng/chi nhánh":   "bank",
-	"ngan hang thu huong/chi nhanh":   "bank",
-	"beneficiary bank":                "bank",
-	"beneficiary bank / branch":       "bank",
-	"(beneficiary bank)":              "bank",
+	"ngân hàng thụ hưởng/chi nhánh": "bank",
+	"ngan hang thu huong/chi nhanh": "bank",
+	"beneficiary bank":              "bank",
+	"beneficiary bank / branch":     "bank",
+	"(beneficiary bank)":            "bank",
 	// SwiftCode
 	"mã swift":     "swift_code",
 	"ma swift":     "swift_code",
@@ -67,16 +67,16 @@ var headerAliases = map[string]string{
 	"(swift code)": "swift_code",
 	"(swift/bic)":  "swift_code",
 	// Amount
-	"số tiền":   "amount",
-	"so tien":   "amount",
-	"amount":    "amount",
-	"(amount)":  "amount",
+	"số tiền":  "amount",
+	"so tien":  "amount",
+	"amount":   "amount",
+	"(amount)": "amount",
 	// PaymentDetail
-	"nội dung chuyển khoản":  "payment_detail",
-	"noi dung chuyen khoan":  "payment_detail",
-	"payment detail":         "payment_detail",
-	"(payment detail)":       "payment_detail",
-	"description":            "payment_detail",
+	"nội dung chuyển khoản": "payment_detail",
+	"noi dung chuyen khoan": "payment_detail",
+	"payment detail":        "payment_detail",
+	"(payment detail)":      "payment_detail",
+	"description":           "payment_detail",
 }
 
 // canonicalFields lists every header alias value we MUST resolve before we
@@ -129,11 +129,11 @@ func NewYeuCauChuyenTienParser(logger *slog.Logger) *YeuCauChuyenTienParser {
 // Returns one of the sentinel errors from types.go when validation fails.
 func (p *YeuCauChuyenTienParser) Parse(ctx context.Context, r io.Reader) ([]BulkTransferRow, error) {
 	f, err := excelize.OpenReader(r, excelize.Options{
-		UnzipSizeLimit:     unzipSizeLimit,
-		UnzipXMLSizeLimit:  unzipXMLSizeLimit,
-		MaxCalcIterations:  1,
-		ShortDatePattern:   "yyyy-mm-dd",
-		LongDatePattern:    "yyyy-mm-dd",
+		UnzipSizeLimit:    unzipSizeLimit,
+		UnzipXMLSizeLimit: unzipXMLSizeLimit,
+		MaxCalcIterations: 1,
+		ShortDatePattern:  "yyyy-mm-dd",
+		LongDatePattern:   "yyyy-mm-dd",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open xlsx: %w", err)

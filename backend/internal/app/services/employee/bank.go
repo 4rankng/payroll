@@ -41,10 +41,44 @@ func (s *EmployeeService) ResolveBankID(ctx context.Context, bankName string) *u
 func (s *EmployeeService) UpdateBankInfo(ctx context.Context, employeeID uint, bankUpdates map[string]any) error {
 	// Fold validation outcome into the column update if (a) the validator
 	// is configured and (b) the caller is actually changing bank fields.
-	if s.bankAccountValidator != nil && hasBankColumns(bankUpdates) {
-		s.augmentBankUpdateWithValidation(ctx, employeeID, bankUpdates)
+	if s.bankAccountValidator == nil || !hasBankColumns(bankUpdates) {
+		return s.EmployeeRepo.UpdateColumns(ctx, employeeID, bankUpdates)
 	}
-	return s.EmployeeRepo.UpdateColumns(ctx, employeeID, bankUpdates)
+
+	// Validate against a snapshot without holding a database lock across the
+	// external provider call.
+	current, err := s.EmployeeRepo.GetByID(ctx, employeeID)
+	if err != nil {
+		slog.Error("UpdateBankInfo: could not load employee for validation",
+			"employee_id", employeeID, "error", err)
+		return fmt.Errorf("không thể xác minh thông tin ngân hàng: %w", err)
+	}
+	if err := s.augmentBankUpdateWithValidation(ctx, current, bankUpdates); err != nil {
+		return err
+	}
+
+	// BCC jobs already carry a workbook-wide transaction in ctx. Start a small,
+	// independent transaction for the financial tuple so the row lock is held
+	// only for the compare-and-write window, not for the rest of the workbook.
+	writeCtx := context.WithValue(ctx, domain.TransactionContextKey{}, nil)
+	write := func(txCtx context.Context) error {
+		locked, err := s.EmployeeRepo.GetByIDForUpdate(txCtx, employeeID)
+		if err != nil {
+			return fmt.Errorf("không thể kiểm tra lại thông tin ngân hàng: %w", err)
+		}
+		if !sameBankAccountTuple(current, locked) {
+			return domain.NewConflictError(
+				"Thông tin ngân hàng vừa được thay đổi. Vui lòng thử lại.",
+			)
+		}
+		return s.EmployeeRepo.UpdateColumns(txCtx, employeeID, bankUpdates)
+	}
+	if s.TransactionManager == nil {
+		// Unit-test and narrowly wired service fallback. Production always
+		// supplies a transaction manager.
+		return write(writeCtx)
+	}
+	return s.TransactionManager.WithTransaction(writeCtx, write)
 }
 
 // hasBankColumns reports whether the update map touches any of the three
@@ -58,43 +92,42 @@ func hasBankColumns(m map[string]any) bool {
 	return false
 }
 
-// augmentBankUpdateWithValidation reads the current employee, applies the
-// incoming bank columns on top to derive the effective values, runs the
-// validator, and writes status/reason/validated_at into the map.
-//
-// Errors reading the employee are non-fatal: we simply skip validation
-// (the bank update itself still proceeds).
-func (s *EmployeeService) augmentBankUpdateWithValidation(ctx context.Context, employeeID uint, bankUpdates map[string]any) {
-	current, err := s.EmployeeRepo.GetByID(ctx, employeeID)
-	if err != nil {
-		slog.Warn("UpdateBankInfo: could not load employee for validation; skipping",
-			"employee_id", employeeID, "error", err)
-		return
-	}
-
+// augmentBankUpdateWithValidation applies incoming bank columns on top of a
+// previously read snapshot, runs the validator, and writes the verdict into
+// the same update map.
+func (s *EmployeeService) augmentBankUpdateWithValidation(
+	ctx context.Context,
+	current *domain.Employee,
+	bankUpdates map[string]any,
+) error {
 	// Derive effective bankID: incoming column if present, else current.
 	var effectiveBankID *uint
-	switch v := bankUpdates["bank_id"].(type) {
-	case nil:
+	incomingBankID, hasIncomingBankID := bankUpdates["bank_id"]
+	if !hasIncomingBankID {
 		effectiveBankID = current.BankID
-	case uint:
-		effectiveBankID = &v
-	case *uint:
-		effectiveBankID = v
-	case int64:
-		u := uint(v)
-		effectiveBankID = &u
-	default:
-		// Unknown type (e.g. a future caller passing a JSON-decoded
-		// float64). Fail-open to unverified rather than silently
-		// validating against the OLD bank — a stale verdict is worse
-		// than no verdict.
-		slog.Warn("UpdateBankInfo: unexpected bank_id type in update map; marking unverified",
-			"employee_id", employeeID, "type", fmt.Sprintf("%T", bankUpdates["bank_id"]))
-		bankUpdates["bank_account_status"] = domain.BankAccountStatusUnverified
-		bankUpdates["bank_account_invalid_reason"] = nil
-		bankUpdates["bank_account_validated_at"] = clock.Now()
-		return
+	} else {
+		switch v := incomingBankID.(type) {
+		case nil:
+			effectiveBankID = nil
+		case uint:
+			effectiveBankID = &v
+		case *uint:
+			effectiveBankID = v
+		case int64:
+			u := uint(v)
+			effectiveBankID = &u
+		default:
+			// Unknown type (e.g. a future caller passing a JSON-decoded
+			// float64). Fail-open to unverified rather than silently
+			// validating against the OLD bank — a stale verdict is worse
+			// than no verdict.
+			slog.Warn("UpdateBankInfo: unexpected bank_id type in update map; marking unverified",
+				"employee_id", current.ID, "type", fmt.Sprintf("%T", incomingBankID))
+			bankUpdates["bank_account_status"] = domain.BankAccountStatusUnverified
+			bankUpdates["bank_account_invalid_reason"] = nil
+			bankUpdates["bank_account_validated_at"] = clock.Now()
+			return nil
+		}
 	}
 
 	// Derive effective account number / name: incoming column if present,
@@ -122,6 +155,21 @@ func (s *EmployeeService) augmentBankUpdateWithValidation(ctx context.Context, e
 	}
 	now := clock.Now()
 	bankUpdates["bank_account_validated_at"] = now
+	return nil
+}
+
+func sameBankAccountTuple(expected, actual *domain.Employee) bool {
+	if expected == nil || actual == nil {
+		return false
+	}
+	if (expected.BankID == nil) != (actual.BankID == nil) {
+		return false
+	}
+	if expected.BankID != nil && *expected.BankID != *actual.BankID {
+		return false
+	}
+	return expected.BankAccountNumber == actual.BankAccountNumber &&
+		expected.BankAccountName == actual.BankAccountName
 }
 
 // UpdateMobile sets the employee's mobile number (targeted update to avoid

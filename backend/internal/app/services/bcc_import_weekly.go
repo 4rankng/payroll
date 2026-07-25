@@ -198,7 +198,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 					// build a complete record; otherwise the profile is created
 					// without banking info and can be filled in later.
 					applySTKBankFields(emp, row, bankID, fullName)
-					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+					createdEmp, createErr := s.employeeService.CreateEmployeeFromImport(txCtx, emp, uploaderID)
 					if createErr != nil {
 						blockedEmployeeCCCDs[cccd] = struct{}{}
 						importErrors = append(importErrors, domain.ImportError{
@@ -210,17 +210,14 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 					emp = createdEmp
 				} else {
 					emp = existingEmp
-					if row.BankAccount != "" && emp.BankAccountNumber == "" {
-						bankUpdates := map[string]any{
-							"bank_account_number": row.BankAccount,
-							"bank_account_name":   strings.ToUpper(fullName),
-						}
-						if bankID != nil {
-							bankUpdates["bank_id"] = *bankID
-						}
+					if bankUpdates := buildSTKBankUpdates(emp, row, bankID, fullName); bankUpdates != nil {
 						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
-							slog.Error("BCCImport(WBCC): failed to fill bank info for employee",
+							slog.Error("BCCImport(WBCC): failed to update bank info for employee",
 								"employee_id", emp.ID, "error", updateErr)
+							importErrors = append(importErrors, domain.ImportError{
+								Employee: fullName,
+								Reason:   "Không thể cập nhật thông tin ngân hàng",
+							})
 						}
 					}
 
@@ -373,7 +370,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 								emp.Mobile = stkRow.Mobile
 							}
 						}
-						createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+						createdEmp, createErr := s.employeeService.CreateEmployeeFromImport(txCtx, emp, uploaderID)
 						if createErr != nil {
 							blockedEmployeeCCCDs[m.cccd] = struct{}{}
 							importErrors = append(importErrors, domain.ImportError{
@@ -386,36 +383,22 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						slog.Info("BCCImport(WBCC): auto-created employee from BCC sheet",
 							"cccd", m.cccd, "employee_id", emp.ID)
 
-						// Create user account for new employee.
-						if s.employeeUserService != nil {
-							baseUsername := utils.GenerateUsername(emp.Fullname)
-							if baseUsername != "" {
-								username := s.employeeUserService.EnsureUniqueUsername(txCtx, baseUsername)
-								userID, userErr := s.employeeUserService.CreateUserForEmployee(txCtx, emp, username)
-								if userErr != nil {
-									slog.Error("BCCImport(WBCC): failed to create user for employee",
-										"employee_id", emp.ID, "error", userErr)
-								} else if linkErr := s.employeeService.UpdateUserLink(txCtx, emp.ID, userID); linkErr != nil {
-									slog.Error("BCCImport(WBCC): failed to link user to employee",
-										"employee_id", emp.ID, "user_id", userID, "error", linkErr)
-								}
-							}
-						}
 					} else {
 						emp = existingEmp
-						// Fill missing bank info from STK if available.
+						// Apply changed bank info from STK if available.
 						if stkRow := findSTKRow(stkRows, m.cccd); stkRow != nil {
-							if stkRow.BankAccount != "" && emp.BankAccountNumber == "" {
-								bankUpdates := map[string]any{
-									"bank_account_number": stkRow.BankAccount,
-									"bank_account_name":   strings.ToUpper(m.fullName),
-								}
-								if stkRow.BankName != "" {
-									bankUpdates["bank_id"] = s.employeeService.ResolveBankID(txCtx, stkRow.BankName)
-								}
+							var stkBankID *uint
+							if stkRow.BankName != "" {
+								stkBankID = s.employeeService.ResolveBankID(txCtx, stkRow.BankName)
+							}
+							if bankUpdates := buildSTKBankUpdates(emp, *stkRow, stkBankID, m.fullName); bankUpdates != nil {
 								if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
-									slog.Error("BCCImport(WBCC): failed to fill bank info",
+									slog.Error("BCCImport(WBCC): failed to update bank info",
 										"employee_id", emp.ID, "error", updateErr)
+									importErrors = append(importErrors, domain.ImportError{
+										Employee: m.fullName,
+										Reason:   "Không thể cập nhật thông tin ngân hàng",
+									})
 								}
 							}
 							if stkRow.Mobile != "" && emp.Mobile == "" {

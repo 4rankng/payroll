@@ -56,14 +56,14 @@ type BulkTransferBatch struct {
 	TotalFee       int64                         `json:"total_fee" gorm:"column:total_fee;type:bigint;not null;default:0"`
 	// LedgerTxnID references the partner receivable transaction when at least
 	// one employee was paid; all-failed fee-only batches reference the fee txn.
-	LedgerTxnID    *uint64                       `json:"ledger_txn_id,omitempty" gorm:"column:ledger_txn_id;type:bigint unsigned"`
-	FeeBookedAt    *time.Time                    `json:"fee_booked_at,omitempty" gorm:"column:fee_booked_at;type:datetime(3)"`
-	Data           string                        `json:"data" gorm:"column:data;type:json;not null"`
-	AssetID        *uint64                       `json:"asset_id,omitempty" gorm:"column:asset_id;type:bigint unsigned"`
-	CreatedBy      uint64                        `json:"created_by" gorm:"column:created_by;not null;type:bigint unsigned"`
-	CreatedAt      time.Time                     `json:"created_at" gorm:"column:created_at;type:datetime(3);not null;autoCreateTime"`
-	UpdatedAt      time.Time                     `json:"updated_at" gorm:"column:updated_at;type:datetime(3);not null;autoUpdateTime"`
-	CompletedAt    *time.Time                    `json:"completed_at,omitempty" gorm:"column:completed_at;type:datetime(3)"`
+	LedgerTxnID *uint64    `json:"ledger_txn_id,omitempty" gorm:"column:ledger_txn_id;type:bigint unsigned"`
+	FeeBookedAt *time.Time `json:"fee_booked_at,omitempty" gorm:"column:fee_booked_at;type:datetime(3)"`
+	Data        string     `json:"data" gorm:"column:data;type:json;not null"`
+	AssetID     *uint64    `json:"asset_id,omitempty" gorm:"column:asset_id;type:bigint unsigned"`
+	CreatedBy   uint64     `json:"created_by" gorm:"column:created_by;not null;type:bigint unsigned"`
+	CreatedAt   time.Time  `json:"created_at" gorm:"column:created_at;type:datetime(3);not null;autoCreateTime"`
+	UpdatedAt   time.Time  `json:"updated_at" gorm:"column:updated_at;type:datetime(3);not null;autoUpdateTime"`
+	CompletedAt *time.Time `json:"completed_at,omitempty" gorm:"column:completed_at;type:datetime(3)"`
 }
 
 // TableName binds the entity to its physical table.

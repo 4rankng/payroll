@@ -20,8 +20,9 @@ import (
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
 // net employee-requested amounts (request_amount - fee), plus completed/grand
-// totals. The source is advance_payment_requests only; quota/max_adv_amount must
-// never feed this forecast.
+// totals. Demand comes from advance_payment_requests only. Uploaded
+// quota/max_adv_amount may cap an in-progress projection, but must never be
+// treated as demand by itself.
 type cohortSeries struct {
 	forMonth       string
 	isCurrent      bool
@@ -29,6 +30,7 @@ type cohortSeries struct {
 	dailyAmount    map[int]int64
 	cumulative     map[int]int64
 	completedTotal int64
+	payableTotal   int64
 	grandTotal     int64
 }
 
@@ -139,6 +141,10 @@ func pivotCohort(rows []domain.CohortRow, forMonth string, isCurrent bool) cohor
 		s.grandTotal += r.TotalAmount
 		if r.Status == string(domain.AdvancePaymentStatusCompleted) {
 			s.completedTotal += r.TotalAmount
+		}
+		if r.Status == string(domain.AdvancePaymentStatusPending) ||
+			r.Status == string(domain.AdvancePaymentStatusApproved) {
+			s.payableTotal += r.TotalAmount
 		}
 	}
 	s.cumulative = make(map[int]int64, maxDay)
@@ -478,6 +484,57 @@ func forecastRemainingCycleDistribution(
 		rem = append(rem, float64(max(int64(0), futureAmount)+sameDayResidual))
 	}
 	return forecastDemandDistributionFromRemaining(historical, rem, nSim, rngSeed, pf)
+}
+
+// conditionDistributionOnCurrentPace re-centres the historical remaining-cycle
+// distribution on the current cycle's observed pace. maxFuture is the remaining
+// uploaded request capacity; a negative value means no authoritative ceiling is
+// available. The historical shape and tail remain intact while the forecast
+// level follows the current cycle.
+func conditionDistributionOnCurrentPace(
+	dist demandDistribution,
+	targetP50 int64,
+	maxFuture int64,
+) demandDistribution {
+	if dist.method == "no-history" || len(dist.samples) == 0 {
+		return dist
+	}
+	if targetP50 < 0 {
+		targetP50 = 0
+	}
+	if maxFuture >= 0 && targetP50 > maxFuture {
+		targetP50 = maxFuture
+	}
+
+	scale := 0.0
+	shift := 0.0
+	if dist.p50 > 0 {
+		scale = float64(targetP50) / dist.p50
+	} else if targetP50 > 0 {
+		scale = 1
+		shift = float64(targetP50)
+	}
+	capValue := math.Inf(1)
+	if maxFuture >= 0 {
+		capValue = float64(maxFuture)
+	}
+
+	for i, sample := range dist.samples {
+		adjusted := sample*scale + shift
+		if adjusted > capValue {
+			adjusted = capValue
+		}
+		dist.samples[i] = max(0, adjusted)
+	}
+	sort.Float64s(dist.samples)
+
+	dist.p50, _ = quantileOfSorted(dist.samples, 0.50)
+	dist.p90, _ = quantileOfSorted(dist.samples, 0.90)
+	dist.p95, _ = quantileOfSorted(dist.samples, 0.95)
+	dist.p99, _ = quantileOfSorted(dist.samples, 0.99)
+	dist.empiricalMax = min(dist.empiricalMax*scale+shift, capValue)
+	dist.divergent = dist.empiricalMax > 0 && dist.p95 < dist.empiricalMax*0.75
+	return dist
 }
 
 func forecastDemandDistributionFromRemaining(

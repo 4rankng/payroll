@@ -13,9 +13,9 @@ import (
 // invokes the worker / service handlers in-process. No Redis, no asynq boot.
 // Used by Phase 6 integration tests to drive the full pipeline deterministically.
 type SyncDispatcher struct {
-	RowWorker      RowWorkerAdapter
-	BookLedgerSvc  BookLedgerAdapter
-	RowCalls       int
+	RowWorker       RowWorkerAdapter
+	BookLedgerSvc   BookLedgerAdapter
+	RowCalls        int
 	BookLedgerCalls int
 }
 

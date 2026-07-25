@@ -22,6 +22,7 @@ interface WalletDemandChartProps {
 
 type WalletDemandPeriod = WalletDemandForecastResponse['periods'][number];
 type ChartPeriod = WalletDemandPeriod & { displayLabel: string };
+export type WalletDemandChartRow = Record<string, number | string>;
 
 const SERIES_COLORS = ['hsl(151 87% 25%)', 'hsl(171 66% 34%)', 'hsl(215 16% 47%)'];
 
@@ -45,6 +46,64 @@ const mean = (values: number[]) => {
 
 const getForecastLabel = (period: WalletDemandPeriod) =>
   `Dự báo ${period.label.replace(/^Kỳ\s+/, '')}`;
+
+// Build the current line from the backend's live p50 remaining-cycle forecast,
+// then preserve the historical remaining-demand shape after today. This keeps
+// the chart aligned with requests and disbursements already observed in the
+// active cycle instead of redrawing an unconditional historical mean.
+export const buildWalletDemandChartData = (
+  data: WalletDemandForecastResponse,
+): { periods: ChartPeriod[]; rows: WalletDemandChartRow[] } => {
+  const periods = data.periods.slice(0, 3);
+  const currentPeriod = periods.find((period) => period.is_current);
+  if (!currentPeriod) return { periods: [], rows: [] };
+
+  const currentCycleDay = data.current_cycle_day;
+  const currentMaxDay = currentPeriod.series.length;
+  const chartPeriods = periods.map((period) => ({
+    ...period,
+    displayLabel:
+      period.is_current && currentCycleDay < currentMaxDay
+        ? getForecastLabel(period)
+        : period.label,
+  }));
+  const historicalPeriods = chartPeriods.filter(
+    (period) => !period.is_current && getFinalAmount(period) > 0,
+  );
+  const historicalRemainingAt = (cycleDay: number) =>
+    mean(historicalPeriods.map((period) => getRemainingFromDay(period, cycleDay)));
+  const baselineToday = historicalRemainingAt(Math.max(1, currentCycleDay));
+  const liveRemaining =
+    data.prediction.p50_reference ??
+    data.prediction.remaining_to_pay ??
+    baselineToday;
+
+  const rows: WalletDemandChartRow[] = [];
+  for (let day = 1; day <= currentMaxDay; day++) {
+    const row: WalletDemandChartRow = {
+      cycle_day: day,
+      day_label: currentPeriod.series[day - 1]?.day_label ?? `${day}`,
+    };
+    for (const period of chartPeriods) {
+      if (!period.is_current || currentCycleDay >= currentMaxDay) {
+        row[period.displayLabel] = getRemainingFromDay(period, day);
+        continue;
+      }
+
+      if (currentCycleDay <= 0) {
+        row[period.displayLabel] = historicalRemainingAt(day);
+      } else if (day <= currentCycleDay || baselineToday <= 0) {
+        row[period.displayLabel] = liveRemaining;
+      } else {
+        row[period.displayLabel] = Math.round(
+          liveRemaining * (historicalRemainingAt(day) / baselineToday),
+        );
+      }
+    }
+    rows.push(row);
+  }
+  return { periods: chartPeriods, rows };
+};
 
 /**
  * Cohort line chart of remaining net advance-payment request volume per period.
@@ -72,42 +131,15 @@ export function WalletDemandChart({ data, isLoading }: WalletDemandChartProps) {
     return () => obs.disconnect();
   }, []);
 
-  const periods = useMemo(() => (data?.periods ?? []).slice(0, 3), [data?.periods]);
+  const chart = useMemo(
+    () => (data ? buildWalletDemandChartData(data) : { periods: [], rows: [] }),
+    [data],
+  );
+  const periods = chart.periods;
   const currentPeriod = periods.find((p) => p.is_current);
   const currentCycleDay = data?.current_cycle_day ?? 0;
-  const chartPeriods = useMemo<ChartPeriod[]>(() => {
-    const currentMaxDay = currentPeriod?.series.length ?? 0;
-    return periods.map((period) => ({
-      ...period,
-      displayLabel:
-        period.is_current && currentCycleDay < currentMaxDay
-          ? getForecastLabel(period)
-          : period.label,
-    }));
-  }, [currentCycleDay, currentPeriod?.series.length, periods]);
-
-  // Pivot periods into Recharts rows keyed by cycle day. Values are remaining
-  // demand from that day through cutoff, not cumulative demand since period start.
-  const chartData = useMemo(() => {
-    if (!chartPeriods.length || !currentPeriod) return [];
-    const maxDay = currentPeriod.series.length;
-    const historicalPeriods = chartPeriods.filter((p) => !p.is_current && getFinalAmount(p) > 0);
-    const rows: Array<Record<string, number | string>> = [];
-    for (let d = 1; d <= maxDay; d++) {
-      const row: Record<string, number | string> = {
-        cycle_day: d,
-        day_label: currentPeriod.series[d - 1]?.day_label ?? `${d}`,
-      };
-      for (const p of chartPeriods) {
-        row[p.displayLabel] =
-          p.is_current && currentCycleDay < maxDay
-            ? mean(historicalPeriods.map((hist) => getRemainingFromDay(hist, d)))
-            : getRemainingFromDay(p, d);
-      }
-      rows.push(row);
-    }
-    return rows;
-  }, [chartPeriods, currentCycleDay, currentPeriod]);
+  const chartPeriods = chart.periods;
+  const chartData = chart.rows;
 
   const handleLegendClick = (value?: string | number) => {
     const key = typeof value === 'string' ? value : String(value);

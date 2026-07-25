@@ -48,3 +48,27 @@ The root cause was a design mistake: the reserve logic had been coupled to the r
 
 - Keep an eye on cached PWA clients: the new copy and behavior land with the next bundle/service-worker refresh, so stale clients may still show the old lead-window language until they reload.
 - If this regresses again, the first thing to check is whether the reserve target is being bounded by display metadata instead of actual remaining-cycle demand.
+
+## Follow-up: active-cycle state conditioning (2026-07-25)
+
+The remaining-cycle boundary was correct, but the distribution was still
+unconditional once a cycle was underway. It removed the historical amount
+observed on the current day, yet ignored the cumulative request pace already
+visible in the active cycle. This let the card keep showing a historical-only
+reserve after the payroll entitlement had been uploaded and employees had
+started requesting and receiving advances.
+
+The active-cycle forecast now:
+
+- re-centres the historical remaining-demand distribution on the observed
+  current-cycle pace once enough cycle data exists for the cohort-median model;
+- subtracts completed and currently payable demand before projecting genuinely
+  new requests, avoiding double counting;
+- caps future projected requests at the unused uploaded `max_adv_amount`
+  capacity without treating that capacity as guaranteed demand;
+- preserves the historical same-day residual on the cutoff day, where the
+  current day is necessarily incomplete;
+- drives the chart's current line from the backend p50 forecast instead of an
+  independent historical mean; and
+- refreshes desktop and mobile every 15 seconds during an active cycle, with an
+  immediate invalidation after a successful payroll import.

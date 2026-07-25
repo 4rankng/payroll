@@ -26,7 +26,6 @@ type TimesheetRepository struct {
 	errorHandler   *common.RepoErrorHandler
 }
 
-
 func NewTimesheetRepository(db *Database, projectEmployeeRepo domain.ProjectEmployeeRepository) domain.TimesheetRepository {
 	return &TimesheetRepository{
 		BaseRepository: NewBaseRepository(db),

@@ -154,7 +154,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 					// build a complete record; otherwise the profile is created
 					// without banking info and can be filled in later.
 					applySTKBankFields(emp, row, bankID, fullName)
-					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+					createdEmp, createErr := s.employeeService.CreateEmployeeFromImport(txCtx, emp, uploaderID)
 					if createErr != nil {
 						importErrors = append(importErrors, domain.ImportError{
 							Employee: fullName,
@@ -165,17 +165,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 					emp = createdEmp
 				} else {
 					emp = existingEmp
-					if row.BankAccount != "" && emp.BankAccountNumber == "" {
-						bankUpdates := map[string]any{
-							"bank_account_number": row.BankAccount,
-							"bank_account_name":   strings.ToUpper(fullName),
-						}
-						if bankID != nil {
-							bankUpdates["bank_id"] = *bankID
-						}
+					if bankUpdates := buildSTKBankUpdates(emp, row, bankID, fullName); bankUpdates != nil {
 						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
-							slog.Error("BCCImport(MP): failed to fill bank info for employee",
+							slog.Error("BCCImport(MP): failed to update bank info for employee",
 								"employee_id", emp.ID, "error", updateErr)
+							importErrors = append(importErrors, domain.ImportError{
+								Employee: fullName,
+								Reason:   "Không thể cập nhật thông tin ngân hàng",
+							})
 						}
 					}
 

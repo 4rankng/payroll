@@ -298,6 +298,22 @@ func validateManualBankAccount(ctx context.Context, v *BankAccountValidator, e *
 		WithContext("attempted_account_number", e.BankAccountNumber)
 }
 
+// validateBankAccountForCreate keeps manual and import creation semantics
+// explicit at their shared boundary. Manual creates reject a confirmed-invalid
+// account; trusted bulk imports persist the verdict and continue.
+func validateBankAccountForCreate(
+	ctx context.Context,
+	v *BankAccountValidator,
+	e *domain.Employee,
+	allowInvalidBankAccount bool,
+) error {
+	if allowInvalidBankAccount {
+		applyBankAccountValidation(ctx, v, e)
+		return nil
+	}
+	return validateManualBankAccount(ctx, v, e)
+}
+
 // bankFieldsChanged reports whether any of the three banking fields
 // differ between the original (pre-update) and incoming employee. Used
 // by UpdateEmployee to decide whether a fresh OnePay call is warranted.

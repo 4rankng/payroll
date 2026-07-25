@@ -1,9 +1,13 @@
 package persistence
 
 import (
+	"context"
+
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
 	query_builders "api-server/internal/infra/persistence/query_builders"
+
+	"gorm.io/gorm"
 )
 
 type EmployeeRepository struct {
@@ -24,4 +28,11 @@ func NewEmployeeRepository(db *Database) domain.EmployeeRepository {
 		errorHandler:        common.NewRepoErrorHandler(),
 		batchProcessor:      common.NewBatchProcessor(common.DefaultBatchConfig()),
 	}
+}
+
+func (r *EmployeeRepository) dbForContext(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
 }

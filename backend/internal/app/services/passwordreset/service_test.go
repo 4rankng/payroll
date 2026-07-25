@@ -97,26 +97,28 @@ func (r *fakeUserRepo) Create(context.Context, *domain.User) error { panic("not 
 func (r *fakeUserRepo) GetByIDs(context.Context, []uint) (map[uint]*domain.User, error) {
 	panic("not impl")
 }
-func (r *fakeUserRepo) GetByUsername(context.Context, string) (*domain.User, error) { panic("not impl") }
+func (r *fakeUserRepo) GetByUsername(context.Context, string) (*domain.User, error) {
+	panic("not impl")
+}
 func (r *fakeUserRepo) GetByUsernameIncludingDeleted(context.Context, string) (*domain.User, error) {
 	panic("not impl")
 }
 func (r *fakeUserRepo) GetUsernamesByPrefix(context.Context, string) ([]string, error) {
 	panic("not impl")
 }
-func (r *fakeUserRepo) GetByCCCD(context.Context, string) (*domain.User, error) { panic("not impl") }
+func (r *fakeUserRepo) GetByCCCD(context.Context, string) (*domain.User, error)   { panic("not impl") }
 func (r *fakeUserRepo) GetByMobile(context.Context, string) (*domain.User, error) { panic("not impl") }
-func (r *fakeUserRepo) ExistsByUsername(context.Context, string) (bool, error) { panic("not impl") }
-func (r *fakeUserRepo) Update(context.Context, *domain.User) error                 { panic("not impl") }
-func (r *fakeUserRepo) UpdateLastLogin(context.Context, uint, time.Time) error     { panic("not impl") }
+func (r *fakeUserRepo) ExistsByUsername(context.Context, string) (bool, error)    { panic("not impl") }
+func (r *fakeUserRepo) Update(context.Context, *domain.User) error                { panic("not impl") }
+func (r *fakeUserRepo) UpdateLastLogin(context.Context, uint, time.Time) error    { panic("not impl") }
 func (r *fakeUserRepo) UpdateTokensInvalidBefore(context.Context, uint, time.Time) error {
 	panic("not impl")
 }
 func (r *fakeUserRepo) UpdateOTPLockout(context.Context, uint, int, *time.Time) error {
 	panic("not impl")
 }
-func (r *fakeUserRepo) Delete(context.Context, uint) error          { panic("not impl") }
-func (r *fakeUserRepo) Restore(context.Context, uint) error         { panic("not impl") }
+func (r *fakeUserRepo) Delete(context.Context, uint) error  { panic("not impl") }
+func (r *fakeUserRepo) Restore(context.Context, uint) error { panic("not impl") }
 func (r *fakeUserRepo) List(context.Context, int, int) ([]*domain.User, error) {
 	panic("not impl")
 }

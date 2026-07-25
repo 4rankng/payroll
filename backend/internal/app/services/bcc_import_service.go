@@ -636,7 +636,7 @@ func (s *BCCImportService) processAssetData(
 					// build a complete record; otherwise the profile is created
 					// without banking info and can be filled in later.
 					applySTKBankFields(emp, row, bankID, fullName)
-					createdEmp, createErr := s.employeeService.CreateEmployee(txCtx, emp, uploaderID)
+					createdEmp, createErr := s.employeeService.CreateEmployeeFromImport(txCtx, emp, uploaderID)
 					if createErr != nil {
 						slog.Error("BCCImport: failed to auto-create employee",
 							"cccd", cccd, "name", fullName, "error", createErr)
@@ -652,20 +652,18 @@ func (s *BCCImportService) processAssetData(
 				} else {
 					emp = existingEmp
 
-					// Fill missing bank info from STK (targeted update to avoid full-record Save)
-					if row.BankAccount != "" && emp.BankAccountNumber == "" {
-						bankUpdates := map[string]any{
-							"bank_account_number": row.BankAccount,
-							"bank_account_name":   strings.ToUpper(fullName),
-						}
-						if bankID != nil {
-							bankUpdates["bank_id"] = *bankID
-						}
+					// Apply changed bank info from STK using a targeted,
+					// atomically validated update.
+					if bankUpdates := buildSTKBankUpdates(emp, row, bankID, fullName); bankUpdates != nil {
 						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
-							slog.Error("BCCImport: failed to fill bank info for employee",
+							slog.Error("BCCImport: failed to update bank info for employee",
 								"employee_id", emp.ID, "error", updateErr)
+							importErrors = append(importErrors, domain.ImportError{
+								Employee: fullName,
+								Reason:   "Không thể cập nhật thông tin ngân hàng",
+							})
 						} else {
-							slog.Info("BCCImport: filled bank info for existing employee",
+							slog.Info("BCCImport: updated bank info for existing employee",
 								"employee_id", emp.ID, "cccd", cccd)
 						}
 					}

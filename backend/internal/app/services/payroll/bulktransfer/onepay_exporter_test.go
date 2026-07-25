@@ -180,7 +180,7 @@ func TestBuildRowsWithSwift_BankRepoError(t *testing.T) {
 		EmployeeData: map[uint]excel.Employee{
 			1: {ID: 1, Fullname: "A", BankAccountNumber: "1", BankAccountName: "A", Bank: &excel.Bank{ID: 1, BankCode: "MB"}},
 		},
-		ProjectData:     map[uint]excel.Project{10: {ID: 10, Name: "P"}},
+		ProjectData:      map[uint]excel.Project{10: {ID: 10, Name: "P"}},
 		TransactionCodes: map[excel.EmployeeProjectKey]string{{EmployeeID: 1, ProjectID: 10}: "VFICxxx"},
 	}
 	rows, skipped, _, err := e.buildRowsWithSwift(context.Background(), data, "weekly", time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 7, 7, 0, 0, 0, 0, time.UTC))

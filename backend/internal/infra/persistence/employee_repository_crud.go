@@ -6,6 +6,7 @@ import (
 	"api-server/internal/domain"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (r *EmployeeRepository) Create(ctx context.Context, employee *domain.Employee) error {
@@ -59,7 +60,11 @@ func (r *EmployeeRepository) GetByIDs(ctx context.Context, ids []int64) ([]*doma
 
 func (r *EmployeeRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.Employee, error) {
 	var employee domain.Employee
-	err := r.queryBuilder.BuildGetByIDForUpdateQuery(id).First(&employee).Error
+	err := r.dbForContext(ctx).
+		Model(&domain.Employee{}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("id = ?", id).
+		First(&employee).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -183,5 +188,8 @@ func (r *EmployeeRepository) BulkCreate(ctx context.Context, employees []*domain
 
 // UpdateColumns performs a targeted update of specific columns for an employee.
 func (r *EmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {
-	return r.DB.WithContext(ctx).Model(&domain.Employee{}).Where("id = ?", id).Updates(columns).Error
+	return r.dbForContext(ctx).
+		Model(&domain.Employee{}).
+		Where("id = ?", id).
+		Updates(columns).Error
 }

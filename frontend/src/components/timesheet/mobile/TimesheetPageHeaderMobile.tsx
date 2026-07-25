@@ -113,7 +113,13 @@ export function TimesheetPageHeaderMobile({
                     disabled={isPayrollReportPending}
                   >
                     <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">{isPayrollReportPending ? 'Đang xuất...' : 'Xuất sao kê lương'}</span>
+                    <span className="text-sm font-medium">
+                      {isPayrollReportPending
+                        ? 'Đang xuất...'
+                        : userRole === 'partner'
+                          ? 'Xuất sao kê'
+                          : 'Xuất sao kê lương'}
+                    </span>
                   </Button>
                 )}
 

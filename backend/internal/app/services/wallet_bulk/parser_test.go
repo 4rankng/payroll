@@ -155,13 +155,13 @@ func TestParser_UnknownHeader(t *testing.T) {
 func TestParser_ColumnReordering(t *testing.T) {
 	// Same data, columns shuffled — parser must still map by header name.
 	headers := []string{
-		"Mã SWIFT",                    // moved to col A
-		"Số tài khoản",                // col B
-		"Tên người thụ hưởng",         // col C
+		"Mã SWIFT",                      // moved to col A
+		"Số tài khoản",                  // col B
+		"Tên người thụ hưởng",           // col C
 		"Ngân hàng thụ hưởng/Chi nhánh", // col D
-		"STT",                         // col E (was A)
-		"Số tiền",                     // col F
-		"Nội dung chuyển khoản",       // col G
+		"STT",                           // col E (was A)
+		"Số tiền",                       // col F
+		"Nội dung chuyển khoản",         // col G
 	}
 	// Data must follow the SAME shuffled order.
 	data := [][]any{

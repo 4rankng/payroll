@@ -28,8 +28,8 @@ const PartnerScopeTTL = 10 * time.Second
 // the employee IDs and project IDs in Go, and returns a repositories.PartnerScope
 // that the analytics methods substitute for the correlated subqueries.
 type PartnerScopeResolver struct {
-	db    *gorm.DB
-	cache *infrastructure.CacheService
+	db     *gorm.DB
+	cache  *infrastructure.CacheService
 	logger *slog.Logger
 }
 

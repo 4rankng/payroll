@@ -106,14 +106,14 @@ type Handlers struct {
 }
 
 type Middleware struct {
-	Auth                 *middleware.AuthMiddleware
-	Authorization        *middleware.AuthorizationMiddleware
-	LoginRateLimit       gin.HandlerFunc
+	Auth                   *middleware.AuthMiddleware
+	Authorization          *middleware.AuthorizationMiddleware
+	LoginRateLimit         gin.HandlerFunc
 	PasswordResetRateLimit gin.HandlerFunc // Red Team H1: per-normalized-email cap
-	APIRateLimit         gin.HandlerFunc
-	StrictRateLimit      gin.HandlerFunc
-	TenantSemaphore      *middleware.TenantSemaphoreMiddleware
-	APIMetrics           gin.HandlerFunc
+	APIRateLimit           gin.HandlerFunc
+	StrictRateLimit        gin.HandlerFunc
+	TenantSemaphore        *middleware.TenantSemaphoreMiddleware
+	APIMetrics             gin.HandlerFunc
 }
 
 func NewContainer(cfg *config.Config, version string) (*Container, error) {

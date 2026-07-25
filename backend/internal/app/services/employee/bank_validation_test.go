@@ -11,6 +11,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/disbursement"
+	userservice "api-server/internal/app/services/user"
 	"api-server/internal/domain"
 	infrastructure "api-server/internal/domain/ports/infrastructure"
 
@@ -298,6 +299,39 @@ func TestValidateManualBankAccount_ConfirmedInvalidReturnsTypedError(t *testing.
 	assert.Equal(t, domain.BankAccountStatusInvalid, employee.BankAccountStatus)
 }
 
+func TestValidateBankAccountForCreate_ImportPersistsInvalidVerdictWithoutRejecting(t *testing.T) {
+	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	provider := &verifierProvider{
+		name: "onepay",
+		checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+			return &infrastructure.AccountCheckResult{
+				Valid:        false,
+				RawErrorCode: "account_not_found",
+				RawMessage:   "Invalid account info",
+			}, nil
+		},
+	}
+	validator := newTestValidator(provider, bank, nil)
+	employee := &domain.Employee{
+		BankID:            &bank.ID,
+		BankAccountNumber: "000000000",
+		BankAccountName:   "Nguyen Van A",
+	}
+
+	err := validateBankAccountForCreate(
+		context.Background(),
+		validator,
+		employee,
+		true,
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, domain.BankAccountStatusInvalid, employee.BankAccountStatus)
+	require.NotNil(t, employee.BankAccountInvalidReason)
+	assert.Equal(t, "Số tài khoản không hợp lệ", *employee.BankAccountInvalidReason)
+	assert.NotNil(t, employee.BankAccountValidatedAt)
+}
+
 func TestValidate_ProviderError_UnverifiedFailOpen(t *testing.T) {
 	bank := &domain.Bank{ID: 1, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
 	p := &verifierProvider{
@@ -405,11 +439,25 @@ func TestRowBankFieldsPresent(t *testing.T) {
 type stubEmployeeRepo struct {
 	domain.EmployeeRepository
 	byID        map[uint]*domain.Employee
+	lockedByID  map[uint]*domain.Employee
 	getErr      error
 	updatedID   uint
 	cols        map[string]any
 	updateErr   error
 	updateCalls int
+	columnCalls int
+	lockReads   int
+	created     []*domain.Employee
+}
+
+func (s *stubEmployeeRepo) Create(_ context.Context, employee *domain.Employee) error {
+	employee.ID = uint(len(s.created) + 1)
+	s.created = append(s.created, employee)
+	return nil
+}
+
+func (s *stubEmployeeRepo) GetByCCCD(_ context.Context, _ string) (*domain.Employee, error) {
+	return nil, domain.NewNotFoundError("employee not found")
 }
 
 func (s *stubEmployeeRepo) GetByID(_ context.Context, id uint) (*domain.Employee, error) {
@@ -419,7 +467,19 @@ func (s *stubEmployeeRepo) GetByID(_ context.Context, id uint) (*domain.Employee
 	return s.byID[id], nil
 }
 
+func (s *stubEmployeeRepo) GetByIDForUpdate(_ context.Context, id uint) (*domain.Employee, error) {
+	s.lockReads++
+	if s.getErr != nil {
+		return nil, s.getErr
+	}
+	if employee, ok := s.lockedByID[id]; ok {
+		return employee, nil
+	}
+	return s.byID[id], nil
+}
+
 func (s *stubEmployeeRepo) UpdateColumns(_ context.Context, id uint, cols map[string]any) error {
+	s.columnCalls++
 	if s.updateErr != nil {
 		return s.updateErr
 	}
@@ -442,6 +502,43 @@ func (directTransactionManager) WithTransaction(ctx context.Context, fn func(con
 func (directTransactionManager) WithTransactionResult(ctx context.Context, fn func(context.Context) (interface{}, error)) (interface{}, error) {
 	return fn(ctx)
 }
+
+type createEmployeeTestUserRepo struct {
+	domain.UserRepository
+	users []*domain.User
+}
+
+func (r *createEmployeeTestUserRepo) GetUsernamesByPrefix(context.Context, string) ([]string, error) {
+	return nil, nil
+}
+
+func (r *createEmployeeTestUserRepo) GetByUsername(context.Context, string) (*domain.User, error) {
+	return nil, domain.NewNotFoundError("user not found")
+}
+
+func (r *createEmployeeTestUserRepo) GetByID(_ context.Context, id uint) (*domain.User, error) {
+	for _, stored := range r.users {
+		if stored.ID == id {
+			return stored, nil
+		}
+	}
+	return nil, domain.NewNotFoundError("user not found")
+}
+
+func (r *createEmployeeTestUserRepo) Create(_ context.Context, user *domain.User) error {
+	user.ID = uint(len(r.users) + 1)
+	r.users = append(r.users, user)
+	return nil
+}
+
+type createEmployeeTestEventBus struct{}
+
+func (createEmployeeTestEventBus) Publish(context.Context, ...domain.DomainEvent) error {
+	return nil
+}
+
+func (createEmployeeTestEventBus) Subscribe(string, domain.EventHandler) {}
+func (createEmployeeTestEventBus) SubscribeAll(domain.EventHandler)      {}
 
 // newEmployeeServiceWithValidator builds an EmployeeService whose only wired
 // dependencies are the repo + validator, enough to drive UpdateBankInfo.
@@ -503,6 +600,65 @@ func TestUpdateEmployee_InvalidManualBankEditDoesNotPersist(t *testing.T) {
 	assert.Equal(t, "Nguyen Van A", original.BankAccountName)
 }
 
+func TestCreateEmployeeFromImport_PersistsInvalidVerdictWhileManualCreateRemainsStrict(t *testing.T) {
+	bank := &domain.Bank{ID: 5, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	provider := &verifierProvider{
+		name: "onepay",
+		checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+			return &infrastructure.AccountCheckResult{
+				Valid:        false,
+				RawErrorCode: "account_not_found",
+				RawMessage:   "Invalid account info",
+			}, nil
+		},
+	}
+	validator := newTestValidator(provider, bank, nil)
+	employeeRepo := &stubEmployeeRepo{}
+	userRepo := &createEmployeeTestUserRepo{}
+	eventBus := createEmployeeTestEventBus{}
+	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt")
+	service := &EmployeeService{
+		EmployeeRepo:         employeeRepo,
+		BankRepo:             &stubBankRepo{byID: map[uint]*domain.Bank{bank.ID: bank}},
+		UserRepo:             userRepo,
+		UserService:          userService,
+		TransactionManager:   directTransactionManager{},
+		events:               eventBus,
+		bankAccountValidator: validator,
+	}
+	imported := &domain.Employee{
+		Fullname:          "Nguyen Van Import",
+		CCCD:              "123456789012",
+		BankID:            &bank.ID,
+		BankAccountNumber: "000000000",
+		BankAccountName:   "Nguyen Van Import",
+	}
+
+	created, err := service.CreateEmployeeFromImport(context.Background(), imported, 99)
+
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	assert.Equal(t, domain.BankAccountStatusInvalid, created.BankAccountStatus)
+	require.NotNil(t, created.BankAccountInvalidReason)
+	assert.Len(t, employeeRepo.created, 1)
+	assert.Len(t, userRepo.users, 1)
+
+	manual := &domain.Employee{
+		Fullname:          "Nguyen Van Manual",
+		CCCD:              "123456789013",
+		BankID:            &bank.ID,
+		BankAccountNumber: "111111111",
+		BankAccountName:   "Nguyen Van Manual",
+	}
+	_, err = service.CreateEmployee(context.Background(), manual, 99)
+
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
+	assert.Len(t, employeeRepo.created, 1, "manual invalid create must not persist an employee")
+	assert.Len(t, userRepo.users, 1, "manual invalid create must not create a user")
+}
+
 func TestUpdateBankInfo_NoBankColumns_SkipsValidation(t *testing.T) {
 	repo := &stubEmployeeRepo{}
 	// Validator with a provider that would fail the test if called.
@@ -554,6 +710,7 @@ func TestUpdateBankInfo_BankColumnsChanged_RunsValidationAndFoldsResult(t *testi
 	assert.Equal(t, domain.BankAccountStatusValid, updates["bank_account_status"])
 	assert.Nil(t, updates["bank_account_invalid_reason"])
 	assert.NotNil(t, updates["bank_account_validated_at"])
+	assert.Equal(t, 1, repo.lockReads, "bank validation must read the current tuple with a row lock")
 }
 
 func TestUpdateBankInfo_BankIDAsPointer_Handled(t *testing.T) {
@@ -586,6 +743,85 @@ func TestUpdateBankInfo_BankIDAsPointer_Handled(t *testing.T) {
 	assert.Equal(t, "ICBVVNVX", seenSwift, "*uint bank_id must resolve to the bank's swift code")
 }
 
+func TestUpdateBankInfo_ExplicitNilBankDoesNotReuseCurrentBank(t *testing.T) {
+	bank := &domain.Bank{ID: 5, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	id := uint(1)
+	current := &domain.Employee{
+		ID:                id,
+		BankID:            &bank.ID,
+		BankAccountNumber: "OLD",
+		BankAccountName:   "Old Name",
+	}
+	repo := &stubEmployeeRepo{byID: map[uint]*domain.Employee{id: current}}
+	providerCalled := false
+	validator := newTestValidator(
+		&verifierProvider{
+			name: "onepay",
+			checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+				providerCalled = true
+				return &infrastructure.AccountCheckResult{Valid: true}, nil
+			},
+		},
+		bank,
+		nil,
+	)
+	service := newEmployeeServiceWithValidator(repo, validator)
+	updates := map[string]any{
+		"bank_id":             nil,
+		"bank_account_number": "NEW123",
+		"bank_account_name":   "New Name",
+	}
+
+	require.NoError(t, service.UpdateBankInfo(context.Background(), id, updates))
+
+	assert.False(t, providerCalled, "a cleared bank must not validate against the employee's previous bank")
+	assert.Nil(t, updates["bank_id"])
+	assert.Equal(t, domain.BankAccountStatusValid, updates["bank_account_status"])
+}
+
+func TestUpdateBankInfo_ConcurrentManualChangeDoesNotGetOverwritten(t *testing.T) {
+	bank := &domain.Bank{ID: 5, BranchName: "VCB", SwiftCode: "ICBVVNVX"}
+	id := uint(1)
+	snapshot := &domain.Employee{
+		ID:                id,
+		BankID:            &bank.ID,
+		BankAccountNumber: "OLD",
+		BankAccountName:   "Old Name",
+	}
+	concurrent := &domain.Employee{
+		ID:                id,
+		BankID:            &bank.ID,
+		BankAccountNumber: "MANUAL",
+		BankAccountName:   "Manual Edit",
+	}
+	repo := &stubEmployeeRepo{
+		byID:       map[uint]*domain.Employee{id: snapshot},
+		lockedByID: map[uint]*domain.Employee{id: concurrent},
+	}
+	validator := newTestValidator(
+		&verifierProvider{
+			name: "onepay",
+			checkFunc: func(context.Context, infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+				return &infrastructure.AccountCheckResult{Valid: true}, nil
+			},
+		},
+		bank,
+		nil,
+	)
+	service := newEmployeeServiceWithValidator(repo, validator)
+	updates := map[string]any{
+		"bank_account_number": "IMPORT",
+		"bank_account_name":   "Import Edit",
+	}
+
+	err := service.UpdateBankInfo(context.Background(), id, updates)
+
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	assert.Equal(t, "CONFLICT", domainErr.Type)
+	assert.Zero(t, repo.columnCalls, "stale import data must not overwrite a concurrent manual edit")
+}
+
 func TestUpdateBankInfo_UnexpectedBankIDType_FailsOpenUnverified(t *testing.T) {
 	id := uint(1)
 	current := &domain.Employee{ID: id}
@@ -605,16 +841,16 @@ func TestUpdateBankInfo_UnexpectedBankIDType_FailsOpenUnverified(t *testing.T) {
 	assert.Equal(t, domain.BankAccountStatusUnverified, updates["bank_account_status"])
 }
 
-func TestUpdateBankInfo_GetByIDError_SkipsValidationSilently(t *testing.T) {
+func TestUpdateBankInfo_GetByIDError_DoesNotPersistUnverifiedChanges(t *testing.T) {
 	repo := &stubEmployeeRepo{getErr: errors.New("db down")}
 	v := newTestValidator(&verifierProvider{name: "onepay"}, nil, nil)
 	svc := newEmployeeServiceWithValidator(repo, v)
 
 	updates := map[string]any{"bank_account_number": "123"}
-	if err := svc.UpdateBankInfo(context.Background(), 1, updates); err != nil {
-		t.Fatalf("UpdateBankInfo: %v", err)
-	}
-	// Validation skipped; original bank columns untouched.
+	err := svc.UpdateBankInfo(context.Background(), 1, updates)
+
+	require.Error(t, err)
+	assert.Zero(t, repo.columnCalls, "bank changes must not persist when the current employee cannot be loaded")
 	_, hasStatus := updates["bank_account_status"]
 	assert.False(t, hasStatus)
 }

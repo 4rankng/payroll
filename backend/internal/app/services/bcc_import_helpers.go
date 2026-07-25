@@ -134,3 +134,48 @@ func applySTKBankFields(emp *domain.Employee, row excelparser.STKRow, bankID *ui
 	emp.BankAccountNumber = row.BankAccount
 	emp.BankAccountName = strings.ToUpper(strings.TrimSpace(fullName))
 }
+
+// buildSTKBankUpdates returns a complete targeted update when an STK row
+// changes an existing employee's bank account, bank, or account-holder name.
+// Empty account numbers remain non-authoritative. A supplied but unresolved
+// bank clears the stale bank relation so the account cannot be checked or paid
+// against the wrong institution.
+func buildSTKBankUpdates(
+	emp *domain.Employee,
+	row excelparser.STKRow,
+	bankID *uint,
+	fullName string,
+) map[string]any {
+	if emp == nil {
+		return nil
+	}
+
+	accountNumber := strings.TrimSpace(row.BankAccount)
+	if accountNumber == "" {
+		return nil
+	}
+	accountName := strings.ToUpper(strings.TrimSpace(fullName))
+	bankNameProvided := strings.TrimSpace(row.BankName) != ""
+	bankChanged := bankNameProvided &&
+		((bankID == nil && emp.BankID != nil) ||
+			(bankID != nil && (emp.BankID == nil || *emp.BankID != *bankID)))
+	accountChanged := strings.TrimSpace(emp.BankAccountNumber) != accountNumber
+	nameChanged := !strings.EqualFold(strings.TrimSpace(emp.BankAccountName), accountName)
+	if !bankChanged && !accountChanged && !nameChanged {
+		return nil
+	}
+
+	updates := map[string]any{
+		"bank_account_number": accountNumber,
+		"bank_account_name":   accountName,
+	}
+	if bankNameProvided && bankID == nil {
+		// A supplied but unknown bank is authoritative evidence that the old
+		// bank must not be reused for the new account. Clear the relation so
+		// the employee appears in the unified warning list for correction.
+		updates["bank_id"] = nil
+	} else if bankID != nil {
+		updates["bank_id"] = *bankID
+	}
+	return updates
+}

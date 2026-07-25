@@ -189,41 +189,141 @@ interface ResultSuccessProps {
   result: PartnerImportFile;
 }
 
+interface ResultCountsProps {
+  result: PartnerImportFile;
+  showErrorCount?: boolean;
+}
+
+const ResultCounts = memo(function ResultCounts({
+  result,
+  showErrorCount = false,
+}: ResultCountsProps) {
+  return (
+    <dl
+      className={`grid gap-2 ${showErrorCount ? 'grid-cols-1 min-[380px]:grid-cols-3' : 'grid-cols-2'}`}
+      aria-label="Kết quả nhập bảng chấm công"
+    >
+      <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-700/50 dark:bg-emerald-900/20">
+        <dt className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+          Tạo mới
+        </dt>
+        <dd className="mt-0.5 text-base font-bold tabular-nums text-emerald-900 dark:text-emerald-100">
+          {result.created_count}
+        </dd>
+      </div>
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-700/50 dark:bg-amber-900/20">
+        <dt className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <SkipForward className="h-3.5 w-3.5" aria-hidden="true" />
+          Bỏ qua
+        </dt>
+        <dd className="mt-0.5 text-base font-bold tabular-nums text-amber-900 dark:text-amber-100">
+          {result.skipped_count}
+        </dd>
+      </div>
+      {showErrorCount && (
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 dark:border-rose-700/50 dark:bg-rose-900/20">
+          <dt className="flex items-center gap-1.5 text-xs font-medium text-rose-700 dark:text-rose-300">
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+            Lỗi
+          </dt>
+          <dd className="mt-0.5 text-base font-bold tabular-nums text-rose-900 dark:text-rose-100">
+            {result.error_count}
+          </dd>
+        </div>
+      )}
+    </dl>
+  );
+});
+
+interface ResultErrorDetailsProps {
+  result: PartnerImportFile;
+}
+
+const ResultErrorDetails = memo(function ResultErrorDetails({
+  result,
+}: ResultErrorDetailsProps) {
+  const [showErrors, setShowErrors] = useState(false);
+  const parsedErrors = useMemo(
+    () => parseResultErrors(result.error_detail),
+    [result.error_detail],
+  );
+  const groupedErrors = useMemo(
+    () => groupErrorsByEmployee(parsedErrors),
+    [parsedErrors],
+  );
+
+  if (parsedErrors.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setShowErrors((value) => !value)}
+        aria-expanded={showErrors}
+        aria-controls="bcc-import-error-details"
+        className="flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-rose-700 transition-colors hover:text-rose-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-rose-300 dark:hover:text-rose-200"
+      >
+        <span>
+          {showErrors
+            ? 'Ẩn chi tiết cần xử lý'
+            : `Xem ${parsedErrors.length} lỗi cần xử lý`}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${showErrors ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {showErrors && (
+        <div
+          id="bcc-import-error-details"
+          className="max-h-52 divide-y divide-rose-100 overflow-y-auto overscroll-contain rounded-lg border border-rose-200 bg-white dark:divide-rose-900/30 dark:border-rose-700/50 dark:bg-slate-800"
+        >
+          {Array.from(groupedErrors.entries()).map(([employee, errors]) => (
+            <div key={employee} className="px-4 py-3">
+              <p className="mb-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {employee}
+              </p>
+              <ul className="space-y-1">
+                {errors.map((error) => (
+                  <li
+                    key={`${error.row}-${error.reason}`}
+                    className="break-words border-l-2 border-rose-300 pl-3 text-sm leading-relaxed text-rose-700 dark:border-rose-700 dark:text-rose-300/80"
+                  >
+                    {error.row > 0 && (
+                      <span className="font-semibold">Dòng {error.row}: </span>
+                    )}
+                    {error.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
 const ResultSuccess = memo(function ResultSuccess({ result }: ResultSuccessProps) {
   return (
-    <div className="overflow-hidden rounded-lg border border-emerald-200 bg-white shadow-sm dark:border-emerald-700/50 dark:bg-slate-800">
-      {/* Accent header */}
-      <div className="flex items-start gap-3 border-l-4 border-emerald-500 bg-emerald-50 p-5 dark:bg-emerald-900/20">
+    <div className="space-y-4">
+      <div className="flex items-start gap-3 rounded-lg border border-emerald-200 border-l-4 border-l-emerald-500 bg-emerald-50 p-5 dark:border-emerald-700/50 dark:border-l-emerald-500 dark:bg-emerald-900/20">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-          <CheckCircle2 className="h-5 w-5" />
+          <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
           <h4 className="text-base font-semibold text-emerald-900 dark:text-emerald-200">
-            Import thành công!
+            Nhập dữ liệu thành công
           </h4>
           <p className="mt-0.5 text-sm text-emerald-700 dark:text-emerald-300/80">
-            Tháng {formatMonthLabel(result.for_month)} · {result.created_count} bản chấm công đã tạo
+            Tháng {formatMonthLabel(result.for_month)} · Tất cả dữ liệu hợp lệ đã được nhập.
           </p>
         </div>
-        <PartyPopper className="h-5 w-5 shrink-0 text-emerald-500" />
+        <PartyPopper className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" />
       </div>
-
-      {(result.created_count > 0 || result.skipped_count > 0) && (
-        <div className="flex flex-wrap gap-2 p-4">
-          {result.created_count > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-300">
-              <CheckCircle2 className="h-3 w-3" />
-              {result.created_count} tạo mới
-            </span>
-          )}
-          {result.skipped_count > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
-              <SkipForward className="h-3 w-3" />
-              {result.skipped_count} bỏ qua
-            </span>
-          )}
-        </div>
-      )}
+      <ResultCounts result={result} />
     </div>
   );
 });
@@ -232,90 +332,51 @@ interface ResultFailureProps {
   result: PartnerImportFile;
 }
 
+const ResultPartial = memo(function ResultPartial({ result }: ResultFailureProps) {
+  return (
+    <div className="space-y-4" role="status" aria-live="polite">
+      <div className="flex items-start gap-3 rounded-lg border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-5 dark:border-amber-700/50 dark:border-l-amber-500 dark:bg-amber-900/20">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+          <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-base font-semibold text-amber-950 dark:text-amber-100">
+            Nhập dữ liệu hoàn tất một phần
+          </h4>
+          <p className="mt-1 text-sm leading-relaxed text-amber-800 dark:text-amber-200/90">
+            Dữ liệu hợp lệ đã được nhập. Kiểm tra các dòng lỗi để hoàn tất phần còn lại.
+          </p>
+        </div>
+      </div>
+      <ResultCounts result={result} showErrorCount />
+      <ResultErrorDetails result={result} />
+    </div>
+  );
+});
+
 const ResultFailure = memo(function ResultFailure({ result }: ResultFailureProps) {
-  const [showErrors, setShowErrors] = useState(false);
   const parsedErrors = useMemo(() => parseResultErrors(result.error_detail), [result.error_detail]);
   const summaryText = useMemo(
     () => buildFailureSummary(parsedErrors, result.for_month),
     [parsedErrors, result.for_month],
   );
-  const groupedErrors = useMemo(() => groupErrorsByEmployee(parsedErrors), [parsedErrors]);
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-hidden rounded-lg border border-rose-200 bg-white shadow-sm dark:border-rose-700/50 dark:bg-slate-800">
+    <div className="space-y-4" role="alert">
+      <div className="overflow-hidden rounded-lg border border-rose-200 bg-white dark:border-rose-700/50 dark:bg-slate-800">
         <div className="flex items-start gap-3 border-l-4 border-rose-500 bg-rose-50 p-5 dark:bg-rose-900/20">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
-            <XCircle className="h-5 w-5" />
+            <XCircle className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <h4 className="text-base font-semibold text-rose-900 dark:text-rose-200">
-              Import thất bại
+              Nhập dữ liệu thất bại
             </h4>
             <p className="mt-1 text-sm leading-relaxed text-rose-700 dark:text-rose-300/80">{summaryText}</p>
           </div>
         </div>
       </div>
-
-      {(result.created_count > 0 || result.skipped_count > 0 || result.error_count > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {result.created_count > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 dark:border-emerald-700/50 dark:bg-emerald-900/20">
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-              <span className="font-bold text-emerald-800 dark:text-emerald-200">{result.created_count}</span>
-              <span className="text-sm text-emerald-700 dark:text-emerald-300/80">tạo mới</span>
-            </div>
-          )}
-          {result.skipped_count > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 dark:border-amber-700/50 dark:bg-amber-900/20">
-              <SkipForward className="h-4 w-4 shrink-0 text-amber-600" />
-              <span className="font-bold text-amber-800 dark:text-amber-200">{result.skipped_count}</span>
-              <span className="text-sm text-amber-700 dark:text-amber-300/80">bỏ qua</span>
-            </div>
-          )}
-          {result.error_count > 0 && (
-            <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 dark:border-rose-700/50 dark:bg-rose-900/20">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
-              <span className="font-bold text-rose-800 dark:text-rose-200">{result.error_count}</span>
-              <span className="text-sm text-rose-700 dark:text-rose-300/80">lỗi</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {parsedErrors.length > 0 && (
-        <div className="space-y-2">
-          <button
-            onClick={() => setShowErrors((v) => !v)}
-            className="flex items-center gap-1.5 text-sm font-medium text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"
-          >
-            <span>{showErrors ? 'Ẩn chi tiết lỗi' : `Xem ${parsedErrors.length} lỗi chi tiết`}</span>
-            <ChevronDown
-              className={`h-4 w-4 transition-transform duration-200 ${showErrors ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {showErrors && (
-            <div className="max-h-52 overflow-y-auto rounded-lg border border-rose-200 bg-white divide-y divide-rose-100 dark:border-rose-700/50 dark:bg-slate-800 dark:divide-rose-900/30">
-              {Array.from(groupedErrors.entries()).map(([employee, errors]) => (
-                <div key={employee} className="px-4 py-3">
-                  <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{employee}</p>
-                  <ul className="space-y-1">
-                    {errors.map((e, i) => (
-                      <li
-                        key={i}
-                        className="border-l-2 border-rose-300 pl-3 text-sm leading-relaxed text-rose-700 dark:border-rose-700 dark:text-rose-300/80"
-                      >
-                        {e.reason}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <ResultErrorDetails result={result} />
     </div>
   );
 });
@@ -406,7 +467,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               <span className="flex flex-col leading-tight">
                 <span className="text-[15px] font-semibold">Tải lên Bảng Chấm Công</span>
                 <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400">
-                  Nhập dữ liệu chấm công từ file Excel
+                  Nhập dữ liệu chấm công từ tệp Excel
                 </span>
               </span>
             </h3>
@@ -476,7 +537,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               <div className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-3.5 text-sm leading-relaxed text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-200/90">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <p className="flex-1">
-                  Các ngày trong file Excel sẽ được gán vào tháng đã chọn — ví dụ ngày{' '}
+                  Các ngày trong tệp Excel sẽ được gán vào tháng đã chọn — ví dụ ngày{' '}
                   <code className="rounded bg-emerald-600/10 px-1 py-px font-mono text-[12px] font-semibold">
                     22
                   </code>{' '}
@@ -514,10 +575,10 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        Kéo thả file <span className="text-emerald-700 dark:text-emerald-400">BCC</span> vào đây
+                        Kéo thả tệp <span className="text-emerald-700 dark:text-emerald-400">BCC</span> vào đây
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                        hoặc nhấn để chọn file · định dạng .xlsx · tối đa 10 MB
+                        hoặc nhấn để chọn tệp · định dạng .xlsx · tối đa 10 MB
                       </p>
                     </div>
                     <input
@@ -547,8 +608,8 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                     </div>
                     <button
                       onClick={handleRemoveFile}
-                      title="Xóa file"
-                      aria-label="Xóa file"
+                      title="Xóa tệp"
+                      aria-label="Xóa tệp"
                       className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                     >
                       <X className="h-4 w-4" />
@@ -578,7 +639,11 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           {/* Result states */}
           {result &&
             (result.status === 'completed' ? (
-              <ResultSuccess result={result} />
+              result.error_count > 0 ? (
+                <ResultPartial result={result} />
+              ) : (
+                <ResultSuccess result={result} />
+              )
             ) : result.status === 'pending' || result.status === 'processing' ? (
               <ImportProcessingState status={result.status} />
             ) : (

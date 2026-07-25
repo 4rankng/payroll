@@ -89,3 +89,75 @@ func TestApplySTKBankFields(t *testing.T) {
 		assert.Empty(t, emp.BankAccountName) // TrimSpace collapses to ""
 	})
 }
+
+func TestBuildSTKBankUpdates(t *testing.T) {
+	oldBankID := uint(7)
+	newBankID := uint(8)
+	employee := &domain.Employee{
+		BankID:            &oldBankID,
+		BankAccountNumber: "123456789",
+		BankAccountName:   "Nguyễn Văn A",
+	}
+
+	t.Run("changed account number creates a complete update", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{BankAccount: "987654321"},
+			nil,
+			"Nguyễn Văn A",
+		)
+
+		assert.Equal(t, "987654321", updates["bank_account_number"])
+		assert.Equal(t, "NGUYỄN VĂN A", updates["bank_account_name"])
+		assert.NotContains(t, updates, "bank_id")
+	})
+
+	t.Run("changed bank is included when it resolves", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{BankAccount: "123456789", BankName: "BIDV"},
+			&newBankID,
+			"Nguyễn Văn A",
+		)
+
+		assert.Equal(t, newBankID, updates["bank_id"])
+	})
+
+	t.Run("unchanged values do not trigger revalidation", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{BankAccount: "123456789"},
+			&oldBankID,
+			"NGUYỄN VĂN A",
+		)
+
+		assert.Nil(t, updates)
+	})
+
+	t.Run("empty account number is not authoritative", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{BankName: "BIDV"},
+			&newBankID,
+			"Nguyễn Văn A",
+		)
+
+		assert.Nil(t, updates)
+	})
+
+	t.Run("provided but unresolved bank clears the stale bank relation", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{
+				BankAccount: "987654321",
+				BankName:    "Ngân hàng không xác định",
+			},
+			nil,
+			"Nguyễn Văn A",
+		)
+
+		assert.Contains(t, updates, "bank_id")
+		assert.Nil(t, updates["bank_id"])
+		assert.Equal(t, "987654321", updates["bank_account_number"])
+	})
+}

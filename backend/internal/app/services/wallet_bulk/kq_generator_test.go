@@ -14,9 +14,9 @@ import (
 )
 
 // stringPtr helper for test row construction.
-func stringPtr(s string) *string { return &s }
-func uintPtr(u uint) *uint       { return &u }
-func uint64Ptr(u uint64) *uint64 { return &u }
+func stringPtr(s string) *string     { return &s }
+func uintPtr(u uint) *uint           { return &u }
+func uint64Ptr(u uint64) *uint64     { return &u }
 func timePtr(t time.Time) *time.Time { return &t }
 
 // TestKQGenerator_HappyPath verifies the row-5 layout + status mapping + FT column.
@@ -26,9 +26,9 @@ func TestKQGenerator_HappyPath(t *testing.T) {
 	}
 	dataJSON, _ := json.Marshal(rows)
 	batch := &domain.BulkTransferBatch{
-		ID:         42,
-		Filename:   "Yeu_cau_chuyen_tien_weekly_20260719.xlsx",
-		Data:       string(dataJSON),
+		ID:       42,
+		Filename: "Yeu_cau_chuyen_tien_weekly_20260719.xlsx",
+		Data:     string(dataJSON),
 	}
 
 	// One completed row with a real FT number (IPN delivered).

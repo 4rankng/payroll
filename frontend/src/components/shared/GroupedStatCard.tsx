@@ -10,6 +10,7 @@ export interface StatItem {
   unit?: string;
   variant?: 'default' | 'muted' | 'accent';
   onClick?: () => void;
+  isPressed?: boolean;
 }
 
 export interface GroupedStatCardProps {
@@ -78,16 +79,13 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
     : (stat.value as string);
 
   const isAccent = stat.variant === 'accent';
-
-  return (
-    <div
-      onClick={(e) => { if (stat.onClick) { e.stopPropagation(); stat.onClick(); } }}
-      className={cn(
-        'flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0 transition-colors',
-        isAccent ? 'bg-primary/5' : 'bg-card',
-        stat.onClick && 'cursor-pointer hover:bg-muted/50 active:bg-muted/80',
-      )}
-    >
+  const cellClassName = cn(
+    'flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0 transition-colors',
+    isAccent ? 'bg-primary/5' : 'bg-card',
+    stat.onClick && 'cursor-pointer hover:bg-muted/50 active:bg-muted/80',
+  );
+  const content = (
+    <>
       <span className={cn(
         'w-full break-words text-center font-display text-sm font-extrabold tabular-nums leading-tight tracking-tight sm:text-base',
         isAccent ? 'text-primary' : 'text-foreground',
@@ -97,6 +95,28 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
       <span className="mt-0.5 w-full break-words px-1 text-center text-[11px] font-medium leading-tight text-muted-foreground">
         {stat.label}
       </span>
+    </>
+  );
+
+  if (stat.onClick) {
+    return (
+      <button
+        type="button"
+        aria-pressed={stat.isPressed}
+        onClick={(event) => {
+          event.stopPropagation();
+          stat.onClick?.();
+        }}
+        className={cellClassName}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={cellClassName}>
+      {content}
     </div>
   );
 });

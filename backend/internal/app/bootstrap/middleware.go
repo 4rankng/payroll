@@ -43,7 +43,7 @@ func setupCORS(router *gin.Engine, cfg *config.Config) {
 		}
 	}
 	corsConfig.AllowCredentials = true
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-Requested-With"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Idempotency-Key", "X-Requested-With"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	corsConfig.ExposeHeaders = []string{"Content-Disposition"}
 	router.Use(cors.New(corsConfig))

@@ -20,6 +20,33 @@ func runWalletTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		return nil
 	})
 
+	reporter.RunTest(flowWallet, "Get current-state demand forecast", func() error {
+		var resp WalletDemandForecastResponse
+		if _, err := admin.GetInto("/api/v1/wallet/demand-forecast", &resp); err != nil {
+			return fmt.Errorf("wallet demand forecast: %w", err)
+		}
+		if resp.CurrentForMonth == "" || resp.MaxCycleDay <= 0 || len(resp.Periods) == 0 {
+			return fmt.Errorf(
+				"incomplete forecast response: forMonth=%q maxCycleDay=%d periods=%d",
+				resp.CurrentForMonth,
+				resp.MaxCycleDay,
+				len(resp.Periods),
+			)
+		}
+		if resp.Prediction.RecommendedBalance < 0 ||
+			resp.Prediction.P50Reference > resp.Prediction.P90Reference ||
+			resp.Prediction.P90Reference > resp.Prediction.P99Reference {
+			return fmt.Errorf(
+				"invalid forecast ladder: recommended=%d p50=%d p90=%d p99=%d",
+				resp.Prediction.RecommendedBalance,
+				resp.Prediction.P50Reference,
+				resp.Prediction.P90Reference,
+				resp.Prediction.P99Reference,
+			)
+		}
+		return nil
+	})
+
 	reporter.RunTest(flowWallet, "Sync balance", func() error {
 		var resp interface{}
 		if _, err := admin.PostInto("/api/v1/wallet/sync", nil, &resp); err != nil {
