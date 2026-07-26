@@ -188,7 +188,7 @@ export function TransactionPageHeader({
               Phí OnePay
             </DropdownMenuItem>
             {onSimulateSettlement && (
-              <DropdownMenuItem onClick={onSimulateSettlement}>
+              <DropdownMenuItem className="lg:hidden" onClick={onSimulateSettlement}>
                 <ClipboardCheck className="mr-2 h-4 w-4" />
                 Mô phỏng đối soát
               </DropdownMenuItem>
@@ -208,6 +208,18 @@ export function TransactionPageHeader({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {onSimulateSettlement && (
+          <Button
+            data-testid="compact-settlement-simulation-button"
+            variant="outline"
+            onClick={onSimulateSettlement}
+            className="hidden h-9 lg:inline-flex"
+          >
+            <ClipboardCheck className="h-4 w-4" />
+            Mô phỏng đối soát
+          </Button>
+        )}
 
         <Button onClick={onAddTransaction} size="sm" className="h-9 px-3 text-sm">
           <Plus className="h-4 w-4" />

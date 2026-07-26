@@ -72,7 +72,7 @@ export function EmployeeMonthNavigator({ month, className }: EmployeeMonthNaviga
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full gap-2.5 rounded-xl px-2 font-normal normal-case text-base-content shadow-none transition-colors active:bg-[var(--employee-accent-soft)]"
+            className="ct-btn ct-btn-ghost mx-auto h-auto min-h-11 min-w-0 max-w-full flex-nowrap gap-2.5 rounded-xl px-2 font-normal normal-case text-base-content shadow-none transition-colors active:bg-[var(--employee-accent-soft)] max-[359px]:gap-1.5 max-[359px]:px-0"
             aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
           >
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-primary">

@@ -373,20 +373,18 @@ export function AdvancePaymentRequestForm({
         className="employee-fintech-surface -mx-4 -mt-4 rounded-t-2xl border-b border-[var(--employee-border)] px-4 pb-4 pt-4"
         data-period-state={status.variant}
       >
-        <div className="flex flex-col gap-3 min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between">
-          <div className="min-w-0">
-            <h2
-              id="employee-advance-title"
-              className="employee-type-label-caps flex items-center gap-2 text-[var(--employee-text-secondary)]"
-            >
-              <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
-              Ứng lương tháng {viewedMonthLabel}
-            </h2>
-            <p className="employee-type-payroll-value mt-1 text-[var(--employee-text)] tabular-nums">
-              {formatPayrollMonthRange(selectedMonth)}
-            </p>
-          </div>
-          <span className={cn(PERIOD_CHIP_BASE, "self-start", status.chipClassName)} aria-label={status.chipLabel}>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-3 gap-y-1.5">
+          <h2
+            id="employee-advance-title"
+            className="employee-type-label-caps col-span-2 flex items-center gap-2 text-[var(--employee-text-secondary)]"
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
+            Ứng lương tháng {viewedMonthLabel}
+          </h2>
+          <p className="employee-type-payroll-value min-w-0 text-[var(--employee-text)] tabular-nums">
+            {formatPayrollMonthRange(selectedMonth)}
+          </p>
+          <span className={cn(PERIOD_CHIP_BASE, "justify-self-end", status.chipClassName)} aria-label={status.chipLabel}>
             {status.chipIcon === "check" && (
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
             )}
@@ -400,7 +398,7 @@ export function AdvancePaymentRequestForm({
           </span>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
+        <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 max-[359px]:grid-cols-1">
           <div className="min-w-0">
             <p
               className={cn(
@@ -417,7 +415,7 @@ export function AdvancePaymentRequestForm({
             </p>
             <p
               className={cn(
-                "employee-type-label mt-2",
+                "employee-type-label mt-1.5",
                 isOpen
                   ? "text-[var(--employee-text-secondary)]"
                   : "text-[var(--employee-text-secondary)]",
@@ -427,8 +425,8 @@ export function AdvancePaymentRequestForm({
             </p>
           </div>
           {showQuotaProgress && (
-            <div className="flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-white px-3 py-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+            <div className="flex items-center gap-2 self-center rounded-xl border border-[var(--employee-accent-border)] bg-white px-2.5 py-2 max-[359px]:justify-self-start">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
                 <Gauge className="h-4 w-4" aria-hidden="true" />
               </span>
               <span>
@@ -445,7 +443,7 @@ export function AdvancePaymentRequestForm({
 
         {/* Historical quota details stay visible only for the selected month. */}
         {showQuotaProgress && (
-          <div className="mt-4 rounded-xl border border-[var(--employee-border)] bg-white p-3">
+          <div className="mt-3 rounded-xl border border-[var(--employee-border)] bg-white p-3">
             <div className="employee-type-label mb-2 text-[var(--employee-text-secondary)]">
               <span>Tiến độ hạn mức</span>
             </div>
@@ -494,7 +492,7 @@ export function AdvancePaymentRequestForm({
       {/* ============== Form controls — only in the open state ============== */}
       {showFormControls && (
         <>
-          <div className="mt-4 border-t border-[#EAECF0] pt-4">
+          <div className="pt-4">
             <label
               htmlFor="advance-payment-amount"
               className="employee-type-label block text-[#475467]"

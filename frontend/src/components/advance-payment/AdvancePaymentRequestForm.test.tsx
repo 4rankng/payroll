@@ -90,6 +90,30 @@ describe("AdvancePaymentRequestForm", () => {
     expect(onSubmit).toHaveBeenCalledWith({ amount: 500_000, forMonth: "2026-07" });
   });
 
+  it("keeps the mobile summary compact while allowing a narrow-screen fallback", () => {
+    render(<AdvancePaymentRequestForm {...baseProps} info={info} />);
+
+    const periodTitle = screen.getByText("Ứng lương tháng 07/2026");
+    expect(periodTitle.parentElement).toHaveClass(
+      "grid",
+      "grid-cols-[minmax(0,1fr)_auto]",
+      "items-end",
+    );
+    expect(screen.getByText("Đang mở")).toHaveClass("justify-self-end");
+
+    const amountLabel = screen.getByText("Có thể ứng");
+    expect(amountLabel.parentElement?.parentElement).toHaveClass(
+      "grid",
+      "grid-cols-[minmax(0,1fr)_auto]",
+      "max-[359px]:grid-cols-1",
+    );
+
+    const amountField = screen.getByLabelText("Số tiền muốn ứng");
+    const formSection = amountField.parentElement?.parentElement;
+    expect(formSection).toHaveClass("pt-4");
+    expect(formSection).not.toHaveClass("mt-4", "border-t");
+  });
+
   it("replaces the request controls with the submitted-request acknowledgement", () => {
     render(
       <AdvancePaymentRequestForm

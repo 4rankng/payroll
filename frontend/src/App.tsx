@@ -258,7 +258,7 @@ const AppContent = () => {
           <Route path="payment-history" element={<AdminPaymentHistoryPage />} />
           <Route path="timesheets" element={<Navigate to="/admin/timesheet" replace />} />
           <Route path="transactions" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={TransactionsPageMobile} />} />
-          <Route path="ledger" element={<LedgerEntriesPageMobile />} />
+          <Route path="ledger" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={LedgerEntriesPageMobile} />} />
           <Route path="loans" element={<ResponsivePage desktopComponent={LoansPage} mobileComponent={LoansPageMobile} />} />
           <Route path="loans/lenders" element={<LendersPageMobile />} />
           <Route path="advance-payments" element={<ResponsivePage desktopComponent={AdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />} />
