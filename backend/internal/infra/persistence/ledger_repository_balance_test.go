@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"api-server/internal/domain"
@@ -11,10 +12,20 @@ import (
 )
 
 func TestGetAccountTotalForTransactionsScopesAccountAndTransactionIDs(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open("file:ledger_scope_test?mode=memory&cache=shared"), &gorm.Config{})
+	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
 	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("get sqlite connection: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := sqlDB.Close(); err != nil {
+			t.Errorf("close sqlite: %v", err)
+		}
+	})
 	if err := db.Exec(`
 		CREATE TABLE ledger_entries (
 			id INTEGER PRIMARY KEY,

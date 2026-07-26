@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -141,6 +142,114 @@ func TestSettlementSimulationMissingTransactionLinkRemainsMismatch(t *testing.T)
 	if len(ledger.transactionIDs) != 0 {
 		t.Fatalf("transaction IDs = %v, want none for an unlinked timesheet", ledger.transactionIDs)
 	}
+	if !hasSimulationWarning(result.Warnings, "LEDGER_TRANSACTION_LINK_MISSING") {
+		t.Fatalf("warnings = %+v, want LEDGER_TRANSACTION_LINK_MISSING", result.Warnings)
+	}
+}
+
+func TestSettlementSimulationMissingZeroValueTransactionLinkCannotReconcile(t *testing.T) {
+	project := &domain.Project{ID: 1, Name: "Dự án thử nghiệm"}
+	included := simulationTimesheet(1, 0, 0, nil, project)
+	ledger := &simulationLedgerReader{}
+	service := NewSettlementSimulationService(
+		&simulationReportSelector{reports: []*domainServices.ProjectReportData{{
+			Project:      project,
+			TimesheetIDs: []uint{included.ID},
+			Timesheets:   []*domain.Timesheet{included},
+		}}},
+		&simulationTimesheetRepository{rows: []*domain.Timesheet{included}},
+		ledger,
+		pkgClock.NewFake(time.Date(2026, time.July, 26, 0, 0, 0, 0, pkgClock.DefaultLocation)),
+	)
+
+	result, err := service.Simulate(context.Background(), &dto.SimulateSettlementRequest{
+		StartDate:   "2026-07-26",
+		ExportCount: 1,
+	})
+	if err != nil {
+		t.Fatalf("Simulate() error = %v", err)
+	}
+
+	if result.Reconciliation.Reconciled {
+		t.Fatalf("reconciliation = %+v, missing evidence must not reconcile even at zero value", result.Reconciliation)
+	}
+	if !hasSimulationWarning(result.Warnings, "LEDGER_TRANSACTION_LINK_MISSING") {
+		t.Fatalf("warnings = %+v, want LEDGER_TRANSACTION_LINK_MISSING", result.Warnings)
+	}
+}
+
+func TestSettlementSimulationAcceptsEstablishedRoundingTolerance(t *testing.T) {
+	txID := uint(10)
+	project := &domain.Project{ID: 1, Name: "Dự án thử nghiệm"}
+	includedOne := simulationTimesheet(1, 1000, 1020, &txID, project)
+	includedTwo := simulationTimesheet(2, 500, 510, &txID, project)
+	ledger := &simulationLedgerReader{transactionTotal: 1545}
+	service := NewSettlementSimulationService(
+		&simulationReportSelector{reports: []*domainServices.ProjectReportData{{
+			Project:      project,
+			TimesheetIDs: []uint{includedOne.ID, includedTwo.ID},
+			Timesheets:   []*domain.Timesheet{includedOne, includedTwo},
+		}}},
+		&simulationTimesheetRepository{rows: []*domain.Timesheet{includedOne, includedTwo}},
+		ledger,
+		pkgClock.NewFake(time.Date(2026, time.July, 26, 0, 0, 0, 0, pkgClock.DefaultLocation)),
+	)
+
+	result, err := service.Simulate(context.Background(), &dto.SimulateSettlementRequest{
+		StartDate:   "2026-07-26",
+		ExportCount: 1,
+	})
+	if err != nil {
+		t.Fatalf("Simulate() error = %v", err)
+	}
+
+	if result.Reconciliation.Delta != 15 || !result.Reconciliation.Reconciled {
+		t.Fatalf("reconciliation = %+v, want 15 VND rounding difference accepted", result.Reconciliation)
+	}
+}
+
+func TestSettlementSimulationExcludesPartiallyCoveredTransactionsFromLedgerComparison(t *testing.T) {
+	partialTxID := uint(10)
+	completeTxID := uint(11)
+	project := &domain.Project{ID: 1, Name: "Dự án thử nghiệm"}
+	partialCovered := simulationTimesheet(1, 1000, 1020, &partialTxID, project)
+	partialRemainder := simulationTimesheet(2, 500, 510, &partialTxID, project)
+	completeCovered := simulationTimesheet(3, 500, 510, &completeTxID, project)
+	ledger := &simulationLedgerReader{transactionTotal: 510}
+	service := NewSettlementSimulationService(
+		&simulationReportSelector{reports: []*domainServices.ProjectReportData{{
+			Project:      project,
+			TimesheetIDs: []uint{partialCovered.ID, completeCovered.ID},
+			Timesheets:   []*domain.Timesheet{partialCovered, completeCovered},
+		}}},
+		&simulationTimesheetRepository{rows: []*domain.Timesheet{partialCovered, partialRemainder, completeCovered}},
+		ledger,
+		pkgClock.NewFake(time.Date(2026, time.July, 26, 0, 0, 0, 0, pkgClock.DefaultLocation)),
+	)
+
+	result, err := service.Simulate(context.Background(), &dto.SimulateSettlementRequest{
+		StartDate:   "2026-07-26",
+		ExportCount: 1,
+	})
+	if err != nil {
+		t.Fatalf("Simulate() error = %v", err)
+	}
+
+	if result.Reconciliation.ExportedTotal != completeCovered.RevenueReceivable {
+		t.Fatalf("reconciliation comparator = %d, want only complete transaction amount %d", result.Reconciliation.ExportedTotal, completeCovered.RevenueReceivable)
+	}
+	if !slices.Equal(ledger.transactionIDs, []uint{completeTxID}) {
+		t.Fatalf("transaction IDs = %v, want only complete transaction %d", ledger.transactionIDs, completeTxID)
+	}
+	if result.Reconciliation.Reconciled {
+		t.Fatalf("reconciliation = %+v, partial transaction scope must not claim a complete match", result.Reconciliation)
+	}
+	if !hasSimulationWarning(result.Warnings, "LEDGER_PARTIAL_TRANSACTION_SCOPE") {
+		t.Fatalf("warnings = %+v, want LEDGER_PARTIAL_TRANSACTION_SCOPE", result.Warnings)
+	}
+	if message := simulationWarningMessage(result.Warnings, "LEDGER_PARTIAL_TRANSACTION_SCOPE"); !strings.Contains(message, "1 giao dịch") {
+		t.Fatalf("partial transaction warning = %q, want affected transaction count", message)
+	}
 }
 
 func TestSettlementSimulationLedgerReadErrorCannotReportReconciled(t *testing.T) {
@@ -197,4 +306,13 @@ func hasSimulationWarning(warnings []dto.SimWarning, code string) bool {
 		}
 	}
 	return false
+}
+
+func simulationWarningMessage(warnings []dto.SimWarning, code string) string {
+	for _, warning := range warnings {
+		if warning.Code == code {
+			return warning.Message
+		}
+	}
+	return ""
 }

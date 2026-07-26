@@ -42,6 +42,8 @@ import type {
   SettlementSimulationResult,
   SettlementVerdict,
   ExportProjection,
+  ReconciliationResult,
+  SimWarning,
 } from '@/types/api/settlement-simulation.types';
 
 interface SettlementSimulationDialogProps {
@@ -72,6 +74,43 @@ const TONE_CLASS: Record<'green' | 'amber' | 'red', string> = {
   amber: 'border-amber-500 bg-amber-50 text-amber-900',
   red: 'border-red-500 bg-red-50 text-red-900',
 };
+
+export function getLedgerReconciliationCardState(
+  reconciliation: ReconciliationResult,
+  warnings: SimWarning[],
+): { value: string; sub: string; tone: 'green' | 'amber' | 'red' } {
+  const hasHardFailure = warnings.some(
+    (warning) =>
+      warning.code === 'LEDGER_RECONCILIATION_FAILED' ||
+      warning.code === 'LEDGER_TRANSACTION_LINK_MISSING',
+  );
+  if (hasHardFailure) {
+    return {
+      value: 'Lệch',
+      sub: `Δ ${formatCurrency(reconciliation.delta)}`,
+      tone: 'red',
+    };
+  }
+  if (warnings.some((warning) => warning.code === 'LEDGER_PARTIAL_TRANSACTION_SCOPE')) {
+    return {
+      value: 'Một phần',
+      sub: 'Xem cảnh báo bên dưới',
+      tone: 'amber',
+    };
+  }
+  if (reconciliation.reconciled) {
+    return {
+      value: 'Khớp',
+      sub: formatCurrency(reconciliation.exported_total),
+      tone: 'green',
+    };
+  }
+  return {
+    value: 'Lệch',
+    sub: `Δ ${formatCurrency(reconciliation.delta)}`,
+    tone: 'red',
+  };
+}
 
 export function SettlementSimulationDialog({ open, onOpenChange }: SettlementSimulationDialogProps) {
   const today = dateToString(new Date());
@@ -171,6 +210,7 @@ function ResultView({ result }: { result: SettlementSimulationResult }) {
   const meta = VERDICT_META[result.verdict] ?? VERDICT_META.CAN_KIEM_TRA;
   const VerdictIcon = meta.icon;
   const { summary, reconciliation, exports, remainders, warnings } = result;
+  const reconciliationCard = getLedgerReconciliationCardState(reconciliation, warnings);
 
   return (
     <div className="space-y-4">
@@ -207,9 +247,9 @@ function ResultView({ result }: { result: SettlementSimulationResult }) {
         />
         <StatCard
           label="Đối soát sổ cái"
-          value={reconciliation.reconciled ? 'Khớp' : 'Lệch'}
-          sub={reconciliation.reconciled ? formatCurrency(reconciliation.exported_total) : `Δ ${formatCurrency(reconciliation.delta)}`}
-          tone={reconciliation.reconciled ? 'green' : 'red'}
+          value={reconciliationCard.value}
+          sub={reconciliationCard.sub}
+          tone={reconciliationCard.tone}
         />
       </div>
 

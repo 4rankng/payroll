@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"api-server/internal/app/dto"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/infra/observability"
@@ -146,22 +147,31 @@ func (s *SettlementSimulationService) Simulate(ctx context.Context, req *dto.Sim
 	//    transaction cohort. The export table shows employee paid_amount, while
 	//    receivable ledger entries include the service fee, so the comparator
 	//    must be RevenueReceivable rather than the wage principal.
-	expectedReceivable, transactionIDs := buildReconciliationScope(fullPoolTs, covered)
-	receivable, recErr := s.ledgerService.GetAccountTotalForTransactions(ctx, "receivable", transactionIDs)
+	reconciliationScope := buildReconciliationScope(fullPoolTs, covered)
+	receivable, recErr := s.ledgerService.GetAccountTotalForTransactions(ctx, "receivable", reconciliationScope.transactionIDs)
 	if recErr != nil {
 		s.logger.Warn("simulation: receivable query failed", "error", recErr)
 		receivable = 0
 	}
+	delta := receivable - reconciliationScope.expectedReceivable
 	reconciliation := dto.ReconciliationResult{
-		ExportedTotal:    expectedReceivable,
+		ExportedTotal:    reconciliationScope.expectedReceivable,
 		LedgerReceivable: receivable,
-		Delta:            receivable - expectedReceivable,
-		Reconciled:       recErr == nil && receivable == expectedReceivable,
+		Delta:            delta,
+		Reconciled: recErr == nil &&
+			!reconciliationScope.hasMissingTransactionLink &&
+			reconciliationScope.partialTransactionCount == 0 &&
+			withinRoundingTolerance(delta),
 	}
 
 	// 7. Summary + verdict.
 	summary := buildSummaryFromTimesheets(fullPoolTs, exports, remainders, covered)
-	warnings := buildWarnings(len(remainders) > 0, recErr != nil)
+	warnings := buildWarnings(
+		len(remainders) > 0,
+		recErr != nil,
+		reconciliationScope.hasMissingTransactionLink,
+		reconciliationScope.partialTransactionCount,
+	)
 	verdict := computeVerdict(remainders, reconciliation, warnings)
 
 	return &dto.SimulationResult{
@@ -393,7 +403,7 @@ func computeVerdict(remainders []dto.RemainderRow, rec dto.ReconciliationResult,
 	}
 }
 
-func buildWarnings(hasRemainders, reconciliationFailed bool) []dto.SimWarning {
+func buildWarnings(hasRemainders, reconciliationFailed, hasMissingTransactionLink bool, partialTransactionCount int) []dto.SimWarning {
 	w := []dto.SimWarning{
 		{Code: "PRODUCTION_DOES_NOT_VALIDATE", Message: "Sản xuất không kiểm tra mã ngân hàng, số tiền âm, hoặc trùng lặp. Xem chi tiết trong từng lần xuất."},
 	}
@@ -403,16 +413,52 @@ func buildWarnings(hasRemainders, reconciliationFailed bool) []dto.SimWarning {
 	if reconciliationFailed {
 		w = append(w, dto.SimWarning{Code: "LEDGER_RECONCILIATION_FAILED", Message: "Không thể đọc dữ liệu sổ cái để đối soát. Vui lòng thử lại."})
 	}
+	if hasMissingTransactionLink {
+		w = append(w, dto.SimWarning{Code: "LEDGER_TRANSACTION_LINK_MISSING", Message: "Có bảng công đã bao phủ nhưng chưa liên kết giao dịch sổ cái. Cần kiểm tra dữ liệu kế toán."})
+	}
+	if partialTransactionCount > 0 {
+		w = append(w, dto.SimWarning{
+			Code:    "LEDGER_PARTIAL_TRANSACTION_SCOPE",
+			Message: fmt.Sprintf("Có %d giao dịch sổ cái chứa cả bảng công đã bao phủ và chưa bao phủ; các giao dịch này được tách khỏi phép so sánh để tránh báo lệch sai.", partialTransactionCount),
+		})
+	}
 	return w
 }
 
-// buildReconciliationScope returns the projected receivable amount and exact
-// ledger transaction cohort for covered timesheets. Unlinked covered rows stay
-// in the expected amount so missing accounting evidence remains visible.
-func buildReconciliationScope(fullPool []*domain.Timesheet, covered map[uint]struct{}) (int64, []uint) {
-	var expectedReceivable int64
-	seenTransactionIDs := make(map[uint]struct{})
+type reconciliationScope struct {
+	expectedReceivable        int64
+	transactionIDs            []uint
+	hasMissingTransactionLink bool
+	partialTransactionCount   int
+}
 
+type transactionCoverage struct {
+	covered   bool
+	uncovered bool
+}
+
+// buildReconciliationScope returns the projected receivable amount and exact
+// ledger transaction cohort for covered timesheets. Transactions split across
+// covered and remainder rows are excluded from both sides because the ledger is
+// aggregated at transaction granularity and cannot represent only one share.
+func buildReconciliationScope(fullPool []*domain.Timesheet, covered map[uint]struct{}) reconciliationScope {
+	coverageByTransaction := make(map[uint]transactionCoverage)
+	for _, ts := range fullPool {
+		if ts == nil || ts.TransactionID == nil {
+			continue
+		}
+		coverage := coverageByTransaction[*ts.TransactionID]
+		if _, ok := covered[ts.ID]; ok {
+			coverage.covered = true
+		} else {
+			coverage.uncovered = true
+		}
+		coverageByTransaction[*ts.TransactionID] = coverage
+	}
+
+	var scope reconciliationScope
+	seenTransactionIDs := make(map[uint]struct{})
+	partialTransactionIDs := make(map[uint]struct{})
 	for _, ts := range fullPool {
 		if ts == nil {
 			continue
@@ -421,21 +467,37 @@ func buildReconciliationScope(fullPool []*domain.Timesheet, covered map[uint]str
 			continue
 		}
 
-		expectedReceivable += ts.RevenueReceivable
-		if ts.TransactionID != nil {
-			seenTransactionIDs[*ts.TransactionID] = struct{}{}
+		if ts.TransactionID == nil {
+			scope.expectedReceivable += ts.RevenueReceivable
+			scope.hasMissingTransactionLink = true
+			continue
 		}
+		coverage := coverageByTransaction[*ts.TransactionID]
+		if coverage.covered && coverage.uncovered {
+			partialTransactionIDs[*ts.TransactionID] = struct{}{}
+			continue
+		}
+		scope.expectedReceivable += ts.RevenueReceivable
+		seenTransactionIDs[*ts.TransactionID] = struct{}{}
 	}
 
-	transactionIDs := make([]uint, 0, len(seenTransactionIDs))
+	scope.transactionIDs = make([]uint, 0, len(seenTransactionIDs))
 	for id := range seenTransactionIDs {
-		transactionIDs = append(transactionIDs, id)
+		scope.transactionIDs = append(scope.transactionIDs, id)
 	}
-	sort.Slice(transactionIDs, func(i, j int) bool {
-		return transactionIDs[i] < transactionIDs[j]
+	sort.Slice(scope.transactionIDs, func(i, j int) bool {
+		return scope.transactionIDs[i] < scope.transactionIDs[j]
 	})
+	scope.partialTransactionCount = len(partialTransactionIDs)
 
-	return expectedReceivable, transactionIDs
+	return scope
+}
+
+func withinRoundingTolerance(delta int64) bool {
+	if delta < 0 {
+		delta = -delta
+	}
+	return delta <= constants.RoundingTolerance
 }
 
 // buildSummaryFromTimesheets computes the answer-first totals from the raw
