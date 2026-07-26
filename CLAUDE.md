@@ -103,6 +103,7 @@ make adminer          # SSH tunnel to production DB UI at localhost:18081
 ## Working Effectively
 
 - **Scout before coding.** Read the relevant `AGENTS.md` file in the target directory — every major module has one.
+- **Load context progressively.** Follow [Context Engineering](docs/standards/context-engineering.md): establish a small task packet, retrieve the owning path and contracts first, and stop loading when the task can be executed and verified.
 - **Follow the Locate → Repair → Validate loop** instead of one massive prompt. See [prompt-library/bug-fix.md](docs/prompt-library/bug-fix.md).
 - **Run `make api-test` after every feature change** to catch regressions.
 - **Review agent output at architectural boundaries**, not line by line.

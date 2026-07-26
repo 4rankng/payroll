@@ -19,6 +19,7 @@ Project documentation for the payroll monorepo. Evergreen reference docs live di
 | `testing.md` | Testing strategy: unit, integration, E2E, CI pipeline, known test issues |
 | `troubleshooting.md` | Known recurring issues with symptom → cause → fix |
 | `definition-of-done.md` | Completion gates: build, tests, lint, security, docs, mobile responsive |
+| `standards/context-engineering.md` | Task-scoped retrieval, context state, compression, and evidence rules |
 
 The project front door is the root [`README.md`](../README.md). Root-level AI agent guidance is in [`../CLAUDE.md`](../CLAUDE.md) and [`../AGENTS.md`](../AGENTS.md). Per-area developer context lives in [`backend/AGENTS.md`](../backend/AGENTS.md) and [`frontend/AGENTS.md`](../frontend/AGENTS.md).
 
@@ -27,7 +28,7 @@ The project front door is the root [`README.md`](../README.md). Root-level AI ag
 | Directory | Contents |
 |-----------|----------|
 | `decisions/` | Architecture Decision Records (ADRs) — why technical decisions were made |
-| `standards/` | Cross-cutting standards: review checklist, security, performance, UI guidelines |
+| `standards/` | Cross-cutting standards: context engineering, review, security, performance, UI guidelines |
 | `prompt-library/` | Reusable prompts for common engineering tasks (feature, bugfix, refactor, security, etc.) |
 | `lessons/` | Durable engineering lessons extracted from real experiences |
 | `journals/` | Session narratives: what happened, what was tried, what shipped |

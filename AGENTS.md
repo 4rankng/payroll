@@ -1,4 +1,4 @@
-<!-- Generated: 2026-06-07 | Updated: 2026-07-25 -->
+<!-- Generated: 2026-06-07 | Updated: 2026-07-26 -->
 
 # Payroll
 
@@ -9,6 +9,7 @@ Payroll management system for Vietnamese companies. Monorepo with a Go backend (
 | File | Description |
 |------|-------------|
 | `CLAUDE.md` | Project-level instructions, integration test patterns, clock system, cache invalidation rules |
+| `docs/standards/context-engineering.md` | Task-scoped context selection, state, and evidence contract |
 | `Makefile` | Build, test, deploy, and restore commands for the monorepo |
 | `docker-compose.yml` | Production Docker Compose (api-server + MySQL + Redis + nginx) |
 | `docker-compose.dev.yml` | Development Docker Compose (MySQL + Redis only, backend runs via air) |
@@ -47,6 +48,14 @@ Payroll management system for Vietnamese companies. Monorepo with a Go backend (
 - Backend: Domain events via `EventBus.Publish()`, non-blocking goroutines, outbox pattern
 - Frontend: TanStack Query for data fetching, optimistic updates, Vietnamese UI text
 - Both: Centralized clock, Redis caching with invalidation after commit, asynq background jobs
+
+### Development Context Engineering
+- Start with the user goal, root `AGENTS.md`, `CLAUDE.md`, `README.md`, and the nearest `AGENTS.md` for each target file. Add reference docs only when they govern the task.
+- Use `graphify query` to locate the active control flow before broad text search. Then read the owning source, its callers/consumers, and the narrowest relevant tests.
+- Retrieve context progressively. Stop when ownership, contract, precedent, verification, and unresolved risks are known; do not preload whole docs trees or `GRAPH_REPORT.md`.
+- For cross-module or resumable work, keep a short task packet based on `plans/templates/task-context.md`. Record decisions and evidence, not full tool output.
+- Re-check the packet after scope changes or contradictory evidence. Completion claims must name the checks actually run and classify skipped or failing checks.
+- The full selection, compression, state, and evaluation contract is in [`docs/standards/context-engineering.md`](docs/standards/context-engineering.md).
 
 ## Dependencies
 

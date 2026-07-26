@@ -14,6 +14,13 @@ Output format: What the result should look like
 Verification: How to confirm it's done
 ```
 
+For cross-module, risky, delegated, or resumable work, create a small task
+packet from
+[`plans/templates/task-context.md`](../../plans/templates/task-context.md).
+Follow the [Context Engineering Standard](../standards/context-engineering.md):
+load the owning path and contracts first, add references only when a concrete
+unknown requires them, and preserve decisions/evidence instead of raw output.
+
 ## Prompts
 
 | Prompt | Use When |
@@ -29,11 +36,14 @@ Verification: How to confirm it's done
 
 ## Usage Tips
 
-1. **Scout first.** Before using a prompt, read the relevant `AGENTS.md` file in the target directory. Every major module has one.
+1. **Scout first.** Read the root and nearest applicable `AGENTS.md`, then use `graphify query` to locate the owning path.
 2. **Adapt, don't copy.** Replace placeholders with your specific context. Remove sections that don't apply.
 3. **Verify after.** Every prompt includes a verification step. Don't skip it.
 4. **Use with `/ck:cook`.** These prompts pair well with the cook skill — pass the prompt as the task description.
 
 ## Relationship to Plan Templates
 
-The [`plans/templates/`](../../plans/templates/) directory has structured plan templates (feature-implementation, bug-fix, refactor). These prompts are the *instructions* you give an AI agent; the plan templates are the *output format* the agent fills in.
+The [`task-context` template](../../plans/templates/task-context.md) preserves
+intent, authority, active-path findings, decisions, and evidence across a long
+task. Prompt-library files define task instructions; active execution plans and
+phase files live in their timestamped directory under `plans/`.
