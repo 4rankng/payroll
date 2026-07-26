@@ -43,7 +43,7 @@ const (
 //   - Remainders = full pool − covered; each carries employee/project/date.
 //
 // Strictly read-only: only calls GetProjectsForPayrollReport + a read-only
-// timesheet List + GetAccountTotalInRange. Zero writes.
+// timesheet List + GetAccountTotalForTransactions. Zero writes.
 type SettlementSimulationService struct {
 	reportService ReportSelector
 	timesheetRepo domain.TimesheetRepository
@@ -60,7 +60,7 @@ type ReportSelector interface {
 
 // LedgerSumReader is the read-only ledger reconciliation subset.
 type LedgerSumReader interface {
-	GetAccountTotalInRange(ctx context.Context, account string, from, to time.Time) (int64, error)
+	GetAccountTotalForTransactions(ctx context.Context, account string, transactionIDs []uint) (int64, error)
 }
 
 // NewSettlementSimulationService constructs the service.
@@ -142,28 +142,26 @@ func (s *SettlementSimulationService) Simulate(ctx context.Context, req *dto.Sim
 	// 5. Remainders = full pool − covered. Built from the raw timesheet slice.
 	remainders := buildRemaindersFromTimesheets(fullPoolTs, covered, dateByID)
 
-	// 6. Reconciliation against ledger receivable over the full span.
-	var totalIncluded int64
-	for _, e := range exports {
-		totalIncluded += e.IncludedAmount
-	}
-	spanFrom := earliestTimesheetDate(fullPoolTs)
-	spanTo := exportTimes[len(exportTimes)-1]
-	receivable, recErr := s.ledgerService.GetAccountTotalInRange(ctx, "receivable", spanFrom, spanTo)
+	// 6. Reconcile the projected timesheets against the exact same ledger
+	//    transaction cohort. The export table shows employee paid_amount, while
+	//    receivable ledger entries include the service fee, so the comparator
+	//    must be RevenueReceivable rather than the wage principal.
+	expectedReceivable, transactionIDs := buildReconciliationScope(fullPoolTs, covered)
+	receivable, recErr := s.ledgerService.GetAccountTotalForTransactions(ctx, "receivable", transactionIDs)
 	if recErr != nil {
 		s.logger.Warn("simulation: receivable query failed", "error", recErr)
 		receivable = 0
 	}
 	reconciliation := dto.ReconciliationResult{
-		ExportedTotal:    totalIncluded,
+		ExportedTotal:    expectedReceivable,
 		LedgerReceivable: receivable,
-		Delta:            receivable - totalIncluded,
-		Reconciled:       receivable == totalIncluded,
+		Delta:            receivable - expectedReceivable,
+		Reconciled:       recErr == nil && receivable == expectedReceivable,
 	}
 
 	// 7. Summary + verdict.
 	summary := buildSummaryFromTimesheets(fullPoolTs, exports, remainders, covered)
-	warnings := buildWarnings(len(remainders) > 0)
+	warnings := buildWarnings(len(remainders) > 0, recErr != nil)
 	verdict := computeVerdict(remainders, reconciliation, warnings)
 
 	return &dto.SimulationResult{
@@ -191,21 +189,6 @@ func filterRevenuePaidFalse(tses []*domain.Timesheet) []*domain.Timesheet {
 		out = append(out, ts)
 	}
 	return out
-}
-
-// earliestTimesheetDate returns the earliest work date in the pool, or the
-// zero time if empty.
-func earliestTimesheetDate(tses []*domain.Timesheet) time.Time {
-	var earliest time.Time
-	for _, ts := range tses {
-		if ts == nil {
-			continue
-		}
-		if earliest.IsZero() || ts.Date.Before(earliest) {
-			earliest = ts.Date
-		}
-	}
-	return earliest
 }
 
 func parseStartDate(s string, now time.Time) (time.Time, error) {
@@ -410,14 +393,49 @@ func computeVerdict(remainders []dto.RemainderRow, rec dto.ReconciliationResult,
 	}
 }
 
-func buildWarnings(hasRemainders bool) []dto.SimWarning {
+func buildWarnings(hasRemainders, reconciliationFailed bool) []dto.SimWarning {
 	w := []dto.SimWarning{
 		{Code: "PRODUCTION_DOES_NOT_VALIDATE", Message: "Sản xuất không kiểm tra mã ngân hàng, số tiền âm, hoặc trùng lặp. Xem chi tiết trong từng lần xuất."},
 	}
 	if hasRemainders {
 		w = append(w, dto.SimWarning{Code: "UNCOVERED_REMAINDERS", Message: "Có giao dịch chưa được bao phủ sau các lần xuất đã mô phỏng — xem danh sách 'Còn lại'."})
 	}
+	if reconciliationFailed {
+		w = append(w, dto.SimWarning{Code: "LEDGER_RECONCILIATION_FAILED", Message: "Không thể đọc dữ liệu sổ cái để đối soát. Vui lòng thử lại."})
+	}
 	return w
+}
+
+// buildReconciliationScope returns the projected receivable amount and exact
+// ledger transaction cohort for covered timesheets. Unlinked covered rows stay
+// in the expected amount so missing accounting evidence remains visible.
+func buildReconciliationScope(fullPool []*domain.Timesheet, covered map[uint]struct{}) (int64, []uint) {
+	var expectedReceivable int64
+	seenTransactionIDs := make(map[uint]struct{})
+
+	for _, ts := range fullPool {
+		if ts == nil {
+			continue
+		}
+		if _, ok := covered[ts.ID]; !ok {
+			continue
+		}
+
+		expectedReceivable += ts.RevenueReceivable
+		if ts.TransactionID != nil {
+			seenTransactionIDs[*ts.TransactionID] = struct{}{}
+		}
+	}
+
+	transactionIDs := make([]uint, 0, len(seenTransactionIDs))
+	for id := range seenTransactionIDs {
+		transactionIDs = append(transactionIDs, id)
+	}
+	sort.Slice(transactionIDs, func(i, j int) bool {
+		return transactionIDs[i] < transactionIDs[j]
+	})
+
+	return expectedReceivable, transactionIDs
 }
 
 // buildSummaryFromTimesheets computes the answer-first totals from the raw

@@ -72,6 +72,26 @@ func (r *LedgerEntryRepository) GetAccountTotalInRange(ctx context.Context, acco
 	return res.Total, err
 }
 
+// GetAccountTotalForTransactions returns SUM(debit) - SUM(credit) for the
+// given account and exact transaction cohort. An empty cohort has a zero
+// balance and intentionally avoids a database query.
+func (r *LedgerEntryRepository) GetAccountTotalForTransactions(ctx context.Context, account domain.LedgerAccount, transactionIDs []uint) (int64, error) {
+	if len(transactionIDs) == 0 {
+		return 0, nil
+	}
+
+	type result struct {
+		Total int64 `gorm:"column:total"`
+	}
+	var res result
+	err := r.DB.WithContext(ctx).
+		Model(&domain.LedgerEntry{}).
+		Select("CAST(COALESCE(SUM(debit - credit), 0) AS SIGNED) as total").
+		Where("account = ? AND transaction_id IN ?", account, transactionIDs).
+		Scan(&res).Error
+	return res.Total, err
+}
+
 // RecalculateAllBalances recalculates the balance field for every ledger entry in sequence.
 // This is the canonical implementation — all other balance logic must produce the same results.
 func (r *LedgerEntryRepository) RecalculateAllBalances(ctx context.Context) error {

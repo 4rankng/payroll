@@ -53,6 +53,9 @@ type LedgerEntryRepository interface {
 	// account over the inclusive date range [from, to]. int64 VND. Used by the
 	// settlement simulation's reconciliation against the ledger receivable.
 	GetAccountTotalInRange(ctx context.Context, account LedgerAccount, from, to time.Time) (int64, error)
+	// GetAccountTotalForTransactions returns SUM(debit) - SUM(credit) for the
+	// given account, limited to the supplied transaction IDs.
+	GetAccountTotalForTransactions(ctx context.Context, account LedgerAccount, transactionIDs []uint) (int64, error)
 	CreateTransaction(ctx context.Context, entries []*LedgerEntry) error
 	GetCashFlowSummary(ctx context.Context, start, end time.Time) (*CashFlowSummary, error)
 	GetTotalByAccountType(ctx context.Context, accountType string, startDate, endDate time.Time) (int64, error)

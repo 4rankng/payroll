@@ -181,6 +181,16 @@ func (s *LedgerService) GetAccountTotalInRange(ctx context.Context, account doma
 	return s.LedgerRepo.GetAccountTotalInRange(ctx, account, from, to)
 }
 
+// GetAccountTotalForTransactions returns the account balance for one exact
+// transaction cohort. Settlement simulation uses this to avoid mixing opening
+// balances, historical settlements, and unrelated receivables.
+func (s *LedgerService) GetAccountTotalForTransactions(ctx context.Context, account domain.LedgerAccount, transactionIDs []uint) (int64, error) {
+	if !domain.IsValidAccountType(account) {
+		return 0, domain.NewValidationError(fmt.Sprintf("loại tài khoản không hợp lệ: %s", account))
+	}
+	return s.LedgerRepo.GetAccountTotalForTransactions(ctx, account, transactionIDs)
+}
+
 func (s *LedgerService) GetCashFlowSummary(ctx context.Context, start, end time.Time) (*domain.CashFlowSummary, error) {
 	// Generate cache key: dashboard:cash_flow_summary:{start}:{end}
 	cacheKey := fmt.Sprintf("dashboard:cash_flow_summary:%s:%s",

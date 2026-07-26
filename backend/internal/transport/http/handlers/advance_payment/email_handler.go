@@ -90,7 +90,7 @@ func (h *AdvancePaymentHandler) SendReconciliationEmail(c *gin.Context) {
 		ExcelBytes: excelBytes,
 		HTMLBody:   htmlBody,
 		TextBody:   textBody,
-		Subject:    fmt.Sprintf("Sao kê Nhận lương sớm 24/7 - %s", req.ForMonth),
+		Subject:    fmt.Sprintf("Sao kê thanh toán LG Display - %s", h.clock.Now().Format("02/01/2006")),
 		Summary:    summary,
 	})
 	if err != nil {

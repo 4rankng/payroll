@@ -545,7 +545,7 @@ func (s *EmailService) buildPayrollReportMessage(payload *dto.SendPayrollReportE
 	}
 
 	emailDay := clock.Now()
-	subject := fmt.Sprintf("Dịch vụ thanh toán TingTing – %s", emailDay.Format("02/01/2006"))
+	subject := fmt.Sprintf("Sao kê thanh toán lương tuần – %s", emailDay.Format("02/01/2006"))
 	dueDate := emailDay.AddDate(0, 0, 14).Format("02/01/2006")
 	feePercentValue := summary.FeePercentage
 	if feePercentValue <= 0 {
