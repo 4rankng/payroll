@@ -126,7 +126,11 @@ func (r *stubProjectEmployeeRepo) GetActiveAssignmentsByProjectsAndEmployees(con
 	return nil, errors.New("not used")
 }
 
-type stubSettings struct{ pct float64 }
+type stubSettings struct {
+	pct             float64
+	limit           int64
+	failOnLimitRead bool
+}
 
 func (s *stubSettings) GetWeeklyPaymentPercentage(context.Context) float64  { return s.pct }
 func (s *stubSettings) GetMonthlyPaymentPercentage(context.Context) float64 { return s.pct }
@@ -134,6 +138,15 @@ func (s *stubSettings) GetAdvanceCashFeePercentage(context.Context) float64 { re
 func (s *stubSettings) GetPartnerCompany(context.Context) string            { return "TestCo" }
 func (s *stubSettings) GetPaymentPercentageForSchedule(_ context.Context, _ string) float64 {
 	return s.pct
+}
+func (s *stubSettings) GetBulkTransferWorkbookLimit(context.Context) int64 {
+	if s.failOnLimitRead {
+		panic("OnePay must not read the manual MBank workbook limit")
+	}
+	if s.limit >= 2 {
+		return s.limit
+	}
+	return 400_000_000
 }
 
 // helpers

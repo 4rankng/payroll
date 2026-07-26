@@ -375,6 +375,10 @@ func TestExport_EmptyPool_ReturnsEmptyResultError(t *testing.T) {
 		weeklyPercentage: 1.0,
 	}
 	planner := newPlannerWithStub(bundle)
+	planner.excelService = excel.NewService(&stubSettings{
+		pct:             bundle.weeklyPercentage,
+		failOnLimitRead: true,
+	})
 
 	bankRepo := &stubBankRepo{byCode: map[string]*domain.Bank{}}
 	txnRepo := &stubTransactionCodeRepo{}

@@ -39,6 +39,9 @@ func (s *SettingsService) CreateSetting(ctx context.Context, settings *domain.Se
 	if err := settings.IsValid(); err != nil {
 		return nil, err
 	}
+	if err := validateBusinessSetting(settings); err != nil {
+		return nil, err
+	}
 
 	// Set default value type if not provided
 	if settings.ValueType == "" {
@@ -88,6 +91,13 @@ func (s *SettingsService) GetSettingByKey(ctx context.Context, key string) (*dom
 	return setting, nil
 }
 
+// GetSettingByKeyAuthoritative reads directly from the repository. Financial
+// controls use this path so a successful Admin update cannot be masked by a
+// stale cache entry or a cache-aside invalidation race.
+func (s *SettingsService) GetSettingByKeyAuthoritative(ctx context.Context, key string) (*domain.Settings, error) {
+	return s.SettingsRepo.GetByKey(ctx, key)
+}
+
 func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, updateData map[string]any, updatedBy uint) (*domain.Settings, error) {
 	// Get existing setting
 	existingSetting, err := s.SettingsRepo.GetByID(ctx, settingID)
@@ -115,6 +125,9 @@ func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, upd
 	if err := existingSetting.IsValid(); err != nil {
 		return nil, err
 	}
+	if err := validateBusinessSetting(existingSetting); err != nil {
+		return nil, err
+	}
 
 	if err := s.SettingsRepo.Update(ctx, existingSetting); err != nil {
 		return nil, fmt.Errorf("failed to update setting: %w", err)
@@ -129,6 +142,14 @@ func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, upd
 	s.invalidateSettingsCache(ctx)
 
 	return existingSetting, nil
+}
+
+func validateBusinessSetting(setting *domain.Settings) error {
+	if setting == nil || setting.Key != SettingKeyBulkTransferWorkbookLimit {
+		return nil
+	}
+	_, err := parseBulkTransferWorkbookLimit(setting)
+	return err
 }
 
 func (s *SettingsService) DeleteSetting(ctx context.Context, id uint, deletedBy uint) error {

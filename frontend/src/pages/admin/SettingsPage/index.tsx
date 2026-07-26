@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings, Percent, Building2, Receipt, Mail, Bell } from 'lucide-react';
+import { Settings, Percent, Building2, Receipt, Mail, Bell, AlertCircle, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SettingCard } from '@/components/settings/SettingCard';
@@ -54,10 +55,36 @@ const SettingsPage = () => {
         <Skeleton className="h-9 w-72" />
         <div className="space-y-3">
           <Skeleton className="h-4 w-32" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <Skeleton className="h-28" />
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (form.loadError) {
+    return (
+      <div className="mx-auto max-w-[1280px] space-y-6 p-4 lg:p-6">
+        <PageHeader
+          icon={Settings}
+          title="Cài đặt hệ thống"
+          description="Quản lý các cài đặt nghiệp vụ của hệ thống"
+        />
+        <div
+          role="alert"
+          className="flex flex-col gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <p className="text-sm text-destructive">{form.loadError}</p>
+          </div>
+          <Button type="button" variant="outline" onClick={form.retryLoading} className="h-11 gap-2">
+            <RefreshCw aria-hidden="true" className="h-4 w-4" />
+            Thử lại
+          </Button>
         </div>
       </div>
     );
@@ -105,7 +132,31 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <SettingCard
+                title="Giới hạn tổng tiền mỗi file Chuyển lô"
+                description="Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này."
+                value={form.bulkTransferWorkbookLimitVnd}
+                originalValue={form.originalBulkTransferWorkbookLimitVnd}
+                onChange={form.setBulkTransferWorkbookLimitVnd}
+                onSave={form.handleSaveBulkTransferWorkbookLimitVnd}
+                onReset={() =>
+                  form.setBulkTransferWorkbookLimitVnd(
+                    form.originalBulkTransferWorkbookLimitVnd,
+                  )
+                }
+                isDirty={
+                  form.bulkTransferWorkbookLimitVnd !==
+                  form.originalBulkTransferWorkbookLimitVnd
+                }
+                isSaving={form.isSaving}
+                displayMode="currency-vnd"
+                min="2"
+                max="9223372036854775807"
+                errorMessage={form.bulkTransferWorkbookLimitSaveError}
+                unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
+                onRetry={form.retryLoading}
+              />
               <SettingCard
                 title="Trả lương tuần"
                 description="Giới hạn % ngân sách theo chu kỳ tuần"

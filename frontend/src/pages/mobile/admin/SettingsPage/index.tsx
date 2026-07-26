@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
@@ -51,6 +52,38 @@ const SettingsPageMobile = () => {
     );
   }
 
+  if (form.loadError) {
+    return (
+      <div className="max-w-full overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        <MobilePageHeader
+          title="Cài đặt"
+          icon={Settings}
+          subtitle="Quản lý cấu hình hệ thống"
+        />
+        <div className="p-4">
+          <div
+            role="alert"
+            className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+              <p className="min-w-0 break-words text-sm text-destructive">{form.loadError}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={form.retryLoading}
+              className="h-11 w-full gap-2"
+            >
+              <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              Thử lại
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-full overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
@@ -78,6 +111,30 @@ const SettingsPageMobile = () => {
 
           <TabsContent value={TAB_GENERAL} className="mt-0 space-y-3">
             <div className="grid grid-cols-1 gap-3">
+              <SettingCard
+                title="Giới hạn tổng tiền mỗi file Chuyển lô"
+                description="Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này."
+                value={form.bulkTransferWorkbookLimitVnd}
+                originalValue={form.originalBulkTransferWorkbookLimitVnd}
+                onChange={form.setBulkTransferWorkbookLimitVnd}
+                onSave={form.handleSaveBulkTransferWorkbookLimitVnd}
+                onReset={() =>
+                  form.setBulkTransferWorkbookLimitVnd(
+                    form.originalBulkTransferWorkbookLimitVnd,
+                  )
+                }
+                isDirty={
+                  form.bulkTransferWorkbookLimitVnd !==
+                  form.originalBulkTransferWorkbookLimitVnd
+                }
+                isSaving={form.isSaving}
+                displayMode="currency-vnd"
+                min="2"
+                max="9223372036854775807"
+                errorMessage={form.bulkTransferWorkbookLimitSaveError}
+                unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
+                onRetry={form.retryLoading}
+              />
               <SettingCard
                 title="Tỷ lệ trả lương tuần"
                 description="Giới hạn phần trăm ngân sách được phép trả theo chu kỳ tuần"

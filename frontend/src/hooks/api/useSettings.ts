@@ -53,10 +53,7 @@ export const useUpdateSetting = () => {
 export const useMultipleSettings = (keys: string[]) => {
   return useQuery({
     queryKey: [...QueryKeys.settings.all, 'multiple', keys],
-    queryFn: async () => {
-      const allSettings = await settingsService.getSettings();
-      return allSettings.filter(setting => keys.includes(setting.key));
-    },
+    queryFn: () => Promise.all(keys.map((key) => settingsService.getSettingByKey(key))),
     enabled: keys.length > 0,
   });
 };

@@ -3,6 +3,8 @@ package config
 import (
 	"api-server/internal/pkg/clock"
 	"context"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,21 +15,24 @@ import (
 
 // Setting keys for business configuration
 const (
-	SettingKeyWeeklyPaymentPercentage  = "bulk_transfer_payment_percentage" // Reusing existing key for weekly
-	SettingKeyMonthlyPaymentPercentage = "monthly_payment_percentage"
-	SettingKeyPartnerCompany           = "partner_company"
-	SettingKeyAdvancePaymentPercentage = "advance_payment_percentage"
+	SettingKeyWeeklyPaymentPercentage   = "bulk_transfer_payment_percentage" // Reusing existing key for weekly
+	SettingKeyMonthlyPaymentPercentage  = "monthly_payment_percentage"
+	SettingKeyPartnerCompany            = "partner_company"
+	SettingKeyAdvancePaymentPercentage  = "advance_payment_percentage"
+	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
 )
 
 // Default values
 const (
-	DefaultWeeklyPaymentPercentage  = 0.70
-	DefaultMonthlyPaymentPercentage = 0.70
-	DefaultAdvanceCashFeePercentage = 0.02
-	DefaultPartnerCompany           = "VFIC Manpower"
-	DefaultAdvancePaymentPercentage = 0.60                       // 60% max advance
-	DefaultAdvancePaymentFeeMin     = 10000                      // 10,000 VND minimum fee
-	CacheTTL                        = constants.SettingsCacheTTL // Use centralized cache TTL
+	DefaultWeeklyPaymentPercentage   = 0.70
+	DefaultMonthlyPaymentPercentage  = 0.70
+	DefaultAdvanceCashFeePercentage  = 0.02
+	DefaultPartnerCompany            = "VFIC Manpower"
+	DefaultAdvancePaymentPercentage  = 0.60  // 60% max advance
+	DefaultAdvancePaymentFeeMin      = 10000 // 10,000 VND minimum fee
+	DefaultBulkTransferWorkbookLimit = int64(400_000_000)
+	MinBulkTransferWorkbookLimit     = int64(2)
+	CacheTTL                         = constants.SettingsCacheTTL // Use centralized cache TTL
 )
 
 // Validation constants for advance payment
@@ -50,19 +55,76 @@ type FeeScheduleResolver interface {
 	MinFeeAt(ctx context.Context, at time.Time) uint64
 }
 
+type SettingReader interface {
+	GetSettingByKey(ctx context.Context, key string) (*domain.Settings, error)
+	GetSettingByKeyAuthoritative(ctx context.Context, key string) (*domain.Settings, error)
+}
+
 // SettingsConfigService provides methods to retrieve business configuration settings
 type SettingsConfigService struct {
-	settingsService *SettingsService
+	settingsService SettingReader
 	cache           sync.Map // key -> *cacheEntry
 	feeSchedule     FeeScheduleResolver
 }
 
 // NewSettingsConfigService creates a new settings configuration service
-func NewSettingsConfigService(settingsService *SettingsService) *SettingsConfigService {
+func NewSettingsConfigService(settingsService SettingReader) *SettingsConfigService {
 	return &SettingsConfigService{
 		settingsService: settingsService,
 		cache:           sync.Map{},
 	}
+}
+
+// GetBulkTransferWorkbookLimit returns the strict total threshold for each
+// manual MBank Chuyển lô workbook. This value intentionally bypasses the local
+// sync.Map and Redis cache-aside layers so a completed Admin update is
+// authoritative for the next money-moving export.
+func (s *SettingsConfigService) GetBulkTransferWorkbookLimit(ctx context.Context) int64 {
+	if s.settingsService == nil {
+		return DefaultBulkTransferWorkbookLimit
+	}
+
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeyBulkTransferWorkbookLimit)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"failed to get bulk transfer workbook limit setting, using default",
+			"key", SettingKeyBulkTransferWorkbookLimit,
+			"error", err,
+		)
+		return DefaultBulkTransferWorkbookLimit
+	}
+
+	value, err := parseBulkTransferWorkbookLimit(setting)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"invalid bulk transfer workbook limit setting, using default",
+			"key", SettingKeyBulkTransferWorkbookLimit,
+			"error", err,
+		)
+		return DefaultBulkTransferWorkbookLimit
+	}
+	return value
+}
+
+func parseBulkTransferWorkbookLimit(setting *domain.Settings) (int64, error) {
+	if setting == nil || setting.Value == nil {
+		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô không được để trống")
+	}
+	if setting.ValueType != domain.ValueTypeNumber {
+		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số")
+	}
+
+	raw := *setting.Value
+	if raw == "" || strings.TrimSpace(raw) != raw || raw[0] == '0' || strings.IndexFunc(raw, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) >= 0 {
+		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số nguyên")
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value < MinBulkTransferWorkbookLimit {
+		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số nguyên từ 2 đ trở lên")
+	}
+	return value, nil
 }
 
 // BindFeeScheduleResolver wires the fee-schedule data source. After binding,

@@ -77,6 +77,59 @@ func runSettingsTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		return AssertEqual("value", newVal, *resp.Value)
 	})
 
+	reporter.RunTest(flowSettings, "Configure bulk transfer workbook limit", func() error {
+		const settingKey = "bulk_transfer_workbook_limit_vnd"
+
+		var current SettingResponse
+		if _, err := admin.GetInto("/api/v1/settings/key/"+settingKey, &current); err != nil {
+			return fmt.Errorf("get bulk transfer workbook limit: %w", err)
+		}
+		if current.Value == nil {
+			return fmt.Errorf("bulk transfer workbook limit must have a value")
+		}
+
+		originalValue := *current.Value
+		defer func() {
+			restore := originalValue
+			_, _, _ = admin.Put(
+				fmt.Sprintf("/api/v1/settings/%d", current.ID),
+				UpdateSettingRequest{Value: &restore},
+			)
+		}()
+
+		for _, invalidValue := range []string{"1", "+400000000", "0400000000"} {
+			value := invalidValue
+			_, invalidStatus, _ := admin.Put(
+				fmt.Sprintf("/api/v1/settings/%d", current.ID),
+				UpdateSettingRequest{Value: &value},
+			)
+			if invalidStatus < 400 {
+				return fmt.Errorf("expected non-canonical workbook limit %q to be rejected", invalidValue)
+			}
+		}
+
+		updatedValue := "399000000"
+		_, status, err := admin.Put(
+			fmt.Sprintf("/api/v1/settings/%d", current.ID),
+			UpdateSettingRequest{Value: &updatedValue},
+		)
+		if err != nil {
+			return fmt.Errorf("update bulk transfer workbook limit: %w", err)
+		}
+		if status >= 400 {
+			return fmt.Errorf("update bulk transfer workbook limit returned status %d", status)
+		}
+
+		var updated SettingResponse
+		if _, err := admin.GetInto("/api/v1/settings/key/"+settingKey, &updated); err != nil {
+			return fmt.Errorf("get bulk transfer workbook limit after update: %w", err)
+		}
+		if updated.Value == nil {
+			return fmt.Errorf("updated bulk transfer workbook limit must have a value")
+		}
+		return AssertEqual("bulk transfer workbook limit", updatedValue, *updated.Value)
+	})
+
 	reporter.RunTest(flowSettings, "Delete test setting", func() error {
 		if testSettingID == 0 {
 			return fmt.Errorf("no test setting ID")

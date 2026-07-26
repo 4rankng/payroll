@@ -24,7 +24,7 @@ import (
 // Post-Phase-1 refactor: Export() is now a thin orchestrator. The read +
 // aggregate + validate phase lives in ExportPlanner.Plan() (see planner.go);
 // the write phase (transaction_codes batch + audit event) lives in
-// ExportService.Persist(). Production calls Plan() → Persist() → Excel gen.
+// ExportService.Persist(). Production calls Plan() → Excel gen → Persist().
 // The settlement simulation (Phase 2) calls Plan() only, so it cannot drift
 // from production selection logic.
 type ExportService struct {
@@ -96,16 +96,27 @@ func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransfer
 		)
 	}
 
+	// Generate and validate every workbook before the write phase. A configured
+	// threshold can reject an individual row, and that failure must not leave
+	// transaction codes behind for a file the Admin never received.
+	fromDateStr, toDateStr := formatDateRange(plan)
+	workbookLimit := es.excelService.GetBulkTransferWorkbookLimit(ctx)
+	response, err := es.excelService.GenerateBulkTransferExcelWithPaymentPercentage(
+		plan.RawAggregated,
+		req,
+		fromDateStr,
+		toDateStr,
+		plan.Cycle,
+		plan.PaymentPercentage,
+		workbookLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	filename, err := es.Persist(ctx, req, plan)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save bulk transfer file: %w", err)
-	}
-
-	// Generate ZIP file with bulk transfer data
-	fromDateStr, toDateStr := formatDateRange(plan)
-	response, err := es.excelService.GenerateBulkTransferExcelWithPaymentPercentage(plan.RawAggregated, req, fromDateStr, toDateStr, plan.Cycle, plan.PaymentPercentage)
-	if err != nil {
-		return nil, err
 	}
 
 	response.FromDate = fromDateStr

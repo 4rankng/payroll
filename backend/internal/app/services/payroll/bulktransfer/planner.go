@@ -127,7 +127,6 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 		// simulation will surface a warning, and production export is unaffected.
 		snapshot = time.Time{}
 	}
-
 	return &ExportPlan{
 		Cycle:                cycle,
 		FromDate:             fromDate,

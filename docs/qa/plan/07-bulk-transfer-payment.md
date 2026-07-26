@@ -15,7 +15,8 @@
 ### Manual Bulk Transfer
 - Export Excel with approved timesheets whose `payment_status` is `pending`
   or `failed` (the shared "Chờ thanh toán" cohort)
-- Each MBank workbook must total less than 500,000,000 VND after applying the configured payment percentage
+- Each MBank workbook must total strictly below the Admin-configured workbook limit after applying the configured payment percentage (default: 400,000,000 VND)
+- The workbook limit is persisted as `bulk_transfer_workbook_limit_vnd`; the export planner reads the Admin-configured value authoritatively for the next export
 - Exports that fit download as one `.xlsx`; larger exports are split by atomic transfer row and download as one `.zip` containing multiple `.xlsx` workbooks
 - Admin processes with bank externally
 - Upload result file → timesheets marked as paid synchronously
@@ -59,7 +60,7 @@ Manual Transfer: [exported] → uploaded → paid (synchronous)
 
 | # | Scenario | Type | Steps | Expected Result |
 |---|----------|------|-------|-----------------|
-| F12-01 | Export bulk transfer file | Happy | POST `/payrolls/export-bulk-transfer` for a weekly range or month | 200; one `.xlsx` when the total is below 500M VND, otherwise a `.zip` of `.xlsx` files whose individual totals are each below 500M VND |
+| F12-01 | Export bulk transfer file | Happy | POST `/payrolls/export-bulk-transfer` for a weekly range or month | 200; one `.xlsx` when the total is below the configured limit (400M VND by default), otherwise a `.zip` of `.xlsx` files whose individual totals are each strictly below that limit; exact-boundary rows are split into the next workbook, and a single row at or above the limit is rejected |
 | F12-02 | Upload result file | Happy | POST `/bulk-transfers/upload-result` with Excel | 200, timesheets marked paid synchronously |
 | F12-03 | Export for non-existent month | Negative | GET `/bulk-transfers/export?forMonth=2020-01` | 200, empty Excel (no data) |
 | F12-04 | Upload marks timesheets paid | Integration | Upload → check timesheets | payment_status='paid' immediately |
@@ -85,5 +86,6 @@ Manual Transfer: [exported] → uploaded → paid (synchronous)
 
 - Integration test: `backend/tests/integration/flow_bulk_transfer.go`
 - Integration test: `backend/tests/integration/flow_manual_bulk_transfer.go`
+- Integration test: `backend/tests/integration/flow_settings.go` (Admin update and validation for `bulk_transfer_workbook_limit_vnd`)
 - Integration test: `backend/tests/integration/flow_disbursement.go`
 - Important: Use `pageSize=200` when polling timesheets to avoid pagination issues

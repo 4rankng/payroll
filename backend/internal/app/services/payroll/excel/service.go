@@ -20,9 +20,8 @@ import (
 )
 
 const (
-	bulkTransferWorkbookLimit = int64(500_000_000)
-	xlsxContentType           = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	zipContentType            = "application/zip"
+	xlsxContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	zipContentType  = "application/zip"
 )
 
 // Service handles Excel operations for payroll
@@ -33,6 +32,7 @@ type Service struct {
 // SettingsConfigService interface for settings configuration operations
 type SettingsConfigService interface {
 	GetPaymentPercentageForSchedule(ctx context.Context, schedule string) float64
+	GetBulkTransferWorkbookLimit(ctx context.Context) int64
 }
 
 // BulkTransferData holds aggregated data for bulk transfer export
@@ -109,6 +109,12 @@ func NewService(settingsConfig SettingsConfigService) *Service {
 // used by workbook generation so forecast outcomes use identical cash units.
 func (s *Service) GetPaymentPercentageForSchedule(ctx context.Context, cycle string) float64 {
 	return s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
+}
+
+// GetBulkTransferWorkbookLimit exposes the same persisted threshold used by
+// workbook generation so the export planner can capture one immutable value.
+func (s *Service) GetBulkTransferWorkbookLimit(ctx context.Context) int64 {
+	return s.settingsConfig.GetBulkTransferWorkbookLimit(ctx)
 }
 
 // ValidateAndFilterBulkTransferData validates bank information and filters out invalid entries
@@ -195,21 +201,23 @@ func (s *Service) GetBulkTransferTemplate() ([]byte, error) {
 // GenerateBulkTransferExcel creates XLSX file with bulk transfer data using MBank template
 func (s *Service) GenerateBulkTransferExcel(ctx context.Context, data *BulkTransferData, req *dto.ExportBulkTransferRequest, fromDate, toDate, cycle string) (*dto.ExportBulkTransferResponse, error) {
 	paymentPercentage := s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
-	return s.GenerateBulkTransferExcelWithPaymentPercentage(data, req, fromDate, toDate, cycle, paymentPercentage)
+	workbookLimit := s.settingsConfig.GetBulkTransferWorkbookLimit(ctx)
+	return s.GenerateBulkTransferExcelWithPaymentPercentage(data, req, fromDate, toDate, cycle, paymentPercentage, workbookLimit)
 }
 
 // GenerateBulkTransferExcelWithPaymentPercentage generates the workbook from a
-// percentage captured by the export plan. This keeps the file and its forecast
-// outcome on one immutable cash basis even if settings change mid-export.
-func (s *Service) GenerateBulkTransferExcelWithPaymentPercentage(data *BulkTransferData, req *dto.ExportBulkTransferRequest, fromDate, toDate, cycle string, paymentPercentage float64) (*dto.ExportBulkTransferResponse, error) {
+// percentage and workbook limit captured by the export plan. This keeps the
+// file and its forecast outcome on one immutable configuration basis even if
+// settings change mid-export.
+func (s *Service) GenerateBulkTransferExcelWithPaymentPercentage(data *BulkTransferData, req *dto.ExportBulkTransferRequest, fromDate, toDate, cycle string, paymentPercentage float64, workbookLimit int64) (*dto.ExportBulkTransferResponse, error) {
 	// First validate and filter the data
 	validationResult := s.ValidateAndFilterBulkTransferData(data)
 
-	rows, err := s.buildTransferRowsWithPaymentPercentage(validationResult.ValidData, paymentPercentage)
+	rows, err := s.buildTransferRowsWithPaymentPercentage(validationResult.ValidData, paymentPercentage, workbookLimit)
 	if err != nil {
 		return nil, err
 	}
-	partitions, err := partitionTransferRows(rows)
+	partitions, err := partitionTransferRows(rows, workbookLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -304,12 +312,16 @@ func (s *Service) generateMBankTransferExcel(rows []transferRow) ([]byte, error)
 
 func (s *Service) buildTransferRows(ctx context.Context, data *BulkTransferData, cycle string) ([]transferRow, error) {
 	paymentPercentage := s.settingsConfig.GetPaymentPercentageForSchedule(ctx, cycle)
-	return s.buildTransferRowsWithPaymentPercentage(data, paymentPercentage)
+	workbookLimit := s.settingsConfig.GetBulkTransferWorkbookLimit(ctx)
+	return s.buildTransferRowsWithPaymentPercentage(data, paymentPercentage, workbookLimit)
 }
 
-func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData, paymentPercentage float64) ([]transferRow, error) {
+func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData, paymentPercentage float64, workbookLimit int64) ([]transferRow, error) {
 	if math.IsNaN(paymentPercentage) || math.IsInf(paymentPercentage, 0) || paymentPercentage <= 0 || paymentPercentage > 1 {
 		return nil, fmt.Errorf("payment percentage must be finite and between zero and one")
+	}
+	if workbookLimit < 2 {
+		return nil, fmt.Errorf("bulk transfer workbook limit must be at least 2 VND")
 	}
 
 	rows := make([]transferRow, 0, len(data.EmployeeProjectAmounts))
@@ -340,8 +352,9 @@ func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData,
 		if calculatedAmount >= float64(math.MaxInt64) {
 			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d exceeds int64 range", key.EmployeeID, key.ProjectID)
 		}
-		if calculatedAmount >= float64(bulkTransferWorkbookLimit) {
-			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d must be below %d VND", key.EmployeeID, key.ProjectID, bulkTransferWorkbookLimit)
+		paymentAmount := int64(calculatedAmount)
+		if paymentAmount >= workbookLimit {
+			return nil, fmt.Errorf("calculated transfer amount for employee %d and project %d must be below %d VND", key.EmployeeID, key.ProjectID, workbookLimit)
 		}
 
 		employee := data.EmployeeData[key.EmployeeID]
@@ -355,7 +368,7 @@ func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData,
 			accountNumber:   employee.BankAccountNumber,
 			accountName:     employee.BankAccountName,
 			bankBranchName:  bankBranchName,
-			paymentAmount:   int64(calculatedAmount),
+			paymentAmount:   paymentAmount,
 			transactionCode: data.TransactionCodes[key],
 		})
 	}
@@ -363,7 +376,10 @@ func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData,
 	return rows, nil
 }
 
-func partitionTransferRows(rows []transferRow) ([][]transferRow, error) {
+func partitionTransferRows(rows []transferRow, workbookLimit int64) ([][]transferRow, error) {
+	if workbookLimit < 2 {
+		return nil, fmt.Errorf("bulk transfer workbook limit must be at least 2 VND")
+	}
 	if len(rows) == 0 {
 		return [][]transferRow{{}}, nil
 	}
@@ -372,11 +388,13 @@ func partitionTransferRows(rows []transferRow) ([][]transferRow, error) {
 	currentPartition := 0
 	var currentTotal int64
 	for _, row := range rows {
-		if row.paymentAmount <= 0 || row.paymentAmount >= bulkTransferWorkbookLimit {
-			return nil, fmt.Errorf("transfer amount for employee %d and project %d must be between 1 and %d VND", row.key.EmployeeID, row.key.ProjectID, bulkTransferWorkbookLimit-1)
+		if row.paymentAmount <= 0 || row.paymentAmount >= workbookLimit {
+			return nil, fmt.Errorf("transfer amount for employee %d and project %d must be between 1 and %d VND", row.key.EmployeeID, row.key.ProjectID, workbookLimit-1)
 		}
 
-		if currentTotal+row.paymentAmount >= bulkTransferWorkbookLimit {
+		// Subtract before comparing so a very large configured int64 threshold
+		// cannot make currentTotal+paymentAmount overflow.
+		if row.paymentAmount >= workbookLimit-currentTotal {
 			partitions = append(partitions, nil)
 			currentPartition++
 			currentTotal = 0

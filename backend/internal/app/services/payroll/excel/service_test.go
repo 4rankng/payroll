@@ -20,14 +20,19 @@ import (
 
 // Mock implementations for testing
 type mockSettingsConfigService struct {
-	bulkPct float64
-	calls   int
+	bulkPct    float64
+	limit      int64
+	calls      int
+	limitCalls int
 }
 
 type fixedSettingsConfigService float64
 
 func (s fixedSettingsConfigService) GetPaymentPercentageForSchedule(context.Context, string) float64 {
 	return float64(s)
+}
+func (s fixedSettingsConfigService) GetBulkTransferWorkbookLimit(context.Context) int64 {
+	return 400_000_000
 }
 
 func (m *mockSettingsConfigService) GetPaymentPercentageForSchedule(ctx context.Context, schedule string) float64 {
@@ -36,6 +41,14 @@ func (m *mockSettingsConfigService) GetPaymentPercentageForSchedule(ctx context.
 		return m.bulkPct
 	}
 	return 0.7
+}
+
+func (m *mockSettingsConfigService) GetBulkTransferWorkbookLimit(context.Context) int64 {
+	m.limitCalls++
+	if m.limit >= 2 {
+		return m.limit
+	}
+	return 400_000_000
 }
 
 func TestNewService(t *testing.T) {
@@ -203,13 +216,13 @@ func TestPartitionTransferRows_BoundaryAndStrictEquality(t *testing.T) {
 	}{
 		{
 			name:       "maximum allowed total stays in one workbook",
-			amounts:    []int64{499_999_999},
-			wantTotals: []int64{499_999_999},
+			amounts:    []int64{399_999_999},
+			wantTotals: []int64{399_999_999},
 		},
 		{
 			name:       "exact cap spills into another workbook",
-			amounts:    []int64{300_000_000, 200_000_000},
-			wantTotals: []int64{300_000_000, 200_000_000},
+			amounts:    []int64{250_000_000, 150_000_000},
+			wantTotals: []int64{250_000_000, 150_000_000},
 		},
 	}
 
@@ -223,7 +236,7 @@ func TestPartitionTransferRows_BoundaryAndStrictEquality(t *testing.T) {
 				})
 			}
 
-			partitions, err := partitionTransferRows(rows)
+			partitions, err := partitionTransferRows(rows, 400_000_000)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantTotals, partitionTotals(partitions))
@@ -255,6 +268,7 @@ func TestService_BuildTransferRows_DeterministicAndPercentageCalculatedOnce(t *t
 	}, transferRowKeys(rowsA))
 	assert.Equal(t, []int64{140, 70, 210}, transferRowAmounts(rowsA))
 	assert.Equal(t, 2, settings.calls, "payment percentage should be fetched once per export build")
+	assert.Equal(t, 2, settings.limitCalls, "workbook limit should be fetched once per export build")
 }
 
 func TestService_BuildTransferRows_RejectsInvalidAmounts(t *testing.T) {
@@ -269,7 +283,7 @@ func TestService_BuildTransferRows_RejectsInvalidAmounts(t *testing.T) {
 		{name: "negative percentage", amount: 100, percentage: -1},
 		{name: "NaN percentage", amount: 100, percentage: math.NaN()},
 		{name: "positive infinity percentage", amount: 100, percentage: math.Inf(1)},
-		{name: "exact workbook cap", amount: 500_000_000, percentage: 1},
+		{name: "exact workbook cap", amount: 400_000_000, percentage: 1},
 		{name: "non-representable result", amount: math.MaxInt64, percentage: 2},
 	}
 
@@ -290,15 +304,15 @@ func TestService_BuildTransferRows_RejectsInvalidAmounts(t *testing.T) {
 
 func TestPartitionTransferRows_UsesSequentialSortedPacking(t *testing.T) {
 	rows := []transferRow{
-		{key: EmployeeProjectKey{EmployeeID: 1, ProjectID: 1}, paymentAmount: 300_000_000},
-		{key: EmployeeProjectKey{EmployeeID: 2, ProjectID: 1}, paymentAmount: 300_000_000},
-		{key: EmployeeProjectKey{EmployeeID: 3, ProjectID: 1}, paymentAmount: 199_000_000},
+		{key: EmployeeProjectKey{EmployeeID: 1, ProjectID: 1}, paymentAmount: 250_000_000},
+		{key: EmployeeProjectKey{EmployeeID: 2, ProjectID: 1}, paymentAmount: 250_000_000},
+		{key: EmployeeProjectKey{EmployeeID: 3, ProjectID: 1}, paymentAmount: 149_000_000},
 	}
 
-	partitions, err := partitionTransferRows(rows)
+	partitions, err := partitionTransferRows(rows, 400_000_000)
 
 	require.NoError(t, err)
-	assert.Equal(t, []int64{300_000_000, 499_000_000}, partitionTotals(partitions))
+	assert.Equal(t, []int64{250_000_000, 399_000_000}, partitionTotals(partitions))
 	assert.Equal(t, []EmployeeProjectKey{
 		{EmployeeID: 1, ProjectID: 1},
 	}, transferRowKeys(partitions[0]))
@@ -306,6 +320,25 @@ func TestPartitionTransferRows_UsesSequentialSortedPacking(t *testing.T) {
 		{EmployeeID: 2, ProjectID: 1},
 		{EmployeeID: 3, ProjectID: 1},
 	}, transferRowKeys(partitions[1]))
+}
+
+func TestPartitionTransferRows_AvoidsInt64Overflow(t *testing.T) {
+	rows := []transferRow{
+		{key: EmployeeProjectKey{EmployeeID: 1, ProjectID: 1}, paymentAmount: math.MaxInt64 - 2},
+		{key: EmployeeProjectKey{EmployeeID: 2, ProjectID: 1}, paymentAmount: 2},
+	}
+
+	partitions, err := partitionTransferRows(rows, math.MaxInt64)
+
+	require.NoError(t, err)
+	assert.Equal(t, []int64{math.MaxInt64 - 2, 2}, partitionTotals(partitions))
+}
+
+func TestPartitionTransferRows_RejectsInvalidConfiguredLimit(t *testing.T) {
+	partitions, err := partitionTransferRows(nil, 1)
+
+	require.Error(t, err)
+	assert.Nil(t, partitions)
 }
 
 func TestSafeBulkTransferCycleLabel(t *testing.T) {
@@ -325,8 +358,8 @@ func TestService_GenerateBulkTransferExcel_SingleWorkbookAtBoundary(t *testing.T
 	withBackendWorkingDirectory(t)
 	service := NewService(&mockSettingsConfigService{bulkPct: 1})
 	data := newBulkTransferTestData([]bulkTransferTestEntry{
-		{employeeID: 2, projectID: 1, amount: 200_000_000, transactionCode: "TX-2"},
-		{employeeID: 1, projectID: 1, amount: 299_999_999, transactionCode: "TX-1"},
+		{employeeID: 2, projectID: 1, amount: 150_000_000, transactionCode: "TX-2"},
+		{employeeID: 1, projectID: 1, amount: 249_999_999, transactionCode: "TX-1"},
 	})
 
 	response, err := service.GenerateBulkTransferExcel(context.Background(), data, &dto.ExportBulkTransferRequest{}, "", "", "monthly")
@@ -337,7 +370,7 @@ func TestService_GenerateBulkTransferExcel_SingleWorkbookAtBoundary(t *testing.T
 	rows := readWorkbookRows(t, response.Data)
 	require.Len(t, rows, 2)
 	assert.Equal(t, []string{"TX-1", "TX-2"}, []string{rows[0].transactionCode, rows[1].transactionCode})
-	assert.Equal(t, int64(499_999_999), sumWorkbookRows(rows))
+	assert.Equal(t, int64(399_999_999), sumWorkbookRows(rows))
 }
 
 func TestService_GenerateBulkTransferExcelWithPaymentPercentage_UsesCapturedValue(t *testing.T) {
@@ -348,7 +381,7 @@ func TestService_GenerateBulkTransferExcelWithPaymentPercentage_UsesCapturedValu
 		{employeeID: 1, projectID: 1, amount: 1_000, transactionCode: "TX-1"},
 	})
 
-	response, err := service.GenerateBulkTransferExcelWithPaymentPercentage(data, &dto.ExportBulkTransferRequest{}, "", "", "weekly", 0.7)
+	response, err := service.GenerateBulkTransferExcelWithPaymentPercentage(data, &dto.ExportBulkTransferRequest{}, "", "", "weekly", 0.7, 400_000_000)
 
 	require.NoError(t, err)
 	rows := readWorkbookRows(t, response.Data)
@@ -383,7 +416,7 @@ func TestService_GenerateBulkTransferExcel_ExpandsWorksheetDimension(t *testing.
 
 func TestService_GenerateBulkTransferExcel_MultipleReadableWorkbooksPreserveRows(t *testing.T) {
 	withBackendWorkingDirectory(t)
-	settings := &mockSettingsConfigService{bulkPct: 1}
+	settings := &mockSettingsConfigService{bulkPct: 1, limit: 500_000_000}
 	service := NewService(settings)
 	data := newBulkTransferTestData([]bulkTransferTestEntry{
 		{employeeID: 3, projectID: 1, amount: 200_000_000, transactionCode: "TX-3"},
@@ -397,6 +430,7 @@ func TestService_GenerateBulkTransferExcel_MultipleReadableWorkbooksPreserveRows
 	assert.Equal(t, zipContentType, response.ContentType)
 	assert.Equal(t, ".zip", response.FileExtension)
 	assert.Equal(t, 1, settings.calls)
+	assert.Equal(t, 1, settings.limitCalls)
 
 	archive, err := zip.NewReader(bytes.NewReader(response.Data), int64(len(response.Data)))
 	require.NoError(t, err)
@@ -416,7 +450,7 @@ func TestService_GenerateBulkTransferExcel_MultipleReadableWorkbooksPreserveRows
 		require.NoError(t, reader.Close())
 
 		workbookTotal := sumWorkbookRows(rows)
-		assert.Less(t, workbookTotal, bulkTransferWorkbookLimit)
+		assert.Less(t, workbookTotal, settings.limit)
 		combinedTotal += workbookTotal
 		for _, row := range rows {
 			seenCodes[row.transactionCode]++
