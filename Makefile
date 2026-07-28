@@ -1,4 +1,4 @@
-.PHONY: deploy demo dev backup restore demo-db sandbox
+.PHONY: deploy dev backup restore sandbox
 
 # Build & push all images, then deploy to production
 deploy:
@@ -25,21 +25,6 @@ backup:
 # Load latest database backup from OneDrive
 restore:
 	$(MAKE) -C backend restore
-
-# Build & push :demo images, then deploy to demo.tingting.vip
-demo:
-	@echo "=== Building & pushing frontend (demo) ==="
-	cd frontend && make push-demo
-	@echo "=== Building & pushing backend (demo) ==="
-	cd backend && make push-demo
-	@echo "=== Building & pushing sandbox mock (demo) ==="
-	cd backend && make sandbox-push-demo
-	@echo "=== Deploying to demo.tingting.vip ==="
-	cd backend && make deploy-demo
-
-# Reload demo MySQL from local dev DB (does NOT touch demo images)
-demo-db:
-	$(MAKE) -C backend demo-db
 
 # Open Adminer over an SSH tunnel -> http://localhost:18081 (no internet exposure).
 # Starts the Adminer container on prod, forwards localhost:18081 -> prod loopback:8081, opens the page.
