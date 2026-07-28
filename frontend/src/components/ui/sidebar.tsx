@@ -34,6 +34,12 @@ type SidebarContext = {
   toggleSidebar: () => void
 }
 
+type SidebarOpenState = Pick<SidebarContext, "isMobile" | "open" | "openMobile">
+
+function getSidebarCollapsedState({ isMobile, open, openMobile }: SidebarOpenState) {
+  return isMobile ? !openMobile : !open
+}
+
 const SidebarContext = React.createContext<SidebarContext | null>(null)
 
 function useSidebar() {
@@ -767,5 +773,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+  getSidebarCollapsedState,
   useSidebar,
 }

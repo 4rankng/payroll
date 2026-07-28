@@ -12,10 +12,10 @@ import {
   Bell,
   ReceiptText,
 } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 import {
+  getSidebarCollapsedState,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -23,6 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -124,7 +125,7 @@ const PartnerSidebar = () => {
   const { user, logout } = useAuth();
   const { isMobile, setOpenMobile, open, openMobile } = useSidebar();
   const { openModal } = useModalNavigation();
-  const isCollapsed = !open && !openMobile;
+  const isCollapsed = getSidebarCollapsedState({ isMobile, open, openMobile });
   const { data: unreadData } = useUnreadNotifications();
   const unreadCount = unreadData?.count || 0;
 
@@ -160,7 +161,7 @@ const PartnerSidebar = () => {
         </SidebarHeader>
 
         {/* Nav */}
-        <SidebarContent className="py-2 overflow-hidden">
+        <SidebarContent className="py-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <SidebarMenu className={cn("px-2 gap-0.5", isCollapsed && "items-center")}>
             {menuItems.map((item) => (
               <NavItem key={item.path} item={item} isCollapsed={isCollapsed} onNavigate={handleNavigate} />

@@ -24,10 +24,10 @@ import {
   ReceiptText,
   ArrowRightLeft,
 } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 import {
+  getSidebarCollapsedState,
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -35,6 +35,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -256,7 +257,7 @@ const AdminSidebar = () => {
   const { user, logout } = useAuth();
   const { isMobile, setOpenMobile, open, openMobile } = useSidebar();
   const { openModal } = useModalNavigation();
-  const isCollapsed = !open && !openMobile;
+  const isCollapsed = getSidebarCollapsedState({ isMobile, open, openMobile });
   const { data: unreadData } = useUnreadNotifications();
   const unreadCount = unreadData?.count || 0;
   const isAdvPartner = user?.role === 'adv_partner';
@@ -324,39 +325,44 @@ const AdminSidebar = () => {
   }, [isCollapsed, activeGroupKey, isAdvPartner, allGroupKeys]);
 
   useEffect(() => {
-    const el = contentRef.current;
-    if (!el || isCollapsed) return;
+    let observer: ResizeObserver | null = null;
+    const animationFrame = requestAnimationFrame(() => {
+      const el = contentRef.current;
+      if (!el || isCollapsed) return;
 
-    const checkOverflow = () => {
-      if (overflowTimerRef.current) clearTimeout(overflowTimerRef.current);
-      overflowTimerRef.current = setTimeout(() => {
-        // Skip check if sidebar is currently collapsed (avoids false positives during animation)
-        if (!contentRef.current || prevCollapsedRef.current) return;
-        const overflowing = el.scrollHeight > el.clientHeight + 2;
-        if (overflowing && !autoCollapsedRef.current) {
-          autoCollapsedRef.current = true;
-          setExpandedGroups(
-            activeGroupKey && activeGroupKey !== "top" ? new Set([activeGroupKey]) : new Set()
-          );
-        } else if (!overflowing && autoCollapsedRef.current) {
-          autoCollapsedRef.current = false;
-          setExpandedGroups(
-            isAdvPartner
-              ? (activeGroupKey && activeGroupKey !== "top" ? new Set([activeGroupKey]) : new Set<string>())
-              : new Set(allGroupKeys)
-          );
-        }
-      }, 300);
-    };
+      const checkOverflow = () => {
+        if (overflowTimerRef.current) clearTimeout(overflowTimerRef.current);
+        overflowTimerRef.current = setTimeout(() => {
+          // Skip check if sidebar is currently collapsed (avoids false positives during animation)
+          if (!contentRef.current || prevCollapsedRef.current) return;
+          const overflowing = el.scrollHeight > el.clientHeight + 2;
+          if (overflowing && !autoCollapsedRef.current) {
+            autoCollapsedRef.current = true;
+            setExpandedGroups(
+              activeGroupKey && activeGroupKey !== "top" ? new Set([activeGroupKey]) : new Set()
+            );
+          } else if (!overflowing && autoCollapsedRef.current) {
+            autoCollapsedRef.current = false;
+            setExpandedGroups(
+              isAdvPartner
+                ? (activeGroupKey && activeGroupKey !== "top" ? new Set([activeGroupKey]) : new Set<string>())
+                : new Set(allGroupKeys)
+            );
+          }
+        }, 300);
+      };
 
-    const observer = new ResizeObserver(checkOverflow);
-    observer.observe(el);
-    checkOverflow();
+      observer = new ResizeObserver(checkOverflow);
+      observer.observe(el);
+      checkOverflow();
+    });
+
     return () => {
-      observer.disconnect();
+      cancelAnimationFrame(animationFrame);
+      observer?.disconnect();
       if (overflowTimerRef.current) clearTimeout(overflowTimerRef.current);
     };
-  }, [isCollapsed, activeGroupKey, allGroupKeys, isAdvPartner]);
+  }, [isCollapsed, isMobile, activeGroupKey, allGroupKeys, isAdvPartner]);
 
   useEffect(() => {
     if (activeGroupKey && activeGroupKey !== "top" && autoCollapsedRef.current) {
