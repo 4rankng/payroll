@@ -21,9 +21,10 @@ const DAY_COLORS: Record<string, string> = {
 
 interface PayrateRateGridProps {
   rates: PayrateStructure;
+  isFlexible?: boolean;
 }
 
-export function PayrateRateGrid({ rates }: PayrateRateGridProps) {
+export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridProps) {
   const positions = getPositionsFromRates(rates);
   const hourTypes = getAllHourTypes(rates);
   const gridStyle = {
@@ -36,7 +37,7 @@ export function PayrateRateGrid({ rates }: PayrateRateGridProps) {
   return (
     <div
       className="overflow-x-auto pb-1"
-      aria-label="Bảng mức lương theo giờ"
+      aria-label={isFlexible ? "Bảng lương trọn ca" : "Bảng mức lương theo giờ"}
     >
       <div className="space-y-3">
         {/* Column header row */}
@@ -85,7 +86,9 @@ export function PayrateRateGrid({ rates }: PayrateRateGridProps) {
                           {active ? (
                             <span className="text-xs font-semibold tabular-nums text-foreground">
                               {rate.toLocaleString('vi-VN')}
-                              <span className="ml-0.5 text-[9px] font-normal text-muted-foreground">đ/giờ</span>
+                              <span className="ml-0.5 text-[9px] font-normal text-muted-foreground">
+                                {isFlexible ? "đ/ca" : "đ/giờ"}
+                              </span>
                             </span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground/50">—</span>

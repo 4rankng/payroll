@@ -15,10 +15,15 @@ import {
 } from "@/hooks/api/useTimesheetEditRequests";
 import { useCurrentPayRate } from "@/hooks/api/usePayRates";
 import { useActiveProjectEmployees } from "@/hooks/api/useProjectEmployees";
+import { useProject } from "@/hooks/api/useProjects";
 import { useAuth } from "@/contexts/AuthContext";
 import { canEditTimesheet } from "@/lib/permissions";
 import { vietnameseEquals } from "@/utils/vietnameseNormalization";
 import { getErrorMessage } from "@/utils/error-handler";
+import {
+  calculateTimesheetPreviewAmount,
+  findTimesheetRate,
+} from "./timesheet-pay-unit";
 
 interface FormData {
   hoursWorked: number;
@@ -70,7 +75,18 @@ export function useTimesheetEntryForm({
 
   const { data: payrateData, isLoading: isPayrateLoading, isError: isPayrateError } =
     useCurrentPayRate(projectId, isOpen && !!projectId);
+  const {
+    data: projectData,
+    isLoading: isPayUnitLoading,
+    isError: isPayUnitError,
+  } = useProject(projectId, isOpen && !!projectId);
   const { data: projectEmployeesData } = useActiveProjectEmployees(projectId, isOpen && !!projectId);
+  const projectPayUnit = projectData
+    ? projectData.is_flexible
+      ? "shift"
+      : "hour"
+    : null;
+  const isFlexibleProject = projectPayUnit === "shift";
 
   const isEditing = !!existingEntry;
   const isReadOnly = existingEntry ? !canEditTimesheet(existingEntry, user?.role) : false;
@@ -313,18 +329,42 @@ export function useTimesheetEntryForm({
 
   // Live payrate calculation
   const liveAmount = useMemo(() => {
-    if (!payrateData?.rates || !formData.hourType || !formData.dayType) return null;
-    for (const positionRates of Object.values(payrateData.rates)) {
-      if (typeof positionRates === "object" && positionRates !== null) {
-        const dayRates = (positionRates as Record<string, unknown>)[formData.dayType];
-        if (typeof dayRates === "object" && dayRates !== null) {
-          const rate = (dayRates as Record<string, unknown>)[formData.hourType];
-          if (typeof rate === "number") return rate * formData.hoursWorked;
-        }
-      }
-    }
-    return null;
-  }, [payrateData, formData.hourType, formData.dayType, formData.hoursWorked]);
+    if (
+      !payrateData?.rates ||
+      !formData.hourType ||
+      !formData.dayType ||
+      projectPayUnit === null
+    ) return null;
+
+    const assignmentPosition = projectEmployeesData?.data.find(
+      (employee) => employee.employee_id === employeeId,
+    )?.position;
+    const position =
+      existingEntry?.paytype.split(".")[0] || assignmentPosition || "";
+    const rate = findTimesheetRate(
+      payrateData.rates,
+      position,
+      formData.dayType,
+      formData.hourType,
+    );
+    if (rate === null) return null;
+
+    return calculateTimesheetPreviewAmount(
+      rate,
+      formData.hoursWorked,
+      isFlexibleProject,
+    );
+  }, [
+    payrateData,
+    formData.hourType,
+    formData.dayType,
+    formData.hoursWorked,
+    projectPayUnit,
+    isFlexibleProject,
+    projectEmployeesData,
+    employeeId,
+    existingEntry,
+  ]);
 
   const statusBadge = existingEntry ? (() => {
     const cfg: Record<string, { label: string; cls: string }> = {
@@ -343,14 +383,20 @@ export function useTimesheetEntryForm({
     isLoading,
     isPayrateLoading,
     isPayrateError,
+    isPayUnitLoading,
+    isPayUnitError,
     // Computed
     availableHourTypes,
     availableDayTypes,
     isHourTypeValid,
     dateValidation,
     liveAmount,
-    displayAmount: liveAmount ?? existingEntry?.amount ?? null,
+    displayAmount:
+      projectPayUnit === null
+        ? null
+        : liveAmount ?? existingEntry?.amount ?? null,
     displayPayrate: existingEntry?.payrate ?? null,
+    isFlexibleProject,
     displayProjectName,
     displayEmployeeName,
     displayEmployeeCode,

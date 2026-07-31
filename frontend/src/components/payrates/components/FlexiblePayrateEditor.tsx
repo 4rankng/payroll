@@ -296,7 +296,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       <div className="flex flex-col leading-tight">
                         <span className="text-[10px] text-muted-foreground/60 font-semibold">Ca làm việc →</span>
                         <span className="text-sm font-bold text-foreground">Vị trí ↓</span>
-                        <span className="mt-1 text-[10px] font-semibold text-emerald-700">Mức lương (₫/giờ)</span>
+                        <span className="mt-1 text-[10px] font-semibold text-emerald-700">Lương trọn ca (₫)</span>
                       </div>
                     </th>
                     {/* shift columns */}
@@ -412,7 +412,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 className="fpe-mono h-11 w-full rounded-lg pl-2 pr-12 text-right text-sm transition-all"
                                 inputMode="numeric"
                                 placeholder="0"
-                                aria-label={`Mức lương theo giờ cho ${pos}, ca ${s.start}-${s.end}`}
+                                aria-label={`Lương trọn ca cho ${pos}, ca ${s.start}-${s.end}`}
                                 readOnly={readOnly}
                                 value={focused ? (val||'') : (has ? fmtVND(val) : '')}
                                 onFocus={() => setFocusKey(key)}
@@ -427,7 +427,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 }}
                               />
                               <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
-                                style={{ color: has ? '#047857' : '#94a3b8' }}>₫/giờ</span>
+                                style={{ color: has ? '#047857' : '#94a3b8' }}>₫/ca</span>
                             </div>
                           </td>
                         );
@@ -466,17 +466,27 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
 
           {/* ── palettes ── */}
           {!readOnly && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 border-t border-border/60">
+            <div
+              className="grid grid-cols-1 divide-y divide-border/60 border-t border-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+              data-slot="payrate-selector-sections"
+            >
               {/* positions */}
-              <div className="rounded-xl border border-border p-4">
-                <div className="flex items-center gap-2 mb-3">
+              <section
+                className="min-w-0 p-4 sm:p-5 sm:pr-6"
+                aria-labelledby="payrate-positions-heading"
+              >
+                <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
-                  <span className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</span>
-                  <span className="ml-auto text-xs text-muted-foreground/60">chạm để thêm / bỏ</span>
+                  <h3 id="payrate-positions-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</h3>
+                  <span className="w-full pl-[22px] text-[11px] text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn để thêm hoặc bỏ</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ALL_POSITIONS.map(name => (
-                    <button key={name} onClick={()=>togglePos(name)}
+                    <button
+                      key={name}
+                      type="button"
+                      aria-pressed={hasPos(name)}
+                      onClick={()=>togglePos(name)}
                       className="fpe-sans inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                       style={{
                         border: `1px solid ${hasPos(name)?'#bfe0cc':'#e2e8f0'}`,
@@ -488,20 +498,27 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
 
               {/* shifts */}
-              <div className="rounded-xl border border-border p-4">
-                <div className="flex items-center gap-2 mb-3">
+              <section
+                className="min-w-0 p-4 sm:p-5 sm:pl-6"
+                aria-labelledby="payrate-shifts-heading"
+              >
+                <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                  <span className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</span>
-                  <span className="ml-auto text-xs text-muted-foreground/60">mẫu phổ biến</span>
+                  <h3 id="payrate-shifts-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</h3>
+                  <span className="w-full pl-[22px] text-[11px] text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn ca phổ biến</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {PRESET_SHIFTS.map(p => {
                     const on = hasShift(p.start, p.end);
                     return (
-                      <button key={p.start+p.end} onClick={()=>togglePreset(p)}
+                      <button
+                        key={p.start+p.end}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={()=>togglePreset(p)}
                         className="fpe-mono inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                         style={{
                           border:`1px solid ${on?'#bfe0cc':'#e2e8f0'}`,
@@ -524,6 +541,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       onChange={e => { setCustomShift(e.target.value); setShiftErr(null); setShiftHighlight(false); }}
                       onKeyDown={e => e.key==='Enter' && addCustomShift()}
                       placeholder="06:00-14:00" inputMode="numeric"
+                      aria-label="Khung giờ ca làm việc mới"
                       className={`fpe-mono h-11 rounded-lg border px-3 text-sm transition-colors ${shiftHighlight ? 'shift-highlight' : ''}`}
                       style={{
                         border: `1px solid ${shiftErr ? '#fbcfcf' : '#e2e8f0'}`,
@@ -531,7 +549,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         color: '#0f172a',
                       }}
                     />
-                    <button onClick={addCustomShift}
+                    <button
+                      type="button"
+                      onClick={addCustomShift}
                       className="fpe-sans h-11 rounded-lg px-4 text-sm font-bold text-white transition-colors"
                       style={{ background:'#08783e' }}>
                       Thêm ca
@@ -542,6 +562,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       Sai định dạng — cần <span className="fpe-mono">HH:MM-HH:MM</span> (24 giờ)
                       {typeof shiftErr === 'object' && shiftErr.fix && (
                         <button
+                          type="button"
                           onClick={() => { setCustomShift(shiftErr.fix); setShiftErr(null); shiftInputRef.current?.focus(); }}
                           className="fpe-mono font-bold text-emerald-600 underline underline-offset-2 ml-1">
                           Dùng: {shiftErr.fix}
@@ -550,7 +571,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     </div>
                   )}
                 </div>
-              </div>
+              </section>
             </div>
           )}
         </div>

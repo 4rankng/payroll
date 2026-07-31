@@ -65,6 +65,7 @@ func (s *TimesheetResponseService) BuildTimesheetWithDetailsResponse(timesheet *
 	// Add project and employee details if available from preloaded relationships
 	if timesheet.Project.ID != 0 {
 		response.ProjectName = timesheet.Project.Name
+		response.ProjectIsFlexible = timesheet.Project.IsFlexible
 	}
 	if timesheet.Employee.ID != 0 {
 		response.EmployeeName = timesheet.Employee.Fullname

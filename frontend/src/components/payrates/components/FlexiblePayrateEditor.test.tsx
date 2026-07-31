@@ -3,7 +3,35 @@ import { describe, expect, it, vi } from "vitest";
 import { FlexiblePayrateEditor } from "./FlexiblePayrateEditor";
 
 describe("FlexiblePayrateEditor", () => {
-  it("clearly edits both the shift time and its hourly pay", () => {
+  it("renders position and shift controls as flat divided sections", () => {
+    const { container } = render(
+      <FlexiblePayrateEditor
+        rates={{
+          "Công nhân": {
+            "ngày thường": {
+              "08:00-17:00": 30000,
+            },
+          },
+        }}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Vị trí" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Ca làm việc" }),
+    ).toBeInTheDocument();
+
+    const selectorSections = container.querySelector(
+      '[data-slot="payrate-selector-sections"]',
+    );
+    expect(selectorSections).toHaveClass("divide-y", "sm:divide-x");
+    expect(
+      selectorSections?.querySelectorAll(":scope > .rounded-xl"),
+    ).toHaveLength(0);
+  });
+
+  it("clearly edits both the shift time and its full-shift pay", () => {
     const onChange = vi.fn();
 
     render(
@@ -19,11 +47,13 @@ describe("FlexiblePayrateEditor", () => {
       />,
     );
 
-    expect(screen.getByText("Mức lương (₫/giờ)")).toBeInTheDocument();
+    expect(screen.getByText("Lương trọn ca (₫)")).toBeInTheDocument();
+    expect(screen.getAllByText("₫/ca")).not.toHaveLength(0);
+    expect(screen.queryByText(/₫\/giờ/)).not.toBeInTheDocument();
 
     fireEvent.change(
       screen.getByRole("textbox", {
-        name: "Mức lương theo giờ cho Công nhân, ca 08:00-17:00",
+        name: "Lương trọn ca cho Công nhân, ca 08:00-17:00",
       }),
       { target: { value: "35000" } },
     );
@@ -74,7 +104,7 @@ describe("FlexiblePayrateEditor", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("textbox", {
-        name: "Mức lương theo giờ cho Công nhân, ca 08:00-17:00",
+        name: "Lương trọn ca cho Công nhân, ca 08:00-17:00",
       }),
     ).toHaveAttribute("readonly");
     expect(onChange).not.toHaveBeenCalled();

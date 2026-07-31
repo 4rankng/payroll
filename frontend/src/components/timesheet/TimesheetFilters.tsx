@@ -124,6 +124,7 @@ export const TimesheetFilters = () => {
                   placeholder="Tất cả dự án" searchPlaceholder="Tìm dự án..."
                   emptyMessage="Không tìm thấy dự án nào." className="w-full"
                   allOption={{ value: 'all', label: 'Tất cả dự án' }}
+                  mobileTitle="Chọn dự án"
                 />
               </div>
               <div className="space-y-1.5">

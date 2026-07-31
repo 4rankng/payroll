@@ -473,7 +473,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
             >
               ⚠ chưa có
             </span>
-          ) : `${entry.payrate?.toLocaleString("vi-VN")}đ/h`}
+          ) : `${entry.payrate?.toLocaleString("vi-VN")}${entry.projectIsFlexible ? "đ/ca" : "đ/giờ"}`}
         </p>
       </TableCell>
       <TableCell className="py-2 px-3 text-right">

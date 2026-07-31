@@ -113,7 +113,9 @@ func (s *PayrollCalculationService) ValidatePayrollPeriod(ctx context.Context, f
 	return nil
 }
 
-// CalculateTimesheetAmount calculates the amount for a timesheet based on hours and payrate
+// CalculateTimesheetAmount calculates the amount for a timesheet using the
+// project's configured pay unit: flexible projects pay the configured total
+// once per shift, while standard projects retain hourly calculation.
 func (s *PayrollCalculationService) CalculateTimesheetAmount(ctx context.Context, timesheet *domain.Timesheet) (int64, error) {
 	// Get the active payrate for the project on the timesheet date
 	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, timesheet.ProjectID, timesheet.Date)
@@ -136,7 +138,9 @@ func (s *PayrollCalculationService) CalculateTimesheetAmount(ctx context.Context
 	timesheet.PayrateID = payrate.ID
 	timesheet.PayRate = int64(rate)
 
-	// Calculate amount: hours * rate
-	amount := int64(timesheet.HoursWorked * float64(rate))
-	return amount, nil
+	if payrate.Project.IsFlexible {
+		return int64(rate), nil
+	}
+
+	return int64(timesheet.HoursWorked * float64(rate)), nil
 }

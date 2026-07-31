@@ -78,6 +78,10 @@ describe("ShiftNamesSection", () => {
     expect(onEditPayrate).toHaveBeenCalledWith(91);
     expect(screen.getByText("20:00-08:00")).toBeInTheDocument();
     expect(screen.getByText("Qua đêm")).toBeInTheDocument();
+    expect(screen.getAllByText("Lương trọn ca")).not.toHaveLength(0);
+    expect(screen.getByText("300.000 đ")).toBeInTheDocument();
+    expect(screen.getByText("350.000 đ")).toBeInTheDocument();
+    expect(screen.queryByText(/mức lương theo giờ/)).not.toBeInTheDocument();
   });
 
   it("keeps the shift ranges read-only without edit permission", () => {
@@ -92,6 +96,42 @@ describe("ShiftNamesSection", () => {
     expect(screen.queryByRole("button", { name: "Chỉnh giờ & lương" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Đặt tên ca" })).not.toBeInTheDocument();
     expect(screen.getByText("08:00-17:00")).toBeInTheDocument();
+  });
+
+  it("shows each position's full-shift pay without collapsing different amounts", () => {
+    mockUseProjectPayRates.mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 91,
+            project_id: project.id,
+            fromDate: "2020-01-01",
+            toDate: null,
+            rates: {
+              "Công nhân": {
+                "ngày thường": { "08:00-17:00": 252000 },
+              },
+              "Thợ hàn": {
+                "ngày thường": { "08:00-17:00": 315000 },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    render(
+      <ShiftNamesSection
+        project={project}
+        canEdit={false}
+        onEditPayrate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Công nhân")).toBeInTheDocument();
+    expect(screen.getByText("252.000 đ")).toBeInTheDocument();
+    expect(screen.getByText("Thợ hàn")).toBeInTheDocument();
+    expect(screen.getByText("315.000 đ")).toBeInTheDocument();
   });
 
   it("opens the nearest upcoming payrate when no configuration is active", () => {
@@ -161,6 +201,6 @@ describe("ShiftNamesSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Chỉnh giờ & lương" }));
 
     expect(onEditPayrate).toHaveBeenCalledWith(92);
-    expect(screen.getByText(/mức lương theo giờ/)).toBeInTheDocument();
+    expect(screen.getByText(/lương trọn ca/)).toBeInTheDocument();
   });
 });

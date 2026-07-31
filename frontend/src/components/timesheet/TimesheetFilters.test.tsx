@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimesheetFilters } from './TimesheetFilters';
 
@@ -14,8 +14,8 @@ vi.mock('@/components/timesheet/TimesheetContext', () => ({
 }));
 
 vi.mock('@/components/ui/searchable-dropdown', () => ({
-  SearchableDropdown: ({ className }: { className?: string }) => (
-    <button data-testid="project-filter" className={className}>Dự án</button>
+  SearchableDropdown: ({ className, mobileTitle }: { className?: string; mobileTitle?: string }) => (
+    <button data-testid="project-filter" data-mobile-title={mobileTitle} className={className}>Dự án</button>
   ),
 }));
 
@@ -69,5 +69,14 @@ describe('TimesheetFilters', () => {
 
     expect(screen.getByRole('combobox')).toHaveClass('h-11');
     expect(screen.getByRole('button', { name: 'Bộ lọc' })).toHaveClass('h-11', 'w-11');
+  });
+
+  it('wires the project selector to the mobile picker', () => {
+    useIsMobileMock.mockReturnValue(true);
+    render(<TimesheetFilters />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bộ lọc' }));
+
+    expect(screen.getByTestId('project-filter')).toHaveAttribute('data-mobile-title', 'Chọn dự án');
   });
 });

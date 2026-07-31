@@ -14,6 +14,7 @@ import { Timesheet } from "@/types/api/timesheet.types";
 import { InlineAlert } from "@/components/shared/InlineAlert";
 import { ContextStrip } from "@/components/shared/ContextStrip";
 import { useTimesheetEntryForm } from "./useTimesheetEntryForm";
+import { getPayrateUnit } from "./timesheet-pay-unit";
 
 interface TimesheetEntryModalProps {
   isOpen: boolean;
@@ -89,6 +90,9 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
           {f.isPayrateError && (
             <InlineAlert severity="error" icon={AlertTriangle} message="Không thể tải cấu hình bảng lương. Vui lòng thử lại." />
           )}
+          {f.isPayUnitError && (
+            <InlineAlert severity="error" icon={AlertTriangle} message="Không thể xác định cách tính lương của dự án. Vui lòng thử lại." />
+          )}
           {!f.isPayrateLoading && !f.isPayrateError && f.availableHourTypes.length === 0 && (
             <InlineAlert severity="warning" icon={AlertTriangle} message="Dự án chưa có cấu hình loại giờ." />
           )}
@@ -126,7 +130,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  {f.isPayrateLoading ? (
+                  {f.isPayrateLoading || f.isPayUnitLoading ? (
                     <div className="flex flex-col items-end gap-1">
                       <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
                       <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
@@ -138,7 +142,11 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                         {f.displayAmount.toLocaleString("vi-VN")}đ
                       </div>
                       {f.displayPayrate != null && (
-                        <div className="text-[10px] text-slate-400 mt-0.5">Đơn giá: {f.displayPayrate.toLocaleString("vi-VN")}đ/h</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {f.isFlexibleProject ? "Lương trọn ca" : "Đơn giá"}:{" "}
+                          {f.displayPayrate.toLocaleString("vi-VN")}
+                          {getPayrateUnit(f.isFlexibleProject)}
+                        </div>
                       )}
                     </>
                   ) : null}

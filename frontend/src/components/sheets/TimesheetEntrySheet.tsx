@@ -21,6 +21,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { SheetFooter } from '@/components/shared/SheetFooter';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { calculateTimesheetPreviewAmount } from '@/components/timesheet/components/timesheet-pay-unit';
 
 export const modalConfig: ModalConfig = {
   id: 'timesheet_entry',
@@ -76,6 +77,7 @@ function TimesheetEntrySheetComponent({
   // Track selected project id separately so we can derive off_days before the hook
   const [selectedProjectId, setSelectedProjectId] = useState<number>(projectId || 0);
   const selectedProject = projects.find(p => p.id === selectedProjectId) || null;
+  const isFlexibleProject = selectedProject?.is_flexible === true;
   const projectOffDays = selectedProject?.off_days ?? 0;
 
   const {
@@ -363,7 +365,13 @@ function TimesheetEntrySheetComponent({
 
       if (entry.position && entry.dayType) {
         Object.entries(hours).forEach(([ht, h]) => {
-          if (h > 0) totalPayout += h * getPayRateForEntry(entry.position!, entry.dayType!, ht);
+          if (h > 0) {
+            totalPayout += calculateTimesheetPreviewAmount(
+              getPayRateForEntry(entry.position!, entry.dayType!, ht),
+              h,
+              isFlexibleProject,
+            );
+          }
         });
       }
 
@@ -384,7 +392,13 @@ function TimesheetEntrySheetComponent({
     });
 
     return { employees: employeesWithHours.size, totalHours, totalPayout, newFieldCount, editedFieldCount, deletedFieldCount };
-  }, [formData.entries, formData.projectId, isPayRateReady, getPayRateForEntry]);
+  }, [
+    formData.entries,
+    formData.projectId,
+    isPayRateReady,
+    getPayRateForEntry,
+    isFlexibleProject,
+  ]);
 
   const saveDisabledReason = useMemo(() => {
     if (!formData.projectId) return 'Chưa chọn dự án';
@@ -580,6 +594,7 @@ function TimesheetEntrySheetComponent({
               getHourTypesForEntry={getHourTypesForEntry}
               hasPayRateForEntry={hasPayRateForEntry}
               getPayRateForEntry={getPayRateForEntry}
+              isFlexibleProject={isFlexibleProject}
               onEntryChange={handleEntryChange}
               onAddEntry={handleAddEntry}
               onRemoveEntry={handleRemoveEntry}

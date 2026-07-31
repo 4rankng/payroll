@@ -312,7 +312,7 @@ export function TimesheetEntryCard({
           <div className="space-y-1">
             <p className="typography-label-medium text-muted-foreground">Đơn giá</p>
             <span className="typography-data font-medium tabular-nums">
-              {formatCurrency(entry.payrate)}/h
+              {formatCurrency(entry.payrate)}/{entry.projectIsFlexible ? "ca" : "giờ"}
             </span>
           </div>
           <div className="space-y-1">

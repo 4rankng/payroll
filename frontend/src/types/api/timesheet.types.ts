@@ -33,6 +33,7 @@ export interface Timesheet {
   created_at: string;
   updated_at: string;
   projectName: string;
+  projectIsFlexible?: boolean;
   employeeName: string;
   employeeCode: string;
   notes?: string;

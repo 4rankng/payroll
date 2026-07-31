@@ -34,6 +34,7 @@ import { DeletionStateBanner } from "../components/DeletionStateBanner";
 import { HoursWarningBadge } from "../components/HoursWarningBadge";
 import { HourInputField } from "../components/HourInputField";
 import { DateStrip } from "../components/DateStrip";
+import { calculateTimesheetPreviewAmount } from "@/components/timesheet/components/timesheet-pay-unit";
 
 interface MobileTimesheetEntryProps {
   isOpen: boolean;
@@ -92,6 +93,7 @@ export function MobileTimesheetEntry({
     () => projects.find((p) => p.id === formData.projectId) || null,
     [projects, formData.projectId],
   );
+  const isFlexibleProject = selectedProject?.is_flexible === true;
   const dateBounds = useMemo(
     () => ({ min: new Date(Date.now() - 14 * 86400000), max: new Date() }),
     [],
@@ -794,7 +796,11 @@ export function MobileTimesheetEntry({
                           const val = activeEntry.hours?.[hourType] || 0;
                           if (val <= 0) return sum;
                           const rate = getPayRateForEntry(activeEntry.position, activeEntry.dayType || "", hourType);
-                          return sum + val * rate;
+                          return sum + calculateTimesheetPreviewAmount(
+                            rate,
+                            val,
+                            isFlexibleProject,
+                          );
                         }, 0);
                         return rowEarnings > 0 ? (
                           <span className="text-xs text-emerald-600 font-semibold tabular-nums pl-0.5">

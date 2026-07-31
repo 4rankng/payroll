@@ -241,6 +241,7 @@ func (h *Handler) GetEmployeeTimesheet(c *gin.Context) {
 		timesheetResponses = append(timesheetResponses, dto.TimesheetWithDetailsResponse{
 			TimesheetResponse: timesheetResponse,
 			ProjectName:       projectName,
+			ProjectIsFlexible: timesheet.Project != nil && timesheet.Project.IsFlexible,
 			EmployeeName:      employeeName,
 			EmployeeCode:      employeeCode,
 			SubmittedBy:       submittedBy,

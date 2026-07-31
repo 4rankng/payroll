@@ -11,6 +11,7 @@ interface MultiEntryTableProps {
   getHourTypesForEntry: (position: string, dayType: string) => string[];
   hasPayRateForEntry: (position: string, dayType: string, hourType: string) => boolean;
   getPayRateForEntry: (position: string, dayType: string, hourType: string) => number;
+  isFlexibleProject: boolean;
   onEntryChange: (index: number, field: keyof TimesheetEntry, value: unknown) => void;
   onAddEntry: (employee?: Employee) => void;
   onRemoveEntry: (index: number) => void;
@@ -29,6 +30,7 @@ export const MultiEntryTable = memo(function MultiEntryTable({
   getHourTypesForEntry,
   hasPayRateForEntry,
   getPayRateForEntry,
+  isFlexibleProject,
   onEntryChange,
   onAddEntry,
   onRemoveEntry,
@@ -87,6 +89,7 @@ export const MultiEntryTable = memo(function MultiEntryTable({
                 getHourTypesForEntry={getHourTypesForEntry}
                 hasPayRateForEntry={hasPayRateForEntry}
                 getPayRateForEntry={getPayRateForEntry}
+                isFlexibleProject={isFlexibleProject}
                 onEntryChange={(entryIndex, field, value) => {
                   const groupEntry = group.entries[entryIndex];
                   if (groupEntry) onEntryChange(groupEntry.originalIndex, field, value);

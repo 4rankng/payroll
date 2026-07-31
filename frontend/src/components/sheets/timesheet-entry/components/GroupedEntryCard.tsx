@@ -7,6 +7,7 @@ import { EntryRow } from './EntryRow';
 import type { TimesheetEntry } from '../types/multi-timesheet.types';
 import type { Employee } from '@/types/api/employee.types';
 import { formatCurrency as formatVND } from '@/utils/formatters';
+import { calculateTimesheetPreviewAmount } from '@/components/timesheet/components/timesheet-pay-unit';
 
 interface GroupedEntryCardProps {
   employee: Employee;
@@ -16,6 +17,7 @@ interface GroupedEntryCardProps {
   getHourTypesForEntry: (position: string, dayType: string) => string[];
   hasPayRateForEntry: (position: string, dayType: string, hourType: string) => boolean;
   getPayRateForEntry: (position: string, dayType: string, hourType: string) => number;
+  isFlexibleProject: boolean;
   onEntryChange: (entryIndex: number, field: keyof TimesheetEntry, value: unknown) => void;
   onRemoveEntry: (entryIndex: number) => void;
   onPreviewRequest?: () => void;
@@ -32,6 +34,7 @@ export const GroupedEntryCard = memo(({
   getHourTypesForEntry,
   hasPayRateForEntry,
   getPayRateForEntry,
+  isFlexibleProject,
   onEntryChange,
   onRemoveEntry,
   onPreviewRequest,
@@ -66,13 +69,17 @@ export const GroupedEntryCard = memo(({
       for (const [hourType, hoursWorked] of Object.entries(hours)) {
         if (hoursWorked > 0) {
           const rate = getPayRateForEntry(entry.position!, entry.dayType!, hourType);
-          entryEarnings += hoursWorked * rate;
+          entryEarnings += calculateTimesheetPreviewAmount(
+            rate,
+            hoursWorked,
+            isFlexibleProject,
+          );
         }
       }
 
       return sum + entryEarnings;
     }, 0);
-  }, [entries, getPayRateForEntry]);
+  }, [entries, getPayRateForEntry, isFlexibleProject]);
 
   // formatVND is imported from shared utils
 

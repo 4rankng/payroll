@@ -139,7 +139,7 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
           </div>
           {/* Rate grid */}
           <div className="p-3">
-            <PayrateRateGrid rates={activePayrate.rates} />
+            <PayrateRateGrid rates={activePayrate.rates} isFlexible={project.is_flexible} />
           </div>
         </div>
       ) : (
@@ -179,7 +179,7 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
             )}
           </div>
           <div className="p-3">
-            <PayrateRateGrid rates={upcomingPayrate.rates} />
+            <PayrateRateGrid rates={upcomingPayrate.rates} isFlexible={project.is_flexible} />
           </div>
         </div>
       )}

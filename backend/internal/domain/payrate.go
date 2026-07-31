@@ -371,7 +371,7 @@ func (p PayrateConfiguration) GetRate(path string) (int, error) {
 type Payrate struct {
 	ID          uint                 `json:"id" gorm:"primarykey;type:bigint unsigned"`
 	ProjectID   uint                 `json:"project_id" gorm:"not null;type:bigint unsigned"`
-	PayrateJSON string               `json:"-" gorm:"column:payrate_json;type:json;not null;comment:'custom format per project in format paytype: vnd_per_hour e.g. {\"normal\": 10000, \"overtime\": 15000, \"weekend\": 20000, \"holiday\": 25000}'"`
+	PayrateJSON string               `json:"-" gorm:"column:payrate_json;type:json;not null;comment:'custom payrate format per project; values are hourly for standard projects and per-shift totals for flexible projects'"`
 	Payrate     PayrateConfiguration `json:"payrate" gorm:"-"`
 	FromDate    time.Time            `json:"fromDate" gorm:"type:date;not null"`
 	ToDate      *time.Time           `json:"toDate" gorm:"type:date"`

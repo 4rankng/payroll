@@ -6,42 +6,15 @@ import { useUpdateProject } from "@/hooks/api/useProjects";
 import { useProjectPayRates } from "@/hooks/api/usePayRates";
 import type { Project, ShiftName } from "@/types/api/project.types";
 import { dateToString } from "@/utils/dateHelpers";
+import {
+  extractShiftPaySummaries,
+  formatShiftPay,
+} from "./shift-pay-summary";
 
 interface ShiftNamesSectionProps {
   project: Project;
   canEdit: boolean;
   onEditPayrate: (payrateId: number) => void;
-}
-
-// Matches the backend regex: ^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$
-const SHIFT_RANGE_RE = /^([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d$/;
-
-/**
- * extractShiftRanges walks the active payrate's rates structure
- * `{position: {dayType: {hourRange: rate}}}` and returns the distinct
- * "HH:MM-HH:MM" hourRange keys across every position/day-type, deduped and
- * sorted by start time. Mirrors the backend `ExtractShiftRanges` so the UI and
- * validation stay in sync.
- */
-function extractShiftRanges(rates: unknown): string[] {
-  if (!rates || typeof rates !== "object") return [];
-  const seen = new Set<string>();
-  const ranges: string[] = [];
-  for (const position of Object.keys(rates as Record<string, unknown>)) {
-    const dayTypes = (rates as Record<string, unknown>)[position];
-    if (!dayTypes || typeof dayTypes !== "object") continue;
-    for (const dayType of Object.keys(dayTypes as Record<string, unknown>)) {
-      const hourRanges = (dayTypes as Record<string, unknown>)[dayType];
-      if (!hourRanges || typeof hourRanges !== "object") continue;
-      for (const key of Object.keys(hourRanges as Record<string, unknown>)) {
-        if (SHIFT_RANGE_RE.test(key) && !seen.has(key)) {
-          seen.add(key);
-          ranges.push(key);
-        }
-      }
-    }
-  }
-  return ranges.sort((a, b) => a.slice(0, 5).localeCompare(b.slice(0, 5)));
 }
 
 /** Overnight when end time-of-day <= start time-of-day (crosses midnight). */
@@ -72,9 +45,13 @@ export function ShiftNamesSection({
       .filter((p) => p.fromDate > today)
       .sort((a, b) => a.fromDate.localeCompare(b.fromDate))[0] ?? null;
   }, [payRatesData]);
-  const detectedRanges = useMemo(
-    () => extractShiftRanges(displayedPayrate?.rates),
+  const shiftPaySummaries = useMemo(
+    () => extractShiftPaySummaries(displayedPayrate?.rates),
     [displayedPayrate]
+  );
+  const detectedRanges = useMemo(
+    () => shiftPaySummaries.map((summary) => summary.range),
+    [shiftPaySummaries],
   );
 
   // Local editable map: range -> name. Seeded from the project's saved names.
@@ -129,7 +106,7 @@ export function ShiftNamesSection({
         </div>
         <div className="px-4 sm:px-6">
           <p className="text-xs text-muted-foreground">
-            Chưa có ca nào trong bảng lương. Chọn “Chỉnh giờ &amp; lương” để thêm khung giờ và mức lương theo giờ.
+            Chưa có ca nào trong bảng lương. Chọn “Chỉnh giờ &amp; lương” để thêm khung giờ và lương trọn ca.
           </p>
         </div>
       </div>
@@ -173,21 +150,22 @@ export function ShiftNamesSection({
 
       <div className="px-4 sm:px-6 space-y-2">
         <p className="text-[11px] text-muted-foreground">
-          Đặt tên hiển thị cho từng ca. Khung giờ và mức lương theo giờ được thay đổi trong bảng lương.
+          Đặt tên hiển thị cho từng ca. Khung giờ và lương trọn ca được thay đổi trong bảng lương.
         </p>
 
         <div className="overflow-hidden rounded-lg border">
-          <div className="hidden min-[420px]:grid min-[420px]:grid-cols-[180px_minmax(0,1fr)] gap-2 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="hidden min-[640px]:grid min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] gap-3 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             <span>Khung giờ</span>
+            <span>Lương trọn ca</span>
             <span>Tên hiển thị</span>
           </div>
-          {detectedRanges.map((range) => {
+          {shiftPaySummaries.map(({ range, positionPays }) => {
             const overnight = isOvernight(range);
             const saved = savedNames.find((s) => s.range === range)?.name ?? "";
             return (
               <div
                 key={range}
-                className="grid grid-cols-1 gap-2 border-t px-3 py-2 text-xs min-[420px]:grid-cols-[180px_minmax(0,1fr)] min-[420px]:items-center"
+                className="grid grid-cols-1 gap-2 border-t px-3 py-3 text-xs min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] min-[640px]:items-center min-[640px]:gap-3"
               >
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="font-mono text-[11px] text-muted-foreground">{range}</span>
@@ -200,6 +178,28 @@ export function ShiftNamesSection({
                       Qua đêm
                     </span>
                   )}
+                </div>
+                <div className="min-w-0">
+                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground min-[640px]:hidden">
+                    Lương trọn ca
+                  </span>
+                  <div className="space-y-1">
+                    {positionPays.map(({ position, amount }) => (
+                      <div
+                        key={position}
+                        className="flex min-w-0 items-baseline justify-between gap-2 min-[640px]:justify-start"
+                      >
+                        {positionPays.length > 1 && (
+                          <span className="truncate text-muted-foreground">
+                            {position}
+                          </span>
+                        )}
+                        <span className="shrink-0 font-semibold tabular-nums text-emerald-700">
+                          {formatShiftPay(amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 {editing ? (
                   <Input

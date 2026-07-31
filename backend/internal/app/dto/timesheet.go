@@ -214,12 +214,13 @@ type TimesheetImportResponse struct {
 // TimesheetWithDetailsResponse includes project/employee names
 type TimesheetWithDetailsResponse struct {
 	TimesheetResponse
-	ProjectName     string     `json:"projectName"`
-	EmployeeName    string     `json:"employeeName"`
-	EmployeeCode    string     `json:"employeeCode"`
-	SubmittedBy     *uint      `json:"submittedBy,omitempty"`
-	SubmittedByName *string    `json:"submittedByName,omitempty"`
-	SubmittedAt     *time.Time `json:"submittedAt,omitempty"`
+	ProjectName       string     `json:"projectName"`
+	ProjectIsFlexible bool       `json:"projectIsFlexible"`
+	EmployeeName      string     `json:"employeeName"`
+	EmployeeCode      string     `json:"employeeCode"`
+	SubmittedBy       *uint      `json:"submittedBy,omitempty"`
+	SubmittedByName   *string    `json:"submittedByName,omitempty"`
+	SubmittedAt       *time.Time `json:"submittedAt,omitempty"`
 }
 
 // EmployeeTimesheetSummaryResponse represents timesheet summary for an employee
