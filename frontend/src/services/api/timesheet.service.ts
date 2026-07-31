@@ -17,6 +17,8 @@ import type {
   BulkApproveResult,
   BulkResetData,
   BulkResetResult,
+  RejectUnpaidTimesheetsData,
+  RejectUnpaidTimesheetsResult,
   RejectTimesheetData,
   ImportTimesheetResult,
   ExportTimesheetResult,
@@ -596,6 +598,30 @@ class TimesheetService {
     }>(
       API_ENDPOINTS.timesheets.bulkReject,
       data
+    );
+    if (!response.data) {
+      throw new Error('API response missing expected data');
+    }
+    return response.data;
+  }
+
+  /**
+   * Reject every non-paid timesheet in one project and inclusive date range.
+   * The backend re-evaluates payment state atomically before updating rows.
+   */
+  async rejectUnpaid(data: RejectUnpaidTimesheetsData): Promise<RejectUnpaidTimesheetsResult> {
+    if (!canApproveTimesheet()) {
+      throw new Error('Chỉ Admin mới có thể loại bảng công chưa thanh toán');
+    }
+
+    const response = await apiClient.post<RejectUnpaidTimesheetsResult>(
+      API_ENDPOINTS.timesheets.rejectUnpaid,
+      data,
+      {
+        headers: {
+          'Idempotency-Key': createIdempotencyKey('reject-unpaid-timesheets'),
+        },
+      },
     );
     if (!response.data) {
       throw new Error('API response missing expected data');

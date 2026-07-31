@@ -154,6 +154,18 @@ type TimesheetApprover interface {
 	Reset(ctx context.Context, id uint) error
 }
 
+// TimesheetUnpaidRejector performs the filtered Admin rejection command
+// without expanding every timesheet consumer's repository contract.
+type TimesheetUnpaidRejector interface {
+	RejectUnpaidByProjectDateRange(ctx context.Context, projectID uint, fromDate, toDate time.Time, rejectionReason string, rejectedBy uint) (int64, error)
+}
+
+// TimesheetEditRequestResetter atomically resets an approved timesheet only
+// while it still owns the pending edit-request link being approved.
+type TimesheetEditRequestResetter interface {
+	ResetForApprovedEditRequest(ctx context.Context, timesheetID, requestID uint) error
+}
+
 // TimesheetPaymentUpdater handles payment status transitions.
 type TimesheetPaymentUpdater interface {
 	BulkUpdatePaymentStatus(ctx context.Context, updates []PaymentStatusUpdate) error

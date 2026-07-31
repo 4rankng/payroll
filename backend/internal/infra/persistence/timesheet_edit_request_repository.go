@@ -27,7 +27,7 @@ func (r *TimesheetEditRequestRepository) Create(ctx context.Context, request *do
 func (r *TimesheetEditRequestRepository) GetByID(ctx context.Context, id uint) (*domain.TimesheetEditRequest, error) {
 	var request domain.TimesheetEditRequest
 
-	err := r.DB.WithContext(ctx).
+	err := r.getDB(ctx).
 		Preload("Timesheet").
 		Preload("Timesheet.Project").
 		Preload("Timesheet.Employee").
@@ -177,14 +177,21 @@ func (r *TimesheetEditRequestRepository) GetPendingForTimesheet(ctx context.Cont
 }
 
 func (r *TimesheetEditRequestRepository) Approve(ctx context.Context, id uint, approvedBy uint) error {
-	return r.DB.WithContext(ctx).
+	result := r.getDB(ctx).
 		Model(&domain.TimesheetEditRequest{}).
-		Where("id = ?", id).
+		Where("id = ? AND status = ?", id, domain.EditRequestStatusPending).
 		Updates(map[string]interface{}{
 			"status":      domain.EditRequestStatusApproved,
 			"approved_by": approvedBy,
 			"rejected_by": nil,
-		}).Error
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return domain.NewConflictError("yêu cầu chỉnh sửa đã được xử lý")
+	}
+	return nil
 }
 
 func (r *TimesheetEditRequestRepository) Reject(ctx context.Context, id uint, rejectedBy uint) error {
@@ -196,4 +203,11 @@ func (r *TimesheetEditRequestRepository) Reject(ctx context.Context, id uint, re
 			"rejected_by": rejectedBy,
 			"approved_by": nil,
 		}).Error
+}
+
+func (r *TimesheetEditRequestRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
 }

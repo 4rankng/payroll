@@ -92,13 +92,24 @@ describe('SearchableDropdown', () => {
     expect(trigger).toHaveFocus();
   });
 
-  it('retains the anchored popover interaction on desktop', () => {
+  it('retains the anchored popover and clean keyboard focus contract on desktop', () => {
     renderDropdown();
-    fireEvent.click(screen.getByRole('combobox'));
+    const trigger = screen.getByRole('combobox');
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    fireEvent.click(trigger, { detail: 0 });
 
     const popover = screen.getAllByRole('dialog').at(-1);
+    const searchInput = screen.getByPlaceholderText('Tìm dự án...');
     expect(popover).toHaveClass('w-[var(--radix-popover-trigger-width)]');
     expect(popover).not.toHaveAttribute('data-vaul-drawer');
     expect(screen.getByRole('listbox')).toHaveClass('max-h-[300px]');
+    expect(searchInput).toHaveFocus();
+    expect(searchInput).toHaveClass('!outline-none');
+    expect(searchInput.parentElement).toHaveClass(
+      'focus-within:ring-2',
+      'focus-within:ring-inset',
+      'focus-within:ring-ring',
+    );
   });
 });

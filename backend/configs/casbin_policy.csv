@@ -58,6 +58,7 @@ p, partner, /api/v1/timesheets/*/request-edit-cancel, POST, allow
 # Deny admin-only timesheet endpoints (defense in depth)
 p, partner, /api/v1/timesheets/bulk-approve, *, deny
 p, partner, /api/v1/timesheets/bulk-reject, *, deny
+p, partner, /api/v1/timesheets/reject-unpaid, *, deny
 p, partner, /api/v1/timesheets/bulk-reset, *, deny
 p, partner, /api/v1/timesheets/approve-all, *, deny
 # Edit requests: partner may list their own (handler scopes by RequestedBy);

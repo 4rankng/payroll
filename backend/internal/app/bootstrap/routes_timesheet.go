@@ -21,6 +21,7 @@ func setupTimesheetRoutes(protected *gin.RouterGroup, container *Container) {
 		timesheets.GET("/projects/:id", container.Handlers.Timesheet.GetTimesheetsByProjectAndDate)
 		timesheets.POST("/bulk-approve", container.Handlers.Timesheet.BulkApprove)
 		timesheets.POST("/bulk-reject", container.Handlers.Timesheet.BulkReject)
+		timesheets.POST("/reject-unpaid", container.Handlers.Timesheet.RejectUnpaidTimesheets)
 		timesheets.POST("/bulk-reset", container.Handlers.Timesheet.BulkReset)
 		timesheets.POST("/approve-all", container.Handlers.Timesheet.ApproveAllTimesheets)
 

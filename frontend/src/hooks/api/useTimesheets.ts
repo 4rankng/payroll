@@ -18,11 +18,13 @@ import type {
   TimesheetSummaryResponse,
   EmployeeTimesheetSummary,
   ListGroupedTimesheetsResponse,
+  RejectUnpaidTimesheetsData,
 } from '@/types/api/timesheet.types';
 import type { CashReadinessParams } from '@/types/api/cash-readiness.types';
 import { addItemToList, updateItemInList, removeItemFromList, updateSummaryCount, batchUpdateItemsInList } from '@/utils/cacheUpdates';
 import { invalidateCache } from '@/lib/cache/invalidationService';
 import { QueryKeys } from '@/lib/queryKeys';
+import { toast } from '@/components/ui/sonner';
 
 // Helper function to normalize filters for query keys
 // Removes undefined/null values to ensure consistent cache keys
@@ -389,6 +391,35 @@ export const useBulkRejectTimesheets = () => {
       showBulkOperationNotification(result, 'reject');
     },
     // Error handling is now done globally in React Query - will display response.message from backend
+  });
+};
+
+// Reject all non-paid timesheets in one project and inclusive date range.
+export const useRejectUnpaidTimesheets = () => {
+  return useMutation({
+    mutationFn: (data: RejectUnpaidTimesheetsData) =>
+      timesheetService.rejectUnpaid(data),
+    onSuccess: (result) => {
+      void invalidateCache('timesheet:bulkReject');
+      const successMessage = result.rejected_count > 0
+        ? `Đã loại ${result.rejected_count} bảng công chưa thanh toán`
+        : 'Không có bảng công chưa thanh toán phù hợp';
+      const warnings = result.warnings ?? [];
+
+      if (!result.post_commit_complete || warnings.length > 0) {
+        toast({
+          title: successMessage,
+          description: warnings.length > 0
+            ? `Dữ liệu đã được lưu. Cảnh báo sau khi lưu: ${warnings.join(' ')}`
+            : 'Dữ liệu đã được lưu, nhưng một số bước đồng bộ sau khi lưu chưa hoàn tất.',
+          variant: 'warning',
+          duration: 8000,
+        });
+        return;
+      }
+
+      showSuccessNotification(successMessage);
+    },
   });
 };
 

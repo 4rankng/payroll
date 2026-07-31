@@ -108,9 +108,14 @@ func (s *TimesheetEditRequestService) CreateEditRequest(ctx context.Context, tim
 
 // ApproveEditRequest approves an edit request and resets the timesheet
 func (s *TimesheetEditRequestService) ApproveEditRequest(ctx context.Context, requestID uint, approvedBy uint) error {
-	return s.transactionMgr.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+	resetter, ok := s.timesheetRepo.(domain.TimesheetEditRequestResetter)
+	if !ok {
+		return domain.NewInternalError("Kho lưu trữ bảng chấm công không hỗ trợ phê duyệt yêu cầu chỉnh sửa an toàn", nil)
+	}
+
+	return s.transactionMgr.WithTransaction(ctx, func(txCtx context.Context) error {
 		// 1. Get edit request
-		editRequest, err := s.editRequestRepo.GetByID(ctx, requestID)
+		editRequest, err := s.editRequestRepo.GetByID(txCtx, requestID)
 		if err != nil {
 			return err
 		}
@@ -120,43 +125,33 @@ func (s *TimesheetEditRequestService) ApproveEditRequest(ctx context.Context, re
 			return domain.NewValidationError(fmt.Sprintf("không thể phê duyệt yêu cầu: trạng thái hiện tại là '%s'", editRequest.Status))
 		}
 
-		// 3. Get the timesheet
-		timesheet, err := s.timesheetRepo.GetByID(ctx, editRequest.TimesheetID)
-		if err != nil {
+		// 3. Atomically verify the timesheet is still approved and still owns
+		// this request link before resetting it for editing.
+		if err := resetter.ResetForApprovedEditRequest(txCtx, editRequest.TimesheetID, requestID); err != nil {
 			return err
 		}
 
-		// 4. Reset timesheet to pending_approval and set allowed_edit flag
-		timesheet.Status = domain.TimesheetStatusPendingApproval
-		timesheet.AllowedEdit = true
-		timesheet.ApprovedBy = nil
-		timesheet.ApprovedAt = nil
-
-		timesheet.RequestEditID = nil
-		if err := s.timesheetRepo.Update(ctx, timesheet); err != nil {
-			return err
-		}
-
-		// 5. Mark request as approved
+		// 4. Mark request as approved with a pending-state predicate.
 		if err := editRequest.Approve(approvedBy); err != nil {
 			return err
 		}
-
-		if err := s.editRequestRepo.Update(ctx, editRequest); err != nil {
+		if err := s.editRequestRepo.Approve(txCtx, editRequest.ID, approvedBy); err != nil {
 			return err
 		}
 
-		// 6. Send notification to requester
+		// 5. Send notification to requester
 		// Note: NotificationPort interface would need to be extended to support this use case
 		// For now, we skip the notification
 
-		// 7. Publish TimesheetEditRequestUpdatedEvent to reflect approval
+		// 6. Publish TimesheetEditRequestUpdatedEvent to reflect approval
 		if s.eventBus != nil {
-			event := domain.NewTimesheetEditRequestUpdatedEvent(ctx, editRequest.ID, editRequest.TimesheetID, editRequest.RequestedBy, string(editRequest.Status), "")
-			if err := s.eventBus.Publish(ctx, event); err != nil {
-				// Log but don't fail the transaction if event publishing fails
-				observability.GetLogger().Warn("failed to publish TimesheetEditRequestUpdatedEvent (approve)", "error", err)
-			}
+			event := domain.NewTimesheetEditRequestUpdatedEvent(txCtx, editRequest.ID, editRequest.TimesheetID, editRequest.RequestedBy, string(editRequest.Status), "")
+			domain.RegisterAfterCommit(txCtx, func() {
+				if err := s.eventBus.Publish(context.Background(), event); err != nil {
+					// Log but don't fail the transaction if event publishing fails
+					observability.GetLogger().Warn("failed to publish TimesheetEditRequestUpdatedEvent (approve)", "error", err)
+				}
+			})
 		}
 		return nil
 	})

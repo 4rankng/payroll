@@ -50,6 +50,59 @@ export const useProjects = (filters?: ProjectFilters, options?: { enabled?: bool
   });
 };
 
+// Fetch the complete project catalogue for selectors that must not silently
+// omit projects beyond the backend's 100-row page limit.
+export const useAllProjects = (options?: { enabled?: boolean }) => {
+  const userRole = authManager.getUserRole();
+  const hasPermission = (userRole === 'admin' || userRole === 'partner') && userRole !== null;
+
+  return useQuery({
+    queryKey: [...QueryKeys.projects.all, 'all-pages'],
+    queryFn: async () => {
+      const pageSize = 100;
+      const allProjects: Project[] = [];
+      const seenIds = new Set<number>();
+      let page = 1;
+
+      while (true) {
+        const response = await projectService.getProjects({
+          page,
+          pageSize,
+          sortBy: 'name',
+          sortOrder: 'asc',
+        });
+        const pageProjects = response.data ?? [];
+        const previousCount = allProjects.length;
+
+        pageProjects.forEach((project) => {
+          if (!seenIds.has(project.id)) {
+            seenIds.add(project.id);
+            allProjects.push(project);
+          }
+        });
+
+        const totalPages = response.pagination?.totalPages;
+        if (
+          pageProjects.length < pageSize ||
+          (totalPages !== undefined && page >= totalPages)
+        ) {
+          return allProjects;
+        }
+
+        if (allProjects.length === previousCount) {
+          throw new Error('Không thể tải đầy đủ danh sách dự án');
+        }
+        page += 1;
+      }
+    },
+    enabled: options?.enabled !== undefined
+      ? options.enabled && hasPermission
+      : hasPermission,
+    retry: false,
+    staleTime: 60_000,
+  });
+};
+
 // Search projects with autocomplete and debouncing (500ms delay)
 export const useProjectSearch = (search: string, enabled: boolean = true) => {
   const debouncedSearch = useDebounce(search, 500);

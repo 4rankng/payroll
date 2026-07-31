@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote } from 'lucide-react';
+import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -12,6 +12,7 @@ import { BulkTransferResultUploadDialog } from '@/components/timesheet/BulkTrans
 import { BulkTransferHistoryDialog } from '@/components/transaction/BulkTransferHistoryDialog';
 import { UploadHistorySheet } from '@/components/timesheet/UploadHistorySheet';
 import { BCCUploadModal } from '@/components/timesheet/BCCUploadModal';
+import { RejectUnpaidTimesheetsDialog } from '@/components/timesheet/RejectUnpaidTimesheetsDialog';
 import { BulkTransferHistoryDetailDialog } from '@/components/transaction/BulkTransferHistoryDetailDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -41,6 +42,7 @@ const TimesheetPage = () => {
   const [shouldLoadBulkTransferHistory, setShouldLoadBulkTransferHistory] = useState(false);
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
   const [bccUploadOpen, setBccUploadOpen] = useState(false);
+  const [rejectUnpaidDialogOpen, setRejectUnpaidDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get initial values from URL parameters
@@ -323,6 +325,14 @@ const TimesheetPage = () => {
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                 Lịch sử BCC
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setRejectUnpaidDialogOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Loại công chưa thanh toán
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -442,6 +452,16 @@ const TimesheetPage = () => {
         open={bccHistoryOpen}
         onClose={handleCloseBccHistory}
         projects={timesheetManagement.projects}
+      />
+
+      <RejectUnpaidTimesheetsDialog
+        open={rejectUnpaidDialogOpen}
+        onOpenChange={setRejectUnpaidDialogOpen}
+        initialProjectId={
+          timesheetManagement.selectedProject !== 'all'
+            ? Number(timesheetManagement.selectedProject)
+            : undefined
+        }
       />
     </div>
   );

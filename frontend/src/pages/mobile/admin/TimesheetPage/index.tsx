@@ -17,6 +17,7 @@ import {
 import { BulkTransferResultUploadDialog } from "@/components/timesheet/BulkTransferResultUploadDialog";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
+import { RejectUnpaidTimesheetsDialog } from "@/components/timesheet/RejectUnpaidTimesheetsDialog";
 import { BulkTransferHistoryDialog } from "@/components/transaction/BulkTransferHistoryDialog";
 import { BulkTransferHistoryDetailDialog } from "@/components/transaction/BulkTransferHistoryDetailDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -66,6 +67,7 @@ const TimesheetPageMobile = () => {
     useState(false);
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
   const [bccUploadOpen, setBccUploadOpen] = useState(false);
+  const [rejectUnpaidDialogOpen, setRejectUnpaidDialogOpen] = useState(false);
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
   const [projectBulkApproveDialogOpen, setProjectBulkApproveDialogOpen] =
     useState(false);
@@ -369,6 +371,7 @@ const TimesheetPageMobile = () => {
         onChuyenLo={() => setChuyenLoDialogOpen(true)}
         onBccHistory={handleBccHistory}
         onBccUpload={() => setBccUploadOpen(true)}
+        onRejectUnpaid={() => setRejectUnpaidDialogOpen(true)}
         isApprovedExportPending={exportApprovedTimesheetsMutation.isPending}
         isPayrollReportPending={exportPayrollReportMutation.isPending}
         isOnePayExportPending={exportOnePayMutation.isPending}
@@ -513,6 +516,16 @@ const TimesheetPageMobile = () => {
         open={bccHistoryOpen}
         onClose={handleCloseBccHistory}
         projects={timesheetManagement.projects}
+      />
+
+      <RejectUnpaidTimesheetsDialog
+        open={rejectUnpaidDialogOpen}
+        onOpenChange={setRejectUnpaidDialogOpen}
+        initialProjectId={
+          timesheetManagement.selectedProject !== "all"
+            ? Number(timesheetManagement.selectedProject)
+            : undefined
+        }
       />
     </div>
   );

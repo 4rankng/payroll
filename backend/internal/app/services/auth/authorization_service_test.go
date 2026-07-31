@@ -408,6 +408,7 @@ func TestPartnerRole_DeleteTimesheet(t *testing.T) {
 	}{
 		{"/api/v1/timesheets/bulk-approve", "POST"},
 		{"/api/v1/timesheets/bulk-reject", "POST"},
+		{"/api/v1/timesheets/reject-unpaid", "POST"},
 		{"/api/v1/timesheets/bulk-reset", "POST"},
 		{"/api/v1/timesheets/approve-all", "POST"},
 		{"/api/v1/timesheets/edit-requests/1", "DELETE"},
@@ -440,6 +441,7 @@ func TestPartnerRole_GetTimesheet(t *testing.T) {
 	adminOnlyGET := []string{
 		"/api/v1/timesheets/bulk-approve",
 		"/api/v1/timesheets/bulk-reject",
+		"/api/v1/timesheets/reject-unpaid",
 		"/api/v1/timesheets/bulk-reset",
 		"/api/v1/timesheets/approve-all",
 		"/api/v1/timesheets/edit-requests/1",

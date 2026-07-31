@@ -99,14 +99,10 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 		return fmt.Errorf("get timesheets: %w", err)
 	}
 
-	// Filter out already-paid timesheets
-	var pendingTimesheets []*domain.Timesheet
-	for _, ts := range timesheets {
-		if ts.PaymentStatus == domain.PaymentStatusPaid {
-			continue
-		}
-		pendingTimesheets = append(pendingTimesheets, ts)
-	}
+	// Provider outcomes are authoritative payment facts. A prior Admin rejection
+	// remains the workflow status, but completed/failed settlement metadata must
+	// still be recorded for every non-paid row.
+	pendingTimesheets := paymentFinalizationCandidates(timesheets)
 	if len(pendingTimesheets) == 0 {
 		_ = w.idempotencyService.MarkCompleted(ctx, idempotencyKey)
 		return nil
@@ -177,6 +173,17 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 		"timesheet_count", len(updates))
 
 	return nil
+}
+
+func paymentFinalizationCandidates(timesheets []*domain.Timesheet) []*domain.Timesheet {
+	candidates := make([]*domain.Timesheet, 0, len(timesheets))
+	for _, timesheet := range timesheets {
+		if timesheet.PaymentStatus == domain.PaymentStatusPaid {
+			continue
+		}
+		candidates = append(candidates, timesheet)
+	}
+	return candidates
 }
 
 // Handle processes domain events (implements domain.EventHandler).

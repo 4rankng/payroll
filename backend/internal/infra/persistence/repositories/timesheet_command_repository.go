@@ -1,15 +1,17 @@
 package repositories
 
 import (
-	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
+	"api-server/internal/pkg/clock"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // TimesheetCommandRepository handles write operations for timesheets
@@ -161,6 +163,108 @@ func (r *TimesheetCommandRepository) BulkReject(ctx context.Context, ids []uint,
 	})
 }
 
+// RejectUnpaidByProjectDateRange rejects every non-paid timesheet in the
+// inclusive project/date scope. The payment predicate is part of the UPDATE so
+// a row that becomes paid before this statement acquires its write lock cannot
+// be overwritten by the rejection.
+func (r *TimesheetCommandRepository) RejectUnpaidByProjectDateRange(
+	ctx context.Context,
+	projectID uint,
+	fromDate time.Time,
+	toDate time.Time,
+	rejectionReason string,
+	rejectedBy uint,
+) (int64, error) {
+	db := r.getDB(ctx)
+	scopedTimesheets := func(query *gorm.DB) *gorm.DB {
+		return query.
+			Where("project_id = ?", projectID).
+			Where("date >= ? AND date <= ?", fromDate, toDate).
+			Where("timesheet_status IN ?", []domain.TimesheetStatus{
+				domain.TimesheetStatusPendingApproval,
+				domain.TimesheetStatusApproved,
+			}).
+			Where("payment_status <> ?", domain.PaymentStatusPaid)
+	}
+
+	// Lock the eligible timesheets first. If rejection commits first, an
+	// authoritative provider result waits and then records its payment facts
+	// without changing this workflow status. If payment commits first, the paid
+	// predicate below makes rejection a zero-match.
+	var lockedIDs []uint
+	if err := scopedTimesheets(db.Model(&domain.Timesheet{})).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Pluck("id", &lockedIDs).Error; err != nil {
+		return 0, err
+	}
+	if len(lockedIDs) == 0 {
+		return 0, nil
+	}
+
+	// Resolve pending edit requests before clearing request_edit_id. This uses a
+	// set update (no N+1) and remains in the same transaction as rejection.
+	linkedRequestIDs := db.Model(&domain.Timesheet{}).
+		Select("request_edit_id").
+		Where("id IN ?", lockedIDs).
+		Where("request_edit_id IS NOT NULL")
+	if err := db.Model(&domain.TimesheetEditRequest{}).
+		Where("id IN (?)", linkedRequestIDs).
+		Where("status = ?", domain.EditRequestStatusPending).
+		Updates(map[string]interface{}{
+			"status":      domain.EditRequestStatusRejected,
+			"rejected_by": rejectedBy,
+			"approved_by": nil,
+		}).Error; err != nil {
+		return 0, err
+	}
+
+	result := scopedTimesheets(db.
+		Model(&domain.Timesheet{}).
+		Where("id IN ?", lockedIDs)).
+		Updates(map[string]interface{}{
+			"timesheet_status": domain.TimesheetStatusRejected,
+			"rejection_reason": rejectionReason,
+			"approved_by":      nil,
+			"approved_at":      nil,
+			"allowed_edit":     false,
+			"request_edit_id":  nil,
+			"force_payroll":    false,
+		})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	if result.RowsAffected != int64(len(lockedIDs)) {
+		return 0, domain.NewConflictError("trạng thái bảng chấm công đã thay đổi trong khi từ chối")
+	}
+
+	return result.RowsAffected, nil
+}
+
+// ResetForApprovedEditRequest performs the state/link checks in the UPDATE so
+// a stale approval cannot resurrect a rejected or otherwise changed timesheet.
+func (r *TimesheetCommandRepository) ResetForApprovedEditRequest(ctx context.Context, timesheetID, requestID uint) error {
+	result := r.getDB(ctx).
+		Model(&domain.Timesheet{}).
+		Where("id = ?", timesheetID).
+		Where("timesheet_status = ?", domain.TimesheetStatusApproved).
+		Where("request_edit_id = ?", requestID).
+		Where("payment_status <> ?", domain.PaymentStatusPaid).
+		Updates(map[string]interface{}{
+			"timesheet_status": domain.TimesheetStatusPendingApproval,
+			"allowed_edit":     true,
+			"approved_by":      nil,
+			"approved_at":      nil,
+			"request_edit_id":  nil,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return domain.NewConflictError("bảng chấm công đã thay đổi hoặc không còn liên kết với yêu cầu chỉnh sửa")
+	}
+	return nil
+}
+
 // Reject rejects a timesheet
 func (r *TimesheetCommandRepository) Reject(ctx context.Context, id uint, rejectionReason string) error {
 	return r.db.WithContext(ctx).
@@ -229,14 +333,35 @@ func (r *TimesheetCommandRepository) BulkUpdatePaymentStatus(ctx context.Context
 				updateFields["paid_at"] = nil
 			}
 
-			if err := tx.Model(&domain.Timesheet{}).
+			query := tx.Model(&domain.Timesheet{}).
 				Where("id = ?", update.TimesheetID).
-				Updates(updateFields).Error; err != nil {
-				return err
+				Where("payment_status <> ?", domain.PaymentStatusPaid)
+			if paymentUpdateRequiresApprovedStatus(update.PaymentStatus) {
+				query = query.Where("timesheet_status = ?", domain.TimesheetStatusApproved)
+			}
+			result := query.Updates(updateFields)
+			if result.Error != nil {
+				return result.Error
+			}
+			if result.RowsAffected != 1 {
+				return domain.NewConflictError(fmt.Sprintf("bảng chấm công %d đã thay đổi trước khi cập nhật thanh toán", update.TimesheetID))
 			}
 		}
 		return nil
 	})
+}
+
+// paymentUpdateRequiresApprovedStatus distinguishes workflow transitions from
+// authoritative provider settlement facts. Paid/failed/cancelled outcomes must
+// still be recorded after a concurrent rejection; only reopening payment to
+// pending remains approval-gated.
+func paymentUpdateRequiresApprovedStatus(status domain.PaymentStatus) bool {
+	switch status {
+	case domain.PaymentStatusPaid, domain.PaymentStatusFailed, domain.PaymentStatusCancelled:
+		return false
+	default:
+		return true
+	}
 }
 
 // BatchUpdatePaymentStatusToFailed marks timesheets as failed

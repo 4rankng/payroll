@@ -131,6 +131,19 @@ export interface BulkRejectResult {
   notifications_sent?: number;
 }
 
+export interface RejectUnpaidTimesheetsData {
+  project_id: number;
+  from_date: string;
+  to_date: string;
+  rejection_reason: string;
+}
+
+export interface RejectUnpaidTimesheetsResult {
+  rejected_count: number;
+  post_commit_complete: boolean;
+  warnings?: string[];
+}
+
 export interface BulkResetData {
   timesheet_ids: number[];
 }

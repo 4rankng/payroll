@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     bulkApprove: '/timesheets/bulk-approve',
     approveAll: '/timesheets/approve-all',
     bulkReject: '/timesheets/bulk-reject',
+    rejectUnpaid: '/timesheets/reject-unpaid',
     bulkReset: '/timesheets/bulk-reset',
     import: '/timesheets/import',
     export: '/timesheets/export',

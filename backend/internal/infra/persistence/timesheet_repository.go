@@ -126,6 +126,21 @@ func (r *TimesheetRepository) BulkReject(ctx context.Context, ids []uint, reject
 	return r.commandRepo.BulkReject(ctx, ids, rejectionReason)
 }
 
+func (r *TimesheetRepository) RejectUnpaidByProjectDateRange(
+	ctx context.Context,
+	projectID uint,
+	fromDate time.Time,
+	toDate time.Time,
+	rejectionReason string,
+	rejectedBy uint,
+) (int64, error) {
+	return r.commandRepo.RejectUnpaidByProjectDateRange(ctx, projectID, fromDate, toDate, rejectionReason, rejectedBy)
+}
+
+func (r *TimesheetRepository) ResetForApprovedEditRequest(ctx context.Context, timesheetID, requestID uint) error {
+	return r.commandRepo.ResetForApprovedEditRequest(ctx, timesheetID, requestID)
+}
+
 func (r *TimesheetRepository) Reject(ctx context.Context, id uint, rejectionReason string) error {
 	return r.commandRepo.Reject(ctx, id, rejectionReason)
 }
@@ -243,8 +258,16 @@ func (r *TimesheetRepository) BulkUpdatePaymentStatus(ctx context.Context, updat
 		}
 
 		ids := make([]uint, len(updates))
+		settlementIDs := make([]uint, 0, len(updates))
+		approvalRequiredIDs := make([]uint, 0, len(updates))
 		for i, u := range updates {
 			ids[i] = u.TimesheetID
+			switch u.PaymentStatus {
+			case domain.PaymentStatusPaid, domain.PaymentStatusFailed, domain.PaymentStatusCancelled:
+				settlementIDs = append(settlementIDs, u.TimesheetID)
+			default:
+				approvalRequiredIDs = append(approvalRequiredIDs, u.TimesheetID)
+			}
 		}
 
 		statusExpr := "CASE id " + strings.Join(statusCases, " ") + " END"
@@ -311,9 +334,29 @@ func (r *TimesheetRepository) BulkUpdatePaymentStatus(ctx context.Context, updat
 			updateFields["paid_amount"] = gorm.Expr("CASE id " + strings.Join(amountCases, " ") + " END")
 		}
 
-		return tx.Model(&domain.Timesheet{}).
+		query := tx.Model(&domain.Timesheet{}).
 			Where("id IN ?", ids).
-			Updates(updateFields).Error
+			Where("payment_status <> ?", domain.PaymentStatusPaid)
+		eligibility := make([]string, 0, 2)
+		eligibilityArgs := make([]interface{}, 0, 3)
+		if len(settlementIDs) > 0 {
+			eligibility = append(eligibility, "id IN ?")
+			eligibilityArgs = append(eligibilityArgs, settlementIDs)
+		}
+		if len(approvalRequiredIDs) > 0 {
+			eligibility = append(eligibility, "(id IN ? AND timesheet_status = ?)")
+			eligibilityArgs = append(eligibilityArgs, approvalRequiredIDs, domain.TimesheetStatusApproved)
+		}
+		result := query.
+			Where("("+strings.Join(eligibility, " OR ")+")", eligibilityArgs...).
+			Updates(updateFields)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != int64(len(ids)) {
+			return domain.NewConflictError("một hoặc nhiều bảng chấm công đã thay đổi trước khi cập nhật thanh toán")
+		}
+		return nil
 	})
 }
 

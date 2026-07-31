@@ -3,7 +3,7 @@ import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
-import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon, Banknote } from 'lucide-react';
+import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon, Banknote, Trash2 } from 'lucide-react';
 
 interface TimesheetPageHeaderMobileProps {
   onAddTimesheet: () => void;
@@ -19,6 +19,7 @@ interface TimesheetPageHeaderMobileProps {
   onChuyenLo?: () => void;
   onBccHistory?: () => void;
   onBccUpload?: () => void;
+  onRejectUnpaid?: () => void;
   // Partner-only
   onPaymentHistory?: () => void;
   isApprovedExportPending?: boolean;
@@ -41,6 +42,7 @@ export function TimesheetPageHeaderMobile({
   onChuyenLo,
   onBccHistory,
   onBccUpload,
+  onRejectUnpaid,
   onPaymentHistory,
   isApprovedExportPending = false,
   isPayrollReportPending = false,
@@ -168,7 +170,7 @@ export function TimesheetPageHeaderMobile({
                 )}
 
                 {/* Actions */}
-                {(onBulkApprove || onBulkTransferHistory || onPaymentHistory) && (
+                {(onBulkApprove || onBulkTransferHistory || onPaymentHistory || (onRejectUnpaid && userRole === 'admin')) && (
                   <div className="h-px bg-border mx-1 my-1" />
                 )}
 
@@ -213,6 +215,17 @@ export function TimesheetPageHeaderMobile({
                   >
                     <FileSpreadsheet className="h-5 w-5 text-muted-foreground shrink-0" />
                     <span className="text-sm font-medium">Lịch sử BCC</span>
+                  </Button>
+                )}
+
+                {onRejectUnpaid && userRole === 'admin' && (
+                  <Button
+                    variant="ghost"
+                    className="h-auto min-h-11 w-full justify-start px-2 py-3 text-destructive hover:text-destructive"
+                    onClick={() => { onRejectUnpaid(); close(); }}
+                  >
+                    <Trash2 className="h-5 w-5 shrink-0" />
+                    <span className="text-sm font-medium">Loại công chưa thanh toán</span>
                   </Button>
                 )}
 
