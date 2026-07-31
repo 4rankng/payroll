@@ -36,10 +36,10 @@ describe('TimesheetPageHeaderMobile', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm tùy chọn' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Loại công chưa thanh toán' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Loại công' }));
 
     expect(onRejectUnpaid).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('button', { name: 'Loại công chưa thanh toán' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Loại công' })).not.toBeInTheDocument();
   });
 
   it('does not expose the Admin reject-unpaid action to Partner', () => {
@@ -56,6 +56,6 @@ describe('TimesheetPageHeaderMobile', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm tùy chọn' }));
 
-    expect(screen.queryByRole('button', { name: 'Loại công chưa thanh toán' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Loại công' })).not.toBeInTheDocument();
   });
 });

@@ -225,7 +225,7 @@ export function TimesheetPageHeaderMobile({
                     onClick={() => { onRejectUnpaid(); close(); }}
                   >
                     <Trash2 className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium">Loại công chưa thanh toán</span>
+                    <span className="text-sm font-medium">Loại công</span>
                   </Button>
                 )}
 

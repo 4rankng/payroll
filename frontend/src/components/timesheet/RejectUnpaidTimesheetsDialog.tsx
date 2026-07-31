@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AlertTriangle, ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DateRangeCalendarPicker } from '@/components/ui/date-range-calendar-picker';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
   Dialog,
@@ -87,17 +88,27 @@ export function RejectUnpaidTimesheetsDialog({
               </div>
 
               <div className="min-w-0 space-y-2">
-                <Label>Khoảng ngày làm việc</Label>
-                <DateRangePicker
-                  startDate={form.fromDate}
-                  endDate={form.toDate}
-                  onStartDateChange={form.setFromDate}
-                  onEndDateChange={form.setToDate}
-                  variant={isMobile ? 'mobile' : 'default'}
-                  className="min-h-11 w-full min-w-0 justify-between overflow-hidden rounded-lg border border-input bg-background px-3"
-                  disabled={form.isPending}
-                  usePortal
-                />
+                <Label id="reject-unpaid-date-range-label">Khoảng ngày làm việc</Label>
+                {isMobile ? (
+                  <DateRangePicker
+                    startDate={form.fromDate}
+                    endDate={form.toDate}
+                    onStartDateChange={form.setFromDate}
+                    onEndDateChange={form.setToDate}
+                    variant="mobile"
+                    className="min-h-11 w-full min-w-0 justify-between overflow-hidden rounded-lg border border-input bg-background px-3"
+                    disabled={form.isPending}
+                  />
+                ) : (
+                  <DateRangeCalendarPicker
+                    startDate={form.fromDate}
+                    endDate={form.toDate}
+                    onStartDateChange={form.setFromDate}
+                    onEndDateChange={form.setToDate}
+                    disabled={form.isPending}
+                    ariaLabelledBy="reject-unpaid-date-range-label"
+                  />
+                )}
                 <p className="text-xs text-muted-foreground">Bao gồm cả ngày bắt đầu và ngày kết thúc.</p>
                 {form.errors.dateRange && (
                   <p className="text-sm text-destructive" role="alert">{form.errors.dateRange}</p>

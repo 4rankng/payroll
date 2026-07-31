@@ -63,6 +63,23 @@ describe('RejectUnpaidTimesheetsDialog', () => {
     });
   });
 
+  it('opens a calendar when either displayed date is clicked', () => {
+    render(
+      <RejectUnpaidTimesheetsDialog
+        open
+        onOpenChange={vi.fn()}
+        initialProjectId={7}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Mở lịch chọn ngày bắt đầu/ }));
+    expect(screen.getByRole('grid')).toBeInTheDocument();
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: /Mở lịch chọn ngày kết thúc/ }));
+    expect(screen.getByRole('grid')).toBeInTheDocument();
+  });
+
   it('restores focus to the reason field when returning from confirmation', async () => {
     render(
       <RejectUnpaidTimesheetsDialog
