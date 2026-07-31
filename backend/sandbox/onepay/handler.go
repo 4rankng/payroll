@@ -281,20 +281,12 @@ func (s *Server) getAccountInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Permissive: return an EMPTY holder_name so the backend's CheckAccount
-	// skips name verification (provider.CheckAccount only matches when
-	// holder_name != ""; and the execute worker only overrides the recipient
-	// name when the bank-confirmed name is non-empty). A fixed literal like
-	// "MOCK ACCOUNT HOLDER" mismatches every real employee name and fails
-	// every transfer. OnePay's GET /customers doesn't carry the expected name
-	// (unlike 9Pay's check-account, which echoes account_name), so empty is the
-	// permissive choice — the backend keeps the employee's own recorded name.
-	//
-	// To test the name-mismatch warning flow locally, set
-	// MOCK_ONEPAY_HOLDER_NAME to a non-empty value (e.g. "BANK CONFIRMED NAME").
-	// The provider's CheckAccount will then compare it against the employee's
-	// recorded name and flag a mismatch when they differ.
-	holderName := os.Getenv("MOCK_ONEPAY_HOLDER_NAME")
+	holderName, err := s.accountHolderName(r.Context(), accountNumber, swiftCode)
+	if err != nil {
+		log.Printf("[onepay] getAccountInfo: employee lookup failed: %v", err)
+		writeJSON(w, http.StatusInternalServerError, errInternal)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"response_code":  "00",
 		"message":        "SUCCESSFUL",
@@ -303,6 +295,36 @@ func (s *Server) getAccountInfo(w http.ResponseWriter, r *http.Request) {
 		"holder_name":    holderName,
 		"swift_code":     swiftCode,
 	})
+}
+
+func (s *Server) accountHolderName(ctx context.Context, accountNumber, swiftCode string) (string, error) {
+	if override := strings.TrimSpace(os.Getenv("MOCK_ONEPAY_HOLDER_NAME")); override != "" {
+		return override, nil
+	}
+	if s.recoverer == nil || s.recoverer.db == nil {
+		return "", nil
+	}
+
+	var accountHolderName string
+	err := s.recoverer.db.QueryRowContext(ctx, `
+		SELECT COALESCE(NULLIF(TRIM(e.bank_account_name), ''), e.fullname)
+		FROM employees e
+		JOIN banks b ON b.id = e.bank_id
+		WHERE e.bank_account_number = ?
+		  AND b.swift_code = ?
+		  AND e.deleted_at IS NULL
+		ORDER BY e.id DESC
+		LIMIT 1`,
+		accountNumber,
+		swiftCode,
+	).Scan(&accountHolderName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	return strings.TrimSpace(accountHolderName), nil
 }
 
 func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {

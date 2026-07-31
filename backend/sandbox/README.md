@@ -103,6 +103,7 @@ Reuses the real `ONEPAY_PARTNER_ID` / `ONEPAY_PARTNER_KEY` /
 | `MOCK_ONEPAY_SLOW_DELAY`    | `5m`                                                            | Delay for `mock_slow`                |
 | `MOCK_ONEPAY_SKIP_VERIFY`   | `false`                                                         | Skip inbound OWS1 signature verify   |
 | `MOCK_ONEPAY_DB_DSN`        | _(dev compose: points at MySQL)_                               | Enables the stale-payment recoverer  |
+| `MOCK_ONEPAY_HOLDER_NAME`   | _(empty)_                                                       | Overrides the database-resolved employee name for mismatch testing |
 | `MOCK_BALANCE_DB`           | `onepay_mock_balance.db`                                        | SQLite balance file                  |
 
 ## Signing gotcha

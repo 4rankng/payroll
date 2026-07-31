@@ -88,12 +88,9 @@ services:
       MOCK_ONEPAY_IPN_DELAY: ${MOCK_ONEPAY_IPN_DELAY:-3s}
       MOCK_ONEPAY_SLOW_DELAY: ${MOCK_ONEPAY_SLOW_DELAY:-5m}
       MOCK_ONEPAY_SKIP_VERIFY: ${MOCK_ONEPAY_SKIP_VERIFY:-false}
-      # Set MOCK_ONEPAY_HOLDER_NAME to a non-empty value to test the
-      # name-mismatch warning flow locally. When empty (default), the
-      # mock returns holder_name="" which skips name matching in
-      # Provider.CheckAccount (permissive). Set to e.g. "BANK CONFIRMED NAME"
-      # to force a mismatch and trigger the invalid-account warning dialog.
-      MOCK_ONEPAY_HOLDER_NAME: ${MOCK_ONEPAY_HOLDER_NAME:-BANK CONFIRMED NAME}
+      # Optional explicit holder-name override for testing mismatch warnings.
+      # By default the mock resolves the employee name from the local database.
+      MOCK_ONEPAY_HOLDER_NAME: ${MOCK_ONEPAY_HOLDER_NAME:-}
       MOCK_ONEPAY_DB_DSN: ${MOCK_ONEPAY_DB_DSN:-root:${ROOT_PASSWORD}@tcp(mysql:3306)/payroll_db?parseTime=true&loc=UTC}
     extra_hosts:
       - "host.docker.internal:host-gateway"

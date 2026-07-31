@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/common"
 )
 
 // TestHasAccessViaProject_ProjectCreator verifies that a user who CREATED a project
@@ -139,5 +142,90 @@ func TestHasAccessViaProject_ProjectCreator(t *testing.T) {
 	}
 	if got {
 		t.Fatal("creator should NOT access an employee whose only assignment has ended")
+	}
+}
+
+func TestProjectEmployeeRepository_SearchVietnameseAndCountBeforePagination(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	db, err := getTestDB()
+	if err != nil {
+		t.Skipf("cannot connect to test DB: %v", err)
+	}
+	repo := &ProjectEmployeeRepository{
+		BaseRepository: &BaseRepository{DB: db},
+		filterBuilder:  common.NewFilterBuilder(db),
+	}
+	ctx := context.Background()
+
+	const (
+		creatorID = uint(999970)
+		projectID = uint(999970)
+	)
+	employeeIDs := []uint{999970, 999971, 999972}
+
+	cleanup := func() {
+		db.Exec("DELETE FROM project_employees WHERE project_id = ?", projectID)
+		db.Exec("DELETE FROM projects WHERE id = ?", projectID)
+		db.Exec("DELETE FROM employees WHERE id IN ?", employeeIDs)
+		db.Exec("DELETE FROM users WHERE id = ?", creatorID)
+	}
+	cleanup()
+	defer cleanup()
+
+	if err := db.Exec(
+		"INSERT INTO users (id, username, password, fullname, role) VALUES (?, 'test_pe_search', 'x', 'Search Owner', 'admin')",
+		creatorID,
+	).Error; err != nil {
+		t.Fatalf("setup user: %v", err)
+	}
+	if err := db.Exec(
+		"INSERT INTO projects (id, name, total_payout_vnd, pending_payable_vnd, pending_receivable_vnd, total_received_vnd, project_status, created_by, off_days, is_flexible) VALUES (?, 'Search Project', 0, 0, 0, 0, 'active', ?, 0, 1)",
+		projectID, creatorID,
+	).Error; err != nil {
+		t.Fatalf("setup project: %v", err)
+	}
+
+	names := []string{"Việt Duy", "Trần Việt Duy", "Nguyễn Văn Khác"}
+	for index, employeeID := range employeeIDs {
+		cccd := "09999999997" + string(rune('0'+index))
+		if err := db.Exec(
+			"INSERT INTO employees (id, fullname, cccd, created_by) VALUES (?, ?, ?, ?)",
+			employeeID, names[index], cccd, creatorID,
+		).Error; err != nil {
+			t.Fatalf("setup employee %d: %v", employeeID, err)
+		}
+		if err := db.Exec(
+			"INSERT INTO project_employees (project_id, employee_id, employee_name, employee_cccd, position, start_date, created_by, payment_schedule, check_in_enabled) VALUES (?, ?, ?, ?, 'phổ thông', '2026-01-01', ?, 'weekly', 0)",
+			projectID, employeeID, names[index], cccd, creatorID,
+		).Error; err != nil {
+			t.Fatalf("setup assignment %d: %v", employeeID, err)
+		}
+	}
+
+	projectIDFilter := projectID
+	filters := domain.ProjectEmployeeFilters{
+		ProjectID: &projectIDFilter,
+		Status:    "current",
+		Search:    "viet duy",
+		Limit:     1,
+	}
+
+	results, err := repo.List(ctx, filters)
+	if err != nil {
+		t.Fatalf("search list: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("paginated search returned %d rows, want 1", len(results))
+	}
+
+	total, err := repo.Count(ctx, filters)
+	if err != nil {
+		t.Fatalf("search count: %v", err)
+	}
+	if total != 2 {
+		t.Fatalf("accent-insensitive search total = %d, want 2", total)
 	}
 }
