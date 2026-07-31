@@ -9,11 +9,12 @@ Targets, Docker build constraints, database migrations, and backup/restore proce
 | Production | `tingting.vip` | `:latest` | x86_64/amd64 only |
 | Demo | `demo.tingting.vip` | `:demo` | 1GB droplet, requires 2GB swap |
 
-Both targets use SSH deploy: images are built/pushed to DockerHub, then pulled on the server via `docker compose`.
+Both targets use SSH deploy: images are built/pushed to **GHCR** (`ghcr.io/4rankng/...`), then pulled on the server via `docker compose`.
 
 ## Common Prerequisites
 
-- DockerHub credentials in `.env` (`DOCKERHUB_USERNAME`, `DOCKERHUB_PASSWORD`)
+- GHCR credentials in `~/.zshrc` (`GHCR_TOKEN` = a classic PAT with `write:packages`) and `GHCR_OWNER` in `.env`
+- Base images vendored into GHCR via `make mirror-bases` (run once per base-image bump; pinned by digest in the Dockerfiles)
 - SSH access to target servers (root)
 - Production DB credentials in `.env` (`MYSQL_ROOT_PASSWORD_PROD`, `DB_DSN`, etc.)
 - `make` available locally
@@ -169,7 +170,7 @@ make dev
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `.env` | `backend/` | Backend config: DB_DSN, Redis URL, JWT secret, payment provider keys, DockerHub creds |
+| `.env` | `backend/` | Backend config: DB_DSN, Redis URL, JWT secret, payment provider keys, GHCR_OWNER |
 | `.env` | `frontend/` | Frontend build args: API base URL, Google Client ID |
 | `.env` | `/opt/payroll/` (prod server) | Production runtime config |
 | `.env.example` | `backend/`, `frontend/` | Template with all required variables |

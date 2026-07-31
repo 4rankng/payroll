@@ -196,21 +196,24 @@ function SettleTransactionModalComponent({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <AlertDialogHeader>
+      <AlertDialogContent
+        overlayClassName="bg-slate-950/80 backdrop-blur-[3px]"
+        className="max-h-[calc(100dvh-1rem)] max-w-3xl shadow-none sm:max-h-[calc(100dvh-2rem)]"
+      >
+        <AlertDialogHeader className="border-b border-emerald-900 bg-emerald-950 pb-5 text-white">
           <div className="flex items-center gap-3">
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              transaction.transaction_type === 'revenue' ? 'bg-emerald-100' : 'bg-red-100'
+            <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
+              transaction.transaction_type === 'revenue' ? 'bg-emerald-400/15' : 'bg-red-400/15'
             }`}>
               <CheckCircle className={`h-5 w-5 ${
-                transaction.transaction_type === 'revenue' ? 'text-emerald-600' : 'text-red-600'
+                transaction.transaction_type === 'revenue' ? 'text-emerald-300' : 'text-red-300'
               }`} />
             </div>
-            <div>
-              <AlertDialogTitle className="text-lg font-semibold">
+            <div className="min-w-0">
+              <AlertDialogTitle className="text-lg font-semibold text-white">
                 {step === 'form' ? 'Thanh toán giao dịch' : 'Xác nhận thanh toán'}
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-sm text-muted-foreground">
+              <AlertDialogDescription className="text-sm text-emerald-100/70">
                 {step === 'form' ? 'Nhập thông tin thanh toán' : 'Kiểm tra lại thông tin trước khi xác nhận'}
               </AlertDialogDescription>
             </div>
@@ -218,34 +221,34 @@ function SettleTransactionModalComponent({
         </AlertDialogHeader>
 
         {step === 'form' && (
-          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 mt-4">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex min-h-0 flex-1 flex-col">
             {/* Two Column Layout: Transaction Info & Payment Details (Left) | Evidence & Notes (Right) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 md:grid-cols-2 md:gap-6">
               {/* Left Pane: Transaction Info & Payment Details */}
               <div className="space-y-4">
                 {/* Original Transaction Info */}
                 <div className="bg-muted/50 rounded-xl p-3 space-y-2">
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin giao dịch</div>
                   <div className="space-y-1 typography-body-small">
-                    <div className="flex justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <span className="text-muted-foreground">Số tiền gốc:</span>
-                      <span className="font-medium">{formatCurrency(transaction.amount)}</span>
+                      <span className="text-right font-medium">{formatCurrency(transaction.amount)}</span>
                     </div>
                     {transaction.settled_amount !== undefined && transaction.settled_amount > 0 && (
                       <>
-                        <div className="flex justify-between">
+                        <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Đã thanh toán:</span>
-                          <span className="font-medium text-green-600">{formatCurrency(transaction.settled_amount)}</span>
+                          <span className="text-right font-medium text-green-600">{formatCurrency(transaction.settled_amount)}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Còn lại:</span>
-                          <span className="font-medium text-amber-600">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
+                          <span className="text-right font-medium text-amber-600">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
                         </div>
                       </>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Đối tượng:</span>
-                      <span className="font-medium">{transaction.party}</span>
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="shrink-0 text-muted-foreground">Đối tượng:</span>
+                      <span className="min-w-0 break-words text-right font-medium">{transaction.party}</span>
                     </div>
                   </div>
                 </div>
@@ -324,6 +327,7 @@ function SettleTransactionModalComponent({
                       onChange={(url) => setValue('evidenceUrl', url)}
                       placeholder="https://drive.google.com/..."
                       label=""
+                      helperText="Dán đường dẫn đầy đủ tới chứng từ."
                     />
                   )}
 
@@ -337,9 +341,9 @@ function SettleTransactionModalComponent({
                         />
                       ) : (
                         <div className="flex items-center justify-between gap-2 p-3 bg-green-50 rounded border">
-                          <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
                             <Receipt className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-700">
+                            <span className="min-w-0 break-all text-sm text-green-700">
                               {evidenceFile.name}
                             </span>
                           </div>
@@ -348,7 +352,8 @@ function SettleTransactionModalComponent({
                             variant="ghost"
                             size="sm"
                             onClick={handleRemoveFile}
-                            className="h-auto p-1 text-muted-foreground hover:text-red-600"
+                            className="h-11 w-11 p-0 text-muted-foreground hover:text-red-600"
+                            aria-label="Xóa file chứng từ"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -378,12 +383,12 @@ function SettleTransactionModalComponent({
               </div>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-card-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
                 Hủy
@@ -391,7 +396,7 @@ function SettleTransactionModalComponent({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 Tiếp tục
               </button>
@@ -400,70 +405,72 @@ function SettleTransactionModalComponent({
         )}
 
         {step === 'confirm' && formData && (
-          <div className="space-y-4 mt-4">
-            <div className="bg-muted/50 rounded-xl p-3 space-y-3">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Thông tin thanh toán
-              </div>
-
-              <div className="space-y-2 typography-body-small">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Số tiền thanh toán:</span>
-                  <span className="font-semibold">
-                    {formatCurrency(parseFloat(formData.amount.replace(/\./g, '')))}
-                  </span>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+              <div className="bg-muted/50 rounded-xl p-3 space-y-3">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Thông tin thanh toán
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Ngày thanh toán:</span>
-                  <span className="font-medium">{formatDate(formData.settlement_date)}</span>
-                </div>
-
-                {formData.payment_method && (
+                <div className="space-y-2 typography-body-small">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Phương thức:</span>
-                    <span className="font-medium">{formData.payment_method}</span>
+                    <span className="text-muted-foreground">Số tiền thanh toán:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(parseFloat(formData.amount.replace(/\./g, '')))}
+                    </span>
                   </div>
-                )}
 
-                {formData.notes && (
-                  <div className="pt-2 border-t border-border">
-                    <span className="text-muted-foreground">Ghi chú:</span>
-                    <div className="mt-1">{formData.notes}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Ngày thanh toán:</span>
+                    <span className="font-medium">{formatDate(formData.settlement_date)}</span>
                   </div>
-                )}
 
-                {evidenceType === 'url' && formData.evidenceUrl && (
-                  <div className="pt-2 border-t border-border">
-                    <span className="text-muted-foreground">Chứng từ (URL):</span>
-                    <div className="mt-1 break-all text-xs">{formData.evidenceUrl}</div>
-                  </div>
-                )}
-
-                {evidenceType === 'file' && evidenceFile && (
-                  <div className="pt-2 border-t border-border">
-                    <span className="text-muted-foreground">Chứng từ (File):</span>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Receipt className="h-4 w-4" />
-                      <span>{evidenceFile.name}</span>
+                  {formData.payment_method && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Phương thức:</span>
+                      <span className="font-medium">{formData.payment_method}</span>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {formData.notes && (
+                    <div className="pt-2 border-t border-border">
+                      <span className="text-muted-foreground">Ghi chú:</span>
+                      <div className="mt-1">{formData.notes}</div>
+                    </div>
+                  )}
+
+                  {evidenceType === 'url' && formData.evidenceUrl && (
+                    <div className="pt-2 border-t border-border">
+                      <span className="text-muted-foreground">Chứng từ (URL):</span>
+                      <div className="mt-1 break-all text-xs">{formData.evidenceUrl}</div>
+                    </div>
+                  )}
+
+                  {evidenceType === 'file' && evidenceFile && (
+                    <div className="pt-2 border-t border-border">
+                      <span className="text-muted-foreground">Chứng từ (File):</span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Receipt className="h-4 w-4" />
+                      <span className="min-w-0 break-all">{evidenceFile.name}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <p className="typography-body-small text-amber-800">
+                  Hành động này sẽ thanh toán giao dịch và không thể hoàn tác.
+                </p>
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-              <p className="typography-body-small text-amber-800">
-                ⚠️ Hành động này sẽ thanh toán giao dịch và không thể hoàn thành.
-              </p>
-            </div>
-
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-card-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 Quay lại
               </button>
@@ -471,7 +478,7 @@ function SettleTransactionModalComponent({
                 type="button"
                 onClick={handleConfirm}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

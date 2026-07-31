@@ -75,8 +75,12 @@ dev:
 # - Builds + pushes in one command
 # - Tags immutable SHA + latest
 # - Uses registry cache for fast rebuilds
+# - Pushes to GHCR (ghcr.io/<GHCR_OWNER>/payroll-backend), NOT Docker Hub —
+#   Docker Hub TLS-handshake timeouts were the #1 deploy failure. GHCR auth
+#   uses GHCR_OWNER + GHCR_TOKEN (exported from backend/.env).
 
-IMAGE_NAME := $(DOCKERHUB_USERNAME)/payroll-backend
+GHCR_OWNER ?= 4rankng
+IMAGE_NAME := ghcr.io/$(GHCR_OWNER)/payroll-backend
 GIT_SHA    := $(shell git rev-parse --short HEAD)
 BUILDER    := bb
 
@@ -84,9 +88,8 @@ push:
 	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
 	@docker buildx use $(BUILDER)
 	@docker buildx inspect --bootstrap >/dev/null
-	@echo "🔐 Logging into DockerHub..."
-	@docker logout >/dev/null 2>&1 || true
-	@echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+	@echo "🔐 Logging into GHCR as $(GHCR_OWNER)..."
+	@echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_OWNER)" --password-stdin
 
 	@echo "🏗️  Building & pushing AMD64 image (with inline cache)..."
 	docker buildx build \

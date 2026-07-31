@@ -15,6 +15,7 @@ interface UrlInputProps {
   disabled?: boolean;
   required?: boolean;
   error?: string;
+  helperText?: string;
 }
 
 export function UrlInput({
@@ -26,6 +27,7 @@ export function UrlInput({
   disabled = false,
   required = false,
   error: externalError,
+  helperText = 'Nhập link đầy đủ tới file chứng từ (ví dụ: Google Drive, Dropbox, hoặc website khác)',
 }: UrlInputProps) {
   const [inputValue, setInputValue] = useState(value);
   const [validationError, setValidationError] = useState<string>('');
@@ -110,7 +112,7 @@ export function UrlInput({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            "pr-20",
+            "min-h-11 pr-28",
             isValid === true && "border-green-300 focus:border-green-400 focus:ring-green-100",
             isValid === false && "border-red-300 focus:border-red-400 focus:ring-red-100",
             displayError && "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -140,8 +142,9 @@ export function UrlInput({
               size="sm"
               onClick={openUrl}
               disabled={disabled}
-              className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-600"
+              className="h-11 w-11 p-0 hover:bg-blue-50 hover:text-blue-600"
               title="Mở link trong tab mới"
+              aria-label="Mở đường dẫn chứng từ"
             >
               <ExternalLink className="w-3 h-3" />
             </Button>
@@ -155,8 +158,9 @@ export function UrlInput({
               size="sm"
               onClick={clearUrl}
               disabled={disabled}
-              className="h-6 w-6 p-0 hover:bg-gray-100 hover:text-gray-600"
+              className="h-11 w-11 p-0 hover:bg-gray-100 hover:text-gray-600"
               title="Xóa URL"
+              aria-label="Xóa đường dẫn chứng từ"
             >
               <X className="w-3 h-3" />
             </Button>
@@ -175,7 +179,7 @@ export function UrlInput({
       {/* Help text */}
       {!displayError && (
         <p className="typography-body-small text-gray-500">
-          Nhập link đầy đủ tới file chứng từ (ví dụ: Google Drive, Dropbox, hoặc website khác)
+          {helperText}
         </p>
       )}
 

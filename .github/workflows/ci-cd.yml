@@ -15,6 +15,13 @@ env:
   NODE_VERSION: '20'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# packages: write → lets the docker jobs push to GHCR using the auto-provided
+# GITHUB_TOKEN (no separate secret needed). contents: read is the safe default
+# for checkout.
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # ──────────────────────────────────────────────────────────
   # Job 1: Backend Lint
@@ -235,10 +242,13 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      # GHCR login via the auto-provided GITHUB_TOKEN (no secret to manage).
+      # Requires the top-level permissions: { packages: write }.
       - uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate short SHA tag
         id: sha
@@ -252,9 +262,9 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            franknguyenvd/payroll-backend:latest
-            franknguyenvd/payroll-backend:${{ steps.sha.outputs.short }}
-          cache-from: type=registry,ref=franknguyenvd/payroll-backend:latest
+            ghcr.io/${{ github.repository_owner }}/payroll-backend:latest
+            ghcr.io/${{ github.repository_owner }}/payroll-backend:${{ steps.sha.outputs.short }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/payroll-backend:latest
           build-args: BUILDKIT_INLINE_CACHE=1
 
   # ──────────────────────────────────────────────────────────
@@ -272,10 +282,12 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      # GHCR login via the auto-provided GITHUB_TOKEN (no secret to manage).
       - uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate short SHA tag
         id: sha
@@ -289,9 +301,9 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            franknguyenvd/payroll-frontend:latest
-            franknguyenvd/payroll-frontend:${{ steps.sha.outputs.short }}
-          cache-from: type=registry,ref=franknguyenvd/payroll-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/payroll-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/payroll-frontend:${{ steps.sha.outputs.short }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/payroll-frontend:latest
           build-args: |
             BUILDKIT_INLINE_CACHE=1
             VITE_API_BASE_URL=https://tingting.vip

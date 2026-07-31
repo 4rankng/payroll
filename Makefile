@@ -1,4 +1,34 @@
-.PHONY: deploy dev backup restore sandbox
+.PHONY: deploy dev backup restore sandbox mirror-bases
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GHCR base-image mirroring
+#
+# We vendor upstream base images into our own GHCR namespace so builds never
+# depend on Docker Hub at build time (Docker Hub TLS-handshake timeouts are the
+# #1 cause of deploy failures from Vietnam). `crane copy` is registry-to-
+# registry — it does NOT route through the local Docker daemon, so it works
+# even when `docker pull` from Docker Hub is failing locally. It preserves the
+# exact upstream digest, so trust == Docker Official Image (no third-party
+# mirror risk, appropriate for a money-moving system).
+#
+# After bumping a base image, re-run `make mirror-bases` and copy the printed
+# digest into the matching FROM line in backend/Dockerfile or frontend/Dockerfile.
+# ─────────────────────────────────────────────────────────────────────────────
+GHCR_OWNER ?= 4rankng
+BASE_IMAGES ?= node:22-alpine golang:1.26-alpine
+
+# Mirror upstream Docker Hub base images into GHCR (registry-to-registry) and
+# print the digest each image should be pinned to in the Dockerfiles.
+mirror-bases:
+	@command -v crane >/dev/null 2>&1 || { echo "❌ crane not installed. Run: brew install crane"; exit 1; }
+	@for img in $(BASE_IMAGES); do \
+		src="docker.io/library/$$img"; \
+		dst="ghcr.io/$(GHCR_OWNER)/$$img"; \
+		echo "🖼️  Mirroring $$src -> $$dst"; \
+		crane copy "$$src" "$$dst" || { echo "❌ Failed to copy $$src"; exit 1; }; \
+		echo "   pin digest: $$(crane digest $$dst)"; \
+	done
+	@echo "✅ Done. Pin the digests above into the Dockerfiles' FROM lines."
 
 # Build & push all images, then deploy to production
 deploy:

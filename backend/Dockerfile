@@ -1,6 +1,11 @@
-# syntax=docker/dockerfile:1.4
-# Multi-stage build for minimal production image
-FROM golang:1.26-alpine AS builder
+# Multi-stage build for minimal production image.
+#
+# No `# syntax=docker/dockerfile:1.4` pin on purpose (see frontend/Dockerfile
+# for rationale). Base image is vendored into our own GHCR namespace (mirrored
+# from Docker Hub via `make mirror-bases`) and pinned by manifest-list digest
+# so builds never hit Docker Hub (avoids "TLS handshake timeout" deploy
+# failures). Manifest-list digest → BuildKit picks linux/amd64 automatically.
+FROM ghcr.io/4rankng/golang:1.26-alpine@sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2 AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata

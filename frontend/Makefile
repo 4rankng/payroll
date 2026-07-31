@@ -3,9 +3,10 @@ include .env
 export $(shell sed 's/=.*//' .env)
 
 # Variables
+GHCR_OWNER ?= 4rankng
 IMAGE_NAME = payroll-frontend
 TAG ?= latest
-FULL_IMAGE_NAME = $(DOCKERHUB_USERNAME)/$(IMAGE_NAME):$(TAG)
+FULL_IMAGE_NAME = ghcr.io/$(GHCR_OWNER)/$(IMAGE_NAME):$(TAG)
 
 # Buildx builder (shared with backend) — persistent docker-container builder.
 # The builder's own volume caches layers; BUILD_CACHE_DIR adds an on-host cache
@@ -19,9 +20,8 @@ push:
 	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
 	@docker buildx use $(BUILDER)
 	@docker buildx inspect --bootstrap >/dev/null
-	@echo "Logging in to DockerHub as $(DOCKERHUB_USERNAME)"
-	@docker logout >/dev/null 2>&1 || true
-	@echo "$(DOCKERHUB_PASSWORD)" | docker login --username $(DOCKERHUB_USERNAME) --password-stdin
+	@echo "Logging in to GHCR as $(GHCR_OWNER)"
+	@echo "$(GHCR_TOKEN)" | docker login ghcr.io --username $(GHCR_OWNER) --password-stdin
 	@echo "Building & pushing amd64 image with production environment variables: $(FULL_IMAGE_NAME)"
 	docker buildx build \
 		--platform linux/amd64 \

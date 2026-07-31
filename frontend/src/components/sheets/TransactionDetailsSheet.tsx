@@ -11,6 +11,7 @@ import { useUsersByIds } from '@/hooks/api/useUsers';
 import { getUserFullName } from '@/utils/userHelpers';
 import { transactionService } from '@/services/api/transaction.service';
 import { formatCurrency } from '@/utils/formatters';
+import { formatSettlementBusinessDate, getLatestSettlementDate } from '@/utils/transactionHelpers';
 import { assetService } from '@/services/api/asset.service';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -81,6 +82,10 @@ function TransactionDetailsSheetComponent({
 
   const createdByName = getUserFullName(transaction?.created_by, userMap);
   const settledByName = getUserFullName(transaction?.settled_by, userMap);
+  const paymentDate = useMemo(
+    () => getLatestSettlementDate(transaction?.settlements),
+    [transaction?.settlements],
+  );
 
   const isLoading = isLoadingTransaction || isLoadingUsers;
 
@@ -481,13 +486,13 @@ function TransactionDetailsSheetComponent({
                   <span className="typography-body-small text-medium-contrast break-words">{formatDate(transaction.created_at)}</span>
                 </div>
               </div>
-              {transaction.status === 'settled' && (
+              {transaction.status === 'settled' && paymentDate && (
                 <div className="space-y-1.5">
                   <div className="typography-label-small text-muted-foreground">Ngày thanh toán</div>
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 flex-shrink-0 text-slate-400" />
                     <span className="typography-body-small text-medium-contrast break-words">
-                      {formatDate(transaction.settled_at || transaction.created_at)}
+                      {formatSettlementBusinessDate(paymentDate)}
                     </span>
                   </div>
                 </div>

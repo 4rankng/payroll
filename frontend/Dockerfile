@@ -1,5 +1,12 @@
-# syntax=docker/dockerfile:1.4
 # Multi-stage build for React frontend with BuildKit optimizations.
+#
+# NOTE: No `# syntax=docker/dockerfile:1.4` pin on purpose. That directive
+# forces BuildKit to fetch the frontend image from Docker Hub before every
+# build; from Vietnam (and other flaky-Docker-Hub networks) that fetch often
+# fails with "TLS handshake timeout" and blocks deploys. The builtin frontend
+# bundled with BuildKit (v0.30+ in our `bb` builder) already supports every
+# feature used below (--mount=type=cache, --platform=$BUILDPLATFORM, etc.) and
+# is newer than dockerfile:1.4 anyway, so the pin buys nothing.
 #
 # The deps and builder stages run on $BUILDPLATFORM (native arch of the machine
 # invoking buildx). The Vite/Workbox toolchain is heavy and its output (dist/)
@@ -11,7 +18,13 @@
 # it receives dist/ via COPY, which crosses architectures safely.
 
 # Dependencies stage - caches node_modules separately (native arch, no QEMU)
-FROM --platform=$BUILDPLATFORM node:22-alpine AS deps
+#
+# Base image is vendored into our own GHCR namespace (mirrored from Docker Hub
+# via `make mirror-bases`) and pinned by manifest-list digest so builds never
+# depend on Docker Hub (the #1 cause of "TLS handshake timeout" deploy failures
+# from Vietnam). The digest is the multi-arch manifest list, so BuildKit still
+# picks the correct arch per $BUILDPLATFORM.
+FROM --platform=$BUILDPLATFORM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS deps
 WORKDIR /app
 
 # Enable corepack to use pnpm (version pinned via package.json's packageManager field)
@@ -27,7 +40,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 # Builder stage - runs the Vite/Workbox toolchain natively ($BUILDPLATFORM) to
 # avoid the QEMU-emulation SIGSEGV. Output (dist/) is static, copied into the
 # linux/amd64 production stage below.
-FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
+FROM --platform=$BUILDPLATFORM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS builder
 WORKDIR /app
 
 # Enable corepack so pnpm (pinned via package.json#packageManager) is available
@@ -57,8 +70,10 @@ COPY . .
 RUN --mount=type=cache,target=/app/.vite \
     pnpm build
 
-# Production stage - static files only
-FROM node:22-alpine AS production
+# Production stage - static files only.
+# No --platform here → builds for the --platform target (linux/amd64). Same
+# vendored GHCR base, digest-pinned.
+FROM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS production
 
 # Create app directory
 WORKDIR /app
