@@ -14,10 +14,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ScanFace, Search, AlertCircle } from "lucide-react";
+import { SearchBar } from "@/components/shared/SearchBar";
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  ScanFace,
+} from "lucide-react";
 import { useProjects } from "@/hooks/api/useProjects";
 import {
   useProjectEmployees,
@@ -30,9 +37,12 @@ interface CheckInBulkDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const EMPLOYEES_PER_PAGE = 50;
+
 export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [pendingEmployeeId, setPendingEmployeeId] = useState<number | null>(null);
 
@@ -41,12 +51,21 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     { enabled: open }
   );
 
-  const employeeParams = useMemo(
-    () => ({ pageSize: 200, status: "current" as const }),
-    []
-  );
+  const employeeParams = useMemo(() => {
+    const trimmedSearch = search.trim();
+    return {
+      page: currentPage,
+      pageSize: EMPLOYEES_PER_PAGE,
+      status: "current" as const,
+      ...(trimmedSearch ? { search: trimmedSearch } : {}),
+    };
+  }, [currentPage, search]);
 
-  const { data: employeesData, isLoading: loadingEmployees } = useProjectEmployees(
+  const {
+    data: employeesData,
+    isLoading: loadingEmployees,
+    isFetching: fetchingEmployees,
+  } = useProjectEmployees(
     selectedProjectId ?? 0,
     employeeParams,
     open && !!selectedProjectId
@@ -60,17 +79,10 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     [projectsData]
   );
 
-  const allEmployees = useMemo(() => employeesData?.data ?? [], [employeesData?.data]);
-
-  const filteredEmployees = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return allEmployees;
-    return allEmployees.filter(
-      (e) =>
-        e.employee_name.toLowerCase().includes(q) ||
-        e.employee_cccd.toLowerCase().includes(q)
-    );
-  }, [allEmployees, search]);
+  const pageEmployees = useMemo(() => employeesData?.data ?? [], [employeesData?.data]);
+  const totalRecords = employeesData?.pagination.totalRecords ?? 0;
+  const totalPages = employeesData?.pagination.totalPages ?? 0;
+  const isLoadingEmployeePage = loadingEmployees || fetchingEmployees;
 
   useEffect(() => {
     if (!open || flexibleProjects.length === 0) return;
@@ -80,18 +92,25 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     if (selectedProjectExists) return;
     setSelectedProjectId(flexibleProjects[0].id);
     setSearch("");
+    setCurrentPage(1);
     setErrorMsg(null);
   }, [flexibleProjects, open, selectedProjectId]);
 
   const handleProjectChange = (value: string) => {
     setSelectedProjectId(Number(value));
     setSearch("");
+    setCurrentPage(1);
     setErrorMsg(null);
   };
 
-  const allFilteredEnabled =
-    filteredEmployees.length > 0 &&
-    filteredEmployees.every((e) => e.check_in_enabled);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const allPageEmployeesEnabled =
+    pageEmployees.length > 0 &&
+    pageEmployees.every((e) => e.check_in_enabled);
 
   const isMutating = toggleCheckIn.isPending || bulkToggle.isPending;
 
@@ -115,14 +134,14 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
     );
   };
 
-  const handleBulkToggleFiltered = () => {
-    if (!selectedProjectId || filteredEmployees.length === 0 || isMutating) return;
-    const enabled = !allFilteredEnabled;
+  const handleBulkTogglePage = () => {
+    if (!selectedProjectId || pageEmployees.length === 0 || isMutating) return;
+    const enabled = !allPageEmployeesEnabled;
     setErrorMsg(null);
     bulkToggle.mutate(
       {
         projectId: selectedProjectId,
-        employeeIds: filteredEmployees.map((employee) => employee.employee_id),
+        employeeIds: pageEmployees.map((employee) => employee.employee_id),
         enabled,
       },
       {
@@ -158,7 +177,7 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
             <div className="min-w-0 space-y-1.5">
               <label className="text-sm font-medium">Dự án</label>
               <Select
-                value={selectedProjectId ? String(selectedProjectId) : undefined}
+                value={selectedProjectId ? String(selectedProjectId) : ""}
                 onValueChange={handleProjectChange}
               >
                 <SelectTrigger className="h-11">
@@ -187,16 +206,20 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
 
             {selectedProjectId && (
               <div className="min-w-0 space-y-1.5">
-                <label className="text-sm font-medium">Tìm kiếm nhân viên</label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tên hoặc CCCD..."
-                    className="h-11 pl-9"
-                  />
-                </div>
+                <label
+                  htmlFor="check-in-employee-search"
+                  className="text-sm font-medium"
+                >
+                  Tìm kiếm nhân viên
+                </label>
+                <SearchBar
+                  key={selectedProjectId}
+                  inputId="check-in-employee-search"
+                  searchTerm={search}
+                  onSearchChange={handleSearchChange}
+                  placeholder="Tên hoặc CCCD..."
+                  className="w-full rounded-md"
+                />
               </div>
             )}
           </div>
@@ -213,37 +236,35 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
           {selectedProjectId && (
             <>
               {/* Toolbar */}
-              {!loadingEmployees && (
+              {!isLoadingEmployeePage && (
                 <div className="flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <p className="text-sm text-muted-foreground">
-                    {search
-                      ? `${filteredEmployees.length} / ${allEmployees.length} nhân viên`
-                      : `${allEmployees.length} nhân viên`}
+                    {search ? `${totalRecords} kết quả` : `${totalRecords} nhân viên`}
                   </p>
-                  {filteredEmployees.length > 0 && (
+                  {pageEmployees.length > 0 && (
                     <button
-                      onClick={handleBulkToggleFiltered}
+                      onClick={handleBulkTogglePage}
                       disabled={isMutating}
                       className="inline-flex min-h-11 w-fit items-center rounded-lg text-sm font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
                     >
-                      {allFilteredEnabled ? "Tắt tất cả" : "Bật tất cả"}
+                      {allPageEmployeesEnabled ? "Tắt trang này" : "Bật trang này"}
                     </button>
                   )}
                 </div>
               )}
 
               {/* Grid */}
-              {loadingEmployees ? (
+              {isLoadingEmployeePage ? (
                 <div className="flex justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : filteredEmployees.length === 0 ? (
+              ) : pageEmployees.length === 0 ? (
                 <div className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
                   {search ? "Không tìm thấy nhân viên phù hợp" : "Dự án chưa có nhân viên"}
                 </div>
               ) : (
                 <div className="grid max-h-[52dvh] grid-cols-1 gap-2 overflow-y-auto pr-1 min-[380px]:grid-cols-2 sm:grid-cols-3">
-                  {filteredEmployees.map((emp) => {
+                  {pageEmployees.map((emp) => {
                     const checked = Boolean(emp.check_in_enabled);
                     const isPending = pendingEmployeeId === emp.employee_id || bulkToggle.isPending;
                     return (
@@ -297,6 +318,43 @@ export function CheckInBulkDialog({ open, onOpenChange }: CheckInBulkDialogProps
                     );
                   })}
                 </div>
+              )}
+
+              {!isLoadingEmployeePage && totalPages > 1 && (
+                <nav
+                  aria-label="Phân trang nhân viên"
+                  className="flex flex-wrap items-center justify-between gap-2 border-t pt-3"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Trang {currentPage} / {totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-11 w-11"
+                      aria-label="Trang trước"
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                      disabled={currentPage === 1 || isMutating}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-11 w-11"
+                      aria-label="Trang sau"
+                      onClick={() =>
+                        setCurrentPage((page) => Math.min(totalPages, page + 1))
+                      }
+                      disabled={currentPage === totalPages || isMutating}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </nav>
               )}
             </>
           )}

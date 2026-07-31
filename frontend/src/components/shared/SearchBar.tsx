@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 interface SearchBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  inputId?: string;
   placeholder?: string;
   showClearButton?: boolean;
   className?: string;
@@ -14,6 +15,7 @@ interface SearchBarProps {
 export const SearchBar = React.memo(function SearchBar({
   searchTerm,
   onSearchChange,
+  inputId,
   placeholder = 'Tìm kiếm...',
   showClearButton = true,
   className,
@@ -70,9 +72,11 @@ export const SearchBar = React.memo(function SearchBar({
     >
       <Search className="h-4 w-4 shrink-0 opacity-50" />
       <input
+        id={inputId}
         type="text"
         value={localValue}
         onChange={handleChange}
+        aria-label={inputId ? undefined : placeholder}
         placeholder={placeholder}
         className="flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground/60 text-foreground"
       />
