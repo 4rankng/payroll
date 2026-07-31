@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Project } from "@/types/api/project.types";
 import { ProjectEmployeesList } from "@/components/project-employees/ProjectEmployeesList";
 import { AddEmployeesToProject } from "@/components/project-employees/AddEmployeesToProject";
@@ -59,6 +59,7 @@ function ProjectDetailsSheet({
   initialTab
 }: ProjectDetailsSheetProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { closeModal } = useModalNavigation();
   const [activeTab, setActiveTab] = useState<ProjectTab>(() => mapInitialTab(initialTab));
@@ -246,6 +247,12 @@ function ProjectDetailsSheet({
     }
   }, [searchParams, closeModal, onClose, queryClient]);
 
+  const handleEditPayrate = useCallback((payrateId: number) => {
+    if (!project) return;
+    const basePath = userRole === 'partner' ? '/partner' : '/admin';
+    navigate(`${basePath}/projects/${project.id}/payrates/${payrateId}/edit`);
+  }, [navigate, project, userRole]);
+
   const handleCompleteCancel = () => {
     setIsCompleteModalOpen(false);
   };
@@ -388,7 +395,11 @@ function ProjectDetailsSheet({
             {project.is_flexible && (
               <div className="mt-4 space-y-4">
                 <GeofenceSection project={project} />
-                <ShiftNamesSection project={project} />
+                <ShiftNamesSection
+                  project={project}
+                  canEdit={canEditProject}
+                  onEditPayrate={handleEditPayrate}
+                />
               </div>
             )}
 

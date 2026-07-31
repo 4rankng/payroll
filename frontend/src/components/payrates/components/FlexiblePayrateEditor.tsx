@@ -296,6 +296,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       <div className="flex flex-col leading-tight">
                         <span className="text-[10px] text-muted-foreground/60 font-semibold">Ca làm việc →</span>
                         <span className="text-sm font-bold text-foreground">Vị trí ↓</span>
+                        <span className="mt-1 text-[10px] font-semibold text-emerald-700">Mức lương (₫/giờ)</span>
                       </div>
                     </th>
                     {/* shift columns */}
@@ -317,14 +318,20 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                   onBlur={() => saveShiftEdit()}
                                   autoFocus
                                 />
-                              ) : (
-                                <span
-                                  className={`fpe-mono text-sm font-bold tracking-tight ${!readOnly ? 'cursor-pointer hover:text-emerald-600 transition-colors' : ''}`}
-                                  onClick={() => startShiftEdit(i)}
-                                  title={readOnly ? undefined : 'Nhấn để đổi thời gian ca'}
-                                >
+                              ) : readOnly ? (
+                                <span className="fpe-mono inline-flex min-h-11 items-center text-sm font-bold tracking-tight">
                                   {s.start}–{s.end}
                                 </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="fpe-mono min-h-11 cursor-pointer text-left text-sm font-bold tracking-tight transition-colors hover:text-emerald-600"
+                                  onClick={() => startShiftEdit(i)}
+                                  title="Nhấn để đổi thời gian ca"
+                                  aria-label={`Chỉnh khung giờ ${s.start}-${s.end}`}
+                                >
+                                  {s.start}–{s.end}
+                                </button>
                               )}
                               {!readOnly && (
                                 <button onClick={()=>removeShift(s)} className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
@@ -402,9 +409,10 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           <td key={ci} style={{ borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #e2e8f0', padding:4, background: has ? '#f0fdf6' : 'transparent' }}>
                             <div className="relative">
                               <input
-                                className="fpe-mono h-11 w-full rounded-lg pl-2 pr-7 text-right text-sm transition-all"
+                                className="fpe-mono h-11 w-full rounded-lg pl-2 pr-12 text-right text-sm transition-all"
                                 inputMode="numeric"
                                 placeholder="0"
+                                aria-label={`Mức lương theo giờ cho ${pos}, ca ${s.start}-${s.end}`}
                                 readOnly={readOnly}
                                 value={focused ? (val||'') : (has ? fmtVND(val) : '')}
                                 onFocus={() => setFocusKey(key)}
@@ -418,8 +426,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                   fontWeight: has ? 600 : 400,
                                 }}
                               />
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none"
-                                style={{ color: has ? '#bdeccf' : '#94a3b8' }}>₫</span>
+                              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                                style={{ color: has ? '#047857' : '#94a3b8' }}>₫/giờ</span>
                             </div>
                           </td>
                         );
