@@ -1,17 +1,82 @@
 package payroll
 
 import (
+	"archive/zip"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/xuri/excelize/v2"
 )
+
+var (
+	templateRootElementPattern = regexp.MustCompile(`<([A-Za-z_][\w.-]*:)?[A-Za-z_][\w.-]*\b[^>]*>`)
+	templateMCIgnorablePattern = regexp.MustCompile(`\s+mc:Ignorable="([^"]*)"`)
+)
+
+func TestPayrollStatementTemplatesDeclareCompatibilityPrefixes(t *testing.T) {
+	t.Parallel()
+
+	for _, filename := range []string{"payroll_template.xlsx", "sao_ke_tt_theo_du_an.xlsx"} {
+		filename := filename
+		t.Run(filename, func(t *testing.T) {
+			t.Parallel()
+
+			workbook, err := zip.OpenReader(templatePath(t, filename))
+			if err != nil {
+				t.Fatalf("open template archive: %v", err)
+			}
+			t.Cleanup(func() {
+				if err := workbook.Close(); err != nil {
+					t.Errorf("close template archive: %v", err)
+				}
+			})
+
+			for _, part := range workbook.File {
+				if !strings.HasSuffix(part.Name, ".xml") {
+					continue
+				}
+				content := readTemplatePart(t, part)
+				rootElement := templateRootElementPattern.Find(content)
+				for _, match := range templateMCIgnorablePattern.FindAllSubmatch(rootElement, -1) {
+					for _, prefix := range strings.Fields(string(match[1])) {
+						if !bytes.Contains(rootElement, []byte("xmlns:"+prefix+"=")) {
+							t.Fatalf("%s has undeclared mc:Ignorable prefix %q", part.Name, prefix)
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
+func readTemplatePart(t *testing.T, part *zip.File) []byte {
+	t.Helper()
+
+	reader, err := part.Open()
+	if err != nil {
+		t.Fatalf("open %s: %v", part.Name, err)
+	}
+	defer func() {
+		if err := reader.Close(); err != nil {
+			t.Errorf("close %s: %v", part.Name, err)
+		}
+	}()
+
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("read %s: %v", part.Name, err)
+	}
+	return content
+}
 
 func TestPayrollStatementTemplatesKeepCompanyBeneficiaryReadable(t *testing.T) {
 	t.Parallel()
