@@ -84,6 +84,12 @@ IMAGE_NAME := ghcr.io/$(GHCR_OWNER)/payroll-backend
 GIT_SHA    := $(shell git rev-parse --short HEAD)
 BUILDER    := bb
 
+# GHCR auth token. Prefer an explicit shell env var; otherwise read it from
+# ~/.zshrc (per .env comment, the token lives there — not in .env) so deploys
+# work from non-interactive shells (editors, CI, this agent) that never source
+# ~/.zshrc. awk (not sed) because Make's $(shell) mis-parses sed + tr pipes.
+GHCR_TOKEN ?= $(shell awk -F= '/export GHCR_TOKEN=/{print $$2}' $(HOME)/.zshrc | head -1)
+
 push:
 	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
 	@docker buildx use $(BUILDER)
