@@ -64,6 +64,9 @@ uploads/
 # === Tooling ===
 .codegraph/
 graphify-out/
+# Understand-Anything knowledge base (per-developer, large generated graph)
+.ua/
+.understand-anything/
 .kiro
 .claude/
 .crush/
