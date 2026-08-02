@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BankTransferHistoryPageContent } from './BankTransferHistoryPageContent';
 
@@ -10,6 +10,17 @@ vi.mock('@/hooks/api/usePayrolls', () => ({
 }));
 
 describe('BankTransferHistoryPageContent', () => {
+  beforeEach(() => {
+    // getCurrentMonthValue() reads the real clock; pin it so the month picker
+    // always renders 07/2026 regardless of when the suite runs.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-15T12:00:00+07:00'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     useBankTransferHistories.mockReturnValue({
       data: {
