@@ -311,12 +311,18 @@ func TestLoad(t *testing.T) {
 	_ = os.Setenv("JWT_SECRET", "test-secret")
 	_ = os.Setenv("HASH_SECRET", "test-hash-secret")
 	_ = os.Setenv("HASH_SALT", "test-hash-salt")
+	// The test asserts Load() succeeds in a minimal env. Disable Google
+	// OAuth so the GOOGLE_CLIENT_ID-must-be-set rule doesn't fire from
+	// values leaking in from .env via the test runner; this test isn't
+	// about OAuth validation.
+	_ = os.Setenv("GOOGLE_OAUTH_ENABLED", "false")
 	defer func() {
 		_ = os.Unsetenv("APP_ENV")
 		_ = os.Unsetenv("APP_PORT")
 		_ = os.Unsetenv("JWT_SECRET")
 		_ = os.Unsetenv("HASH_SECRET")
 		_ = os.Unsetenv("HASH_SALT")
+		_ = os.Unsetenv("GOOGLE_OAUTH_ENABLED")
 	}()
 
 	cfg, err := Load()
