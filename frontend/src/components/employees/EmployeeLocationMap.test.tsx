@@ -146,7 +146,7 @@ vi.mock("maplibre-gl", () => {
 
 const target: CheckInTarget = {
   project_id: 1,
-  project_name: "Ting Ting Soft HQ",
+  project_name: "TingTing Soft HQ",
   radius_meters: 150,
   gates: [
     { name: "Cổng xa", lat: 10.79, lng: 106.72 },
@@ -156,7 +156,7 @@ const target: CheckInTarget = {
 
 const singleGateTarget: CheckInTarget = {
   project_id: 2,
-  project_name: "Ting Ting Soft HQ",
+  project_name: "TingTing Soft HQ",
   radius_meters: 150,
   gates: [{ name: "Cổng D", lat: 10.7769, lng: 106.7009 }],
 };
@@ -280,7 +280,7 @@ describe("EmployeeLocationMap", () => {
   });
 
   it("keeps the complete checkpoint summary readable on narrow mobile cards", async () => {
-    const checkpointName = "Ting Ting Soft Headquarters";
+    const checkpointName = "TingTing Soft Headquarters";
     const narrowCardTarget: CheckInTarget = {
       ...singleGateTarget,
       gates: [{ ...singleGateTarget.gates[0], name: checkpointName }],

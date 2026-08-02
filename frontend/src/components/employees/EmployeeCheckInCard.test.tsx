@@ -62,7 +62,7 @@ describe("AttendanceReference", () => {
         checkOutWindowEnd="2026-07-12T21:00:00+07:00"
         checkInTarget={{
           project_id: 1,
-          project_name: "Ting Ting Soft HQ",
+          project_name: "TingTing Soft HQ",
           radius_meters: 150,
           gates: [
             { name: "Cổng chính", lat: 10.7769, lng: 106.7009 },
@@ -133,7 +133,7 @@ describe("AttendanceReference", () => {
       <AttendanceReference
         checkInTarget={{
           project_id: 1,
-          project_name: "Ting Ting Soft HQ",
+          project_name: "TingTing Soft HQ",
           radius_meters: 150,
           gates: [
             { name: "Cổng chính", lat: 10.7769, lng: 106.7009 },

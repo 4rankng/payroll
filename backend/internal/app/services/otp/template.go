@@ -25,13 +25,13 @@ func BuildOTPEmailMessage(code, recipientEmail, recipientName, fromEmail string)
 		to.Name = recipientName
 	}
 
-	subject := "Ting Ting Soft OTP"
+	subject := "TingTing Soft OTP"
 	textBody := strings.Join([]string{
 		"Mã đăng nhập của bạn là: " + code,
 		"Mã có hiệu lực trong 5 phút.",
 		"Nếu bạn không yêu cầu đăng nhập, vui lòng bỏ qua email này và cân nhắc đổi mật khẩu.",
 		"",
-		"— Ting Ting Soft",
+		"— TingTing Soft",
 	}, "\n")
 
 	htmlBody := buildOTPEmailHTML(code)
@@ -69,7 +69,7 @@ const otpEmailTemplate = `<!DOCTYPE html>
       <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="width:100%;max-width:520px;border-collapse:separate;border-spacing:0;">
         <tr>
           <td style="padding:0 0 14px;">
-            <img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:16px;">
+            <img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="TingTing Soft" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:16px;">
           </td>
         </tr>
         <tr>

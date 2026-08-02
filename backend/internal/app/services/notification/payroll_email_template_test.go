@@ -96,7 +96,7 @@ func TestPayrollTemplateStaysAlignedAfterProviderBranding(t *testing.T) {
 	if !strings.Contains(deliveredHTML, `<table role="presentation" width="640"`) {
 		t.Fatal("expected delivered document to retain the provider's 640px layout contract")
 	}
-	if !strings.Contains(deliveredHTML, `<img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="640"`) {
+	if !strings.Contains(deliveredHTML, `<img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="TingTing Soft" width="640"`) {
 		t.Fatal("expected delivered banner and document to use the same width")
 	}
 	if strings.Contains(deliveredHTML, `width="600"`) {

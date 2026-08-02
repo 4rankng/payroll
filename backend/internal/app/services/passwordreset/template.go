@@ -39,7 +39,7 @@ func BuildResetEmailMessage(token, recipientEmail, recipientName, fromEmail, res
 		"",
 		"Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và cân nhắc đổi mật khẩu.",
 		"",
-		"— Ting Ting Soft",
+		"— TingTing Soft",
 	}, "\n")
 
 	htmlBody := buildResetEmailHTML(link, recipientName)
@@ -82,7 +82,7 @@ const resetEmailTemplate = `<!DOCTYPE html>
       <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="width:100%;max-width:520px;border-collapse:separate;border-spacing:0;">
         <tr>
           <td style="padding:0 0 14px;">
-            <img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="Ting Ting Soft" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:16px;">
+            <img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="TingTing Soft" width="520" style="display:block;width:100%;max-width:520px;height:auto;border:0;border-radius:16px;">
           </td>
         </tr>
         <tr>

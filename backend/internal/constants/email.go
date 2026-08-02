@@ -1,6 +1,6 @@
 package constants
 
 const (
-	DefaultEmailSenderName    = "Ting Ting"
+	DefaultEmailSenderName    = "TingTing Soft"
 	DefaultEmailSenderAddress = "marketing@tingting.vip"
 )

@@ -20,7 +20,7 @@ func TestEmailServiceResolveFromAddressUsesApprovedIdentities(t *testing.T) {
 		if err != nil {
 			t.Fatalf("resolve default sender: %v", err)
 		}
-		if address.Name != "Ting Ting" || address.Address != "marketing@tingting.vip" {
+		if address.Name != "TingTing Soft" || address.Address != "marketing@tingting.vip" {
 			t.Fatalf("unexpected default sender: %#v", address)
 		}
 	})
@@ -30,7 +30,7 @@ func TestEmailServiceResolveFromAddressUsesApprovedIdentities(t *testing.T) {
 		if err != nil {
 			t.Fatalf("resolve approved sender: %v", err)
 		}
-		if address.Name != "Ting Ting" || address.Address != "marketing@tingting.vip" {
+		if address.Name != "TingTing Soft" || address.Address != "marketing@tingting.vip" {
 			t.Fatalf("unexpected sender: %#v", address)
 		}
 	})
@@ -88,7 +88,7 @@ func TestEmailServiceAvailableSendersReturnsApprovedIdentities(t *testing.T) {
 	if len(senders) != 1 {
 		t.Fatalf("expected 1 sender, got %#v", senders)
 	}
-	if senders[0].Name != "Ting Ting" || senders[0].Address != "marketing@tingting.vip" {
+	if senders[0].Name != "TingTing Soft" || senders[0].Address != "marketing@tingting.vip" {
 		t.Fatalf("unexpected sender: %#v", senders)
 	}
 }

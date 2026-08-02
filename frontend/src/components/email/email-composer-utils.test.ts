@@ -18,7 +18,7 @@ describe('email composer utilities', () => {
   });
 
   it('normalizes pasted banner images but keeps non-image references', () => {
-    const preview = buildEmailPreviewDocument(`<img src="${TINGTING_EMAIL_BANNER_URL}" alt="Ting Ting Soft"><img src="${TINGTING_EMAIL_BANNER_URL}"><a href="https://tingting.vip/email-banner.jpg">Tải banner</a>`);
+    const preview = buildEmailPreviewDocument(`<img src="${TINGTING_EMAIL_BANNER_URL}" alt="TingTing Soft"><img src="${TINGTING_EMAIL_BANNER_URL}"><a href="https://tingting.vip/email-banner.jpg">Tải banner</a>`);
 
     expect(preview.split(TINGTING_EMAIL_BANNER_URL)).toHaveLength(2);
     expect(preview).toContain('href="https://tingting.vip/email-banner.jpg"');
