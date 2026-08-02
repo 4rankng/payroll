@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"api-server/internal/domain/ports/infrastructure"
+	"golang.org/x/text/unicode/norm"
 )
 
 // ErrInvalidWebhookSignature is returned when the IPN's checksum does
@@ -99,6 +100,16 @@ func translateStatus(status int, errorCode, failureReason, message string) infra
 	if status == 5 && isSuccessCode(errorCode) {
 		return infrastructure.TransferStatusSuccess
 	}
+	// Reversal is detected from free-text fields before the error_code
+	// check because 9pay has no dedicated reversal error_code (see the
+	// canonical list in the doc comment above) — the refund surfaces as
+	// a non-success status with Vietnamese/English reversal phrasing in
+	// failure_reason or message. The text match must take precedence
+	// over a hard failure so that wallet_payment_service can route the
+	// row into the reversal-recovery path instead of marking it failed.
+	if isReversalText(failureReason, message) {
+		return infrastructure.TransferStatusReversed
+	}
 	if !isSuccessCode(errorCode) {
 		return infrastructure.TransferStatusFailed
 	}
@@ -110,6 +121,38 @@ func translateStatus(status int, errorCode, failureReason, message string) infra
 // settled and then reversed by the recipient bank. Matched
 // case-insensitively against the original Vietnamese (with diacritics)
 // and an unaccented fallback.
+//
+// Vietnamese markers cover both the "hoàn chuyển tiền" (reversed
+// transfer) and "hoàn tiền" (refunded) phrasings 9pay uses; the
+// English markers cover the beneficiary-bank-rejected wording seen in
+// sandbox. keep the list conservative — a too-broad marker (e.g. the
+// bare word "hoàn") would false-positive on legitimate "hoàn tất"
+// (completed) messages.
+var reversalMarkers = []string{
+	"hoàn chuyển",
+	"hoan chuyen",
+	"hoàn tiền",
+	"hoan tien",
+	"transaction reversed",
+	"reversed by beneficiary bank",
+}
+
+// isReversalText reports whether either of the reversal free-text
+// fields carries a reversal marker. Both the NFC-composed form (what
+// 9pay actually sends) and the decomposed/unaccented form are matched
+// so the detection survives an intermediary that strips diacritics.
+func isReversalText(failureReason, message string) bool {
+	haystack := strings.ToLower(norm.NFC.String(strings.TrimSpace(failureReason + " " + message)))
+	if haystack == "" {
+		return false
+	}
+	for _, marker := range reversalMarkers {
+		if strings.Contains(haystack, marker) {
+			return true
+		}
+	}
+	return false
+}
 
 // decodeFlexibleBase64 decodes 9pay's IPN `result` field, tolerating
 // the encoding variants observed in the wild against sand-payment.9pay.vn:

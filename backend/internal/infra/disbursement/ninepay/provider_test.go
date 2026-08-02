@@ -37,7 +37,7 @@ func parseMultipart(t *testing.T, r *http.Request) map[string]string {
 func validRequest() infrastructure.TransferRequest {
 	return infrastructure.TransferRequest{
 		RequestID:   "REQ-12345",
-		Amount:      50000,
+		Amount:      150_000,
 		Description: "Salary May 2026",
 		BankCode:    "VCB",
 		AccountNo:   "1023020330000",
@@ -145,7 +145,7 @@ func TestProvider_InitiateTransfer_HappyPath(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(createDisbursementResponse{
 			Status: 5, ErrorCode: "", Message: "Success",
-			InvoiceNo: "99887766", Amount: "50000",
+			InvoiceNo: "99887766", Amount: "150000",
 			BankCode: "VCB", AccountName: "NGUYEN VAN A", AccountNo: "1023020330000",
 		})
 	}))

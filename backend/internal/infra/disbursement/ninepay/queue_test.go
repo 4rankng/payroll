@@ -44,7 +44,7 @@ func TestQueuedProvider_RateLimitsTransfers(t *testing.T) {
 		go func(i int) {
 			_, err := q.InitiateTransfer(context.Background(), infrastructure.TransferRequest{
 				RequestID:   "QTEST-" + string(rune('A'+i)),
-				Amount:      5000,
+				Amount:      150_000,
 				BankCode:    "VCB",
 				AccountNo:   "123",
 				AccountName: "TEST",
@@ -148,7 +148,7 @@ func TestQueuedProvider_QueueFullReturnsError(t *testing.T) {
 
 	// Queue is full (or nearly full). InitiateTransfer should fail immediately.
 	_, err := q.InitiateTransfer(context.Background(), infrastructure.TransferRequest{
-		RequestID: "OVERFLOW", Amount: 5000, BankCode: "VCB",
+		RequestID: "OVERFLOW", Amount: 150_000, BankCode: "VCB",
 		AccountNo: "1", AccountName: "T", AccountType: "0",
 	})
 	if err == nil {
