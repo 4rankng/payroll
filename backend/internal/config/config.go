@@ -98,6 +98,7 @@ type PasswordResetConfig struct {
 // `Enabled` here only controls the first-boot seed value.
 type ZaloConfig struct {
 	Enabled     bool // ZALO_RESET_ENABLE (default false) — first-boot seed only
+	UseSandbox  bool // ZALO_USE_SANDBOX (default false) — dev only: mock the ZNS send, log the OTP
 	AppID       string
 	SecretKey   string
 	TemplateID  string // default "617976" (OTP-ZNS-v1)
@@ -463,6 +464,7 @@ func Load() (*Config, error) {
 		},
 		Zalo: ZaloConfig{
 			Enabled:     parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
+			UseSandbox:  parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
 			AppID:       getEnv("ZALO_APP_ID", ""),
 			SecretKey:   getEnv("ZALO_SECRET_KEY", ""),
 			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "617976"),

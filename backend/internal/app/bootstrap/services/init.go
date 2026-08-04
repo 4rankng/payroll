@@ -641,9 +641,19 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		SecretKey:  cfg.Zalo.SecretKey,
 		TemplateID: cfg.Zalo.TemplateID,
 	})
+
+	// Sandbox mode: when ZALO_USE_SANDBOX=true, the reset service uses a mock
+	// sender that logs the OTP to the terminal instead of hitting Zalo. This
+	// lets a developer test the full reset flow locally without a Zalo OA.
+	var zaloSender zalo.Sender = zaloProvider
+	if cfg.Zalo.UseSandbox {
+		zaloSender = zalo.NewSandboxSender(logger)
+		logger.Info("zalo: SANDBOX mode enabled — OTPs will be logged, not sent to Zalo")
+	}
+
 	zaloResetStore := cache.NewZaloResetStore(redis.Client, cfg.Zalo.CodeTTL)
 	zaloResetService := zaloreset.NewService(
-		zaloResetStore, repos.User, repos.Employee, userService, zaloProvider,
+		zaloResetStore, repos.User, repos.Employee, userService, zaloSender,
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
