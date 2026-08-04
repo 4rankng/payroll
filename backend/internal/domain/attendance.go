@@ -114,10 +114,11 @@ type AttendanceRepository interface {
 	// (both safe no-ops) or the id does not exist.
 	MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error)
 	// MarkAdminReviewed stamps an admin approve/reject review on an attendance
-	// and applies the earning override atomically via a conditional UPDATE
-	// (WHERE id = ?). On approve, earningAmount is set and salary_reject_reason
+	// and applies the earning override atomically via a conditional UPDATE.
+	// Rejection is accepted only before approval or quota credit. On approve, earningAmount is set and salary_reject_reason
 	// is cleared; on reject, earning is forced to 0 and salary_reject_reason is
-	// set to note. Returns true if a row matched the id, false otherwise.
+	// set to note. Returns true if the transition was applied, false if the row
+	// was missing or a terminal financial state won the race.
 	MarkAdminReviewed(ctx context.Context, id uint, action AttendanceReviewAction, note string, adminID uint, reviewedAt time.Time, earningAmount *int64) (bool, error)
 	// GetOrphanCandidates returns open (no checkout), unrejected attendances
 	// checked in within [after, before). Used by the auto-reject fallback sweep
@@ -128,11 +129,9 @@ type AttendanceRepository interface {
 	// split additionally uses an 18h cutoff against the current time.
 	GetHealthStats(ctx context.Context, since, until time.Time) (*AttendanceHealthStats, error)
 	// MarkQuotaCredited atomically stamps quota_credited_at = at on an attendance
-	// whose earning has just been banked into the quota pool. The conditional
-	// WHERE (quota_credited_at IS NULL) is the race guard that makes crediting
-	// idempotent: a concurrent credit (deferred task vs sweep vs admin-approve)
-	// that already stamped the row makes RowsAffected=0 — a safe no-op. Returns
-	// true if this call claimed the credit, false if the row was already credited.
+	// whose earning is still payable. The conditional WHERE makes crediting
+	// idempotent and race-safe against admin rejection. Returns true only if this
+	// call claimed the credit.
 	MarkQuotaCredited(ctx context.Context, id uint, at time.Time) (bool, error)
 	// GetOverdueQuotaCreditCandidates returns IDs of checked-out attendances whose
 	// 24h hold has elapsed (check_out_time < before) but whose earning has not yet
@@ -234,9 +233,10 @@ type AttendanceFailedAttemptRepository interface {
 	ExistsRecent(ctx context.Context, employeeID uint, attemptType, reasonCategory string, projectID uint, within time.Duration) (bool, error)
 }
 
-// IsCompleted returns true if the attendance record has both check-in and check-out
+// IsCompleted returns true when the employee checked out or an Admin
+// authoritatively approved the shift without a physical checkout.
 func (a *Attendance) IsCompleted() bool {
-	return a.CheckOutTime != nil
+	return a.CheckOutTime != nil || (a.IsApproved() && a.SalaryRejectReason == nil)
 }
 
 // IsApproved reports whether an admin has manually approved this attendance.
@@ -259,6 +259,18 @@ func (a *Attendance) IsReviewed() bool {
 // Callers should pass clock.Now() (or s.clock.Now() for injectable clock) to
 // respect the centralized clock convention used in tests and non-prod environments.
 func (a *Attendance) GetStatus(now time.Time) AttendanceStatus {
+	// An Admin rejection is authoritative even when a physical checkout exists.
+	if a.IsRejectedByAdmin() {
+		return AttendanceStatusRejected
+	}
+
+	// An Admin approval is the authoritative completion of the shift even when
+	// the employee did not record a physical checkout. Keep contradictory legacy
+	// rows with a reject reason visible as rejected so they can still be repaired.
+	if a.IsApproved() && a.SalaryRejectReason == nil {
+		return AttendanceStatusCompleted
+	}
+
 	if a.CheckOutTime != nil {
 		return AttendanceStatusCompleted
 	}

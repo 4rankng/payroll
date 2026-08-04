@@ -19,6 +19,21 @@ import (
 //
 // Fakes come from attendance_auto_reject_test.go in the same package.
 
+type staleCreditAfterRejectRepo struct {
+	fakeAttendanceRepo
+}
+
+func (f *staleCreditAfterRejectRepo) MarkQuotaCredited(_ context.Context, id uint, _ time.Time) (bool, error) {
+	rec := f.findByID(id)
+	rejected := string(domain.AttendanceReviewActionRejected)
+	reason := "admin rejected while credit was waiting"
+	zero := int64(0)
+	rec.ReviewAction = &rejected
+	rec.SalaryRejectReason = &reason
+	rec.EarningAmount = &zero
+	return false, nil
+}
+
 func TestCreditAttendanceQuotaIdempotent(t *testing.T) {
 	loc := clock.DefaultLocation
 	co := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
@@ -175,6 +190,39 @@ func TestCreditAttendanceQuotaNoOpsForZeroEarningAndMissing(t *testing.T) {
 	}
 	if att.QuotaCreditedAt != nil {
 		t.Fatal("expected quota_credited_at left nil when there is nothing to credit")
+	}
+}
+
+func TestCreditAttendanceQuotaDoesNotBankWhenConcurrentRejectWins(t *testing.T) {
+	loc := clock.DefaultLocation
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID: 7, ProjectID: 55, EmployeeID: 123,
+		Date:          time.Date(2026, 6, 22, 0, 0, 0, 0, loc),
+		CheckInTime:   time.Date(2026, 6, 22, 8, 0, 0, 0, loc),
+		EarningAmount: &earn,
+	}
+	repo := &staleCreditAfterRejectRepo{fakeAttendanceRepo: fakeAttendanceRepo{byID: att}}
+	advRepo := &fakeAdvancePaymentRepo{}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(time.Date(2026, 6, 23, 18, 0, 0, 0, loc)),
+	}
+
+	banked, err := svc.CreditAttendanceQuota(context.Background(), 7)
+	if err != nil {
+		t.Fatalf("credit after concurrent reject: %v", err)
+	}
+	if banked {
+		t.Fatal("expected stale credit to lose after rejection")
+	}
+	if got := advRepo.salaryFor(123, "2026-06"); got != 0 {
+		t.Fatalf("employee quota increased by %d after rejection", got)
+	}
+	if att.QuotaCreditedAt != nil {
+		t.Fatal("rejected attendance must not be stamped as credited")
 	}
 }
 

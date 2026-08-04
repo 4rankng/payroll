@@ -98,6 +98,7 @@ type AdminAttendanceResponse struct {
 	ReviewNote                              *string    `json:"review_note,omitempty"`
 	ReviewedBy                              *uint      `json:"reviewed_by,omitempty"`
 	ReviewedAt                              *time.Time `json:"reviewed_at,omitempty"`
+	QuotaCreditedAt                         *time.Time `json:"quota_credited_at,omitempty"`
 	NearestCheckpointName                   *string    `json:"nearest_checkpoint_name,omitempty"`
 	NearestCheckpointLat                    *float64   `json:"nearest_checkpoint_lat,omitempty"`
 	NearestCheckpointLng                    *float64   `json:"nearest_checkpoint_lng,omitempty"`

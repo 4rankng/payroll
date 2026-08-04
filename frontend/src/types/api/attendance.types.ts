@@ -25,6 +25,7 @@ export interface AdminAttendanceResponse {
   review_note?: string | null;
   reviewed_by?: number | null;
   reviewed_at?: string | null;
+  quota_credited_at?: string | null;
   nearest_checkpoint_name?: string | null;
   nearest_checkpoint_lat?: number | null;
   nearest_checkpoint_lng?: number | null;

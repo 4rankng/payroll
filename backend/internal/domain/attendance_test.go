@@ -23,6 +23,32 @@ func TestGetStatusRejectedDerivation(t *testing.T) {
 		want AttendanceStatus
 	}{
 		{
+			name: "admin approval completes a shift without physical checkout",
+			att: Attendance{
+				CheckInTime:  now.Add(-2 * time.Hour),
+				ReviewAction: stringPointer(string(AttendanceReviewActionApproved)),
+			},
+			want: AttendanceStatusCompleted,
+		},
+		{
+			name: "contradictory legacy approval remains rejected for repair",
+			att: Attendance{
+				CheckInTime:        now.Add(-2 * time.Hour),
+				ReviewAction:       stringPointer(string(AttendanceReviewActionApproved)),
+				SalaryRejectReason: &reason,
+			},
+			want: AttendanceStatusRejected,
+		},
+		{
+			name: "admin rejection overrides physical checkout",
+			att: Attendance{
+				CheckInTime:  now.Add(-10 * time.Hour),
+				CheckOutTime: &checkout,
+				ReviewAction: stringPointer(string(AttendanceReviewActionRejected)),
+			},
+			want: AttendanceStatusRejected,
+		},
+		{
 			name: "completed beats reject reason (completed-but-unpaid)",
 			att: Attendance{
 				CheckInTime:        now.Add(-20 * time.Hour),
@@ -72,4 +98,8 @@ func TestGetStatusRejectedDerivation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func stringPointer(value string) *string {
+	return &value
 }

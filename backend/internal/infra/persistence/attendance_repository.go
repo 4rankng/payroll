@@ -89,7 +89,8 @@ func (r *attendanceRepository) MarkAutoRejected(ctx context.Context, id uint, re
 //   - approved: earningAmount is the recomputed value, salary_reject_reason cleared
 //   - rejected: earningAmount is &zero, salary_reject_reason set to note
 //
-// Returns true if a row matched id, false if no such attendance exists.
+// Rejection is guarded against a concurrent approval or quota credit. Returns
+// true if the transition applied, false if the row is missing or terminal.
 func (r *attendanceRepository) MarkAdminReviewed(
 	ctx context.Context,
 	id uint,
@@ -114,9 +115,16 @@ func (r *attendanceRepository) MarkAdminReviewed(
 		updates["salary_reject_reason"] = note
 	}
 
-	res := r.getDB(ctx).Model(&domain.Attendance{}).
-		Where("id = ?", id).
-		Updates(updates)
+	query := r.getDB(ctx).Model(&domain.Attendance{}).Where("id = ?", id)
+	if action == domain.AttendanceReviewActionRejected {
+		// Rejection cannot claw back quota that has already been banked. Keep the
+		// transition atomic with approval/quota credit so a stale service read
+		// cannot overwrite an approval that won the race.
+		query = query.Where("quota_credited_at IS NULL").
+			Where("review_action IS NULL OR review_action <> ? OR salary_reject_reason IS NOT NULL", domain.AttendanceReviewActionApproved)
+	}
+
+	res := query.Updates(updates)
 	if res.Error != nil {
 		return false, res.Error
 	}
@@ -124,14 +132,14 @@ func (r *attendanceRepository) MarkAdminReviewed(
 }
 
 // MarkQuotaCredited atomically stamps quota_credited_at on an attendance whose
-// earning has just been banked into the quota pool. The conditional WHERE
-// (quota_credited_at IS NULL) is the race guard: a concurrent credit that already
-// stamped the row makes RowsAffected=0 — a safe no-op. The service layers the
-// actual AccumulateSalary/Create on top of a successful claim so two racing
-// credits cannot double-bank the same earning.
+// earning is still payable. The conditional WHERE is the race guard: a
+// concurrent credit that already stamped the row, or a rejection that zeroed
+// the earning, makes RowsAffected=0. The service banks only after this claim.
 func (r *attendanceRepository) MarkQuotaCredited(ctx context.Context, id uint, at time.Time) (bool, error) {
 	res := r.getDB(ctx).Model(&domain.Attendance{}).
-		Where("id = ? AND quota_credited_at IS NULL", id).
+		Where("id = ? AND quota_credited_at IS NULL AND earning_amount > 0", id).
+		Where("salary_reject_reason IS NULL").
+		Where("review_action IS NULL OR review_action <> ?", domain.AttendanceReviewActionRejected).
 		Update("quota_credited_at", at)
 	if res.Error != nil {
 		return false, res.Error
@@ -265,13 +273,17 @@ func (r *attendanceRepository) buildFilterQuery(ctx context.Context, filters dom
 	if filters.Status != nil {
 		switch *filters.Status {
 		case domain.AttendanceStatusCompleted:
-			query = query.Where("check_out_time IS NOT NULL")
+			query = query.Where(
+				"(review_action IS NULL OR review_action <> ?) AND (check_out_time IS NOT NULL OR (review_action = ? AND salary_reject_reason IS NULL))",
+				domain.AttendanceReviewActionRejected,
+				domain.AttendanceReviewActionApproved,
+			)
 		case domain.AttendanceStatusRejected:
-			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NOT NULL")
+			query = query.Where("review_action = ? OR (check_out_time IS NULL AND salary_reject_reason IS NOT NULL)", domain.AttendanceReviewActionRejected)
 		case domain.AttendanceStatusCheckedIn:
-			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ?", clock.Now().Add(-18*time.Hour))
+			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND (review_action IS NULL OR review_action <> ?) AND check_in_time >= ?", domain.AttendanceReviewActionApproved, clock.Now().Add(-18*time.Hour))
 		case domain.AttendanceStatusOrphaned:
-			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ?", clock.Now().Add(-18*time.Hour))
+			query = query.Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND (review_action IS NULL OR review_action <> ?) AND check_in_time < ?", domain.AttendanceReviewActionApproved, clock.Now().Add(-18*time.Hour))
 		}
 	}
 	if filters.SuccessfulCheckout != nil && *filters.SuccessfulCheckout {
@@ -298,10 +310,10 @@ func (r *attendanceRepository) GetHealthStats(ctx context.Context, since, until 
 	err := r.getDB(ctx).
 		Table("attendances").
 		Select(`
-			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ? THEN 1 ELSE 0 END) as open_checked_in,
-			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time < ? THEN 1 ELSE 0 END) as orphaned,
+			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND (review_action IS NULL OR review_action <> 'approved') AND check_in_time >= ? THEN 1 ELSE 0 END) as open_checked_in,
+			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NULL AND (review_action IS NULL OR review_action <> 'approved') AND check_in_time < ? THEN 1 ELSE 0 END) as orphaned,
 			SUM(CASE WHEN check_out_time IS NULL AND salary_reject_reason IS NOT NULL THEN 1 ELSE 0 END) as auto_rejected,
-			SUM(CASE WHEN check_out_time IS NOT NULL AND (earning_amount IS NULL OR earning_amount = 0) THEN 1 ELSE 0 END) as completed_zero_earning,
+			SUM(CASE WHEN check_out_time IS NOT NULL AND (review_action IS NULL OR review_action <> 'rejected') AND (earning_amount IS NULL OR earning_amount = 0) THEN 1 ELSE 0 END) as completed_zero_earning,
 			SUM(CASE WHEN check_out_time IS NOT NULL AND earning_amount > 0 THEN 1 ELSE 0 END) as successful_checkouts
 		`, openCutoff, openCutoff).
 		Where("check_in_time >= ? AND check_in_time < ?", since, until).

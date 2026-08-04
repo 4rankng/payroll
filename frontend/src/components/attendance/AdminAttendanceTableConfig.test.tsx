@@ -14,6 +14,71 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 }));
 
 describe("getAdminAttendanceColumns", () => {
+  it("renders an admin-approved open attendance as completed", () => {
+    const attendance = {
+      id: 8,
+      status: "checked_in",
+      review_action: "approved",
+    } as AdminAttendanceResponse;
+    const columns = getAdminAttendanceColumns();
+    const statusColumn = columns.find((column) => "accessorKey" in column && column.accessorKey === "status");
+    const statusCell = statusColumn?.cell;
+    if (typeof statusCell !== "function") {
+      throw new Error("Expected desktop attendance status cell");
+    }
+
+    render(<>{statusCell({ row: { original: attendance } } as never)}</>);
+
+    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
+    expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
+    expect(screen.queryByText("Đang làm")).not.toBeInTheDocument();
+  });
+
+  it("does not allow rejecting an admin-approved completed attendance", () => {
+    const attendance = {
+      id: 8,
+      status: "checked_in",
+      review_action: "approved",
+    } as AdminAttendanceResponse;
+    const columns = getAdminAttendanceColumns({
+      onViewMap: vi.fn(),
+      onApprove: vi.fn(),
+      onReject: vi.fn(),
+    });
+    const actionsColumn = columns.find((column) => column.id === "actions");
+    const cell = actionsColumn?.cell;
+    if (typeof cell !== "function") {
+      throw new Error("Expected desktop attendance actions cell");
+    }
+
+    render(<>{cell({ row: { original: attendance } } as never)}</>);
+
+    expect(screen.queryByRole("menuitem", { name: "Từ chối" })).not.toBeInTheDocument();
+  });
+
+  it("does not allow rejecting a physically completed attendance after quota credit", () => {
+    const attendance = {
+      id: 10,
+      status: "completed",
+      review_action: null,
+      quota_credited_at: "2026-08-05T01:00:00+07:00",
+    } as AdminAttendanceResponse;
+    const columns = getAdminAttendanceColumns({
+      onViewMap: vi.fn(),
+      onApprove: vi.fn(),
+      onReject: vi.fn(),
+    });
+    const actionsColumn = columns.find((column) => column.id === "actions");
+    const cell = actionsColumn?.cell;
+    if (typeof cell !== "function") {
+      throw new Error("Expected desktop attendance actions cell");
+    }
+
+    render(<>{cell({ row: { original: attendance } } as never)}</>);
+
+    expect(screen.queryByRole("menuitem", { name: "Từ chối" })).not.toBeInTheDocument();
+  });
+
   it("offers desktop repair for a delayed rejection after admin approval", () => {
     const onApprove = vi.fn();
     const attendance = {

@@ -133,13 +133,13 @@ func (f *fakeAttendanceRepo) MarkAutoRejected(_ context.Context, id uint, reason
 }
 
 // MarkQuotaCredited mirrors the real repo's conditional: it stamps
-// quota_credited_at only when nil, returning true the first time and false on
+// quota_credited_at only when nil and still payable, returning true the first time and false on
 // repeats (idempotent). Tracks credited IDs + the new running salary so the
 // deferred-credit and Approve-credit paths are testable in-memory. The advance
 // payment rows live on the paired fakeAdvancePaymentRepo (salaryByMonth).
 func (f *fakeAttendanceRepo) MarkQuotaCredited(_ context.Context, id uint, at time.Time) (bool, error) {
 	rec := f.findByID(id)
-	if rec == nil || rec.QuotaCreditedAt != nil {
+	if rec == nil || rec.QuotaCreditedAt != nil || rec.EarningAmount == nil || *rec.EarningAmount <= 0 || rec.SalaryRejectReason != nil || rec.IsRejectedByAdmin() {
 		return false, nil
 	}
 	rec.QuotaCreditedAt = &at
@@ -377,6 +377,40 @@ func TestCheckOutRejectsAutoRejectedAttendance(t *testing.T) {
 	if repo.updated != nil {
 		t.Fatalf("expected no persistence on a rejected checkout, but attendance was updated")
 	}
+}
+
+func TestCheckOutRejectsAdminApprovedAttendance(t *testing.T) {
+	approved := string(domain.AttendanceReviewActionApproved)
+	earning := int64(300000)
+	att := &domain.Attendance{
+		ID:              8,
+		EmployeeID:      123,
+		ReviewAction:    &approved,
+		EarningAmount:   &earning,
+		CheckInTime:     time.Date(2026, 6, 22, 8, 0, 0, 0, clock.DefaultLocation),
+		QuotaCreditedAt: timePointer(time.Date(2026, 6, 22, 17, 0, 0, 0, clock.DefaultLocation)),
+	}
+	repo := &fakeAttendanceRepo{byDate: att}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		clock:              clock.NewFake(time.Date(2026, 6, 22, 18, 0, 0, 0, clock.DefaultLocation)),
+		transactionManager: &fakeTransactionManager{},
+	}
+
+	_, err := svc.CheckOut(context.Background(), 123, domain.GeoReading{Lat: 10.0, Lng: 106.0}, false)
+	if err == nil || !strings.Contains(err.Error(), "đã tan ca") {
+		t.Fatalf("expected approved shift to reject checkout as completed, got %v", err)
+	}
+	if repo.updated != nil {
+		t.Fatal("expected approved earning not to be overwritten by checkout")
+	}
+	if att.EarningAmount == nil || *att.EarningAmount != earning {
+		t.Fatalf("approved earning = %v, want %d", att.EarningAmount, earning)
+	}
+}
+
+func timePointer(value time.Time) *time.Time {
+	return &value
 }
 
 func TestCancelCurrentAttendanceMarksOpenShiftRejected(t *testing.T) {

@@ -24,6 +24,22 @@ type reviewFakeAttendanceRepo struct {
 	reviewed        bool
 }
 
+type rejectConflictAttendanceRepo struct {
+	reviewFakeAttendanceRepo
+}
+
+func (f *rejectConflictAttendanceRepo) MarkAdminReviewed(
+	_ context.Context, id uint, action domain.AttendanceReviewAction,
+	_ string, _ uint, _ time.Time, _ *int64,
+) (bool, error) {
+	if action == domain.AttendanceReviewActionRejected {
+		rec := f.findByID(id)
+		approved := string(domain.AttendanceReviewActionApproved)
+		rec.ReviewAction = &approved
+	}
+	return false, nil
+}
+
 func (f *reviewFakeAttendanceRepo) MarkAdminReviewed(
 	_ context.Context, id uint, action domain.AttendanceReviewAction,
 	note string, adminID uint, _ time.Time, earning *int64,
@@ -251,6 +267,70 @@ func TestRejectIdempotentWhenAlreadyRejected(t *testing.T) {
 	}
 	if res.EarningAmount == nil || *res.EarningAmount != 0 {
 		t.Fatalf("expected earning unchanged at 0, got %v", res.EarningAmount)
+	}
+}
+
+func TestRejectRefusesCompletedAdminApproval(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 35, 0, 0, loc)
+	approved := string(domain.AttendanceReviewActionApproved)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID: 7, ProjectID: 55, EmployeeID: 123,
+		Date: checkIn, CheckInTime: checkIn, CheckInGate: "Cổng chính",
+		ReviewAction: &approved, EarningAmount: &earn,
+	}
+	svc, repo := newReviewService(att, nil, nil)
+
+	_, err := svc.Reject(context.Background(), 7, 9, "đổi quyết định")
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("expected validation error for terminal approval, got %v", err)
+	}
+	if repo.reviewed {
+		t.Fatal("expected approved attendance and credited quota to remain unchanged")
+	}
+}
+
+func TestRejectRefusesAttendanceWhoseQuotaWasAlreadyCredited(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 35, 0, 0, loc)
+	checkOut := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
+	creditedAt := checkOut.Add(24 * time.Hour)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID: 7, ProjectID: 55, EmployeeID: 123,
+		Date: checkIn, CheckInTime: checkIn, CheckOutTime: &checkOut,
+		EarningAmount: &earn, QuotaCreditedAt: &creditedAt,
+	}
+	svc, repo := newReviewService(att, nil, nil)
+
+	_, err := svc.Reject(context.Background(), 7, 9, "đổi quyết định")
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("expected validation error for credited attendance, got %v", err)
+	}
+	if repo.reviewed {
+		t.Fatal("expected credited attendance and employee quota to remain unchanged")
+	}
+}
+
+func TestRejectReportsConflictWhenConcurrentApprovalWins(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 35, 0, 0, loc)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID: 7, ProjectID: 55, EmployeeID: 123,
+		Date: checkIn, CheckInTime: checkIn, EarningAmount: &earn,
+	}
+	svc, baseRepo := newReviewService(att, nil, nil)
+	conflictRepo := &rejectConflictAttendanceRepo{reviewFakeAttendanceRepo: *baseRepo}
+	svc.attendanceRepo = conflictRepo
+
+	_, err := svc.Reject(context.Background(), 7, 9, "đổi quyết định")
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("expected validation conflict when approval wins, got %v", err)
+	}
+	if att.ReviewAction == nil || *att.ReviewAction != string(domain.AttendanceReviewActionApproved) {
+		t.Fatalf("expected concurrent approval preserved, got %v", att.ReviewAction)
 	}
 }
 

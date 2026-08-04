@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 import {
   canApproveAttendance,
+  canRejectAttendance,
+  getAttendanceOperationalStatus,
   getAttendanceReviewStatusLabel,
   needsAttendanceApprovalRepair,
 } from "@/utils/attendanceReviewState";
@@ -45,7 +47,8 @@ function StatusBadges({ status, reviewAction }: { status: string; reviewAction?:
       </div>
     );
   }
-  const sys = SYSTEM_STATUS_CONFIG[status] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
+  const operationalStatus = getAttendanceOperationalStatus({ status, review_action: reviewAction });
+  const sys = SYSTEM_STATUS_CONFIG[operationalStatus] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
   return (
     <div className="flex flex-col items-start gap-1">
@@ -159,7 +162,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
       cell: ({ row }) => {
         const att = row.original;
         const showApprove = canApproveAttendance(att);
-        const showReject = att.status !== "rejected" && att.review_action !== "rejected";
+        const showReject = canRejectAttendance(att);
         return (
           <div className="text-right">
             <DropdownMenu>

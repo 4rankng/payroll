@@ -1011,6 +1011,12 @@ func (s *AttendanceService) Reject(ctx context.Context, attendanceID, adminID ui
 	if att.IsRejectedByAdmin() {
 		return att, nil
 	}
+	if att.IsApproved() && att.SalaryRejectReason == nil {
+		return nil, domain.NewValidationError("Ca làm đã được duyệt và hoàn thành, không thể từ chối lại.")
+	}
+	if att.QuotaCreditedAt != nil {
+		return nil, domain.NewValidationError("Thu nhập của ca làm đã được cộng vào hạn mức ứng lương, không thể từ chối lại.")
+	}
 
 	zero := int64(0)
 	updated, err := s.attendanceRepo.MarkAdminReviewed(
@@ -1020,7 +1026,14 @@ func (s *AttendanceService) Reject(ctx context.Context, attendanceID, adminID ui
 		return nil, fmt.Errorf("failed to mark attendance rejected: %w", err)
 	}
 	if !updated {
-		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+		latest, reloadErr := s.attendanceRepo.GetByID(ctx, attendanceID)
+		if reloadErr != nil {
+			return nil, fmt.Errorf("failed to reload attendance after rejected transition conflict: %w", reloadErr)
+		}
+		if latest == nil {
+			return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+		}
+		return nil, domain.NewValidationError("Ca làm đã hoàn thành hoặc thu nhập đã được cộng vào hạn mức ứng lương, không thể từ chối lại.")
 	}
 
 	return s.attendanceRepo.GetByID(ctx, attendanceID)
@@ -1076,7 +1089,7 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 // path (immediate credit), and the safety-net sweep.
 //
 // Idempotent and race-free: it claims the credit via a conditional
-// MarkQuotaCredited (WHERE quota_credited_at IS NULL) inside a transaction, and
+// MarkQuotaCredited (still payable and quota_credited_at IS NULL) inside a transaction, and
 // only banks the earning if the claim succeeded. Two concurrent credits for the
 // same attendance serialize on the row lock; the loser's MarkQuotaCredited
 // returns RowsAffected=0 and skips the bank, so the earning is never double-
@@ -1111,9 +1124,8 @@ func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanc
 			return nil
 		}
 
-		// Claim first — the conditional UPDATE (quota_credited_at IS NULL) is the
-		// race guard. If a concurrent credit already stamped the row this returns
-		// false and we skip the bank, avoiding a double-count.
+		// Claim first. The conditional UPDATE also verifies the current row is
+		// still payable, so a concurrent admin rejection blocks stale credit.
 		claimed, err := s.attendanceRepo.MarkQuotaCredited(txCtx, attendanceID, s.clock.Now())
 		if err != nil {
 			return fmt.Errorf("failed to claim quota credit: %w", err)

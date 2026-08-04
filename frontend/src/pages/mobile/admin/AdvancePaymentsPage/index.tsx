@@ -55,6 +55,8 @@ import { cn } from "@/lib/utils";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import {
   canApproveAttendance,
+  canRejectAttendance,
+  getAttendanceOperationalStatus,
   getAttendanceReviewStatusLabel,
   needsAttendanceApprovalRepair,
 } from "@/utils/attendanceReviewState";
@@ -88,10 +90,11 @@ export function AttendanceMobileCard({
   const fmtDate = (d: string) => {
     try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
   };
-  const statusLabel = getAttendanceReviewStatusLabel(row) ?? ATTENDANCE_STATUS_LABEL[row.status] ?? row.status;
+  const statusLabel = needsAttendanceApprovalRepair(row)
+    ? getAttendanceReviewStatusLabel(row)
+    : ATTENDANCE_STATUS_LABEL[getAttendanceOperationalStatus(row)] ?? row.status;
   const showApprove = canApproveAttendance(row);
-  const showReject =
-    row.status !== "rejected" && row.review_action !== "rejected";
+  const showReject = canRejectAttendance(row);
 
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">

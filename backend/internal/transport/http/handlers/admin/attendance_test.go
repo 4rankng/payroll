@@ -165,6 +165,40 @@ func TestMapAdminAttendanceResponseRejectedIncludesRejectTimeAndNearestGate(t *t
 	}
 }
 
+func TestMapAdminAttendanceResponseTreatsApprovalAsCompleted(t *testing.T) {
+	now := clock.Now()
+	approved := string(domain.AttendanceReviewActionApproved)
+	att := &domain.Attendance{
+		ID:           9,
+		CheckInTime:  now.Add(-2 * time.Hour),
+		ReviewAction: &approved,
+	}
+
+	got := mapAdminAttendanceResponse(att, now)
+
+	if got.Status != string(domain.AttendanceStatusCompleted) {
+		t.Fatalf("status = %q, want completed", got.Status)
+	}
+}
+
+func TestMapAdminAttendanceResponseTreatsAdminRejectedCheckoutAsRejected(t *testing.T) {
+	now := clock.Now()
+	rejected := string(domain.AttendanceReviewActionRejected)
+	checkOut := now.Add(-time.Hour)
+	att := &domain.Attendance{
+		ID:           10,
+		CheckInTime:  now.Add(-10 * time.Hour),
+		CheckOutTime: &checkOut,
+		ReviewAction: &rejected,
+	}
+
+	got := mapAdminAttendanceResponse(att, now)
+
+	if got.Status != string(domain.AttendanceStatusRejected) {
+		t.Fatalf("status = %q, want rejected", got.Status)
+	}
+}
+
 func TestMapAdminAttendanceResponseIncludesCheckoutNearestGate(t *testing.T) {
 	loc := clock.DefaultLocation
 	now := time.Date(2026, 7, 2, 21, 0, 0, 0, loc)

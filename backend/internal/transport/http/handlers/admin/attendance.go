@@ -224,6 +224,7 @@ func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.Admin
 		ReviewNote:         att.ReviewNote,
 		ReviewedBy:         att.ReviewedBy,
 		ReviewedAt:         att.ReviewedAt,
+		QuotaCreditedAt:    att.QuotaCreditedAt,
 		Status:             status,
 	}
 

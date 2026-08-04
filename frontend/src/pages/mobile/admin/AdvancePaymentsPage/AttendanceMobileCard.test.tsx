@@ -19,6 +19,21 @@ const attendance = {
 } as AdminAttendanceResponse;
 
 describe("AttendanceMobileCard", () => {
+  it("renders an admin-approved open attendance as completed", () => {
+    render(
+      <AttendanceMobileCard
+        row={{ ...attendance, review_action: "approved" }}
+        onViewMap={vi.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
+    expect(screen.queryByText("Đang làm")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Từ chối" })).not.toBeInTheDocument();
+  });
+
   it("keeps map, approve, and reject review actions available", () => {
     const onViewMap = vi.fn();
     const onApprove = vi.fn();
