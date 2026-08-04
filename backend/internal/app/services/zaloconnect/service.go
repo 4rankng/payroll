@@ -169,22 +169,24 @@ type SaveCredentialsInput struct {
 }
 
 // SaveCredentials updates the admin-configured fields. Token lifecycle rules:
-//   - If AppID changes, all tokens are cleared (tokens are bound to a specific
-//     OA app — a stale token from another app will only produce -124 errors).
-//   - If AppID is unchanged, existing tokens are preserved so the admin can
-//     edit one field (e.g. re-paste an expired access_token) without forcing a
-//     full re-OAuth.
+//   - Each field is applied independently — empty fields mean "keep existing"
+//     so the admin can edit one value without clobbering the others.
 //   - When a non-empty AccessToken is provided AND differs from the current
 //     one, ExpiresAt is reset to now + 24h so the Provider treats the freshly
 //     pasted token as live (manual paste bypasses OAuth's expires_in).
+//   - Rotating AppID no longer force-clears tokens: the admin is manually
+//     managing tokens now, and a stale token will surface cleanly as a -124
+//     on the next Send (which the Provider retries after refresh). The old
+//     clear-on-rotate rule was OAuth-era defense that broke the manual paste
+//     UX (any re-save with a placeholder App ID wiped the tokens).
 //
-// Empty SecretKey/RefreshToken never overwrite existing values — the UI sends
-// empty for password fields the admin did not retype.
+// Empty SecretKey/RefreshToken/AccessToken never overwrite existing values —
+// the UI sends empty for password fields the admin did not retype.
 func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) error {
 	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
-		appIDChanged := in.AppID != "" && cur.AppID != "" && in.AppID != cur.AppID
-
-		cur.AppID = in.AppID
+		if in.AppID != "" {
+			cur.AppID = in.AppID
+		}
 		if in.SecretKey != "" {
 			cur.SecretKey = in.SecretKey
 		}
@@ -195,16 +197,8 @@ func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) 
 			cur.TemplateID = defaultTemplate
 		}
 
-		// Rotating AppID invalidates any existing tokens (app-bound).
-		if appIDChanged {
-			cur.AccessToken = ""
-			cur.RefreshToken = ""
-			cur.ExpiresAt = nil
-			return cur
-		}
-
-		// Manual token paste (AppID unchanged): overwrite only what was supplied.
-		// A new AccessToken resets the expiry clock to +24h (matches the Zalo OA
+		// Manual token paste: overwrite only what was supplied. A new
+		// AccessToken resets the expiry clock to +24h (matches the Zalo OA
 		// dashboard's typical access_token lifetime so the proactive-refresh
 		// buffer doesn't immediately fire).
 		if in.AccessToken != "" && in.AccessToken != cur.AccessToken {

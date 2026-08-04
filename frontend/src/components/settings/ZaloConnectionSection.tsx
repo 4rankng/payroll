@@ -46,12 +46,13 @@ export const ZaloConnectionSection = () => {
   const [testPhone, setTestPhone] = useState('');
   const [testResult, setTestResult] = useState<{ error_code: number; error_msg: string; msg_id?: string } | null>(null);
 
-  // Populate app_id + template_id from status once loaded.
+  // Populate template_id from status once loaded. App ID is write-only
+  // (never echoed from server) — leaving it empty means "keep existing" on
+  // save, matching the password fields. The status badge already tells the
+  // admin whether the connection is configured.
   useEffect(() => {
-    if (status) {
-      setAppID((prev) => prev || status.configured ? appID : '');
-      setTemplateID(status.template_id || '617976');
-    }
+    if (!status) return;
+    setTemplateID(status.template_id || '617976');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.template_id, status?.configured]);
 
@@ -197,12 +198,19 @@ export const ZaloConnectionSection = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="zalo-app-id">App ID</Label>
+            <Label htmlFor="zalo-app-id">
+              App ID
+              {status?.configured && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  (để trống để giữ nguyên)
+                </span>
+              )}
+            </Label>
             <Input
               id="zalo-app-id"
               value={appID}
               onChange={(e) => setAppID(e.target.value)}
-              placeholder="App ID từ Zalo OA Console"
+              placeholder={status?.configured ? '(đã lưu)' : 'App ID từ Zalo OA Console'}
               disabled={saveCreds.isPending}
             />
           </div>
@@ -272,7 +280,10 @@ export const ZaloConnectionSection = () => {
               disabled={saveCreds.isPending}
             />
           </div>
-          <Button onClick={handleSaveCreds} disabled={saveCreds.isPending || !appID.trim()}>
+          <Button
+            onClick={handleSaveCreds}
+            disabled={saveCreds.isPending || (!appID.trim() && !status?.configured)}
+          >
             {saveCreds.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Lưu thông tin
           </Button>
@@ -348,7 +359,7 @@ export const ZaloConnectionSection = () => {
             </div>
             <Button
               onClick={handleTestSend}
-              disabled={testSend.isPending || !status?.connected}
+              disabled={testSend.isPending || !status?.configured}
             >
               {testSend.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Gửi thử

@@ -120,7 +120,7 @@ func TestSaveCredentials_ThenStatusConfigured(t *testing.T) {
 	}
 }
 
-func TestSaveCredentials_ClearsTokensOnAppIDRotate(t *testing.T) {
+func TestSaveCredentials_PreservesTokensOnAppIDRotate(t *testing.T) {
 	svc, _, _, _ := newTestService(t)
 	// Seed with tokens for app1.
 	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
@@ -130,15 +130,17 @@ func TestSaveCredentials_ClearsTokensOnAppIDRotate(t *testing.T) {
 		c.RefreshToken = "old-refresh"
 		return c
 	})
-	// Re-saving with a DIFFERENT app_id must clear tokens (tokens are app-bound).
+	// Re-saving with a DIFFERENT app_id preserves tokens now — the admin is
+	// manually managing tokens, and a stale one surfaces cleanly as -124 on
+	// the next Send (Provider retries after refresh).
 	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
 		AppID: "app2", SecretKey: "secret2",
 	}); err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	st, _ := svc.GetStatus(context.Background())
-	if st.Connected {
-		t.Error("rotating app_id should clear tokens (Connected must be false)")
+	got, _ := svc.Get(context.Background())
+	if got.AccessToken != "old-access" || got.RefreshToken != "old-refresh" {
+		t.Errorf("tokens should be preserved on app_id rotate, got access=%q refresh=%q", got.AccessToken, got.RefreshToken)
 	}
 }
 
@@ -168,6 +170,28 @@ func TestSaveCredentials_PreservesTokensWhenAppIDUnchanged(t *testing.T) {
 	st, _ := svc.GetStatus(context.Background())
 	if !st.Connected {
 		t.Error("expected Connected=true (tokens preserved)")
+	}
+}
+
+func TestSaveCredentials_EmptyAppIDKeepsExisting(t *testing.T) {
+	// Admin clicks Save with an empty App ID field (write-only pattern —
+	// empty means "keep existing"). Must NOT clear the stored App ID.
+	svc, _, _, _ := newTestService(t)
+	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", SecretKey: "secret1",
+	})
+	// Re-save with empty App ID + a new access token.
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "", AccessToken: "new-access",
+	}); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	got, _ := svc.Get(context.Background())
+	if got.AppID != "app1" {
+		t.Errorf("empty App ID should keep existing, got %q", got.AppID)
+	}
+	if got.AccessToken != "new-access" {
+		t.Errorf("access token should be updated, got %q", got.AccessToken)
 	}
 }
 
