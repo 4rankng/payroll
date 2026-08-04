@@ -49,6 +49,9 @@ vi.mock('@/components/email/AdminEmailComposer', () => ({
 vi.mock('@/components/settings/SendNotificationComposer', () => ({
   SendNotificationComposer: () => null,
 }));
+vi.mock('@/components/settings/ZaloConnectionSection', () => ({
+  ZaloConnectionSection: () => <div>Quy trình cấu hình Zalo ZNS</div>,
+}));
 
 describe.each([
   ['desktop', SettingsPage],
@@ -88,5 +91,16 @@ describe.each([
     expect(screen.queryByLabelText('Giới hạn tổng tiền mỗi file Chuyển lô')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
     expect(mocks.retryLoading).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the Zalo ZNS workflow available', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/settings?tab=zalo']}>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('tab', { name: /Zalo ZNS/ })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByText('Quy trình cấu hình Zalo ZNS')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
+import { AlertCircle, MessageCircle, RefreshCw, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,12 +12,14 @@ import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementF
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
+import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
 const TAB_EMAIL = 'email';
 const TAB_NOTIFICATIONS = 'notifications';
-const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICATIONS]);
+const TAB_ZALO = 'zalo';
+const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICATIONS, TAB_ZALO]);
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
@@ -94,18 +96,22 @@ const SettingsPageMobile = () => {
 
       <div className="p-4 space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
-          <TabsList className="grid h-auto w-full grid-cols-2 p-1">
-            <TabsTrigger value={TAB_GENERAL} className="typography-body-medium min-h-11 px-3 py-2">
+          <TabsList className="grid h-auto w-full grid-cols-6 p-1">
+            <TabsTrigger value={TAB_GENERAL} className="col-span-2 min-h-11 px-2 py-2 typography-body-medium">
               Trả lương
             </TabsTrigger>
-            <TabsTrigger value={TAB_FEE_CONFIG} className="typography-body-medium min-h-11 px-3 py-2">
+            <TabsTrigger value={TAB_FEE_CONFIG} className="col-span-2 min-h-11 px-2 py-2 typography-body-medium">
               Tạm ứng
             </TabsTrigger>
-            <TabsTrigger value={TAB_EMAIL} className="typography-body-medium min-h-11 px-3 py-2">
+            <TabsTrigger value={TAB_EMAIL} className="col-span-2 min-h-11 px-2 py-2 typography-body-medium">
               Email
             </TabsTrigger>
-            <TabsTrigger value={TAB_NOTIFICATIONS} className="typography-body-medium min-h-11 px-3 py-2">
+            <TabsTrigger value={TAB_NOTIFICATIONS} className="col-span-3 min-h-11 px-2 py-2 typography-body-medium">
               Thông báo
+            </TabsTrigger>
+            <TabsTrigger value={TAB_ZALO} className="col-span-3 min-h-11 gap-1.5 px-2 py-2 typography-body-medium">
+              <MessageCircle aria-hidden="true" className="size-3.5" />
+              Zalo ZNS
             </TabsTrigger>
           </TabsList>
 
@@ -187,6 +193,10 @@ const SettingsPageMobile = () => {
 
           <TabsContent value={TAB_NOTIFICATIONS} className="mt-0">
             <SendNotificationComposer />
+          </TabsContent>
+
+          <TabsContent value={TAB_ZALO} className="mt-0">
+            <ZaloConnectionSection />
           </TabsContent>
         </Tabs>
       </div>
