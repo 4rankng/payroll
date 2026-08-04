@@ -9,7 +9,7 @@ import (
 )
 
 // ZaloHandler exposes admin-only endpoints for managing the Zalo OA connection
-// (credentials, OAuth connect flow, runtime toggle, forced refresh).
+// (credentials, runtime toggle, forced refresh, test send).
 // All routes live behind the admin authorization middleware.
 type ZaloHandler struct {
 	svc *zaloconnect.Service
@@ -22,9 +22,9 @@ func NewZaloHandler(svc *zaloconnect.Service) *ZaloHandler {
 
 // zaloCredentialsDTO is the body for PUT /admin/zalo/credentials.
 // SecretKey/AccessToken/RefreshToken are optional — empty means "keep existing"
-// (the UI sends empty for password fields the admin did not retype). This lets
-// the admin paste tokens manually for localhost/dev (no OAuth callback URL
-// reachable from the OA) OR run the OAuth connect flow for production.
+// (the UI sends empty for password fields the admin did not retype). The admin
+// pastes all four OA fields directly from the Zalo OA Console; there is no
+// OAuth authorization-code flow.
 type zaloCredentialsDTO struct {
 	AppID        string `json:"app_id" binding:"required"`
 	SecretKey    string `json:"secret_key"`
@@ -36,28 +36,6 @@ type zaloCredentialsDTO struct {
 // zaloEnabledDTO is the body for PUT /admin/zalo/enabled.
 type zaloEnabledDTO struct {
 	Enabled bool `json:"enabled"`
-}
-
-// zaloOAuthStartDTO is the response for POST /admin/zalo/oauth/start.
-type zaloOAuthStartDTO struct {
-	RedirectURL string `json:"redirect_url"`
-}
-
-// zaloOAuthCallbackQuery is the query string Zalo appends to the redirect.
-type zaloOAuthCallbackQuery struct {
-	Code  string `form:"code" form:"code"`
-	State string `form:"state" form:"state"`
-}
-
-// zaloOAuthCallbackDTO is the JSON body the SPA POSTs after receiving the
-// Zalo redirect. The SPA extracts code+state from the URL query (Zalo's
-// redirect lands on a frontend route), then calls this endpoint via axios —
-// which attaches the admin's Bearer JWT. A direct browser redirect to this
-// API endpoint would NOT carry the JWT (the SPA uses header-based auth, not
-// cookies), so the SPA intermediary is required.
-type zaloOAuthCallbackDTO struct {
-	Code  string `json:"code" binding:"required"`
-	State string `json:"state" binding:"required"`
 }
 
 // GetStatus
@@ -78,8 +56,9 @@ func (h *ZaloHandler) GetStatus(c *gin.Context) {
 
 // SaveCredentials
 // @Summary Save Zalo OA credentials
-// @Description Save app_id/secret/template and optional manually-pasted tokens.
-// @Description Tokens are preserved when app_id is unchanged; cleared when app_id rotates.
+// @Description Save app_id/secret/template and the manually-pasted tokens.
+// @Description Each field is applied independently — empty fields mean "keep existing"
+// @Description so the admin can re-paste one value without clobbering the others.
 // @Tags admin,zalo
 // @Security Bearer
 // @Param body body zaloCredentialsDTO true "Credentials"
@@ -103,47 +82,6 @@ func (h *ZaloHandler) SaveCredentials(c *gin.Context) {
 	response.SuccessEmpty(c, "Đã lưu thông tin kết nối Zalo")
 }
 
-// StartOAuth
-// @Summary Start Zalo OAuth connect flow
-// @Description Mints a single-use state and returns the Zalo permission URL.
-// @Tags admin,zalo
-// @Security Bearer
-// @Success 200 {object} response.SuccessResponse
-// @Router /admin/zalo/oauth/start [post]
-func (h *ZaloHandler) StartOAuth(c *gin.Context) {
-	redirectURL, err := h.svc.StartOAuth(c.Request.Context())
-	if err != nil {
-		response.HandleDomainError(c, err)
-		return
-	}
-	response.Success(c, zaloOAuthStartDTO{RedirectURL: redirectURL}, "ok")
-}
-
-// OAuthCallback
-// @Summary Complete Zalo OAuth connect (exchange code for tokens)
-// @Description Admin-authenticated. The SPA calls this after receiving Zalo's
-// @Description redirect (which lands on a frontend route carrying code+state in
-// @Description the URL query). The SPA extracts them and POSTs here via axios
-// @Description (which attaches the admin's JWT). Validates the single-use state,
-// @Description exchanges the code, persists tokens.
-// @Tags admin,zalo
-// @Security Bearer
-// @Param body body zaloOAuthCallbackDTO true "Authorization code + state"
-// @Success 200 {object} response.SuccessResponse
-// @Failure 400 {object} response.ErrorResponse
-// @Router /admin/zalo/oauth/callback [post]
-func (h *ZaloHandler) OAuthCallback(c *gin.Context) {
-	var req zaloOAuthCallbackDTO
-	if !helpers.BindJSON(c, &req) {
-		return
-	}
-	if err := h.svc.HandleOAuthCallback(c.Request.Context(), req.Code, req.State); err != nil {
-		response.HandleDomainError(c, err)
-		return
-	}
-	response.SuccessEmpty(c, "Đã kết nối Zalo thành công")
-}
-
 // SetEnabled
 // @Summary Toggle Zalo OTP feature on/off
 // @Description Hot toggle — takes effect on the next request, no redeploy.
@@ -165,8 +103,11 @@ func (h *ZaloHandler) SetEnabled(c *gin.Context) {
 }
 
 // RefreshNow
-// @Summary Force a Zalo token refresh
-// @Description Manual refresh for debugging ("Làm mới token").
+// @Summary Force a Zalo token refresh (validates connection)
+// @Description Used by the admin "Kiểm tra kết nối" button — validates
+// @Description App ID + Secret + Refresh Token against Zalo's token endpoint
+// @Description without sending a ZNS message (useful when the template is
+// @Description still pending Zalo approval).
 // @Tags admin,zalo
 // @Security Bearer
 // @Success 200 {object} response.SuccessResponse

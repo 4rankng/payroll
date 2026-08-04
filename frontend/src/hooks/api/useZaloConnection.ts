@@ -11,7 +11,6 @@ export interface ZaloConnectionStatus {
   template_id: string;
   expires_at?: string;
   last_error?: string;
-  callback_url: string;
 }
 
 // Result of POST /admin/zalo/test — mirrors the backend zalo.SendResult.
@@ -39,19 +38,6 @@ class ZaloAdminService {
     refresh_token?: string;
   }): Promise<ApiResponse<void>> {
     return apiClient.put<void>(API_ENDPOINTS.zalo.credentials, payload);
-  }
-
-  async startOAuth(): Promise<ApiResponse<{ redirect_url: string }>> {
-    return apiClient.post<{ redirect_url: string }>(API_ENDPOINTS.zalo.oauthStart, {});
-  }
-
-  /**
-   * Complete the OAuth flow: exchange the code+state (received from Zalo's
-   * redirect to the SPA) for tokens. Called by the SPA after detecting
-   * ?zalo_oauth=1&code=...&state=... in the URL.
-   */
-  async completeOAuth(code: string, state: string): Promise<ApiResponse<void>> {
-    return apiClient.post<void>(API_ENDPOINTS.zalo.oauthCallback, { code, state });
   }
 
   async setEnabled(enabled: boolean): Promise<ApiResponse<void>> {
@@ -100,21 +86,6 @@ export const useSaveZaloCredentials = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: zaloAdminService.saveCredentials.bind(zaloAdminService),
-    onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
-  });
-};
-
-export const useStartZaloOAuth = () =>
-  useMutation({
-    mutationFn: zaloAdminService.startOAuth.bind(zaloAdminService),
-  });
-
-/** Complete the OAuth flow after Zalo redirects back to the SPA. */
-export const useCompleteZaloOAuth = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ code, state }: { code: string; state: string }) =>
-      zaloAdminService.completeOAuth(code, state),
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };

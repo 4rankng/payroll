@@ -338,7 +338,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         step="1"
         title="Cấu hình kết nối"
-        description="Thông tin từ Zalo OA Console. Các khóa bảo mật không được hiển thị lại sau khi lưu."
+        description="Dán 4 thông tin từ Zalo OA Console (Quản trị trang → Thông tin nhà phát triển). Các khóa bảo mật không hiển thị lại sau khi lưu."
       >
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
@@ -368,7 +368,7 @@ export const ZaloConnectionSection = () => {
                 aria-describedby="zalo-secret-hint"
               />
             </CredentialField>
-            <CredentialField id="zalo-access-token" label="Mã truy cập (Access Token)" hint="Có hiệu lực khoảng 24 giờ. Chỉ dán thủ công khi cần thay thế OAuth trên localhost.">
+            <CredentialField id="zalo-access-token" label="Mã truy cập (Access Token)" hint="Lấy từ Zalo OA Console → Token quản trị trang. Có hiệu lực khoảng 24 giờ; hệ thống tự làm mới qua Refresh Token.">
               <Input
                 id="zalo-access-token"
                 name="zalo-access-token"

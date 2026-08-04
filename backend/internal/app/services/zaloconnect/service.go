@@ -8,10 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/zalo"
@@ -21,9 +18,7 @@ import (
 const (
 	KeyEnabled      = "zalo.enabled"
 	KeyCredentials  = "zalo.credentials"
-	stateKeyPrefix  = "zalo:oauth:state:"
 	defaultTemplate = "617976" // OTP-ZNS-v1; admin may override via credentials.template_id
-	stateTTL        = 5 * time.Minute
 )
 
 // Credentials is the JSON payload of the zalo.credentials settings row. It is
@@ -41,13 +36,12 @@ type Credentials struct {
 
 // Status is the masked, admin-facing view. No secret fields.
 type Status struct {
-	Enabled     bool       `json:"enabled"`
-	Configured  bool       `json:"configured"` // has app_id + secret
-	Connected   bool       `json:"connected"`  // has valid access + refresh tokens
-	TemplateID  string     `json:"template_id"`
-	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	LastError   string     `json:"last_error,omitempty"`
-	CallbackURL string     `json:"callback_url"`
+	Enabled    bool       `json:"enabled"`
+	Configured bool       `json:"configured"` // has app_id + secret
+	Connected  bool       `json:"connected"`  // has valid access + refresh tokens
+	TemplateID string     `json:"template_id"`
+	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+	LastError  string     `json:"last_error,omitempty"`
 }
 
 // EnvSeed is the bootstrap-only seed values read from ZALO_* env vars. Used by
@@ -69,35 +63,32 @@ type settingsRepo interface {
 	Update(ctx context.Context, s *domain.Settings) error
 }
 
-// Service owns the Zalo connection state + admin OAuth orchestration. It
-// implements zalo.CredentialSource so the infra/zalo Provider can read/update
-// tokens through it.
+// Service owns the Zalo connection state. The admin pastes all four OA fields
+// (app_id, secret, access_token, refresh_token) directly into the settings UI;
+// there is no OAuth authorization-code flow. Service implements
+// zalo.CredentialSource so the infra/zalo Provider can read/update tokens
+// through it (token rotation happens via refresh_token on each Send).
 type Service struct {
-	repo        settingsRepo
-	redis       *redis.Client
-	callbackURL string
-	clk         func() time.Time
-	log         *slog.Logger
+	repo settingsRepo
+	clk  func() time.Time
+	log  *slog.Logger
 
 	// provider is set via SetProvider after construction to break the
-	// construction cycle (Service needs Provider for OAuth exchange; Provider
-	// needs Service as CredentialSource). It is only used by admin actions
-	// (ExchangeCode/RefreshNow), never by the CredentialSource methods.
+	// construction cycle (Service needs Provider for RefreshNow/TestSend;
+	// Provider needs Service as CredentialSource).
 	provider *zalo.Provider
 }
 
 // NewService constructs the service. provider is nil initially — call
 // SetProvider after wiring the Provider with this service as its CredentialSource.
-func NewService(repo settingsRepo, rdb *redis.Client, callbackURL string, log *slog.Logger) *Service {
+func NewService(repo settingsRepo, log *slog.Logger) *Service {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &Service{
-		repo:        repo,
-		redis:       rdb,
-		callbackURL: callbackURL,
-		clk:         time.Now,
-		log:         log,
+		repo: repo,
+		clk:  time.Now,
+		log:  log,
 	}
 }
 
@@ -147,13 +138,12 @@ func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 		tmpl = defaultTemplate
 	}
 	return Status{
-		Enabled:     enabled,
-		Configured:  c.AppID != "" && c.SecretKey != "",
-		Connected:   c.AccessToken != "" && c.RefreshToken != "",
-		TemplateID:  tmpl,
-		ExpiresAt:   c.ExpiresAt,
-		LastError:   c.LastError,
-		CallbackURL: s.callbackURL,
+		Enabled:    enabled,
+		Configured: c.AppID != "" && c.SecretKey != "",
+		Connected:  c.AccessToken != "" && c.RefreshToken != "",
+		TemplateID: tmpl,
+		ExpiresAt:  c.ExpiresAt,
+		LastError:  c.LastError,
 	}, nil
 }
 
@@ -243,74 +233,14 @@ func (s *Service) IsEnabled(ctx context.Context) (bool, error) {
 	return *row.Value == "true", nil
 }
 
-// StartOAuth mints a single-use state param, stores it in Redis (5-min TTL),
-// and returns the Zalo permission URL the admin's browser should navigate to.
-func (s *Service) StartOAuth(ctx context.Context) (string, error) {
-	c, err := s.loadCredentials(ctx)
-	if err != nil {
-		return "", err
-	}
-	if c.AppID == "" || c.SecretKey == "" {
-		return "", errors.New("zalo: cannot start OAuth — save app_id and secret first")
-	}
-	state, err := randomToken(32)
-	if err != nil {
-		return "", fmt.Errorf("zalo: generate state: %w", err)
-	}
-	if err := s.redis.Set(ctx, stateKeyPrefix+state, "1", stateTTL).Err(); err != nil {
-		return "", fmt.Errorf("zalo: store state: %w", err)
-	}
-	// Zalo OA permission URL (OAuth v4). redirect_uri + state travel as query.
-	u := fmt.Sprintf("https://oauth.zaloapp.com/v4/permission?app_id=%s&redirect_uri=%s&state=%s",
-		url.QueryEscape(c.AppID),
-		url.QueryEscape(s.callbackURL),
-		url.QueryEscape(state),
-	)
-	return u, nil
-}
-
-// HandleOAuthCallback validates the single-use state, exchanges the code for
-// tokens via the Provider, and persists them. The state is consumed (Redis
-// GETDEL) before the exchange so a replay is rejected.
-func (s *Service) HandleOAuthCallback(ctx context.Context, code, state string) error {
-	if code == "" || state == "" {
-		return errors.New("zalo: missing code or state")
-	}
-	// Single-use state: GETDEL.
-	n, err := s.redis.Del(ctx, stateKeyPrefix+state).Result()
-	if err != nil {
-		return fmt.Errorf("zalo: validate state: %w", err)
-	}
-	if n == 0 {
-		return errors.New("zalo: invalid or expired OAuth state (possible replay)")
-	}
-	if s.provider == nil {
-		return errors.New("zalo: provider not wired (SetProvider not called)")
-	}
-	creds, err := s.provider.ExchangeCode(ctx, code, "")
-	if err != nil {
-		// Record the error on the credentials row so the admin UI can surface it.
-		_ = s.recordError(ctx, err.Error())
-		return fmt.Errorf("zalo: exchange code: %w", err)
-	}
-	// ExchangeCode already persisted via the Provider's CredentialSource.Update.
-	_ = creds
-	s.log.Info("zalo: OAuth connect completed")
-	return nil
-}
-
-// RefreshNow forces a token refresh via the Provider (manual "Làm mới token"
-// button for debugging). Returns the error if the refresh fails.
+// RefreshNow forces a token refresh via the Provider. Used by the admin
+// "Kiểm tra kết nối" button — validates App ID + Secret + Refresh Token with
+// Zalo's token endpoint WITHOUT sending a ZNS message (useful when the
+// template is still pending approval). Returns the error if refresh fails.
 func (s *Service) RefreshNow(ctx context.Context) error {
 	if s.provider == nil {
 		return errors.New("zalo: provider not wired")
 	}
-	// Trigger a refresh by calling Send with a no-op? Cleaner: expose a refresh
-	// method on the Provider. For now, read creds and force-expire so the next
-	// op refreshes. Simplest: call the internal path via a zero-cost send.
-	// We instead directly invoke the Provider's refresh by reading creds and
-	// writing an expired timestamp, but that is hacky. Prefer: Provider exposes
-	// Refresh(ctx) — add it.
 	return s.provider.RefreshNow(ctx)
 }
 
@@ -464,14 +394,6 @@ func toZaloCreds(c Credentials) zalo.Credentials {
 		RefreshToken: c.RefreshToken,
 		ExpiresAt:    c.ExpiresAt,
 	}
-}
-
-func randomToken(n int) (string, error) {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
 
 // isDomainNotFound reports whether err is a domain NotFoundError. Uses the

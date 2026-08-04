@@ -102,9 +102,8 @@ type ZaloConfig struct {
 	AppID       string
 	SecretKey   string
 	TemplateID  string // default "617976" (OTP-ZNS-v1)
-	CallbackURL string // ZALO_OAUTH_CALLBACK_URL — admin OAuth redirect target
 	CodeTTL     time.Duration
-}
+	}
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
 // id_token audience; GoogleOAuthEnabled flips the "Sign in with Google" flow on
@@ -468,7 +467,6 @@ func Load() (*Config, error) {
 			AppID:       getEnv("ZALO_APP_ID", ""),
 			SecretKey:   getEnv("ZALO_SECRET_KEY", ""),
 			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "617976"),
-			CallbackURL: getEnv("ZALO_OAUTH_CALLBACK_URL", "https://tingting.vip/admin/settings?tab=zalo"),
 			CodeTTL:     parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
 		Captcha: CaptchaConfig{

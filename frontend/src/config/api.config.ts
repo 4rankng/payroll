@@ -315,12 +315,11 @@ export const API_ENDPOINTS = {
     byKey: (key: string) => `/settings/key/${key}`,
   },
 
-  // Zalo ZNS connection management (Admin only)
+  // Zalo ZNS connection management (Admin only). The admin pastes all OA
+  // fields directly — there is no OAuth authorization-code flow.
   zalo: {
     status: '/admin/zalo',
     credentials: '/admin/zalo/credentials',
-    oauthStart: '/admin/zalo/oauth/start',
-    oauthCallback: '/admin/zalo/oauth/callback',
     enabled: '/admin/zalo/enabled',
     refresh: '/admin/zalo/refresh',
     test: '/admin/zalo/test',

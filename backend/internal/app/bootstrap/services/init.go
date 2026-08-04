@@ -631,8 +631,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// Zalo-OTP employee password-reset (mobile channel). Two-step wire:
 	// zaloconnect.Service implements zalo.CredentialSource and owns the
 	// admin-managed connection (DB-backed); the zalo.Provider takes it.
+	// The admin pastes all four OA fields directly (no OAuth flow).
 	// SeedFromEnvIfEmpty runs on first boot only — thereafter DB is authoritative.
-	zaloConnectSvc := zaloconnect.NewService(repos.Settings, redis.Client, cfg.Zalo.CallbackURL, logger)
+	zaloConnectSvc := zaloconnect.NewService(repos.Settings, logger)
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
 	zaloConnectSvc.SetProvider(zaloProvider)
 	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{

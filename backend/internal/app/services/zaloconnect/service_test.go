@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alicebob/miniredis/v2"
-	"github.com/redis/go-redis/v9"
-
 	"api-server/internal/domain"
 	"api-server/internal/infra/zalo"
 )
@@ -57,25 +54,20 @@ func (r *fakeSettingsRepo) Update(_ context.Context, s *domain.Settings) error {
 	return nil
 }
 
-// newTestService spins up a miniredis + fake repo and returns the service +
-// handles so the test can drive + inspect it.
-func newTestService(t *testing.T) (*Service, *fakeSettingsRepo, *redis.Client, *miniredis.Miniredis) {
+// newTestService spins up a fake repo and returns the service + repo so the
+// test can drive + inspect it. (No redis dependency — the OAuth state store
+// was removed along with the OAuth flow.)
+func newTestService(t *testing.T) (*Service, *fakeSettingsRepo) {
 	t.Helper()
-	mr, err := miniredis.Run()
-	if err != nil {
-		t.Fatalf("miniredis: %v", err)
-	}
-	t.Cleanup(mr.Close)
-	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 	repo := newFakeSettingsRepo()
-	svc := NewService(repo, rdb, "https://api.example.test/api/v1/admin/zalo/oauth/callback", nil)
-	return svc, repo, rdb, mr
+	svc := NewService(repo, nil)
+	return svc, repo
 }
 
 // --- GetStatus --------------------------------------------------------------
 
 func TestGetStatus_NotConfigured(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	st, err := svc.GetStatus(context.Background())
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -86,15 +78,12 @@ func TestGetStatus_NotConfigured(t *testing.T) {
 	if st.TemplateID != "617976" {
 		t.Errorf("default template_id = %q, want 617976", st.TemplateID)
 	}
-	if st.CallbackURL == "" {
-		t.Error("callback URL empty")
-	}
 }
 
 // --- SaveCredentials --------------------------------------------------------
 
 func TestSaveCredentials_ThenStatusConfigured(t *testing.T) {
-	svc, repo, _, _ := newTestService(t)
+	svc, repo := newTestService(t)
 	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
 		AppID: "app1", SecretKey: "secret1",
 	}); err != nil {
@@ -116,12 +105,12 @@ func TestSaveCredentials_ThenStatusConfigured(t *testing.T) {
 		t.Error("expected Configured=true after save")
 	}
 	if st.Connected {
-		t.Error("expected Connected=false (no OAuth yet)")
+		t.Error("expected Connected=false (no tokens pasted yet)")
 	}
 }
 
 func TestSaveCredentials_PreservesTokensOnAppIDRotate(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	// Seed with tokens for app1.
 	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
 		c.AppID = "app1"
@@ -145,7 +134,7 @@ func TestSaveCredentials_PreservesTokensOnAppIDRotate(t *testing.T) {
 }
 
 func TestSaveCredentials_PreservesTokensWhenAppIDUnchanged(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	// Seed connected state.
 	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
 		c.AppID = "app1"
@@ -176,7 +165,7 @@ func TestSaveCredentials_PreservesTokensWhenAppIDUnchanged(t *testing.T) {
 func TestSaveCredentials_EmptyAppIDKeepsExisting(t *testing.T) {
 	// Admin clicks Save with an empty App ID field (write-only pattern —
 	// empty means "keep existing"). Must NOT clear the stored App ID.
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{
 		AppID: "app1", SecretKey: "secret1",
 	})
@@ -197,7 +186,7 @@ func TestSaveCredentials_EmptyAppIDKeepsExisting(t *testing.T) {
 
 func TestSaveCredentials_ManualTokenPasteResetsExpiry(t *testing.T) {
 	// Freeze the clock so we can assert the +24h expiry precisely.
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	frozen := time.Date(2026, 8, 4, 12, 0, 0, 0, time.UTC)
 	svc.clk = func() time.Time { return frozen }
 
@@ -231,7 +220,7 @@ func TestSaveCredentials_ManualTokenPasteResetsExpiry(t *testing.T) {
 }
 
 func TestSaveCredentials_EmptyTokensDontClobber(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	// Seed connected state.
 	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
 		c.AppID = "app1"
@@ -256,7 +245,7 @@ func TestSaveCredentials_EmptyTokensDontClobber(t *testing.T) {
 // --- SetEnabled / IsEnabled -------------------------------------------------
 
 func TestSetEnabled_HotToggle(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	on, _ := svc.IsEnabled(context.Background())
 	if on {
 		t.Error("default should be disabled")
@@ -277,65 +266,10 @@ func TestSetEnabled_HotToggle(t *testing.T) {
 	}
 }
 
-// --- StartOAuth / HandleOAuthCallback --------------------------------------
-
-func TestStartOAuth_RequiresCredentials(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
-	_, err := svc.StartOAuth(context.Background())
-	if err == nil {
-		t.Error("StartOAuth without credentials should error")
-	}
-}
-
-func TestStartOAuth_BuildsURLAndStoresState(t *testing.T) {
-	svc, _, rdb, mr := newTestService(t)
-	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
-
-	url, err := svc.StartOAuth(context.Background())
-	if err != nil {
-		t.Fatalf("StartOAuth: %v", err)
-	}
-	if !strings.Contains(url, "app_id=app1") {
-		t.Errorf("URL missing app_id: %s", url)
-	}
-	if !strings.Contains(url, "state=") {
-		t.Errorf("URL missing state: %s", url)
-	}
-	if !strings.Contains(url, "redirect_uri=") {
-		t.Errorf("URL missing redirect_uri: %s", url)
-	}
-	// State stored in redis.
-	keys := mr.Keys()
-	found := false
-	for _, k := range keys {
-		if strings.HasPrefix(k, stateKeyPrefix) {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("state not stored in redis")
-	}
-	_ = rdb
-}
-
-func TestOAuthCallback_StateSingleUse(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
-	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
-	_, _ = svc.StartOAuth(context.Background())
-
-	// Extract the state from redis (we can't easily read the URL here, so
-	// drive HandleOAuthCallback with a known state that doesn't exist → rejected).
-	err := svc.HandleOAuthCallback(context.Background(), "code1", "nonexistent-state")
-	if err == nil {
-		t.Error("expected error for nonexistent state")
-	}
-}
-
 // --- SeedFromEnvIfEmpty -----------------------------------------------------
 
 func TestSeedFromEnvIfEmpty_FirstBoot(t *testing.T) {
-	svc, repo, _, _ := newTestService(t)
+	svc, repo := newTestService(t)
 	err := svc.SeedFromEnvIfEmpty(context.Background(), EnvSeed{
 		Enabled: true, AppID: "env-app", SecretKey: "env-secret", TemplateID: "",
 	})
@@ -356,7 +290,7 @@ func TestSeedFromEnvIfEmpty_FirstBoot(t *testing.T) {
 }
 
 func TestSeedFromEnvIfEmpty_NoOpWhenRowExists(t *testing.T) {
-	svc, repo, _, _ := newTestService(t)
+	svc, repo := newTestService(t)
 	// Pre-create credentials row.
 	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "db-app", SecretKey: "db-secret"})
 	before := repo.rows[KeyCredentials].Value
@@ -371,7 +305,7 @@ func TestSeedFromEnvIfEmpty_NoOpWhenRowExists(t *testing.T) {
 // --- TestSend --------------------------------------------------------------
 
 func TestTestSend_ErrorsWhenProviderNotWired(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	// Fresh service: provider is nil (SetProvider not called).
 	_, err := svc.TestSend(context.Background(), "84987654321", "", nil)
 	if err == nil {
@@ -382,7 +316,7 @@ func TestTestSend_ErrorsWhenProviderNotWired(t *testing.T) {
 // --- CredentialSource (Get/Update) -----------------------------------------
 
 func TestGetUpdate_RoundTrip(t *testing.T) {
-	svc, _, _, _ := newTestService(t)
+	svc, _ := newTestService(t)
 	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
 
 	// Simulate a token refresh via Update.

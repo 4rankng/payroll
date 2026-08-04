@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => ({
     connected: true,
     template_id: '617976',
     expires_at: '2099-01-01T00:00:00.000Z',
-    callback_url: 'https://example.test/zalo/callback',
   },
 }));
 

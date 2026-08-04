@@ -15,9 +15,11 @@ import (
 	"time"
 )
 
-// ErrNotConfigured is returned when no OAuth tokens are available (admin has
-// saved app_id/secret but not yet completed the connect flow).
-var ErrNotConfigured = errors.New("zalo: not configured (OAuth not completed)")
+// ErrNotConfigured is returned when the admin has not yet pasted an
+// access_token (and refresh_token) into the connection settings. The admin
+// pastes both tokens manually from the Zalo OA Console; there is no OAuth
+// authorization-code flow in this app.
+var ErrNotConfigured = errors.New("zalo: chưa dán access token — mở Zalo OA Console, lấy token và dán vào Cấu hình kết nối")
 
 // ErrRefreshFailed is returned when a token refresh attempt fails. The caller
 // should surface this as a transient error; the stored tokens are unchanged.
@@ -236,7 +238,7 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 		return "", fmt.Errorf("%w: malformed response", ErrRefreshFailed)
 	}
 	if tok.AccessToken == "" || tok.RefreshToken == "" {
-		p.log.Error("zalo: refresh returned missing tokens (needs admin re-OAuth)",
+		p.log.Error("zalo: refresh returned missing tokens (admin needs to re-paste from OA Console)",
 			"has_access", tok.AccessToken != "", "has_refresh", tok.RefreshToken != "")
 		return "", fmt.Errorf("%w: missing access_token or refresh_token", ErrRefreshFailed)
 	}
@@ -267,9 +269,10 @@ type oauthTokenResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-// RefreshNow forces a token refresh regardless of expiry. Called by the admin
-// "Làm mới token" button (zaloconnect.Service.RefreshNow). Acquires the mutex
-// so it cannot race an in-flight -124 retry refresh.
+// RefreshNow forces a token refresh regardless of expiry. Used by the admin
+// "Kiểm tra kết nối" button — validates App ID + Secret + Refresh Token with
+// Zalo without sending a message. Acquires the mutex so it cannot race an
+// in-flight -124 retry refresh.
 func (p *Provider) RefreshNow(ctx context.Context) error {
 	creds, err := p.creds.Get(ctx)
 	if err != nil {
@@ -280,67 +283,4 @@ func (p *Provider) RefreshNow(ctx context.Context) error {
 	}
 	_, err = p.refreshTokenLocked(ctx)
 	return err
-}
-
-// ExchangeCode trades a one-time authorization code (from the admin OAuth flow)
-// for an access + refresh token pair. Called by the zaloconnect service's
-// OAuth callback handler. Unlike refresh, this does NOT require the mutex — it
-// is only ever invoked from the single admin callback path.
-func (p *Provider) ExchangeCode(ctx context.Context, code, codeVerifier string) (Credentials, error) {
-	creds, err := p.creds.Get(ctx)
-	if err != nil {
-		return Credentials{}, fmt.Errorf("zalo: read credentials for exchange: %w", err)
-	}
-	if creds.AppID == "" || creds.SecretKey == "" {
-		return Credentials{}, ErrNotConfigured
-	}
-
-	form := url.Values{
-		"grant_type": {"authorization_code"},
-		"app_id":     {creds.AppID},
-		"code":       {code},
-	}
-	if codeVerifier != "" {
-		form.Set("code_verifier", codeVerifier)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.cfg.OAuthURL, strings.NewReader(form.Encode()))
-	if err != nil {
-		return Credentials{}, fmt.Errorf("zalo: build exchange request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("secret_key", creds.SecretKey)
-
-	resp, err := p.http.Do(req)
-	if err != nil {
-		return Credentials{}, fmt.Errorf("zalo: exchange code: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	var tok oauthTokenResponse
-	if jsonErr := json.Unmarshal(respBody, &tok); jsonErr != nil {
-		return Credentials{}, fmt.Errorf("zalo: exchange: malformed response: %w", jsonErr)
-	}
-	if tok.AccessToken == "" {
-		return Credentials{}, fmt.Errorf("zalo: exchange returned no access_token (check app_id/secret/code)")
-	}
-
-	expiresAt := time.Now().Add(time.Duration(tok.ExpiresIn) * time.Second)
-	if tok.ExpiresIn <= 0 {
-		expiresAt = time.Now().Add(time.Hour)
-	}
-
-	// Do NOT clobber an existing refresh_token with empty (PHP bug-fix). Zalo
-	// may or may not return a new refresh_token on the authorization_code grant.
-	next := creds
-	next.AccessToken = tok.AccessToken
-	if tok.RefreshToken != "" {
-		next.RefreshToken = tok.RefreshToken
-	}
-	next.ExpiresAt = &expiresAt
-	if err := p.creds.Update(ctx, next); err != nil {
-		return Credentials{}, fmt.Errorf("zalo: persist exchanged tokens: %w", err)
-	}
-	p.log.Info("zalo: OAuth code exchanged", "expires_in", tok.ExpiresIn, "expires_at", expiresAt.Format(time.RFC3339))
-	return next, nil
 }
