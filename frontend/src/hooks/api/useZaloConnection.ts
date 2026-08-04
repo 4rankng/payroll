@@ -14,6 +14,16 @@ export interface ZaloConnectionStatus {
   callback_url: string;
 }
 
+// Result of POST /admin/zalo/test — mirrors the backend zalo.SendResult.
+// error_code 0 = success; non-zero is a Zalo business error (e.g. -124 bad
+// token, -118 phone not linked to Zalo) surfaced with a Vietnamese message.
+export interface ZaloTestSendResult {
+  msg_id?: string;
+  error_code: number;
+  error_msg: string;
+  http_status?: number;
+}
+
 // --- service ----------------------------------------------------------------
 
 class ZaloAdminService {
@@ -50,6 +60,19 @@ class ZaloAdminService {
 
   async refreshNow(): Promise<ApiResponse<void>> {
     return apiClient.post<void>(API_ENDPOINTS.zalo.refresh, {});
+  }
+
+  /**
+   * Fire one test ZNS to verify the stored tokens work. Defaults to the OTP
+   * template (617976) with sample data when template_id/template_data are
+   * omitted. Does NOT touch the password-reset flow — no OTP stored in Redis.
+   */
+  async testSend(payload: {
+    phone: string;
+    template_id?: string;
+    template_data?: Record<string, string>;
+  }): Promise<ApiResponse<ZaloTestSendResult>> {
+    return apiClient.post<ZaloTestSendResult>(API_ENDPOINTS.zalo.test, payload);
   }
 }
 
@@ -111,3 +134,9 @@ export const useRefreshZaloToken = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };
+
+/** Fire a test ZNS to verify the connection. See ZaloTestSendResult for shape. */
+export const useTestZaloSend = () =>
+  useMutation({
+    mutationFn: zaloAdminService.testSend.bind(zaloAdminService),
+  });

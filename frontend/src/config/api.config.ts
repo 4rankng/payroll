@@ -323,6 +323,7 @@ export const API_ENDPOINTS = {
     oauthCallback: '/admin/zalo/oauth/callback',
     enabled: '/admin/zalo/enabled',
     refresh: '/admin/zalo/refresh',
+    test: '/admin/zalo/test',
   },
 
   // Health Check

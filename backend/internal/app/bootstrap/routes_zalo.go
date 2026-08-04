@@ -25,5 +25,6 @@ func setupZaloAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 		adminOnly.POST("/oauth/callback", container.Handlers.AdminZalo.OAuthCallback)
 		adminOnly.PUT("/enabled", container.Handlers.AdminZalo.SetEnabled)
 		adminOnly.POST("/refresh", container.Handlers.AdminZalo.RefreshNow)
+		adminOnly.POST("/test", container.Handlers.AdminZalo.TestSend)
 	}
 }

@@ -178,3 +178,36 @@ func (h *ZaloHandler) RefreshNow(c *gin.Context) {
 	}
 	response.SuccessEmpty(c, "Đã làm mới token Zalo")
 }
+
+// zaloTestSendDTO is the body for POST /admin/zalo/test. phone is required;
+// template_id defaults to the OTP template (617976); template_data defaults to
+// sample values for the OTP template. For any other template the admin must
+// supply template_data matching the template's declared params.
+type zaloTestSendDTO struct {
+	Phone        string            `json:"phone" binding:"required"`
+	TemplateID   string            `json:"template_id"`
+	TemplateData map[string]string `json:"template_data"`
+}
+
+// TestSend
+// @Summary Send a test ZNS message
+// @Description Fires one ZNS template message to verify the stored tokens work.
+// @Description Defaults to the OTP template (617976) with sample data.
+// @Description Does NOT touch the password-reset flow — no OTP stored in Redis.
+// @Tags admin,zalo
+// @Security Bearer
+// @Param body body zaloTestSendDTO true "Phone + optional template/data"
+// @Success 200 {object} response.SuccessResponse
+// @Router /admin/zalo/test [post]
+func (h *ZaloHandler) TestSend(c *gin.Context) {
+	var req zaloTestSendDTO
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	res, err := h.svc.TestSend(c.Request.Context(), req.Phone, req.TemplateID, req.TemplateData)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.Success(c, res, "Đã gửi tin thử")
+}

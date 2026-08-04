@@ -320,6 +320,49 @@ func (s *Service) RefreshNow(ctx context.Context) error {
 	return s.provider.RefreshNow(ctx)
 }
 
+// TestSendResult is the admin-facing outcome of a one-off test ZNS send. All
+// fields come straight from zalo.SendResult; the struct is separate so the
+// handler layer can attach it to a success response without leaking the Go
+// error type.
+type TestSendResult = zalo.SendResult
+
+// TestSend fires one ZNS template message to a phone using the currently
+// stored credentials, without touching the password-reset business flow (no
+// OTP stored in Redis, no event published, no rate-limit beyond admin auth).
+// This is the admin "Gửi thử" diagnostic — mirrors vfic_zns_preview_send in
+// the PHP reference app. Defaults to the OTP template (617976) with sample
+// values when the caller doesn't supply template_id/data.
+func (s *Service) TestSend(ctx context.Context, phone, templateID string, data map[string]string) (TestSendResult, error) {
+	if s.provider == nil {
+		return zalo.SendResult{}, errors.New("zalo: provider not wired")
+	}
+	if templateID == "" {
+		templateID = defaultTemplate
+	}
+	// Default sample data for the OTP template so a bare test request works
+	// without the admin having to remember param keys. For other templates,
+	// the caller must supply data — missing params surface as Zalo -1122.
+	if data == nil && templateID == defaultTemplate {
+		data = map[string]string{
+			"otp_code":             "000000",
+			"user_fullname":        "Test ZNS",
+			"otp_valid_in_minutes": "5",
+		}
+	}
+	trackingID := fmt.Sprintf("test_%d_%s", s.clk().Unix(), randomHex(4))
+	return s.provider.Send(ctx, phone, templateID, trackingID, data)
+}
+
+// randomHex returns 2*n hex characters of cryptographic randomness. Tiny helper
+// to avoid pulling in another import for the tracking ID suffix.
+func randomHex(n int) string {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return "00000000"
+	}
+	return hex.EncodeToString(b)
+}
+
 // SeedFromEnvIfEmpty populates the settings rows from env on first boot ONLY.
 // If the zalo.credentials row already exists, this is a no-op (DB authoritative).
 func (s *Service) SeedFromEnvIfEmpty(ctx context.Context, seed EnvSeed) error {

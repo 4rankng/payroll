@@ -344,6 +344,17 @@ func TestSeedFromEnvIfEmpty_NoOpWhenRowExists(t *testing.T) {
 	}
 }
 
+// --- TestSend --------------------------------------------------------------
+
+func TestTestSend_ErrorsWhenProviderNotWired(t *testing.T) {
+	svc, _, _, _ := newTestService(t)
+	// Fresh service: provider is nil (SetProvider not called).
+	_, err := svc.TestSend(context.Background(), "84987654321", "", nil)
+	if err == nil {
+		t.Fatal("expected error when provider not wired")
+	}
+}
+
 // --- CredentialSource (Get/Update) -----------------------------------------
 
 func TestGetUpdate_RoundTrip(t *testing.T) {

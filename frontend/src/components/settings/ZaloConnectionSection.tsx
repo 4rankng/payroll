@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, RefreshCw, Power } from 'lucide-react';
+import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, RefreshCw, Power, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import {
   useSaveZaloCredentials,
   useSetZaloEnabled,
   useRefreshZaloToken,
+  useTestZaloSend,
 } from '@/hooks/api/useZaloConnection';
 
 /**
@@ -34,6 +35,7 @@ export const ZaloConnectionSection = () => {
   const saveCreds = useSaveZaloCredentials();
   const setEnabled = useSetZaloEnabled();
   const refreshTok = useRefreshZaloToken();
+  const testSend = useTestZaloSend();
 
   // Form state — secret_key/access_token/refresh_token are write-only (never
   // echoed from server; empty on submit means "keep existing").
@@ -43,6 +45,8 @@ export const ZaloConnectionSection = () => {
   const [refreshToken, setRefreshToken] = useState('');
   const [templateID, setTemplateID] = useState('617976');
   const [confirmDisable, setConfirmDisable] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testResult, setTestResult] = useState<{ error_code: number; error_msg: string; msg_id?: string } | null>(null);
 
   // Populate app_id + template_id from status once loaded.
   useEffect(() => {
@@ -97,6 +101,31 @@ export const ZaloConnectionSection = () => {
       toast.success('Đã làm mới token Zalo');
     } catch (e) {
       toast.error('Không thể làm mới token');
+    }
+  };
+
+  const handleTestSend = async () => {
+    setTestResult(null);
+    if (!testPhone.trim()) {
+      toast.error('Nhập SĐT nhận thử');
+      return;
+    }
+    try {
+      const res = await testSend.mutateAsync({ phone: testPhone.trim() });
+      const r = res.data;
+      setTestResult({
+        error_code: r.error_code,
+        error_msg: r.error_msg,
+        msg_id: r.msg_id,
+      });
+      if (r.error_code === 0) {
+        toast.success(`Đã gửi thử (msg_id: ${r.msg_id || '—'})`);
+      } else {
+        toast.error(`Lỗi ZNS: ${r.error_msg}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Không rõ lỗi';
+      toast.error(`Gửi thử thất bại: ${msg}`);
     }
   };
 
@@ -309,6 +338,55 @@ export const ZaloConnectionSection = () => {
                   Hủy
                 </Button>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Test send */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Gửi thử ZNS</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Gửi 1 tin ZNS thử (template OTP {status?.template_id || '617976'}) đến SĐT
+            bạn nhập để kiểm tra tokens đang hoạt động. Không ảnh hưởng luồng đặt
+            lại mật khẩu — không lưu OTP vào Redis.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[200px] flex-1 space-y-2">
+              <Label htmlFor="zalo-test-phone">SĐT nhận thử</Label>
+              <Input
+                id="zalo-test-phone"
+                value={testPhone}
+                onChange={(e) => setTestPhone(e.target.value)}
+                placeholder="84987654321 (84 + 9 số, không dấu cách)"
+                disabled={testSend.isPending}
+              />
+            </div>
+            <Button
+              onClick={handleTestSend}
+              disabled={testSend.isPending || !status?.connected}
+            >
+              {testSend.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Gửi thử
+            </Button>
+          </div>
+          {testResult && (
+            <div
+              className={`rounded-lg border p-3 text-xs ${
+                testResult.error_code === 0
+                  ? 'border-green-500/30 bg-green-500/5 text-green-700'
+                  : 'border-destructive/30 bg-destructive/5 text-destructive'
+              }`}
+            >
+              <strong>{testResult.error_code === 0 ? 'Thành công' : `Lỗi ${testResult.error_code}`}</strong>
+              {' — '}
+              {testResult.error_msg}
+              {testResult.msg_id && (
+                <span className="ml-2 font-mono text-muted-foreground">msg_id: {testResult.msg_id}</span>
+              )}
             </div>
           )}
         </CardContent>
