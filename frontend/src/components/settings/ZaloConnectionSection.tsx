@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, Copy, RefreshCw, Power, Link2 } from 'lucide-react';
+import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, RefreshCw, Power } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import {
   useZaloStatus,
   useSaveZaloCredentials,
-  useStartZaloOAuth,
-  useCompleteZaloOAuth,
   useSetZaloEnabled,
   useRefreshZaloToken,
 } from '@/hooks/api/useZaloConnection';
@@ -20,9 +17,10 @@ import {
  * ZaloConnectionSection — the admin control surface for the Zalo ZNS connection.
  *
  * Renders the live connection status badge, the credentials form (app_id /
- * secret_key / template_id), the "Kết nối Zalo" OAuth button, the runtime
- * enable/disable toggle, and a manual token-refresh button. All mutations
- * invalidate the status query on success so the badge updates immediately.
+ * secret_key / access_token / refresh_token / template_id — tokens are pasted
+ * manually), the runtime enable/disable toggle, and a manual token-refresh
+ * button. All mutations invalidate the status query on success so the badge
+ * updates immediately.
  *
  * Secrets are write-only: the server never returns secret_key, access_token, or
  * refresh_token in the status payload, so those fields are never populated from
@@ -32,47 +30,10 @@ import {
 export const ZaloConnectionSection = () => {
   const { data: statusRes, isLoading, isError } = useZaloStatus();
   const status = statusRes?.data;
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const saveCreds = useSaveZaloCredentials();
-  const startOAuth = useStartZaloOAuth();
-  const completeOAuth = useCompleteZaloOAuth();
   const setEnabled = useSetZaloEnabled();
   const refreshTok = useRefreshZaloToken();
-
-  // --- Handle Zalo OAuth redirect ---
-  // Zalo redirects back to the SPA (e.g. /admin/settings?tab=zalo&code=...&state=...).
-  // The SPA extracts code+state and POSTs to the backend (which validates the
-  // single-use state and exchanges the code). This runs once on mount when the
-  // params are present.
-  useEffect(() => {
-    const code = searchParams.get('code');
-    const state = searchParams.get('state');
-    if (code && state) {
-      completeOAuth.mutate(
-        { code, state },
-        {
-          onSuccess: () => {
-            toast.success('Đã kết nối Zalo thành công');
-            // Clean the URL so a refresh doesn't re-trigger.
-            const next = new URLSearchParams(searchParams);
-            next.delete('code');
-            next.delete('state');
-            setSearchParams(next, { replace: true });
-          },
-          onError: (err: unknown) => {
-            const msg = err instanceof Error ? err.message : 'Không rõ lỗi';
-            toast.error(`Kết nối Zalo thất bại: ${msg}`);
-            const next = new URLSearchParams(searchParams);
-            next.delete('code');
-            next.delete('state');
-            setSearchParams(next, { replace: true });
-          },
-        },
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   // Form state — secret_key/access_token/refresh_token are write-only (never
   // echoed from server; empty on submit means "keep existing").
@@ -92,24 +53,6 @@ export const ZaloConnectionSection = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.template_id, status?.configured]);
 
-  // Handle ?zalo_connected=1 / ?zalo_error= from the OAuth callback redirect.
-  useEffect(() => {
-    const connected = searchParams.get('zalo_connected');
-    const error = searchParams.get('zalo_error');
-    if (connected) {
-      toast.success('Đã kết nối Zalo thành công');
-      const next = new URLSearchParams(searchParams);
-      next.delete('zalo_connected');
-      setSearchParams(next, { replace: true });
-    }
-    if (error) {
-      toast.error(`Kết nối Zalo thất bại: ${error}`);
-      const next = new URLSearchParams(searchParams);
-      next.delete('zalo_error');
-      setSearchParams(next, { replace: true });
-    }
-  }, [searchParams, setSearchParams, toast]);
-
   const handleSaveCreds = async () => {
     try {
       await saveCreds.mutateAsync({
@@ -127,18 +70,6 @@ export const ZaloConnectionSection = () => {
       setRefreshToken('');
     } catch (e) {
       toast.error('Không thể lưu thông tin kết nối');
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      const res = await startOAuth.mutateAsync();
-      const url = res.data?.redirect_url;
-      if (url) {
-        window.location.href = url; // full redirect to Zalo permission page
-      }
-    } catch (e) {
-      toast.error('Không thể bắt đầu kết nối Zalo');
     }
   };
 
@@ -166,13 +97,6 @@ export const ZaloConnectionSection = () => {
       toast.success('Đã làm mới token Zalo');
     } catch (e) {
       toast.error('Không thể làm mới token');
-    }
-  };
-
-  const handleCopyCallback = () => {
-    if (status?.callback_url) {
-      navigator.clipboard.writeText(status.callback_url);
-      toast.success('Đã sao chép URL callback');
     }
   };
 
@@ -335,28 +259,8 @@ export const ZaloConnectionSection = () => {
             Lưu thông tin
           </Button>
 
-          {/* Callback URL */}
-          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-            <Label className="text-xs text-muted-foreground">OAuth Callback URL</Label>
-            <p className="text-xs text-muted-foreground">
-              Đăng ký URL này trong Zalo OA Console (OAuth redirect_uris).
-            </p>
-            <div className="flex items-center gap-2">
-              <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1.5 text-xs">
-                {status?.callback_url || '(chưa cấu hình)'}
-              </code>
-              <Button size="sm" variant="outline" onClick={handleCopyCallback} disabled={!status?.callback_url}>
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Connect + refresh actions */}
+          {/* Refresh action */}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleConnect} disabled={startOAuth.isPending || !status?.configured}>
-              {startOAuth.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-              Kết nối Zalo
-            </Button>
             <Button onClick={handleRefresh} variant="outline" disabled={refreshTok.isPending || !status?.connected}>
               {refreshTok.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Làm mới token
