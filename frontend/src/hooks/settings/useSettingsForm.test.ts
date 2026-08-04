@@ -32,6 +32,12 @@ const mocks = vi.hoisted(() => ({
       value: '400000000',
       value_type: 'number',
     },
+    {
+      id: 5,
+      key: 'self_check_in_advance_percentage',
+      value: '70',
+      value_type: 'number',
+    },
   ],
 }));
 
@@ -99,5 +105,32 @@ describe('useSettingsForm', () => {
       result.current.setBulkTransferWorkbookLimitVnd('600000000');
     });
     expect(result.current.bulkTransferWorkbookLimitSaveError).toBeNull();
+  });
+
+  it('loads and saves the self-check-in advance percentage as a whole percent', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.selfCheckInAdvancePercentage).toBe('70');
+    });
+
+    act(() => {
+      result.current.setSelfCheckInAdvancePercentage('85');
+    });
+    act(() => {
+      result.current.handleSaveSelfCheckInAdvancePercentage();
+    });
+
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      { id: 5, data: { value: '85' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    const [, options] = mocks.mutate.mock.calls.at(-1) as [
+      unknown,
+      { onSuccess: () => void },
+    ];
+    act(() => options.onSuccess());
+    expect(result.current.originalSelfCheckInAdvancePercentage).toBe('85');
   });
 });

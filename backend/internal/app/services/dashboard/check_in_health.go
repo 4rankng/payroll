@@ -109,15 +109,16 @@ func (s *Service) GetCheckInHealth(ctx context.Context, month string) (*dto.Chec
 	}
 
 	// Quota anomaly counts for the month (cheap, run sequentially).
-	driftCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "drift")
+	advancePercent := s.SettingsConfigSvc.GetSelfCheckInAdvancePercentage(ctx)
+	driftCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "drift", advancePercent)
 	if err != nil {
 		return nil, fmt.Errorf("quota drift count: %w", err)
 	}
-	missingCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "missing")
+	missingCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "missing", advancePercent)
 	if err != nil {
 		return nil, fmt.Errorf("quota missing count: %w", err)
 	}
-	staleCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "stale")
+	staleCount, err := s.AdvancePaymentRepo.CountQuotaAnomalies(ctx, forMonth, "stale", advancePercent)
 	if err != nil {
 		return nil, fmt.Errorf("quota stale count: %w", err)
 	}
@@ -183,7 +184,8 @@ func (s *Service) GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType s
 		forMonth = clock.Now().Format("2006-01")
 	}
 
-	rows, err := s.AdvancePaymentRepo.GetQuotaAnomalies(ctx, forMonth, anomalyType)
+	advancePercent := s.SettingsConfigSvc.GetSelfCheckInAdvancePercentage(ctx)
+	rows, err := s.AdvancePaymentRepo.GetQuotaAnomalies(ctx, forMonth, anomalyType, advancePercent)
 	if err != nil {
 		return nil, err
 	}
@@ -196,18 +198,18 @@ func (s *Service) GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType s
 			ForMonth:     r.ForMonth,
 			Salary:       int64(r.Salary),
 			MaxAdvAmount: int64(r.MaxAdvAmount),
-			ExpectedMax:  expectedMaxAdv(int64(r.Salary)),
+			ExpectedMax:  expectedMaxAdv(int64(r.Salary), advancePercent),
 			Reason:       r.Reason,
 		})
 	}
 	return out, nil
 }
 
-// expectedMaxAdv computes floor(salary * 70 / 100) — the invariant value for the
+// expectedMaxAdv computes floor(salary * configured_percent / 100) — the invariant value for the
 // self-check-in flow. Centralized here so the DTO agrees with the repo's drift
 // predicate (advance_payment_repository.go:quotaAnomalySQL).
-func expectedMaxAdv(salary int64) int64 {
-	return (salary * int64(domain.SelfCheckInAdvanceablePercent)) / 100
+func expectedMaxAdv(salary int64, advancePercentage uint64) int64 {
+	return (salary * int64(advancePercentage)) / 100
 }
 
 // toDTOCategoryCounts maps the domain count slice to the DTO slice, returning a

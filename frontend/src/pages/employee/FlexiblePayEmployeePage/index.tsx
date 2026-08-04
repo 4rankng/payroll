@@ -69,7 +69,7 @@ const FlexiblePayEmployeePage = () => {
   // history remains all-time so employees always see their latest activity.
   const month = useEmployeeMonth();
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
-  // (70% advanceable cap, calendar-month window); others use the admin-upload flow.
+  // (Admin-configured advanceable cap, calendar-month window); others use the admin-upload flow.
   const isCheckInEnabled = Boolean(profile?.check_in_enabled);
   const isCheckIn = isCheckInEnabled;
   const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckIn });

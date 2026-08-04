@@ -14,7 +14,7 @@ func setupAdvancePaymentRoutes(protected *gin.RouterGroup, container *Container)
 	}
 
 	// Employee self-check-in advance endpoints — DEDICATED PATH (separate from the
-	// admin-upload /me/advance-payment flow above). 70% advanceable cap, calendar-
+	// admin-upload /me/advance-payment flow above). Admin-configured advanceable cap, calendar-
 	// month salary period, day-10 request window.
 	checkInMe := protected.Group("/me/check-in-advance")
 	{

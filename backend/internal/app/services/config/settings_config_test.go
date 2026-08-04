@@ -17,6 +17,7 @@ type stubSettingReader struct {
 	setting *domain.Settings
 	err     error
 	calls   int
+	locks   int
 }
 
 func (s *stubSettingReader) GetSettingByKey(context.Context, string) (*domain.Settings, error) {
@@ -28,9 +29,22 @@ func (s *stubSettingReader) GetSettingByKeyAuthoritative(context.Context, string
 	return s.setting, s.err
 }
 
+func (s *stubSettingReader) GetSettingByKeyAuthoritativeForUpdate(context.Context, string) (*domain.Settings, error) {
+	s.locks++
+	return s.setting, s.err
+}
+
 func numberSetting(value *string) *domain.Settings {
 	return &domain.Settings{
 		Key:       SettingKeyBulkTransferWorkbookLimit,
+		Value:     value,
+		ValueType: domain.ValueTypeNumber,
+	}
+}
+
+func selfCheckInPercentSetting(value *string) *domain.Settings {
+	return &domain.Settings{
+		Key:       SettingKeySelfCheckInAdvancePercent,
 		Value:     value,
 		ValueType: domain.ValueTypeNumber,
 	}
@@ -94,6 +108,7 @@ func TestParseBulkTransferWorkbookLimitBoundaries(t *testing.T) {
 func TestValidateBusinessSettingOnlyAppliesToWorkbookLimit(t *testing.T) {
 	invalid := "not-a-number"
 	require.Error(t, validateBusinessSetting(numberSetting(&invalid)))
+	require.Error(t, validateBusinessSetting(selfCheckInPercentSetting(&invalid)))
 
 	unrelated := &domain.Settings{
 		Key:       "some_other_number",
@@ -101,6 +116,78 @@ func TestValidateBusinessSettingOnlyAppliesToWorkbookLimit(t *testing.T) {
 		ValueType: domain.ValueTypeNumber,
 	}
 	require.NoError(t, validateBusinessSetting(unrelated))
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvancePercentage(t *testing.T) {
+	valid := "85"
+	reader := &stubSettingReader{setting: selfCheckInPercentSetting(&valid)}
+	service := NewSettingsConfigService(reader)
+
+	assert.Equal(t, uint64(85), service.GetSelfCheckInAdvancePercentage(context.Background()))
+	assert.Equal(t, 1, reader.calls)
+	assert.Equal(t, 0, reader.locks)
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvancePercentageForUpdateLocks(t *testing.T) {
+	valid := "72"
+	reader := &stubSettingReader{setting: selfCheckInPercentSetting(&valid)}
+	service := NewSettingsConfigService(reader)
+
+	got, err := service.GetSelfCheckInAdvancePercentageForUpdate(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, uint64(72), got)
+	assert.Equal(t, 0, reader.calls)
+	assert.Equal(t, 1, reader.locks)
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvancePercentageForUpdatePropagatesLockFailure(t *testing.T) {
+	reader := &stubSettingReader{err: errors.New("database unavailable")}
+	service := NewSettingsConfigService(reader)
+
+	_, err := service.GetSelfCheckInAdvancePercentageForUpdate(context.Background())
+	require.ErrorContains(t, err, "database unavailable")
+	assert.Equal(t, 1, reader.locks)
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvancePercentageFallsBackToDefault(t *testing.T) {
+	tests := []struct {
+		name    string
+		setting *domain.Settings
+		err     error
+	}{
+		{name: "missing", err: errors.New("not found")},
+		{name: "nil value", setting: selfCheckInPercentSetting(nil)},
+		{name: "zero", setting: selfCheckInPercentSetting(stringPointer("0"))},
+		{name: "leading zero", setting: selfCheckInPercentSetting(stringPointer("070"))},
+		{name: "spaces", setting: selfCheckInPercentSetting(stringPointer(" 70 "))},
+		{name: "decimal", setting: selfCheckInPercentSetting(stringPointer("70.5"))},
+		{name: "plus sign", setting: selfCheckInPercentSetting(stringPointer("+70"))},
+		{name: "overflow range", setting: selfCheckInPercentSetting(stringPointer("101"))},
+		{
+			name: "wrong type",
+			setting: &domain.Settings{
+				Key:       SettingKeySelfCheckInAdvancePercent,
+				Value:     stringPointer("70"),
+				ValueType: domain.ValueTypeString,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewSettingsConfigService(&stubSettingReader{setting: tt.setting, err: tt.err})
+			assert.Equal(t, DefaultSelfCheckInAdvancePercent, service.GetSelfCheckInAdvancePercentage(context.Background()))
+		})
+	}
+}
+
+func TestParseSelfCheckInAdvancePercentBoundaries(t *testing.T) {
+	for _, value := range []uint64{1, DefaultSelfCheckInAdvancePercent, 100} {
+		raw := strconv.FormatUint(value, 10)
+		parsed, err := parseSelfCheckInAdvancePercent(selfCheckInPercentSetting(&raw))
+		require.NoError(t, err)
+		assert.Equal(t, value, parsed)
+	}
 }
 
 func stringPointer(value string) *string {

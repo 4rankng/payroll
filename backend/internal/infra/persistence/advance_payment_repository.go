@@ -118,7 +118,7 @@ func (r *AdvancePaymentRepository) SumSalaryAndMaxAdvByEmployeeMonth(ctx context
 // earning has not yet been banked into the quota pool (quota_credited_at IS NULL
 // and earning_amount > 0), scoped by check-out month. Displayed separately from
 // the already-credited Salary on the self-check-in advance screen; it is NOT
-// part of the 70% advanceable cap. Queries the attendances table directly — the
+// part of the configured advanceable cap. Queries the attendances table directly — the
 // advance-payment repo already reads attendances for GetQuotaAnomalies, so this
 // stays within the existing cross-table precedent.
 func (r *AdvancePaymentRepository) SumPendingEarningsByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error) {
@@ -212,17 +212,33 @@ func (r *AdvancePaymentRepository) getDB(ctx context.Context) *gorm.DB {
 }
 
 // AccumulateSalary atomically adds earning to salary AND recomputes max_adv_amount as
-// floor(salary * SelfCheckInAdvanceablePercent / 100) for the self-check-in flow.
+// floor(salary * configured_percent / 100) for the self-check-in flow.
 // Both expressions reference (old salary + earning) so the result is independent of
 // MySQL's left-to-right SET evaluation order. earning is always >= 0 (checkout earnings).
-func (r *AdvancePaymentRepository) AccumulateSalary(ctx context.Context, id uint64, earning int64) error {
+func (r *AdvancePaymentRepository) AccumulateSalary(ctx context.Context, id uint64, earning int64, advancePercentage uint64) error {
 	return r.getDB(ctx).
 		Model(&domain.AdvancePayment{}).
 		Where("id = ?", id).
 		Updates(map[string]any{
 			"salary":         gorm.Expr("salary + ?", earning),
-			"max_adv_amount": gorm.Expr("(salary + ?) * ? / 100", earning, domain.SelfCheckInAdvanceablePercent),
+			"max_adv_amount": gorm.Expr("FLOOR((salary + ?) * ? / 100)", earning, advancePercentage),
 		}).Error
+}
+
+// RecomputeActiveCheckInMaxAdvance reapplies the configured self-check-in
+// advance percentage to live self-check-in quota rows. The active assignment
+// is the flow authority; admin-import rows for non-check-in employees are not joined.
+func (r *AdvancePaymentRepository) RecomputeActiveCheckInMaxAdvance(ctx context.Context, advancePercentage uint64) error {
+	return r.getDB(ctx).Exec(`
+		UPDATE advance_payments ap
+		JOIN project_employees pe
+		  ON pe.project_id = ap.project_id
+		 AND pe.employee_id = ap.employee_id
+		 AND pe.deleted_at IS NULL
+		 AND pe.last_date IS NULL
+		 AND pe.check_in_enabled = 1
+		SET ap.max_adv_amount = FLOOR(ap.salary * ? / 100)
+	`, advancePercentage).Error
 }
 
 // ZeroOutQuota sets max_adv_amount AND salary to 0 for all advance payments of a project-employee
@@ -474,17 +490,17 @@ func (r *AdvancePaymentRepository) HasDataForMonth(ctx context.Context, forMonth
 // quotaAnomalySQL returns the Raw SQL query and bind args for each anomaly type.
 // The queries reuse the predicates documented on
 // AdvancePaymentRepository.GetQuotaAnomalies in the domain interface.
-func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string, startOfMonth, endOfNextMonth time.Time) (string, []any) {
+func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string, startOfMonth, endOfNextMonth time.Time, advancePercentage uint64) (string, []any) {
 	switch anomalyType {
 	case "drift":
-		// max_adv_amount invariant: must equal floor(salary * 70 / 100) when salary>0.
+		// max_adv_amount invariant: must equal floor(salary * configured_percent / 100) when salary>0.
 		return fmt.Sprintf(`
 			SELECT ap.employee_id, ap.project_id, ap.for_month, ap.salary, ap.max_adv_amount, 'drift' as reason
 			FROM advance_payments ap
 			WHERE ap.for_month = ? AND ap.salary > 0
 			  AND ap.max_adv_amount != FLOOR(ap.salary * ? / 100)
 			  AND %s
-		`, checkInEnabledScope("ap")), []any{forMonth, domain.SelfCheckInAdvanceablePercent}
+		`, checkInEnabledScope("ap")), []any{forMonth, advancePercentage}
 	case "missing":
 		// Earning>0 attendance this month but no advance_payments row for the pair.
 		return fmt.Sprintf(`
@@ -516,12 +532,12 @@ func (r *AdvancePaymentRepository) quotaAnomalySQL(forMonth, anomalyType string,
 
 // GetQuotaAnomalies returns quota rows violating the named invariant. See
 // domain.AdvancePaymentRepository.GetQuotaAnomalies for the per-type contract.
-func (r *AdvancePaymentRepository) GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) ([]domain.QuotaAnomaly, error) {
+func (r *AdvancePaymentRepository) GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string, advancePercentage uint64) ([]domain.QuotaAnomaly, error) {
 	startOfMonth, endOfNextMonth, err := quotaAnomalyMonthBounds(forMonth)
 	if err != nil {
 		return nil, domain.NewValidationError("định dạng tháng không hợp lệ (YYYY-MM)")
 	}
-	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth)
+	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth, advancePercentage)
 	if sql == "" {
 		return nil, domain.NewValidationError("loại bất thường không hợp lệ (drift|missing|stale)")
 	}
@@ -535,12 +551,12 @@ func (r *AdvancePaymentRepository) GetQuotaAnomalies(ctx context.Context, forMon
 }
 
 // CountQuotaAnomalies returns the count of rows violating the named invariant.
-func (r *AdvancePaymentRepository) CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) (int, error) {
+func (r *AdvancePaymentRepository) CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string, advancePercentage uint64) (int, error) {
 	startOfMonth, endOfNextMonth, err := quotaAnomalyMonthBounds(forMonth)
 	if err != nil {
 		return 0, domain.NewValidationError("định dạng tháng không hợp lệ (YYYY-MM)")
 	}
-	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth)
+	sql, args := r.quotaAnomalySQL(forMonth, anomalyType, startOfMonth, endOfNextMonth, advancePercentage)
 	if sql == "" {
 		return 0, domain.NewValidationError("loại bất thường không hợp lệ (drift|missing|stale)")
 	}

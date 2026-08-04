@@ -5,11 +5,10 @@ import (
 	"time"
 )
 
-// SelfCheckInAdvanceablePercent is the percent of earned salary (from check-in/out)
-// that a self-check-in employee may take as an advance. Centralized so accumulation
-// (repo), request validation, and UI display all agree.
-// For the self-check-in flow: max_adv_amount = floor(salary * percent / 100).
-const SelfCheckInAdvanceablePercent uint64 = 70
+// DefaultSelfCheckInAdvancePercentage is the fallback percent of earned salary
+// (from check-in/out) that a self-check-in employee may take as an advance when
+// the Admin setting is missing or invalid.
+const DefaultSelfCheckInAdvancePercentage uint64 = 70
 
 // QuotaCreditHoldDuration is how long a self-check-out earning stays pending
 // before it is banked into the advance-payment quota pool. Check-out enqueues a
@@ -27,7 +26,7 @@ type AdvancePayment struct {
 	UploadDate   string `json:"upload_date" gorm:"size:10;not null"`    // YYYY-MM-DD
 	MaxAdvAmount uint64 `json:"max_adv_amount" gorm:"type:bigint unsigned;not null"`
 	// Salary is the total earned wages from check-in/out (100%) for the self-check-in flow.
-	// MaxAdvAmount = floor(Salary * SelfCheckInAdvanceablePercent / 100). Unused by the
+	// MaxAdvAmount = floor(Salary * configured_percent / 100). Unused by the
 	// admin-upload (BCC) flow, which sets MaxAdvAmount directly.
 	Salary             uint64    `json:"salary" gorm:"type:bigint unsigned;not null;default:0"`
 	LastAppliedAssetID *uint     `json:"last_applied_asset_id,omitempty" gorm:"type:bigint unsigned"`
@@ -75,12 +74,13 @@ type AdvancePaymentRepository interface {
 	// (quota_credited_at IS NULL, earning_amount > 0), scoped by check-out month.
 	// Displayed separately from Salary (already-credited) on the self-check-in
 	// advance screen so the worker can see money is coming; it is NOT part of the
-	// 70% advanceable cap.
+	// configured advanceable cap.
 	SumPendingEarningsByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
 	BatchCreate(ctx context.Context, aps []*AdvancePayment) error
 	BatchUpsert(ctx context.Context, aps []*AdvancePayment) error
 	Update(ctx context.Context, ap *AdvancePayment) error
-	AccumulateSalary(ctx context.Context, id uint64, earning int64) error
+	AccumulateSalary(ctx context.Context, id uint64, earning int64, advancePercentage uint64) error
+	RecomputeActiveCheckInMaxAdvance(ctx context.Context, advancePercentage uint64) error
 	ZeroOutQuota(ctx context.Context, projectID, employeeID uint, currentMonth string) error
 	BatchZeroOutQuota(ctx context.Context, projectID uint, employeeIDs []uint, currentMonth string) error
 	GetLatestForMonth(ctx context.Context) (string, error)
@@ -92,12 +92,12 @@ type AdvancePaymentRepository interface {
 	GetEmployeesByIDs(ctx context.Context, employeeIDs []uint64) (map[uint64]*Employee, error)
 	HasDataForMonth(ctx context.Context, forMonth string) (bool, error)
 	// GetQuotaAnomalies returns quota rows that violate the named invariant.
-	// anomalyType is one of: "drift" (max_adv != floor(salary*70/100)),
+	// anomalyType is one of: "drift" (max_adv != floor(salary*configured_percent/100)),
 	// "missing" (earning>0 attendance but no advance_payments row), or
 	// "stale" (salary>0 but assignment check_in_enabled=false).
-	GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) ([]QuotaAnomaly, error)
+	GetQuotaAnomalies(ctx context.Context, forMonth, anomalyType string, advancePercentage uint64) ([]QuotaAnomaly, error)
 	// CountQuotaAnomalies returns the count of rows violating the named invariant.
-	CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string) (int, error)
+	CountQuotaAnomalies(ctx context.Context, forMonth, anomalyType string, advancePercentage uint64) (int, error)
 	// SumSalaryAndMaxAdvForMonth returns the total salary and max_adv_amount across
 	// all advance_payments rows for the given month (the throughput tile B4).
 	SumSalaryAndMaxAdvForMonth(ctx context.Context, forMonth string) (salary, maxAdv uint64, err error)

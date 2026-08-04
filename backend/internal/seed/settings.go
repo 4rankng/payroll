@@ -29,6 +29,7 @@ func (s *Seeder) seedSettings(ctx context.Context, db *gorm.DB) error {
 		{"MaxHoursPerDay", "12", "number"},
 		{"MinHoursPerDay", "1", "number"},
 		{"bulk_transfer_workbook_limit_vnd", "400000000", "number"},
+		{"self_check_in_advance_percentage", "70", "number"},
 	}
 
 	for _, setting := range settings {

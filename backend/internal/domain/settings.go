@@ -33,7 +33,9 @@ type Settings struct {
 type SettingsRepository interface {
 	Create(ctx context.Context, settings *Settings) error
 	GetByID(ctx context.Context, id uint) (*Settings, error)
+	GetByIDForUpdate(ctx context.Context, id uint) (*Settings, error)
 	GetByKey(ctx context.Context, key string) (*Settings, error)
+	GetByKeyForUpdate(ctx context.Context, key string) (*Settings, error)
 	Update(ctx context.Context, settings *Settings) error
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, filters SettingsFilters) ([]*Settings, error)

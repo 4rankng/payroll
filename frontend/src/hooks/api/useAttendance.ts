@@ -61,7 +61,7 @@ export function useCheckOut() {
       queryClient.setQueryData(ATTENDANCE_QUERY_KEYS.today(), response);
       queryClient.invalidateQueries({ queryKey: ATTENDANCE_QUERY_KEYS.all });
       // Invalidate advance payment info to refresh quota. Check-in-enabled employees
-      // use the dedicated check-in-advance key (70% cap); refresh both so the just-earned
+      // use the dedicated check-in-advance key (Admin-configured cap); refresh both so the just-earned
       // quota is visible without waiting for the pending-request poll.
       queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.info });
       queryClient.invalidateQueries({ queryKey: QueryKeys.advancePayments.employee.checkInAdvanceInfo });

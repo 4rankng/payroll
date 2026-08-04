@@ -76,9 +76,12 @@ type AttendanceService struct {
 	projectRepo         domain.ProjectRepository
 	payrateRepo         domain.PayrateRepository
 	advancePaymentRepo  domain.AdvancePaymentRepository
-	transactionManager  domain.TransactionManager
-	taskEnqueuer        TaskEnqueuer
-	clock               clock.Clock
+	settingsConfig      interface {
+		GetSelfCheckInAdvancePercentageForUpdate(ctx context.Context) (uint64, error)
+	}
+	transactionManager domain.TransactionManager
+	taskEnqueuer       TaskEnqueuer
+	clock              clock.Clock
 }
 
 func NewAttendanceService(
@@ -87,6 +90,9 @@ func NewAttendanceService(
 	projectRepo domain.ProjectRepository,
 	payrateRepo domain.PayrateRepository,
 	advancePaymentRepo domain.AdvancePaymentRepository,
+	settingsConfig interface {
+		GetSelfCheckInAdvancePercentageForUpdate(ctx context.Context) (uint64, error)
+	},
 	transactionManager domain.TransactionManager,
 	taskEnqueuer TaskEnqueuer,
 	clk clock.Clock,
@@ -100,6 +106,7 @@ func NewAttendanceService(
 		projectRepo:         projectRepo,
 		payrateRepo:         payrateRepo,
 		advancePaymentRepo:  advancePaymentRepo,
+		settingsConfig:      settingsConfig,
 		transactionManager:  transactionManager,
 		taskEnqueuer:        taskEnqueuer,
 		clock:               clk,
@@ -876,15 +883,16 @@ func (s *AttendanceService) resolveShiftForAttendance(ctx context.Context, att *
 // has closed with no checkout: it sets earning to 0 and records a reject
 // reason, making the shift final. Idempotent — the underlying MarkAutoRejected
 // is a conditional UPDATE (WHERE check_out_time IS NULL AND
-// salary_reject_reason IS NULL), so it is a safe no-op if the employee already
-// checked out, the record was already rejected, or a concurrent CheckOut beats
-// it. Invoked by the asynq auto-reject task scheduled at K+4h at check-in.
+// salary_reject_reason IS NULL AND review_action IS NULL), so it is a safe
+// no-op if the employee checked out, the record was rejected/reviewed, or a
+// concurrent CheckOut/Admin review beats it. Invoked by the asynq auto-reject
+// task scheduled at K+4h at check-in.
 func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceID uint) error {
 	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
 	if err != nil {
 		return fmt.Errorf("failed to load attendance: %w", err)
 	}
-	if att == nil || att.CheckOutTime != nil || att.SalaryRejectReason != nil {
+	if att == nil || att.CheckOutTime != nil || att.SalaryRejectReason != nil || att.IsReviewed() {
 		return nil
 	}
 
@@ -903,9 +911,10 @@ func (s *AttendanceService) AutoRejectIfExpired(ctx context.Context, attendanceI
 // Approve records a manual admin approval of a disputed attendance and
 // recomputes the earning for the full configured shift. It clears any prior
 // salary_reject_reason (restoring the row to a payable state) and stamps the
-// review audit. Idempotent — re-approving an already-approved row is a no-op
-// (guard returns the current record). No transaction: a single conditional
-// UPDATE is atomic by itself, mirroring AutoRejectIfExpired.
+// review audit. Idempotent — a consistent approved row is a no-op, while a
+// legacy row contradicted by a delayed auto-reject is recomputed and repaired.
+// No transaction: a single conditional UPDATE is atomic by itself, mirroring
+// AutoRejectIfExpired.
 //
 // The earning recompute uses the configured shift end K as the effective
 // checkout. K is always inside the checkout window [K-grace, K+grace], so the
@@ -919,7 +928,7 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 	if att == nil {
 		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
 	}
-	if att.IsApproved() {
+	if att.IsApproved() && att.SalaryRejectReason == nil && att.EarningAmount != nil && *att.EarningAmount > 0 {
 		// Already approved. The earning may still be un-credited if the credit
 		// step failed on a prior call (CreditAttendanceQuota is idempotent and
 		// skips already-credited rows), so re-attempt it before returning.
@@ -1061,7 +1070,8 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 
 // CreditAttendanceQuota banks an attendance's earning into the advance-payment
 // quota pool: it bumps advance_payments.salary and recomputes max_adv_amount
-// (= floor(salary * 70 / 100)). It is the single entry point for crediting and
+// (= floor(salary * configured_percent / 100)). It is the single entry point
+// for crediting and
 // is shared by the deferred 24h task (self-check-out path), the admin Approve
 // path (immediate credit), and the safety-net sweep.
 //
@@ -1077,6 +1087,15 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error) {
 	credited := false
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		advancePercent := domain.DefaultSelfCheckInAdvancePercentage
+		if s.settingsConfig != nil {
+			var err error
+			advancePercent, err = s.settingsConfig.GetSelfCheckInAdvancePercentageForUpdate(txCtx)
+			if err != nil {
+				return fmt.Errorf("failed to lock self check-in advance percentage: %w", err)
+			}
+		}
+
 		att, err := s.attendanceRepo.GetByID(txCtx, attendanceID)
 		if err != nil {
 			return fmt.Errorf("failed to load attendance for quota credit: %w", err)
@@ -1132,13 +1151,13 @@ func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanc
 				ForMonth:     forMonth,
 				UploadDate:   uploadDate,
 				Salary:       earning,
-				MaxAdvAmount: (earning * domain.SelfCheckInAdvanceablePercent) / 100,
+				MaxAdvAmount: (earning * advancePercent) / 100,
 			}
 			if err := s.advancePaymentRepo.Create(txCtx, ap); err != nil {
 				return fmt.Errorf("failed to create advance payment row: %w", err)
 			}
 		} else {
-			if err := s.advancePaymentRepo.AccumulateSalary(txCtx, uint64(ap.ID), *att.EarningAmount); err != nil {
+			if err := s.advancePaymentRepo.AccumulateSalary(txCtx, uint64(ap.ID), *att.EarningAmount, advancePercent); err != nil {
 				return fmt.Errorf("failed to accumulate salary: %w", err)
 			}
 		}

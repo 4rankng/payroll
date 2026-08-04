@@ -2,7 +2,7 @@ Công nhân đăng ký xin sử dụng dịch vụ tự chấm công
 - Hiện tại dự án LGD salary period từ ngày 1 đến cuối tháng
 - Giả sử lương tháng 5, nv chỉ xin ứng lương bắt đầu từ ngày 10 đến ngày cuối tháng
 - Nếu sang tháng 6 thì không xin ứng lương của tháng 5 được nữa
-- Tỷ lệ ứng lương chỉ là 70% của tổng chấm công
+- Tỷ lệ ứng lương tự chấm công mặc định là 70% tổng tiền công đã ghi nhận; admin có thể thay đổi tỷ lệ này trong trang Cài đặt hệ thống
 - Giao diện phải ghi rõ tiền công thực tế và một dòng nữa là tiền công được ứng
 - Những công nhân làm theo dịch vụ tự chấm công thì không dùng flow bảng chấm công admin upload nữa
   (vì đây là flow khác rồi)

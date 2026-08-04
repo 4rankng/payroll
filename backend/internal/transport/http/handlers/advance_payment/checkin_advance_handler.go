@@ -11,8 +11,8 @@ import (
 
 // GetMyCheckInAdvanceInfo returns the self-check-in advance summary for the logged-in
 // employee via the DEDICATED /me/check-in-advance path. Separate from the admin-upload
-// /me/advance-payment flow: 70% advanceable cap, calendar-month salary period, day-10
-// request window, dual-wage (salary 100% / advanceable 70%) + OT/allowance disclaimer.
+// /me/advance-payment flow: Admin-configured advanceable cap, calendar-month salary
+// period, day-10 request window, dual-wage display + OT/allowance disclaimer.
 func (h *AdvancePaymentHandler) GetMyCheckInAdvanceInfo(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

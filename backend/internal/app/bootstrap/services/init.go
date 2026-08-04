@@ -146,13 +146,13 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	pushSvc := pushService.NewPushService(repos.PushSubscription, cfg.Notification, logger)
 	notificationService := notification.NewNotificationService(repos.Notification, repos.User, repos.Project, userService, pushSvc, logger)
 	employeeNotificationService := notification.NewEmployeeNotificationService(notificationService, repos.Employee, logger)
-	settingsService := config.NewSettingsService(repos.Settings, cacheService, eventBus)
+	transactionManager := infraServices.NewTransactionManager(db.DB)
+	settingsService := config.NewSettingsService(repos.Settings, repos.AdvancePayment, transactionManager, cacheService, eventBus)
 	settingsConfigService := config.NewSettingsConfigService(settingsService)
 	excelConverterService := reporting.NewExcelConverterService()
 	pdfService := reporting.NewPDFService("fonts/Roboto-Regular.ttf")
 	fileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
 	assetService := asset.NewAssetService(repos.Asset, fileStorage, cfg.Asset.MaxFileSize, eventBus)
-	transactionManager := infraServices.NewTransactionManager(db.DB)
 
 	// Step 4: Create domain services using infrastructure ports
 	ledgerService := settlement.NewLedgerService(repos.Ledger, eventBus, cachePort)
@@ -212,7 +212,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	employeeUserService := employee.NewEmployeeUserService(repos.Employee, userService)
 	employeeProfileService := employee.NewEmployeeProfileService(repos.Employee, repos.Timesheet, repos.ProjectEmployee, repos.Payrate, repos.Attendance, userService, eventBus)
 	lenderService := loan.NewLenderService(repos.Lender, cacheService, eventBus)
-	attendanceService := attendance.NewAttendanceService(repos.Attendance, repos.ProjectEmployee, repos.Project, repos.Payrate, repos.AdvancePayment, transactionManager, asynqClient, clk)
+	attendanceService := attendance.NewAttendanceService(repos.Attendance, repos.ProjectEmployee, repos.Project, repos.Payrate, repos.AdvancePayment, settingsConfigService, transactionManager, asynqClient, clk)
 
 	// Geofence gates are now DB-backed (project.geofence_gates JSON column).
 	// No in-memory registration needed.

@@ -168,6 +168,29 @@ const SettingsPageMobile = () => {
                 suffix="%"
               />
               <SettingCard
+                title="Tỷ lệ ứng lương tự chấm công"
+                description="Phần trăm tiền công đã ghi nhận được cộng vào hạn mức ứng lương"
+                value={form.selfCheckInAdvancePercentage}
+                originalValue={form.originalSelfCheckInAdvancePercentage}
+                onChange={form.setSelfCheckInAdvancePercentage}
+                onSave={form.handleSaveSelfCheckInAdvancePercentage}
+                onReset={() =>
+                  form.setSelfCheckInAdvancePercentage(
+                    form.originalSelfCheckInAdvancePercentage,
+                  )
+                }
+                isDirty={
+                  form.selfCheckInAdvancePercentage !==
+                  form.originalSelfCheckInAdvancePercentage
+                }
+                isSaving={form.isSaving}
+                type="number"
+                min={1}
+                max={100}
+                step={1}
+                suffix="%"
+              />
+              <SettingCard
                 title="Khách hàng"
                 description="Tên khách hàng sử dụng dịch vụ tạm ứng"
                 value={form.partnerCompany}

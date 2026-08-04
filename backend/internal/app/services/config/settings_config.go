@@ -20,6 +20,7 @@ const (
 	SettingKeyPartnerCompany            = "partner_company"
 	SettingKeyAdvancePaymentPercentage  = "advance_payment_percentage"
 	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
+	SettingKeySelfCheckInAdvancePercent = "self_check_in_advance_percentage"
 )
 
 // Default values
@@ -31,6 +32,7 @@ const (
 	DefaultAdvancePaymentPercentage  = 0.60  // 60% max advance
 	DefaultAdvancePaymentFeeMin      = 10000 // 10,000 VND minimum fee
 	DefaultBulkTransferWorkbookLimit = int64(400_000_000)
+	DefaultSelfCheckInAdvancePercent = domain.DefaultSelfCheckInAdvancePercentage
 	MinBulkTransferWorkbookLimit     = int64(2)
 	CacheTTL                         = constants.SettingsCacheTTL // Use centralized cache TTL
 )
@@ -58,6 +60,7 @@ type FeeScheduleResolver interface {
 type SettingReader interface {
 	GetSettingByKey(ctx context.Context, key string) (*domain.Settings, error)
 	GetSettingByKeyAuthoritative(ctx context.Context, key string) (*domain.Settings, error)
+	GetSettingByKeyAuthoritativeForUpdate(ctx context.Context, key string) (*domain.Settings, error)
 }
 
 // SettingsConfigService provides methods to retrieve business configuration settings
@@ -125,6 +128,78 @@ func parseBulkTransferWorkbookLimit(setting *domain.Settings) (int64, error) {
 		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số nguyên từ 2 đ trở lên")
 	}
 	return value, nil
+}
+
+func parseSelfCheckInAdvancePercent(setting *domain.Settings) (uint64, error) {
+	if setting == nil || setting.Value == nil {
+		return 0, domain.NewValidationError("tỷ lệ ứng lương tự chấm công không được để trống")
+	}
+	if setting.ValueType != domain.ValueTypeNumber {
+		return 0, domain.NewValidationError("tỷ lệ ứng lương tự chấm công phải là số")
+	}
+
+	raw := *setting.Value
+	if raw == "" || strings.TrimSpace(raw) != raw || raw[0] == '0' || strings.IndexFunc(raw, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) >= 0 {
+		return 0, domain.NewValidationError("tỷ lệ ứng lương tự chấm công phải là số nguyên từ 1 đến 100")
+	}
+
+	value, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || value < 1 || value > 100 {
+		return 0, domain.NewValidationError("tỷ lệ ứng lương tự chấm công phải là số nguyên từ 1 đến 100")
+	}
+	return value, nil
+}
+
+// GetSelfCheckInAdvancePercentage returns the authoritative self-check-in
+// advance percentage (1..100). Financial reads bypass cache so a completed
+// Admin update applies on the next request; invalid/missing data falls back to
+// the long-standing default.
+func (s *SettingsConfigService) GetSelfCheckInAdvancePercentage(ctx context.Context) uint64 {
+	return s.getSelfCheckInAdvancePercentage(ctx)
+}
+
+// GetSelfCheckInAdvancePercentageForUpdate returns the authoritative
+// self-check-in advance percentage while locking the settings row inside the
+// caller's transaction. Attendance quota credit uses this so salary banking and
+// admin edits serialize on the same row lock.
+func (s *SettingsConfigService) GetSelfCheckInAdvancePercentageForUpdate(ctx context.Context) (uint64, error) {
+	if s.settingsService == nil {
+		return DefaultSelfCheckInAdvancePercent, nil
+	}
+	setting, err := s.settingsService.GetSettingByKeyAuthoritativeForUpdate(ctx, SettingKeySelfCheckInAdvancePercent)
+	if err != nil {
+		return 0, err
+	}
+	return parseSelfCheckInAdvancePercent(setting)
+}
+
+func (s *SettingsConfigService) getSelfCheckInAdvancePercentage(ctx context.Context) uint64 {
+	if s.settingsService == nil {
+		return DefaultSelfCheckInAdvancePercent
+	}
+
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeySelfCheckInAdvancePercent)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"failed to get self check-in advance percentage, using default",
+			"key", SettingKeySelfCheckInAdvancePercent,
+			"error", err,
+		)
+		return DefaultSelfCheckInAdvancePercent
+	}
+
+	value, err := parseSelfCheckInAdvancePercent(setting)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"invalid self check-in advance percentage, using default",
+			"key", SettingKeySelfCheckInAdvancePercent,
+			"error", err,
+		)
+		return DefaultSelfCheckInAdvancePercent
+	}
+	return value
 }
 
 // BindFeeScheduleResolver wires the fee-schedule data source. After binding,

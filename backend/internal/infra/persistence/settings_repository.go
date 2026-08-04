@@ -8,6 +8,7 @@ import (
 	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SettingsRepository struct {
@@ -20,14 +21,32 @@ func NewSettingsRepository(db *Database) domain.SettingsRepository {
 	}
 }
 
+func (r *SettingsRepository) getDB(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 func (r *SettingsRepository) Create(ctx context.Context, settings *domain.Settings) error {
-	return r.DB.WithContext(ctx).Create(settings).Error
+	return r.getDB(ctx).Create(settings).Error
 }
 
 func (r *SettingsRepository) GetByID(ctx context.Context, id uint) (*domain.Settings, error) {
+	return r.getByID(ctx, id, false)
+}
+
+func (r *SettingsRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.Settings, error) {
+	return r.getByID(ctx, id, true)
+}
+
+func (r *SettingsRepository) getByID(ctx context.Context, id uint, forUpdate bool) (*domain.Settings, error) {
 	var settings domain.Settings
-	err := r.DB.WithContext(ctx).
-		First(&settings, id).Error
+	query := r.getDB(ctx)
+	if forUpdate {
+		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	err := query.First(&settings, id).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -40,10 +59,20 @@ func (r *SettingsRepository) GetByID(ctx context.Context, id uint) (*domain.Sett
 }
 
 func (r *SettingsRepository) GetByKey(ctx context.Context, key string) (*domain.Settings, error) {
+	return r.getByKey(ctx, key, false)
+}
+
+func (r *SettingsRepository) GetByKeyForUpdate(ctx context.Context, key string) (*domain.Settings, error) {
+	return r.getByKey(ctx, key, true)
+}
+
+func (r *SettingsRepository) getByKey(ctx context.Context, key string, forUpdate bool) (*domain.Settings, error) {
 	var settings domain.Settings
-	err := r.DB.WithContext(ctx).
-		Where("`key` = ?", key).
-		First(&settings).Error
+	query := r.getDB(ctx)
+	if forUpdate {
+		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	err := query.Where("`key` = ?", key).First(&settings).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -56,17 +85,17 @@ func (r *SettingsRepository) GetByKey(ctx context.Context, key string) (*domain.
 }
 
 func (r *SettingsRepository) Update(ctx context.Context, settings *domain.Settings) error {
-	return r.DB.WithContext(ctx).Save(settings).Error
+	return r.getDB(ctx).Save(settings).Error
 }
 
 func (r *SettingsRepository) Delete(ctx context.Context, id uint) error {
 	// Use GORM soft delete
-	return r.DB.WithContext(ctx).Delete(&domain.Settings{}, id).Error
+	return r.getDB(ctx).Delete(&domain.Settings{}, id).Error
 }
 
 func (r *SettingsRepository) List(ctx context.Context, filters domain.SettingsFilters) ([]*domain.Settings, error) {
 	var settings []*domain.Settings
-	query := r.DB.WithContext(ctx)
+	query := r.getDB(ctx)
 
 	// Apply filters
 	query = r.applyFilters(query, filters)
@@ -98,7 +127,7 @@ func (r *SettingsRepository) List(ctx context.Context, filters domain.SettingsFi
 
 func (r *SettingsRepository) Count(ctx context.Context, filters domain.SettingsFilters) (int64, error) {
 	var count int64
-	query := r.DB.WithContext(ctx).Model(&domain.Settings{})
+	query := r.getDB(ctx).Model(&domain.Settings{})
 
 	// Apply filters
 	query = r.applyFilters(query, filters)
@@ -109,7 +138,7 @@ func (r *SettingsRepository) Count(ctx context.Context, filters domain.SettingsF
 
 func (r *SettingsRepository) GetActiveSettings(ctx context.Context) ([]*domain.Settings, error) {
 	var settings []*domain.Settings
-	err := r.DB.WithContext(ctx).
+	err := r.getDB(ctx).
 		Order("`key` ASC").
 		Find(&settings).Error
 

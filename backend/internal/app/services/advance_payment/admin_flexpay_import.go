@@ -275,7 +275,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 			// Only create advance payment record if amount column is provided and > 0
 			if hanMuc > 0 {
 				// Self-check-in employees earn their advance quota from check-in/out
-				// (advance_payments.salary → max_adv_amount = 70%). Exclude them from
+				// (advance_payments.salary → configured max_adv_amount). Exclude them from
 				// the admin FlexPay import so BatchUpsert never overwrites their
 				// salary-derived quota. This is a SEPARATE flow (AC5).
 				if assignment.CheckInEnabled {

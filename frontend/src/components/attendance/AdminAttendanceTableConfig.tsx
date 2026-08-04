@@ -10,6 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import {
+  canApproveAttendance,
+  getAttendanceReviewStatusLabel,
+  needsAttendanceApprovalRepair,
+} from "@/utils/attendanceReviewState";
 
 /** Row-action callbacks wired by the page. Each is optional so the table can
  * render without them (e.g. read-only contexts). */
@@ -32,6 +37,14 @@ const REVIEW_BADGE_CONFIG: Record<string, { label: string; className: string }> 
 };
 
 function StatusBadges({ status, reviewAction }: { status: string; reviewAction?: string | null }) {
+  const reviewStatusLabel = getAttendanceReviewStatusLabel({ status, review_action: reviewAction });
+  if (needsAttendanceApprovalRepair({ status, review_action: reviewAction })) {
+    return (
+      <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+        {reviewStatusLabel}
+      </div>
+    );
+  }
   const sys = SYSTEM_STATUS_CONFIG[status] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
   return (
@@ -42,7 +55,7 @@ function StatusBadges({ status, reviewAction }: { status: string; reviewAction?:
       {review && (
         <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border", review.className)}>
           {reviewAction === "approved" ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
-          {review.label}
+          {reviewStatusLabel ?? review.label}
         </div>
       )}
     </div>
@@ -145,7 +158,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
       size: 48,
       cell: ({ row }) => {
         const att = row.original;
-        const showApprove = att.status !== "completed" && att.review_action !== "approved";
+        const showApprove = canApproveAttendance(att);
         const showReject = att.status !== "rejected" && att.review_action !== "rejected";
         return (
           <div className="text-right">
@@ -168,7 +181,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                 {showApprove && (
                   <DropdownMenuItem onClick={() => actions.onApprove(att)}>
                     <Check className="mr-2 h-4 w-4" />
-                    Duyệt
+                    {needsAttendanceApprovalRepair(att) ? "Duyệt lại" : "Duyệt"}
                   </DropdownMenuItem>
                 )}
                 {showReject && (

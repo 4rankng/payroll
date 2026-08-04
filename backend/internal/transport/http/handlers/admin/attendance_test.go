@@ -249,6 +249,7 @@ func TestListFailedAttemptsInfersCheckoutProjectForLegacyRows(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		nil,
 		clock.NewFake(createdAt),
 	)
 	handler := &AttendanceHandler{

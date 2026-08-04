@@ -144,6 +144,34 @@ func TestApproveIdempotentWhenAlreadyApproved(t *testing.T) {
 	}
 }
 
+func TestApproveRepairsApprovedRecordRejectedByDelayedWorker(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 6, 22, 8, 35, 0, 0, loc)
+	approved := string(domain.AttendanceReviewActionApproved)
+	delayedRejectReason := "Đã hết hạn tan ca"
+	zero := int64(0)
+	att := &domain.Attendance{
+		ID: 7, ProjectID: 55, EmployeeID: 123,
+		Date: checkIn, CheckInTime: checkIn, CheckInGate: "Cổng chính",
+		ReviewAction: &approved, SalaryRejectReason: &delayedRejectReason, EarningAmount: &zero,
+	}
+
+	svc, repo := newReviewService(att, nil, nil)
+	res, err := svc.Approve(context.Background(), 7, 42, "Khôi phục quyết định duyệt")
+	if err != nil {
+		t.Fatalf("expected repair approval to succeed, got %v", err)
+	}
+	if !repo.reviewed {
+		t.Fatal("expected inconsistent approved record to be repaired")
+	}
+	if res.SalaryRejectReason != nil {
+		t.Fatalf("expected delayed reject reason cleared, got %q", *res.SalaryRejectReason)
+	}
+	if res.EarningAmount == nil || *res.EarningAmount != 300000 {
+		t.Fatalf("expected earning restored to 300000, got %v", res.EarningAmount)
+	}
+}
+
 func TestApproveFailsWhenShiftUnresolvable(t *testing.T) {
 	loc := clock.DefaultLocation
 	checkIn := time.Date(2026, 6, 22, 8, 35, 0, 0, loc)

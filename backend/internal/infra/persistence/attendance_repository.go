@@ -62,13 +62,13 @@ func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.At
 }
 
 // MarkAutoRejected atomically rejects an open, unrejected attendance. The
-// conditional WHERE (check_out_time IS NULL AND salary_reject_reason IS NULL)
-// is the race guard: a concurrent CheckOut that set check_out_time, or a prior
-// rejection, makes RowsAffected=0 — a safe no-op. This avoids the lost-update
-// hazard of a full-row Save over a stale no-checkout snapshot.
+// conditional WHERE (check_out_time IS NULL AND salary_reject_reason IS NULL
+// AND review_action IS NULL) is the race guard: a concurrent CheckOut, prior
+// rejection, or authoritative admin review makes RowsAffected=0 — a safe no-op.
+// This prevents a delayed worker from overwriting an admin decision.
 func (r *attendanceRepository) MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error) {
 	res := r.getDB(ctx).Model(&domain.Attendance{}).
-		Where("id = ? AND check_out_time IS NULL AND salary_reject_reason IS NULL", id).
+		Where("id = ? AND check_out_time IS NULL AND salary_reject_reason IS NULL AND review_action IS NULL", id).
 		Updates(map[string]interface{}{
 			"earning_amount":       0,
 			"salary_reject_reason": reason,
@@ -183,10 +183,10 @@ func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employe
 func (r *attendanceRepository) GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*domain.Attendance, error) {
 	var attendances []*domain.Attendance
 	// Open (no checkout) AND unrejected records checked in within [after, before).
-	// salary_reject_reason IS NULL excludes already-auto-rejected records so the
-	// fallback sweep can't double-process a finalized rejection.
+	// Reviewed rows are excluded because an admin decision is authoritative over
+	// the delayed fallback worker.
 	err := r.getDB(ctx).
-		Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND check_in_time >= ? AND check_in_time < ?", after, before).
+		Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND review_action IS NULL AND check_in_time >= ? AND check_in_time < ?", after, before).
 		Find(&attendances).Error
 	return attendances, err
 }

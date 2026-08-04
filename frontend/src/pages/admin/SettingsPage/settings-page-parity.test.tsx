@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
     originalPartnerCompany: 'TingTing',
     bulkTransferWorkbookLimitVnd: '400000000',
     originalBulkTransferWorkbookLimitVnd: '400000000',
+    selfCheckInAdvancePercentage: '70',
+    originalSelfCheckInAdvancePercentage: '70',
     bulkTransferWorkbookLimitSaveError: null,
     bulkTransferWorkbookLimitUnavailableMessage: null,
     loadError: null as string | null,
@@ -25,10 +27,12 @@ const mocks = vi.hoisted(() => ({
     setMonthlyPaymentPercentage: vi.fn(),
     setPartnerCompany: vi.fn(),
     setBulkTransferWorkbookLimitVnd: vi.fn(),
+    setSelfCheckInAdvancePercentage: vi.fn(),
     handleSaveWeeklyPayment: vi.fn(),
     handleSaveMonthlyPayment: vi.fn(),
     handleSavePartnerCompany: vi.fn(),
     handleSaveBulkTransferWorkbookLimitVnd: vi.fn(),
+    handleSaveSelfCheckInAdvancePercentage: vi.fn(),
     retryLoading: vi.fn(),
   },
 }));
@@ -76,6 +80,19 @@ describe.each([
       'Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này.',
     )).toBeInTheDocument();
     expect(limitInput.closest('.grid')?.querySelector('input')).toBe(limitInput);
+  });
+
+  it('allows admins to configure the self-check-in advance percentage', () => {
+    render(
+      <MemoryRouter>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    const percentageInput = screen.getByLabelText('Tỷ lệ ứng lương tự chấm công');
+    expect(percentageInput).toHaveValue(70);
+    expect(percentageInput).toHaveAttribute('min', '1');
+    expect(percentageInput).toHaveAttribute('max', '100');
   });
 
   it('shows a page-level retry state when any required setting cannot load', () => {

@@ -117,11 +117,11 @@ func (f *fakeAttendanceRepo) GetOrphanCandidates(_ context.Context, _, _ time.Ti
 }
 
 // MarkAutoRejected mirrors the SQL conditional: it acts only on an open (no
-// checkout), unrejected record matching id, mirroring the real repo's
-// WHERE check_out_time IS NULL AND salary_reject_reason IS NULL guard.
+// checkout), unrejected, unreviewed record matching id, mirroring the real
+// repo's SQL race guard.
 func (f *fakeAttendanceRepo) MarkAutoRejected(_ context.Context, id uint, reason string) (bool, error) {
 	rec := f.findByID(id)
-	if rec == nil || rec.CheckOutTime != nil || rec.SalaryRejectReason != nil {
+	if rec == nil || rec.CheckOutTime != nil || rec.SalaryRejectReason != nil || rec.IsReviewed() {
 		return false, nil
 	}
 	zero := int64(0)
@@ -185,15 +185,33 @@ func (f *fakeAdvancePaymentRepo) Create(_ context.Context, ap *domain.AdvancePay
 	return nil
 }
 
-func (f *fakeAdvancePaymentRepo) AccumulateSalary(_ context.Context, id uint64, earning int64) error {
+func (f *fakeAdvancePaymentRepo) AccumulateSalary(_ context.Context, id uint64, earning int64, advancePercentage uint64) error {
 	for _, ap := range f.rows {
 		if uint64(ap.ID) == id {
 			ap.Salary = uint64(int64(ap.Salary) + earning)
-			ap.MaxAdvAmount = (ap.Salary * domain.SelfCheckInAdvanceablePercent) / 100
+			ap.MaxAdvAmount = (ap.Salary * advancePercentage) / 100
 			return nil
 		}
 	}
 	return nil
+}
+
+func (f *fakeAdvancePaymentRepo) RecomputeActiveCheckInMaxAdvance(_ context.Context, advancePercentage uint64) error {
+	for _, ap := range f.rows {
+		ap.MaxAdvAmount = (ap.Salary * advancePercentage) / 100
+	}
+	return nil
+}
+
+type fakeSelfCheckInSettingsConfig struct {
+	percent uint64
+}
+
+func (f fakeSelfCheckInSettingsConfig) GetSelfCheckInAdvancePercentageForUpdate(context.Context) (uint64, error) {
+	if f.percent == 0 {
+		return domain.DefaultSelfCheckInAdvancePercentage, nil
+	}
+	return f.percent, nil
 }
 
 // salaryFor returns the total credited salary for an employee/month (read path).
@@ -292,6 +310,7 @@ func (f *fakeTaskEnqueuer) creditSnapshot() []fakeEnqCall {
 func TestAutoRejectIfExpired(t *testing.T) {
 	existingReason := "previously rejected"
 	completed := time.Date(2026, 6, 22, 17, 0, 0, 0, clock.DefaultLocation)
+	approved := string(domain.AttendanceReviewActionApproved)
 
 	cases := []struct {
 		name          string
@@ -303,6 +322,7 @@ func TestAutoRejectIfExpired(t *testing.T) {
 		{name: "nil attendance is no-op", existing: nil, wantNoUpdate: true},
 		{name: "completed attendance is no-op", existing: &domain.Attendance{ID: 1, CheckOutTime: &completed}, wantNoUpdate: true},
 		{name: "already rejected is no-op", existing: &domain.Attendance{ID: 1, SalaryRejectReason: &existingReason}, wantNoUpdate: true},
+		{name: "admin-approved attendance is no-op", existing: &domain.Attendance{ID: 1, ReviewAction: &approved}, wantNoUpdate: true},
 		{name: "open attendance is rejected with earning 0", existing: &domain.Attendance{ID: 1}, wantNoUpdate: false, wantEarning: 0, wantReasonHas: "hết hạn"},
 	}
 
@@ -761,8 +781,11 @@ func TestAutoRejectSweep(t *testing.T) {
 	alreadyRejected := &domain.Attendance{ID: 103, SalaryRejectReason: &existingReason}
 	completedAt := time.Date(2026, 6, 22, 17, 0, 0, 0, clock.DefaultLocation)
 	completed := &domain.Attendance{ID: 104, CheckOutTime: &completedAt}
+	approvedAction := string(domain.AttendanceReviewActionApproved)
+	approvedEarning := int64(300000)
+	adminApproved := &domain.Attendance{ID: 105, ReviewAction: &approvedAction, EarningAmount: &approvedEarning}
 
-	repo := &fakeAttendanceRepo{orphanCandidates: []*domain.Attendance{open1, alreadyRejected, open2, completed}}
+	repo := &fakeAttendanceRepo{orphanCandidates: []*domain.Attendance{open1, alreadyRejected, open2, completed, adminApproved}}
 	svc := &AttendanceService{
 		attendanceRepo:      repo,
 		payrateRepo:         &fakePayrateRepo{},
@@ -796,6 +819,9 @@ func TestAutoRejectSweep(t *testing.T) {
 	// Completed record untouched (no reject reason written over a valid checkout).
 	if completed.SalaryRejectReason != nil {
 		t.Errorf("completed id %d: should not get a reject reason", completed.ID)
+	}
+	if adminApproved.SalaryRejectReason != nil || adminApproved.EarningAmount == nil || *adminApproved.EarningAmount != approvedEarning {
+		t.Errorf("admin-approved id %d: decision and earning should be preserved", adminApproved.ID)
 	}
 }
 

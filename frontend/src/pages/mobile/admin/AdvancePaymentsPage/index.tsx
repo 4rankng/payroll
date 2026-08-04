@@ -53,6 +53,11 @@ import { vi } from "date-fns/locale";
 import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
+import {
+  canApproveAttendance,
+  getAttendanceReviewStatusLabel,
+  needsAttendanceApprovalRepair,
+} from "@/utils/attendanceReviewState";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
 import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
@@ -83,9 +88,8 @@ export function AttendanceMobileCard({
   const fmtDate = (d: string) => {
     try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
   };
-  const statusLabel = ATTENDANCE_STATUS_LABEL[row.status] ?? row.status;
-  const showApprove =
-    row.status !== "completed" && row.review_action !== "approved";
+  const statusLabel = getAttendanceReviewStatusLabel(row) ?? ATTENDANCE_STATUS_LABEL[row.status] ?? row.status;
+  const showApprove = canApproveAttendance(row);
   const showReject =
     row.status !== "rejected" && row.review_action !== "rejected";
 
@@ -126,7 +130,7 @@ export function AttendanceMobileCard({
             onClick={() => onApprove(row)}
           >
             <Check className="h-4 w-4" />
-            Duyệt
+            {needsAttendanceApprovalRepair(row) ? "Duyệt lại" : "Duyệt"}
           </Button>
         )}
         {showReject && (

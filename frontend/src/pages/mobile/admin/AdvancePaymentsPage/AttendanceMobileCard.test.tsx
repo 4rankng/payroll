@@ -61,4 +61,24 @@ describe("AttendanceMobileCard", () => {
     expect(screen.queryByRole("button", { name: "Từ chối" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bản đồ" })).toBeInTheDocument();
   });
+
+  it("offers repair when a delayed worker contradicted an admin approval", () => {
+    const onApprove = vi.fn();
+    const corrupted = { ...attendance, status: "rejected", review_action: "approved" as const };
+
+    render(
+      <AttendanceMobileCard
+        row={corrupted}
+        onViewMap={vi.fn()}
+        onApprove={onApprove}
+        onReject={vi.fn()}
+      />,
+    );
+
+    const repairButton = screen.getByRole("button", { name: "Duyệt lại" });
+    expect(screen.getByText("Cần duyệt lại")).toBeInTheDocument();
+    expect(screen.queryByText("Đã từ chối")).not.toBeInTheDocument();
+    fireEvent.click(repairButton);
+    expect(onApprove).toHaveBeenCalledWith(corrupted);
+  });
 });

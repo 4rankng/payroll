@@ -104,6 +104,7 @@ func TestCheckOutFailedAttemptUsesAttendanceProjectID(t *testing.T) {
 		nil,
 		&fakeCheckoutPayrateRepo{payrate: &domain.Payrate{Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`)}},
 		nil,
+		nil,
 		&fakeCheckoutTransactionManager{},
 		nil,
 		clock.NewFake(now),

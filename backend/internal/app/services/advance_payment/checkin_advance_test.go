@@ -38,12 +38,12 @@ func TestIsCheckInRequestWindowOpen(t *testing.T) {
 	}
 }
 
-// TestSelfCheckInAdvanceablePercent verifies the centralized 70% constant and the
-// integer advanceable formula (salary * percent / 100) used by repo.AccumulateSalary
-// and the attendance checkout create path. Floor semantics, no float drift.
-func TestSelfCheckInAdvanceablePercent(t *testing.T) {
-	if domain.SelfCheckInAdvanceablePercent != 70 {
-		t.Fatalf("SelfCheckInAdvanceablePercent = %d, want 70", domain.SelfCheckInAdvanceablePercent)
+// TestDefaultSelfCheckInAdvancePercentage verifies the fallback percentage and
+// integer advanceable formula (salary * percent / 100). Floor semantics, no
+// float drift.
+func TestDefaultSelfCheckInAdvancePercentage(t *testing.T) {
+	if domain.DefaultSelfCheckInAdvancePercentage != 70 {
+		t.Fatalf("DefaultSelfCheckInAdvancePercentage = %d, want 70", domain.DefaultSelfCheckInAdvancePercentage)
 	}
 	cases := []struct {
 		salary uint64
@@ -58,7 +58,7 @@ func TestSelfCheckInAdvanceablePercent(t *testing.T) {
 		{1234567, 864196}, // floor(864196.9) = 864196
 	}
 	for _, c := range cases {
-		got := (c.salary * domain.SelfCheckInAdvanceablePercent) / 100
+		got := (c.salary * domain.DefaultSelfCheckInAdvancePercentage) / 100
 		if got != c.want {
 			t.Errorf("advanceable(salary=%d) = %d, want %d", c.salary, got, c.want)
 		}

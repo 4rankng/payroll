@@ -68,6 +68,44 @@ func TestCreditAttendanceQuotaIdempotent(t *testing.T) {
 	}
 }
 
+func TestCreditAttendanceQuotaUsesConfiguredPercent(t *testing.T) {
+	loc := clock.DefaultLocation
+	co := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID:            17,
+		ProjectID:     55,
+		EmployeeID:    321,
+		Date:          time.Date(2026, 6, 22, 0, 0, 0, 0, loc),
+		CheckInTime:   time.Date(2026, 6, 22, 8, 35, 0, 0, loc),
+		CheckOutTime:  &co,
+		EarningAmount: &earn,
+	}
+	repo := &fakeAttendanceRepo{byID: att}
+	advRepo := &fakeAdvancePaymentRepo{}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		settingsConfig:     fakeSelfCheckInSettingsConfig{percent: 85},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(time.Date(2026, 6, 23, 17, 0, 0, 0, loc)),
+	}
+
+	banked, err := svc.CreditAttendanceQuota(context.Background(), 17)
+	if err != nil {
+		t.Fatalf("credit returned error: %v", err)
+	}
+	if !banked {
+		t.Fatal("expected first credit to bank the earning")
+	}
+	if len(advRepo.rows) != 1 {
+		t.Fatalf("expected 1 advance payment row, got %d", len(advRepo.rows))
+	}
+	if advRepo.rows[0].MaxAdvAmount != 255000 {
+		t.Fatalf("expected max advance 255000 at 85%%, got %d", advRepo.rows[0].MaxAdvAmount)
+	}
+}
+
 func TestCreditAttendanceQuotaMonthBoundary(t *testing.T) {
 	loc := clock.DefaultLocation
 	// Checkout at 31-Jul 23:55; the 24h timer fires in August. The earning must

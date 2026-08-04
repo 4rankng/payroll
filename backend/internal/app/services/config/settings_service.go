@@ -21,14 +21,24 @@ const (
 type SettingsService struct {
 	logger       *slog.Logger
 	SettingsRepo domain.SettingsRepository
+	QuotaRepo    domain.AdvancePaymentRepository
+	TxManager    domain.TransactionManager
 	CacheService *infrastructure.CacheService
 	EventBus     domain.EventBus
 }
 
-func NewSettingsService(settingsRepo domain.SettingsRepository, cacheService *infrastructure.CacheService, eventBus domain.EventBus) *SettingsService {
+func NewSettingsService(
+	settingsRepo domain.SettingsRepository,
+	quotaRepo domain.AdvancePaymentRepository,
+	txManager domain.TransactionManager,
+	cacheService *infrastructure.CacheService,
+	eventBus domain.EventBus,
+) *SettingsService {
 	return &SettingsService{
 		logger:       observability.GetLogger(),
 		SettingsRepo: settingsRepo,
+		QuotaRepo:    quotaRepo,
+		TxManager:    txManager,
 		CacheService: cacheService,
 		EventBus:     eventBus,
 	}
@@ -68,6 +78,10 @@ func (s *SettingsService) GetSetting(ctx context.Context, id uint) (*domain.Sett
 }
 
 func (s *SettingsService) GetSettingByKey(ctx context.Context, key string) (*domain.Settings, error) {
+	if s.CacheService == nil {
+		return s.SettingsRepo.GetByKey(ctx, key)
+	}
+
 	// Generate cache key for setting detail
 	cacheKey := s.CacheService.GenerateSettingsCacheKey("detail", fmt.Sprintf("key:%s", strings.ToLower(key)))
 
@@ -98,58 +112,80 @@ func (s *SettingsService) GetSettingByKeyAuthoritative(ctx context.Context, key 
 	return s.SettingsRepo.GetByKey(ctx, key)
 }
 
+// GetSettingByKeyAuthoritativeForUpdate reads directly from the repository and
+// acquires a row lock when called inside a transaction.
+func (s *SettingsService) GetSettingByKeyAuthoritativeForUpdate(ctx context.Context, key string) (*domain.Settings, error) {
+	return s.SettingsRepo.GetByKeyForUpdate(ctx, key)
+}
+
 func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, updateData map[string]any, updatedBy uint) (*domain.Settings, error) {
-	// Get existing setting
-	existingSetting, err := s.SettingsRepo.GetByID(ctx, settingID)
+	var updatedSetting *domain.Settings
+	err := s.TxManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		existingSetting, err := s.SettingsRepo.GetByIDForUpdate(txCtx, settingID)
+		if err != nil {
+			return err
+		}
+
+		if key, ok := updateData["key"].(string); ok {
+			existingSetting.Key = key
+		}
+		if value, ok := updateData["value"].(string); ok {
+			existingSetting.Value = &value
+		} else if updateData["value"] == nil {
+			existingSetting.Value = nil
+		}
+		if valueTypeStr, ok := updateData["value_type"].(string); ok {
+			valueType := domain.SettingsValueType(valueTypeStr)
+			existingSetting.ValueType = valueType
+		}
+
+		if err := existingSetting.IsValid(); err != nil {
+			return err
+		}
+		if err := validateBusinessSetting(existingSetting); err != nil {
+			return err
+		}
+		if err := s.SettingsRepo.Update(txCtx, existingSetting); err != nil {
+			return fmt.Errorf("failed to update setting: %w", err)
+		}
+		if existingSetting.Key == SettingKeySelfCheckInAdvancePercent {
+			percent, err := parseSelfCheckInAdvancePercent(existingSetting)
+			if err != nil {
+				return err
+			}
+			if err := s.QuotaRepo.RecomputeActiveCheckInMaxAdvance(txCtx, percent); err != nil {
+				return fmt.Errorf("failed to recompute active self check-in quota: %w", err)
+			}
+		}
+
+		updatedSetting = existingSetting
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Apply updates
-	if key, ok := updateData["key"].(string); ok {
-		existingSetting.Key = key
+	if err := s.EventBus.Publish(ctx, domain.NewSettingsUpdatedEvent(ctx, updatedSetting.Key, updatedSetting.ID)); err != nil {
+		s.logger.Warn("Failed to publish settings updated event", "settingsID", updatedSetting.ID, "key", updatedSetting.Key, "error", err)
 	}
-
-	if value, ok := updateData["value"].(string); ok {
-		existingSetting.Value = &value
-	} else if updateData["value"] == nil {
-		existingSetting.Value = nil
-	}
-
-	if valueTypeStr, ok := updateData["value_type"].(string); ok {
-		valueType := domain.SettingsValueType(valueTypeStr)
-		existingSetting.ValueType = valueType
-	}
-
-	// Validate updated setting
-	if err := existingSetting.IsValid(); err != nil {
-		return nil, err
-	}
-	if err := validateBusinessSetting(existingSetting); err != nil {
-		return nil, err
-	}
-
-	if err := s.SettingsRepo.Update(ctx, existingSetting); err != nil {
-		return nil, fmt.Errorf("failed to update setting: %w", err)
-	}
-
-	// Publish event
-	if err := s.EventBus.Publish(ctx, domain.NewSettingsUpdatedEvent(ctx, existingSetting.Key, existingSetting.ID)); err != nil {
-		s.logger.Warn("Failed to publish settings updated event", "settingsID", existingSetting.ID, "key", existingSetting.Key, "error", err)
-	}
-
-	// Invalidate settings cache
 	s.invalidateSettingsCache(ctx)
-
-	return existingSetting, nil
+	return updatedSetting, nil
 }
 
 func validateBusinessSetting(setting *domain.Settings) error {
-	if setting == nil || setting.Key != SettingKeyBulkTransferWorkbookLimit {
+	if setting == nil {
 		return nil
 	}
-	_, err := parseBulkTransferWorkbookLimit(setting)
-	return err
+	switch setting.Key {
+	case SettingKeyBulkTransferWorkbookLimit:
+		_, err := parseBulkTransferWorkbookLimit(setting)
+		return err
+	case SettingKeySelfCheckInAdvancePercent:
+		_, err := parseSelfCheckInAdvancePercent(setting)
+		return err
+	default:
+		return nil
+	}
 }
 
 func (s *SettingsService) DeleteSetting(ctx context.Context, id uint, deletedBy uint) error {
@@ -175,6 +211,18 @@ func (s *SettingsService) DeleteSetting(ctx context.Context, id uint, deletedBy 
 }
 
 func (s *SettingsService) ListSettings(ctx context.Context, filters domain.SettingsFilters) ([]*domain.Settings, int64, error) {
+	if s.CacheService == nil {
+		settings, err := s.SettingsRepo.List(ctx, filters)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to list settings: %w", err)
+		}
+		count, err := s.SettingsRepo.Count(ctx, filters)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to count settings: %w", err)
+		}
+		return settings, count, nil
+	}
+
 	// Generate cache key based on filters
 	cacheKey := s.CacheService.GenerateSettingsCacheKey("list",
 		fmt.Sprintf("limit:%d", filters.Limit),
@@ -216,6 +264,10 @@ func (s *SettingsService) ListSettings(ctx context.Context, filters domain.Setti
 
 // invalidateSettingsCache clears all settings-related cache entries
 func (s *SettingsService) invalidateSettingsCache(ctx context.Context) {
+	if s.CacheService == nil {
+		return
+	}
+
 	// Clear all settings list cache entries
 	if err := s.CacheService.DeletePattern(ctx, "settings:list:*"); err != nil {
 		s.logger.Warn("Failed to clear settings list cache", "error", err)

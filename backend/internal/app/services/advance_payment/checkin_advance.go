@@ -16,7 +16,7 @@ import (
 //
 // This flow is separate from the admin-upload (BCC) advance flow:
 //   - Quota source: check-out earnings (advance_payments.salary = 100% earned;
-//     max_adv_amount = floor(salary * SelfCheckInAdvanceablePercent / 100) = 70%).
+//     max_adv_amount = floor(salary * configured_percent / 100); default 70%).
 //   - Salary period: calendar month (project.SalaryPeriodFrom), NOT the admin
 //     day-20 three-phase model.
 //   - Request window: opens on SelfCheckInAdvanceWindowOpenDay (day 10) and closes
@@ -27,7 +27,8 @@ import (
 // SelfCheckInAdvanceWindowOpenDay is the day of the calendar month from which a
 // self-check-in employee may request an advance for the current salary period.
 // Before this day the employee may still check-in/out and earn, but cannot submit
-// an advance request. Centralized alongside domain.SelfCheckInAdvanceablePercent.
+// an advance request. Centralized alongside the configurable self-check-in
+// advance percentage.
 const SelfCheckInAdvanceWindowOpenDay = 10
 
 // CheckInAdvanceDisclaimerVN is the in-app note clarifying that the displayed
@@ -40,7 +41,8 @@ const minCheckInAdvanceRequest uint64 = 10000
 
 // CheckInAdvanceInfo is the self-check-in advance summary returned to the employee
 // app. Salary = tiền công thực tế (100% earned); MaxAdvanceAmount = tiền công được
-// ứng (70%). Fee/transfer fields are filled by the handler from the service config.
+// ứng (the configured self-check-in percentage, default 70%). Fee/transfer
+// fields are filled by the handler from the service config.
 // CheckInAdvanceInfo is an INTERNAL service-level value — it is NOT serialized to the
 // client; the handler maps it field-by-field into dto.AdvancePaymentInfoResponse (which
 // carries the canonical camelCase json tags). Do not add json tags here.
@@ -50,9 +52,9 @@ type CheckInAdvanceInfo struct {
 	// PendingEarnings is the total earning held in the 24h credit window this
 	// month — checked-out attendances whose earning has not yet been banked into
 	// the quota pool. Shown separately so the worker sees money is coming; it is
-	// NOT part of MaxAdvanceAmount / the 70% advanceable cap.
+	// NOT part of MaxAdvanceAmount / the configured advanceable cap.
 	PendingEarnings           uint64
-	MaxAdvanceAmount          uint64 // tiền công được ứng (70% of credited salary)
+	MaxAdvanceAmount          uint64 // tiền công được ứng (configured percent of credited salary)
 	CompletedAmount           uint64
 	PendingAmount             uint64
 	RemainingAmount           uint64
@@ -167,7 +169,7 @@ func (s *Service) GetCheckInAdvanceInfoByUserID(ctx context.Context, userID uint
 
 // CreateCheckInAdvanceRequest creates an advance request under the self-check-in flow.
 // Calendar-month window (open day 10, prior periods locked); budget is checked
-// atomically by CreateWithBudgetCheck against the stored 70% max_adv_amount; fee via
+// atomically by CreateWithBudgetCheck against the stored configured max_adv_amount; fee via
 // the flexible-pay schedule (unchanged).
 func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID uint64, requestAmount uint64, forMonth string) (*domain.AdvancePaymentRequest, error) {
 	if requestAmount < minCheckInAdvanceRequest {
