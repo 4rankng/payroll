@@ -25,6 +25,8 @@ class ZaloAdminService {
     app_id: string;
     secret_key: string;
     template_id: string;
+    access_token?: string;
+    refresh_token?: string;
   }): Promise<ApiResponse<void>> {
     return apiClient.put<void>(API_ENDPOINTS.zalo.credentials, payload);
   }

@@ -157,25 +157,68 @@ func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 	}, nil
 }
 
-// SaveCredentials updates app_id/secret/template WITHOUT touching tokens. The
-// admin must re-run the OAuth connect flow after rotating keys. actorID is
-// recorded in the audit log.
-func (s *Service) SaveCredentials(ctx context.Context, appID, secretKey, templateID string) error {
+// SaveCredentialsInput is the admin-supplied connection form payload. Empty
+// optional fields mean "keep existing" so the admin can change just one value
+// (e.g. re-paste an access_token) without clobbering the others.
+type SaveCredentialsInput struct {
+	AppID        string // required
+	SecretKey    string // empty = keep existing
+	TemplateID   string // empty = keep existing/default
+	AccessToken  string // empty = keep existing (unless AppID changes)
+	RefreshToken string // empty = keep existing (unless AppID changes)
+}
+
+// SaveCredentials updates the admin-configured fields. Token lifecycle rules:
+//   - If AppID changes, all tokens are cleared (tokens are bound to a specific
+//     OA app — a stale token from another app will only produce -124 errors).
+//   - If AppID is unchanged, existing tokens are preserved so the admin can
+//     edit one field (e.g. re-paste an expired access_token) without forcing a
+//     full re-OAuth.
+//   - When a non-empty AccessToken is provided AND differs from the current
+//     one, ExpiresAt is reset to now + 24h so the Provider treats the freshly
+//     pasted token as live (manual paste bypasses OAuth's expires_in).
+//
+// Empty SecretKey/RefreshToken never overwrite existing values — the UI sends
+// empty for password fields the admin did not retype.
+func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) error {
 	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
-		cur.AppID = appID
-		if secretKey != "" {
-			cur.SecretKey = secretKey // empty = keep existing (UI sends empty when unchanged)
+		appIDChanged := in.AppID != "" && cur.AppID != "" && in.AppID != cur.AppID
+
+		cur.AppID = in.AppID
+		if in.SecretKey != "" {
+			cur.SecretKey = in.SecretKey
 		}
-		if templateID != "" {
-			cur.TemplateID = templateID
+		if in.TemplateID != "" {
+			cur.TemplateID = in.TemplateID
 		}
 		if cur.TemplateID == "" {
 			cur.TemplateID = defaultTemplate
 		}
-		// Rotating keys invalidates any existing tokens.
-		cur.AccessToken = ""
-		cur.RefreshToken = ""
-		cur.ExpiresAt = nil
+
+		// Rotating AppID invalidates any existing tokens (app-bound).
+		if appIDChanged {
+			cur.AccessToken = ""
+			cur.RefreshToken = ""
+			cur.ExpiresAt = nil
+			return cur
+		}
+
+		// Manual token paste (AppID unchanged): overwrite only what was supplied.
+		// A new AccessToken resets the expiry clock to +24h (matches the Zalo OA
+		// dashboard's typical access_token lifetime so the proactive-refresh
+		// buffer doesn't immediately fire).
+		if in.AccessToken != "" && in.AccessToken != cur.AccessToken {
+			exp := s.clk().Add(24 * time.Hour)
+			cur.ExpiresAt = &exp
+		}
+		if in.AccessToken != "" {
+			cur.AccessToken = in.AccessToken
+		}
+		if in.RefreshToken != "" {
+			cur.RefreshToken = in.RefreshToken
+		}
+		// A successful credential update clears any stale last_error.
+		cur.LastError = ""
 		return cur
 	})
 }

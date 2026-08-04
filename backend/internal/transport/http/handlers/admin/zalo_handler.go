@@ -21,12 +21,16 @@ func NewZaloHandler(svc *zaloconnect.Service) *ZaloHandler {
 }
 
 // zaloCredentialsDTO is the body for PUT /admin/zalo/credentials.
-// SecretKey is optional — empty means "keep existing" (the UI sends empty when
-// the admin leaves the password field blank).
+// SecretKey/AccessToken/RefreshToken are optional — empty means "keep existing"
+// (the UI sends empty for password fields the admin did not retype). This lets
+// the admin paste tokens manually for localhost/dev (no OAuth callback URL
+// reachable from the OA) OR run the OAuth connect flow for production.
 type zaloCredentialsDTO struct {
-	AppID      string `json:"app_id" binding:"required"`
-	SecretKey  string `json:"secret_key"`
-	TemplateID string `json:"template_id"`
+	AppID        string `json:"app_id" binding:"required"`
+	SecretKey    string `json:"secret_key"`
+	TemplateID   string `json:"template_id"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // zaloEnabledDTO is the body for PUT /admin/zalo/enabled.
@@ -74,7 +78,8 @@ func (h *ZaloHandler) GetStatus(c *gin.Context) {
 
 // SaveCredentials
 // @Summary Save Zalo OA credentials
-// @Description Save app_id/secret/template. Tokens are cleared (admin must re-OAuth).
+// @Description Save app_id/secret/template and optional manually-pasted tokens.
+// @Description Tokens are preserved when app_id is unchanged; cleared when app_id rotates.
 // @Tags admin,zalo
 // @Security Bearer
 // @Param body body zaloCredentialsDTO true "Credentials"
@@ -85,7 +90,13 @@ func (h *ZaloHandler) SaveCredentials(c *gin.Context) {
 	if !helpers.BindJSON(c, &req) {
 		return
 	}
-	if err := h.svc.SaveCredentials(c.Request.Context(), req.AppID, req.SecretKey, req.TemplateID); err != nil {
+	if err := h.svc.SaveCredentials(c.Request.Context(), zaloconnect.SaveCredentialsInput{
+		AppID:        req.AppID,
+		SecretKey:    req.SecretKey,
+		TemplateID:   req.TemplateID,
+		AccessToken:  req.AccessToken,
+		RefreshToken: req.RefreshToken,
+	}); err != nil {
 		response.HandleDomainError(c, err)
 		return
 	}

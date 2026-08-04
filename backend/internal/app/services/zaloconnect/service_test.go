@@ -95,7 +95,9 @@ func TestGetStatus_NotConfigured(t *testing.T) {
 
 func TestSaveCredentials_ThenStatusConfigured(t *testing.T) {
 	svc, repo, _, _ := newTestService(t)
-	if err := svc.SaveCredentials(context.Background(), "app1", "secret1", ""); err != nil {
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", SecretKey: "secret1",
+	}); err != nil {
 		t.Fatalf("SaveCredentials: %v", err)
 	}
 	// Credentials row persisted.
@@ -118,9 +120,9 @@ func TestSaveCredentials_ThenStatusConfigured(t *testing.T) {
 	}
 }
 
-func TestSaveCredentials_ClearsExistingTokens(t *testing.T) {
+func TestSaveCredentials_ClearsTokensOnAppIDRotate(t *testing.T) {
 	svc, _, _, _ := newTestService(t)
-	// Seed with tokens.
+	// Seed with tokens for app1.
 	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
 		c.AppID = "app1"
 		c.SecretKey = "secret1"
@@ -128,13 +130,102 @@ func TestSaveCredentials_ClearsExistingTokens(t *testing.T) {
 		c.RefreshToken = "old-refresh"
 		return c
 	})
-	// Re-saving credentials must clear tokens (admin must re-OAuth).
-	if err := svc.SaveCredentials(context.Background(), "app1", "secret1", ""); err != nil {
+	// Re-saving with a DIFFERENT app_id must clear tokens (tokens are app-bound).
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app2", SecretKey: "secret2",
+	}); err != nil {
 		t.Fatalf("err: %v", err)
 	}
 	st, _ := svc.GetStatus(context.Background())
 	if st.Connected {
-		t.Error("re-saving credentials should clear tokens (Connected must be false)")
+		t.Error("rotating app_id should clear tokens (Connected must be false)")
+	}
+}
+
+func TestSaveCredentials_PreservesTokensWhenAppIDUnchanged(t *testing.T) {
+	svc, _, _, _ := newTestService(t)
+	// Seed connected state.
+	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
+		c.AppID = "app1"
+		c.SecretKey = "secret1"
+		c.AccessToken = "old-access"
+		c.RefreshToken = "old-refresh"
+		return c
+	})
+	// Re-saving credentials (same app_id, no token fields) must PRESERVE tokens.
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", SecretKey: "secret1",
+	}); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.AccessToken != "old-access" || got.RefreshToken != "old-refresh" {
+		t.Errorf("tokens should be preserved, got access=%q refresh=%q", got.AccessToken, got.RefreshToken)
+	}
+	st, _ := svc.GetStatus(context.Background())
+	if !st.Connected {
+		t.Error("expected Connected=true (tokens preserved)")
+	}
+}
+
+func TestSaveCredentials_ManualTokenPasteResetsExpiry(t *testing.T) {
+	// Freeze the clock so we can assert the +24h expiry precisely.
+	svc, _, _, _ := newTestService(t)
+	frozen := time.Date(2026, 8, 4, 12, 0, 0, 0, time.UTC)
+	svc.clk = func() time.Time { return frozen }
+
+	// Seed configured (no tokens).
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", SecretKey: "secret1",
+	}); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	// Paste access_token + refresh_token manually.
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", AccessToken: "manual-access", RefreshToken: "manual-refresh",
+	}); err != nil {
+		t.Fatalf("paste: %v", err)
+	}
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.AccessToken != "manual-access" || got.RefreshToken != "manual-refresh" {
+		t.Errorf("manual paste failed: %+v", got)
+	}
+	wantExpiry := frozen.Add(24 * time.Hour)
+	if got.ExpiresAt == nil || !got.ExpiresAt.Equal(wantExpiry) {
+		t.Errorf("expiry = %v, want %v", got.ExpiresAt, wantExpiry)
+	}
+	st, _ := svc.GetStatus(context.Background())
+	if !st.Connected {
+		t.Error("expected Connected=true after manual token paste")
+	}
+}
+
+func TestSaveCredentials_EmptyTokensDontClobber(t *testing.T) {
+	svc, _, _, _ := newTestService(t)
+	// Seed connected state.
+	_ = svc.mutateCredentials(context.Background(), func(c Credentials) Credentials {
+		c.AppID = "app1"
+		c.SecretKey = "secret1"
+		c.AccessToken = "old-access"
+		c.RefreshToken = "old-refresh"
+		return c
+	})
+	// Re-save with empty token fields — tokens must survive (UI password fields
+	// are empty when the admin doesn't retype them).
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", SecretKey: "", AccessToken: "", RefreshToken: "",
+	}); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	got, _ := svc.Get(context.Background())
+	if got.AccessToken != "old-access" || got.RefreshToken != "old-refresh" {
+		t.Errorf("empty fields clobbered tokens: %+v", got)
 	}
 }
 
@@ -174,7 +265,7 @@ func TestStartOAuth_RequiresCredentials(t *testing.T) {
 
 func TestStartOAuth_BuildsURLAndStoresState(t *testing.T) {
 	svc, _, rdb, mr := newTestService(t)
-	_ = svc.SaveCredentials(context.Background(), "app1", "secret1", "")
+	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
 
 	url, err := svc.StartOAuth(context.Background())
 	if err != nil {
@@ -206,7 +297,7 @@ func TestStartOAuth_BuildsURLAndStoresState(t *testing.T) {
 
 func TestOAuthCallback_StateSingleUse(t *testing.T) {
 	svc, _, _, _ := newTestService(t)
-	_ = svc.SaveCredentials(context.Background(), "app1", "secret1", "")
+	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
 	_, _ = svc.StartOAuth(context.Background())
 
 	// Extract the state from redis (we can't easily read the URL here, so
@@ -243,7 +334,7 @@ func TestSeedFromEnvIfEmpty_FirstBoot(t *testing.T) {
 func TestSeedFromEnvIfEmpty_NoOpWhenRowExists(t *testing.T) {
 	svc, repo, _, _ := newTestService(t)
 	// Pre-create credentials row.
-	_ = svc.SaveCredentials(context.Background(), "db-app", "db-secret", "")
+	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "db-app", SecretKey: "db-secret"})
 	before := repo.rows[KeyCredentials].Value
 
 	_ = svc.SeedFromEnvIfEmpty(context.Background(), EnvSeed{AppID: "env-app", SecretKey: "env-secret"})
@@ -257,7 +348,7 @@ func TestSeedFromEnvIfEmpty_NoOpWhenRowExists(t *testing.T) {
 
 func TestGetUpdate_RoundTrip(t *testing.T) {
 	svc, _, _, _ := newTestService(t)
-	_ = svc.SaveCredentials(context.Background(), "app1", "secret1", "")
+	_ = svc.SaveCredentials(context.Background(), SaveCredentialsInput{AppID: "app1", SecretKey: "secret1"})
 
 	// Simulate a token refresh via Update.
 	future := time.Now().Add(time.Hour)

@@ -74,9 +74,12 @@ export const ZaloConnectionSection = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Form state — secret_key is write-only (never echoed from server).
+  // Form state — secret_key/access_token/refresh_token are write-only (never
+  // echoed from server; empty on submit means "keep existing").
   const [appID, setAppID] = useState('');
   const [secretKey, setSecretKey] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [refreshToken, setRefreshToken] = useState('');
   const [templateID, setTemplateID] = useState('617976');
   const [confirmDisable, setConfirmDisable] = useState(false);
 
@@ -109,9 +112,19 @@ export const ZaloConnectionSection = () => {
 
   const handleSaveCreds = async () => {
     try {
-      await saveCreds.mutateAsync({ app_id: appID, secret_key: secretKey, template_id: templateID });
+      await saveCreds.mutateAsync({
+        app_id: appID,
+        secret_key: secretKey,
+        template_id: templateID,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
       toast.success('Đã lưu thông tin kết nối Zalo');
-      setSecretKey(''); // clear the write-only field after save
+      // Clear write-only password fields after save (server keeps existing
+      // values for fields left blank).
+      setSecretKey('');
+      setAccessToken('');
+      setRefreshToken('');
     } catch (e) {
       toast.error('Không thể lưu thông tin kết nối');
     }
@@ -265,6 +278,47 @@ export const ZaloConnectionSection = () => {
               disabled={saveCreds.isPending}
               autoComplete="new-password"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="zalo-access-token">
+              Access Token
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                (dán thủ công — để trống để giữ nguyên)
+              </span>
+            </Label>
+            <Input
+              id="zalo-access-token"
+              type="password"
+              value={accessToken}
+              onChange={(e) => setAccessToken(e.target.value)}
+              placeholder="••••••••••••••••"
+              disabled={saveCreds.isPending}
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground">
+              Hết hạn ~24h. Dán token mới → đồng hồ hết hạn tự đặt lại +24h. Thay
+              thế OAuth khi chạy localhost.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="zalo-refresh-token">
+              Refresh Token
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                (dán thủ công — để trống để giữ nguyên)
+              </span>
+            </Label>
+            <Input
+              id="zalo-refresh-token"
+              type="password"
+              value={refreshToken}
+              onChange={(e) => setRefreshToken(e.target.value)}
+              placeholder="••••••••••••••••"
+              disabled={saveCreds.isPending}
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-muted-foreground">
+              Cần kèm App ID + Secret Key thì nút &quot;Làm mới token&quot; mới hoạt động.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="zalo-template">Template ID</Label>
