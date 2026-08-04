@@ -3,6 +3,7 @@ export interface User {
   email: string;
   username: string;
   fullname: string;
+  mobile?: string;
   role: 'admin' | 'partner' | 'employee' | 'adv_partner';
   last_login?: string;
   created_at: string;
@@ -13,6 +14,7 @@ export type UserFormData = {
   email: string;
   username: string;
   fullname: string;
+  mobile?: string;
   password: string;
   role: User["role"] | "";
 };
@@ -23,6 +25,7 @@ export interface CreateUserData {
   fullname: string;
   password: string;
   role: 'admin' | 'partner' | 'employee' | 'adv_partner';
+  mobile?: string;
 }
 
 export interface UpdateUserData {
@@ -30,6 +33,7 @@ export interface UpdateUserData {
   username?: string;
   fullname?: string;
   role?: 'admin' | 'partner' | 'employee' | 'adv_partner';
+  mobile?: string;
 }
 
 export interface UserSummary {

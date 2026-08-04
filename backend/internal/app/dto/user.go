@@ -8,6 +8,7 @@ import (
 // CreateUserRequest represents the request to create a new user
 type CreateUserRequest struct {
 	Email    string `json:"email" binding:"omitempty,email"`
+	Mobile   string `json:"mobile,omitempty"`
 	Username string `json:"username" binding:"required,min=3"`
 	Password string `json:"password" binding:"required,min=8"`
 	Fullname string `json:"fullname" binding:"required"`
@@ -17,6 +18,7 @@ type CreateUserRequest struct {
 // UpdateUserRequest represents the request to update a user
 type UpdateUserRequest struct {
 	Email    *string `json:"email"`
+	Mobile   *string `json:"mobile"`
 	Username *string `json:"username" binding:"omitempty,min=3"`
 	Fullname *string `json:"fullname"`
 	Role     *string `json:"role"`
@@ -170,6 +172,26 @@ type PasswordResetRequestDTO struct {
 type PasswordResetConfirmDTO struct {
 	Token       string `json:"token" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+// ZaloResetRequestDTO is the body of POST /auth/zalo-reset/request. The endpoint
+// returns the SAME success response + a structurally identical session id
+// whether or not the mobile exists, to prevent mobile enumeration.
+type ZaloResetRequestDTO struct {
+	Mobile string `json:"mobile" binding:"required"`
+}
+
+// ZaloResetConfirmDTO is the body of POST /auth/zalo-reset/confirm. Code is the
+// 6-digit OTP delivered via ZNS; OTPSessionID is the opaque id from /request.
+type ZaloResetConfirmDTO struct {
+	OTPSessionID string `json:"otp_session_id" binding:"required"`
+	Code         string `json:"code" binding:"required,len=6"`
+	NewPassword  string `json:"new_password" binding:"required,min=8"`
+}
+
+// ZaloResetResendDTO is the body of POST /auth/zalo-reset/resend.
+type ZaloResetResendDTO struct {
+	OTPSessionID string `json:"otp_session_id" binding:"required"`
 }
 
 // UserActivitiesRequest represents the request parameters for user activities

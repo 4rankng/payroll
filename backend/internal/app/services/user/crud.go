@@ -12,6 +12,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	auditctx "api-server/internal/pkg/context"
+	"api-server/internal/pkg/phone"
 	"api-server/internal/pkg/utils"
 )
 
@@ -52,6 +53,21 @@ func (s *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest)
 		s.logger.Info("Using default role for new user", "role", role)
 	}
 
+	var normalizedMobile string
+	if req.Mobile != "" {
+		if role != domain.RoleAdmin && role != domain.RolePartner {
+			return nil, domain.NewValidationError(constants.MsgUserMobileRoleRestrictedVN)
+		}
+		normalizedMobile, err = phone.NormalizeVietnameseMobile(req.Mobile)
+		if err != nil {
+			return nil, domain.NewValidationError(constants.MsgInvalidMobileFormatVN)
+		}
+		if _, err := s.UserRepo.GetByMobile(ctx, normalizedMobile); err == nil {
+			s.logger.Info("User creation failed: mobile already exists", "mobile", normalizedMobile)
+			return nil, domain.NewConflictError(constants.MsgUserWithMobileExistsVN)
+		}
+	}
+
 	// Normalize fullname to Vietnamese title case
 	normalizedFullname := utils.ToVietnameseTitleCase(req.Fullname)
 
@@ -66,6 +82,11 @@ func (s *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest)
 	// Set email to nil if empty, otherwise set to pointer
 	if req.Email != "" {
 		user.Email = &req.Email
+	}
+
+	// Set mobile to nil if empty, otherwise set to pointer
+	if normalizedMobile != "" {
+		user.Mobile = &normalizedMobile
 	}
 
 	// Save to database
@@ -188,6 +209,28 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, req dto.UpdateUse
 
 	if req.Role != nil && *req.Role != "" {
 		user.Role = domain.UserRole(*req.Role)
+	}
+
+	if user.Role != domain.RoleAdmin && user.Role != domain.RolePartner {
+		if req.Mobile != nil && *req.Mobile != "" {
+			return nil, domain.NewValidationError(constants.MsgUserMobileRoleRestrictedVN)
+		}
+		// Employee contact numbers belong to employees.mobile, never users.mobile.
+		user.Mobile = nil
+	} else if req.Mobile != nil {
+		if *req.Mobile == "" {
+			user.Mobile = nil
+		} else {
+			normalizedMobile, err := phone.NormalizeVietnameseMobile(*req.Mobile)
+			if err != nil {
+				return nil, domain.NewValidationError(constants.MsgInvalidMobileFormatVN)
+			}
+			if existingUser, err := s.UserRepo.GetByMobile(ctx, normalizedMobile); err == nil && existingUser.ID != id {
+				s.logger.Info("Mobile already taken by another user", "mobile", normalizedMobile, "existing_user_id", existingUser.ID)
+				return nil, domain.NewConflictError(constants.MsgMobileAlreadyTakenVN)
+			}
+			user.Mobile = &normalizedMobile
+		}
 	}
 
 	// Save updated user

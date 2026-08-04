@@ -518,6 +518,7 @@ type UpdateProfileRequest struct {
 
 type CreateUserRequest struct {
 	Email    string `json:"email,omitempty"`
+	Mobile   string `json:"mobile,omitempty"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Fullname string `json:"fullname"`
@@ -526,6 +527,7 @@ type CreateUserRequest struct {
 
 type UpdateUserRequest struct {
 	Email    *string `json:"email,omitempty"`
+	Mobile   *string `json:"mobile,omitempty"`
 	Username *string `json:"username,omitempty"`
 	Fullname *string `json:"fullname,omitempty"`
 	Role     *string `json:"role,omitempty"`

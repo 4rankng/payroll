@@ -145,6 +145,14 @@ if err := h.eventBus.Publish(ctx, event); err != nil {
 }
 ```
 
+**Zalo ZNS password reset (employee mobile channel):**
+- `internal/infra/zalo/` — stateless ZNS protocol client (phone norm, param clamp, OAuth v4, `-124` retry). Ported from tuyennhanvien.vn PHP. DB-agnostic; takes credentials via `CredentialSource` interface.
+- `internal/app/services/zaloreset/` — the reset service (mobile lookup, code-gen, async ZNS dispatch, atomic password update). Role-gated to `employee`; anti-enumeration via dummy sessions.
+- `internal/app/services/zaloconnect/` — admin-managed OA connection (DB-backed via `settings` table: `zalo.enabled`, `zalo.credentials`). Implements `zalo.CredentialSource`. Owns the OAuth v4 connect flow + runtime toggle (hot — no redeploy).
+- Admin UI: `/admin/settings?tab=zalo` — credentials form, "Kết nối Zalo" OAuth, enable/disable toggle, token refresh. See `docs/runbooks/zalo-oa-connect.md`.
+- Env vars (`ZALO_*`) are **bootstrap-only seed**; on first boot they populate the `settings` rows; thereafter the admin UI is authoritative.
+- ADR: `docs/decisions/ADR-011-zalo-otp-password-reset.md`.
+
 ### Git Conventions
 
 **Commit format:** `<type>(<scope>): <subject>`

@@ -32,6 +32,8 @@ import (
 	"api-server/internal/app/services/settlement"
 	"api-server/internal/app/services/timesheet"
 	"api-server/internal/app/services/user"
+	"api-server/internal/app/services/zaloconnect"
+	"api-server/internal/app/services/zaloreset"
 	"api-server/internal/app/workers"
 	appConfig "api-server/internal/config"
 	"api-server/internal/constants"
@@ -46,6 +48,7 @@ import (
 	"api-server/internal/infra/persistence"
 	"api-server/internal/infra/persistence/repositories"
 	"api-server/internal/infra/storage"
+	"api-server/internal/infra/zalo"
 	"api-server/internal/pkg/clock"
 
 	// Adapter imports
@@ -60,6 +63,8 @@ type Services struct {
 	User                              *user.UserService
 	PasswordResetJobManager           *user.PasswordResetJobManager
 	EmailPasswordReset                *passwordreset.Service // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
+	ZaloPasswordReset                 *zaloreset.Service     // Employee mobile-channel OTP reset (Phase 2)
+	ZaloConnect                       *zaloconnect.Service   // Admin-managed OA connection + runtime toggle (Phase 4)
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
 	Dashboard                         *dashboard.Service
@@ -623,6 +628,25 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		constants.DefaultEmailSenderAddress, cfg.PasswordReset.ResetURL, clk, logger,
 	)
 
+	// Zalo-OTP employee password-reset (mobile channel). Two-step wire:
+	// zaloconnect.Service implements zalo.CredentialSource and owns the
+	// admin-managed connection (DB-backed); the zalo.Provider takes it.
+	// SeedFromEnvIfEmpty runs on first boot only — thereafter DB is authoritative.
+	zaloConnectSvc := zaloconnect.NewService(repos.Settings, redis.Client, cfg.Zalo.CallbackURL, logger)
+	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
+	zaloConnectSvc.SetProvider(zaloProvider)
+	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{
+		Enabled:    cfg.Zalo.Enabled,
+		AppID:      cfg.Zalo.AppID,
+		SecretKey:  cfg.Zalo.SecretKey,
+		TemplateID: cfg.Zalo.TemplateID,
+	})
+	zaloResetStore := cache.NewZaloResetStore(redis.Client, cfg.Zalo.CodeTTL)
+	zaloResetService := zaloreset.NewService(
+		zaloResetStore, repos.User, repos.Employee, userService, zaloProvider,
+		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
+	)
+
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
 
@@ -640,6 +664,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		User:                              userService,
 		PasswordResetJobManager:           passwordResetJobManager,
 		EmailPasswordReset:                emailPasswordResetService,
+		ZaloPasswordReset:                 zaloResetService,
+		ZaloConnect:                       zaloConnectSvc,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),
 		Authorization:                     authorizationService,
 		Dashboard:                         dashboardService,

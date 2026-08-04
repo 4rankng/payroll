@@ -97,3 +97,81 @@ func TestLoginAccountKeyGetter_FallbackToIP(t *testing.T) {
 		})
 	}
 }
+
+// --- Zalo reset key-getters -------------------------------------------------
+
+func TestZaloResetMobileKeyGetter_NormalizationAndBodyRestore(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want string
+	}{
+		{name: "domestic mobile", body: `{"mobile":"0987654321"}`, want: "zreset-mobile:987654321"},
+		{name: "international +84", body: `{"mobile":"+84987654321"}`, want: "zreset-mobile:987654321"},
+		{name: "84 prefix", body: `{"mobile":"84987654321"}`, want: "zreset-mobile:987654321"},
+		{name: "spaced domestic", body: `{"mobile":"0987 654 321"}`, want: "zreset-mobile:987654321"},
+		{name: "whitespace trimmed", body: `{"mobile":"  0987654321  "}`, want: "zreset-mobile:987654321"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newContextWithBody(tc.body)
+			got := zaloResetMobileKeyGetter(c)
+			if got != tc.want {
+				t.Fatalf("zaloResetMobileKeyGetter = %q, want %q", got, tc.want)
+			}
+			// CRITICAL: body must be restorable for the downstream handler's BindJSON.
+			rest, err := io.ReadAll(c.Request.Body)
+			if err != nil {
+				t.Fatalf("re-read body: %v", err)
+			}
+			if string(rest) != tc.body {
+				t.Fatalf("body not restored: got %q, want %q", string(rest), tc.body)
+			}
+		})
+	}
+}
+
+func TestZaloResetMobileKeyGetter_FallbackToIP(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+	}{
+		{name: "no mobile field", body: `{"email":"a@b.c"}`},
+		{name: "empty mobile", body: `{"mobile":"  "}`},
+		{name: "malformed JSON", body: `not-json`},
+		{name: "empty body", body: ``},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newContextWithBody(tc.body)
+			got := zaloResetMobileKeyGetter(c)
+			if got != "ip:1.2.3.4" {
+				t.Fatalf("zaloResetMobileKeyGetter = %q, want %q", got, "ip:1.2.3.4")
+			}
+		})
+	}
+}
+
+func TestZaloResetSessionKeyGetter(t *testing.T) {
+	c := newContextWithBody(`{"otp_session_id":"sid-abc123","code":"123456"}`)
+	got := zaloResetSessionKeyGetter(c)
+	if got != "zreset-sid:sid-abc123" {
+		t.Fatalf("zaloResetSessionKeyGetter = %q, want %q", got, "zreset-sid:sid-abc123")
+	}
+	// Body must be restored.
+	rest, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		t.Fatalf("re-read body: %v", err)
+	}
+	if !strings.Contains(string(rest), "sid-abc123") {
+		t.Fatalf("body not restored: %q", string(rest))
+	}
+}
+
+func TestZaloResetSessionKeyGetter_FallbackToIP(t *testing.T) {
+	c := newContextWithBody(`{"code":"123456"}`) // no otp_session_id
+	got := zaloResetSessionKeyGetter(c)
+	if got != "ip:1.2.3.4" {
+		t.Fatalf("zaloResetSessionKeyGetter = %q, want %q", got, "ip:1.2.3.4")
+	}
+}

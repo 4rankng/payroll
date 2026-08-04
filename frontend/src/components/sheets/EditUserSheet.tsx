@@ -20,6 +20,7 @@ interface EditUserSheetProps {
 
 interface FormData {
   email: string;
+  mobile: string;
   username: string;
   fullname: string;
   password: string;
@@ -38,6 +39,7 @@ function EditUserSheet({
 
   const [formData, setFormData] = useState<FormData>({
     email: "",
+    mobile: "",
     username: "",
     fullname: "",
     password: "",
@@ -54,6 +56,7 @@ function EditUserSheet({
           setUser(data);
           setFormData({
             email: data.email || "",
+            mobile: data.mobile || "",
             username: data.username || "",
             fullname: data.fullname || "",
             password: "",
@@ -100,6 +103,7 @@ function EditUserSheet({
     try {
       await userService.updateUser(user.id, {
         email: formData.email,
+        ...((user.role === "admin" || user.role === "partner") && { mobile: formData.mobile }),
         username: formData.username,
         fullname: formData.fullname,
       });
@@ -118,7 +122,7 @@ function EditUserSheet({
   };
 
   const handleClose = () => {
-    setFormData({ email: "", username: "", fullname: "", password: "" });
+    setFormData({ email: "", mobile: "", username: "", fullname: "", password: "" });
     setErrors({});
     onClose();
   };
@@ -191,6 +195,22 @@ function EditUserSheet({
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
+
+          {(user?.role === "admin" || user?.role === "partner") && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-mobile">Số điện thoại</Label>
+              <Input
+                id="edit-mobile"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="090 123 4567"
+                value={formData.mobile}
+                onChange={(e) => handleInputChange("mobile", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Dùng để đặt lại mật khẩu qua Zalo OTP.</p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-password">Mật khẩu mới</Label>

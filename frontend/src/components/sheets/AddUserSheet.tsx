@@ -8,7 +8,7 @@ import { Users, X, Eye, EyeOff } from "lucide-react";
 import { User, CreateUserData } from "@/types/user";
 import { SlideSheetTemplate } from "./templates/SlideSheetTemplate";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { validateFullname, formatVietnameseName } from "@/lib/validation";
+import { validateFullname, formatVietnameseName, validatePhoneNumber } from "@/lib/validation";
 import type { ModalConfig } from "@/types/modal-config.types";
 
 interface AddUserSheetProps {
@@ -23,6 +23,7 @@ interface UserFormData {
   email: string;
   username: string;
   fullname: string;
+  mobile: string;
   password: string;
   role: string;
 }
@@ -41,6 +42,7 @@ function AddUserSheet({
     email: "",
     username: "",
     fullname: "",
+    mobile: "",
     password: "",
     role: "",
   });
@@ -54,6 +56,7 @@ function AddUserSheet({
         email: "",
         username: "",
         fullname: "",
+        mobile: "",
         password: "",
         role: "",
       });
@@ -109,6 +112,13 @@ function AddUserSheet({
       newErrors.role = "Vai trò là bắt buộc";
     }
 
+    if ((formData.role === "admin" || formData.role === "partner") && formData.mobile.trim()) {
+      const mobileValidation = validatePhoneNumber(formData.mobile);
+      if (!mobileValidation.valid) {
+        newErrors.mobile = mobileValidation.error || "Số điện thoại không hợp lệ";
+      }
+    }
+
     // Check if username already exists
     const existingUser = existingUsers.find(u =>
       u.username.toLowerCase() === formData.username.toLowerCase()
@@ -151,6 +161,7 @@ function AddUserSheet({
           fullname: formData.fullname.trim(),
           password: formData.password.trim(),
           role: formData.role as User["role"],
+          ...((formData.role === "admin" || formData.role === "partner") && formData.mobile.trim() && { mobile: formData.mobile.trim() }),
         });
 
         onClose();
@@ -283,6 +294,23 @@ function AddUserSheet({
                     {errors.email && <p className="text-xs text-red-500 mt-0.5">{errors.email}</p>}
                   </div>
                 </div>
+
+                {(formData.role === "admin" || formData.role === "partner") && (
+                  <div className="space-y-1">
+                    <Label htmlFor="mobile" className="text-xs font-medium">Số điện thoại</Label>
+                    <Input
+                      id="mobile"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={formData.mobile}
+                      onChange={(e) => handleInputChange("mobile", e.target.value)}
+                      placeholder="090 123 4567"
+                      className={errors.mobile ? "h-11 border-red-500" : "h-11"}
+                    />
+                    {errors.mobile && <p className="mt-0.5 text-xs text-red-500">{errors.mobile}</p>}
+                  </div>
+                )}
 
                 <div className="space-y-1">
                   <Label htmlFor="password" className="text-xs font-medium">Mật khẩu *</Label>

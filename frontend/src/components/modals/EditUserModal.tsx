@@ -17,6 +17,7 @@ interface EditUserModalProps {
 export function EditUserModal({ open, onClose, onSubmit, user, loading = false }: EditUserModalProps) {
   const [formData, setFormData] = useState<Omit<UserFormData, 'password'>>({
     email: "",
+    mobile: "",
     username: "",
     fullname: "",
     role: "",
@@ -28,6 +29,7 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
     if (user) {
       setFormData({
         email: user.email,
+        mobile: user.mobile ?? "",
         username: user.username,
         fullname: user.fullname,
         role: user.role,
@@ -66,7 +68,7 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
   };
 
   const resetForm = () => {
-    setFormData({ email: "", username: "", fullname: "", role: "" });
+    setFormData({ email: "", mobile: "", username: "", fullname: "", role: "" });
     setErrors({});
   };
 
@@ -76,6 +78,7 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
     onSubmit({
       id: user.id,
       email: formData.email,
+      mobile: formData.mobile,
       username: formData.username,
       fullname: formData.fullname,
       role: formData.role as User["role"],
@@ -141,6 +144,19 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
               className={errors.email ? "border-destructive" : ""}
             />
             {errors.email && <p className="typography-body-medium text-destructive">{errors.email}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-mobile">Số điện thoại</Label>
+            <Input
+              id="edit-mobile"
+              type="tel"
+              inputMode="tel"
+              placeholder="0987 654 321"
+              value={formData.mobile}
+              onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Dùng để đặt lại mật khẩu qua Zalo OTP.</p>
           </div>
 
           <div className="space-y-2">

@@ -15,6 +15,9 @@ func CompareUsers(original, updated *User) map[string]FieldChange {
 	if !equalStringPtr(original.Email, updated.Email) {
 		changes["email"] = FieldChange{Before: strPtrToStr(original.Email), After: strPtrToStr(updated.Email)}
 	}
+	if !equalStringPtr(original.Mobile, updated.Mobile) {
+		changes["mobile"] = FieldChange{Before: strPtrToStr(original.Mobile), After: strPtrToStr(updated.Mobile)}
+	}
 	if original.Role != updated.Role {
 		changes["role"] = FieldChange{Before: string(original.Role), After: string(updated.Role)}
 	}

@@ -19,6 +19,14 @@ func setupAuthRoutes(v1 *gin.RouterGroup, container *Container) {
 			auth.POST("/password-reset/confirm", container.Middleware.PasswordResetRateLimit, container.Handlers.Auth.ConfirmPasswordReset)
 		}
 
+		// Self-service Zalo-OTP password reset (employee mobile channel).
+		// Registered unconditionally; the service hot-checks the admin toggle
+		// (zaloconnect.IsEnabled) on every request, so disabling the feature
+		// via the admin UI immediately stops dispatch without a 404 that would
+		// reveal the toggle state to a prober.
+		auth.POST("/zalo-reset/request", container.Middleware.ZaloResetRateLimit, container.Handlers.Auth.RequestZaloReset)
+		auth.POST("/zalo-reset/confirm", container.Middleware.ZaloResetConfirmRateLimit, container.Handlers.Auth.ConfirmZaloReset)
+
 		auth.POST("/logout", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.Logout)
 
 		auth.GET("/me", container.Middleware.Auth.Authenticate(), container.Handlers.Auth.GetProfile)

@@ -18,6 +18,7 @@ import (
 	"api-server/internal/infra/cache"
 	auditctx "api-server/internal/pkg/context"
 	"api-server/internal/pkg/ipgeo"
+	"api-server/internal/pkg/phone"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -87,10 +88,37 @@ func (s *AuthService) CaptchaRequiredForUsername(ctx context.Context, username s
 		return false
 	}
 	user, err := s.userService.UserRepo.GetByUsername(ctx, username)
+	if err != nil {
+		user, err = s.userService.UserRepo.GetByCCCD(ctx, username)
+	}
+	if err != nil {
+		user, err = s.findUserByMobileIdentifier(ctx, username)
+	}
 	if err != nil || user == nil {
 		return false
 	}
 	return s.captchaService.RequiredForFailures(user.OTPFailedAttempts)
+}
+
+func (s *AuthService) findUserByMobileIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
+	candidates := []string{identifier}
+	if normalized, err := phone.NormalizeVietnameseMobile(identifier); err == nil && normalized != identifier {
+		candidates = []string{normalized, identifier}
+	}
+
+	for _, candidate := range candidates {
+		if user, err := s.userService.UserRepo.GetByMobile(ctx, candidate); err == nil &&
+			(user.Role == domain.RoleAdmin || user.Role == domain.RolePartner) {
+			return user, nil
+		}
+	}
+	for _, candidate := range candidates {
+		employee, err := s.employeeRepo.GetByMobile(ctx, candidate)
+		if err == nil && employee.UserID != nil {
+			return s.userService.UserRepo.GetByID(ctx, *employee.UserID)
+		}
+	}
+	return nil, domain.NewNotFoundError("user not found")
 }
 
 // GenerateCaptcha creates a new image CAPTCHA challenge.
@@ -245,21 +273,14 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 		// If username not found, try User CCCD (for admin/partner)
 		user, err = userRepo.GetByCCCD(ctx, req.Username)
 		if err != nil {
-			// Try User mobile (for admin/partner)
-			user, err = userRepo.GetByMobile(ctx, req.Username)
+			// Admin/Partner mobile belongs to users; Employee mobile belongs to
+			// employees. Both accept common Vietnamese phone formatting.
+			user, err = s.findUserByMobileIdentifier(ctx, req.Username)
 			if err != nil {
 				// Try Employee CCCD (for employee)
 				employee, empErr := s.employeeRepo.GetByCCCD(ctx, req.Username)
 				if empErr == nil && employee.UserID != nil {
 					user, err = userRepo.GetByID(ctx, *employee.UserID)
-				}
-
-				// Try Employee mobile (for employee)
-				if err != nil {
-					employee, empErr = s.employeeRepo.GetByMobile(ctx, req.Username)
-					if empErr == nil && employee.UserID != nil {
-						user, err = userRepo.GetByID(ctx, *employee.UserID)
-					}
 				}
 
 				// If none found, return unauthorized
@@ -648,11 +669,18 @@ func (s *AuthService) UpdateProfile(ctx context.Context, userID uint, req dto.Up
 		if *req.Mobile == "" {
 			user.Mobile = nil
 		} else {
+			if user.Role != domain.RoleAdmin && user.Role != domain.RolePartner {
+				return nil, domain.NewValidationError(constants.MsgUserMobileRoleRestrictedVN)
+			}
+			normalizedMobile, err := phone.NormalizeVietnameseMobile(*req.Mobile)
+			if err != nil {
+				return nil, domain.NewValidationError(constants.MsgInvalidMobileFormatVN)
+			}
 			// Check uniqueness: no other active user can have this mobile
-			if existing, err := s.userService.UserRepo.GetByMobile(auditCtx, *req.Mobile); err == nil && existing.ID != userID {
+			if existing, err := s.userService.UserRepo.GetByMobile(auditCtx, normalizedMobile); err == nil && existing.ID != userID {
 				return nil, domain.NewConflictError(constants.MsgPhoneUsedByAnotherAccountVN)
 			}
-			mobileVal := *req.Mobile
+			mobileVal := normalizedMobile
 			user.Mobile = &mobileVal
 		}
 	}

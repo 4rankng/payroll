@@ -375,6 +375,14 @@ const (
 	MsgPasswordResetTokenInvalidVN     = "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới."
 	MsgPasswordResetStoreUnavailableVN = "Đã có lỗi xảy ra, vui lòng thử lại."
 
+	// Zalo OTP password reset (employee mobile channel) — self-service flow.
+	MsgZaloResetRequestedVN      = "Nếu số điện thoại tồn tại trong hệ thống, mã đặt lại mật khẩu đã được gửi qua Zalo."
+	MsgZaloResetCodeInvalidVN    = "Mã đặt lại không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới."
+	MsgZaloResetStoreDownVN      = "Đã có lỗi xảy ra, vui lòng thử lại."
+	MsgZaloResetSuccessVN        = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới."
+	MsgZaloResetMobileRequiredVN = "Vui lòng nhập số điện thoại."
+	MsgZaloResetResendTooSoonVN  = "Vui lòng đợi một chút trước khi yêu cầu gửi lại mã."
+
 	// Bank Messages - Vietnamese
 	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"
 	MsgBankNotFoundVN              = "Không tìm thấy ngân hàng"
@@ -651,7 +659,9 @@ const (
 	MsgCurrentPasswordIncorrectVN                  = "Mật khẩu hiện tại không chính xác"
 	MsgEmailAlreadyTakenVN                         = "Email đã được sử dụng"
 	MsgUsernameAlreadyTakenVN                      = "Tên đăng nhập đã được sử dụng"
+	MsgMobileAlreadyTakenVN                        = "Số điện thoại đã được sử dụng"
 	MsgUserWithEmailExistsVN                       = "Người dùng với email này đã tồn tại"
+	MsgUserWithMobileExistsVN                      = "Người dùng với số điện thoại này đã tồn tại"
 	MsgUserWithUsernameExistsVN                    = "Người dùng với tên đăng nhập này đã tồn tại"
 	MsgUserNotFoundVN2                             = "Không tìm thấy người dùng"
 	MsgCannotDeleteProjectWithApprovedTimesheetsVN = "Không thể xóa dự án có bảng chấm công đã phê duyệt"
@@ -705,6 +715,8 @@ const (
 	// Auth Business Errors - Vietnamese
 	MsgCCCDUsedByAnotherAccountVN  = "Số CCCD này đã được sử dụng bởi tài khoản khác"
 	MsgPhoneUsedByAnotherAccountVN = "Số điện thoại này đã được sử dụng bởi tài khoản khác"
+	MsgInvalidMobileFormatVN       = "Số điện thoại không hợp lệ"
+	MsgUserMobileRoleRestrictedVN  = "Số điện thoại tài khoản chỉ áp dụng cho quản trị viên hoặc quản lý"
 
 	// Employee Business Errors - Vietnamese
 	MsgEmployeeNoUserAccountVN = "Nhân viên chưa có tài khoản người dùng"

@@ -49,6 +49,7 @@ function UserDetailsSheet({
     email: "",
     username: "",
     fullname: "",
+    mobile: "",
     role: "partner",
   });
 
@@ -68,6 +69,7 @@ function UserDetailsSheet({
         email: user.email || "",
         username: user.username || "",
         fullname: user.fullname || "",
+        mobile: user.mobile || "",
         role: user.role,
       });
       setIsEditing(false);
@@ -75,7 +77,11 @@ function UserDetailsSheet({
   }, [user]);
 
   const handleInputChange = useCallback((field: keyof UpdateUserData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+      ...(field === "role" && value !== "admin" && value !== "partner" ? { mobile: "" } : {}),
+    }));
   }, []);
 
   const handleSave = useCallback(() => {
@@ -91,6 +97,7 @@ function UserDetailsSheet({
         email: user.email || "",
         username: user.username || "",
         fullname: user.fullname || "",
+        mobile: user.mobile || "",
         role: user.role,
       });
     }
@@ -168,6 +175,22 @@ function UserDetailsSheet({
                   <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
                   <Input id="email" type="email" value={formData.email || ""} onChange={(e) => handleInputChange("email", e.target.value)} disabled={loading} className="h-11 text-sm" />
                 </div>
+                {(formData.role === "admin" || formData.role === "partner") && (
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor="mobile" className="text-xs text-muted-foreground">Số điện thoại</Label>
+                    <Input
+                      id="mobile"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={formData.mobile || ""}
+                      onChange={(e) => handleInputChange("mobile", e.target.value)}
+                      placeholder="090 123 4567"
+                      disabled={loading}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                )}
                 <div className="space-y-1 sm:col-span-2">
                   <Label htmlFor="role" className="text-xs text-muted-foreground">Vai trò</Label>
                   <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)} disabled={loading}>
@@ -196,6 +219,12 @@ function UserDetailsSheet({
                   <span className="text-xs text-muted-foreground shrink-0">Email</span>
                   <span className="text-xs font-medium break-all min-[380px]:text-right">{user.email || '-'}</span>
                 </div>
+                {(user.role === "admin" || user.role === "partner") && (
+                  <div className="flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
+                    <span className="text-xs text-muted-foreground shrink-0">Số điện thoại</span>
+                    <span className="text-xs font-medium tabular-nums break-all min-[380px]:text-right">{user.mobile || '-'}</span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1 px-3 py-2.5 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Vai trò</span>
                   <span className="text-xs font-medium text-right">

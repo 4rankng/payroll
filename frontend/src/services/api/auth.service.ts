@@ -329,6 +329,27 @@ class AuthService {
     return apiClient.post<void>(API_ENDPOINTS.auth.passwordResetConfirm, payload);
   }
 
+  /**
+   * Request a Zalo-OTP password reset. Always returns a session id — real or
+   * dummy (anti-enumeration). The OTP is delivered via ZNS to the employee's
+   * mobile if it exists in the system.
+   */
+  async requestZaloReset(mobile: string): Promise<ApiResponse<{ otp_session_id: string }>> {
+    return apiClient.post<{ otp_session_id: string }>(API_ENDPOINTS.auth.zaloResetRequest, { mobile });
+  }
+
+  /**
+   * Confirm a Zalo-OTP password reset with the session id + 6-digit code + new
+   * password. On success the backend invalidates all existing sessions.
+   */
+  async confirmZaloReset(payload: {
+    otp_session_id: string;
+    code: string;
+    new_password: string;
+  }): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(API_ENDPOINTS.auth.zaloResetConfirm, payload);
+  }
+
 }
 
 export const authService = new AuthService();

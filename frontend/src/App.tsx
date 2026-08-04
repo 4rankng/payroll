@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import OTPLogin from "./pages/OTPLogin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ZaloResetPassword from "./pages/ZaloResetPassword";
 import AdminLayout from "./layouts/AdminLayout";
 import PartnerLayout from "./layouts/PartnerLayout";
 
@@ -240,9 +241,10 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         {/* OTP second-step login (admin/partner when OTP_ENABLE is on) */}
         <Route path="/login/otp" element={<OTPLogin />} />
-        {/* Self-service password reset (email magic link) */}
+        {/* Self-service password reset (email magic link + Zalo OTP) */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/zalo-reset-password" element={<ZaloResetPassword />} />
 
         {/* Logout */}
         <Route path="/logout" element={<LogoutRedirect />} />

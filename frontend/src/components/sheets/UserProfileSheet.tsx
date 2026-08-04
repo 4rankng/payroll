@@ -95,6 +95,8 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
     },
   });
 
+  const storesMobileOnUser = displayUser?.role === 'admin' || displayUser?.role === 'partner';
+
   const handleEditToggle = () => {
     if (isEditing) {
       // Reset form when canceling edit
@@ -123,7 +125,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
       if (data.cccd !== undefined) {
         payload.cccd = data.cccd || '';
       }
-      if (data.mobile !== undefined) {
+      if (storesMobileOnUser && data.mobile !== undefined) {
         payload.mobile = data.mobile || '';
       }
 
@@ -296,7 +298,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                     </FormItem>
                   )}
                 />
-                <FormField
+                {storesMobileOnUser && <FormField
                   control={form.control}
                   name="mobile"
                   render={({ field }) => (
@@ -305,6 +307,9 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                       <FormControl>
                         <Input
                           {...field}
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
                           placeholder="Nhập số điện thoại"
                           disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
                           className="h-11"
@@ -313,7 +318,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                />}
               </form>
             </Form>
           ) : (
@@ -332,7 +337,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                   {completeUser?.cccd && (
                     <InfoRow icon={<CreditCard className="h-4 w-4" />} label="Số CCCD" value={completeUser.cccd} />
                   )}
-                  {completeUser?.mobile && (
+                  {storesMobileOnUser && completeUser?.mobile && (
                     <InfoRow icon={<Phone className="h-4 w-4" />} label="Số điện thoại" value={completeUser.mobile} />
                   )}
                   <InfoRow icon={<Shield className="h-4 w-4" />} label="Vai trò" value={getRoleText(displayUser.role)} />

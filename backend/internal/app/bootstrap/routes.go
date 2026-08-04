@@ -77,6 +77,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
 	setupAdvancePaymentRoutes(protected, container)
 	setupAuditRoutes(protected, container)
 	setupSettingsRoutes(v1, container) // Admin-only routes, use v1 directly
+	setupZaloAdminRoutes(v1, container)
 	setupDBExportRoutes(protected, container)
 	setupCronRoutes(protected, container)
 	setupAdvPartnerRoutes(protected, container)

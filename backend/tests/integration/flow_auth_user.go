@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
 const flowAuth = "AuthUser"
@@ -68,6 +69,9 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 	// --- User CRUD ---
 
 	var testUserID uint
+	mobileSuffix := time.Now().UnixNano() % 10_000_000
+	originalMobile := fmt.Sprintf("090%07d", mobileSuffix)
+	updatedMobile := fmt.Sprintf("091%07d", mobileSuffix)
 
 	reporter.RunTest(flowAuth, "Create test user", func() error {
 		body := CreateUserRequest{
@@ -76,12 +80,16 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 			Fullname: "ITest Partner User",
 			Email:    prefix + "@itest.local",
 			Role:     "partner",
+			Mobile:   originalMobile,
 		}
 		var resp UserResponse
 		if _, err := admin.PostInto("/api/v1/users", body, &resp); err != nil {
 			return fmt.Errorf("create user: %w", err)
 		}
 		testUserID = resp.ID
+		if err := AssertEqual("mobile", originalMobile, resp.Mobile); err != nil {
+			return err
+		}
 		fmt.Printf("    Created user ID %d, username: %s\n", resp.ID, resp.Username)
 		return AssertGreaterThan("id", uint(0), resp.ID)
 	})
@@ -109,7 +117,10 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/users/%d", testUserID), &resp); err != nil {
 			return fmt.Errorf("get user: %w", err)
 		}
-		return AssertEqual("username", prefix+"_user", resp.Username)
+		if err := AssertEqual("username", prefix+"_user", resp.Username); err != nil {
+			return err
+		}
+		return AssertEqual("mobile", originalMobile, resp.Mobile)
 	})
 
 	reporter.RunTest(flowAuth, "Update user fullname", func() error {
@@ -125,6 +136,30 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 			return fmt.Errorf("get after update: %w", err)
 		}
 		return AssertContains("fullname", resp.Fullname, "Updated Name")
+	})
+
+	reporter.RunTest(flowAuth, "Update and clear partner mobile", func() error {
+		if testUserID == 0 {
+			return fmt.Errorf("no test user ID")
+		}
+		body := map[string]interface{}{"mobile": updatedMobile}
+		if _, _, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), body); err != nil {
+			return fmt.Errorf("update mobile: %w", err)
+		}
+		var resp UserResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/users/%d", testUserID), &resp); err != nil {
+			return fmt.Errorf("get after mobile update: %w", err)
+		}
+		if err := AssertEqual("mobile", updatedMobile, resp.Mobile); err != nil {
+			return err
+		}
+		if _, _, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), map[string]interface{}{"mobile": ""}); err != nil {
+			return fmt.Errorf("clear mobile: %w", err)
+		}
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/users/%d", testUserID), &resp); err != nil {
+			return fmt.Errorf("get after mobile clear: %w", err)
+		}
+		return AssertEqual("mobile", "", resp.Mobile)
 	})
 
 	reporter.RunTest(flowAuth, "Get user summary", func() error {

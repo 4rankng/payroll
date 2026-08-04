@@ -30,6 +30,7 @@ type Config struct {
 	Google         GoogleConfig
 	Captcha        CaptchaConfig
 	PasswordReset  PasswordResetConfig
+	Zalo           ZaloConfig
 	WalletForecast WalletForecastConfig
 	CashForecast   CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
@@ -88,6 +89,20 @@ type PasswordResetConfig struct {
 	TokenTTL         time.Duration // PASSWORD_RESET_TOKEN_TTL (default 30m)
 	RateLimitPerHour int           // PASSWORD_RESET_RATE_LIMIT (default 3, per normalized email)
 	ResetURL         string        // PASSWORD_RESET_URL (default "https://tingting.vip/reset-password")
+}
+
+// ZaloConfig backs the Zalo-OTP password-reset feature for employees. These are
+// BOOTSTRAP-ONLY SEED VALUES — on first boot, if the zalo.credentials settings
+// row is empty, it is seeded from here. Thereafter the admin UI is authoritative
+// and these are ignored. The runtime toggle lives in DB (zalo.enabled), so
+// `Enabled` here only controls the first-boot seed value.
+type ZaloConfig struct {
+	Enabled     bool // ZALO_RESET_ENABLE (default false) — first-boot seed only
+	AppID       string
+	SecretKey   string
+	TemplateID  string // default "617976" (OTP-ZNS-v1)
+	CallbackURL string // ZALO_OAUTH_CALLBACK_URL — admin OAuth redirect target
+	CodeTTL     time.Duration
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -445,6 +460,14 @@ func Load() (*Config, error) {
 			TokenTTL:         parseDuration(getEnv("PASSWORD_RESET_TOKEN_TTL", "30m")),
 			RateLimitPerHour: parseInt(getEnv("PASSWORD_RESET_RATE_LIMIT", "3")),
 			ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
+		},
+		Zalo: ZaloConfig{
+			Enabled:     parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
+			AppID:       getEnv("ZALO_APP_ID", ""),
+			SecretKey:   getEnv("ZALO_SECRET_KEY", ""),
+			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "617976"),
+			CallbackURL: getEnv("ZALO_OAUTH_CALLBACK_URL", "https://tingting.vip/admin/settings?tab=zalo"),
+			CodeTTL:     parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

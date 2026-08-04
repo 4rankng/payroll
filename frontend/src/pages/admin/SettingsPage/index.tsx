@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings, Percent, Building2, Receipt, Mail, Bell, AlertCircle, RefreshCw } from 'lucide-react';
+import { Settings, Percent, Building2, Receipt, Mail, Bell, AlertCircle, RefreshCw, MessageCircle } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,14 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
+import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 
 const TAB_GENERAL = 'general';
 const TAB_FEE_CONFIG = 'fee-config';
 const TAB_EMAIL = 'email';
 const TAB_NOTIFICATIONS = 'notifications';
-const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICATIONS]);
+const TAB_ZALO = 'zalo';
+const VALID_TABS = new Set([TAB_GENERAL, TAB_FEE_CONFIG, TAB_EMAIL, TAB_NOTIFICATIONS, TAB_ZALO]);
 
 const SettingsPage = () => {
   const form = useSettingsForm();
@@ -115,6 +117,10 @@ const SettingsPage = () => {
           <TabsTrigger value={TAB_NOTIFICATIONS} className="gap-1.5">
             <Bell className="h-3.5 w-3.5" />
             Thông báo
+          </TabsTrigger>
+          <TabsTrigger value={TAB_ZALO} className="gap-1.5">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Zalo ZNS
           </TabsTrigger>
         </TabsList>
 
@@ -228,6 +234,10 @@ const SettingsPage = () => {
 
         <TabsContent value={TAB_NOTIFICATIONS} className="mt-0">
           <SendNotificationComposer />
+        </TabsContent>
+
+        <TabsContent value={TAB_ZALO} className="mt-0">
+          <ZaloConnectionSection />
         </TabsContent>
       </Tabs>
     </div>

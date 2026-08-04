@@ -18,6 +18,8 @@ export const API_ENDPOINTS = {
     google: '/auth/google',
     passwordResetRequest: '/auth/password-reset/request',
     passwordResetConfirm: '/auth/password-reset/confirm',
+    zaloResetRequest: '/auth/zalo-reset/request',
+    zaloResetConfirm: '/auth/zalo-reset/confirm',
   },
 
   // Users
@@ -311,6 +313,16 @@ export const API_ENDPOINTS = {
     base: '/settings',
     byId: (id: number) => `/settings/${id}`,
     byKey: (key: string) => `/settings/key/${key}`,
+  },
+
+  // Zalo ZNS connection management (Admin only)
+  zalo: {
+    status: '/admin/zalo',
+    credentials: '/admin/zalo/credentials',
+    oauthStart: '/admin/zalo/oauth/start',
+    oauthCallback: '/admin/zalo/oauth/callback',
+    enabled: '/admin/zalo/enabled',
+    refresh: '/admin/zalo/refresh',
   },
 
   // Health Check

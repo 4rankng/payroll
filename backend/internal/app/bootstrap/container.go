@@ -67,6 +67,7 @@ type Handlers struct {
 	EmployeeProfile      *handlers.EmployeeProfileHandler
 	ProjectEmployee      *handlers.ProjectEmployeeHandler
 	AdminClock           *adminHandlers.ClockHandler
+	AdminZalo            *adminHandlers.ZaloHandler
 	AdminAttendance      *adminHandlers.AttendanceHandler
 	Bank                 *handlers.BankHandler
 	Timesheet            *handlers.TimesheetHandler
@@ -106,14 +107,16 @@ type Handlers struct {
 }
 
 type Middleware struct {
-	Auth                   *middleware.AuthMiddleware
-	Authorization          *middleware.AuthorizationMiddleware
-	LoginRateLimit         gin.HandlerFunc
-	PasswordResetRateLimit gin.HandlerFunc // Red Team H1: per-normalized-email cap
-	APIRateLimit           gin.HandlerFunc
-	StrictRateLimit        gin.HandlerFunc
-	TenantSemaphore        *middleware.TenantSemaphoreMiddleware
-	APIMetrics             gin.HandlerFunc
+	Auth                      *middleware.AuthMiddleware
+	Authorization             *middleware.AuthorizationMiddleware
+	LoginRateLimit            gin.HandlerFunc
+	PasswordResetRateLimit    gin.HandlerFunc // Red Team H1: per-normalized-email cap
+	ZaloResetRateLimit        gin.HandlerFunc // per-normalized-mobile cap for /zalo-reset/request
+	ZaloResetConfirmRateLimit gin.HandlerFunc // per-otp_session_id cap for /zalo-reset/confirm
+	APIRateLimit              gin.HandlerFunc
+	StrictRateLimit           gin.HandlerFunc
+	TenantSemaphore           *middleware.TenantSemaphoreMiddleware
+	APIMetrics                gin.HandlerFunc
 }
 
 func NewContainer(cfg *config.Config, version string) (*Container, error) {
@@ -384,7 +387,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 
 	return &Handlers{
 		User:                 handlers.NewUserHandler(services.User, services.PasswordResetJobManager),
-		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset),
+		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset, services.ZaloPasswordReset),
 		Dashboard:            handlers.NewDashboardHandler(services.Dashboard),
 		Project:              handlers.NewProjectHandlerWithServices(services.Project, services.Payrate, services.Timesheet, services.ProjectEmployee, services.ProjectPermission, clk),
 		Employee:             handlers.NewEmployeeHandlerWithServices(services.Employee, services.Timesheet, services.ProjectEmployee, services.Audit, clk),
@@ -441,6 +444,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		ReconciliationExport: disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
 		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
 		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
+		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
 		WalletBulkTransfer:   handlers.NewWalletBulkTransferHandler(walletBulkSvc, logger),
@@ -464,14 +468,16 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 
 	return &Middleware{
-		Auth:                   middleware.NewAuthMiddleware(authService),
-		Authorization:          authorizationMiddleware,
-		LoginRateLimit:         middleware.CreateLoginRateLimit(cfg.Redis.Addr),
-		PasswordResetRateLimit: middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),
-		APIRateLimit:           middleware.CreateAPIRateLimit(cfg.Redis.Addr),
-		StrictRateLimit:        middleware.CreateStrictRateLimit(cfg.Redis.Addr),
-		TenantSemaphore:        middleware.NewTenantSemaphoreMiddleware(tenantLimit),
-		APIMetrics:             middleware.APIMetrics(apiMetricRepo),
+		Auth:                      middleware.NewAuthMiddleware(authService),
+		Authorization:             authorizationMiddleware,
+		LoginRateLimit:            middleware.CreateLoginRateLimit(cfg.Redis.Addr),
+		PasswordResetRateLimit:    middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),
+		ZaloResetRateLimit:        middleware.CreateZaloResetRateLimit(cfg.Redis.Addr, 3),
+		ZaloResetConfirmRateLimit: middleware.CreateZaloResetConfirmRateLimit(cfg.Redis.Addr),
+		APIRateLimit:              middleware.CreateAPIRateLimit(cfg.Redis.Addr),
+		StrictRateLimit:           middleware.CreateStrictRateLimit(cfg.Redis.Addr),
+		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
+		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}
 }
 
