@@ -2,6 +2,7 @@ package admin
 
 import (
 	"api-server/internal/app/services/zaloconnect"
+	"api-server/internal/domain"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
 
@@ -21,12 +22,12 @@ func NewZaloHandler(svc *zaloconnect.Service) *ZaloHandler {
 }
 
 // zaloCredentialsDTO is the body for PUT /admin/zalo/credentials.
-// SecretKey/AccessToken/RefreshToken are optional — empty means "keep existing"
-// (the UI sends empty for password fields the admin did not retype). The admin
-// pastes all four OA fields directly from the Zalo OA Console; there is no
-// OAuth authorization-code flow.
+// All fields are optional at the binding layer — empty means "keep existing"
+// (the UI sends empty for fields the admin did not retype, including App ID,
+// which is write-only once saved). The handler enforces "app_id required when
+// none is stored yet" against the persisted state.
 type zaloCredentialsDTO struct {
-	AppID        string `json:"app_id" binding:"required"`
+	AppID        string `json:"app_id"`
 	SecretKey    string `json:"secret_key"`
 	TemplateID   string `json:"template_id"`
 	AccessToken  string `json:"access_token"`
@@ -59,6 +60,7 @@ func (h *ZaloHandler) GetStatus(c *gin.Context) {
 // @Description Save app_id/secret/template and the manually-pasted tokens.
 // @Description Each field is applied independently — empty fields mean "keep existing"
 // @Description so the admin can re-paste one value without clobbering the others.
+// @Description app_id is required only when no app_id is stored yet.
 // @Tags admin,zalo
 // @Security Bearer
 // @Param body body zaloCredentialsDTO true "Credentials"
@@ -68,6 +70,20 @@ func (h *ZaloHandler) SaveCredentials(c *gin.Context) {
 	var req zaloCredentialsDTO
 	if !helpers.BindJSON(c, &req) {
 		return
+	}
+	// app_id is write-only in the UI once saved (the field ships empty when
+	// the admin only wants to update tokens/secret). Reject only when the
+	// request supplies no app_id AND none is persisted yet.
+	if req.AppID == "" {
+		stored, err := h.svc.Get(c.Request.Context())
+		if err != nil {
+			response.HandleDomainError(c, err)
+			return
+		}
+		if stored.AppID == "" {
+			response.HandleDomainError(c, domain.NewValidationError("Thiếu App ID — dán App ID từ Zalo OA Console"))
+			return
+		}
 	}
 	if err := h.svc.SaveCredentials(c.Request.Context(), zaloconnect.SaveCredentialsInput{
 		AppID:        req.AppID,

@@ -8,6 +8,7 @@ export interface ZaloConnectionStatus {
   enabled: boolean;
   configured: boolean;
   connected: boolean;
+  app_id: string;
   template_id: string;
   expires_at?: string;
   last_error?: string;

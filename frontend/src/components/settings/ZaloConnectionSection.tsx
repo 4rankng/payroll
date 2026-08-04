@@ -128,9 +128,10 @@ export const ZaloConnectionSection = () => {
 
   useEffect(() => {
     if (!status) return;
+    setAppID(status.app_id || '');
     setTemplateID(status.template_id || '617976');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status?.template_id, status?.configured]);
+  }, [status?.app_id, status?.template_id, status?.configured]);
 
   const handleSaveCreds = async () => {
     try {
@@ -342,16 +343,15 @@ export const ZaloConnectionSection = () => {
       >
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
-            <CredentialField id="zalo-app-id" label="App ID" hint={status?.configured ? 'Để trống nếu bạn muốn giữ nguyên giá trị đã lưu.' : undefined}>
+            <CredentialField id="zalo-app-id" label="App ID">
               <Input
                 id="zalo-app-id"
                 name="zalo-app-id"
                 value={appID}
                 onChange={(event) => setAppID(event.target.value)}
-                placeholder={status?.configured ? 'Đã lưu' : 'App ID từ Zalo OA Console'}
+                placeholder="App ID từ Zalo OA Console"
                 disabled={saveCreds.isPending}
                 className="h-11"
-                aria-describedby={status?.configured ? 'zalo-app-id-hint' : undefined}
               />
             </CredentialField>
             <CredentialField id="zalo-secret" label="Khóa bí mật (Secret Key)" hint="Để trống nếu bạn muốn giữ nguyên khóa hiện tại.">
@@ -415,7 +415,7 @@ export const ZaloConnectionSection = () => {
             <Button
               type="submit"
               className="h-11 gap-2 sm:w-auto"
-              disabled={saveCreds.isPending || (!appID.trim() && !status?.configured)}
+              disabled={saveCreds.isPending}
             >
               {saveCreds.isPending ? <Loader2 aria-hidden="true" className="size-4 animate-spin" /> : null}
               Lưu cấu hình

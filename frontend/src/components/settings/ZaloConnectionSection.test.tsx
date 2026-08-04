@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
     enabled: true,
     configured: true,
     connected: true,
+    app_id: 'app-123',
     template_id: '617976',
     expires_at: '2099-01-01T00:00:00.000Z',
   },
@@ -63,6 +64,7 @@ describe('ZaloConnectionSection', () => {
       enabled: true,
       configured: true,
       connected: true,
+      app_id: 'app-123',
       template_id: '617976',
     });
   });

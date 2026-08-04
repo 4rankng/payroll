@@ -34,11 +34,13 @@ type Credentials struct {
 	LastError    string     `json:"last_error,omitempty"`
 }
 
-// Status is the masked, admin-facing view. No secret fields.
+// Status is the masked, admin-facing view. Only AppID is exposed (it is a
+// public identifier); secret_key/access_token/refresh_token are never returned.
 type Status struct {
 	Enabled    bool       `json:"enabled"`
 	Configured bool       `json:"configured"` // has app_id + secret
 	Connected  bool       `json:"connected"`  // has valid access + refresh tokens
+	AppID      string     `json:"app_id"`
 	TemplateID string     `json:"template_id"`
 	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
 	LastError  string     `json:"last_error,omitempty"`
@@ -141,6 +143,7 @@ func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 		Enabled:    enabled,
 		Configured: c.AppID != "" && c.SecretKey != "",
 		Connected:  c.AccessToken != "" && c.RefreshToken != "",
+		AppID:      c.AppID,
 		TemplateID: tmpl,
 		ExpiresAt:  c.ExpiresAt,
 		LastError:  c.LastError,
