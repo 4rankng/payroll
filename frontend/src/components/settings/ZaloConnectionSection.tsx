@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, Power, Send } from 'lucide-react';
+import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, Power, Send, PlugZap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import {
   useSaveZaloCredentials,
   useSetZaloEnabled,
   useTestZaloSend,
+  useRefreshZaloToken,
 } from '@/hooks/api/useZaloConnection';
 
 /**
@@ -34,6 +35,7 @@ export const ZaloConnectionSection = () => {
   const saveCreds = useSaveZaloCredentials();
   const setEnabled = useSetZaloEnabled();
   const testSend = useTestZaloSend();
+  const refreshTok = useRefreshZaloToken();
 
   // Form state — secret_key/access_token/refresh_token are write-only (never
   // echoed from server; empty on submit means "keep existing").
@@ -73,6 +75,20 @@ export const ZaloConnectionSection = () => {
       setRefreshToken('');
     } catch (e) {
       toast.error('Không thể lưu thông tin kết nối');
+    }
+  };
+
+  const handleTestConnection = async () => {
+    try {
+      // RefreshNow calls Zalo's OAuth /v4/oa/access_token with
+      // grant_type=refresh_token — this validates app_id + secret_key +
+      // refresh_token against Zalo's servers WITHOUT sending any message.
+      // Template approval is not required. Returns fresh access+refresh tokens.
+      await refreshTok.mutateAsync();
+      toast.success('Kết nối Zalo hợp lệ — App ID, Secret, Refresh Token đều chính xác');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Không rõ lỗi';
+      toast.error(`Kết nối thất bại: ${msg}`);
     }
   };
 
@@ -280,13 +296,27 @@ export const ZaloConnectionSection = () => {
               disabled={saveCreds.isPending}
             />
           </div>
-          <Button
-            onClick={handleSaveCreds}
-            disabled={saveCreds.isPending || (!appID.trim() && !status?.configured)}
-          >
-            {saveCreds.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Lưu thông tin
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleSaveCreds}
+              disabled={saveCreds.isPending || (!appID.trim() && !status?.configured)}
+            >
+              {saveCreds.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Lưu thông tin
+            </Button>
+            <Button
+              onClick={handleTestConnection}
+              variant="outline"
+              disabled={refreshTok.isPending || !status?.configured}
+            >
+              {refreshTok.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />}
+              Kiểm tra kết nối
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            &quot;Kiểm tra kết nối&quot; xác thực App ID + Secret + Refresh Token với Zalo
+            mà <strong>không gửi tin nhắn</strong> — dùng được khi template chưa được duyệt.
+          </p>
         </CardContent>
       </Card>
 
