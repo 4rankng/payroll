@@ -19,10 +19,10 @@ type Sender interface {
 // populate ErrorCode/ErrorMsg with the Go error left nil; transport failures
 // surface as the Go error.
 type SendResult struct {
-	MsgID      string
-	ErrorCode  int
-	ErrorMsg   string
-	HTTPStatus int
+	MsgID      string `json:"msg_id,omitempty"`
+	ErrorCode  int    `json:"error_code"`
+	ErrorMsg   string `json:"error_msg"`
+	HTTPStatus int    `json:"http_status,omitempty"`
 }
 
 // Credentials is the full Zalo OA connection state. The first three fields are

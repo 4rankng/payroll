@@ -113,12 +113,13 @@ describe('ZaloConnectionSection', () => {
     render(<ZaloConnectionSection />);
 
     fireEvent.change(screen.getByLabelText('Số điện thoại nhận thử'), {
-      target: { value: ' 84987654321 ' },
+      target: { value: ' 0357210887 ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Gửi thử' }));
 
-    await waitFor(() => expect(mocks.testSend).toHaveBeenCalledWith({ phone: '84987654321' }));
+    await waitFor(() => expect(mocks.testSend).toHaveBeenCalledWith({ phone: '0357210887' }));
     expect(await screen.findByRole('status')).toHaveTextContent('Gửi thành công');
+    expect(screen.getByText(/0xxxxxxxxx hoặc 84xxxxxxxxx/)).toBeInTheDocument();
   });
 
   it('exposes the setup state without clipping labels', () => {

@@ -510,7 +510,7 @@ export const ZaloConnectionSection = () => {
               aria-describedby="zalo-test-phone-hint"
             />
             <p id="zalo-test-phone-hint" className="text-xs text-muted-foreground">
-              Nhập mã quốc gia 84 và 9 số điện thoại, không có dấu cách.
+              Nhập số điện thoại dạng 0xxxxxxxxx hoặc 84xxxxxxxxx, không có dấu cách.
             </p>
           </div>
           <Button
