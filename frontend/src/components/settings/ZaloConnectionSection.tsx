@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, RefreshCw, Power, Send } from 'lucide-react';
+import { MessageCircle, CheckCircle2, XCircle, AlertCircle, Loader2, Power, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,6 @@ import {
   useZaloStatus,
   useSaveZaloCredentials,
   useSetZaloEnabled,
-  useRefreshZaloToken,
   useTestZaloSend,
 } from '@/hooks/api/useZaloConnection';
 
@@ -34,7 +33,6 @@ export const ZaloConnectionSection = () => {
 
   const saveCreds = useSaveZaloCredentials();
   const setEnabled = useSetZaloEnabled();
-  const refreshTok = useRefreshZaloToken();
   const testSend = useTestZaloSend();
 
   // Form state — secret_key/access_token/refresh_token are write-only (never
@@ -92,15 +90,6 @@ export const ZaloConnectionSection = () => {
       toast.success(enabled ? 'Đã bật Zalo OTP' : 'Đã tắt Zalo OTP');
     } catch (e) {
       toast.error('Không thể cập nhật trạng thái');
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      await refreshTok.mutateAsync();
-      toast.success('Đã làm mới token Zalo');
-    } catch (e) {
-      toast.error('Không thể làm mới token');
     }
   };
 
@@ -270,7 +259,7 @@ export const ZaloConnectionSection = () => {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              Cần kèm App ID + Secret Key thì nút &quot;Làm mới token&quot; mới hoạt động.
+              Cần kèm App ID + Secret Key để hệ thống tự làm mới token khi hết hạn.
             </p>
           </div>
           <div className="space-y-2">
@@ -287,14 +276,6 @@ export const ZaloConnectionSection = () => {
             {saveCreds.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Lưu thông tin
           </Button>
-
-          {/* Refresh action */}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleRefresh} variant="outline" disabled={refreshTok.isPending || !status?.connected}>
-              {refreshTok.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Làm mới token
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
