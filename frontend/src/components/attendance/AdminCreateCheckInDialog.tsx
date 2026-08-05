@@ -107,6 +107,7 @@ export function AdminCreateCheckInDialog({ open, onOpenChange }: AdminCreateChec
                 value={project}
                 onSelect={setProject}
                 activeOnly
+                flexibleOnly
                 className="min-h-11"
               />
             </div>

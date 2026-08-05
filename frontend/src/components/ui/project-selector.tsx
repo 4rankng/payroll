@@ -13,6 +13,7 @@ interface ProjectSelectorProps {
   disabled?: boolean;
   className?: string;
   activeOnly?: boolean;
+  flexibleOnly?: boolean;
   excludeProjectIds?: number[];
 }
 
@@ -23,6 +24,7 @@ export function ProjectSelector({
   disabled = false,
   className,
   activeOnly = false,
+  flexibleOnly = false,
   excludeProjectIds = []
 }: ProjectSelectorProps) {
   const [searchValue, setSearchValue] = useState('');
@@ -37,7 +39,7 @@ export function ProjectSelector({
     hasNextPage,
     isFetchingNextPage
   } = useInfiniteQuery({
-    queryKey: ['projects', 'selector', { activeOnly, search: debouncedSearchValue }],
+    queryKey: ['projects', 'selector', { activeOnly, flexibleOnly, search: debouncedSearchValue }],
     queryFn: async ({ pageParam = 1 }) => {
       const filters = {
         page: pageParam,
@@ -61,8 +63,10 @@ export function ProjectSelector({
 
   const projects = useMemo(() => {
     const allProjects = projectsData?.pages.flatMap(page => page.data || []) || [];
-    return allProjects.filter(project => !excludeProjectIds.includes(project.id));
-  }, [projectsData, excludeProjectIds]);
+    return allProjects.filter(project =>
+      !excludeProjectIds.includes(project.id) && (!flexibleOnly || project.is_flexible)
+    );
+  }, [projectsData, excludeProjectIds, flexibleOnly]);
 
   const handleSelect = useCallback((project: Project) => {
     onSelect(project);

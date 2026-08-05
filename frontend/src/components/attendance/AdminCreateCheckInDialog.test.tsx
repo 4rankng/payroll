@@ -28,8 +28,8 @@ vi.mock("@/components/ui/employee-selector", () => ({
 }));
 
 vi.mock("@/components/ui/project-selector", () => ({
-  ProjectSelector: ({ onSelect }: { onSelect: (value: unknown) => void }) => (
-    <button type="button" onClick={() => onSelect({ id: 2, name: "Dự án A", code: "DA" })}>Chọn dự án thử</button>
+  ProjectSelector: ({ onSelect, flexibleOnly }: { onSelect: (value: unknown) => void; flexibleOnly?: boolean }) => (
+    <button type="button" data-flexible-only={String(flexibleOnly)} onClick={() => onSelect({ id: 2, name: "Dự án A", code: "DA", is_flexible: true })}>Chọn dự án thử</button>
   ),
 }));
 
@@ -61,6 +61,7 @@ describe("AdminCreateCheckInDialog", () => {
     expect(screen.getByText(/vẫn phải tự tan ca/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Chọn nhân viên thử" }));
     fireEvent.click(screen.getByRole("button", { name: "Chọn dự án thử" }));
+    expect(screen.getByRole("button", { name: "Chọn dự án thử" })).toHaveAttribute("data-flexible-only", "true");
 
     // The rendered shift button proves the server-provided shift is the sole
     // selectable attendance time; no checkout input is present in this form.
