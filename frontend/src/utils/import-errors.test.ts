@@ -59,4 +59,18 @@ describe('parseImportErrors', () => {
       },
     ]);
   });
+
+  it('explains legacy BCC format errors without blaming an employee', () => {
+    expect(parseImportErrors(JSON.stringify([
+      {
+        reason: 'không nhận diện được định dạng file: không nhận diện được định dạng file BCC',
+      },
+    ]))).toEqual([
+      {
+        row: 0,
+        employee: '',
+        reason: 'Tệp không đúng mẫu bảng chấm công',
+      },
+    ]);
+  });
 });

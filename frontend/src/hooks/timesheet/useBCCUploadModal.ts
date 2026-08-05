@@ -44,6 +44,14 @@ export function buildFailureSummary(
     return 'Tệp này là bảng lương. Hãy dùng “Nhập bảng lương” thay vì tải lên BCC.';
   }
 
+  const invalidBCCFileErrors = errors.filter(
+    (e) => e.reason === 'Tệp không đúng mẫu bảng chấm công',
+  );
+
+  if (invalidBCCFileErrors.length > 0) {
+    return 'Tệp chưa đúng mẫu BCC. Hãy chọn tệp có ngày và ca làm việc.';
+  }
+
   const approvedErrors = errors.filter(
     (e) =>
       e.reason.toLowerCase().includes('phê duyệt') ||
@@ -77,7 +85,8 @@ export function groupErrorsByEmployee(
   const map = new Map<string, ImportError[]>();
   for (const e of errors) {
     const key = e.employee || (
-      e.reason === 'Tệp này là bảng lương, không phải bảng chấm công'
+      e.reason === 'Tệp này là bảng lương, không phải bảng chấm công' ||
+      e.reason === 'Tệp không đúng mẫu bảng chấm công'
         ? 'Tệp đã tải lên'
         : 'Không rõ nhân viên'
     );

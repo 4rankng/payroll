@@ -234,4 +234,17 @@ describe('useBCCUploadModal', () => {
     );
     expect(Array.from(groupErrorsByEmployee(errors).keys())).toEqual(['Tệp đã tải lên']);
   });
+
+  it('explains a legacy BCC format error without an employee label', () => {
+    const errors = [{
+      row: 0,
+      employee: '',
+      reason: 'Tệp không đúng mẫu bảng chấm công',
+    }];
+
+    expect(buildFailureSummary(errors)).toBe(
+      'Tệp chưa đúng mẫu BCC. Hãy chọn tệp có ngày và ca làm việc.',
+    );
+    expect(Array.from(groupErrorsByEmployee(errors).keys())).toEqual(['Tệp đã tải lên']);
+  });
 });

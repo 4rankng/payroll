@@ -27,6 +27,9 @@ export function getSafeImportErrorReason(reason: string): string {
   ) {
     return 'Tệp này là bảng lương, không phải bảng chấm công';
   }
+  if (normalized.includes('không nhận diện được định dạng file bcc')) {
+    return 'Tệp không đúng mẫu bảng chấm công';
+  }
   if (normalized.includes('không tìm thấy') && normalized.includes('nhân viên')) {
     return 'Không tìm thấy nhân viên';
   }
