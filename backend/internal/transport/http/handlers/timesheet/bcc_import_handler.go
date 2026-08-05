@@ -90,6 +90,16 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		return
 	}
 
+	includeFlexibleEmployees, err := strconv.ParseBool(c.DefaultPostForm("include_flexible_employees", "false"))
+	if err != nil {
+		response.BadRequest(c, "include_flexible_employees không hợp lệ")
+		return
+	}
+	if includeFlexibleEmployees && userRole != string(domain.RoleAdmin) {
+		response.Forbidden(c, "Chỉ quản trị viên có thể import nhân viên lương linh hoạt")
+		return
+	}
+
 	// Partner users must have write access to the target project.
 	if userRole == string(domain.RolePartner) {
 		canModify, err := h.projectPermissionSvc.CanUserModifyProject(c.Request.Context(), projectID, userID)
@@ -129,6 +139,7 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		userID,
 		userRole,
 		forMonth,
+		includeFlexibleEmployees,
 		idempotencyKey,
 	)
 	if errors.Is(err, appservices.ErrBCCIdempotencyConflict) {

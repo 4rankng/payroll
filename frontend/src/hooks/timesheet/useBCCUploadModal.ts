@@ -14,9 +14,10 @@ interface ProjectOption {
 }
 
 interface UseBCCUploadModalParams {
-  projectId: number;
-  projects?: ProjectOption[];
-  onClose: () => void;
+	projectId: number;
+	projects?: ProjectOption[];
+	allowFlexibleEmployeeImport?: boolean;
+	onClose: () => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -126,16 +127,18 @@ function invalidateTerminalImportQueries(
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useBCCUploadModal({
-  projectId,
-  projects,
-  onClose,
+	projectId,
+	projects,
+	allowFlexibleEmployeeImport = false,
+	onClose,
 }: UseBCCUploadModalParams) {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<PartnerImportFile | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
     projectId > 0 ? String(projectId) : '',
   );
-  const [isDragging, setIsDragging] = useState(false);
+	const [isDragging, setIsDragging] = useState(false);
+	const [includeFlexibleEmployees, setIncludeFlexibleEmployees] = useState(false);
   const idempotencyKeyRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -216,7 +219,13 @@ export function useBCCUploadModal({
       idempotencyKeyRef.current ?? crypto.randomUUID();
     idempotencyKeyRef.current = idempotencyKey;
     upload(
-      { file, projectId: effectiveProjectId, forMonth: selectedMonth, idempotencyKey },
+      {
+        file,
+        projectId: effectiveProjectId,
+        forMonth: selectedMonth,
+        includeFlexibleEmployees,
+        idempotencyKey,
+      },
       {
         onSuccess: (data) => {
           setResult(data);
@@ -228,7 +237,12 @@ export function useBCCUploadModal({
         },
       },
     );
-  }, [file, effectiveProjectId, queryClient, selectedMonth, upload]);
+  }, [file, effectiveProjectId, includeFlexibleEmployees, queryClient, selectedMonth, upload]);
+
+	const handleIncludeFlexibleEmployeesChange = useCallback((checked: boolean) => {
+		setIncludeFlexibleEmployees(checked);
+		idempotencyKeyRef.current = null;
+	}, []);
 
   const handleClose = useCallback(() => {
     setFile(null);
@@ -292,11 +306,14 @@ export function useBCCUploadModal({
     hasProject,
     canUpload,
     hintText,
-    isReady,
+		isReady,
+		includeFlexibleEmployees,
+		allowFlexibleEmployeeImport,
 
     // Setters
     setSelectedProjectId,
-    setSelectedMonth,
+		setSelectedMonth,
+		handleIncludeFlexibleEmployeesChange,
 
     // Handlers
     handleFileChange,

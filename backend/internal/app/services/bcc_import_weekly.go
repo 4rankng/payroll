@@ -36,6 +36,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	uploaderRole string,
 	createdAsset *domain.Asset,
 	effectiveMonth string,
+	includeFlexibleEmployees bool,
 ) (*BCCImportResult, error) {
 	fail := func(status, reason string) (*BCCImportResult, error) {
 		errs := []domain.ImportError{{Reason: reason}}
@@ -451,6 +452,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	//   - If the exact path is not found, we fall back to any path ending with the shift type.
 
 	var entries []domainservices.BulkCreateTimesheetEntry
+	flexibleEmployeeIDs := make(map[uint]struct{})
 	totalRows := 0
 	reportedMissingCCCDs := make(map[string]struct{})
 
@@ -503,11 +505,14 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 			}
 
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
-				importErrors = append(importErrors, domain.ImportError{
-					Employee: emp.FullName,
-					Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
-				})
-				continue
+				if !includeFlexibleEmployees {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: emp.FullName,
+						Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
+					})
+					continue
+				}
+				flexibleEmployeeIDs[assignment.EmployeeID] = struct{}{}
 			}
 
 			empPosition := strings.ToLower(assignment.Position)
@@ -572,6 +577,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	// 8. "Latest wins" overwrite (same logic as other formats).
 	var staleIDs []uint
+	flexibleSkippedCount := 0
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -593,6 +599,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		}
 
 		blocked := make(map[dk]string)
+		existingFlexible := make(map[dk]bool)
 		for _, ts := range existingTS {
 			// Extract hourType (last segment) from the timesheet's PayType path.
 			tsHourType := ""
@@ -601,6 +608,10 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 			}
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02"), tsHourType}
 			if !importDates[k] {
+				continue
+			}
+			if _, isFlexible := flexibleEmployeeIDs[ts.EmployeeID]; isFlexible {
+				existingFlexible[k] = true
 				continue
 			}
 
@@ -641,6 +652,18 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 			}
 			entries = filtered
 		}
+		if len(existingFlexible) > 0 {
+			filtered := entries[:0]
+			for _, entry := range entries {
+				key := dk{entry.EmployeeID, entry.Date, strings.ToLower(entry.HourType)}
+				if existingFlexible[key] {
+					flexibleSkippedCount++
+					continue
+				}
+				filtered = append(filtered, entry)
+			}
+			entries = filtered
+		}
 
 	}
 
@@ -677,7 +700,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	// 10. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets)
+	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
 	for _, f := range result.FailedEntries {
 		importErrors = append(importErrors, domain.ImportError{
 			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),

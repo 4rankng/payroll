@@ -811,13 +811,15 @@ class TimesheetService {
   async uploadBCCFile(
     file: File,
     projectId: number,
-    forMonth: string,
-    idempotencyKey: string,
+	forMonth: string,
+	includeFlexibleEmployees: boolean,
+	idempotencyKey: string,
   ): Promise<PartnerImportFile> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('project_id', String(projectId));
-    formData.append('for_month', forMonth);
+	formData.append('for_month', forMonth);
+	formData.append('include_flexible_employees', String(includeFlexibleEmployees));
     const response = await apiClient.post<PartnerImportFile>(
       API_ENDPOINTS.timesheets.partnerImport,
       formData,

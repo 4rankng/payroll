@@ -94,6 +94,7 @@ func (s *BCCImportService) AcceptUpload(
 	uploaderID uint,
 	uploaderRole string,
 	forMonth string,
+	includeFlexibleEmployees bool,
 	idempotencyKey string,
 ) (*BCCImportResult, error) {
 	data, err := io.ReadAll(io.LimitReader(fileData, maxBCCUploadSize+1))
@@ -107,7 +108,7 @@ func (s *BCCImportService) AcceptUpload(
 		return nil, fmt.Errorf("tháng không hợp lệ: %w", err)
 	}
 
-	fingerprint := bccRequestFingerprint(projectID, forMonth, data)
+	fingerprint := bccRequestFingerprint(projectID, forMonth, includeFlexibleEmployees, data)
 	if existing, lookupErr := s.importJobRepo.GetByIdempotencyKey(ctx, uploaderID, idempotencyKey); lookupErr == nil {
 		if existing.RequestFingerprint != fingerprint {
 			return nil, ErrBCCIdempotencyConflict
@@ -152,17 +153,18 @@ func (s *BCCImportService) AcceptUpload(
 		}
 		asset = created
 		return s.importJobRepo.Create(txCtx, &domain.TimesheetImportJob{
-			AssetID:            asset.ID,
-			ProjectID:          projectID,
-			ForMonth:           forMonth,
-			UploadedBy:         uploaderID,
-			UploaderRole:       uploaderRole,
-			Status:             domain.TimesheetImportStatusPending,
-			IdempotencyKey:     idempotencyKey,
-			RequestFingerprint: fingerprint,
-			ActiveScopeKey:     &activeScope,
-			CreatedAt:          now,
-			UpdatedAt:          now,
+			AssetID:                  asset.ID,
+			ProjectID:                projectID,
+			ForMonth:                 forMonth,
+			UploadedBy:               uploaderID,
+			UploaderRole:             uploaderRole,
+			IncludeFlexibleEmployees: includeFlexibleEmployees,
+			Status:                   domain.TimesheetImportStatusPending,
+			IdempotencyKey:           idempotencyKey,
+			RequestFingerprint:       fingerprint,
+			ActiveScopeKey:           &activeScope,
+			CreatedAt:                now,
+			UpdatedAt:                now,
 		})
 	})
 	if err != nil {
@@ -264,6 +266,7 @@ func (s *BCCImportService) ProcessPendingJob(ctx context.Context, assetID uint) 
 			job.UploaderRole,
 			asset,
 			job.ForMonth,
+			job.IncludeFlexibleEmployees,
 		)
 		if importErr != nil && result == nil {
 			return importErr
@@ -379,9 +382,9 @@ func (s *BCCImportService) MarkTerminalAuditLogged(ctx context.Context, assetID 
 
 func stringPointer(value string) *string { return &value }
 
-func bccRequestFingerprint(projectID uint, forMonth string, data []byte) string {
+func bccRequestFingerprint(projectID uint, forMonth string, includeFlexibleEmployees bool, data []byte) string {
 	hash := sha256.New()
-	_, _ = fmt.Fprintf(hash, "%d:%s:", projectID, forMonth)
+	_, _ = fmt.Fprintf(hash, "%d:%s:%t:", projectID, forMonth, includeFlexibleEmployees)
 	_, _ = hash.Write(data)
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
@@ -463,7 +466,7 @@ func (s *BCCImportService) ProcessUpload(
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: create asset: %w", err)
 	}
 
-	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth)
+	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth, false)
 }
 
 func (s *BCCImportService) processAssetData(
@@ -475,6 +478,7 @@ func (s *BCCImportService) processAssetData(
 	uploaderRole string,
 	createdAsset *domain.Asset,
 	forMonth string,
+	includeFlexibleEmployees bool,
 ) (*BCCImportResult, error) {
 
 	// effectiveMonth is captured by the fail() closure.
@@ -516,9 +520,9 @@ func (s *BCCImportService) processAssetData(
 
 	switch formatResult.Format {
 	case excelparser.FormatMultiPosition:
-		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth)
+		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
 	case excelparser.FormatWeeklyBCC:
-		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth)
+		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
 	default:
 		// FormatLegacy — continue with existing BCC parsing below
 	}
@@ -771,8 +775,9 @@ func (s *BCCImportService) processAssetData(
 
 	// 8. Build timesheet entries, collecting employee errors.
 	var (
-		entries []domainservices.BulkCreateTimesheetEntry
-		rowNum  = 12
+		entries             []domainservices.BulkCreateTimesheetEntry
+		flexibleEmployeeIDs = make(map[uint]struct{})
+		rowNum              = 12
 	)
 
 	for _, emp := range parsed.Employees {
@@ -821,13 +826,16 @@ func (s *BCCImportService) processAssetData(
 		}
 
 		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
-			importErrors = append(importErrors, domain.ImportError{
-				Row:      rowNum,
-				Employee: emp.FullName,
-				Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
-			})
-			rowNum++
-			continue
+			if !includeFlexibleEmployees {
+				importErrors = append(importErrors, domain.ImportError{
+					Row:      rowNum,
+					Employee: emp.FullName,
+					Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
+				})
+				rowNum++
+				continue
+			}
+			flexibleEmployeeIDs[assignment.EmployeeID] = struct{}{}
 		}
 
 		for _, entry := range emp.Entries {
@@ -865,6 +873,7 @@ func (s *BCCImportService) processAssetData(
 	// delete previously-imported unapproved entries so the latest upload
 	// fully replaces them. Approved or paid entries are protected.
 	var staleIDs []uint
+	flexibleSkippedCount := 0
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -883,9 +892,14 @@ func (s *BCCImportService) processAssetData(
 		}
 
 		blocked := make(map[dk]string)
+		existingFlexible := make(map[dk]bool)
 		for _, ts := range existingTS {
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
 			if !importDates[k] {
+				continue
+			}
+			if _, isFlexible := flexibleEmployeeIDs[ts.EmployeeID]; isFlexible {
+				existingFlexible[k] = true
 				continue
 			}
 
@@ -926,6 +940,17 @@ func (s *BCCImportService) processAssetData(
 			}
 			entries = filtered
 		}
+		if len(existingFlexible) > 0 {
+			filtered := entries[:0]
+			for _, entry := range entries {
+				if existingFlexible[dk{entry.EmployeeID, entry.Date}] {
+					flexibleSkippedCount++
+					continue
+				}
+				filtered = append(filtered, entry)
+			}
+			entries = filtered
+		}
 
 	}
 
@@ -961,7 +986,7 @@ func (s *BCCImportService) processAssetData(
 
 	// 11. Count results.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets)
+	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
 	for _, f := range result.FailedEntries {
 		importErrors = append(importErrors, domain.ImportError{
 			Row:      0,

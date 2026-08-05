@@ -50,7 +50,7 @@ describe('useBCCUploadModal', () => {
     vi.unstubAllGlobals();
   });
 
-  it.each(['completed', 'failed'] as const)(
+	it.each(['completed', 'failed'] as const)(
     'refreshes the invalid-bank-information list when an import becomes %s',
     async (terminalStatus) => {
       const queryClient = new QueryClient({
@@ -62,7 +62,8 @@ describe('useBCCUploadModal', () => {
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
       vi.spyOn(timesheetService, 'uploadBCCFile').mockResolvedValue(
         createImport('pending'),
-      );
+	);
+
       vi.spyOn(timesheetService, 'getPartnerImport').mockResolvedValue(
         createImport(terminalStatus),
       );
@@ -97,7 +98,7 @@ describe('useBCCUploadModal', () => {
     },
   );
 
-  it.each(['completed', 'failed'] as const)(
+	it.each(['completed', 'failed'] as const)(
     'refreshes the invalid-bank-information list when upload returns %s directly',
     async (terminalStatus) => {
       const queryClient = new QueryClient({
@@ -183,5 +184,37 @@ describe('useBCCUploadModal', () => {
         queryKey: QueryKeys.employees.missingBankDetails(),
       });
     },
-  );
+	);
+
+	it('sends the admin flexible-pay import choice', async () => {
+		const queryClient = new QueryClient({
+			defaultOptions: {
+				queries: { retry: false },
+				mutations: { retry: false },
+			},
+		});
+		const uploadSpy = vi.spyOn(timesheetService, 'uploadBCCFile').mockResolvedValue(
+			createImport('completed'),
+		);
+		const { result } = renderHook(
+			() => useBCCUploadModal({ projectId: 12, allowFlexibleEmployeeImport: true, onClose: vi.fn() }),
+			{ wrapper: createWrapper(queryClient) },
+		);
+		const file = new File(['test'], 'bang-cham-cong.xlsx', {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		});
+		act(() => {
+			result.current.handleFileChange({ target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>);
+		});
+		act(() => {
+			result.current.handleIncludeFlexibleEmployeesChange(true);
+		});
+		act(() => {
+			result.current.handleUpload();
+		});
+
+		await waitFor(() => {
+			expect(uploadSpy).toHaveBeenCalledWith(file, 12, expect.any(String), true, 'bcc-upload-test-key');
+		});
+	});
 });

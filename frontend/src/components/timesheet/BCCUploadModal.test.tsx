@@ -30,7 +30,7 @@ const baseResult: PartnerImportFile = {
   created_at: '2026-07-25T00:00:00Z',
 };
 
-function mockModalState(result: PartnerImportFile) {
+function mockModalState(result: PartnerImportFile | null, allowFlexibleEmployeeImport = false) {
   mockUseBCCUploadModal.mockReturnValue({
     file: null,
     result,
@@ -41,11 +41,14 @@ function mockModalState(result: PartnerImportFile) {
     isImportActive: false,
     needsProjectSelect: false,
     hasProject: true,
-    canUpload: false,
-    hintText: '',
-    isReady: false,
+	canUpload: false,
+	hintText: '',
+	isReady: false,
+	includeFlexibleEmployees: false,
+	allowFlexibleEmployeeImport,
     setSelectedProjectId: vi.fn(),
-    setSelectedMonth: vi.fn(),
+	setSelectedMonth: vi.fn(),
+	handleIncludeFlexibleEmployeesChange: vi.fn(),
     handleFileChange: vi.fn(),
     handleUpload: vi.fn(),
     handleClose: vi.fn(),
@@ -57,13 +60,14 @@ function mockModalState(result: PartnerImportFile) {
   });
 }
 
-function renderModal() {
+function renderModal(allowFlexibleEmployeeImport = false) {
   render(
     <BCCUploadModal
       open
       onClose={vi.fn()}
       projectId={7}
       projects={[{ id: 7, name: 'Dự án 7' }]}
+		allowFlexibleEmployeeImport={allowFlexibleEmployeeImport}
     />,
   );
 }
@@ -71,7 +75,20 @@ function renderModal() {
 describe('BCCUploadModal result states', () => {
   beforeEach(() => {
     mockUseBCCUploadModal.mockReset();
-  });
+	});
+
+	it('shows the safe flexible-pay import option only when an admin enables it', () => {
+		mockModalState(null, true);
+		renderModal(true);
+
+		const checkbox = screen.getByRole('checkbox', {
+			name: /import lương linh hoạt/i,
+		});
+		fireEvent.click(checkbox);
+		expect(mockUseBCCUploadModal.mock.results[0]?.value.handleIncludeFlexibleEmployeesChange)
+			.toHaveBeenCalledWith(true);
+		expect(screen.getByText('Chỉ tạo ngày chưa có.')).toBeInTheDocument();
+	});
 
   it('renders pure completion as success without an error state', () => {
     mockModalState(baseResult);

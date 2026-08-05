@@ -31,6 +31,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	uploaderRole string,
 	createdAsset *domain.Asset,
 	effectiveMonth string,
+	includeFlexibleEmployees bool,
 ) (*BCCImportResult, error) {
 	fail := func(status, reason string) (*BCCImportResult, error) {
 		errs := []domain.ImportError{{Reason: reason}}
@@ -290,6 +291,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	type rateTarget struct{ dayType, hourType string }
 
 	var entries []domainservices.BulkCreateTimesheetEntry
+	flexibleEmployeeIDs := make(map[uint]struct{})
 	totalRows := 0
 
 	for _, sheet := range parsed.Sheets {
@@ -357,11 +359,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 			}
 
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
-				importErrors = append(importErrors, domain.ImportError{
-					Employee: emp.FullName,
-					Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
-				})
-				continue
+				if !includeFlexibleEmployees {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: emp.FullName,
+						Reason:   "nhân viên lương linh hoạt không áp dụng BCC import",
+					})
+					continue
+				}
+				flexibleEmployeeIDs[assignment.EmployeeID] = struct{}{}
 			}
 
 			for _, entry := range emp.Entries {
@@ -393,6 +398,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 9. "Latest wins" overwrite (same logic as legacy path).
 	var staleIDs []uint
+	flexibleSkippedCount := 0
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
@@ -411,9 +417,14 @@ func (s *BCCImportService) processMultiPositionUpload(
 		}
 
 		blocked := make(map[dk]string)
+		existingFlexible := make(map[dk]bool)
 		for _, ts := range existingTS {
 			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
 			if !importDates[k] {
+				continue
+			}
+			if _, isFlexible := flexibleEmployeeIDs[ts.EmployeeID]; isFlexible {
+				existingFlexible[k] = true
 				continue
 			}
 
@@ -454,6 +465,17 @@ func (s *BCCImportService) processMultiPositionUpload(
 			}
 			entries = filtered
 		}
+		if len(existingFlexible) > 0 {
+			filtered := entries[:0]
+			for _, entry := range entries {
+				if existingFlexible[dk{entry.EmployeeID, entry.Date}] {
+					flexibleSkippedCount++
+					continue
+				}
+				filtered = append(filtered, entry)
+			}
+			entries = filtered
+		}
 
 	}
 
@@ -490,7 +512,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 11. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets)
+	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
 	for _, f := range result.FailedEntries {
 		importErrors = append(importErrors, domain.ImportError{
 			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),

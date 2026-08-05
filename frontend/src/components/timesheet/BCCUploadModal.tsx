@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Loader2,
   Upload,
@@ -47,8 +48,9 @@ interface ProjectOption {
 interface BCCUploadModalProps {
   open: boolean;
   onClose: () => void;
-  projectId: number;
-  projects?: ProjectOption[];
+	projectId: number;
+	projects?: ProjectOption[];
+	allowFlexibleEmployeeImport?: boolean;
 }
 
 // ─── Searchable Project Combobox ──────────────────────────────────────────────
@@ -420,8 +422,9 @@ function ImportProcessingState({ status }: { status: 'pending' | 'processing' })
 export const BCCUploadModal = memo(function BCCUploadModal({
   open,
   onClose,
-  projectId,
-  projects,
+	projectId,
+	projects,
+	allowFlexibleEmployeeImport,
 }: BCCUploadModalProps) {
   const {
     file,
@@ -435,9 +438,12 @@ export const BCCUploadModal = memo(function BCCUploadModal({
     hasProject,
     canUpload,
     hintText,
-    isReady,
+		isReady,
+		includeFlexibleEmployees,
+		allowFlexibleEmployeeImport: canImportFlexibleEmployees,
     setSelectedProjectId,
-    setSelectedMonth,
+		setSelectedMonth,
+		handleIncludeFlexibleEmployeesChange,
     handleFileChange,
     handleUpload,
     handleClose,
@@ -446,7 +452,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
     handleDrop,
     handleReset,
     handleRemoveFile,
-  } = useBCCUploadModal({ projectId, projects, onClose });
+	} = useBCCUploadModal({ projectId, projects, allowFlexibleEmployeeImport, onClose });
 
   const monthOptions = useMemo(() => getMonthOptions(), []);
 
@@ -548,6 +554,26 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                   .
                 </p>
               </div>
+
+			  {canImportFlexibleEmployees && (
+				<label
+					htmlFor="bcc-include-flexible-employees"
+					className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 transition-colors hover:border-amber-300 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-100"
+				>
+					<Checkbox
+						id="bcc-include-flexible-employees"
+						checked={includeFlexibleEmployees}
+						onCheckedChange={(checked) => handleIncludeFlexibleEmployeesChange(checked === true)}
+						className="mt-0.5 size-5 border-amber-600 data-[state=checked]:bg-amber-700 data-[state=checked]:text-white"
+					/>
+					<span className="min-w-0 leading-relaxed">
+						<span className="block font-semibold">Import lương linh hoạt</span>
+						<span className="block text-xs text-amber-800 dark:text-amber-200/90">
+							Chỉ tạo ngày chưa có.
+						</span>
+					</span>
+				</label>
+			  )}
 
               {/* Upload area */}
               <div className="space-y-1.5">

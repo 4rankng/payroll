@@ -13,23 +13,24 @@ const (
 )
 
 type TimesheetImportJob struct {
-	AssetID            uint       `json:"asset_id" gorm:"primaryKey;column:asset_id"`
-	ProjectID          uint       `json:"project_id"`
-	ForMonth           string     `json:"for_month"`
-	UploadedBy         uint       `json:"uploaded_by"`
-	UploaderRole       string     `json:"uploader_role"`
-	Status             string     `json:"status"`
-	IdempotencyKey     string     `json:"-" gorm:"column:idempotency_key"`
-	RequestFingerprint string     `json:"-" gorm:"column:request_fingerprint"`
-	ActiveScopeKey     *string    `json:"-" gorm:"column:active_scope_key"`
-	Attempt            uint       `json:"attempt"`
-	LeaseExpiresAt     *time.Time `json:"lease_expires_at,omitempty"`
-	StartedAt          *time.Time `json:"started_at,omitempty"`
-	ProcessedAt        *time.Time `json:"processed_at,omitempty"`
-	AuditLoggedAt      *time.Time `json:"-"`
-	LastError          *string    `json:"last_error,omitempty"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
+	AssetID                  uint       `json:"asset_id" gorm:"primaryKey;column:asset_id"`
+	ProjectID                uint       `json:"project_id"`
+	ForMonth                 string     `json:"for_month"`
+	UploadedBy               uint       `json:"uploaded_by"`
+	UploaderRole             string     `json:"uploader_role"`
+	IncludeFlexibleEmployees bool       `json:"include_flexible_employees" gorm:"column:include_flexible_employees"`
+	Status                   string     `json:"status"`
+	IdempotencyKey           string     `json:"-" gorm:"column:idempotency_key"`
+	RequestFingerprint       string     `json:"-" gorm:"column:request_fingerprint"`
+	ActiveScopeKey           *string    `json:"-" gorm:"column:active_scope_key"`
+	Attempt                  uint       `json:"attempt"`
+	LeaseExpiresAt           *time.Time `json:"lease_expires_at,omitempty"`
+	StartedAt                *time.Time `json:"started_at,omitempty"`
+	ProcessedAt              *time.Time `json:"processed_at,omitempty"`
+	AuditLoggedAt            *time.Time `json:"-"`
+	LastError                *string    `json:"last_error,omitempty"`
+	CreatedAt                time.Time  `json:"created_at"`
+	UpdatedAt                time.Time  `json:"updated_at"`
 }
 
 func (TimesheetImportJob) TableName() string { return "timesheet_import_jobs" }

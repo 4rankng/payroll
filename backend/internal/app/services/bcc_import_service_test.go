@@ -168,18 +168,21 @@ func TestBuildResult(t *testing.T) {
 }
 
 func TestBCCRequestFingerprintBindsScopeAndContent(t *testing.T) {
-	base := bccRequestFingerprint(10, "2026-07", []byte("same workbook"))
-	if base != bccRequestFingerprint(10, "2026-07", []byte("same workbook")) {
+	base := bccRequestFingerprint(10, "2026-07", false, []byte("same workbook"))
+	if base != bccRequestFingerprint(10, "2026-07", false, []byte("same workbook")) {
 		t.Fatal("same request must have a stable fingerprint")
 	}
-	if base == bccRequestFingerprint(11, "2026-07", []byte("same workbook")) {
+	if base == bccRequestFingerprint(11, "2026-07", false, []byte("same workbook")) {
 		t.Fatal("project must be part of the fingerprint")
 	}
-	if base == bccRequestFingerprint(10, "2026-08", []byte("same workbook")) {
+	if base == bccRequestFingerprint(10, "2026-08", false, []byte("same workbook")) {
 		t.Fatal("month must be part of the fingerprint")
 	}
-	if base == bccRequestFingerprint(10, "2026-07", []byte("different workbook")) {
+	if base == bccRequestFingerprint(10, "2026-07", false, []byte("different workbook")) {
 		t.Fatal("file content must be part of the fingerprint")
+	}
+	if base == bccRequestFingerprint(10, "2026-07", true, []byte("same workbook")) {
+		t.Fatal("flexible-employee import mode must be part of the fingerprint")
 	}
 }
 

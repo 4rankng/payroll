@@ -6,16 +6,17 @@ import type { PartnerImportFile } from '@/types/api/timesheet.types';
 interface UploadBCCVariables {
   file: File;
   projectId: number;
-  forMonth: string;
-  idempotencyKey: string;
+	forMonth: string;
+	includeFlexibleEmployees: boolean;
+	idempotencyKey: string;
 }
 
 export function useUploadBCCTimesheet() {
   const queryClient = useQueryClient();
 
   return useMutation<PartnerImportFile, Error, UploadBCCVariables>({
-    mutationFn: ({ file, projectId, forMonth, idempotencyKey }) =>
-      timesheetService.uploadBCCFile(file, projectId, forMonth, idempotencyKey),
+    mutationFn: ({ file, projectId, forMonth, includeFlexibleEmployees, idempotencyKey }) =>
+      timesheetService.uploadBCCFile(file, projectId, forMonth, includeFlexibleEmployees, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
     },

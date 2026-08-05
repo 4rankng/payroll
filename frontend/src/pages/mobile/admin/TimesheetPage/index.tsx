@@ -509,6 +509,7 @@ const TimesheetPageMobile = () => {
             : 0
         }
         projects={timesheetManagement.projects}
+		allowFlexibleEmployeeImport
       />
 
       {/* BCC Upload History */}
