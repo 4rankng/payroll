@@ -173,6 +173,11 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	}
 
 	forMonth := c.PostForm("forMonth")
+	forceReprocess, err := strconv.ParseBool(c.DefaultPostForm("force_reprocess", "false"))
+	if err != nil {
+		response.BadRequest(c, "force_reprocess không hợp lệ")
+		return
+	}
 
 	// Auto-resolve forMonth if not provided
 	if forMonth == "" {
@@ -225,28 +230,34 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	hash := sha256.Sum256(fileContent)
 	checksum := fmt.Sprintf("%x", hash)
 
-	// Check for duplicate first — reuse existing asset if found
-	existingAsset, err := h.service.GetConfig().AssetRepo.GetByChecksum(c.Request.Context(), checksum, domain.UploadTypeFlexPayImport)
-	if err == nil && existingAsset != nil {
-		assetReady := h.ensureAssetFileExists(c, existingAsset, fileContent, fileHeader.Filename)
-		if !assetReady {
+	// The default path reuses an existing upload. When an admin explicitly
+	// requests reprocessing, create a new asset so the worker runs again; the
+	// flexible import's get-or-create and BatchUpsert paths keep the employee,
+	// assignment, and advance-limit records duplicate-free.
+	if !forceReprocess {
+		existingAsset, lookupErr := h.service.GetConfig().AssetRepo.GetByChecksum(c.Request.Context(), checksum, domain.UploadTypeFlexPayImport)
+		if lookupErr == nil && existingAsset != nil {
+			assetReady := h.ensureAssetFileExists(c, existingAsset, fileContent, fileHeader.Filename)
+			if !assetReady {
+				return
+			}
+
+			if err := h.asynqClient.EnqueueImportJob(existingAsset.ID, forMonth); err != nil {
+				logger := observability.GetLogger()
+				logger.Error("failed to enqueue import job", "error", err, "asset_id", existingAsset.ID)
+			}
+			response.SuccessCreated(c, dto.ImportJobResponse{
+				ID:        existingAsset.ID,
+				Status:    "pending",
+				Message:   "File đang được xử lý lại, các bản ghi đã tồn tại sẽ được bỏ qua",
+				CreatedAt: existingAsset.CreatedAt.Format(time.RFC3339),
+			}, "File đang được xử lý lại, các bản ghi đã tồn tại sẽ được bỏ qua")
 			return
 		}
-
-		if err := h.asynqClient.EnqueueImportJob(existingAsset.ID, forMonth); err != nil {
-			logger := observability.GetLogger()
-			logger.Error("failed to enqueue import job", "error", err, "asset_id", existingAsset.ID)
+		if lookupErr != nil && !domain.IsNotFoundError(lookupErr) {
+			response.InternalServerError(c, "Không thể kiểm tra file")
+			return
 		}
-		response.SuccessCreated(c, dto.ImportJobResponse{
-			ID:        existingAsset.ID,
-			Status:    "pending",
-			Message:   "File đang được xử lý lại, các bản ghi đã tồn tại sẽ được bỏ qua",
-			CreatedAt: existingAsset.CreatedAt.Format(time.RFC3339),
-		}, "File đang được xử lý lại, các bản ghi đã tồn tại sẽ được bỏ qua")
-		return
-	} else if err != nil && !domain.IsNotFoundError(err) {
-		response.InternalServerError(c, "Không thể kiểm tra file")
-		return
 	}
 
 	// New file — store to disk and create asset

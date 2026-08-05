@@ -445,7 +445,6 @@ const TimesheetPage = () => {
             : 0
         }
         projects={timesheetManagement.projects}
-		allowFlexibleEmployeeImport
       />
 
       {/* BCC Upload History */}

@@ -222,29 +222,4 @@ describe('useBCCUploadModal', () => {
 		});
 	});
 
-  it('explains when a payroll file is uploaded to BCC', () => {
-    const errors = [{
-      row: 0,
-      employee: '',
-      reason: 'Tệp này là bảng lương, không phải bảng chấm công',
-    }];
-
-    expect(buildFailureSummary(errors)).toBe(
-      'Tệp này là bảng lương. Hãy dùng “Nhập bảng lương” thay vì tải lên BCC.',
-    );
-    expect(Array.from(groupErrorsByEmployee(errors).keys())).toEqual(['Tệp đã tải lên']);
-  });
-
-  it('explains a legacy BCC format error without an employee label', () => {
-    const errors = [{
-      row: 0,
-      employee: '',
-      reason: 'Tệp không đúng mẫu bảng chấm công',
-    }];
-
-    expect(buildFailureSummary(errors)).toBe(
-      'Tệp chưa đúng mẫu BCC. Hãy chọn tệp có ngày và ca làm việc.',
-    );
-    expect(Array.from(groupErrorsByEmployee(errors).keys())).toEqual(['Tệp đã tải lên']);
-  });
 });

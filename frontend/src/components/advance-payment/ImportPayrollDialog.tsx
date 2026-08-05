@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -36,6 +37,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
   const [importProgress, setImportProgress] = useState<number>(0);
   const [importStatus, setImportStatus] = useState<ImportJobStatus | null>(null);
   const [importResult, setImportResult] = useState<ImportJobStatusResponse | null>(null);
+  const [forceReprocess, setForceReprocess] = useState(false);
 
   const monthOptions = useMemo(() => MONTH_OPTIONS, []);
 
@@ -56,6 +58,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
     setImportProgress(0);
     setImportStatus(null);
     setImportResult(null);
+    setForceReprocess(false);
   }, []);
 
   const handleImport = useCallback(() => {
@@ -66,6 +69,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("forMonth", selectedMonth);
+    formData.append("force_reprocess", String(forceReprocess));
     importTemplateMutation.mutate(formData, {
       onSuccess: (response) => {
         setImportResult(response);
@@ -75,7 +79,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
         resetState();
       },
     });
-  }, [selectedFile, selectedMonth, importTemplateMutation, onOpenChange, resetState]);
+  }, [selectedFile, selectedMonth, forceReprocess, importTemplateMutation, onOpenChange, resetState]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -224,6 +228,17 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                   onFileChange={setSelectedFile}
                   inputId="import-file-input"
                 />
+                <label
+                  htmlFor="force-flexpay-reprocess"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                >
+                  <Checkbox
+                    id="force-flexpay-reprocess"
+                    checked={forceReprocess}
+                    onCheckedChange={(checked) => setForceReprocess(checked === true)}
+                  />
+                  Xử lý lại tệp
+                </label>
               </div>
 
               {/* Progress */}

@@ -99,6 +99,10 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		response.Forbidden(c, "Chỉ quản trị viên có thể import nhân viên lương linh hoạt")
 		return
 	}
+	if includeFlexibleEmployees {
+		response.BadRequest(c, "Nhập BCC không áp dụng cho nhân viên lương linh hoạt")
+		return
+	}
 
 	// Partner users must have write access to the target project.
 	if userRole == string(domain.RolePartner) {
