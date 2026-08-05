@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Wallet, Calendar, Users, Banknote, UserRoundCheck } from "lucide-react";
+import { Wallet, Calendar, Users, Banknote, UserRoundCheck, FileUp } from "lucide-react";
 import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
@@ -32,6 +32,7 @@ import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymen
 import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
 import { ActionBar, ButtonGroup, ImportAction, ExportListAction, ExportBatchAction, UploadResultAction, CheckInAction, HistoryAction } from "@/components/advance-payment/actions";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
+import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
 import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
@@ -68,6 +69,7 @@ import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel"
 import { TabBarWithBadges } from "@/components/shared/TabBarWithBadges";
 import { useAuth } from "@/contexts";
 import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
+import { useAllProjects } from "@/hooks/api/useProjects";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useMobilePageAnimations } from "@/hooks/useMobilePageAnimations";
 import { cn } from "@/lib/utils";
@@ -81,6 +83,7 @@ import type { ActiveTab } from "./types";
 const AdvancePaymentsPage = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
+  const [isBccUploadOpen, setIsBccUploadOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isUploadResultDialogOpen, setIsUploadResultDialogOpen] = useState(false);
   const [isEmployeeListUploadDialogOpen, setIsEmployeeListUploadDialogOpen] =
@@ -103,6 +106,7 @@ const AdvancePaymentsPage = () => {
   const animRoot = useMobilePageAnimations();
 
   const page = useAdvancePaymentsPage({ employeesTabActive: activeTab === "employees" });
+  const { data: projects = [] } = useAllProjects({ enabled: !isAdvPartner });
   const attendancePage = useAdminAttendancePage({ active: activeTab === "attendances" });
   const exportBatchMutation = useExportAdvancePayments();
 
@@ -385,6 +389,17 @@ const AdvancePaymentsPage = () => {
             <ActionBar>
               <ButtonGroup>
                 <ImportAction onClick={() => setIsImportSheetOpen(true)} />
+                {!isAdvPartner && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsBccUploadOpen(true)}
+                    className="min-h-11 gap-1.5"
+                  >
+                    <FileUp className="h-4 w-4" />
+                    Tải lên BCC
+                  </Button>
+                )}
                 {page.handleExportFlexPayEmployees && (
                   <ExportListAction
                     onClick={page.handleExportFlexPayEmployees}
@@ -585,6 +600,13 @@ const AdvancePaymentsPage = () => {
         <ImportPayrollDialog
           open={isImportSheetOpen}
           onOpenChange={setIsImportSheetOpen}
+        />
+        <BCCUploadModal
+          open={isBccUploadOpen}
+          onClose={() => setIsBccUploadOpen(false)}
+          projectId={0}
+          projects={projects}
+          allowFlexibleEmployeeImport
         />
         <AdvancePaymentResultUploadDialog
           open={isUploadResultDialogOpen}

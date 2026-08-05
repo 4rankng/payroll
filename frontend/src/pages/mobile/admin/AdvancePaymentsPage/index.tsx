@@ -23,7 +23,7 @@ import {
   useRejectAttendance,
 } from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck } from "lucide-react";
+import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck, FileUp } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
@@ -31,6 +31,7 @@ import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/F
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
+import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { StatementDialog } from "@/components/advance-payment/StatementDialog";
 import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
 import { PayrollReportEmailDialog } from "@/components/timesheet/PayrollReportEmailDialog";
@@ -64,6 +65,7 @@ import {
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
 import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
+import { useAllProjects } from "@/hooks/api/useProjects";
 
 type AdminTab = "requests" | "attendances";
 
@@ -170,6 +172,7 @@ const AdvancePaymentsPageMobile = () => {
   const isAdvPartner = user?.role === "adv_partner";
 
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
+  const [isBccUploadOpen, setIsBccUploadOpen] = useState(false);
   const [isEmployeeListUploadOpen, setIsEmployeeListUploadOpen] = useState(false);
   const [isResultUploadOpen, setIsResultUploadOpen] = useState(false);
   const [isStatementSheetOpen, setIsStatementSheetOpen] = useState(false);
@@ -186,6 +189,7 @@ const AdvancePaymentsPageMobile = () => {
   const [isCreateCheckInOpen, setIsCreateCheckInOpen] = useState(false);
 
   const page = useAdvancePaymentsPage({ employeesTabActive: false });
+  const { data: projects = [] } = useAllProjects({ enabled: !isAdvPartner });
   const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
   const approveAttendanceMutation = useApproveAttendance();
   const rejectAttendanceMutation = useRejectAttendance();
@@ -321,6 +325,13 @@ const AdvancePaymentsPageMobile = () => {
                 disabled={exportBatchMutation.isPending}
                 isLoading={exportBatchMutation.isPending}
               />
+              {!isAdvPartner && (
+                <MobileOverflowAction
+                  icon={FileUp}
+                  label="Tải BCC"
+                  onClick={() => { setIsBccUploadOpen(true); close(); }}
+                />
+              )}
               {!isAdvPartner && (
                 <MobileOverflowAction
                   icon={ArrowRightLeft}
@@ -581,6 +592,13 @@ const AdvancePaymentsPageMobile = () => {
       />
 
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />
+      <BCCUploadModal
+        open={isBccUploadOpen}
+        onClose={() => setIsBccUploadOpen(false)}
+        projectId={0}
+        projects={projects}
+        allowFlexibleEmployeeImport
+      />
       <FlexibleEmployeeListUploadDialog open={isEmployeeListUploadOpen} onOpenChange={setIsEmployeeListUploadOpen} />
       <AdvancePaymentResultUploadDialog open={isResultUploadOpen} onOpenChange={setIsResultUploadOpen} />
       <CheckInBulkDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} />
