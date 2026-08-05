@@ -30,7 +30,11 @@ import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
-import { formatPayrollMonthRange, isPastAdvancePaymentPeriod } from "@/utils/advancePaymentHelpers";
+import {
+  formatPayrollMonthRange,
+  getInitialEmployeeAdvanceMonth,
+  isPastAdvancePaymentPeriod,
+} from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 
@@ -62,12 +66,18 @@ const FlexiblePayEmployeePage = () => {
   const [requestConfirmation, setRequestConfirmation] = useState<AdvanceRequestConfirmation | null>(null);
   const [confirmationDataReady, setConfirmationDataReady] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialMonthResolvedRef = useRef(false);
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const { data: unreadNotifications } = useUnreadNotifications();
   // URL-backed month drives the viewed quota and attendance period. Request
   // history remains all-time so employees always see their latest activity.
   const month = useEmployeeMonth();
+  const {
+    hasExplicitMonth,
+    setValue: setMonth,
+    value: selectedMonth,
+  } = month;
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
   // (Admin-configured advanceable cap, calendar-month window); others use the admin-upload flow.
   const isCheckInEnabled = Boolean(profile?.check_in_enabled);
@@ -99,6 +109,32 @@ const FlexiblePayEmployeePage = () => {
   const info = infoResponse?.data;
   const history = historyResponse?.data ?? EMPTY_HISTORY;
   const historyTotal = historyResponse?.pagination?.totalRecords ?? history.length;
+
+  // A non-check-in employee can request against the previous payroll month
+  // through the cutoff. The API's forMonth is authoritative; only use it for
+  // the initial view so explicit URL and navigator selections stay intact.
+  useEffect(() => {
+    if (profileLoading || infoLoading || !info || initialMonthResolvedRef.current) return;
+
+    const initialMonth = getInitialEmployeeAdvanceMonth(
+      info?.forMonth,
+      isCheckIn,
+      hasExplicitMonth,
+    );
+    initialMonthResolvedRef.current = true;
+
+    if (initialMonth && selectedMonth !== initialMonth) {
+      setMonth(initialMonth);
+    }
+  }, [
+    info,
+    infoLoading,
+    isCheckIn,
+    hasExplicitMonth,
+    profileLoading,
+    selectedMonth,
+    setMonth,
+  ]);
 
   // Debounced server-side fee calculation
   const [serverFeeDetails, setServerFeeDetails] = useState<{

@@ -12,6 +12,7 @@ function MonthHarness() {
     <>
       <EmployeeMonthNavigator month={month} />
       <output aria-label="Địa chỉ hiện tại">{location.search}</output>
+      <output aria-label="Đã chọn tháng qua URL">{String(month.hasExplicitMonth)}</output>
     </>
   );
 }
@@ -31,6 +32,14 @@ describe("EmployeeMonthNavigator", () => {
     const expected = format(subMonths(startOfMonth(new Date()), 1), "yyyy-MM");
     expect(screen.getByLabelText("Địa chỉ hiện tại")).toHaveTextContent(`?month=${expected}`);
     expect(screen.getByRole("button", { name: "Xem tháng sau" })).toBeEnabled();
+    expect(screen.getByLabelText("Đã chọn tháng qua URL")).toHaveTextContent("true");
+  });
+
+  it("marks an initial URL month as an explicit selection", () => {
+    const selectedMonth = format(subMonths(startOfMonth(new Date()), 1), "yyyy-MM");
+    render(<MemoryRouter initialEntries={[`/employee?month=${selectedMonth}`]}><MonthHarness /></MemoryRouter>);
+
+    expect(screen.getByLabelText("Đã chọn tháng qua URL")).toHaveTextContent("true");
   });
 
   it("disables backward navigation at the 24-month history floor", () => {

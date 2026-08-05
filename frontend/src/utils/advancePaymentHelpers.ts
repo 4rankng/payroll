@@ -314,6 +314,20 @@ export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: strin
 }
 
 /**
+ * Select the API-provided active payroll period when a non-check-in employee
+ * first opens FlexiblePay without choosing a month. Before the cutoff that
+ * period can be the prior calendar month, so the calendar default is wrong.
+ */
+export function getInitialEmployeeAdvanceMonth(
+  activeMonth: string | undefined,
+  isCheckIn: boolean,
+  hasExplicitMonth: boolean,
+): string | undefined {
+  if (!activeMonth || isCheckIn || hasExplicitMonth) return undefined;
+  return activeMonth;
+}
+
+/**
  * Day-of-month from which a freshly-created advance request lands in the
  * CURRENT calendar month — also the day the self-check-in advance window opens.
  *

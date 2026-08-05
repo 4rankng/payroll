@@ -5,6 +5,7 @@ import {
   getAdvanceQuotaSummary,
   getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
+  getInitialEmployeeAdvanceMonth,
   isPastAdvancePaymentPeriod,
 } from "./advancePaymentHelpers";
 import type {
@@ -330,6 +331,17 @@ describe("isPastAdvancePaymentPeriod", () => {
   it("closes only payroll months older than the active advance period", () => {
     expect(isPastAdvancePaymentPeriod("2026-06", "2026-07")).toBe(true);
     expect(isPastAdvancePaymentPeriod("2026-08", "2026-07")).toBe(false);
+  });
+});
+
+describe("getInitialEmployeeAdvanceMonth", () => {
+  it("opens a non-check-in employee on the active payroll period", () => {
+    expect(getInitialEmployeeAdvanceMonth("2026-07", false, false)).toBe("2026-07");
+  });
+
+  it("preserves an explicitly selected month and check-in calendar flow", () => {
+    expect(getInitialEmployeeAdvanceMonth("2026-07", false, true)).toBeUndefined();
+    expect(getInitialEmployeeAdvanceMonth("2026-07", true, false)).toBeUndefined();
   });
 });
 

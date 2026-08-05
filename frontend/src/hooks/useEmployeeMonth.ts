@@ -20,6 +20,8 @@ const MAX_MONTHS_BACK = 24;
 export interface EmployeeMonth {
   /** `yyyy-MM` string — the canonical value mirrored to the URL. */
   value: string;
+  /** Whether the current URL explicitly selects a valid month. */
+  hasExplicitMonth: boolean;
   /** First day of the selected month as a Date. */
   date: Date;
   /** Human label, e.g. "Tháng 07, 2026" (Vietnamese locale). */
@@ -109,6 +111,7 @@ export function useEmployeeMonth(): EmployeeMonth {
     const end = endOfMonth(start);
     return {
       value: format(start, "yyyy-MM"),
+      hasExplicitMonth: isValidMonth(rawParam),
       date: start,
       label: `Tháng ${format(start, "MM, yyyy")}`,
       fromDate: format(start, "yyyy-MM-dd"),
@@ -122,5 +125,5 @@ export function useEmployeeMonth(): EmployeeMonth {
       goToday,
       setValue,
     };
-  }, [resolvedDate, currentMonth, floorMonth, goPrev, goNext, goToday, setValue]);
+  }, [resolvedDate, currentMonth, floorMonth, goPrev, goNext, goToday, rawParam, setValue]);
 }
