@@ -6,7 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryKeys } from '@/lib/queryKeys';
 import { timesheetService } from '@/services/api/timesheet.service';
 import type { PartnerImportFile } from '@/types/api/timesheet.types';
-import { useBCCUploadModal } from './useBCCUploadModal';
+import {
+  buildFailureSummary,
+  groupErrorsByEmployee,
+  useBCCUploadModal,
+} from './useBCCUploadModal';
 
 function createWrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -217,4 +221,17 @@ describe('useBCCUploadModal', () => {
 			expect(uploadSpy).toHaveBeenCalledWith(file, 12, expect.any(String), true, 'bcc-upload-test-key');
 		});
 	});
+
+  it('explains when a payroll file is uploaded to BCC', () => {
+    const errors = [{
+      row: 0,
+      employee: '',
+      reason: 'Tệp này là bảng lương, không phải bảng chấm công',
+    }];
+
+    expect(buildFailureSummary(errors)).toBe(
+      'Tệp này là bảng lương. Hãy dùng “Nhập bảng lương” thay vì tải lên BCC.',
+    );
+    expect(Array.from(groupErrorsByEmployee(errors).keys())).toEqual(['Tệp đã tải lên']);
+  });
 });

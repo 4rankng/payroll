@@ -36,6 +36,14 @@ export function buildFailureSummary(
 ): string {
   if (errors.length === 0) return 'Không thể xử lý tệp. Vui lòng kiểm tra lại định dạng.';
 
+  const payrollFileErrors = errors.filter(
+    (e) => e.reason === 'Tệp này là bảng lương, không phải bảng chấm công',
+  );
+
+  if (payrollFileErrors.length > 0) {
+    return 'Tệp này là bảng lương. Hãy dùng “Nhập bảng lương” thay vì tải lên BCC.';
+  }
+
   const approvedErrors = errors.filter(
     (e) =>
       e.reason.toLowerCase().includes('phê duyệt') ||
@@ -68,7 +76,11 @@ export function groupErrorsByEmployee(
 ): Map<string, ImportError[]> {
   const map = new Map<string, ImportError[]>();
   for (const e of errors) {
-    const key = e.employee || 'Không rõ nhân viên';
+    const key = e.employee || (
+      e.reason === 'Tệp này là bảng lương, không phải bảng chấm công'
+        ? 'Tệp đã tải lên'
+        : 'Không rõ nhân viên'
+    );
     const list = map.get(key) || [];
     list.push(e);
     map.set(key, list);

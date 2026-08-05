@@ -167,6 +167,23 @@ func TestDetectFormat_NoValidHeaders(t *testing.T) {
 	}
 }
 
+func TestDetectFormat_FlexPayWorkbook(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+	if err := f.SetSheetName("Sheet1", "UL"); err != nil {
+		t.Fatalf("rename sheet: %v", err)
+	}
+	_ = f.SetCellValue("UL", "B1", "Mã nhân viên được cấp bởi công ty")
+
+	_, err := DetectFormat(f)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "bảng lương linh hoạt") {
+		t.Errorf("error = %q, want flexible payroll guidance", err.Error())
+	}
+}
+
 func TestDetectFormat_BCCTiebreaker(t *testing.T) {
 	t.Parallel()
 	f := excelize.NewFile()

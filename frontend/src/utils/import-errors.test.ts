@@ -45,4 +45,18 @@ describe('parseImportErrors', () => {
     expect(parseImportErrors('{"reason":"failed"}')).toEqual([]);
     expect(parseImportErrors('not-json')).toEqual([]);
   });
+
+  it('explains when a flexible payroll file is uploaded as a timesheet', () => {
+    expect(parseImportErrors(JSON.stringify([
+      {
+        reason: 'tệp này là bảng lương linh hoạt, không phải bảng chấm công BCC',
+      },
+    ]))).toEqual([
+      {
+        row: 0,
+        employee: '',
+        reason: 'Tệp này là bảng lương, không phải bảng chấm công',
+      },
+    ]);
+  });
 });

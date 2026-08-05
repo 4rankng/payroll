@@ -102,7 +102,29 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 		}, nil
 	}
 
+	if isFlexPayWorkbook(f) {
+		return nil, fmt.Errorf("tệp này là bảng lương linh hoạt, không phải bảng chấm công BCC")
+	}
+
 	return nil, fmt.Errorf("không nhận diện được định dạng file BCC")
+}
+
+// isFlexPayWorkbook recognizes the UL template so callers can guide the user
+// to the payroll import instead of reporting a misleading employee error.
+func isFlexPayWorkbook(f *excelize.File) bool {
+	for _, sheetName := range f.GetSheetList() {
+		if !strings.EqualFold(strings.TrimSpace(sheetName), "UL") {
+			continue
+		}
+		header, err := f.GetCellValue(sheetName, "B1")
+		if err != nil {
+			continue
+		}
+		if strings.Contains(normHeader(header), "mã nhân viên") {
+			return true
+		}
+	}
+	return false
 }
 
 // isPositionSheet checks if a sheet has the expected header pattern in row 4:

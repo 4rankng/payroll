@@ -21,6 +21,12 @@ export function getSafeImportErrorReason(reason: string): string {
   ) {
     return 'Dữ liệu đã tồn tại';
   }
+  if (
+    normalized.includes('bảng lương linh hoạt') &&
+    normalized.includes('không phải bảng chấm công')
+  ) {
+    return 'Tệp này là bảng lương, không phải bảng chấm công';
+  }
   if (normalized.includes('không tìm thấy') && normalized.includes('nhân viên')) {
     return 'Không tìm thấy nhân viên';
   }
