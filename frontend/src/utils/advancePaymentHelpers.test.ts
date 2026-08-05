@@ -5,6 +5,7 @@ import {
   getAdvanceQuotaSummary,
   getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
+  isPastAdvancePaymentPeriod,
 } from "./advancePaymentHelpers";
 import type {
   AdvancePaymentHistoryItem,
@@ -318,6 +319,17 @@ describe("formatPayrollMonthRange", () => {
 describe("formatMonthShort", () => {
   it("renders YYYY-MM as MM/YYYY", () => {
     expect(formatMonthShort("2026-07")).toBe("07/2026");
+  });
+});
+
+describe("isPastAdvancePaymentPeriod", () => {
+  it("keeps the previous calendar month's active advance period requestable", () => {
+    expect(isPastAdvancePaymentPeriod("2026-07", "2026-07")).toBe(false);
+  });
+
+  it("closes only payroll months older than the active advance period", () => {
+    expect(isPastAdvancePaymentPeriod("2026-06", "2026-07")).toBe(true);
+    expect(isPastAdvancePaymentPeriod("2026-08", "2026-07")).toBe(false);
   });
 });
 

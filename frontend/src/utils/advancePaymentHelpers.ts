@@ -303,6 +303,17 @@ export function formatMonthShort(monthString: string): string {
 }
 
 /**
+ * Whether a selected payroll month is older than the active advance period.
+ *
+ * The active advance period can be the previous calendar month through the
+ * request cutoff. Calendar-month comparisons would incorrectly close that
+ * still-requestable payroll month in the employee portal.
+ */
+export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: string): boolean {
+  return viewMonth < activeMonth;
+}
+
+/**
  * Day-of-month from which a freshly-created advance request lands in the
  * CURRENT calendar month — also the day the self-check-in advance window opens.
  *

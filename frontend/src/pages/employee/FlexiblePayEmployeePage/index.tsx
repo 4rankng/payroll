@@ -30,7 +30,7 @@ import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
-import { formatPayrollMonthRange } from "@/utils/advancePaymentHelpers";
+import { formatPayrollMonthRange, isPastAdvancePaymentPeriod } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 
@@ -267,7 +267,7 @@ const FlexiblePayEmployeePage = () => {
               key={`${formKey}-${month.value}`}
               info={info}
               viewMonth={month.value}
-              isPastMonth={!month.isCurrentMonth}
+              isPastMonth={isPastAdvancePaymentPeriod(month.value, info.forMonth)}
               isSelfCheckInFlow={isCheckIn}
               history={history}
               feeDetails={feeDetails}
