@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { format, startOfMonth, subMonths } from "date-fns";
+import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { useEmployeeMonth } from "@/hooks/useEmployeeMonth";
@@ -40,6 +40,23 @@ describe("EmployeeMonthNavigator", () => {
     render(<MemoryRouter initialEntries={[`/employee?month=${selectedMonth}`]}><MonthHarness /></MemoryRouter>);
 
     expect(screen.getByLabelText("Đã chọn tháng qua URL")).toHaveTextContent("true");
+  });
+
+  it("does not treat a clamped future or out-of-range URL month as explicit", () => {
+    const currentMonth = startOfMonth(new Date());
+    const future = format(addMonths(currentMonth, 1), "yyyy-MM");
+    const outOfRange = format(subMonths(currentMonth, 25), "yyyy-MM");
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={[`/employee?month=${future}`]}><MonthHarness /></MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Đã chọn tháng qua URL")).toHaveTextContent("false");
+
+    unmount();
+    render(
+      <MemoryRouter initialEntries={[`/employee?month=${outOfRange}`]}><MonthHarness /></MemoryRouter>,
+    );
+    expect(screen.getByLabelText("Đã chọn tháng qua URL")).toHaveTextContent("false");
   });
 
   it("disables backward navigation at the 24-month history floor", () => {

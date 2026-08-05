@@ -75,6 +75,14 @@ export function useEmployeeMonth(): EmployeeMonth {
     return parsed;
   }, [rawParam, currentMonth, floorMonth]);
 
+  // A valid-looking URL is not necessarily a user selection we can honor:
+  // future and out-of-range values are clamped above. Only an accepted month
+  // must prevent a page from selecting its authoritative initial period.
+  const hasExplicitMonth = useMemo(
+    () => isValidMonth(rawParam) && format(resolvedDate, "yyyy-MM") === rawParam,
+    [rawParam, resolvedDate],
+  );
+
   const writeMonth = useCallback(
     (next: Date) => {
       const value = format(startOfMonth(next), "yyyy-MM");
@@ -111,7 +119,7 @@ export function useEmployeeMonth(): EmployeeMonth {
     const end = endOfMonth(start);
     return {
       value: format(start, "yyyy-MM"),
-      hasExplicitMonth: isValidMonth(rawParam),
+      hasExplicitMonth,
       date: start,
       label: `Tháng ${format(start, "MM, yyyy")}`,
       fromDate: format(start, "yyyy-MM-dd"),
@@ -125,5 +133,5 @@ export function useEmployeeMonth(): EmployeeMonth {
       goToday,
       setValue,
     };
-  }, [resolvedDate, currentMonth, floorMonth, goPrev, goNext, goToday, rawParam, setValue]);
+  }, [resolvedDate, currentMonth, floorMonth, goPrev, goNext, goToday, hasExplicitMonth, setValue]);
 }

@@ -114,7 +114,7 @@ const FlexiblePayEmployeePage = () => {
   // through the cutoff. The API's forMonth is authoritative; only use it for
   // the initial view so explicit URL and navigator selections stay intact.
   useEffect(() => {
-    if (profileLoading || infoLoading || !info || initialMonthResolvedRef.current) return;
+    if (profileLoading || !profile || infoLoading || !info || initialMonthResolvedRef.current) return;
 
     const initialMonth = getInitialEmployeeAdvanceMonth(
       info?.forMonth,
@@ -132,6 +132,7 @@ const FlexiblePayEmployeePage = () => {
     isCheckIn,
     hasExplicitMonth,
     profileLoading,
+    profile,
     selectedMonth,
     setMonth,
   ]);
