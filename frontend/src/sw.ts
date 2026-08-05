@@ -14,7 +14,7 @@ const PRECACHE_MANIFEST = self.__WB_MANIFEST;
 
 // Cache name — bump version to force SW update when caching strategy changes.
 const CACHE_PREFIX = 'tingting-cache-';
-const CACHE_NAME = 'tingting-cache-v4';
+const CACHE_NAME = 'tingting-cache-v5';
 const IS_DEVELOPMENT = self.location.pathname.endsWith('/dev-sw.js');
 
 // Install event — precache assets
@@ -35,8 +35,25 @@ self.addEventListener('install', (event: ExtendableEvent) => {
     typeof entry === 'string' ? entry : entry.url
   );
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(precacheUrls))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(precacheUrls);
+
+      // The app uses VitePWA's auto-update mode. Activate as soon as the
+      // complete release has been precached so an open employee portal reloads
+      // into the current payroll-period rules instead of waiting for every
+      // existing PWA tab to be closed.
+      await self.skipWaiting();
+    })()
   );
+});
+
+// Keep the standard Workbox update message supported as well. This makes
+// manual update triggers safe if a future screen needs to defer an update.
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+  }
 });
 
 // Activate event — clean old caches
