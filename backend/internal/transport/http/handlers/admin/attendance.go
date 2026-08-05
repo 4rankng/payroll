@@ -197,6 +197,68 @@ func (h *AttendanceHandler) Reject(c *gin.Context) {
 	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã từ chối chấm công")
 }
 
+// ListCreateCheckInShifts returns today's configured shifts for the selected
+// employee/project before an admin records a missed check-in.
+func (h *AttendanceHandler) ListCreateCheckInShifts(c *gin.Context) {
+	employeeID, err := strconv.ParseUint(c.Query("employee_id"), 10, 64)
+	if err != nil || employeeID == 0 {
+		response.BadRequest(c, "Nhân viên không hợp lệ")
+		return
+	}
+	projectID, err := strconv.ParseUint(c.Query("project_id"), 10, 64)
+	if err != nil || projectID == 0 {
+		response.BadRequest(c, "Dự án không hợp lệ")
+		return
+	}
+	date, err := time.ParseInLocation("2006-01-02", c.Query("date"), h.clk.Now().Location())
+	if err != nil {
+		response.BadRequest(c, "Ngày chấm công không hợp lệ")
+		return
+	}
+
+	shifts, err := h.attendanceService.AdminCheckInShifts(c.Request.Context(), uint(employeeID), uint(projectID), date)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	responseShifts := make([]dto.ShiftOption, 0, len(shifts))
+	position := ""
+	for _, shift := range shifts {
+		position = shift.Position
+		responseShifts = append(responseShifts, dto.ShiftOption{
+			Index:    shift.Index,
+			Label:    shift.Label,
+			Start:    shift.Start,
+			End:      shift.End,
+			Amount:   shift.Amount,
+			Position: shift.Position,
+		})
+	}
+	response.Success(c, dto.AdminListShiftsResponse{Position: position, Shifts: responseShifts}, "Lấy ca làm việc thành công")
+}
+
+// CreateCheckIn records an admin-entered check-in only. It intentionally leaves
+// checkout/earning empty so the employee must finish the shift normally.
+func (h *AttendanceHandler) CreateCheckIn(c *gin.Context) {
+	var req dto.AdminCreateCheckInRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Dữ liệu không hợp lệ: "+err.Error())
+		return
+	}
+	date, err := time.ParseInLocation("2006-01-02", req.Date, h.clk.Now().Location())
+	if err != nil {
+		response.BadRequest(c, "Ngày chấm công không hợp lệ")
+		return
+	}
+
+	att, err := h.attendanceService.AdminCreateCheckIn(c.Request.Context(), req.EmployeeID, req.ProjectID, date, req.ShiftIndex)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã tạo check-in; nhân viên cần tự tan ca để hoàn tất ca làm")
+}
+
 func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.AdminAttendanceResponse {
 	status := string(att.GetStatus(now))
 	res := dto.AdminAttendanceResponse{

@@ -14,7 +14,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 }));
 
 describe("getAdminAttendanceColumns", () => {
-  it("renders an admin-approved open attendance as completed", () => {
+  it("surfaces an admin-approved attendance missing checkout as needing repair", () => {
     const attendance = {
       id: 8,
       status: "checked_in",
@@ -29,12 +29,11 @@ describe("getAdminAttendanceColumns", () => {
 
     render(<>{statusCell({ row: { original: attendance } } as never)}</>);
 
-    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
-    expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
-    expect(screen.queryByText("Đang làm")).not.toBeInTheDocument();
+    expect(screen.getByText("Cần duyệt lại")).toBeInTheDocument();
+    expect(screen.queryByText("Hoàn thành")).not.toBeInTheDocument();
   });
 
-  it("does not allow rejecting an admin-approved completed attendance", () => {
+  it("does not allow rejecting an admin-approved attendance that needs checkout repair", () => {
     const attendance = {
       id: 8,
       status: "checked_in",
@@ -54,6 +53,27 @@ describe("getAdminAttendanceColumns", () => {
     render(<>{cell({ row: { original: attendance } } as never)}</>);
 
     expect(screen.queryByRole("menuitem", { name: "Từ chối" })).not.toBeInTheDocument();
+  });
+
+  it("shows a physically completed admin approval as completed on desktop", () => {
+    const attendance = {
+      id: 11,
+      status: "completed",
+      review_action: "approved",
+      check_out_time: "2026-08-05T10:00:00+07:00",
+    } as AdminAttendanceResponse;
+    const columns = getAdminAttendanceColumns();
+    const statusColumn = columns.find((column) => "accessorKey" in column && column.accessorKey === "status");
+    const statusCell = statusColumn?.cell;
+    if (typeof statusCell !== "function") {
+      throw new Error("Expected desktop attendance status cell");
+    }
+
+    render(<>{statusCell({ row: { original: attendance } } as never)}</>);
+
+    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
+    expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
+    expect(screen.queryByText("Cần duyệt lại")).not.toBeInTheDocument();
   });
 
   it("does not allow rejecting a physically completed attendance after quota credit", () => {
@@ -79,11 +99,11 @@ describe("getAdminAttendanceColumns", () => {
     expect(screen.queryByRole("menuitem", { name: "Từ chối" })).not.toBeInTheDocument();
   });
 
-  it("offers desktop repair for a delayed rejection after admin approval", () => {
+  it("offers desktop repair when an approval has no persisted checkout", () => {
     const onApprove = vi.fn();
     const attendance = {
       id: 9,
-      status: "rejected",
+      status: "completed",
       review_action: "approved",
     } as AdminAttendanceResponse;
     const columns = getAdminAttendanceColumns({

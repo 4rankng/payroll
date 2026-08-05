@@ -47,6 +47,10 @@ func (r *racingAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, _
 	return nil, nil          // both observe: no existing attendance
 }
 
+func (r *racingAttendanceRepo) GetApprovedOpenBefore(_ context.Context, _ uint, _ time.Time) (*domain.Attendance, error) {
+	return nil, nil
+}
+
 // Create mirrors the post-fix DB contract (uq_attendances_employee_open): at most
 // one OPEN row per employee/date. A second open row is rejected with the same
 // validation error the real repo returns for a duplicate-key.

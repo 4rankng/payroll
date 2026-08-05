@@ -53,6 +53,38 @@ type AdminReviewAttendanceRequest struct {
 	Note string `json:"note"`
 }
 
+// AdminCreateCheckInRequest is the body for POST /admin/attendances (create).
+// The admin picks a date, employee, project, and which configured shift to
+// anchor the check-in to. The server fills CheckInTime = the chosen shift's
+// configured start and schedules the auto-reject task; the employee must still
+// do a real GPS checkout to earn. ShiftIndex is the 0-based index into the
+// shifts list returned by GET /admin/attendances/shifts for the same
+// employee+project+date.
+type AdminCreateCheckInRequest struct {
+	EmployeeID uint   `json:"employee_id" binding:"required"`
+	ProjectID  uint   `json:"project_id" binding:"required"`
+	Date       string `json:"date" binding:"required"` // YYYY-MM-DD
+	ShiftIndex int    `json:"shift_index" binding:"min=0"`
+}
+
+// ShiftOption is one selectable shift returned by GET /admin/attendances/shifts.
+// Index is the value to send back as AdminCreateCheckInRequest.ShiftIndex.
+type ShiftOption struct {
+	Index    int       `json:"index"`
+	Label    string    `json:"label"`    // e.g. "08:00 - 17:00"
+	Start    time.Time `json:"start"`    // absolute check-in time (shift start)
+	End      time.Time `json:"end"`      // absolute shift end K
+	Amount   int64     `json:"amount"`   // configured flat pay for the shift
+	DayType  string    `json:"day_type"` // configured day-type segment if any
+	Position string    `json:"position"` // effective position matched
+}
+
+// AdminListShiftsResponse wraps the shift options for the create-attendance form.
+type AdminListShiftsResponse struct {
+	Position string        `json:"position"`
+	Shifts   []ShiftOption `json:"shifts"`
+}
+
 // AttendanceResponse represents an attendance record
 type AttendanceResponse struct {
 	ID                 uint       `json:"id"`

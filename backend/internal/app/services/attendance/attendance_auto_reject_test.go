@@ -55,6 +55,7 @@ type fakeAttendanceRepo struct {
 	byID                   *domain.Attendance
 	byDate                 *domain.Attendance
 	byDateByDay            map[string]*domain.Attendance
+	approvedOpenBefore     *domain.Attendance
 	created                *domain.Attendance
 	updated                *domain.Attendance
 	orphanCandidates       []*domain.Attendance
@@ -72,6 +73,7 @@ func (f *fakeAttendanceRepo) Create(_ context.Context, a *domain.Attendance) err
 	a.ID = f.nextID
 	f.nextID++
 	f.created = a
+	f.byID = a
 	return nil
 }
 func (f *fakeAttendanceRepo) GetByID(_ context.Context, _ uint) (*domain.Attendance, error) {
@@ -82,6 +84,17 @@ func (f *fakeAttendanceRepo) GetByEmployeeAndDate(_ context.Context, _ uint, dat
 		return f.byDateByDay[date.Format("2006-01-02")], nil
 	}
 	return f.byDate, nil
+}
+func (f *fakeAttendanceRepo) GetApprovedOpenBefore(_ context.Context, _ uint, _ time.Time) (*domain.Attendance, error) {
+	return f.approvedOpenBefore, nil
+}
+func (f *fakeAttendanceRepo) CompleteApprovedOpen(_ context.Context, id uint, checkOutTime time.Time, checkOutGate string) (bool, error) {
+	if f.approvedOpenBefore == nil || f.approvedOpenBefore.ID != id || f.approvedOpenBefore.CheckOutTime != nil {
+		return false, nil
+	}
+	f.approvedOpenBefore.CheckOutTime = &checkOutTime
+	f.approvedOpenBefore.CheckOutGate = &checkOutGate
+	return true, nil
 }
 func (f *fakeAttendanceRepo) Update(_ context.Context, a *domain.Attendance) error {
 	f.updated = a
@@ -755,6 +768,51 @@ func TestGetTodayAttendanceIgnoresCompletedYesterday(t *testing.T) {
 	}
 	if got != nil {
 		t.Fatalf("expected completed previous-day attendance to be ignored, got %+v", got)
+	}
+}
+
+func TestGetTodayAttendanceRepairsApprovedOpenYesterday(t *testing.T) {
+	loc := clock.DefaultLocation
+	today := time.Date(2026, 8, 5, 0, 0, 0, 0, loc)
+	yesterday := today.AddDate(0, 0, -1)
+	approved := string(domain.AttendanceReviewActionApproved)
+	legacy := &domain.Attendance{
+		ID:           77,
+		EmployeeID:   123,
+		ProjectID:    55,
+		Date:         yesterday,
+		CheckInTime:  time.Date(2026, 8, 4, 8, 0, 0, 0, loc),
+		ReviewAction: &approved,
+	}
+	repo := &fakeAttendanceRepo{
+		byDateByDay:        map[string]*domain.Attendance{yesterday.Format("2006-01-02"): legacy},
+		approvedOpenBefore: legacy,
+	}
+	svc := &AttendanceService{
+		attendanceRepo: repo,
+		projectEmployeeRepo: &fakeProjectEmployeeRepo{assignment: &domain.ProjectEmployee{
+			Position: "Công nhân",
+		}},
+		payrateRepo: &fakePayrateRepo{pr: &domain.Payrate{
+			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`),
+		}},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(time.Date(2026, 8, 5, 8, 10, 0, 0, loc)),
+	}
+
+	got, err := svc.GetTodayAttendance(context.Background(), 123)
+	if err != nil {
+		t.Fatalf("GetTodayAttendance returned error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("expected repaired approved record to be absent from today's read model, got %+v", got)
+	}
+	wantCheckout := time.Date(2026, 8, 4, 17, 0, 0, 0, loc)
+	if legacy.CheckOutTime == nil || !legacy.CheckOutTime.Equal(wantCheckout) {
+		t.Fatalf("legacy checkout = %v, want %v", legacy.CheckOutTime, wantCheckout)
+	}
+	if legacy.CheckOutGate == nil || *legacy.CheckOutGate != "admin" {
+		t.Fatalf("legacy checkout gate = %v, want admin", legacy.CheckOutGate)
 	}
 }
 

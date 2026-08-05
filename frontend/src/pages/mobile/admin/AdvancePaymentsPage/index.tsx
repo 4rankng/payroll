@@ -23,7 +23,7 @@ import {
   useRejectAttendance,
 } from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X } from "lucide-react";
+import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
@@ -43,6 +43,7 @@ import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { AttendanceMapDialog } from "@/components/attendance/AttendanceMapDialog";
+import { AdminCreateCheckInDialog } from "@/components/attendance/AdminCreateCheckInDialog";
 import {
   AttendanceReviewDialogs,
   type ReviewMode,
@@ -182,6 +183,7 @@ const AdvancePaymentsPageMobile = () => {
   const [reviewMode, setReviewMode] = useState<ReviewMode>(null);
   const [reviewRow, setReviewRow] =
     useState<AdminAttendanceResponse | null>(null);
+  const [isCreateCheckInOpen, setIsCreateCheckInOpen] = useState(false);
 
   const page = useAdvancePaymentsPage({ employeesTabActive: false });
   const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
@@ -506,14 +508,23 @@ const AdvancePaymentsPageMobile = () => {
             <SelectTrigger className="h-11 w-full text-sm">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="checked_in">Đang làm</SelectItem>
-              <SelectItem value="completed">Hoàn thành</SelectItem>
-              <SelectItem value="orphaned">Thiếu check-out</SelectItem>
-              <SelectItem value="rejected">Đã từ chối</SelectItem>
-            </SelectContent>
-          </Select>
+          <SelectContent>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="checked_in">Đang làm</SelectItem>
+            <SelectItem value="completed">Hoàn thành</SelectItem>
+            <SelectItem value="orphaned">Thiếu check-out</SelectItem>
+            <SelectItem value="rejected">Đã từ chối</SelectItem>
+          </SelectContent>
+        </Select>
+
+          <Button
+            type="button"
+            className="min-h-11 w-full gap-1.5"
+            onClick={() => setIsCreateCheckInOpen(true)}
+          >
+            <UserRoundCheck className="h-4 w-4" />
+            Tạo check-in
+          </Button>
 
           {attendance.isLoading ? (
             <div className="space-y-2">
@@ -583,6 +594,10 @@ const AdvancePaymentsPageMobile = () => {
         onReject={handleRejectAttendance}
         approveLoading={approveAttendanceMutation.isPending}
         rejectLoading={rejectAttendanceMutation.isPending}
+      />
+      <AdminCreateCheckInDialog
+        open={isCreateCheckInOpen}
+        onOpenChange={setIsCreateCheckInOpen}
       />
       <AttendanceMapDialog
         row={selectedAttendance}

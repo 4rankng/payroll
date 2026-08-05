@@ -102,6 +102,15 @@ type AttendanceRepository interface {
 	Create(ctx context.Context, attendance *Attendance) error
 	GetByID(ctx context.Context, id uint) (*Attendance, error)
 	GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*Attendance, error)
+	// GetApprovedOpenBefore returns the newest admin-approved attendance which
+	// still has no persisted checkout before the supplied business day. Legacy
+	// versions represented an approval as completed in status only, leaving such
+	// rows open to the database's one-open-attendance guard.
+	GetApprovedOpenBefore(ctx context.Context, employeeID uint, before time.Time) (*Attendance, error)
+	// CompleteApprovedOpen atomically persists the authoritative checkout for a
+	// previously approved but still-open attendance. It preserves the existing
+	// earning and review audit data, returning false if another writer won.
+	CompleteApprovedOpen(ctx context.Context, id uint, checkOutTime time.Time, checkOutGate string) (bool, error)
 	Update(ctx context.Context, attendance *Attendance) error
 	List(ctx context.Context, filters AttendanceFilters) ([]*Attendance, error)
 	Count(ctx context.Context, filters AttendanceFilters) (int64, error)
@@ -115,11 +124,15 @@ type AttendanceRepository interface {
 	MarkAutoRejected(ctx context.Context, id uint, reason string) (bool, error)
 	// MarkAdminReviewed stamps an admin approve/reject review on an attendance
 	// and applies the earning override atomically via a conditional UPDATE.
-	// Rejection is accepted only before approval or quota credit. On approve, earningAmount is set and salary_reject_reason
-	// is cleared; on reject, earning is forced to 0 and salary_reject_reason is
-	// set to note. Returns true if the transition was applied, false if the row
-	// was missing or a terminal financial state won the race.
-	MarkAdminReviewed(ctx context.Context, id uint, action AttendanceReviewAction, note string, adminID uint, reviewedAt time.Time, earningAmount *int64) (bool, error)
+	// Rejection is accepted only before approval or quota credit. On approve,
+	// earningAmount is set and salary_reject_reason is cleared; on reject,
+	// earning is forced to 0 and salary_reject_reason is set to note. On approve,
+	// checkOutTime/checkOutGate (when non-nil) close the shift so the record is
+	// genuinely completed — not just faked-completed by IsApproved(). Reject
+	// passes nil,nil (a rejection does not check out). Returns true if the
+	// transition was applied, false if the row was missing or a terminal
+	// financial state won the race.
+	MarkAdminReviewed(ctx context.Context, id uint, action AttendanceReviewAction, note string, adminID uint, reviewedAt time.Time, earningAmount *int64, checkOutTime *time.Time, checkOutGate *string) (bool, error)
 	// GetOrphanCandidates returns open (no checkout), unrejected attendances
 	// checked in within [after, before). Used by the auto-reject fallback sweep
 	// to finalize records whose scheduled K+4h task was lost.

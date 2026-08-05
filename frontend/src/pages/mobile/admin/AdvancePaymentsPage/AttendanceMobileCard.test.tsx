@@ -19,7 +19,7 @@ const attendance = {
 } as AdminAttendanceResponse;
 
 describe("AttendanceMobileCard", () => {
-  it("renders an admin-approved open attendance as completed", () => {
+  it("surfaces an admin-approved attendance with no checkout for repair", () => {
     render(
       <AttendanceMobileCard
         row={{ ...attendance, review_action: "approved" }}
@@ -29,8 +29,8 @@ describe("AttendanceMobileCard", () => {
       />,
     );
 
-    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
-    expect(screen.queryByText("Đang làm")).not.toBeInTheDocument();
+    expect(screen.getByText("Cần duyệt lại")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Duyệt lại" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Từ chối" })).not.toBeInTheDocument();
   });
 
@@ -77,9 +77,9 @@ describe("AttendanceMobileCard", () => {
     expect(screen.getByRole("button", { name: "Bản đồ" })).toBeInTheDocument();
   });
 
-  it("offers repair when a delayed worker contradicted an admin approval", () => {
+  it("offers repair when an approval has no persisted checkout", () => {
     const onApprove = vi.fn();
-    const corrupted = { ...attendance, status: "rejected", review_action: "approved" as const };
+    const corrupted = { ...attendance, status: "completed", review_action: "approved" as const };
 
     render(
       <AttendanceMobileCard
@@ -92,7 +92,7 @@ describe("AttendanceMobileCard", () => {
 
     const repairButton = screen.getByRole("button", { name: "Duyệt lại" });
     expect(screen.getByText("Cần duyệt lại")).toBeInTheDocument();
-    expect(screen.queryByText("Đã từ chối")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hoàn thành")).not.toBeInTheDocument();
     fireEvent.click(repairButton);
     expect(onApprove).toHaveBeenCalledWith(corrupted);
   });

@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"testing"
+	"time"
 
 	"api-server/internal/domain"
 	"api-server/internal/pkg/clock"
@@ -153,7 +154,7 @@ func TestMarkAdminRejectedGuardsApprovedAndCreditedAttendance(t *testing.T) {
 	repo := NewAttendanceRepository(db)
 	zero := int64(0)
 	for _, id := range []uint{1, 2} {
-		updated, err := repo.MarkAdminReviewed(context.Background(), id, domain.AttendanceReviewActionRejected, "đổi quyết định", 9, now, &zero)
+		updated, err := repo.MarkAdminReviewed(context.Background(), id, domain.AttendanceReviewActionRejected, "đổi quyết định", 9, now, &zero, nil, nil)
 		if err != nil {
 			t.Fatalf("reject attendance %d: %v", id, err)
 		}
@@ -175,5 +176,66 @@ func TestMarkAdminRejectedGuardsApprovedAndCreditedAttendance(t *testing.T) {
 	}
 	if !credited {
 		t.Fatal("expected payable attendance to remain creditable")
+	}
+}
+
+func TestCompleteApprovedOpenPersistsCheckoutOnlyForApprovedLegacyRows(t *testing.T) {
+	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.Exec(`CREATE TABLE attendances (
+		id INTEGER PRIMARY KEY,
+		employee_id INTEGER,
+		date DATE,
+		check_in_time DATETIME,
+		check_out_time DATETIME,
+		check_out_gate TEXT,
+		salary_reject_reason TEXT,
+		review_action TEXT,
+		updated_at DATETIME
+	)`).Error; err != nil {
+		t.Fatalf("create attendance table: %v", err)
+	}
+	loc := clock.DefaultLocation
+	checkIn := time.Date(2026, 8, 4, 8, 0, 0, 0, loc)
+	if err := db.Exec(
+		"INSERT INTO attendances (id, employee_id, date, check_in_time, review_action) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, NULL)",
+		1, 123, checkIn, checkIn, string(domain.AttendanceReviewActionApproved),
+		2, 123, checkIn, checkIn,
+	).Error; err != nil {
+		t.Fatalf("seed attendances: %v", err)
+	}
+
+	repo := NewAttendanceRepository(db)
+	checkOut := time.Date(2026, 8, 4, 17, 0, 0, 0, loc)
+	updated, err := repo.CompleteApprovedOpen(context.Background(), 1, checkOut, "admin")
+	if err != nil {
+		t.Fatalf("CompleteApprovedOpen: %v", err)
+	}
+	if !updated {
+		t.Fatal("expected approved open row to be completed")
+	}
+	updated, err = repo.CompleteApprovedOpen(context.Background(), 2, checkOut, "admin")
+	if err != nil {
+		t.Fatalf("CompleteApprovedOpen non-approved row: %v", err)
+	}
+	if updated {
+		t.Fatal("non-approved row must not be completed by legacy repair")
+	}
+
+	var got struct {
+		CheckOutTime *time.Time
+		CheckOutGate *string
+	}
+	if err := db.Table("attendances").Select("check_out_time, check_out_gate").Where("id = ?", 1).Take(&got).Error; err != nil {
+		t.Fatalf("reload completed attendance: %v", err)
+	}
+	if got.CheckOutTime == nil || !got.CheckOutTime.Equal(checkOut) {
+		t.Fatalf("check_out_time = %v, want %v", got.CheckOutTime, checkOut)
+	}
+	if got.CheckOutGate == nil || *got.CheckOutGate != "admin" {
+		t.Fatalf("check_out_gate = %v, want admin", got.CheckOutGate)
 	}
 }

@@ -38,16 +38,25 @@ const REVIEW_BADGE_CONFIG: Record<string, { label: string; className: string }> 
   rejected: { label: "Đã huỷ", className: "bg-rose-50 text-rose-700 border-rose-200" },
 };
 
-function StatusBadges({ status, reviewAction }: { status: string; reviewAction?: string | null }) {
-  const reviewStatusLabel = getAttendanceReviewStatusLabel({ status, review_action: reviewAction });
-  if (needsAttendanceApprovalRepair({ status, review_action: reviewAction })) {
+function StatusBadges({
+  status,
+  reviewAction,
+  checkOutTime,
+}: {
+  status: string;
+  reviewAction?: string | null;
+  checkOutTime?: string | null;
+}) {
+  const attendance = { status, review_action: reviewAction, check_out_time: checkOutTime };
+  const reviewStatusLabel = getAttendanceReviewStatusLabel(attendance);
+  if (needsAttendanceApprovalRepair(attendance)) {
     return (
       <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
         {reviewStatusLabel}
       </div>
     );
   }
-  const operationalStatus = getAttendanceOperationalStatus({ status, review_action: reviewAction });
+  const operationalStatus = getAttendanceOperationalStatus(attendance);
   const sys = SYSTEM_STATUS_CONFIG[operationalStatus] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
   return (
@@ -143,7 +152,11 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
       header: "Trạng thái",
       size: 120,
       cell: ({ row }) => (
-        <StatusBadges status={row.original.status} reviewAction={row.original.review_action} />
+        <StatusBadges
+          status={row.original.status}
+          reviewAction={row.original.review_action}
+          checkOutTime={row.original.check_out_time}
+        />
       ),
     },
   ];

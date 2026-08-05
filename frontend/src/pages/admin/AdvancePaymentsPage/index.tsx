@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, memo } from "react";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
 import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
@@ -22,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Wallet, Calendar, Users, Banknote } from "lucide-react";
+import { Wallet, Calendar, Users, Banknote, UserRoundCheck } from "lucide-react";
 import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
@@ -50,6 +51,7 @@ import {
   attendanceEmptyState,
 } from "@/components/attendance/AdminAttendanceTableConfig";
 import { AttendanceMapDialog } from "@/components/attendance/AttendanceMapDialog";
+import { AdminCreateCheckInDialog } from "@/components/attendance/AdminCreateCheckInDialog";
 import {
   AttendanceReviewDialogs,
   type ReviewMode,
@@ -90,6 +92,7 @@ const AdvancePaymentsPage = () => {
     useState<AdminAttendanceResponse | null>(null);
   const [reviewMode, setReviewMode] = useState<ReviewMode>(null);
   const [reviewRow, setReviewRow] = useState<AdminAttendanceResponse | null>(null);
+  const [isCreateCheckInOpen, setIsCreateCheckInOpen] = useState(false);
 
   const approveAttendanceMutation = useApproveAttendance();
   const rejectAttendanceMutation = useRejectAttendance();
@@ -479,6 +482,17 @@ const AdvancePaymentsPage = () => {
                     <SelectItem value="rejected">Đã từ chối</SelectItem>
                   </SelectContent>
                 </Select>
+                {!isAdvPartner && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="min-h-9 shrink-0 gap-1.5"
+                    onClick={() => setIsCreateCheckInOpen(true)}
+                  >
+                    <UserRoundCheck data-icon="inline-start" />
+                    Tạo check-in
+                  </Button>
+                )}
               </>
             )}
             </div>
@@ -625,6 +639,10 @@ const AdvancePaymentsPage = () => {
           onReject={handleRejectAttendance}
           approveLoading={approveAttendanceMutation.isPending}
           rejectLoading={rejectAttendanceMutation.isPending}
+        />
+        <AdminCreateCheckInDialog
+          open={isCreateCheckInOpen}
+          onOpenChange={setIsCreateCheckInOpen}
         />
         <AttendanceMapDialog
           row={selectedAttendance}

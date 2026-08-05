@@ -99,6 +99,8 @@ func (r *attendanceRepository) MarkAdminReviewed(
 	adminID uint,
 	reviewedAt time.Time,
 	earningAmount *int64,
+	checkOutTime *time.Time,
+	checkOutGate *string,
 ) (bool, error) {
 	updates := map[string]interface{}{
 		"review_action":  string(action),
@@ -111,6 +113,16 @@ func (r *attendanceRepository) MarkAdminReviewed(
 	// and records the reason so GetStatus() still reads as rejected consistently.
 	if action == domain.AttendanceReviewActionApproved {
 		updates["salary_reject_reason"] = nil
+		// Close the shift so the record is genuinely completed. Without this,
+		// GetStatus() fakes "completed" via IsApproved() while check_out_time
+		// stays NULL — which makes GetTodayAttendance's cross-day fallback
+		// surface the stale record and block the employee's next check-in.
+		if checkOutTime != nil {
+			updates["check_out_time"] = *checkOutTime
+		}
+		if checkOutGate != nil {
+			updates["check_out_gate"] = *checkOutGate
+		}
 	} else {
 		updates["salary_reject_reason"] = note
 	}
@@ -186,6 +198,39 @@ func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employe
 		return nil, err
 	}
 	return &att, nil
+}
+
+// GetApprovedOpenBefore finds a legacy row whose approval was represented only
+// in status and never persisted a checkout. The open-row unique key permits at
+// most one today, but newest-first remains safe for older installations.
+func (r *attendanceRepository) GetApprovedOpenBefore(ctx context.Context, employeeID uint, before time.Time) (*domain.Attendance, error) {
+	var att domain.Attendance
+	err := r.getDB(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("employee_id = ? AND date < ?", employeeID, before.Format("2006-01-02")).
+		Where("check_out_time IS NULL AND salary_reject_reason IS NULL AND review_action = ?", domain.AttendanceReviewActionApproved).
+		Order("date DESC, id DESC").
+		First(&att).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &att, nil
+}
+
+func (r *attendanceRepository) CompleteApprovedOpen(ctx context.Context, id uint, checkOutTime time.Time, checkOutGate string) (bool, error) {
+	result := r.getDB(ctx).Model(&domain.Attendance{}).
+		Where("id = ? AND check_out_time IS NULL AND salary_reject_reason IS NULL AND review_action = ?", id, domain.AttendanceReviewActionApproved).
+		Updates(map[string]interface{}{
+			"check_out_time": checkOutTime,
+			"check_out_gate": checkOutGate,
+		})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
 }
 
 func (r *attendanceRepository) GetOrphanCandidates(ctx context.Context, after, before time.Time) ([]*domain.Attendance, error) {

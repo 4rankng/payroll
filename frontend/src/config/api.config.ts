@@ -199,6 +199,8 @@ export const API_ENDPOINTS = {
   attendance: {
     admin: {
       list: '/admin/attendances',
+      create: '/admin/attendances',
+      shifts: '/admin/attendances/shifts',
       byId: (id: number) => `/admin/attendances/${id}`,
       approve: (id: number) => `/admin/attendances/${id}/approve`,
       reject: (id: number) => `/admin/attendances/${id}/reject`,

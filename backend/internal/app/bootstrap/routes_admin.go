@@ -59,6 +59,8 @@ func setupAdminAttendanceRoutes(v1 *gin.RouterGroup, container *Container) {
 		admin.Use(container.Middleware.Authorization.Authorize())
 	}
 	admin.GET("", container.Handlers.AdminAttendance.List)
+	admin.POST("", container.Handlers.AdminAttendance.CreateCheckIn)
+	admin.GET("/shifts", container.Handlers.AdminAttendance.ListCreateCheckInShifts)
 	admin.GET("/failed-attempts", container.Handlers.AdminAttendance.AdminListFailedAttempts)
 	admin.GET("/:id", container.Handlers.AdminAttendance.Get)
 	admin.POST("/:id/approve", container.Handlers.AdminAttendance.Approve)

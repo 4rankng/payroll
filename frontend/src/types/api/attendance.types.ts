@@ -38,6 +38,27 @@ export interface AdminAttendanceResponse {
   status: string;
 }
 
+export interface AdminCheckInShift {
+  index: number;
+  label: string;
+  start: string;
+  end: string;
+  amount: number;
+  position: string;
+}
+
+export interface AdminCheckInShiftResponse {
+  position: string;
+  shifts: AdminCheckInShift[];
+}
+
+export interface AdminCreateCheckInData {
+  employee_id: number;
+  project_id: number;
+  date: string;
+  shift_index: number;
+}
+
 export interface AttendanceFilters {
   page?: number;
   pageSize?: number;

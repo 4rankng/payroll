@@ -8,8 +8,8 @@ import {
 } from "./attendanceReviewState";
 
 describe("attendanceReviewState", () => {
-  it("allows a corrupted approved/rejected attendance to be repaired", () => {
-    const attendance = { status: "rejected", review_action: "approved" as const };
+  it("allows an approved attendance without a persisted checkout to be repaired", () => {
+    const attendance = { status: "completed", review_action: "approved" as const, check_out_time: undefined };
 
     expect(needsAttendanceApprovalRepair(attendance)).toBe(true);
     expect(canApproveAttendance(attendance)).toBe(true);
@@ -17,7 +17,11 @@ describe("attendanceReviewState", () => {
   });
 
   it("keeps a consistent approval terminal", () => {
-    const attendance = { status: "checked_in", review_action: "approved" as const };
+    const attendance = {
+      status: "completed",
+      review_action: "approved" as const,
+      check_out_time: "2026-08-05T17:00:00+07:00",
+    };
 
     expect(needsAttendanceApprovalRepair(attendance)).toBe(false);
     expect(canApproveAttendance(attendance)).toBe(false);

@@ -1,9 +1,9 @@
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 
-type AttendanceReviewState = Pick<AdminAttendanceResponse, "status" | "review_action" | "quota_credited_at">;
+type AttendanceReviewState = Pick<AdminAttendanceResponse, "status" | "review_action" | "quota_credited_at" | "check_out_time">;
 
 export function needsAttendanceApprovalRepair(attendance: AttendanceReviewState): boolean {
-  return attendance.review_action === "approved" && attendance.status === "rejected";
+  return attendance.review_action === "approved" && attendance.check_out_time == null;
 }
 
 export function getAttendanceOperationalStatus(attendance: AttendanceReviewState): string {
@@ -17,8 +17,8 @@ export function getAttendanceOperationalStatus(attendance: AttendanceReviewState
 }
 
 export function canApproveAttendance(attendance: AttendanceReviewState): boolean {
-	return attendance.status !== "completed" &&
-		(attendance.review_action !== "approved" || needsAttendanceApprovalRepair(attendance));
+	if (needsAttendanceApprovalRepair(attendance)) return true;
+	return attendance.status !== "completed" && attendance.review_action !== "approved";
 }
 
 export function canRejectAttendance(attendance: AttendanceReviewState): boolean {

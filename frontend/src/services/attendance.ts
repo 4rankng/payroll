@@ -1,5 +1,10 @@
 import { apiClient } from "./api/client";
 import { API_ENDPOINTS } from "@/config/api.config";
+import type {
+  AdminCheckInShiftResponse,
+  AdminCreateCheckInData,
+  AdminAttendanceResponse,
+} from "@/types/api/attendance.types";
 
 export interface AttendanceRecord {
   id: number;
@@ -102,6 +107,22 @@ export const attendanceService = {
 
   adminReject: async (id: number, note: string) => {
     const { data } = await apiClient.post(API_ENDPOINTS.attendance.admin.reject(id), { note });
+    return data;
+  },
+
+  adminGetCheckInShifts: async (employeeId: number, projectId: number, date: string) => {
+    const { data } = await apiClient.get<AdminCheckInShiftResponse>(
+      API_ENDPOINTS.attendance.admin.shifts,
+      { params: { employee_id: employeeId, project_id: projectId, date } },
+    );
+    return data;
+  },
+
+  adminCreateCheckIn: async (payload: AdminCreateCheckInData) => {
+    const { data } = await apiClient.post<AdminAttendanceResponse>(
+      API_ENDPOINTS.attendance.admin.create,
+      payload,
+    );
     return data;
   }
 };

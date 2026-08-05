@@ -30,7 +30,7 @@ type rejectConflictAttendanceRepo struct {
 
 func (f *rejectConflictAttendanceRepo) MarkAdminReviewed(
 	_ context.Context, id uint, action domain.AttendanceReviewAction,
-	_ string, _ uint, _ time.Time, _ *int64,
+	_ string, _ uint, _ time.Time, _ *int64, _ *time.Time, _ *string,
 ) (bool, error) {
 	if action == domain.AttendanceReviewActionRejected {
 		rec := f.findByID(id)
@@ -43,6 +43,7 @@ func (f *rejectConflictAttendanceRepo) MarkAdminReviewed(
 func (f *reviewFakeAttendanceRepo) MarkAdminReviewed(
 	_ context.Context, id uint, action domain.AttendanceReviewAction,
 	note string, adminID uint, _ time.Time, earning *int64,
+	checkOutTime *time.Time, checkOutGate *string,
 ) (bool, error) {
 	rec := f.findByID(id)
 	if rec == nil {
@@ -62,6 +63,16 @@ func (f *reviewFakeAttendanceRepo) MarkAdminReviewed(
 	rec.EarningAmount = earning
 	if action == domain.AttendanceReviewActionApproved {
 		rec.SalaryRejectReason = nil
+		// Mirror the real repo's approve-also-closes behavior so tests observe the
+		// genuine completion (check_out_time + gate) that the fix introduces.
+		if checkOutTime != nil {
+			t := *checkOutTime
+			rec.CheckOutTime = &t
+		}
+		if checkOutGate != nil {
+			g := *checkOutGate
+			rec.CheckOutGate = &g
+		}
 	} else {
 		rec.SalaryRejectReason = &note
 	}
@@ -133,6 +144,18 @@ func TestApproveRecomputesEarningAndClearsRejectReason(t *testing.T) {
 	if res.ReviewAction == nil || *res.ReviewAction != "approved" {
 		t.Fatalf("expected review_action=approved, got %v", res.ReviewAction)
 	}
+	// Regression guard for the "approved but no checkout blocks next check-in"
+	// bug: Approve must genuinely close the shift, not fake-completed it.
+	if res.CheckOutTime == nil {
+		t.Fatal("expected check_out_time to be set after approve (regression: must close the shift)")
+	}
+	wantCheckout := time.Date(2026, 6, 22, 17, 0, 0, 0, loc) // configured shift end K
+	if !res.CheckOutTime.Equal(wantCheckout) {
+		t.Fatalf("expected check_out_time = shift end %v, got %v", wantCheckout, *res.CheckOutTime)
+	}
+	if res.CheckOutGate == nil || *res.CheckOutGate != "admin" {
+		t.Fatalf("expected check_out_gate=admin, got %v", res.CheckOutGate)
+	}
 }
 
 func TestApproveIdempotentWhenAlreadyApproved(t *testing.T) {
@@ -141,10 +164,11 @@ func TestApproveIdempotentWhenAlreadyApproved(t *testing.T) {
 	approved := "approved"
 	note := "đã duyệt"
 	earn := int64(300000)
+	checkOut := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
 	att := &domain.Attendance{
 		ID: 7, ProjectID: 55, EmployeeID: 123,
 		Date: checkIn, CheckInTime: checkIn, CheckInGate: "Cổng chính",
-		ReviewAction: &approved, ReviewNote: &note, EarningAmount: &earn,
+		CheckOutTime: &checkOut, ReviewAction: &approved, ReviewNote: &note, EarningAmount: &earn,
 	}
 	svc, repo := newReviewService(att, nil, nil)
 

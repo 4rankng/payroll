@@ -210,6 +210,18 @@ type ShiftWindow struct {
 	Name string
 }
 
+// AdminCheckInShift is a server-resolved shift that an administrator can use
+// to record a missed check-in. Keeping these absolute timestamps on the server
+// prevents clients from manufacturing their own checkout window.
+type AdminCheckInShift struct {
+	Index    int
+	Label    string
+	Start    time.Time
+	End      time.Time
+	Amount   int64
+	Position string
+}
+
 // resolveShifts parses the flattened payrate for the given position and returns:
 //   - effectivePosition: the configured position matching `position` (case- and
 //     diacritic-insensitive), falling back to the only configured position when the
@@ -510,6 +522,12 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	var result *domain.Attendance
 
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		now := s.clock.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		if err := s.completeLegacyApprovedOpenAttendance(txCtx, employeeID, today); err != nil {
+			return err
+		}
+
 		// 1. Resolve and validate project (auto-detect if not provided)
 		project, err := s.resolveProject(txCtx, employeeID, projectID)
 		if err != nil {
@@ -532,9 +550,6 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		}
 
 		// 4. Enforce 1 check-in per day per employee
-		now := s.clock.Now()
-		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
 		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, today)
 		if err != nil {
 			return fmt.Errorf("failed to check existing attendance: %w", err)
@@ -599,6 +614,181 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 	})
 
 	return result, err
+}
+
+// completeLegacyApprovedOpenAttendance closes a record written by the former
+// status-only approval path before a new check-in is inserted. Running it in
+// the check-in transaction makes the repair atomic with the insert that the
+// stale open row would otherwise block.
+func (s *AttendanceService) completeLegacyApprovedOpenAttendance(ctx context.Context, employeeID uint, before time.Time) error {
+	att, err := s.attendanceRepo.GetApprovedOpenBefore(ctx, employeeID, before)
+	if err != nil {
+		return fmt.Errorf("failed to find approved open attendance: %w", err)
+	}
+	if att == nil {
+		return nil
+	}
+
+	checkOutTime := att.CheckInTime
+	if shift := s.resolveShiftForAttendance(ctx, att); shift != nil {
+		checkOutTime = shift.end
+	} else {
+		// Historical payrate configuration may have been removed after approval.
+		// The prior approval is still authoritative; persist a closed record rather
+		// than stranding the employee behind an obsolete open-row constraint.
+		observability.GetLogger().Warn("closing approved open attendance without historical shift configuration",
+			"attendance_id", att.ID, "employee_id", att.EmployeeID)
+	}
+
+	updated, err := s.attendanceRepo.CompleteApprovedOpen(ctx, att.ID, checkOutTime, "admin")
+	if err != nil {
+		return fmt.Errorf("failed to complete approved open attendance: %w", err)
+	}
+	if updated {
+		observability.GetLogger().Info("completed legacy admin-approved attendance before new check-in",
+			"attendance_id", att.ID, "employee_id", att.EmployeeID, "check_out_time", checkOutTime)
+	}
+	return nil
+}
+
+// AdminCheckInShifts returns today's configured shifts for an employee's active
+// assignment. Admin-created records intentionally stay within today's live
+// checkout window: the employee, not the administrator, must still checkout
+// from the configured geofence to complete the shift.
+func (s *AttendanceService) AdminCheckInShifts(ctx context.Context, employeeID, projectID uint, day time.Time) ([]AdminCheckInShift, error) {
+	_, shifts, err := s.adminCheckInShifts(ctx, employeeID, projectID, day)
+	return shifts, err
+}
+
+func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, projectID uint, day time.Time) (*domain.ProjectEmployee, []AdminCheckInShift, error) {
+	now := s.clock.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
+	if !day.Equal(today) {
+		return nil, nil, domain.NewValidationError("Chỉ có thể tạo check-in cho hôm nay để nhân viên tự tan ca.")
+	}
+
+	project, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load project for admin check-in: %w", err)
+	}
+	if project == nil {
+		return nil, nil, domain.NewNotFoundError("Không tìm thấy dự án")
+	}
+	if !project.IsFlexible {
+		return nil, nil, domain.NewValidationError("Dự án không hỗ trợ chấm công linh hoạt")
+	}
+
+	assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, employeeID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if assignment == nil || !assignment.CheckInEnabled {
+		return nil, nil, domain.NewValidationError("Nhân viên chưa được cấp quyền chấm công tại dự án này.")
+	}
+
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, day)
+	if err != nil {
+		if !domain.IsNotFoundError(err) {
+			return nil, nil, fmt.Errorf("failed to load payrate for admin check-in: %w", err)
+		}
+		payrate = nil
+	}
+	if payrate == nil {
+		return nil, nil, domain.NewValidationError("Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này.")
+	}
+
+	flattened, err := payrate.Payrate.Flatten()
+	if err != nil {
+		return nil, nil, domain.NewValidationError("Cấu hình ca làm việc không hợp lệ. Vui lòng kiểm tra mức lương dự án.")
+	}
+	position, _, parsed := resolveShifts(flattened, assignment.Position, day.Add(12*time.Hour))
+	options := make([]AdminCheckInShift, 0, len(parsed))
+	for _, shift := range parsed {
+		if shift.start.Year() != day.Year() || shift.start.Month() != day.Month() || shift.start.Day() != day.Day() {
+			continue
+		}
+		options = append(options, AdminCheckInShift{
+			Label:    fmt.Sprintf("%s - %s", shift.start.Format("15:04"), shift.end.Format("15:04")),
+			Start:    shift.start,
+			End:      shift.end,
+			Amount:   int64(shift.amount),
+			Position: position,
+		})
+	}
+	sort.Slice(options, func(i, j int) bool { return options[i].Start.Before(options[j].Start) })
+	for i := range options {
+		options[i].Index = i
+	}
+	if len(options) == 0 {
+		return nil, nil, domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng kiểm tra mức lương dự án.")
+	}
+	return assignment, options, nil
+}
+
+// AdminCreateCheckIn records only a check-in at the selected configured shift
+// start. It deliberately does not write checkout GPS, earning, or quota: the
+// employee must use the normal checkout flow to finish the shift.
+func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, projectID uint, day time.Time, shiftIndex int) (*domain.Attendance, error) {
+	var created *domain.Attendance
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		now := s.clock.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		if err := s.completeLegacyApprovedOpenAttendance(txCtx, employeeID, today); err != nil {
+			return err
+		}
+
+		_, shifts, err := s.adminCheckInShifts(txCtx, employeeID, projectID, day)
+		if err != nil {
+			return err
+		}
+		if shiftIndex < 0 || shiftIndex >= len(shifts) {
+			return domain.NewValidationError("Ca làm việc được chọn không hợp lệ.")
+		}
+		shift := shifts[shiftIndex]
+		if shift.Start.After(now) {
+			return domain.NewValidationError("Chỉ có thể tạo check-in cho ca đã bắt đầu.")
+		}
+		if now.After(shift.End.Add(checkOutUpperGrace)) {
+			return domain.NewValidationError("Ca làm đã quá giờ tan ca; không thể tạo check-in để nhân viên tự tan ca.")
+		}
+
+		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, today)
+		if err != nil {
+			return fmt.Errorf("failed to check existing attendance: %w", err)
+		}
+		if existing != nil && !isConfirmedNoSalaryCheckout(existing) && !isAutoRejectedNoCheckout(existing) {
+			return domain.NewValidationError("Nhân viên đã có check-in trong ngày hôm nay.")
+		}
+
+		attendance := &domain.Attendance{
+			EmployeeID:  employeeID,
+			ProjectID:   projectID,
+			Date:        today,
+			CheckInTime: shift.Start,
+			CheckInGate: "admin",
+		}
+		if err := s.attendanceRepo.Create(txCtx, attendance); err != nil {
+			return err
+		}
+		if s.taskEnqueuer != nil {
+			attendanceID := attendance.ID
+			deadline := shift.End.Add(checkOutUpperGrace)
+			enqueuer := s.taskEnqueuer
+			domain.RegisterAfterCommit(txCtx, func() {
+				if err := enqueuer.EnqueueAutoRejectCheckout(attendanceID, deadline); err != nil {
+					observability.GetLogger().Warn("failed to enqueue auto-reject for admin check-in",
+						"attendance_id", attendanceID, "error", err)
+				}
+			})
+		}
+		created = attendance
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.attendanceRepo.GetByID(ctx, created.ID)
 }
 
 func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo domain.GeoReading, confirmNoSalary bool) (*domain.Attendance, error) {
@@ -928,7 +1118,7 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 	if att == nil {
 		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
 	}
-	if att.IsApproved() && att.SalaryRejectReason == nil && att.EarningAmount != nil && *att.EarningAmount > 0 {
+	if att.IsApproved() && att.CheckOutTime != nil && att.SalaryRejectReason == nil && att.EarningAmount != nil && *att.EarningAmount > 0 {
 		// Already approved. The earning may still be un-credited if the credit
 		// step failed on a prior call (CreditAttendanceQuota is idempotent and
 		// skips already-credited rows), so re-attempt it before returning.
@@ -974,8 +1164,9 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 		return nil, domain.NewValidationError(msg)
 	}
 
+	adminGate := "admin"
 	updated, err := s.attendanceRepo.MarkAdminReviewed(
-		ctx, attendanceID, domain.AttendanceReviewActionApproved, note, adminID, s.clock.Now(), &earning,
+		ctx, attendanceID, domain.AttendanceReviewActionApproved, note, adminID, s.clock.Now(), &earning, &shift.end, &adminGate,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to mark attendance approved: %w", err)
@@ -1020,7 +1211,7 @@ func (s *AttendanceService) Reject(ctx context.Context, attendanceID, adminID ui
 
 	zero := int64(0)
 	updated, err := s.attendanceRepo.MarkAdminReviewed(
-		ctx, attendanceID, domain.AttendanceReviewActionRejected, note, adminID, s.clock.Now(), &zero,
+		ctx, attendanceID, domain.AttendanceReviewActionRejected, note, adminID, s.clock.Now(), &zero, nil, nil,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to mark attendance rejected: %w", err)
@@ -1242,6 +1433,18 @@ func (s *AttendanceService) GetTodayAttendance(ctx context.Context, employeeID u
 		return nil, err
 	}
 	if att == nil || att.CheckOutTime != nil || att.SalaryRejectReason != nil {
+		return nil, nil
+	}
+	if att.IsApproved() {
+		// Older approvals were stored as a logical completion only. Repair that
+		// physical open row before returning the mobile read model so the employee
+		// can immediately begin today's shift and the database no longer retains
+		// a stale open check-in.
+		if err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+			return s.completeLegacyApprovedOpenAttendance(txCtx, employeeID, today)
+		}); err != nil {
+			return nil, err
+		}
 		return nil, nil
 	}
 	return att, nil
