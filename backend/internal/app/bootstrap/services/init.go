@@ -65,6 +65,7 @@ type Services struct {
 	EmailPasswordReset                *passwordreset.Service // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
 	ZaloPasswordReset                 *zaloreset.Service     // Employee mobile-channel OTP reset (Phase 2)
 	ZaloConnect                       *zaloconnect.Service   // Admin-managed OA connection + runtime toggle (Phase 4)
+		FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
 	Dashboard                         *dashboard.Service
@@ -658,6 +659,13 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
+	// FlexPay ZNS service for employee salary notifications
+	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
+		zaloProvider,
+		logger,
+		zaloConnectSvc.IsEnabled, // Feature flag check
+	)
+
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
 
@@ -677,6 +685,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmailPasswordReset:                emailPasswordResetService,
 		ZaloPasswordReset:                 zaloResetService,
 		ZaloConnect:                       zaloConnectSvc,
+		FlexPayZNS:                        flexPayZNSService,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),
 		Authorization:                     authorizationService,
 		Dashboard:                         dashboardService,

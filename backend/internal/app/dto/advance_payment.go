@@ -167,6 +167,16 @@ type ImportFlexPayFileResult struct {
 	AssignmentsSkipped     int    `json:"assignmentsSkipped"`
 	AdvancePaymentsCreated int    `json:"advancePaymentsCreated"`
 	AdvancePaymentsSkipped int    `json:"advancePaymentsSkipped"`
+	// EmployeeZNSData holds employee data for ZNS notifications after successful import
+	EmployeeZNSData []EmployeeZNSData `json:"employeeZNSData,omitempty"`
+}
+
+// EmployeeZNSData holds employee data for ZNS notification
+type EmployeeZNSData struct {
+	EmployeeName string    `json:"employeeName"`
+	Mobile       string    `json:"mobile"`
+	Amount       int64     `json:"amount"`
+	ExpiryDate   time.Time `json:"expiryDate"`
 }
 
 // ImportJobResponse represents the response when starting an import job

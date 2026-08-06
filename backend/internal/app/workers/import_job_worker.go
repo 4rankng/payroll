@@ -11,6 +11,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
+	"api-server/internal/app/services/zaloconnect"
 	"api-server/internal/domain"
 )
 
@@ -20,6 +21,7 @@ type ImportJobWorker struct {
 	assetRepo         domain.AssetRepository
 	importService     *advance_payment.Service
 	importProgressSvc *advance_payment.ImportProgressService
+	znsService        *zaloconnect.FlexPayZNSService
 	storagePath       string
 }
 
@@ -28,6 +30,7 @@ func NewImportJobWorker(
 	assetRepo domain.AssetRepository,
 	importService *advance_payment.Service,
 	importProgressSvc *advance_payment.ImportProgressService,
+	znsService *zaloconnect.FlexPayZNSService,
 	storagePath string,
 ) *ImportJobWorker {
 	return &ImportJobWorker{
@@ -35,6 +38,7 @@ func NewImportJobWorker(
 		assetRepo:         assetRepo,
 		importService:     importService,
 		importProgressSvc: importProgressSvc,
+		znsService:        znsService,
 		storagePath:       storagePath,
 	}
 }
@@ -86,6 +90,22 @@ func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth s
 
 	// Mark job as completed
 	w.markJobCompleted(ctx, asset, result)
+
+	// Send ZNS notifications to employees (fire-and-forget)
+	if w.znsService != nil && len(result.EmployeeZNSData) > 0 {
+		w.logger.Info("sending ZNS notifications to employees", "count", len(result.EmployeeZNSData))
+		// Convert DTO ZNS data to service format
+		notifications := make([]zaloconnect.FlexPayZNSData, len(result.EmployeeZNSData))
+		for i, data := range result.EmployeeZNSData {
+			notifications[i] = zaloconnect.FlexPayZNSData{
+				EmployeeName: data.EmployeeName,
+				Amount:       data.Amount,
+				ExpiryDate:   data.ExpiryDate,
+				Mobile:       data.Mobile,
+			}
+		}
+		w.znsService.SendBatch(ctx, notifications)
+	}
 
 	w.logJobSuccess(jobID, result)
 }

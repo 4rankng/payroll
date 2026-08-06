@@ -280,6 +280,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			repos.Asset,
 			services.AdvancePayment,
 			services.ImportProgress,
+			services.FlexPayZNS,
 			cfg.Asset.StoragePath,
 		),
 		workers.NewIPNProcessWorker(services.ProviderTransactions, repos.WalletIPN, services.BulkTransferPayment, infra.Logger).

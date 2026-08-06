@@ -156,6 +156,8 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 
 	processedRows := 0
 	var advancePayments []*domain.AdvancePayment
+	// Collect employee data for ZNS notifications
+	var employeeZNSData []dto.EmployeeZNSData
 
 	for _, sheetName := range importSheets {
 		rows, err := file.GetRows(sheetName)
@@ -257,6 +259,22 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 				result.EmployeesSkipped++
 			}
 
+			// Collect employee data for ZNS if amount > 0 and mobile is available
+			if hanMuc > 0 && mobile != "" {
+				// Parse expiry date as end of forMonth
+				expiryDate, err := time.Parse("2006-01", forMonth)
+				if err == nil {
+					// Set to last day of the month
+					expiryDate = expiryDate.AddDate(0, 1, -1)
+					employeeZNSData = append(employeeZNSData, dto.EmployeeZNSData{
+						EmployeeName: fullName,
+						Mobile:       mobile,
+						Amount:       int64(hanMuc),
+						ExpiryDate:   expiryDate,
+					})
+				}
+			}
+
 			assignment, assignmentCreated, err := s.getOrCreateAssignment(ctx, project.ID, employee.ID, cccd, fullName, position, createdBy)
 			if err != nil {
 				s.logger.Warn("failed to get/create assignment", "project_id", project.ID, "employee_id", employee.ID, "error", err)
@@ -342,6 +360,10 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 			s.logger.Warn("failed to invalidate employee summary creator cache", "error", err)
 		}
 	}
+
+	// Attach employee ZNS data to result for notification sending
+	result.EmployeeZNSData = employeeZNSData
+	s.logger.Info("collected employee data for ZNS", "count", len(employeeZNSData))
 
 	return result, nil
 }
