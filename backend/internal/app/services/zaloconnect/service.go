@@ -16,8 +16,9 @@ import (
 
 // Settings keys (single source of truth for the two rows this service owns).
 const (
-	KeyEnabled      = "zalo.enabled"
-	KeyCredentials  = "zalo.credentials"
+	KeyEnabled         = "zalo.enabled"
+	KeyCredentials     = "zalo.credentials"
+	KeyFlexPayZNSEnabled = "zns.flexpay_enabled"
 	defaultTemplate = "619684" // OTP-ZNS-v2; admin may override via credentials.template_id
 )
 
@@ -42,6 +43,7 @@ type Status struct {
 	Connected  bool       `json:"connected"`  // has valid access + refresh tokens
 	AppID      string     `json:"app_id"`
 	TemplateID string     `json:"template_id"`
+	FlexPayZNSEnabled bool       `json:"flexpay_zns_enabled"`
 	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
 	LastError  string     `json:"last_error,omitempty"`
 }
@@ -134,6 +136,7 @@ func (s *Service) Update(ctx context.Context, creds zalo.Credentials) error {
 // includes secret_key, access_token, or refresh_token.
 func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 	c, _ := s.loadCredentials(ctx) // empty creds on not-found is fine
+	flexpayZNSEnabled, _ := s.IsFlexPayZNSEnabled(ctx)
 	enabled, _ := s.IsEnabled(ctx)
 	tmpl := c.TemplateID
 	if tmpl == "" {
@@ -146,7 +149,8 @@ func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 		AppID:      c.AppID,
 		TemplateID: tmpl,
 		ExpiresAt:  c.ExpiresAt,
-		LastError:  c.LastError,
+		LastError: c.LastError,
+		FlexPayZNSEnabled: flexpayZNSEnabled,
 	}, nil
 }
 
@@ -224,6 +228,32 @@ func (s *Service) SetEnabled(ctx context.Context, enabled bool) error {
 // is missing — the feature is off by default.
 func (s *Service) IsEnabled(ctx context.Context) (bool, error) {
 	row, err := s.repo.GetByKey(ctx, KeyEnabled)
+	if err != nil {
+		if isDomainNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if row.Value == nil {
+		return false, nil
+	}
+	return *row.Value == "true", nil
+}
+
+// SetFlexPayZNSEnabled flips the FlexPay ZNS feature toggle. Persists immediately;
+// ZNS notifications for FlexPay salary notifications use this setting.
+func (s *Service) SetFlexPayZNSEnabled(ctx context.Context, enabled bool) error {
+	val := "false"
+	if enabled {
+		val = "true"
+	}
+	return s.upsertSetting(ctx, KeyFlexPayZNSEnabled, val, domain.ValueTypeBoolean)
+}
+
+// IsFlexPayZNSEnabled reads the FlexPay ZNS toggle. Returns false (not an error) if
+// the row is missing — the feature is off by default.
+func (s *Service) IsFlexPayZNSEnabled(ctx context.Context) (bool, error) {
+	row, err := s.repo.GetByKey(ctx, KeyFlexPayZNSEnabled)
 	if err != nil {
 		if isDomainNotFound(err) {
 			return false, nil

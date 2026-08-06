@@ -23,6 +23,7 @@ func setupZaloAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 		adminOnly.Use(container.Middleware.Authorization.Authorize())
 		adminOnly.PUT("/credentials", container.Handlers.AdminZalo.SaveCredentials)
 		adminOnly.PUT("/enabled", container.Handlers.AdminZalo.SetEnabled)
+		adminOnly.PUT("/flexpay-enabled", container.Handlers.AdminZalo.SetFlexPayZNSEnabled)
 		adminOnly.POST("/refresh", container.Handlers.AdminZalo.RefreshNow)
 		adminOnly.POST("/test", container.Handlers.AdminZalo.TestSend)
 	}

@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import {
   useRefreshZaloToken,
   useSaveZaloCredentials,
+  useSetFlexPayZNSEnabled,
   useSetZaloEnabled,
   useTestZaloSend,
   useZaloStatus,
@@ -110,6 +111,7 @@ export const ZaloConnectionSection = () => {
 
   const saveCreds = useSaveZaloCredentials();
   const setEnabled = useSetZaloEnabled();
+  const setFlexPayZNSEnabled = useSetFlexPayZNSEnabled();
   const testSend = useTestZaloSend();
   const refreshTok = useRefreshZaloToken();
 
@@ -119,6 +121,7 @@ export const ZaloConnectionSection = () => {
   const [refreshToken, setRefreshToken] = useState('');
   const [templateID, setTemplateID] = useState('617976');
   const [confirmDisable, setConfirmDisable] = useState(false);
+  const [flexPayZNSEnabled, setFlexPayZNSEnabled] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testResult, setTestResult] = useState<{
     error_code: number;
@@ -130,8 +133,22 @@ export const ZaloConnectionSection = () => {
     if (!status) return;
     setAppID(status.app_id || '');
     setTemplateID(status.template_id || '617976');
+    setFlexPayZNSEnabled(status.flexpay_zns_enabled || false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status?.app_id, status?.template_id, status?.configured]);
+  }, [status?.app_id, status?.template_id, status?.configured, status?.flexpay_zns_enabled]);
+
+  const handleFlexPayZNSToggle = async (enabled: boolean) => {
+    if (!status?.connected || !status?.enabled) {
+      toast.error('Cần kết nối Zalo và bật tính năng ZNS trước');
+      return;
+    }
+    try {
+      await setFlexPayZNSEnabled.mutateAsync(enabled);
+      setFlexPayZNSEnabled(enabled);
+    } catch {
+      toast.error('Không thể cập nhật trạng thái');
+    }
+  };
 
   const handleSaveCreds = async () => {
     try {
@@ -490,6 +507,43 @@ export const ZaloConnectionSection = () => {
 
       <SettingsSection
         step="3"
+        title="Thông báo lương linh hoạt"
+        description="Gửi ZNS thông báo cho nhân viên khi nhập bảng lương linh hoạt (LGD, v.v.)."
+      >
+        <label
+          htmlFor="flexpay-zns-enabled"
+          className={cn(
+            'flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-lg border px-4 py-3',
+            !status?.connected && 'cursor-not-allowed bg-muted/40',
+          )}
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-foreground">
+              Thông báo ZNS lương linh hoạt
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+              {status?.connected && status?.enabled
+                ? 'Gửi thông báo qua ZNS khi nhập file lương linh hoạt.'
+                : 'Cần kết nối Zalo và bật tính năng ZNS trước khi sử dụng.'}
+            </span>
+          </span>
+          <Switch
+            id="flexpay-zns-enabled"
+            checked={flexPayZNSEnabled}
+            disabled={!status?.connected || !status?.enabled || isSavingFlexPayZNS}
+            onCheckedChange={handleFlexPayZNSToggle}
+            aria-label="Bật thông báo ZNS lương linh hoạt"
+          />
+        </label>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Khi bật: Tất cả nhân viên có SĐT trong file Excel sẽ nhận ZNS thông báo số tiền tích lũy có thể request.
+          <br />
+          Chi phí: ~300₫/tin nhắn.
+        </p>
+      </SettingsSection>
+
+      <SettingsSection
+        step="4"
         title="Gửi thử ZNS"
         description={`Gửi một tin thử bằng template ${status?.template_id || '617976'}. Mã OTP thử không được lưu và không ảnh hưởng luồng đặt lại mật khẩu.`}
       >

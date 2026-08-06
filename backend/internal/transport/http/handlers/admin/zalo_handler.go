@@ -118,6 +118,26 @@ func (h *ZaloHandler) SetEnabled(c *gin.Context) {
 	response.SuccessEmpty(c, "Đã cập nhật trạng thái bật Zalo OTP")
 }
 
+// SetFlexPayZNSEnabled
+// @Summary Toggle FlexPay ZNS notifications on/off
+// @Description Hot toggle for FlexPay salary notification ZNS — takes effect immediately.
+// @Tags admin,zalo
+// @Security Bearer
+// @Param body body zaloEnabledDTO true "Enabled flag"
+// @Success 200 {object} response.SuccessResponse
+// @Router /admin/zalo/flexpay-enabled [put]
+func (h *ZaloHandler) SetFlexPayZNSEnabled(c *gin.Context) {
+	var req zaloEnabledDTO
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+	if err := h.svc.SetFlexPayZNSEnabled(c.Request.Context(), req.Enabled); err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+	response.SuccessEmpty(c, "Đã cập nhật trạng thái thông báo ZNS lương linh hoạt")
+}
+
 // RefreshNow
 // @Summary Force a Zalo token refresh (validates connection)
 // @Description Used by the admin "Kiểm tra kết nối" button — validates

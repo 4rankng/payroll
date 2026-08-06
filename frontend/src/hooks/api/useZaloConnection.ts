@@ -45,6 +45,10 @@ class ZaloAdminService {
     return apiClient.put<void>(API_ENDPOINTS.zalo.enabled, { enabled });
   }
 
+  async setFlexPayZNSEnabled(enabled: boolean): Promise<ApiResponse<void>> {
+    return apiClient.put<void>(API_ENDPOINTS.zalo.flexpayEnabled, { enabled });
+  }
+
   async refreshNow(): Promise<ApiResponse<void>> {
     return apiClient.post<void>(API_ENDPOINTS.zalo.refresh, {});
   }
@@ -95,6 +99,14 @@ export const useSetZaloEnabled = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (enabled: boolean) => zaloAdminService.setEnabled(enabled),
+    onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
+  });
+};
+
+export const useSetFlexPayZNSEnabled = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => zaloAdminService.setFlexPayZNSEnabled(enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };

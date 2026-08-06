@@ -323,6 +323,7 @@ export const API_ENDPOINTS = {
     status: '/admin/zalo',
     credentials: '/admin/zalo/credentials',
     enabled: '/admin/zalo/enabled',
+    flexpayEnabled: '/admin/zalo/flexpay-enabled',
     refresh: '/admin/zalo/refresh',
     test: '/admin/zalo/test',
   },
