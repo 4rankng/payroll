@@ -18,7 +18,7 @@ import (
 const (
 	KeyEnabled      = "zalo.enabled"
 	KeyCredentials  = "zalo.credentials"
-	defaultTemplate = "617976" // OTP-ZNS-v1; admin may override via credentials.template_id
+	defaultTemplate = "619684" // OTP-ZNS-v2; admin may override via credentials.template_id
 )
 
 // Credentials is the JSON payload of the zalo.credentials settings row. It is
@@ -242,9 +242,24 @@ func (s *Service) IsEnabled(ctx context.Context) (bool, error) {
 // template is still pending approval). Returns the error if refresh fails.
 func (s *Service) RefreshNow(ctx context.Context) error {
 	if s.provider == nil {
-		return errors.New("zalo: provider not wired")
+		return domain.NewValidationError("zalo: provider not wired")
 	}
-	return s.provider.RefreshNow(ctx)
+	err := s.provider.RefreshNow(ctx)
+	if err == nil {
+		return nil
+	}
+	// Convert Zalo errors to domain errors for proper HTTP status codes
+	if errors.Is(err, zalo.ErrNotConfigured) {
+		return domain.NewValidationError("Chưa cấu hình Zalo — vui lòng nhập App ID và tokens từ Zalo OA Console")
+	}
+	if errors.Is(err, zalo.ErrRefreshFailed) {
+		return domain.NewInternalError(
+			"Token Zalo đã hết hạn hoặc không hợp lệ. Admin vui lòng làm mới tokens từ Zalo OA Console",
+			err,
+		)
+	}
+	// Wrap other errors as internal errors
+	return domain.NewInternalError(err.Error(), err)
 }
 
 // TestSendResult is the admin-facing outcome of a one-off test ZNS send. All
@@ -257,11 +272,11 @@ type TestSendResult = zalo.SendResult
 // stored credentials, without touching the password-reset business flow (no
 // OTP stored in Redis, no event published, no rate-limit beyond admin auth).
 // This is the admin "Gửi thử" diagnostic — mirrors vfic_zns_preview_send in
-// the PHP reference app. Defaults to the OTP template (617976) with sample
+// the PHP reference app. Defaults to the OTP template (619684) with sample
 // values when the caller doesn't supply template_id/data.
 func (s *Service) TestSend(ctx context.Context, phone, templateID string, data map[string]string) (TestSendResult, error) {
 	if s.provider == nil {
-		return zalo.SendResult{}, errors.New("zalo: provider not wired")
+		return zalo.SendResult{}, domain.NewValidationError("zalo: provider not wired")
 	}
 	if templateID == "" {
 		templateID = defaultTemplate
@@ -271,13 +286,20 @@ func (s *Service) TestSend(ctx context.Context, phone, templateID string, data m
 	// the caller must supply data — missing params surface as Zalo -1122.
 	if data == nil && templateID == defaultTemplate {
 		data = map[string]string{
-			"otp_code":             "000000",
-			"user_fullname":        "Test ZNS",
-			"otp_valid_in_minutes": "5",
+			"otp":             "000000",
 		}
 	}
 	trackingID := fmt.Sprintf("test_%d_%s", s.clk().Unix(), randomHex(4))
-	return s.provider.Send(ctx, phone, templateID, trackingID, data)
+	result, err := s.provider.Send(ctx, phone, templateID, trackingID, data)
+	if err != nil {
+		// Convert Zalo errors to domain errors for proper HTTP status codes
+		if errors.Is(err, zalo.ErrNotConfigured) {
+			return result, domain.NewValidationError("Chưa cấu hình Zalo — vui lòng nhập App ID và tokens từ Zalo OA Console")
+		}
+		// Transport/credential failures surface as internal errors
+		return result, domain.NewInternalError(err.Error(), err)
+	}
+	return result, nil
 }
 
 // randomHex returns 2*n hex characters of cryptographic randomness. Tiny helper

@@ -59,17 +59,14 @@ func (p *SandboxSender) Send(_ context.Context, phone, templateID, trackingID st
 	p.mu.Unlock()
 
 	// Log the OTP prominently so the developer can see it in the terminal.
-	otp := cp["otp_code"]
-	name := cp["user_fullname"]
+	otp := cp["otp"]
 	p.logger.Info("📱 [ZALO SANDBOX] OTP captured (not sent to Zalo)",
 		"id", id,
 		"phone", phone,
 		"template_id", templateID,
-		"otp_code", otp,
-		"user_fullname", name,
-		"otp_valid_in_minutes", cp["otp_valid_in_minutes"],
+		"otp", otp,
 	)
-	fmt.Printf("\n   📱 [ZALO SANDBOX] OTP for %s (%s): %s\n\n", phone, name, otp)
+	fmt.Printf("\n   📱 [ZALO SANDBOX] OTP for %s: %s\n\n", phone, otp)
 
 	return SendResult{
 		MsgID:      fmt.Sprintf("sandbox-%d", id),

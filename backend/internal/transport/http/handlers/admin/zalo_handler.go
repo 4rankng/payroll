@@ -137,7 +137,7 @@ func (h *ZaloHandler) RefreshNow(c *gin.Context) {
 }
 
 // zaloTestSendDTO is the body for POST /admin/zalo/test. phone is required;
-// template_id defaults to the OTP template (617976); template_data defaults to
+// template_id defaults to the OTP template (619684); template_data defaults to
 // sample values for the OTP template. For any other template the admin must
 // supply template_data matching the template's declared params.
 type zaloTestSendDTO struct {
@@ -149,7 +149,7 @@ type zaloTestSendDTO struct {
 // TestSend
 // @Summary Send a test ZNS message
 // @Description Fires one ZNS template message to verify the stored tokens work.
-// @Description Defaults to the OTP template (617976) with sample data.
+// @Description Defaults to the OTP template (619684) with sample data.
 // @Description Does NOT touch the password-reset flow — no OTP stored in Redis.
 // @Tags admin,zalo
 // @Security Bearer
