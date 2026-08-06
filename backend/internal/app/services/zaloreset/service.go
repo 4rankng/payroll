@@ -179,9 +179,7 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 		defer cancel()
 		trackingID := fmt.Sprintf("pwreset_%d_%d", uid, s.clk.Now().UnixNano())
 		res, sendErr := s.zalo.Send(bg, recipMobile, tpl, trackingID, map[string]string{
-			"otp_code":             code,
-			"user_fullname":        fullname,
-			"otp_valid_in_minutes": validMin,
+			"otp": code,
 		})
 		if sendErr != nil {
 			s.logger.Error("zalo reset: send failed (transport)", "error", sendErr, "user_id", uid)

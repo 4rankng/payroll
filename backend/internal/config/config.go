@@ -101,7 +101,7 @@ type ZaloConfig struct {
 	UseSandbox  bool // ZALO_USE_SANDBOX (default false) — dev only: mock the ZNS send, log the OTP
 	AppID       string
 	SecretKey   string
-	TemplateID  string // default "617976" (OTP-ZNS-v1)
+	TemplateID  string // default "619684" (OTP-ZNS-v2)
 	CodeTTL     time.Duration
 	}
 
@@ -466,7 +466,7 @@ func Load() (*Config, error) {
 			UseSandbox:  parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
 			AppID:       getEnv("ZALO_APP_ID", ""),
 			SecretKey:   getEnv("ZALO_SECRET_KEY", ""),
-			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "617976"),
+			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
 			CodeTTL:     parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
 		Captcha: CaptchaConfig{

@@ -8,17 +8,24 @@ package zalo
 // Caps count UTF-8 runes (Vietnamese diacritics are one rune each), matching
 // the PHP port's use of mb_substr.
 //
-// Source of truth: the OA console "Tham số" table for each template. The
-// password_reset template OTP-ZNS-v1 (id "617976") declares:
+// Source of truth: the OA console "Tham số" table for each template.
+// OTP-ZNS-v1 (id "617976") - deprecated:
 //
 //	otp_code             string  cap 30
 //	user_fullname        string  cap 30
 //	otp_valid_in_minutes "date"  cap 20   (rendered as integer-minutes string)
+//
+// OTP-ZNS-v2 (id "619684") - current:
+//
+//	otp    string  cap 10
 var ParamCaps = map[string]map[string]int{
 	"617976": {
 		"otp_code":             30,
 		"user_fullname":        30,
 		"otp_valid_in_minutes": 20,
+	},
+	"619684": {
+		"otp": 10,
 	},
 }
 
