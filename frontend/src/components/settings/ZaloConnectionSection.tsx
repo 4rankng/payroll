@@ -111,7 +111,7 @@ export const ZaloConnectionSection = () => {
 
   const saveCreds = useSaveZaloCredentials();
   const setEnabled = useSetZaloEnabled();
-  const setFlexPayZNSEnabled = useSetFlexPayZNSEnabled();
+  const setFlexPayZNSEnabledMutation = useSetFlexPayZNSEnabled();
   const testSend = useTestZaloSend();
   const refreshTok = useRefreshZaloToken();
 
@@ -143,7 +143,7 @@ export const ZaloConnectionSection = () => {
       return;
     }
     try {
-      await setFlexPayZNSEnabled.mutateAsync(enabled);
+      await setFlexPayZNSEnabledMutation.mutateAsync(enabled);
       setFlexPayZNSEnabled(enabled);
     } catch {
       toast.error('Không thể cập nhật trạng thái');
@@ -530,7 +530,7 @@ export const ZaloConnectionSection = () => {
           <Switch
             id="flexpay-zns-enabled"
             checked={flexPayZNSEnabled}
-            disabled={!status?.connected || !status?.enabled || isSavingFlexPayZNS}
+            disabled={!status?.connected || !status?.enabled || setFlexPayZNSEnabledMutation.isPending}
             onCheckedChange={handleFlexPayZNSToggle}
             aria-label="Bật thông báo ZNS lương linh hoạt"
           />

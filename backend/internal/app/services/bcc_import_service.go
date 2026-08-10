@@ -546,7 +546,12 @@ func (s *BCCImportService) processAssetData(
 	// Build rate -> (dayType, hourType) lookup from the project payrate.
 	// Rate is king: as long as the rate matches, the entry is valid.
 	// On collision (same rate, multiple paths), prefer "ngay thuong".
-	dayTypePriority := map[string]int{"ngày thường": 0, "ngày nghỉ": 1, "ngày lễ": 2}
+	// Normalize day type: accept both short names (Thường, Nghỉ, Lễ) and full names (ngày thường, ngày nghỉ, ngày lễ)
+	dayTypePriority := map[string]int{
+		"ngày thường": 0, "thường": 0,
+		"ngày nghỉ": 1, "nghỉ": 1,
+		"ngày lễ": 2, "lễ": 2,
+	}
 	type rateTarget struct{ dayType, hourType string }
 	rateToTarget := make(map[int]rateTarget)
 	for path, rate := range flatRates {

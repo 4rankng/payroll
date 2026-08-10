@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"api-server/internal/app/services/otp"
@@ -167,8 +166,6 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 	recipMobile := normalizedMobile
 	tpl := s.templateID
 	uid := u.ID
-	fullname := u.Fullname
-	validMin := strconv.Itoa(int(s.codeTTL.Minutes()))
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {

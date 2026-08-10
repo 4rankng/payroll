@@ -287,7 +287,12 @@ func (s *BCCImportService) processMultiPositionUpload(
 	}
 
 	// 8. Build timesheet entries for each position sheet.
-	dayTypePriority := map[string]int{"ngày thường": 0, "ngày nghỉ": 1, "ngày lễ": 2}
+	// Normalize day type: accept both short names (Thường, Nghỉ, Lễ) and full names (ngày thường, ngày nghỉ, ngày lễ)
+	dayTypePriority := map[string]int{
+		"ngày thường": 0, "thường": 0,
+		"ngày nghỉ": 1, "nghỉ": 1,
+		"ngày lễ": 2, "lễ": 2,
+	}
 	type rateTarget struct{ dayType, hourType string }
 
 	var entries []domainservices.BulkCreateTimesheetEntry
@@ -384,13 +389,15 @@ func (s *BCCImportService) processMultiPositionUpload(
 					continue
 				}
 
+				// Normalize day type for consistent storage (Thường → ngày thường, etc.)
+				normalizedDayType := normalizeDayType(target.dayType)
 				entries = append(entries, domainservices.BulkCreateTimesheetEntry{
 					ProjectID:   projectID,
 					EmployeeID:  assignment.EmployeeID,
 					Date:        date.Format("2006-01-02"),
 					HoursWorked: entry.Hours,
 					HourType:    target.hourType,
-					DayType:     &target.dayType,
+					DayType:     &normalizedDayType,
 				})
 			}
 		}
@@ -567,6 +574,27 @@ func getPositions(flatRates map[string]int) []string {
 // produce false mismatches against NFC text from other tools.
 func bccNormName(s string) string {
 	return strings.ToLower(strings.TrimSpace(norm.NFC.String(s)))
+}
+
+// normalizeDayType converts short day type names to full names for consistent storage.
+// Maps: Thường → ngày thường, Nghỉ → ngày nghỉ, Lễ → ngày lễ
+// Full names are returned as-is (case-insensitive).
+func normalizeDayType(dayType string) string {
+	normalized := strings.ToLower(strings.TrimSpace(dayType))
+	switch normalized {
+	case "thường":
+		return "ngày thường"
+	case "nghỉ":
+		return "ngày nghỉ"
+	case "lễ":
+		return "ngày lễ"
+	default:
+		// Return original if it's already a full name or unknown
+		if strings.HasPrefix(normalized, "ngày ") {
+			return dayType // Return as-is to preserve case
+		}
+		return dayType // Return unknown values as-is
+	}
 }
 
 // bccNormNameLoose normalizes a Vietnamese name the same way as bccNormName,

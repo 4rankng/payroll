@@ -1097,6 +1097,9 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				}
 				seenMissing[emp.EmployeeCode] = true
 				missingCCCDs = append(missingCCCDs, struct {
+					cccd     string
+					fullName string
+				}{
 					cccd:     emp.EmployeeCode,
 					fullName: emp.FullName,
 				})

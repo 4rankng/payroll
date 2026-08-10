@@ -2,7 +2,6 @@ package excel
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -67,7 +66,7 @@ func ParseWeeklyPaymentFile(f *excelize.File, sheetNames []string, forMonth stri
 	result := &WeeklyPaymentImportData{}
 
 	// Extract first weekday from row 9 to determine day offset
-	firstWeekday, firstSheet := extractFirstWeekday(f, sheetNames)
+	firstWeekday, _ := extractFirstWeekday(f, sheetNames)
 	if firstWeekday == "" {
 		return nil, fmt.Errorf("không tìm thấy ngày trong tuần ở hàng 9")
 	}
@@ -427,9 +426,6 @@ func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[s
 	// Find the day of month for the first occurrence of each weekday
 	result := make(map[string]int)
 
-	// Get the first day of the month
-	firstOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
-
 	// Find which weekday corresponds to the first weekday in the file
 	firstWeekdayEN, ok := weekdayMap[strings.ToUpper(firstWeekday)]
 	if !ok {
@@ -470,44 +466,6 @@ func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[s
 	}
 
 	return result
-}
-
-// bccCell reads a single cell value from a BCC sheet.
-func bccCell(f *excelize.File, sheet string, col, row int) string {
-	cn, err := excelize.CoordinatesToCellName(col, row)
-	if err != nil {
-		return ""
-	}
-	val, err := f.GetCellValue(sheet, cn)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(val)
-}
-
-// parseExcelDate attempts to parse a cell value as an Excel date serial number.
-// Returns the date and true if successful, or zero value and false.
-func parseExcelDate(val string) (time.Time, bool) {
-	serial, err := strconv.ParseFloat(val, 64)
-	if err != nil {
-		return time.Time{}, false
-	}
-
-	if serial < 1 {
-		return time.Time{}, false
-	}
-
-	serial = math.Floor(serial)
-	t, err := excelize.ExcelDateToTime(serial, false)
-	if err != nil {
-		return time.Time{}, false
-	}
-
-	if t.Year() < 2020 || t.Year() > 2040 {
-		return time.Time{}, false
-	}
-
-	return t, true
 }
 
 // RateKeyFor builds a rate lookup key from sheet prefix and shift code.

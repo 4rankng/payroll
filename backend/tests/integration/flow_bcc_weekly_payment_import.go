@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 const flowWeeklyPayment = "WeeklyPaymentImport"
@@ -156,7 +155,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		// Look for employees with bank info (from STK sheet)
 		foundWithBank := 0
 		for _, emp := range employees {
-			if emp.BankAccountNumber != "" && emp.BankName != nil {
+			if emp.BankAccountNumber != "" && emp.BankAccountName != "" {
 				foundWithBank++
 			}
 		}
@@ -208,7 +207,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 
 	// ── 6. Re-upload (latest wins) ─────────────────────────────────────────────────
 	reporter.RunTest(flowWeeklyPayment, "Re-upload same file (latest wins)", func() error {
-		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", weeklyPaymentFile,
+		apiResp, _, err := partnerClient.UploadFile(endpoint, "file", weeklyPaymentFile,
 			map[string]string{"project_id": projectIDStr, "for_month": forMonth})
 		if err != nil {
 			return fmt.Errorf("request failed: %w", err)
@@ -222,7 +221,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 
 		fmt.Printf("    Re-upload import_id=%d status=%s\n", result.ID, result.Status)
 
-		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
+		_, err = waitForBCCImport(partnerClient, endpoint, result.ID)
 		if err != nil {
 			return err
 		}
