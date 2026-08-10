@@ -24,13 +24,13 @@ type FlexPayZNSData struct {
 
 // FlexPayZNSService sends ZNS notifications for FlexPay salary notifications.
 type FlexPayZNSService struct {
-	provider *zalo.Provider
+	provider zalo.Sender
 	logger   *slog.Logger
 	enabled  func(context.Context) (bool, error) // Feature flag check
 }
 
 // NewFlexPayZNSService creates a new FlexPay ZNS service.
-func NewFlexPayZNSService(provider *zalo.Provider, logger *slog.Logger, enabledCheck func(context.Context) (bool, error)) *FlexPayZNSService {
+func NewFlexPayZNSService(provider zalo.Sender, logger *slog.Logger, enabledCheck func(context.Context) (bool, error)) *FlexPayZNSService {
 	if logger == nil {
 		logger = slog.Default()
 	}
@@ -100,12 +100,13 @@ func (s *FlexPayZNSService) SendSalaryNotification(ctx context.Context, data Fle
 	}
 
 	// Business errors from Zalo (logged but don't fail the batch)
-	if !result.Success {
+	// ErrorCode 0 means success, non-zero means Zalo business error
+	if result.ErrorCode != 0 {
 		s.logger.Warn("zns: business error from Zalo",
 			"phone", phone,
 			"employee", data.EmployeeName,
 			"error_code", result.ErrorCode,
-			"error_message", result.ErrorMessage)
+			"error_message", result.ErrorMsg)
 		return nil // Don't fail the batch for business errors
 	}
 

@@ -1,6 +1,6 @@
 # Phase 1: Create ZNS Service
 
-**Status:** Pending  
+**Status:** Completed  
 **Dependencies:** None
 
 ## Context

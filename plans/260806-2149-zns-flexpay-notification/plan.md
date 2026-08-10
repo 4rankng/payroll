@@ -1,7 +1,8 @@
 # ZNS Notification for FlexPay Import
 
-**Status:** Draft  
+**Status:** Completed  
 **Created:** 2026-08-06  
+**Completed:** 2026-08-10  
 **Issue:** ZNS notifications for flexible project payments
 
 ## Overview
