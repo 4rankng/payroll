@@ -23,10 +23,13 @@ func NewGormTransactionManager(db *gorm.DB) domain.TransactionManager {
 // WithTransaction executes the given function within a database transaction
 func (tm *GormTransactionManager) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
-		return fn(ctx)
+		return tm.withTransaction(ctx, txCtx.TX, fn)
 	}
+	return tm.withTransaction(ctx, tm.db, fn)
+}
 
-	return tm.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+func (tm *GormTransactionManager) withTransaction(ctx context.Context, db *gorm.DB, fn func(ctx context.Context) error) error {
+	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create transaction context
 		txCtx := &domain.TransactionContext{
 			TX:              tx,
@@ -43,14 +46,14 @@ func (tm *GormTransactionManager) WithTransaction(ctx context.Context, fn func(c
 
 // WithTransactionResult executes the given function within a database transaction and returns a result
 func (tm *GormTransactionManager) WithTransactionResult(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error) {
-	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
-		return fn(ctx)
-	}
-
 	var result interface{}
 	var resultErr error
 
-	err := tm.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	db := tm.db
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		db = txCtx.TX
+	}
+	err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create transaction context
 		txCtx := &domain.TransactionContext{
 			TX:              tx,

@@ -93,6 +93,39 @@ func TestGormTransactionManager_WithTransaction_Rollback(t *testing.T) {
 	assert.Equal(t, int64(0), count)
 }
 
+func TestGormTransactionManager_WithTransaction_NestedRollbackUsesSavepoint(t *testing.T) {
+	db := setupTestDB(t)
+	tm := NewGormTransactionManager(db)
+	nestedErr := errors.New("nested error")
+
+	err := tm.WithTransaction(context.Background(), func(ctx context.Context) error {
+		txCtx, ok := domain.GetTransactionFromContext(ctx)
+		assert.True(t, ok)
+		if err := txCtx.TX.Create(&TestModel{Name: "outer"}).Error; err != nil {
+			return err
+		}
+
+		if err := tm.WithTransaction(ctx, func(nestedCtx context.Context) error {
+			nestedTxCtx, ok := domain.GetTransactionFromContext(nestedCtx)
+			assert.True(t, ok)
+			if err := nestedTxCtx.TX.Create(&TestModel{Name: "nested"}).Error; err != nil {
+				return err
+			}
+			return nestedErr
+		}); !errors.Is(err, nestedErr) {
+			return err
+		}
+
+		return nil
+	})
+
+	assert.NoError(t, err)
+	var models []TestModel
+	assert.NoError(t, db.Order("id").Find(&models).Error)
+	assert.Len(t, models, 1)
+	assert.Equal(t, "outer", models[0].Name)
+}
+
 func TestGormTransactionManager_WithTransactionResult_Success(t *testing.T) {
 	db := setupTestDB(t)
 	tm := NewGormTransactionManager(db)
