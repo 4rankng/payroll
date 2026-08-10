@@ -97,13 +97,13 @@ type PasswordResetConfig struct {
 // and these are ignored. The runtime toggle lives in DB (zalo.enabled), so
 // `Enabled` here only controls the first-boot seed value.
 type ZaloConfig struct {
-	Enabled     bool // ZALO_RESET_ENABLE (default false) — first-boot seed only
-	UseSandbox  bool // ZALO_USE_SANDBOX (default false) — dev only: mock the ZNS send, log the OTP
-	AppID       string
-	SecretKey   string
-	TemplateID  string // default "619684" (OTP-ZNS-v2)
-	CodeTTL     time.Duration
-	}
+	Enabled    bool // ZALO_RESET_ENABLE (default false) — first-boot seed only
+	UseSandbox bool // ZALO_USE_SANDBOX (default false) — dev only: mock the ZNS send, log the OTP
+	AppID      string
+	SecretKey  string
+	TemplateID string // default "619684" (OTP-ZNS-v2)
+	CodeTTL    time.Duration
+}
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
 // id_token audience; GoogleOAuthEnabled flips the "Sign in with Google" flow on
@@ -462,12 +462,12 @@ func Load() (*Config, error) {
 			ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
 		},
 		Zalo: ZaloConfig{
-			Enabled:     parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
-			UseSandbox:  parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
-			AppID:       getEnv("ZALO_APP_ID", ""),
-			SecretKey:   getEnv("ZALO_SECRET_KEY", ""),
-			TemplateID:  getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
-			CodeTTL:     parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
+			Enabled:    parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
+			UseSandbox: parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
+			AppID:      getEnv("ZALO_APP_ID", ""),
+			SecretKey:  getEnv("ZALO_SECRET_KEY", ""),
+			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
+			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

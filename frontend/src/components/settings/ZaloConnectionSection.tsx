@@ -119,7 +119,7 @@ export const ZaloConnectionSection = () => {
   const [secretKey, setSecretKey] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [refreshToken, setRefreshToken] = useState('');
-  const [templateID, setTemplateID] = useState('617976');
+  const [templateID, setTemplateID] = useState('619684');
   const [confirmDisable, setConfirmDisable] = useState(false);
   const [flexPayZNSEnabled, setFlexPayZNSEnabled] = useState(false);
   const [testPhone, setTestPhone] = useState('');
@@ -132,7 +132,7 @@ export const ZaloConnectionSection = () => {
   useEffect(() => {
     if (!status) return;
     setAppID(status.app_id || '');
-    setTemplateID(status.template_id || '617976');
+    setTemplateID(status.template_id || '619684');
     setFlexPayZNSEnabled(status.flexpay_zns_enabled || false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.app_id, status?.template_id, status?.configured, status?.flexpay_zns_enabled]);
@@ -334,7 +334,7 @@ export const ZaloConnectionSection = () => {
           <dl className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
             <div className="flex gap-1.5">
               <dt className="text-muted-foreground">Mã mẫu ZNS</dt>
-              <dd className="font-mono font-medium text-foreground">{status?.template_id || '617976'}</dd>
+              <dd className="font-mono font-medium text-foreground">{status?.template_id || '619684'}</dd>
             </div>
             <div className="flex gap-1.5">
               <dt className="text-muted-foreground">Mã truy cập</dt>
@@ -420,7 +420,7 @@ export const ZaloConnectionSection = () => {
                   name="zalo-template"
                   value={templateID}
                   onChange={(event) => setTemplateID(event.target.value)}
-                  placeholder="617976"
+                  placeholder="619684"
                   disabled={saveCreds.isPending}
                   className="h-11"
                 />
@@ -545,7 +545,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         step="4"
         title="Gửi thử ZNS"
-        description={`Gửi một tin thử bằng template ${status?.template_id || '617976'}. Mã OTP thử không được lưu và không ảnh hưởng luồng đặt lại mật khẩu.`}
+        description={`Gửi một tin thử bằng template ${status?.template_id || '619684'}. Mã OTP thử không được lưu và không ảnh hưởng luồng đặt lại mật khẩu.`}
       >
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div className="min-w-0 space-y-2">

@@ -16,8 +16,8 @@ The organization already runs a Zalo Official Account (OA) with ZNS (Zalo
 Notification Service) template messaging approved for the sister recruitment
 codebase `tuyennhanvien.vn`. ZNS delivers to the phone number's linked Zalo
 account and is markedly cheaper than transactional SMS in Vietnam. A new
-transactional template `OTP-ZNS-v1` (id `617976`, 3 params: `otp_code`,
-`user_fullname`, `otp_valid_in_minutes`) was registered in the payroll OA
+transactional template `OTP-ZNS-v2` (id `619684`, one `otp` parameter) was
+registered in the payroll OA
 ("Ting Ting Software Solution" / app "TingTing Soft") for this purpose.
 
 ## Decision
@@ -34,7 +34,7 @@ operations.
 | D1 | New `app/services/zaloreset` package, separate from the email `passwordreset` | Different OTP medium (push template vs magic-link email), different lookup key (mobile vs email), different timing-equalization. Mixing them produces a god-service. |
 | D2 | New `infra/cache/ZaloResetStore`, not reuse `OTPPendingStore` | The OTP store binds sessions to IP/UA + enforces per-account lockout — both wrong for an unauthenticated reset. A focused store is cheaper than parameterizing the OTP store and risking login 2FA. |
 | D3 | ZNS provider implements a narrow `zalo.Sender` interface | Keeps the ZNS dependency behind an interface so the reset service is unit-testable with a fake. |
-| D4 | Template `617976` (`OTP-ZNS-v1`) with 3 params | Registered in the payroll OA. `otp_code` + `user_fullname` + `otp_valid_in_minutes` are all populated; missing any returns Zalo `-1122`. |
+| D4 | Template `619684` (`OTP-ZNS-v2`) with one `otp` parameter | Current approved payroll OA template. The retired `617976` template is not used for new reset requests. |
 | D5 | Credentials + connection state in the **existing generic `settings` table** | Two rows: `zalo.enabled` (bool) + `zalo.credentials` (JSON). Admin UI is authoritative after first boot; env vars are seed-only. Lets admin toggle without a redeploy. |
 | D6 | `role = 'employee'` hard gate | Admin/partner reset stays on the audited email + 2FA path. Splitting channels per role keeps each role's blast-radius small. |
 | D7 | No per-account failed-attempt lockout in v1 | The rate limiter (3/hour/mobile) + 10-min TTL + single-consume already cap brute force. Adding `OTPFailedAttempts` reuse would require schema changes for a non-login flow. Deferred. |
@@ -71,7 +71,7 @@ Inherited from the email reset's red-team review:
 - **R-Z1:** Zalo refresh_tokens are single-use; a crash between refresh and persist forces a full admin re-OAuth. Mitigated by persisting `Update` before returning to the retry path.
 - **R-Z3:** No per-account attempt lockout (see D7).
 - **R-Z5:** Wrong-code session survival removes one anti-brute-force lever; the per-mobile rate limiter is the compensating control.
-- **R-Z16:** Template `617976` was Đang duyệt as of 2026-08-04; prod go-live is blocked until approved. Dev/test proceeds in sandbox (Zalo returns `-127`, treated as non-fatal).
+- **R-Z16:** The current `619684` template must remain approved in the OA console; sandbox delivery may return `-127`, which is treated as non-fatal.
 
 ## Verification
 

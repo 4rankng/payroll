@@ -55,7 +55,7 @@ class ZaloAdminService {
 
   /**
    * Fire one test ZNS to verify the stored tokens work. Defaults to the OTP
-   * template (617976) with sample data when template_id/template_data are
+   * template (619684) with sample data when template_id/template_data are
    * omitted. Does NOT touch the password-reset flow — no OTP stored in Redis.
    */
   async testSend(payload: {

@@ -16,10 +16,10 @@ import (
 
 // Settings keys (single source of truth for the two rows this service owns).
 const (
-	KeyEnabled         = "zalo.enabled"
-	KeyCredentials     = "zalo.credentials"
+	KeyEnabled           = "zalo.enabled"
+	KeyCredentials       = "zalo.credentials"
 	KeyFlexPayZNSEnabled = "zns.flexpay_enabled"
-	defaultTemplate = "619684" // OTP-ZNS-v2; admin may override via credentials.template_id
+	defaultTemplate      = "619684" // OTP-ZNS-v2; admin may override via credentials.template_id
 )
 
 // Credentials is the JSON payload of the zalo.credentials settings row. It is
@@ -38,14 +38,14 @@ type Credentials struct {
 // Status is the masked, admin-facing view. Only AppID is exposed (it is a
 // public identifier); secret_key/access_token/refresh_token are never returned.
 type Status struct {
-	Enabled    bool       `json:"enabled"`
-	Configured bool       `json:"configured"` // has app_id + secret
-	Connected  bool       `json:"connected"`  // has valid access + refresh tokens
-	AppID      string     `json:"app_id"`
-	TemplateID string     `json:"template_id"`
+	Enabled           bool       `json:"enabled"`
+	Configured        bool       `json:"configured"` // has app_id + secret
+	Connected         bool       `json:"connected"`  // has valid access + refresh tokens
+	AppID             string     `json:"app_id"`
+	TemplateID        string     `json:"template_id"`
 	FlexPayZNSEnabled bool       `json:"flexpay_zns_enabled"`
-	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
-	LastError  string     `json:"last_error,omitempty"`
+	ExpiresAt         *time.Time `json:"expires_at,omitempty"`
+	LastError         string     `json:"last_error,omitempty"`
 }
 
 // EnvSeed is the bootstrap-only seed values read from ZALO_* env vars. Used by
@@ -143,13 +143,13 @@ func (s *Service) GetStatus(ctx context.Context) (Status, error) {
 		tmpl = defaultTemplate
 	}
 	return Status{
-		Enabled:    enabled,
-		Configured: c.AppID != "" && c.SecretKey != "",
-		Connected:  c.AccessToken != "" && c.RefreshToken != "",
-		AppID:      c.AppID,
-		TemplateID: tmpl,
-		ExpiresAt:  c.ExpiresAt,
-		LastError: c.LastError,
+		Enabled:           enabled,
+		Configured:        c.AppID != "" && c.SecretKey != "",
+		Connected:         c.AccessToken != "" && c.RefreshToken != "",
+		AppID:             c.AppID,
+		TemplateID:        tmpl,
+		ExpiresAt:         c.ExpiresAt,
+		LastError:         c.LastError,
 		FlexPayZNSEnabled: flexpayZNSEnabled,
 	}, nil
 }
@@ -316,7 +316,7 @@ func (s *Service) TestSend(ctx context.Context, phone, templateID string, data m
 	// the caller must supply data — missing params surface as Zalo -1122.
 	if data == nil && templateID == defaultTemplate {
 		data = map[string]string{
-			"otp":             "000000",
+			"otp": "000000",
 		}
 	}
 	trackingID := fmt.Sprintf("test_%d_%s", s.clk().Unix(), randomHex(4))

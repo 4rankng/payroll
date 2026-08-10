@@ -217,7 +217,7 @@ func newTestService(t *testing.T, enabled bool) (*Service, *fakeUserRepo, *fakeS
 		employeeRepo: &fakeEmployeeRepo{byMobile: map[string]*domain.Employee{}},
 		userService:  fakePasswordSvc{hashed: "hashed-pwd"},
 		zalo:         sender,
-		templateID:   "617976",
+		templateID:   "619684",
 		codeTTL:      10 * time.Minute,
 		enabled:      alwaysEnabled{on: enabled},
 		eventBus:     bus,
@@ -235,7 +235,7 @@ func addEmployee(svc *Service, repo *fakeUserRepo, id uint, mobile, fullname str
 
 // --- RequestReset tests -----------------------------------------------------
 
-func TestRequestReset_KnownEmployee_SendsZNSWithAllThreeParams(t *testing.T) {
+func TestRequestReset_KnownEmployee_SendsZNSWithOTP(t *testing.T) {
 	svc, repo, _, sender, _ := newTestService(t, true)
 	addEmployee(svc, repo, 5, "0987654321", "Nguyễn Văn A")
 
@@ -258,14 +258,11 @@ func TestRequestReset_KnownEmployee_SendsZNSWithAllThreeParams(t *testing.T) {
 	if phone != "0987654321" {
 		t.Errorf("send phone = %q", phone)
 	}
-	if data["otp_code"] == "" || len(data["otp_code"]) != 6 {
-		t.Errorf("otp_code missing/not 6 digits: %q", data["otp_code"])
+	if data["otp"] == "" || len(data["otp"]) != 6 {
+		t.Errorf("otp missing/not 6 digits: %q", data["otp"])
 	}
-	if data["user_fullname"] != "Nguyễn Văn A" {
-		t.Errorf("user_fullname = %q", data["user_fullname"])
-	}
-	if data["otp_valid_in_minutes"] != "10" {
-		t.Errorf("otp_valid_in_minutes = %q, want 10", data["otp_valid_in_minutes"])
+	if len(data) != 1 {
+		t.Errorf("template data = %#v, want only otp", data)
 	}
 }
 

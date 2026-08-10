@@ -78,8 +78,8 @@ func TestGetStatus_NotConfigured(t *testing.T) {
 	if st.AppID != "" {
 		t.Errorf("fresh AppID should be empty, got %q", st.AppID)
 	}
-	if st.TemplateID != "617976" {
-		t.Errorf("default template_id = %q, want 617976", st.TemplateID)
+	if st.TemplateID != "619684" {
+		t.Errorf("default template_id = %q, want 619684", st.TemplateID)
 	}
 }
 

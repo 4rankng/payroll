@@ -62,10 +62,10 @@ import (
 type Services struct {
 	User                              *user.UserService
 	PasswordResetJobManager           *user.PasswordResetJobManager
-	EmailPasswordReset                *passwordreset.Service // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
-	ZaloPasswordReset                 *zaloreset.Service     // Employee mobile-channel OTP reset (Phase 2)
-	ZaloConnect                       *zaloconnect.Service   // Admin-managed OA connection + runtime toggle (Phase 4)
-		FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
+	EmailPasswordReset                *passwordreset.Service         // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
+	ZaloPasswordReset                 *zaloreset.Service             // Employee mobile-channel OTP reset (Phase 2)
+	ZaloConnect                       *zaloconnect.Service           // Admin-managed OA connection + runtime toggle (Phase 4)
+	FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
 	Dashboard                         *dashboard.Service

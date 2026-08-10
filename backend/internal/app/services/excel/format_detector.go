@@ -24,9 +24,9 @@ const (
 
 // FormatDetectionResult holds the result of format detection.
 type FormatDetectionResult struct {
-	Format             BCCFormat
-	PositionSheets     []string // sheet names that are position sheets (for FormatMultiPosition)
-	WeeklyBCCSheets    []string // sheet names like "BCC-HC", "BCC-OT150" (for FormatWeeklyBCC)
+	Format              BCCFormat
+	PositionSheets      []string // sheet names that are position sheets (for FormatMultiPosition)
+	WeeklyBCCSheets     []string // sheet names like "BCC-HC", "BCC-OT150" (for FormatWeeklyBCC)
 	WeeklyPaymentSheets []string // sheet names like "520", "700", "750" (for FormatWeeklyPayment)
 }
 
@@ -110,7 +110,7 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 	// Weekly payment takes priority over multi-position
 	if len(weeklyPaymentSheets) > 0 {
 		return &FormatDetectionResult{
-			Format:             FormatWeeklyPayment,
+			Format:              FormatWeeklyPayment,
 			WeeklyPaymentSheets: weeklyPaymentSheets,
 		}, nil
 	}

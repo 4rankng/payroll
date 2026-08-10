@@ -8,7 +8,7 @@ everything is done through the admin UI.
 
 1. A verified **Zalo OA** ("Ting Ting Software Solution" / app "TingTing Soft")
    with the ZNS (Zalo Notification Service) permission enabled.
-2. The **template `617976`** (`OTP-ZNS-v1`) must be **approved** (status
+2. The **template `619684`** (`OTP-ZNS-v2`) must be **approved** (status
    "Đã duyệt"). It was submitted 2026-08-04 and takes 2–3 business days for Zalo
    review. Check the OA Console → Quản lý mẫu ZBS. Prod go-live is blocked until
    this flips; dev/test can proceed in sandbox (Zalo returns `-127`, treated as
@@ -47,7 +47,7 @@ Fill in:
 - **App ID** — from the OA Console app settings.
 - **Secret Key** — from the OA Console (this is write-only; the field is blank
   after save for security).
-- **Template ID** — `617976` (pre-filled; change only if using a different template).
+- **Template ID** — `619684` (pre-filled; change only if using a different template).
 
 Click **Lưu thông tin**. The status badge should flip to "Chưa kết nối"
 (configured but not connected).
@@ -76,8 +76,7 @@ As an employee (or a test employee account):
 1. Go to `/login` → click **Quên mật khẩu?**
 2. Enter the employee's registered **mobile number**.
 3. You should be navigated to `/zalo-reset-password` — check the Zalo inbox for
-   the OTP message (it carries `otp_code`, the employee's name, and "Hết hạn
-   (phút)").
+   the OTP message (it carries the six-digit `otp`).
 4. Enter the 6-digit code + a new password → login with the new password.
 
 ## Troubleshooting

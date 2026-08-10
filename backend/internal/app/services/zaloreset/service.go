@@ -70,7 +70,7 @@ type Service struct {
 	userService    passwordService
 	zalo           zalo.Sender
 	templateID     string
-	codeTTL        time.Duration // drives the otp_valid_in_minutes template param
+	codeTTL        time.Duration // drives the reset-session lifetime
 	enabled        EnabledChecker
 	resendCooldown time.Duration
 	eventBus       domain.EventBus
@@ -78,8 +78,8 @@ type Service struct {
 	logger         *slog.Logger
 }
 
-// NewService constructs the service. codeTTL drives both the store TTL and the
-// otp_valid_in_minutes template param. enabled may be nil (always-on, dev).
+// NewService constructs the service. codeTTL drives the reset-session lifetime.
+// enabled may be nil (always-on, dev).
 // resendCooldown defaults to 60s when zero.
 func NewService(
 	store ResetStore,
