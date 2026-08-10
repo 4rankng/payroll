@@ -143,8 +143,10 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 			return fmt.Errorf("no test user ID")
 		}
 		body := map[string]interface{}{"mobile": updatedMobile}
-		if _, _, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), body); err != nil {
+		if _, statusCode, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), body); err != nil {
 			return fmt.Errorf("update mobile: %w", err)
+		} else if statusCode >= 400 {
+			return fmt.Errorf("update mobile returned HTTP %d", statusCode)
 		}
 		var resp UserResponse
 		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/users/%d", testUserID), &resp); err != nil {
@@ -153,8 +155,10 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		if err := AssertEqual("mobile", updatedMobile, resp.Mobile); err != nil {
 			return err
 		}
-		if _, _, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), map[string]interface{}{"mobile": ""}); err != nil {
+		if _, statusCode, err := admin.Put(fmt.Sprintf("/api/v1/users/%d", testUserID), map[string]interface{}{"mobile": ""}); err != nil {
 			return fmt.Errorf("clear mobile: %w", err)
+		} else if statusCode >= 400 {
+			return fmt.Errorf("clear mobile returned HTTP %d", statusCode)
 		}
 		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/users/%d", testUserID), &resp); err != nil {
 			return fmt.Errorf("get after mobile clear: %w", err)

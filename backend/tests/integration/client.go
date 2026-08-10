@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -92,6 +93,7 @@ func (c *APIClient) GetInto(path string, dest any) (*APIResponse, error) {
 		return apiResp, fmt.Errorf("API error: %s", apiResp.Message)
 	}
 	if apiResp.Data != nil {
+		resetDecodeTarget(dest)
 		if err := json.Unmarshal(apiResp.Data, dest); err != nil {
 			return apiResp, fmt.Errorf("unmarshal error: %w", err)
 		}
@@ -113,6 +115,7 @@ func (c *APIClient) PostInto(path string, body any, dest any) (*APIResponse, err
 		return apiResp, fmt.Errorf("API error (HTTP %d): %s", statusCode, msg)
 	}
 	if apiResp.Data != nil {
+		resetDecodeTarget(dest)
 		if err := json.Unmarshal(apiResp.Data, dest); err != nil {
 			return apiResp, fmt.Errorf("unmarshal error: %w", err)
 		}
@@ -253,6 +256,7 @@ func (c *APIClient) PutInto(path string, body any, dest any) (*APIResponse, erro
 		return apiResp, fmt.Errorf("API error (HTTP %d): %s", statusCode, msg)
 	}
 	if apiResp.Data != nil {
+		resetDecodeTarget(dest)
 		if err := json.Unmarshal(apiResp.Data, dest); err != nil {
 			return apiResp, fmt.Errorf("unmarshal error: %w", err)
 		}
@@ -289,11 +293,20 @@ func (c *APIClient) PatchInto(path string, body any, dest any) (*APIResponse, er
 		return apiResp, fmt.Errorf("API error (HTTP %d): %s", statusCode, msg)
 	}
 	if apiResp.Data != nil {
+		resetDecodeTarget(dest)
 		if err := json.Unmarshal(apiResp.Data, dest); err != nil {
 			return apiResp, fmt.Errorf("unmarshal error: %w", err)
 		}
 	}
 	return apiResp, nil
+}
+
+func resetDecodeTarget(dest any) {
+	rv := reflect.ValueOf(dest)
+	if !rv.IsValid() || rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return
+	}
+	rv.Elem().Set(reflect.Zero(rv.Elem().Type()))
 }
 
 // Delete performs an authenticated DELETE and returns the raw API response.
