@@ -5,33 +5,7 @@ import (
 	"time"
 
 	"github.com/xuri/excelize/v2"
-	"github.com/xuri/excelize/v2/opt"
 )
-
-// TestIsNumericSheetName tests the numeric sheet name detector.
-func TestIsNumericSheetName(t *testing.T) {
-	tests := []struct {
-		name     string
-		sheetName string
-		want     bool
-	}{
-		{"numeric sheet", "520", true},
-		{"numeric sheet", "700", true},
-		{"numeric sheet", "750", true},
-		{"non-numeric", "BCC", false},
-		{"non-numeric", "STK", false},
-		{"non-numeric", "Phổ thông", false},
-		{"empty", "", false},
-		{"whitespace", "  ", false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := isNumericSheetName(tt.sheetName); got != tt.want {
-				t.Errorf("isNumericSheetName() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 // TestIsShiftCode tests the shift code detector.
 func TestIsShiftCode(t *testing.T) {
@@ -80,59 +54,14 @@ func TestIsStopColumn(t *testing.T) {
 	}
 }
 
-// TestRateKeyFor tests the rate key builder.
-func TestRateKeyFor(t *testing.T) {
-	tests := []struct {
-		name      string
-		prefix    string
-		shiftCode string
-		want      string
-	}{
-		{"520HC", "520", "HC", "520HC"},
-		{"700TCN", "700", "TCN", "700TCN"},
-		{"750NN", "750", "NN", "750NN"},
-		{"800TCNN", "800", "TCNN", "800TCNN"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := RateKeyFor(tt.prefix, tt.shiftCode); got != tt.want {
-				t.Errorf("RateKeyFor() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-// TestDayTypeFor tests the day type resolver.
-func TestDayTypeFor(t *testing.T) {
-	tests := []struct {
-		name      string
-		shiftCode string
-		want      string
-	}{
-		{"weekday shift", "HC", "ngày thường"},
-		{"weekday OT", "TCN", "ngày thường"},
-		{"weekend shift", "NN", "ngày nghỉ"},
-		{"weekend OT", "TCNN", "ngày nghỉ"},
-		{"unknown", "XYZ", "ngày thường"},
-		{"lowercase", "hc", "ngày thường"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := DayTypeFor(tt.shiftCode); got != tt.want {
-				t.Errorf("DayTypeFor() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 // TestParseForMonth tests the month string parser.
 func TestParseForMonth(t *testing.T) {
 	tests := []struct {
-		name     string
-		forMonth string
-		wantYear int
+		name      string
+		forMonth  string
+		wantYear  int
 		wantMonth time.Month
-		wantErr  bool
+		wantErr   bool
 	}{
 		{"YYYY-MM format", "2026-07", 2026, time.July, false},
 		{"MM/YYYY format", "07/2026", 2026, time.July, false},
@@ -185,7 +114,10 @@ func TestBuildWeekdayToDayMap(t *testing.T) {
 func TestDetectFormat_WeeklyPayment(t *testing.T) {
 	// Create a minimal weekly payment file
 	f := excelize.NewFile()
-	sheetName := "520"
+	sheetName := "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
 
 	// Row 8: Headers
 	setCellValue(f, sheetName, "A8", "STT")
@@ -201,9 +133,6 @@ func TestDetectFormat_WeeklyPayment(t *testing.T) {
 	// Set as visible (default)
 	f.SetSheetVisible(sheetName, true)
 
-	// Delete default Sheet1
-	f.DeleteSheet("Sheet1")
-
 	result, err := DetectFormat(f)
 	if err != nil {
 		t.Fatalf("DetectFormat() error = %v", err)
@@ -213,13 +142,51 @@ func TestDetectFormat_WeeklyPayment(t *testing.T) {
 		t.Errorf("DetectFormat() = %v, want %v", result.Format, FormatWeeklyPayment)
 	}
 
-	if len(result.WeeklyPaymentSheets) != 1 || result.WeeklyPaymentSheets[0] != "520" {
-		t.Errorf("WeeklyPaymentSheets = %v, want [520]", result.WeeklyPaymentSheets)
+	if len(result.WeeklyPaymentSheets) != 1 || result.WeeklyPaymentSheets[0] != sheetName {
+		t.Errorf("WeeklyPaymentSheets = %v, want [%s]", result.WeeklyPaymentSheets, sheetName)
+	}
+}
+
+func TestParseWeeklyPaymentFile_UsesSheetNameAsPosition(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "F9", "T7")
+	setCellValue(f, sheetName, "F10", "HC")
+	setCellValue(f, sheetName, "G10", "TCN")
+	setCellValue(f, sheetName, "B11", "012345678901")
+	setCellValue(f, sheetName, "C11", "Nguyễn Văn Kiên")
+	setCellValue(f, sheetName, "F11", "8")
+	setCellValue(f, sheetName, "G11", "2")
+
+	parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
+	if err != nil {
+		t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+	}
+	if len(parsed.Sheets) != 1 {
+		t.Fatalf("expected one sheet, got %d", len(parsed.Sheets))
+	}
+	if got := parsed.Sheets[0].Position; got != sheetName {
+		t.Errorf("sheet position = %q, want %q", got, sheetName)
+	}
+	entries := parsed.Sheets[0].Employees[0].Entries
+	if len(entries) != 2 {
+		t.Fatalf("expected two shift entries, got %#v", entries)
+	}
+	if got := entries[0].ShiftKey; got != "HC" {
+		t.Errorf("first shift code = %q, want HC", got)
+	}
+	if got := entries[1].ShiftKey; got != "TCN" {
+		t.Errorf("second shift code = %q, want TCN", got)
 	}
 }
 
 // setCellValue is a helper for test cell value setting.
 func setCellValue(f *excelize.File, sheet, cell, value string) {
-	col, row, _ := excelize.CellNameToCoordinates(cell)
-	f.SetCellValue(sheet, row, col, value, opt.NoCellTypeErr())
+	if err := f.SetCellValue(sheet, cell, value); err != nil {
+		panic(err)
+	}
 }

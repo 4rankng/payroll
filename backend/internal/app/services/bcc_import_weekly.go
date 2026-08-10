@@ -12,8 +12,10 @@ import (
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/utils"
 
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/unicode/norm"
 )
 
 // wbccRateKey groups rate lookups by (position, dayType) for weekly BCC imports.
@@ -516,7 +518,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				flexibleEmployeeIDs[assignment.EmployeeID] = struct{}{}
 			}
 
-			empPosition := strings.ToLower(assignment.Position)
+			empPosition := canonicalBCCRateKeySegment(assignment.Position)
 
 			for _, entry := range emp.Entries {
 				// Excel dates carry the template's month/year — we only
@@ -536,11 +538,11 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				// Resolve the rate set for THIS date's payrate, then look up
 				// position + dayType + shiftType.
 				shiftRates := shiftRatesFor(realDate)
-				key := wbccRateKey{position: empPosition, dayType: strings.ToLower(dayType)}
+				key := wbccRateKey{position: empPosition, dayType: canonicalBCCRateKeySegment(dayType)}
 				_, found := shiftRates[key]
 				if !found {
 					// Try weekend rate as fallback.
-					fallbackKey := wbccRateKey{position: empPosition, dayType: "ngày nghỉ"}
+					fallbackKey := weeklyBCCWeekendFallbackKey(empPosition)
 					if _, f := shiftRates[fallbackKey]; f {
 						slog.Warn("BCCImport(WBCC): using weekend rate fallback for weekday entry",
 							"employee_id", assignment.EmployeeID, "shift_type", shiftType,
@@ -795,10 +797,30 @@ func buildShiftRatesForShift(flatRates map[string]int, shiftType string) map[wbc
 		}
 		position := parts[0]
 		dayType := strings.Join(parts[1:len(parts)-1], ".")
-		key := wbccRateKey{position: strings.ToLower(position), dayType: strings.ToLower(dayType)}
+		key := wbccRateKey{position: canonicalBCCRateKeySegment(position), dayType: canonicalBCCRateKeySegment(dayType)}
 		shiftRates[key] = rate
 	}
 	return shiftRates
+}
+
+// canonicalBCCRateKeySegment makes human-facing Vietnamese labels comparable
+// with flattened payrate path segments. Shift keys are matched separately.
+func canonicalBCCRateKeySegment(value string) string {
+	return strings.TrimSpace(utils.NormalizeVietnamese(norm.NFC.String(value)))
+}
+
+func weeklyBCCWeekendFallbackKey(position string) wbccRateKey {
+	return wbccRateKey{
+		position: canonicalBCCRateKeySegment(position),
+		dayType:  canonicalBCCRateKeySegment("ngày nghỉ"),
+	}
+}
+
+func weeklyPaymentRateKey(sheetPosition string) wbccRateKey {
+	return wbccRateKey{
+		position: canonicalBCCRateKeySegment(sheetPosition),
+		dayType:  canonicalBCCRateKeySegment("ngày thường"),
+	}
 }
 
 // getShiftTypes extracts unique leaf-level shift type names from flattened payrate paths.
@@ -838,9 +860,9 @@ func findSTKRow(stkRows []excelparser.STKRow, cccd string) *excelparser.STKRow {
 	return nil
 }
 
-// processWeeklyPaymentUpload handles the weekly payment format (e.g. 520, 700, 750 sheets).
-// Each sheet represents one salary tier, with row 10 containing per-cell shift codes.
-// Combined rate key = sheet prefix + shift code (e.g., 520HC, 700TCN).
+// processWeeklyPaymentUpload handles the weekly payment format.
+// Each sheet name is the configured payrate position (for example, "Lương 520"),
+// and each row 10 column header is its configured shift code (for example, "HC" or "TCN").
 func (s *BCCImportService) processWeeklyPaymentUpload(
 	ctx context.Context,
 	xf *excelize.File,
@@ -858,13 +880,13 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 		detail := marshalErrors(errs)
 		now := clock.Now()
 		stats := BCCImportStats{
-			ProjectID:     projectID,
-			OriginalName:  filename,
-			ForMonth:      effectiveMonth,
-			Status:        status,
-			ErrorCount:    1,
-			ErrorDetail:   detail,
-			ProcessedAt:   &now,
+			ProjectID:    projectID,
+			OriginalName: filename,
+			ForMonth:     effectiveMonth,
+			Status:       status,
+			ErrorCount:   1,
+			ErrorDetail:  detail,
+			ProcessedAt:  &now,
 		}
 		if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
 			slog.Error("BCCImport(WPayment): metadata update failed in fail path", "asset_id", createdAsset.ID, "error", metaErr)
@@ -1212,7 +1234,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	reportedMissingCCCDs := make(map[string]struct{})
 
 	for _, sheet := range parsed.Sheets {
-		prefix := sheet.Prefix
+		sheetPosition := canonicalBCCRateKeySegment(sheet.Position)
 
 		for _, emp := range sheet.Employees {
 			totalRows++
@@ -1240,7 +1262,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				if bccNorm != stkNorm && bccNormNameLoose(emp.FullName) != bccNormNameLoose(stkName) {
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: emp.FullName,
-						Reason:   fmt.Sprintf("tên BCC (%s) và tên STK (%s) khác nhau cho cùng CCCD %s",
+						Reason: fmt.Sprintf("tên BCC (%s) và tên STK (%s) khác nhau cho cùng CCCD %s",
 							emp.FullName, stkName, emp.EmployeeCode),
 					})
 					continue
@@ -1258,8 +1280,6 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				flexibleEmployeeIDs[assignment.EmployeeID] = struct{}{}
 			}
 
-			empPosition := strings.ToLower(assignment.Position)
-
 			for _, entry := range emp.Entries {
 				if entry.Day < 1 || entry.Day > 31 {
 					continue
@@ -1271,15 +1291,11 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 
 				dateStr := realDate.Format("2006-01-02")
 
-				// Build combined rate key: prefix + shift code (e.g., 520HC)
-				combinedShiftKey := excelparser.RateKeyFor(prefix, entry.ShiftKey)
-
-				// Determine day type from shift code.
-				dayType := excelparser.DayTypeFor(entry.ShiftKey)
-
-				// Resolve the rate set for THIS date's payrate using combined shift key.
-				shiftRates := buildShiftRatesForShift(flatRatesFor(realDate), combinedShiftKey)
-				key := wbccRateKey{position: empPosition, dayType: strings.ToLower(dayType)}
+				// This template has one day-type rate set: all entries use ngày thường.
+				// The column header itself selects the configured shift rate.
+				dayType := "ngày thường"
+				shiftRates := buildShiftRatesForShift(flatRatesFor(realDate), entry.ShiftKey)
+				key := weeklyPaymentRateKey(sheetPosition)
 				if _, found := shiftRates[key]; !found {
 					name := empNames[assignment.EmployeeID]
 					if name == "" {
@@ -1287,8 +1303,8 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 					}
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: name,
-						Reason:   fmt.Sprintf("không tìm thấy mức lương cho ca %s, vị trí %s, ngày %s",
-							combinedShiftKey, assignment.Position, dateStr),
+						Reason: fmt.Sprintf("không tìm thấy mức lương cho ca %s, vị trí %s, ngày %s",
+							entry.ShiftKey, sheet.Position, dateStr),
 					})
 					continue
 				}
@@ -1403,14 +1419,14 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 			detail := marshalErrors(importErrors)
 			now := clock.Now()
 			stats := BCCImportStats{
-				ProjectID:     projectID,
-				OriginalName:  filename,
-				ForMonth:      effectiveMonth,
-				Status:        "failed",
-				TotalRows:     totalRows,
-				ErrorCount:    len(importErrors),
-				ErrorDetail:   detail,
-				ProcessedAt:   &now,
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				Status:       "failed",
+				TotalRows:    totalRows,
+				ErrorCount:   len(importErrors),
+				ErrorDetail:  detail,
+				ProcessedAt:  &now,
 			}
 			if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
 				slog.Error("BCCImport(WPayment): metadata update failed in empty-entries path",
@@ -1446,16 +1462,16 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 
 	errDetail := marshalErrors(importErrors)
 	stats := BCCImportStats{
-		ProjectID:     projectID,
-		OriginalName:  filename,
-		ForMonth:      effectiveMonth,
-		Status:        finalStatus,
-		TotalRows:     totalRows,
-		CreatedCount:  createdCount,
-		SkippedCount:  skippedCount,
-		ErrorCount:    errorCount,
-		ErrorDetail:   errDetail,
-		ProcessedAt:   &now,
+		ProjectID:    projectID,
+		OriginalName: filename,
+		ForMonth:     effectiveMonth,
+		Status:       finalStatus,
+		TotalRows:    totalRows,
+		CreatedCount: createdCount,
+		SkippedCount: skippedCount,
+		ErrorCount:   errorCount,
+		ErrorDetail:  errDetail,
+		ProcessedAt:  &now,
 	}
 	if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
 		slog.Error("BCCImport(WPayment): metadata update failed", "asset_id", createdAsset.ID, "error", metaErr)

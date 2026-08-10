@@ -46,4 +46,16 @@ describe('parseImportErrors', () => {
     expect(parseImportErrors('not-json')).toEqual([]);
   });
 
+  it('keeps a missing-payrate error actionable', () => {
+    expect(parseImportErrors(JSON.stringify([{
+      row: 14,
+      employee: 'Nguyễn Văn Kiên',
+      reason: 'không tìm thấy mức lương cho ca HC, vị trí Lương 520, ngày 2026-08-10',
+    }]))).toEqual([{
+      row: 14,
+      employee: 'Nguyễn Văn Kiên',
+      reason: 'Chưa cấu hình mức lương phù hợp cho ca làm việc',
+    }]);
+  });
+
 });

@@ -22,8 +22,8 @@ type WeeklyPaymentImportData struct {
 
 // WeeklyPaymentSheetData holds parsed data from a single weekly payment sheet.
 type WeeklyPaymentSheetData struct {
-	Prefix    string                 // e.g. "520", "700", "750"
-	ShiftRows WeeklyPaymentShiftRow  // row 10 cells (col index → shift code)
+	Position  string                // Excel sheet name, e.g. "Lương 520"
+	ShiftRows WeeklyPaymentShiftRow // row 10 cells (col index → shift code)
 	Employees []WeeklyPaymentEmployeeData
 }
 
@@ -43,22 +43,22 @@ type WeeklyPaymentEmployeeData struct {
 
 // WeeklyPaymentEntryData holds one (day, shift, hours) entry for an employee.
 type WeeklyPaymentEntryData struct {
-	Day      int     // 1..31, derived from column position
-	ShiftKey string  // e.g. "520HC" — sheet prefix + row 10 label, used to look up rate
+	Day      int    // 1..31, derived from column position
+	ShiftKey string // e.g. "HC" or "TCN", taken directly from the row 10 column header
 	Hours    float64
 }
 
 // weeklyPaymentHeaderMap stores detected column positions for a weekly payment sheet.
 type weeklyPaymentHeaderMap struct {
-	empCodeCol      int               // 1-based column for "Mã nhân viên"
-	fullNameCol     int               // 1-based column for "Họ và tên"
-	departmentCol   int               // 1-based column for "Bộ phận"
-	salaryTierCol   int               // 1-based column for "Lương 8h"
-	firstShiftCol   int               // 1-based first column with shift data
-	firstColumnDay  int               // Day number corresponding to first shift column
-	shiftCols       map[int]string    // 1-based col index → shift type
-	stopCol         int               // 1-based "Tổng hợp" column (exclusive stop)
-	dateColumns     map[int]int       // 1-based col index → day of month (1..31)
+	empCodeCol     int            // 1-based column for "Mã nhân viên"
+	fullNameCol    int            // 1-based column for "Họ và tên"
+	departmentCol  int            // 1-based column for "Bộ phận"
+	salaryTierCol  int            // 1-based column for "Lương 8h"
+	firstShiftCol  int            // 1-based first column with shift data
+	firstColumnDay int            // Day number corresponding to first shift column
+	shiftCols      map[int]string // 1-based col index → shift type
+	stopCol        int            // 1-based "Tổng hợp" column (exclusive stop)
+	dateColumns    map[int]int    // 1-based col index → day of month (1..31)
 }
 
 // ParseWeeklyPaymentFile parses all weekly payment sheets in a weekly payment Excel file.
@@ -85,7 +85,7 @@ func ParseWeeklyPaymentFile(f *excelize.File, sheetNames []string, forMonth stri
 		if err != nil {
 			return nil, fmt.Errorf("sheet %q: %w", sheetName, err)
 		}
-		sheetData.Prefix = sheetName
+		sheetData.Position = sheetName
 		result.Sheets = append(result.Sheets, *sheetData)
 	}
 
@@ -130,10 +130,10 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, weekdayToDay ma
 
 	// Detect header columns (row 8)
 	// A=STT, B=Mã nhân viên, C=Họ Tên, D=Bộ phận, E=Lương 8h
-	hm.empCodeCol = 2      // B
-	hm.fullNameCol = 3     // C
-	hm.departmentCol = 4   // D
-	hm.salaryTierCol = 5   // E
+	hm.empCodeCol = 2    // B
+	hm.fullNameCol = 3   // C
+	hm.departmentCol = 4 // D
+	hm.salaryTierCol = 5 // E
 
 	// Find first shift column (starts at column F in the template)
 	// Row 8 has date values, row 9 has weekday labels, row 10 has shift codes
@@ -302,11 +302,9 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 				continue
 			}
 
-			// Build shift key (prefix + shift code) will be done by the caller
-			// using the sheet prefix
 			emp.Entries = append(emp.Entries, WeeklyPaymentEntryData{
 				Day:      dayNum,
-				ShiftKey: shiftCode, // Will be prefixed with sheet name later
+				ShiftKey: shiftCode,
 				Hours:    hours,
 			})
 		}
@@ -324,6 +322,7 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 
 // isShiftCode checks if a value is a known shift code.
 func isShiftCode(val string) bool {
+	val = strings.ToUpper(strings.TrimSpace(val))
 	shiftCodes := []string{"HC", "TCN", "NN", "TCNN"}
 	for _, code := range shiftCodes {
 		if strings.Contains(val, code) {
@@ -466,19 +465,4 @@ func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[s
 	}
 
 	return result
-}
-
-// RateKeyFor builds a rate lookup key from sheet prefix and shift code.
-func RateKeyFor(prefix, shiftCode string) string {
-	return prefix + shiftCode
-}
-
-// DayTypeFor determines the day type from a shift code.
-// HC/TCN → "ngày thường", NN/TCNN → "ngày nghỉ", fallback → "ngày thường"
-func DayTypeFor(shiftCode string) string {
-	shiftCodeUpper := strings.ToUpper(shiftCode)
-	if shiftCodeUpper == "NN" || shiftCodeUpper == "TCNN" {
-		return "ngày nghỉ"
-	}
-	return "ngày thường"
 }

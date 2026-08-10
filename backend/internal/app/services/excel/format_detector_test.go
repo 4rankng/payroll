@@ -385,14 +385,7 @@ func TestDetectFormat_WeeklyPayment_NoShiftRow(t *testing.T) {
 	_, _ = f.NewSheet("Stk")
 
 	result, err := DetectFormat(f)
-	if err != nil {
-		t.Fatalf("DetectFormat returned error: %v", err)
-	}
-	// Should fall through to FormatMultiPosition (missing shift row)
-	if result.Format != FormatMultiPosition {
-		t.Errorf("Format = %v, want FormatMultiPosition (missing shift row)", result.Format)
-	}
-	if len(result.WeeklyPaymentSheets) != 0 {
-		t.Errorf("WeeklyPaymentSheets = %v, want empty (missing shift row)", result.WeeklyPaymentSheets)
+	if err == nil {
+		t.Fatalf("DetectFormat() result = %#v, want error for a weekly-payment header without shift codes", result)
 	}
 }

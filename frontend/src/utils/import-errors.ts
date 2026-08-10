@@ -27,6 +27,9 @@ export function getSafeImportErrorReason(reason: string): string {
   if (normalized.includes('không thể tạo nhân viên')) {
     return 'Không thể tạo hồ sơ nhân viên';
   }
+  if (normalized.includes('không tìm thấy mức lương')) {
+    return 'Chưa cấu hình mức lương phù hợp cho ca làm việc';
+  }
   if (normalized.includes('thiếu')) {
     return 'Thiếu dữ liệu bắt buộc';
   }

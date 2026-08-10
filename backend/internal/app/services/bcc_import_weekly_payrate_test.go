@@ -40,12 +40,36 @@ func TestBuildShiftRatesForShift(t *testing.T) {
 		t.Fatalf("expected 2 Com rate keys, got %d: %v", len(rates), rates)
 	}
 	want := map[wbccRateKey]int{
-		{position: "phổ thông", dayType: "ngày thường"}: 31000,
-		{position: "phổ thông", dayType: "ngày nghỉ"}:   31000,
+		{position: canonicalBCCRateKeySegment("phổ thông"), dayType: canonicalBCCRateKeySegment("ngày thường")}: 31000,
+		{position: canonicalBCCRateKeySegment("phổ thông"), dayType: canonicalBCCRateKeySegment("ngày nghỉ")}:   31000,
 	}
 	for k, v := range want {
 		if got, ok := rates[k]; !ok || got != v {
 			t.Errorf("rates[%v] = (%d, %v), want %d", k, got, ok, v)
 		}
+	}
+}
+
+func TestCanonicalBCCRateKeySegment(t *testing.T) {
+	tests := map[string]string{
+		"phổ thông":   "pho thong",
+		"ngày thường": "ngay thuong",
+		"ngày nghỉ":   "ngay nghi",
+	}
+
+	for input, want := range tests {
+		if got := canonicalBCCRateKeySegment(input); got != want {
+			t.Errorf("canonicalBCCRateKeySegment(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
+func TestWeeklyBCCWeekendFallbackKey(t *testing.T) {
+	want := wbccRateKey{
+		position: "pho thong",
+		dayType:  "ngay nghi",
+	}
+	if got := weeklyBCCWeekendFallbackKey("phổ thông"); got != want {
+		t.Errorf("weeklyBCCWeekendFallbackKey() = %#v, want %#v", got, want)
 	}
 }
