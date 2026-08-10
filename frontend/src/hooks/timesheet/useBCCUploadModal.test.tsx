@@ -54,6 +54,35 @@ describe('useBCCUploadModal', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps the project picker available when opened from a project-filtered page', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const { result } = renderHook(
+      () => useBCCUploadModal({
+        projectId: 12,
+        projects: [
+          { id: 12, name: 'Dự án đang lọc' },
+          { id: 24, name: 'Dự án khác' },
+        ],
+        onClose: vi.fn(),
+      }),
+      { wrapper: createWrapper(queryClient) },
+    );
+
+    expect(result.current.needsProjectSelect).toBe(true);
+    expect(result.current.effectiveProjectId).toBe(12);
+
+    act(() => {
+      result.current.setSelectedProjectId('24');
+    });
+
+    expect(result.current.effectiveProjectId).toBe(24);
+  });
+
 	it.each(['completed', 'failed'] as const)(
     'refreshes the invalid-bank-information list when an import becomes %s',
     async (terminalStatus) => {

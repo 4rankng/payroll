@@ -158,12 +158,13 @@ export function useBCCUploadModal({
   // ── Derived values ──────────────────────────────────────────────────────
 
   const effectiveProjectId = useMemo(() => {
-    if (projectId > 0) return projectId;
     const parsed = parseInt(selectedProjectId, 10);
     return parsed > 0 ? parsed : 0;
-  }, [projectId, selectedProjectId]);
+  }, [selectedProjectId]);
 
-  const needsProjectSelect = projectId === 0 && (projects?.length ?? 0) > 0;
+  // The page filter supplies a default. Users can still redirect the import to
+  // any project that is available to their role.
+  const needsProjectSelect = (projects?.length ?? 0) > 0;
   const hasProject = effectiveProjectId > 0;
   const isReady = hasProject && !!file;
   const canUpload = !!file && effectiveProjectId > 0;

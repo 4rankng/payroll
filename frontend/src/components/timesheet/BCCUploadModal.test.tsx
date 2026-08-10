@@ -30,7 +30,11 @@ const baseResult: PartnerImportFile = {
   created_at: '2026-07-25T00:00:00Z',
 };
 
-function mockModalState(result: PartnerImportFile | null, allowFlexibleEmployeeImport = false) {
+function mockModalState(
+  result: PartnerImportFile | null,
+  allowFlexibleEmployeeImport = false,
+  overrides: Record<string, unknown> = {},
+) {
   mockUseBCCUploadModal.mockReturnValue({
     file: null,
     result,
@@ -57,6 +61,7 @@ function mockModalState(result: PartnerImportFile | null, allowFlexibleEmployeeI
     handleDrop: vi.fn(),
     handleReset: vi.fn(),
     handleRemoveFile: vi.fn(),
+    ...overrides,
   });
 }
 
@@ -89,6 +94,23 @@ describe('BCCUploadModal result states', () => {
 			.toHaveBeenCalledWith(true);
 		expect(screen.getByText('Chỉ tạo ngày chưa có.')).toBeInTheDocument();
 	});
+
+  it('uses a continuous, scrollable dialog layout for the upload form', () => {
+    mockModalState(null);
+    renderModal();
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveClass('gap-0', 'max-h-[calc(100dvh-2rem)]');
+    expect(screen.getByText('Tệp bảng chấm công').parentElement?.parentElement).toHaveClass('overflow-y-auto');
+  });
+
+  it('shows the project picker even when the page already has a project selected', () => {
+    mockModalState(null, false, { needsProjectSelect: true });
+    renderModal();
+
+    expect(screen.getByText('Dự án áp dụng')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dự án 7' })).toBeInTheDocument();
+  });
 
   it('renders pure completion as success without an error state', () => {
     mockModalState(baseResult);
