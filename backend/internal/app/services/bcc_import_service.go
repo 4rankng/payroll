@@ -251,6 +251,7 @@ func (s *BCCImportService) ProcessPendingJob(ctx context.Context, assetID uint) 
 	}
 
 	var result *BCCImportResult
+	rollbackAndFinalize := false
 	processErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		if err := s.importJobRepo.LockProcessingAttempt(txCtx, assetID, attempt); err != nil {
 			return err
@@ -268,12 +269,20 @@ func (s *BCCImportService) ProcessPendingJob(ctx context.Context, assetID uint) 
 			job.ForMonth,
 			job.IncludeFlexibleEmployees,
 		)
-		if importErr != nil && result == nil {
+		if importErr != nil {
+			rollbackAndFinalize = result != nil
 			return importErr
 		}
 		return s.finalizeImportJob(txCtx, assetID, attempt, result)
 	})
 	if processErr != nil {
+		if rollbackAndFinalize && result != nil {
+			if finalErr := s.finalizeImportJob(ctx, assetID, attempt, result); finalErr != nil {
+				_ = s.importJobRepo.ReleaseForRetry(ctx, assetID, attempt, finalErr.Error())
+				return finalErr
+			}
+			return nil
+		}
 		_ = s.importJobRepo.ReleaseForRetry(ctx, assetID, attempt, processErr.Error())
 		return processErr
 	}
@@ -404,9 +413,13 @@ func (s *BCCImportService) applyTimesheetReplacement(
 			}
 		}
 
+		// Carry deleted IDs into validation so a replacement never treats its
+		// own stale rows as duplicates while this transaction is pending.
+		replacementCtx := domainservices.WithTimesheetReplacementDeletes(txCtx, staleIDs)
+
 		var err error
 		result, err = s.timesheetService.BulkCreateTimesheetsInTransaction(
-			txCtx,
+			replacementCtx,
 			entries,
 			uploaderID,
 			uploaderRole,

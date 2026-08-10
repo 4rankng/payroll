@@ -259,7 +259,10 @@ func (r *TimesheetQueryRepository) GetByEmployeeAndPeriod(ctx context.Context, e
 func (r *TimesheetQueryRepository) GetByProjectEmployeeDatePaytype(ctx context.Context, projectID, employeeID uint, date time.Time, paytype string) (*domain.Timesheet, error) {
 	var timesheet domain.Timesheet
 
-	query := r.queryBuilder.BuildProjectEmployeeDateQuery(projectID, employeeID, date, paytype)
+	query := r.getDB(ctx).
+		Model(&domain.Timesheet{}).
+		Where("project_id = ? AND employee_id = ? AND date = ? AND paytype = ?",
+			projectID, employeeID, date, paytype)
 	err := query.First(&timesheet).Error
 
 	if err != nil {
@@ -327,7 +330,9 @@ func (r *TimesheetQueryRepository) GetByProjectEmployeeDate(ctx context.Context,
 	var timesheets []*domain.Timesheet
 
 	startOfDay, endOfDay := dayBoundsInDateLocation(date)
-	query := r.db.WithContext(ctx).Where("project_id = ? AND employee_id = ? AND date >= ? AND date < ?", projectID, employeeID, startOfDay, endOfDay)
+	query := r.getDB(ctx).
+		Where("project_id = ? AND employee_id = ? AND date >= ? AND date < ?",
+			projectID, employeeID, startOfDay, endOfDay)
 
 	err := query.Find(&timesheets).Error
 	if err != nil {

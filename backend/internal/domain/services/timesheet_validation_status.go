@@ -8,6 +8,29 @@ import (
 	"api-server/internal/domain"
 )
 
+type timesheetReplacementDeletesKey struct{}
+
+// WithTimesheetReplacementDeletes marks rows that have been deleted inside an
+// in-flight replacement transaction. Validation must not consider those rows
+// live replacements.
+func WithTimesheetReplacementDeletes(ctx context.Context, ids []uint) context.Context {
+	deleted := make(map[uint]struct{}, len(ids))
+	for _, id := range ids {
+		deleted[id] = struct{}{}
+	}
+	return context.WithValue(ctx, timesheetReplacementDeletesKey{}, deleted)
+}
+
+func isTimesheetReplacementDelete(ctx context.Context, timesheetID uint) bool {
+	deleted, _ := ctx.Value(timesheetReplacementDeletesKey{}).(map[uint]struct{})
+	_, exists := deleted[timesheetID]
+	return exists
+}
+
+func isDuplicateTimesheetConflict(ctx context.Context, existing *domain.Timesheet, currentID uint) bool {
+	return existing != nil && existing.ID != currentID && !isTimesheetReplacementDelete(ctx, existing.ID)
+}
+
 // ValidateDuplicateTimesheet checks for duplicate timesheets
 func (s *TimesheetValidationService) ValidateDuplicateTimesheet(ctx context.Context, timesheet *domain.Timesheet) error {
 	existing, err := s.timesheetValidator.GetByProjectEmployeeDatePaytype(ctx, timesheet.ProjectID, timesheet.EmployeeID, timesheet.Date, timesheet.PayType)
@@ -20,7 +43,7 @@ func (s *TimesheetValidationService) ValidateDuplicateTimesheet(ctx context.Cont
 	}
 
 	// If existing timesheet found and it's not the same one being updated
-	if existing != nil && existing.ID != timesheet.ID {
+	if isDuplicateTimesheetConflict(ctx, existing, timesheet.ID) {
 		// Get employee name for proper error format
 		employee, err := s.employeeRepo.GetByID(ctx, timesheet.EmployeeID)
 		employeeName := "Unknown"

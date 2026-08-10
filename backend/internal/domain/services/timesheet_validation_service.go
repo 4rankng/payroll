@@ -83,9 +83,20 @@ func (s *TimesheetValidationService) getExistingTimesheets(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
+	visibleTimesheets := filterTimesheetReplacementDeletes(ctx, timesheets)
 
-	vctx.existingTimesheets[key] = timesheets
-	return timesheets, nil
+	vctx.existingTimesheets[key] = visibleTimesheets
+	return visibleTimesheets, nil
+}
+
+func filterTimesheetReplacementDeletes(ctx context.Context, timesheets []*domain.Timesheet) []*domain.Timesheet {
+	visible := make([]*domain.Timesheet, 0, len(timesheets))
+	for _, timesheet := range timesheets {
+		if !isTimesheetReplacementDelete(ctx, timesheet.ID) {
+			visible = append(visible, timesheet)
+		}
+	}
+	return visible
 }
 
 // ValidateTimesheet validates business rules for timesheet creation/update
@@ -132,11 +143,17 @@ func (s *TimesheetValidationService) ValidateTimesheet(ctx context.Context, time
 
 	logger.Info("ValidateTimesheet: Passed basic validations, starting sequential validations")
 
-	// Read-only validations must NOT use the transaction connection (sql.Tx is not safe
-	// for concurrent use or for use after the surrounding transaction has committed/rolled
-	// back). Strip any transaction from the context so each validation query uses the
-	// connection pool instead of a shared transaction connection.
-	readCtx := context.WithValue(ctx, domain.TransactionContextKey{}, nil)
+	// Replacement imports need reads to observe the same transaction after stale rows
+	// have been deleted; otherwise duplicate validation sees the pre-delete state and
+	// rejects the replacement batch. Other call sites keep using the pooled connection.
+	readCtx := ctx
+	if _, hasReplacementDeletes := ctx.Value(timesheetReplacementDeletesKey{}).(map[uint]struct{}); !hasReplacementDeletes {
+		// Read-only validations must NOT use the transaction connection (sql.Tx is not
+		// safe for concurrent use or for use after the surrounding transaction has been
+		// committed or rolled back). Strip any transaction from the context so each
+		// validation query uses the connection pool instead of a shared transaction.
+		readCtx = context.WithValue(ctx, domain.TransactionContextKey{}, nil)
+	}
 
 	// Run validations sequentially. Concurrent goroutines sharing a single *sql.Tx caused
 	// "transaction has already been committed or rolled back" errors during BCC bulk import
