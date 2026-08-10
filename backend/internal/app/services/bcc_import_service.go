@@ -1088,24 +1088,3 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 		flatRates:  flatRates,
 	}, release, nil
 }
-
-// normalizeDayType converts short day type names to full names for consistent storage.
-// Maps: Thường → ngày thường, Nghỉ → ngày nghỉ, Lễ → ngày lễ
-// Full names are returned as-is (case-insensitive).
-func normalizeDayType(dayType string) string {
-	normalized := strings.ToLower(strings.TrimSpace(dayType))
-	switch normalized {
-	case "thường":
-		return "ngày thường"
-	case "nghỉ":
-		return "ngày nghỉ"
-	case "lễ":
-		return "ngày lễ"
-	default:
-		// Return original if it's already a full name or unknown
-		if strings.HasPrefix(normalized, "ngày ") {
-			return dayType // Return as-is to preserve case
-		}
-		return dayType // Return unknown values as-is
-	}
-}
