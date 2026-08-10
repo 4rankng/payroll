@@ -35,7 +35,7 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	log := observability.GetLogger()
 	log.Info("Creating user in database", "username", user.Username, "email", user.Email)
 
-	if err := r.DB.WithContext(ctx).Create(user).Error; err != nil {
+	if err := r.dbForContext(ctx).Create(user).Error; err != nil {
 		log.Error("Database error when creating user", "error", err, "username", user.Username, "email", user.Email)
 
 		// Check for MySQL duplicate entry error (Error 1062)

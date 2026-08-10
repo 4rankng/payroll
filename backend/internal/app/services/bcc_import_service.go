@@ -21,7 +21,6 @@ import (
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/infra/storage"
 	"api-server/internal/pkg/clock"
-	"api-server/internal/pkg/utils"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
@@ -77,6 +76,13 @@ func NewBCCImportService(
 		importJobRepo:       importJobRepo,
 		importEnqueuer:      importEnqueuer,
 	}
+}
+
+func (s *BCCImportService) ensureEmployeeUserAccount(ctx context.Context, employeeID uint) error {
+	if s.employeeService == nil {
+		return errors.New("employee service is not configured")
+	}
+	return s.employeeService.EnsureEmployeeUserAccount(ctx, employeeID)
 }
 
 const maxBCCUploadSize = 10 << 20
@@ -700,25 +706,13 @@ func (s *BCCImportService) processAssetData(
 						}
 					}
 
-					// If employee exists but has no user account, create one
-					if emp.UserID == nil && s.employeeUserService != nil {
-						baseUsername := utils.GenerateUsername(emp.Fullname)
-						if baseUsername != "" {
-							username := s.employeeUserService.EnsureUniqueUsername(txCtx, baseUsername)
-							userID, userErr := s.employeeUserService.CreateUserForEmployee(txCtx, emp, username)
-							if userErr != nil {
-								slog.Error("BCCImport: failed to create user for existing employee",
-									"employee_id", emp.ID, "cccd", cccd, "error", userErr)
-							} else {
-								// Targeted update: only set user_id to avoid full-record Save overwriting concurrent changes.
-								if updateErr := s.employeeService.UpdateUserLink(txCtx, emp.ID, userID); updateErr != nil {
-									slog.Error("BCCImport: failed to update employee with user_id",
-										"employee_id", emp.ID, "user_id", userID, "error", updateErr)
-								} else {
-									slog.Info("BCCImport: created user account for existing employee",
-										"employee_id", emp.ID, "cccd", cccd, "username", username)
-								}
-							}
+					if emp.UserID == nil {
+						if err := s.ensureEmployeeUserAccount(txCtx, emp.ID); err != nil {
+							importErrors = append(importErrors, domain.ImportError{
+								Employee: fullName,
+								Reason:   fmt.Sprintf("không thể tạo tài khoản nhân viên CCCD %s: %v", cccd, err),
+							})
+							continue
 						}
 					}
 				}

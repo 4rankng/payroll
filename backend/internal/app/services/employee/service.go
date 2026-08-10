@@ -86,7 +86,7 @@ func (s *EmployeeService) CreateEmployeeFromImport(ctx context.Context, employee
 // after a successful repair.
 func (s *EmployeeService) EnsureEmployeeUserAccount(ctx context.Context, employeeID uint) error {
 	return s.TransactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		employee, err := s.EmployeeRepo.GetByID(txCtx, employeeID)
+		employee, err := s.EmployeeRepo.GetByIDForUpdate(txCtx, employeeID)
 		if err != nil {
 			return err
 		}

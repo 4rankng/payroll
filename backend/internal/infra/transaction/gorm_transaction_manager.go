@@ -22,6 +22,10 @@ func NewGormTransactionManager(db *gorm.DB) domain.TransactionManager {
 
 // WithTransaction executes the given function within a database transaction
 func (tm *GormTransactionManager) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return fn(ctx)
+	}
+
 	return tm.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Create transaction context
 		txCtx := &domain.TransactionContext{
@@ -39,6 +43,10 @@ func (tm *GormTransactionManager) WithTransaction(ctx context.Context, fn func(c
 
 // WithTransactionResult executes the given function within a database transaction and returns a result
 func (tm *GormTransactionManager) WithTransactionResult(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error) {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return fn(ctx)
+	}
+
 	var result interface{}
 	var resultErr error
 

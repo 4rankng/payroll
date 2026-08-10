@@ -27,6 +27,13 @@ func NewBaseRepository(db *Database) *BaseRepository {
 	}
 }
 
+func (r *BaseRepository) dbForContext(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 // WithRetryConfig allows customization of retry configuration
 func (r *BaseRepository) WithRetryConfig(cfg retry.DatabaseOperationConfig) *BaseRepository {
 	r.dbHelper = r.dbHelper.WithRetryConfig(retry.Config{
@@ -40,11 +47,17 @@ func (r *BaseRepository) WithRetryConfig(cfg retry.DatabaseOperationConfig) *Bas
 
 // SafeCreate creates a record with retry logic
 func (r *BaseRepository) SafeCreate(ctx context.Context, value any) error {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx).Create(value).Error
+	}
 	return r.dbHelper.SafeCreate(ctx, value)
 }
 
 // SafeUpdate updates a record with retry logic
 func (r *BaseRepository) SafeUpdate(ctx context.Context, value any) error {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx).Save(value).Error
+	}
 	return r.dbHelper.SafeUpdate(ctx, value)
 }
 

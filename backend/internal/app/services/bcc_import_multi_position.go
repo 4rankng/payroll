@@ -184,20 +184,13 @@ func (s *BCCImportService) processMultiPositionUpload(
 								"employee_id", emp.ID, "error", err)
 						}
 					}
-					if emp.UserID == nil && s.employeeUserService != nil {
-						baseUsername := utils.GenerateUsername(emp.Fullname)
-						if baseUsername != "" {
-							username := s.employeeUserService.EnsureUniqueUsername(txCtx, baseUsername)
-							userID, userErr := s.employeeUserService.CreateUserForEmployee(txCtx, emp, username)
-							if userErr != nil {
-								slog.Error("BCCImport(MP): failed to create user for existing employee",
-									"employee_id", emp.ID, "cccd", cccd, "error", userErr)
-							} else {
-								if linkErr := s.employeeService.UpdateUserLink(txCtx, emp.ID, userID); linkErr != nil {
-									slog.Error("BCCImport(MP): failed to update employee with user_id",
-										"employee_id", emp.ID, "user_id", userID, "error", linkErr)
-								}
-							}
+					if emp.UserID == nil {
+						if err := s.ensureEmployeeUserAccount(txCtx, emp.ID); err != nil {
+							importErrors = append(importErrors, domain.ImportError{
+								Employee: fullName,
+								Reason:   fmt.Sprintf("không thể tạo tài khoản nhân viên CCCD %s: %v", cccd, err),
+							})
+							continue
 						}
 					}
 				}
