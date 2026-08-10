@@ -197,6 +197,13 @@ func (v *BankAccountValidator) Validate(ctx context.Context, bankID *uint, accou
 		v.logger.Warn("account validation call failed; marking unverified",
 			"bank_id", *bankID, "account_no", accountNo, "error", err)
 		r = ValidationResult{Status: domain.BankAccountStatusUnverified}
+	case isBankConfigurationError(res.RawErrorCode):
+		// OnePay rejected the bank identifier rather than the beneficiary
+		// account. Keep the employee writable while the bank directory is
+		// corrected; a confirmed account rejection still remains invalid.
+		v.logger.Warn("account validation rejected the bank configuration; marking unverified",
+			"bank_id", *bankID, "provider_code", res.RawErrorCode)
+		r = ValidationResult{Status: domain.BankAccountStatusUnverified}
 	case res.Valid:
 		r = ValidationResult{Status: domain.BankAccountStatusValid}
 	default:
@@ -218,6 +225,15 @@ func (v *BankAccountValidator) Validate(ctx context.Context, bankID *uint, accou
 		writeCachedResult(ctx, v.cache, key, r)
 	}
 	return r
+}
+
+func isBankConfigurationError(code string) bool {
+	switch code {
+	case "12", "13", "19":
+		return true
+	default:
+		return false
+	}
 }
 
 // readCachedResult fetches a ValidationResult from the cache. Returns

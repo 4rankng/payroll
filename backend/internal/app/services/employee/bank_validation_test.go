@@ -254,7 +254,7 @@ func TestValidate_AccountNotFound_InvalidGenericReason(t *testing.T) {
 		checkFunc: func(ctx context.Context, req infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
 			return &infrastructure.AccountCheckResult{
 				Valid:        false,
-				RawErrorCode: "account_not_found",
+				RawErrorCode: "15",
 				RawMessage:   "no such account",
 			}, nil
 		},
@@ -268,6 +268,34 @@ func TestValidate_AccountNotFound_InvalidGenericReason(t *testing.T) {
 	}
 	assert.Equal(t, "Số tài khoản không hợp lệ", *r.Reason)
 	assert.NotContains(t, *r.Reason, "no such account")
+}
+
+func TestValidateManualBankAccount_BankConfigurationErrorsAreUnverified(t *testing.T) {
+	for _, code := range []string{"12", "13", "19"} {
+		t.Run(code, func(t *testing.T) {
+			bank := &domain.Bank{ID: 1, BranchName: "Agribank", SwiftCode: "VBAVVNVX"}
+			p := &verifierProvider{
+				name: "onepay",
+				checkFunc: func(ctx context.Context, req infrastructure.AccountCheckRequest) (*infrastructure.AccountCheckResult, error) {
+					return &infrastructure.AccountCheckResult{
+						Valid:        false,
+						RawErrorCode: code,
+						RawMessage:   "Invalid bank configuration",
+					}, nil
+				},
+			}
+			v := newTestValidator(p, bank, nil)
+			employee := &domain.Employee{
+				BankID:            &bank.ID,
+				BankAccountNumber: "123456789",
+				BankAccountName:   "Nguyen Van A",
+			}
+
+			require.NoError(t, validateManualBankAccount(context.Background(), v, employee))
+			assert.Equal(t, domain.BankAccountStatusUnverified, employee.BankAccountStatus)
+			assert.Nil(t, employee.BankAccountInvalidReason)
+		})
+	}
 }
 
 func TestValidateManualBankAccount_ConfirmedInvalidReturnsTypedError(t *testing.T) {
