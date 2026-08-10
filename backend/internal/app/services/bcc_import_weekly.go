@@ -12,7 +12,6 @@ import (
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/pkg/clock"
-	"api-server/internal/pkg/utils"
 
 	"github.com/xuri/excelize/v2"
 )
