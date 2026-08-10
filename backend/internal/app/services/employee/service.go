@@ -80,6 +80,34 @@ func (s *EmployeeService) CreateEmployeeFromImport(ctx context.Context, employee
 	return s.createEmployee(ctx, employee, createdBy, true)
 }
 
+// EnsureEmployeeUserAccount creates and links a login account for an existing
+// employee that predates the transactional employee-creation flow. Both writes
+// share one transaction so an employee is never left without a linked account
+// after a successful repair.
+func (s *EmployeeService) EnsureEmployeeUserAccount(ctx context.Context, employeeID uint) error {
+	return s.TransactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		employee, err := s.EmployeeRepo.GetByID(txCtx, employeeID)
+		if err != nil {
+			return err
+		}
+		if employee.UserID != nil {
+			return nil
+		}
+
+		userID, err := s.createUserForEmployee(txCtx, employee)
+		if err != nil {
+			return err
+		}
+
+		employee.UserID = &userID
+		if err := s.EmployeeRepo.Update(txCtx, employee); err != nil {
+			return fmt.Errorf("%s: %w", constants.MsgFailedToUpdateEmployeeVN, err)
+		}
+
+		return nil
+	})
+}
+
 func (s *EmployeeService) createEmployee(
 	ctx context.Context,
 	employee *domain.Employee,

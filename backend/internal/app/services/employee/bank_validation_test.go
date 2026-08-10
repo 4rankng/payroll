@@ -533,7 +533,8 @@ func (directTransactionManager) WithTransactionResult(ctx context.Context, fn fu
 
 type createEmployeeTestUserRepo struct {
 	domain.UserRepository
-	users []*domain.User
+	users     []*domain.User
+	createErr error
 }
 
 func (r *createEmployeeTestUserRepo) GetUsernamesByPrefix(context.Context, string) ([]string, error) {
@@ -554,6 +555,9 @@ func (r *createEmployeeTestUserRepo) GetByID(_ context.Context, id uint) (*domai
 }
 
 func (r *createEmployeeTestUserRepo) Create(_ context.Context, user *domain.User) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
 	user.ID = uint(len(r.users) + 1)
 	r.users = append(r.users, user)
 	return nil
@@ -685,6 +689,56 @@ func TestCreateEmployeeFromImport_PersistsInvalidVerdictWhileManualCreateRemains
 	assert.Equal(t, bankAccountInvalidErrorCode, domainErr.Code)
 	assert.Len(t, employeeRepo.created, 1, "manual invalid create must not persist an employee")
 	assert.Len(t, userRepo.users, 1, "manual invalid create must not create a user")
+}
+
+func TestEnsureEmployeeUserAccount_CreatesAndLinksLegacyEmployee(t *testing.T) {
+	employee := &domain.Employee{
+		ID:       42,
+		Fullname: "Nguyen Van Legacy",
+		CCCD:     "123456789012",
+	}
+	employeeRepo := &stubEmployeeRepo{byID: map[uint]*domain.Employee{employee.ID: employee}}
+	userRepo := &createEmployeeTestUserRepo{}
+	eventBus := createEmployeeTestEventBus{}
+	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt")
+	service := &EmployeeService{
+		EmployeeRepo:       employeeRepo,
+		UserRepo:           userRepo,
+		UserService:        userService,
+		TransactionManager: directTransactionManager{},
+	}
+
+	require.NoError(t, service.EnsureEmployeeUserAccount(context.Background(), employee.ID))
+	require.NotNil(t, employee.UserID)
+	assert.Equal(t, uint(1), *employee.UserID)
+	assert.Len(t, userRepo.users, 1)
+	assert.Equal(t, 1, employeeRepo.updateCalls)
+}
+
+func TestImportService_DoesNotPersistEmployeeWhenUserCreationFails(t *testing.T) {
+	employeeRepo := &stubEmployeeRepo{}
+	userRepo := &createEmployeeTestUserRepo{createErr: errors.New("user storage unavailable")}
+	userService := userservice.NewUserService(userRepo, nil, createEmployeeTestEventBus{}, "test-secret", "test-salt")
+	employeeService := &EmployeeService{
+		EmployeeRepo:       employeeRepo,
+		UserRepo:           userRepo,
+		UserService:        userService,
+		TransactionManager: directTransactionManager{},
+		events:             createEmployeeTestEventBus{},
+	}
+	importService := &ImportService{
+		employeeService: employeeService,
+		employeeRepo:    employeeRepo,
+	}
+
+	_, created, _, err := importService.getOrCreateEmployee(context.Background(), dto.EmployeeImportRow{
+		Fullname: "Nguyen Van Import",
+		CCCD:     "123456789012",
+	}, 99)
+
+	require.Error(t, err)
+	assert.False(t, created)
+	assert.Empty(t, employeeRepo.created, "an import cannot persist an employee when its user account cannot be created")
 }
 
 func TestUpdateBankInfo_NoBankColumns_SkipsValidation(t *testing.T) {

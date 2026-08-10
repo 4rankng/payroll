@@ -596,7 +596,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		repos.Employee,
 		repos.Project,
 		repos.ProjectEmployee,
-		employeeUserService,
 		employeeImportProgressService,
 	)
 

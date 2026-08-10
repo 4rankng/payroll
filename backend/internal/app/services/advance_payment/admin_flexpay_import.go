@@ -13,7 +13,6 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
-	"api-server/internal/pkg/utils"
 )
 
 // dedupeAdvancePayments collapses multiple rows for the same (project, employee)
@@ -433,32 +432,13 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 
 		if needsUpdate {
 			if err := s.config.EmployeeRepo.Update(ctx, employee); err != nil {
-				s.logger.Warn("failed to update employee info", "error", err)
+				return nil, false, false, fmt.Errorf("failed to update employee info: %w", err)
 			}
 		}
 
-		// Create user account for existing employee if they don't have one
 		if employee.UserID == nil {
-			if s.config.EmployeeUserService == nil {
-				s.logger.Warn("EmployeeUserService not available, cannot create user account", "employee_id", employee.ID, "cccd", cccd)
-			} else {
-				baseUsername := utils.GenerateUsername(name)
-				if baseUsername == "" {
-					s.logger.Warn("failed to generate username from name", "employee_id", employee.ID, "name", name)
-				} else {
-					username := s.config.EmployeeUserService.EnsureUniqueUsername(ctx, baseUsername)
-					userID, err := s.config.EmployeeUserService.CreateUserForEmployee(ctx, employee, username)
-					if err != nil {
-						s.logger.Error("failed to create user for existing employee", "employee_id", employee.ID, "cccd", cccd, "username", username, "error", err)
-					} else {
-						employee.UserID = &userID
-						if err := s.config.EmployeeRepo.Update(ctx, employee); err != nil {
-							s.logger.Error("failed to update employee with user_id", "employee_id", employee.ID, "user_id", userID, "error", err)
-						} else {
-							s.logger.Info("created user account for existing employee", "employee_id", employee.ID, "cccd", cccd, "username", username)
-						}
-					}
-				}
+			if err := s.config.EmployeeService.EnsureEmployeeUserAccount(ctx, employee.ID); err != nil {
+				return nil, false, false, fmt.Errorf("failed to create employee user account: %w", err)
 			}
 		}
 
@@ -476,33 +456,12 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 		CreatedBy:         createdBy,
 	}
 
-	if err := s.config.EmployeeRepo.Create(ctx, employee); err != nil {
+	createdEmployee, err := s.config.EmployeeService.CreateEmployeeFromImport(ctx, employee, createdBy)
+	if err != nil {
 		return nil, false, false, err
 	}
 
-	if s.config.EmployeeUserService != nil {
-		baseUsername := utils.GenerateUsername(name)
-		if baseUsername == "" {
-			s.logger.Warn("failed to generate username from name for new employee", "employee_id", employee.ID, "name", name)
-		} else {
-			username := s.config.EmployeeUserService.EnsureUniqueUsername(ctx, baseUsername)
-			userID, err := s.config.EmployeeUserService.CreateUserForEmployee(ctx, employee, username)
-			if err != nil {
-				s.logger.Error("failed to create user for new employee", "employee_id", employee.ID, "cccd", cccd, "username", username, "error", err)
-			} else {
-				employee.UserID = &userID
-				if err := s.config.EmployeeRepo.Update(ctx, employee); err != nil {
-					s.logger.Error("failed to update employee with user_id", "employee_id", employee.ID, "user_id", userID, "error", err)
-				} else {
-					s.logger.Info("created user account for new employee", "employee_id", employee.ID, "cccd", cccd, "username", username)
-				}
-			}
-		}
-	} else {
-		s.logger.Warn("EmployeeUserService not available for new employee", "employee_id", employee.ID, "cccd", cccd)
-	}
-
-	return employee, true, false, nil
+	return createdEmployee, true, false, nil
 }
 
 func (s *Service) resolveBankID(ctx context.Context, bankName string) *uint {

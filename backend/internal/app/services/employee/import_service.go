@@ -14,7 +14,6 @@ import (
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
-	"api-server/internal/pkg/utils"
 )
 
 // ImportService handles employee import operations
@@ -23,7 +22,6 @@ type ImportService struct {
 	employeeRepo        domain.EmployeeRepository
 	projectRepo         domain.ProjectRepository
 	projectEmployeeRepo domain.ProjectEmployeeRepository
-	userService         *EmployeeUserService
 	progressService     *infrastructure.EmployeeImportProgressService
 	logger              *slog.Logger
 }
@@ -42,7 +40,6 @@ func NewImportService(
 	employeeRepo domain.EmployeeRepository,
 	projectRepo domain.ProjectRepository,
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
-	userService *EmployeeUserService,
 	progressService *infrastructure.EmployeeImportProgressService,
 ) *ImportService {
 	return &ImportService{
@@ -50,7 +47,6 @@ func NewImportService(
 		employeeRepo:        employeeRepo,
 		projectRepo:         projectRepo,
 		projectEmployeeRepo: projectEmployeeRepo,
-		userService:         userService,
 		progressService:     progressService,
 		logger:              observability.GetLogger().With("component", "EmployeeImportService"),
 	}
@@ -316,19 +312,21 @@ func (s *ImportService) getOrCreateEmployee(ctx context.Context, row dto.Employe
 				applyBankAccountValidation(ctx, s.bankAccountValidator(), employee)
 			}
 			if err := s.employeeRepo.Update(ctx, employee); err != nil {
-				s.logger.Warn("failed to update employee", "employee_id", employee.ID, "error", err)
-			} else {
-				s.logger.Info("updated employee from import", "employee_id", employee.ID, "cccd", row.CCCD)
-				return employee, false, true, nil
+				return nil, false, false, fmt.Errorf("failed to update employee: %w", err)
+			}
+			s.logger.Info("updated employee from import", "employee_id", employee.ID, "cccd", row.CCCD)
+		}
+
+		// Repair legacy imported employees through the same transactional path
+		// used for account creation. Fail the row rather than reporting a
+		// successful import with no usable login.
+		if employee.UserID == nil {
+			if err := s.employeeService.EnsureEmployeeUserAccount(ctx, employee.ID); err != nil {
+				return nil, false, false, fmt.Errorf("failed to create employee user account: %w", err)
 			}
 		}
 
-		// Create user account if employee doesn't have one
-		if employee.UserID == nil && s.userService != nil {
-			s.createUserAccountForEmployee(ctx, employee)
-		}
-
-		return employee, false, false, nil
+		return employee, false, needsUpdate, nil
 	}
 
 	// Create new employee
@@ -351,24 +349,13 @@ func (s *ImportService) getOrCreateEmployee(ctx context.Context, row dto.Employe
 		CreatedBy:         createdBy,
 	}
 
-	// Live OnePay account verification before persist. This path bypasses
-	// the EmployeeService layer (it calls the repo directly), so the
-	// validation must be invoked explicitly. Non-blocking: invalid
-	// accounts are still created and surface in the warning list.
-	applyBankAccountValidation(ctx, s.bankAccountValidator(), employee)
-
-	if err := s.employeeRepo.Create(ctx, employee); err != nil {
+	createdEmployee, err := s.employeeService.CreateEmployeeFromImport(ctx, employee, createdBy)
+	if err != nil {
 		return nil, false, false, err
 	}
 
-	s.logger.Info("created employee from import", "employee_id", employee.ID, "cccd", row.CCCD)
-
-	// Create user account
-	if s.userService != nil {
-		s.createUserAccountForEmployee(ctx, employee)
-	}
-
-	return employee, true, false, nil
+	s.logger.Info("created employee from import", "employee_id", createdEmployee.ID, "cccd", row.CCCD)
+	return createdEmployee, true, false, nil
 }
 
 // shouldUpdateEmployee checks if an employee needs to be updated based on import data
@@ -440,30 +427,6 @@ func (s *ImportService) updateEmployeeFields(employee *domain.Employee, row dto.
 	if row.DateOfBirth != nil {
 		employee.DateOfBirth = parseDateOfBirth(*row.DateOfBirth)
 	}
-}
-
-// createUserAccountForEmployee creates a user account for an employee
-func (s *ImportService) createUserAccountForEmployee(ctx context.Context, employee *domain.Employee) {
-	baseUsername := utils.GenerateUsername(employee.Fullname)
-	if baseUsername == "" {
-		s.logger.Warn("failed to generate username from name", "employee_id", employee.ID, "name", employee.Fullname)
-		return
-	}
-
-	username := s.userService.EnsureUniqueUsername(ctx, baseUsername)
-	userID, err := s.userService.CreateUserForEmployee(ctx, employee, username)
-	if err != nil {
-		s.logger.Error("failed to create user for employee", "employee_id", employee.ID, "username", username, "error", err)
-		return
-	}
-
-	employee.UserID = &userID
-	if err := s.employeeRepo.Update(ctx, employee); err != nil {
-		s.logger.Error("failed to update employee with user_id", "employee_id", employee.ID, "user_id", userID, "error", err)
-		return
-	}
-
-	s.logger.Info("created user account for employee", "employee_id", employee.ID, "username", username)
 }
 
 // getOrCreateAssignment gets an existing assignment or creates a new one
