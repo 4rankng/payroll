@@ -465,7 +465,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
       >
         {/* ── Header (Tailkit modal-head pattern) ─────────────────────────── */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
-          <DialogTitle asChild>
+          <DialogTitle asChild className="text-slate-900 dark:text-slate-100">
             <h3 className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-slate-100">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                 <FileText className="h-5 w-5" />

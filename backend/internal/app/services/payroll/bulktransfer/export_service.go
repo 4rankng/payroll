@@ -96,6 +96,15 @@ func (es *ExportService) Export(ctx context.Context, req *dto.ExportBulkTransfer
 		)
 	}
 
+	// Re-read bank details at the file-generation boundary. Planning can take
+	// long enough for a bank account to be confirmed invalid after the initial
+	// snapshot; the manual Chuyển lô file must use the latest eligibility state.
+	if err := es.planner.RefreshEmployeeBankDetails(ctx, plan.RawAggregated); err != nil {
+		return nil, err
+	}
+	plan.ValidatedData = es.excelService.ValidateAndFilterBulkTransferData(plan.RawAggregated)
+	plan.ForecastOutcomeItems = buildForecastOutcomeItems(req, plan.IsMonthly, plan.SelectedTimesheets, plan.ValidatedData, plan.PaymentPercentage)
+
 	// Generate and validate every workbook before the write phase. A configured
 	// threshold can reject an individual row, and that failure must not leave
 	// transaction codes behind for a file the Admin never received.

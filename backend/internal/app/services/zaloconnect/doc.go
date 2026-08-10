@@ -18,4 +18,3 @@
 //   - Secret fields (secret_key, access_token, refresh_token) are NEVER returned
 //     by GetStatus — it produces a masked view for the admin UI.
 package zaloconnect
-

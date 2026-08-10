@@ -45,13 +45,14 @@ func (r *TimesheetCommandRepository) Delete(ctx context.Context, id uint) error 
 	return r.db.WithContext(ctx).Delete(&domain.Timesheet{}, id).Error
 }
 
-// HardDelete permanently removes a timesheet (no soft-delete).
-// Used by BCC import "latest wins" overwrite to avoid accumulation of stale soft-deleted rows.
+// HardDelete permanently removes a timesheet (no soft-delete). BCC replacement
+// may only remove a row that is still pending approval and unpaid; the exact
+// predicate prevents a concurrent review/payment transition from being lost.
 func (r *TimesheetCommandRepository) HardDelete(ctx context.Context, id uint) error {
 	result := r.getDB(ctx).
 		Unscoped().
-		Where("id = ? AND timesheet_status <> ? AND payment_status = ?",
-			id, domain.TimesheetStatusApproved, domain.PaymentStatusPending).
+		Where("id = ? AND timesheet_status = ? AND payment_status = ?",
+			id, domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending).
 		Delete(&domain.Timesheet{})
 	if result.Error != nil {
 		return result.Error

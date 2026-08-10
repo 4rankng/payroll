@@ -104,6 +104,16 @@ describe('BCCUploadModal result states', () => {
     expect(screen.getByText('Tệp bảng chấm công').parentElement?.parentElement).toHaveClass('overflow-y-auto');
   });
 
+  it('keeps the light-header title visible instead of inheriting the dark-header default', () => {
+    mockModalState(null);
+    renderModal();
+
+    expect(screen.getByRole('heading', { name: /Tải lên Bảng Chấm Công/ })).toHaveClass(
+      'text-slate-900',
+      'dark:text-slate-100',
+    );
+  });
+
   it('shows the project picker even when the page already has a project selected', () => {
     mockModalState(null, false, { needsProjectSelect: true });
     renderModal();

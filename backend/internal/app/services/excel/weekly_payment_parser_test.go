@@ -234,6 +234,72 @@ func TestParseWeeklyPaymentFileKeepsMultipleShiftColumnsOnTheSameDay(t *testing.
 	}
 }
 
+func TestParseWeeklyPaymentFileStopsBeforeSummaryShiftColumns(t *testing.T) {
+	tests := []struct {
+		name     string
+		row8     string
+		row9     string
+		row10    string
+		merge    bool
+		hideColH bool
+	}{
+		{name: "row 8 label", row8: "Tổng hợp", row10: "HC"},
+		{name: "row 9 label", row9: "Tổng hợp", row10: "HC"},
+		{name: "row 10 label", row10: "Tổng hợp"},
+		{name: "merged upper label", row8: "Tổng hợp", row10: "HC", merge: true},
+		{name: "hidden merged anchor", row8: "Tổng hợp", row10: "HC", merge: true, hideColH: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := excelize.NewFile()
+			const sheetName = "Lương 520"
+			if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+				t.Fatalf("rename initial sheet: %v", err)
+			}
+
+			setCellValue(f, sheetName, "F8", "1")
+			setCellValue(f, sheetName, "F10", "HC")
+			setCellValue(f, sheetName, "G10", "TCN")
+			setCellValue(f, sheetName, "H8", tt.row8)
+			setCellValue(f, sheetName, "H9", tt.row9)
+			setCellValue(f, sheetName, "H10", tt.row10)
+			setCellValue(f, sheetName, "I10", "TCN")
+			setCellValue(f, sheetName, "B11", "NV-01")
+			setCellValue(f, sheetName, "C11", "Nguyễn Văn An")
+			setCellValue(f, sheetName, "F11", "8")
+			setCellValue(f, sheetName, "G11", "2")
+			setCellValue(f, sheetName, "H11", "8")
+			setCellValue(f, sheetName, "I11", "2")
+			if tt.merge {
+				if err := f.MergeCell(sheetName, "H8", "I8"); err != nil {
+					t.Fatalf("merge summary header: %v", err)
+				}
+			}
+			if tt.hideColH {
+				if err := f.SetColVisible(sheetName, "H", false); err != nil {
+					t.Fatalf("hide summary anchor: %v", err)
+				}
+			}
+
+			parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
+			if err != nil {
+				t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+			}
+			entries := parsed.Sheets[0].Employees[0].Entries
+			if len(entries) != 2 {
+				t.Fatalf("entry count = %d, want only 2 attendance entries before the summary block", len(entries))
+			}
+			if _, ok := parsed.Sheets[0].ShiftRows.ByCol[8]; ok {
+				t.Fatal("summary column H was included in the shift map")
+			}
+			if _, ok := parsed.Sheets[0].ShiftRows.ByCol[9]; ok {
+				t.Fatal("summary column I was included in the shift map")
+			}
+		})
+	}
+}
+
 func TestParseWeeklyPaymentFileUsesSelectedMonthDespiteStaleWeekdayHeader(t *testing.T) {
 	f := excelize.NewFile()
 	const sheetName = "Lương 520"

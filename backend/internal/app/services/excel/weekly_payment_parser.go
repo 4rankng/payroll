@@ -157,14 +157,29 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 	// can contain stale weekday labels.
 	lastColumnDay := 0
 	for colIdx := firstShiftCol - 1; colIdx < wpMaxColScan; colIdx++ {
-		// Check if column is hidden
 		colName, err := excelize.ColumnNumberToName(colIdx + 1)
 		if err != nil {
 			break
 		}
-		visible, err := f.GetColVisible(sheet, colName)
-		if err == nil && !visible {
-			continue
+
+		// Summary blocks can repeat real shift codes in row 10 (HC, TCN, NN,
+		// TCNN). Check their section label before visibility because the merged
+		// anchor column may be hidden while later summary columns remain visible.
+		isSummaryColumn := false
+		for _, headerRow := range []int{8, 9} {
+			headerCell, cellErr := excelize.CoordinatesToCellName(colIdx+1, headerRow)
+			if cellErr != nil {
+				continue
+			}
+			headerValue, valueErr := f.GetCellValue(sheet, headerCell)
+			if valueErr == nil && isStopColumn(headerValue) {
+				isSummaryColumn = true
+				break
+			}
+		}
+		if isSummaryColumn {
+			hm.stopCol = colIdx + 1
+			break
 		}
 
 		cn, err := excelize.CoordinatesToCellName(colIdx+1, 10)
@@ -181,6 +196,13 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 		if isStopColumn(val) {
 			hm.stopCol = colIdx + 1 // 1-based
 			break
+		}
+
+		// Hidden attendance columns do not contribute entries, but summary
+		// boundaries above must still terminate the scan.
+		visible, err := f.GetColVisible(sheet, colName)
+		if err == nil && !visible {
+			continue
 		}
 
 		// Read shift code from row 10

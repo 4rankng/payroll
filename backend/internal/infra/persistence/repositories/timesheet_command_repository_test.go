@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -111,5 +112,84 @@ func TestTimesheetCommandRepositoryUsesTransactionContextForReplacement(t *testi
 	}
 	if replacementCount != 0 {
 		t.Fatalf("replacement count after rollback = %d, want 0", replacementCount)
+	}
+}
+
+func TestTimesheetCommandRepositoryHardDeleteProtectsNonPendingRows(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open("file:hard-delete-protection?mode=memory&cache=shared"), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.Exec(`
+		CREATE TABLE timesheets (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			project_id INTEGER, employee_id INTEGER, payrate_id INTEGER,
+			date DATETIME, hours_worked REAL, paytype TEXT, payrate INTEGER,
+			amount INTEGER, timesheet_status TEXT, payment_status TEXT,
+			allowed_edit INTEGER, request_edit_id INTEGER,
+			payment_reference TEXT, payment_date DATETIME, paid_amount INTEGER,
+			paid_at DATETIME, revenue_receivable INTEGER, revenue_paid INTEGER,
+			transaction_id INTEGER, deleted_at DATETIME, created_by INTEGER,
+			approved_by INTEGER, approved_at DATETIME, rejection_reason TEXT,
+			created_at DATETIME, updated_at DATETIME, force_payroll INTEGER
+		)
+	`).Error; err != nil {
+		t.Fatalf("create timesheets: %v", err)
+	}
+
+	repo := NewTimesheetCommandRepository(db)
+	tests := []struct {
+		name          string
+		status        domain.TimesheetStatus
+		paymentStatus domain.PaymentStatus
+		wantDeleted   bool
+	}{
+		{name: "pending unpaid", status: domain.TimesheetStatusPendingApproval, paymentStatus: domain.PaymentStatusPending, wantDeleted: true},
+		{name: "approved", status: domain.TimesheetStatusApproved, paymentStatus: domain.PaymentStatusPending},
+		{name: "rejected", status: domain.TimesheetStatusRejected, paymentStatus: domain.PaymentStatusPending},
+		{name: "paid", status: domain.TimesheetStatusPendingApproval, paymentStatus: domain.PaymentStatusPaid},
+		{name: "failed payment", status: domain.TimesheetStatusPendingApproval, paymentStatus: domain.PaymentStatusFailed},
+		{name: "cancelled payment", status: domain.TimesheetStatusPendingApproval, paymentStatus: domain.PaymentStatusCancelled},
+	}
+
+	for index, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			timesheet := &domain.Timesheet{
+				ProjectID:     10,
+				EmployeeID:    uint(index + 1),
+				PayrateID:     30,
+				Date:          time.Date(2026, 8, index+1, 0, 0, 0, 0, time.UTC),
+				PayType:       "worker.ngày thường.HC",
+				Status:        tt.status,
+				PaymentStatus: tt.paymentStatus,
+				CreatedBy:     1,
+			}
+			if err := db.Create(timesheet).Error; err != nil {
+				t.Fatalf("seed timesheet: %v", err)
+			}
+
+			err := repo.HardDelete(context.Background(), timesheet.ID)
+			if tt.wantDeleted {
+				if err != nil {
+					t.Fatalf("HardDelete() error = %v", err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), "became protected") {
+				t.Fatalf("HardDelete() error = %v, want became-protected error", err)
+			}
+
+			var count int64
+			if err := db.Unscoped().Model(&domain.Timesheet{}).Where("id = ?", timesheet.ID).Count(&count).Error; err != nil {
+				t.Fatalf("count timesheet: %v", err)
+			}
+			wantCount := int64(1)
+			if tt.wantDeleted {
+				wantCount = 0
+			}
+			if count != wantCount {
+				t.Fatalf("stored row count = %d, want %d", count, wantCount)
+			}
+		})
 	}
 }

@@ -27,6 +27,7 @@ type stubRepoBundle struct {
 	timesheetByID    map[uint]*domain.Timesheet
 	weeklyPercentage float64
 	listFilters      []domain.TimesheetFilters
+	beforeBatchRead  func()
 }
 
 type stubTimesheetRepo struct{ b *stubRepoBundle }
@@ -90,8 +91,18 @@ func (r *stubEmployeeRepo) GetByID(ctx context.Context, id uint) (*domain.Employ
 	}
 	return nil, errors.New("employee not found")
 }
-func (r *stubEmployeeRepo) GetByIDs(context.Context, []int64) ([]*domain.Employee, error) {
-	return nil, errors.New("not used")
+func (r *stubEmployeeRepo) GetByIDs(_ context.Context, ids []int64) ([]*domain.Employee, error) {
+	if r.b.beforeBatchRead != nil {
+		r.b.beforeBatchRead()
+		r.b.beforeBatchRead = nil
+	}
+	employees := make([]*domain.Employee, 0, len(ids))
+	for _, id := range ids {
+		if employee, ok := r.b.employees[uint(id)]; ok {
+			employees = append(employees, employee)
+		}
+	}
+	return employees, nil
 }
 func (r *stubEmployeeRepo) GetByBankAccountNumber(context.Context, string) (*domain.Employee, error) {
 	return nil, errors.New("not used")
@@ -261,6 +272,62 @@ func TestPlanner_Plan_Weekly_AggregatesAndValidates(t *testing.T) {
 	assert.Equal(t, pkgClock.DefaultLocation, b.listFilters[0].ToDate.Location())
 	assert.Equal(t, "2026-07-08", b.listFilters[0].FromDate.Format(timeutil.DateFormat))
 	assert.Equal(t, "2026-07-14", b.listFilters[0].ToDate.Format(timeutil.DateFormat))
+}
+
+func TestPlanner_Plan_Weekly_ExcludesConfirmedInvalidBankAccount(t *testing.T) {
+	b := seedStub()
+	b.employees[9].BankAccountNumber = "87654321"
+	b.employees[9].BankAccountStatus = domain.BankAccountStatusInvalid
+	p := newPlannerWithStub(b)
+
+	plan, err := p.Plan(context.Background(), &dto.ExportBulkTransferRequest{
+		FromDate:  "2026-07-08",
+		ToDate:    "2026-07-14",
+		CreatedBy: 1,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, plan.ValidatedData)
+
+	invalidKey := excel.EmployeeProjectKey{EmployeeID: 9, ProjectID: 12}
+	assert.Equal(t, 2, plan.ValidatedData.TotalCount)
+	assert.Equal(t, 1, plan.ValidatedData.ValidCount)
+	assert.Equal(t, 1, plan.ValidatedData.SkippedCount)
+	assert.NotContains(t, plan.ValidatedData.ValidData.EmployeeProjectAmounts, invalidKey)
+	require.Len(t, plan.ValidatedData.SkippedEmployees, 1)
+	assert.Equal(t, "Invalid bank account", plan.ValidatedData.SkippedEmployees[0].Reason)
+}
+
+func TestPlanner_RefreshEmployeeBankDetails_UsesCurrentInvalidStatus(t *testing.T) {
+	b := seedStub()
+	b.timesheets[0].Date = time.Date(2026, time.July, 8, 0, 0, 0, 0, pkgClock.DefaultLocation)
+	b.timesheets[1].Date = time.Date(2026, time.July, 14, 0, 0, 0, 0, pkgClock.DefaultLocation)
+	p := newPlannerWithStub(b)
+
+	plan, err := p.Plan(context.Background(), &dto.ExportBulkTransferRequest{
+		FromDate:  "2026-07-08",
+		ToDate:    "2026-07-14",
+		CreatedBy: 1,
+	})
+	require.NoError(t, err)
+	require.Equal(t, []domain.CashForecastOutcomeItem{
+		{TimesheetID: 101, Amount: 5_000_000},
+		{TimesheetID: 102, Amount: 3_000_000},
+	}, plan.ForecastOutcomeItems)
+
+	b.employees[7].BankAccountStatus = domain.BankAccountStatusInvalid
+	require.NoError(t, p.RefreshEmployeeBankDetails(context.Background(), plan.RawAggregated))
+
+	validation := p.excelService.ValidateAndFilterBulkTransferData(plan.RawAggregated)
+	validKey := excel.EmployeeProjectKey{EmployeeID: 7, ProjectID: 12}
+	assert.NotContains(t, validation.ValidData.EmployeeProjectAmounts, validKey)
+	assert.Equal(t, domain.BankAccountStatusInvalid, plan.RawAggregated.EmployeeData[7].BankAccountStatus)
+	assert.Empty(t, buildForecastOutcomeItems(
+		&dto.ExportBulkTransferRequest{FromDate: "2026-07-08", ToDate: "2026-07-14"},
+		plan.IsMonthly,
+		plan.SelectedTimesheets,
+		validation,
+		plan.PaymentPercentage,
+	))
 }
 
 // TestPlanner_Plan_EmptyPool_NoError verifies the empty-eligible-pool case:

@@ -522,9 +522,124 @@ func (s *BCCImportService) failWithImportErrors(
 		fmt.Errorf("import failed: %s", FirstErrorReason(detail))
 }
 
+type bccReplacementKey struct {
+	employeeID uint
+	date       string
+	hourType   string
+}
+
+func bccEntryReplacementKey(entry domainservices.BulkCreateTimesheetEntry, includeHourType bool) bccReplacementKey {
+	key := bccReplacementKey{employeeID: entry.EmployeeID, date: entry.Date}
+	if includeHourType {
+		key.hourType = strings.ToLower(entry.HourType)
+	}
+	return key
+}
+
+func bccTimesheetReplacementKey(timesheet *domain.Timesheet, includeHourType bool) bccReplacementKey {
+	key := bccReplacementKey{
+		employeeID: timesheet.EmployeeID,
+		date:       timesheet.Date.Format("2006-01-02"),
+	}
+	if includeHourType {
+		parts := strings.Split(timesheet.PayType, ".")
+		key.hourType = strings.ToLower(parts[len(parts)-1])
+	}
+	return key
+}
+
+// planBCCReplacement preserves reviewed payroll data, replaces only pending
+// rows, and leaves missing rows for the bulk-create path. Paid and other
+// non-pending rows are also protected because an import must not reopen them.
+func planBCCReplacement(
+	entries []domainservices.BulkCreateTimesheetEntry,
+	existingTimesheets []*domain.Timesheet,
+	flexibleEmployeeIDs map[uint]struct{},
+	includeHourType bool,
+) (
+	filteredEntries []domainservices.BulkCreateTimesheetEntry,
+	staleIDs []uint,
+	protectedSkippedCount int,
+	flexibleSkippedCount int,
+) {
+	requestedKeys := make(map[bccReplacementKey]struct{}, len(entries))
+	for _, entry := range entries {
+		requestedKeys[bccEntryReplacementKey(entry, includeHourType)] = struct{}{}
+	}
+
+	protectedKeys := make(map[bccReplacementKey]struct{})
+	flexibleKeys := make(map[bccReplacementKey]struct{})
+	for _, timesheet := range existingTimesheets {
+		key := bccTimesheetReplacementKey(timesheet, includeHourType)
+		if _, requested := requestedKeys[key]; !requested {
+			continue
+		}
+		if _, flexible := flexibleEmployeeIDs[timesheet.EmployeeID]; flexible {
+			flexibleKeys[key] = struct{}{}
+			continue
+		}
+		if timesheet.Status != domain.TimesheetStatusPendingApproval ||
+			timesheet.PaymentStatus == domain.PaymentStatusPaid ||
+			timesheet.PaymentStatus == domain.PaymentStatusFailed ||
+			timesheet.PaymentStatus == domain.PaymentStatusCancelled {
+			protectedKeys[key] = struct{}{}
+		}
+	}
+
+	for _, timesheet := range existingTimesheets {
+		key := bccTimesheetReplacementKey(timesheet, includeHourType)
+		if _, requested := requestedKeys[key]; !requested {
+			continue
+		}
+		if _, flexible := flexibleKeys[key]; flexible {
+			continue
+		}
+		if _, protected := protectedKeys[key]; protected {
+			continue
+		}
+		if timesheet.Status == domain.TimesheetStatusPendingApproval {
+			staleIDs = append(staleIDs, timesheet.ID)
+		}
+	}
+
+	filteredEntries = make([]domainservices.BulkCreateTimesheetEntry, 0, len(entries))
+	for _, entry := range entries {
+		key := bccEntryReplacementKey(entry, includeHourType)
+		if _, flexible := flexibleKeys[key]; flexible {
+			flexibleSkippedCount++
+			continue
+		}
+		if _, protected := protectedKeys[key]; protected {
+			protectedSkippedCount++
+			continue
+		}
+		filteredEntries = append(filteredEntries, entry)
+	}
+
+	return filteredEntries, staleIDs, protectedSkippedCount, flexibleSkippedCount
+}
+
+func (s *BCCImportService) completeSkippedBCCImport(
+	ctx context.Context,
+	createdAsset *domain.Asset,
+	uploaderID uint,
+	stats BCCImportStats,
+) (*BCCImportResult, error) {
+	now := clock.Now()
+	stats.Status = domain.TimesheetImportStatusCompleted
+	stats.CreatedCount = 0
+	stats.ErrorCount = 0
+	stats.ErrorDetail = marshalErrors(nil)
+	stats.ProcessedAt = &now
+	if err := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); err != nil {
+		return nil, fmt.Errorf("cập nhật kết quả BCC: %w", err)
+	}
+	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt), nil
+}
+
 // ProcessUpload saves the BCC file, parses it, and creates timesheets.
 // forMonth is "YYYY-MM" from the frontend; day numbers in the Excel belong to this month.
-// Conflict policy: latest upload wins — unapproved entries are overwritten, approved/paid are protected.
+// Conflict policy: missing rows are created, pending rows are replaced, and reviewed/paid rows are skipped.
 func (s *BCCImportService) ProcessUpload(
 	ctx context.Context,
 	fileData io.Reader,
@@ -963,93 +1078,32 @@ func (s *BCCImportService) processAssetData(
 
 	totalRows := len(parsed.Employees)
 
-	// 9. "Latest wins" overwrite: for any (employee, date) in the new import,
-	// delete previously-imported unapproved entries so the latest upload
-	// fully replaces them. Approved or paid entries are protected.
+	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	var staleIDs []uint
 	flexibleSkippedCount := 0
+	protectedSkippedCount := 0
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
 		if terr != nil {
 			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
 		}
-
-		type dk struct {
-			empID uint
-			date  string
-		}
-
-		importDates := make(map[dk]bool, len(entries))
-		for _, e := range entries {
-			importDates[dk{e.EmployeeID, e.Date}] = true
-		}
-
-		blocked := make(map[dk]string)
-		existingFlexible := make(map[dk]bool)
-		for _, ts := range existingTS {
-			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
-			if !importDates[k] {
-				continue
-			}
-			if _, isFlexible := flexibleEmployeeIDs[ts.EmployeeID]; isFlexible {
-				existingFlexible[k] = true
-				continue
-			}
-
-			isPaid := ts.PaymentStatus == domain.PaymentStatusPaid ||
-				ts.PaymentStatus == domain.PaymentStatusFailed ||
-				ts.PaymentStatus == domain.PaymentStatusCancelled
-
-			switch {
-			case isPaid:
-				blocked[k] = "đã thanh toán"
-			case ts.Status == domain.TimesheetStatusApproved:
-				blocked[k] = "đã được phê duyệt"
-			default:
-				staleIDs = append(staleIDs, ts.ID)
-			}
-		}
-
-		if len(blocked) > 0 {
-			warned := make(map[dk]bool, len(blocked))
-			filtered := entries[:0]
-			for _, e := range entries {
-				k := dk{e.EmployeeID, e.Date}
-				if reason, isBlocked := blocked[k]; isBlocked {
-					if !warned[k] {
-						warned[k] = true
-						name := empNames[e.EmployeeID]
-						if name == "" {
-							name = fmt.Sprintf("ID %d", e.EmployeeID)
-						}
-						importErrors = append(importErrors, domain.ImportError{
-							Employee: name,
-							Reason:   fmt.Sprintf("ngày %s: %s, không ghi đè", e.Date, reason),
-						})
-					}
-					continue
-				}
-				filtered = append(filtered, e)
-			}
-			entries = filtered
-		}
-		if len(existingFlexible) > 0 {
-			filtered := entries[:0]
-			for _, entry := range entries {
-				if existingFlexible[dk{entry.EmployeeID, entry.Date}] {
-					flexibleSkippedCount++
-					continue
-				}
-				filtered = append(filtered, entry)
-			}
-			entries = filtered
-		}
-
+		entries, staleIDs, protectedSkippedCount, flexibleSkippedCount = planBCCReplacement(
+			entries, existingTS, flexibleEmployeeIDs, false,
+		)
 	}
 
 	// 10. Call BulkCreateTimesheets.
 	if len(entries) == 0 {
+		if len(importErrors) == 0 && protectedSkippedCount+flexibleSkippedCount > 0 {
+			return s.completeSkippedBCCImport(ctx, createdAsset, uploaderID, BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				TotalRows:    totalRows,
+				SkippedCount: protectedSkippedCount + flexibleSkippedCount,
+			})
+		}
 		reason := "không có dữ liệu hợp lệ để tạo bảng chấm công"
 		if len(importErrors) > 0 {
 			detail := marshalErrors(importErrors)
@@ -1089,7 +1143,7 @@ func (s *BCCImportService) processAssetData(
 
 	// 11. Count results.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 

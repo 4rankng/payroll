@@ -38,6 +38,7 @@ type ExportPlan struct {
 	// timesheets inside the declared range. Force-included backlog outside the
 	// range remains in the bank file but never contaminates forecast accuracy.
 	ForecastOutcomeItems []domain.CashForecastOutcomeItem
+	SelectedTimesheets   []*domain.Timesheet
 }
 
 // ExportPlanner performs the read-only selection + aggregation + validation
@@ -115,7 +116,7 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 		}
 	}
 
-	rawAggregated, validated, outcomeItems, paymentPercentage, err := p.selectAndAggregate(ctx, req, isMonthly, monthStart, cycle, periodCache)
+	rawAggregated, validated, selectedTimesheets, outcomeItems, paymentPercentage, err := p.selectAndAggregate(ctx, req, isMonthly, monthStart, cycle, periodCache)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +139,7 @@ func (p *ExportPlanner) planWithDateRange(ctx context.Context, req *dto.ExportBu
 		SnapshotEpoch:        snapshot,
 		PaymentPercentage:    paymentPercentage,
 		ForecastOutcomeItems: outcomeItems,
+		SelectedTimesheets:   selectedTimesheets,
 	}, nil
 }
 
@@ -151,7 +153,7 @@ func (p *ExportPlanner) selectAndAggregate(
 	monthStart time.Time,
 	cycle string,
 	periodCache map[uint]projectPeriod,
-) (*excel.BulkTransferData, *excel.BulkTransferValidationResult, []domain.CashForecastOutcomeItem, float64, error) {
+) (*excel.BulkTransferData, *excel.BulkTransferValidationResult, []*domain.Timesheet, []domain.CashForecastOutcomeItem, float64, error) {
 	// Base filters: eligible timesheets per the shared pending-payment rule.
 	filters := domain.NewPendingPaymentTimesheetFilters()
 	// For weekly exports, include date filters; for monthly, dates are handled per-project
@@ -175,7 +177,7 @@ func (p *ExportPlanner) selectAndAggregate(
 	// Get all timesheets matching the date and status criteria
 	allTimesheets, err := p.listTimesheetsForCycle(ctx, filters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
-		return nil, nil, nil, 0, fmt.Errorf("failed to get timesheets: %w", err)
+		return nil, nil, nil, nil, 0, fmt.Errorf("failed to get timesheets: %w", err)
 	}
 
 	// Filter by employee IDs if provided in request
@@ -191,7 +193,7 @@ func (p *ExportPlanner) selectAndAggregate(
 
 	forcedAll, err := p.listTimesheetsForCycle(ctx, forcedFilters, req, isMonthly, monthStart, periodCache)
 	if err != nil {
-		return nil, nil, nil, 0, fmt.Errorf("failed to get forced timesheets: %w", err)
+		return nil, nil, nil, nil, 0, fmt.Errorf("failed to get forced timesheets: %w", err)
 	}
 	forced := p.filterTimesheetsByRequest(forcedAll, req)
 
@@ -214,14 +216,14 @@ func (p *ExportPlanner) selectAndAggregate(
 	// Aggregate data by employee-project combination with payment schedule filter
 	aggregatedData, err := p.aggregateTimesheetData(ctx, filteredTimesheets, cycle)
 	if err != nil {
-		return nil, nil, nil, 0, fmt.Errorf("failed to aggregate timesheet data: %w", err)
+		return nil, nil, nil, nil, 0, fmt.Errorf("failed to aggregate timesheet data: %w", err)
 	}
 
 	// Validate and filter the data before saving
 	validationResult := p.excelService.ValidateAndFilterBulkTransferData(aggregatedData)
 
 	paymentPercentage := p.excelService.GetPaymentPercentageForSchedule(ctx, cycle)
-	return aggregatedData, validationResult, buildForecastOutcomeItems(req, isMonthly, filteredTimesheets, validationResult, paymentPercentage), paymentPercentage, nil
+	return aggregatedData, validationResult, filteredTimesheets, buildForecastOutcomeItems(req, isMonthly, filteredTimesheets, validationResult, paymentPercentage), paymentPercentage, nil
 }
 
 func buildForecastOutcomeItems(
@@ -437,22 +439,7 @@ func (p *ExportPlanner) aggregateTimesheetData(ctx context.Context, timesheets [
 			if err != nil {
 				return nil, fmt.Errorf("failed to get employee %d: %w", timesheet.EmployeeID, err)
 			}
-
-			// Convert to excel.Employee
-			excelEmployee := excel.Employee{
-				ID:                employee.ID,
-				Fullname:          employee.FormattedFullname(),
-				BankAccountNumber: employee.BankAccountNumber,
-				BankAccountName:   employee.BankAccountName,
-			}
-			if employee.Bank != nil {
-				excelEmployee.Bank = &excel.Bank{
-					ID:         employee.Bank.ID,
-					BranchName: employee.Bank.BranchName,
-					BankCode:   employee.Bank.BankCode,
-				}
-			}
-			employeeData[timesheet.EmployeeID] = excelEmployee
+			employeeData[timesheet.EmployeeID] = excelEmployeeFromDomain(employee)
 		}
 
 		// Get project data if not already fetched
@@ -475,6 +462,58 @@ func (p *ExportPlanner) aggregateTimesheetData(ctx context.Context, timesheets [
 		ProjectData:               projectData,
 		TransactionCodes:          transactionCodes,
 	}, nil
+}
+
+// RefreshEmployeeBankDetails re-reads the bank fields that determine whether
+// a row may enter the manual Chuyển lô workbook. Export calls it immediately
+// before generation so a confirmed-invalid account changed after planning is
+// still excluded from the downloaded file.
+func (p *ExportPlanner) RefreshEmployeeBankDetails(ctx context.Context, data *excel.BulkTransferData) error {
+	if data == nil {
+		return nil
+	}
+
+	employeeIDs := make([]int64, 0, len(data.EmployeeData))
+	for employeeID := range data.EmployeeData {
+		employeeIDs = append(employeeIDs, int64(employeeID))
+	}
+	employees, err := p.employeeRepo.GetByIDs(ctx, employeeIDs)
+	if err != nil {
+		return fmt.Errorf("refresh employee bank details: %w", err)
+	}
+	byID := make(map[uint]*domain.Employee, len(employees))
+	for _, employee := range employees {
+		if employee != nil {
+			byID[employee.ID] = employee
+		}
+	}
+	for _, employeeID := range employeeIDs {
+		employee, ok := byID[uint(employeeID)]
+		if !ok {
+			return fmt.Errorf("refresh employee %d bank details: employee not found", employeeID)
+		}
+		data.EmployeeData[uint(employeeID)] = excelEmployeeFromDomain(employee)
+	}
+
+	return nil
+}
+
+func excelEmployeeFromDomain(employee *domain.Employee) excel.Employee {
+	excelEmployee := excel.Employee{
+		ID:                employee.ID,
+		Fullname:          employee.FormattedFullname(),
+		BankAccountNumber: employee.BankAccountNumber,
+		BankAccountName:   employee.BankAccountName,
+		BankAccountStatus: employee.BankAccountStatus,
+	}
+	if employee.Bank != nil {
+		excelEmployee.Bank = &excel.Bank{
+			ID:         employee.Bank.ID,
+			BranchName: employee.Bank.BranchName,
+			BankCode:   employee.Bank.BankCode,
+		}
+	}
+	return excelEmployee
 }
 
 // uuidNewShort returns the first 8 alphanumeric chars of a fresh UUID, matching

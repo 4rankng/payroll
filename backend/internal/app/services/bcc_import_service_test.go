@@ -9,6 +9,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseForMonth(t *testing.T) {
@@ -227,6 +228,129 @@ func TestAdminBCCImportEntryRemainsPendingApproval(t *testing.T) {
 	}
 	if timesheet.ApprovedBy != nil || timesheet.ApprovedAt != nil {
 		t.Fatal("admin BCC import must not have approval metadata")
+	}
+}
+
+func TestPlanBCCReplacementSkipsReviewedAndUpsertsPendingOrMissing(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "HC"},
+		{EmployeeID: 2, Date: "2026-08-08", HourType: "TCN"},
+		{EmployeeID: 3, Date: "2026-08-08", HourType: "HC"},
+		{EmployeeID: 4, Date: "2026-08-08", HourType: "HC"},
+		{EmployeeID: 5, Date: "2026-08-08", HourType: "HC"},
+	}
+	existing := []*domain.Timesheet{
+		{ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending},
+		// A pending row sharing an approved key must remain untouched because the
+		// incoming key is protected as a unit.
+		{ID: 12, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending},
+		{ID: 21, EmployeeID: 2, Date: date, PayType: "worker.ngày thường.TCN", Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending},
+		{ID: 41, EmployeeID: 4, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusRejected, PaymentStatus: domain.PaymentStatusPending},
+		{ID: 51, EmployeeID: 5, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending},
+	}
+
+	filtered, staleIDs, protectedSkipped, flexibleSkipped := planBCCReplacement(
+		entries,
+		existing,
+		map[uint]struct{}{5: {}},
+		true,
+	)
+
+	if len(filtered) != 2 || filtered[0].EmployeeID != 2 || filtered[1].EmployeeID != 3 {
+		t.Fatalf("filtered entries = %#v, want pending employee 2 and missing employee 3", filtered)
+	}
+	if len(staleIDs) != 1 || staleIDs[0] != 21 {
+		t.Fatalf("stale IDs = %v, want only pending timesheet 21", staleIDs)
+	}
+	if protectedSkipped != 2 {
+		t.Fatalf("protected skipped = %d, want approved and rejected entries", protectedSkipped)
+	}
+	if flexibleSkipped != 1 {
+		t.Fatalf("flexible skipped = %d, want 1", flexibleSkipped)
+	}
+}
+
+func TestPlanBCCReplacementKeepsDifferentHourTypesIndependent(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "HC"},
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "TCN"},
+	}
+	existing := []*domain.Timesheet{{
+		ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC",
+		Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending,
+	}}
+
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+
+	if len(filtered) != 1 || filtered[0].HourType != "TCN" {
+		t.Fatalf("filtered entries = %#v, want only TCN", filtered)
+	}
+	if len(staleIDs) != 0 || protectedSkipped != 1 {
+		t.Fatalf("stale IDs = %v, protected skipped = %d", staleIDs, protectedSkipped)
+	}
+}
+
+func TestPlanBCCReplacementProtectsEveryNonEditablePaymentState(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	for _, paymentStatus := range []domain.PaymentStatus{
+		domain.PaymentStatusPaid,
+		domain.PaymentStatusFailed,
+		domain.PaymentStatusCancelled,
+	} {
+		t.Run(string(paymentStatus), func(t *testing.T) {
+			entries := []domainservices.BulkCreateTimesheetEntry{{
+				EmployeeID: 1, Date: "2026-08-08", HourType: "HC",
+			}}
+			existing := []*domain.Timesheet{{
+				ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC",
+				Status: domain.TimesheetStatusPendingApproval, PaymentStatus: paymentStatus,
+			}}
+
+			filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+			if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 1 {
+				t.Fatalf("filtered=%v stale=%v protected=%d", filtered, staleIDs, protectedSkipped)
+			}
+		})
+	}
+}
+
+func TestPlanBCCReplacementLegacyKeyProtectsWholeEmployeeDay(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "HC"},
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "TCN"},
+	}
+	existing := []*domain.Timesheet{{
+		ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC",
+		Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending,
+	}}
+
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, false)
+	if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 2 {
+		t.Fatalf("filtered=%v stale=%v protected=%d, want whole day protected", filtered, staleIDs, protectedSkipped)
+	}
+}
+
+func TestCompleteSkippedBCCImportReportsSuccessfulNoOp(t *testing.T) {
+	createdAt := clock.Now()
+	asset := &domain.Asset{ID: 42, CreatedAt: createdAt}
+	ctx := context.WithValue(context.Background(), deferBCCTerminalMetadataKey{}, true)
+
+	result, err := (&BCCImportService{}).completeSkippedBCCImport(ctx, asset, 7, BCCImportStats{
+		ProjectID:    74,
+		OriginalName: "thai-binh-duong.xlsx",
+		ForMonth:     "2026-08",
+		TotalRows:    3,
+		SkippedCount: 3,
+	})
+	if err != nil {
+		t.Fatalf("completeSkippedBCCImport() error = %v", err)
+	}
+	if result.Status != domain.TimesheetImportStatusCompleted || result.CreatedCount != 0 ||
+		result.ErrorCount != 0 || result.SkippedCount != 3 {
+		t.Fatalf("result = %#v, want completed no-op with 3 skipped rows", result)
 	}
 }
 

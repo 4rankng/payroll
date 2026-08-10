@@ -396,91 +396,32 @@ func (s *BCCImportService) processMultiPositionUpload(
 		}
 	}
 
-	// 9. "Latest wins" overwrite (same logic as legacy path).
+	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	var staleIDs []uint
 	flexibleSkippedCount := 0
+	protectedSkippedCount := 0
 	if len(entries) > 0 {
 		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
 		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
 		if terr != nil {
 			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
 		}
-
-		type dk struct {
-			empID uint
-			date  string
-		}
-
-		importDates := make(map[dk]bool, len(entries))
-		for _, e := range entries {
-			importDates[dk{e.EmployeeID, e.Date}] = true
-		}
-
-		blocked := make(map[dk]string)
-		existingFlexible := make(map[dk]bool)
-		for _, ts := range existingTS {
-			k := dk{ts.EmployeeID, ts.Date.Format("2006-01-02")}
-			if !importDates[k] {
-				continue
-			}
-			if _, isFlexible := flexibleEmployeeIDs[ts.EmployeeID]; isFlexible {
-				existingFlexible[k] = true
-				continue
-			}
-
-			isPaid := ts.PaymentStatus == domain.PaymentStatusPaid ||
-				ts.PaymentStatus == domain.PaymentStatusFailed ||
-				ts.PaymentStatus == domain.PaymentStatusCancelled
-
-			switch {
-			case isPaid:
-				blocked[k] = "đã thanh toán"
-			case ts.Status == domain.TimesheetStatusApproved:
-				blocked[k] = "đã được phê duyệt"
-			default:
-				staleIDs = append(staleIDs, ts.ID)
-			}
-		}
-
-		if len(blocked) > 0 {
-			warned := make(map[dk]bool, len(blocked))
-			filtered := entries[:0]
-			for _, e := range entries {
-				k := dk{e.EmployeeID, e.Date}
-				if reason, isBlocked := blocked[k]; isBlocked {
-					if !warned[k] {
-						warned[k] = true
-						name := empNames[e.EmployeeID]
-						if name == "" {
-							name = fmt.Sprintf("ID %d", e.EmployeeID)
-						}
-						importErrors = append(importErrors, domain.ImportError{
-							Employee: name,
-							Reason:   fmt.Sprintf("ngày %s: %s, không ghi đè", e.Date, reason),
-						})
-					}
-					continue
-				}
-				filtered = append(filtered, e)
-			}
-			entries = filtered
-		}
-		if len(existingFlexible) > 0 {
-			filtered := entries[:0]
-			for _, entry := range entries {
-				if existingFlexible[dk{entry.EmployeeID, entry.Date}] {
-					flexibleSkippedCount++
-					continue
-				}
-				filtered = append(filtered, entry)
-			}
-			entries = filtered
-		}
-
+		entries, staleIDs, protectedSkippedCount, flexibleSkippedCount = planBCCReplacement(
+			entries, existingTS, flexibleEmployeeIDs, false,
+		)
 	}
 
 	// 10. Bulk create or return failure.
 	if len(entries) == 0 {
+		if len(importErrors) == 0 && protectedSkippedCount+flexibleSkippedCount > 0 {
+			return s.completeSkippedBCCImport(ctx, createdAsset, uploaderID, BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				TotalRows:    totalRows,
+				SkippedCount: protectedSkippedCount + flexibleSkippedCount,
+			})
+		}
 		reason := "không có dữ liệu hợp lệ để tạo bảng chấm công"
 		if len(importErrors) > 0 {
 			detail := marshalErrors(importErrors)
@@ -521,7 +462,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 11. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 

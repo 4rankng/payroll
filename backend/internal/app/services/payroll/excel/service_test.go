@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"api-server/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xuri/excelize/v2"
@@ -186,6 +187,85 @@ func TestService_ValidateAndFilterBulkTransferData_MissingAccountName(t *testing
 	assert.Equal(t, 1, result.SkippedCount)
 	assert.Len(t, result.SkippedEmployees, 1)
 	assert.Equal(t, "Missing bank account name", result.SkippedEmployees[0].Reason)
+}
+
+func TestService_ValidateAndFilterBulkTransferData_BankAccountStatus(t *testing.T) {
+	tests := []struct {
+		name          string
+		status        string
+		validCount    int
+		skippedReason string
+	}{
+		{name: "confirmed valid", status: domain.BankAccountStatusValid, validCount: 1},
+		{name: "unverified fail open", status: domain.BankAccountStatusUnverified, validCount: 1},
+		{name: "legacy empty status", status: "", validCount: 1},
+		{name: "confirmed invalid", status: domain.BankAccountStatusInvalid, skippedReason: "Invalid bank account"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewService(&mockSettingsConfigService{})
+			data := &BulkTransferData{
+				EmployeeProjectAmounts: map[EmployeeProjectKey]int64{
+					{EmployeeID: 1, ProjectID: 1}: 1000,
+				},
+				EmployeeProjectTimesheets: map[EmployeeProjectKey][]uint{
+					{EmployeeID: 1, ProjectID: 1}: {1, 2},
+				},
+				EmployeeData: map[uint]Employee{
+					1: {
+						ID:                1,
+						Fullname:          "John Doe",
+						BankAccountNumber: "123456789",
+						BankAccountName:   "John Account",
+						Bank:              &Bank{ID: 1, BranchName: "Main Branch"},
+						BankAccountStatus: tt.status,
+					},
+				},
+				ProjectData: map[uint]Project{
+					1: {ID: 1, Name: "Project Alpha"},
+				},
+			}
+
+			result := service.ValidateAndFilterBulkTransferData(data)
+
+			assert.Equal(t, tt.validCount, result.ValidCount)
+			if tt.skippedReason != "" {
+				require.Len(t, result.SkippedEmployees, 1)
+				assert.Equal(t, tt.skippedReason, result.SkippedEmployees[0].Reason)
+			}
+		})
+	}
+}
+
+func TestService_ValidateAndFilterBulkTransferData_MissingBank(t *testing.T) {
+	service := NewService(&mockSettingsConfigService{})
+
+	data := &BulkTransferData{
+		EmployeeProjectAmounts: map[EmployeeProjectKey]int64{
+			{EmployeeID: 1, ProjectID: 1}: 1000,
+		},
+		EmployeeProjectTimesheets: map[EmployeeProjectKey][]uint{
+			{EmployeeID: 1, ProjectID: 1}: {1, 2},
+		},
+		EmployeeData: map[uint]Employee{
+			1: {
+				ID:                1,
+				Fullname:          "John Doe",
+				BankAccountNumber: "123456789",
+				BankAccountName:   "John Account",
+			},
+		},
+		ProjectData: map[uint]Project{
+			1: {ID: 1, Name: "Project Alpha"},
+		},
+	}
+
+	result := service.ValidateAndFilterBulkTransferData(data)
+
+	assert.Equal(t, 0, result.ValidCount)
+	assert.Equal(t, 1, result.SkippedCount)
+	assert.Equal(t, "Missing bank", result.SkippedEmployees[0].Reason)
 }
 
 func TestService_GenerateBulkTransferExcel_EmptyData(t *testing.T) {

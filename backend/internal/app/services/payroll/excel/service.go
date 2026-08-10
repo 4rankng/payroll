@@ -74,6 +74,7 @@ type Employee struct {
 	Fullname          string
 	BankAccountNumber string
 	BankAccountName   string
+	BankAccountStatus string
 	Bank              *Bank
 }
 
@@ -132,7 +133,7 @@ func (s *Service) ValidateAndFilterBulkTransferData(data *BulkTransferData) *Bul
 		employee := data.EmployeeData[key.EmployeeID]
 		project := data.ProjectData[key.ProjectID]
 
-		// Validate bank account information
+		// Validate bank account information.
 		if employee.BankAccountNumber == "" {
 			skippedEmployees = append(skippedEmployees, SkippedEmployee{
 				EmployeeID:   employee.ID,
@@ -151,6 +152,28 @@ func (s *Service) ValidateAndFilterBulkTransferData(data *BulkTransferData) *Bul
 				ProjectID:    project.ID,
 				ProjectName:  project.Name,
 				Reason:       "Missing bank account name",
+			})
+			continue
+		}
+
+		if employee.Bank == nil {
+			skippedEmployees = append(skippedEmployees, SkippedEmployee{
+				EmployeeID:   employee.ID,
+				EmployeeName: employee.Fullname,
+				ProjectID:    project.ID,
+				ProjectName:  project.Name,
+				Reason:       "Missing bank",
+			})
+			continue
+		}
+
+		if employee.BankAccountStatus == domain.BankAccountStatusInvalid {
+			skippedEmployees = append(skippedEmployees, SkippedEmployee{
+				EmployeeID:   employee.ID,
+				EmployeeName: employee.Fullname,
+				ProjectID:    project.ID,
+				ProjectName:  project.Name,
+				Reason:       "Invalid bank account",
 			})
 			continue
 		}
