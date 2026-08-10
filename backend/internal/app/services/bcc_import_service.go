@@ -411,6 +411,8 @@ func (s *BCCImportService) applyTimesheetReplacement(
 	uploaderID uint,
 	uploaderRole string,
 ) (*domainservices.BulkCreateTimesheetResult, error) {
+	requireBCCImportApproval(entries)
+
 	var result *domainservices.BulkCreateTimesheetResult
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		for _, id := range staleIDs {
@@ -439,9 +441,85 @@ func (s *BCCImportService) applyTimesheetReplacement(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		// The transaction correctly rolls back every replacement when one or more
+		// rows are invalid, but the caller still needs the collected row failures
+		// to tell the uploader what to correct.
+		return result, err
 	}
 	return result, nil
+}
+
+func requireBCCImportApproval(entries []domainservices.BulkCreateTimesheetEntry) {
+	for i := range entries {
+		// BCC rows are imported records and always require an explicit review,
+		// independent of whether an admin or partner uploaded the workbook.
+		entries[i].RequireApproval = true
+	}
+}
+
+func importErrorsFromBulkFailures(
+	failures []domainservices.BulkCreateFailure,
+	employeeNames map[uint]string,
+) []domain.ImportError {
+	errors := make([]domain.ImportError, 0, len(failures))
+	for _, failure := range failures {
+		employeeName := employeeNames[failure.Request.EmployeeID]
+		if employeeName == "" {
+			employeeName = "Nhân viên chưa xác định"
+		}
+		errors = append(errors, domain.ImportError{
+			Employee: employeeName,
+			Reason:   fmt.Sprintf("ngày %s: %s", failure.Request.Date, safeBulkFailureReason(failure.Error)),
+		})
+	}
+	return errors
+}
+
+func safeBulkFailureReason(reason string) string {
+	normalized := strings.ToLower(reason)
+	switch {
+	case strings.Contains(normalized, "ngày trong tương lai"):
+		return "Ngày chấm công chưa đến"
+	case strings.Contains(normalized, "phê duyệt"), strings.Contains(normalized, "approved"):
+		return "Bảng chấm công đã được phê duyệt"
+	case strings.Contains(normalized, "thanh toán"), strings.Contains(normalized, "paid"):
+		return "Bảng chấm công đã thanh toán"
+	case strings.Contains(normalized, "trùng"), strings.Contains(normalized, "duplicate"):
+		return "Dữ liệu đã tồn tại"
+	case strings.Contains(normalized, "không tìm thấy mức lương"):
+		return "Chưa cấu hình mức lương phù hợp cho ca làm việc"
+	default:
+		return "Không thể tạo bảng chấm công"
+	}
+}
+
+func safeWeeklyPaymentParseError(err error) string {
+	reason := strings.ToLower(err.Error())
+	if strings.Contains(reason, "nằm ngoài kỳ nhập") {
+		return "Ngày trong tệp nằm ngoài tháng đã chọn. Vui lòng kiểm tra tệp."
+	}
+	return "Không thể đọc cấu trúc tệp chấm công. Vui lòng dùng đúng mẫu tệp."
+}
+
+func (s *BCCImportService) failWithImportErrors(
+	ctx context.Context,
+	createdAsset *domain.Asset,
+	uploaderID uint,
+	stats BCCImportStats,
+	importErrors []domain.ImportError,
+) (*BCCImportResult, error) {
+	detail := marshalErrors(importErrors)
+	now := clock.Now()
+	stats.Status = domain.TimesheetImportStatusFailed
+	stats.CreatedCount = 0
+	stats.ErrorCount = len(importErrors)
+	stats.ErrorDetail = detail
+	stats.ProcessedAt = &now
+	if err := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); err != nil {
+		slog.Error("BCCImport: metadata update failed for bulk validation failure", "asset_id", createdAsset.ID, "error", err)
+	}
+	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt),
+		fmt.Errorf("import failed: %s", FirstErrorReason(detail))
 }
 
 // ProcessUpload saves the BCC file, parses it, and creates timesheets.
@@ -997,19 +1075,22 @@ func (s *BCCImportService) processAssetData(
 
 	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
+		if result != nil && len(result.FailedEntries) > 0 {
+			importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
+			return s.failWithImportErrors(ctx, createdAsset, uploaderID, BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				TotalRows:    totalRows,
+			}, importErrors)
+		}
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
 
 	// 11. Count results.
 	createdCount := len(result.CreatedTimesheets)
 	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
-	for _, f := range result.FailedEntries {
-		importErrors = append(importErrors, domain.ImportError{
-			Row:      0,
-			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),
-			Reason:   f.Error,
-		})
-	}
+	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 
 	now := clock.Now()

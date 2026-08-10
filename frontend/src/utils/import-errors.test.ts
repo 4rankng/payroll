@@ -58,4 +58,15 @@ describe('parseImportErrors', () => {
     }]);
   });
 
+  it('explains a future attendance date without exposing internal details', () => {
+    expect(parseImportErrors(JSON.stringify([{
+      employee: 'Nguyễn Văn An',
+      reason: 'ngày 2026-08-16: Ngày chấm công chưa đến',
+    }]))).toEqual([{
+      row: 0,
+      employee: 'Nguyễn Văn An',
+      reason: 'Ngày chấm công 16/08/2026 chưa đến',
+    }]);
+  });
+
 });

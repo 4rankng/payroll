@@ -65,23 +65,14 @@ type weeklyPaymentHeaderMap struct {
 func ParseWeeklyPaymentFile(f *excelize.File, sheetNames []string, forMonth string) (*WeeklyPaymentImportData, error) {
 	result := &WeeklyPaymentImportData{}
 
-	// Extract first weekday from row 9 to determine day offset
-	firstWeekday, _ := extractFirstWeekday(f, sheetNames)
-	if firstWeekday == "" {
-		return nil, fmt.Errorf("không tìm thấy ngày trong tuần ở hàng 9")
-	}
-
 	// Parse forMonth to get year and month
 	year, month, err := parseForMonth(forMonth)
 	if err != nil {
 		return nil, fmt.Errorf("lỗi phân tích tháng hiệu lực: %w", err)
 	}
 
-	// Build weekday → day-of-month mapping
-	weekdayToDay := buildWeekdayToDayMap(year, month, firstWeekday)
-
 	for _, sheetName := range sheetNames {
-		sheetData, err := parseWeeklyPaymentSheet(f, sheetName, weekdayToDay)
+		sheetData, err := parseWeeklyPaymentSheet(f, sheetName, year, month)
 		if err != nil {
 			return nil, fmt.Errorf("sheet %q: %w", sheetName, err)
 		}
@@ -97,9 +88,9 @@ func ParseWeeklyPaymentFile(f *excelize.File, sheetNames []string, forMonth stri
 }
 
 // parseWeeklyPaymentSheet parses a single weekly payment sheet.
-func parseWeeklyPaymentSheet(f *excelize.File, sheetName string, weekdayToDay map[string]int) (*WeeklyPaymentSheetData, error) {
+func parseWeeklyPaymentSheet(f *excelize.File, sheetName string, year int, month time.Month) (*WeeklyPaymentSheetData, error) {
 	// Step 1: Build header map from rows 8, 9, 10
-	hm, err := buildWeeklyPaymentHeaderMap(f, sheetName, weekdayToDay)
+	hm, err := buildWeeklyPaymentHeaderMap(f, sheetName, year, month)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +108,7 @@ func parseWeeklyPaymentSheet(f *excelize.File, sheetName string, weekdayToDay ma
 // Row 8: Headers (STT, Mã nhân viên, Họ tên, Bộ phận, Lương 8h) + day columns
 // Row 9: Day types (T4, T5, T6, T7, CN, T2, T3, ...)
 // Row 10: Shift codes (HC, TCN, NN, TCNN, ...)
-func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, weekdayToDay map[string]int) (*weeklyPaymentHeaderMap, error) {
+func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month time.Month) (*weeklyPaymentHeaderMap, error) {
 	hm := &weeklyPaymentHeaderMap{
 		shiftCols:   make(map[int]string),
 		dateColumns: make(map[int]int),
@@ -160,26 +151,11 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, weekdayToDay ma
 	}
 	hm.firstShiftCol = firstShiftCol
 
-	// Read row 9 to get weekday labels for determining day numbers
-	// This helps us map column position → day of month
-	row9 := rows[8] // Row 9 is index 8
-	firstWeekdayInRow9 := ""
-	for colIdx := firstShiftCol - 1; colIdx < len(row9); colIdx++ {
-		val := strings.TrimSpace(row9[colIdx])
-		if val != "" {
-			firstWeekdayInRow9 = val
-			break
-		}
-	}
-
-	// Determine the day number for the first shift column
-	if dayNum, ok := weekdayToDay[firstWeekdayInRow9]; ok {
-		hm.firstColumnDay = dayNum
-	} else {
-		return nil, fmt.Errorf("không thể xác định ngày cho cột đầu tiên: ngày %s không tìm thấy trong bản đồ tháng", firstWeekdayInRow9)
-	}
-
-	// Scan date/shift columns using row 10
+	// The selected month/year is authoritative. Row 8 supplies only the day of
+	// month; its merged top-left values apply to following shift columns until
+	// the next explicit day header. Row 9 is display-only because legacy files
+	// can contain stale weekday labels.
+	lastColumnDay := 0
 	for colIdx := firstShiftCol - 1; colIdx < wpMaxColScan; colIdx++ {
 		// Check if column is hidden
 		colName, err := excelize.ColumnNumberToName(colIdx + 1)
@@ -209,10 +185,20 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, weekdayToDay ma
 
 		// Read shift code from row 10
 		if isShiftCode(val) {
+			if day, hasDay, err := weeklyPaymentHeaderDay(f, sheet, colIdx+1); err != nil {
+				return nil, fmt.Errorf("không thể đọc ngày ở cột %s: %w", colName, err)
+			} else if hasDay {
+				lastColumnDay = day
+			}
+			if lastColumnDay == 0 {
+				return nil, fmt.Errorf("không thể xác định ngày cho cột %s: thiếu ngày ở hàng 8", colName)
+			}
+
+			if err := validateWeeklyPaymentHeaderDay(year, month, lastColumnDay); err != nil {
+				return nil, fmt.Errorf("cột %s: %w", colName, err)
+			}
 			hm.shiftCols[colIdx+1] = val
-			// Calculate day number: firstColumnDay + offset
-			dayOffset := (colIdx + 1 - firstShiftCol)
-			hm.dateColumns[colIdx+1] = hm.firstColumnDay + dayOffset
+			hm.dateColumns[colIdx+1] = lastColumnDay
 		}
 	}
 
@@ -226,6 +212,69 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, weekdayToDay ma
 	}
 
 	return hm, nil
+}
+
+// weeklyPaymentHeaderDay returns the explicitly displayed day in row 8. A
+// blank result is expected for merged header cells and is carried forward by
+// the caller. We accept both day numbers and normal date cell formats.
+func weeklyPaymentHeaderDay(f *excelize.File, sheet string, col int) (int, bool, error) {
+	cell, err := excelize.CoordinatesToCellName(col, 8)
+	if err != nil {
+		return 0, false, err
+	}
+	value, err := f.GetCellValue(sheet, cell)
+	if err != nil {
+		return 0, false, err
+	}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, false, nil
+	}
+
+	if day, err := strconv.Atoi(value); err == nil {
+		return day, true, nil
+	}
+	for _, layout := range []string{"02/01/2006", "2/1/2006", "2006-01-02"} {
+		if date, err := time.Parse(layout, value); err == nil {
+			return date.Day(), true, nil
+		}
+	}
+	return 0, false, fmt.Errorf("giá trị %q không phải ngày", value)
+}
+
+func validateWeeklyPaymentHeaderDay(year int, month time.Month, day int) error {
+	date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	if day < 1 || date.Month() != month {
+		return fmt.Errorf("ngày %d nằm ngoài kỳ nhập %02d/%d", day, month, year)
+	}
+	return nil
+}
+
+func weekdayForCell(value string) string {
+	normalized := strings.ToUpper(strings.TrimSpace(value))
+	for _, weekday := range []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"} {
+		if strings.Contains(normalized, weekday) {
+			return weekday
+		}
+	}
+	return ""
+}
+
+func weekdayDistance(from, to string) int {
+	weekdays := []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"}
+	fromIndex, toIndex := -1, -1
+	for i, weekday := range weekdays {
+		if weekday == from {
+			fromIndex = i
+		}
+		if weekday == to {
+			toIndex = i
+		}
+	}
+	if fromIndex < 0 || toIndex < 0 {
+		return 0
+	}
+	return (toIndex - fromIndex + len(weekdays)) % len(weekdays)
 }
 
 // parseWeeklyPaymentEmployees reads employee rows from row 11+.

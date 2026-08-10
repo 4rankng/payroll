@@ -1,6 +1,7 @@
 package excel
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -154,6 +155,7 @@ func TestParseWeeklyPaymentFile_UsesSheetNameAsPosition(t *testing.T) {
 		t.Fatalf("rename initial sheet: %v", err)
 	}
 
+	setCellValue(f, sheetName, "F8", "1")
 	setCellValue(f, sheetName, "F9", "T7")
 	setCellValue(f, sheetName, "F10", "HC")
 	setCellValue(f, sheetName, "G10", "TCN")
@@ -181,6 +183,95 @@ func TestParseWeeklyPaymentFile_UsesSheetNameAsPosition(t *testing.T) {
 	}
 	if got := entries[1].ShiftKey; got != "TCN" {
 		t.Errorf("second shift code = %q, want TCN", got)
+	}
+}
+
+func TestParseWeeklyPaymentFileKeepsMultipleShiftColumnsOnTheSameDay(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "A8", "STT")
+	setCellValue(f, sheetName, "B8", "Mã nhân viên")
+	setCellValue(f, sheetName, "C8", "Họ và tên")
+	setCellValue(f, sheetName, "D8", "Bộ phận")
+	setCellValue(f, sheetName, "E8", "Lương 8h")
+	setCellValue(f, sheetName, "F8", "3")
+	setCellValue(f, sheetName, "H8", "4")
+	setCellValue(f, sheetName, "F9", "T2")
+	setCellValue(f, sheetName, "H9", "T3")
+	if err := f.MergeCell(sheetName, "F8", "G8"); err != nil {
+		t.Fatalf("merge day header: %v", err)
+	}
+	if err := f.MergeCell(sheetName, "F9", "G9"); err != nil {
+		t.Fatalf("merge weekday header: %v", err)
+	}
+	setCellValue(f, sheetName, "F10", "HC")
+	setCellValue(f, sheetName, "G10", "TCN")
+	setCellValue(f, sheetName, "H10", "HC")
+	setCellValue(f, sheetName, "B11", "NV-01")
+	setCellValue(f, sheetName, "C11", "Nguyễn Văn An")
+	setCellValue(f, sheetName, "F11", "8")
+	setCellValue(f, sheetName, "G11", "2")
+	setCellValue(f, sheetName, "H11", "8")
+
+	parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
+	if err != nil {
+		t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+	}
+	entries := parsed.Sheets[0].Employees[0].Entries
+	if len(entries) != 3 {
+		t.Fatalf("entry count = %d, want 3", len(entries))
+	}
+	gotDays := []int{entries[0].Day, entries[1].Day, entries[2].Day}
+	wantDays := []int{3, 3, 4}
+	for i := range wantDays {
+		if gotDays[i] != wantDays[i] {
+			t.Fatalf("entry %d day = %d, want %d", i, gotDays[i], wantDays[i])
+		}
+	}
+}
+
+func TestParseWeeklyPaymentFileUsesSelectedMonthDespiteStaleWeekdayHeader(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	// The user-selected period is authoritative; legacy templates can retain a
+	// weekday label from another month.
+	setCellValue(f, sheetName, "F8", "1")
+	setCellValue(f, sheetName, "F9", "T4")
+	setCellValue(f, sheetName, "F10", "HC")
+	setCellValue(f, sheetName, "B11", "NV-01")
+	setCellValue(f, sheetName, "F11", "8")
+
+	parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
+	if err != nil {
+		t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+	}
+	if got := parsed.Sheets[0].Employees[0].Entries[0].Day; got != 1 {
+		t.Fatalf("entry day = %d, want 1", got)
+	}
+}
+
+func TestParseWeeklyPaymentFileRejectsDayOutsideMonth(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "F8", "32")
+	setCellValue(f, sheetName, "F9", "T2")
+	setCellValue(f, sheetName, "F10", "HC")
+
+	_, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
+	if err == nil || !strings.Contains(err.Error(), "nằm ngoài kỳ nhập") {
+		t.Fatalf("expected out-of-month error, got %v", err)
 	}
 }
 

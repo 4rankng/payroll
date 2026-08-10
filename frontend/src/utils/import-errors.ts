@@ -2,6 +2,7 @@ import type { ImportError } from '@/types/api/timesheet.types';
 
 const TECHNICAL_VALUE_PATTERN =
   /^(?:id\s+\d+)\b|\b(?:onepay|9pay|provider|error|failed|internal|timeout|employee_id)\b|[_{}[\]=]/iu;
+const ISO_DATE_PATTERN = /\b(\d{4})-(\d{2})-(\d{2})\b/u;
 
 export function getSafeImportErrorReason(reason: string): string {
   const normalized = reason.trim().toLocaleLowerCase('vi');
@@ -29,6 +30,16 @@ export function getSafeImportErrorReason(reason: string): string {
   }
   if (normalized.includes('không tìm thấy mức lương')) {
     return 'Chưa cấu hình mức lương phù hợp cho ca làm việc';
+  }
+  if (
+    normalized.includes('ngày trong tương lai') ||
+    normalized.includes('ngày chấm công chưa đến')
+  ) {
+    const dateMatch = reason.match(ISO_DATE_PATTERN);
+    if (dateMatch) {
+      return `Ngày chấm công ${dateMatch[3]}/${dateMatch[2]}/${dateMatch[1]} chưa đến`;
+    }
+    return 'Ngày chấm công chưa đến';
   }
   if (normalized.includes('thiếu')) {
     return 'Thiếu dữ liệu bắt buộc';

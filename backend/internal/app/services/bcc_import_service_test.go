@@ -2,8 +2,11 @@ package services
 
 import (
 	"api-server/internal/domain"
+	domainservices "api-server/internal/domain/services"
 	"api-server/internal/pkg/clock"
+	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -100,6 +103,15 @@ func TestMarshalErrors(t *testing.T) {
 	})
 }
 
+func TestSafeWeeklyPaymentParseError(t *testing.T) {
+	if got := safeWeeklyPaymentParseError(errors.New("cột F: ngày 32 nằm ngoài kỳ nhập 08/2026")); got != "Ngày trong tệp nằm ngoài tháng đã chọn. Vui lòng kiểm tra tệp." {
+		t.Errorf("out-of-month date = %q", got)
+	}
+	if got := safeWeeklyPaymentParseError(errors.New("driver: malformed cell")); got != "Không thể đọc cấu trúc tệp chấm công. Vui lòng dùng đúng mẫu tệp." {
+		t.Errorf("unexpected parser failure = %q", got)
+	}
+}
+
 func TestRateMatchingCollisionPriority(t *testing.T) {
 	dayTypePriority := map[string]int{"ngày thường": 0, "ngày nghỉ": 1, "ngày lễ": 2}
 	type rateTarget struct{ dayType, hourType string }
@@ -183,6 +195,82 @@ func TestBCCRequestFingerprintBindsScopeAndContent(t *testing.T) {
 	}
 	if base == bccRequestFingerprint(10, "2026-07", true, []byte("same workbook")) {
 		t.Fatal("flexible-employee import mode must be part of the fingerprint")
+	}
+}
+
+func TestRequireBCCImportApproval(t *testing.T) {
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{ProjectID: 1, EmployeeID: 10},
+		{ProjectID: 1, EmployeeID: 11},
+	}
+
+	requireBCCImportApproval(entries)
+
+	for _, entry := range entries {
+		if !entry.RequireApproval {
+			t.Fatalf("BCC entry for employee %d must require approval", entry.EmployeeID)
+		}
+	}
+}
+
+func TestAdminBCCImportEntryRemainsPendingApproval(t *testing.T) {
+	entries := []domainservices.BulkCreateTimesheetEntry{{ProjectID: 1, EmployeeID: 10}}
+	requireBCCImportApproval(entries)
+
+	timesheet := &domain.Timesheet{}
+	service := &domainservices.TimesheetDomainService{}
+	if err := service.SetInitialTimesheetStatusForBulk(context.Background(), timesheet, 42, "admin", entries[0].RequireApproval); err != nil {
+		t.Fatalf("SetInitialTimesheetStatusForBulk() error = %v", err)
+	}
+	if timesheet.Status != domain.TimesheetStatusPendingApproval {
+		t.Fatalf("status = %q, want %q", timesheet.Status, domain.TimesheetStatusPendingApproval)
+	}
+	if timesheet.ApprovedBy != nil || timesheet.ApprovedAt != nil {
+		t.Fatal("admin BCC import must not have approval metadata")
+	}
+}
+
+func TestImportErrorsFromBulkFailuresKeepsEmployeeAndDate(t *testing.T) {
+	errors := importErrorsFromBulkFailures([]domainservices.BulkCreateFailure{
+		{
+			Request: domainservices.BulkCreateTimesheetEntry{
+				EmployeeID: 10,
+				Date:       "2026-08-16",
+			},
+			Error: "Ngày không thể là ngày trong tương lai",
+		},
+	}, map[uint]string{10: "Nguyễn Văn An"})
+
+	if len(errors) != 1 {
+		t.Fatalf("error count = %d, want 1", len(errors))
+	}
+	if errors[0].Employee != "Nguyễn Văn An" {
+		t.Errorf("employee = %q, want employee name", errors[0].Employee)
+	}
+	if errors[0].Reason != "ngày 2026-08-16: Ngày chấm công chưa đến" {
+		t.Errorf("reason = %q", errors[0].Reason)
+	}
+}
+
+func TestImportErrorsFromBulkFailuresUsesSafeFallback(t *testing.T) {
+	errors := importErrorsFromBulkFailures([]domainservices.BulkCreateFailure{{
+		Request: domainservices.BulkCreateTimesheetEntry{EmployeeID: 10, Date: "2026-08-16"},
+		Error:   "Ngày không thể là ngày trong tương lai",
+	}}, nil)
+
+	if len(errors) != 1 || errors[0].Employee != "Nhân viên chưa xác định" {
+		t.Fatalf("errors = %#v, want safe employee fallback", errors)
+	}
+}
+
+func TestImportErrorsFromBulkFailuresDoesNotExposeInfrastructureError(t *testing.T) {
+	errors := importErrorsFromBulkFailures([]domainservices.BulkCreateFailure{{
+		Request: domainservices.BulkCreateTimesheetEntry{EmployeeID: 10, Date: "2026-08-16"},
+		Error:   "Error 1062: duplicate key timesheets_unique",
+	}}, map[uint]string{10: "Nguyễn Văn An"})
+
+	if len(errors) != 1 || errors[0].Reason != "ngày 2026-08-16: Dữ liệu đã tồn tại" {
+		t.Fatalf("errors = %#v, want user-safe duplicate error", errors)
 	}
 }
 

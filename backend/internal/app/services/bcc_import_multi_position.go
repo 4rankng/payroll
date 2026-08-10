@@ -507,18 +507,22 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
+		if result != nil && len(result.FailedEntries) > 0 {
+			importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
+			return s.failWithImportErrors(ctx, createdAsset, uploaderID, BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				TotalRows:    totalRows,
+			}, importErrors)
+		}
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
 
 	// 11. Finalize.
 	createdCount := len(result.CreatedTimesheets)
 	skippedCount := len(result.DeletedTimesheets) + flexibleSkippedCount
-	for _, f := range result.FailedEntries {
-		importErrors = append(importErrors, domain.ImportError{
-			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),
-			Reason:   f.Error,
-		})
-	}
+	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 
 	now := clock.Now()

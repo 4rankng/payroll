@@ -55,6 +55,26 @@ func (s *TimesheetDomainService) ValidateTimesheetDeletion(ctx context.Context, 
 
 // SetInitialTimesheetStatus sets the initial status of a timesheet based on user role and business rules
 func (s *TimesheetDomainService) SetInitialTimesheetStatus(ctx context.Context, timesheet *domain.Timesheet, createdBy uint, userRole string) error {
+	return s.SetInitialTimesheetStatusForBulk(ctx, timesheet, createdBy, userRole, false)
+}
+
+// SetInitialTimesheetStatusForBulk sets the initial status for a bulk-created
+// timesheet. Imports that must be reviewed can require approval even when an
+// administrator submitted the file.
+func (s *TimesheetDomainService) SetInitialTimesheetStatusForBulk(
+	ctx context.Context,
+	timesheet *domain.Timesheet,
+	createdBy uint,
+	userRole string,
+	requireApproval bool,
+) error {
+	if requireApproval {
+		timesheet.Status = domain.TimesheetStatusPendingApproval
+		timesheet.ApprovedBy = nil
+		timesheet.ApprovedAt = nil
+		return nil
+	}
+
 	// Business rule: Admin submissions are auto-approved
 	if userRole == "admin" {
 		// Set status directly to approved for admin users

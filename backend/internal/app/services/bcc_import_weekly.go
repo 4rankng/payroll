@@ -898,7 +898,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	// 1. Parse all weekly payment sheets.
 	parsed, err := excelparser.ParseWeeklyPaymentFile(xf, formatResult.WeeklyPaymentSheets, effectiveMonth)
 	if err != nil {
-		return fail("failed", fmt.Sprintf("lỗi phân tích file weekly payment: %v", err))
+		return fail("failed", safeWeeklyPaymentParseError(err))
 	}
 
 	// 2-3. Shared setup: month parsing, lock, payrate lookup.

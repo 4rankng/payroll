@@ -13,12 +13,13 @@ import (
 
 // BulkCreateTimesheetEntry represents a single timesheet creation request for bulk operations
 type BulkCreateTimesheetEntry struct {
-	ProjectID   uint    `json:"project_id"`
-	EmployeeID  uint    `json:"employee_id"`
-	Date        string  `json:"date"`
-	HoursWorked float64 `json:"hours_worked"`
-	HourType    string  `json:"hour_type"`
-	DayType     *string `json:"day_type,omitempty"`
+	ProjectID       uint    `json:"project_id"`
+	EmployeeID      uint    `json:"employee_id"`
+	Date            string  `json:"date"`
+	HoursWorked     float64 `json:"hours_worked"`
+	HourType        string  `json:"hour_type"`
+	DayType         *string `json:"day_type,omitempty"`
+	RequireApproval bool    `json:"-"`
 }
 
 // BulkCreateTimesheetResult represents the result of bulk timesheet creation
@@ -518,7 +519,7 @@ func (s *TimesheetDomainService) BulkCreateTimesheets(ctx context.Context, reque
 
 			// Set audit fields and status based on role BEFORE calling repository
 			timesheet.CreatedBy = createdBy
-			if err := s.SetInitialTimesheetStatus(ctx, timesheet, createdBy, userRole); err != nil {
+			if err := s.SetInitialTimesheetStatusForBulk(ctx, timesheet, createdBy, userRole, req.RequireApproval); err != nil {
 				failedEntries = append(failedEntries, BulkCreateFailure{
 					Index:   i,
 					Error:   err.Error(),
