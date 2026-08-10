@@ -862,13 +862,15 @@ func (s *BCCImportService) processAssetData(
 				continue
 			}
 
+			// Normalize day type for consistent storage (Thường → ngày thường, etc.)
+			normalizedDayType := normalizeDayType(target.dayType)
 			entries = append(entries, domainservices.BulkCreateTimesheetEntry{
 				ProjectID:   projectID,
 				EmployeeID:  assignment.EmployeeID,
 				Date:        date.Format("2006-01-02"),
 				HoursWorked: entry.Hours,
 				HourType:    target.hourType,
-				DayType:     &target.dayType,
+				DayType:     &normalizedDayType,
 			})
 		}
 		rowNum++
@@ -1085,4 +1087,25 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 		monthStart: monthStart,
 		flatRates:  flatRates,
 	}, release, nil
+}
+
+// normalizeDayType converts short day type names to full names for consistent storage.
+// Maps: Thường → ngày thường, Nghỉ → ngày nghỉ, Lễ → ngày lễ
+// Full names are returned as-is (case-insensitive).
+func normalizeDayType(dayType string) string {
+	normalized := strings.ToLower(strings.TrimSpace(dayType))
+	switch normalized {
+	case "thường":
+		return "ngày thường"
+	case "nghỉ":
+		return "ngày nghỉ"
+	case "lễ":
+		return "ngày lễ"
+	default:
+		// Return original if it's already a full name or unknown
+		if strings.HasPrefix(normalized, "ngày ") {
+			return dayType // Return as-is to preserve case
+		}
+		return dayType // Return unknown values as-is
+	}
 }
