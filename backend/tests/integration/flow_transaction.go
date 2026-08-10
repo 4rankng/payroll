@@ -134,7 +134,7 @@ func runTransactionTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 
 	reporter.RunTest(flowTransaction, "Export transactions (binary)", func() error {
-		data, _, statusCode, err := admin.DownloadGet("/api/v1/transactions/export")
+		data, _, statusCode, err := admin.DownloadGet("/api/v1/transactions/export?fromDate=2026-01-01&toDate=2026-12-31")
 		if err != nil {
 			return fmt.Errorf("export: %w", err)
 		}

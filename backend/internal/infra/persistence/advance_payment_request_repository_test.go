@@ -25,15 +25,17 @@ func TestCreateWithBudgetCheck_RejectsOverBudget(t *testing.T) {
 	defer cleanup()
 	ctx := context.Background()
 
-	// Create an employee and advance_payment record
-	empID, forMonth := uint64(999901), "2026-05"
+	empID, projectID := requireSeedEmployeeAndProject(t, repo)
+	forMonth := "2099-01"
+	repo.DB.Unscoped().Where("employee_id = ? AND for_month = ?", empID, forMonth).
+		Delete(&domain.AdvancePayment{})
 
 	// Insert advance_payment directly to set budget = 200_000
 	advPay := &domain.AdvancePayment{
 		EmployeeID:   uint(empID),
 		ForMonth:     forMonth,
 		MaxAdvAmount: 200000,
-		ProjectID:    1,
+		ProjectID:    uint(projectID),
 	}
 	if err := repo.DB.Create(advPay).Error; err != nil {
 		t.Fatalf("setup: create advance_payment: %v", err)
@@ -81,14 +83,17 @@ func TestCreateWithBudgetCheck_Concurrent(t *testing.T) {
 	defer cleanup()
 	ctx := context.Background()
 
-	empID, forMonth := uint64(999902), "2026-05"
+	empID, projectID := requireSeedEmployeeAndProject(t, repo)
+	forMonth := "2099-02"
+	repo.DB.Unscoped().Where("employee_id = ? AND for_month = ?", empID, forMonth).
+		Delete(&domain.AdvancePayment{})
 
 	// Budget: 200k
 	advPay := &domain.AdvancePayment{
 		EmployeeID:   uint(empID),
 		ForMonth:     forMonth,
 		MaxAdvAmount: 200000,
-		ProjectID:    1,
+		ProjectID:    uint(projectID),
 	}
 	if err := repo.DB.Create(advPay).Error; err != nil {
 		t.Fatalf("setup: create advance_payment: %v", err)
@@ -180,16 +185,7 @@ func TestGetByEmployee_DateRange(t *testing.T) {
 	// The employees/projects tables have many NOT NULL columns, so we can't
 	// trivially seed throwaway rows. Discover real IDs from the test DB instead,
 	// and skip if either is missing (e.g. a fresh migration with no seed data).
-	var empID uint64
-	if err := repo.DB.Model(&domain.Employee{}).Limit(1).
-		Select("id").Scan(&empID).Error; err != nil || empID == 0 {
-		t.Skipf("no employee row available to satisfy FK; skipping: %v", err)
-	}
-	var projectID uint64
-	if err := repo.DB.Model(&domain.Project{}).Limit(1).
-		Select("id").Scan(&projectID).Error; err != nil || projectID == 0 {
-		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
-	}
+	empID, projectID := requireSeedEmployeeAndProject(t, repo)
 	repo.DB.Unscoped().Where("employee_id = ? AND for_month = ?", empID, "2020-01").
 		Delete(&domain.AdvancePayment{})
 
@@ -338,16 +334,7 @@ func TestGetOrphanedApproved_WalletPaymentStatusFiltering(t *testing.T) {
 
 	// The advance_payment_requests table has FK constraints on employee_id
 	// and project_id, so we discover real IDs from the test DB.
-	var empID uint64
-	if err := repo.DB.Model(&domain.Employee{}).Limit(1).
-		Select("id").Scan(&empID).Error; err != nil || empID == 0 {
-		t.Skipf("no employee row available to satisfy FK; skipping: %v", err)
-	}
-	var projectID uint64
-	if err := repo.DB.Model(&domain.Project{}).Limit(1).
-		Select("id").Scan(&projectID).Error; err != nil || projectID == 0 {
-		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
-	}
+	empID, projectID := requireSeedEmployeeAndProject(t, repo)
 
 	const provider = "1pay"
 	// Each case uses a distinct YYYY-MM (column is varchar(7)).
@@ -476,6 +463,24 @@ func endOfMonth(t time.Time) time.Time {
 	return startOfMonth(t).AddDate(0, 1, -1)
 }
 
+func requireSeedEmployeeAndProject(t *testing.T, repo *AdvancePaymentRequestRepository) (uint64, uint64) {
+	t.Helper()
+
+	var empID uint64
+	if err := repo.DB.Model(&domain.Employee{}).Limit(1).
+		Select("id").Scan(&empID).Error; err != nil || empID == 0 {
+		t.Skipf("no employee row available to satisfy FK; skipping: %v", err)
+	}
+
+	var projectID uint64
+	if err := repo.DB.Model(&domain.Project{}).Limit(1).
+		Select("id").Scan(&projectID).Error; err != nil || projectID == 0 {
+		t.Skipf("no project row available to satisfy FK; skipping: %v", err)
+	}
+
+	return empID, projectID
+}
+
 // getTestDB connects to the local test database.
 func getTestDB() (*gorm.DB, error) {
 	dsn := "root:rootpassword@tcp(localhost:3306)/payroll_db?parseTime=true&loc=Local"
@@ -500,6 +505,7 @@ func setupTestRepo(t *testing.T) (*AdvancePaymentRequestRepository, func()) {
 		// Clean up test data
 		db.Exec("DELETE FROM advance_payment_requests WHERE employee_id IN (999901, 999902, 999903, 999904)")
 		db.Exec("DELETE FROM advance_payments WHERE employee_id IN (999901, 999902, 999903, 999904)")
+		db.Exec("DELETE FROM advance_payments WHERE for_month IN ('2099-01', '2099-02')")
 	}
 
 	return repo, cleanup

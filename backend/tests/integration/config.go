@@ -32,7 +32,7 @@ func LoadTestConfig() *TestConfig {
 }
 
 func (c *TestConfig) UniquePrefix() string {
-	return fmt.Sprintf("itest%s", time.Now().Format("20060102150405"))
+	return fmt.Sprintf("itest%s%d", time.Now().Format("20060102150405"), time.Now().UnixNano())
 }
 
 func getEnvOrDefault(key, defaultVal string) string {

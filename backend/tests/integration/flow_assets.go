@@ -26,11 +26,14 @@ func runAssetTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 	defer func() { _ = os.Remove(tmpFile) }()
 
 	reporter.RunTest(flowAssets, "Upload test file", func() error {
-		resp, _, err := admin.UploadFile("/api/v1/assets/upload", "file", tmpFile, map[string]string{
-			"upload_type": "itest_document",
+		resp, status, err := admin.UploadFile("/api/v1/assets/upload", "file", tmpFile, map[string]string{
+			"upload_type": "document",
 		})
 		if err != nil {
 			return fmt.Errorf("upload file: %w", err)
+		}
+		if status >= 400 || resp.Status == "error" {
+			return fmt.Errorf("upload returned HTTP %d: %s", status, resp.Message)
 		}
 		var asset AssetResponse
 		if err := json.Unmarshal(resp.Data, &asset); err != nil {

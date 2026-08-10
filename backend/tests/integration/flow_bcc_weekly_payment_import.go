@@ -28,13 +28,14 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 	projectIDStr := strconv.Itoa(int(projectID))
 	endpoint := "/api/v1/timesheets/partner-import"
 
-	// WeeklyPayment fixture (relative to backend/ working dir).
-	weeklyPaymentFile := "../tests/fixtures/bcc/thai_binh_duong.xlsx"
+	// WeeklyPayment fixture (relative to backend/ working directory).
+	weeklyPaymentFile := "tests/fixtures/bcc/thai_binh_duong.xlsx"
 	// Use 2026-07 for the Thai Binh Duong fixture (matches the file title)
 	forMonth := "2026-07"
 
 	// ── 1. Upload Thai Binh Duong.xlsx (WeeklyPayment format) ────────────────────
 	var importID uint
+	var uploadForbidden bool
 	reporter.RunTest(flowWeeklyPayment, "Upload WeeklyPayment file (thai_binh_duong.xlsx)", func() error {
 		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", weeklyPaymentFile,
 			map[string]string{"project_id": projectIDStr, "for_month": forMonth})
@@ -43,6 +44,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		}
 		if status == 403 {
 			fmt.Printf("    Partner lacks upload access (403) — skipping\n")
+			uploadForbidden = true
 			return nil
 		}
 
@@ -80,6 +82,19 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		}
 		return nil
 	})
+	if uploadForbidden {
+		for _, name := range []string{
+			"Verify per-tier rate resolution (520HC)",
+			"Verify per-tier weekend rate (520NN)",
+			"Verify STK sheet auto-creates employees",
+			"Verify day uniqueness (no duplicate days)",
+			"Re-upload same file (latest wins)",
+			"Import with wrong forMonth (should fail)",
+		} {
+			reporter.Skip(flowWeeklyPayment, name, "partner lacks BCC upload permission")
+		}
+		return
+	}
 
 	// ── 2. Verify per-tier rate resolution ────────────────────────────────────────
 	reporter.RunTest(flowWeeklyPayment, "Verify per-tier rate resolution (520HC)", func() error {
