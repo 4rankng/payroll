@@ -523,6 +523,8 @@ func (s *BCCImportService) processAssetData(
 		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
 	case excelparser.FormatWeeklyBCC:
 		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
+	case excelparser.FormatWeeklyPayment:
+		return s.processWeeklyPaymentUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
 	default:
 		// FormatLegacy — continue with existing BCC parsing below
 	}

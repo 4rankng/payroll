@@ -231,3 +231,168 @@ func TestDetectFormat_STKSheetTrailingSpace(t *testing.T) {
 		})
 	}
 }
+
+// setWeeklyPaymentHeaders writes the weekly payment header row at row 8.
+func setWeeklyPaymentHeaders(t *testing.T, f *excelize.File, sheet string) {
+	t.Helper()
+	_ = f.SetCellValue(sheet, "A8", "STT")
+	_ = f.SetCellValue(sheet, "B8", "Mã nhân viên")
+	_ = f.SetCellValue(sheet, "C8", "Họ và tên")
+	_ = f.SetCellValue(sheet, "D8", "Bộ phận")
+	_ = f.SetCellValue(sheet, "E8", "Lương 8h")
+}
+
+// setWeeklyPaymentShiftRow writes shift codes at row 10.
+func setWeeklyPaymentShiftRow(t *testing.T, f *excelize.File, sheet string) {
+	t.Helper()
+	_ = f.SetCellValue(sheet, "F10", "HC")
+	_ = f.SetCellValue(sheet, "G10", "TCN")
+	_ = f.SetCellValue(sheet, "H10", "HC")
+	_ = f.SetCellValue(sheet, "I10", "TCN")
+	_ = f.SetCellValue(sheet, "J10", "HC")
+	_ = f.SetCellValue(sheet, "K10", "TCN")
+	_ = f.SetCellValue(sheet, "L10", "HC")
+	_ = f.SetCellValue(sheet, "M10", "TCN")
+	_ = f.SetCellValue(sheet, "N10", "NN")
+	_ = f.SetCellValue(sheet, "O10", "TCNN")
+}
+
+func TestDetectFormat_WeeklyPayment_SingleSheet(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+
+	sheet := "520"
+	idx, err := f.NewSheet(sheet)
+	if err != nil {
+		t.Fatalf("create sheet %q: %v", sheet, err)
+	}
+	f.SetActiveSheet(idx)
+	setWeeklyPaymentHeaders(t, f, sheet)
+	setWeeklyPaymentShiftRow(t, f, sheet)
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat returned error: %v", err)
+	}
+	if result.Format != FormatWeeklyPayment {
+		t.Errorf("Format = %v, want FormatWeeklyPayment", result.Format)
+	}
+	if len(result.WeeklyPaymentSheets) != 1 || result.WeeklyPaymentSheets[0] != sheet {
+		t.Errorf("WeeklyPaymentSheets = %v, want [%q]", result.WeeklyPaymentSheets, sheet)
+	}
+}
+
+func TestDetectFormat_WeeklyPayment_MultipleSheets(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+
+	sheets := []string{"520", "700", "750", "800", "900"}
+	for _, sheet := range sheets {
+		idx, err := f.NewSheet(sheet)
+		if err != nil {
+			t.Fatalf("create sheet %q: %v", sheet, err)
+		}
+		f.SetActiveSheet(idx)
+		setWeeklyPaymentHeaders(t, f, sheet)
+		setWeeklyPaymentShiftRow(t, f, sheet)
+	}
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat returned error: %v", err)
+	}
+	if result.Format != FormatWeeklyPayment {
+		t.Errorf("Format = %v, want FormatWeeklyPayment", result.Format)
+	}
+	if len(result.WeeklyPaymentSheets) != len(sheets) {
+		t.Errorf("WeeklyPaymentSheets count = %d, want %d", len(result.WeeklyPaymentSheets), len(sheets))
+	}
+}
+
+func TestDetectFormat_WeeklyPayment_Row4HeadersNotRow8(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+
+	// Row 4 headers instead of row 8 (wrong layout for weekly payment)
+	sheet := "520"
+	idx, err := f.NewSheet(sheet)
+	if err != nil {
+		t.Fatalf("create sheet %q: %v", sheet, err)
+	}
+	f.SetActiveSheet(idx)
+	setBCCHeaders(t, f, sheet) // Row 4 headers, not row 8
+
+	_, _ = f.NewSheet("Stk")
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat returned error: %v", err)
+	}
+	// Should fall through to FormatMultiPosition, not FormatWeeklyPayment
+	if result.Format != FormatMultiPosition {
+		t.Errorf("Format = %v, want FormatMultiPosition (wrong layout for weekly payment)", result.Format)
+	}
+	if len(result.PositionSheets) != 1 || result.PositionSheets[0] != sheet {
+		t.Errorf("PositionSheets = %v, want [%q]", result.PositionSheets, sheet)
+	}
+	if len(result.WeeklyPaymentSheets) != 0 {
+		t.Errorf("WeeklyPaymentSheets = %v, want empty (wrong layout)", result.WeeklyPaymentSheets)
+	}
+}
+
+func TestDetectFormat_WeeklyPayment_AnySheetName(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+
+	// Non-numeric sheet name but with row 8/10 fingerprint should still work
+	sheet := "Phổ thông"
+	idx, err := f.NewSheet(sheet)
+	if err != nil {
+		t.Fatalf("create sheet %q: %v", sheet, err)
+	}
+	f.SetActiveSheet(idx)
+	setWeeklyPaymentHeaders(t, f, sheet)
+	setWeeklyPaymentShiftRow(t, f, sheet)
+
+	_, _ = f.NewSheet("Stk")
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat returned error: %v", err)
+	}
+	// Should detect as FormatWeeklyPayment despite non-numeric name
+	if result.Format != FormatWeeklyPayment {
+		t.Errorf("Format = %v, want FormatWeeklyPayment (any sheet name with row 8/10 fingerprint)", result.Format)
+	}
+	if len(result.WeeklyPaymentSheets) != 1 || result.WeeklyPaymentSheets[0] != sheet {
+		t.Errorf("WeeklyPaymentSheets = %v, want [%q]", result.WeeklyPaymentSheets, sheet)
+	}
+}
+
+func TestDetectFormat_WeeklyPayment_NoShiftRow(t *testing.T) {
+	t.Parallel()
+	f := excelize.NewFile()
+
+	sheet := "520"
+	idx, err := f.NewSheet(sheet)
+	if err != nil {
+		t.Fatalf("create sheet %q: %v", sheet, err)
+	}
+	f.SetActiveSheet(idx)
+	setWeeklyPaymentHeaders(t, f, sheet)
+	// No shift row set
+
+	_, _ = f.NewSheet("Stk")
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat returned error: %v", err)
+	}
+	// Should fall through to FormatMultiPosition (missing shift row)
+	if result.Format != FormatMultiPosition {
+		t.Errorf("Format = %v, want FormatMultiPosition (missing shift row)", result.Format)
+	}
+	if len(result.WeeklyPaymentSheets) != 0 {
+		t.Errorf("WeeklyPaymentSheets = %v, want empty (missing shift row)", result.WeeklyPaymentSheets)
+	}
+}

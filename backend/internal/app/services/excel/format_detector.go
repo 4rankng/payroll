@@ -17,31 +17,37 @@ const (
 	FormatMultiPosition
 	// FormatWeeklyBCC is the format with BCC-<shiftType> sheets (e.g. BCC-HC, BCC-OT150).
 	FormatWeeklyBCC
+	// FormatWeeklyPayment is the format with numeric salary tier sheets (e.g. 520, 700, 750)
+	// where row 10 contains per-cell shift codes (HC, TCN, NN, TCNN).
+	FormatWeeklyPayment
 )
 
 // FormatDetectionResult holds the result of format detection.
 type FormatDetectionResult struct {
-	Format          BCCFormat
-	PositionSheets  []string // sheet names that are position sheets (for FormatMultiPosition)
-	WeeklyBCCSheets []string // sheet names like "BCC-HC", "BCC-OT150" (for FormatWeeklyBCC)
+	Format             BCCFormat
+	PositionSheets     []string // sheet names that are position sheets (for FormatMultiPosition)
+	WeeklyBCCSheets    []string // sheet names like "BCC-HC", "BCC-OT150" (for FormatWeeklyBCC)
+	WeeklyPaymentSheets []string // sheet names like "520", "700", "750" (for FormatWeeklyPayment)
 }
 
 // DetectFormat determines whether the given Excel file uses the old single-BCC-sheet
-// format, the multi-position format, or the weekly BCC format.
+// format, the multi-position format, the weekly BCC format, or the weekly payment format.
 //
 // Algorithm:
 //  1. Iterate all sheets, skip hidden ones (via GetSheetVisible)
 //  2. If any visible sheet is named exactly "BCC" → FormatLegacy (BCC wins tiebreaker)
 //  3. For each remaining visible sheet (not "STK" case-insensitive):
 //     a. If sheet name has "BCC-" prefix → weekly BCC sheet (shift type from suffix)
-//     b. Otherwise check row 4 for headers: "STT" AND "Mã nhân viên" AND "Họ và tên"
+//     b. If row 8 has weekly payment headers AND row 10 has shift codes → weekly payment sheet
+//     c. Otherwise check row 4 for headers: "STT" AND "Mã nhân viên" AND "Họ và tên"
 //     If all found → it's a position sheet (sheet name = position value)
-//  4. Priority: FormatLegacy > FormatWeeklyBCC > FormatMultiPosition
+//  4. Priority: FormatLegacy > FormatWeeklyBCC > FormatWeeklyPayment > FormatMultiPosition
 //  5. Otherwise → error
 func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 	var hasBCCSheet bool
 	var positionSheets []string
 	var weeklyBCCSheets []string
+	var weeklyPaymentSheets []string
 
 	for _, sheetName := range f.GetSheetList() {
 		// Skip hidden sheets
@@ -74,6 +80,12 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 			continue
 		}
 
+		// Check for weekly payment sheet (numeric name + row 8/10 fingerprint)
+		if isWeeklyPaymentSheet(f, sheetName) {
+			weeklyPaymentSheets = append(weeklyPaymentSheets, sheetName)
+			continue
+		}
+
 		// Check row 4 for expected header pattern
 		if isPositionSheet(f, sheetName) {
 			positionSheets = append(positionSheets, sheetName)
@@ -87,11 +99,19 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 		}, nil
 	}
 
-	// Weekly BCC takes priority over multi-position
+	// Weekly BCC takes priority over weekly payment and multi-position
 	if len(weeklyBCCSheets) > 0 {
 		return &FormatDetectionResult{
 			Format:          FormatWeeklyBCC,
 			WeeklyBCCSheets: weeklyBCCSheets,
+		}, nil
+	}
+
+	// Weekly payment takes priority over multi-position
+	if len(weeklyPaymentSheets) > 0 {
+		return &FormatDetectionResult{
+			Format:             FormatWeeklyPayment,
+			WeeklyPaymentSheets: weeklyPaymentSheets,
 		}, nil
 	}
 
@@ -153,4 +173,74 @@ func ExtractShiftType(sheetName string) string {
 		return ""
 	}
 	return shiftType
+}
+
+// isWeeklyPaymentSheet checks if a sheet matches the weekly payment format:
+// - Row 8 has headers: STT, Mã nhân viên, Họ và tên, Bộ phận, Lương 8h
+// - Row 10 has shift codes: HC, TCN, NN, or TCNN
+// Sheet name can be any value (not restricted to numeric).
+func isWeeklyPaymentSheet(f *excelize.File, sheetName string) bool {
+	return hasWeeklyPaymentHeader(f, sheetName) && hasWeeklyPaymentShiftRow(f, sheetName)
+}
+
+// hasWeeklyPaymentHeader checks if row 8 contains the expected headers:
+// STT, Mã nhân viên, Họ và tên, Bộ phận, Lương 8h
+func hasWeeklyPaymentHeader(f *excelize.File, sheet string) bool {
+	rows, err := f.GetRows(sheet)
+	if err != nil || len(rows) < 8 {
+		return false
+	}
+
+	// Row 8 is index 7
+	row := rows[7]
+	hasSTT := false
+	hasMaNV := false
+	hasHoTen := false
+	hasBoPhan := false
+	hasLuong8h := false
+
+	for _, cell := range row {
+		val := strings.TrimSpace(cell)
+		if val == "STT" {
+			hasSTT = true
+		}
+		if strings.Contains(val, "Mã nhân viên") || strings.Contains(val, "Ma nhan vien") {
+			hasMaNV = true
+		}
+		if strings.Contains(val, "Họ và tên") || strings.Contains(val, "Ho va ten") || strings.Contains(val, "Họ và Tên") {
+			hasHoTen = true
+		}
+		if strings.Contains(val, "Bộ phận") || strings.Contains(val, "Bo phan") {
+			hasBoPhan = true
+		}
+		if strings.Contains(val, "Lương 8h") || strings.Contains(val, "Luong 8h") {
+			hasLuong8h = true
+		}
+	}
+
+	return hasSTT && hasMaNV && hasHoTen && hasBoPhan && hasLuong8h
+}
+
+// hasWeeklyPaymentShiftRow checks if row 10 contains any of the shift codes:
+// HC, TCN, NN, TCNN (case-insensitive substring match)
+func hasWeeklyPaymentShiftRow(f *excelize.File, sheet string) bool {
+	rows, err := f.GetRows(sheet)
+	if err != nil || len(rows) < 10 {
+		return false
+	}
+
+	// Row 10 is index 9
+	row := rows[9]
+	shiftCodes := []string{"HC", "TCN", "NN", "TCNN"}
+
+	for _, cell := range row {
+		val := strings.ToUpper(strings.TrimSpace(cell))
+		for _, code := range shiftCodes {
+			if strings.Contains(val, code) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
