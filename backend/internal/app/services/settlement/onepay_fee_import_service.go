@@ -336,7 +336,10 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 	for i, h := range rows[0] {
 		headers[normalizeHeader(h)] = i
 	}
-	required := []string{"merchant id", "merchant name", "merchant fund transfer id", "op transaction id", "create date", "currency", "beneficiary account", "beneficiary account name", "beneficiary bank", "amount", "state"}
+	// OnePay's monthly export has two valid layouts. Older exports include the
+	// merchant-name and currency metadata; current VND-only exports omit both.
+	// Keep every field used to reconcile an application payment mandatory.
+	required := []string{"merchant id", "merchant fund transfer id", "op transaction id", "create date", "beneficiary account", "beneficiary account name", "beneficiary bank", "amount", "state"}
 	var issues []dto.OnePayFeeReportIssue
 	for _, h := range required {
 		if _, ok := headers[h]; !ok {
@@ -363,13 +366,22 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 			continue
 		}
 
+		merchantName := ""
+		if merchantNameColumn, ok := headers["merchant name"]; ok {
+			merchantName = strings.TrimSpace(cell(row, merchantNameColumn))
+		}
+		currency := "VND"
+		if currencyColumn, ok := headers["currency"]; ok {
+			currency = strings.TrimSpace(cell(row, currencyColumn))
+		}
+
 		detail := onePayFeeReportDetail{
 			row:                    idx + 1,
 			merchantID:             strings.TrimSpace(cell(row, headers["merchant id"])),
-			merchantName:           strings.TrimSpace(cell(row, headers["merchant name"])),
+			merchantName:           merchantName,
 			fundTransferID:         strings.TrimSpace(cell(row, headers["merchant fund transfer id"])),
 			opTransactionID:        strings.TrimSpace(cell(row, headers["op transaction id"])),
-			currency:               strings.TrimSpace(cell(row, headers["currency"])),
+			currency:               currency,
 			beneficiaryAccount:     strings.TrimSpace(cell(row, headers["beneficiary account"])),
 			beneficiaryAccountName: strings.TrimSpace(cell(row, headers["beneficiary account name"])),
 			beneficiaryBank:        strings.TrimSpace(cell(row, headers["beneficiary bank"])),
@@ -382,6 +394,9 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 			issues = append(issues, issue("duplicate_fund_transfer_id", detail.row, detail.fundTransferID, fmt.Sprintf("Trùng Merchant Fund Transfer ID với dòng %d", previousRow)))
 		}
 		seen[detail.fundTransferID] = detail.row
+		if detail.opTransactionID == "" {
+			issues = append(issues, issue("op_transaction_id_missing", detail.row, detail.fundTransferID, "Thiếu mã giao dịch OnePay"))
+		}
 		if !strings.EqualFold(detail.currency, "VND") {
 			issues = append(issues, issue("currency_mismatch", detail.row, detail.fundTransferID, "Đơn vị tiền tệ không phải VND"))
 		}
