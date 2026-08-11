@@ -19,7 +19,14 @@ vi.mock('@/hooks/api/useProjects', () => ({
 }));
 
 vi.mock('@/hooks/api/useEmployees', () => ({
-  useEmployees: () => ({ data: { data: [] } }),
+  useEmployeesInfinite: () => ({
+    data: { pages: [{ data: [] }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 vi.mock('@/hooks/api/usePayrolls', () => ({

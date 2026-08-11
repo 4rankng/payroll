@@ -22,10 +22,8 @@ import {
 import { cn } from '@/lib/utils';
 import { formatCurrencyFromString } from '@/utils/formatters';
 import { useIsMobile } from '@/hooks/useBreakpoint';
-import { useEmployees } from '@/hooks/api/useEmployees';
 import { useProjects } from '@/hooks/api/useProjects';
 import type { Project } from '@/types/api/project.types';
-import type { Employee } from '@/types/api/employee.types';
 import { walletService } from '@/services/api/wallet.service';
 import { useDisbursementSettings } from '@/hooks/useDisbursementSettings';
 import {
@@ -92,15 +90,12 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
   const walletBalance = balanceData?.available ?? null;
 
   const { data: projectsResponse } = useProjects();
-  const { data: employeesResponse } = useEmployees();
   const projects = useMemo(() => projectsResponse?.data || [], [projectsResponse?.data]);
-  const employees = useMemo(() => employeesResponse?.data || [], [employeesResponse?.data]);
 
   const form = useBulkTransferExportForm({
     isOpen: open,
     onOpenChange,
     projects,
-    employees,
   });
 
   // Mutations
@@ -428,7 +423,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
               Xuất Excel → CK qua app ngân hàng → upload kết quả tại{' '}
               <span className="font-medium text-foreground">Nhập KQ chuyển lô</span>.
             </p>
-            <SharedExportForm form={form} projects={projects} employees={employees} isMobile={isMobile} />
+            <SharedExportForm form={form} projects={projects} isMobile={isMobile} />
           </TabsContent>
 
           {/* Provider tab */}
@@ -458,7 +453,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
                 <span>{providerWarning}</span>
               </div>
             )}
-            <SharedExportForm form={form} projects={projects} employees={employees} isMobile={isMobile} />
+            <SharedExportForm form={form} projects={projects} isMobile={isMobile} />
           </TabsContent>
         </Tabs>
 
@@ -516,11 +511,10 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
 interface SharedExportFormProps {
   form: ReturnType<typeof useBulkTransferExportForm>;
   projects: Project[];
-  employees: Employee[];
   isMobile: boolean;
 }
 
-function SharedExportForm({ form, projects, employees, isMobile }: SharedExportFormProps) {
+function SharedExportForm({ form, projects, isMobile }: SharedExportFormProps) {
   return (
     <div className="space-y-2.5">
       {/* Payment Schedule */}
@@ -562,7 +556,6 @@ function SharedExportForm({ form, projects, employees, isMobile }: SharedExportF
         selectedProjects={form.selectedProjects}
         selectedEmployees={form.selectedEmployees}
         projects={projects}
-        employees={employees}
         onProjectChange={form.setSelectedProjects}
         onEmployeeChange={form.setSelectedEmployees}
       />

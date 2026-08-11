@@ -10,13 +10,6 @@ interface BulkTransferFiltersSectionProps {
   selectedProjects: number[];
   selectedEmployees: number[];
   projects: Array<{ id: number; code: string; name: string }>;
-  employees: Array<{
-    id: number;
-    employee_code?: string;
-    fullname: string;
-    cccd?: string | null;
-    date_of_birth?: string | null;
-  }>;
   onProjectChange: (ids: number[]) => void;
   onEmployeeChange: (ids: number[]) => void;
 }
@@ -25,15 +18,14 @@ export const BulkTransferFiltersSection = memo(function BulkTransferFiltersSecti
   selectedProjects,
   selectedEmployees,
   projects,
-  employees,
   onProjectChange,
   onEmployeeChange,
 }: BulkTransferFiltersSectionProps) {
   const hasActiveFilters = useMemo(() => {
     const hasProjectFilter = selectedProjects.length > 0 && selectedProjects.length < projects.length;
-    const hasEmployeeFilter = selectedEmployees.length > 0 && selectedEmployees.length < employees.length;
+    const hasEmployeeFilter = selectedEmployees.length > 0;
     return hasProjectFilter || hasEmployeeFilter;
-  }, [selectedProjects.length, selectedEmployees.length, projects.length, employees.length]);
+  }, [selectedProjects.length, selectedEmployees.length, projects.length]);
 
   const filterSummary = useMemo(() => {
     if (!hasActiveFilters) return null;
@@ -41,11 +33,11 @@ export const BulkTransferFiltersSection = memo(function BulkTransferFiltersSecti
     if (selectedProjects.length > 0 && selectedProjects.length < projects.length) {
       parts.push(`${selectedProjects.length} dự án`);
     }
-    if (selectedEmployees.length > 0 && selectedEmployees.length < employees.length) {
+    if (selectedEmployees.length > 0) {
       parts.push(`${selectedEmployees.length} nhân viên`);
     }
     return parts.join(' · ');
-  }, [hasActiveFilters, selectedProjects.length, selectedEmployees.length, projects.length, employees.length]);
+  }, [hasActiveFilters, selectedProjects.length, selectedEmployees.length, projects.length]);
 
   return (
     <Collapsible>
@@ -85,7 +77,6 @@ export const BulkTransferFiltersSection = memo(function BulkTransferFiltersSecti
             <EmployeeMultiSelector
               value={selectedEmployees}
               onChange={onEmployeeChange}
-              employees={employees}
             />
           </div>
         </div>

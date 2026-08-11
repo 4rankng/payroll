@@ -15,7 +15,6 @@ describe('useBulkTransferExportForm', () => {
       isOpen: true,
       onOpenChange: vi.fn(),
       projects,
-      employees: [],
       initialProjectIds: [42],
     }));
 
@@ -38,7 +37,6 @@ describe('useBulkTransferExportForm', () => {
       isOpen: true,
       onOpenChange: vi.fn(),
       projects: [],
-      employees: [],
       initialProjectIds: [42],
     }));
 
@@ -52,6 +50,25 @@ describe('useBulkTransferExportForm', () => {
       fromDate: selectedPeriod.from,
       toDate: selectedPeriod.to,
       project_ids: [42],
+    });
+  });
+
+  it('keeps explicitly selected employee IDs when the search result page changes', () => {
+    const { result } = renderHook(() => useBulkTransferExportForm({
+      isOpen: true,
+      onOpenChange: vi.fn(),
+      projects: [],
+    }));
+
+    const selectedPeriod = result.current.weekPeriods.availablePeriods[0];
+
+    act(() => {
+      result.current.applyWeekPeriod(selectedPeriod);
+      result.current.setSelectedEmployees([11156]);
+    });
+
+    expect(result.current.buildExportParams()).toMatchObject({
+      employee_ids: [11156],
     });
   });
 });

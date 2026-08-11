@@ -6,7 +6,6 @@ import { getAvailableMonthPeriods, type MonthPeriod, type MonthPeriodsResult } f
 import { getCustomDateRanges, type CustomDateRange } from '@/utils/weekPeriodHelpers';
 import { formatDateForAPI } from '@/utils/formatters';
 import type { Project } from '@/types/api/project.types';
-import type { Employee } from '@/types/api/employee.types';
 
 export interface BulkTransferExportParams {
   project_ids?: number[];
@@ -20,7 +19,6 @@ interface UseBulkTransferExportFormProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   projects: Project[];
-  employees: Employee[];
   initialProjectIds?: number[];
 }
 
@@ -56,7 +54,6 @@ export function useBulkTransferExportForm({
   isOpen,
   onOpenChange,
   projects,
-  employees,
   initialProjectIds,
 }: UseBulkTransferExportFormProps) {
   const [paymentSchedule, setPaymentScheduleState] = useState<'weekly' | 'monthly'>('weekly');
@@ -159,20 +156,6 @@ export function useBulkTransferExportForm({
     );
   }, [projects]);
 
-  const handleEmployeeSelect = useCallback((employeeId: number) => {
-    setSelectedEmployees(prev =>
-      prev.includes(employeeId)
-        ? prev.filter(id => id !== employeeId)
-        : [...prev, employeeId]
-    );
-  }, []);
-
-  const handleEmployeeSelectAll = useCallback(() => {
-    setSelectedEmployees(prev =>
-      prev.length === employees.length ? [] : employees.map(e => e.id)
-    );
-  }, [employees]);
-
   // Display text for selectors
   const projectDisplayText = useMemo(() => {
     if (selectedProjects.length === 0 || selectedProjects.length === projects.length) {
@@ -182,11 +165,11 @@ export function useBulkTransferExportForm({
   }, [selectedProjects.length, projects.length]);
 
   const employeeDisplayText = useMemo(() => {
-    if (selectedEmployees.length === 0 || selectedEmployees.length === employees.length) {
+    if (selectedEmployees.length === 0) {
       return 'Tất cả nhân viên';
     }
     return `Đã chọn ${selectedEmployees.length} nhân viên`;
-  }, [selectedEmployees.length, employees.length]);
+  }, [selectedEmployees.length]);
 
   // Validation
   const canExport = useMemo(() => {
@@ -235,14 +218,14 @@ export function useBulkTransferExportForm({
       params.project_ids = [];
     }
 
-    if (selectedEmployees.length > 0 && selectedEmployees.length < employees.length) {
+    if (selectedEmployees.length > 0) {
       params.employee_ids = selectedEmployees;
-    } else if (selectedEmployees.length === 0 || selectedEmployees.length === employees.length) {
+    } else {
       params.employee_ids = [];
     }
 
     return params;
-  }, [canExport, fromDate, toDate, paymentSchedule, selectedProjects, selectedEmployees, projects.length, employees.length]);
+  }, [canExport, fromDate, toDate, paymentSchedule, selectedProjects, selectedEmployees, projects.length]);
 
   return {
     paymentSchedule,
@@ -270,8 +253,6 @@ export function useBulkTransferExportForm({
     applyCustomRange,
     handleProjectSelect,
     handleProjectSelectAll,
-    handleEmployeeSelect,
-    handleEmployeeSelectAll,
     buildExportParams
   };
 }

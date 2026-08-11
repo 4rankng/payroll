@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Download, Loader2, FileSpreadsheet, CreditCard, CheckCircle2, XCircle } from 'lucide-react';
 import { useProjects } from '@/hooks/api/useProjects';
-import { useEmployees } from '@/hooks/api/useEmployees';
 import { useBulkTransferExportForm } from '@/hooks/timesheet/useBulkTransferExportForm';
 import { useAutoBulkTransferStatus } from '@/hooks/api/usePayrolls';
 import { type BulkTransferExportParams } from '@/services/api/bulk-transfer.service';
@@ -36,16 +35,13 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
   preselectedProjectIds,
 }: BulkTransferExportDialogProps) {
   const { data: projectsResponse } = useProjects();
-  const { data: employeesResponse } = useEmployees();
 
   const projects = useMemo(() => projectsResponse?.data || [], [projectsResponse?.data]);
-  const employees = useMemo(() => employeesResponse?.data || [], [employeesResponse?.data]);
 
   const form = useBulkTransferExportForm({
     isOpen: open,
     onOpenChange,
     projects,
-    employees,
     initialProjectIds: preselectedProjectIds,
   });
 
@@ -239,7 +235,6 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
             selectedProjects={form.selectedProjects}
             selectedEmployees={form.selectedEmployees}
             projects={projects}
-            employees={employees}
             onProjectChange={form.setSelectedProjects}
             onEmployeeChange={form.setSelectedEmployees}
           />
