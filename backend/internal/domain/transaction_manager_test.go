@@ -119,6 +119,19 @@ func TestWithTransactionContext_ChainedContexts(t *testing.T) {
 	assert.NotEqual(t, txCtx1, retrieved2)
 }
 
+func TestWithoutTransactionContext_PreservesOtherValues(t *testing.T) {
+	type requestKey struct{}
+	ctx := context.WithValue(context.Background(), requestKey{}, "request-value")
+	ctx = WithTransactionContext(ctx, &TransactionContext{IsTransactional: true})
+
+	detached := WithoutTransactionContext(ctx)
+
+	txCtx, ok := GetTransactionFromContext(detached)
+	assert.False(t, ok)
+	assert.Nil(t, txCtx)
+	assert.Equal(t, "request-value", detached.Value(requestKey{}))
+}
+
 func TestWithTransactionContext_NilTransactionContext(t *testing.T) {
 	ctx := context.Background()
 	newCtx := WithTransactionContext(ctx, nil)

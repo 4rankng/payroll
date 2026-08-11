@@ -11,7 +11,7 @@
 - Two-layer duplicate protection: (1) stale cleanup deletes unapproved matching employee+date+hourType, (2) BulkCreateTimesheets does paytype-keyed upsert
 - Re-upload after bulk-approve is rejected (status=failed)
 - Paid/approved timesheets are never modified by re-upload
-- Two BCC formats: Standard (multi-position) and Weekly (BCC-<shiftType> sheets)
+- Supported BCC formats include Standard (multi-position), Weekly (`BCC-<shiftType>` sheets), and Weekly Payment (salary-position sheets)
 
 ## Standard BCC Format
 
@@ -27,6 +27,15 @@
 - Date handling: day-of-month from Excel cell (not strict year/month matching)
 - Day type: weekday vs weekend only (no holiday detection)
 - Rate lookup via dot-path: `position.dayType.shiftType`
+
+## Weekly Payment Format
+
+- Each salary sheet name is the authoritative employee position (for example, `Lương 520` or `Lương 700`)
+- The `STK` sheet supplies employee identity and bank details for employee creation
+- Row 10 supplies the shift type for each attendance column (`HC`, `TCN`, `NN`, `TCNN`)
+- Day type is always `ngày thường`; rate lookup uses `sheetName.ngày thường.row10Shift`
+- An employee in different salary-position sheets is blocked instead of being assigned an arbitrary default position
+- Existing project assignments are synchronized to the salary sheet before timesheets are created
 
 ## State Machine
 
@@ -73,10 +82,22 @@ Re-upload: [uploaded] → completed (overwrites unapproved)
 | F10-11 | Day type: weekday vs weekend | Integration | Upload with weekday + weekend dates | Weekday rates vs weekend rates applied correctly |
 | F10-12 | Paid timesheets not affected by re-upload | Integration | Upload → approve → pay → re-upload | Paid entries untouched, new entries created for unpaid |
 
+### F11 — Weekly Payment Import
+
+| # | Scenario | Type | Steps | Expected Result |
+|---|----------|------|-------|-----------------|
+| F11-01 | Import multiple salary positions | Happy | Upload sheets `Lương 520` and `Lương 700` with different employees | Each project assignment keeps its owning sheet name as position |
+| F11-02 | Resolve rate from row-10 shift | Integration | Import an `HC`, `TCN`, or `TCNN` attendance cell | Paytype and rate use `sheetName.ngày thường.shiftType` |
+| F11-03 | Create employee from STK | Integration | Import a new CCCD present in both STK and one salary sheet | Employee and weekly project assignment are created with STK details and the sheet-derived position |
+| F11-04 | Correct an existing wrong position | Regression | Existing assignment is `Lương 520`; employee appears in `Lương 700` | Assignment is updated to `Lương 700` before imported paytype is constructed |
+| F11-05 | Employee appears in multiple salary sheets | Negative | Put one CCCD in two sheets with different names | Employee is blocked and the import reports the conflicting positions |
+| F11-06 | STK employee has no salary sheet | Negative | Put a CCCD only in STK | Employee details may be created, but no arbitrary project position is assigned; import reports the missing position |
+
 ## Automated Test Reference
 
 - Integration test: `backend/tests/integration/flow_bcc_import.go`
 - Integration test: `backend/tests/integration/flow_bcc_weekly_import.go`
+- Integration test: `backend/tests/integration/flow_bcc_weekly_payment_import.go`
 - Unit test: `backend/internal/app/services/bcc_import_service_test.go`
 - Unit test: `backend/internal/app/services/bcc_import_weekly_test.go`
 - Key constants: `MAX_HOURS_PER_DAY = 12`, `MAX_HOURS_EXCESSIVE = 16`

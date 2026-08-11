@@ -61,3 +61,10 @@ func GetTransactionFromContext(ctx context.Context) (*TransactionContext, bool) 
 func WithTransactionContext(ctx context.Context, txCtx *TransactionContext) context.Context {
 	return context.WithValue(ctx, TransactionContextKey{}, txCtx)
 }
+
+// WithoutTransactionContext preserves the caller's request-scoped values while
+// shadowing any transaction inherited from the parent context. Use it for work
+// that runs after commit so repositories cannot reuse an already-committed TX.
+func WithoutTransactionContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, TransactionContextKey{}, struct{}{})
+}

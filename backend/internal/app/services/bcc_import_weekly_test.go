@@ -6,6 +6,7 @@ import (
 
 	excelparser "api-server/internal/app/services/excel"
 	"api-server/internal/domain"
+	domainservices "api-server/internal/domain/services"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -172,4 +173,91 @@ func TestWeeklyPaymentRateLookup_DistinguishesSheetPositions(t *testing.T) {
 	rates := buildShiftRatesForShift(flatRates, "HC")
 	assert.Equal(t, 65000, rates[weeklyPaymentRateKey("Lương 520")])
 	assert.Equal(t, 87500, rates[weeklyPaymentRateKey("Lương 700")])
+}
+
+func TestBuildWeeklyPaymentPositions_UsesOwningSheet(t *testing.T) {
+	sheets := []excelparser.WeeklyPaymentSheetData{
+		{
+			Position: "Lương 520",
+			Employees: []excelparser.WeeklyPaymentEmployeeData{
+				{EmployeeCode: "CCCD-520", FullName: "Nhân viên 520"},
+			},
+		},
+		{
+			Position: "Lương 700",
+			Employees: []excelparser.WeeklyPaymentEmployeeData{
+				{EmployeeCode: "CCCD-700", FullName: "Nhân viên 700"},
+			},
+		},
+	}
+
+	positions, blocked, errs := buildWeeklyPaymentPositions(sheets)
+
+	assert.Equal(t, "Lương 520", positions["CCCD-520"])
+	assert.Equal(t, "Lương 700", positions["CCCD-700"])
+	assert.Empty(t, blocked)
+	assert.Empty(t, errs)
+}
+
+func TestBuildWeeklyPaymentPositions_BlocksEmployeeInMultiplePositionSheets(t *testing.T) {
+	sheets := []excelparser.WeeklyPaymentSheetData{
+		{
+			Position: "Lương 520",
+			Employees: []excelparser.WeeklyPaymentEmployeeData{
+				{EmployeeCode: "CCCD-DUP", FullName: "Nhân viên trùng"},
+			},
+		},
+		{
+			Position: "Lương 700",
+			Employees: []excelparser.WeeklyPaymentEmployeeData{
+				{EmployeeCode: "CCCD-DUP", FullName: "Nhân viên trùng"},
+			},
+		},
+	}
+
+	positions, blocked, errs := buildWeeklyPaymentPositions(sheets)
+
+	assert.NotContains(t, positions, "CCCD-DUP")
+	assert.Contains(t, blocked, "CCCD-DUP")
+	if assert.Len(t, errs, 1) {
+		assert.Contains(t, errs[0].Reason, "xuất hiện ở nhiều sheet vị trí")
+	}
+}
+
+func TestPlanWeeklyPaymentPositionCorrections_SkipsExcludedFlexibleEmployees(t *testing.T) {
+	assignments := []*domain.ProjectEmployee{
+		{ID: 10, EmployeeID: 100, EmployeeCCCD: "CCCD-WEEKLY", EmployeeName: "Nhân viên tuần", Position: "Lương 520", PaymentSchedule: string(domain.PaymentScheduleWeekly)},
+		{ID: 20, EmployeeID: 200, EmployeeCCCD: "CCCD-FLEX", EmployeeName: "Nhân viên linh hoạt", Position: "Lương 520", PaymentSchedule: string(domain.PaymentScheduleFlexible)},
+	}
+	positions := map[string]string{
+		"CCCD-WEEKLY": "Lương 700",
+		"CCCD-FLEX":   "Lương 750",
+	}
+
+	corrections := planWeeklyPaymentPositionCorrections(assignments, positions, false)
+
+	if assert.Len(t, corrections, 1) {
+		assert.Equal(t, uint(10), corrections[100].assignmentID)
+		assert.Equal(t, "Lương 520", corrections[100].oldPosition)
+		assert.Equal(t, "Lương 700", corrections[100].newPosition)
+	}
+	assert.NotContains(t, corrections, uint(200))
+}
+
+func TestSelectWeeklyPaymentPositionCorrections_OnlyEmployeesWithFinalEntries(t *testing.T) {
+	planned := map[uint]posCorrection{
+		100: {assignmentID: 20, employeeID: 100, oldPosition: "Lương 520", newPosition: "Lương 700"},
+		200: {assignmentID: 10, employeeID: 200, oldPosition: "Lương 520", newPosition: "Lương 750"},
+	}
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{EmployeeID: 100},
+		{EmployeeID: 100},
+	}
+
+	selected := selectWeeklyPaymentPositionCorrections(entries, planned)
+
+	if assert.Len(t, selected, 1) {
+		assert.Equal(t, uint(20), selected[0].assignmentID)
+		assert.Equal(t, uint(100), selected[0].employeeID)
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/config"
@@ -62,34 +63,33 @@ func NewBulkTransferPaymentWorker(
 // UpdateForTransfer updates timesheet payment statuses for a single completed or
 // failed transfer, identified by its requestID (the transaction_code).
 func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, requestID string, completed bool, invoiceNo string) error {
-	// Idempotency — skip if already processed
-	idempotencyKey := fmt.Sprintf("transfer_ts_update:%s", requestID)
-	acquired, state, err := w.idempotencyService.TryAcquireLock(ctx, idempotencyKey)
-	if err != nil {
-		return fmt.Errorf("acquire idempotency lock: %w", err)
-	}
-	if !acquired {
-		w.logger.Info("timesheet update already processed", "request_id", requestID, "state", state)
-		return nil
-	}
-
 	// Look up transaction code to find timesheet IDs
 	tc, err := w.tcRepo.GetByCode(ctx, requestID)
 	if err != nil {
 		// Not a bulk transfer (e.g. flex pay) — nothing to do
-		_ = w.idempotencyService.ReleaseLock(ctx, idempotencyKey)
 		return nil
 	}
 
 	var tcData domain.TransactionCodeData
 	if err := json.Unmarshal(tc.Data, &tcData); err != nil {
-		_ = w.idempotencyService.ReleaseLock(ctx, idempotencyKey)
 		return nil
 	}
 
 	timesheetIDs := tcData.GetTimesheetIDs()
 	if len(timesheetIDs) == 0 {
-		_ = w.idempotencyService.ReleaseLock(ctx, idempotencyKey)
+		return nil
+	}
+
+	// Include the current target rows in the idempotency key. BCC replacement
+	// can legitimately change the IDs behind a VFIC code; a code-only key would
+	// treat a retry for the new rows as already complete and leave them pending.
+	idempotencyKey := transferTimesheetUpdateIdempotencyKey(requestID, timesheetIDs)
+	acquired, state, err := w.idempotencyService.TryAcquireLock(ctx, idempotencyKey)
+	if err != nil {
+		return fmt.Errorf("acquire idempotency lock: %w", err)
+	}
+	if !acquired {
+		w.logger.Info("timesheet update already processed", "request_id", requestID, "state", state, "idempotency_key", idempotencyKey)
 		return nil
 	}
 
@@ -173,6 +173,12 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 		"timesheet_count", len(updates))
 
 	return nil
+}
+
+func transferTimesheetUpdateIdempotencyKey(requestID string, timesheetIDs []uint) string {
+	ids := append([]uint(nil), timesheetIDs...)
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return fmt.Sprintf("transfer_ts_update:%s:%v", requestID, ids)
 }
 
 func paymentFinalizationCandidates(timesheets []*domain.Timesheet) []*domain.Timesheet {

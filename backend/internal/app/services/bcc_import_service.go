@@ -411,10 +411,26 @@ func (s *BCCImportService) applyTimesheetReplacement(
 	uploaderID uint,
 	uploaderRole string,
 ) (*domainservices.BulkCreateTimesheetResult, error) {
+	return s.applyTimesheetReplacementPrepared(ctx, staleIDs, entries, uploaderID, uploaderRole, nil)
+}
+
+func (s *BCCImportService) applyTimesheetReplacementPrepared(
+	ctx context.Context,
+	staleIDs []uint,
+	entries []domainservices.BulkCreateTimesheetEntry,
+	uploaderID uint,
+	uploaderRole string,
+	prepare func(context.Context) error,
+) (*domainservices.BulkCreateTimesheetResult, error) {
 	requireBCCImportApproval(entries)
 
 	var result *domainservices.BulkCreateTimesheetResult
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		if prepare != nil {
+			if err := prepare(txCtx); err != nil {
+				return err
+			}
+		}
 		for _, id := range staleIDs {
 			if err := s.timesheetWriter.HardDelete(txCtx, id); err != nil {
 				return fmt.Errorf("xóa bảng chấm công cũ %d: %w", id, err)
@@ -551,6 +567,9 @@ func bccTimesheetReplacementKey(timesheet *domain.Timesheet, includeHourType boo
 // planBCCReplacement preserves reviewed payroll data, replaces only pending
 // rows, and leaves missing rows for the bulk-create path. Paid and other
 // non-pending rows are also protected because an import must not reopen them.
+// A row linked to a revenue transaction is protected too: the transfer result
+// may still be finishing its payment-status update asynchronously, so replacing
+// that row would orphan the provider result from the newly-created timesheet.
 func planBCCReplacement(
 	entries []domainservices.BulkCreateTimesheetEntry,
 	existingTimesheets []*domain.Timesheet,
@@ -579,6 +598,7 @@ func planBCCReplacement(
 			continue
 		}
 		if timesheet.Status != domain.TimesheetStatusPendingApproval ||
+			timesheet.TransactionID != nil ||
 			timesheet.PaymentStatus == domain.PaymentStatusPaid ||
 			timesheet.PaymentStatus == domain.PaymentStatusFailed ||
 			timesheet.PaymentStatus == domain.PaymentStatusCancelled {

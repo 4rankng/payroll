@@ -59,6 +59,9 @@ type ProjectEmployeeRepository interface {
 	// UpdatePosition updates only the position column, avoiding full-row Save() that
 	// could overwrite concurrent changes to other fields (e.g., CheckInEnabled).
 	UpdatePosition(ctx context.Context, id uint, position string) error
+	// UpdatePositionIfCurrent performs a compare-and-swap update so imports never
+	// overwrite a concurrent assignment edit made after their initial read.
+	UpdatePositionIfCurrent(ctx context.Context, id uint, currentPosition, newPosition string) error
 	Delete(ctx context.Context, id uint) error
 	DeleteByProjectID(ctx context.Context, projectID uint) error
 	DeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error

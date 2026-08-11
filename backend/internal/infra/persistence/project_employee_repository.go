@@ -151,6 +151,25 @@ func (r *ProjectEmployeeRepository) UpdatePosition(ctx context.Context, id uint,
 	return nil
 }
 
+func (r *ProjectEmployeeRepository) UpdatePositionIfCurrent(
+	ctx context.Context,
+	id uint,
+	currentPosition string,
+	newPosition string,
+) error {
+	result := r.getDB(ctx).
+		Model(&domain.ProjectEmployee{}).
+		Where("id = ? AND position = ?", id, currentPosition).
+		Update("position", newPosition)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update assignment position: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.NewConflictError("vị trí nhân viên đã thay đổi trong lúc nhập BCC")
+	}
+	return nil
+}
+
 func (r *ProjectEmployeeRepository) Delete(ctx context.Context, id uint) error {
 	return r.SafeDelete(ctx, &domain.ProjectEmployee{}, id)
 }

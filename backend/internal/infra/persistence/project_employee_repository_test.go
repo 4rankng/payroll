@@ -2,12 +2,45 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
+
+	"github.com/stretchr/testify/require"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
+
+func TestProjectEmployeeRepository_UpdatePositionIfCurrent(t *testing.T) {
+	dsn := fmt.Sprintf("file:project-employee-cas-%d?mode=memory&cache=shared", time.Now().UnixNano())
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.Exec(`CREATE TABLE project_employees (
+		id INTEGER PRIMARY KEY,
+		position TEXT NOT NULL,
+		updated_at DATETIME,
+		deleted_at DATETIME
+	)`).Error)
+	require.NoError(t, db.Exec("INSERT INTO project_employees (id, position) VALUES (?, ?)", 1, "Lương 520").Error)
+
+	repo := &ProjectEmployeeRepository{BaseRepository: &BaseRepository{DB: db}}
+	ctx := context.Background()
+
+	require.NoError(t, repo.UpdatePositionIfCurrent(ctx, 1, "Lương 520", "Lương 700"))
+
+	var position string
+	require.NoError(t, db.Raw("SELECT position FROM project_employees WHERE id = ?", 1).Scan(&position).Error)
+	require.Equal(t, "Lương 700", position)
+
+	err = repo.UpdatePositionIfCurrent(ctx, 1, "Lương 520", "Lương 900")
+	require.Error(t, err)
+	require.ErrorIs(t, err, domain.ErrConflict)
+	require.NoError(t, db.Raw("SELECT position FROM project_employees WHERE id = ?", 1).Scan(&position).Error)
+	require.Equal(t, "Lương 700", position)
+}
 
 // TestHasAccessViaProject_ProjectCreator verifies that a user who CREATED a project
 // can access an employee actively assigned to it — even when the creator has NO

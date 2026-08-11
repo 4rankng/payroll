@@ -51,6 +51,11 @@ func (m *MockProjectEmployeeRepository) UpdatePosition(ctx context.Context, id u
 	return args.Error(0)
 }
 
+func (m *MockProjectEmployeeRepository) UpdatePositionIfCurrent(ctx context.Context, id uint, currentPosition, newPosition string) error {
+	args := m.Called(ctx, id, currentPosition, newPosition)
+	return args.Error(0)
+}
+
 func (m *MockProjectEmployeeRepository) Delete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

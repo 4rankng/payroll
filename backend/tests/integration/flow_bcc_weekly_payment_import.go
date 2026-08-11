@@ -85,7 +85,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 	if uploadForbidden {
 		for _, name := range []string{
 			"Verify per-tier rate resolution (520HC)",
-			"Verify per-tier weekend rate (520NN)",
+			"Verify per-tier normal-day rate (520NN)",
 			"Verify STK sheet auto-creates employees",
 			"Verify day uniqueness (no duplicate days)",
 			"Re-upload same file (latest wins)",
@@ -125,8 +125,8 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		return nil
 	})
 
-	// ── 3. Verify per-tier weekend rate (520NN) ─────────────────────────────────────
-	reporter.RunTest(flowWeeklyPayment, "Verify per-tier weekend rate (520NN)", func() error {
+	// ── 3. Verify weekly-payment NN shift keeps the fixed normal-day type ───────────
+	reporter.RunTest(flowWeeklyPayment, "Verify per-tier normal-day rate (520NN)", func() error {
 		if importID == 0 {
 			return fmt.Errorf("no import ID from previous test")
 		}
@@ -138,18 +138,19 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 			return fmt.Errorf("fetch timesheets: %w", err)
 		}
 
-		// Look for a weekend entry (should have HourType=NN, DayType="ngày nghỉ")
+		// Weekly-payment templates always resolve through "ngày thường"; NN is the
+		// row-10 shift code, not a signal to change the day-type branch.
 		found := false
 		for _, ts := range timesheets {
-			if ts.HourType == "NN" && ts.DayType == "ngày nghỉ" && ts.HoursWorked == 8 {
+			if ts.HourType == "NN" && ts.DayType == "ngày thường" && ts.HoursWorked == 8 {
 				found = true
-				fmt.Printf("    Found weekend entry: employee=%s date=%s hour_type=%s day_type=%s hours=%.0f\n",
+				fmt.Printf("    Found NN entry: employee=%s date=%s hour_type=%s day_type=%s hours=%.0f\n",
 					ts.EmployeeName, ts.Date, ts.HourType, ts.DayType, ts.HoursWorked)
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("expected to find weekend entry with NN/8h, got %d timesheets", len(timesheets))
+			return fmt.Errorf("expected to find normal-day entry with NN/8h, got %d timesheets", len(timesheets))
 		}
 		return nil
 	})

@@ -231,65 +231,81 @@ func (s *ProjectEmployeeService) UpdateAssignment(ctx context.Context, assignmen
 // with full cache invalidation, event emission, and conditional timesheet recalculation.
 // Uses targeted column update to avoid full-row Save() overwriting concurrent changes.
 func (s *ProjectEmployeeService) UpdateAssignmentPosition(ctx context.Context, assignmentID uint, position string, updatedBy uint) error {
-	var existing *domain.ProjectEmployee
-
-	err := s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
-		var err error
-		existing, err = s.projectEmployeeRepo.GetByID(ctx, assignmentID)
+	return s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		existing, err := s.projectEmployeeRepo.GetByID(txCtx, assignmentID)
 		if err != nil {
 			return err
 		}
+		return s.updateAssignmentPosition(txCtx, existing, existing.Position, position, updatedBy)
+	})
+}
 
-		if err := s.projectEmployeeRepo.UpdatePosition(ctx, assignmentID, position); err != nil {
+// UpdateAssignmentPositionIfCurrent updates a position only when it still
+// matches the caller's snapshot. When ctx already carries a transaction, the
+// compare-and-swap and all downstream writes join that transaction.
+func (s *ProjectEmployeeService) UpdateAssignmentPositionIfCurrent(
+	ctx context.Context,
+	assignmentID uint,
+	currentPosition string,
+	newPosition string,
+	updatedBy uint,
+) error {
+	return s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		existing, err := s.projectEmployeeRepo.GetByID(txCtx, assignmentID)
+		if err != nil {
 			return err
 		}
+		if existing.Position != currentPosition {
+			return domain.NewConflictError("vị trí nhân viên đã thay đổi trong lúc nhập BCC")
+		}
+		return s.updateAssignmentPosition(txCtx, existing, currentPosition, newPosition, updatedBy)
+	})
+}
 
-		// Update in-memory for event publishing
-		existing.Position = position
+func (s *ProjectEmployeeService) updateAssignmentPosition(
+	ctx context.Context,
+	existing *domain.ProjectEmployee,
+	currentPosition string,
+	newPosition string,
+	updatedBy uint,
+) error {
+	if currentPosition == newPosition {
+		return nil
+	}
+	if err := s.projectEmployeeRepo.UpdatePositionIfCurrent(ctx, existing.ID, currentPosition, newPosition); err != nil {
+		return err
+	}
 
-		// Publish ProjectEmployeeUpdatedEvent
+	existing.Position = newPosition
+	assignmentCopy := *existing
+	afterCommitCtx := domain.WithoutTransactionContext(context.WithoutCancel(ctx))
+	domain.RegisterAfterCommit(ctx, func() {
+		if s.cache != nil {
+			cacheKey := fmt.Sprintf("assignment:%d:%d", assignmentCopy.ProjectID, assignmentCopy.EmployeeID)
+			if err := s.cache.Delete(afterCommitCtx, cacheKey); err != nil {
+				observability.GetLogger().Warn("failed to invalidate assignment cache after position update", "error", err)
+			}
+		}
+
 		if s.eventBus != nil {
-			assignment := existing
-			employee, err := s.employeeRepo.GetByID(ctx, assignment.EmployeeID)
-			if err == nil {
-				assignment.Employee = *employee
+			if employee, err := s.employeeRepo.GetByID(afterCommitCtx, assignmentCopy.EmployeeID); err == nil {
+				assignmentCopy.Employee = *employee
 			}
-			project, err := s.projectRepo.GetByID(ctx, assignment.ProjectID)
-			if err == nil {
-				assignment.Project = *project
+			if project, err := s.projectRepo.GetByID(afterCommitCtx, assignmentCopy.ProjectID); err == nil {
+				assignmentCopy.Project = *project
 			}
-
-			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
-			if err := s.eventBus.Publish(ctx, event); err != nil {
+			event := domain.NewProjectEmployeeUpdatedEvent(afterCommitCtx, &assignmentCopy)
+			if err := s.eventBus.Publish(afterCommitCtx, event); err != nil {
 				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (position update)", "error", err)
 			}
 		}
 
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	// Invalidate assignment cache so subsequent validation sees updated data
-	if s.cache != nil {
-		cacheKey := fmt.Sprintf("assignment:%d:%d", existing.ProjectID, existing.EmployeeID)
-		if err := s.cache.Delete(ctx, cacheKey); err != nil {
-			observability.GetLogger().Warn("failed to invalidate assignment cache after position update", "error", err)
-		}
-	}
-
-	// Recalculate editable timesheets since position changed (affects payrate resolution)
-	if s.timesheetRecalculator != nil {
-		recalculator := s.timesheetRecalculator
-		assignmentCopy := *existing
-		domain.RegisterAfterCommit(ctx, func() {
-			if err := recalculator.RecalculateTimesheetsForAssignment(context.Background(), &assignmentCopy, updatedBy); err != nil {
+		if s.timesheetRecalculator != nil {
+			if err := s.timesheetRecalculator.RecalculateTimesheetsForAssignment(afterCommitCtx, &assignmentCopy, updatedBy); err != nil {
 				observability.GetLogger().Warn("failed to recalculate timesheets after position update", "assignmentID", assignmentCopy.ID, "error", err)
 			}
-		})
-	}
+		}
+	})
 
 	return nil
 }

@@ -757,6 +757,97 @@ func weeklyPaymentRateKey(sheetPosition string) wbccRateKey {
 	}
 }
 
+// buildWeeklyPaymentPositions makes the salary sheet the authoritative source
+// for each employee's project position. An employee cannot safely belong to two
+// different salary-tier sheets because assignment position is later used to
+// construct the persisted paytype and resolve the final rate.
+func buildWeeklyPaymentPositions(
+	sheets []excelparser.WeeklyPaymentSheetData,
+) (map[string]string, map[string]struct{}, []domain.ImportError) {
+	positions := make(map[string]string)
+	blocked := make(map[string]struct{})
+	var importErrors []domain.ImportError
+
+	for _, sheet := range sheets {
+		for _, employee := range sheet.Employees {
+			cccd := strings.TrimSpace(employee.EmployeeCode)
+			if cccd == "" {
+				continue
+			}
+			if _, alreadyBlocked := blocked[cccd]; alreadyBlocked {
+				continue
+			}
+
+			existingPosition, exists := positions[cccd]
+			if !exists {
+				positions[cccd] = sheet.Position
+				continue
+			}
+			if canonicalBCCRateKeySegment(existingPosition) == canonicalBCCRateKeySegment(sheet.Position) {
+				continue
+			}
+
+			delete(positions, cccd)
+			blocked[cccd] = struct{}{}
+			importErrors = append(importErrors, domain.ImportError{
+				Employee: employee.FullName,
+				Reason: fmt.Sprintf("nhân viên %q xuất hiện ở nhiều sheet vị trí (%s, %s)",
+					employee.FullName, existingPosition, sheet.Position),
+			})
+		}
+	}
+
+	return positions, blocked, importErrors
+}
+
+func planWeeklyPaymentPositionCorrections(
+	assignments []*domain.ProjectEmployee,
+	positionByCCCD map[string]string,
+	includeFlexibleEmployees bool,
+) map[uint]posCorrection {
+	corrections := make(map[uint]posCorrection)
+	for _, assignment := range assignments {
+		expectedPosition := positionByCCCD[assignment.EmployeeCCCD]
+		if expectedPosition == "" || canonicalBCCRateKeySegment(assignment.Position) == canonicalBCCRateKeySegment(expectedPosition) {
+			continue
+		}
+		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) && !includeFlexibleEmployees {
+			continue
+		}
+		corrections[assignment.EmployeeID] = posCorrection{
+			assignmentID: assignment.ID,
+			employeeID:   assignment.EmployeeID,
+			oldPosition:  assignment.Position,
+			newPosition:  expectedPosition,
+			employeeName: assignment.EmployeeName,
+		}
+	}
+	return corrections
+}
+
+func selectWeeklyPaymentPositionCorrections(
+	entries []domainservices.BulkCreateTimesheetEntry,
+	planned map[uint]posCorrection,
+) []posCorrection {
+	selectedByAssignment := make(map[uint]posCorrection)
+	for _, entry := range entries {
+		if correction, ok := planned[entry.EmployeeID]; ok {
+			selectedByAssignment[correction.assignmentID] = correction
+		}
+	}
+	assignmentIDs := make([]uint, 0, len(selectedByAssignment))
+	for assignmentID := range selectedByAssignment {
+		assignmentIDs = append(assignmentIDs, assignmentID)
+	}
+	sort.Slice(assignmentIDs, func(i, j int) bool { return assignmentIDs[i] < assignmentIDs[j] })
+
+	selected := make([]posCorrection, 0, len(assignmentIDs))
+	for _, assignmentID := range assignmentIDs {
+		selected = append(selected, selectedByAssignment[assignmentID])
+	}
+	return selected
+}
+
 // getShiftTypes extracts unique leaf-level shift type names from flattened payrate paths.
 // For paths like "pho thong.ngay thuong.HC" → returns ["HC"].
 func getShiftTypes(flatRates map[string]int) []string {
@@ -834,6 +925,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	if err != nil {
 		return fail("failed", safeWeeklyPaymentParseError(err))
 	}
+	positionByCCCD, blockedEmployeeCCCDs, positionErrors := buildWeeklyPaymentPositions(parsed.Sheets)
 
 	// 2-3. Shared setup: month parsing, lock, payrate lookup.
 	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
@@ -841,7 +933,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 		return fail("failed", err.Error())
 	}
 	defer releaseLock()
-	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	year, month, monthStart := ictx.year, ictx.month, ictx.monthStart
 	loc := monthStart.Location()
 
 	// 4. Resolve payrates for the ACTUAL timesheet dates in the file.
@@ -862,8 +954,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	}
 
 	// 5. STK auto-creation (same pattern as multi-position and weekly BCC).
-	var importErrors []domain.ImportError
-	blockedEmployeeCCCDs := make(map[string]struct{})
+	importErrors := append([]domain.ImportError(nil), positionErrors...)
 
 	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
 	if stkErr != nil {
@@ -875,14 +966,6 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 		if row.CCCD != "" && row.FullName != "" {
 			stkNameByCCCD[row.CCCD] = row.FullName
 		}
-	}
-
-	// Collect unique CCCDs and determine default position.
-	availablePositions := getPositions(flatRates)
-	sort.Strings(availablePositions)
-	defaultPosition := ""
-	if len(availablePositions) > 0 {
-		defaultPosition = availablePositions[0]
 	}
 
 	if len(stkRows) > 0 {
@@ -903,6 +986,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, cccd) {
 					continue
 				}
+				employeePosition := positionByCCCD[cccd]
 
 				var bankID *uint
 				if row.BankName != "" {
@@ -982,13 +1066,21 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 					})
 					continue
 				}
+				if existingAssignment == nil && employeePosition == "" {
+					blockedEmployeeCCCDs[cccd] = struct{}{}
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   "không xác định được vị trí: nhân viên có trong STK nhưng không có trong sheet lương",
+					})
+					continue
+				}
 				if existingAssignment == nil {
 					assignment := &domain.ProjectEmployee{
 						ProjectID:       projectID,
 						EmployeeID:      emp.ID,
 						EmployeeName:    emp.Fullname,
 						EmployeeCCCD:    emp.CCCD,
-						Position:        defaultPosition,
+						Position:        employeePosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
 						CreatedBy:       uploaderID,
@@ -1015,6 +1107,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tải danh sách nhân viên: %v", err))
 	}
+	plannedPositionCorrections := planWeeklyPaymentPositionCorrections(assignments, positionByCCCD, includeFlexibleEmployees)
 	byCCCD := make(map[string]*domain.ProjectEmployee, len(assignments))
 	empNames := make(map[uint]string, len(assignments))
 	for _, a := range assignments {
@@ -1027,6 +1120,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 		var missingCCCDs []struct {
 			cccd     string
 			fullName string
+			position string
 		}
 		seenMissing := make(map[string]bool)
 		for _, sheet := range parsed.Sheets {
@@ -1047,9 +1141,11 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				missingCCCDs = append(missingCCCDs, struct {
 					cccd     string
 					fullName string
+					position string
 				}{
 					cccd:     emp.EmployeeCode,
 					fullName: emp.FullName,
+					position: positionByCCCD[emp.EmployeeCode],
 				})
 			}
 		}
@@ -1062,6 +1158,14 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 
 			autoErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 				for _, m := range missingCCCDs {
+					if m.position == "" {
+						blockedEmployeeCCCDs[m.cccd] = struct{}{}
+						importErrors = append(importErrors, domain.ImportError{
+							Employee: m.fullName,
+							Reason:   "không xác định được vị trí từ sheet lương",
+						})
+						continue
+					}
 					existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, m.cccd)
 					if empErr != nil && !domain.IsNotFoundError(empErr) {
 						blockedEmployeeCCCDs[m.cccd] = struct{}{}
@@ -1137,7 +1241,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 						EmployeeID:      emp.ID,
 						EmployeeName:    emp.Fullname,
 						EmployeeCCCD:    emp.CCCD,
-						Position:        defaultPosition,
+						Position:        m.position,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
 						CreatedBy:       uploaderID,
@@ -1309,7 +1413,28 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 		return fail("failed", reason)
 	}
 
-	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
+	positionCorrections := selectWeeklyPaymentPositionCorrections(entries, plannedPositionCorrections)
+	result, err := s.applyTimesheetReplacementPrepared(
+		ctx,
+		staleIDs,
+		entries,
+		uploaderID,
+		uploaderRole,
+		func(txCtx context.Context) error {
+			for _, correction := range positionCorrections {
+				if updateErr := s.projectEmployeeSvc.UpdateAssignmentPositionIfCurrent(
+					txCtx,
+					correction.assignmentID,
+					correction.oldPosition,
+					correction.newPosition,
+					uploaderID,
+				); updateErr != nil {
+					return fmt.Errorf("cập nhật vị trí cho nhân viên %s: %w", correction.employeeName, updateErr)
+				}
+			}
+			return nil
+		},
+	)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}

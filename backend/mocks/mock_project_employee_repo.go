@@ -446,3 +446,17 @@ func (mr *MockProjectEmployeeRepositoryMockRecorder) UpdatePosition(ctx, id, pos
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePosition", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).UpdatePosition), ctx, id, position)
 }
+
+// UpdatePositionIfCurrent mocks base method.
+func (m *MockProjectEmployeeRepository) UpdatePositionIfCurrent(ctx context.Context, id uint, currentPosition, newPosition string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePositionIfCurrent", ctx, id, currentPosition, newPosition)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePositionIfCurrent indicates an expected call of UpdatePositionIfCurrent.
+func (mr *MockProjectEmployeeRepositoryMockRecorder) UpdatePositionIfCurrent(ctx, id, currentPosition, newPosition interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePositionIfCurrent", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).UpdatePositionIfCurrent), ctx, id, currentPosition, newPosition)
+}

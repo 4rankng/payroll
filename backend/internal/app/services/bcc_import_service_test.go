@@ -316,6 +316,25 @@ func TestPlanBCCReplacementProtectsEveryNonEditablePaymentState(t *testing.T) {
 	}
 }
 
+func TestPlanBCCReplacementProtectsTimesheetsLinkedToTransferTransaction(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	transactionID := uint(208)
+	entries := []domainservices.BulkCreateTimesheetEntry{{
+		EmployeeID: 1273, Date: "2026-08-08", HourType: "HC",
+	}}
+	existing := []*domain.Timesheet{{
+		ID: 55656, EmployeeID: 1273, Date: date, PayType: "worker.ngày thường.HC",
+		Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending,
+		TransactionID: &transactionID,
+	}}
+
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+
+	if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 1 {
+		t.Fatalf("filtered=%v stale=%v protected=%d, want linked row protected", filtered, staleIDs, protectedSkipped)
+	}
+}
+
 func TestPlanBCCReplacementLegacyKeyProtectsWholeEmployeeDay(t *testing.T) {
 	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
 	entries := []domainservices.BulkCreateTimesheetEntry{
