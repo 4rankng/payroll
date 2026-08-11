@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -456,5 +456,73 @@ describe("EmployeeCheckInCard geofence guidance", () => {
 
     expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText("Tiến gần tâm khu vực")).not.toBeInTheDocument();
+  });
+
+  it("keeps the attendance action in a visible GPS warm-up state above 50 m", () => {
+    const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
+    locationMock.mockReturnValue({
+      sample: { lat: gate.lat, lng: gate.lng, accuracy: 51, timestamp: Date.now() },
+      progress: {
+        sampleCount: 2,
+        elapsedMs: 3_000,
+        bestAccuracy: 51,
+        requiredAccuracyMeters: 50,
+        status: "weak",
+      },
+      isSubmitReady: false,
+      isWatching: true,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [gate] }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Đang làm nét GPS đến ≤50 m…");
+    expect(screen.getByRole("status")).toHaveTextContent("Sai số hiện 51m");
+    expect(screen.getByRole("button", { name: "Đang kiểm tra GPS…" })).toBeDisabled();
+  });
+
+  it("asks the employee to allow GPS before starting the location watch", () => {
+    const requestPermission = vi.fn();
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      needsPermission: true,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      requestPermission,
+      retry: vi.fn(),
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }] }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Cho phép sử dụng vị trí");
+    fireEvent.click(
+      within(screen.getByRole("toolbar", { name: "Hành động nhân viên" })).getByRole("button", {
+        name: "Cho phép vị trí",
+      })
+    );
+    expect(requestPermission).toHaveBeenCalledOnce();
   });
 });

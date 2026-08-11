@@ -57,6 +57,11 @@ const GEOLOCATION_TIMEOUT = 3;
 const GEOLOCATION_UNSUPPORTED = 0;
 const GEOLOCATION_INACCURATE = 4;
 
+// Attendance submissions are held until the browser reports a GPS fix within
+// this accuracy. Geofence radius answers "where may the employee be"; it is
+// not a safe substitute for the precision of the GPS reading itself.
+export const EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS = 50;
+
 const DEFAULT_LOCATION_ACQUISITION_OPTIONS: LocationAcquisitionOptions = {
   // High-accuracy GNSS can need 25-30s for a cold first fix (indoor / weak
   // signal / battery saver). The browser watchPosition has no per-attempt
@@ -65,7 +70,7 @@ const DEFAULT_LOCATION_ACQUISITION_OPTIONS: LocationAcquisitionOptions = {
   timeoutMs: 30000,
   freshMaxAgeMs: 30000,
   excellentAccuracyMeters: 20,
-  requiredAccuracyMeters: 50,
+  requiredAccuracyMeters: EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS,
   minimumExcellentSamples: 2,
   minimumAcceptableSamples: 2,
   minimumWarmupMs: 3000,

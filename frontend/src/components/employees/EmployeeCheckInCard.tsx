@@ -456,6 +456,9 @@ export function EmployeeCheckInCard({
   // Aliases so the existing JSX (converging-accuracy banner, map preview) reads the
   // continuous watch's reactive state unchanged.
   const locationProgress: LocationAcquisitionProgress | null = location.progress;
+  const fatalLocationIssue = location.fatalError
+    ? getLocationPermissionIssue(location.fatalError)
+    : null;
   const checkInGuidance = useMemo(
     () => getCheckInGeofenceGuidance(checkInTarget, location.sample),
     [checkInTarget, location.sample]
@@ -691,8 +694,8 @@ export function EmployeeCheckInCard({
       return;
     }
 
-    // Cold path: submit the first fresh fix that meets the project's configured
-    // accuracy radius, even when client guidance says "outside". The server is
+    // Cold path: submit the first fresh fix that meets the 50 m attendance
+    // accuracy threshold, even when client guidance says "outside". The server is
     // the geofence authority and records validation failures; waiting for an
     // "inside" sample here would leave outside-geofence taps unaudited.
     setIsLocating(true);
@@ -926,7 +929,17 @@ export function EmployeeCheckInCard({
   let dockActionDisabled = true;
   let handleDockAttendanceAction: (() => void) | undefined;
 
-  if (attendance?.status === "checked_in") {
+  if (locationEnabled && location.needsPermission) {
+    dockAction = "attention";
+    dockActionLabel = "Cho phép vị trí";
+    dockActionDisabled = false;
+    handleDockAttendanceAction = location.requestPermission;
+  } else if (locationEnabled && location.fatalError) {
+    dockAction = "attention";
+    dockActionLabel = "Đã bật vị trí";
+    dockActionDisabled = false;
+    handleDockAttendanceAction = location.retry;
+  } else if (attendance?.status === "checked_in") {
     dockAction = checkoutCoolingDown || isLocating ? "loading" : "check_out";
     dockActionLabel = checkoutCoolingDown
       ? "Đang chờ GPS…"
@@ -946,8 +959,6 @@ export function EmployeeCheckInCard({
     } else if (gpsAcquiring || isLocating) {
       dockAction = "loading";
       dockActionLabel = "Đang kiểm tra GPS…";
-    } else if (location.fatalError) {
-      dockActionLabel = "Kiểm tra vị trí";
     } else {
       dockAction = "check_in";
       dockActionLabel = "Vào làm";
@@ -1448,20 +1459,49 @@ export function EmployeeCheckInCard({
                 {checkInGuidance.status === "inaccurate" ? "Tiến gần tâm rồi thử lại" : "Đến gần cổng rồi thử lại"}
               </Button>
             </div>
-          ) : gpsAcquiring ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
+          ) : location.needsPermission ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3" role="status">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
-                    <MapPin className="h-5 w-5 animate-pulse" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-employee">
+                    <MapPin className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">Đang xác định vị trí...</p>
+                    <p className="employee-type-card-title font-semibold text-slate-950">Cho phép sử dụng vị trí</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
-                      {geofenceInstruction || (locationProgress?.status === "excellent"
-                        ? "Tín hiệu rất tốt — sẵn sàng chấm công."
-                        : locationProgress?.status === "acceptable"
-                          ? "Tín hiệu khá — đang ổn định thêm."
-                          : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần.")}
+                      Để chấm công chính xác, hãy cho phép ứng dụng sử dụng GPS của thiết bị.
+                    </p>
+                  </div>
+                </div>
+              {attendanceReference}
+              {locationMapDisclosure}
+              <Button
+                size="lg"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
+                onClick={location.requestPermission}
+              >
+                <MapPin className="mr-2 h-5 w-5" aria-hidden="true" />
+                Cho phép vị trí
+              </Button>
+            </div>
+          ) : gpsAcquiring ? (
+              <div
+                className="rounded-2xl border border-slate-200 bg-white p-3"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="employee-type-card-title font-semibold text-slate-950">
+                      Đang làm nét GPS đến ≤50 m…
+                    </p>
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                      {geofenceInstruction || (locationProgress?.bestAccuracy
+                        ? `Sai số hiện ${formatAccuracy(locationProgress.bestAccuracy)}. Đang chờ tín hiệu ổn định hơn.`
+                        : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần.")}
                     </p>
                   </div>
                 </div>
@@ -1478,20 +1518,28 @@ export function EmployeeCheckInCard({
               </Button>
             </div>
           ) : location.fatalError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-3" role="alert">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
                   <MapPin className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-card-title font-semibold text-slate-950">Không lấy được vị trí</p>
+                  <p className="employee-type-card-title font-semibold text-slate-950">{fatalLocationIssue?.title}</p>
                   <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
-                    {location.fatalError.title}. {location.fatalError.description}
+                    {fatalLocationIssue?.description}
                   </p>
                 </div>
               </div>
               {attendanceReference}
               {locationMapDisclosure}
+              <Button
+                size="lg"
+                variant="outline"
+                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                onClick={location.retry}
+              >
+                Tôi đã bật vị trí
+              </Button>
             </div>
           ) : (
               <div className="rounded-2xl border border-slate-200 bg-white p-3">

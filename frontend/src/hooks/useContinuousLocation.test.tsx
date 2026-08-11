@@ -1,7 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CheckInTarget } from "@/types/api/auth.types";
-import { CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS } from "@/utils/geolocation";
+import {
+  CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS,
+  EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS,
+  type LocationPermissionState,
+} from "@/utils/geolocation";
 import { useContinuousLocation } from "./useContinuousLocation";
 
 type WatchCb = (pos: GeolocationPosition) => void;
@@ -14,6 +18,7 @@ interface GeolocationStub {
 }
 
 const originalGeolocation = navigator.geolocation;
+const originalPermissions = navigator.permissions;
 
 const target: CheckInTarget = {
   project_id: 58,
@@ -37,7 +42,7 @@ function makePosition(lat: number, lng: number, accuracy: number, timestamp = Da
   } as GeolocationPosition;
 }
 
-function installGeolocationStub(): GeolocationStub {
+function installGeolocationStub(permissionState: LocationPermissionState = "granted"): GeolocationStub {
   let watchCb: WatchCb | null = null;
   const watchPosition = vi.fn((success: WatchCb, error: ErrCb) => {
     watchCb = success;
@@ -49,6 +54,10 @@ function installGeolocationStub(): GeolocationStub {
     configurable: true,
     writable: true,
     value: { watchPosition, clearWatch },
+  });
+  Object.defineProperty(navigator, "permissions", {
+    configurable: true,
+    value: { query: vi.fn().mockResolvedValue({ state: permissionState }) },
   });
 
   return {
@@ -69,6 +78,10 @@ describe("useContinuousLocation", () => {
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
       value: originalGeolocation,
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: originalPermissions,
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -91,6 +104,36 @@ describe("useContinuousLocation", () => {
       accuracy: 35,
     });
     expect(result.current.isSubmitReady).toBe(false);
+
+    unmount();
+  });
+
+  it("waits for an explicit employee action before asking for an ungranted location permission", async () => {
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+    expect(stub.watchPosition).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+
+    unmount();
+  });
+
+  it("explains a previously denied permission without starting a GPS watch", async () => {
+    stub = installGeolocationStub("denied");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+
+    await waitFor(() => expect(result.current.permissionState).toBe("denied"));
+    expect(result.current.fatalError?.code).toBe(1);
+    expect(stub.watchPosition).not.toHaveBeenCalled();
 
     unmount();
   });
@@ -138,7 +181,7 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
-  it("accepts an on-site fix within the project's configured accuracy radius", async () => {
+  it("keeps warming for a fix above the 50 m attendance accuracy threshold", async () => {
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
@@ -149,13 +192,16 @@ describe("useContinuousLocation", () => {
     });
 
     await waitFor(() => expect(result.current.sample).toMatchObject({ accuracy: 80 }));
-    expect(result.current.isSubmitReady).toBe(true);
-    await expect(result.current.awaitAccurateSample(1)).resolves.toMatchObject({ accuracy: 80 });
+    expect(result.current.progress?.requiredAccuracyMeters).toBe(
+      EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS
+    );
+    expect(result.current.isSubmitReady).toBe(false);
+    expect(stub.clearWatch).not.toHaveBeenCalled();
 
     unmount();
   });
 
-  it("waits for a fix within the project's accuracy radius before providing a check-in sample", async () => {
+  it("waits for a <=50 m fix before providing a check-in sample", async () => {
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
@@ -163,14 +209,24 @@ describe("useContinuousLocation", () => {
 
     const accurateSamplePromise = result.current.awaitAccurateSample();
     await act(async () => {
-      stub.emitFix(target.gates[0].lat, target.gates[0].lng, target.radius_meters + 0.1);
+      stub.emitFix(
+        target.gates[0].lat,
+        target.gates[0].lng,
+        EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS + 0.1
+      );
     });
     expect(stub.clearWatch).not.toHaveBeenCalled();
 
     await act(async () => {
-      stub.emitFix(target.gates[0].lat, target.gates[0].lng, target.radius_meters - 0.1);
+      stub.emitFix(
+        target.gates[0].lat,
+        target.gates[0].lng,
+        EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS
+      );
     });
-    await expect(accurateSamplePromise).resolves.toMatchObject({ accuracy: target.radius_meters - 0.1 });
+    await expect(accurateSamplePromise).resolves.toMatchObject({
+      accuracy: EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS,
+    });
 
     unmount();
   });

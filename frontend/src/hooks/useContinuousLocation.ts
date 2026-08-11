@@ -3,11 +3,15 @@ import type { CheckInTarget } from "@/types/api/auth.types";
 import { getCheckInGeofenceGuidance } from "@/utils/checkInGeofenceGuidance";
 import {
   CONTINUOUS_LOCATION_FRESH_MAX_AGE_MS,
+  EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS,
+  createGeolocationError,
   createInaccurateGeolocationError,
+  getLocationPermissionState,
   isSampleFresh,
   watchContinuousLocation,
   type ContinuousLocationHandle,
   type LocationAcquisitionProgress,
+  type LocationPermissionState,
   type LocationSample,
 } from "@/utils/geolocation";
 
@@ -28,21 +32,28 @@ export interface UseContinuousLocationResult {
   sample: LocationSample | null;
   /** Rolling acquisition progress for the converging-accuracy UX. */
   progress: LocationAcquisitionProgress | null;
-  /** True iff `sample` is fresh, accurate enough for the project's configured
-   *  radius, and its guidance against the target gate is "inside". A warm tap
+  /** True iff `sample` is fresh, accurate to the attendance GPS threshold,
+   *  and its guidance against the target gate is "inside". A warm tap
    *  with this true submits instantly. */
   isSubmitReady: boolean;
   /** True while the underlying watchPosition is active. */
   isWatching: boolean;
+  /** Browser-reported permission state when the Permissions API is available. */
+  permissionState: LocationPermissionState;
+  /** True when the employee needs to explicitly ask the browser for location access. */
+  needsPermission: boolean;
   /** A fatal geolocation error from the watch (permission denied). The card
    *  surfaces this via its existing recovery banner + failed-attempt log. Null
    *  while the watch is healthy. */
   fatalError: GeolocationPositionError | null;
+  /** Start GPS acquisition from an employee action, so the browser can display
+   *  its native location-permission prompt in a clear user context. */
+  requestPermission: () => void;
   /** Resolve with a submit-ready sample, or reject with a geolocation error on
    *  timeout / fatal error / abort. */
   awaitSubmitReady: (timeoutMs?: number) => Promise<LocationSample>;
-  /** Resolve with the next fresh GPS sample within the project's configured
-   *  accuracy radius, regardless of geofence status. The server remains the
+  /** Resolve with the next fresh GPS sample within the attendance GPS accuracy
+   *  threshold, regardless of geofence status. The server remains the
    *  geofence authority. */
   awaitAccurateSample: (timeoutMs?: number) => Promise<LocationSample>;
   /** Clear state and restart the watch (recovery CTA, or after OS settings change). */
@@ -51,7 +62,13 @@ export interface UseContinuousLocationResult {
 
 const DEFAULT_SUBMIT_TIMEOUT_MS = 30000;
 const PERMISSION_DENIED = 1;
-const DEFAULT_REQUIRED_ACCURACY_METERS = 50;
+
+function createPermissionDeniedError(): GeolocationPositionError {
+  return createGeolocationError(
+    PERMISSION_DENIED,
+    "Quyền truy cập vị trí đang bị chặn"
+  ) as GeolocationPositionError;
+}
 
 /**
  * Marks a submit-wait as cancelled (watch paused/restarted, component going
@@ -93,6 +110,8 @@ export function useContinuousLocation({
   const [progress, setProgress] = useState<LocationAcquisitionProgress | null>(null);
   const [fatalError, setFatalError] = useState<GeolocationPositionError | null>(null);
   const [isWatching, setIsWatching] = useState(false);
+  const [permissionState, setPermissionState] = useState<LocationPermissionState>("unknown");
+  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
   const [watchPausedForAccuracy, setWatchPausedForAccuracy] = useState(false);
   const [, setSampleFreshnessEpoch] = useState(0);
   // Bump to force a clean watch restart (retry, or visibility return).
@@ -115,10 +134,11 @@ export function useContinuousLocation({
   progressRef.current = progress;
   fatalErrorRef.current = fatalError;
 
-  const requiredAccuracyMeters =
-    target && target.radius_meters > 0
-      ? target.radius_meters
-      : DEFAULT_REQUIRED_ACCURACY_METERS;
+  // A geofence's radius describes its permitted area, not the confidence of a
+  // location reading. Using the radius here allowed a ±100 m fix to be sent to
+  // a 150 m geofence, where the server could still reject it as ambiguous.
+  // Keep acquiring until the fixed attendance threshold is reached instead.
+  const requiredAccuracyMeters = EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS;
 
   const guidance = useMemo(
     () => getCheckInGeofenceGuidance(target, sample),
@@ -131,6 +151,35 @@ export function useContinuousLocation({
     guidance.status === "inside" &&
     fatalError === null;
   isSubmitReadyRef.current = isSubmitReady;
+  const canAcquireLocation = permissionState === "granted" || hasRequestedPermission;
+  const needsPermission =
+    !fatalError &&
+    !isWatching &&
+    !hasRequestedPermission &&
+    (permissionState === "prompt" || permissionState === "unknown");
+
+  // Do not trigger the browser's permission prompt merely because the employee
+  // opened the attendance card. A browser permission that was already granted
+  // starts warming immediately; otherwise the card gives the employee a clear
+  // "Cho phép vị trí" action that starts the native prompt in user context.
+  useEffect(() => {
+    let cancelled = false;
+    void getLocationPermissionState().then((nextPermissionState) => {
+      if (cancelled) return;
+      setPermissionState(nextPermissionState);
+      if (nextPermissionState === "granted") {
+        setHasRequestedPermission(true);
+      } else if (nextPermissionState === "denied") {
+        const deniedError = createPermissionDeniedError();
+        fatalErrorRef.current = deniedError;
+        setFatalError(deniedError);
+        setHasRequestedPermission(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [restartEpoch]);
 
   // A paused watch does not emit another location update to make the React tree
   // re-check freshness. Re-render exactly when the retained fix expires so the
@@ -185,7 +234,7 @@ export function useContinuousLocation({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !target || !visible) {
+    if (!enabled || !target || !visible || !canAcquireLocation) {
       retainSampleOnWatchStopRef.current = false;
       isWatchingRef.current = false;
       setIsWatching(false);
@@ -213,13 +262,15 @@ export function useContinuousLocation({
         progressRef.current = p;
         setProgress(p);
         const next = p.bestFreshSample ?? null;
+        setPermissionState("granted");
+        setHasRequestedPermission(true);
         sampleRef.current = next;
         setSample(next);
         if (next && next.accuracy <= requiredAccuracyMeters) {
           resolveFreshSampleAwaiters(next);
         }
         if (next && next.accuracy <= requiredAccuracyMeters) {
-          // The fix is precise enough for this project's configured geofence.
+          // The fix is precise enough for an attendance submission.
           // Preserve it for the short freshness window and stop high-accuracy
           // GPS; a stale future tap restarts the watch below.
           retainSampleOnWatchStopRef.current = true;
@@ -238,6 +289,8 @@ export function useContinuousLocation({
           // generic timeout).
           fatalErrorRef.current = geoError;
           setFatalError(geoError);
+          setPermissionState("denied");
+          setHasRequestedPermission(false);
           isWatchingRef.current = false;
           setIsWatching(false);
           handle.unsubscribe();
@@ -270,7 +323,7 @@ export function useContinuousLocation({
       // failed-attempt row should be written when the 30s timer would have fired.
       rejectAwaiters(new AbortedSubmitError());
     };
-  }, [enabled, target, visible, watchPausedForAccuracy, restartEpoch, requiredAccuracyMeters, rejectAwaiters, resolveFreshSampleAwaiters]);
+  }, [canAcquireLocation, enabled, target, visible, watchPausedForAccuracy, restartEpoch, requiredAccuracyMeters, rejectAwaiters, resolveFreshSampleAwaiters]);
 
   // Drain pending awaiters the moment submit-readiness flips true.
   useEffect(() => {
@@ -376,15 +429,28 @@ export function useContinuousLocation({
     setWatchPausedForAccuracy(false);
     setProgress(null);
     setSample(null);
+    setHasRequestedPermission(false);
     setRestartEpoch((n) => n + 1);
   }, [rejectAwaiters]);
+
+  const requestPermission = useCallback(() => {
+    if (!navigator.geolocation) return;
+    fatalErrorRef.current = null;
+    setFatalError(null);
+    setHasRequestedPermission(true);
+    setWatchPausedForAccuracy(false);
+    setRestartEpoch((n) => n + 1);
+  }, []);
 
   return {
     sample,
     progress,
     isSubmitReady,
     isWatching,
+    permissionState,
+    needsPermission,
     fatalError,
+    requestPermission,
     awaitSubmitReady,
     awaitAccurateSample,
     retry,
