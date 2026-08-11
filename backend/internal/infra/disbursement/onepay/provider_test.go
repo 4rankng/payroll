@@ -658,7 +658,7 @@ func TestProvider_CheckAccount_NameMatchWithDiacritics(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(AccountInfoResponse{
 			State:        "approved",
-			HolderName:   "NGUYEN VAN A",
+			HolderName:   "Tran Van Truong",
 			ResponseCode: "00",
 			Message:      "Success",
 		})
@@ -669,7 +669,7 @@ func TestProvider_CheckAccount_NameMatchWithDiacritics(t *testing.T) {
 	p := NewProvider(c, nil)
 
 	req := validAccountCheckRequest()
-	req.AccountName = "Nguyễn Văn A" // our record has diacritics
+	req.AccountName = "Trần Văn Trường" // Stored Vietnamese name must match OnePay's ASCII holder name.
 
 	res, err := p.CheckAccount(context.Background(), req)
 	if err != nil {
