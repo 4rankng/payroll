@@ -1,6 +1,6 @@
 ---
 title: "Phase 1: Persist, apply, and verify the wait"
-status: in_progress
+status: completed
 ---
 
 # Phase 1: Start
@@ -12,11 +12,11 @@ attendance, API, and responsive Settings boundaries.
 
 ## Requirements
 
-- [ ] Add a number setting with a migration and a seed default of 24 hours.
-- [ ] Accept only canonical whole hours from 0 through 720; use 24 hours for missing or invalid reads.
-- [ ] Persist the authoritative hold calculation at checkout; make the worker and overdue-credit sweep enforce that deadline.
-- [ ] Add the reusable Settings form state and the matching desktop/mobile cards.
-- [ ] Cover backend parsing/scheduling and frontend form/page parity.
+- [x] Add a number setting with a migration and a seed default of 24 hours.
+- [x] Accept only canonical whole hours from 0 through 720; use 24 hours for missing or invalid reads.
+- [x] Persist the authoritative hold calculation at checkout; make the worker and overdue-credit sweep enforce that deadline.
+- [x] Add the reusable Settings form state and the matching desktop/mobile cards.
+- [x] Cover backend parsing/scheduling and frontend form/page parity.
 
 ## Implementation Steps
 
@@ -28,10 +28,10 @@ attendance, API, and responsive Settings boundaries.
 
 ## Todo
 
-- [ ] Persistence and runtime accessor
-- [ ] Attendance scheduling and recovery
-- [ ] Responsive Admin Settings UI
-- [ ] Tests and release validation
+- [x] Persistence and runtime accessor
+- [x] Attendance scheduling and recovery
+- [x] Responsive Admin Settings UI
+- [x] Tests and release validation
 
 ## Success Criteria
 

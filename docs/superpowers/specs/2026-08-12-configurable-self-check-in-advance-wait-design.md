@@ -57,5 +57,6 @@ Admin Settings (desktop/mobile)
   a valid value.
 - Frontend tests prove the card exists with the same label, bounds, and saved
   state on desktop and mobile.
-- Type, lint, targeted backend, integration, graph update, and production
-  health checks are run before release.
+- Type, lint, targeted backend, graph update, and production health checks are
+  run before release. The local API integration runner requires a running local
+  API and is reported as unavailable when that service is not running.

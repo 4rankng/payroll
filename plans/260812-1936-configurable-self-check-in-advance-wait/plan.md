@@ -1,7 +1,7 @@
 ---
 title: "Configurable self check-in advance wait"
 description: "Make the post-checkout self-check-in advance wait configurable by Admin while retaining 24 hours as the safe default."
-status: in_progress
+status: completed
 priority: P1
 effort: "small"
 tags: [backend, frontend, settings, advance-payment, attendance]
@@ -29,14 +29,14 @@ checkout for the scheduler and its overdue-credit recovery path.
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | [Phase 1: Persist, apply, and verify the wait](./phase-01-start.md) | In progress |
+| 1 | [Phase 1: Persist, apply, and verify the wait](./phase-01-start.md) | Complete |
 
 ## Success Criteria
 
-- [ ] Existing databases receive `self_check_in_advance_hold_hours=24`; clean installs seed it too.
-- [ ] Admin can save an integer from 0 through 720 hours on desktop and mobile Settings.
-- [ ] Invalid API writes are rejected and missing/invalid reads use 24 hours.
-- [ ] Checkout persists the configured hold as an immutable deadline that both worker and recovery enforce.
-- [ ] Backend and frontend focused tests, type check, lint, and the project API test gate are run or any environmental limitation is reported.
+- [x] Existing databases receive `self_check_in_advance_hold_hours=24`; clean installs seed it too.
+- [x] Admin can save an integer from 0 through 720 hours on desktop and mobile Settings.
+- [x] Invalid API writes are rejected and missing/invalid reads use 24 hours.
+- [x] Checkout persists the configured hold as an immutable deadline that both worker and recovery enforce.
+- [x] Backend and frontend focused tests, type check, lint, and the project API test gate are run or its local-service limitation is reported.
 
 <!-- slug: configurable-self-check-in-advance-wait -->
