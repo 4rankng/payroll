@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
     originalBulkTransferWorkbookLimitVnd: '400000000',
     selfCheckInAdvancePercentage: '70',
     originalSelfCheckInAdvancePercentage: '70',
+    selfCheckInAdvanceHoldHours: '24',
+    originalSelfCheckInAdvanceHoldHours: '24',
     bulkTransferWorkbookLimitSaveError: null,
     bulkTransferWorkbookLimitUnavailableMessage: null,
     loadError: null as string | null,
@@ -28,11 +30,13 @@ const mocks = vi.hoisted(() => ({
     setPartnerCompany: vi.fn(),
     setBulkTransferWorkbookLimitVnd: vi.fn(),
     setSelfCheckInAdvancePercentage: vi.fn(),
+    setSelfCheckInAdvanceHoldHours: vi.fn(),
     handleSaveWeeklyPayment: vi.fn(),
     handleSaveMonthlyPayment: vi.fn(),
     handleSavePartnerCompany: vi.fn(),
     handleSaveBulkTransferWorkbookLimitVnd: vi.fn(),
     handleSaveSelfCheckInAdvancePercentage: vi.fn(),
+    handleSaveSelfCheckInAdvanceHoldHours: vi.fn(),
     retryLoading: vi.fn(),
   },
 }));
@@ -93,6 +97,20 @@ describe.each([
     expect(percentageInput).toHaveValue(70);
     expect(percentageInput).toHaveAttribute('min', '1');
     expect(percentageInput).toHaveAttribute('max', '100');
+  });
+
+  it('allows admins to configure the post-checkout advance wait in whole hours', () => {
+    render(
+      <MemoryRouter>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    const holdInput = screen.getByLabelText('Thời gian chờ ứng lương tự chấm công sau khi tan ca');
+    expect(holdInput).toHaveValue(24);
+    expect(holdInput).toHaveAttribute('min', '0');
+    expect(holdInput).toHaveAttribute('max', '720');
+    expect(holdInput).toHaveAttribute('step', '1');
   });
 
   it('shows a page-level retry state when any required setting cannot load', () => {

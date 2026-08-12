@@ -56,10 +56,9 @@ const (
 	// attendances whose scheduled K+4h task was lost (Redis/process outage at
 	// check-in). Runs on a fixed schedule via the asynq scheduler.
 	TaskAutoRejectSweep = "attendance:auto_reject_sweep"
-	// TaskCreditQuota is the one-shot task scheduled at an attendance's
-	// checkOutTime + QuotaCreditHoldDuration. It banks the earning into the
-	// advance-payment quota pool after the 24h hold; the worker is idempotent on
-	// quota_credited_at so retries/duplicates are safe.
+	// TaskCreditQuota is the one-shot task scheduled at an attendance's persisted
+	// quota-credit deadline. It banks the earning once eligible; the worker is
+	// idempotent on quota_credited_at so retries/duplicates are safe.
 	TaskCreditQuota = "attendance:credit_quota"
 	// TaskCreditQuotaSweep is the periodic safety-net task that banks earnings
 	// whose scheduled credit task was lost (Redis/process outage). Runs on a
@@ -482,8 +481,8 @@ func (h *Handlers) HandleAutoRejectSweep(ctx context.Context, _ *asynqlib.Task) 
 }
 
 // HandleCreditQuota processes the one-shot attendance:credit_quota task scheduled
-// at an attendance's checkOutTime + QuotaCreditHoldDuration. Malformed payloads are
-// dropped (SkipRetry); DB errors are retried by asynq. The worker is idempotent on
+// at its persisted quota-credit deadline. Malformed payloads are dropped
+// (SkipRetry); DB errors are retried by asynq. The worker is idempotent on
 // quota_credited_at, so duplicate or retried tasks are safe.
 func (h *Handlers) HandleCreditQuota(ctx context.Context, t *asynqlib.Task) error {
 	var p creditQuotaPayload

@@ -29,6 +29,7 @@ interface SettingCardProps {
   min?: number | string;
   max?: number | string;
   step?: number;
+  wholeNumber?: boolean;
 }
 
 const VND_FORMATTER = new Intl.NumberFormat('vi-VN');
@@ -49,6 +50,7 @@ const validateValue = (
   min: number | string,
   max: number | string,
   displayMode: 'default' | 'currency-vnd',
+  wholeNumber: boolean,
 ): { isValid: boolean; errorMessage?: string } => {
   if (!value || value.trim() === '') {
     return { isValid: false, errorMessage: 'Giá trị không được để trống' };
@@ -69,6 +71,9 @@ const validateValue = (
     return { isValid: true };
   }
   if (type === 'number') {
+    if (wholeNumber && !/^(0|[1-9]\d*)$/.test(value)) {
+      return { isValid: false, errorMessage: 'Giá trị phải là số nguyên' };
+    }
     const numValue = parseFloat(value);
     const numericMin = Number(min);
     const numericMax = Number(max);
@@ -99,13 +104,14 @@ export const SettingCard = ({
   min = 0,
   max = 100,
   step = 0.01,
+  wholeNumber = false,
 }: SettingCardProps) => {
   const generatedId = useId().replace(/:/g, '');
   const inputId = `setting-${generatedId}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
   const [currencyInputError, setCurrencyInputError] = useState<string | null>(null);
-  const validation = validateValue(value, type, min, max, displayMode);
+  const validation = validateValue(value, type, min, max, displayMode, wholeNumber);
   const visibleError =
     unavailableMessage ?? errorMessage ?? currencyInputError ?? validation.errorMessage;
   const isUnavailable = Boolean(unavailableMessage);

@@ -49,7 +49,7 @@ const minCheckInAdvanceRequest uint64 = 10000
 type CheckInAdvanceInfo struct {
 	ForMonth string
 	Salary   uint64 // tiền công thực tế (100% earned, already credited)
-	// PendingEarnings is the total earning held in the 24h credit window this
+	// PendingEarnings is the total earning held in the configured credit window this
 	// month — checked-out attendances whose earning has not yet been banked into
 	// the quota pool. Shown separately so the worker sees money is coming; it is
 	// NOT part of MaxAdvanceAmount / the configured advanceable cap.
@@ -111,7 +111,7 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get salary and max advance")
 	}
-	// Earnings still inside the 24h credit window this month — displayed
+	// Earnings still inside the configured credit window this month — displayed
 	// separately; not part of the advanceable cap.
 	pendingEarnings, err := s.config.AdvancePaymentRepo.SumPendingEarningsByEmployeeMonth(ctx, employeeID, currentCalMonth)
 	if err != nil {

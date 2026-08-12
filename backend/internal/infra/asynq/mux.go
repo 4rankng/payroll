@@ -112,7 +112,7 @@ func RegisterAutoRejectSweep(srv *Server) error {
 
 // RegisterCreditQuotaSweep registers the periodic quota-credit fallback sweep.
 // Runs every 30 minutes on the low-priority queue. It is the safety net for the
-// per-attendance 24h credit task: it banks earnings the scheduled task missed
+// per-attendance credit task: it banks earnings the scheduled task missed
 // (Redis/process outage at check-out). The sweeper is idempotent on
 // quota_credited_at, so retries and overlapping runs are safe.
 func RegisterCreditQuotaSweep(srv *Server) error {

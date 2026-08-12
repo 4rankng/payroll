@@ -9,14 +9,13 @@ import (
 // quota pool. Implemented by *attendance.AttendanceService; defined here
 // (consumer-side) so the workers package does not import the service package.
 type AttendanceQuotaCreditr interface {
-	CreditAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error)
+	CreditScheduledAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error)
 }
 
 // CreditQuotaWorker banks a single attendance's earning into the quota pool. It
-// is the bridge between the attendance:credit_quota asynq task (scheduled at
-// checkOutTime + QuotaCreditHoldDuration when the employee checks out) and the
-// attendance service. The service's CreditAttendanceQuota is idempotent on
-// quota_credited_at, so asynq retries and duplicate tasks are safe.
+// is the bridge between the attendance:credit_quota asynq task and the
+// attendance service. The service enforces the persisted eligibility timestamp
+// and is idempotent on quota_credited_at, so asynq retries and duplicates are safe.
 type CreditQuotaWorker struct {
 	creditr AttendanceQuotaCreditr
 	logger  *slog.Logger
@@ -30,11 +29,11 @@ func NewCreditQuotaWorker(creditr AttendanceQuotaCreditr) *CreditQuotaWorker {
 	}
 }
 
-// ProcessJob banks the attendance's earning if its 24h hold has elapsed. Returns
+// ProcessJob banks the attendance's earning if its persisted hold has elapsed. Returns
 // nil for already-credited / nothing-to-credit records (idempotent), so duplicate
 // or retried tasks are safe.
 func (w *CreditQuotaWorker) ProcessJob(ctx context.Context, attendanceID uint) error {
-	banked, err := w.creditr.CreditAttendanceQuota(ctx, attendanceID)
+	banked, err := w.creditr.CreditScheduledAttendanceQuota(ctx, attendanceID)
 	if err != nil {
 		w.logger.Error("quota credit failed",
 			"attendance_id", attendanceID, "error", err)
@@ -56,7 +55,7 @@ type AttendanceQuotaCreditSweeper interface {
 
 // CreditQuotaSweepWorker is the periodic backstop for the per-attendance credit
 // task: it runs CreditOverduePendingQuota on a schedule to catch earnings the
-// scheduled 24h task missed. The sweeper is idempotent, so asynq retries and
+// scheduled task missed. The sweeper is idempotent, so asynq retries and
 // overlapping runs are safe.
 type CreditQuotaSweepWorker struct {
 	sweeper AttendanceQuotaCreditSweeper

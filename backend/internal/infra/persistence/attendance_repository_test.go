@@ -179,6 +179,55 @@ func TestMarkAdminRejectedGuardsApprovedAndCreditedAttendance(t *testing.T) {
 	}
 }
 
+func TestGetOverdueQuotaCreditCandidatesUsesPersistedEligibilityDeadline(t *testing.T) {
+	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.Exec(`CREATE TABLE attendances (
+		id INTEGER PRIMARY KEY,
+		quota_credited_at DATETIME,
+		quota_credit_eligible_at DATETIME,
+		check_out_time DATETIME,
+		earning_amount INTEGER
+	)`).Error; err != nil {
+		t.Fatalf("create attendance table: %v", err)
+	}
+	cutoff := time.Date(2026, 6, 22, 9, 0, 0, 0, clock.DefaultLocation)
+	if err := db.Exec(
+		"INSERT INTO attendances (id, quota_credited_at, quota_credit_eligible_at, earning_amount) VALUES (?, NULL, ?, ?), (?, NULL, ?, ?), (?, NULL, NULL, ?), (?, ?, ?, ?), (?, NULL, ?, ?)",
+		1, cutoff.Add(-time.Second), 300000,
+		2, cutoff.Add(time.Second), 300000,
+		3, 300000,
+		4, cutoff, cutoff.Add(-time.Hour), 300000,
+		5, cutoff, 300000,
+	).Error; err != nil {
+		t.Fatalf("insert attendances: %v", err)
+	}
+	if err := db.Exec(
+		"INSERT INTO attendances (id, quota_credited_at, quota_credit_eligible_at, check_out_time, earning_amount) VALUES (?, NULL, NULL, ?, ?)",
+		6, cutoff.Add(-domain.QuotaCreditHoldDuration), 300000,
+	).Error; err != nil {
+		t.Fatalf("insert legacy attendance: %v", err)
+	}
+
+	ids, err := NewAttendanceRepository(db).GetOverdueQuotaCreditCandidates(context.Background(), cutoff, 10)
+	if err != nil {
+		t.Fatalf("GetOverdueQuotaCreditCandidates: %v", err)
+	}
+	if len(ids) != 3 {
+		t.Fatalf("candidate IDs = %v, want 3 candidates", ids)
+	}
+	got := make(map[uint]bool, len(ids))
+	for _, id := range ids {
+		got[id] = true
+	}
+	if !got[1] || !got[5] || !got[6] {
+		t.Fatalf("candidate IDs = %v, want IDs 1, 5, and legacy ID 6", ids)
+	}
+}
+
 func TestCompleteApprovedOpenPersistsCheckoutOnlyForApprovedLegacyRows(t *testing.T) {
 	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})

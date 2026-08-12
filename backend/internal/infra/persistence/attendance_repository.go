@@ -159,12 +159,13 @@ func (r *attendanceRepository) MarkQuotaCredited(ctx context.Context, id uint, a
 	return res.RowsAffected > 0, nil
 }
 
-// GetOverdueQuotaCreditCandidates returns IDs of checked-out attendances whose
-// 24h hold has elapsed (check_out_time < before) but whose earning has not yet
-// been banked (quota_credited_at IS NULL, earning_amount > 0). Capped at limit
-// per pass so the sweep stays bounded. The per-id MarkQuotaCredited guard makes
-// overlapping runs with the per-attendance deferred task safe.
-func (r *attendanceRepository) GetOverdueQuotaCreditCandidates(ctx context.Context, before time.Time, limit int) ([]uint, error) {
+// GetOverdueQuotaCreditCandidates returns IDs whose persisted checkout deadline
+// has elapsed but whose earnings have not been banked. Null deadlines are only
+// possible when an older server completed checkout during the migration rollout;
+// those retain the former 24-hour contract. Capped at limit per pass so the
+// sweep stays bounded. The per-id MarkQuotaCredited guard makes overlapping runs
+// with the per-attendance deferred task safe.
+func (r *attendanceRepository) GetOverdueQuotaCreditCandidates(ctx context.Context, eligibleBefore time.Time, limit int) ([]uint, error) {
 	if limit <= 0 {
 		limit = 500
 	}
@@ -173,10 +174,9 @@ func (r *attendanceRepository) GetOverdueQuotaCreditCandidates(ctx context.Conte
 		Model(&domain.Attendance{}).
 		Where("quota_credited_at IS NULL").
 		Where("earning_amount > 0").
-		Where("check_out_time IS NOT NULL").
-		Where("check_out_time < ?", before).
+		Where("(quota_credit_eligible_at IS NOT NULL AND quota_credit_eligible_at <= ?) OR (quota_credit_eligible_at IS NULL AND check_out_time <= ?)", eligibleBefore, eligibleBefore.Add(-domain.QuotaCreditHoldDuration)).
 		Limit(limit).
-		Order("check_out_time ASC").
+		Order("quota_credit_eligible_at ASC, check_out_time ASC").
 		Pluck("id", &ids).Error
 	return ids, err
 }

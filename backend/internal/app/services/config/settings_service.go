@@ -183,6 +183,9 @@ func validateBusinessSetting(setting *domain.Settings) error {
 	case SettingKeySelfCheckInAdvancePercent:
 		_, err := parseSelfCheckInAdvancePercent(setting)
 		return err
+	case SettingKeySelfCheckInAdvanceHold:
+		_, err := parseSelfCheckInAdvanceHoldHours(setting)
+		return err
 	default:
 		return nil
 	}

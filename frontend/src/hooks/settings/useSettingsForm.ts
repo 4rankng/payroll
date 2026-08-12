@@ -7,6 +7,7 @@ const SETTINGS_KEYS = {
   PARTNER_COMPANY: 'partner_company',
   BULK_TRANSFER_WORKBOOK_LIMIT_VND: 'bulk_transfer_workbook_limit_vnd',
   SELF_CHECK_IN_ADVANCE_PERCENTAGE: 'self_check_in_advance_percentage',
+  SELF_CHECK_IN_ADVANCE_HOLD_HOURS: 'self_check_in_advance_hold_hours',
 } as const;
 
 export interface SettingsFormState {
@@ -22,6 +23,8 @@ export interface SettingsFormState {
   bulkTransferWorkbookLimitUnavailableMessage: string | null;
   selfCheckInAdvancePercentage: string;
   originalSelfCheckInAdvancePercentage: string;
+  selfCheckInAdvanceHoldHours: string;
+  originalSelfCheckInAdvanceHoldHours: string;
   loadError: string | null;
   isSaving: boolean;
   isLoading: boolean;
@@ -30,11 +33,13 @@ export interface SettingsFormState {
   setPartnerCompany: (v: string) => void;
   setBulkTransferWorkbookLimitVnd: (v: string) => void;
   setSelfCheckInAdvancePercentage: (v: string) => void;
+  setSelfCheckInAdvanceHoldHours: (v: string) => void;
   handleSaveWeeklyPayment: () => void;
   handleSaveMonthlyPayment: () => void;
   handleSavePartnerCompany: () => void;
   handleSaveBulkTransferWorkbookLimitVnd: () => Promise<void>;
   handleSaveSelfCheckInAdvancePercentage: () => void;
+  handleSaveSelfCheckInAdvanceHoldHours: () => void;
   retryLoading: () => void;
 }
 
@@ -50,6 +55,7 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.PARTNER_COMPANY,
     SETTINGS_KEYS.BULK_TRANSFER_WORKBOOK_LIMIT_VND,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
+    SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
   ]);
 
   const updateMutation = useUpdateSetting();
@@ -64,6 +70,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalBulkTransferWorkbookLimitVnd, setOriginalBulkTransferWorkbookLimitVnd] = useState('');
   const [selfCheckInAdvancePercentage, setSelfCheckInAdvancePercentage] = useState('');
   const [originalSelfCheckInAdvancePercentage, setOriginalSelfCheckInAdvancePercentage] = useState('');
+  const [selfCheckInAdvanceHoldHours, setSelfCheckInAdvanceHoldHours] = useState('');
+  const [originalSelfCheckInAdvanceHoldHours, setOriginalSelfCheckInAdvanceHoldHours] = useState('');
   const [bulkTransferWorkbookLimitSaveError, setBulkTransferWorkbookLimitSaveError] =
     useState<string | null>(null);
 
@@ -77,6 +85,9 @@ export function useSettingsForm(): SettingsFormState {
       );
       const selfCheckInAdvancePercentageSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
+      );
+      const selfCheckInAdvanceHoldHoursSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
       );
 
       if (weeklySetting?.value) {
@@ -100,6 +111,10 @@ export function useSettingsForm(): SettingsFormState {
       if (selfCheckInAdvancePercentageSetting?.value != null) {
         setSelfCheckInAdvancePercentage(selfCheckInAdvancePercentageSetting.value);
         setOriginalSelfCheckInAdvancePercentage(selfCheckInAdvancePercentageSetting.value);
+      }
+      if (selfCheckInAdvanceHoldHoursSetting?.value != null) {
+        setSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
+        setOriginalSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
       }
     }
   }, [settings]);
@@ -163,6 +178,18 @@ export function useSettingsForm(): SettingsFormState {
     );
   };
 
+  const handleSaveSelfCheckInAdvanceHoldHours = () => {
+    if (!settings || !Array.isArray(settings)) return;
+    const setting = settings.find(
+      (item) => item?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
+    );
+    if (!setting) return;
+    updateMutation.mutate(
+      { id: setting.id, data: { value: selfCheckInAdvanceHoldHours } },
+      { onSuccess: () => setOriginalSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHours) },
+    );
+  };
+
   const handleSaveBulkTransferWorkbookLimitVnd = async () => {
     if (!bulkTransferWorkbookLimitSetting) return;
 
@@ -197,6 +224,8 @@ export function useSettingsForm(): SettingsFormState {
     bulkTransferWorkbookLimitUnavailableMessage,
     selfCheckInAdvancePercentage,
     originalSelfCheckInAdvancePercentage,
+    selfCheckInAdvanceHoldHours,
+    originalSelfCheckInAdvanceHoldHours,
     loadError,
     isSaving: updateMutation.isPending,
     isLoading,
@@ -205,11 +234,13 @@ export function useSettingsForm(): SettingsFormState {
     setPartnerCompany,
     setBulkTransferWorkbookLimitVnd,
     setSelfCheckInAdvancePercentage,
+    setSelfCheckInAdvanceHoldHours,
     handleSaveWeeklyPayment,
     handleSaveMonthlyPayment,
     handleSavePartnerCompany,
     handleSaveBulkTransferWorkbookLimitVnd,
     handleSaveSelfCheckInAdvancePercentage,
+    handleSaveSelfCheckInAdvanceHoldHours,
     retryLoading,
   };
 }

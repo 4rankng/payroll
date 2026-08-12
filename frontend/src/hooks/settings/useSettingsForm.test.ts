@@ -38,6 +38,12 @@ const mocks = vi.hoisted(() => ({
       value: '70',
       value_type: 'number',
     },
+    {
+      id: 6,
+      key: 'self_check_in_advance_hold_hours',
+      value: '24',
+      value_type: 'number',
+    },
   ],
 }));
 
@@ -132,5 +138,32 @@ describe('useSettingsForm', () => {
     ];
     act(() => options.onSuccess());
     expect(result.current.originalSelfCheckInAdvancePercentage).toBe('85');
+  });
+
+  it('loads and saves the self-check-in advance hold in whole hours', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.selfCheckInAdvanceHoldHours).toBe('24');
+    });
+
+    act(() => {
+      result.current.setSelfCheckInAdvanceHoldHours('6');
+    });
+    act(() => {
+      result.current.handleSaveSelfCheckInAdvanceHoldHours();
+    });
+
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      { id: 6, data: { value: '6' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    const [, options] = mocks.mutate.mock.calls.at(-1) as [
+      unknown,
+      { onSuccess: () => void },
+    ];
+    act(() => options.onSuccess());
+    expect(result.current.originalSelfCheckInAdvanceHoldHours).toBe('6');
   });
 });

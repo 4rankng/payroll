@@ -10,11 +10,10 @@ import (
 // the Admin setting is missing or invalid.
 const DefaultSelfCheckInAdvancePercentage uint64 = 70
 
-// QuotaCreditHoldDuration is how long a self-check-out earning stays pending
-// before it is banked into the advance-payment quota pool. Check-out enqueues a
-// deferred credit task at checkOutTime + QuotaCreditHoldDuration; admin manual
-// approvals credit immediately and bypass this hold. Centralized alongside the
-// other self-check-in advance-policy knobs.
+// QuotaCreditHoldDuration is the default self-check-out earning hold when the
+// Admin setting is missing or invalid. Check-out enqueues a deferred credit task
+// after the configured hold; admin manual approvals credit immediately and
+// bypass it. Centralized alongside the other self-check-in advance-policy knobs.
 const QuotaCreditHoldDuration = 24 * time.Hour
 
 // AdvancePayment represents monthly advance payment limits from Flexible Payroll Template uploads
@@ -69,7 +68,7 @@ type AdvancePaymentRepository interface {
 	SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
 	SumSalaryAndMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (salary, maxAdv uint64, err error)
 	// SumPendingEarningsByEmployeeMonth returns the total earning_amount held in
-	// the 24h credit window for the employee's month: checked-out attendances
+	// the configured credit-hold window for the employee's month: checked-out attendances
 	// whose earning has not yet been banked into the quota pool
 	// (quota_credited_at IS NULL, earning_amount > 0), scoped by check-out month.
 	// Displayed separately from Salary (already-credited) on the self-check-in

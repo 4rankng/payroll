@@ -64,10 +64,14 @@ func newLocationValidationError(code, reason, message string, checkpoint nearest
 // CheckIn/CheckOut skip scheduling (used in lightweight tests).
 type TaskEnqueuer interface {
 	EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) error
-	// EnqueueCreditQuota schedules the deferred quota-credit task at checkOutTime +
-	// QuotaCreditHoldDuration. The task banks the earning into the quota pool only
-	// after the 24h hold; the worker is idempotent (guards on quota_credited_at).
+	// EnqueueCreditQuota schedules the deferred quota-credit task after the
+	// Admin-configured post-checkout hold. The worker is idempotent (guards on
+	// quota_credited_at).
 	EnqueueCreditQuota(attendanceID uint, at time.Time) error
+}
+
+type selfCheckInAdvanceHoldDurationProvider interface {
+	GetSelfCheckInAdvanceHoldDuration(ctx context.Context) time.Duration
 }
 
 type AttendanceService struct {
@@ -914,23 +918,29 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 		}
 		attendance.EarningAmount = &earningAmount
 		attendance.SalaryRejectReason = salaryRejectReason
+		var quotaCreditEligibleAt *time.Time
+		if earningAmount > 0 {
+			eligibleAt := now.Add(s.selfCheckInAdvanceHoldDuration(txCtx))
+			quotaCreditEligibleAt = &eligibleAt
+			attendance.QuotaCreditEligibleAt = quotaCreditEligibleAt
+		}
 
 		// 5. Update attendance record
 		if err := s.attendanceRepo.Update(txCtx, attendance); err != nil {
 			return err
 		}
 
-		// 6. Defer the quota credit to checkOutTime + QuotaCreditHoldDuration so the
-		// earning sits in a 24h holding state before it becomes advanceable. The
+		// 6. Defer the quota credit by the configured post-checkout hold so the
+		// earning stays pending before it becomes advanceable. The
 		// earning stays parked on the attendance row (earning_amount, persisted
 		// above) with quota_credited_at = NULL; the credit task banks it later via
 		// CreditAttendanceQuota, which derives forMonth from the check-out date and
 		// is idempotent on quota_credited_at. Enqueued after-commit so the task can
 		// only fire once the attendance row is durable. A lost task is recovered by
 		// the periodic CreditOverduePendingQuota sweep.
-		if earningAmount > 0 && s.taskEnqueuer != nil {
+		if quotaCreditEligibleAt != nil && s.taskEnqueuer != nil {
 			attendanceID := attendance.ID
-			fireAt := now.Add(domain.QuotaCreditHoldDuration)
+			fireAt := *quotaCreditEligibleAt
 			enqueuer := s.taskEnqueuer
 			domain.RegisterAfterCommit(txCtx, func() {
 				if err := enqueuer.EnqueueCreditQuota(attendanceID, fireAt); err != nil {
@@ -1175,7 +1185,7 @@ func (s *AttendanceService) Approve(ctx context.Context, attendanceID, adminID u
 		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
 	}
 
-	// Admin approval credits the quota immediately, bypassing the 24h hold that
+	// Admin approval credits the quota immediately, bypassing the configured hold that
 	// the self-check-out path applies. CreditAttendanceQuota is idempotent on
 	// quota_credited_at, so a re-approve (caught by the IsApproved guard above)
 	// will not double-bank the earning.
@@ -1276,7 +1286,7 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 // quota pool: it bumps advance_payments.salary and recomputes max_adv_amount
 // (= floor(salary * configured_percent / 100)). It is the single entry point
 // for crediting and
-// is shared by the deferred 24h task (self-check-out path), the admin Approve
+// is shared by the deferred self-check-out task, the admin Approve
 // path (immediate credit), and the safety-net sweep.
 //
 // Idempotent and race-free: it claims the credit via a conditional
@@ -1285,10 +1295,21 @@ func (s *AttendanceService) AutoRejectSweep(ctx context.Context) (int, error) {
 // same attendance serialize on the row lock; the loser's MarkQuotaCredited
 // returns RowsAffected=0 and skips the bank, so the earning is never double-
 // counted. forMonth is derived from the check-out DATE (not credit-time now) so
-// a check-out near month-end credits to the correct month even when the 24h
-// timer crosses into the next month. Returns true when this call banked a
+// a check-out near month-end credits to the correct month even when its hold
+// crosses into the next month. Returns true when this call banked a
 // credit, false for a no-op (already credited / nothing to credit / not found).
 func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error) {
+	return s.creditAttendanceQuota(ctx, attendanceID, false)
+}
+
+// CreditScheduledAttendanceQuota credits an earning only after the immutable
+// deadline persisted at checkout. It is used by the deferred worker and sweep;
+// manual admin approval deliberately uses CreditAttendanceQuota to bypass it.
+func (s *AttendanceService) CreditScheduledAttendanceQuota(ctx context.Context, attendanceID uint) (bool, error) {
+	return s.creditAttendanceQuota(ctx, attendanceID, true)
+}
+
+func (s *AttendanceService) creditAttendanceQuota(ctx context.Context, attendanceID uint, requireEligibility bool) (bool, error) {
 	credited := false
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		advancePercent := domain.DefaultSelfCheckInAdvancePercentage
@@ -1314,6 +1335,16 @@ func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanc
 		if att.QuotaCreditedAt != nil {
 			return nil
 		}
+		if requireEligibility {
+			eligibleAt := att.QuotaCreditEligibleAt
+			if eligibleAt == nil && att.CheckOutTime != nil {
+				legacyEligibleAt := att.CheckOutTime.Add(domain.QuotaCreditHoldDuration)
+				eligibleAt = &legacyEligibleAt
+			}
+			if eligibleAt == nil || s.clock.Now().Before(*eligibleAt) {
+				return nil
+			}
+		}
 
 		// Claim first. The conditional UPDATE also verifies the current row is
 		// still payable, so a concurrent admin rejection blocks stale credit.
@@ -1326,7 +1357,8 @@ func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanc
 		}
 
 		// Derive the salary month from the work date, not credit-time now: a
-		// 31-Jul 23:55 check-out credits ~24h later but belongs to July's quota.
+		// A check-out near month end can credit in the next month but belongs to
+		// its original quota month.
 		effective := att.Date
 		if att.CheckOutTime != nil {
 			effective = *att.CheckOutTime
@@ -1370,26 +1402,32 @@ func (s *AttendanceService) CreditAttendanceQuota(ctx context.Context, attendanc
 	return credited, err
 }
 
+func (s *AttendanceService) selfCheckInAdvanceHoldDuration(ctx context.Context) time.Duration {
+	if settingsConfig, ok := s.settingsConfig.(selfCheckInAdvanceHoldDurationProvider); ok {
+		return settingsConfig.GetSelfCheckInAdvanceHoldDuration(ctx)
+	}
+	return domain.QuotaCreditHoldDuration
+}
+
 // quotaCreditSweepBatch caps the number of records one sweep pass finalizes, so
 // the safety net stays bounded even if a long outage leaves many pending credits.
 const quotaCreditSweepBatch = 500
 
 // CreditOverduePendingQuota is the safety-net backstop for the deferred
-// quota-credit task. It banks earnings whose 24h hold has elapsed but were never
-// credited — which happens when the per-attendance task scheduled at check-out
+// quota-credit task. It banks earnings whose persisted checkout deadline has
+// elapsed but were never credited — which happens when the per-attendance task scheduled at check-out
 // was lost (Redis unavailable at commit time, or a process crash between commit
 // and the after-commit enqueue). Each credit uses the idempotent
 // CreditAttendanceQuota, so in-flight tasks and overlapping runs are safe
 // no-ops. Returns the count of records banked this pass.
 func (s *AttendanceService) CreditOverduePendingQuota(ctx context.Context) (int, error) {
-	cutoff := s.clock.Now().Add(-domain.QuotaCreditHoldDuration)
-	ids, err := s.attendanceRepo.GetOverdueQuotaCreditCandidates(ctx, cutoff, quotaCreditSweepBatch)
+	ids, err := s.attendanceRepo.GetOverdueQuotaCreditCandidates(ctx, s.clock.Now(), quotaCreditSweepBatch)
 	if err != nil {
 		return 0, fmt.Errorf("failed to load overdue quota-credit candidates: %w", err)
 	}
 	credited := 0
 	for _, id := range ids {
-		banked, err := s.CreditAttendanceQuota(ctx, id)
+		banked, err := s.CreditScheduledAttendanceQuota(ctx, id)
 		if err != nil {
 			// One bad row must not abort the whole sweep; the next pass retries it.
 			observability.GetLogger().Warn("quota-credit sweep: failed to credit attendance",

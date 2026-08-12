@@ -9,15 +9,27 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-// This file tests the 24h quota-credit hold:
+// This file tests the configured quota-credit hold:
 //   - CreditAttendanceQuota idempotency + zero-earning/missing no-ops
 //   - forMonth is derived from the check-out DATE (not credit-time now), so a
 //     31-Jul 23:55 check-out credits to July even when the timer fires in August
-//   - CheckOut no longer banks salary inline; it defers a credit task at +24h
+//   - CheckOut no longer banks salary inline; it defers a credit task after the configured hold
 //   - Approve credits immediately (no hold) and stamps quota_credited_at
 //   - CreditOverduePendingQuota sweep banks each overdue candidate once
 //
 // Fakes come from attendance_auto_reject_test.go in the same package.
+
+type fakeQuotaHoldSettingsConfig struct {
+	hold time.Duration
+}
+
+func (f fakeQuotaHoldSettingsConfig) GetSelfCheckInAdvancePercentageForUpdate(context.Context) (uint64, error) {
+	return domain.DefaultSelfCheckInAdvancePercentage, nil
+}
+
+func (f fakeQuotaHoldSettingsConfig) GetSelfCheckInAdvanceHoldDuration(context.Context) time.Duration {
+	return f.hold
+}
 
 type staleCreditAfterRejectRepo struct {
 	fakeAttendanceRepo
@@ -255,6 +267,7 @@ func TestCheckOutDefersQuotaCredit(t *testing.T) {
 			Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":300000}}}`),
 		}},
 		advancePaymentRepo: advRepo,
+		settingsConfig:     fakeQuotaHoldSettingsConfig{hold: 6 * time.Hour},
 		transactionManager: &fakeTransactionManager{},
 		taskEnqueuer:       enq,
 		clock:              clock.NewFake(now),
@@ -271,16 +284,22 @@ func TestCheckOutDefersQuotaCredit(t *testing.T) {
 		t.Fatalf("expected earning 300000 recorded on attendance, got %v", res.EarningAmount)
 	}
 
-	// The earning must NOT be banked into the quota pool at check-out — it sits
-	// in the 24h hold (quota_credited_at stays nil, salary still 0).
+	// The earning must NOT be banked into the quota pool at check-out — it stays
+	// pending for the configured six-hour hold.
 	if got := advRepo.salaryFor(123, "2026-06"); got != 0 {
-		t.Fatalf("expected no immediate salary credit (24h hold), got %d", got)
+		t.Fatalf("expected no immediate salary credit during configured hold, got %d", got)
 	}
 	if att.QuotaCreditedAt != nil {
-		t.Fatal("expected quota_credited_at nil during the 24h hold")
+		t.Fatal("expected quota_credited_at nil during the configured hold")
+	}
+	if att.QuotaCreditEligibleAt == nil {
+		t.Fatal("expected quota_credit_eligible_at to be persisted at check-out")
+	}
+	if want := now.Add(6 * time.Hour); !att.QuotaCreditEligibleAt.Equal(want) {
+		t.Fatalf("quota_credit_eligible_at = %v, want %v", *att.QuotaCreditEligibleAt, want)
 	}
 
-	// A deferred credit task is enqueued at checkOutTime + QuotaCreditHoldDuration.
+	// A deferred credit task is enqueued at checkOutTime + the configured hold.
 	calls := enq.creditSnapshot()
 	if len(calls) != 1 {
 		t.Fatalf("expected exactly 1 credit-quota enqueue, got %d", len(calls))
@@ -288,7 +307,7 @@ func TestCheckOutDefersQuotaCredit(t *testing.T) {
 	if calls[0].id != 8 {
 		t.Fatalf("expected enqueue for attendance 8, got %d", calls[0].id)
 	}
-	wantAt := now.Add(domain.QuotaCreditHoldDuration)
+	wantAt := now.Add(6 * time.Hour)
 	if !calls[0].at.Equal(wantAt) {
 		t.Fatalf("expected credit task fire-at %v, got %v", wantAt, calls[0].at)
 	}
@@ -329,20 +348,23 @@ func TestCreditOverduePendingQuotaSweep(t *testing.T) {
 	loc := clock.DefaultLocation
 	earn := int64(250000)
 	co := time.Date(2026, 6, 20, 17, 0, 0, 0, loc)
+	eligible := time.Date(2026, 6, 21, 17, 0, 0, 0, loc)
 	att := &domain.Attendance{
-		ID:            10,
-		ProjectID:     55,
-		EmployeeID:    200,
-		Date:          time.Date(2026, 6, 20, 0, 0, 0, 0, loc),
-		CheckInTime:   time.Date(2026, 6, 20, 8, 0, 0, 0, loc),
-		CheckOutTime:  &co,
-		EarningAmount: &earn,
+		ID:                    10,
+		ProjectID:             55,
+		EmployeeID:            200,
+		Date:                  time.Date(2026, 6, 20, 0, 0, 0, 0, loc),
+		CheckInTime:           time.Date(2026, 6, 20, 8, 0, 0, 0, loc),
+		CheckOutTime:          &co,
+		EarningAmount:         &earn,
+		QuotaCreditEligibleAt: &eligible,
 	}
 	repo := &fakeAttendanceRepo{byID: att, overdueQuotaCandidates: []uint{10}}
 	advRepo := &fakeAdvancePaymentRepo{}
 	svc := &AttendanceService{
 		attendanceRepo:     repo,
 		advancePaymentRepo: advRepo,
+		settingsConfig:     fakeQuotaHoldSettingsConfig{hold: 0}, // current setting may have changed since check-out
 		transactionManager: &fakeTransactionManager{},
 		clock:              clock.NewFake(time.Date(2026, 6, 22, 9, 0, 0, 0, loc)),
 	}
@@ -353,6 +375,9 @@ func TestCreditOverduePendingQuotaSweep(t *testing.T) {
 	}
 	if credited != 1 {
 		t.Fatalf("expected 1 record banked by sweep, got %d", credited)
+	}
+	if want := time.Date(2026, 6, 22, 9, 0, 0, 0, loc); !repo.overdueQuotaBefore.Equal(want) {
+		t.Fatalf("sweep deadline = %v, want current time %v", repo.overdueQuotaBefore, want)
 	}
 	if got := advRepo.salaryFor(200, "2026-06"); got != 250000 {
 		t.Fatalf("expected sweep to bank 250000, got %d", got)
@@ -368,5 +393,100 @@ func TestCreditOverduePendingQuotaSweep(t *testing.T) {
 	}
 	if got := advRepo.salaryFor(200, "2026-06"); got != 250000 {
 		t.Fatalf("expected salary still 250000 after re-sweep, got %d", got)
+	}
+}
+
+func TestCreditScheduledAttendanceQuotaPreservesCheckoutDeadline(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 6, 20, 18, 0, 0, 0, loc)
+	earning := int64(300000)
+	checkOut := now.Add(-time.Hour)
+	eligible := now.Add(23 * time.Hour) // set at check-out under the former 24-hour policy
+	att := &domain.Attendance{
+		ID:                    11,
+		ProjectID:             55,
+		EmployeeID:            200,
+		Date:                  now,
+		CheckInTime:           now.Add(-9 * time.Hour),
+		CheckOutTime:          &checkOut,
+		EarningAmount:         &earning,
+		QuotaCreditEligibleAt: &eligible,
+	}
+	repo := &fakeAttendanceRepo{byID: att}
+	advRepo := &fakeAdvancePaymentRepo{}
+	beforeDeadline := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		settingsConfig:     fakeQuotaHoldSettingsConfig{hold: 0}, // Admin later reduced the setting
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+
+	banked, err := beforeDeadline.CreditScheduledAttendanceQuota(context.Background(), att.ID)
+	if err != nil {
+		t.Fatalf("scheduled credit before deadline returned error: %v", err)
+	}
+	if banked || att.QuotaCreditedAt != nil {
+		t.Fatal("scheduled credit must not release an earning before its persisted deadline")
+	}
+
+	afterDeadline := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		settingsConfig:     fakeQuotaHoldSettingsConfig{hold: 0},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(eligible),
+	}
+	banked, err = afterDeadline.CreditScheduledAttendanceQuota(context.Background(), att.ID)
+	if err != nil {
+		t.Fatalf("scheduled credit at deadline returned error: %v", err)
+	}
+	if !banked {
+		t.Fatal("scheduled credit should bank an earning at its persisted deadline")
+	}
+}
+
+func TestCreditScheduledAttendanceQuotaUsesLegacyDeadlineWhenMissing(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkOut := time.Date(2026, 6, 20, 18, 0, 0, 0, loc)
+	earning := int64(300000)
+	att := &domain.Attendance{
+		ID:            12,
+		ProjectID:     55,
+		EmployeeID:    200,
+		Date:          checkOut,
+		CheckInTime:   checkOut.Add(-9 * time.Hour),
+		CheckOutTime:  &checkOut,
+		EarningAmount: &earning,
+	}
+	repo := &fakeAttendanceRepo{byID: att}
+	advRepo := &fakeAdvancePaymentRepo{}
+	beforeDeadline := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(checkOut.Add(23 * time.Hour)),
+	}
+
+	banked, err := beforeDeadline.CreditScheduledAttendanceQuota(context.Background(), att.ID)
+	if err != nil {
+		t.Fatalf("legacy scheduled credit before deadline returned error: %v", err)
+	}
+	if banked {
+		t.Fatal("legacy checkout must retain its former 24-hour deadline")
+	}
+
+	atDeadline := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(checkOut.Add(domain.QuotaCreditHoldDuration)),
+	}
+	banked, err = atDeadline.CreditScheduledAttendanceQuota(context.Background(), att.ID)
+	if err != nil {
+		t.Fatalf("legacy scheduled credit at deadline returned error: %v", err)
+	}
+	if !banked {
+		t.Fatal("legacy checkout should credit at its former 24-hour deadline")
 	}
 }

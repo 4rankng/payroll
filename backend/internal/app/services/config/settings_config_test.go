@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"testing"
+	"time"
 
 	"api-server/internal/domain"
 
@@ -45,6 +46,14 @@ func numberSetting(value *string) *domain.Settings {
 func selfCheckInPercentSetting(value *string) *domain.Settings {
 	return &domain.Settings{
 		Key:       SettingKeySelfCheckInAdvancePercent,
+		Value:     value,
+		ValueType: domain.ValueTypeNumber,
+	}
+}
+
+func selfCheckInAdvanceHoldSetting(value *string) *domain.Settings {
+	return &domain.Settings{
+		Key:       SettingKeySelfCheckInAdvanceHold,
 		Value:     value,
 		ValueType: domain.ValueTypeNumber,
 	}
@@ -105,10 +114,11 @@ func TestParseBulkTransferWorkbookLimitBoundaries(t *testing.T) {
 	}
 }
 
-func TestValidateBusinessSettingOnlyAppliesToWorkbookLimit(t *testing.T) {
+func TestValidateBusinessSettingValidatesNamedFinancialControls(t *testing.T) {
 	invalid := "not-a-number"
 	require.Error(t, validateBusinessSetting(numberSetting(&invalid)))
 	require.Error(t, validateBusinessSetting(selfCheckInPercentSetting(&invalid)))
+	require.Error(t, validateBusinessSetting(selfCheckInAdvanceHoldSetting(&invalid)))
 
 	unrelated := &domain.Settings{
 		Key:       "some_other_number",
@@ -116,6 +126,59 @@ func TestValidateBusinessSettingOnlyAppliesToWorkbookLimit(t *testing.T) {
 		ValueType: domain.ValueTypeNumber,
 	}
 	require.NoError(t, validateBusinessSetting(unrelated))
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvanceHoldDuration(t *testing.T) {
+	valid := "6"
+	reader := &stubSettingReader{setting: selfCheckInAdvanceHoldSetting(&valid)}
+	service := NewSettingsConfigService(reader)
+
+	assert.Equal(t, 6*time.Hour, service.GetSelfCheckInAdvanceHoldDuration(context.Background()))
+	assert.Equal(t, 1, reader.calls)
+
+	updated := "0"
+	reader.setting = selfCheckInAdvanceHoldSetting(&updated)
+	assert.Equal(t, time.Duration(0), service.GetSelfCheckInAdvanceHoldDuration(context.Background()))
+	assert.Equal(t, 2, reader.calls, "the credit schedule must bypass the local cache")
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvanceHoldDurationFallsBackToDefault(t *testing.T) {
+	tests := []struct {
+		name    string
+		setting *domain.Settings
+		err     error
+	}{
+		{name: "missing", err: errors.New("not found")},
+		{name: "nil value", setting: selfCheckInAdvanceHoldSetting(nil)},
+		{name: "negative", setting: selfCheckInAdvanceHoldSetting(stringPointer("-1"))},
+		{name: "decimal", setting: selfCheckInAdvanceHoldSetting(stringPointer("24.5"))},
+		{name: "leading zero", setting: selfCheckInAdvanceHoldSetting(stringPointer("024"))},
+		{name: "over maximum", setting: selfCheckInAdvanceHoldSetting(stringPointer("721"))},
+		{
+			name: "wrong type",
+			setting: &domain.Settings{
+				Key:       SettingKeySelfCheckInAdvanceHold,
+				Value:     stringPointer("24"),
+				ValueType: domain.ValueTypeString,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewSettingsConfigService(&stubSettingReader{setting: tt.setting, err: tt.err})
+			assert.Equal(t, DefaultSelfCheckInAdvanceHold, service.GetSelfCheckInAdvanceHoldDuration(context.Background()))
+		})
+	}
+}
+
+func TestParseSelfCheckInAdvanceHoldHoursBoundaries(t *testing.T) {
+	for _, value := range []uint64{0, 24, MaxSelfCheckInAdvanceHoldHours} {
+		raw := strconv.FormatUint(value, 10)
+		parsed, err := parseSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldSetting(&raw))
+		require.NoError(t, err)
+		assert.Equal(t, value, parsed)
+	}
 }
 
 func TestSettingsConfigServiceGetSelfCheckInAdvancePercentage(t *testing.T) {

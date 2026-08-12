@@ -65,11 +65,14 @@ type Attendance struct {
 	CheckOutGate       *string    `json:"check_out_gate" gorm:"type:varchar(50)"`
 	EarningAmount      *int64     `json:"earning_amount" gorm:"type:bigint;default:0"`
 	SalaryRejectReason *string    `json:"salary_reject_reason" gorm:"type:text"`
+	// QuotaCreditEligibleAt is the immutable deadline assigned at self checkout.
+	// It protects the worker and recovery sweep from applying a later setting
+	// change to earnings that were already waiting for quota credit.
+	QuotaCreditEligibleAt *time.Time `json:"quota_credit_eligible_at" gorm:"type:datetime(3);index"`
 	// QuotaCreditedAt marks when this attendance's earning was banked into the
 	// advance-payment quota pool (advance_payments.salary/max_adv_amount). NULL
-	// means the earning is held / pending its 24h credit window; non-NULL means
-	// it has been credited and must not be banked again. The deferred credit task
-	// and the safety-net sweep gate on this — it is the idempotency key.
+	// means the earning remains pending; non-NULL means it has been credited and
+	// must not be banked again. It is the idempotency key for crediting.
 	QuotaCreditedAt *time.Time `json:"quota_credited_at" gorm:"type:datetime(3)"`
 	// Admin review audit (migration 083): populated when an admin manually
 	// approves/rejects a disputed attendance via /admin/attendances/:id/approve|reject.
@@ -146,11 +149,10 @@ type AttendanceRepository interface {
 	// idempotent and race-safe against admin rejection. Returns true only if this
 	// call claimed the credit.
 	MarkQuotaCredited(ctx context.Context, id uint, at time.Time) (bool, error)
-	// GetOverdueQuotaCreditCandidates returns IDs of checked-out attendances whose
-	// 24h hold has elapsed (check_out_time < before) but whose earning has not yet
-	// been banked (quota_credited_at IS NULL, earning_amount > 0). Used by the
-	// safety-net sweep to finalize credits the per-attendance deferred task missed.
-	GetOverdueQuotaCreditCandidates(ctx context.Context, before time.Time, limit int) ([]uint, error)
+	// GetOverdueQuotaCreditCandidates returns IDs whose persisted quota-credit
+	// deadline has elapsed but whose earning has not yet been banked. Used by the
+	// safety-net sweep to finalize credits the per-attendance task missed.
+	GetOverdueQuotaCreditCandidates(ctx context.Context, eligibleBefore time.Time, limit int) ([]uint, error)
 }
 
 // AttendanceFilters represents filtering options for attendance queries

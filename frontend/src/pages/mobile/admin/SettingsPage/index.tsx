@@ -191,6 +191,23 @@ const SettingsPageMobile = () => {
                 suffix="%"
               />
               <SettingCard
+              title="Thời gian chờ ứng lương tự chấm công sau khi tan ca"
+                description="Tiền công của ca đã hoàn tất được cộng vào hạn mức ứng lương sau số giờ này."
+                value={form.selfCheckInAdvanceHoldHours}
+                originalValue={form.originalSelfCheckInAdvanceHoldHours}
+                onChange={form.setSelfCheckInAdvanceHoldHours}
+                onSave={form.handleSaveSelfCheckInAdvanceHoldHours}
+                onReset={() => form.setSelfCheckInAdvanceHoldHours(form.originalSelfCheckInAdvanceHoldHours)}
+                isDirty={form.selfCheckInAdvanceHoldHours !== form.originalSelfCheckInAdvanceHoldHours}
+                isSaving={form.isSaving}
+                type="number"
+                min={0}
+                max={720}
+                step={1}
+                wholeNumber
+                suffix="giờ"
+              />
+              <SettingCard
                 title="Khách hàng"
                 description="Tên khách hàng sử dụng dịch vụ tạm ứng"
                 value={form.partnerCompany}

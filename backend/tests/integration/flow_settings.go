@@ -130,6 +130,59 @@ func runSettingsTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		return AssertEqual("bulk transfer workbook limit", updatedValue, *updated.Value)
 	})
 
+	reporter.RunTest(flowSettings, "Configure self check-in advance wait", func() error {
+		const settingKey = "self_check_in_advance_hold_hours"
+
+		var current SettingResponse
+		if _, err := admin.GetInto("/api/v1/settings/key/"+settingKey, &current); err != nil {
+			return fmt.Errorf("get self check-in advance wait: %w", err)
+		}
+		if current.Value == nil {
+			return fmt.Errorf("self check-in advance wait must have a value")
+		}
+
+		originalValue := *current.Value
+		defer func() {
+			restore := originalValue
+			_, _, _ = admin.Put(
+				fmt.Sprintf("/api/v1/settings/%d", current.ID),
+				UpdateSettingRequest{Value: &restore},
+			)
+		}()
+
+		for _, invalidValue := range []string{"-1", "24.5", "024", "721"} {
+			value := invalidValue
+			_, invalidStatus, _ := admin.Put(
+				fmt.Sprintf("/api/v1/settings/%d", current.ID),
+				UpdateSettingRequest{Value: &value},
+			)
+			if invalidStatus < 400 {
+				return fmt.Errorf("expected invalid self check-in advance wait %q to be rejected", invalidValue)
+			}
+		}
+
+		updatedValue := "6"
+		_, status, err := admin.Put(
+			fmt.Sprintf("/api/v1/settings/%d", current.ID),
+			UpdateSettingRequest{Value: &updatedValue},
+		)
+		if err != nil {
+			return fmt.Errorf("update self check-in advance wait: %w", err)
+		}
+		if status >= 400 {
+			return fmt.Errorf("update self check-in advance wait returned status %d", status)
+		}
+
+		var updated SettingResponse
+		if _, err := admin.GetInto("/api/v1/settings/key/"+settingKey, &updated); err != nil {
+			return fmt.Errorf("get self check-in advance wait after update: %w", err)
+		}
+		if updated.Value == nil {
+			return fmt.Errorf("updated self check-in advance wait must have a value")
+		}
+		return AssertEqual("self check-in advance wait", updatedValue, *updated.Value)
+	})
+
 	reporter.RunTest(flowSettings, "Delete test setting", func() error {
 		if testSettingID == 0 {
 			return fmt.Errorf("no test setting ID")

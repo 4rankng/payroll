@@ -63,6 +63,7 @@ type fakeAttendanceRepo struct {
 	markedIDs              []uint
 	quotaCreditedIDs       []uint
 	overdueQuotaCandidates []uint
+	overdueQuotaBefore     time.Time
 	nextID                 uint
 }
 
@@ -161,9 +162,9 @@ func (f *fakeAttendanceRepo) MarkQuotaCredited(_ context.Context, id uint, at ti
 }
 
 // GetOverdueQuotaCreditCandidates returns the records configured as overdue
-// candidates for the sweep test. The fake ignores the time bounds — sweep tests
-// assert on which IDs get credited, not on the cutoff.
-func (f *fakeAttendanceRepo) GetOverdueQuotaCreditCandidates(_ context.Context, _ time.Time, _ int) ([]uint, error) {
+// candidates for the sweep test and records the requested deadline.
+func (f *fakeAttendanceRepo) GetOverdueQuotaCreditCandidates(_ context.Context, eligibleBefore time.Time, _ int) ([]uint, error) {
+	f.overdueQuotaBefore = eligibleBefore
 	return f.overdueQuotaCandidates, nil
 }
 
@@ -289,8 +290,8 @@ func (f *fakeTaskEnqueuer) EnqueueAutoRejectCheckout(id uint, at time.Time) erro
 	return nil
 }
 
-// EnqueueCreditQuota records the deferred quota-credit enqueue (24h hold) so
-// CheckOut tests can assert the task is scheduled at checkOutTime + hold.
+// EnqueueCreditQuota records the deferred quota-credit enqueue so CheckOut
+// tests can assert the task is scheduled at its persisted deadline.
 func (f *fakeTaskEnqueuer) EnqueueCreditQuota(id uint, at time.Time) error {
 	f.mu.Lock()
 	f.creditCalls = append(f.creditCalls, fakeEnqCall{id: id, at: at})

@@ -402,9 +402,9 @@ type creditQuotaPayload struct {
 	AttendanceID uint `json:"attendance_id"`
 }
 
-// EnqueueCreditQuota schedules a one-shot task to fire at `at` — the per-attendance
-// quota-credit time (checkOutTime + QuotaCreditHoldDuration). The task banks the
-// attendance's earning into the advance-payment quota pool after the 24h hold.
+// EnqueueCreditQuota schedules a one-shot task at the persisted per-attendance
+// quota-credit deadline. The task banks the attendance's earning into the
+// advance-payment quota pool once that deadline has elapsed.
 // Deduplicated by TaskID per attendance, so repeated enqueues for the same
 // attendance collapse to a single scheduled task; the worker is idempotent on
 // quota_credited_at, so duplicate/retried tasks are safe.
