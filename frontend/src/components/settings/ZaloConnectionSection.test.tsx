@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   setEnabled: vi.fn(),
   setFlexPayZNSEnabled: vi.fn(),
   testSend: vi.fn(),
+  testSendPending: false,
   refreshToken: vi.fn(),
   status: {
     enabled: true,
@@ -49,7 +50,7 @@ vi.mock("@/hooks/api/useZaloConnection", () => ({
   }),
   useTestZaloSend: () => ({
     mutateAsync: mocks.testSend,
-    isPending: false,
+    isPending: mocks.testSendPending,
   }),
   useRefreshZaloToken: () => ({
     mutateAsync: mocks.refreshToken,
@@ -58,6 +59,12 @@ vi.mock("@/hooks/api/useZaloConnection", () => ({
 }));
 
 describe("ZaloConnectionSection", () => {
+  const openStoredCredentials = () => {
+    fireEvent.click(
+      screen.getByRole("button", { name: "Thay đổi cấu hình" }),
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.saveCredentials.mockResolvedValue({ data: undefined });
@@ -67,6 +74,7 @@ describe("ZaloConnectionSection", () => {
     mocks.testSend.mockResolvedValue({
       data: { error_code: 0, error_msg: "Thành công", msg_id: "msg-123" },
     });
+    mocks.testSendPending = false;
     Object.assign(mocks.status, {
       enabled: true,
       configured: true,
@@ -79,6 +87,7 @@ describe("ZaloConnectionSection", () => {
 
   it("saves the complete credential payload", async () => {
     render(<ZaloConnectionSection />);
+    openStoredCredentials();
 
     fireEvent.change(screen.getByLabelText("App ID"), {
       target: { value: "app-123" },
@@ -110,8 +119,11 @@ describe("ZaloConnectionSection", () => {
 
   it("checks the stored credentials without sending a message", async () => {
     render(<ZaloConnectionSection />);
+    openStoredCredentials();
 
-    fireEvent.click(screen.getByRole("button", { name: "Kiểm tra kết nối" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Kiểm tra cấu hình đã lưu" }),
+    );
 
     await waitFor(() => expect(mocks.refreshToken).toHaveBeenCalledOnce());
     expect(mocks.testSend).not.toHaveBeenCalled();
@@ -138,36 +150,171 @@ describe("ZaloConnectionSection", () => {
     ).toBeEnabled();
   });
 
-  it("trims the test phone before sending", async () => {
+  it("sends the default sample OTP with a trimmed test phone", async () => {
     render(<ZaloConnectionSection />);
 
     fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
       target: { value: " 0357210887 " },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Gửi thử" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gửi OTP mẫu" }));
+
+    await waitFor(() =>
+      expect(mocks.testSend).toHaveBeenCalledWith({
+        phone: "0357210887",
+        template_id: "619684",
+        template_data: { otp: "000000" },
+      }),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "OTP mẫu đã gửi thành công",
+    );
+  });
+
+  it("sends the salary notification sample separately from the OTP sample", async () => {
+    render(<ZaloConnectionSection />);
+
+    fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
+      target: { value: " 0357210887 " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi mẫu lương" }));
 
     await waitFor(() =>
       expect(mocks.testSend).toHaveBeenCalledWith({
         phone: "0357210887",
         template_id: "619686",
         template_data: {
-          customer_name: "Nguyễn Việt Dũng",
+          customer_name: "Nhân viên kiểm thử",
           max_amount: "1000000",
-          expiry_date: "18/06/2026",
+          expiry_date: expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
         },
       }),
     );
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Gửi thành công",
+      "Mẫu thông báo lương đã gửi thành công",
     );
     expect(screen.getByText(/0xxxxxxxxx hoặc 84xxxxxxxxx/)).toBeInTheDocument();
+  });
+
+  it("disables both sends while a test message is in progress", () => {
+    mocks.testSendPending = true;
+    render(<ZaloConnectionSection />);
+
+    expect(screen.getByRole("button", { name: "Gửi OTP mẫu" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Gửi mẫu lương" })).toBeDisabled();
+  });
+
+  it("identifies a failed OTP sample in the result", async () => {
+    mocks.testSend.mockResolvedValue({
+      data: { error_code: -124, error_msg: "Access token không hợp lệ" },
+    });
+    render(<ZaloConnectionSection />);
+
+    fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
+      target: { value: "0357210887" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi OTP mẫu" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "OTP mẫu lỗi -124",
+    );
+  });
+
+  it("presents both test actions as equal choices beside the input", () => {
+    render(<ZaloConnectionSection />);
+
+    expect(screen.getByLabelText("Chọn loại tin nhắn gửi thử")).toHaveClass(
+      "sm:grid-cols-2",
+    );
+    expect(screen.getByRole("button", { name: "Gửi OTP mẫu" })).toHaveClass(
+      "h-11",
+    );
+    expect(screen.getByRole("button", { name: "Gửi mẫu lương" })).toHaveClass(
+      "h-11",
+    );
   });
 
   it("exposes the setup state without clipping labels", () => {
     render(<ZaloConnectionSection />);
 
-    const activationStep = screen.getByText("Kích hoạt");
+    const activationStep = screen.getByText("Dịch vụ");
     expect(activationStep).not.toHaveClass("truncate");
     expect(activationStep).toHaveTextContent("đã hoàn tất");
+  });
+
+  it("groups both ZNS services into one independently controlled stage", () => {
+    render(<ZaloConnectionSection />);
+
+    const servicesHeading = screen.getByRole("heading", {
+      name: "Dịch vụ sử dụng kết nối",
+    });
+    const servicesSection = servicesHeading.closest("section");
+
+    expect(servicesSection).toContainElement(
+      screen.getByRole("switch", { name: "Bật đặt lại mật khẩu qua Zalo" }),
+    );
+    expect(servicesSection).toContainElement(
+      screen.getByRole("switch", { name: "Bật thông báo ZNS lương linh hoạt" }),
+    );
+    expect(screen.queryByText("4", { selector: "span" })).not.toBeInTheDocument();
+  });
+
+  it("keeps stored credentials collapsed until an admin chooses to edit", () => {
+    render(<ZaloConnectionSection />);
+
+    expect(screen.queryByLabelText("App ID")).not.toBeInTheDocument();
+    openStoredCredentials();
+    expect(screen.getByLabelText("App ID")).toBeInTheDocument();
+    expect(
+      screen.getAllByPlaceholderText("Chỉ nhập khi cần thay đổi"),
+    ).toHaveLength(3);
+  });
+
+  it("does not imply unsaved credentials are being checked", () => {
+    render(<ZaloConnectionSection />);
+    openStoredCredentials();
+
+    fireEvent.change(screen.getByLabelText("App ID"), {
+      target: { value: "app-changed" },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Kiểm tra cấu hình đã lưu" }),
+    ).toBeDisabled();
+    expect(screen.getByText("Lưu thay đổi trước khi kiểm tra.")).toBeInTheDocument();
+  });
+
+  it("tests the stored OTP template instead of an unsaved template edit", async () => {
+    render(<ZaloConnectionSection />);
+    openStoredCredentials();
+    fireEvent.change(screen.getByLabelText("Mã mẫu ZNS"), {
+      target: { value: "unsaved-template" },
+    });
+    fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
+      target: { value: "0357210887" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi OTP mẫu" }));
+
+    await waitFor(() =>
+      expect(mocks.testSend).toHaveBeenCalledWith({
+        phone: "0357210887",
+        template_id: "619684",
+        template_data: { otp: "000000" },
+      }),
+    );
+  });
+
+  it("keeps first-time configuration open when a partial save is still incomplete", async () => {
+    Object.assign(mocks.status, { configured: false, connected: false });
+    render(<ZaloConnectionSection />);
+
+    const appIdInput = await screen.findByLabelText("App ID");
+    fireEvent.change(appIdInput, { target: { value: "app-only" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu cấu hình" }));
+
+    await waitFor(() => expect(mocks.saveCredentials).toHaveBeenCalledOnce());
+    expect(screen.getByLabelText("App ID")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Thay đổi cấu hình" }),
+    ).not.toBeInTheDocument();
   });
 });

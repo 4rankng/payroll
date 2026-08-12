@@ -131,6 +131,7 @@ func TestErrorMessage(t *testing.T) {
 		{ErrNoZaloAccount, "chưa liên kết"},
 		{ErrOANoPermission, "cấp quyền"},
 		{ErrBadAccessToken, "token"},
+		{ErrInvalidRefreshToken, "Refresh token"},
 		{ErrTemplateTestOnly, "quản trị viên"},
 		{ErrDailyQuotaPhone, "giới hạn"},
 		{ErrBadTemplateID, "Template ID"},
@@ -217,6 +218,14 @@ func (m *zaloMock) setOAuthMissingTokens() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.oauthResp = `{"access_token":"","refresh_token":""}`
+}
+
+func (m *zaloMock) setOAuthInvalidRefreshToken() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Zalo's terminal -14014: the refresh_token is dead (single-use, already
+	// consumed, or expired). No access_token comes back.
+	m.oauthResp = `{"error":-14014,"error_name":"Invalid refresh token.","message":"","access_token":"","refresh_token":""}`
 }
 
 func newProviderWithMock(t *testing.T) (*Provider, *zaloMock, *fakeCreds, *httptest.Server) {
@@ -316,6 +325,60 @@ func TestProvider_Send_RetriesOnBadAccessToken(t *testing.T) {
 	sends, _ := mock.counts()
 	if sends != 2 {
 		t.Errorf("send calls = %d, want 2 (initial + retry)", sends)
+	}
+}
+
+// TestProvider_Send_Minus124ForcesRefreshWithFutureExpiry is the core
+// auto-refresh regression: when Zalo returns -124 (authoritative "access token
+// invalid"), the Provider MUST exchange the refresh_token even if the stored
+// expires_at is far in the future. Before the fix the refresh path short-
+// circuited on the future expires_at, retried the send with the same dead
+// token, and looped on -124 — so a manually-pasted token (expires_at = guessed
+// +24h) could never self-heal. This is what keeps the chain "always alive".
+func TestProvider_Send_Minus124ForcesRefreshWithFutureExpiry(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	// Credentials carry a FAR-FUTURE expiry (exactly what manual paste produces)
+	// and a dead access token.
+	creds.mu.Lock()
+	creds.cur.AccessToken = "dead-access"
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(24 * time.Hour))
+	creds.mu.Unlock()
+
+	// First send returns -124 (dead token); the mock then serves success.
+	mock.mu.Lock()
+	first := true
+	mock.sendHandler = func(w http.ResponseWriter, r *http.Request) {
+		mock.mu.Lock()
+		mock.sendCalls++
+		if first {
+			first = false
+			mock.mu.Unlock()
+			_, _ = io.WriteString(w, `{"error":-124,"message":"bad token"}`)
+			return
+		}
+		mock.mu.Unlock()
+		_, _ = io.WriteString(w, `{"error":0,"data":{"msg_id":"m2"}}`)
+	}
+	mock.mu.Unlock()
+
+	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if err != nil {
+		t.Fatalf("Send err: %v", err)
+	}
+	if res.ErrorCode != 0 {
+		t.Fatalf("after forced refresh + retry, ErrorCode = %d (%s)", res.ErrorCode, res.ErrorMsg)
+	}
+	sends, oauth := mock.counts()
+	if sends != 2 {
+		t.Errorf("send calls = %d, want 2 (failed + retried)", sends)
+	}
+	if oauth != 1 {
+		t.Errorf("oauth calls = %d, want 1 — -124 must force a refresh despite the future expires_at", oauth)
+	}
+	// The persisted token must be the refreshed one, proving the chain advanced.
+	after := creds.snapshot()
+	if after.AccessToken != "new-access" {
+		t.Errorf("AccessToken = %q, want new-access (refresh must persist)", after.AccessToken)
 	}
 }
 

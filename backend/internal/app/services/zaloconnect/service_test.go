@@ -190,8 +190,8 @@ func TestSaveCredentials_EmptyAppIDKeepsExisting(t *testing.T) {
 	}
 }
 
-func TestSaveCredentials_ManualTokenPasteResetsExpiry(t *testing.T) {
-	// Freeze the clock so we can assert the +24h expiry precisely.
+func TestSaveCredentials_ManualTokenPasteUsesAccessTokenBeforeRefresh(t *testing.T) {
+	// Freeze the clock so we can assert the estimated access-token lifetime.
 	svc, _ := newTestService(t)
 	frozen := time.Date(2026, 8, 4, 12, 0, 0, 0, time.UTC)
 	svc.clk = func() time.Time { return frozen }
@@ -215,9 +215,30 @@ func TestSaveCredentials_ManualTokenPasteResetsExpiry(t *testing.T) {
 	if got.AccessToken != "manual-access" || got.RefreshToken != "manual-refresh" {
 		t.Errorf("manual paste failed: %+v", got)
 	}
+	// A manually pasted access token must be tried before consuming its refresh
+	// token. If Zalo rejects it with -124, Provider.Send still force-refreshes.
 	wantExpiry := frozen.Add(24 * time.Hour)
 	if got.ExpiresAt == nil || !got.ExpiresAt.Equal(wantExpiry) {
-		t.Errorf("expiry = %v, want %v", got.ExpiresAt, wantExpiry)
+		t.Errorf("expiry = %v, want %v (use pasted access token first)", got.ExpiresAt, wantExpiry)
+	}
+	// Re-pasting the same access token is an explicit recovery action. It must
+	// reset an expired estimate too; otherwise a production admin could not
+	// recover after the former immediate-refresh behavior without changing the
+	// token value.
+	repastedAt := frozen.Add(time.Hour)
+	svc.clk = func() time.Time { return repastedAt }
+	if err := svc.SaveCredentials(context.Background(), SaveCredentialsInput{
+		AppID: "app1", AccessToken: "manual-access",
+	}); err != nil {
+		t.Fatalf("re-paste: %v", err)
+	}
+	got, err = svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("Get after re-paste: %v", err)
+	}
+	wantExpiry = repastedAt.Add(24 * time.Hour)
+	if got.ExpiresAt == nil || !got.ExpiresAt.Equal(wantExpiry) {
+		t.Errorf("expiry after re-paste = %v, want %v", got.ExpiresAt, wantExpiry)
 	}
 	st, _ := svc.GetStatus(context.Background())
 	if !st.Connected {

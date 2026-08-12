@@ -25,6 +25,12 @@ var ErrNotConfigured = errors.New("zalo: chưa dán access token — mở Zalo O
 // should surface this as a transient error; the stored tokens are unchanged.
 var ErrRefreshFailed = errors.New("zalo: token refresh failed")
 
+// errRefreshTokenRejected is returned (wrapped inside ErrRefreshFailed) when
+// Zalo invalidates the refresh_token itself with -14014. Send uses it to
+// surface the actionable "re-paste a fresh token pair" message instead of the
+// misleading send-time -124. Unexported: only this package distinguishes it.
+var errRefreshTokenRejected = errors.New("zalo: refresh token rejected")
+
 // Provider is the stateless ZNS protocol client. It depends on a
 // CredentialSource for tokens and uses an internal mutex to serialize
 // refreshes so two concurrent -124 retries cannot double-spend the
@@ -112,11 +118,23 @@ func (p *Provider) Send(ctx context.Context, phone, templateID, trackingID strin
 		return SendResult{}, err // transport error
 	}
 
-	// -124: access token is invalid/expired. Refresh once under the lock, retry once.
+	// -124: access token is invalid/expired — Zalo's authoritative signal that
+	// the token is dead. Force a refresh regardless of the stored expires_at
+	// (which may be a guessed +24h from manual paste), then retry once.
 	if res.ErrorCode == ErrBadAccessToken {
-		newToken, refreshErr := p.refreshTokenLocked(ctx)
+		newToken, refreshErr := p.refreshLocked(ctx, true)
 		if refreshErr != nil {
 			p.log.Warn("zalo: -124 retry aborted (refresh failed)", "error", refreshErr)
+			// A dead refresh_token (-14014) is the real, actionable cause.
+			// Surface it instead of the misleading send-time -124 so the admin
+			// knows to re-paste a fresh token pair.
+			if errors.Is(refreshErr, errRefreshTokenRejected) {
+				return SendResult{
+					ErrorCode:  ErrInvalidRefreshToken,
+					ErrorMsg:   ErrorMessage(ErrInvalidRefreshToken),
+					HTTPStatus: res.HTTPStatus,
+				}, nil
+			}
 			return res, nil // surface the original -124 to the caller
 		}
 		res2, err := p.doSend(ctx, phone, templateID, data, trackingID, newToken)
@@ -135,8 +153,8 @@ func (p *Provider) getAccessToken(ctx context.Context, creds Credentials) (strin
 		return "", ErrNotConfigured
 	}
 	if creds.ExpiresAt != nil && creds.ExpiresAt.Sub(time.Now()) < p.cfg.RefreshBuffer {
-		// About to expire — refresh proactively.
-		tok, err := p.refreshTokenLocked(ctx)
+		// About to expire — refresh proactively (short-circuits while still valid).
+		tok, err := p.refreshLocked(ctx, false)
 		if err != nil {
 			// Refresh failed. If the token hasn't actually expired yet, fall
 			// back to it (the server may still accept it); otherwise bail.
@@ -190,10 +208,19 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 	}, nil
 }
 
-// refreshTokenLocked serializes refresh attempts. Two concurrent -124 retries
-// would otherwise both call refresh, burning the single-use refresh_token.
-// Under the lock we re-read creds in case another goroutine just refreshed.
-func (p *Provider) refreshTokenLocked(ctx context.Context) (string, error) {
+// refreshLocked serializes refresh attempts. Two concurrent -124 retries would
+// otherwise both call refresh, burning the single-use refresh_token. Under the
+// lock we re-read creds in case another goroutine just refreshed.
+//
+// force ignores the stored expires_at and always exchanges the refresh_token.
+// The reactive callers — a -124 from Zalo (Send) and an explicit admin
+// "Kiểm tra kết nối" (RefreshNow) — MUST pass force=true: the stored expires_at
+// can be a guessed value (manual paste records +24h, not the token's real
+// lifetime), and honoring that guess over Zalo's authoritative "token invalid"
+// left a dead token in place and looped on -124 forever. The proactive caller
+// (getAccessToken) passes force=false so it short-circuits while the token is
+// genuinely still within the refresh buffer.
+func (p *Provider) refreshLocked(ctx context.Context, force bool) (string, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -202,14 +229,14 @@ func (p *Provider) refreshTokenLocked(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("zalo: read credentials for refresh: %w", err)
 	}
 	// Another goroutine may have rotated while we waited for the lock.
-	if creds.ExpiresAt != nil && creds.ExpiresAt.Sub(time.Now()) >= p.cfg.RefreshBuffer {
+	if !force && creds.ExpiresAt != nil && creds.ExpiresAt.Sub(time.Now()) >= p.cfg.RefreshBuffer {
 		return creds.AccessToken, nil
 	}
 	return p.refresh(ctx, creds)
 }
 
 // refresh performs one OAuth refresh_token exchange and persists the new pair.
-// Caller must hold p.mu (use refreshTokenLocked from Send/getAccessToken).
+// Caller must hold p.mu (use refreshLocked from Send/getAccessToken/RefreshNow).
 func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, error) {
 	if creds.RefreshToken == "" {
 		return "", ErrNotConfigured
@@ -246,6 +273,13 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	if tok.AccessToken == "" {
 		p.log.Error("zalo: refresh returned no access_token (admin needs to re-paste from OA Console)",
 			"zalo_error", tok.Error, "zalo_message", tok.Message, "body", string(respBody))
+		// -14014 = Zalo invalidated this refresh_token (single-use token already
+		// consumed, or expired). Tag it distinctly (wrapped in ErrRefreshFailed so
+		// existing errors.Is callers still match) so Send can surface the
+		// actionable "re-paste a fresh pair" message instead of the misleading -124.
+		if tok.Error == ErrInvalidRefreshToken {
+			return "", fmt.Errorf("%w: %w (zalo -14014: refresh token không hợp lệ)", ErrRefreshFailed, errRefreshTokenRejected)
+		}
 		return "", fmt.Errorf("%w: no access_token in response (zalo error %d: %s)", ErrRefreshFailed, tok.Error, tok.Message)
 	}
 
@@ -288,17 +322,12 @@ type oauthTokenResponse struct {
 }
 
 // RefreshNow forces a token refresh regardless of expiry. Used by the admin
-// "Kiểm tra kết nối" button — validates App ID + Secret + Refresh Token with
-// Zalo without sending a message. Acquires the mutex so it cannot race an
-// in-flight -124 retry refresh.
+// "Kiểm tra kết nối" button — it must actually contact Zalo to validate App ID
+// + Secret + Refresh Token, so it forces the exchange ignoring the stored
+// expires_at (which may be a guessed value that doesn't reflect real validity).
+// Acquires the mutex so it cannot race an in-flight -124 retry. Returns
+// ErrNotConfigured (via refresh) when no refresh_token is stored.
 func (p *Provider) RefreshNow(ctx context.Context) error {
-	creds, err := p.creds.Get(ctx)
-	if err != nil {
-		return fmt.Errorf("zalo: read credentials for forced refresh: %w", err)
-	}
-	if creds.RefreshToken == "" {
-		return ErrNotConfigured
-	}
-	_, err = p.refreshTokenLocked(ctx)
+	_, err := p.refreshLocked(ctx, true)
 	return err
 }

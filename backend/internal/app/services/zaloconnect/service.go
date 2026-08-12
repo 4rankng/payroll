@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"api-server/internal/domain"
@@ -172,9 +173,10 @@ type SaveCredentialsInput struct {
 // SaveCredentials updates the admin-configured fields. Token lifecycle rules:
 //   - Each field is applied independently — empty fields mean "keep existing"
 //     so the admin can edit one value without clobbering the others.
-//   - When a non-empty AccessToken is provided AND differs from the current
-//     one, ExpiresAt is reset to now + 24h so the Provider treats the freshly
-//     pasted token as live (manual paste bypasses OAuth's expires_in).
+//   - When a non-empty AccessToken is provided, ExpiresAt is estimated as now +
+//     24h so the Provider uses the freshly pasted access token first (manual paste bypasses OAuth's
+//     expires_in). If Zalo rejects it, Send force-refreshes and records the
+//     authoritative expiry instead.
 //   - Rotating AppID no longer force-clears tokens: the admin is manually
 //     managing tokens now, and a stale token will surface cleanly as a -124
 //     on the next Send (which the Provider retries after refresh). The old
@@ -184,6 +186,15 @@ type SaveCredentialsInput struct {
 // Empty SecretKey/RefreshToken/AccessToken never overwrite existing values —
 // the UI sends empty for password fields the admin did not retype.
 func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) error {
+	// Trim stray whitespace on every field. A trailing space in a pasted token
+	// is silently invalid (e.g. an access_token with a space surfaces as -124)
+	// and is the single most common manual-paste failure. Trimming here is the
+	// authoritative defense regardless of which client wrote the value.
+	in.AppID = strings.TrimSpace(in.AppID)
+	in.SecretKey = strings.TrimSpace(in.SecretKey)
+	in.TemplateID = strings.TrimSpace(in.TemplateID)
+	in.AccessToken = strings.TrimSpace(in.AccessToken)
+	in.RefreshToken = strings.TrimSpace(in.RefreshToken)
 	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
 		if in.AppID != "" {
 			cur.AppID = in.AppID
@@ -198,11 +209,13 @@ func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) 
 			cur.TemplateID = defaultTemplate
 		}
 
-		// Manual token paste: overwrite only what was supplied. A new
-		// AccessToken resets the expiry clock to +24h (matches the Zalo OA
-		// dashboard's typical access_token lifetime so the proactive-refresh
-		// buffer doesn't immediately fire).
-		if in.AccessToken != "" && in.AccessToken != cur.AccessToken {
+		// Manual token paste: overwrite only what was supplied. The pasted access
+		// token is the only credential we can use immediately. Do not consume the
+		// refresh token before Zalo has rejected that access token: a manually
+		// retrieved refresh token can already be stale while its paired access
+		// token remains valid. -124 still forces a refresh regardless of this
+		// estimate, so an expired pasted access token self-recovers promptly.
+		if in.AccessToken != "" {
 			exp := s.clk().Add(24 * time.Hour)
 			cur.ExpiresAt = &exp
 		}
@@ -282,6 +295,10 @@ func (s *Service) RefreshNow(ctx context.Context) error {
 	if err == nil {
 		return nil
 	}
+	// A failed refresh is the most useful signal to pin to the status panel —
+	// it names exactly which leg of the token chain is broken. (On success the
+	// Provider's Update already clears LastError.)
+	_ = s.recordError(ctx, "Làm mới token thất bại — kiểm tra lại App ID, Secret Key và Refresh Token")
 	// Convert Zalo errors to domain errors for proper HTTP status codes
 	if errors.Is(err, zalo.ErrNotConfigured) {
 		return domain.NewValidationError("Chưa cấu hình Zalo — vui lòng nhập App ID và tokens từ Zalo OA Console")
@@ -328,10 +345,22 @@ func (s *Service) TestSend(ctx context.Context, phone, templateID string, data m
 	if err != nil {
 		// Convert Zalo errors to domain errors for proper HTTP status codes
 		if errors.Is(err, zalo.ErrNotConfigured) {
+			_ = s.recordError(ctx, "Chưa cấu hình Zalo — thiếu access token/refresh token")
 			return result, domain.NewValidationError("Chưa cấu hình Zalo — vui lòng nhập App ID và tokens từ Zalo OA Console")
 		}
+		_ = s.recordError(ctx, err.Error())
 		// Transport/credential failures surface as internal errors
 		return result, domain.NewInternalError(err.Error(), err)
+	}
+	// Persist the outcome so the connection status panel reflects the real
+	// reason a send broke. Token-chain failures (-124 / -14014) are recorded;
+	// per-recipient business errors are not (they don't indicate a bad
+	// connection). A successful send clears any stale error.
+	switch result.ErrorCode {
+	case zalo.ErrBadAccessToken, zalo.ErrInvalidRefreshToken:
+		_ = s.recordError(ctx, fmt.Sprintf("Token Zalo không hợp lệ (%d): %s", result.ErrorCode, result.ErrorMsg))
+	case 0:
+		_ = s.recordError(ctx, "")
 	}
 	return result, nil
 }
@@ -405,7 +434,10 @@ func (s *Service) loadCredentials(ctx context.Context) (Credentials, error) {
 // and unit-testable, trading off a narrow lost-update window on concurrent
 // admin key-saves (an operational rarity) for testability.
 func (s *Service) mutateCredentials(ctx context.Context, fn func(Credentials) Credentials) error {
-	cur, _ := s.loadCredentials(ctx)
+	cur, err := s.loadCredentials(ctx)
+	if err != nil {
+		return fmt.Errorf("zalo: load credentials: %w", err)
+	}
 	next := fn(cur)
 	return s.writeCredentials(ctx, next)
 }

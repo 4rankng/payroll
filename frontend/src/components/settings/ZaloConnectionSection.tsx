@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Check,
   CheckCircle2,
+  ChevronDown,
   Loader2,
   MessageCircle,
   PlugZap,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { buildSalaryZnsTestPayload } from "./zalo-test-message";
 import {
   useRefreshZaloToken,
   useSaveZaloCredentials,
@@ -27,33 +29,40 @@ import {
 } from "@/hooks/api/useZaloConnection";
 
 type SettingsSectionProps = {
-  step: string;
+  id: string;
   title: string;
   description: string;
   children: ReactNode;
 };
 
 const SettingsSection = ({
-  step,
+  id,
   title,
   description,
   children,
-}: SettingsSectionProps) => (
-  <section className="grid gap-5 border-t px-4 py-6 sm:px-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10 lg:py-7">
-    <div className="min-w-0">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/5 text-xs font-semibold text-primary">
-          {step}
-        </span>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+}: SettingsSectionProps) => {
+  const titleId = `${id}-title`;
+
+  return (
+    <section
+      id={id}
+      aria-labelledby={titleId}
+      className="grid gap-5 border-t px-4 py-6 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 lg:py-7 xl:grid-cols-[16rem_minmax(0,1fr)]"
+    >
+      <div className="min-w-0">
+        <div className="mb-2 flex items-center gap-2">
+          <h3 id={titleId} className="text-sm font-semibold text-foreground">
+            {title}
+          </h3>
+        </div>
+        <p className="max-w-xs text-sm leading-5 text-muted-foreground">
+          {description}
+        </p>
       </div>
-      <p className="max-w-xs text-sm leading-5 text-muted-foreground">
-        {description}
-      </p>
-    </div>
-    <div className="min-w-0">{children}</div>
-  </section>
-);
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+};
 
 type CredentialFieldProps = {
   id: string;
@@ -86,12 +95,15 @@ const CredentialField = ({
 };
 
 type SetupStepProps = {
+  step: string;
   label: string;
   complete: boolean;
   active: boolean;
 };
 
-const SetupStep = ({ label, complete, active }: SetupStepProps) => (
+type TestMessageKind = "otp" | "salary";
+
+const SetupStep = ({ step, label, complete, active }: SetupStepProps) => (
   <li
     className="flex min-w-0 flex-col items-center gap-1.5 text-center sm:flex-row sm:gap-2 sm:text-left"
     aria-current={active ? "step" : undefined}
@@ -107,7 +119,7 @@ const SetupStep = ({ label, complete, active }: SetupStepProps) => (
       )}
       aria-hidden="true"
     >
-      {complete ? <Check className="size-3.5" /> : null}
+      {complete ? <Check className="size-3.5" /> : step}
     </span>
     <span
       className={cn(
@@ -145,8 +157,12 @@ export const ZaloConnectionSection = () => {
   const [templateID, setTemplateID] = useState("619684");
   const [confirmDisable, setConfirmDisable] = useState(false);
   const [flexPayZNSEnabled, setFlexPayZNSEnabled] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
   const [testPhone, setTestPhone] = useState("");
+  const [testSendingKind, setTestSendingKind] =
+    useState<TestMessageKind | null>(null);
   const [testResult, setTestResult] = useState<{
+    kind: TestMessageKind;
     error_code: number;
     error_msg: string;
     msg_id?: string;
@@ -164,6 +180,10 @@ export const ZaloConnectionSection = () => {
     status?.configured,
     status?.flexpay_zns_enabled,
   ]);
+
+  useEffect(() => {
+    if (status?.configured === false) setShowCredentials(true);
+  }, [status?.configured]);
 
   const handleFlexPayZNSToggle = async (enabled: boolean) => {
     if (!status?.connected) {
@@ -191,6 +211,7 @@ export const ZaloConnectionSection = () => {
       setSecretKey("");
       setAccessToken("");
       setRefreshToken("");
+      if (status?.configured) setShowCredentials(false);
     } catch {
       toast.error("Không thể lưu thông tin kết nối");
     }
@@ -231,47 +252,61 @@ export const ZaloConnectionSection = () => {
     }
   };
 
-  const handleTestSend = async () => {
+  const handleTestSend = async (kind: TestMessageKind) => {
     setTestResult(null);
     if (!testPhone.trim()) {
       toast.error("Nhập SĐT nhận thử");
       return;
     }
+    setTestSendingKind(kind);
     try {
-      const response = await testSend.mutateAsync({
-        phone: testPhone.trim(),
-        template_id: "619686",
-        template_data: {
-          customer_name: "Nguyễn Việt Dũng",
-          max_amount: "1000000",
-          expiry_date: "18/06/2026",
-        },
-      });
+      const phone = testPhone.trim();
+      const response = await testSend.mutateAsync(
+        kind === "otp"
+          ? {
+              phone,
+              template_id: status?.template_id || "619684",
+              template_data: { otp: "000000" },
+            }
+          : {
+              phone,
+              ...buildSalaryZnsTestPayload(),
+            },
+      );
       const result = response.data;
       setTestResult({
+        kind,
         error_code: result.error_code,
         error_msg: result.error_msg,
         msg_id: result.msg_id,
       });
       if (result.error_code === 0) {
-        toast.success(`Đã gửi thử (msg_id: ${result.msg_id || "—"})`);
+        toast.success(
+          `${kind === "otp" ? "Đã gửi OTP mẫu" : "Đã gửi mẫu thông báo lương"} (msg_id: ${result.msg_id || "—"})`,
+        );
       } else {
         toast.error(`Lỗi ZNS: ${result.error_msg}`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Không rõ lỗi";
       toast.error(`Gửi thử thất bại: ${message}`);
+    } finally {
+      setTestSendingKind(null);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-xl border bg-card px-4 py-12 text-center text-sm text-muted-foreground"
+      >
         <Loader2
           aria-hidden="true"
           className="mx-auto mb-3 size-6 animate-spin"
         />
-        Đang tải trạng thái kết nối...
+        Đang tải trạng thái kết nối…
       </div>
     );
   }
@@ -321,20 +356,20 @@ export const ZaloConnectionSection = () => {
         className: "border-amber-300 bg-amber-50 text-amber-800",
       };
     }
-    if (!status.enabled) {
-      return {
-        icon: CheckCircle2,
-        text: "Đã kết nối · Đang tắt",
-        className: "border-amber-300 bg-amber-50 text-amber-800",
-      };
-    }
     return {
       icon: CheckCircle2,
-      text: "Đang hoạt động",
+      text: "Đã kết nối",
       className: "border-emerald-300 bg-emerald-50 text-emerald-800",
     };
   })();
   const BadgeIcon = badge.icon;
+  const hasUnsavedCredentials = Boolean(
+    appID !== (status?.app_id || "") ||
+      templateID !== (status?.template_id || "619684") ||
+      secretKey ||
+      accessToken ||
+      refreshToken,
+  );
 
   const expiryText = (() => {
     if (!status?.expires_at) return "Chưa có thời hạn";
@@ -360,21 +395,43 @@ export const ZaloConnectionSection = () => {
                 id="zalo-connection-title"
                 className="text-base font-semibold text-foreground sm:text-lg"
               >
-                Đặt lại mật khẩu bằng OTP qua Zalo
+                Kênh thông báo Zalo ZNS
               </h2>
               <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
-                Cấu hình kênh ZNS, kích hoạt dịch vụ và gửi thử trong một quy
-                trình.
+                Một kết nối dùng chung cho OTP đặt lại mật khẩu và thông báo
+                lương linh hoạt.
               </p>
             </div>
           </div>
-          <Badge
-            variant="outline"
-            className={cn("h-7 w-fit gap-1.5 px-2.5", badge.className)}
-          >
-            <BadgeIcon aria-hidden="true" className="size-3.5" />
-            {badge.text}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn("h-7 w-fit gap-1.5 px-2.5", badge.className)}
+            >
+              <BadgeIcon aria-hidden="true" className="size-3.5" />
+              {badge.text}
+            </Badge>
+            {status?.configured ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-11 gap-1.5 px-2.5 text-sm"
+                aria-expanded={showCredentials}
+                aria-controls="zalo-credentials"
+                onClick={() => setShowCredentials((current) => !current)}
+              >
+                {showCredentials ? "Đóng cấu hình" : "Thay đổi cấu hình"}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4 transition-transform",
+                    showCredentials && "rotate-180",
+                  )}
+                />
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-5 grid gap-4 border-t pt-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
@@ -383,19 +440,24 @@ export const ZaloConnectionSection = () => {
             className="grid grid-cols-3 gap-3"
           >
             <SetupStep
+              step="1"
               label="Cấu hình"
               complete={Boolean(status?.configured)}
               active={!status?.configured}
             />
             <SetupStep
+              step="2"
               label="Kết nối"
               complete={Boolean(status?.connected)}
               active={Boolean(status?.configured && !status.connected)}
             />
             <SetupStep
-              label="Kích hoạt"
-              complete={Boolean(status?.enabled)}
-              active={Boolean(status?.connected && !status.enabled)}
+              step="3"
+              label="Dịch vụ"
+              complete={Boolean(status?.enabled || flexPayZNSEnabled)}
+              active={Boolean(
+                status?.connected && !status.enabled && !flexPayZNSEnabled,
+              )}
             />
           </ol>
           <dl className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
@@ -406,7 +468,7 @@ export const ZaloConnectionSection = () => {
               </dd>
             </div>
             <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">Mã truy cập</dt>
+              <dt className="text-muted-foreground">Hiệu lực mã truy cập</dt>
               <dd className="font-medium text-foreground">{expiryText}</dd>
             </div>
           </dl>
@@ -429,10 +491,11 @@ export const ZaloConnectionSection = () => {
         ) : null}
       </header>
 
+      {showCredentials ? (
       <SettingsSection
-        step="1"
+        id="zalo-credentials"
         title="Cấu hình kết nối"
-        description="Dán 4 thông tin từ Zalo OA Console (Quản trị trang → Thông tin nhà phát triển). Các khóa bảo mật không hiển thị lại sau khi lưu."
+        description="Nhập thông tin ứng dụng, mã truy cập và mã mẫu từ Zalo OA Console. Khóa bảo mật không hiển thị lại sau khi lưu."
       >
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
@@ -458,7 +521,7 @@ export const ZaloConnectionSection = () => {
                 type="password"
                 value={secretKey}
                 onChange={(event) => setSecretKey(event.target.value)}
-                placeholder="••••••••••••••••"
+                placeholder="Chỉ nhập khi cần thay đổi"
                 disabled={saveCreds.isPending}
                 autoComplete="new-password"
                 className="h-11"
@@ -476,7 +539,7 @@ export const ZaloConnectionSection = () => {
                 type="password"
                 value={accessToken}
                 onChange={(event) => setAccessToken(event.target.value)}
-                placeholder="••••••••••••••••"
+                placeholder="Chỉ nhập khi cần thay đổi"
                 disabled={saveCreds.isPending}
                 autoComplete="new-password"
                 className="h-11"
@@ -494,7 +557,7 @@ export const ZaloConnectionSection = () => {
                 type="password"
                 value={refreshToken}
                 onChange={(event) => setRefreshToken(event.target.value)}
-                placeholder="••••••••••••••••"
+                placeholder="Chỉ nhập khi cần thay đổi"
                 disabled={saveCreds.isPending}
                 autoComplete="new-password"
                 className="h-11"
@@ -532,52 +595,91 @@ export const ZaloConnectionSection = () => {
               variant="outline"
               className="h-11 gap-2 sm:w-auto"
               onClick={handleTestConnection}
-              disabled={refreshTok.isPending || !status?.configured}
+              disabled={
+                refreshTok.isPending ||
+                !status?.configured ||
+                hasUnsavedCredentials
+              }
             >
               {refreshTok.isPending ? (
                 <Loader2 aria-hidden="true" className="size-4 animate-spin" />
               ) : (
                 <PlugZap aria-hidden="true" className="size-4" />
               )}
-              Kiểm tra kết nối
+              Kiểm tra cấu hình đã lưu
             </Button>
             <p className="text-xs leading-5 text-muted-foreground sm:ml-2">
-              Kiểm tra khóa với Zalo mà không gửi tin nhắn.
+              {hasUnsavedCredentials
+                ? "Lưu thay đổi trước khi kiểm tra."
+                : "Kiểm tra khóa đã lưu với Zalo mà không gửi tin nhắn."}
             </p>
           </div>
         </form>
       </SettingsSection>
+      ) : null}
 
       <SettingsSection
-        step="2"
-        title="Kích hoạt dịch vụ"
-        description="Cho phép nhân viên dùng Zalo ZNS để nhận mã OTP đặt lại mật khẩu."
+        id="zalo-services"
+        title="Dịch vụ sử dụng kết nối"
+        description="Chọn nghiệp vụ được phép gửi qua kênh ZNS. Hai dịch vụ hoạt động độc lập trên cùng một kết nối."
       >
-        <label
-          htmlFor="zalo-enabled"
-          className={cn(
-            "flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-lg border px-4 py-3",
-            !status?.connected && "cursor-not-allowed bg-muted/40",
-          )}
-        >
-          <span className="min-w-0">
-            <span className="block text-sm font-medium text-foreground">
-              {status?.enabled ? "Đang bật" : "Đang tắt"}
+        <div className="overflow-hidden rounded-lg border bg-background">
+          <label
+            htmlFor="zalo-enabled"
+            className={cn(
+              "flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-4 px-4 py-3.5",
+              !status?.connected && "cursor-not-allowed bg-muted/40",
+            )}
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-foreground">
+                OTP đặt lại mật khẩu
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                {status?.connected
+                  ? status.enabled
+                    ? "Đang gửi OTP qua Zalo cho nhân viên."
+                    : "Cho phép nhân viên nhận OTP đặt lại mật khẩu qua Zalo."
+                  : "Hoàn tất kết nối trước khi bật dịch vụ."}
+              </span>
             </span>
-            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-              {status?.connected
-                ? "Kết nối đã sẵn sàng để phục vụ nhân viên."
-                : "Hoàn tất bước kết nối trước khi bật."}
+            <Switch
+              id="zalo-enabled"
+              checked={status?.enabled ?? false}
+              disabled={!status?.connected || setEnabled.isPending}
+              onCheckedChange={handleToggle}
+              aria-label="Bật đặt lại mật khẩu qua Zalo"
+            />
+          </label>
+
+          <label
+            htmlFor="flexpay-zns-enabled"
+            className={cn(
+              "flex min-h-[4.5rem] cursor-pointer items-center justify-between gap-4 border-t px-4 py-3.5",
+              !status?.connected && "cursor-not-allowed bg-muted/40",
+            )}
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-foreground">
+                Thông báo lương linh hoạt
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                {status?.connected
+                  ? "Gửi hạn mức và hạn yêu cầu sau khi nhập bảng lương linh hoạt · 400 ₫/tin."
+                  : "Hoàn tất kết nối trước khi bật dịch vụ."}
+              </span>
             </span>
-          </span>
-          <Switch
-            id="zalo-enabled"
-            checked={status?.enabled ?? false}
-            disabled={!status?.connected || setEnabled.isPending}
-            onCheckedChange={handleToggle}
-            aria-label="Bật đặt lại mật khẩu qua Zalo"
-          />
-        </label>
+            <Switch
+              id="flexpay-zns-enabled"
+              checked={flexPayZNSEnabled}
+              disabled={
+                !status?.connected || setFlexPayZNSEnabledMutation.isPending
+              }
+              onCheckedChange={handleFlexPayZNSToggle}
+              aria-label="Bật thông báo ZNS lương linh hoạt"
+            />
+          </label>
+        </div>
 
         {confirmDisable ? (
           <div
@@ -612,85 +714,74 @@ export const ZaloConnectionSection = () => {
       </SettingsSection>
 
       <SettingsSection
-        step="3"
-        title="Thông báo lương linh hoạt"
-        description="Sau khi nhập bảng lương linh hoạt, hệ thống gửi ZNS cho nhân viên có lịch trả lương linh hoạt, không tự chấm công và có số điện thoại hợp lệ."
+        id="zalo-test-send"
+        title="Kiểm tra gửi thực tế"
+        description="Gửi một trong hai mẫu đến số điện thoại kiểm tra trước khi đưa kênh vào sử dụng."
       >
-        <label
-          htmlFor="flexpay-zns-enabled"
-          className={cn(
-            "flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-lg border px-4 py-3",
-            !status?.connected && "cursor-not-allowed bg-muted/40",
-          )}
-        >
-          <span className="min-w-0">
-            <span className="block text-sm font-medium text-foreground">
-              Thông báo ZNS lương linh hoạt
-            </span>
-            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-              {status?.connected
-                ? "Gửi thông báo qua ZNS khi nhập file lương linh hoạt."
-                : "Cần kết nối Zalo trước khi sử dụng."}
-            </span>
-          </span>
-          <Switch
-            id="flexpay-zns-enabled"
-            checked={flexPayZNSEnabled}
-            disabled={
-              !status?.connected || setFlexPayZNSEnabledMutation.isPending
-            }
-            onCheckedChange={handleFlexPayZNSToggle}
-            aria-label="Bật thông báo ZNS lương linh hoạt"
-          />
-        </label>
-        <p className="mt-2 break-words text-xs leading-5 text-muted-foreground">
-          Tin nhắn hiển thị số tiền tối đa có thể yêu cầu và hạn gửi yêu cầu.
-          Chi phí: 400 ₫/tin gửi theo số điện thoại.
-        </p>
-      </SettingsSection>
-
-      <SettingsSection
-        step="4"
-        title="Gửi thử thông báo lương linh hoạt"
-        description="Gửi mẫu SalaryNotification-v1 (619686) tới số điện thoại này. Dữ liệu thử: Nguyễn Việt Dũng, 1.000.000 ₫, 18/06/2026."
-      >
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div className="min-w-0 space-y-2">
-            <Label htmlFor="zalo-test-phone">Số điện thoại nhận thử</Label>
-            <Input
-              id="zalo-test-phone"
-              name="zalo-test-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={testPhone}
-              onChange={(event) => setTestPhone(event.target.value)}
-              placeholder="84987654321"
-              disabled={testSend.isPending}
-              className="h-11"
-              aria-describedby="zalo-test-phone-hint"
-            />
-            <p
-              id="zalo-test-phone-hint"
-              className="text-xs text-muted-foreground"
+        <div className="space-y-2">
+          <Label htmlFor="zalo-test-phone">Số điện thoại nhận thử</Label>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div className="min-w-0">
+              <Input
+                id="zalo-test-phone"
+                name="zalo-test-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={testPhone}
+                onChange={(event) => setTestPhone(event.target.value)}
+                placeholder="84987654321"
+                disabled={testSend.isPending}
+                className="h-11"
+                aria-describedby="zalo-test-phone-hint"
+              />
+              <p
+                id="zalo-test-phone-hint"
+                className="mt-2 text-xs leading-5 text-muted-foreground"
+              >
+                Nhập số điện thoại dạng 0xxxxxxxxx hoặc 84xxxxxxxxx, không có
+                dấu cách.
+              </p>
+            </div>
+            <div
+              role="group"
+              aria-label="Chọn loại tin nhắn gửi thử"
+              className="grid gap-2 sm:grid-cols-2"
             >
-              Nhập số điện thoại dạng 0xxxxxxxxx hoặc 84xxxxxxxxx, không có dấu
-              cách.
-            </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 gap-2"
+                onClick={() => void handleTestSend("otp")}
+                disabled={testSend.isPending || !status?.configured}
+              >
+                {testSend.isPending && testSendingKind === "otp" ? (
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                ) : (
+                  <Send aria-hidden="true" className="size-4" />
+                )}
+                {testSend.isPending && testSendingKind === "otp"
+                  ? "Đang gửi OTP…"
+                  : "Gửi OTP mẫu"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 gap-2"
+                onClick={() => void handleTestSend("salary")}
+                disabled={testSend.isPending || !status?.configured}
+              >
+                {testSend.isPending && testSendingKind === "salary" ? (
+                  <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+                ) : (
+                  <Send aria-hidden="true" className="size-4" />
+                )}
+                {testSend.isPending && testSendingKind === "salary"
+                  ? "Đang gửi mẫu lương…"
+                  : "Gửi mẫu lương"}
+              </Button>
+            </div>
           </div>
-          <Button
-            type="button"
-            className="h-11 gap-2"
-            onClick={handleTestSend}
-            disabled={testSend.isPending || !status?.configured}
-          >
-            {testSend.isPending ? (
-              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-            ) : (
-              <Send aria-hidden="true" className="size-4" />
-            )}
-            Gửi thử
-          </Button>
         </div>
 
         {testResult ? (
@@ -706,8 +797,10 @@ export const ZaloConnectionSection = () => {
           >
             <span className="font-semibold">
               {testResult.error_code === 0
-                ? "Gửi thành công"
-                : `Lỗi ${testResult.error_code}`}
+                ? testResult.kind === "otp"
+                  ? "OTP mẫu đã gửi thành công"
+                  : "Mẫu thông báo lương đã gửi thành công"
+                : `${testResult.kind === "otp" ? "OTP mẫu" : "Mẫu thông báo lương"} lỗi ${testResult.error_code}`}
             </span>
             {" — "}
             {testResult.error_msg}
