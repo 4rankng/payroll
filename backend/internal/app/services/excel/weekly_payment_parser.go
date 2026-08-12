@@ -50,15 +50,14 @@ type WeeklyPaymentEntryData struct {
 
 // weeklyPaymentHeaderMap stores detected column positions for a weekly payment sheet.
 type weeklyPaymentHeaderMap struct {
-	empCodeCol     int            // 1-based column for "Mã nhân viên"
-	fullNameCol    int            // 1-based column for "Họ và tên"
-	departmentCol  int            // 1-based column for "Bộ phận"
-	salaryTierCol  int            // 1-based column for "Lương 8h"
-	firstShiftCol  int            // 1-based first column with shift data
-	firstColumnDay int            // Day number corresponding to first shift column
-	shiftCols      map[int]string // 1-based col index → shift type
-	stopCol        int            // 1-based "Tổng hợp" column (exclusive stop)
-	dateColumns    map[int]int    // 1-based col index → day of month (1..31)
+	empCodeCol    int            // 1-based column for "Mã nhân viên"
+	fullNameCol   int            // 1-based column for "Họ và tên"
+	departmentCol int            // 1-based column for "Bộ phận"
+	salaryTierCol int            // 1-based column for "Lương 8h"
+	firstShiftCol int            // 1-based first column with shift data
+	shiftCols     map[int]string // 1-based col index → shift type
+	stopCol       int            // 1-based "Tổng hợp" column (exclusive stop)
+	dateColumns   map[int]int    // 1-based col index → day of month (1..31)
 }
 
 // ParseWeeklyPaymentFile parses all weekly payment sheets in a weekly payment Excel file.
@@ -272,33 +271,6 @@ func validateWeeklyPaymentHeaderDay(year int, month time.Month, day int) error {
 	return nil
 }
 
-func weekdayForCell(value string) string {
-	normalized := strings.ToUpper(strings.TrimSpace(value))
-	for _, weekday := range []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"} {
-		if strings.Contains(normalized, weekday) {
-			return weekday
-		}
-	}
-	return ""
-}
-
-func weekdayDistance(from, to string) int {
-	weekdays := []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"}
-	fromIndex, toIndex := -1, -1
-	for i, weekday := range weekdays {
-		if weekday == from {
-			fromIndex = i
-		}
-		if weekday == to {
-			toIndex = i
-		}
-	}
-	if fromIndex < 0 || toIndex < 0 {
-		return 0
-	}
-	return (toIndex - fromIndex + len(weekdays)) % len(weekdays)
-}
-
 // parseWeeklyPaymentEmployees reads employee rows from row 11+.
 func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPaymentHeaderMap) []WeeklyPaymentEmployeeData {
 	var employees []WeeklyPaymentEmployeeData
@@ -415,37 +387,6 @@ func isStopColumn(val string) bool {
 	return false
 }
 
-// extractFirstWeekday extracts the first non-empty weekday from row 9 across all sheets.
-func extractFirstWeekday(f *excelize.File, sheetNames []string) (string, string) {
-	for _, sheetName := range sheetNames {
-		rows, err := f.GetRows(sheetName)
-		if err != nil || len(rows) < 9 {
-			continue
-		}
-
-		row9 := rows[8] // Row 9 is index 8
-		for _, cell := range row9 {
-			val := strings.TrimSpace(cell)
-			if val != "" && isWeekdayLabel(val) {
-				return val, sheetName
-			}
-		}
-	}
-	return "", ""
-}
-
-// isWeekdayLabel checks if a value is a weekday label (T2-T7, CN).
-func isWeekdayLabel(val string) bool {
-	weekdays := []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"}
-	valUpper := strings.ToUpper(strings.TrimSpace(val))
-	for _, wd := range weekdays {
-		if strings.Contains(valUpper, wd) {
-			return true
-		}
-	}
-	return false
-}
-
 // parseForMonth parses a month string in "YYYY-MM" or "MM/YYYY" format.
 func parseForMonth(forMonth string) (year int, month time.Month, err error) {
 	forMonth = strings.TrimSpace(forMonth)
@@ -522,7 +463,7 @@ func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[s
 			weekdayIndex := i
 			firstWeekdayIndex := -1
 			for j, w := range weekdayOrder {
-				if strings.ToUpper(w) == strings.ToUpper(firstWeekday) {
+				if strings.EqualFold(w, firstWeekday) {
 					firstWeekdayIndex = j
 					break
 				}

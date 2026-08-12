@@ -9,7 +9,6 @@ export interface ZaloConnectionStatus {
   configured: boolean;
   connected: boolean;
   app_id: string;
-  template_id: string;
   flexpay_zns_enabled: boolean;
   expires_at?: string;
   last_error?: string;
@@ -35,7 +34,6 @@ class ZaloAdminService {
   async saveCredentials(payload: {
     app_id: string;
     secret_key: string;
-    template_id: string;
     access_token?: string;
     refresh_token?: string;
   }): Promise<ApiResponse<void>> {

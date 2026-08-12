@@ -35,7 +35,7 @@ func TestEnqueueFlexPaySalaryNotificationCanRecoverAfterArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer client.AsynqClient().Close()
+	defer func() { _ = client.AsynqClient().Close() }()
 
 	if err := client.EnqueueFlexPaySalaryNotification(73); err != nil {
 		t.Fatal(err)

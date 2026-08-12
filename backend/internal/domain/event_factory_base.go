@@ -7,25 +7,6 @@ import (
 	auditctx "api-server/internal/pkg/context"
 )
 
-// newBaseEvent creates a base event with context information, action, and entity type.
-// IP address and user agent are extracted from context automatically.
-func newBaseEvent(ctx context.Context, eventName string, entityID uint,
-	action AuditAction, entityType EntityType) BaseEvent {
-	userID := getUserIDFromContext(ctx)
-
-	return BaseEvent{
-		EventName:    eventName,
-		Timestamp:    clock.Now(),
-		EntityID:     entityID,
-		ActorUserID:  userID,
-		AuditMessage: "",
-		Action:       action,
-		EntityType:   entityType,
-		IPAddress:    auditctx.GetIPAddress(ctx),
-		UserAgent:    auditctx.GetUserAgent(ctx),
-	}
-}
-
 // newBaseEventWithAudit creates a base event with context information, action, entity type, and audit message.
 func newBaseEventWithAudit(ctx context.Context, eventName string, entityID uint,
 	action AuditAction, entityType EntityType, auditMessage string) BaseEvent {

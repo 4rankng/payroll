@@ -14,10 +14,8 @@ import (
 )
 
 // stringPtr helper for test row construction.
-func stringPtr(s string) *string     { return &s }
-func uintPtr(u uint) *uint           { return &u }
-func uint64Ptr(u uint64) *uint64     { return &u }
-func timePtr(t time.Time) *time.Time { return &t }
+func stringPtr(s string) *string { return &s }
+func uintPtr(u uint) *uint       { return &u }
 
 // TestKQGenerator_HappyPath verifies the row-5 layout + status mapping + FT column.
 func TestKQGenerator_HappyPath(t *testing.T) {
@@ -51,7 +49,7 @@ func TestKQGenerator_HappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Row 5 column H = "Thành công"
 	if v, _ := f.GetCellValue("data", "H5"); v != "Thành công" {
@@ -95,7 +93,7 @@ func TestKQGenerator_FTPendingFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if v, _ := f.GetCellValue("data", "I5"); v != "Đang chờ FT" {
 		t.Errorf("I5: got %q, want 'Đang chờ FT'", v)
@@ -122,7 +120,7 @@ func TestKQGenerator_FailedRow(t *testing.T) {
 	gen := NewKQExcelGenerator(time.Now)
 	bytes, _ := gen.Generate(context.Background(), batch, wpRows)
 	f, _ := excelize.OpenReader(strings.NewReader(string(bytes)), excelize.Options{UnzipSizeLimit: 10 << 20})
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if v, _ := f.GetCellValue("data", "H5"); v != "Thất bại" {
 		t.Errorf("H5: got %q, want 'Thất bại'", v)

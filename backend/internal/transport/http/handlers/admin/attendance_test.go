@@ -346,13 +346,3 @@ func (f *fakeProjectRepo) GetByID(_ context.Context, id uint) (*domain.Project, 
 	}
 	return nil, domain.NewNotFoundError("project not found")
 }
-
-type fakeTransactionManager struct{}
-
-func (fakeTransactionManager) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
-	return fn(ctx)
-}
-
-func (fakeTransactionManager) WithTransactionResult(ctx context.Context, fn func(context.Context) (interface{}, error)) (interface{}, error) {
-	return fn(ctx)
-}

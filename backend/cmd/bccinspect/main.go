@@ -17,7 +17,7 @@ func main() {
 		data, perr := excelparser.ParseBCCFile(f)
 		if perr != nil {
 			fmt.Printf("%-50s ERR: %v\n", p, perr)
-			f.Close()
+			_ = f.Close()
 			continue
 		}
 		fmt.Printf("%-50s OK: %d employees, %d shift rates\n", p, len(data.Employees), len(data.ShiftRates))
@@ -42,6 +42,6 @@ func main() {
 			ds = append(ds, d)
 		}
 		fmt.Printf("    distinct day numbers across all entries: %v\n", ds)
-		f.Close()
+		_ = f.Close()
 	}
 }

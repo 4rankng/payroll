@@ -9,7 +9,6 @@ import (
 )
 
 const publicEmailBannerURL = "https://tingting.vip/email-banner.jpg?v=20260709"
-const publicEmailBannerPath = "tingting.vip/email-banner.jpg"
 
 const publicEmailBannerHTML = `<img src="https://tingting.vip/email-banner.jpg?v=20260709" alt="TingTing Soft" width="640" style="display:block;width:100%;max-width:640px;height:auto;border:0;border-radius:16px;">`
 

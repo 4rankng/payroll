@@ -303,7 +303,7 @@ func (c *APIClient) PatchInto(path string, body any, dest any) (*APIResponse, er
 
 func resetDecodeTarget(dest any) {
 	rv := reflect.ValueOf(dest)
-	if !rv.IsValid() || rv.Kind() != reflect.Ptr || rv.IsNil() {
+	if !rv.IsValid() || rv.Kind() != reflect.Pointer || rv.IsNil() {
 		return
 	}
 	rv.Elem().Set(reflect.Zero(rv.Elem().Type()))

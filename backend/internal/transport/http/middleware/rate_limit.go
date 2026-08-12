@@ -303,9 +303,7 @@ func normalizeMobileForRateLimit(mobile string) string {
 	// then any remaining leading "0" (so "0987654321" → "987654321"). The
 	// order matters: a number already starting "840..." would lose the 84 then
 	// the 0, collapsing to the right bucket.
-	if strings.HasPrefix(digits, "84") {
-		digits = digits[2:]
-	}
+	digits = strings.TrimPrefix(digits, "84")
 	digits = strings.TrimLeft(digits, "0")
 	return digits
 }

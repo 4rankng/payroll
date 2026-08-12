@@ -432,7 +432,7 @@ func TestDownloadKQScoped_SuccessfulOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer workbook.Close()
+	defer func() { _ = workbook.Close() }()
 	if got, _ := workbook.GetCellValue(kqSheetName, "B5"); got != "111" {
 		t.Fatalf("successful account = %q, want 111", got)
 	}

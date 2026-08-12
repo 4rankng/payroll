@@ -86,7 +86,7 @@ func (h *WalletBulkTransferHandler) UploadBulkTransfer(c *gin.Context) {
 		response.InternalServerError(c, "Không thể đọc file")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	head := make([]byte, 512)
 	n, _ := io.ReadFull(file, head)

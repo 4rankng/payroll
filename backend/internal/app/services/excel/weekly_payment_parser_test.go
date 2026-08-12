@@ -132,7 +132,9 @@ func TestDetectFormat_WeeklyPayment(t *testing.T) {
 	setCellValue(f, sheetName, "G10", "TCN")
 
 	// Set as visible (default)
-	f.SetSheetVisible(sheetName, true)
+	if err := f.SetSheetVisible(sheetName, true); err != nil {
+		t.Fatalf("set sheet visible: %v", err)
+	}
 
 	result, err := DetectFormat(f)
 	if err != nil {

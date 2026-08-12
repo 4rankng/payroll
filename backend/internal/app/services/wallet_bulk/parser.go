@@ -138,7 +138,7 @@ func (p *YeuCauChuyenTienParser) Parse(ctx context.Context, r io.Reader) ([]Bulk
 	if err != nil {
 		return nil, fmt.Errorf("open xlsx: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	index, err := f.GetSheetIndex(ExpectedSheet)
 	if err != nil || index < 0 {

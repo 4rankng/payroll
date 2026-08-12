@@ -33,7 +33,7 @@ func TestStartLoginReusesPendingChallengeWithoutSendingAgain(t *testing.T) {
 	defer redisServer.Close()
 
 	redisClient := redis.NewClient(&redis.Options{Addr: redisServer.Addr()})
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 
 	ttl := 5 * time.Minute
 	sender := &recordingEmailSender{sent: make(chan *domain.EmailMessage, 2)}

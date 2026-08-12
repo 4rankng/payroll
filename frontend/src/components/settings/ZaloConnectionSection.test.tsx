@@ -16,7 +16,6 @@ const mocks = vi.hoisted(() => ({
     configured: true,
     connected: true,
     app_id: "app-123",
-    template_id: "619684",
     flexpay_zns_enabled: false,
     expires_at: "2099-01-01T00:00:00.000Z",
   },
@@ -80,7 +79,6 @@ describe("ZaloConnectionSection", () => {
       configured: true,
       connected: true,
       app_id: "app-123",
-      template_id: "619684",
       flexpay_zns_enabled: false,
     });
   });
@@ -101,9 +99,6 @@ describe("ZaloConnectionSection", () => {
     fireEvent.change(screen.getByLabelText("Mã làm mới (Refresh Token)"), {
       target: { value: "refresh-123" },
     });
-    fireEvent.change(screen.getByLabelText("Mã mẫu ZNS"), {
-      target: { value: "template-123" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Lưu cấu hình" }));
 
     await waitFor(() => {
@@ -112,7 +107,6 @@ describe("ZaloConnectionSection", () => {
         secret_key: "secret-123",
         access_token: "access-123",
         refresh_token: "refresh-123",
-        template_id: "template-123",
       });
     });
   });
@@ -161,7 +155,6 @@ describe("ZaloConnectionSection", () => {
     await waitFor(() =>
       expect(mocks.testSend).toHaveBeenCalledWith({
         phone: "0357210887",
-        template_id: "619684",
         template_data: { otp: "000000" },
       }),
     );
@@ -283,24 +276,12 @@ describe("ZaloConnectionSection", () => {
     expect(screen.getByText("Lưu thay đổi trước khi kiểm tra.")).toBeInTheDocument();
   });
 
-  it("tests the stored OTP template instead of an unsaved template edit", async () => {
+  it("does not expose a configurable ZNS template", () => {
     render(<ZaloConnectionSection />);
     openStoredCredentials();
-    fireEvent.change(screen.getByLabelText("Mã mẫu ZNS"), {
-      target: { value: "unsaved-template" },
-    });
-    fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
-      target: { value: "0357210887" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Gửi OTP mẫu" }));
 
-    await waitFor(() =>
-      expect(mocks.testSend).toHaveBeenCalledWith({
-        phone: "0357210887",
-        template_id: "619684",
-        template_data: { otp: "000000" },
-      }),
-    );
+    expect(screen.queryByLabelText("Mã mẫu ZNS")).not.toBeInTheDocument();
+    expect(screen.queryByText("619684")).not.toBeInTheDocument();
   });
 
   it("keeps first-time configuration open when a partial save is still incomplete", async () => {

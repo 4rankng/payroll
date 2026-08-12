@@ -71,11 +71,3 @@ func TestSanitizeFilename_LengthCap(t *testing.T) {
 		t.Errorf("length: got %d, want ≤128", len(got))
 	}
 }
-
-func repeat(s string, n int) string {
-	out := ""
-	for i := 0; i < n; i++ {
-		out += s
-	}
-	return out
-}

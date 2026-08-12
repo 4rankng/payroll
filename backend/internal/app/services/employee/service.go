@@ -284,7 +284,7 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		if bankFieldsChanged(originalEmployee, employee) {
 			if err := validateManualBankAccount(txCtx, s.bankAccountValidator, employee); err != nil {
 				if domainErr, ok := err.(*domain.DomainError); ok {
-					domainErr.WithContext("original_account_number", originalEmployee.BankAccountNumber)
+					return domainErr.WithContext("original_account_number", originalEmployee.BankAccountNumber)
 				}
 				return err
 			}

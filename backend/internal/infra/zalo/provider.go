@@ -152,7 +152,7 @@ func (p *Provider) getAccessToken(ctx context.Context, creds Credentials) (strin
 	if creds.AccessToken == "" {
 		return "", ErrNotConfigured
 	}
-	if creds.ExpiresAt != nil && creds.ExpiresAt.Sub(time.Now()) < p.cfg.RefreshBuffer {
+	if creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) < p.cfg.RefreshBuffer {
 		// About to expire — refresh proactively (short-circuits while still valid).
 		tok, err := p.refreshLocked(ctx, false)
 		if err != nil {
@@ -189,7 +189,7 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 	if err != nil {
 		return SendResult{}, fmt.Errorf("zalo: send: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	var parsed templateMessageResponse
@@ -229,7 +229,7 @@ func (p *Provider) refreshLocked(ctx context.Context, force bool) (string, error
 		return "", fmt.Errorf("zalo: read credentials for refresh: %w", err)
 	}
 	// Another goroutine may have rotated while we waited for the lock.
-	if !force && creds.ExpiresAt != nil && creds.ExpiresAt.Sub(time.Now()) >= p.cfg.RefreshBuffer {
+	if !force && creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) >= p.cfg.RefreshBuffer {
 		return creds.AccessToken, nil
 	}
 	return p.refresh(ctx, creds)
@@ -257,7 +257,7 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrRefreshFailed, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	var tok oauthTokenResponse

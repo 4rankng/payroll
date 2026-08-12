@@ -154,7 +154,6 @@ export const ZaloConnectionSection = () => {
   const [secretKey, setSecretKey] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [refreshToken, setRefreshToken] = useState("");
-  const [templateID, setTemplateID] = useState("619684");
   const [confirmDisable, setConfirmDisable] = useState(false);
   const [flexPayZNSEnabled, setFlexPayZNSEnabled] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
@@ -171,12 +170,10 @@ export const ZaloConnectionSection = () => {
   useEffect(() => {
     if (!status) return;
     setAppID(status.app_id || "");
-    setTemplateID(status.template_id || "619684");
     setFlexPayZNSEnabled(status.flexpay_zns_enabled || false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     status?.app_id,
-    status?.template_id,
     status?.configured,
     status?.flexpay_zns_enabled,
   ]);
@@ -203,7 +200,6 @@ export const ZaloConnectionSection = () => {
       await saveCreds.mutateAsync({
         app_id: appID,
         secret_key: secretKey,
-        template_id: templateID,
         access_token: accessToken,
         refresh_token: refreshToken,
       });
@@ -265,7 +261,6 @@ export const ZaloConnectionSection = () => {
         kind === "otp"
           ? {
               phone,
-              template_id: status?.template_id || "619684",
               template_data: { otp: "000000" },
             }
           : {
@@ -365,7 +360,6 @@ export const ZaloConnectionSection = () => {
   const BadgeIcon = badge.icon;
   const hasUnsavedCredentials = Boolean(
     appID !== (status?.app_id || "") ||
-      templateID !== (status?.template_id || "619684") ||
       secretKey ||
       accessToken ||
       refreshToken,
@@ -462,12 +456,6 @@ export const ZaloConnectionSection = () => {
           </ol>
           <dl className="flex flex-wrap gap-x-5 gap-y-2 text-xs">
             <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">Mã mẫu ZNS</dt>
-              <dd className="font-mono font-medium text-foreground">
-                {status?.template_id || "619684"}
-              </dd>
-            </div>
-            <div className="flex gap-1.5">
               <dt className="text-muted-foreground">Hiệu lực mã truy cập</dt>
               <dd className="font-medium text-foreground">{expiryText}</dd>
             </div>
@@ -495,7 +483,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         id="zalo-credentials"
         title="Cấu hình kết nối"
-        description="Nhập thông tin ứng dụng, mã truy cập và mã mẫu từ Zalo OA Console. Khóa bảo mật không hiển thị lại sau khi lưu."
+        description="Nhập thông tin ứng dụng và mã truy cập từ Zalo OA Console. Khóa bảo mật không hiển thị lại sau khi lưu."
       >
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
@@ -564,19 +552,6 @@ export const ZaloConnectionSection = () => {
                 aria-describedby="zalo-refresh-token-hint"
               />
             </CredentialField>
-            <div className="md:max-w-xs">
-              <CredentialField id="zalo-template" label="Mã mẫu ZNS">
-                <Input
-                  id="zalo-template"
-                  name="zalo-template"
-                  value={templateID}
-                  onChange={(event) => setTemplateID(event.target.value)}
-                  placeholder="619684"
-                  disabled={saveCreds.isPending}
-                  className="h-11"
-                />
-              </CredentialField>
-            </div>
           </div>
 
           <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center">

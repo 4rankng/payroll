@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
 
 	asynqlib "github.com/hibiken/asynq"
 
@@ -417,10 +416,3 @@ func finalizeBulkBatch(
 	}
 	return nil
 }
-
-// wallClock is a package-level indirection so tests can stub the clock.
-// Default: clock.Now() (Asia/Ho_Chi_Minh).
-var wallClock = clock.Now
-
-// _time is imported for the test file's time-travel helper.
-var _ = time.Time{}

@@ -29,7 +29,6 @@ Fill in:
 - **Access Token** and **Refresh Token** — retrieve them as one pair for this
   OA and app. Do not use a refresh token that has already been exchanged by
   the OA Console or another system.
-- **Template ID** — `619684` (pre-filled; change only if using a different template).
 
 Click **Lưu cấu hình**. The status badge should flip to **Đã kết nối**. The
 first test message uses the pasted access token. It refreshes only after Zalo

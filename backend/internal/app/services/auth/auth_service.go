@@ -303,7 +303,9 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 			// Keep the failure counter climbing so the account continues to
 			// escalate toward OTP-lockout; a sustained captcha-failed flood must
 			// not freeze the counter at the threshold indefinitely.
-			s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil)
+			if err := s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil); err != nil {
+				return nil, domain.NewInternalError("Không thể cập nhật trạng thái bảo mật tài khoản", err)
+			}
 			return nil, domain.NewValidationError(constants.MsgCaptchaFailedVN)
 		}
 	}
@@ -311,7 +313,9 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	if !s.userService.VerifyPasswordHash(req.Password, user.Password) {
 		s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: sai mật khẩu")
 		// Increment consecutive failure count (used by CAPTCHA threshold + brute-force tracking).
-		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil)
+		if err := s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil); err != nil {
+			return nil, domain.NewInternalError("Không thể cập nhật trạng thái bảo mật tài khoản", err)
+		}
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
 	}
 
@@ -324,7 +328,9 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	// (it requires a valid password) nor the OTP increment path (also behind the
 	// password check), so they cannot deplete the counter to dodge the CAPTCHA.
 	if user.OTPFailedAttempts > 0 {
-		s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, 0, user.OTPLockedUntil)
+		if err := s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, 0, user.OTPLockedUntil); err != nil {
+			return nil, domain.NewInternalError("Không thể cập nhật trạng thái bảo mật tài khoản", err)
+		}
 	}
 
 	// Email-OTP 2FA gate (RT-C2): when the feature is enabled and the caller is

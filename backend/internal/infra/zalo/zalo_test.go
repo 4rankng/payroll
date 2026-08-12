@@ -430,6 +430,30 @@ func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	}
 }
 
+func TestProvider_Send_Minus124WithInvalidRefreshTokenSurfacesActionableError(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.setSendError(ErrBadAccessToken)
+	mock.setOAuthInvalidRefreshToken()
+
+	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if err != nil {
+		t.Fatalf("Send err: %v", err)
+	}
+	if res.ErrorCode != ErrInvalidRefreshToken {
+		t.Fatalf("ErrorCode = %d, want %d", res.ErrorCode, ErrInvalidRefreshToken)
+	}
+	if res.ErrorMsg != ErrorMessage(ErrInvalidRefreshToken) {
+		t.Fatalf("ErrorMsg = %q, want %q", res.ErrorMsg, ErrorMessage(ErrInvalidRefreshToken))
+	}
+	if after := creds.snapshot(); after.RefreshToken != "live-refresh" {
+		t.Fatalf("RefreshToken = %q, should be preserved after rejection", after.RefreshToken)
+	}
+	sends, oauth := mock.counts()
+	if sends != 1 || oauth != 1 {
+		t.Fatalf("send/oauth calls = %d/%d, want 1/1", sends, oauth)
+	}
+}
+
 // TestProvider_Refresh_AccessTokenOnlyKeepsOldRefreshToken verifies that when
 // Zalo returns a new access_token WITHOUT a refresh_token (which it does not
 // always rotate), the Provider accepts it and preserves the existing

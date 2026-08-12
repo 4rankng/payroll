@@ -21,7 +21,9 @@ func buildOnePayInputXlsx(t *testing.T, headers []string, data [][]any, sheetNam
 	}
 	f := excelize.NewFile()
 	if idx, _ := f.GetSheetIndex("Sheet1"); idx >= 0 {
-		f.DeleteSheet("Sheet1")
+		if err := f.DeleteSheet("Sheet1"); err != nil {
+			t.Fatalf("DeleteSheet: %v", err)
+		}
 	}
 	if _, err := f.NewSheet(sheetName); err != nil {
 		t.Fatalf("NewSheet: %v", err)

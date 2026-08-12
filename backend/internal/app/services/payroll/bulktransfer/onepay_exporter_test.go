@@ -211,7 +211,7 @@ func TestGenerateOnePayExcel_LayoutAndColumns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open generated xlsx: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if idx, _ := f.GetSheetIndex("eMB_BulkPayment"); idx < 0 {
 		t.Fatalf("sheet eMB_BulkPayment not found")

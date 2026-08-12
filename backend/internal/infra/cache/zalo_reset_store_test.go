@@ -2,9 +2,6 @@ package cache
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -25,11 +22,6 @@ func newTestZaloStore(t *testing.T) (*ZaloResetStore, *miniredis.Miniredis) {
 	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 	t.Cleanup(func() { _ = client.Close() })
 	return NewZaloResetStore(client, 10*time.Minute), mr
-}
-
-func hashHexOf(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return hex.EncodeToString(sum[:])
 }
 
 func TestZaloResetStore_CreateConsumeHappy(t *testing.T) {
@@ -184,5 +176,4 @@ func TestZaloResetStore_DummyAndRealProduceSameShapeID(t *testing.T) {
 	if len(realSID) < 40 {
 		t.Errorf("real id too short: %q", realSID)
 	}
-	fmt.Sprintf("real=%q dummy=%q", realSID, dummySID) // keep fmt import used
 }

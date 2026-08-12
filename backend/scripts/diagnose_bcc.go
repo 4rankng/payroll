@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// List all sheets
 	sheets := f.GetSheetList()
