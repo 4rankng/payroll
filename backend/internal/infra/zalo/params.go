@@ -27,6 +27,16 @@ var ParamCaps = map[string]map[string]int{
 	"619684": {
 		"otp": 10,
 	},
+	// SalaryNotification-v1 (id "619686"):
+	//
+	//	customer_name string cap 30
+	//	max_amount    number cap 20
+	//	expiry_date   date   cap 20
+	"619686": {
+		"customer_name": 30,
+		"max_amount":    20,
+		"expiry_date":   20,
+	},
 }
 
 // ClampParams truncates each string value in data to the per-template cap (in

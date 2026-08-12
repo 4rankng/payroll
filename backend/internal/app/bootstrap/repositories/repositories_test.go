@@ -117,4 +117,8 @@ func TestInitialize(t *testing.T) {
 	if repos.TimesheetImportJob == nil {
 		t.Error("TimesheetImportJob repository is nil")
 	}
+
+	if repos.FlexPaySalaryNotification == nil {
+		t.Error("FlexPaySalaryNotification repository is nil")
+	}
 }

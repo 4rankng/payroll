@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"api-server/internal/infra/zalo"
+	"api-server/internal/pkg/clock"
 )
 
 // FlexPaySalaryTemplateID is the ZNS template for salary/payment notifications.
 // Template: SalaryNotification-v1
-// Status: Pending approval (Đang duyệt - 2-3 days)
+// Status: approved for production sends.
 const FlexPaySalaryTemplateID = "619686"
 
 // FlexPayZNSData holds the data for ZNS notification.
@@ -86,7 +87,7 @@ func (s *FlexPayZNSService) SendSalaryNotification(ctx context.Context, data Fle
 	}
 
 	// Generate tracking ID for debugging
-	trackingID := fmt.Sprintf("flexpay-%d-%s", time.Now().Unix(), phone)
+	trackingID := fmt.Sprintf("flexpay-%d-%s", clock.Now().Unix(), phone)
 
 	// Send ZNS via provider
 	result, err := s.provider.Send(ctx, phone, FlexPaySalaryTemplateID, trackingID, templateData)
@@ -119,8 +120,8 @@ func (s *FlexPayZNSService) SendSalaryNotification(ctx context.Context, data Fle
 	return nil
 }
 
-// SendBatch sends notifications to multiple employees concurrently.
-// Uses fire-and-forget pattern - errors are logged but not returned.
+// SendBatch is retained for callers outside the durable import path. It sends
+// sequentially so it cannot create an unbounded goroutine burst.
 func (s *FlexPayZNSService) SendBatch(ctx context.Context, notifications []FlexPayZNSData) {
 	if len(notifications) == 0 {
 		return
@@ -129,15 +130,9 @@ func (s *FlexPayZNSService) SendBatch(ctx context.Context, notifications []FlexP
 	s.logger.Info("zns: starting batch send", "count", len(notifications))
 
 	for _, notification := range notifications {
-		// Launch goroutine for each employee (fire-and-forget)
-		go func(data FlexPayZNSData) {
-			// Use background context since the worker may have moved on
-			bgCtx := context.Background()
-			if err := s.SendSalaryNotification(bgCtx, data); err != nil {
-				// Error already logged in SendSalaryNotification
-				return
-			}
-		}(notification)
+		if err := s.SendSalaryNotification(ctx, notification); err != nil {
+			s.logger.Warn("zns: batch notification send failed", "error", err)
+		}
 	}
 }
 

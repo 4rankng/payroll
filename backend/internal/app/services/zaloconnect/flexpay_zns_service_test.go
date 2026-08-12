@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"testing"
 	"time"
 
@@ -12,17 +13,26 @@ import (
 
 // MockZaloProvider is a mock provider for testing
 type MockZaloProvider struct {
+	mu           sync.Mutex
 	SendFunc     func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error)
 	RefreshCount int
-	SendCount    int
+	sendCount    int
 }
 
 func (m *MockZaloProvider) Send(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
-	m.SendCount++
+	m.mu.Lock()
+	m.sendCount++
+	m.mu.Unlock()
 	if m.SendFunc != nil {
 		return m.SendFunc(ctx, phone, templateID, trackingID, data)
 	}
 	return zalo.SendResult{ErrorCode: 0, ErrorMsg: ""}, nil
+}
+
+func (m *MockZaloProvider) SendCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.sendCount
 }
 
 func (m *MockZaloProvider) RefreshNow(ctx context.Context) error {
@@ -54,6 +64,9 @@ func TestNewFlexPayZNSService(t *testing.T) {
 func TestSendSalaryNotification_Success(t *testing.T) {
 	provider := &MockZaloProvider{
 		SendFunc: func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
+			if templateID != FlexPaySalaryTemplateID {
+				t.Errorf("template_id = %q, want %q", templateID, FlexPaySalaryTemplateID)
+			}
 			return zalo.SendResult{ErrorCode: 0, ErrorMsg: "", MsgID: "test-msg-id"}, nil
 		},
 	}
@@ -72,8 +85,8 @@ func TestSendSalaryNotification_Success(t *testing.T) {
 		t.Errorf("expected no error, got %v", err)
 	}
 
-	if provider.SendCount != 1 {
-		t.Errorf("expected 1 send, got %d", provider.SendCount)
+	if provider.SendCount() != 1 {
+		t.Errorf("expected 1 send, got %d", provider.SendCount())
 	}
 }
 
@@ -94,8 +107,8 @@ func TestSendSalaryNotification_NoMobile(t *testing.T) {
 		t.Errorf("expected no error for missing mobile, got %v", err)
 	}
 
-	if provider.SendCount != 0 {
-		t.Errorf("expected 0 sends for missing mobile, got %d", provider.SendCount)
+	if provider.SendCount() != 0 {
+		t.Errorf("expected 0 sends for missing mobile, got %d", provider.SendCount())
 	}
 }
 
@@ -116,8 +129,8 @@ func TestSendSalaryNotification_InvalidPhone(t *testing.T) {
 		t.Errorf("expected no error for invalid phone, got %v", err)
 	}
 
-	if provider.SendCount != 0 {
-		t.Errorf("expected 0 sends for invalid phone, got %d", provider.SendCount)
+	if provider.SendCount() != 0 {
+		t.Errorf("expected 0 sends for invalid phone, got %d", provider.SendCount())
 	}
 }
 
@@ -141,8 +154,8 @@ func TestSendSalaryNotification_Disabled(t *testing.T) {
 		t.Errorf("expected no error when disabled, got %v", err)
 	}
 
-	if provider.SendCount != 0 {
-		t.Errorf("expected 0 sends when disabled, got %d", provider.SendCount)
+	if provider.SendCount() != 0 {
+		t.Errorf("expected 0 sends when disabled, got %d", provider.SendCount())
 	}
 }
 
@@ -169,8 +182,8 @@ func TestSendSalaryNotification_BusinessError(t *testing.T) {
 		t.Errorf("expected no error for business error, got %v", err)
 	}
 
-	if provider.SendCount != 1 {
-		t.Errorf("expected 1 send attempt, got %d", provider.SendCount)
+	if provider.SendCount() != 1 {
+		t.Errorf("expected 1 send attempt, got %d", provider.SendCount())
 	}
 }
 
@@ -194,16 +207,11 @@ func TestSendBatch(t *testing.T) {
 		},
 	}
 
-	// SendBatch is fire-and-forget, so we can't easily verify the result
-	// but we can verify it doesn't panic
 	service.SendBatch(context.Background(), notifications)
 
-	// Give time for goroutines to run
-	time.Sleep(100 * time.Millisecond)
-
 	// Should have sent both
-	if provider.SendCount != 2 {
-		t.Errorf("expected 2 sends, got %d", provider.SendCount)
+	if provider.SendCount() != 2 {
+		t.Errorf("expected 2 sends, got %d", provider.SendCount())
 	}
 }
 
@@ -215,8 +223,8 @@ func TestSendBatch_Empty(t *testing.T) {
 	// Should not panic
 	service.SendBatch(context.Background(), []FlexPayZNSData{})
 
-	if provider.SendCount != 0 {
-		t.Errorf("expected 0 sends for empty batch, got %d", provider.SendCount)
+	if provider.SendCount() != 0 {
+		t.Errorf("expected 0 sends for empty batch, got %d", provider.SendCount())
 	}
 }
 

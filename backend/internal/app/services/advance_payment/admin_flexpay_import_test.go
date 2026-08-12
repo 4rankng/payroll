@@ -105,3 +105,32 @@ func TestResolveUploadDate_FallsBackToBusinessClockWhenAssetTimestampMissing(t *
 		t.Fatalf("expected fallback upload date 2026-06-06, got %s", got)
 	}
 }
+
+func TestShouldNotifyFlexPayZNS_OnlyForRequestableFlexibleEmployees(t *testing.T) {
+	eligible := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleFlexible)}
+	selfCheckIn := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleFlexible), CheckInEnabled: true}
+	weekly := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleWeekly)}
+
+	tests := []struct {
+		name       string
+		amount     uint64
+		mobile     string
+		assignment *domain.ProjectEmployee
+		want       bool
+	}{
+		{name: "eligible flexible employee", amount: 1_000_000, mobile: "0366178061", assignment: eligible, want: true},
+		{name: "self check-in employee", amount: 1_000_000, mobile: "0366178061", assignment: selfCheckIn},
+		{name: "non-flexible employee", amount: 1_000_000, mobile: "0366178061", assignment: weekly},
+		{name: "missing mobile", amount: 1_000_000, assignment: eligible},
+		{name: "zero amount", mobile: "0366178061", assignment: eligible},
+		{name: "missing assignment", amount: 1_000_000, mobile: "0366178061"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldNotifyFlexPayZNS(tt.amount, tt.mobile, tt.assignment); got != tt.want {
+				t.Fatalf("shouldNotifyFlexPayZNS() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

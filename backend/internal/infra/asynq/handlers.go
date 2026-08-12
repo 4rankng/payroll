@@ -18,10 +18,12 @@ var logger = observability.GetLogger().With("component", "asynq")
 
 // Task type constants
 const (
-	TaskEmployeeImport = "employee:import"
-	TaskBCCImport      = "timesheet:bcc_import"
-	TaskBCCImportSweep = "timesheet:bcc_import_sweep"
-	TaskImportJob      = "import:job"
+	TaskEmployeeImport                 = "employee:import"
+	TaskBCCImport                      = "timesheet:bcc_import"
+	TaskBCCImportSweep                 = "timesheet:bcc_import_sweep"
+	TaskImportJob                      = "import:job"
+	TaskFlexPaySalaryNotification      = "zns:flexpay_salary_notification"
+	TaskFlexPaySalaryNotificationSweep = "zns:flexpay_salary_notification_sweep"
 	// TaskIPNProcess is the provider-agnostic task type for verified
 	// disbursement IPN events. The wire payload carries the provider
 	// name so a single worker handles every disbursement provider.
@@ -110,23 +112,24 @@ func payloadToBulkTransferEvent(p bulktransfer.BulkTransferTaskPayload) domain.B
 
 // Handlers holds all task handler dependencies
 type Handlers struct {
-	employeeImportWorker          *workers.EmployeeImportWorker
-	bccImportWorker               *workers.BCCImportWorker
-	importJobWorker               *workers.ImportJobWorker
-	ipnProcessWorker              *workers.IPNProcessWorker
-	disbursementPollerWorker      *workers.DisbursementPollerWorker
-	disbursementExecuteWorker     *workers.DisbursementExecuteWorker
-	ninePayBulkExecuteWorker      *workers.NinePayBulkExecuteWorker
-	bulkTransferTransactionWorker *workers.BulkTransferTransactionWorker
-	bulkTransferPaymentWorker     *workers.BulkTransferPaymentWorker
-	auditLogWriteWorker           *workers.AuditLogWriteWorker
-	payrollReportEmailWorker      *workers.PayrollReportEmailWorker
-	walletSettlementWorker        *workers.WalletSettlementWorker
-	statusInquiryPollerWorker     *workers.StatusInquiryPollerWorker
-	autoRejectCheckoutWorker      *workers.AutoRejectCheckoutWorker
-	autoRejectSweepWorker         *workers.AutoRejectSweepWorker
-	creditQuotaWorker             *workers.CreditQuotaWorker
-	creditQuotaSweepWorker        *workers.CreditQuotaSweepWorker
+	employeeImportWorker            *workers.EmployeeImportWorker
+	bccImportWorker                 *workers.BCCImportWorker
+	importJobWorker                 *workers.ImportJobWorker
+	flexPaySalaryNotificationWorker *workers.FlexPaySalaryNotificationWorker
+	ipnProcessWorker                *workers.IPNProcessWorker
+	disbursementPollerWorker        *workers.DisbursementPollerWorker
+	disbursementExecuteWorker       *workers.DisbursementExecuteWorker
+	ninePayBulkExecuteWorker        *workers.NinePayBulkExecuteWorker
+	bulkTransferTransactionWorker   *workers.BulkTransferTransactionWorker
+	bulkTransferPaymentWorker       *workers.BulkTransferPaymentWorker
+	auditLogWriteWorker             *workers.AuditLogWriteWorker
+	payrollReportEmailWorker        *workers.PayrollReportEmailWorker
+	walletSettlementWorker          *workers.WalletSettlementWorker
+	statusInquiryPollerWorker       *workers.StatusInquiryPollerWorker
+	autoRejectCheckoutWorker        *workers.AutoRejectCheckoutWorker
+	autoRejectSweepWorker           *workers.AutoRejectSweepWorker
+	creditQuotaWorker               *workers.CreditQuotaWorker
+	creditQuotaSweepWorker          *workers.CreditQuotaSweepWorker
 	// wallet_bulk: per-row worker + the service (which hosts the ledger
 	// booking + sweeper handlers — they share the same batch_repo/txnSvc).
 	walletBulkRowWorker *workers.WalletBulkTransferRowWorker
@@ -147,6 +150,7 @@ func NewHandlers(
 	employeeImportWorker *workers.EmployeeImportWorker,
 	bccImportWorker *workers.BCCImportWorker,
 	importJobWorker *workers.ImportJobWorker,
+	flexPaySalaryNotificationWorker *workers.FlexPaySalaryNotificationWorker,
 	ipnProcessWorker *workers.IPNProcessWorker,
 	disbursementPollerWorker *workers.DisbursementPollerWorker,
 	disbursementExecuteWorker *workers.DisbursementExecuteWorker,
@@ -165,30 +169,53 @@ func NewHandlers(
 	walletBulkSvc WalletBulkServiceHandler,
 ) *Handlers {
 	return &Handlers{
-		employeeImportWorker:          employeeImportWorker,
-		bccImportWorker:               bccImportWorker,
-		importJobWorker:               importJobWorker,
-		ipnProcessWorker:              ipnProcessWorker,
-		disbursementPollerWorker:      disbursementPollerWorker,
-		disbursementExecuteWorker:     disbursementExecuteWorker,
-		ninePayBulkExecuteWorker:      ninePayBulkExecuteWorker,
-		bulkTransferTransactionWorker: bulkTransferTransactionWorker,
-		bulkTransferPaymentWorker:     bulkTransferPaymentWorker,
-		auditLogWriteWorker:           auditLogWriteWorker,
-		payrollReportEmailWorker:      payrollReportEmailWorker,
-		walletSettlementWorker:        walletSettlementWorker,
-		statusInquiryPollerWorker:     statusInquiryPollerWorker,
-		autoRejectCheckoutWorker:      autoRejectCheckoutWorker,
-		autoRejectSweepWorker:         autoRejectSweepWorker,
-		creditQuotaWorker:             creditQuotaWorker,
-		creditQuotaSweepWorker:        creditQuotaSweepWorker,
-		walletBulkRowWorker:           walletBulkRowWorker,
-		walletBulkSvc:                 walletBulkSvc,
+		employeeImportWorker:            employeeImportWorker,
+		bccImportWorker:                 bccImportWorker,
+		importJobWorker:                 importJobWorker,
+		flexPaySalaryNotificationWorker: flexPaySalaryNotificationWorker,
+		ipnProcessWorker:                ipnProcessWorker,
+		disbursementPollerWorker:        disbursementPollerWorker,
+		disbursementExecuteWorker:       disbursementExecuteWorker,
+		ninePayBulkExecuteWorker:        ninePayBulkExecuteWorker,
+		bulkTransferTransactionWorker:   bulkTransferTransactionWorker,
+		bulkTransferPaymentWorker:       bulkTransferPaymentWorker,
+		auditLogWriteWorker:             auditLogWriteWorker,
+		payrollReportEmailWorker:        payrollReportEmailWorker,
+		walletSettlementWorker:          walletSettlementWorker,
+		statusInquiryPollerWorker:       statusInquiryPollerWorker,
+		autoRejectCheckoutWorker:        autoRejectCheckoutWorker,
+		autoRejectSweepWorker:           autoRejectSweepWorker,
+		creditQuotaWorker:               creditQuotaWorker,
+		creditQuotaSweepWorker:          creditQuotaSweepWorker,
+		walletBulkRowWorker:             walletBulkRowWorker,
+		walletBulkSvc:                   walletBulkSvc,
 	}
 }
 
 type bccImportPayload struct {
 	AssetID uint `json:"asset_id"`
+}
+
+type flexPaySalaryNotificationPayload struct {
+	NotificationID uint `json:"notification_id"`
+}
+
+func (h *Handlers) HandleFlexPaySalaryNotification(ctx context.Context, t *asynqlib.Task) error {
+	var payload flexPaySalaryNotificationPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil || payload.NotificationID == 0 {
+		return asynqlib.SkipRetry
+	}
+	if h.flexPaySalaryNotificationWorker == nil {
+		return nil
+	}
+	return h.flexPaySalaryNotificationWorker.ProcessJob(ctx, payload.NotificationID)
+}
+
+func (h *Handlers) HandleFlexPaySalaryNotificationSweep(ctx context.Context, _ *asynqlib.Task) error {
+	if h.flexPaySalaryNotificationWorker == nil {
+		return nil
+	}
+	return h.flexPaySalaryNotificationWorker.Recover(ctx)
 }
 
 func (h *Handlers) HandleBCCImport(ctx context.Context, t *asynqlib.Task) error {

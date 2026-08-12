@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, ApiResponse } from '@/services/api/client';
-import { API_ENDPOINTS } from '@/config/api.config';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient, ApiResponse } from "@/services/api/client";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 // --- types ------------------------------------------------------------------
 
@@ -10,6 +10,7 @@ export interface ZaloConnectionStatus {
   connected: boolean;
   app_id: string;
   template_id: string;
+  flexpay_zns_enabled: boolean;
   expires_at?: string;
   last_error?: string;
 }
@@ -71,7 +72,7 @@ export const zaloAdminService = new ZaloAdminService();
 
 // --- hooks ------------------------------------------------------------------
 
-const STATUS_KEY = ['zalo', 'status'] as const;
+const STATUS_KEY = ["zalo", "status"] as const;
 
 /**
  * useZaloStatus — live connection status. Refetches every 60s while the tab is
@@ -106,7 +107,8 @@ export const useSetZaloEnabled = () => {
 export const useSetFlexPayZNSEnabled = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (enabled: boolean) => zaloAdminService.setFlexPayZNSEnabled(enabled),
+    mutationFn: (enabled: boolean) =>
+      zaloAdminService.setFlexPayZNSEnabled(enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };

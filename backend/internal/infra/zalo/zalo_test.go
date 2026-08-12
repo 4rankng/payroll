@@ -99,6 +99,16 @@ func TestClampParams(t *testing.T) {
 			t.Error("unknown template should not clamp")
 		}
 	})
+	t.Run("salary notification clamps approved parameter caps", func(t *testing.T) {
+		out := ClampParams("619686", map[string]string{
+			"customer_name": strings.Repeat("x", 31),
+			"max_amount":    strings.Repeat("1", 21),
+			"expiry_date":   strings.Repeat("2", 21),
+		})
+		if len([]rune(out["customer_name"])) != 30 || len([]rune(out["max_amount"])) != 20 || len([]rune(out["expiry_date"])) != 20 {
+			t.Errorf("salary notification parameters were not clamped: %+v", out)
+		}
+	})
 	t.Run("nil input", func(t *testing.T) {
 		if out := ClampParams("617976", nil); out != nil {
 			t.Errorf("expected nil, got %v", out)

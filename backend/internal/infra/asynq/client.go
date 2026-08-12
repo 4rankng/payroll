@@ -112,6 +112,23 @@ func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
 	return nil
 }
 
+// EnqueueFlexPaySalaryNotification queues one persisted delivery record. The
+// row claim in the worker is the idempotency boundary. Do not use a permanent
+// task ID here: an archived exhausted task would otherwise prevent the recovery
+// sweep from ever re-enqueueing its still-pending database record.
+func (c *Client) EnqueueFlexPaySalaryNotification(notificationID uint) error {
+	payload, _ := json.Marshal(flexPaySalaryNotificationPayload{NotificationID: notificationID})
+	task := asynqlib.NewTask(TaskFlexPaySalaryNotification, payload,
+		asynqlib.Queue(QueueLow),
+		asynqlib.MaxRetry(5),
+		asynqlib.Timeout(20*time.Second),
+	)
+	if _, err := c.client.Enqueue(task); err != nil {
+		return fmt.Errorf("failed to enqueue salary notification: %w", err)
+	}
+	return nil
+}
+
 // IPNProcessPayload is the verified, parsed disbursement IPN event the
 // webhook handler hands off to the asynq worker. The signature has
 // already been validated synchronously in the HTTP path; the worker

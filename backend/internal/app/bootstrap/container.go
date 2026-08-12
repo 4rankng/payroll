@@ -280,9 +280,10 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			repos.Asset,
 			services.AdvancePayment,
 			services.ImportProgress,
-			services.FlexPayZNS,
+			services.FlexPaySalaryDelivery,
 			cfg.Asset.StoragePath,
 		),
+		workers.NewFlexPaySalaryNotificationWorker(services.FlexPaySalaryDelivery),
 		workers.NewIPNProcessWorker(services.ProviderTransactions, repos.WalletIPN, services.BulkTransferPayment, infra.Logger).
 			WithBulkBatchFinalizer(workers.NewBulkBatchFinalizer(
 				repos.BulkTransferBatch,

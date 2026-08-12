@@ -191,6 +191,7 @@ func (d *Database) warmUpSchemas(db *gorm.DB) {
 		&domain.PushSubscription{},
 		&domain.CronJobStatus{},
 		&domain.AssetImportMetadata{},
+		&domain.FlexPaySalaryNotification{},
 	}
 
 	appLogger := observability.GetLogger()

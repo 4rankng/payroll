@@ -21,7 +21,7 @@ type ImportJobWorker struct {
 	assetRepo         domain.AssetRepository
 	importService     *advance_payment.Service
 	importProgressSvc *advance_payment.ImportProgressService
-	znsService        *zaloconnect.FlexPayZNSService
+	notificationSvc   *zaloconnect.SalaryNotificationDeliveryService
 	storagePath       string
 }
 
@@ -30,7 +30,7 @@ func NewImportJobWorker(
 	assetRepo domain.AssetRepository,
 	importService *advance_payment.Service,
 	importProgressSvc *advance_payment.ImportProgressService,
-	znsService *zaloconnect.FlexPayZNSService,
+	notificationSvc *zaloconnect.SalaryNotificationDeliveryService,
 	storagePath string,
 ) *ImportJobWorker {
 	return &ImportJobWorker{
@@ -38,29 +38,28 @@ func NewImportJobWorker(
 		assetRepo:         assetRepo,
 		importService:     importService,
 		importProgressSvc: importProgressSvc,
-		znsService:        znsService,
+		notificationSvc:   notificationSvc,
 		storagePath:       storagePath,
 	}
 }
 
 // ProcessJob processes an import job (called by Asynq handler)
-func (w *ImportJobWorker) ProcessJob(ctx context.Context, jobID uint, forMonth string) error {
+func (w *ImportJobWorker) ProcessJob(ctx context.Context, jobID uint, forMonth string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			w.logger.Error("panic in import job processing", "job_id", jobID, "panic", r)
+			err = fmt.Errorf("panic in import job processing: %v", r)
 		}
 	}()
-
-	w.processJob(ctx, jobID, forMonth)
-	return nil
+	return w.processJob(ctx, jobID, forMonth)
 }
 
-func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth string) {
+func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth string) error {
 
 	// Get and validate asset
 	asset, err := w.getAndValidateAsset(ctx, jobID)
 	if err != nil {
-		return
+		return err
 	}
 
 	// Use the caller-selected month when provided. Fallback keeps old
@@ -68,7 +67,7 @@ func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth s
 	forMonth = resolveImportForMonth(forMonth)
 	if forMonth == "" {
 		w.markJobFailed(ctx, asset, "Failed to auto-resolve for_month")
-		return
+		return fmt.Errorf("failed to auto-resolve for_month")
 	}
 
 	w.logger.Info("starting import job processing", "job_id", jobID, "filename", asset.Filename, "for_month", forMonth)
@@ -76,7 +75,7 @@ func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth s
 	// Initialize import progress tracking
 	if err := w.importProgressSvc.StartImport(ctx, asset.ID, forMonth); err != nil {
 		w.markJobFailed(ctx, asset, fmt.Sprintf("Failed to start import: %v", err))
-		return
+		return err
 	}
 
 	w.logger.Info("import job started", "job_id", jobID, "filename", asset.Filename, "for_month", forMonth)
@@ -85,29 +84,35 @@ func (w *ImportJobWorker) processJob(ctx context.Context, jobID uint, forMonth s
 	result, err := w.processExcelFile(ctx, asset, forMonth)
 	if err != nil {
 		w.markJobFailed(ctx, asset, fmt.Sprintf("Failed to process file: %v", err))
-		return
+		return err
 	}
 
-	// Mark job as completed
-	w.markJobCompleted(ctx, asset, result)
-
-	// Send ZNS notifications to employees (fire-and-forget)
-	if w.znsService != nil && len(result.EmployeeZNSData) > 0 {
-		w.logger.Info("sending ZNS notifications to employees", "count", len(result.EmployeeZNSData))
-		// Convert DTO ZNS data to service format
-		notifications := make([]zaloconnect.FlexPayZNSData, len(result.EmployeeZNSData))
+	// Persist notification work before reporting the import complete. A queue
+	// outage leaves durable pending records for the recovery sweep instead of
+	// losing a chargeable ZNS delivery.
+	if w.notificationSvc != nil && len(result.EmployeeZNSData) > 0 {
+		recipients := make([]zaloconnect.SalaryNotificationRecipient, len(result.EmployeeZNSData))
 		for i, data := range result.EmployeeZNSData {
-			notifications[i] = zaloconnect.FlexPayZNSData{
+			recipients[i] = zaloconnect.SalaryNotificationRecipient{
+				ProjectID:    data.ProjectID,
+				EmployeeID:   data.EmployeeID,
 				EmployeeName: data.EmployeeName,
 				Amount:       data.Amount,
 				ExpiryDate:   data.ExpiryDate,
 				Mobile:       data.Mobile,
 			}
 		}
-		w.znsService.SendBatch(ctx, notifications)
+		if err := w.notificationSvc.ScheduleImportRecipients(ctx, asset.ID, recipients); err != nil {
+			return fmt.Errorf("schedule salary notifications: %w", err)
+		}
 	}
 
+	if err := w.importProgressSvc.CompleteImport(ctx, asset.ID, result); err != nil {
+		w.logger.Warn("failed to complete import progress", "job_id", asset.ID, "error", err)
+	}
+	w.markJobCompleted(ctx, asset, result)
 	w.logJobSuccess(jobID, result)
+	return nil
 }
 
 // getAndValidateAsset retrieves and validates the asset
@@ -168,11 +173,6 @@ func (w *ImportJobWorker) processExcelFile(ctx context.Context, asset *domain.As
 	result, err := w.importService.ImportFlexPayFile(ctx, xlsxFile, forMonth, asset.ID, createdBy, asset.CreatedAt, progressCB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to import flex pay file: %w", err)
-	}
-
-	// Mark as completed in import progress service
-	if err := w.importProgressSvc.CompleteImport(ctx, asset.ID, result); err != nil {
-		w.logger.Warn("failed to complete import progress", "job_id", asset.ID, "error", err)
 	}
 
 	return result, nil

@@ -168,11 +168,13 @@ type ImportFlexPayFileResult struct {
 	AdvancePaymentsCreated int    `json:"advancePaymentsCreated"`
 	AdvancePaymentsSkipped int    `json:"advancePaymentsSkipped"`
 	// EmployeeZNSData holds employee data for ZNS notifications after successful import
-	EmployeeZNSData []EmployeeZNSData `json:"employeeZNSData,omitempty"`
+	EmployeeZNSData []EmployeeZNSData `json:"-"`
 }
 
 // EmployeeZNSData holds employee data for ZNS notification
 type EmployeeZNSData struct {
+	ProjectID    uint
+	EmployeeID   uint
 	EmployeeName string    `json:"employeeName"`
 	Mobile       string    `json:"mobile"`
 	Amount       int64     `json:"amount"`
