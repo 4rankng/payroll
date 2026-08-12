@@ -206,6 +206,13 @@ func (m *zaloMock) setSendError(code int) {
 	defer m.mu.Unlock()
 	m.sendResp = `{"error":` + itoa(code) + `,"message":"err"}`
 }
+func (m *zaloMock) setOAuthAccessTokenOnly() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Zalo does not always rotate the refresh_token — this response has only
+	// a new access_token. The Provider must accept it and keep the old one.
+	m.oauthResp = `{"access_token":"new-access","expires_in":3600}`
+}
 func (m *zaloMock) setOAuthMissingTokens() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -339,7 +346,7 @@ func TestProvider_Send_NotConfiguredWhenNoTokens(t *testing.T) {
 
 // --- provider.go: refresh ---------------------------------------------------
 
-func TestProvider_Refresh_MissingTokensRejected(t *testing.T) {
+func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	p, mock, creds, _ := newProviderWithMock(t)
 	mock.setOAuthMissingTokens()
 	before := creds.snapshot() // has live-refresh
@@ -357,6 +364,40 @@ func TestProvider_Refresh_MissingTokensRejected(t *testing.T) {
 	after := creds.snapshot()
 	if after.RefreshToken != before.RefreshToken {
 		t.Errorf("refresh_token clobbered: was %q, now %q", before.RefreshToken, after.RefreshToken)
+	}
+}
+
+// TestProvider_Refresh_AccessTokenOnlyKeepsOldRefreshToken verifies that when
+// Zalo returns a new access_token WITHOUT a refresh_token (which it does not
+// always rotate), the Provider accepts it and preserves the existing
+// refresh_token. This is the fix for the "token refresh failed: missing
+// access_token or refresh_token" error that caused permanent breakage.
+func TestProvider_Refresh_AccessTokenOnlyKeepsOldRefreshToken(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.setOAuthAccessTokenOnly()
+	before := creds.snapshot()
+	oldRefresh := before.RefreshToken
+
+	// Force a refresh path by expiring the token.
+	creds.mu.Lock()
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // expired
+	creds.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if err != nil {
+		t.Fatalf("Send should succeed with access_token-only refresh, got: %v", err)
+	}
+	after := creds.snapshot()
+	if after.AccessToken != "new-access" {
+		t.Errorf("AccessToken = %q, want new-access", after.AccessToken)
+	}
+	// The old refresh_token must be preserved (Zalo didn't rotate it).
+	if after.RefreshToken != oldRefresh {
+		t.Errorf("RefreshToken changed: was %q, now %q — should keep old when Zalo doesn't rotate",
+			oldRefresh, after.RefreshToken)
+	}
+	if after.ExpiresAt == nil || after.ExpiresAt.Before(time.Now()) {
+		t.Errorf("ExpiresAt not set/future: %v", after.ExpiresAt)
 	}
 }
 

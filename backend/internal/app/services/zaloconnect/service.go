@@ -113,7 +113,11 @@ func (s *Service) Get(ctx context.Context) (zalo.Credentials, error) {
 func (s *Service) Update(ctx context.Context, creds zalo.Credentials) error {
 	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
 		cur.AccessToken = creds.AccessToken
-		cur.RefreshToken = creds.RefreshToken
+		// Zalo does not always return a new refresh_token on refresh. An empty
+		// value means "Zalo didn't rotate" — preserve the existing one.
+		if creds.RefreshToken != "" {
+			cur.RefreshToken = creds.RefreshToken
+		}
 		cur.ExpiresAt = creds.ExpiresAt
 		if creds.AppID != "" {
 			cur.AppID = creds.AppID

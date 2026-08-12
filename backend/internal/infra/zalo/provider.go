@@ -235,12 +235,18 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	var tok oauthTokenResponse
 	if jsonErr := json.Unmarshal(respBody, &tok); jsonErr != nil {
+		p.log.Error("zalo: refresh returned malformed JSON", "body", string(respBody))
 		return "", fmt.Errorf("%w: malformed response", ErrRefreshFailed)
 	}
-	if tok.AccessToken == "" || tok.RefreshToken == "" {
-		p.log.Error("zalo: refresh returned missing tokens (admin needs to re-paste from OA Console)",
-			"has_access", tok.AccessToken != "", "has_refresh", tok.RefreshToken != "")
-		return "", fmt.Errorf("%w: missing access_token or refresh_token", ErrRefreshFailed)
+	// Zalo must return a new access_token. The refresh_token may be absent —
+	// Zalo does not always rotate it, and the existing refresh_token remains
+	// valid in that case. Rejecting an access_token-only response (as the old
+	// code did) caused the system to discard a perfectly good token and get
+	// permanently stuck.
+	if tok.AccessToken == "" {
+		p.log.Error("zalo: refresh returned no access_token (admin needs to re-paste from OA Console)",
+			"zalo_error", tok.Error, "zalo_message", tok.Message, "body", string(respBody))
+		return "", fmt.Errorf("%w: no access_token in response (zalo error %d: %s)", ErrRefreshFailed, tok.Error, tok.Message)
 	}
 
 	expiresAt := time.Now().Add(time.Duration(tok.ExpiresIn) * time.Second)
@@ -252,21 +258,33 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	// doesn't leak a consumed refresh_token (R-Z1).
 	next := creds
 	next.AccessToken = tok.AccessToken
-	next.RefreshToken = tok.RefreshToken
+	// Zalo does not always rotate the refresh_token. When it's absent from the
+	// response, the existing refresh_token is still valid — keep it.
+	if tok.RefreshToken != "" {
+		next.RefreshToken = tok.RefreshToken
+	}
 	next.ExpiresAt = &expiresAt
 	if err := p.creds.Update(ctx, next); err != nil {
 		return "", fmt.Errorf("zalo: persist refreshed tokens: %w", err)
 	}
-	p.log.Info("zalo: access token refreshed", "expires_at", expiresAt.Format(time.RFC3339))
+	p.log.Info("zalo: access token refreshed",
+		"expires_at", expiresAt.Format(time.RFC3339),
+		"refresh_rotated", tok.RefreshToken != "")
 	return tok.AccessToken, nil
 }
 
 // oauthTokenResponse is the JSON body returned by the OAuth v4 token endpoint
 // for both refresh_token and authorization_code grants.
+//
+// Zalo does NOT always return a new refresh_token — when it doesn't, the
+// existing refresh_token is still valid. Callers must keep the old
+// refresh_token in that case (see refresh).
 type oauthTokenResponse struct {
 	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token"` // may be empty — old token still valid
 	ExpiresIn    int64  `json:"expires_in"`
+	Error        int    `json:"error,omitempty"`
+	Message      string `json:"message,omitempty"`
 }
 
 // RefreshNow forces a token refresh regardless of expiry. Used by the admin
