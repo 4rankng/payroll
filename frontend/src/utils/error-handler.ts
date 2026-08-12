@@ -41,6 +41,15 @@ interface NetworkError {
   response?: unknown;
 }
 
+const UPSTREAM_GATEWAY_MESSAGE =
+  'Máy chủ tạm thời không phản hồi. Vui lòng thử lại sau ít phút.';
+
+function sanitizeUserFacingMessage(message: string): string {
+  return /<\s*!doctype\s+html|<\s*html\b/i.test(message)
+    ? UPSTREAM_GATEWAY_MESSAGE
+    : message;
+}
+
 function isApiErrorResponse(error: unknown): error is ApiErrorResponse {
   return (
     error !== null &&
@@ -192,7 +201,7 @@ export function createErrorMessage(
 
   // Always prioritize the backend message if it exists and is meaningful
   if (appError.message && appError.message !== 'Có lỗi xảy ra' && appError.message.trim().length > 0) {
-    return appError.message;
+    return sanitizeUserFacingMessage(appError.message);
   }
 
   if (appError.statusCode) {
@@ -281,7 +290,7 @@ export const getErrorMessage = (error: unknown): string => {
     // seconds (computed from X-RateLimit-Reset, not a hardcoded 60).
     if (apiError.http_status === 429) {
       const retryAfter = apiError.retry_after || 60;
-      const baseMsg = apiError.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau';
+      const baseMsg = sanitizeUserFacingMessage(apiError.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau');
       // The apiClient 429 interceptor already constructs the canonical
       // "...sau N giây" message, and a server may also send a fully-formed
       // sentence. If the duration is already present ("giây"), return verbatim
@@ -303,7 +312,7 @@ export const getErrorMessage = (error: unknown): string => {
       return statusCode >= 200 && statusCode < 300 ? 'Thành công' : 'Thất bại';
     }
 
-    return apiError.message;
+    return sanitizeUserFacingMessage(apiError.message);
   }
 
   // Handle axios error response
@@ -315,11 +324,11 @@ export const getErrorMessage = (error: unknown): string => {
     if (responseData) {
       // Handle structured error response: { status: "error", message: "...", http_status: 400 }
       if (responseData.message) {
-        return responseData.message;
+        return sanitizeUserFacingMessage(responseData.message);
       }
       // Handle alternative error field
       if (responseData.error) {
-        return responseData.error;
+        return sanitizeUserFacingMessage(responseData.error);
       }
 
       // If no message/error field, return based on HTTP status code
@@ -330,7 +339,7 @@ export const getErrorMessage = (error: unknown): string => {
 
     // Fallback to axios error message
     if (axiosError.message) {
-      return axiosError.message;
+      return sanitizeUserFacingMessage(axiosError.message);
     }
 
     // If no message but we have status code, return based on it
@@ -341,17 +350,17 @@ export const getErrorMessage = (error: unknown): string => {
 
   // Handle direct error objects
   if (hasMessage(error)) {
-    return error.message;
+    return sanitizeUserFacingMessage(error.message);
   }
 
   // Handle Error instances
   if (error instanceof Error) {
-    return error.message;
+    return sanitizeUserFacingMessage(error.message);
   }
 
   // Handle string errors
   if (typeof error === 'string') {
-    return error;
+    return sanitizeUserFacingMessage(error);
   }
 
   // Fallback

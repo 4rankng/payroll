@@ -192,13 +192,12 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return SendResult{}, fmt.Errorf("zalo: send returned HTTP %d", resp.StatusCode)
+	}
 	var parsed templateMessageResponse
 	if jsonErr := json.Unmarshal(respBody, &parsed); jsonErr != nil {
-		return SendResult{
-			ErrorCode:  -1,
-			ErrorMsg:   "Phản hồi không phải JSON",
-			HTTPStatus: resp.StatusCode,
-		}, nil
+		return SendResult{}, fmt.Errorf("zalo: send returned malformed JSON (HTTP %d): %w", resp.StatusCode, jsonErr)
 	}
 	return SendResult{
 		MsgID:      parsed.Data.MsgID,

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { getErrorMessage } from "@/utils/error-handler";
 import { buildSalaryZnsTestPayload } from "./zalo-test-message";
 import {
   useRefreshZaloToken,
@@ -225,7 +226,7 @@ export const ZaloConnectionSection = () => {
         "Kết nối Zalo hợp lệ — App ID, Secret Key và Refresh Token đều chính xác",
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không rõ lỗi";
+      const message = getErrorMessage(error);
       toast.error(`Kết nối thất bại: ${message}`);
     }
   };
@@ -283,7 +284,7 @@ export const ZaloConnectionSection = () => {
         toast.error(`Lỗi ZNS: ${result.error_msg}`);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không rõ lỗi";
+      const message = getErrorMessage(error);
       toast.error(`Gửi thử thất bại: ${message}`);
     } finally {
       setTestSendingKind(null);

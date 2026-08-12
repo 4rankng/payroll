@@ -115,6 +115,7 @@ export const useRefreshZaloToken = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: zaloAdminService.refreshNow.bind(zaloAdminService),
+    meta: { skipGlobalError: true },
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };
@@ -123,4 +124,5 @@ export const useRefreshZaloToken = () => {
 export const useTestZaloSend = () =>
   useMutation({
     mutationFn: zaloAdminService.testSend.bind(zaloAdminService),
+    meta: { skipGlobalError: true },
   });

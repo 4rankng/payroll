@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 
 import { ZaloConnectionSection } from "./ZaloConnectionSection";
 
@@ -209,6 +210,25 @@ describe("ZaloConnectionSection", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "OTP mẫu lỗi -124",
+    );
+  });
+
+  it("shows a safe retry message when the salary endpoint returns gateway HTML", async () => {
+    mocks.testSend.mockRejectedValue(
+      "<html><head><title>502 Bad Gateway</title></head><body>nginx</body></html>",
+    );
+    render(<ZaloConnectionSection />);
+
+    fireEvent.change(screen.getByLabelText("Số điện thoại nhận thử"), {
+      target: { value: "0357210887" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi mẫu lương" }));
+
+    await waitFor(() =>
+      expect(mocks.testSend).toHaveBeenCalledOnce(),
+    );
+    expect(toast.error).toHaveBeenCalledWith(
+      "Gửi thử thất bại: Máy chủ tạm thời không phản hồi. Vui lòng thử lại sau ít phút.",
     );
   });
 

@@ -398,6 +398,35 @@ func TestProvider_Send_NoRetryOnBusinessError(t *testing.T) {
 	}
 }
 
+func TestProvider_Send_ReturnsSanitizedErrorForUpstreamBadGateway(t *testing.T) {
+	p, mock, _, _ := newProviderWithMock(t)
+	mock.mu.Lock()
+	mock.sendHandler = func(w http.ResponseWriter, r *http.Request) {
+		mock.mu.Lock()
+		mock.sendCalls++
+		mock.mu.Unlock()
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = io.WriteString(w, "<html><body>502 Bad Gateway</body></html>")
+	}
+	mock.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "619686", "t", map[string]string{
+		"customer_name": "Nhân viên kiểm thử",
+		"max_amount":    "1000000",
+		"expiry_date":   "12/08/2026",
+	})
+	if err == nil {
+		t.Fatal("expected an upstream 502 to be a retryable transport error")
+	}
+	if !strings.Contains(err.Error(), "HTTP 502") {
+		t.Fatalf("error = %q, want HTTP status context", err)
+	}
+	if strings.Contains(err.Error(), "<html") {
+		t.Fatalf("error leaked upstream HTML: %q", err)
+	}
+}
+
 func TestProvider_Send_NotConfiguredWhenNoTokens(t *testing.T) {
 	creds := &fakeCreds{cur: Credentials{AppID: "app1", SecretKey: "s", TemplateID: "617976"}} // no tokens
 	p := NewProvider(creds, Config{SendURL: "http://x", OAuthURL: "http://y", HTTPTimeout: time.Second}, nil)

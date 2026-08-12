@@ -348,9 +348,21 @@ func (s *Service) TestSend(ctx context.Context, phone, templateID string, data m
 			_ = s.recordError(ctx, "Chưa cấu hình Zalo — thiếu access token/refresh token")
 			return result, domain.NewValidationError("Chưa cấu hình Zalo — vui lòng nhập App ID và tokens từ Zalo OA Console")
 		}
-		_ = s.recordError(ctx, err.Error())
-		// Transport/credential failures surface as internal errors
-		return result, domain.NewInternalError(err.Error(), err)
+		// Dead/expired refresh token is actionable: the admin must re-paste a
+		// fresh token pair from Zalo OA Console. Surfacing it as "try again
+		// later" (the generic transport path below) is misleading — no amount
+		// of waiting fixes a consumed refresh_token.
+		if errors.Is(err, zalo.ErrRefreshFailed) {
+			const tokenExpired = "Token Zalo đã hết hạn hoặc không hợp lệ. Admin vui lòng làm mới tokens từ Zalo OA Console"
+			_ = s.recordError(ctx, tokenExpired)
+			return result, domain.NewInternalError(tokenExpired, err)
+		}
+		const temporaryZaloUnavailable = "Dịch vụ Zalo tạm thời không phản hồi. Vui lòng thử lại sau ít phút."
+		_ = s.recordError(ctx, temporaryZaloUnavailable)
+		// Transport failures must stay retryable for the durable salary-delivery
+		// worker, while the one-off admin diagnostic receives a safe Vietnamese
+		// explanation rather than an upstream gateway response.
+		return result, domain.NewInternalError(temporaryZaloUnavailable, err)
 	}
 	// Persist the outcome so the connection status panel reflects the real
 	// reason a send broke. Token-chain failures (-124 / -14014) are recorded;
