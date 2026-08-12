@@ -20,57 +20,39 @@ everything is done through the admin UI.
 
 Navigate to **Admin → Cài đặt → Zalo ZNS** (`/admin/settings?tab=zalo`).
 
-### 2. Register the OAuth callback URL
-
-In the Zalo OA Console, under the app/permission settings, add the callback URL
-shown in the settings tab as an allowed `redirect_uri`:
-
-```
-https://tingting.vip/admin/settings?tab=zalo
-```
-
-> **Why a frontend URL, not an API URL?** Zalo does a full browser redirect to
-> this URL with `?code=...&state=...` appended. Our API uses header-based JWT
-> auth (`Authorization: Bearer`), not cookies — so a direct redirect to an API
-> endpoint would arrive with no auth header and get 401. By redirecting to the
-> SPA route, the SPA loads, reads `code`+`state` from the URL, and POSTs them
-> to `POST /api/v1/admin/zalo/oauth/callback` via axios (which attaches the
-> admin's JWT from localStorage).
-
-Use the **Copy** button next to the Callback URL field in the settings tab to
-copy it exactly. The scheme + host + path must match what's registered in the
-OA Console.
-
-### 3. Enter credentials
+### 2. Enter credentials
 
 Fill in:
 - **App ID** — from the OA Console app settings.
 - **Secret Key** — from the OA Console (this is write-only; the field is blank
   after save for security).
+- **Access Token** and **Refresh Token** — retrieve them as one pair for this
+  OA and app. Do not use a refresh token that has already been exchanged by
+  the OA Console or another system.
 - **Template ID** — `619684` (pre-filled; change only if using a different template).
 
-Click **Lưu thông tin**. The status badge should flip to "Chưa kết nối"
-(configured but not connected).
+Click **Lưu cấu hình**. The status badge should flip to **Đã kết nối**. The
+first test message uses the pasted access token. It refreshes only after Zalo
+rejects that access token, so a valid access token is never discarded merely
+because a stale refresh token was pasted alongside it.
 
-### 4. Connect (OAuth)
+### 3. Validate the channel
 
-Click **Kết nối Zalo**. Your browser redirects to Zalo's permission page.
-Authorize the app. Zalo redirects back to the settings tab with
-`?zalo_connected=1` and the status badge flips to "Đã kết nối" with a live
-token expiry.
+Enter a controlled recipient number and select **Gửi OTP mẫu**. This verifies
+the real ZNS send path without enabling either service.
 
-> If you see `?zalo_error=...`, the connect failed. Common causes:
-> - Callback URL not registered in the OA Console (step 2).
-> - App ID / Secret Key incorrect (re-enter and save).
-> - The `state` expired (5-min TTL) — just click Kết nối Zalo again.
+**Kiểm tra cấu hình đã lưu** deliberately exchanges the refresh token without
+sending a message. Use it only to validate refresh-token rotation. A `-14014`
+result means Zalo rejected that refresh token; it does not by itself prove that
+the currently pasted access token cannot send.
 
-### 5. Enable the feature
+### 4. Enable the required service
 
 Toggle **Bật tính năng** to ON. A confirmation dialog appears when disabling
 (employees won't be able to reset via Zalo until re-enabled). The toggle is
 **hot** — it takes effect on the next request, no redeploy.
 
-### 6. Smoke test
+### 5. Smoke test
 
 As an employee (or a test employee account):
 1. Go to `/login` → click **Quên mật khẩu?**
@@ -83,7 +65,8 @@ As an employee (or a test employee account):
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| Status: "Lỗi" with `-124` | Access token expired + refresh failed | Click **Làm mới token**; if that fails, re-run Kết nối Zalo (step 4). |
+| Send fails with `-124` | Zalo rejected the access token and the paired refresh token could not recover it | Paste a newly issued access/refresh pair, save it, then send one OTP test. |
+| Refresh validation returns `-14014` | Zalo rejected the refresh token (expired, previously exchanged, or for a different OA/app) | Obtain a newly issued pair from the same OA/app. The current access token can still be tested with **Gửi OTP mẫu** before replacement. |
 | Status: "Lỗi" with `-118` | The employee's phone has no linked Zalo account | Not a code issue — the user must install Zalo / link their number, or use the email channel. |
 | Status: "Lỗi" with `-115`/`-137` | Insufficient ZBS balance | Top up the ZBS account in the OA Console. |
 | Status: "Lỗi" with `-131` | Template not approved yet | Wait for Zalo review (2–3 business days). |
@@ -95,16 +78,17 @@ As an employee (or a test employee account):
 If the refresh_token is lost (e.g. exhausted by a crash mid-refresh, or the
 settings row is corrupted), the admin cannot refresh and the connection is dead.
 
-**Option A — Re-OAuth (preferred):**
-1. In the settings tab, click **Kết nối Zalo** again. The old dead refresh_token
-   is replaced by a fresh pair on success.
+**Option A — Replace the token pair (preferred):**
+1. Obtain a newly issued access/refresh pair for the same OA and app.
+2. Paste both values in the settings tab and click **Lưu cấu hình**.
+3. Send one OTP test before enabling a service.
 
 **Option B — Re-seed from env (if the settings row is deleted):**
 1. Set the `ZALO_*` env vars to known-good values.
 2. Delete the `zalo.credentials` and `zalo.enabled` rows from the `settings`
    table (SQL access required).
 3. Restart api-server — `SeedFromEnvIfEmpty` repopulates the rows.
-4. Re-run the connect flow (step 4 above) to get fresh OAuth tokens.
+4. Paste a newly issued access/refresh pair through the settings tab.
 
 **Option C — Direct DB write (last resort):**
 ```sql
