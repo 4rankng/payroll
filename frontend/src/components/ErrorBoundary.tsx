@@ -1,8 +1,9 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { AlertCircle, RefreshCw, Home, DownloadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { isChunkLoadError } from '@/lib/chunk-reload';
 
 interface Props {
   children: ReactNode;
@@ -89,11 +90,47 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.href = '/';
   };
 
+  /**
+   * Hard reload to pick up fresh chunk hashes after a deploy. This is the
+   * manual escape hatch — it bypasses the sessionStorage loop guard in
+   * chunk-reload.ts because the user explicitly asked to reload.
+   */
+  handleHardReload = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {
         return <>{this.props.fallback}</>;
+      }
+
+      // Dedicated UI for stale-chunk failures: a deploy removed a hashed JS
+      // chunk the browser was still referencing. A hard reload fixes it.
+      if (isChunkLoadError(this.state.error)) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-background p-4">
+            <Card className="max-w-md w-full">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <DownloadCloud className="h-6 w-6 text-primary" />
+                  <CardTitle>Đang cập nhật ứng dụng</CardTitle>
+                </div>
+                <CardDescription>
+                  Chúng tôi vừa triển khai phiên bản mới. Vui lòng tải lại trang
+                  để tiếp tục.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button onClick={this.handleHardReload} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Tải lại trang
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        );
       }
 
       // Default error UI
