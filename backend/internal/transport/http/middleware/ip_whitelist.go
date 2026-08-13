@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net"
-	"slices"
 
 	"api-server/internal/infra/observability"
 	"api-server/internal/transport/http/response"
@@ -44,6 +43,7 @@ func IPWhitelist(allowedIPs []string, opts ...Option) gin.HandlerFunc {
 	for _, opt := range opts {
 		opt(&cfg)
 	}
+	exactIPs, networks := parseAllowedIPRanges(allowedIPs)
 	return func(c *gin.Context) {
 		if len(allowedIPs) == 0 {
 			c.Next()
@@ -59,7 +59,7 @@ func IPWhitelist(allowedIPs []string, opts ...Option) gin.HandlerFunc {
 			clientIP = host
 		}
 
-		if slices.Contains(allowedIPs, clientIP) {
+		if isAllowedIP(clientIP, exactIPs, networks) {
 			c.Next()
 			return
 		}
@@ -71,4 +71,39 @@ func IPWhitelist(allowedIPs []string, opts ...Option) gin.HandlerFunc {
 		response.Forbidden(c, "ip not allowed")
 		c.Abort()
 	}
+}
+
+func parseAllowedIPRanges(entries []string) (map[string]struct{}, []*net.IPNet) {
+	exactIPs := make(map[string]struct{}, len(entries))
+	networks := make([]*net.IPNet, 0, len(entries))
+	for _, entry := range entries {
+		if ip := net.ParseIP(entry); ip != nil {
+			exactIPs[ip.String()] = struct{}{}
+			continue
+		}
+
+		_, network, err := net.ParseCIDR(entry)
+		if err != nil {
+			observability.GetLogger().Warn("ignoring invalid IP whitelist entry", "entry", entry)
+			continue
+		}
+		networks = append(networks, network)
+	}
+	return exactIPs, networks
+}
+
+func isAllowedIP(clientIP string, exactIPs map[string]struct{}, networks []*net.IPNet) bool {
+	ip := net.ParseIP(clientIP)
+	if ip == nil {
+		return false
+	}
+	if _, ok := exactIPs[ip.String()]; ok {
+		return true
+	}
+	for _, network := range networks {
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }

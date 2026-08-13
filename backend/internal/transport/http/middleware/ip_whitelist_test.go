@@ -58,6 +58,52 @@ func TestIPWhitelist_BlocksUnlistedClientIP(t *testing.T) {
 	}
 }
 
+func TestIPWhitelist_AllowsClientIPInCIDR(t *testing.T) {
+	r := newIPWhitelistRouter([]string{"118.70.247.80/29"})
+	_ = r.SetTrustedProxies([]string{"118.70.247.80/29"})
+
+	for _, clientIP := range []string{"118.70.247.80", "118.70.247.83", "118.70.247.87"} {
+		req := httptest.NewRequest(http.MethodGet, "/probe", nil)
+		req.RemoteAddr = clientIP + ":54321"
+		if w := do(t, r, req); w.Code != http.StatusOK {
+			t.Fatalf("IP %s in allowed CIDR should pass, got %d", clientIP, w.Code)
+		}
+	}
+}
+
+func TestIPWhitelist_BlocksClientIPOutsideCIDR(t *testing.T) {
+	r := newIPWhitelistRouter([]string{"118.70.247.80/29"})
+	_ = r.SetTrustedProxies([]string{"118.70.247.0/24"})
+	req := httptest.NewRequest(http.MethodGet, "/probe", nil)
+	req.RemoteAddr = "118.70.247.88:54321"
+
+	if w := do(t, r, req); w.Code != http.StatusForbidden {
+		t.Fatalf("IP outside allowed CIDR should be blocked, got %d", w.Code)
+	}
+}
+
+func TestIPWhitelist_AllowsExactIPAlongsideCIDR(t *testing.T) {
+	r := newIPWhitelistRouter([]string{"203.0.113.5", "202.9.84.0/24"}, UseRemoteAddr())
+
+	for _, clientIP := range []string{"203.0.113.5", "202.9.84.183"} {
+		req := httptest.NewRequest(http.MethodGet, "/probe", nil)
+		req.RemoteAddr = clientIP + ":54321"
+		if w := do(t, r, req); w.Code != http.StatusOK {
+			t.Fatalf("allowed IP %s should pass, got %d", clientIP, w.Code)
+		}
+	}
+}
+
+func TestIPWhitelist_InvalidEntryDoesNotDisableWhitelist(t *testing.T) {
+	r := newIPWhitelistRouter([]string{"not-an-ip"}, UseRemoteAddr())
+	req := httptest.NewRequest(http.MethodGet, "/probe", nil)
+	req.RemoteAddr = "203.0.113.5:54321"
+
+	if w := do(t, r, req); w.Code != http.StatusForbidden {
+		t.Fatalf("invalid allowlist entry must fail closed, got %d", w.Code)
+	}
+}
+
 func TestIPWhitelist_UseRemoteAddrBypassesTrustedProxies(t *testing.T) {
 	// Simulate the "behind a proxy" scenario: c.ClientIP() would resolve
 	// to the proxy (127.0.0.1), which is not in the allow list. With

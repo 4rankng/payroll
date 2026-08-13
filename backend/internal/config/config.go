@@ -345,6 +345,8 @@ type OnepayConfig struct {
 	AllowedIPsUseRemoteAddr bool
 }
 
+const defaultOnePayAllowedIPs = "118.70.247.80/29,118.71.0.16/29,101.99.11.176/29,116.97.110.80/29,163.227.219.0/24,202.9.84.0/24"
+
 func Load() (*Config, error) {
 	// Load .env file if it exists (ignore errors in production)
 	_ = godotenv.Load()
@@ -604,7 +606,7 @@ func newOnepayConfig(env string) OnepayConfig {
 		HTTPTimeout:             parseDuration(getEnv("ONEPAY_HTTP_TIMEOUT", "30s")),
 		TPS:                     parseInt(getEnv("ONEPAY_TPS", "3")),
 		QueueBuffer:             parseInt(getEnv("ONEPAY_QUEUE_BUFFER", "100")),
-		AllowedIPs:              parseStringSlice(getEnvWithEmpty("ONEPAY_ALLOWED_IPS", "202.9.84.102,202.9.84.103,116.97.110.81,116.97.110.82,116.97.110.83,116.97.110.84,116.97.110.85,116.97.110.86")),
+		AllowedIPs:              parseStringSlice(getEnvWithEmpty("ONEPAY_ALLOWED_IPS", defaultOnePayAllowedIPs)),
 		AllowedIPsUseRemoteAddr: parseBool(getEnv("ONEPAY_ALLOWED_IPS_USE_REMOTE_ADDR", "false")),
 	}
 }
