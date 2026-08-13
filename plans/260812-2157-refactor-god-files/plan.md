@@ -39,9 +39,11 @@ All targets are **unmodified** in the current tree. Scope chosen by user: top-3 
 
 ## Status
 
-- **Phase 1 — DONE ✅** (commit `f16e232`, 2026-08-12). `attendance_service.go` 1703→98 LOC, split into 8 cohesive files (largest 352). Verified: `go build ./...`, `go vet`, `go test ./internal/app/services/attendance/... -race` (1.58s, green). Committed attendance-files-only; other dirty work untouched. Awaiting user review before Phase 2.
-- **Phase 2 — pending approval.**
-- **Phase 3 — pending approval.**
+- **Phase 1 — DONE ✅** (commit `f16e232`). `attendance_service.go` 1703→98 LOC, split into 8 cohesive files (largest 352). Verified green.
+- **Phase 2 — DONE ✅** (commit `88521f0`). `bcc_import_service.go` 1252→58 LOC core, split into 5 files (lifecycle/process/replacement/result + core). Independent code-reviewer multiset proof: every body line identical to original.
+- **Phase 3 — DONE ✅** (commit `59d346c`). `bcc_import_weekly.go` 1477→1257 LOC; 13 helpers + `wbccRateKey` extracted to `bcc_import_weekly_rates.go`. Reviewer byte-diff: helpers SHA-match HEAD, mega-methods 0-diff.
+- **Pushed to origin/main** 2026-08-12. Working tree clean.
+- **Known limitation (deferred):** file-split fixed god *files*, not god *types* (`AttendanceService` still 45 methods, `processAssetData`/weekly mega-functions still long). Type decomposition + mega-function extract-method are optional follow-ups.
 
 ---
 
