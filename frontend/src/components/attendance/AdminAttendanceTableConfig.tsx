@@ -56,6 +56,15 @@ function StatusBadges({
       </div>
     );
   }
+  if (reviewAction === "approved") {
+    const review = REVIEW_BADGE_CONFIG.approved;
+    return (
+      <div className={cn("inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold", review.className)}>
+        <Check className="h-2.5 w-2.5" />
+        {reviewStatusLabel ?? review.label}
+      </div>
+    );
+  }
   const operationalStatus = getAttendanceOperationalStatus(attendance);
   const sys = SYSTEM_STATUS_CONFIG[operationalStatus] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;

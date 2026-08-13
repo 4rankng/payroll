@@ -77,6 +77,44 @@ describe("AttendanceMobileCard", () => {
     expect(screen.getByRole("button", { name: "Bản đồ" })).toBeInTheDocument();
   });
 
+  it("shows only the manual approval status for a completed admin approval", () => {
+    render(
+      <AttendanceMobileCard
+        row={{
+          ...attendance,
+          status: "completed",
+          review_action: "approved",
+          check_out_time: "2026-07-25T17:00:00+07:00",
+        }}
+        onViewMap={vi.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
+    expect(screen.queryByText("Hoàn thành")).not.toBeInTheDocument();
+  });
+
+  it("keeps the completed status when there was no admin review", () => {
+    render(
+      <AttendanceMobileCard
+        row={{
+          ...attendance,
+          status: "completed",
+          review_action: null,
+          check_out_time: "2026-07-25T17:00:00+07:00",
+        }}
+        onViewMap={vi.fn()}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
+    expect(screen.queryByText("Đã duyệt")).not.toBeInTheDocument();
+  });
+
   it("offers repair when an approval has no persisted checkout", () => {
     const onApprove = vi.fn();
     const corrupted = { ...attendance, status: "completed", review_action: "approved" as const };

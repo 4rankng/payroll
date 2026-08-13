@@ -55,7 +55,7 @@ describe("getAdminAttendanceColumns", () => {
     expect(screen.queryByRole("menuitem", { name: "Từ chối" })).not.toBeInTheDocument();
   });
 
-  it("shows a physically completed admin approval as completed on desktop", () => {
+  it("shows only the manual approval status for a physically completed admin approval", () => {
     const attendance = {
       id: 11,
       status: "completed",
@@ -71,9 +71,29 @@ describe("getAdminAttendanceColumns", () => {
 
     render(<>{statusCell({ row: { original: attendance } } as never)}</>);
 
-    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
     expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
+    expect(screen.queryByText("Hoàn thành")).not.toBeInTheDocument();
     expect(screen.queryByText("Cần duyệt lại")).not.toBeInTheDocument();
+  });
+
+  it("keeps the completed status for attendance completed without admin review", () => {
+    const attendance = {
+      id: 12,
+      status: "completed",
+      review_action: null,
+      check_out_time: "2026-08-05T10:00:00+07:00",
+    } as AdminAttendanceResponse;
+    const columns = getAdminAttendanceColumns();
+    const statusColumn = columns.find((column) => "accessorKey" in column && column.accessorKey === "status");
+    const statusCell = statusColumn?.cell;
+    if (typeof statusCell !== "function") {
+      throw new Error("Expected desktop attendance status cell");
+    }
+
+    render(<>{statusCell({ row: { original: attendance } } as never)}</>);
+
+    expect(screen.getByText("Hoàn thành")).toBeInTheDocument();
+    expect(screen.queryByText("Đã duyệt")).not.toBeInTheDocument();
   });
 
   it("does not allow rejecting a physically completed attendance after quota credit", () => {

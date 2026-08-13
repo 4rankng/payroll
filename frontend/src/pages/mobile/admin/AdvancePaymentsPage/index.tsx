@@ -91,8 +91,9 @@ export function AttendanceMobileCard({
   const fmtDate = (d: string) => {
     try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
   };
-  const statusLabel = needsAttendanceApprovalRepair(row)
-    ? getAttendanceReviewStatusLabel(row)
+  const reviewStatusLabel = getAttendanceReviewStatusLabel(row);
+  const statusLabel = needsAttendanceApprovalRepair(row) || row.review_action === "approved"
+    ? reviewStatusLabel
     : ATTENDANCE_STATUS_LABEL[getAttendanceOperationalStatus(row)] ?? row.status;
   const showApprove = canApproveAttendance(row);
   const showReject = canRejectAttendance(row);
