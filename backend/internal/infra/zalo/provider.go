@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -313,7 +314,7 @@ func (p *Provider) exchangeRefreshToken(ctx context.Context, creds Credentials) 
 		// EMPTY HTTP-200 body (a well-formed but unknown token instead gets
 		// -14014 JSON below). Treat empty as terminal rejection so the admin
 		// sees "re-paste a fresh pair" instead of a transient-looking 500.
-		if len(bytes.TrimSpace(respBody)) == 0 {
+		if len(bytes.TrimSpace(respBody)) == 0 && resp.StatusCode == http.StatusOK {
 			p.log.Error("zalo: refresh returned empty body (refresh token already consumed)",
 				"http_status", resp.StatusCode)
 			return Credentials{}, fmt.Errorf(
@@ -429,11 +430,59 @@ func sameCredentialGeneration(current, observed Credentials) bool {
 // existing refresh_token is still valid. Callers must keep the old
 // refresh_token in that case (see refresh).
 type oauthTokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"` // may be empty — old token still valid
-	ExpiresIn    int64  `json:"expires_in"`
-	Error        int    `json:"error,omitempty"`
-	Message      string `json:"message,omitempty"`
+	AccessToken  string         `json:"access_token"`
+	RefreshToken string         `json:"refresh_token"` // may be empty — old token still valid
+	ExpiresIn    optionalExpiry `json:"expires_in"`
+	Error        flexibleInt64  `json:"error,omitempty"`
+	Message      string         `json:"message,omitempty"`
+}
+
+// optionalExpiry accepts Zalo's numeric and quoted-numeric expires_in shapes.
+// Expiry is advisory: an absent, invalid, non-positive, or duration-overflowing
+// value must not discard an otherwise valid rotated token pair. Zero selects
+// the conservative one-hour fallback in exchangeRefreshToken.
+type optionalExpiry int64
+
+func (e *optionalExpiry) UnmarshalJSON(data []byte) error {
+	seconds, err := parseJSONInt64(data)
+	const maxDurationSeconds = int64(1<<63-1) / int64(time.Second)
+	if err != nil || seconds <= 0 || seconds > maxDurationSeconds {
+		*e = 0
+		return nil
+	}
+	*e = optionalExpiry(seconds)
+	return nil
+}
+
+// flexibleInt64 decodes a JSON number or quoted numeric string for Zalo error
+// codes, which have also been observed in both shapes.
+type flexibleInt64 int64
+
+func (f *flexibleInt64) UnmarshalJSON(data []byte) error {
+	v, err := parseJSONInt64(data)
+	if err != nil {
+		return errors.New("zalo: non-numeric error code")
+	}
+	*f = flexibleInt64(v)
+	return nil
+}
+
+func parseJSONInt64(data []byte) (int64, error) {
+	raw := strings.TrimSpace(string(data))
+	if raw == "" || raw == "null" {
+		return 0, nil
+	}
+	if strings.HasPrefix(raw, `"`) {
+		var quoted string
+		if err := json.Unmarshal(data, &quoted); err != nil {
+			return 0, err
+		}
+		raw = strings.TrimSpace(quoted)
+	}
+	if raw == "" {
+		return 0, nil
+	}
+	return strconv.ParseInt(raw, 10, 64)
 }
 
 // RefreshNow forces a token refresh regardless of expiry. Used by the admin

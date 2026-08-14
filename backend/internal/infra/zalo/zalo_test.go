@@ -262,6 +262,19 @@ func (m *zaloMock) setOAuthHTMLError() {
 	m.oauthResp = `<html><body>504 Gateway Timeout</body></html>`
 }
 
+func (m *zaloMock) setOAuthResponse(response string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.oauthResp = response
+}
+
+func (m *zaloMock) setOAuthStringErrorCode() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Zalo sometimes reports the numeric error code as a quoted string.
+	m.oauthResp = `{"error":"-14014","error_name":"Invalid refresh token.","access_token":"","refresh_token":""}`
+}
+
 func newProviderWithMock(t *testing.T) (*Provider, *zaloMock, *fakeCreds, *httptest.Server) {
 	mock := newZaloMock(t)
 	mux := http.NewServeMux()
@@ -642,6 +655,27 @@ func TestProvider_Refresh_HTMLBodyStaysTransientRefreshFailure(t *testing.T) {
 	}
 }
 
+func TestProvider_Refresh_EmptyNonSuccessBodyStaysTransient(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.mu.Lock()
+	mock.oauthHandler = func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}
+	mock.mu.Unlock()
+
+	creds.mu.Lock()
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute))
+	creds.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if !errors.Is(err, ErrRefreshFailed) {
+		t.Fatalf("Send err = %v, want ErrRefreshFailed", err)
+	}
+	if errors.Is(err, ErrRefreshTokenRejected) {
+		t.Fatalf("empty non-success response must remain transient: %v", err)
+	}
+}
+
 func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	p, mock, creds, _ := newProviderWithMock(t)
 	mock.setOAuthMissingTokens()
@@ -681,6 +715,141 @@ func TestProvider_Send_Minus124WithInvalidRefreshTokenReturnsRetryableError(t *t
 	sends, oauth := mock.counts()
 	if sends != 1 || oauth != 1 {
 		t.Fatalf("send/oauth calls = %d/%d, want 1/1", sends, oauth)
+	}
+}
+
+func TestProvider_Refresh_AcceptsAdvisoryExpiresInShapes(t *testing.T) {
+	tests := []struct {
+		name        string
+		expiresJSON string
+		wantAfter   time.Duration
+	}{
+		{name: "number", expiresJSON: `7200`, wantAfter: 2 * time.Hour},
+		{name: "quoted number", expiresJSON: `"7200"`, wantAfter: 2 * time.Hour},
+		{name: "missing", wantAfter: time.Hour},
+		{name: "null", expiresJSON: `null`, wantAfter: time.Hour},
+		{name: "zero", expiresJSON: `0`, wantAfter: time.Hour},
+		{name: "negative", expiresJSON: `-1`, wantAfter: time.Hour},
+		{name: "invalid string", expiresJSON: `"not-a-number"`, wantAfter: time.Hour},
+		{name: "decimal", expiresJSON: `7200.5`, wantAfter: time.Hour},
+		{name: "duration overflow", expiresJSON: `9223372036854775807`, wantAfter: time.Hour},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, mock, creds, _ := newProviderWithMock(t)
+			response := `{"access_token":"new-access","refresh_token":"new-refresh"}`
+			if tt.expiresJSON != "" {
+				response = `{"access_token":"new-access","refresh_token":"new-refresh","expires_in":` + tt.expiresJSON + `}`
+			}
+			mock.setOAuthResponse(response)
+
+			creds.mu.Lock()
+			creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute))
+			creds.mu.Unlock()
+
+			startedAt := time.Now()
+			_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+			if err != nil {
+				t.Fatalf("Send should retain a valid token pair when expires_in is %s: %v", tt.name, err)
+			}
+			after := creds.snapshot()
+			if after.AccessToken != "new-access" || after.RefreshToken != "new-refresh" {
+				t.Fatalf("tokens = %q/%q, want new-access/new-refresh", after.AccessToken, after.RefreshToken)
+			}
+			if after.ExpiresAt == nil {
+				t.Fatal("ExpiresAt is nil")
+			}
+			want := startedAt.Add(tt.wantAfter)
+			if delta := after.ExpiresAt.Sub(want); delta < -time.Second || delta > time.Second {
+				t.Fatalf("ExpiresAt = %v, want within 1s of %v", after.ExpiresAt, want)
+			}
+		})
+	}
+}
+
+// TestProvider_Refresh_StringErrorCodeClassifiedAsRejected verifies a quoted
+// numeric error code ("-14014") still maps to ErrRefreshTokenRejected instead
+// of failing the whole JSON decode.
+func TestProvider_Refresh_StringErrorCodeClassifiedAsRejected(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.setOAuthStringErrorCode()
+
+	creds.mu.Lock()
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // expired
+	creds.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if !errors.Is(err, ErrRefreshTokenRejected) {
+		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected (string -14014)", err)
+	}
+	if after := creds.snapshot(); after.RefreshToken != "live-refresh" {
+		t.Fatalf("RefreshToken = %q, should be preserved after rejection", after.RefreshToken)
+	}
+}
+
+// TestFlexibleInt64_UnmarshalJSON pins the error-code decode contract: numbers
+// and quoted numbers are accepted, null decodes to 0, and garbage fails the
+// whole decode so the malformed-response path stays intact.
+func TestFlexibleInt64_UnmarshalJSON(t *testing.T) {
+	cases := []struct {
+		in      string
+		want    int64
+		wantErr bool
+	}{
+		{`0`, 0, false},
+		{`-14014`, -14014, false},
+		{`"-14014"`, -14014, false},
+		{`null`, 0, false},
+		{`"abc"`, 0, true},
+		{`"1.5"`, 0, true},
+		{`"99999999999999999999"`, 0, true}, // overflows int64
+	}
+	for _, c := range cases {
+		var got flexibleInt64
+		err := json.Unmarshal([]byte(c.in), &got)
+		if c.wantErr {
+			if err == nil {
+				t.Errorf("Unmarshal(%s) = %d, want error", c.in, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("Unmarshal(%s) error: %v", c.in, err)
+			continue
+		}
+		if int64(got) != c.want {
+			t.Errorf("Unmarshal(%s) = %d, want %d", c.in, got, c.want)
+		}
+	}
+}
+
+// TestOptionalExpiry_UnmarshalJSON pins the expires_in decode contract: any
+// unusable value (absent, garbage, non-positive, overflowing) must decode to 0
+// WITHOUT failing the body, so a bad expiry never discards a valid token pair.
+func TestOptionalExpiry_UnmarshalJSON(t *testing.T) {
+	cases := []struct {
+		in   string
+		want int64
+	}{
+		{`3600`, 3600},
+		{`"3600"`, 3600},
+		{`null`, 0},
+		{`""`, 0},
+		{`"abc"`, 0},
+		{`0`, 0},
+		{`-5`, 0},
+		{`"99999999999999999999"`, 0}, // duration overflow
+	}
+	for _, c := range cases {
+		var got optionalExpiry
+		if err := json.Unmarshal([]byte(c.in), &got); err != nil {
+			t.Errorf("Unmarshal(%s) error: %v, want nil (advisory field)", c.in, err)
+			continue
+		}
+		if int64(got) != c.want {
+			t.Errorf("Unmarshal(%s) = %d, want %d", c.in, got, c.want)
+		}
 	}
 }
 
