@@ -63,11 +63,21 @@ func DefaultConfig() Config {
 
 // CredentialSource is the persistence seam. The zaloconnect service implements
 // it against the generic settings table; tests inject an in-memory fake. The
-// Provider calls Get on every Send and Update after every successful refresh.
-//
-// Update must be atomic (single-row write under a row lock) because Zalo
-// refresh_tokens are single-use — a partial write can leak a consumed token.
+// Provider calls Get on every Send and persists successful exchanges through
+// an optimistic single-row update because Zalo refresh_tokens are single-use.
 type CredentialSource interface {
 	Get(ctx context.Context) (Credentials, error)
+	// Update stores a fully validated configuration and token pair.
 	Update(ctx context.Context, creds Credentials) error
+	// UpdateTokens replaces only OAuth-rotated fields, preserving concurrent
+	// admin metadata such as App ID, secret, and template.
+	UpdateTokens(ctx context.Context, creds Credentials) error
+}
+
+// RefreshCoordinator serializes refresh-token exchanges across API processes.
+// Acquire must wait until it owns the lease or the context is cancelled. The
+// returned release function must delete only the lease owned by that caller.
+// Implementations should renew a live lease while the caller owns it.
+type RefreshCoordinator interface {
+	Acquire(ctx context.Context) (release func(context.Context) error, err error)
 }

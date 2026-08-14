@@ -20,8 +20,9 @@
 //   - access_token is short-lived (typically ≤ 25h, often ~1h per Zalo docs).
 //   - refresh_token is ONE-SHOT — every successful refresh rotates it, and the
 //     new pair must be persisted atomically before any further call.
-//   - Provider.mu serializes refreshes so two concurrent -124 retries cannot
-//     double-spend the single-use refresh_token.
+//   - Provider.mu serializes refreshes, and waiters reuse a token already
+//     rotated for the rejected access token instead of spending the replacement
+//     refresh_token again.
 //
 // Error handling: business errors from Zalo (e.g. -118 "no Zalo account",
 // -115 "insufficient quota") are returned as SendResult.ErrorCode != 0, NOT as

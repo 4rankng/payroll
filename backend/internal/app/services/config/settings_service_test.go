@@ -77,6 +77,20 @@ func (r *fakeSettingsRepoForUpdate) Update(_ context.Context, setting *domain.Se
 	return nil
 }
 
+func (r *fakeSettingsRepoForUpdate) CompareAndSwapValue(_ context.Context, key, currentValue, nextValue string, valueType domain.SettingsValueType) (bool, error) {
+	for id, setting := range r.rows {
+		if setting.Key != key || setting.Value == nil || *setting.Value != currentValue {
+			continue
+		}
+		copySetting := *setting
+		copySetting.Value = &nextValue
+		copySetting.ValueType = valueType
+		r.rows[id] = &copySetting
+		return true, nil
+	}
+	return false, nil
+}
+
 func (r *fakeSettingsRepoForUpdate) Delete(context.Context, uint) error {
 	panic("unexpected Delete call")
 }

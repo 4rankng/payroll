@@ -636,6 +636,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// SeedFromEnvIfEmpty runs on first boot only — thereafter DB is authoritative.
 	zaloConnectSvc := zaloconnect.NewService(repos.Settings, logger)
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
+	zaloProvider.SetRefreshCoordinator(zalo.NewRedisRefreshCoordinator(redis.Client))
 	zaloConnectSvc.SetProvider(zaloProvider)
 	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{
 		Enabled:    cfg.Zalo.Enabled,

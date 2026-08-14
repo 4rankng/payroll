@@ -37,6 +37,7 @@ type SettingsRepository interface {
 	GetByKey(ctx context.Context, key string) (*Settings, error)
 	GetByKeyForUpdate(ctx context.Context, key string) (*Settings, error)
 	Update(ctx context.Context, settings *Settings) error
+	CompareAndSwapValue(ctx context.Context, key, currentValue, nextValue string, valueType SettingsValueType) (bool, error)
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, filters SettingsFilters) ([]*Settings, error)
 	Count(ctx context.Context, filters SettingsFilters) (int64, error)

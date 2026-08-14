@@ -66,6 +66,7 @@ type settingsRepo interface {
 	GetByKey(ctx context.Context, key string) (*domain.Settings, error)
 	Create(ctx context.Context, s *domain.Settings) error
 	Update(ctx context.Context, s *domain.Settings) error
+	CompareAndSwapValue(ctx context.Context, key, currentValue, nextValue string, valueType domain.SettingsValueType) (bool, error)
 }
 
 // Service owns the Zalo connection state. The admin pastes all four OA fields
@@ -113,6 +114,9 @@ func (s *Service) Get(ctx context.Context) (zalo.Credentials, error) {
 
 func (s *Service) Update(ctx context.Context, creds zalo.Credentials) error {
 	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
+		cur.AppID = creds.AppID
+		cur.SecretKey = creds.SecretKey
+		cur.TemplateID = creds.TemplateID
 		cur.AccessToken = creds.AccessToken
 		// Zalo does not always return a new refresh_token on refresh. An empty
 		// value means "Zalo didn't rotate" — preserve the existing one.
@@ -120,16 +124,19 @@ func (s *Service) Update(ctx context.Context, creds zalo.Credentials) error {
 			cur.RefreshToken = creds.RefreshToken
 		}
 		cur.ExpiresAt = creds.ExpiresAt
-		if creds.AppID != "" {
-			cur.AppID = creds.AppID
-		}
-		if creds.SecretKey != "" {
-			cur.SecretKey = creds.SecretKey
-		}
-		if creds.TemplateID != "" {
-			cur.TemplateID = creds.TemplateID
-		}
 		// A successful token op clears the last error.
+		cur.LastError = ""
+		return cur
+	})
+}
+
+func (s *Service) UpdateTokens(ctx context.Context, creds zalo.Credentials) error {
+	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
+		cur.AccessToken = creds.AccessToken
+		if creds.RefreshToken != "" {
+			cur.RefreshToken = creds.RefreshToken
+		}
+		cur.ExpiresAt = creds.ExpiresAt
 		cur.LastError = ""
 		return cur
 	})
@@ -173,10 +180,9 @@ type SaveCredentialsInput struct {
 // SaveCredentials updates the admin-configured fields. Token lifecycle rules:
 //   - Each field is applied independently — empty fields mean "keep existing"
 //     so the admin can edit one value without clobbering the others.
-//   - When a non-empty AccessToken is provided, ExpiresAt is estimated as now +
-//     24h so the Provider uses the freshly pasted access token first (manual paste bypasses OAuth's
-//     expires_in). If Zalo rejects it, Send force-refreshes and records the
-//     authoritative expiry instead.
+//   - Supplying either token immediately exchanges the supplied-or-retained
+//     refresh token. Save succeeds only after the validated successor pair and
+//     Zalo's authoritative expires_in value are persisted.
 //   - Rotating AppID no longer force-clears tokens: the admin is manually
 //     managing tokens now, and a stale token will surface cleanly as a -124
 //     on the next Send (which the Provider retries after refresh). The old
@@ -195,40 +201,76 @@ func (s *Service) SaveCredentials(ctx context.Context, in SaveCredentialsInput) 
 	in.TemplateID = strings.TrimSpace(in.TemplateID)
 	in.AccessToken = strings.TrimSpace(in.AccessToken)
 	in.RefreshToken = strings.TrimSpace(in.RefreshToken)
-	return s.mutateCredentials(ctx, func(cur Credentials) Credentials {
-		if in.AppID != "" {
-			cur.AppID = in.AppID
-		}
-		if in.SecretKey != "" {
-			cur.SecretKey = in.SecretKey
-		}
-		if in.TemplateID != "" {
-			cur.TemplateID = in.TemplateID
-		}
-		if cur.TemplateID == "" {
-			cur.TemplateID = defaultTemplate
-		}
+	cur, err := s.loadCredentials(ctx)
+	if err != nil {
+		return fmt.Errorf("zalo: load credentials: %w", err)
+	}
+	next := mutateCredentialInput(cur, in, s.clk())
 
-		// Manual token paste: overwrite only what was supplied. The pasted access
-		// token is the only credential we can use immediately. Do not consume the
-		// refresh token before Zalo has rejected that access token: a manually
-		// retrieved refresh token can already be stale while its paired access
-		// token remains valid. -124 still forces a refresh regardless of this
-		// estimate, so an expired pasted access token self-recovers promptly.
-		if in.AccessToken != "" {
-			exp := s.clk().Add(24 * time.Hour)
-			cur.ExpiresAt = &exp
+	// A pasted refresh token is accepted only after Zalo exchanges it. This
+	// closes the old 24-hour blind spot where a valid access token masked a
+	// stale/consumed refresh token until the access token expired. Bootstrap
+	// always wires provider before serving requests; the nil path is retained
+	// for configuration-only unit tests and first-boot seeding.
+	if (in.RefreshToken != "" || in.AccessToken != "") && s.provider != nil {
+		if err := s.provider.ValidateAndStore(ctx, toZaloCreds(next), toZaloCreds(cur)); err != nil {
+			if errors.Is(err, zalo.ErrNotConfigured) {
+				return domain.NewValidationError("Thiếu Refresh Token. Vui lòng dán đầy đủ cặp Access Token và Refresh Token mới")
+			}
+			if errors.Is(err, zalo.ErrRefreshTokenRejected) {
+				return domain.NewValidationError("Refresh Token không hợp lệ. Vui lòng lấy một cặp Access Token và Refresh Token mới cho đúng Zalo App của Payroll")
+			}
+			if errors.Is(err, zalo.ErrCredentialsChanged) {
+				return domain.NewConflictError("Cấu hình Zalo vừa được cập nhật bởi yêu cầu khác. Vui lòng tải lại và thử lại")
+			}
+			return domain.NewInternalError("Không thể xác thực token Zalo", err)
 		}
-		if in.AccessToken != "" {
-			cur.AccessToken = in.AccessToken
+		return nil
+	}
+	if s.provider != nil {
+		if err := s.provider.StoreConfiguration(ctx, toZaloCreds(next), toZaloCreds(cur)); err != nil {
+			if errors.Is(err, zalo.ErrCredentialsChanged) {
+				return domain.NewConflictError("Cấu hình Zalo vừa được cập nhật bởi yêu cầu khác. Vui lòng tải lại và thử lại")
+			}
+			return domain.NewInternalError("Không thể lưu cấu hình Zalo", err)
 		}
-		if in.RefreshToken != "" {
-			cur.RefreshToken = in.RefreshToken
-		}
-		// A successful credential update clears any stale last_error.
-		cur.LastError = ""
-		return cur
+		return nil
+	}
+	return s.mutateCredentials(ctx, func(latest Credentials) Credentials {
+		return mutateCredentialInput(latest, in, s.clk())
 	})
+}
+
+func mutateCredentialInput(cur Credentials, in SaveCredentialsInput, now time.Time) Credentials {
+	if in.AppID != "" {
+		cur.AppID = in.AppID
+	}
+	if in.SecretKey != "" {
+		cur.SecretKey = in.SecretKey
+	}
+	if in.TemplateID != "" {
+		cur.TemplateID = in.TemplateID
+	}
+	if cur.TemplateID == "" {
+		cur.TemplateID = defaultTemplate
+	}
+
+	// Manual token paste: overwrite only what was supplied. SaveCredentials
+	// immediately validates a supplied refresh token through the Provider; the
+	// +24h estimate is used only when an access token is updated without one.
+	if in.AccessToken != "" {
+		exp := now.Add(24 * time.Hour)
+		cur.ExpiresAt = &exp
+	}
+	if in.AccessToken != "" {
+		cur.AccessToken = in.AccessToken
+	}
+	if in.RefreshToken != "" {
+		cur.RefreshToken = in.RefreshToken
+	}
+	// A successful credential update clears any stale last_error.
+	cur.LastError = ""
+	return cur
 }
 
 // SetEnabled flips the runtime feature toggle. Persists immediately; the next
@@ -439,19 +481,47 @@ func (s *Service) loadCredentials(ctx context.Context) (Credentials, error) {
 	return c, nil
 }
 
-// mutateCredentials loads, mutates, and writes the credentials row. Concurrency
-// is bounded by the Provider's internal mutex (token refreshes are serialized),
-// so a simple read-modify-write through the repo is safe here. A true row lock
-// would require a GORM transaction; we avoid it to keep the service DB-agnostic
-// and unit-testable, trading off a narrow lost-update window on concurrent
-// admin key-saves (an operational rarity) for testability.
+// mutateCredentials applies an optimistic compare-and-swap loop to the full
+// credentials JSON. This prevents a stale error/status writer from restoring a
+// refresh token that another request already consumed and replaced.
 func (s *Service) mutateCredentials(ctx context.Context, fn func(Credentials) Credentials) error {
-	cur, err := s.loadCredentials(ctx)
-	if err != nil {
-		return fmt.Errorf("zalo: load credentials: %w", err)
+	const maxAttempts = 8
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		row, err := s.repo.GetByKey(ctx, KeyCredentials)
+		if err != nil {
+			if isDomainNotFound(err) {
+				return s.writeCredentials(ctx, fn(Credentials{}))
+			}
+			return fmt.Errorf("zalo: load credentials: %w", err)
+		}
+
+		currentRaw := ""
+		if row.Value != nil {
+			currentRaw = *row.Value
+		}
+		var current Credentials
+		if currentRaw != "" {
+			if err := json.Unmarshal([]byte(currentRaw), &current); err != nil {
+				return fmt.Errorf("zalo: decode credentials: %w", err)
+			}
+		}
+		nextRawBytes, err := json.Marshal(fn(current))
+		if err != nil {
+			return fmt.Errorf("zalo: encode credentials: %w", err)
+		}
+		nextRaw := string(nextRawBytes)
+		if nextRaw == currentRaw {
+			return nil
+		}
+		updated, err := s.repo.CompareAndSwapValue(ctx, KeyCredentials, currentRaw, nextRaw, domain.ValueTypeJSON)
+		if err != nil {
+			return fmt.Errorf("zalo: update credentials: %w", err)
+		}
+		if updated {
+			return nil
+		}
 	}
-	next := fn(cur)
-	return s.writeCredentials(ctx, next)
+	return fmt.Errorf("zalo: credentials changed too frequently; retry operation")
 }
 
 func (s *Service) writeCredentials(ctx context.Context, c Credentials) error {

@@ -25,22 +25,35 @@ var ErrNotConfigured = errors.New("zalo: chưa dán access token — mở Zalo O
 // should surface this as a transient error; the stored tokens are unchanged.
 var ErrRefreshFailed = errors.New("zalo: token refresh failed")
 
-// errRefreshTokenRejected is returned (wrapped inside ErrRefreshFailed) when
+// ErrRefreshTokenRejected is returned (wrapped inside ErrRefreshFailed) when
 // Zalo invalidates the refresh_token itself with -14014. Send uses it to
 // surface the actionable "re-paste a fresh token pair" message instead of the
-// misleading send-time -124. Unexported: only this package distinguishes it.
-var errRefreshTokenRejected = errors.New("zalo: refresh token rejected")
+// misleading send-time -124. Application services also distinguish it from a
+// temporary OAuth transport failure when validating newly pasted credentials.
+var ErrRefreshTokenRejected = errors.New("zalo: refresh token rejected")
+
+// ErrCredentialsChanged prevents a concurrent admin save from silently
+// accepting a candidate that was never validated or persisted.
+var ErrCredentialsChanged = errors.New("zalo: credentials changed while waiting for refresh authority")
 
 // Provider is the stateless ZNS protocol client. It depends on a
 // CredentialSource for tokens and uses an internal mutex to serialize
 // refreshes so two concurrent -124 retries cannot double-spend the
 // single-use refresh_token.
 type Provider struct {
-	creds CredentialSource
-	cfg   Config
-	http  *http.Client
-	log   *slog.Logger
-	mu    sync.Mutex
+	creds       CredentialSource
+	coordinator RefreshCoordinator
+	cfg         Config
+	http        *http.Client
+	log         *slog.Logger
+	mu          sync.Mutex
+}
+
+// SetRefreshCoordinator adds cross-process refresh ownership. Bootstrap wires
+// the Redis implementation; tests and single-process tools may leave it nil
+// and still retain the Provider's in-process mutex.
+func (p *Provider) SetRefreshCoordinator(coordinator RefreshCoordinator) {
+	p.coordinator = coordinator
 }
 
 // NewProvider constructs a Provider. cfg zero-values are filled from
@@ -122,20 +135,10 @@ func (p *Provider) Send(ctx context.Context, phone, templateID, trackingID strin
 	// the token is dead. Force a refresh regardless of the stored expires_at
 	// (which may be a guessed +24h from manual paste), then retry once.
 	if res.ErrorCode == ErrBadAccessToken {
-		newToken, refreshErr := p.refreshLocked(ctx, true)
+		newToken, refreshErr := p.refreshLocked(ctx, true, token)
 		if refreshErr != nil {
 			p.log.Warn("zalo: -124 retry aborted (refresh failed)", "error", refreshErr)
-			// A dead refresh_token (-14014) is the real, actionable cause.
-			// Surface it instead of the misleading send-time -124 so the admin
-			// knows to re-paste a fresh token pair.
-			if errors.Is(refreshErr, errRefreshTokenRejected) {
-				return SendResult{
-					ErrorCode:  ErrInvalidRefreshToken,
-					ErrorMsg:   ErrorMessage(ErrInvalidRefreshToken),
-					HTTPStatus: res.HTTPStatus,
-				}, nil
-			}
-			return res, nil // surface the original -124 to the caller
+			return res, refreshErr
 		}
 		res2, err := p.doSend(ctx, phone, templateID, data, trackingID, newToken)
 		if err != nil {
@@ -154,7 +157,7 @@ func (p *Provider) getAccessToken(ctx context.Context, creds Credentials) (strin
 	}
 	if creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) < p.cfg.RefreshBuffer {
 		// About to expire — refresh proactively (short-circuits while still valid).
-		tok, err := p.refreshLocked(ctx, false)
+		tok, err := p.refreshLocked(ctx, false, "")
 		if err != nil {
 			// Refresh failed. If the token hasn't actually expired yet, fall
 			// back to it (the server may still accept it); otherwise bail.
@@ -209,7 +212,9 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 
 // refreshLocked serializes refresh attempts. Two concurrent -124 retries would
 // otherwise both call refresh, burning the single-use refresh_token. Under the
-// lock we re-read creds in case another goroutine just refreshed.
+// lock we re-read creds in case another goroutine just refreshed. When
+// rejectedAccessToken is non-empty and no longer matches storage, the waiter
+// reuses the winner's token instead of spending the newly rotated refresh token.
 //
 // force ignores the stored expires_at and always exchanges the refresh_token.
 // The reactive callers — a -124 from Zalo (Send) and an explicit admin
@@ -219,26 +224,69 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 // left a dead token in place and looped on -124 forever. The proactive caller
 // (getAccessToken) passes force=false so it short-circuits while the token is
 // genuinely still within the refresh buffer.
-func (p *Provider) refreshLocked(ctx context.Context, force bool) (string, error) {
+func (p *Provider) refreshLocked(ctx context.Context, force bool, rejectedAccessToken string) (string, error) {
+	return p.withRefreshAuthority(ctx, func() (string, error) {
+		creds, err := p.creds.Get(ctx)
+		if err != nil {
+			return "", fmt.Errorf("zalo: read credentials for refresh: %w", err)
+		}
+		// This request failed with rejectedAccessToken before waiting for the lock.
+		// A different request has since persisted another access token, so that
+		// request already advanced the single-use refresh chain. Reuse its result.
+		if rejectedAccessToken != "" && creds.AccessToken != "" && creds.AccessToken != rejectedAccessToken {
+			return creds.AccessToken, nil
+		}
+		// Another goroutine or process may have rotated while we waited for the lock.
+		if !force && creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) >= p.cfg.RefreshBuffer {
+			return creds.AccessToken, nil
+		}
+		return p.refresh(ctx, creds)
+	})
+}
+
+func (p *Provider) withRefreshAuthority(ctx context.Context, fn func() (string, error)) (string, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	creds, err := p.creds.Get(ctx)
+	if p.coordinator == nil {
+		return fn()
+	}
+
+	release, err := p.coordinator.Acquire(ctx)
 	if err != nil {
-		return "", fmt.Errorf("zalo: read credentials for refresh: %w", err)
+		return "", fmt.Errorf("zalo: coordinate token refresh: %w", err)
 	}
-	// Another goroutine may have rotated while we waited for the lock.
-	if !force && creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) >= p.cfg.RefreshBuffer {
-		return creds.AccessToken, nil
-	}
-	return p.refresh(ctx, creds)
+	defer func() {
+		releaseCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if releaseErr := release(releaseCtx); releaseErr != nil {
+			p.log.Error("zalo: failed to release refresh lease", "error", releaseErr)
+		}
+	}()
+	return fn()
 }
 
 // refresh performs one OAuth refresh_token exchange and persists the new pair.
 // Caller must hold p.mu (use refreshLocked from Send/getAccessToken/RefreshNow).
 func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, error) {
+	next, err := p.exchangeRefreshToken(ctx, creds)
+	if err != nil {
+		return "", err
+	}
+	// Persist BEFORE returning, so a crash between refresh and Send retry
+	// doesn't leak a consumed refresh_token (R-Z1).
+	if err := p.creds.UpdateTokens(ctx, next); err != nil {
+		return "", fmt.Errorf("zalo: persist refreshed tokens: %w", err)
+	}
+	p.log.Info("zalo: access token refreshed",
+		"expires_at", next.ExpiresAt.Format(time.RFC3339),
+		"refresh_rotated", next.RefreshToken != creds.RefreshToken)
+	return next.AccessToken, nil
+}
+
+func (p *Provider) exchangeRefreshToken(ctx context.Context, creds Credentials) (Credentials, error) {
 	if creds.RefreshToken == "" {
-		return "", ErrNotConfigured
+		return Credentials{}, ErrNotConfigured
 	}
 	form := url.Values{
 		"grant_type":    {"refresh_token"},
@@ -247,22 +295,29 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.cfg.OAuthURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", fmt.Errorf("zalo: build refresh request: %w", err)
+		return Credentials{}, fmt.Errorf("zalo: build refresh request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("secret_key", creds.SecretKey)
 
 	resp, err := p.http.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrRefreshFailed, err)
+		return Credentials{}, fmt.Errorf("%w: %v", ErrRefreshFailed, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	var tok oauthTokenResponse
 	if jsonErr := json.Unmarshal(respBody, &tok); jsonErr != nil {
-		p.log.Error("zalo: refresh returned malformed JSON", "body", string(respBody))
-		return "", fmt.Errorf("%w: malformed response", ErrRefreshFailed)
+		p.log.Error("zalo: refresh returned malformed JSON", "http_status", resp.StatusCode)
+		return Credentials{}, fmt.Errorf("%w: malformed response", ErrRefreshFailed)
+	}
+	if tok.Error == ErrInvalidRefreshToken {
+		return Credentials{}, fmt.Errorf("%w: %w (zalo -14014: refresh token không hợp lệ)", ErrRefreshFailed, ErrRefreshTokenRejected)
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		p.log.Error("zalo: refresh returned non-success HTTP status", "http_status", resp.StatusCode, "zalo_error", tok.Error)
+		return Credentials{}, fmt.Errorf("%w: OAuth HTTP %d", ErrRefreshFailed, resp.StatusCode)
 	}
 	// Zalo must return a new access_token. The refresh_token may be absent —
 	// Zalo does not always rotate it, and the existing refresh_token remains
@@ -271,15 +326,12 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	// permanently stuck.
 	if tok.AccessToken == "" {
 		p.log.Error("zalo: refresh returned no access_token (admin needs to re-paste from OA Console)",
-			"zalo_error", tok.Error, "zalo_message", tok.Message, "body", string(respBody))
+			"zalo_error", tok.Error, "zalo_message", tok.Message, "http_status", resp.StatusCode)
 		// -14014 = Zalo invalidated this refresh_token (single-use token already
 		// consumed, or expired). Tag it distinctly (wrapped in ErrRefreshFailed so
 		// existing errors.Is callers still match) so Send can surface the
 		// actionable "re-paste a fresh pair" message instead of the misleading -124.
-		if tok.Error == ErrInvalidRefreshToken {
-			return "", fmt.Errorf("%w: %w (zalo -14014: refresh token không hợp lệ)", ErrRefreshFailed, errRefreshTokenRejected)
-		}
-		return "", fmt.Errorf("%w: no access_token in response (zalo error %d: %s)", ErrRefreshFailed, tok.Error, tok.Message)
+		return Credentials{}, fmt.Errorf("%w: no access_token in response (zalo error %d: %s)", ErrRefreshFailed, tok.Error, tok.Message)
 	}
 
 	expiresAt := time.Now().Add(time.Duration(tok.ExpiresIn) * time.Second)
@@ -287,8 +339,6 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 		expiresAt = time.Now().Add(time.Hour)
 	}
 
-	// Persist BEFORE returning, so a crash between refresh and Send retry
-	// doesn't leak a consumed refresh_token (R-Z1).
 	next := creds
 	next.AccessToken = tok.AccessToken
 	// Zalo does not always rotate the refresh_token. When it's absent from the
@@ -297,13 +347,65 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 		next.RefreshToken = tok.RefreshToken
 	}
 	next.ExpiresAt = &expiresAt
-	if err := p.creds.Update(ctx, next); err != nil {
-		return "", fmt.Errorf("zalo: persist refreshed tokens: %w", err)
-	}
-	p.log.Info("zalo: access token refreshed",
-		"expires_at", expiresAt.Format(time.RFC3339),
-		"refresh_rotated", tok.RefreshToken != "")
-	return tok.AccessToken, nil
+	return next, nil
+}
+
+// ValidateAndStore exchanges an admin-supplied refresh token before accepting
+// the credentials as configured. A rejected token therefore fails during save
+// instead of remaining hidden until the access token expires about a day later.
+func (p *Provider) ValidateAndStore(ctx context.Context, candidate Credentials, observed Credentials) error {
+	_, err := p.withRefreshAuthority(ctx, func() (string, error) {
+		current, getErr := p.creds.Get(ctx)
+		if getErr != nil {
+			return "", fmt.Errorf("zalo: read credentials before validation: %w", getErr)
+		}
+		// Another process changed the pair while this request waited. Reject this
+		// candidate as a conflict: silently reusing the winner could falsely
+		// report that a different, unvalidated pasted pair was accepted.
+		if !sameCredentialGeneration(current, observed) {
+			return "", ErrCredentialsChanged
+		}
+		next, exchangeErr := p.exchangeRefreshToken(ctx, candidate)
+		if exchangeErr != nil {
+			return "", exchangeErr
+		}
+		if updateErr := p.creds.Update(ctx, next); updateErr != nil {
+			return "", fmt.Errorf("zalo: persist validated credentials: %w", updateErr)
+		}
+		p.log.Info("zalo: credentials validated and refresh token rotated",
+			"expires_at", next.ExpiresAt.Format(time.RFC3339),
+			"refresh_rotated", next.RefreshToken != candidate.RefreshToken)
+		return next.AccessToken, nil
+	})
+	return err
+}
+
+// StoreConfiguration serializes non-refresh admin edits with token exchanges.
+// It rejects stale saves instead of overwriting a configuration that changed
+// while the request waited for cross-process refresh authority.
+func (p *Provider) StoreConfiguration(ctx context.Context, candidate Credentials, observed Credentials) error {
+	_, err := p.withRefreshAuthority(ctx, func() (string, error) {
+		current, getErr := p.creds.Get(ctx)
+		if getErr != nil {
+			return "", fmt.Errorf("zalo: read credentials before save: %w", getErr)
+		}
+		if !sameCredentialGeneration(current, observed) {
+			return "", ErrCredentialsChanged
+		}
+		if updateErr := p.creds.Update(ctx, candidate); updateErr != nil {
+			return "", fmt.Errorf("zalo: persist credentials: %w", updateErr)
+		}
+		return candidate.AccessToken, nil
+	})
+	return err
+}
+
+func sameCredentialGeneration(current, observed Credentials) bool {
+	return current.AppID == observed.AppID &&
+		current.SecretKey == observed.SecretKey &&
+		current.TemplateID == observed.TemplateID &&
+		current.AccessToken == observed.AccessToken &&
+		current.RefreshToken == observed.RefreshToken
 }
 
 // oauthTokenResponse is the JSON body returned by the OAuth v4 token endpoint
@@ -327,6 +429,10 @@ type oauthTokenResponse struct {
 // Acquires the mutex so it cannot race an in-flight -124 retry. Returns
 // ErrNotConfigured (via refresh) when no refresh_token is stored.
 func (p *Provider) RefreshNow(ctx context.Context) error {
-	_, err := p.refreshLocked(ctx, true)
+	creds, err := p.creds.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("zalo: read credentials before forced refresh: %w", err)
+	}
+	_, err = p.refreshLocked(ctx, true, creds.AccessToken)
 	return err
 }

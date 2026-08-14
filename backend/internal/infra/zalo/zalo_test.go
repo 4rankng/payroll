@@ -3,6 +3,7 @@ package zalo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,18 @@ type fakeCreds struct {
 	updErr error
 	reads  int
 	writes int
+}
+
+type mutexRefreshCoordinator struct {
+	mu sync.Mutex
+}
+
+func (c *mutexRefreshCoordinator) Acquire(context.Context) (func(context.Context) error, error) {
+	c.mu.Lock()
+	return func(context.Context) error {
+		c.mu.Unlock()
+		return nil
+	}, nil
 }
 
 func (f *fakeCreds) Get(_ context.Context) (Credentials, error) {
@@ -41,6 +54,10 @@ func (f *fakeCreds) Update(_ context.Context, c Credentials) error {
 	}
 	f.cur = c
 	return nil
+}
+
+func (f *fakeCreds) UpdateTokens(ctx context.Context, c Credentials) error {
+	return f.Update(ctx, c)
 }
 
 func (f *fakeCreds) snapshot() Credentials {
@@ -382,6 +399,138 @@ func TestProvider_Send_Minus124ForcesRefreshWithFutureExpiry(t *testing.T) {
 	}
 }
 
+func TestProvider_Send_ConcurrentMinus124CoalescesRefresh(t *testing.T) {
+	p, mock, _, _ := newProviderWithMock(t)
+
+	// Hold both requests until they have sent the same stale access token. The
+	// first request then rotates the credential pair while the second waits on
+	// Provider.mu. The waiter must reuse that freshly persisted access token,
+	// not immediately spend the replacement refresh token again.
+	staleRequests := make(chan struct{}, 2)
+	releaseStale := make(chan struct{})
+	mock.mu.Lock()
+	mock.sendHandler = func(w http.ResponseWriter, r *http.Request) {
+		mock.mu.Lock()
+		mock.sendCalls++
+		mock.mu.Unlock()
+		if r.Header.Get("access_token") == "live-access" {
+			staleRequests <- struct{}{}
+			<-releaseStale
+			_, _ = io.WriteString(w, `{"error":-124,"message":"bad token"}`)
+			return
+		}
+		_, _ = io.WriteString(w, `{"error":0,"data":{"msg_id":"m2"}}`)
+	}
+	mock.mu.Unlock()
+
+	type outcome struct {
+		result SendResult
+		err    error
+	}
+	outcomes := make(chan outcome, 2)
+	for range 2 {
+		go func() {
+			result, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+			outcomes <- outcome{result: result, err: err}
+		}()
+	}
+	<-staleRequests
+	<-staleRequests
+	close(releaseStale)
+
+	for range 2 {
+		got := <-outcomes
+		if got.err != nil {
+			t.Fatalf("Send err: %v", got.err)
+		}
+		if got.result.ErrorCode != 0 {
+			t.Fatalf("ErrorCode = %d (%s), want success", got.result.ErrorCode, got.result.ErrorMsg)
+		}
+	}
+	_, oauth := mock.counts()
+	if oauth != 1 {
+		t.Fatalf("oauth calls = %d, want 1 shared refresh for the rejected access token", oauth)
+	}
+}
+
+func TestProvider_Send_TwoProvidersShareOneRefreshAuthority(t *testing.T) {
+	p1, mock, creds, _ := newProviderWithMock(t)
+	p2 := NewProvider(creds, p1.cfg, nil)
+	p2.http = p1.http
+	coordinator := &mutexRefreshCoordinator{}
+	p1.SetRefreshCoordinator(coordinator)
+	p2.SetRefreshCoordinator(coordinator)
+
+	oldTokenArrived := make(chan struct{}, 2)
+	releaseOldResponses := make(chan struct{})
+	mock.mu.Lock()
+	mock.sendHandler = func(w http.ResponseWriter, r *http.Request) {
+		mock.mu.Lock()
+		mock.sendCalls++
+		mock.mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		if r.Header.Get("access_token") == "live-access" {
+			oldTokenArrived <- struct{}{}
+			<-releaseOldResponses
+			_, _ = io.WriteString(w, `{"error":-124,"message":"expired"}`)
+			return
+		}
+		_, _ = io.WriteString(w, `{"error":0,"message":"ok","data":{"msg_id":"m2"}}`)
+	}
+	mock.mu.Unlock()
+
+	results := make(chan SendResult, 2)
+	errs := make(chan error, 2)
+	for _, provider := range []*Provider{p1, p2} {
+		go func(p *Provider) {
+			result, err := p.Send(context.Background(), "0987654321", "617976", "track", map[string]string{"otp": "123456"})
+			results <- result
+			errs <- err
+		}(provider)
+	}
+	<-oldTokenArrived
+	<-oldTokenArrived
+	close(releaseOldResponses)
+
+	for i := 0; i < 2; i++ {
+		if err := <-errs; err != nil {
+			t.Fatalf("Send error: %v", err)
+		}
+		if result := <-results; result.ErrorCode != 0 {
+			t.Fatalf("Send result = %+v, want success", result)
+		}
+	}
+	_, oauthCalls := mock.counts()
+	if oauthCalls != 1 {
+		t.Fatalf("OAuth calls = %d, want 1 across Provider instances", oauthCalls)
+	}
+	if got := creds.snapshot(); got.AccessToken != "new-access" || got.RefreshToken != "new-refresh" {
+		t.Fatalf("stored credentials = %+v, want rotated pair", got)
+	}
+}
+
+func TestProvider_StoreConfigurationRejectsStaleMetadataSave(t *testing.T) {
+	observed := Credentials{
+		AppID: "app", SecretKey: "secret", TemplateID: "template-a",
+		AccessToken: "access", RefreshToken: "refresh",
+	}
+	creds := &fakeCreds{cur: observed}
+	provider := NewProvider(creds, Config{}, nil)
+	first := observed
+	first.TemplateID = "template-b"
+	if err := provider.StoreConfiguration(context.Background(), first, observed); err != nil {
+		t.Fatalf("first StoreConfiguration: %v", err)
+	}
+	stale := observed
+	stale.TemplateID = "template-c"
+	if err := provider.StoreConfiguration(context.Background(), stale, observed); !errors.Is(err, ErrCredentialsChanged) {
+		t.Fatalf("stale StoreConfiguration error = %v, want ErrCredentialsChanged", err)
+	}
+	if got := creds.snapshot().TemplateID; got != "template-b" {
+		t.Fatalf("stored TemplateID = %q, want first writer's template-b", got)
+	}
+}
+
 func TestProvider_Send_NoRetryOnBusinessError(t *testing.T) {
 	p, mock, _, _ := newProviderWithMock(t)
 	mock.setSendError(ErrNoZaloAccount) // -118
@@ -459,20 +608,17 @@ func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	}
 }
 
-func TestProvider_Send_Minus124WithInvalidRefreshTokenSurfacesActionableError(t *testing.T) {
+func TestProvider_Send_Minus124WithInvalidRefreshTokenReturnsRetryableError(t *testing.T) {
 	p, mock, creds, _ := newProviderWithMock(t)
 	mock.setSendError(ErrBadAccessToken)
 	mock.setOAuthInvalidRefreshToken()
 
 	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
-	if err != nil {
-		t.Fatalf("Send err: %v", err)
+	if !errors.Is(err, ErrRefreshTokenRejected) {
+		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected", err)
 	}
-	if res.ErrorCode != ErrInvalidRefreshToken {
-		t.Fatalf("ErrorCode = %d, want %d", res.ErrorCode, ErrInvalidRefreshToken)
-	}
-	if res.ErrorMsg != ErrorMessage(ErrInvalidRefreshToken) {
-		t.Fatalf("ErrorMsg = %q, want %q", res.ErrorMsg, ErrorMessage(ErrInvalidRefreshToken))
+	if res.ErrorCode != ErrBadAccessToken {
+		t.Fatalf("ErrorCode = %d, want original %d", res.ErrorCode, ErrBadAccessToken)
 	}
 	if after := creds.snapshot(); after.RefreshToken != "live-refresh" {
 		t.Fatalf("RefreshToken = %q, should be preserved after rejection", after.RefreshToken)
@@ -536,6 +682,24 @@ func TestProvider_Refresh_PersistsNewPair(t *testing.T) {
 	}
 	if after.ExpiresAt == nil || after.ExpiresAt.Before(time.Now()) {
 		t.Errorf("ExpiresAt not set/future: %v", after.ExpiresAt)
+	}
+}
+
+func TestProvider_RefreshNow_ForcesRotationWithFutureExpiry(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+
+	// The seeded access token is estimated valid for another 24 hours, but the
+	// admin action is an explicit refresh-chain validation and must contact Zalo.
+	if err := p.RefreshNow(context.Background()); err != nil {
+		t.Fatalf("RefreshNow: %v", err)
+	}
+	_, oauth := mock.counts()
+	if oauth != 1 {
+		t.Fatalf("oauth calls = %d, want 1 forced refresh", oauth)
+	}
+	after := creds.snapshot()
+	if after.AccessToken != "new-access" || after.RefreshToken != "new-refresh" {
+		t.Fatalf("persisted tokens = %q/%q, want new-access/new-refresh", after.AccessToken, after.RefreshToken)
 	}
 }
 

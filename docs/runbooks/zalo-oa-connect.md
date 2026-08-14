@@ -30,20 +30,32 @@ Fill in:
   OA and app. Do not use a refresh token that has already been exchanged by
   the OA Console or another system.
 
-Click **Lưu cấu hình**. The status badge should flip to **Đã kết nối**. The
-first test message uses the pasted access token. It refreshes only after Zalo
-rejects that access token, so a valid access token is never discarded merely
-because a stale refresh token was pasted alongside it.
+Treat that rotating refresh-token chain as single-writer state. Do not paste
+the same pair into Payroll and ChatBot (or any other service): whichever system
+refreshes first advances the chain and leaves the other system holding an
+invalid token. Systems that must use the same OA need one shared token authority
+or separate Zalo app/OA authorizations whose refresh chains are independent.
+
+Click **Lưu cấu hình**. Payroll immediately exchanges the pasted refresh token
+and stores the successor token pair before reporting **Đã kết nối**. If Zalo
+rejects the refresh token, save fails immediately; Payroll does not wait until
+the access token expires roughly one day later to reveal the broken pair.
+
+Payroll coordinates every refresh-token exchange through Redis, so concurrent
+API instances wait for the winning exchange and then re-read its stored pair.
+Credential status and error updates use compare-and-swap persistence: a stale
+request cannot put an already-consumed refresh token back into the settings.
+These safeguards apply inside Payroll only; they do not make a token pair safe
+to share with another service.
 
 ### 3. Validate the channel
 
 Enter a controlled recipient number and select **Gửi OTP mẫu**. This verifies
 the real ZNS send path without enabling either service.
 
-**Kiểm tra cấu hình đã lưu** deliberately exchanges the refresh token without
-sending a message. Use it only to validate refresh-token rotation. A `-14014`
-result means Zalo rejected that refresh token; it does not by itself prove that
-the currently pasted access token cannot send.
+**Kiểm tra cấu hình đã lưu** deliberately performs another coordinated token
+exchange without sending a message. Normally this is unnecessary immediately
+after saving because save already validated and rotated the pair.
 
 ### 4. Enable the required service
 
@@ -65,7 +77,9 @@ As an employee (or a test employee account):
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | Send fails with `-124` | Zalo rejected the access token and the paired refresh token could not recover it | Paste a newly issued access/refresh pair, save it, then send one OTP test. |
-| Refresh validation returns `-14014` | Zalo rejected the refresh token (expired, previously exchanged, or for a different OA/app) | Obtain a newly issued pair from the same OA/app. The current access token can still be tested with **Gửi OTP mẫu** before replacement. |
+| Save or refresh validation returns `-14014` | Zalo rejected the refresh token (expired, previously exchanged, or for a different OA/app) | This is an invalid-token condition, not a temporary outage. Obtain a newly issued pair from the same OA/app and save it again. A failed save leaves the previously stored connection unchanged. |
+| Payroll returns `-14014` while another app still sends normally | The same rotating token pair may be stored in more than one system; the other system advanced the chain | Choose one token owner or provision independent Zalo authorizations, then paste a newly issued pair only into its intended owner. |
+| Save or refresh validation says Zalo cannot be reached, or returns an OAuth HTTP/response error other than `-14014` | Temporary OAuth transport or upstream-response failure | Wait a few minutes and retry the same operation. Do not replace a known-good pair solely because of a temporary upstream failure. |
 | Status: "Lỗi" with `-118` | The employee's phone has no linked Zalo account | Not a code issue — the user must install Zalo / link their number, or use the email channel. |
 | Status: "Lỗi" with `-115`/`-137` | Insufficient ZBS balance | Top up the ZBS account in the OA Console. |
 | Status: "Lỗi" with `-131` | Template not approved yet | Wait for Zalo review (2–3 business days). |
@@ -76,6 +90,11 @@ As an employee (or a test employee account):
 
 If the refresh_token is lost (e.g. exhausted by a crash mid-refresh, or the
 settings row is corrupted), the admin cannot refresh and the connection is dead.
+
+Payroll renews its Redis lease while exchanging and storing tokens, but Zalo's
+external exchange and MySQL cannot form one transaction. A process crash,
+ambiguous timeout, or database failure after Zalo consumes the refresh token
+can still require the recovery steps below.
 
 **Option A — Replace the token pair (preferred):**
 1. Obtain a newly issued access/refresh pair for the same OA and app.
@@ -94,3 +113,12 @@ settings row is corrupted), the admin cannot refresh and the connection is dead.
 UPDATE settings SET value = '<json-with-new-tokens>' WHERE `key` = 'zalo.credentials';
 ```
 Document the reason in an incident note; never use routinely.
+
+## Production handoff after a code deployment
+
+A code deployment does not provide or validate credentials. After the deployed
+Payroll API is available, an authorized administrator must obtain **one fresh
+access/refresh pair for Payroll's own Zalo App ID**, save it through Payroll,
+and complete one controlled OTP test. Do not reuse a pair issued for ChatBot or
+another system. This runbook describes the required operator action; it is not
+evidence that a deployment or live Zalo test has occurred.

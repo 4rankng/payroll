@@ -4,6 +4,9 @@ import (
 	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"time"
 
 	"api-server/internal/domain"
@@ -45,8 +48,10 @@ func NewDatabase(cfg DatabaseConfig) (*Database, error) {
 
 	var db *gorm.DB
 
-	// Configure GORM to use our centralized logger for SQL logging
-	gormLogger := logger.Default.LogMode(logger.Info)
+	// Keep SQL structure visible without rendering bound values. Settings rows
+	// contain credentials (including rotating Zalo tokens), so interpolated SQL
+	// would copy live secrets into application logs on every update.
+	gormLogger := newGORMLogger(os.Stdout)
 	config := &gorm.Config{
 		Logger: gormLogger,
 		NowFunc: func() time.Time {
@@ -150,6 +155,19 @@ func NewDatabase(cfg DatabaseConfig) (*Database, error) {
 	go database.startHealthMonitoring()
 
 	return database, nil
+}
+
+func newGORMLogger(output io.Writer) logger.Interface {
+	return logger.New(
+		log.New(output, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: false,
+			Colorful:                  true,
+			ParameterizedQueries:      true,
+		},
+	)
 }
 
 func (d *Database) Close() error {

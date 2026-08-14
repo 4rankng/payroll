@@ -88,6 +88,40 @@ func (r *SettingsRepository) Update(ctx context.Context, settings *domain.Settin
 	return r.getDB(ctx).Save(settings).Error
 }
 
+// CompareAndSwapValue updates a setting only when its JSON value still equals
+// the value read by the caller. Zalo credentials use this to prevent a stale
+// status/error writer from restoring a refresh token that another request has
+// already consumed and replaced.
+func (r *SettingsRepository) CompareAndSwapValue(
+	ctx context.Context,
+	key string,
+	currentValue string,
+	nextValue string,
+	valueType domain.SettingsValueType,
+) (bool, error) {
+	db := r.getDB(ctx)
+	query := db.Model(&domain.Settings{}).Where("`key` = ?", key)
+	if currentValue == "" {
+		query = query.Where("(`value` = ? OR `value` IS NULL)", currentValue)
+	} else if db.Dialector.Name() == "mysql" {
+		// Tokens are case-sensitive. MySQL TEXT equality otherwise inherits the
+		// database collation, which is commonly case-insensitive and can let a
+		// stale value differing only by case pass the CAS predicate.
+		query = query.Where("BINARY `value` = BINARY ?", currentValue)
+	} else {
+		query = query.Where("`value` = ?", currentValue)
+	}
+	result := query.
+		Updates(map[string]any{
+			"value":      nextValue,
+			"value_type": valueType,
+		})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected == 1, nil
+}
+
 func (r *SettingsRepository) Delete(ctx context.Context, id uint) error {
 	// Use GORM soft delete
 	return r.getDB(ctx).Delete(&domain.Settings{}, id).Error

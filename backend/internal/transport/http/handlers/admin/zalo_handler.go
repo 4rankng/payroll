@@ -60,6 +60,7 @@ func (h *ZaloHandler) GetStatus(c *gin.Context) {
 // @Description Save app_id/secret/template and the manually-pasted tokens.
 // @Description Each field is applied independently — empty fields mean "keep existing"
 // @Description so the admin can re-paste one value without clobbering the others.
+// @Description A supplied refresh_token is exchanged immediately; save succeeds only after the successor pair is stored.
 // @Description app_id is required only when no app_id is stored yet.
 // @Tags admin,zalo
 // @Security Bearer
