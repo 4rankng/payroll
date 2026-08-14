@@ -98,7 +98,7 @@ func TestSaveCredentials_ValidatesAndStoresRotatedPairImmediately(t *testing.T) 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		oauthCalls++
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"access_token":"successor-access","refresh_token":"successor-refresh","expires_in":3600}`)
+		_, _ = io.WriteString(w, `{"access_token":"successor-access","refresh_token":"successor-refresh","expires_in":"3600"}`)
 	}))
 	t.Cleanup(server.Close)
 
@@ -122,6 +122,9 @@ func TestSaveCredentials_ValidatesAndStoresRotatedPairImmediately(t *testing.T) 
 	}
 	if stored.AccessToken != "successor-access" || stored.RefreshToken != "successor-refresh" {
 		t.Fatalf("stored pair = %#v, want validated successor", stored)
+	}
+	if stored.ExpiresAt == nil || time.Until(*stored.ExpiresAt) < 59*time.Minute || time.Until(*stored.ExpiresAt) > 61*time.Minute {
+		t.Fatalf("stored expiry = %v, want quoted expires_in parsed to about one hour", stored.ExpiresAt)
 	}
 }
 

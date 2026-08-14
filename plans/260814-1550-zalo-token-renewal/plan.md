@@ -1,6 +1,6 @@
 ---
 title: Durable Zalo token renewal
-status: completed
+status: in_progress
 priority: P0
 effort: medium
 branch: main
@@ -20,6 +20,7 @@ Make Payroll validate a pasted refresh token immediately and keep Zalo's rotatin
 |---|---|---|
 | 01 | Completed | [Token authority and persistence](phase-01-token-authority.md) |
 | 02 | Completed | [Verification and operational recovery](phase-02-verification.md) |
+| 03 | In progress | [Tolerant OAuth expiry decoding](phase-03-tolerant-oauth-expiry.md) |
 
 ## Dependencies
 
@@ -40,6 +41,9 @@ Make Payroll validate a pasted refresh token immediately and keep Zalo's rotatin
   transport failures remain retryable and do not by themselves require a
   credential replacement.
 - Focused race tests, affected package tests, vet, and repository-required broader checks are reported honestly.
+- Successful OAuth responses accept numeric or quoted `expires_in`; missing,
+  null, non-positive, or malformed expiry metadata falls back conservatively
+  without discarding a valid rotated token pair.
 
 ## Scope Boundary
 
