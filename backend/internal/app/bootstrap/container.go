@@ -177,7 +177,14 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 
 	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk, walletBulkSvc)
 	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, repos.APIMetric, cfg)
-	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, cfg, infra.Logger)
+	loanRepaymentReminderService := notification.NewLoanRepaymentReminderService(
+		repos.LoanRepaymentSchedule,
+		repos.User,
+		services.Notification,
+		services.Email,
+		infra.Logger,
+	)
+	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, loanRepaymentReminderService, cfg, infra.Logger)
 	sched.SetRepo(repos.CronJobStatus)
 	h.Cron = handlers.NewCronHandler(repos.CronJobStatus, sched)
 	// init tenant queue manager for per-tenant background workers
@@ -483,7 +490,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 }
 
-func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
+func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, loanRepaymentReminderService *notification.LoanRepaymentReminderService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
 	s := scheduler.NewScheduler(
 		logger,
 		cfg.Scheduler.Timezone,
@@ -501,6 +508,7 @@ func initScheduler(notificationService *notification.NotificationService, emailS
 		advancePaymentReqRepo,
 		walletSvc,
 		flexPayReconciliationSvc,
+		loanRepaymentReminderService,
 		logger,
 	)
 

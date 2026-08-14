@@ -33,6 +33,7 @@ func registerSchedulerJobs(
 	advancePaymentReqRepo domain.AdvancePaymentRequestRepository,
 	walletSyncService wallet.WalletService,
 	flexPayReconciliationService *domainServices.FlexPayReconciliationService,
+	loanRepaymentReminderService *notification.LoanRepaymentReminderService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -321,6 +322,26 @@ func registerSchedulerJobs(
 			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, projectCount)
 
 			sendSaoKeReminder(ctx, title, message)
+		},
+	})
+
+	// 11. Loan repayment reminder - daily at 9:00 AM, one calendar day ahead.
+	s.AddJob(scheduler.Job{
+		Name:    "loan_repayment_reminder",
+		Cron:    "0 9 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			count, err := loanRepaymentReminderService.Send(ctx, clock.Now())
+			if err != nil {
+				logger.Error("Failed to send loan repayment reminders", "schedule_count", count, "error", err)
+				return
+			}
+			if count == 0 {
+				logger.Info("No loan repayments due tomorrow, skipping reminder")
+				return
+			}
+			logger.Info("Loan repayment reminders sent", "schedule_count", count)
 		},
 	})
 

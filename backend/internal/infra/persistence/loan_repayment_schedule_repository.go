@@ -89,6 +89,27 @@ func (r *LoanRepaymentScheduleRepository) GetDueSchedules(ctx context.Context, d
 	return schedules, err
 }
 
+func (r *LoanRepaymentScheduleRepository) ListPendingForReminder(ctx context.Context, start, end time.Time) ([]*domain.LoanRepaymentReminder, error) {
+	var reminders []*domain.LoanRepaymentReminder
+	err := r.DB.WithContext(ctx).
+		Table("loan_repayment_schedules AS schedules").
+		Select(`
+			schedules.id AS schedule_id,
+			loans.loan_code AS loan_code,
+			lenders.name AS lender_name,
+			schedules.period AS period,
+			schedules.due_date AS due_date,
+			schedules.amount AS amount`).
+		Joins("JOIN loans ON loans.id = schedules.loan_id AND loans.deleted_at IS NULL").
+		Joins("JOIN lenders ON lenders.id = loans.lender_id AND lenders.deleted_at IS NULL").
+		Where("schedules.status = ?", domain.ScheduleStatusPending).
+		Where("schedules.due_date >= ? AND schedules.due_date < ?", start, end).
+		Order("loans.loan_code ASC, schedules.period ASC, schedules.id ASC").
+		Scan(&reminders).Error
+
+	return reminders, err
+}
+
 func (r *LoanRepaymentScheduleRepository) GetByTransactionID(ctx context.Context, transactionID uint) (*domain.LoanRepaymentSchedule, error) {
 	var schedule domain.LoanRepaymentSchedule
 	err := r.DB.WithContext(ctx).

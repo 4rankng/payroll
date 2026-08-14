@@ -28,6 +28,18 @@ type LoanRepaymentSchedule struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
+// LoanRepaymentReminder is the read model used by the one-day-ahead reminder.
+// It keeps notification fan-out independent from persistence entities and
+// allows the repository to fetch loan and lender details without N+1 queries.
+type LoanRepaymentReminder struct {
+	ScheduleID uint
+	LoanCode   string
+	LenderName string
+	Period     int
+	DueDate    time.Time
+	Amount     int64
+}
+
 // LoanRepaymentScheduleRepository defines the interface for loan repayment schedule persistence operations
 type LoanRepaymentScheduleRepository interface {
 	Create(ctx context.Context, schedule *LoanRepaymentSchedule) error
@@ -41,6 +53,7 @@ type LoanRepaymentScheduleRepository interface {
 	ListByTransactionIDs(ctx context.Context, transactionIDs []uint) ([]*LoanRepaymentSchedule, error)
 	GetPendingSchedulesByLoan(ctx context.Context, loanID uint) ([]*LoanRepaymentSchedule, error)
 	GetDueSchedules(ctx context.Context, dueDate time.Time) ([]*LoanRepaymentSchedule, error)
+	ListPendingForReminder(ctx context.Context, start, end time.Time) ([]*LoanRepaymentReminder, error)
 	Update(ctx context.Context, schedule *LoanRepaymentSchedule) error
 	Delete(ctx context.Context, id uint) error
 }
