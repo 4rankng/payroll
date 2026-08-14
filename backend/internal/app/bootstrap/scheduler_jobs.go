@@ -15,6 +15,7 @@ import (
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/scheduler"
+	"api-server/internal/app/services/zaloconnect"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
@@ -34,6 +35,7 @@ func registerSchedulerJobs(
 	walletSyncService wallet.WalletService,
 	flexPayReconciliationService *domainServices.FlexPayReconciliationService,
 	loanRepaymentReminderService *notification.LoanRepaymentReminderService,
+	zaloConnectService *zaloconnect.Service,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -342,6 +344,34 @@ func registerSchedulerJobs(
 				return
 			}
 			logger.Info("Loan repayment reminders sent", "schedule_count", count)
+		},
+	})
+
+	// 12. Zalo OA token renewal - daily. Access tokens live ~24h and the
+	// refresh_token is single-use: each exchange rotates the chain. Sends
+	// refresh reactively, but on a day with zero ZNS traffic the chain would
+	// go stale; this job advances it unconditionally. Skips silently when
+	// Zalo is not connected yet so the status panel stays clean pre-setup.
+	s.AddJob(scheduler.Job{
+		Name:    "zalo_token_renew",
+		Cron:    "0 7 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			creds, err := zaloConnectService.Get(ctx)
+			if err != nil {
+				logger.Error("Failed to read Zalo credentials for token renewal", "error", err)
+				return
+			}
+			if !creds.HasTokens() {
+				logger.Info("Zalo not connected, skipping token renewal")
+				return
+			}
+			if err := zaloConnectService.RefreshNow(ctx); err != nil {
+				logger.Error("Failed to renew Zalo token", "error", err)
+				return
+			}
+			logger.Info("Zalo token renewed")
 		},
 	})
 
