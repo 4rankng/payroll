@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,8 +10,11 @@ import (
 )
 
 // mockCacheInvalidator is a minimal test double for CacheInvalidator that
-// records patterns and signals when it is called.
+// records patterns and signals when it is called. It is safe for concurrent
+// use: the handler invalidates asynchronously, so the mock is written from a
+// separate goroutine while tests read it.
 type mockCacheInvalidator struct {
+	mu             sync.Mutex
 	calledPatterns []string
 	called         chan struct{}
 }
@@ -23,13 +27,22 @@ func newMockCacheInvalidator() *mockCacheInvalidator {
 }
 
 func (m *mockCacheInvalidator) DeletePattern(_ context.Context, pattern string) error {
+	m.mu.Lock()
 	m.calledPatterns = append(m.calledPatterns, pattern)
+	m.mu.Unlock()
 	// Non-blocking signal for tests
 	select {
 	case m.called <- struct{}{}:
 	default:
 	}
 	return nil
+}
+
+// patterns returns a copy of the recorded patterns for race-free inspection.
+func (m *mockCacheInvalidator) patterns() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]string(nil), m.calledPatterns...)
 }
 
 func TestCacheInvalidationHandler_HandlesLedgerEvents(t *testing.T) {
@@ -58,7 +71,7 @@ func TestCacheInvalidationHandler_HandlesLedgerEvents(t *testing.T) {
 	}
 
 	foundDashboardPattern := false
-	for _, p := range mockCache.calledPatterns {
+	for _, p := range mockCache.patterns() {
 		if p == "dashboard:*" {
 			foundDashboardPattern = true
 			break
@@ -66,7 +79,7 @@ func TestCacheInvalidationHandler_HandlesLedgerEvents(t *testing.T) {
 	}
 
 	if !foundDashboardPattern {
-		t.Fatalf("expected dashboard:* cache pattern to be invalidated, got %v", mockCache.calledPatterns)
+		t.Fatalf("expected dashboard:* cache pattern to be invalidated, got %v", mockCache.patterns())
 	}
 }
 
@@ -96,7 +109,7 @@ func TestCacheInvalidationHandler_HandlesTimesheetEvents(t *testing.T) {
 	}
 
 	foundDashboardPattern := false
-	for _, p := range mockCache.calledPatterns {
+	for _, p := range mockCache.patterns() {
 		if p == "dashboard:*" {
 			foundDashboardPattern = true
 			break
@@ -104,6 +117,6 @@ func TestCacheInvalidationHandler_HandlesTimesheetEvents(t *testing.T) {
 	}
 
 	if !foundDashboardPattern {
-		t.Fatalf("expected dashboard:* cache pattern to be invalidated, got %v", mockCache.calledPatterns)
+		t.Fatalf("expected dashboard:* cache pattern to be invalidated, got %v", mockCache.patterns())
 	}
 }
