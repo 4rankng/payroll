@@ -245,6 +245,23 @@ func (m *zaloMock) setOAuthInvalidRefreshToken() {
 	m.oauthResp = `{"error":-14014,"error_name":"Invalid refresh token.","message":"","access_token":"","refresh_token":""}`
 }
 
+func (m *zaloMock) setOAuthEmptyBody() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Zalo answers an ALREADY-CONSUMED refresh_token with an empty HTTP-200
+	// body (observed in production 2026-08-14; a merely unknown token gets
+	// -14014 JSON instead). The Provider must classify this as terminal
+	// rejection, not a transient malformed-response failure.
+	m.oauthResp = ""
+}
+
+func (m *zaloMock) setOAuthHTMLError() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// A non-JSON gateway page is transient infrastructure noise.
+	m.oauthResp = `<html><body>504 Gateway Timeout</body></html>`
+}
+
 func newProviderWithMock(t *testing.T) (*Provider, *zaloMock, *fakeCreds, *httptest.Server) {
 	mock := newZaloMock(t)
 	mux := http.NewServeMux()
@@ -586,6 +603,44 @@ func TestProvider_Send_NotConfiguredWhenNoTokens(t *testing.T) {
 }
 
 // --- provider.go: refresh ---------------------------------------------------
+
+func TestProvider_Refresh_EmptyBodyClassifiedAsRejectedToken(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.setOAuthEmptyBody()
+	before := creds.snapshot()
+
+	creds.mu.Lock()
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // already expired
+	creds.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if !errors.Is(err, ErrRefreshTokenRejected) {
+		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected (empty body = consumed refresh token)", err)
+	}
+	if after := creds.snapshot(); after.RefreshToken != before.RefreshToken {
+		t.Errorf("refresh_token clobbered: was %q, now %q", before.RefreshToken, after.RefreshToken)
+	}
+}
+
+func TestProvider_Refresh_HTMLBodyStaysTransientRefreshFailure(t *testing.T) {
+	p, mock, creds, _ := newProviderWithMock(t)
+	mock.setOAuthHTMLError()
+
+	creds.mu.Lock()
+	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // already expired
+	creds.mu.Unlock()
+
+	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	if !errors.Is(err, ErrRefreshFailed) {
+		t.Fatalf("Send err = %v, want ErrRefreshFailed", err)
+	}
+	if errors.Is(err, ErrRefreshTokenRejected) {
+		t.Fatalf("HTML gateway page must not be classified as a rejected refresh token: %v", err)
+	}
+	if after := creds.snapshot(); after.RefreshToken != "live-refresh" {
+		t.Fatalf("RefreshToken = %q, should be preserved", after.RefreshToken)
+	}
+}
 
 func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	p, mock, creds, _ := newProviderWithMock(t)

@@ -309,7 +309,21 @@ func (p *Provider) exchangeRefreshToken(ctx context.Context, creds Credentials) 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	var tok oauthTokenResponse
 	if jsonErr := json.Unmarshal(respBody, &tok); jsonErr != nil {
-		p.log.Error("zalo: refresh returned malformed JSON", "http_status", resp.StatusCode)
+		// Zalo signals an already-consumed single-use refresh_token with an
+		// EMPTY HTTP-200 body (a well-formed but unknown token instead gets
+		// -14014 JSON below). Treat empty as terminal rejection so the admin
+		// sees "re-paste a fresh pair" instead of a transient-looking 500.
+		if len(bytes.TrimSpace(respBody)) == 0 {
+			p.log.Error("zalo: refresh returned empty body (refresh token already consumed)",
+				"http_status", resp.StatusCode)
+			return Credentials{}, fmt.Errorf(
+				"%w: %w (zalo: phản hồi rỗng — refresh token đã được dùng, dán cặp token mới)",
+				ErrRefreshFailed, ErrRefreshTokenRejected)
+		}
+		p.log.Error("zalo: refresh returned malformed JSON",
+			"http_status", resp.StatusCode,
+			"body_len", len(respBody),
+			"content_type", resp.Header.Get("Content-Type"))
 		return Credentials{}, fmt.Errorf("%w: malformed response", ErrRefreshFailed)
 	}
 	if tok.Error == ErrInvalidRefreshToken {
