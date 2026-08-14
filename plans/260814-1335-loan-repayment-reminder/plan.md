@@ -1,7 +1,7 @@
 ---
 title: "Loan repayment reminder"
 description: "Remind every Admin one day before a pending loan repayment by in-app/Web Push and email, then release safely to production."
-status: in_progress
+status: done
 priority: P1
 branch: "main"
 tags: []
@@ -37,9 +37,9 @@ At 09:00 Asia/Ho_Chi_Minh each day, find pending repayment schedules due on the 
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Implement exact-date reminder](./phase-01-implement-exact-date-reminder.md) | In Progress |
-| 2 | [Verify and review](./phase-02-verify-and-review.md) | Pending |
-| 3 | [Backup deploy and verify](./phase-03-backup-deploy-and-verify.md) | Pending |
+| 1 | [Implement exact-date reminder](./phase-01-implement-exact-date-reminder.md) | Done |
+| 2 | [Verify and review](./phase-02-verify-and-review.md) | Done |
+| 3 | [Backup deploy and verify](./phase-03-backup-deploy-and-verify.md) | Done |
 
 ## Dependencies
 
