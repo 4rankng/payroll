@@ -29,3 +29,9 @@ Credential persistence is part of the renewal protocol, not a passive settings w
 ## Next
 
 The external token exchange and database update cannot be atomic. If the process crashes after the provider rotates the pair but before persistence succeeds, the old refresh token may already be invalid. Recovery must therefore accept a fresh operator-provided token pair; it cannot be made fully automatic from the stale pair.
+
+## Follow-up (2026-08-14, second incident)
+
+After deploying the durable-renewal fix, saving a fresh valid pair still failed with "Không thể xác thực token Zalo". Zalo's OAuth v4 endpoint returned HTTP 200 with `expires_in` (and sometimes the error code) as a **quoted string**; the strict typed decode rejected the whole body as "malformed JSON", so validation aborted before persistence and the UI blamed the tokens.
+
+Fix (commit 87236a3): `expires_in` decodes as advisory — an absent, invalid, non-positive, or overflowing value falls back to the conservative one-hour expiry instead of discarding a valid rotated pair — and the error code accepts number or quoted number. Lesson: when an upstream API's response typing is inconsistent, decode leniently at the boundary and treat advisory fields (like expiry) as best-effort, never as gatekeepers for accepting an otherwise valid response.
