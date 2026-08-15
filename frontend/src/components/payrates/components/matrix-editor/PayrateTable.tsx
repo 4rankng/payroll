@@ -1,6 +1,7 @@
 import { Table, TableHeader as ShadcnTableHeader } from '@/components/ui/table';
 import { TableHeader } from './TableHeader';
 import { TableBody } from './TableBody';
+import { PayratePositionList } from './PayratePositionList';
 import type { PayrateStructure, DayType, ValidationResult } from '../../types';
 
 interface PayrateTableProps {
@@ -40,9 +41,42 @@ export function PayrateTable({
   setEditingPositionValue, setEditingPosition, onRateChange,
 }: PayrateTableProps) {
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table className="w-full border-collapse [&_td]:p-0 [&_th]:p-0">
+    <div
+      className="overflow-hidden border-y border-border bg-card lg:rounded-xl lg:border"
+      data-slot="payrate-rate-matrix"
+    >
+      {!isFlexible && (
+        <div className="lg:hidden">
+          <PayratePositionList
+            rates={rates}
+            originalRates={originalRates}
+            positions={positions}
+            hourTypes={hourTypes}
+            readOnly={readOnly}
+            validation={validation}
+            editingHourType={editingHourType}
+            editingHourTypeValue={editingHourTypeValue}
+            editingHourTypeError={editingHourTypeError}
+            onEditHourType={onEditHourType}
+            onSaveHourType={onSaveHourType}
+            onRemoveHourType={onRemoveHourType}
+            onCancelEditHourType={onCancelEditHourType}
+            setEditingHourTypeValue={setEditingHourTypeValue}
+            editingPosition={editingPosition}
+            editingPositionValue={editingPositionValue}
+            onEditPosition={onEditPosition}
+            onSavePosition={onSavePosition}
+            onRemovePosition={onRemovePosition}
+            onCopyRates={onCopyRates}
+            setEditingPositionValue={setEditingPositionValue}
+            setEditingPosition={setEditingPosition}
+            onRateChange={onRateChange}
+          />
+        </div>
+      )}
+
+      <div className={isFlexible ? 'overflow-x-auto overscroll-x-contain' : 'hidden overflow-x-auto lg:block'}>
+        <Table className="min-w-[42rem] w-full border-collapse [&_td]:p-0 [&_th]:p-0">
           <ShadcnTableHeader>
             <TableHeader
               hourTypes={hourTypes}

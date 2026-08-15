@@ -36,13 +36,17 @@ export function TableHeader({
 }: TableHeaderProps) {
   return (
     <TableRow className="border-b border-border/60 bg-muted/30">
-      <TableHead className="w-32 text-xs font-semibold text-muted-foreground py-2 px-3">Vị trí</TableHead>
+      <TableHead className="sticky left-0 z-20 w-44 min-w-44 border-r border-border/60 bg-muted/30 px-4 py-3 text-xs font-semibold text-muted-foreground">
+        Vị trí
+      </TableHead>
       {!isFlexible && (
-        <TableHead className="w-24 text-xs font-semibold text-muted-foreground py-2 px-3">Loại ngày</TableHead>
+        <TableHead className="w-28 min-w-28 px-3 py-3 text-xs font-semibold text-muted-foreground">
+          Loại ngày
+        </TableHead>
       )}
       {hourTypes.map(hourType => (
-        <TableHead key={hourType} className="min-w-[120px] text-xs font-semibold text-muted-foreground py-2 px-2 group">
-          <div className="flex items-center gap-1">
+        <TableHead key={hourType} className="min-w-[9.5rem] px-3 py-3 text-xs font-semibold text-muted-foreground group">
+          <div className="flex items-start gap-1">
             {editingHourType === hourType ? (
               <Input
                 type="text"
@@ -61,13 +65,17 @@ export function TableHeader({
                 autoFocus
               />
             ) : (
-              <span
-                className={`break-words text-xs font-semibold ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : ''}`}
+              <button
+                type="button"
+                className={`min-w-0 flex-1 text-left ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : 'cursor-default'}`}
                 onClick={() => !readOnly && onEditHourType(hourType)}
                 title={readOnly ? hourType : `Nhấn để đổi tên: ${hourType}`}
               >
-                {hourType}
-              </span>
+                <span className="block break-words text-xs font-semibold text-foreground">{hourType}</span>
+                <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
+                  {isFlexible ? '₫/ca' : '₫/giờ'}
+                </span>
+              </button>
             )}
             {!readOnly && hourTypes.length > 1 && (
               <button
@@ -75,7 +83,7 @@ export function TableHeader({
                 className="ml-auto flex h-11 w-11 items-center justify-center rounded text-muted-foreground opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                 title={`Xóa cột ${hourType}`}
               >
-                <X className="h-2.5 w-2.5" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>

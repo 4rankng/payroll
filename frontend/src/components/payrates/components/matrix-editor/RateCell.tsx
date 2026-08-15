@@ -60,17 +60,18 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
     <div className="relative group">
       <Input
         type="text"
+        aria-label={`Mức lương ${position}, ${dayType}, ${hourType}`}
         value={isEmpty ? '' : rate.toLocaleString('vi-VN')}
         onChange={e => onChange(position, dayType, hourType, e.target.value)}
         placeholder="0"
         className={cn(
-          "h-11 min-w-20 text-right text-sm tabular-nums pr-2 pl-2 transition-colors",
+          "h-11 min-w-20 rounded-md px-3 text-right text-sm font-medium tabular-nums transition-colors lg:h-10",
           hasError && "border-destructive",
           hasDiff
             ? diffClasses[diffState]
             : isEmpty
-              ? "bg-muted/30 border-border/40 text-muted-foreground placeholder:text-muted-foreground/40 focus:bg-background"
-              : "bg-background border-border",
+              ? "border-transparent bg-muted/25 text-muted-foreground placeholder:text-muted-foreground/40 focus:bg-background"
+              : "border-transparent bg-muted/35 text-foreground",
           !hasDiff && "hover:border-primary/60 focus:border-primary focus:ring-1 focus:ring-primary/20"
         )}
         onFocus={e => e.target.select()}

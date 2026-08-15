@@ -12,12 +12,6 @@ const DAY_LABELS: Record<string, string> = {
   'ngày lễ': 'Lễ',
 };
 
-const DAY_COLORS: Record<string, string> = {
-  'ngày thường': 'text-blue-600 bg-blue-50 border-blue-200',
-  'ngày nghỉ':   'text-amber-600 bg-amber-50 border-amber-200',
-  'ngày lễ':     'text-red-600 bg-red-50 border-red-200',
-};
-
 interface TableBodyProps {
   positions: string[];
   hourTypes: string[];
@@ -58,7 +52,7 @@ export function TableBody({
             )}
           >
             {/* Position cell */}
-            <TableCell className="align-middle bg-muted/20 px-3 py-3 w-32 border-r border-border/30">
+            <TableCell className="sticky left-0 z-10 w-44 min-w-44 border-r border-border/60 bg-card px-4 py-3 align-middle">
               <PositionCell
                 position={position}
                 positionIndex={posIndex}
@@ -118,7 +112,7 @@ export function TableBody({
               {/* Position cell — spans all 3 day rows */}
               {dayIndex === 0 && (
                 <TableCell
-                  className="align-middle bg-muted/20 px-3 py-2 w-28 border-r border-border/30"
+                  className="sticky left-0 z-10 w-44 min-w-44 border-r border-border/60 bg-card px-4 py-3 align-middle"
                   rowSpan={ALL_DAY_TYPES.length}
                 >
                   <PositionCell
@@ -140,12 +134,9 @@ export function TableBody({
                 </TableCell>
               )}
 
-              {/* Day type badge */}
-              <TableCell className="px-3 py-1.5 w-24">
-                <span className={cn(
-                  "inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded border",
-                  DAY_COLORS[dayType]
-                )}>
+              {/* Day type */}
+              <TableCell className="w-28 min-w-28 px-3 py-2">
+                <span className="text-xs font-medium text-muted-foreground">
                   {DAY_LABELS[dayType]}
                 </span>
               </TableCell>
@@ -154,7 +145,7 @@ export function TableBody({
               {hourTypes.map(hourType => {
                 const rate = (rates[position]?.[dayType]?.[hourType] as number) || 0;
                 return (
-                  <TableCell key={hourType} className="px-2 py-1.5 min-w-[120px]">
+                  <TableCell key={hourType} className="min-w-[9.5rem] px-3 py-2">
                     <RateCell
                       position={position}
                       dayType={dayType}

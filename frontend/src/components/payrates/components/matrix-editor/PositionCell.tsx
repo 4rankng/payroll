@@ -1,6 +1,13 @@
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Copy, X, Pencil } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
 import type { PayrateStructure } from '../../types';
 import { copyRatesFromPosition } from '../../utils/rateOperations';
 
@@ -32,7 +39,7 @@ export function PositionCell({
   };
 
   return (
-    <div className="flex flex-col gap-1 group/pos">
+    <div className="relative flex min-w-0 items-start justify-between gap-2 lg:block" data-slot="payrate-position-cell">
       {editingPosition === position ? (
         <Input
           type="text"
@@ -40,43 +47,49 @@ export function PositionCell({
           onChange={e => setEditingPositionValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); onSavePosition(); } }}
           onBlur={onSavePosition}
-          className="h-11 border-primary bg-transparent p-2 text-xs font-semibold"
+          className="h-11 border-primary bg-background px-3 text-sm font-semibold"
           autoFocus
         />
       ) : (
-        <div className="flex items-center gap-1">
-          <span className="flex-1 break-words text-xs font-semibold capitalize">{position}</span>
+        <>
+          <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-5 text-foreground lg:px-8 lg:text-center">{position}</p>
           {!readOnly && (
-            <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/pos:opacity-100">
-              <button
-                onClick={() => onEditPosition(position)}
-                className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Đổi tên"
-              >
-                <Pencil className="h-2.5 w-2.5" />
-              </button>
-              {positions.length > 1 && (
-                <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onRemovePosition(position); }}
-                  className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  title="Xóa vị trí"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-mr-2 -mt-2 h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground lg:absolute lg:right-0 lg:top-1/2 lg:mr-0 lg:mt-0 lg:-translate-y-1/2"
+                  aria-label={`Tùy chọn cho vị trí ${position}`}
                 >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              )}
-            </div>
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-48">
+                <DropdownMenuItem onSelect={() => onEditPosition(position)}>
+                  Đổi tên
+                </DropdownMenuItem>
+                {positionIndex > 0 && firstPosition && (
+                  <DropdownMenuItem onSelect={handleCopyFromFirst}>
+                    Sao chép mức lương từ {firstPosition}
+                  </DropdownMenuItem>
+                )}
+                {positions.length > 1 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => onRemovePosition(position)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      Xóa vị trí
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        </div>
-      )}
-      {!readOnly && positionIndex > 0 && firstPosition && (
-        <button
-          onClick={handleCopyFromFirst}
-          className="flex min-h-11 items-center gap-1 rounded px-2 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
-          title={`Sao chép từ ${firstPosition}`}
-        >
-          <Copy className="h-2.5 w-2.5" />
-          Sao chép
-        </button>
+        </>
       )}
     </div>
   );

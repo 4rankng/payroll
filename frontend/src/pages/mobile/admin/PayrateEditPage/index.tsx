@@ -396,13 +396,13 @@ export default function PayrateEditPageMobile() {
             )}
 
             {/* View-mode segmented control */}
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted/60 p-1">
+            <div className="inline-grid w-fit grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1">
               <button
                 type="button"
                 onClick={() => setViewMode('matrix')}
                 className={cn(
-                  'min-h-11 rounded-lg py-2 text-xs font-semibold transition-colors',
-                  viewMode === 'matrix' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground',
+                  'min-h-11 min-w-24 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
+                  viewMode === 'matrix' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/60',
                 )}
               >
                 Ma trận
@@ -411,8 +411,8 @@ export default function PayrateEditPageMobile() {
                 type="button"
                 onClick={() => setViewMode('json')}
                 className={cn(
-                  'min-h-11 rounded-lg py-2 text-xs font-semibold transition-colors',
-                  viewMode === 'json' ? 'bg-white text-primary shadow-sm' : 'text-muted-foreground',
+                  'min-h-11 min-w-24 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
+                  viewMode === 'json' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/60',
                 )}
               >
                 JSON
@@ -432,9 +432,8 @@ export default function PayrateEditPageMobile() {
                 </div>
               )}
 
-              <div className={cn('p-3', ratesLocked && 'pointer-events-none select-none opacity-60')}>
-                {/* Horizontal scroll surface — the matrix can be wide on phones */}
-                <div className="overflow-x-auto scrollbar-none">
+              <div className={cn('min-w-0 py-3', ratesLocked && 'pointer-events-none select-none opacity-60')}>
+                <div className="min-w-0">
                   {viewMode === 'matrix' ? (
                     isFlexible ? (
                       <FlexiblePayrateEditor
