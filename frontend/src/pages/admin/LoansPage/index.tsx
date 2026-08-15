@@ -19,7 +19,6 @@ import {
   loanSortFieldMap,
 } from '@/components/loans/loan-table-config';
 import { computeLoansSummary, computeLoanStatItems, filterLoansBySearch } from './utils';
-import { formatVND } from '@/utils/loanHelpers';
 
 const LoansPage = () => {
   const [loanFilters, setLoanFilters] = useState<LoanFilters>({
@@ -114,24 +113,27 @@ const LoansPage = () => {
         description="Quản lý chủ nợ và các khoản vay của công ty"
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
         <KpiHeroCard
           label="Tổng vay"
-          value={formatVND(loansSummary.total_borrowed)}
+          value={loansSummary.total_borrowed}
+          unit="đ"
           icon={Landmark}
           color="blue"
           variant="stack"
         />
         <KpiHeroCard
           label="Dư nợ hiện tại"
-          value={formatVND(loansSummary.total_outstanding)}
+          value={loansSummary.total_outstanding}
+          unit="đ"
           icon={TrendingUp}
           color="amber"
           variant="stack"
         />
         <KpiHeroCard
           label="Lãi đã trả"
-          value={formatVND(loansSummary.total_interest_paid)}
+          value={loansSummary.total_interest_paid}
+          unit="đ"
           icon={Coins}
           color="emerald"
           variant="stack"

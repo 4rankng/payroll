@@ -15,6 +15,7 @@ import { LoanDetailsSheet } from '@/components/sheets/LoanDetailsSheet';
 import { MobileSearchInput } from '@/components/shared/MobileSearchInput';
 import { cn } from '@/lib/utils';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
+import { splitCurrencyDisplay } from '@/utils/formatters';
 
 const LOAN_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   active: { label: "Đang vay", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -160,12 +161,21 @@ const LoansPageMobile = () => {
             { label: "Dư nợ", value: formatVND(loansSummary.total_outstanding) },
             { label: "Lãi đã trả", value: formatVND(loansSummary.total_interest_paid) },
             { label: "Khoản vay", value: String(loansSummary.active_loans_count) },
-          ].map((stat) => (
+          ].map((stat) => {
+            const { amount, unit } = splitCurrencyDisplay(stat.value);
+            return (
             <div key={stat.label} className="flex min-w-0 flex-col items-center gap-1 rounded-xl border border-border bg-card px-3 py-2.5">
-              <span className="text-sm font-bold tabular-nums leading-none text-foreground">{stat.value}</span>
+              <span className={cn(
+                "font-bold tabular-nums leading-none text-foreground",
+                unit ? "whitespace-nowrap text-[clamp(0.75rem,3.3vw,0.875rem)] tracking-[-0.025em]" : "text-sm",
+              )}>
+                <span>{amount}</span>
+                {unit && <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">{unit}</span>}
+              </span>
               <span className="text-[11px] leading-none text-muted-foreground">{stat.label}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

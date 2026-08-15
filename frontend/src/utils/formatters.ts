@@ -2,6 +2,33 @@
 
 const DEFAULT_CURRENCY_CODE = 'VND';
 
+export interface CurrencyDisplayParts {
+  amount: string;
+  unit?: string;
+  isCurrencyUnit: boolean;
+}
+
+/**
+ * Splits a trailing VND symbol from an already localized display string so
+ * money KPIs can render the number and its currency unit with distinct type.
+ */
+export const splitCurrencyDisplay = (value: string, explicitUnit?: string): CurrencyDisplayParts => {
+  if (explicitUnit) {
+    return {
+      amount: value,
+      unit: explicitUnit,
+      isCurrencyUnit: /^(đ|₫|VNĐ)$/u.test(explicitUnit),
+    };
+  }
+
+  const match = value.match(/^(.*?)[\s\u00A0]*(đ|₫|VNĐ)$/u);
+  if (!match) {
+    return { amount: value, isCurrencyUnit: false };
+  }
+
+  return { amount: match[1].trimEnd(), unit: match[2], isCurrencyUnit: true };
+};
+
 /**
  * Normalize currency codes so that UI helpers never pass invalid codes
  * to Intl.NumberFormat. Currently we only support VND, but we gracefully

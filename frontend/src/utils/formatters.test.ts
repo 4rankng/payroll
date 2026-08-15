@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatFullCurrency } from './formatters';
+import { formatFullCurrency, splitCurrencyDisplay } from './formatters';
 import { formatProjectCurrency, formatBudgetDisplay } from './projectHelpers';
 import { formatVietnameseCurrency } from './vietnamese';
 
@@ -21,5 +21,28 @@ describe('full-number currency helpers', () => {
     expect(formatBudgetDisplay(1_100_000_000)).toBe(formatProjectCurrency(1_100_000_000));
     expect(formatBudgetDisplay(1_100_000_000)).toBe('1.100.000.000 đ');
     expect(formatVietnameseCurrency(51_400_000)).toBe('51.400.000 đ');
+  });
+});
+
+describe('splitCurrencyDisplay', () => {
+  it('separates trailing VND symbols for secondary KPI typography', () => {
+    expect(splitCurrencyDisplay('1.000.000.000 đ')).toEqual({
+      amount: '1.000.000.000',
+      unit: 'đ',
+      isCurrencyUnit: true,
+    });
+    expect(splitCurrencyDisplay('1.000.000 ₫')).toEqual({
+      amount: '1.000.000',
+      unit: '₫',
+      isCurrencyUnit: true,
+    });
+  });
+
+  it('preserves non-currency units at their normal typography', () => {
+    expect(splitCurrencyDisplay('12', 'người')).toEqual({
+      amount: '12',
+      unit: 'người',
+      isCurrencyUnit: false,
+    });
   });
 });

@@ -2,6 +2,7 @@ import { memo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCountUp } from '@/hooks/useCountUp';
+import { splitCurrencyDisplay } from '@/utils/formatters';
 
 export interface KpiHeroCardProps {
   label: string;
@@ -62,8 +63,9 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   const displayValue = formattedValue
     ? formattedValue
     : typeof value === 'number'
-      ? `${animated.toLocaleString('vi-VN')}${unit ? ` ${unit}` : ''}`
-      : `${value}${unit ? ` ${unit}` : ''}`;
+      ? animated.toLocaleString('vi-VN')
+      : value;
+  const { amount: displayAmount, unit: displayUnit, isCurrencyUnit } = splitCurrencyDisplay(displayValue, unit);
   const CardRoot = onClick ? 'button' : 'div';
 
   return (
@@ -111,10 +113,19 @@ export const KpiHeroCard = memo(function KpiHeroCard({
             {label}
           </p>
           <p className={cn(
-            'mt-1 break-words font-display font-extrabold tabular-nums leading-tight tracking-tight text-foreground',
-            variant === 'stack' ? 'text-2xl sm:text-[1.75rem]' : 'text-xl sm:text-2xl',
+            'mt-1 font-display font-extrabold tabular-nums leading-tight tracking-[-0.035em] text-foreground',
+            variant === 'stack'
+              ? 'whitespace-nowrap text-[clamp(0.875rem,1.7vw,1.5rem)]'
+              : 'break-words text-xl sm:text-2xl',
           )}>
-            {displayValue}
+            <span>{displayAmount}</span>
+            {isCurrencyUnit && displayUnit ? (
+              <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">
+                {displayUnit}
+              </span>
+            ) : displayUnit ? (
+              <> {displayUnit}</>
+            ) : null}
           </p>
         </div>
 
