@@ -94,8 +94,9 @@ func TestLoanRepaymentReminderService_NoSchedulesSendsNothing(t *testing.T) {
 
 func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testing.T) {
 	schedules := &fakeReminderScheduleRepo{rows: []*domain.LoanRepaymentReminder{
-		{ScheduleID: 2, LoanCode: "LOAN-2026-002", LenderName: "Ngân hàng B", Period: 3, Amount: 5000000},
-		{ScheduleID: 1, LoanCode: "LOAN-2026-001", LenderName: "Ngân hàng A", Period: 1, Amount: 1000000},
+		{ScheduleID: 3, LoanCode: "LOAN-2026-003", LenderName: "Ngân hàng C", Period: 2, Amount: 2000000, DueDate: time.Date(2026, 8, 14, 0, 0, 0, 0, reminderLocation)},
+		{ScheduleID: 2, LoanCode: "LOAN-2026-002", LenderName: "Ngân hàng B", Period: 3, Amount: 5000000, DueDate: time.Date(2026, 8, 15, 0, 0, 0, 0, reminderLocation)},
+		{ScheduleID: 1, LoanCode: "LOAN-2026-001", LenderName: "Ngân hàng A", Period: 1, Amount: 1000000, DueDate: time.Date(2026, 8, 15, 0, 0, 0, 0, reminderLocation)},
 	}}
 	notifier := &fakeReminderNotifier{}
 	email := &fakeReminderEmail{}
@@ -112,8 +113,8 @@ func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testin
 	if err != nil {
 		t.Fatalf("Send: %v", err)
 	}
-	if count != 2 {
-		t.Fatalf("expected 2 schedules, got %d", count)
+	if count != 3 {
+		t.Fatalf("expected 3 schedules, got %d", count)
 	}
 
 	if notifier.calls != 1 {
@@ -125,8 +126,8 @@ func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testin
 	if notifier.nType != domain.NotificationTypeLoanInterestDue {
 		t.Fatalf("expected NotificationTypeLoanInterestDue, got %v", notifier.nType)
 	}
-	if !strings.Contains(notifier.title, "15/08/2026") {
-		t.Fatalf("title should carry tomorrow's date 15/08/2026, got %q", notifier.title)
+	if !strings.Contains(notifier.title, "14/08/2026") || !strings.Contains(notifier.title, "15/08/2026") {
+		t.Fatalf("title should carry today 14/08/2026 and tomorrow 15/08/2026, got %q", notifier.title)
 	}
 	// Consolidation: sorted loan codes, lender names, vi-VN amounts, and total.
 	lower := notifier.message
@@ -137,7 +138,7 @@ func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testin
 		"LOAN-2026-002",
 		"Ngân hàng B",
 		utils.FormatVND(5000000),
-		utils.FormatVND(6000000),
+		utils.FormatVND(8000000),
 	} {
 		if !strings.Contains(lower, want) {
 			t.Fatalf("notification body missing %q:\n%s", want, lower)
@@ -238,10 +239,11 @@ func TestLoanRepaymentReminderService_ComputesTomorrowWindowInNowLocation(t *tes
 			if _, err := service.Send(context.Background(), tc.now); err != nil {
 				t.Fatalf("Send: %v", err)
 			}
-			if !schedules.gotStart.Equal(tc.wantStart) {
-				t.Fatalf("window start = %v, want %v", schedules.gotStart, tc.wantStart)
+			wantStart := time.Date(tc.now.Year(), tc.now.Month(), tc.now.Day(), 0, 0, 0, 0, reminderLocation)
+			if !schedules.gotStart.Equal(wantStart) {
+				t.Fatalf("window start = %v, want %v", schedules.gotStart, wantStart)
 			}
-			wantEnd := tc.wantStart.AddDate(0, 0, 1)
+			wantEnd := wantStart.AddDate(0, 0, 2)
 			if !schedules.gotEnd.Equal(wantEnd) {
 				t.Fatalf("window end = %v, want %v", schedules.gotEnd, wantEnd)
 			}
