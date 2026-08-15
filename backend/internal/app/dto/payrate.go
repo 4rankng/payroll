@@ -70,6 +70,10 @@ type PayrateResponse struct {
 	CreatedBy uint                        `json:"created_by"`
 	CreatedAt time.Time                   `json:"created_at"`
 	UpdatedAt time.Time                   `json:"updated_at"`
+	// EarliestEffectiveFrom is the day after the project's most recent paid
+	// timesheet — the earliest start date an update may take. Empty when the
+	// project has no paid timesheets (no floor beyond today).
+	EarliestEffectiveFrom string `json:"earliest_effective_from,omitempty"`
 }
 
 // ListPayratesRequest represents query parameters for listing payrates

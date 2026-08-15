@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -49,6 +50,19 @@ func formatDateToString(t *time.Time) *string {
 	}
 	dateStr := t.Format("2006-01-02")
 	return &dateStr
+}
+
+// earliestEffectiveFrom returns the day after the project's most recent paid
+// timesheet — the earliest start date a payrate update may take. Returns ""
+// when the project has no paid timesheets (nothing anchors the floor). The
+// date is formatted in its stored location: converting to UTC first would
+// shift it back a day under a loc=Local MySQL DSN.
+func (h *PayrateHandler) earliestEffectiveFrom(ctx context.Context, projectID uint) string {
+	latestPaid, err := h.payrateService.GetLatestPaidTimesheetDateForProject(ctx, projectID)
+	if err != nil || latestPaid == nil {
+		return ""
+	}
+	return latestPaid.AddDate(0, 0, 1).Format("2006-01-02")
 }
 
 func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
@@ -203,14 +217,15 @@ func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 	}
 
 	payrateResponse := dto.PayrateResponse{
-		ID:        payrate.ID,
-		ProjectID: payrate.ProjectID,
-		Rates:     payrate.Payrate,
-		FromDate:  payrate.FromDate.Format("2006-01-02"),
-		ToDate:    formatDateToString(payrate.ToDate),
-		CreatedBy: payrate.CreatedBy,
-		CreatedAt: payrate.CreatedAt,
-		UpdatedAt: payrate.UpdatedAt,
+		ID:                    payrate.ID,
+		ProjectID:             payrate.ProjectID,
+		Rates:                 payrate.Payrate,
+		FromDate:              payrate.FromDate.Format("2006-01-02"),
+		ToDate:                formatDateToString(payrate.ToDate),
+		CreatedBy:             payrate.CreatedBy,
+		CreatedAt:             payrate.CreatedAt,
+		UpdatedAt:             payrate.UpdatedAt,
+		EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
 	}
 
 	response.Success(c, payrateResponse, constants.MsgPayrateRetrievedSuccessfullyVN)
@@ -300,14 +315,15 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 	var payrateResponses []dto.PayrateResponse
 	for _, payrate := range payrates {
 		payrateResponses = append(payrateResponses, dto.PayrateResponse{
-			ID:        payrate.ID,
-			ProjectID: payrate.ProjectID,
-			Rates:     payrate.Payrate,
-			FromDate:  payrate.FromDate.Format("2006-01-02"),
-			ToDate:    formatDateToString(payrate.ToDate),
-			CreatedBy: payrate.CreatedBy,
-			CreatedAt: payrate.CreatedAt,
-			UpdatedAt: payrate.UpdatedAt,
+			ID:                    payrate.ID,
+			ProjectID:             payrate.ProjectID,
+			Rates:                 payrate.Payrate,
+			FromDate:              payrate.FromDate.Format("2006-01-02"),
+			ToDate:                formatDateToString(payrate.ToDate),
+			CreatedBy:             payrate.CreatedBy,
+			CreatedAt:             payrate.CreatedAt,
+			UpdatedAt:             payrate.UpdatedAt,
+			EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
 		})
 	}
 

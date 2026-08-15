@@ -32,6 +32,8 @@ export interface PayRate {
   rates: PayrateStructure;
   fromDate: string;
   toDate: string | null;
+  /** Day after the project's most recent paid timesheet — earliest allowed start. */
+  earliest_effective_from?: string;
   created_by: number;
   created_at: string;
   updated_at: string;

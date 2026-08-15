@@ -124,10 +124,16 @@ export default function PayrateEditPageMobile() {
 
   useEffect(() => {
     if (targetPayrate) {
+      // Default the start date to the paid floor (day after the latest paid
+      // timesheet) whenever the stored start sits before it — the backend
+      // rejects anything earlier, so pre-clamp instead of surfacing an error.
+      const floor = targetPayrate.earliest_effective_from;
+      const fromDate =
+        floor && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
       setConfig({
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
-        fromDate: targetPayrate.fromDate,
+        fromDate,
         toDate: targetPayrate.toDate,
       });
     }
@@ -188,9 +194,14 @@ export default function PayrateEditPageMobile() {
       if (result.valid) {
         setSaveStep('saving');
         try {
-          if (editorMode === 'edit' && targetPayrate?.id) {
-            // Edit always updates in place: moving the start date earlier or
-            // changing rates re-prices mutable (unpaid, unapproved) timesheets.
+          // Rate changes version append-only: create a new config; the backend
+          // closes the previous one the day before the new effective_from.
+          // Only a start-date correction without rate changes updates in place
+          // (re-pricing mutable, i.e. unpaid and unapproved, timesheets).
+          const ratesChanged =
+            editorMode === 'edit' && targetPayrate &&
+            JSON.stringify(targetPayrate.rates ?? {}) !== JSON.stringify(config.rates ?? {});
+          if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
             await updateMutation.mutateAsync({
               payRateId: targetPayrate.id,
               data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
@@ -299,7 +310,7 @@ export default function PayrateEditPageMobile() {
                       type="date"
                       value={config.fromDate || ''}
                       readOnly={fromDateLocked && !fromDateIsActionable}
-                      min={fromDateIsActionable ? sf?.rates.suggested_value : sf?.effective_from.min_value}
+                      min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
                       autoFocus={fromDateIsActionable}
                       onChange={e => {
                         if (fromDateLocked && !fromDateIsActionable) return;

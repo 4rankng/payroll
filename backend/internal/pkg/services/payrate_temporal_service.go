@@ -241,8 +241,10 @@ func (s *PayrateTemporalService) validateEffectiveDateTx(ctx context.Context, tx
 		return nil
 	}
 
-	earliestDate := toUTCDateOnly(*latestPaidDate).AddDate(0, 0, 1)
-	if toUTCDateOnly(date).Before(earliestDate) {
+	// Wall-clock comparison: converting the stored date to UTC first would
+	// shift it back a day under a loc=Local MySQL DSN (GMT+7/+8).
+	earliestDate := toLocalDateOnly(*latestPaidDate).AddDate(0, 0, 1)
+	if toLocalDateOnly(date).Before(earliestDate) {
 		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
 	}
 

@@ -310,8 +310,10 @@ func (h *PayrateHandler) applyCreateConstraints(
 	if err != nil || latestPaidDate == nil {
 		return
 	}
-	earliestDate := timeutil.StartOfDay(latestPaidDate.UTC()).AddDate(0, 0, 1)
-	if !timeutil.StartOfDay(fromDate.UTC()).Before(earliestDate) {
+	// Wall-clock comparison: converting the stored date to UTC first would
+	// shift it back a day under a loc=Local MySQL DSN (GMT+7/+8).
+	earliestDate := timeutil.StartOfDay(*latestPaidDate).AddDate(0, 0, 1)
+	if !timeutil.StartOfDay(*fromDate).Before(earliestDate) {
 		return
 	}
 	earliestDateStr := earliestDate.Format(timeutil.DateFormat)
