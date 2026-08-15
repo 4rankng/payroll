@@ -103,7 +103,7 @@ func (r *SettingsRepository) CompareAndSwapValue(
 	query := db.Model(&domain.Settings{}).Where("`key` = ?", key)
 	if currentValue == "" {
 		query = query.Where("(`value` = ? OR `value` IS NULL)", currentValue)
-	} else if db.Dialector.Name() == "mysql" {
+	} else if db.Dialector.Name() == "mysql" { //nolint:staticcheck // QF1008: explicit selector documents the driver check
 		// Tokens are case-sensitive. MySQL TEXT equality otherwise inherits the
 		// database collation, which is commonly case-insensitive and can let a
 		// stale value differing only by case pass the CAS predicate.

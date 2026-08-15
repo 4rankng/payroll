@@ -50,7 +50,7 @@ func (r *ProjectRepository) GetByIDs(ctx context.Context, ids []uint) (map[uint]
 	if len(ids) == 0 {
 		return make(map[uint]*domain.Project), nil
 	}
-	projects, err := common.Chunk[*domain.Project](ctx, r.DB.WithContext(ctx), ids, common.DefaultChunkSize,
+	projects, err := common.Chunk(ctx, r.DB.WithContext(ctx), ids, common.DefaultChunkSize,
 		func(tx *gorm.DB, batch []uint) ([]*domain.Project, error) {
 			var batchProjects []*domain.Project
 			if err := tx.Where("id IN ?", batch).Find(&batchProjects).Error; err != nil {

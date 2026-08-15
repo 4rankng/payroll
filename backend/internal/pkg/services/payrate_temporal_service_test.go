@@ -137,7 +137,7 @@ func TestPayrateTemporalServiceMovesStartDateEarlierAndRecalculatesMutableTimesh
 	sibling := &domain.Payrate{
 		ID: 7, ProjectID: projectID,
 		FromDate: time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		ToDate:   ptrTime(time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local)),
+		ToDate:   func() *time.Time { t := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local); return &t }(),
 	}
 	// Target config created too late; admin needs to move it back to Aug 8.
 	target := &domain.Payrate{
@@ -229,8 +229,6 @@ func TestPayrateTemporalServiceRejectsMovingStartDatePastLinkedTimesheets(t *tes
 	require.Error(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 }
 
-func ptrTime(t time.Time) *time.Time { return &t }
-
 func seedPayrateTemporalPayrate(t *testing.T, db *gorm.DB, payrate *domain.Payrate) {
 	t.Helper()
 	require.NoError(t, db.Exec(`
@@ -243,11 +241,11 @@ type payrateTemporalRepositoryStub struct {
 	domain.PayrateRepository
 }
 
-func (s *payrateTemporalRepositoryStub) FindActiveByProject(context.Context, interface{}, uint) ([]*domain.Payrate, error) {
+func (s *payrateTemporalRepositoryStub) FindActiveByProject(context.Context, any, uint) ([]*domain.Payrate, error) {
 	return nil, nil
 }
 
-func (s *payrateTemporalRepositoryStub) CreateWithTx(_ context.Context, _ interface{}, payrate *domain.Payrate) error {
+func (s *payrateTemporalRepositoryStub) CreateWithTx(_ context.Context, _ any, payrate *domain.Payrate) error {
 	payrate.ID = 99
 	return nil
 }

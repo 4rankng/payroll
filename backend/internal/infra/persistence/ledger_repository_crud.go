@@ -45,7 +45,7 @@ func (r *LedgerEntryRepository) CreateTransaction(ctx context.Context, entries [
 }
 
 // createEntriesInTx creates ledger entries within an existing transaction.
-func (r *LedgerEntryRepository) createEntriesInTx(ctx context.Context, tx *gorm.DB, entries []*domain.LedgerEntry) error {
+func (r *LedgerEntryRepository) createEntriesInTx(_ context.Context, tx *gorm.DB, entries []*domain.LedgerEntry) error {
 	if len(entries) == 0 {
 		return nil
 	}

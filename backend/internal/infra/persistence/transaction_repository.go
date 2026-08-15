@@ -117,7 +117,7 @@ func (r *transactionRepository) GetByIDs(ctx context.Context, ids []uint) ([]*do
 	// ignored any domain.TransactionContext and widened the snapshot window
 	// once chunked.
 	db := r.getDB(ctx)
-	transactions, err := common.Chunk[*domain.Transaction](ctx, db, ids, common.DefaultChunkSize,
+	transactions, err := common.Chunk(ctx, db, ids, common.DefaultChunkSize,
 		func(tx *gorm.DB, batch []uint) ([]*domain.Transaction, error) {
 			var batchTxns []*domain.Transaction
 			if err := tx.

@@ -79,7 +79,7 @@ func (r *TransactionCodeRepository) FindByCodes(ctx context.Context, codes []str
 		return []*domain.TransactionCode{}, nil
 	}
 
-	tcs, err := common.ChunkStrings[*domain.TransactionCode](ctx, r.getDB(ctx), codes, common.DefaultChunkSize,
+	tcs, err := common.ChunkStrings(ctx, r.getDB(ctx), codes, common.DefaultChunkSize,
 		func(tx *gorm.DB, batch []string) ([]*domain.TransactionCode, error) {
 			var batchTCs []*domain.TransactionCode
 			if err := tx.Where("code IN ?", batch).Find(&batchTCs).Error; err != nil {

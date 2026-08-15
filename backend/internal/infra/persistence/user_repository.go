@@ -84,7 +84,7 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []uint) (map[uint]*do
 		return make(map[uint]*domain.User), nil
 	}
 
-	users, err := common.Chunk[*domain.User](ctx, r.DB.WithContext(ctx), ids, common.DefaultChunkSize,
+	users, err := common.Chunk(ctx, r.DB.WithContext(ctx), ids, common.DefaultChunkSize,
 		func(tx *gorm.DB, batch []uint) ([]*domain.User, error) {
 			var batchUsers []*domain.User
 			if err := tx.Where("id IN ?", batch).Find(&batchUsers).Error; err != nil {
