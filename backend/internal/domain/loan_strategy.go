@@ -95,6 +95,9 @@ func (s *CustomScheduleStrategy) ProcessPayment(loan *Loan, paymentAmount int64,
 	if paymentAmount != schedule.Amount {
 		return NewValidationError("Số tiền thanh toán không khớp với số tiền trong lịch")
 	}
+	if err := schedule.ValidateComponents(); err != nil {
+		return err
+	}
 
 	// Update the schedule as paid
 	now := clock.Now()
@@ -105,14 +108,5 @@ func (s *CustomScheduleStrategy) ProcessPayment(loan *Loan, paymentAmount int64,
 		return err
 	}
 
-	// Update loan outstanding principal based on schedule
-	loan.OutstandingPrincipal -= paymentAmount
-
-	// Check if loan is fully repaid and update status
-	if loan.OutstandingPrincipal <= 0 {
-		loan.OutstandingPrincipal = 0
-		loan.Status = LoanStatusClosed
-	}
-
-	return nil
+	return loan.ApplyScheduledPayment(schedule.PrincipalAmount, schedule.InterestAmount)
 }

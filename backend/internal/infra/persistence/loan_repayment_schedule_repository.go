@@ -7,6 +7,7 @@ import (
 	"api-server/internal/domain"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type LoanRepaymentScheduleRepository struct {
@@ -34,6 +35,20 @@ func (r *LoanRepaymentScheduleRepository) GetByID(ctx context.Context, id uint) 
 		return nil, err
 	}
 
+	return &schedule, nil
+}
+
+func (r *LoanRepaymentScheduleRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.LoanRepaymentSchedule, error) {
+	var schedule domain.LoanRepaymentSchedule
+	err := r.dbForContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		First(&schedule, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, domain.NewNotFoundError("loan repayment schedule not found")
+		}
+		return nil, err
+	}
 	return &schedule, nil
 }
 

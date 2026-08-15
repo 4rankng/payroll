@@ -73,6 +73,11 @@ export function LoanDetailsSheet({
         period: item.period ?? index + 1,
         due_date: item.due_date,
         amount: item.amount,
+        // The legacy schedule endpoint does not expose a principal split.
+        // Treat it as interest-only in the preview so we never promise a
+        // lower outstanding principal than the server will persist.
+        principal_amount: 0,
+        interest_amount: item.amount,
         status: item.status,
         paid_at: null as string | null,
       })) ?? [],

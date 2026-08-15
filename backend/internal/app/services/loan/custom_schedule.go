@@ -41,7 +41,6 @@ func (s *LoanService) CreateCustomScheduleLoan(ctx context.Context, loan *domain
 			loan.InterestRateBps = 0
 		}
 	}
-
 	// Validate loan after derived fields are set
 	if err := loan.Validate(); err != nil {
 		return nil, err
@@ -56,6 +55,9 @@ func (s *LoanService) CreateCustomScheduleLoan(ctx context.Context, loan *domain
 	// Verify schedules are valid
 	if len(schedules) == 0 {
 		return nil, domain.NewValidationError(constants.MsgMinOneScheduleRequiredVN)
+	}
+	if err := domain.AllocateRepaymentScheduleComponents(loan.PrincipalAmount, schedules); err != nil {
+		return nil, err
 	}
 
 	// Verify schedule dates are in order
@@ -156,108 +158,98 @@ func (s *LoanService) CreateCustomScheduleLoan(ctx context.Context, loan *domain
 
 // ProcessScheduledPayment processes a payment against a specific schedule
 func (s *LoanService) ProcessScheduledPayment(ctx context.Context, loanID uint, scheduleID uint, paymentDate time.Time, reference string, notes *string, createdBy uint) (*domain.Loan, []uint, error) {
-	// Get loan and schedule
+	// Load the original state for the event. The financial mutation below is
+	// performed under row locks in one transaction.
 	loan, err := s.LoanRepo.GetByID(ctx, loanID)
 	if err != nil {
 		return nil, nil, err
 	}
 	originalLoan := *loan
 
-	schedule, err := s.RepaymentScheduleRepo.GetByID(ctx, scheduleID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Verify the schedule belongs to the loan
-	if schedule.LoanID != loanID {
-		return nil, nil, domain.NewValidationError(constants.MsgScheduleNotBelongToLoanVN)
-	}
-
-	// Verify the schedule is pending (not already paid)
-	if schedule.Status == domain.ScheduleStatusPaid {
-		return nil, nil, domain.NewValidationError(constants.MsgScheduleAlreadyPaidVN)
-	}
-
 	var ledgerEntryIDs []uint
-	var transactionID *uint
-	var existingTxnID *uint
-
-	// First phase: Check if there's an existing pending transaction to settle
-	currentSchedule, err := s.RepaymentScheduleRepo.GetByID(ctx, scheduleID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if currentSchedule.TransactionID != nil {
-		txn, err := s.TransactionRepo.GetByID(ctx, *currentSchedule.TransactionID)
-		if err != nil && !domain.IsNotFoundError(err) {
-			return nil, nil, fmt.Errorf("failed to fetch existing transaction: %w", err)
-		}
-		if txn != nil && txn.Status == domain.TransactionStatusPending {
-			existingTxnID = &txn.ID
-		}
-	}
-
-	desc := fmt.Sprintf("Trả nợ theo lịch %s - Kỳ %d", loan.LoanCode, currentSchedule.Period)
-	if notes != nil && *notes != "" {
-		desc = fmt.Sprintf("%s - %s", desc, *notes)
-	}
-
-	// Second phase: Create/settle transaction (outside of the main transaction)
-	if existingTxnID != nil {
-		// Settle the existing pending transaction
-		settlement := &domain.Settlement{
-			TransactionID:  *existingTxnID,
-			Amount:         currentSchedule.Amount,
-			SettlementDate: paymentDate,
-			Notes:          "",
-			CreatedBy:      createdBy,
-		}
-		if notes != nil && *notes != "" {
-			settlement.Notes = *notes
-		}
-		updatedTxn, _, ledgerEntries, err := s.transaction.CreateSettlement(ctx, *existingTxnID, settlement)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to settle scheduled repayment transaction: %w", err)
-		}
-		transactionID = &updatedTxn.ID
-		for _, entry := range ledgerEntries {
-			ledgerEntryIDs = append(ledgerEntryIDs, entry.ID)
-		}
-	} else {
-		// Create a new settled transaction
-		txn := &domain.Transaction{
-			Description:     desc,
-			TransactionType: domain.TransactionTypeLoanRepayment,
-			Amount:          currentSchedule.Amount,
-			Party:           loan.Lender.Name,
-			Status:          domain.TransactionStatusSettled,
-			LoanID:          &loan.ID,
-			CreatedBy:       createdBy,
-		}
-		createdTxn, ledgerEntries, err := s.transaction.CreateTransaction(ctx, txn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create scheduled repayment transaction: %w", err)
-		}
-		transactionID = &createdTxn.ID
-		for _, entry := range ledgerEntries {
-			ledgerEntryIDs = append(ledgerEntryIDs, entry.ID)
-		}
-	}
-
-	// Third phase: Update schedule and loan in a database transaction
+	var processedSchedule domain.LoanRepaymentSchedule
 	err = s.TxManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		// Reload schedule to check status again (for concurrency safety)
-		currentSchedule, err := s.RepaymentScheduleRepo.GetByID(txCtx, scheduleID)
+		// Lock the schedule first, so duplicate requests serialize before any
+		// settlement or ledger entries are created.
+		currentSchedule, err := s.RepaymentScheduleRepo.GetByIDForUpdate(txCtx, scheduleID)
 		if err != nil {
 			return err
+		}
+		if currentSchedule.LoanID != loanID {
+			return domain.NewValidationError(constants.MsgScheduleNotBelongToLoanVN)
 		}
 
 		if currentSchedule.Status == domain.ScheduleStatusPaid {
 			return domain.NewValidationError(constants.MsgScheduleAlreadyPaidVN)
 		}
+		if err := currentSchedule.ValidateComponents(); err != nil {
+			return err
+		}
 
-		// Update the schedule as paid
+		// Lock the loan too. Different installments for the same loan may be
+		// paid concurrently, and each must apply to the latest aggregates.
+		loanForUpdate, err := s.LoanRepo.GetByIDForUpdate(txCtx, loanID)
+		if err != nil {
+			return err
+		}
+
+		var transactionID *uint
+		if currentSchedule.TransactionID != nil {
+			txn, err := s.TransactionRepo.GetByIDForUpdate(txCtx, *currentSchedule.TransactionID)
+			if err != nil {
+				return fmt.Errorf("failed to fetch existing transaction: %w", err)
+			}
+			if txn.Status == domain.TransactionStatusPending {
+				settlement := &domain.Settlement{
+					TransactionID:  txn.ID,
+					Amount:         currentSchedule.Amount,
+					SettlementDate: paymentDate,
+					CreatedBy:      createdBy,
+				}
+				if notes != nil && *notes != "" {
+					settlement.Notes = *notes
+				}
+				updatedTxn, _, entries, err := s.transaction.CreateSettlement(txCtx, txn.ID, settlement)
+				if err != nil {
+					return fmt.Errorf("failed to settle scheduled repayment transaction: %w", err)
+				}
+				transactionID = &updatedTxn.ID
+				for _, entry := range entries {
+					ledgerEntryIDs = append(ledgerEntryIDs, entry.ID)
+				}
+			} else {
+				return domain.NewValidationError("Giao dịch của kỳ thanh toán không còn ở trạng thái chờ")
+			}
+		}
+
+		if transactionID == nil {
+			desc := fmt.Sprintf("Trả nợ theo lịch %s - Kỳ %d", loanForUpdate.LoanCode, currentSchedule.Period)
+			if notes != nil && *notes != "" {
+				desc = fmt.Sprintf("%s - %s", desc, *notes)
+			}
+			txn := &domain.Transaction{
+				Description:         desc,
+				TransactionType:     domain.TransactionTypeLoanRepayment,
+				Amount:              currentSchedule.Amount,
+				LoanPrincipalAmount: currentSchedule.PrincipalAmount,
+				LoanInterestAmount:  currentSchedule.InterestAmount,
+				Party:               loanForUpdate.Lender.Name,
+				Status:              domain.TransactionStatusSettled,
+				LoanID:              &loanForUpdate.ID,
+				CreatedBy:           createdBy,
+			}
+			createdTxn, entries, err := s.transaction.CreateTransaction(txCtx, txn)
+			if err != nil {
+				return fmt.Errorf("failed to create scheduled repayment transaction: %w", err)
+			}
+			transactionID = &createdTxn.ID
+			for _, entry := range entries {
+				ledgerEntryIDs = append(ledgerEntryIDs, entry.ID)
+			}
+		}
+
+		// Update the schedule as paid only after its financial transaction is
+		// staged in the same database transaction.
 		now := clock.Now()
 		currentSchedule.Status = domain.ScheduleStatusPaid
 		currentSchedule.PaidAt = &now
@@ -270,27 +262,16 @@ func (s *LoanService) ProcessScheduledPayment(ctx context.Context, loanID uint, 
 			return fmt.Errorf("failed to update repayment schedule: %w", err)
 		}
 
-		// Reload loan to get latest state
-		loanForUpdate, err := s.LoanRepo.GetByID(txCtx, loanID)
-		if err != nil {
+		if err := loanForUpdate.ApplyScheduledPayment(currentSchedule.PrincipalAmount, currentSchedule.InterestAmount); err != nil {
 			return err
-		}
-
-		// Update loan outstanding principal
-		loanForUpdate.OutstandingPrincipal -= currentSchedule.Amount
-
-		// If fully repaid, close the loan
-		if loanForUpdate.OutstandingPrincipal <= 0 {
-			loanForUpdate.OutstandingPrincipal = 0
-			loanForUpdate.Status = domain.LoanStatusClosed
 		}
 
 		if err := s.LoanRepo.Update(txCtx, loanForUpdate); err != nil {
 			return fmt.Errorf("failed to update loan: %w", err)
 		}
 
-		// Update outer schedule variable for downstream logging
-		*schedule = *currentSchedule
+		// Update outer values for logging and the domain event after commit.
+		processedSchedule = *currentSchedule
 		// Update outer loan variable
 		*loan = *loanForUpdate
 
@@ -310,7 +291,7 @@ func (s *LoanService) ProcessScheduledPayment(ctx context.Context, loanID uint, 
 	// Invalidate cache
 	s.invalidateLoanCache(ctx)
 
-	s.logger.Info("Scheduled loan payment successful", "loanID", loanID, "scheduleID", scheduleID, "amount", schedule.Amount, "outstanding", loan.OutstandingPrincipal)
+	s.logger.Info("Scheduled loan payment successful", "loanID", loanID, "scheduleID", scheduleID, "amount", processedSchedule.Amount, "outstanding", loan.OutstandingPrincipal)
 
 	// Reload loan to ensure we return the latest state
 	loan, err = s.LoanRepo.GetByID(ctx, loanID)

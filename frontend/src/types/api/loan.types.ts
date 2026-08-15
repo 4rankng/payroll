@@ -82,6 +82,8 @@ export interface CustomScheduleItem {
   period: number;
   due_date: string;
   amount: number;
+  principal_amount: number;
+  interest_amount: number;
   status: ScheduleStatus;
   paid_at: string | null;
 }

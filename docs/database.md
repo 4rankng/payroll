@@ -4,7 +4,7 @@ Schema overview, migration conventions, and GORM patterns for the payroll backen
 
 ## Migrations
 
-**Location:** `backend/migrations/` — 88 SQL `.up.sql` files (numbered 001-088).
+**Location:** `backend/migrations/` — 103 SQL `.up.sql` files (numbered 001-103; some numbers have down migrations).
 
 **Apply locally:**
 ```bash
@@ -41,7 +41,7 @@ cd backend && go run cmd/migrate/main.go up
 | `timesheet_edit_requests` | Timesheet edit workflow |
 | `assets` | Asset tracking |
 | `loans` | Loan management |
-| `loan_repayment_schedules` | Loan repayment schedules |
+| `loan_repayment_schedules` | Loan repayment schedules, including persisted `principal_amount` and `interest_amount` components (migration 103) |
 | `transactions` | Financial transactions |
 | `ledger_entries` | Double-entry accounting |
 | `settlements` | Payment settlement tracking |
@@ -74,6 +74,7 @@ cd backend && go run cmd/migrate/main.go up
 ### Notable Migration Events
 
 - **015 → 062:** Outbox tables created then dropped. Event publishing migrated to Redis streams. See [ADR-004](decisions/ADR-004-redis-streams-event-bus.md).
+- **103:** Persists principal/interest components for scheduled loan repayments and their transactions, backfills historical schedules, rebuilds paid loan aggregates, and repairs the corresponding scheduled-payment ledger entries. It stops before DDL if an existing schedule totals less than its loan principal, because that split cannot be inferred safely. Apply it before deploying code that reads or writes these columns.
 - **061:** Idempotent recovery script for orphaned settlements (`INSERT IGNORE`).
 - **064:** Drop `advance_payments` salary column.
 - **086:** Add `invalid_before` to user tokens for token revocation.

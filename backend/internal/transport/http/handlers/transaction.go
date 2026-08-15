@@ -686,7 +686,7 @@ func (h *TransactionHandler) GetTransactionMetadata(c *gin.Context) {
 			{Type: string(domain.TransactionTypeCapital), Label: "Vốn"},
 			{Type: string(domain.TransactionTypeWriteOff), Label: "Xóa nợ"},
 			{Type: string(domain.TransactionTypeLoanDisbursement), Label: "Tiền vay nợ"},
-			{Type: string(domain.TransactionTypeLoanRepayment), Label: "Trả nợ gốc"},
+			{Type: string(domain.TransactionTypeLoanRepayment), Label: "Thanh toán khoản vay"},
 		},
 		Statuses: []dto.TransactionMetadata{
 			{Type: string(domain.TransactionStatusPending), Label: "Chờ thanh toán"},

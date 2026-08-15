@@ -35,7 +35,7 @@ func TestTransactionType_Label(t *testing.T) {
 		{
 			name: "loan repayment type",
 			tt:   TransactionTypeLoanRepayment,
-			want: "Trả nợ gốc",
+			want: "Thanh toán khoản vay",
 		},
 		{
 			name: "unknown type defaults to expense",

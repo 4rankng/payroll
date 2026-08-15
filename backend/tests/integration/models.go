@@ -754,18 +754,38 @@ type RepaymentScheduleRequest struct {
 }
 
 type LoanResponse struct {
-	ID              uint      `json:"id"`
-	LenderID        uint      `json:"lender_id"`
-	PrincipalAmount int64     `json:"principal_amount"`
-	InterestRate    float64   `json:"interest_rate"`
-	TermMonths      int       `json:"term_months"`
-	StartDate       string    `json:"start_date"`
-	Status          string    `json:"status"`
-	Purpose         string    `json:"purpose,omitempty"`
-	PaymentSchedule string    `json:"payment_schedule,omitempty"`
-	Outstanding     int64     `json:"outstanding"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID                   uint      `json:"id"`
+	LenderID             uint      `json:"lender_id"`
+	PrincipalAmount      int64     `json:"principal_amount"`
+	InterestRate         float64   `json:"interest_rate"`
+	TermMonths           int       `json:"term_months"`
+	StartDate            string    `json:"start_date"`
+	Status               string    `json:"status"`
+	Purpose              string    `json:"purpose,omitempty"`
+	PaymentSchedule      string    `json:"payment_schedule,omitempty"`
+	Outstanding          int64     `json:"outstanding"`
+	OutstandingPrincipal int64     `json:"outstanding_principal"`
+	TotalInterestPaid    int64     `json:"total_interest_paid"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+}
+
+type LoanDetailResponse struct {
+	ID                   uint                            `json:"id"`
+	OutstandingPrincipal int64                           `json:"outstanding_principal"`
+	TotalInterestPaid    int64                           `json:"total_interest_paid"`
+	Schedules            []LoanRepaymentScheduleResponse `json:"schedules"`
+}
+
+type LoanRepaymentScheduleResponse struct {
+	ID     uint   `json:"id"`
+	Period int    `json:"period"`
+	Status string `json:"status"`
+}
+
+type ProcessScheduledPaymentRequest struct {
+	ScheduleID  uint   `json:"schedule_id"`
+	PaymentDate string `json:"payment_date"`
 }
 
 type DisburseLoanRequest struct {

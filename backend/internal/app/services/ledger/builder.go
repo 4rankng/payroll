@@ -22,17 +22,6 @@ func BuildTransactionLedgerEntries(txn *domain.Transaction) ([]*domain.LedgerEnt
 
 	now := clock.Now()
 
-	debitEntry := &domain.LedgerEntry{
-		Date:          now,
-		Account:       debitAccount,
-		Party:         txn.Party,
-		Debit:         txn.Amount,
-		Credit:        0,
-		AssetID:       txn.AssetID,
-		TransactionID: &txn.ID,
-		CreatedBy:     txn.CreatedBy,
-	}
-
 	creditEntry := &domain.LedgerEntry{
 		Date:          now,
 		Account:       creditAccount,
@@ -44,11 +33,50 @@ func BuildTransactionLedgerEntries(txn *domain.Transaction) ([]*domain.LedgerEnt
 		CreatedBy:     txn.CreatedBy,
 	}
 
-	if err := debitEntry.IsValid(); err != nil {
-		return nil, fmt.Errorf("invalid transaction debit entry: %w", err)
-	}
 	if err := creditEntry.IsValid(); err != nil {
 		return nil, fmt.Errorf("invalid transaction credit entry: %w", err)
+	}
+
+	if txn.TransactionType == domain.TransactionTypeLoanRepayment && (txn.LoanPrincipalAmount != 0 || txn.LoanInterestAmount != 0) {
+		entries := make([]*domain.LedgerEntry, 0, 3)
+		for _, component := range []struct {
+			account domain.LedgerAccount
+			amount  int64
+		}{
+			{account: domain.AccountLoan, amount: txn.LoanPrincipalAmount},
+			{account: domain.AccountExpense, amount: txn.LoanInterestAmount},
+		} {
+			if component.amount == 0 {
+				continue
+			}
+			debitEntry := &domain.LedgerEntry{
+				Date:          now,
+				Account:       component.account,
+				Party:         txn.Party,
+				Debit:         component.amount,
+				AssetID:       txn.AssetID,
+				TransactionID: &txn.ID,
+				CreatedBy:     txn.CreatedBy,
+			}
+			if err := debitEntry.IsValid(); err != nil {
+				return nil, fmt.Errorf("invalid transaction debit entry: %w", err)
+			}
+			entries = append(entries, debitEntry)
+		}
+		return append(entries, creditEntry), nil
+	}
+
+	debitEntry := &domain.LedgerEntry{
+		Date:          now,
+		Account:       debitAccount,
+		Party:         txn.Party,
+		Debit:         txn.Amount,
+		AssetID:       txn.AssetID,
+		TransactionID: &txn.ID,
+		CreatedBy:     txn.CreatedBy,
+	}
+	if err := debitEntry.IsValid(); err != nil {
+		return nil, fmt.Errorf("invalid transaction debit entry: %w", err)
 	}
 
 	return []*domain.LedgerEntry{debitEntry, creditEntry}, nil

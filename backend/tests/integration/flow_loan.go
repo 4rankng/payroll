@@ -86,9 +86,9 @@ func runLoanTests(client *APIClient, data *TestData, reporter *Reporter, cfg *Te
 			PrincipalAmount: 5000000,
 			StartDate:       today(),
 			Schedules: []RepaymentScheduleRequest{
-				{DueDate: "2026-06-10", Amount: 1700000},
-				{DueDate: "2026-07-10", Amount: 1700000},
-				{DueDate: "2026-08-10", Amount: 1600000},
+				{DueDate: "2026-06-10", Amount: 1000000},
+				{DueDate: "2026-07-10", Amount: 1000000},
+				{DueDate: "2026-08-10", Amount: 5000000},
 			},
 		}
 		var resp LoanResponse
@@ -149,6 +149,34 @@ func runLoanTests(client *APIClient, data *TestData, reporter *Reporter, cfg *Te
 		}
 		fmt.Printf("    Loan status after disburse: %s\n", resp.Status)
 		return AssertNotEqual("status", "pending", resp.Status)
+	})
+
+	reporter.RunTest(flowLoan, "Pay interest-only schedule without reducing principal", func() error {
+		if testLoanID == 0 {
+			return fmt.Errorf("no test loan ID")
+		}
+		var detail LoanDetailResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/loans/%d", testLoanID), &detail); err != nil {
+			return fmt.Errorf("get loan detail: %w", err)
+		}
+		if len(detail.Schedules) == 0 {
+			return fmt.Errorf("loan has no repayment schedules")
+		}
+
+		body := ProcessScheduledPaymentRequest{
+			ScheduleID:  detail.Schedules[0].ID,
+			PaymentDate: today(),
+		}
+		if _, _, err := admin.Post(fmt.Sprintf("/api/v1/loans/%d/repay-schedule", testLoanID), body); err != nil {
+			return fmt.Errorf("pay interest-only schedule: %w", err)
+		}
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/loans/%d", testLoanID), &detail); err != nil {
+			return fmt.Errorf("get loan after interest payment: %w", err)
+		}
+		if err := AssertEqual("outstanding principal", int64(5000000), detail.OutstandingPrincipal); err != nil {
+			return err
+		}
+		return AssertEqual("total interest paid", int64(1000000), detail.TotalInterestPaid)
 	})
 
 	reporter.RunTest(flowLoan, "Repay loan partial", func() error {

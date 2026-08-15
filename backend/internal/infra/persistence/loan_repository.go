@@ -44,6 +44,22 @@ func (r *LoanRepository) GetByID(ctx context.Context, id uint) (*domain.Loan, er
 	return &loan, nil
 }
 
+func (r *LoanRepository) GetByIDForUpdate(ctx context.Context, id uint) (*domain.Loan, error) {
+	var loan domain.Loan
+	err := r.db(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Preload("Lender").
+		Preload("Creator").
+		First(&loan, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, domain.NewNotFoundError("loan not found")
+		}
+		return nil, err
+	}
+	return &loan, nil
+}
+
 func (r *LoanRepository) Update(ctx context.Context, loan *domain.Loan) error {
 	updates := map[string]interface{}{
 		"disbursed_at":          loan.DisbursedAt,

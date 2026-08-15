@@ -265,7 +265,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
               <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
               <p className="typography-body-small text-blue-800">
                 Dư nợ sau thanh toán: <span className="font-semibold">
-                  {formatVND(loan.outstanding_principal - selectedSchedule.amount)}
+                  {formatVND(Math.max(loan.outstanding_principal - selectedSchedule.principal_amount, 0))}
                 </span>
               </p>
             </div>

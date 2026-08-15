@@ -189,17 +189,12 @@ func (s *TransactionService) CreateSettlement(
 	var finalSettlement *domain.Settlement
 	var finalLedgerEntries []*domain.LedgerEntry
 
-	// Wrap all operations in a database transaction for atomicity
-	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Create transaction context for repositories
-		txCtx := &domain.TransactionContext{
-			TX:              tx,
-			IsTransactional: true,
-		}
-		newCtx := domain.WithTransactionContext(ctx, txCtx)
-
+	// Keep the complete settlement operation inside a caller-owned transaction
+	// when one exists (loan schedule payment uses this to atomically settle the
+	// transaction, mark its schedule paid, and update loan aggregates).
+	execute := func(txCtx context.Context, tx *gorm.DB) error {
 		// 1. Get transaction and validate
-		txn, err := s.TransactionRepo.GetByID(newCtx, txnID)
+		txn, err := s.TransactionRepo.GetByIDForUpdate(txCtx, txnID)
 		if err != nil {
 			return err
 		}
@@ -224,7 +219,7 @@ func (s *TransactionService) CreateSettlement(
 		settlement.SettlementUUID = &settlementUUID
 
 		// 5. Create settlement record
-		if err := s.SettlementRepo.Create(newCtx, settlement); err != nil {
+		if err := s.SettlementRepo.Create(txCtx, settlement); err != nil {
 			return fmt.Errorf("failed to create settlement: %w", err)
 		}
 
@@ -241,13 +236,13 @@ func (s *TransactionService) CreateSettlement(
 
 		// 7. Update transaction status based on recalculated settled_amount
 		txn.UpdateStatus()
-		if err := s.TransactionRepo.Update(newCtx, txn); err != nil {
+		if err := s.TransactionRepo.Update(txCtx, txn); err != nil {
 			return fmt.Errorf("failed to update transaction: %w", err)
 		}
 
 		// 8. If this settlement is for a loan interest transaction, update the loan's total interest paid
 		if txn.LoanID != nil && txn.TransactionType == domain.TransactionTypeExpense {
-			loan, err := s.LoanRepo.GetByID(newCtx, *txn.LoanID)
+			loan, err := s.LoanRepo.GetByID(txCtx, *txn.LoanID)
 			if err != nil {
 				s.logger.Error("Failed to get loan for interest update", "loanID", *txn.LoanID, "error", err)
 				return fmt.Errorf("failed to get loan for interest update: %w", err)
@@ -257,7 +252,7 @@ func (s *TransactionService) CreateSettlement(
 			}
 
 			loan.TotalInterestPaid += settlement.Amount
-			if err := s.LoanRepo.Update(newCtx, loan); err != nil {
+			if err := s.LoanRepo.Update(txCtx, loan); err != nil {
 				s.logger.Error("Failed to update loan interest paid", "loanID", loan.ID, "amount", utils.FormatVND(settlement.Amount), "error", err)
 				return fmt.Errorf("failed to update loan interest paid: %w", err)
 			}
@@ -272,7 +267,7 @@ func (s *TransactionService) CreateSettlement(
 				"settlementID", settlement.ID, "transactionID", txn.ID, "error", err)
 			return fmt.Errorf("failed to build settlement ledger entries: %w", err)
 		}
-		if err := s.LedgerRepo.CreateTransaction(newCtx, ledgerEntries); err != nil {
+		if err := s.LedgerRepo.CreateTransaction(txCtx, ledgerEntries); err != nil {
 			s.logger.Error("Failed to persist settlement ledger entries",
 				"settlementID", settlement.ID, "transactionID", txn.ID, "error", err)
 			return fmt.Errorf("failed to create settlement ledger entries: %w", err)
@@ -288,14 +283,14 @@ func (s *TransactionService) CreateSettlement(
 			txnCode = fmt.Sprintf("#%d", txn.ID)
 		}
 		settlementEntityName := fmt.Sprintf("tất toán %s cho giao dịch %s", utils.FormatVND(settlement.Amount), txnCode)
-		_ = s.auditBuilder.BuildMessageWithUser(newCtx, settlement.CreatedBy, domain.AuditActionCreate, domain.EntityTypeTransaction, settlementEntityName)
+		_ = s.auditBuilder.BuildMessageWithUser(txCtx, settlement.CreatedBy, domain.AuditActionCreate, domain.EntityTypeTransaction, settlementEntityName)
 
 		// 10. If the transaction is now fully settled AND it's a revenue transaction, mark all
 		// its timesheets revenue_paid=1 inline (was previously: emit TransactionSettled to outbox
 		// → SettlementEventHandler.handleTransactionSettled does the same bulk update).
 		if txn.Status == domain.TransactionStatusSettled && txn.TransactionType == domain.TransactionTypeRevenue {
 			var timesheets []*domain.Timesheet
-			if err := tx.WithContext(newCtx).
+			if err := tx.WithContext(txCtx).
 				Where("transaction_id = ?", txn.ID).
 				Select("id").
 				Find(&timesheets).Error; err != nil {
@@ -306,7 +301,7 @@ func (s *TransactionService) CreateSettlement(
 				for _, t := range timesheets {
 					ids = append(ids, t.ID)
 				}
-				if err := s.TimesheetRepo.BulkUpdateRevenuePaid(newCtx, ids); err != nil {
+				if err := s.TimesheetRepo.BulkUpdateRevenuePaid(txCtx, ids); err != nil {
 					return fmt.Errorf("failed to mark timesheets as revenue paid for txn %d: %w", txn.ID, err)
 				}
 				s.logger.Info("Marked all timesheets revenue_paid for fully-settled txn",
@@ -320,20 +315,36 @@ func (s *TransactionService) CreateSettlement(
 		finalLedgerEntries = ledgerEntries
 
 		return nil
-	})
+	}
+
+	existingTxCtx, insideExistingTransaction := domain.GetTransactionFromContext(ctx)
+	var err error
+	if insideExistingTransaction && existingTxCtx != nil && existingTxCtx.IsTransactional {
+		err = execute(ctx, existingTxCtx.TX)
+	} else {
+		err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			newCtx := domain.WithTransactionContext(ctx, &domain.TransactionContext{TX: tx, IsTransactional: true})
+			return execute(newCtx, tx)
+		})
+	}
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	settledEvent := domain.NewTransactionSettledEvent(ctx, finalTxn, finalSettlement)
-	if pubErr := s.events.Publish(ctx, settledEvent); pubErr != nil {
-		s.logger.Warn("Failed to publish TransactionSettled audit event",
-			"transactionID", finalTxn.ID, "settlementID", finalSettlement.ID, "error", pubErr)
+	publish := func() {
+		settledEvent := domain.NewTransactionSettledEvent(ctx, finalTxn, finalSettlement)
+		if pubErr := s.events.Publish(ctx, settledEvent); pubErr != nil {
+			s.logger.Warn("Failed to publish TransactionSettled audit event",
+				"transactionID", finalTxn.ID, "settlementID", finalSettlement.ID, "error", pubErr)
+		}
+		s.invalidateTransactionCache(ctx)
 	}
-
-	// Invalidate cache
-	s.invalidateTransactionCache(ctx)
+	if insideExistingTransaction {
+		domain.RegisterAfterCommit(ctx, publish)
+	} else {
+		publish()
+	}
 
 	var settlementUUID string
 	if finalSettlement.SettlementUUID != nil {

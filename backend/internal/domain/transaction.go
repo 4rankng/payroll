@@ -35,7 +35,7 @@ func (t TransactionType) Label() string {
 	case TransactionTypeLoanDisbursement:
 		return "Giải ngân khoản vay"
 	case TransactionTypeLoanRepayment:
-		return "Trả nợ gốc"
+		return "Thanh toán khoản vay"
 	default:
 		return "Chi phí"
 	}
@@ -71,6 +71,8 @@ type Transaction struct {
 	TransactionCode       *string           `json:"transaction_code" gorm:"type:varchar(36)"`
 	TransactionType       TransactionType   `json:"transaction_type" gorm:"type:varchar(50);not null"`
 	Amount                int64             `json:"amount" gorm:"type:bigint;not null"`
+	LoanPrincipalAmount   int64             `json:"loan_principal_amount" gorm:"type:bigint;not null;default:0"`
+	LoanInterestAmount    int64             `json:"loan_interest_amount" gorm:"type:bigint;not null;default:0"`
 	Party                 string            `json:"party" gorm:"type:varchar(255);not null"`
 	Status                TransactionStatus `json:"status" gorm:"type:varchar(50);not null;default:'pending'"`
 	SettledAmount         int64             `json:"settled_amount" gorm:"type:bigint;not null;default:0"`
@@ -162,6 +164,15 @@ func (t *Transaction) Validate() error {
 		t.Status != TransactionStatusPending &&
 		t.Status != TransactionStatusPartiallySettled {
 		return NewValidationError("trạng thái giao dịch không hợp lệ")
+	}
+
+	if t.TransactionType == TransactionTypeLoanRepayment {
+		if t.LoanPrincipalAmount < 0 || t.LoanInterestAmount < 0 {
+			return NewValidationError("Phân bổ gốc và lãi không được âm")
+		}
+		if (t.LoanPrincipalAmount != 0 || t.LoanInterestAmount != 0) && t.LoanPrincipalAmount+t.LoanInterestAmount != t.Amount {
+			return NewValidationError("Phân bổ gốc và lãi không khớp số tiền giao dịch")
+		}
 	}
 
 	return nil

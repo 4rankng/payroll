@@ -102,6 +102,24 @@ func (l *Loan) CanRepay(amount int64) error {
 	return nil
 }
 
+// ApplyScheduledPayment updates the aggregate only with the corresponding
+// principal and interest components of a settled schedule installment.
+func (l *Loan) ApplyScheduledPayment(principalAmount, interestAmount int64) error {
+	if principalAmount < 0 || interestAmount < 0 {
+		return NewValidationError("Phân bổ gốc và lãi không được âm")
+	}
+	if principalAmount > l.OutstandingPrincipal {
+		return NewValidationError("Số tiền gốc trả vượt quá nợ gốc còn lại")
+	}
+
+	l.OutstandingPrincipal -= principalAmount
+	l.TotalInterestPaid += interestAmount
+	if l.OutstandingPrincipal == 0 {
+		l.Status = LoanStatusClosed
+	}
+	return nil
+}
+
 // GenerateLoanCode creates unique loan code: LOAN-YYYY-NNN
 func GenerateLoanCode(createdAt time.Time, sequence int) string {
 	return fmt.Sprintf("LOAN-%d-%03d", createdAt.Year(), sequence)
@@ -111,6 +129,7 @@ func GenerateLoanCode(createdAt time.Time, sequence int) string {
 type LoanRepository interface {
 	Create(ctx context.Context, loan *Loan) error
 	GetByID(ctx context.Context, id uint) (*Loan, error)
+	GetByIDForUpdate(ctx context.Context, id uint) (*Loan, error)
 	Update(ctx context.Context, loan *Loan) error
 	List(ctx context.Context, filters LoanFilters) ([]*Loan, int64, error)
 	GetNextSequenceForYear(ctx context.Context, year int) (int, error)

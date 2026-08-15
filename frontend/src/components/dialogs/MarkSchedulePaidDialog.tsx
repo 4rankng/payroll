@@ -99,7 +99,7 @@ export function MarkSchedulePaidDialog({ isOpen, onClose, loan, schedule }: Mark
                 <Banknote className="w-3.5 h-3.5" />
                 Dư nợ sau thanh toán
               </div>
-              <span className="text-sm font-medium">{formatVND(loan.outstanding_principal - schedule.amount)}</span>
+              <span className="text-sm font-medium">{formatVND(Math.max(loan.outstanding_principal - schedule.principal_amount, 0))}</span>
             </div>
           </div>
 

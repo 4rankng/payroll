@@ -128,12 +128,14 @@ type ScheduleItemResponse struct {
 
 // RepaymentScheduleResponse represents a single repayment schedule item in a response
 type RepaymentScheduleResponse struct {
-	ID      uint    `json:"id"`
-	Period  int     `json:"period"`
-	DueDate string  `json:"due_date"` // YYYY-MM-DD
-	Amount  int64   `json:"amount"`
-	Status  string  `json:"status"`            // "pending" or "paid"
-	PaidAt  *string `json:"paid_at,omitempty"` // YYYY-MM-DDTHH:MM:SSZ
+	ID              uint    `json:"id"`
+	Period          int     `json:"period"`
+	DueDate         string  `json:"due_date"` // YYYY-MM-DD
+	Amount          int64   `json:"amount"`
+	PrincipalAmount int64   `json:"principal_amount"`
+	InterestAmount  int64   `json:"interest_amount"`
+	Status          string  `json:"status"`            // "pending" or "paid"
+	PaidAt          *string `json:"paid_at,omitempty"` // YYYY-MM-DDTHH:MM:SSZ
 }
 
 // ProcessScheduledPaymentRequest represents the request to process a scheduled payment

@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-const allFields = "id, description, transaction_type, ROUND(amount) as amount, party, status, ROUND(settled_amount) as settled_amount, url, asset_id, user_id, loan_id, reversed_transaction_id, created_by, created_at, updated_at, deleted_at, transaction_code"
+const allFields = "id, description, transaction_type, ROUND(amount) as amount, ROUND(loan_principal_amount) as loan_principal_amount, ROUND(loan_interest_amount) as loan_interest_amount, party, status, ROUND(settled_amount) as settled_amount, url, asset_id, user_id, loan_id, reversed_transaction_id, created_by, created_at, updated_at, deleted_at, transaction_code"
 
 type transactionRepository struct {
 	db *gorm.DB

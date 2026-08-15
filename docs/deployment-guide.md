@@ -93,11 +93,11 @@ Frontend has both `yarn.lock` (used by Docker build) and `pnpm-lock.yaml` (used 
 
 ## Database Migrations
 
-83 SQL migration files in `backend/migrations/` (`.up.sql` naming).
+103 SQL migration files in `backend/migrations/` (`.up.sql` naming; the latest is migration 103).
 
 ### Applying Migrations to Demo/Prod
 
-When a new migration references columns that the deployed backend code expects, the migration must be applied **before** the backend deploy. Two approaches:
+When a new migration references columns that the deployed backend code expects, the migration must be applied **before** the backend deploy. Migration 103 also backfills loan repayment allocations and repairs related loan aggregates and ledger entries, so apply the complete migration before deploying the matching backend. It refuses to guess where a loan's existing schedule total is lower than its principal; repair those schedules first, then rerun the migration. Two approaches:
 
 1. **Via `make demo-db`**: Dumps local dev DB (which already has migrations applied) and restores to demo. Works when local dev is up to date.
 

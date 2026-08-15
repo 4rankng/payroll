@@ -214,13 +214,14 @@ func (s *LoanService) RepayPrincipal(ctx context.Context, loanID uint, amount in
 			desc = fmt.Sprintf("%s - %s", desc, *notes)
 		}
 		txn := &domain.Transaction{
-			Description:     desc,
-			TransactionType: domain.TransactionTypeLoanRepayment,
-			Amount:          amount,
-			Party:           loan.Lender.Name,
-			Status:          domain.TransactionStatusSettled,
-			LoanID:          &loan.ID,
-			CreatedBy:       createdBy,
+			Description:         desc,
+			TransactionType:     domain.TransactionTypeLoanRepayment,
+			Amount:              amount,
+			LoanPrincipalAmount: amount,
+			Party:               loan.Lender.Name,
+			Status:              domain.TransactionStatusSettled,
+			LoanID:              &loan.ID,
+			CreatedBy:           createdBy,
 		}
 		if err := s.TransactionRepo.Create(txCtx, txn); err != nil {
 			return fmt.Errorf("failed to create principal repayment transaction: %w", err)
@@ -339,44 +340,26 @@ func (s *LoanService) ProcessLoanPayment(ctx context.Context, loanID uint, sched
 		if notes != nil && *notes != "" {
 			desc = fmt.Sprintf("%s - %s", desc, *notes)
 		}
+		if err := schedule.ValidateComponents(); err != nil {
+			return err
+		}
 		txn := &domain.Transaction{
-			Description:     desc,
-			TransactionType: domain.TransactionTypeLoanRepayment,
-			Amount:          schedule.Amount,
-			Party:           loan.Lender.Name,
-			Status:          domain.TransactionStatusSettled,
-			LoanID:          &loan.ID,
-			CreatedBy:       createdBy,
+			Description:         desc,
+			TransactionType:     domain.TransactionTypeLoanRepayment,
+			Amount:              schedule.Amount,
+			LoanPrincipalAmount: schedule.PrincipalAmount,
+			LoanInterestAmount:  schedule.InterestAmount,
+			Party:               loan.Lender.Name,
+			Status:              domain.TransactionStatusSettled,
+			LoanID:              &loan.ID,
+			CreatedBy:           createdBy,
 		}
 		if err := s.TransactionRepo.Create(txCtx, txn); err != nil {
 			return fmt.Errorf("failed to create scheduled repayment transaction: %w", err)
 		}
 		createdTransactionID = &txn.ID
 
-		// Create ledger entries: Dr Loan (liability), Cr Cash
-
-		ledgerEntries := []*domain.LedgerEntry{
-			// Debit: Loan (decrease liability)
-			{
-				Date:          paymentDate,
-				Account:       domain.AccountLoan,
-				Party:         loan.Lender.Name,
-				Debit:         schedule.Amount,
-				Credit:        0,
-				CreatedBy:     createdBy,
-				TransactionID: createdTransactionID,
-			},
-			// Credit: Cash (decrease asset)
-			{
-				Date:          paymentDate,
-				Account:       domain.AccountCash,
-				Party:         loan.Lender.Name,
-				Debit:         0,
-				Credit:        schedule.Amount,
-				CreatedBy:     createdBy,
-				TransactionID: createdTransactionID,
-			},
-		}
+		ledgerEntries := scheduledLoanPaymentLedgerEntries(paymentDate, loan.Lender.Name, schedule, createdTransactionID, createdBy)
 
 		// Create ledger entries
 		if err := s.LedgerRepo.CreateTransaction(txCtx, ledgerEntries); err != nil {
@@ -468,14 +451,20 @@ func (s *LoanService) CreateTransactionsForDueSchedules(ctx context.Context, asO
 			if err != nil {
 				return err
 			}
+			if err := currentSchedule.ValidateComponents(); err != nil {
+				return err
+			}
 
 			txn := &domain.Transaction{
-				TransactionType: domain.TransactionTypeLoanRepayment,
-				Amount:          currentSchedule.Amount,
-				Party:           loan.Lender.Name,
-				Status:          domain.TransactionStatusPending,
-				LoanID:          &loan.ID,
-				CreatedBy:       systemUserID,
+				Description:         fmt.Sprintf("Trả nợ theo lịch %s - Kỳ %d", loan.LoanCode, currentSchedule.Period),
+				TransactionType:     domain.TransactionTypeLoanRepayment,
+				Amount:              currentSchedule.Amount,
+				LoanPrincipalAmount: currentSchedule.PrincipalAmount,
+				LoanInterestAmount:  currentSchedule.InterestAmount,
+				Party:               loan.Lender.Name,
+				Status:              domain.TransactionStatusPending,
+				LoanID:              &loan.ID,
+				CreatedBy:           systemUserID,
 			}
 
 			if err := s.transaction.Create(txCtx, txn); err != nil {
@@ -632,6 +621,39 @@ func (s *LoanService) UpdateInterestPaid(ctx context.Context, loanID uint, amoun
 	return nil
 }
 
+func scheduledLoanPaymentLedgerEntries(paymentDate time.Time, party string, schedule *domain.LoanRepaymentSchedule, transactionID *uint, createdBy uint) []*domain.LedgerEntry {
+	entries := make([]*domain.LedgerEntry, 0, 3)
+	if schedule.PrincipalAmount > 0 {
+		entries = append(entries, &domain.LedgerEntry{
+			Date:          paymentDate,
+			Account:       domain.AccountLoan,
+			Party:         party,
+			Debit:         schedule.PrincipalAmount,
+			TransactionID: transactionID,
+			CreatedBy:     createdBy,
+		})
+	}
+	if schedule.InterestAmount > 0 {
+		entries = append(entries, &domain.LedgerEntry{
+			Date:          paymentDate,
+			Account:       domain.AccountExpense,
+			Party:         party,
+			Debit:         schedule.InterestAmount,
+			TransactionID: transactionID,
+			CreatedBy:     createdBy,
+		})
+	}
+	entries = append(entries, &domain.LedgerEntry{
+		Date:          paymentDate,
+		Account:       domain.AccountCash,
+		Party:         party,
+		Credit:        schedule.Amount,
+		TransactionID: transactionID,
+		CreatedBy:     createdBy,
+	})
+	return entries
+}
+
 // recordPrincipalRepaymentSchedule ensures principal repayments are reflected in the repayment schedule table
 func (s *LoanService) recordPrincipalRepaymentSchedule(ctx context.Context, loan *domain.Loan, amount int64, paymentDate time.Time, reference string, transactionID *uint) error {
 	schedules, err := s.RepaymentScheduleRepo.GetByLoanID(ctx, loan.ID)
@@ -655,7 +677,7 @@ func (s *LoanService) recordPrincipalRepaymentSchedule(ctx context.Context, loan
 
 	if pendingTarget != nil {
 		switch {
-		case pendingTarget.Amount == amount:
+		case pendingTarget.PrincipalAmount == amount && pendingTarget.InterestAmount == 0:
 			pendingTarget.Status = domain.ScheduleStatusPaid
 			pendingTarget.PaidAt = &now
 			if reference != "" {
@@ -669,7 +691,12 @@ func (s *LoanService) recordPrincipalRepaymentSchedule(ctx context.Context, loan
 			}
 			return nil
 		case pendingTarget.Amount > amount:
+			if pendingTarget.PrincipalAmount < amount {
+				pendingTarget = nil
+				break
+			}
 			pendingTarget.Amount -= amount
+			pendingTarget.PrincipalAmount -= amount
 			if err := s.RepaymentScheduleRepo.Update(ctx, pendingTarget); err != nil {
 				return fmt.Errorf("failed to update repayment schedule: %w", err)
 			}
@@ -679,13 +706,14 @@ func (s *LoanService) recordPrincipalRepaymentSchedule(ctx context.Context, loan
 	}
 
 	newSchedule := &domain.LoanRepaymentSchedule{
-		LoanID:        loan.ID,
-		Period:        nextPeriod,
-		DueDate:       paymentDate,
-		Amount:        amount,
-		Status:        domain.ScheduleStatusPaid,
-		PaidAt:        &now,
-		TransactionID: transactionID,
+		LoanID:          loan.ID,
+		Period:          nextPeriod,
+		DueDate:         paymentDate,
+		Amount:          amount,
+		PrincipalAmount: amount,
+		Status:          domain.ScheduleStatusPaid,
+		PaidAt:          &now,
+		TransactionID:   transactionID,
 	}
 
 	if reference != "" {

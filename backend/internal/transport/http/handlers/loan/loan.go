@@ -164,12 +164,14 @@ func (h *Handler) buildLoanDetailResponse(ctx context.Context, loan *domain.Loan
 			}
 
 			scheduleResponse := dto.RepaymentScheduleResponse{
-				ID:      schedule.ID,
-				Period:  schedule.Period,
-				DueDate: schedule.DueDate.Format("2006-01-02"),
-				Amount:  schedule.Amount,
-				Status:  string(schedule.Status),
-				PaidAt:  paidAtStr,
+				ID:              schedule.ID,
+				Period:          schedule.Period,
+				DueDate:         schedule.DueDate.Format("2006-01-02"),
+				Amount:          schedule.Amount,
+				PrincipalAmount: schedule.PrincipalAmount,
+				InterestAmount:  schedule.InterestAmount,
+				Status:          string(schedule.Status),
+				PaidAt:          paidAtStr,
 			}
 			schedules = append(schedules, scheduleResponse)
 		}
