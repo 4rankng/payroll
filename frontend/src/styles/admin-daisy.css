@@ -417,9 +417,12 @@
     font-variant-numeric: tabular-nums lining-nums;
   }
 
-  [data-admin-ui] .admin-page-inner :is(button, a, input, textarea, [role="button"], [role="combobox"]):focus-visible,
+  /* Form controls (input/textarea) are excluded — their parent wrapper already
+     advertises focus via :focus-within, and a second ring on the nested
+     control draws the duplicate inner rectangle around the text. */
+  [data-admin-ui] .admin-page-inner :is(button, a, [role="button"], [role="combobox"]):focus-visible,
   html.admin-route-active :is([role="dialog"], [role="menu"], [role="listbox"])
-    :is(button, a, input, textarea, [role="button"], [role="option"]):focus-visible {
+    :is(button, a, [role="button"], [role="option"]):focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }

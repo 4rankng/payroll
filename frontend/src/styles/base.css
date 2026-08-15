@@ -459,7 +459,12 @@
   /* ========================================================================
      FOCUS VISIBLE - Accessible, Professional
      ======================================================================== */
-  :focus-visible {
+  /* Form controls (input/textarea/select) are excluded from the global outline
+     so they don't draw their own focus ring on top of the parent wrapper's
+     :focus-within ring. The wrapper's ring is the single source of focus
+     indication for the whole field. Buttons, links, and [role="button"] keep
+     the outline since they have no parent wrapper to advertise focus. */
+  :focus-visible:not(input):not(textarea):not(select) {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
     border-radius: 4px;
