@@ -115,7 +115,7 @@ const ZaloResetPassword = () => {
         data-theme="congtruong"
         className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
       >
-        <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_hsl(var(--neutral)/0.38)]">
+        <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
           <div className="ct-card-body gap-4 p-6 sm:p-8 text-center">
             <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
             <h2 className="font-display text-2xl font-black leading-tight tracking-[-0.04em]">
@@ -135,7 +135,7 @@ const ZaloResetPassword = () => {
       className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_hsl(var(--neutral)/0.38)]">
+      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
         <div className="ct-card-body gap-0 p-6 sm:p-8">
           <Link to="/forgot-password" className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold text-base-content/60 hover:text-primary">
             <ArrowLeft className="h-3.5 w-3.5" /> Quay lại

@@ -79,7 +79,7 @@ const ForgotPassword = () => {
       className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100 shadow-[0_24px_70px_-42px_hsl(var(--neutral)/0.38)]">
+      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
         <div className="ct-card-body gap-0 p-6 sm:p-8">
           <div className="mb-6 flex items-center gap-3">
             <img src="/logo-square.png" alt="TingTing logo" className="h-12 w-12 object-contain" />
@@ -136,7 +136,7 @@ const ForgotPassword = () => {
 
                 <button
                   type="submit"
-                  className="ct-btn ct-btn-primary ct-btn-lg mt-2 h-12 w-full rounded-xl text-sm font-extrabold normal-case shadow-[0_12px_28px_-14px_rgba(8,120,62,0.8)]"
+                  className="ct-btn ct-btn-primary ct-btn-lg mt-2 h-12 w-full rounded-xl text-sm font-extrabold normal-case"
                   disabled={pending || !identifier.trim()}
                 >
                   {pending ? (
