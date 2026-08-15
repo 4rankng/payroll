@@ -164,7 +164,10 @@ export default function PayrateEditPageMobile() {
   }, [config.rates, isFlexible]);
 
   const ratesLocked = serverResult?.fields.rates.locked ?? false;
-  const fromDateLocked = serverResult?.fields.effective_from.locked ?? false;
+  // The server flags configs whose start date has no legal move (paid floor
+  // below, linked timesheets above) — render the date read-only instead of
+  // letting the save hit a 400.
+  const fromDateLocked = (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
 
   const handleRatesChange = useCallback((rates: PayrateStructure) => {
     if (ratesLocked) return;

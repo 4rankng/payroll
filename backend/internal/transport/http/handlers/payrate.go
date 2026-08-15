@@ -65,6 +65,26 @@ func (h *PayrateHandler) earliestEffectiveFrom(ctx context.Context, projectID ui
 	return latestPaid.AddDate(0, 0, 1).Format("2006-01-02")
 }
 
+// fromDateLocked reports whether a payrate's start date has no legal move:
+// it cannot move earlier (the stored date is at or under the paid floor) and
+// cannot move later (a timesheet is already linked on or before that date,
+// so the config's reign cannot start after its own earliest row).
+func (h *PayrateHandler) fromDateLocked(ctx context.Context, payrate *domain.Payrate) bool {
+	floor := h.earliestEffectiveFrom(ctx, payrate.ProjectID)
+	from := payrate.FromDate.Format("2006-01-02")
+	if floor != "" && from <= floor {
+		return true
+	}
+	earliestLinked, err := h.payrateService.GetEarliestTimesheetDateForPayrate(ctx, payrate.ID)
+	if err != nil || earliestLinked == nil {
+		return false
+	}
+	// Wall-clock comparison: the stored dates may carry different locations
+	// (Local via the DSN vs UTC), which breaks instant equality on the same
+	// calendar day.
+	return earliestLinked.Format("2006-01-02") <= payrate.FromDate.Format("2006-01-02")
+}
+
 func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 	var req dto.CreatePayrateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -226,6 +246,7 @@ func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 		CreatedAt:             payrate.CreatedAt,
 		UpdatedAt:             payrate.UpdatedAt,
 		EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
+		FromDateLocked:        h.fromDateLocked(c.Request.Context(), payrate),
 	}
 
 	response.Success(c, payrateResponse, constants.MsgPayrateRetrievedSuccessfullyVN)
@@ -324,6 +345,7 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 			CreatedAt:             payrate.CreatedAt,
 			UpdatedAt:             payrate.UpdatedAt,
 			EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
+			FromDateLocked:        h.fromDateLocked(c.Request.Context(), payrate),
 		})
 	}
 

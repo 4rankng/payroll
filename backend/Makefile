@@ -68,7 +68,7 @@ dev:
 		echo "📦 Installing Air (hot-reload)..."; \
 		go install github.com/air-verse/air@latest; \
 	fi; \
-	air -c .air.toml
+	TZ=Asia/Ho_Chi_Minh air -c .air.toml
 
 # Optimized Docker push target
 # - Uses buildx with docker-container driver (supports registry cache)

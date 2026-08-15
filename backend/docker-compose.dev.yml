@@ -17,6 +17,7 @@ services:
       MYSQL_DATABASE: payroll_db
       MYSQL_USER: payroll_user
       MYSQL_PASSWORD: payroll_pass
+      TZ: Asia/Ho_Chi_Minh
     ports:
       - "3306:3306"
     volumes:

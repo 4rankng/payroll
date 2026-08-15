@@ -225,6 +225,24 @@ func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx contex
 	return nil
 }
 
+// GetEarliestTimesheetDateForPayrate returns the earliest work date linked to
+// a payrate config. The start date cannot move past it (rows are already
+// priced under this config), which is what makes the field UI-lockable.
+func (s *PayrateTemporalService) GetEarliestTimesheetDateForPayrate(ctx context.Context, payrateID uint) (*time.Time, error) {
+	var earliest struct {
+		MinDate *time.Time
+	}
+	err := s.db.WithContext(ctx).
+		Model(&domain.Timesheet{}).
+		Select("MIN(date) as min_date").
+		Where("payrate_id = ?", payrateID).
+		Scan(&earliest).Error
+	if err != nil {
+		return nil, err
+	}
+	return earliest.MinDate, nil
+}
+
 // GetLatestPaidTimesheetDateForProject returns the work date that establishes a
 // project's immutable payrate boundary. Unapproved or unpaid entries remain
 // eligible for recalculation by a later configuration.

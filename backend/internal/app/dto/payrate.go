@@ -74,6 +74,10 @@ type PayrateResponse struct {
 	// timesheet — the earliest start date an update may take. Empty when the
 	// project has no paid timesheets (no floor beyond today).
 	EarliestEffectiveFrom string `json:"earliest_effective_from,omitempty"`
+	// FromDateLocked marks a config whose start date has no legal move: it
+	// cannot go earlier (at/under the paid floor) nor later (timesheets are
+	// already linked from that date). The UI renders it read-only.
+	FromDateLocked bool `json:"from_date_locked"`
 }
 
 // ListPayratesRequest represents query parameters for listing payrates
