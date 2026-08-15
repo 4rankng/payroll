@@ -31,7 +31,7 @@ describe("PositionCell", () => {
       />,
     );
 
-    expect(screen.getByText("Lương 520")).toHaveClass("lg:text-center");
+    expect(screen.getByText("Lương 520")).toHaveClass("text-center");
 
     fireEvent.pointerDown(
       screen.getByRole("button", { name: "Tùy chọn cho vị trí Lương 520" }),

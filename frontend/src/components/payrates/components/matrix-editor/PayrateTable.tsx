@@ -41,10 +41,7 @@ export function PayrateTable({
   setEditingPositionValue, setEditingPosition, onRateChange,
 }: PayrateTableProps) {
   return (
-    <div
-      className="overflow-hidden border-y border-border bg-card lg:rounded-xl lg:border"
-      data-slot="payrate-rate-matrix"
-    >
+    <div className="min-w-0 overflow-hidden" data-slot="payrate-rate-matrix">
       {!isFlexible && (
         <div className="lg:hidden">
           <PayratePositionList

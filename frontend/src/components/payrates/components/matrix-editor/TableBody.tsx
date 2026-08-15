@@ -135,8 +135,8 @@ export function TableBody({
               )}
 
               {/* Day type */}
-              <TableCell className="w-28 min-w-28 px-3 py-2">
-                <span className="text-xs font-medium text-muted-foreground">
+              <TableCell className="w-28 min-w-28 px-3 py-2 text-center align-middle">
+                <span className="block text-xs font-medium text-muted-foreground">
                   {DAY_LABELS[dayType]}
                 </span>
               </TableCell>

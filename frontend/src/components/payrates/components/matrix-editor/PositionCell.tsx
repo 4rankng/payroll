@@ -39,7 +39,7 @@ export function PositionCell({
   };
 
   return (
-    <div className="relative flex min-w-0 items-start justify-between gap-2 lg:block" data-slot="payrate-position-cell">
+    <div className="relative block min-w-0" data-slot="payrate-position-cell">
       {editingPosition === position ? (
         <Input
           type="text"
@@ -52,7 +52,7 @@ export function PositionCell({
         />
       ) : (
         <>
-          <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-5 text-foreground lg:px-8 lg:text-center">{position}</p>
+          <p className="min-w-0 break-words px-8 text-center text-sm font-semibold leading-5 text-foreground">{position}</p>
           {!readOnly && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -60,7 +60,7 @@ export function PositionCell({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="-mr-2 -mt-2 h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground lg:absolute lg:right-0 lg:top-1/2 lg:mr-0 lg:mt-0 lg:-translate-y-1/2"
+                  className="absolute right-0 top-1/2 h-11 w-11 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   aria-label={`Tùy chọn cho vị trí ${position}`}
                 >
                   <MoreHorizontal className="h-4 w-4" aria-hidden="true" />

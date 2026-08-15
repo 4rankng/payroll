@@ -45,7 +45,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
   if (readOnly) {
     return (
       <div className={cn(
-        "text-right tabular-nums text-sm px-2 py-1 rounded",
+        "text-center tabular-nums text-sm px-2 py-1 rounded",
         isEmpty && !diffState ? "text-muted-foreground/40" : "",
         diffState && diffState !== 'unchanged' ? diffClasses[diffState] : "",
       )}>
@@ -65,7 +65,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
         onChange={e => onChange(position, dayType, hourType, e.target.value)}
         placeholder="0"
         className={cn(
-          "h-11 min-w-20 rounded-md px-3 text-right text-sm font-medium tabular-nums transition-colors lg:h-10",
+          "h-11 min-w-20 rounded-md px-3 text-center text-sm font-medium tabular-nums transition-colors lg:h-10",
           hasError && "border-destructive",
           hasDiff
             ? diffClasses[diffState]

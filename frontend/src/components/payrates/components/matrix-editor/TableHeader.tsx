@@ -36,17 +36,17 @@ export function TableHeader({
 }: TableHeaderProps) {
   return (
     <TableRow className="border-b border-border/60 bg-muted/30">
-      <TableHead className="sticky left-0 z-20 w-44 min-w-44 border-r border-border/60 bg-muted/30 px-4 py-3 text-xs font-semibold text-muted-foreground">
+      <TableHead className="sticky left-0 z-20 w-44 min-w-44 border-r border-border/60 bg-muted/30 px-4 py-3 text-center align-middle text-xs font-semibold text-muted-foreground">
         Vị trí
       </TableHead>
       {!isFlexible && (
-        <TableHead className="w-28 min-w-28 px-3 py-3 text-xs font-semibold text-muted-foreground">
+        <TableHead className="w-28 min-w-28 px-3 py-3 text-center align-middle text-xs font-semibold text-muted-foreground">
           Loại ngày
         </TableHead>
       )}
       {hourTypes.map(hourType => (
-        <TableHead key={hourType} className="min-w-[9.5rem] px-3 py-3 text-xs font-semibold text-muted-foreground group">
-          <div className="flex items-start gap-1">
+        <TableHead key={hourType} className="relative min-w-[9.5rem] px-3 py-3 text-center align-middle text-xs font-semibold text-muted-foreground group">
+          <div className="flex items-center justify-center">
             {editingHourType === hourType ? (
               <Input
                 type="text"
@@ -57,7 +57,7 @@ export function TableHeader({
                   if (e.key === 'Escape') { e.stopPropagation(); onCancelEditHourType(); }
                 }}
                 onBlur={onSaveHourType}
-                className={`h-11 p-2 text-xs font-mono font-semibold focus:ring-1 ${
+                className={`h-11 text-center text-xs font-mono font-semibold focus:ring-1 ${
                   editingHourTypeError
                     ? 'border border-destructive text-destructive bg-destructive/10 focus:ring-destructive'
                     : 'border-0 bg-transparent focus:ring-primary'
@@ -67,12 +67,12 @@ export function TableHeader({
             ) : (
               <button
                 type="button"
-                className={`min-w-0 flex-1 text-left ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : 'cursor-default'}`}
+                className={`flex min-h-11 w-full items-center justify-center gap-1 px-10 text-center ${!readOnly ? 'cursor-pointer hover:text-foreground transition-colors' : 'cursor-default'}`}
                 onClick={() => !readOnly && onEditHourType(hourType)}
                 title={readOnly ? hourType : `Nhấn để đổi tên: ${hourType}`}
               >
-                <span className="block break-words text-xs font-semibold text-foreground">{hourType}</span>
-                <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
+                <span className="break-words text-xs font-semibold text-foreground">{hourType}</span>
+                <span className="text-[10px] font-normal text-muted-foreground">
                   {isFlexible ? '₫/ca' : '₫/giờ'}
                 </span>
               </button>
@@ -80,7 +80,7 @@ export function TableHeader({
             {!readOnly && hourTypes.length > 1 && (
               <button
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onRemoveHourType(hourType); }}
-                className="ml-auto flex h-11 w-11 items-center justify-center rounded text-muted-foreground opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
+                className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded text-muted-foreground opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                 title={`Xóa cột ${hourType}`}
               >
                 <X className="h-3.5 w-3.5" />
