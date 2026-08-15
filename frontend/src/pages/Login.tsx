@@ -7,24 +7,14 @@ import {
   EyeOff,
   AlertCircle,
   Loader2,
-  ChevronRight,
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
-import { useLogin, useGoogleLogin } from "@/hooks/api/useAuth";
+import { useLogin } from "@/hooks/api/useAuth";
 import { apiClient } from "@/services/api/client";
 import type { ApiError } from "@/services/api/client";
-
-const GoogleIcon = () => (
-  <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-  </svg>
-);
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -39,7 +29,6 @@ const Login = () => {
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
-  const googleLoginMutation = useGoogleLogin();
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const needsCaptcha = failedAttempts >= 3;
@@ -135,37 +124,7 @@ const Login = () => {
     if (loginError) resetLogin();
   }, [emailOrUsername, password]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle Google OAuth redirect callback — Google returns id_token in the URL hash
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash.slice(1)); // strip leading '#'
-    const idToken = params.get("id_token");
-    if (idToken) {
-      // Remove token from URL before sending to backend
-      window.history.replaceState(null, "", window.location.pathname);
-      googleLoginMutation.mutate(idToken);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Redirect to Google OIDC — returns id_token in fragment, no popup, no FedCM needed
-  const handleGoogleLogin = useCallback(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
-    const nonce = crypto.getRandomValues(new Uint8Array(16))
-      .reduce((acc, b) => acc + b.toString(16).padStart(2, "0"), "");
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: window.location.origin + "/login",
-      response_type: "id_token",
-      scope: "openid email profile",
-      nonce,
-      prompt: "select_account",
-    });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  }, []);
-
-  const isDisabled = loginSubmitting || loginMutation.isPending || googleLoginMutation.isPending;
+  const isDisabled = loginSubmitting || loginMutation.isPending;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -296,37 +255,16 @@ const Login = () => {
                   <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">Chào mừng trở lại</h2>
                 </div>
 
-                {(loginMutation.error || googleLoginMutation.error) && (
+                {loginMutation.error && (
                   <div role="alert" className="ct-alert ct-alert-error mb-5 items-start rounded-xl text-sm shadow-none animate-fade-in">
                     <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
                     <span className="font-semibold leading-5">
-                      {loginMutation.error
-                        ? (((loginMutation.error as unknown) as ApiError)?.http_status === 429
-                          ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
-                          : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")
-                        : (((googleLoginMutation.error as unknown) as ApiError)?.message || "Đăng nhập Google thất bại. Vui lòng thử lại.")}
+                      {(((loginMutation.error as unknown) as ApiError)?.http_status === 429
+                        ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
+                        : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")}
                     </span>
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={isDisabled}
-                  className="ct-btn ct-btn-outline ct-btn-lg group h-12 w-full justify-start rounded-xl border-base-300 bg-base-100 px-3 text-sm normal-case shadow-sm hover:border-base-content/20 hover:bg-base-200"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-base-300 bg-base-100">
-                    {googleLoginMutation.isPending
-                      ? <span className="ct-loading ct-loading-spinner ct-loading-sm text-base-content/45" />
-                      : <GoogleIcon />}
-                  </span>
-                  <span className="flex-1 text-left font-bold">
-                    {googleLoginMutation.isPending ? "Đang đăng nhập..." : "Tiếp tục bằng Google"}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-base-content/35 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                </button>
-
-                <div className="ct-divider my-5 text-[10px] font-bold uppercase tracking-[0.2em] text-base-content/35">hoặc đăng nhập bằng tài khoản</div>
 
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                   <fieldset className="space-y-4">
