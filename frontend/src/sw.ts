@@ -14,7 +14,7 @@ const PRECACHE_MANIFEST = self.__WB_MANIFEST;
 
 // Cache name — bump version to force SW update when caching strategy changes.
 const CACHE_PREFIX = 'tingting-cache-';
-const CACHE_NAME = 'tingting-cache-v6';
+const CACHE_NAME = 'tingting-cache-v5';
 const IS_DEVELOPMENT = self.location.pathname.endsWith('/dev-sw.js');
 
 // Install event — precache assets
