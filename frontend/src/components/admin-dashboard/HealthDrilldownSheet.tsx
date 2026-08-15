@@ -511,8 +511,8 @@ function AttendanceRowsTable({
               <TableRow key={row.id} className="border-border/50 transition-colors hover:bg-muted/30">
                 <Td className="font-medium text-foreground">{row.employee_name ?? `#${row.employee_id}`}</Td>
                 <Td className="text-muted-foreground">{row.project_name ?? `#${row.project_id}`}</Td>
-                <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
-                  {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })}
+                <Td className="whitespace-nowrap text-muted-foreground">
+                  <TimeCell iso={row.check_in_time} />
                 </Td>
                 <Td className="text-muted-foreground">
                   <span className="block">{row.check_in_gate || '—'}</span>
@@ -531,8 +531,8 @@ function AttendanceRowsTable({
                   </>
                 ) : (
                   <>
-                    <Td className="whitespace-nowrap tabular-nums text-muted-foreground">
-                      {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
+                    <Td className="whitespace-nowrap text-muted-foreground">
+                      {row.check_out_time ? <TimeCell iso={row.check_out_time} /> : '—'}
                     </Td>
                     <Td className="text-muted-foreground">
                       <span className="block">{row.check_out_gate || '—'}</span>
@@ -677,10 +677,10 @@ function SuccessfulCheckoutCard({ row, onOpenMap }: { row: AdminAttendanceRespon
       </div>
       <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-2">
         <DetailLine label="Vào làm">
-          {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
+          {format(parseISO(row.check_in_time), 'HH:mm dd/MM', { locale: vi })} · {row.check_in_gate || '—'}
         </DetailLine>
         <DetailLine label="Tan ca">
-          {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm', { locale: vi }) : '—'}
+          {row.check_out_time ? format(parseISO(row.check_out_time), 'HH:mm dd/MM', { locale: vi }) : '—'}
           {row.check_out_gate ? ` · ${row.check_out_gate}` : ''}
         </DetailLine>
         <DetailLine label="GPS vào">{formatGpsAccuracy(row.check_in_accuracy)}</DetailLine>
@@ -716,7 +716,7 @@ function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceRespon
       </div>
       <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-2">
         <DetailLine label="Vào làm">
-          {format(parseISO(row.check_in_time), 'HH:mm', { locale: vi })} · {row.check_in_gate || '—'}
+          {format(parseISO(row.check_in_time), 'HH:mm dd/MM', { locale: vi })} · {row.check_in_gate || '—'}
         </DetailLine>
         <DetailLine label="Tự động huỷ lúc">{formatDateTime(row.rejected_at)}</DetailLine>
         <DetailLine label="GPS vào">{formatGpsAccuracy(row.check_in_accuracy)}</DetailLine>
