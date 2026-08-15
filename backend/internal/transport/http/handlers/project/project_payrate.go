@@ -218,6 +218,17 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		response.Forbidden(c, constants.MsgUserRoleNotFoundInContextVN)
 		return
 	}
+	if userRole.(string) == string(domain.RolePartner) {
+		canModify, err := h.projectPermissionService.CanUserModifyProject(c.Request.Context(), uint(projectID), userID.(uint))
+		if err != nil {
+			response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+			return
+		}
+		if !canModify {
+			response.Forbidden(c, constants.MsgForbiddenVN)
+			return
+		}
+	}
 
 	// Set project ID from URL
 	req.ProjectID = uint(projectID)

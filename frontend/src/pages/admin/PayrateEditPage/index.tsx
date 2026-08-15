@@ -201,9 +201,9 @@ export default function PayrateEditPage() {
         setSaveStep('saving');
         // validation passed — save immediately, no confirmation step
         try {
-          const startDateChanged =
-            editorMode === 'edit' && targetPayrate?.fromDate && targetPayrate.fromDate !== config.fromDate;
-          if (editorMode === 'edit' && targetPayrate?.id && !startDateChanged) {
+          if (editorMode === 'edit' && targetPayrate?.id) {
+            // Edit always updates in place: moving the start date earlier or
+            // changing rates re-prices mutable (unpaid, unapproved) timesheets.
             await updateMutation.mutateAsync({
               payRateId: targetPayrate.id,
               data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
@@ -244,12 +244,11 @@ export default function PayrateEditPage() {
 
   const sf = serverResult?.fields;
 
-  // Determine which field is the action point based on server result
-  // RATES_LOCKED + suggested_value on rates → user must create NEW config → highlight fromDate
-  // RATES_LOCKED without suggested_value change → only toDate can change → highlight toDate
-  const ratesLockedNeedNewConfig = ratesLocked && !!sf?.rates.suggested_value;
-  const toDateIsActionable = ratesLocked && !ratesLockedNeedNewConfig;
-  const fromDateIsActionable = ratesLockedNeedNewConfig;
+  // Server locks all fields only when the project is completed/cancelled.
+  // Otherwise every field stays editable: moving the start date earlier or
+  // changing rates re-prices mutable (unpaid, unapproved) timesheets on save.
+  const fromDateIsActionable = false;
+  const toDateIsActionable = false;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -380,7 +379,8 @@ export default function PayrateEditPage() {
                   {fromDateIsActionable && sf?.rates.suggested_value && (
                     <div className="mt-1.5 rounded-xl px-3 py-2 text-xs space-y-1 bg-amber-50 border border-amber-200 text-amber-800">
                       <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
-                      <p className="text-xs opacity-80">Ngày bắt đầu sớm nhất có thể: <strong>{sf.rates.suggested_value}</strong> (ngày sau bảng công gần nhất).</p>
+                      <p className="text-xs opacity-80">Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
+                      <p className="text-xs opacity-80">Ngày bắt đầu sớm nhất có thể: <strong>{sf.rates.suggested_value}</strong> (sau bảng công đã thanh toán gần nhất).</p>
                     </div>
                   )}
                   {!fromDateIsActionable && (

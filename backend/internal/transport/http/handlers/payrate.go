@@ -76,6 +76,17 @@ func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 		response.HandleDomainError(c, err)
 		return
 	}
+	if userRole.(string) == string(domain.RolePartner) {
+		canModify, err := h.projectPermissionService.CanUserModifyProject(c.Request.Context(), req.ProjectID, userID.(uint))
+		if err != nil {
+			response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+			return
+		}
+		if !canModify {
+			response.Forbidden(c, constants.MsgForbiddenVN)
+			return
+		}
+	}
 
 	// Check if project status allows modifications
 	if project.IsCompleted() || project.IsCancelled() {

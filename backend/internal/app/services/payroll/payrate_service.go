@@ -170,3 +170,9 @@ func (s *PayrateService) HasProjectTimesheetsFromDate(ctx context.Context, proje
 func (s *PayrateService) GetLatestTimesheetDateForPayrate(ctx context.Context, payrateID uint) (*time.Time, error) {
 	return s.PayrateRepo.GetLatestTimesheetDateForPayrate(ctx, payrateID)
 }
+
+// GetLatestPaidTimesheetDateForProject returns the financial cutoff for a
+// new effective-dated payrate across the whole project.
+func (s *PayrateService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
+	return s.TemporalService.GetLatestPaidTimesheetDateForProject(ctx, projectID)
+}

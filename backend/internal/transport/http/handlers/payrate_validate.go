@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -138,7 +137,6 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	}
 
 	today := timeutil.StartOfDay(h.clock.NowUTC())
-	todayStr := today.Format(timeutil.DateFormat)
 
 	// ── Build per-field results ────────────────────────────────────────────
 
@@ -167,9 +165,9 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	// ── Temporal / timesheet conflict checks ──────────────────────────────
 	if !projectBlocked && len(fromResult.errors) == 0 && len(ratesResult.Message) == 0 {
 		if isUpdate && existingPayrate != nil {
-			h.applyUpdateConstraints(c, existingPayrate, req, &fromResult.field, &toResult.field, &ratesResult, today, todayStr)
+			h.applyCreateConstraints(c, existingPayrate.ProjectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
 		} else if projectID > 0 && fromResult.parsedDate != nil {
-			h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field, today, todayStr)
+			h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
 		}
 	}
 
@@ -297,119 +295,32 @@ func validateRates(rates []byte) RatesFieldResult {
 	return r
 }
 
-func (h *PayrateHandler) applyUpdateConstraints(
-	c *gin.Context,
-	existing *domain.Payrate,
-	req dto.CreatePayrateRequest,
-	fromField *FieldResult,
-	toField *FieldResult,
-	ratesField *RatesFieldResult,
-	today time.Time,
-	todayStr string,
-) {
-	isUsed, err := h.payrateService.IsPayrateUsedByTimesheets(c.Request.Context(), existing.ID)
-	if err != nil || !isUsed {
-		return
-	}
-
-	existingFromStr := existing.FromDate.Format(timeutil.DateFormat)
-	existingFrom := timeutil.StartOfDay(existing.FromDate.UTC())
-
-	// Find earliest valid start date for a new config = latest timesheet date + 1 day
-	earliestNewStart := today
-	latestDate, latestErr := h.payrateService.GetLatestTimesheetDateForPayrate(c.Request.Context(), existing.ID)
-	if latestErr == nil && latestDate != nil {
-		earliestNewStart = timeutil.StartOfDay(latestDate.UTC()).AddDate(0, 0, 1)
-	}
-	earliestNewStartStr := earliestNewStart.Format(timeutil.DateFormat)
-
-	ratesChanged := strings.TrimSpace(string(existing.Payrate)) != strings.TrimSpace(string(req.Rates))
-
-	submittedFrom, _ := time.Parse(timeutil.DateFormat, req.EffectiveFrom)
-	submittedFromOnly := timeutil.StartOfDay(submittedFrom.UTC())
-	fromDateChanged := !submittedFromOnly.Equal(existingFrom)
-
-	// Case 1: rates changed AND fromDate is on or after earliestNewStart
-	// → valid "create new config" scenario, let it through
-	if ratesChanged && fromDateChanged && !submittedFromOnly.Before(earliestNewStart) {
-		return
-	}
-
-	// Case 2: rates changed but fromDate is still the original (or too early)
-	if ratesChanged {
-		ratesField.Status = FieldError
-		ratesField.Locked = true
-		ratesField.Message = "Mức lương bị khóa — cấu hình này đã có bảng công liên kết."
-		ratesField.Hint = fmt.Sprintf(
-			"Để thay đổi mức lương, hãy đổi ngày bắt đầu sang %s (ngày sau bảng công gần nhất) để tạo cấu hình mới.",
-			earliestNewStartStr,
-		)
-		ratesField.SuggestedValue = earliestNewStartStr
-
-		// If fromDate is still the original, guide user to change it
-		if !fromDateChanged {
-			fromField.Status = FieldError
-			fromField.Message = fmt.Sprintf("Đổi ngày bắt đầu sang %s để tạo cấu hình mới với mức lương mới.", earliestNewStartStr)
-			fromField.Hint = fmt.Sprintf("Ngày bắt đầu sớm nhất hợp lệ: %s (ngày sau bảng công gần nhất).", earliestNewStartStr)
-			fromField.MinValue = earliestNewStartStr
-			fromField.SuggestedValue = earliestNewStartStr
-		} else if submittedFromOnly.Before(earliestNewStart) {
-			// fromDate changed but still too early
-			fromField.Status = FieldError
-			fromField.Message = fmt.Sprintf("Ngày %s vẫn còn bảng công liên kết. Ngày sớm nhất hợp lệ: %s.", req.EffectiveFrom, earliestNewStartStr)
-			fromField.Hint = fmt.Sprintf("Chọn ngày từ %s trở đi.", earliestNewStartStr)
-			fromField.MinValue = earliestNewStartStr
-			fromField.SuggestedValue = earliestNewStartStr
-		}
-		return
-	}
-
-	// Case 3: rates unchanged — only fromDate or toDate changes allowed
-	if fromDateChanged {
-		fromField.Status = FieldError
-		fromField.Locked = true
-		fromField.Message = fmt.Sprintf("Ngày bắt đầu bị khóa — đã có bảng công liên kết (ngày gốc: %s).", existingFromStr)
-		fromField.Hint = fmt.Sprintf("Khôi phục lại ngày bắt đầu gốc: %s.", existingFromStr)
-		fromField.SuggestedValue = existingFromStr
-	}
-
-	// To date in the past?
-	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
-		toDate, err := time.Parse(timeutil.DateFormat, *req.EffectiveTo)
-		if err == nil && timeutil.StartOfDay(toDate.UTC()).Before(today) {
-			toField.Status = FieldError
-			toField.Message = "Ngày kết thúc không thể là ngày trong quá khứ khi đã có bảng công liên kết."
-			toField.Hint = fmt.Sprintf("Chọn ngày từ hôm nay (%s) trở đi, hoặc để trống.", todayStr)
-			toField.MinValue = todayStr
-			toField.SuggestedValue = todayStr
-		}
-	}
-}
-
+// applyPaidFloorConstraints enforces the single immutable boundary shared by
+// create and update: a configuration's start date must fall after the
+// project's most recent paid timesheet. Rates are always editable in place —
+// mutable (unpaid and unapproved) rows are recalculated on save.
 func (h *PayrateHandler) applyCreateConstraints(
 	c *gin.Context,
 	projectID uint,
 	submittedFrom string,
 	fromDate *time.Time,
 	fromField *FieldResult,
-	today time.Time,
-	todayStr string,
 ) {
-	fromDateOnly := timeutil.StartOfDay(fromDate.UTC())
-	if !fromDateOnly.Before(today) {
+	latestPaidDate, err := h.payrateService.GetLatestPaidTimesheetDateForProject(c.Request.Context(), projectID)
+	if err != nil || latestPaidDate == nil {
 		return
 	}
-
-	hasTimesheets, err := h.payrateService.HasProjectTimesheetsFromDate(c.Request.Context(), projectID, fromDateOnly)
-	if err != nil || !hasTimesheets {
+	earliestDate := timeutil.StartOfDay(latestPaidDate.UTC()).AddDate(0, 0, 1)
+	if !timeutil.StartOfDay(fromDate.UTC()).Before(earliestDate) {
 		return
 	}
+	earliestDateStr := earliestDate.Format(timeutil.DateFormat)
 
 	fromField.Status = FieldError
-	fromField.Message = fmt.Sprintf("Dự án đã có bảng công từ ngày %s — không thể dùng ngày này.", submittedFrom)
-	fromField.Hint = fmt.Sprintf("Chọn ngày bắt đầu từ hôm nay (%s) trở đi.", todayStr)
-	fromField.MinValue = todayStr
-	fromField.SuggestedValue = todayStr
+	fromField.Message = fmt.Sprintf("Ngày %s có trước bảng công đã thanh toán gần nhất của dự án.", submittedFrom)
+	fromField.Hint = fmt.Sprintf("Chọn ngày từ %s trở đi để chỉ cập nhật các bảng công chưa thanh toán và chưa duyệt.", earliestDateStr)
+	fromField.MinValue = earliestDateStr
+	fromField.SuggestedValue = earliestDateStr
 }
 
 func buildValidateSummary(valid, canSave, hasWarnings bool) string {

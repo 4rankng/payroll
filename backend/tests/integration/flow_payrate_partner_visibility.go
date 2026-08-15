@@ -19,6 +19,8 @@ const flowPayratePartnerVisibility = "PayratePartnerVisibility"
 //     created by other users) for a project they can access.
 //   - NEGATIVE: a partner is denied (403) when listing payrates for a project
 //     they cannot access (guards against an IDOR regression).
+//   - NEGATIVE: a partner cannot create a payrate for a project they cannot
+//     modify, which also prevents recalculating another project's timesheets.
 func runPayratePartnerVisibilityTests(client *APIClient, data *TestData, reporter *Reporter, cfg *TestConfig) {
 	reporter.PrintSection("FLOW: Payrate partner visibility")
 
@@ -108,6 +110,18 @@ func runPayratePartnerVisibilityTests(client *APIClient, data *TestData, reporte
 			_, statusCode, err := partner.GetExpectError(fmt.Sprintf("/api/v1/payrates?project_id=%d", inaccessibleProjectID))
 			if err != nil {
 				return fmt.Errorf("request for inaccessible project %d: %w", inaccessibleProjectID, err)
+			}
+			return AssertEqual("status", http.StatusForbidden, statusCode)
+		})
+
+		reporter.RunTest(flowPayratePartnerVisibility, "Partner cannot create payrate for inaccessible project", func() error {
+			body := CreatePayrateRequest{
+				Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":250000}}}`),
+				EffectiveFrom: today(),
+			}
+			_, statusCode, err := partner.PostExpectError(fmt.Sprintf("/api/v1/projects/%d/payrate", inaccessibleProjectID), body)
+			if err != nil {
+				return fmt.Errorf("create payrate for inaccessible project %d: %w", inaccessibleProjectID, err)
 			}
 			return AssertEqual("status", http.StatusForbidden, statusCode)
 		})

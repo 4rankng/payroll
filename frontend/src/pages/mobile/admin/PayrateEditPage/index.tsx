@@ -188,9 +188,9 @@ export default function PayrateEditPageMobile() {
       if (result.valid) {
         setSaveStep('saving');
         try {
-          const startDateChanged =
-            editorMode === 'edit' && targetPayrate?.fromDate && targetPayrate.fromDate !== config.fromDate;
-          if (editorMode === 'edit' && targetPayrate?.id && !startDateChanged) {
+          if (editorMode === 'edit' && targetPayrate?.id) {
+            // Edit always updates in place: moving the start date earlier or
+            // changing rates re-prices mutable (unpaid, unapproved) timesheets.
             await updateMutation.mutateAsync({
               payRateId: targetPayrate.id,
               data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
@@ -226,9 +226,12 @@ export default function PayrateEditPageMobile() {
   const canProceed = clientValidation.valid && !!config.fromDate && !isLoading;
 
   const sf = serverResult?.fields;
-  const ratesLockedNeedNewConfig = ratesLocked && !!sf?.rates.suggested_value;
-  const toDateIsActionable = ratesLocked && !ratesLockedNeedNewConfig;
-  const fromDateIsActionable = ratesLockedNeedNewConfig;
+
+  // Server locks all fields only when the project is completed/cancelled.
+  // Otherwise every field stays editable: moving the start date earlier or
+  // changing rates re-prices mutable (unpaid, unapproved) timesheets on save.
+  const fromDateIsActionable = false;
+  const toDateIsActionable = false;
 
   return (
     <MobilePageShell className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
@@ -313,7 +316,8 @@ export default function PayrateEditPageMobile() {
                     {fromDateIsActionable && sf?.rates.suggested_value && (
                       <div className="mt-1 space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                         <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
-                        <p className="opacity-80">Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong></p>
+                        <p className="opacity-80">Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
+                        <p className="opacity-80">Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong> (sau bảng công đã thanh toán gần nhất).</p>
                       </div>
                     )}
                     {!fromDateIsActionable && (

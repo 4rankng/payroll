@@ -8,20 +8,24 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
-	"api-server/internal/pkg/clock"
 	dbhelper "api-server/internal/pkg/db"
 	"api-server/internal/pkg/retry"
 
 	"gorm.io/gorm"
 )
 
-// MaxTemporalDate represents the far future date used for open-ended payrates
-// Using a deterministic constant instead of time.Now() + 100 years for consistency
-var MaxTemporalDate = time.Date(2999, 12, 31, 0, 0, 0, 0, time.UTC)
-
 // Date utility functions to avoid repetitive conversions
 func toUTCDateOnly(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+// toLocalDateOnly mirrors toUTCDateOnly but in time.Local. Under a loc=Local
+// MySQL DSN the driver converts bound time.Time values to Local before
+// sending, so a UTC-midnight bound shifts +7h on the UTC+7 box and silently
+// misses same-day DATE rows (timesheet dates are stored at local midnight).
+// Any value compared against stored timesheet/payrate dates must use this.
+func toLocalDateOnly(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 }
 
 func formatDateString(t time.Time) string {
@@ -58,17 +62,21 @@ func NewPayrateTemporalService(db *gorm.DB, payrateRepo domain.PayrateRepository
 
 // CreateEffectiveDatedPayrate implements the temporal algorithm for payrates
 func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
-	if err := s.validateEffectiveDate(ctx, payrate.ProjectID, payrate.FromDate); err != nil {
-		return err
-	}
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
+			return err
+		}
 
-	return s.dbHelper.ExecuteInTransactionWithRetry(ctx, func(tx *gorm.DB) error {
 		if err := s.manageActivePayrates(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
 			return err
 		}
 
 		payrate.ToDate = nil // Open-ended
-		return s.payrateRepo.CreateWithTx(ctx, tx, payrate)
+		if err := s.payrateRepo.CreateWithTx(ctx, tx, payrate); err != nil {
+			return err
+		}
+
+		return s.recalculateMutableTimesheets(ctx, tx, payrate)
 	})
 }
 
@@ -138,256 +146,183 @@ func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context,
 }
 
 // UpdateEffectiveDatedPayrate handles updates to payrates following these rules:
-// 1. If payrate has attached timesheets (any status), can only update end date to today onward
-// 2. If no timesheets attached, can update anything
-// 3. Date range conflicts with other payrates that have timesheets (any status) reject the change
-// 4. Otherwise user's date range takes priority and may delete/modify other payrates
+// 1. The new start date must fall after the project's most recent paid timesheet
+// 2. The payrate must remain the project's most recent configuration
+//    (no sibling payrate may start on or after the new start date)
+// 3. Mutable timesheets inside the config's reign are recalculated in the same
+//    transaction. The config in effect for a work date is always the project
+//    payrate with the latest from_date on or before that date.
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	logger := observability.GetLogger()
 
-	// Get existing payrate to validate
-	var existingPayrate *domain.Payrate
-	err := s.dbHelper.ExecuteWithRetry(ctx, func(db *gorm.DB) error {
-		var err error
-		existingPayrate, err = s.payrateRepo.GetByID(ctx, payrate.ID)
-		return err
-	})
-	if err != nil {
-		logger.Error("Failed to get existing payrate", "payrate_id", payrate.ID, "error", err)
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to get existing payrate: %w", err))
-	}
-
 	return s.dbHelper.ExecuteInTransactionWithRetry(ctx, func(tx *gorm.DB) error {
-		// Check if this payrate has any attached timesheets (any status)
-		timesheetCount, err := s.getTimesheetCount(ctx, tx, payrate.ID)
-		if err != nil {
-			logger.Error("Failed to check timesheet usage", "payrate_id", payrate.ID, "error", err)
-			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check timesheet usage: %w", err))
+		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
+			return err
 		}
 
-		hasTimesheets := timesheetCount > 0
-
-		if hasTimesheets {
-			// Rule 1 & 2: If has any timesheets, validate restrictions
-			if err := s.validatePayrateWithTimesheets(ctx, tx, payrate, existingPayrate); err != nil {
-				return err
-			}
-		} else {
-			// Rule 3 & 4: No timesheets - check for conflicts with other payrates
-			if err := s.handlePayrateConflicts(ctx, tx, payrate); err != nil {
-				return err
-			}
+		if err := s.ensureLatestConfigTx(ctx, tx, payrate); err != nil {
+			return err
 		}
 
-		// Update the existing record with new data
+		if err := s.ensureEarliestPaidTimesheetCoveredTx(ctx, tx, payrate); err != nil {
+			return err
+		}
+
 		if err := tx.Save(payrate).Error; err != nil {
 			logger.Error("Failed to save payrate", "payrate_id", payrate.ID, "error", err)
 			return s.dbHelper.WrapDatabaseError(err)
 		}
 
 		logger.Info("Payrate updated successfully", "payrate_id", payrate.ID)
-		return nil
+		return s.recalculateMutableTimesheets(ctx, tx, payrate)
 	})
-}
-
-// dateRangesOverlap checks if two payrate date ranges overlap.
-//
-// Uses deterministic MaxTemporalDate for open-ended payrates to ensure
-// consistent behavior regardless of when the function is called.
-//
-// Algorithm: Two ranges [a,b] and [c,d] overlap if !(b < c || d < a)
-func (s *PayrateTemporalService) dateRangesOverlap(p1, p2 *domain.Payrate) bool {
-	p1Start := toUTCDateOnly(p1.FromDate)
-	p1End := MaxTemporalDate // Use deterministic far future date
-	if p1.ToDate != nil {
-		p1End = toUTCDateOnly(*p1.ToDate)
-	}
-
-	p2Start := toUTCDateOnly(p2.FromDate)
-	p2End := MaxTemporalDate // Use deterministic far future date
-	if p2.ToDate != nil {
-		p2End = toUTCDateOnly(*p2.ToDate)
-	}
-
-	// Ranges overlap if one starts before the other ends
-	return !p1End.Before(p2Start) && !p2End.Before(p1Start)
-}
-
-// ValidatePayrateTemporalIntegrity performs comprehensive validation of payrate temporal data
-func (s *PayrateTemporalService) ValidatePayrateTemporalIntegrity(ctx context.Context, projectID uint) error {
-	logger := observability.GetLogger()
-
-	// Check 1: Validate date order constraints using repository
-	invalidDateCount, err := s.payrateRepo.ValidateDateOrdering(ctx, nil, projectID)
-	if err != nil {
-		logger.Error("Failed to check date order constraints", "project_id", projectID, "error", err)
-		return fmt.Errorf("failed to validate date constraints: %w", err)
-	}
-	if invalidDateCount > 0 {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
-	}
-
-	// Check 2: Ensure at most one active (open-ended) payrate using repository
-	activeCount, err := s.payrateRepo.ValidateActiveCount(ctx, nil, projectID)
-	if err != nil {
-		logger.Error("Failed to count active payrates", "project_id", projectID, "error", err)
-		return fmt.Errorf("failed to count active payrates: %w", err)
-	}
-	if activeCount > 1 {
-		return domain.NewValidationError(constants.MsgInvalidPayrateConfigurationVN)
-	}
-
-	return nil
 }
 
 // Private helper methods
 
-// getTimesheetCount returns the count of all timesheets for a given payrate (any status)
-func (s *PayrateTemporalService) getTimesheetCount(ctx context.Context, tx *gorm.DB, payrateID uint) (int64, error) {
+// ensureLatestConfigTx enforces the single-config-per-date model: the payrate
+// being updated must remain the project's most recent configuration, so no
+// sibling payrate may start on or after the new from_date. The config applied
+// to a work date is the project payrate with the latest from_date on or before
+// that date; effective_to is bookkeeping, never a resolution input.
+func (s *PayrateTemporalService) ensureLatestConfigTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
 	var count int64
-	err := tx.Model(&domain.Timesheet{}).
-		Where("payrate_id = ?", payrateID).
+	err := tx.WithContext(ctx).
+		Model(&domain.Payrate{}).
+		Where("project_id = ? AND id <> ? AND from_date >= ?", payrate.ProjectID, payrate.ID, toLocalDateOnly(payrate.FromDate)).
 		Count(&count).Error
-	return count, err
-}
-
-// hasProjectTimesheetsFromDateTx checks if a project has any timesheets on or after the specified date within a transaction
-func (s *PayrateTemporalService) hasProjectTimesheetsFromDateTx(ctx context.Context, tx *gorm.DB, projectID uint, fromDate time.Time) (bool, error) {
-	var count int64
-	err := tx.Model(&domain.Timesheet{}).
-		Where("project_id = ? AND date >= ?", projectID, fromDate).
-		Count(&count).Error
-	return count > 0, err
-}
-
-// validatePayrateWithTimesheets validates updates to payrates that have any attached timesheets
-func (s *PayrateTemporalService) validatePayrateWithTimesheets(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate, existingPayrate *domain.Payrate) error {
-	logger := observability.GetLogger()
-	today := toUTCDateOnly(clock.Now().UTC())
-
-	logger.Info("Payrate has attached timesheets, validating update restrictions",
-		"payrate_id", payrate.ID,
-		"project_id", payrate.ProjectID)
-
-	// Check if project has any timesheets from the new effective date onwards
-	newFromDate := toUTCDateOnly(payrate.FromDate)
-	hasProjectTimesheetsFromNewDate, err := s.hasProjectTimesheetsFromDateTx(ctx, tx, payrate.ProjectID, newFromDate)
 	if err != nil {
-		logger.Error("Failed to check project timesheets from new date",
-			"payrate_id", payrate.ID,
-			"project_id", payrate.ProjectID,
-			"from_date", newFromDate,
-			"error", err)
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check project timesheets from date: %w", err))
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check sibling payrates: %w", err))
 	}
-
-	// If no project timesheets exist from the new start date onwards, allow all changes
-	if !hasProjectTimesheetsFromNewDate {
-		logger.Info("No project timesheets exist from new effective date, allowing update",
-			"payrate_id", payrate.ID,
-			"project_id", payrate.ProjectID,
-			"new_from_date", newFromDate.Format("2006-01-02"))
-		return nil
+	if count > 0 {
+		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
 	}
-
-	// Project timesheets exist from the new date onwards - apply restrictions
-	logger.Info("Project timesheets exist from new effective date, applying restrictions",
-		"payrate_id", payrate.ID,
-		"project_id", payrate.ProjectID,
-		"new_from_date", newFromDate.Format("2006-01-02"))
-
-	// Cannot change payrate configuration
-	existingJSON := string(existingPayrate.Payrate)
-	newJSON := string(payrate.Payrate)
-	if existingJSON != newJSON {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateWithTimesheetsVN)
-	}
-
-	// Cannot change start date
-	if !newFromDate.Equal(toUTCDateOnly(existingPayrate.FromDate)) {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateWithTimesheetsVN)
-	}
-
-	// Can only set end date to today or later
-	if payrate.ToDate != nil {
-		toDateOnly := toUTCDateOnly(*payrate.ToDate)
-		if toDateOnly.Before(today) {
-			return domain.NewValidationError(constants.MsgCannotUpdatePayrateWithTimesheetsVN)
-		}
-	}
-
 	return nil
 }
 
-// handlePayrateConflicts processes conflicts with other payrates when updating
-func (s *PayrateTemporalService) handlePayrateConflicts(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
-	logger := observability.GetLogger()
-
-	logger.Info("No timesheets attached, checking for conflicts with other payrates",
-		"payrate_id", payrate.ID)
-
-	// Get all other payrates for this project
-	var otherPayrates []*domain.Payrate
-	if err := tx.Where("project_id = ? AND id != ?", payrate.ProjectID, payrate.ID).
-		Find(&otherPayrates).Error; err != nil {
-		logger.Error("Failed to get other payrates", "project_id", payrate.ProjectID, "error", err)
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to get other payrates: %w", err))
+// ensureEarliestPaidTimesheetCoveredTx blocks moving a config's start date
+// forward past timesheets already linked to it. Immutable rows reference the
+// config they were priced under; shifting its from_date later would silently
+// reassign them to an older sibling config in date-based resolution.
+func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
+	var earliest struct {
+		MinDate *time.Time
 	}
-
-	// Check each other payrate for conflicts
-	for _, other := range otherPayrates {
-		// Check if this other payrate has any timesheets
-		otherTimesheetCount, err := s.getTimesheetCount(ctx, tx, other.ID)
-		if err != nil {
-			logger.Error("Failed to check other payrate timesheet usage", "payrate_id", other.ID, "error", err)
-			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check timesheet usage: %w", err))
-		}
-
-		if otherTimesheetCount > 0 {
-			// Rule: Check for date range conflict with payrates that have timesheets
-			if s.dateRangesOverlap(payrate, other) {
-				return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
-			}
-		} else {
-			// Rule: User's date range takes priority - handle overlapping payrates without timesheets
-			if s.dateRangesOverlap(payrate, other) {
-				logger.Info("Deleting overlapping payrate without timesheets",
-					"deleted_payrate_id", other.ID,
-					"updated_payrate_id", payrate.ID)
-
-				// Delete the conflicting payrate that has no timesheets
-				if err := tx.Delete(other).Error; err != nil {
-					logger.Error("Failed to delete conflicting payrate", "payrate_id", other.ID, "error", err)
-					return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to delete conflicting payrate: %w", err))
-				}
-			}
-		}
+	err := tx.WithContext(ctx).
+		Model(&domain.Timesheet{}).
+		Select("MIN(date) as min_date").
+		Where("project_id = ? AND payrate_id = ?", payrate.ProjectID, payrate.ID).
+		Scan(&earliest).Error
+	if err != nil {
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to find earliest linked timesheet: %w", err))
 	}
-
+	if earliest.MinDate == nil {
+		return nil
+	}
+	if toLocalDateOnly(payrate.FromDate).After(*earliest.MinDate) {
+		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
+	}
 	return nil
 }
 
-// validateEffectiveDate checks if a date is valid for payrate creation
-// Allows past dates only if no timesheets exist for the project from that date to present
-func (s *PayrateTemporalService) validateEffectiveDate(ctx context.Context, projectID uint, date time.Time) error {
-	today := toUTCDateOnly(clock.Now().UTC())
-	dateOnly := toUTCDateOnly(date)
+// GetLatestPaidTimesheetDateForProject returns the work date that establishes a
+// project's immutable payrate boundary. Unapproved or unpaid entries remain
+// eligible for recalculation by a later configuration.
+func (s *PayrateTemporalService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
+	return s.getLatestPaidTimesheetDate(ctx, s.db, projectID)
+}
 
-	// Allow today or future dates (existing behavior)
-	if !dateOnly.Before(today) {
+func (s *PayrateTemporalService) validateEffectiveDateTx(ctx context.Context, tx *gorm.DB, projectID uint, date time.Time) error {
+	latestPaidDate, err := s.getLatestPaidTimesheetDate(ctx, tx, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to find latest paid timesheet: %w", err)
+	}
+	if latestPaidDate == nil {
 		return nil
 	}
 
-	// For past dates, check if timesheets exist from that date to present
-	hasTimesheets, err := s.payrateRepo.HasProjectTimesheetsFromDate(ctx, projectID, dateOnly)
-	if err != nil {
-		return fmt.Errorf("failed to check for existing timesheets: %w", err)
-	}
-
-	if hasTimesheets {
+	earliestDate := toUTCDateOnly(*latestPaidDate).AddDate(0, 0, 1)
+	if toUTCDateOnly(date).Before(earliestDate) {
 		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
 	}
 
+	return nil
+}
+
+func (s *PayrateTemporalService) getLatestPaidTimesheetDate(ctx context.Context, db *gorm.DB, projectID uint) (*time.Time, error) {
+	var timesheet domain.Timesheet
+	err := db.WithContext(ctx).
+		Model(&domain.Timesheet{}).
+		Select("date").
+		Where("project_id = ? AND payment_status = ?", projectID, domain.PaymentStatusPaid).
+		Order("date DESC").
+		First(&timesheet).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &timesheet.Date, nil
+}
+
+// recalculateMutableTimesheets runs in the same transaction as the newly
+// effective payrate. It keeps paid and approved records immutable, including
+// when either state changes concurrently with this operation.
+func (s *PayrateTemporalService) recalculateMutableTimesheets(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
+	var project domain.Project
+	if err := tx.WithContext(ctx).Select("id", "is_flexible").First(&project, payrate.ProjectID).Error; err != nil {
+		return fmt.Errorf("failed to load project for timesheet recalculation: %w", err)
+	}
+
+	var timesheets []*domain.Timesheet
+	if err := tx.WithContext(ctx).
+		Where("project_id = ? AND date >= ? AND payment_status <> ? AND timesheet_status <> ?",
+			payrate.ProjectID,
+			toLocalDateOnly(payrate.FromDate),
+			domain.PaymentStatusPaid,
+			domain.TimesheetStatusApproved,
+		).
+		Find(&timesheets).Error; err != nil {
+		return fmt.Errorf("failed to load mutable timesheets: %w", err)
+	}
+
+	updatedCount := 0
+	for _, timesheet := range timesheets {
+		rate, err := payrate.Payrate.GetRate(timesheet.PayType)
+		if err != nil {
+			return domain.NewValidationError(fmt.Sprintf("bảng công %d có loại lương không tồn tại trong cấu hình mới", timesheet.ID))
+		}
+
+		amount := int64(timesheet.HoursWorked * float64(rate))
+		if project.IsFlexible {
+			amount = int64(rate)
+		}
+
+		result := tx.WithContext(ctx).
+			Model(&domain.Timesheet{}).
+			Where("id = ? AND payment_status <> ? AND timesheet_status <> ?",
+				timesheet.ID,
+				domain.PaymentStatusPaid,
+				domain.TimesheetStatusApproved,
+			).
+			Updates(map[string]any{
+				"payrate_id": payrate.ID,
+				"payrate":    int64(rate),
+				"amount":     amount,
+			})
+		if result.Error != nil {
+			return fmt.Errorf("failed to recalculate timesheet %d: %w", timesheet.ID, result.Error)
+		}
+		updatedCount += int(result.RowsAffected)
+	}
+
+	observability.GetLogger().Info("recalculated mutable timesheets for payrate change",
+		"project_id", payrate.ProjectID,
+		"payrate_id", payrate.ID,
+		"from_date", formatDateString(payrate.FromDate),
+		"updated_count", updatedCount,
+	)
 	return nil
 }
 
