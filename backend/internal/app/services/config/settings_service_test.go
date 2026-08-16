@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"api-server/internal/domain"
 )
@@ -107,6 +108,32 @@ type fakeQuotaRepoForUpdate struct {
 	rows         []*domain.AdvancePayment
 	recomputeErr error
 	calls        int
+}
+
+type fakeAttendanceRepoForSettingsUpdate struct {
+	domain.AttendanceRepository
+	schedules []domain.QuotaCreditSchedule
+	hold      time.Duration
+	calls     int
+	err       error
+}
+
+func (r *fakeAttendanceRepoForSettingsUpdate) RecalculatePendingQuotaCreditSchedules(_ context.Context, hold time.Duration) ([]domain.QuotaCreditSchedule, error) {
+	r.calls++
+	r.hold = hold
+	if r.err != nil {
+		return nil, r.err
+	}
+	return r.schedules, nil
+}
+
+type fakeQuotaCreditTaskEnqueuer struct {
+	schedules []domain.QuotaCreditSchedule
+}
+
+func (e *fakeQuotaCreditTaskEnqueuer) EnqueueCreditQuota(attendanceID uint, at time.Time) error {
+	e.schedules = append(e.schedules, domain.QuotaCreditSchedule{AttendanceID: attendanceID, EligibleAt: at})
+	return nil
 }
 
 func (r *fakeQuotaRepoForUpdate) snapshot() []*domain.AdvancePayment {
@@ -265,9 +292,11 @@ func TestSettingsServiceUpdateSettingRecomputesSelfCheckInQuota(t *testing.T) {
 	service := NewSettingsService(
 		settingsRepo,
 		quotaRepo,
+		nil,
 		fakeSettingsTxManager{settings: settingsRepo, quota: quotaRepo},
 		nil,
 		fakeSettingsEventBus{},
+		nil,
 	)
 
 	updated, err := service.UpdateSetting(context.Background(), 1, map[string]any{
@@ -301,9 +330,11 @@ func TestSettingsServiceUpdateSettingRollsBackWhenQuotaRecomputeFails(t *testing
 	service := NewSettingsService(
 		settingsRepo,
 		quotaRepo,
+		nil,
 		fakeSettingsTxManager{settings: settingsRepo, quota: quotaRepo},
 		nil,
 		fakeSettingsEventBus{},
+		nil,
 	)
 
 	if _, err := service.UpdateSetting(context.Background(), 1, map[string]any{"value": "85"}, 7); err == nil {
@@ -319,5 +350,70 @@ func TestSettingsServiceUpdateSettingRollsBackWhenQuotaRecomputeFails(t *testing
 	}
 	if quotaRepo.rows[0].MaxAdvAmount != 700_000 {
 		t.Fatalf("rolled-back max_adv_amount = %d, want 700000", quotaRepo.rows[0].MaxAdvAmount)
+	}
+}
+
+func TestSettingsServiceUpdateHoldRecalculatesCompletedPendingQuotaDeadlines(t *testing.T) {
+	settingsRepo := newFakeSettingsRepoForUpdate(&domain.Settings{
+		ID:        1,
+		Key:       SettingKeySelfCheckInAdvanceHold,
+		Value:     stringPointer("2"),
+		ValueType: domain.ValueTypeNumber,
+	})
+	quotaRepo := &fakeQuotaRepoForUpdate{}
+	attendanceRepo := &fakeAttendanceRepoForSettingsUpdate{schedules: []domain.QuotaCreditSchedule{{
+		AttendanceID: 42,
+		EligibleAt:   time.Date(2026, 8, 16, 19, 0, 0, 0, time.UTC),
+	}}}
+	tasks := &fakeQuotaCreditTaskEnqueuer{}
+	service := NewSettingsService(
+		settingsRepo,
+		quotaRepo,
+		attendanceRepo,
+		fakeSettingsTxManager{settings: settingsRepo, quota: quotaRepo},
+		nil,
+		fakeSettingsEventBus{},
+		tasks,
+	)
+
+	if _, err := service.UpdateSetting(context.Background(), 1, map[string]any{"value": "4"}, 7); err != nil {
+		t.Fatalf("UpdateSetting returned error: %v", err)
+	}
+	if attendanceRepo.calls != 1 || attendanceRepo.hold != 4*time.Hour {
+		t.Fatalf("hold reconciliation = %d calls at %v, want 1 call at 4h", attendanceRepo.calls, attendanceRepo.hold)
+	}
+	if len(tasks.schedules) != 1 || tasks.schedules[0].AttendanceID != 42 {
+		t.Fatalf("recalculated quota task schedules = %+v, want attendance 42", tasks.schedules)
+	}
+}
+
+func TestSettingsServiceUpdateHoldRollsBackWhenDeadlineRecalculationFails(t *testing.T) {
+	settingsRepo := newFakeSettingsRepoForUpdate(&domain.Settings{
+		ID:        1,
+		Key:       SettingKeySelfCheckInAdvanceHold,
+		Value:     stringPointer("2"),
+		ValueType: domain.ValueTypeNumber,
+	})
+	quotaRepo := &fakeQuotaRepoForUpdate{}
+	attendanceRepo := &fakeAttendanceRepoForSettingsUpdate{err: errors.New("database unavailable")}
+	service := NewSettingsService(
+		settingsRepo,
+		quotaRepo,
+		attendanceRepo,
+		fakeSettingsTxManager{settings: settingsRepo, quota: quotaRepo},
+		nil,
+		fakeSettingsEventBus{},
+		nil,
+	)
+
+	if _, err := service.UpdateSetting(context.Background(), 1, map[string]any{"value": "4"}, 7); err == nil {
+		t.Fatal("expected UpdateSetting to fail when deadline reconciliation fails")
+	}
+	setting, err := settingsRepo.GetByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if setting.Value == nil || *setting.Value != "2" {
+		t.Fatalf("setting value = %v, want rollback to 2", setting.Value)
 	}
 }

@@ -100,6 +100,13 @@ type AttendanceHealthStats struct {
 	SuccessfulCheckouts  int `json:"successful_checkouts" gorm:"column:successful_checkouts"`
 }
 
+// QuotaCreditSchedule is the persisted deadline for a completed attendance
+// earning to become available in the self-check-in advance quota.
+type QuotaCreditSchedule struct {
+	AttendanceID uint
+	EligibleAt   time.Time
+}
+
 // AttendanceRepository defines the interface for attendance persistence operations
 type AttendanceRepository interface {
 	Create(ctx context.Context, attendance *Attendance) error
@@ -153,6 +160,10 @@ type AttendanceRepository interface {
 	// deadline has elapsed but whose earning has not yet been banked. Used by the
 	// safety-net sweep to finalize credits the per-attendance task missed.
 	GetOverdueQuotaCreditCandidates(ctx context.Context, eligibleBefore time.Time, limit int) ([]uint, error)
+	// RecalculatePendingQuotaCreditSchedules applies an updated post-checkout
+	// hold to completed, still-uncredited earnings only. Open check-ins and
+	// finalized/rejected earnings are deliberately excluded.
+	RecalculatePendingQuotaCreditSchedules(ctx context.Context, hold time.Duration) ([]QuotaCreditSchedule, error)
 }
 
 // AttendanceFilters represents filtering options for attendance queries

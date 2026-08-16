@@ -181,6 +181,47 @@ func (r *attendanceRepository) GetOverdueQuotaCreditCandidates(ctx context.Conte
 	return ids, err
 }
 
+// RecalculatePendingQuotaCreditSchedules applies an Admin-updated hold duration
+// to every completed, payable attendance whose earning has not been credited.
+// The rows are locked while their persisted deadline is replaced, preventing a
+// concurrent quota worker from banking an old deadline during the update.
+func (r *attendanceRepository) RecalculatePendingQuotaCreditSchedules(ctx context.Context, hold time.Duration) ([]domain.QuotaCreditSchedule, error) {
+	type pendingAttendance struct {
+		ID           uint
+		CheckOutTime time.Time
+	}
+
+	db := r.getDB(ctx)
+	var pending []pendingAttendance
+	if err := db.Model(&domain.Attendance{}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Select("id", "check_out_time").
+		Where("check_out_time IS NOT NULL").
+		Where("earning_amount > 0").
+		Where("quota_credited_at IS NULL").
+		Where("salary_reject_reason IS NULL").
+		Where("review_action IS NULL OR review_action <> ?", domain.AttendanceReviewActionRejected).
+		Find(&pending).Error; err != nil {
+		return nil, err
+	}
+
+	schedules := make([]domain.QuotaCreditSchedule, 0, len(pending))
+	for _, attendance := range pending {
+		eligibleAt := attendance.CheckOutTime.Add(hold)
+		if err := db.Model(&domain.Attendance{}).
+			Where("id = ? AND quota_credited_at IS NULL", attendance.ID).
+			Update("quota_credit_eligible_at", eligibleAt).Error; err != nil {
+			return nil, err
+		}
+		schedules = append(schedules, domain.QuotaCreditSchedule{
+			AttendanceID: attendance.ID,
+			EligibleAt:   eligibleAt,
+		})
+	}
+
+	return schedules, nil
+}
+
 func (r *attendanceRepository) GetByEmployeeAndDate(ctx context.Context, employeeID uint, date time.Time) (*domain.Attendance, error) {
 	var att domain.Attendance
 	dateOnly := date.Format("2006-01-02")

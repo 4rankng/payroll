@@ -405,9 +405,9 @@ type creditQuotaPayload struct {
 // EnqueueCreditQuota schedules a one-shot task at the persisted per-attendance
 // quota-credit deadline. The task banks the attendance's earning into the
 // advance-payment quota pool once that deadline has elapsed.
-// Deduplicated by TaskID per attendance, so repeated enqueues for the same
-// attendance collapse to a single scheduled task; the worker is idempotent on
-// quota_credited_at, so duplicate/retried tasks are safe.
+// Deduplicated by TaskID per attendance/deadline. An Admin hold-duration update
+// may enqueue a replacement task at a new deadline; an older queued task is
+// harmless because the worker always checks the persisted deadline first.
 func (c *Client) EnqueueCreditQuota(attendanceID uint, at time.Time) error {
 	payload, _ := json.Marshal(creditQuotaPayload{AttendanceID: attendanceID})
 
@@ -415,7 +415,7 @@ func (c *Client) EnqueueCreditQuota(attendanceID uint, at time.Time) error {
 		asynqlib.Queue(QueueDefault),
 		asynqlib.MaxRetry(c.cfg.RetryMax),
 		asynqlib.ProcessAt(at),
-		asynqlib.TaskID(fmt.Sprintf("credit-quota-att:%d", attendanceID)),
+		asynqlib.TaskID(fmt.Sprintf("credit-quota-att:%d:%d", attendanceID, at.UnixNano())),
 	)
 
 	info, err := c.client.Enqueue(task)

@@ -149,7 +149,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	notificationService := notification.NewNotificationService(repos.Notification, repos.User, repos.Project, userService, pushSvc, logger)
 	employeeNotificationService := notification.NewEmployeeNotificationService(notificationService, repos.Employee, logger)
 	transactionManager := infraServices.NewTransactionManager(db.DB)
-	settingsService := config.NewSettingsService(repos.Settings, repos.AdvancePayment, transactionManager, cacheService, eventBus)
+	settingsService := config.NewSettingsService(repos.Settings, repos.AdvancePayment, repos.Attendance, transactionManager, cacheService, eventBus, asynqClient)
 	settingsConfigService := config.NewSettingsConfigService(settingsService)
 	excelConverterService := reporting.NewExcelConverterService()
 	pdfService := reporting.NewPDFService("fonts/Roboto-Regular.ttf")

@@ -228,6 +228,73 @@ func TestGetOverdueQuotaCreditCandidatesUsesPersistedEligibilityDeadline(t *test
 	}
 }
 
+func TestRecalculatePendingQuotaCreditSchedulesOnlyChangesCompletedUncreditedEarnings(t *testing.T) {
+	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.Exec(`CREATE TABLE attendances (
+		id INTEGER PRIMARY KEY,
+		check_out_time DATETIME,
+		earning_amount INTEGER,
+		quota_credited_at DATETIME,
+		quota_credit_eligible_at DATETIME,
+		salary_reject_reason TEXT,
+		review_action TEXT,
+		updated_at DATETIME
+	)`).Error; err != nil {
+		t.Fatalf("create attendance table: %v", err)
+	}
+	checkOut := time.Date(2026, 8, 16, 17, 0, 0, 0, clock.DefaultLocation)
+	oldDeadline := checkOut.Add(24 * time.Hour)
+	if err := db.Exec(`INSERT INTO attendances
+		(id, check_out_time, earning_amount, quota_credited_at, quota_credit_eligible_at, salary_reject_reason, review_action)
+		VALUES
+		(1, ?, 300000, NULL, ?, NULL, NULL),
+		(2, NULL, 300000, NULL, NULL, NULL, NULL),
+		(3, ?, 300000, ?, ?, NULL, NULL),
+		(4, ?, 300000, NULL, ?, 'Từ chối', 'rejected'),
+		(5, ?, 0, NULL, ?, NULL, NULL)`,
+		checkOut, oldDeadline,
+		checkOut, checkOut, oldDeadline,
+		checkOut, oldDeadline,
+		checkOut, oldDeadline,
+	).Error; err != nil {
+		t.Fatalf("seed attendances: %v", err)
+	}
+
+	schedules, err := NewAttendanceRepository(db).RecalculatePendingQuotaCreditSchedules(context.Background(), 2*time.Hour)
+	if err != nil {
+		t.Fatalf("RecalculatePendingQuotaCreditSchedules: %v", err)
+	}
+	if len(schedules) != 1 || schedules[0].AttendanceID != 1 || !schedules[0].EligibleAt.Equal(checkOut.Add(2*time.Hour)) {
+		t.Fatalf("schedules = %+v, want only attendance 1 at %v", schedules, checkOut.Add(2*time.Hour))
+	}
+
+	var rows []struct {
+		ID       uint
+		Eligible *time.Time `gorm:"column:quota_credit_eligible_at"`
+	}
+	if err := db.Table("attendances").Select("id, quota_credit_eligible_at").Order("id").Find(&rows).Error; err != nil {
+		t.Fatalf("reload attendances: %v", err)
+	}
+	if rows[0].Eligible == nil || !rows[0].Eligible.Equal(checkOut.Add(2*time.Hour)) {
+		t.Fatalf("completed pending deadline = %v, want %v", rows[0].Eligible, checkOut.Add(2*time.Hour))
+	}
+	for _, row := range rows[1:] {
+		if row.ID == 2 {
+			if row.Eligible != nil {
+				t.Fatalf("open check-in deadline = %v, want nil", row.Eligible)
+			}
+			continue
+		}
+		if row.Eligible == nil || !row.Eligible.Equal(oldDeadline) {
+			t.Fatalf("attendance %d deadline = %v, want unchanged %v", row.ID, row.Eligible, oldDeadline)
+		}
+	}
+}
+
 func TestCompleteApprovedOpenPersistsCheckoutOnlyForApprovedLegacyRows(t *testing.T) {
 	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})

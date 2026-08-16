@@ -19,28 +19,38 @@ const (
 )
 
 type SettingsService struct {
-	logger       *slog.Logger
-	SettingsRepo domain.SettingsRepository
-	QuotaRepo    domain.AdvancePaymentRepository
-	TxManager    domain.TransactionManager
-	CacheService *infrastructure.CacheService
-	EventBus     domain.EventBus
+	logger                  *slog.Logger
+	SettingsRepo            domain.SettingsRepository
+	QuotaRepo               domain.AdvancePaymentRepository
+	AttendanceRepo          domain.AttendanceRepository
+	TxManager               domain.TransactionManager
+	CacheService            *infrastructure.CacheService
+	EventBus                domain.EventBus
+	quotaCreditTaskEnqueuer interface {
+		EnqueueCreditQuota(attendanceID uint, at time.Time) error
+	}
 }
 
 func NewSettingsService(
 	settingsRepo domain.SettingsRepository,
 	quotaRepo domain.AdvancePaymentRepository,
+	attendanceRepo domain.AttendanceRepository,
 	txManager domain.TransactionManager,
 	cacheService *infrastructure.CacheService,
 	eventBus domain.EventBus,
+	quotaCreditTaskEnqueuer interface {
+		EnqueueCreditQuota(attendanceID uint, at time.Time) error
+	},
 ) *SettingsService {
 	return &SettingsService{
-		logger:       observability.GetLogger(),
-		SettingsRepo: settingsRepo,
-		QuotaRepo:    quotaRepo,
-		TxManager:    txManager,
-		CacheService: cacheService,
-		EventBus:     eventBus,
+		logger:                  observability.GetLogger(),
+		SettingsRepo:            settingsRepo,
+		QuotaRepo:               quotaRepo,
+		AttendanceRepo:          attendanceRepo,
+		TxManager:               txManager,
+		CacheService:            cacheService,
+		EventBus:                eventBus,
+		quotaCreditTaskEnqueuer: quotaCreditTaskEnqueuer,
 	}
 }
 
@@ -120,6 +130,7 @@ func (s *SettingsService) GetSettingByKeyAuthoritativeForUpdate(ctx context.Cont
 
 func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, updateData map[string]any, updatedBy uint) (*domain.Settings, error) {
 	var updatedSetting *domain.Settings
+	var rescheduledQuotaCredits []domain.QuotaCreditSchedule
 	err := s.TxManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		existingSetting, err := s.SettingsRepo.GetByIDForUpdate(txCtx, settingID)
 		if err != nil {
@@ -157,12 +168,34 @@ func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, upd
 				return fmt.Errorf("failed to recompute active self check-in quota: %w", err)
 			}
 		}
+		if existingSetting.Key == SettingKeySelfCheckInAdvanceHold && s.AttendanceRepo != nil {
+			holdHours, err := parseSelfCheckInAdvanceHoldHours(existingSetting)
+			if err != nil {
+				return err
+			}
+			schedules, err := s.AttendanceRepo.RecalculatePendingQuotaCreditSchedules(txCtx, time.Duration(holdHours)*time.Hour)
+			if err != nil {
+				return fmt.Errorf("failed to recalculate pending self check-in quota deadlines: %w", err)
+			}
+			rescheduledQuotaCredits = schedules
+		}
 
 		updatedSetting = existingSetting
 		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+	for _, schedule := range rescheduledQuotaCredits {
+		if s.quotaCreditTaskEnqueuer == nil {
+			break
+		}
+		if err := s.quotaCreditTaskEnqueuer.EnqueueCreditQuota(schedule.AttendanceID, schedule.EligibleAt); err != nil {
+			s.logger.Warn("failed to enqueue recalculated quota credit task",
+				"attendance_id", schedule.AttendanceID,
+				"eligible_at", schedule.EligibleAt,
+				"error", err)
+		}
 	}
 
 	if err := s.EventBus.Publish(ctx, domain.NewSettingsUpdatedEvent(ctx, updatedSetting.Key, updatedSetting.ID)); err != nil {
