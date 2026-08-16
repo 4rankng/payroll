@@ -40,6 +40,10 @@ type AdvancePaymentInfoResponse struct {
 	Disclaimer string `json:"disclaimer,omitempty"`
 	// WindowOpenDay is the day of month the self-check-in request window opens.
 	WindowOpenDay int `json:"windowOpenDay,omitempty"`
+	// AdvancePercentage is the configured self-check-in advance percentage
+	// (e.g. 70). Lets the employee app show the per-shift advanceable amount
+	// floor(earning × pct / 100) alongside the full wage.
+	AdvancePercentage uint64 `json:"advancePercentage,omitempty"`
 }
 
 type AdvancePaymentQuotaResponse struct {

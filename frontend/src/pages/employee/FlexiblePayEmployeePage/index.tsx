@@ -369,6 +369,7 @@ const FlexiblePayEmployeePage = () => {
             fromDate={month.fromDate}
             toDate={month.toDate}
             monthLabel={month.shortLabel}
+            advancePercentage={info?.advancePercentage}
             className="overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-white lg:col-start-1 lg:row-start-3"
           />
         )}

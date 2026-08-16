@@ -39,6 +39,11 @@ type Config struct {
 	GetAdvancePaymentFeeMin     func(ctx context.Context) uint64
 	GetAdvanceCashFeePercentage func(ctx context.Context) float64
 	GetPartnerCompany           func(ctx context.Context) string
+	// GetSelfCheckInAdvancePercentage returns the authoritative self-check-in
+	// advance percentage (e.g. 70) used to derive the advanceable cap from
+	// credited salary. Exposed to the employee app so per-shift rows can show
+	// the advanceable amount alongside the full wage.
+	GetSelfCheckInAdvancePercentage func(ctx context.Context) uint64
 	// GetTransferLimits returns the active disbursement provider's per-transfer
 	// amount bounds. Returns zero-value limits when no provider is configured.
 	// Used by CreateRequest to fail-fast when the net amount (after fee) would

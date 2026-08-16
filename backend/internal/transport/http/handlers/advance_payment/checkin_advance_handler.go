@@ -54,6 +54,9 @@ func (h *AdvancePaymentHandler) GetMyCheckInAdvanceInfo(c *gin.Context) {
 		Disclaimer:      info.Disclaimer,
 		WindowOpenDay:   info.WindowOpenDay,
 	}
+	if cfg.GetSelfCheckInAdvancePercentage != nil {
+		resp.AdvancePercentage = cfg.GetSelfCheckInAdvancePercentage(c.Request.Context())
+	}
 	if cfg.GetTransferLimits != nil {
 		limits := cfg.GetTransferLimits(c.Request.Context())
 		resp.ProviderMinTransferAmount = uint64(limits.MinAmount)

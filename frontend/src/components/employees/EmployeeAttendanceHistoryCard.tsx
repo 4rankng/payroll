@@ -41,6 +41,13 @@ interface EmployeeAttendanceHistoryCardProps {
   toDate: string;
   /** Period label shown in the header (e.g. "07/2026"). */
   monthLabel: string;
+  /**
+   * Configured self-check-in advance percentage (e.g. 70). When provided, each
+   * completed shift also shows the advanceable amount floor(earning × pct / 100)
+   * — the same rounding the backend uses for the quota cap — so workers see why
+   * the advance limit grows slower than the listed wages.
+   */
+  advancePercentage?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -77,7 +84,7 @@ function AttendanceStatusPill({ status }: { status: AttendanceRecord["status"] }
   );
 }
 
-function AttendanceHistoryRow({ attendance }: { attendance: AttendanceRecord }) {
+function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: AttendanceRecord; advancePercentage?: number }) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const detailId = useId();
   const salaryRecorded = isSalaryRecorded(attendance);
@@ -93,6 +100,10 @@ function AttendanceHistoryRow({ attendance }: { attendance: AttendanceRecord }) 
     attendance.salary_reject_reason || attendance.salary_message,
     fallbackDescription
   );
+  const showAdvanceable = salaryRecorded && advancePercentage !== undefined && advancePercentage > 0;
+  const advanceableAmount = showAdvanceable
+    ? Math.floor(((attendance.earning_amount ?? 0) * advancePercentage) / 100)
+    : null;
 
   return (
     <article className="px-4 py-3.5">
@@ -117,6 +128,16 @@ function AttendanceHistoryRow({ attendance }: { attendance: AttendanceRecord }) 
           <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-[#B54708]" : "text-[#475467]")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>
         )}
       </div>
+
+      {showAdvanceable && advanceableAmount !== null && (
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <span className="employee-type-label text-[#667085]">Được ứng ({advancePercentage}%)</span>
+          <span className="employee-type-inline-amount text-[#067647] tabular-nums">
+            +{advanceableAmount.toLocaleString("vi-VN")}
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
+          </span>
+        </div>
+      )}
 
       {needsDetail && (
         <div className="mt-3 border-t border-[#EAECF0] pt-2">
@@ -150,6 +171,7 @@ export function EmployeeAttendanceHistoryCard({
   fromDate,
   toDate,
   monthLabel,
+  advancePercentage,
   className,
   style,
 }: EmployeeAttendanceHistoryCardProps) {
@@ -205,7 +227,7 @@ export function EmployeeAttendanceHistoryCard({
         </div>
       ) : (
         <div id={panelId} className="divide-y divide-[#EAECF0] border-y border-[#EAECF0]">
-          {visibleHistory.map((attendance) => <AttendanceHistoryRow key={attendance.id} attendance={attendance} />)}
+          {visibleHistory.map((attendance) => <AttendanceHistoryRow key={attendance.id} attendance={attendance} advancePercentage={advancePercentage} />)}
         </div>
       )}
 

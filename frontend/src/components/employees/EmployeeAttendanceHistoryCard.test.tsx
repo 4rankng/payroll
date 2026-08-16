@@ -90,4 +90,21 @@ describe("EmployeeAttendanceHistoryCard", () => {
     expect(screen.getByText("Quá hạn tan ca")).toBeInTheDocument();
     expect(screen.getByText("21:00")).toBeInTheDocument();
   });
+
+  it("shows the advanceable amount per shift when the percentage is provided", () => {
+    render(<EmployeeAttendanceHistoryCard advancePercentage={70} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
+
+    // 282.400 × 70% = 197.680 — mirrors the backend floor(earning × pct / 100).
+    // All 3 completed shifts carry the advanceable line; the rejected one does not.
+    expect(screen.getAllByText("Được ứng (70%)")).toHaveLength(3);
+    expect(screen.getAllByText((_, node) => node?.textContent === "+197.680₫")).toHaveLength(3);
+  });
+
+  it("hides the advanceable line when no percentage is provided", () => {
+    render(<EmployeeAttendanceHistoryCard />);
+
+    expect(screen.queryByText("Được ứng (70%)")).not.toBeInTheDocument();
+  });
 });
