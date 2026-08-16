@@ -81,29 +81,29 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
 
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
-      {/* Horizontal scroll wrapper — preserves desktop layout, scrolls when viewport is too narrow */}
+      {/* Scroll only when the desktop workspace is genuinely too narrow. */}
       <div className="overflow-x-auto">
-        <Table className="table-fixed min-w-[980px]">
+        <Table className="table-fixed min-w-[860px]">
           <colgroup>
             <col style={{ width: "4px" }} />
-            <col style={{ width: "16%" }} />
-            <col style={{ width: "20%" }} />
-            <col style={{ width: "18%" }} />
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "17%" }} />
+            <col style={{ width: "170px" }} />
+            <col style={{ width: "130px" }} />
+            <col style={{ width: "150px" }} />
+            <col style={{ width: "80px" }} />
+            <col style={{ width: "125px" }} />
+            <col style={{ width: "145px" }} />
             <col style={{ width: "36px" }} />
           </colgroup>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/40">
               <TableHead className="p-0" />
-              <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
               </TableHead>
-              <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Dự án · Loại ngày" : "Loại ngày"}
               </TableHead>
-              <TableHead className="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 Ca làm · Trạng thái
               </TableHead>
               <TableHead className="border-l border-border/30 py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
@@ -178,7 +178,7 @@ const GroupRow = memo(function GroupRow({
               <div className={cn("w-1 h-full min-h-[52px] rounded-r-full transition-colors", groupStripBg)} />
             </TableCell>
             {/* [1] employee */}
-            <TableCell className="py-3.5 px-4">
+            <TableCell className="py-3.5 px-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <UserAvatar email={group.employeeCode} name={group.employeeName} size="sm" />
                 <div className="min-w-0 flex-1">
@@ -192,7 +192,7 @@ const GroupRow = memo(function GroupRow({
               </div>
             </TableCell>
             {/* [2] role-specific column */}
-            <TableCell className="py-3.5 px-4">
+            <TableCell className="py-3.5 px-3">
               {userRole === "partner" ? (
                 <PartnerGroupColumn group={group} />
               ) : (
@@ -202,7 +202,7 @@ const GroupRow = memo(function GroupRow({
               )}
             </TableCell>
             {/* [3] status summary */}
-            <TableCell className="py-3.5 px-4">
+            <TableCell className="py-3.5 px-3">
               <GroupStatusSummary group={group} />
             </TableCell>
             {/* [4] total hours */}
@@ -327,7 +327,7 @@ const ProjectSection = memo(function ProjectSection({
       {showHeader && (
         <TableRow className={cn("bg-primary/[0.035] hover:bg-primary/[0.035]", isFirstProject && "border-t border-dashed border-border/50")}>
           <TableCell className="p-0" />
-          <TableCell colSpan={3} className="px-4 py-2.5 pl-8">
+          <TableCell colSpan={3} className="px-3 py-2.5 pl-6">
             <div className="flex min-w-0 items-center gap-2.5">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Building2 className="h-3.5 w-3.5" />
@@ -399,7 +399,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       <TableCell className="p-0 relative">
         {(!entry.payrate || entry.payrate === 0) && <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />}
       </TableCell>
-      <TableCell className="py-2 px-4 pl-8">
+      <TableCell className="py-2 px-3 pl-6">
         <div className="flex min-h-9 items-center gap-2">
           {showDate ? (
             <div className="flex items-center gap-2">
@@ -417,7 +417,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           {entry.force_payroll && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />}
         </div>
       </TableCell>
-      <TableCell className="py-2 px-4">
+      <TableCell className="py-2 px-3">
         <span
           className={cn(
             "inline-flex h-7 items-center rounded-md px-2.5 text-xs font-semibold capitalize ring-1 ring-inset",
@@ -431,7 +431,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           {dayTypeLabel}
         </span>
       </TableCell>
-      <TableCell className="py-2 px-4">
+      <TableCell className="py-2 px-3">
         <span
           className={cn(
             "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold capitalize",
