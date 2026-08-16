@@ -56,7 +56,7 @@ export const FeeScheduleLivePreview = ({ tiers, minFeeVnd }: Props) => {
 
       <div className="space-y-2">
         <Label htmlFor="preview-amount" className="text-xs">
-          Số tiền ứng (VND)
+          Số tiền ứng (₫)
         </Label>
         <Input
           id="preview-amount"

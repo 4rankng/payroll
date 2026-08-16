@@ -14,9 +14,9 @@ export const RatePreviewCard = memo(({ ratePreview, hoursWorked }: RatePreviewCa
     <Alert>
       <Info className="h-4 w-4" />
       <AlertDescription>
-        Mức lương dự kiến: <strong>{ratePreview.toLocaleString('vi-VN')} VND/giờ</strong>
+        Mức lương dự kiến: <strong>{ratePreview.toLocaleString('vi-VN')} ₫/giờ</strong>
         {hoursWorked > 0 && (
-          <span> → Tổng: <strong>{(ratePreview * hoursWorked).toLocaleString('vi-VN')} VND</strong></span>
+          <span> → Tổng: <strong>{(ratePreview * hoursWorked).toLocaleString('vi-VN')} ₫</strong></span>
         )}
       </AlertDescription>
     </Alert>

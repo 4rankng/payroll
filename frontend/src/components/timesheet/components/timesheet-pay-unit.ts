@@ -9,7 +9,7 @@ export function calculateTimesheetPreviewAmount(
 }
 
 export function getPayrateUnit(isFlexibleProject: boolean): string {
-  return isFlexibleProject ? "đ/ca" : "đ/giờ";
+  return isFlexibleProject ? "₫/ca" : "₫/giờ";
 }
 
 export function findTimesheetRate(

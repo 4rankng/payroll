@@ -90,7 +90,7 @@ export const useLedgerManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast({
         title: 'Thành công',
-        description: `Đã tạo chi phí OnePay ${data.summary.total_fee.toLocaleString('vi-VN')} đ.`,
+        description: `Đã tạo chi phí OnePay ${data.summary.total_fee.toLocaleString('vi-VN')} ₫.`,
       });
     },
     onError: (error: Error) => {

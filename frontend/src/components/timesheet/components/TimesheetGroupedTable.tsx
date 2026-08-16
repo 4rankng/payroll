@@ -218,7 +218,8 @@ const GroupRow = memo(function GroupRow({
             {/* [6] total amount */}
             <TableCell className="py-3.5 px-3 text-right">
               <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 typography-body-medium font-bold text-emerald-800 tabular-nums whitespace-nowrap">
-                {group.totalAmount.toLocaleString("vi-VN")}đ
+                {group.totalAmount.toLocaleString("vi-VN")}
+                <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
               </span>
             </TableCell>
             {/* [7] chevron */}
@@ -341,7 +342,10 @@ const ProjectSection = memo(function ProjectSection({
           </TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{project.totalHours}h</TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground/35">—</TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{project.totalAmount.toLocaleString("vi-VN")}đ</TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">
+            {project.totalAmount.toLocaleString("vi-VN")}
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
+          </TableCell>
           <TableCell className="p-0" />
         </TableRow>
       )}
@@ -473,13 +477,14 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
             >
               ⚠ chưa có
             </span>
-          ) : `${entry.payrate?.toLocaleString("vi-VN")}${entry.projectIsFlexible ? "đ/ca" : "đ/giờ"}`}
+          ) : `${entry.payrate?.toLocaleString("vi-VN")}${entry.projectIsFlexible ? "₫/ca" : "₫/giờ"}`}
         </p>
       </TableCell>
       <TableCell className="py-2 px-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 text-xs font-bold text-emerald-800 tabular-nums">
-            {(entry.amount || 0).toLocaleString("vi-VN")}đ
+            {(entry.amount || 0).toLocaleString("vi-VN")}
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
           </span>
         </div>
       </TableCell>

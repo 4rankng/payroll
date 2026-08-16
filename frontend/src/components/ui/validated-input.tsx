@@ -183,7 +183,7 @@ export const ValidatedInput = forwardRef<HTMLInputElement, ValidatedInputProps>(
         case 'workingHours':
           return '0-24';
         case 'currency':
-          return '1,000,000 VND';
+          return '1.000.000 ₫';
         case 'projectCode':
           return 'PRJ-2025-001';
         case 'bankAccount':

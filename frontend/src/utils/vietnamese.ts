@@ -2,7 +2,7 @@ import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 /**
- * Format Vietnamese currency (đ)
+ * Format Vietnamese currency (₫)
  * @param amount Amount in VND (integer)
  * @param options Formatting options
  */
@@ -20,7 +20,7 @@ export const formatVietnameseCurrency = (
   });
 
   const formattedAmount = formatter.format(amount);
-  return showSymbol ? `${formattedAmount} đ` : formattedAmount;
+  return showSymbol ? `${formattedAmount} ₫` : formattedAmount;
 };
 
 /**

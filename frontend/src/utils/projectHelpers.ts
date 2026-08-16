@@ -3,7 +3,7 @@ import { Target } from "lucide-react";
 import { Project } from "@/types/api/project.types";
 
 export const formatProjectCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+  return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
 };
 
 export const getStatusColor = (status: string): string => {

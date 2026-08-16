@@ -137,7 +137,7 @@ export function createPartnerTimesheetColumns(): ColumnDef<Timesheet>[] {
         const paidAmount = timesheet.paid_amount;
         if (!paidAmount) return (
           <span className="typography-body-small text-muted-foreground">
-            0đ
+            0₫
           </span>
         );
 

@@ -495,7 +495,7 @@ export function TimesheetEntryTable({
         <div className="text-center">
           Thành tiền
           <br />
-          <small className="font-normal text-muted-foreground lowercase">VND</small>
+          <small className="font-normal text-muted-foreground">₫</small>
         </div>
       ),
       accessorKey: "totalAmount",

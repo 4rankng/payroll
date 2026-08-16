@@ -50,7 +50,7 @@ export default function CreateTopupDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.amount % 1000 !== 0) {
-      setAmountError('Số tiền phải là bội số của 1.000 VND');
+      setAmountError('Số tiền phải là bội số của 1.000 ₫');
       return;
     }
     setAmountError(null);

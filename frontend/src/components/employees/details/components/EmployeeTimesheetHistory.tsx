@@ -93,7 +93,7 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
           <div>
             <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Đã thanh toán</p>
             <p className="text-xs font-semibold text-green-700">
-              {entry.paid_amount ? formatCurrency(entry.paid_amount) : '0đ'}
+              {entry.paid_amount ? formatCurrency(entry.paid_amount) : '0₫'}
             </p>
           </div>
           {entry.paid_at && (

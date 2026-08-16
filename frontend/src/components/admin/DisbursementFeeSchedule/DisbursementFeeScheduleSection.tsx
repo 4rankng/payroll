@@ -185,7 +185,7 @@ export const DisbursementFeeScheduleSection = () => {
                         )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {formatVnd(entry.feeVnd)} VNĐ
+                        {formatVnd(entry.feeVnd)} ₫
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                         {entry.notes ?? ""}
@@ -270,7 +270,7 @@ const ActiveCard = ({
       </div>
 
       <p className="text-base sm:text-lg leading-snug text-foreground">
-        <strong className="font-semibold">{formatVnd(active.feeVnd)} VNĐ</strong>
+        <strong className="font-semibold">{formatVnd(active.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
 
@@ -335,7 +335,7 @@ const UpcomingCard = ({
       </div>
 
       <p className="text-base sm:text-lg leading-snug text-foreground">
-        <strong className="font-semibold">{formatVnd(entry.feeVnd)} VNĐ</strong>
+        <strong className="font-semibold">{formatVnd(entry.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
 

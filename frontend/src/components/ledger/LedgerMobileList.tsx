@@ -60,7 +60,7 @@ export function LedgerMobileList({
     try { return format(new Date(d), 'dd/MM/yyyy', { locale: vi }); } catch { return d; }
   };
 
-  const fmtCurrency = (n: number) => n === 0 ? '0 đ' : ledgerService.formatCurrency(n);
+  const fmtCurrency = (n: number) => n === 0 ? '0 ₫' : ledgerService.formatCurrency(n);
 
   const getAccountLabel = (account: string) => {
     const meta = accountMetadata.find(m => m.value === account);

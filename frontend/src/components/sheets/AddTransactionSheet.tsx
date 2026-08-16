@@ -377,7 +377,7 @@ function TransactionFormComponent({
                   className={`h-11 pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
                 />
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
-                  đ
+                  ₫
                 </span>
               </div>
               {errors.amount && (

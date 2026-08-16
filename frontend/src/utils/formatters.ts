@@ -14,10 +14,12 @@ export interface CurrencyDisplayParts {
  */
 export const splitCurrencyDisplay = (value: string, explicitUnit?: string): CurrencyDisplayParts => {
   if (explicitUnit) {
+    const normalizedUnit = explicitUnit.trim();
+    const isCurrencyUnit = /^(đ|₫|VNĐ)$/u.test(normalizedUnit);
     return {
       amount: value,
-      unit: explicitUnit,
-      isCurrencyUnit: /^(đ|₫|VNĐ)$/u.test(explicitUnit),
+      unit: isCurrencyUnit ? '₫' : normalizedUnit,
+      isCurrencyUnit,
     };
   }
 
@@ -26,7 +28,7 @@ export const splitCurrencyDisplay = (value: string, explicitUnit?: string): Curr
     return { amount: value, isCurrencyUnit: false };
   }
 
-  return { amount: match[1].trimEnd(), unit: match[2], isCurrencyUnit: true };
+  return { amount: match[1].trimEnd(), unit: '₫', isCurrencyUnit: true };
 };
 
 /**
@@ -41,7 +43,7 @@ export const normalizeCurrencyCode = (currency?: string | null | number): string
   if (!trimmed) return DEFAULT_CURRENCY_CODE;
 
   const upperCased = trimmed.toUpperCase();
-  if (trimmed === 'đ' || trimmed === 'đ' || upperCased === 'VNĐ') {
+  if (trimmed === 'đ' || trimmed === '₫' || upperCased === 'VNĐ') {
     return DEFAULT_CURRENCY_CODE;
   }
 
@@ -50,7 +52,7 @@ export const normalizeCurrencyCode = (currency?: string | null | number): string
 
 export const formatCurrency = (amount: number | null | undefined, currency: string = DEFAULT_CURRENCY_CODE) => {
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return '- đ';
+    return '- ₫';
   }
   const normalizedCurrency = normalizeCurrencyCode(currency);
   return new Intl.NumberFormat('vi-VN', {
@@ -152,7 +154,7 @@ export const truncateText = (text: string, maxLength: number) => {
  * Parses the string to a number and delegates to formatCurrency.
  */
 export const formatCurrencyFromString = (amountStr?: string | null, currency?: string): string => {
-  if (!amountStr) return '- đ';
+  if (!amountStr) return '- ₫';
   const num = Number(amountStr.replace(/,/g, ''));
   return formatCurrency(num, currency);
 };
@@ -177,5 +179,5 @@ export const formatFullCurrency = (
     maximumFractionDigits: 0,
   }).format(value);
 
-  return `${formattedValue}${showSymbol ? ' đ' : ''}`;
+  return `${formattedValue}${showSymbol ? ' ₫' : ''}`;
 };

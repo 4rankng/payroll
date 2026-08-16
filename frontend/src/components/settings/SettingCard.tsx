@@ -65,7 +65,7 @@ const validateValue = (
     if (integerValue < minimum || integerValue > maximum) {
       return {
         isValid: false,
-        errorMessage: `Giá trị phải từ ${formatVndDigits(String(min))} đ đến ${formatVndDigits(String(max))} đ`,
+        errorMessage: `Giá trị phải từ ${formatVndDigits(String(min))} ₫ đến ${formatVndDigits(String(max))} ₫`,
       };
     }
     return { isValid: true };
@@ -118,7 +118,7 @@ export const SettingCard = ({
   const isInvalid = isUnavailable || Boolean(currencyInputError) || !validation.isValid;
   const hasVisibleError = Boolean(visibleError);
   const displayValue = displayMode === 'currency-vnd' ? formatVndDigits(value) : value;
-  const visibleSuffix = displayMode === 'currency-vnd' ? 'đ' : suffix;
+  const visibleSuffix = displayMode === 'currency-vnd' ? '₫' : suffix;
 
   const handleValueChange = (nextValue: string) => {
     if (displayMode !== 'currency-vnd') {

@@ -71,11 +71,11 @@ export function TransactionStatusPanel({ row, onReset, hideResetButton = false }
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Số tiền</p>
-          <p className="font-semibold">{formatAmount(row.requested_amount)} đ</p>
+          <p className="font-semibold">{formatAmount(row.requested_amount)} ₫</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Phí giao dịch</p>
-          <p>{formatAmount(row.fee)} đ</p>
+          <p>{formatAmount(row.fee)} ₫</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Khởi tạo lúc</p>

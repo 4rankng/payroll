@@ -75,7 +75,7 @@ export const DATE_FORMATS = {
 // Currency
 export const CURRENCY = {
   CODE: 'VND',
-  SYMBOL: 'đ',
+  SYMBOL: '₫',
   LOCALE: 'vi-VN',
 } as const;
 

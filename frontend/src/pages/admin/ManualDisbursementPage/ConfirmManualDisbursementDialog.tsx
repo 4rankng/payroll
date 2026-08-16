@@ -78,12 +78,12 @@ export function ConfirmManualDisbursementDialog(props: Props) {
               Số tiền chuyển
             </p>
             <p className="mt-1 text-3xl font-bold leading-tight">
-              {formatAmount(amount)} <span className="text-lg font-sans">đ</span>
+              {formatAmount(amount)} <span className="text-lg font-sans">₫</span>
             </p>
             {fee !== null && (
               <p className="mt-1 text-xs text-muted-foreground">
-                Phí: {formatAmount(fee)} đ
-                {total !== null && <> · Tổng: {formatAmount(total)} đ</>}
+                Phí: {formatAmount(fee)} ₫
+                {total !== null && <> · Tổng: {formatAmount(total)} ₫</>}
               </p>
             )}
           </div>

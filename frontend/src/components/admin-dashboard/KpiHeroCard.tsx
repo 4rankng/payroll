@@ -65,7 +65,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
     : typeof value === 'number'
       ? animated.toLocaleString('vi-VN')
       : value;
-  const { amount: displayAmount, unit: displayUnit, isCurrencyUnit } = splitCurrencyDisplay(displayValue, unit);
+  const { amount: displayAmount, unit: displayUnit } = splitCurrencyDisplay(displayValue, unit);
   const CardRoot = onClick ? 'button' : 'div';
 
   return (
@@ -119,12 +119,10 @@ export const KpiHeroCard = memo(function KpiHeroCard({
               : 'break-words text-xl sm:text-2xl',
           )}>
             <span>{displayAmount}</span>
-            {isCurrencyUnit && displayUnit ? (
+            {displayUnit ? (
               <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">
                 {displayUnit}
               </span>
-            ) : displayUnit ? (
-              <> {displayUnit}</>
             ) : null}
           </p>
         </div>

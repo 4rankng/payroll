@@ -103,7 +103,7 @@ export function createPartnerTimesheetMobileConfig({
       render: (timesheet) => {
         if (!timesheet.paid_amount) return (
           <span className="typography-body-small text-muted-foreground">
-            0đ
+            0₫
           </span>
         );
 

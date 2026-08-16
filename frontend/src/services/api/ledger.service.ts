@@ -364,7 +364,7 @@ class LedgerService {
    * Format currency for display in short form (for charts)
    */
   formatCurrencyShort(amount: number): string {
-    return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
   }
 
   /**

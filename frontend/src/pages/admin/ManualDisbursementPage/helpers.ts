@@ -43,9 +43,9 @@ export function validateForm(
   const errors: Partial<Record<keyof ManualDisbursementFormState, string>> = {};
   const amount = Number(state.amount);
   if (!state.amount || Number.isNaN(amount) || amount < MIN_AMOUNT) {
-    errors.amount = `Số tiền phải từ ${MIN_AMOUNT.toLocaleString("vi-VN")} VNĐ trở lên`;
+    errors.amount = `Số tiền phải từ ${MIN_AMOUNT.toLocaleString("vi-VN")} ₫ trở lên`;
   } else if (amount > MAX_AMOUNT) {
-    errors.amount = `Số tiền tối đa ${MAX_AMOUNT.toLocaleString("vi-VN")} VNĐ`;
+    errors.amount = `Số tiền tối đa ${MAX_AMOUNT.toLocaleString("vi-VN")} ₫`;
   }
   if (!state.description.trim()) {
     errors.description = "Vui lòng nhập nội dung chuyển khoản";
@@ -172,5 +172,5 @@ export function formatTimestamp(iso: string | null | undefined): string {
 // summarizeRow is used by the recent-transfers list and the inline
 // confirmation panel — both want a stable terse summary of one row.
 export function summarizeRow(row: ManualDisbursementResponse): string {
-  return `${formatAmount(row.requested_amount)} đ → ${row.recipient_name} (${row.recipient_bank})`;
+  return `${formatAmount(row.requested_amount)} ₫ → ${row.recipient_name} (${row.recipient_bank})`;
 }

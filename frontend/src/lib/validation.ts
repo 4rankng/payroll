@@ -153,7 +153,7 @@ export const validateCurrency = (amount: number | string): { valid: boolean; err
   }
 
   if (!Number.isInteger(numAmount)) {
-    return { valid: false, error: 'Số tiền phải là số nguyên (đ)' };
+    return { valid: false, error: 'Số tiền phải là số nguyên (₫)' };
   }
 
   return { valid: true };
@@ -163,7 +163,7 @@ export const validateCurrency = (amount: number | string): { valid: boolean; err
 import { formatCurrency as _formatCurrency } from '@/utils/formatters';
 export { _formatCurrency as formatCurrency };
 
-// Format currency in full form with đ symbol
+// Format currency in full form with the ₫ symbol
 export const formatCurrencyShort = (amount: number): string => {
   return _formatCurrency(amount);
 };

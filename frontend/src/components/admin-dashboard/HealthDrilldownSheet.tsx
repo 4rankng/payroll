@@ -97,7 +97,7 @@ const REASON_META: Record<string, ReasonMeta> = {
   other:                   { label: 'Lỗi khác',                     severity: 'neutral', icon: AlertCircle },
   // Attendance-based drilldown categories (not from attempt_classifier)
   open:                    { label: 'Đang chờ checkout',            severity: 'info',    icon: Clock },
-  zero_earning:            { label: 'Ca 0 đ',                       severity: 'warning', icon: Banknote },
+  zero_earning:            { label: 'Ca 0 ₫',                       severity: 'warning', icon: Banknote },
   stuck_pending:           { label: 'Yêu cầu kẹt pending',          severity: 'warning', icon: Hourglass },
   request_failed:          { label: 'Yêu cầu lỗi',                  severity: 'danger',  icon: AlertTriangle },
 };
@@ -576,7 +576,7 @@ function attendanceMapBadge(variant: AttendanceDrawerVariant): { label: string; 
     case 'rejected':
       return { label: 'Đã huỷ', tone: 'slate' };
     case 'zero':
-      return { label: 'Ca 0 đ', tone: 'amber' };
+      return { label: 'Ca 0 ₫', tone: 'amber' };
     case 'success':
       return { label: 'Tan ca', tone: 'blue' };
     default:

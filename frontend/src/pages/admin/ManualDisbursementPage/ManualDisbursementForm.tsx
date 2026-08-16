@@ -424,7 +424,7 @@ export function ManualDisbursementForm(props: Props) {
 
       {/* ── Row 4: Amount + fee info ────────────────────────────────────── */}
       <div className="grid gap-1.5">
-        <Label htmlFor="md-amount">Số tiền (VNĐ)</Label>
+        <Label htmlFor="md-amount">Số tiền (₫)</Label>
         <div className="relative">
           <Input
             id="md-amount"
@@ -436,7 +436,7 @@ export function ManualDisbursementForm(props: Props) {
             className="min-h-11 pr-14 text-right text-lg font-semibold tabular-nums"
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-            VNĐ
+            ₫
           </span>
         </div>
         {touched && errors.amount && (
@@ -445,11 +445,11 @@ export function ManualDisbursementForm(props: Props) {
         {activeFee !== null && state.amount && !errors.amount && (
           <p className="text-xs text-muted-foreground">
             Phí:{" "}
-            <span className="font-semibold text-foreground">{formatAmount(activeFee)} đ</span>
+            <span className="font-semibold text-foreground">{formatAmount(activeFee)} ₫</span>
             {totalWithFee !== null && (
               <>
                 {" "}· Tổng:{" "}
-                <span className="font-bold text-foreground">{formatAmount(totalWithFee)} đ</span>
+                <span className="font-bold text-foreground">{formatAmount(totalWithFee)} ₫</span>
               </>
             )}
           </p>

@@ -42,7 +42,7 @@ describe('SettingCard currency-vnd mode', () => {
     const input = renderCurrencyCard();
 
     expect(input).toHaveValue('400.000.000');
-    expect(screen.getByText('đ')).toBeInTheDocument();
+    expect(screen.getByText('₫')).toBeInTheDocument();
     expect(input).toHaveAttribute('inputmode', 'numeric');
     expect(input).toHaveAttribute(
       'aria-describedby',

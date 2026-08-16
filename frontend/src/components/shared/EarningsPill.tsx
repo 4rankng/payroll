@@ -52,7 +52,8 @@ export const EarningsPill = memo(function EarningsPill({
           isWarn ? 'text-red-600' : 'text-slate-800',
         )}
       >
-        {amount.toLocaleString('vi-VN')}đ
+        {amount.toLocaleString('vi-VN')}
+        <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
       </span>
       {subtitle && (
         <span

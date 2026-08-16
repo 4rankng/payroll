@@ -90,7 +90,7 @@ export function usePayrateValidation() {
         if (minRate < 15000) {
           warnings.push({
             field: 'rates',
-            message: `Mức lương thấp nhất (${minRate.toLocaleString('vi-VN')} đ) có thể thấp hơn mức tối thiểu.`,
+            message: `Mức lương thấp nhất (${minRate.toLocaleString('vi-VN')} ₫) có thể thấp hơn mức tối thiểu.`,
             type: 'warning'
           });
         }

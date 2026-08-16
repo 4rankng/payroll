@@ -56,7 +56,7 @@ export function CustomScheduleFields({
           </div>
 
           <div className="space-y-2">
-            <Label className="typography-label-small text-foreground">Trả hàng tháng (đ) *</Label>
+            <Label className="typography-label-small text-foreground">Trả hàng tháng (₫) *</Label>
             <Input
               inputMode="numeric"
               value={form.custom_monthly_amount}
@@ -73,7 +73,7 @@ export function CustomScheduleFields({
           </div>
 
           <div className="space-y-2">
-            <Label className="typography-label-small text-foreground">Trả tháng cuối (đ)</Label>
+            <Label className="typography-label-small text-foreground">Trả tháng cuối (₫)</Label>
             <Input
               inputMode="numeric"
               value={form.custom_last_month_amount}

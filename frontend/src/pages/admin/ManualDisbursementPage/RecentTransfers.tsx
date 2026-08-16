@@ -72,7 +72,7 @@ export function RecentTransfers({ limit = 20 }: Props) {
               <div className="flex flex-col gap-1 min-[420px]:flex-row min-[420px]:items-baseline min-[420px]:justify-between min-[420px]:gap-3">
                 <p className="break-words font-medium leading-snug">{r.recipient_name}</p>
                 <p className="shrink-0 text-sm font-semibold">
-                  {formatAmount(r.requested_amount)} đ
+                  {formatAmount(r.requested_amount)} ₫
                 </p>
               </div>
               <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">

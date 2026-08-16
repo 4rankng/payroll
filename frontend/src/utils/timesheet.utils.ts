@@ -30,11 +30,11 @@ export function calculateAmountDisplay(
 
   // If we have a calculated amount, format and return it
   if (calculatedAmount && calculatedAmount > 0) {
-    const formattedAmount = calculatedAmount.toLocaleString(locale) + ' đ';
+    const formattedAmount = calculatedAmount.toLocaleString(locale) + ' ₫';
     const result: AmountDisplayResult = { text: formattedAmount, formattedAmount, shouldDisplay: true };
 
     if (calculatedRate && calculatedRate > 0) {
-      result.formattedRate = `@${calculatedRate.toLocaleString(locale)} đ/giờ`;
+      result.formattedRate = `@${calculatedRate.toLocaleString(locale)} ₫/giờ`;
     }
 
     return result;
@@ -52,7 +52,7 @@ export function calculateAmountDisplay(
   }
 
   // Default to zero if no hours worked but employee is selected
-  return { text: '0 đ', shouldDisplay: true };
+  return { text: '0 ₫', shouldDisplay: true };
 }
 
 export function getAmountDisplayText(

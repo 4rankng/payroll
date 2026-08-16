@@ -79,8 +79,8 @@ describe("ShiftNamesSection", () => {
     expect(screen.getByText("20:00-08:00")).toBeInTheDocument();
     expect(screen.getByText("Qua đêm")).toBeInTheDocument();
     expect(screen.getAllByText("Lương trọn ca")).not.toHaveLength(0);
-    expect(screen.getByText("300.000 đ")).toBeInTheDocument();
-    expect(screen.getByText("350.000 đ")).toBeInTheDocument();
+    expect(screen.getByText("300.000 ₫")).toBeInTheDocument();
+    expect(screen.getByText("350.000 ₫")).toBeInTheDocument();
     expect(screen.queryByText(/mức lương theo giờ/)).not.toBeInTheDocument();
   });
 
@@ -129,9 +129,9 @@ describe("ShiftNamesSection", () => {
     );
 
     expect(screen.getByText("Công nhân")).toBeInTheDocument();
-    expect(screen.getByText("252.000 đ")).toBeInTheDocument();
+    expect(screen.getByText("252.000 ₫")).toBeInTheDocument();
     expect(screen.getByText("Thợ hàn")).toBeInTheDocument();
-    expect(screen.getByText("315.000 đ")).toBeInTheDocument();
+    expect(screen.getByText("315.000 ₫")).toBeInTheDocument();
   });
 
   it("opens the nearest upcoming payrate when no configuration is active", () => {

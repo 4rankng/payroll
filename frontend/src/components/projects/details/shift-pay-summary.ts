@@ -60,5 +60,5 @@ export function extractShiftPaySummaries(rates: unknown): ShiftPaySummary[] {
 }
 
 export function formatShiftPay(amount: number): string {
-  return `${amount.toLocaleString("vi-VN")} đ`;
+  return `${amount.toLocaleString("vi-VN")} ₫`;
 }

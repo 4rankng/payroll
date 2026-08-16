@@ -8,12 +8,12 @@ import {
 describe("timesheet pay unit", () => {
   it("uses a flexible project's configured amount once per shift", () => {
     expect(calculateTimesheetPreviewAmount(252000, 10, true)).toBe(252000);
-    expect(getPayrateUnit(true)).toBe("đ/ca");
+    expect(getPayrateUnit(true)).toBe("₫/ca");
   });
 
   it("preserves hourly calculation for standard projects", () => {
     expect(calculateTimesheetPreviewAmount(252000, 10, false)).toBe(2520000);
-    expect(getPayrateUnit(false)).toBe("đ/giờ");
+    expect(getPayrateUnit(false)).toBe("₫/giờ");
   });
 
   it("selects the assigned position instead of the first configured position", () => {

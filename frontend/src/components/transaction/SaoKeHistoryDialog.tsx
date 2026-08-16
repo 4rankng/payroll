@@ -31,7 +31,7 @@ interface SaoKeHistoryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
 const fmtDate = (v: string) => {
   try { return format(new Date(v), 'dd/MM/yyyy HH:mm', { locale: vi }); }
   catch { return v; }

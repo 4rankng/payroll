@@ -140,7 +140,7 @@ export function AdvancePaymentRequestForm({
       return `Số tiền tối thiểu là ${formatCurrency(ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT)}`;
     }
     if (numericAmount % 5000 !== 0) {
-      return "Số tiền phải là bội số của 5.000 VND";
+      return "Số tiền phải là bội số của 5.000 ₫";
     }
     if (numericAmount > selectedQuotaRemaining) {
       return `Số tiền không được vượt quá ${formatCurrency(selectedQuotaRemaining)}`;
@@ -515,7 +515,7 @@ export function AdvancePaymentRequestForm({
                 )}
               />
               <span className="employee-type-label absolute right-3 top-1/2 -translate-y-1/2 text-[#667085]">
-                VND
+                ₫
               </span>
             </div>
           </div>

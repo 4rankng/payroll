@@ -385,13 +385,13 @@ export function validateAdvancePaymentAmount(
   minAmount: number = ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT
 ): string | null {
   if (amount < minAmount) {
-    return `Số tiền tối thiểu là ${minAmount.toLocaleString('vi-VN')} đ`;
+    return `Số tiền tối thiểu là ${minAmount.toLocaleString('vi-VN')} ₫`;
   }
   if (amount % 5000 !== 0) {
-    return `Số tiền phải là bội số của 5.000 đ`;
+    return `Số tiền phải là bội số của 5.000 ₫`;
   }
   if (amount > remainingAmount) {
-    return `Số tiền không được vượt quá ${remainingAmount.toLocaleString('vi-VN')} đ`;
+    return `Số tiền không được vượt quá ${remainingAmount.toLocaleString('vi-VN')} ₫`;
   }
   return null;
 }

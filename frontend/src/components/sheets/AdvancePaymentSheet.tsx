@@ -236,7 +236,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                         className={`w-full h-11 px-4 pr-14 text-sm font-medium rounded-xl border bg-card/80 focus:bg-card focus:outline-none focus:ring-2 transition-all ${
                           error ? "border-red-300 focus:ring-red-200" : "border-border focus:ring-sky-200 focus:border-border"                        }`}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">VND</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">₫</span>
                     </div>
 
                     {error && (

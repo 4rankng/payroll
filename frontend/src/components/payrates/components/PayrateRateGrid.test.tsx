@@ -19,7 +19,7 @@ describe("PayrateRateGrid", () => {
     );
 
     expect(screen.getByText("30.000")).toBeInTheDocument();
-    expect(screen.getByText("đ/giờ")).toBeInTheDocument();
+    expect(screen.getByText("₫/giờ")).toBeInTheDocument();
     expect(screen.getByLabelText("Bảng mức lương theo giờ")).toHaveClass("overflow-x-auto");
   });
 
@@ -27,8 +27,8 @@ describe("PayrateRateGrid", () => {
     render(<PayrateRateGrid rates={rates} isFlexible />);
 
     expect(screen.getByText("30.000")).toBeInTheDocument();
-    expect(screen.getByText("đ/ca")).toBeInTheDocument();
-    expect(screen.queryByText("đ/giờ")).not.toBeInTheDocument();
+    expect(screen.getByText("₫/ca")).toBeInTheDocument();
+    expect(screen.queryByText("₫/giờ")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Bảng lương trọn ca")).toHaveClass(
       "overflow-x-auto",
     );

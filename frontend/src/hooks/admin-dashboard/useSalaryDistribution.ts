@@ -34,10 +34,10 @@ export const CYCLE_LABELS: Record<string, string> = {
 
 /** Fixed salary bin definitions */
 export const SALARY_BINS = [
-  { label: '< 1.500.000 đ', min: -Infinity, max: 1_499_999 },
-  { label: '1.500.000 – 2.500.000 đ', min: 1_500_000, max: 2_499_999 },
-  { label: '2.500.000 – 3.500.000 đ', min: 2_500_000, max: 3_499_999 },
-  { label: '> 3.500.000 đ', min: 3_500_000, max: Infinity },
+  { label: '< 1.500.000 ₫', min: -Infinity, max: 1_499_999 },
+  { label: '1.500.000 – 2.500.000 ₫', min: 1_500_000, max: 2_499_999 },
+  { label: '2.500.000 – 3.500.000 ₫', min: 2_500_000, max: 3_499_999 },
+  { label: '> 3.500.000 ₫', min: 3_500_000, max: Infinity },
 ] as const;
 
 /** Bin salary values into fixed ranges */

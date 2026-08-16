@@ -25,7 +25,7 @@ export function PrincipalDateFields({
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-6">
       <div className="w-full space-y-2">
-        <Label className="typography-label-medium">Số tiền vay (đ) *</Label>
+        <Label className="typography-label-medium">Số tiền vay (₫) *</Label>
         <Input
           inputMode="numeric"
           value={principalAmount}

@@ -110,7 +110,8 @@ function AttendanceHistoryRow({ attendance }: { attendance: AttendanceRecord }) 
         <span className="employee-type-label text-[#667085]">Tiền công</span>
         {salaryRecorded ? (
           <span className="employee-type-inline-amount text-[#067647] tabular-nums">
-            +{attendance.earning_amount?.toLocaleString("vi-VN")}đ
+            +{attendance.earning_amount?.toLocaleString("vi-VN")}
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
           </span>
         ) : (
           <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-[#B54708]" : "text-[#475467]")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>

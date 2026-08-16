@@ -379,7 +379,7 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
         return (
           <div className="text-right">
             <span className="typography-data-medium font-semibold text-foreground">
-              {amount.toLocaleString('vi-VN')} đ
+              {amount.toLocaleString('vi-VN')} ₫
             </span>
           </div>
         );

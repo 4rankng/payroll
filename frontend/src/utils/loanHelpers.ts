@@ -80,7 +80,7 @@ const VND_NUMBER_FORMATTER = new Intl.NumberFormat('vi-VN', {
  * Format currency in Vietnamese Dong using locale-aware grouping and a suffix.
  */
 export function formatVND(amount: number): string {
-  return `${VND_NUMBER_FORMATTER.format(amount)} đ`;
+  return `${VND_NUMBER_FORMATTER.format(amount)} ₫`;
 }
 
 /**

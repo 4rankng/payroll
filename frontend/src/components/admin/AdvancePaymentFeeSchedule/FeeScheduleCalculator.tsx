@@ -85,7 +85,7 @@ export const FeeScheduleCalculator = ({ entries }: Props) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="calc-amount" className="text-xs text-muted-foreground">
-            Số tiền ứng (VND)
+            Số tiền ứng (₫)
           </Label>
           <Input
             id="calc-amount"

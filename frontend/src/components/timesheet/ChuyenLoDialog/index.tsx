@@ -133,7 +133,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
   } else if (!ninePayEnabled) {
     providerWarning = 'Chuyển lô tự động chưa được kích hoạt.';
   } else if (insufficientBalance && walletBalance !== null && estimatedTotal != null) {
-    providerWarning = `Số dư ví không đủ — cần thêm ${(estimatedTotal - walletBalance).toLocaleString('vi-VN')}đ.`;
+    providerWarning = `Số dư ví không đủ — cần thêm ${(estimatedTotal - walletBalance).toLocaleString('vi-VN')} ₫.`;
   }
 
   useEffect(() => {
@@ -400,7 +400,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
         <DialogNavyHeader
           title="Chuyển lô"
           description={selectionCount > 0
-            ? `Đã chọn ${selectionCount} nhân viên${estimatedTotal ? ` · Tổng: ${estimatedTotal.toLocaleString('vi-VN')}đ` : ''}`
+            ? `Đã chọn ${selectionCount} nhân viên${estimatedTotal ? ` · Tổng: ${estimatedTotal.toLocaleString('vi-VN')} ₫` : ''}`
             : undefined}
         />
 
@@ -432,7 +432,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
               <span className="text-muted-foreground">Số dư</span>
               <div className="flex items-baseline gap-3 text-right">
                 <span className="font-semibold tabular-nums text-foreground">
-                  {balanceLoading ? '…' : walletBalance !== null ? `${walletBalance.toLocaleString('vi-VN')}đ` : '—'}
+                  {balanceLoading ? '…' : walletBalance !== null ? `${walletBalance.toLocaleString('vi-VN')} ₫` : '—'}
                 </span>
                 {estimatedTotal != null && walletBalance !== null && (
                   <span
@@ -442,7 +442,7 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
                     )}
                     title="Số dư sau giao dịch (ước tính)"
                   >
-                    → {(walletBalance - estimatedTotal).toLocaleString('vi-VN')}đ
+                    → {(walletBalance - estimatedTotal).toLocaleString('vi-VN')} ₫
                   </span>
                 )}
               </div>

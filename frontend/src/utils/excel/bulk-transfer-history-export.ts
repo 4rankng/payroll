@@ -54,7 +54,7 @@ export async function exportBulkTransferHistoryToExcel(
         const strValue = String(value);
         // Remove commas and format as number
         const numValue = Number(strValue.replace(/,/g, ''));
-        return isNaN(numValue) ? strValue : `${numValue.toLocaleString('vi-VN')} VND`;
+        return isNaN(numValue) ? strValue : `${numValue.toLocaleString('vi-VN')} ₫`;
       },
     },
     {

@@ -117,7 +117,7 @@ const LoansPage = () => {
         <KpiHeroCard
           label="Tổng vay"
           value={loansSummary.total_borrowed}
-          unit="đ"
+          unit="₫"
           icon={Landmark}
           color="blue"
           variant="stack"
@@ -125,7 +125,7 @@ const LoansPage = () => {
         <KpiHeroCard
           label="Dư nợ hiện tại"
           value={loansSummary.total_outstanding}
-          unit="đ"
+          unit="₫"
           icon={TrendingUp}
           color="amber"
           variant="stack"
@@ -133,7 +133,7 @@ const LoansPage = () => {
         <KpiHeroCard
           label="Lãi đã trả"
           value={loansSummary.total_interest_paid}
-          unit="đ"
+          unit="₫"
           icon={Coins}
           color="emerald"
           variant="stack"

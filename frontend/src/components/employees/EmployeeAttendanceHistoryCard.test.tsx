@@ -83,7 +83,7 @@ describe("EmployeeAttendanceHistoryCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
     expect(screen.getByText("Ngày 6/7/2026")).toBeInTheDocument();
-    expect(screen.getAllByText("+282.400đ")).toHaveLength(3);
+    expect(screen.getAllByText((_, node) => node?.textContent === "+282.400₫")).toHaveLength(3);
     expect(screen.queryByText("Quá hạn tan ca")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Xem lý do" }));

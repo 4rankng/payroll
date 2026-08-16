@@ -80,19 +80,19 @@ export const useDashboardStats = ({
         {
           label: 'Chờ trả',
           value: dashboardSummary.pending_salary_this_month,
-          unit: ' đ',
+          unit: ' ₫',
           onClick: dashboardNav.navigateToSalaryLedger,
         },
         {
           label: 'Đã trả',
           value: dashboardSummary.paid_salary_this_month,
-          unit: ' đ',
+          unit: ' ₫',
           onClick: dashboardNav.navigateToSalaryLedger,
         },
         {
           label: 'Tổng đã trả',
           value: dashboardSummary.total_paid_salary,
-          unit: ' đ',
+          unit: ' ₫',
           onClick: dashboardNav.navigateToSalaryLedger,
         }
       );
@@ -114,22 +114,22 @@ export const useDashboardStats = ({
       {
         label: 'Tiền ứng',
         value: dashboardSummary.total_revenue_this_month,
-        unit: ' đ',
+        unit: ' ₫',
       },
       {
         label: 'Lợi nhuận',
         value: dashboardSummary.total_profit_this_month,
-        unit: ' đ',
+        unit: ' ₫',
       },
       {
         label: 'Tổng ứng',
         value: dashboardSummary.total_revenue,
-        unit: ' đ',
+        unit: ' ₫',
       },
       {
         label: 'Tổng lãi',
         value: dashboardSummary.total_profit,
-        unit: ' đ',
+        unit: ' ₫',
       },
     ] as StatItem[];
   }, [dashboardSummary]);

@@ -143,7 +143,7 @@ export const DisbursementFeeFormDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dfs-fee-vnd">Mức phí (VNĐ)</Label>
+            <Label htmlFor="dfs-fee-vnd">Mức phí (₫)</Label>
             <Input
               id="dfs-fee-vnd"
               type="number"

@@ -138,7 +138,7 @@ export function ProjectEditModal({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="editBudget">Ngân sách (đ)</Label>
+            <Label htmlFor="editBudget">Ngân sách (₫)</Label>
             <Input
               id="editBudget"
               type="number"

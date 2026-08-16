@@ -40,7 +40,8 @@ export function TimesheetMonthlySummary({ summaryData }: TimesheetMonthlySummary
         <div>
           <span className="typography-body-small text-emerald-600">Tổng tiền</span>
           <p className="font-medium">
-            {summaryData.totalAmount?.toLocaleString('vi-VN') || '0'}đ
+            {summaryData.totalAmount?.toLocaleString('vi-VN') || '0'}
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
           </p>
         </div>
         <div>

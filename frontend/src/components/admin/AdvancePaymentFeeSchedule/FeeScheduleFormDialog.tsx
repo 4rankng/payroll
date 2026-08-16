@@ -283,7 +283,7 @@ export const FeeScheduleFormDialog = ({
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground -mt-1">
-                  Bậc 1 áp dụng cho mọi khoản từ 0 đ trở lên (mặc định). Thêm
+                  Bậc 1 áp dụng cho mọi khoản từ 0 ₫ trở lên (mặc định). Thêm
                   bậc nếu muốn % phí khác cho khoản lớn hơn.
                 </p>
                 <div className="space-y-2">
@@ -298,7 +298,7 @@ export const FeeScheduleFormDialog = ({
                       >
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">
-                            {idx === 0 ? "Từ (cố định: 0)" : "Từ số tiền (đ)"}
+                            {idx === 0 ? "Từ (cố định: 0)" : "Từ số tiền (₫)"}
                           </Label>
                           <Input
                             type="number"
@@ -380,7 +380,7 @@ export const FeeScheduleFormDialog = ({
 
               {/* Min fee */}
               <div className="space-y-1.5">
-                <Label htmlFor="minFee">Phí tối thiểu (đ)</Label>
+                <Label htmlFor="minFee">Phí tối thiểu (₫)</Label>
                 <Input
                   id="minFee"
                   type="number"

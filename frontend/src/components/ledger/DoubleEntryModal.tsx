@@ -307,8 +307,8 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                     <div className="col-span-2">Tài khoản</div>
                     <div className="col-span-2">Đối tượng</div>
                     <div className="col-span-3">Diễn giải</div>
-                    <div className="col-span-2">Nợ (đ)</div>
-                    <div className="col-span-2">Có (đ)</div>
+                    <div className="col-span-2">Nợ (₫)</div>
+                    <div className="col-span-2">Có (₫)</div>
                     <div className="col-span-1">Dự án</div>
                   </div>
                 </div>
@@ -444,11 +444,11 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
               <div className="grid grid-cols-2 gap-4 typography-body-small">
                 <div className="flex justify-between">
                   <span>Tổng Nợ:</span>
-                  <span className="font-medium">{totalDebits.toLocaleString('vi-VN')} đ</span>
+                  <span className="font-medium">{totalDebits.toLocaleString('vi-VN')} ₫</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tổng Có:</span>
-                  <span className="font-medium">{totalCredits.toLocaleString('vi-VN')} đ</span>
+                  <span className="font-medium">{totalCredits.toLocaleString('vi-VN')} ₫</span>
                 </div>
               </div>
               {!isBalanced && totalDebits + totalCredits > 0 && (

@@ -90,7 +90,12 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
         'w-full break-words text-center font-display text-sm font-extrabold tabular-nums leading-tight tracking-tight sm:text-base',
         isAccent ? 'text-primary' : 'text-foreground',
       )}>
-        {formatted}{stat.unit}
+        {formatted}
+        {stat.unit && (
+          <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">
+            {stat.unit.trim()}
+          </span>
+        )}
       </span>
       <span className="mt-0.5 w-full break-words px-1 text-center text-[11px] font-medium leading-tight text-muted-foreground">
         {stat.label}
