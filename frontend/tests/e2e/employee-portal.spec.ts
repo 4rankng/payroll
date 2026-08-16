@@ -171,6 +171,75 @@ test.describe("mobile employee payroll dashboard", () => {
     }
   });
 
+  test("shows a completed shift as a compact wage and advance pair", async ({ page }) => {
+    await page.unroute("**/api/v1/me");
+    await page.route("**/api/v1/me", (route) => route.fulfill({
+      json: json({
+        id: 77,
+        fullname: "Nguyễn An",
+        username: "employee.mobile",
+        payment_schedule: "flexible",
+        check_in_enabled: true,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-07-01T00:00:00Z",
+      }),
+    }));
+    await page.unroute("**/api/v1/me/advance-payment");
+    await page.route("**/api/v1/me/advance-payment", (route) => route.fulfill({
+      json: json({
+        forMonth: "2026-07",
+        maxAdvanceAmount: 5_000_000,
+        completedAmount: 1_000_000,
+        pendingAmount: 0,
+        remainingAmount: 4_000_000,
+        canRequest: true,
+        feePercentage: 2,
+        minFee: 10_000,
+        hasFlexible: true,
+        advancePercentage: 70,
+      }),
+    }));
+    await page.route("**/api/v1/mobile/attendance/today", (route) => route.fulfill({ json: json(null) }));
+    await page.route("**/api/v1/mobile/attendance/history*", (route) => route.fulfill({
+      json: json([{
+        id: 42,
+        project_id: 10,
+        employee_id: 77,
+        date: "2026-07-09",
+        check_in_time: "2026-07-09T08:36:00+07:00",
+        check_out_time: "2026-07-09T19:00:00+07:00",
+        earning_amount: 252_000,
+        salary_status: "recorded",
+        status: "completed",
+      }]),
+    }));
+    await clearPersistedEmployeeQueries(page);
+    await page.reload();
+
+    const summary = page.getByTestId("attendance-earnings-summary");
+    await expect(summary).toBeVisible();
+    await expect(summary).toContainText("Tiền công");
+    await expect(summary).toContainText("252.000₫");
+    await expect(summary).toContainText("Được ứng (70%)");
+    await expect(summary).toContainText("+176.400₫");
+    await expect(summary).not.toContainText("+252.000₫");
+
+    for (const viewport of [
+      { width: 390, height: 844, columns: 2 },
+      { width: 320, height: 844, columns: 2 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const layout = await summary.evaluate((element) => ({
+        columns: getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length,
+        overflow: element.scrollWidth > element.clientWidth,
+      }));
+
+      expect(layout.columns).toBe(viewport.columns);
+      expect(layout.overflow).toBe(false);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    }
+  });
+
   test("keeps the approved salary-advance information order", async ({ page }) => {
     const sectionOrder = await page.evaluate(() => {
       const ids = ["employee-advance-request", "employee-history", "employee-bank"];

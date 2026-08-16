@@ -77,8 +77,8 @@ function AttendanceStatusPill({ status }: { status: AttendanceRecord["status"] }
   const Icon = config.icon;
 
   return (
-    <span className={cn("employee-type-pill inline-flex items-center gap-1 rounded-full px-2.5 py-1.5", config.className)}>
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+    <span className={cn("employee-type-pill inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1", config.className)}>
+      <Icon className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden="true" />
       {config.label}
     </span>
   );
@@ -106,36 +106,49 @@ function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: A
     : null;
 
   return (
-    <article className="px-4 py-3.5">
+    <article className="px-4 py-4 sm:px-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="employee-type-card-title text-[#101828]">Ngày {formatDate(attendance.date)}</p>
-          <p className="employee-type-body-sm mt-1 text-[#667085]">
-            {formatTime(attendance.check_in_time)} — {formatTime(attendance.check_out_time)}
+          <p className="employee-type-body-sm mt-1 flex items-center gap-1.5 text-[#667085] tabular-nums">
+            <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{formatTime(attendance.check_in_time)} — {formatTime(attendance.check_out_time)}</span>
           </p>
         </div>
         <AttendanceStatusPill status={attendance.status} />
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <span className="employee-type-label text-[#667085]">Tiền công</span>
-        {salaryRecorded ? (
-          <span className="employee-type-inline-amount text-[#067647] tabular-nums">
-            +{attendance.earning_amount?.toLocaleString("vi-VN")}
-            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
-          </span>
-        ) : (
-          <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-[#B54708]" : "text-[#475467]")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>
-        )}
-      </div>
-
-      {showAdvanceable && advanceableAmount !== null && (
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <span className="employee-type-label text-[#667085]">Được ứng ({advancePercentage}%)</span>
-          <span className="employee-type-inline-amount text-[#067647] tabular-nums">
-            +{advanceableAmount.toLocaleString("vi-VN")}
-            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
-          </span>
+      {showAdvanceable && advanceableAmount !== null ? (
+        <dl
+          data-testid="attendance-earnings-summary"
+          className="mt-3 grid grid-cols-2 gap-x-3 border-t border-[#EAECF0] pt-3"
+        >
+          <div className="min-w-0 border-r border-[#EAECF0] pr-3">
+            <dt className="employee-type-label text-[#667085]">Tiền công</dt>
+            <dd className="employee-type-inline-amount mt-1 text-[#101828] tabular-nums">
+              {attendance.earning_amount?.toLocaleString("vi-VN")}
+              <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
+            </dd>
+          </div>
+          <div className="min-w-0 text-right">
+            <dt className="employee-type-label text-[#667085]">Được ứng ({advancePercentage}%)</dt>
+            <dd className="employee-type-inline-amount mt-1 text-[#067647] tabular-nums">
+              +{advanceableAmount.toLocaleString("vi-VN")}
+              <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#EAECF0] pt-3">
+          <span className="employee-type-label text-[#667085]">Tiền công</span>
+          {salaryRecorded ? (
+            <span className="employee-type-inline-amount text-[#101828] tabular-nums">
+              {attendance.earning_amount?.toLocaleString("vi-VN")}
+              <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
+            </span>
+          ) : (
+            <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-[#B54708]" : "text-[#475467]")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>
+          )}
         </div>
       )}
 
@@ -155,7 +168,7 @@ function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: A
             <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isDetailOpen && "rotate-180")} />
           </button>
           {isDetailOpen && (
-            <div id={detailId} className="rounded-xl bg-[#FFFAEB] px-3 py-3 text-[#7A2E0E]">
+            <div id={detailId} className="rounded-lg bg-[#FFFAEB] px-3 py-3 text-[#7A2E0E]">
               <p className="employee-type-strong">{issue.title}</p>
               <p className="employee-type-body-sm mt-1 text-[#B54708]">{issue.description}</p>
               <HistoryIssueChips details={issue.details} />
@@ -199,19 +212,19 @@ export function EmployeeAttendanceHistoryCard({
 
   return (
     <section className={className ?? "employee-surface-card overflow-hidden"} style={style} aria-labelledby="employee-attendance-title">
-      <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
+      <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--employee-radius-control)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
-            <History className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+            <History className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <h2 id="employee-attendance-title" className="employee-type-card-title text-[var(--employee-text)]">Chấm công</h2>
-            <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">{monthLabel}</p>
+            <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Bảng công tháng {monthLabel}</p>
           </div>
         </div>
-        <div className="flex shrink-0 gap-1.5" aria-label="Tóm tắt chấm công">
-          <span className="employee-type-pill rounded-full bg-[var(--employee-accent-soft)] px-2.5 py-1.5 text-[var(--employee-accent)]">{isLoading ? "Đang tải" : `${workdayCount} ngày công`}</span>
-          {warningCount > 0 && <span className="employee-type-pill rounded-full bg-[var(--employee-warning-soft)] px-2.5 py-1.5 text-[var(--employee-warning)]">{warningCount} cần kiểm tra</span>}
+        <div className="flex shrink-0 items-center gap-1.5" aria-label="Tóm tắt chấm công">
+          <span className="employee-type-pill whitespace-nowrap rounded-md border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-2 py-1 text-[var(--employee-accent)]">{isLoading ? "Đang tải" : `${workdayCount} ngày công`}</span>
+          {warningCount > 0 && <span className="employee-type-pill whitespace-nowrap rounded-md bg-[var(--employee-warning-soft)] px-2 py-1 text-[var(--employee-warning)]">{warningCount} cần kiểm tra</span>}
         </div>
       </div>
 
@@ -232,8 +245,8 @@ export function EmployeeAttendanceHistoryCard({
       )}
 
       {hasMoreHistory && (
-        <div className="px-4 py-2">
-          <button type="button" aria-expanded={isFullHistoryOpen} aria-controls={panelId} onClick={() => setIsFullHistoryOpen((current) => !current)} className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-1 text-[#067647] hover:bg-[#F0FDF4] focus-visible:ring-2 focus-visible:ring-[#07883F]">
+        <div className="px-4 py-3 sm:px-5">
+          <button type="button" aria-expanded={isFullHistoryOpen} aria-controls={panelId} onClick={() => setIsFullHistoryOpen((current) => !current)} className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-[#067647] transition-colors hover:bg-[#F0FDF4] focus-visible:ring-2 focus-visible:ring-[#07883F]">
             <span>{isFullHistoryOpen ? "Thu gọn lịch chấm công" : "Xem toàn bộ lịch chấm công"}</span>
             {isFullHistoryOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>

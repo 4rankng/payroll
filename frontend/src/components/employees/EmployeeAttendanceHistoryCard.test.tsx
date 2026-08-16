@@ -83,7 +83,7 @@ describe("EmployeeAttendanceHistoryCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
     expect(screen.getByText("Ngày 6/7/2026")).toBeInTheDocument();
-    expect(screen.getAllByText((_, node) => node?.textContent === "+282.400₫")).toHaveLength(3);
+    expect(screen.getAllByText((_, node) => node?.textContent === "282.400₫")).toHaveLength(3);
     expect(screen.queryByText("Quá hạn tan ca")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Xem lý do" }));
@@ -92,14 +92,16 @@ describe("EmployeeAttendanceHistoryCard", () => {
   });
 
   it("shows the advanceable amount per shift when the percentage is provided", () => {
-    render(<EmployeeAttendanceHistoryCard advancePercentage={70} />);
+    const { container } = render(<EmployeeAttendanceHistoryCard advancePercentage={70} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
 
     // 282.400 × 70% = 197.680 — mirrors the backend floor(earning × pct / 100).
     // All 3 completed shifts carry the advanceable line; the rejected one does not.
     expect(screen.getAllByText("Được ứng (70%)")).toHaveLength(3);
+    expect(container.querySelectorAll("[data-testid='attendance-earnings-summary']")).toHaveLength(3);
     expect(screen.getAllByText((_, node) => node?.textContent === "+197.680₫")).toHaveLength(3);
+    expect(screen.queryByText((_, node) => node?.textContent === "+282.400₫")).not.toBeInTheDocument();
   });
 
   it("hides the advanceable line when no percentage is provided", () => {
