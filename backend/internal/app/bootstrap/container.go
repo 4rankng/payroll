@@ -400,7 +400,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset, services.ZaloPasswordReset),
 		Dashboard:            handlers.NewDashboardHandler(services.Dashboard),
 		Project:              handlers.NewProjectHandlerWithServices(services.Project, services.Payrate, services.Timesheet, services.ProjectEmployee, services.ProjectPermission, clk),
-		Employee:             handlers.NewEmployeeHandlerWithServices(services.Employee, services.Timesheet, services.ProjectEmployee, services.Audit, clk),
+		Employee:             handlers.NewEmployeeHandlerWithServices(services.Employee, services.Timesheet, services.ProjectEmployee, services.EmployeePermission, services.Audit, clk),
 		EmployeeUsers:        employeeHandlers.NewEmployeeUsersHandler(services.EmployeePermission),
 		EmployeeProfile:      handlers.NewEmployeeProfileHandler(services.EmployeeProfile, services.EmployeeUser),
 		ProjectEmployee:      handlers.NewProjectEmployeeHandler(services.ProjectEmployee, services.Employee, services.Project, services.ProjectPermission, services.EmployeePermission, logger, clk),

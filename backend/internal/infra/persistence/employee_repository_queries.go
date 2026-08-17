@@ -45,6 +45,26 @@ func (r *EmployeeRepository) ListWithProjects(ctx context.Context, filters domai
 	return r.projectQueryBuilder.MapToEmployeeWithProject(employees, assignments), nil
 }
 
+// ListAccessibleIDs returns IDs of all employees accessible to a user via the
+// same access rules as ApplyAccessControl (created by them, shared via
+// employee_users, or assigned to their projects). Used by the global-pool list
+// to annotate rows with is_accessible.
+func (r *EmployeeRepository) ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error) {
+	accessFilters := domain.EmployeeFilters{
+		AccessibleBy: &userID,
+		Limit:        10000,
+	}
+	// Reuse the exact ApplyAccessControl semantics: same query shape, IDs only.
+	var ids []uint
+	err := r.queryBuilder.BuildListQuery(accessFilters).
+		Select("employees.id").
+		Pluck("employees.id", &ids).Error
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 // ListWithAllProjects returns employees with all their current active projects
 func (r *EmployeeRepository) ListWithAllProjects(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
 	// Get employees using the query builder

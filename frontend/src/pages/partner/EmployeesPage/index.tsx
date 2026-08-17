@@ -7,7 +7,7 @@ import { InlineStatStrip } from "@/components/shared/InlineStatStrip";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { FilterPill } from "@/components/shared/FilterPill";
 import { usePartnerEmployeesData } from "@/hooks/partner-employees/usePartnerEmployeesData";
-import { useEmployeesSummary } from "@/hooks/api/useEmployees";
+import { useEmployeesSummary, useRequestEmployeeAccess } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
@@ -27,8 +27,10 @@ import {
   Clock,
   X,
   UserPlus,
-  ListFilter,
   UserRoundCheck,
+  Globe,
+  HandHeart,
+  Check,
 } from "lucide-react";
 import {
   Employee,
@@ -60,6 +62,8 @@ const monthOptions = generateMonthOptions(12).map(o => ({
 
 const EmployeesPage = () => {
   const navigate = useNavigate();
+  const [poolView, setPoolView] = useState<"mine" | "global">("mine");
+
   const {
     employees,
     pagination,
@@ -78,7 +82,21 @@ const EmployeesPage = () => {
     sortBy,
     sortOrder,
     handleSortChange,
-  } = usePartnerEmployeesData();
+  } = usePartnerEmployeesData(poolView === "global" ? "global" : undefined);
+
+  const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
+  const requestAccess = useRequestEmployeeAccess();
+  const handleClaim = useCallback(
+    (employee: Employee) => {
+      requestAccess.mutate(employee.id, {
+        // A successful claim grants immediate detail access. Open the detail
+        // sheet only after the server has persisted that permission, rather
+        // than sending the partner to a predictable 403 first.
+        onSuccess: () => openEmployeeDetails(employee.id.toString()),
+      });
+    },
+    [openEmployeeDetails, requestAccess],
+  );
 
   const { sorting, onSortingChange } = useTableSorting(
     sortBy,
@@ -91,11 +109,15 @@ const EmployeesPage = () => {
   const { data: projectsData } = useAssignableProjects();
   const { exportEmployees, isExporting } = useEmployeeExport();
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
-
   const handleEmployeeClick = useCallback(
-    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
-    [openEmployeeDetails],
+    (employee: Employee) => {
+      if (poolView === "global" && employee.is_accessible === false) {
+        handleClaim(employee);
+        return;
+      }
+      openEmployeeDetails(employee.id.toString());
+    },
+    [handleClaim, openEmployeeDetails, poolView],
   );
 
   const activeEmployees = useMemo(
@@ -115,6 +137,52 @@ const EmployeesPage = () => {
 
   const columns: ColumnDef<Employee>[] = useMemo(
     () => [
+      // Global-pool view: management status + claim action replaces bank column
+      ...(poolView === "global"
+        ? [{
+            id: "managed_by",
+            header: "Quản lý",
+            size: 0,
+            minSize: 0,
+            accessorFn: (row: Employee) => row.creator_name || "",
+            cell: ({ row }: { row: { original: Employee } }) => {
+              const employee = row.original;
+              const accessible = employee.is_accessible;
+              return (
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                  <div className="min-w-0">
+                    <span className="typography-body-medium text-foreground/80 truncate block" title={employee.creator_name}>
+                      {employee.creator_name || "—"}
+                    </span>
+                    <span className="typography-label-medium text-muted-foreground/50">
+                      {employee.created_at
+                        ? format(new Date(employee.created_at), 'dd/MM/yyyy')
+                        : ""}
+                    </span>
+                  </div>
+                  {accessible ? (
+                    <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold text-success bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
+                      <Check className="h-3 w-3" />
+                      Đang quản lý
+                    </span>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClaim(employee);
+                      }}
+                      disabled={requestAccess.isPending}
+                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      <HandHeart className="h-3.5 w-3.5" />
+                      Yêu cầu quản lý
+                    </button>
+                  )}
+                </div>
+              );
+            },
+          } satisfies ColumnDef<Employee>]
+        : []),
       {
         accessorKey: "fullname",
         header: "Nhân viên",
@@ -124,6 +192,9 @@ const EmployeesPage = () => {
           const employee = row.original;
           const pendingCount = employee.timesheet_summary?.pending_timesheets ?? 0;
           const bankOk = hasCompleteBankDetails(employee);
+          // In the global pool, bank fields are deliberately masked until this
+          // partner manages the employee. Masked data is not missing data.
+          const showBankWarning = employee.is_accessible !== false && !bankOk;
           return (
             <div
               className="flex items-center gap-3 cursor-pointer -mx-2 px-2 py-2 rounded-xl transition-all hover:bg-primary/5 min-w-0 group"
@@ -159,7 +230,7 @@ const EmployeesPage = () => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                  {!bankOk && (
+                  {showBankWarning && (
                     <TooltipProvider delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -255,7 +326,7 @@ const EmployeesPage = () => {
           );
         },
       },
-      {
+      ...(poolView !== "global" ? [{
         id: "bank",
         header: "Ngân hàng",
         size: 0,
@@ -282,7 +353,7 @@ const EmployeesPage = () => {
             </div>
           );
         },
-      },
+      } satisfies ColumnDef<Employee>] : []),
       {
         accessorKey: "created_at",
         header: "Ngày tạo",
@@ -296,7 +367,7 @@ const EmployeesPage = () => {
         ),
       },
     ],
-    [navigate, handleEmployeeClick],
+    [navigate, handleEmployeeClick, poolView, handleClaim, requestAccess.isPending],
   );
 
   const mobileConfig = useMemo(
@@ -426,7 +497,10 @@ const EmployeesPage = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/60 bg-card p-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)] opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
+        <div className={cn(
+          "rounded-2xl border border-border/60 bg-card p-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)] opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]",
+          poolView === "global" && "hidden",
+        )}>
           <InlineStatStrip
             isLoading={summaryLoading}
             items={
@@ -479,12 +553,33 @@ const EmployeesPage = () => {
 
         <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
           <div className="flex items-center gap-2.5 flex-wrap rounded-2xl border border-border/60 bg-card px-3 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
-            <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <ListFilter className="h-4 w-4" />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc nhân sự</span>
+            <div className="inline-flex items-center rounded-xl border border-border/70 bg-muted/40 p-0.5">
+              <button
+                onClick={() => setPoolView("mine")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
+                  poolView === "mine"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <UserRoundCheck className="h-3.5 w-3.5" />
+                Nhân viên của tôi
+              </button>
+              <button
+                onClick={() => setPoolView("global")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
+                  poolView === "global"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Globe className="h-3.5 w-3.5" />
+                Tất cả NV
+              </button>
             </div>
+
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
@@ -532,7 +627,16 @@ const EmployeesPage = () => {
           </div>
         </div>
 
-        <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
+        {poolView === "global" && (
+          <div className="flex items-center gap-2.5 rounded-2xl border border-info/25 bg-info/5 px-4 py-3">
+            <Globe className="h-4 w-4 shrink-0 text-info" />
+            <p className="typography-body-medium text-foreground/80">
+              Toàn bộ nhân viên trong hệ thống. Nhấn <strong>Yêu cầu quản lý</strong> để thêm nhân viên vào danh sách của bạn thay vì tạo mới trùng lặp.
+            </p>
+          </div>
+        )}
+
+        {poolView !== "global" && <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />}
 
         <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
           <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">

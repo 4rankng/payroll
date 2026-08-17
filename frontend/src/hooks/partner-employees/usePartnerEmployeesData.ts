@@ -3,7 +3,7 @@ import { useEmployees, useEmployeeSearch } from '@/hooks/api/useEmployees';
 import type { Employee } from '@/types/api/employee.types';
 import { useDebounce } from '@/hooks/useDebounce';
 
-export const usePartnerEmployeesData = () => {
+export const usePartnerEmployeesData = (scope?: 'global') => {
   const [searchTerm, setSearchTerm] = useState('');
   const [projectId, setProjectId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<'working' | 'unassigned' | undefined>(undefined);
@@ -31,7 +31,8 @@ export const usePartnerEmployeesData = () => {
     status: statusFilter,
     month,
     fromDate,
-    toDate
+    toDate,
+    scope,
   });
 
   const { data: searchData, isLoading: isSearching, error: searchError } = useEmployeeSearch(
@@ -45,6 +46,7 @@ export const usePartnerEmployeesData = () => {
       toDate,
       sortBy,
       sortOrder,
+      scope,
     }
   );
 

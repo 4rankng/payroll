@@ -72,9 +72,31 @@ export interface Employee {
   timesheet_summary?: TimesheetSummary;
   payroll_summary?: PayrollSummary;
   created_by?: number;
+  /** Global-pool listing only: true when the requesting partner already manages this employee */
+  is_accessible?: boolean;
+  /** Global-pool listing only: display name of the employee's creator */
+  creator_name?: string;
   created_at?: string;
   updated_at?: string;
   [key: string]: unknown; // Add index signature for table compatibility
+}
+
+/** One existing employee matching the typed identifiers (masked). */
+export interface DuplicateCheckMatch {
+  id: number;
+  fullname: string;
+  cccd_masked?: string;
+  mobile_masked?: string;
+  email_masked?: string;
+  current_project_names: string[];
+  created_by_name: string;
+  created_at: string;
+  matched_on: string[];
+}
+
+export interface DuplicateCheckResponse {
+  has_duplicates: boolean;
+  data: DuplicateCheckMatch[];
 }
 
 export interface EmployeeSummary {
@@ -114,6 +136,8 @@ export interface EmployeeFilters {
   fromDate?: string;
   toDate?: string;
   paymentSchedule?: "weekly" | "monthly" | "flexible";
+  /** Partner-only: "global" lists ALL employees (global pool); default = accessible only */
+  scope?: "global";
 }
 
 export interface EmployeesResponse {

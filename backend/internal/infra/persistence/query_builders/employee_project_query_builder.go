@@ -57,7 +57,7 @@ type ProjectAssignmentWithPayment struct {
 
 // BuildListWithProjectsQuery builds the employee query for ListWithProjects
 func (b *EmployeeProjectQueryBuilder) BuildListWithProjectsQuery(filters domain.EmployeeFilters) *gorm.DB {
-	query := b.db.Model(&domain.Employee{}).Preload("Bank").Preload("User")
+	query := b.db.Model(&domain.Employee{}).Preload("Bank").Preload("User").Preload("Creator")
 
 	// Apply filters for employee selection
 	query = b.applyFilters(query, filters)

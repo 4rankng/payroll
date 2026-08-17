@@ -240,6 +240,154 @@ func runEmployeeCRUDTests(client *APIClient, data *TestData, reporter *Reporter,
 		return nil
 	})
 
+	// --- Global pool + self-service claim (partner duplicate prevention) ---
+	// Uses a dedicated employee: the shared testEmpID is deleted by the time
+	// these run, and claiming mutates the partner's scoped list.
+
+	// Partner flow requires at least one partner account; skip silently otherwise.
+	if len(data.Partners) > 0 {
+		partner := client.WithToken(data.Partners[0].Token)
+		poolCCCD := prefix + "POOL"
+		var poolEmpID uint
+
+		reporter.RunTest(flowEmployee, "Pool: create dedicated test employee", func() error {
+			body := CreateEmployeeRequest{
+				Fullname: prefix + " Pool Employee",
+				CCCD:     poolCCCD,
+				Mobile:   "0909123000",
+			}
+			var resp EmployeeResponse
+			if _, err := admin.PostInto("/api/v1/employees", body, &resp); err != nil {
+				return fmt.Errorf("create pool employee: %w", err)
+			}
+			poolEmpID = resp.ID
+			return AssertGreaterThan("id", uint(0), resp.ID)
+		})
+
+		defer func() {
+			if poolEmpID != 0 {
+				_, _, _ = admin.Delete(fmt.Sprintf("/api/v1/employees/%d", poolEmpID))
+			}
+		}()
+
+		reporter.RunTest(flowEmployee, "Duplicate check: global CCCD match with masked identifiers", func() error {
+			if poolEmpID == 0 {
+				return fmt.Errorf("no pool employee ID")
+			}
+			var resp struct {
+				HasDuplicates bool `json:"has_duplicates"`
+				Data          []struct {
+					ID           uint     `json:"id"`
+					Fullname     string   `json:"fullname"`
+					CCCDMasked   string   `json:"cccd_masked"`
+					MobileMasked string   `json:"mobile_masked"`
+					MatchedOn    []string `json:"matched_on"`
+				} `json:"data"`
+			}
+			if _, err := partner.GetInto("/api/v1/employees/duplicate-check?cccd="+poolCCCD, &resp); err != nil {
+				return fmt.Errorf("duplicate check: %w", err)
+			}
+			if !resp.HasDuplicates {
+				return fmt.Errorf("expected has_duplicates for CCCD %s", poolCCCD)
+			}
+			if len(resp.Data) == 0 || resp.Data[0].ID != poolEmpID {
+				return fmt.Errorf("expected match on employee %d", poolEmpID)
+			}
+			masked := resp.Data[0].CCCDMasked
+			if masked == "" || masked == poolCCCD {
+				return fmt.Errorf("expected masked CCCD, got %q", masked)
+			}
+			if resp.Data[0].MobileMasked != "" {
+				return fmt.Errorf("mobile must not be revealed on CCCD-only match")
+			}
+			return nil
+		})
+
+		reporter.RunTest(flowEmployee, "Duplicate check: no match", func() error {
+			var resp struct {
+				HasDuplicates bool `json:"has_duplicates"`
+			}
+			if _, err := partner.GetInto("/api/v1/employees/duplicate-check?cccd="+prefix+"UNKNOWN", &resp); err != nil {
+				return fmt.Errorf("duplicate check: %w", err)
+			}
+			if resp.HasDuplicates {
+				return fmt.Errorf("expected no duplicates for unknown CCCD")
+			}
+			return nil
+		})
+
+		reporter.RunTest(flowEmployee, "Duplicate check: requires identifier", func() error {
+			_, statusCode, err := partner.Get("/api/v1/employees/duplicate-check")
+			if err != nil {
+				return fmt.Errorf("get: %w", err)
+			}
+			return AssertGreaterOrEqual("status", 400, statusCode)
+		})
+
+		reporter.RunTest(flowEmployee, "Global pool: partner sees all employees", func() error {
+			if poolEmpID == 0 {
+				return fmt.Errorf("no pool employee ID")
+			}
+			var employees []EmployeeResponse
+			if _, err := partner.GetInto("/api/v1/employees?scope=global&pageSize=100&sortBy=created_at&sortOrder=desc", &employees); err != nil {
+				return fmt.Errorf("global pool list: %w", err)
+			}
+			found := false
+			for _, emp := range employees {
+				if emp.ID == poolEmpID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("partner global pool must include admin-created employee %d", poolEmpID)
+			}
+			return nil
+		})
+
+		reporter.RunTest(flowEmployee, "Claim: partner self-service request-access", func() error {
+			if poolEmpID == 0 {
+				return fmt.Errorf("no pool employee ID")
+			}
+			var resp APIResponse
+			if _, err := partner.PostInto(fmt.Sprintf("/api/v1/employees/%d/request-access", poolEmpID), map[string]string{}, &resp); err != nil {
+				return fmt.Errorf("request access: %w", err)
+			}
+
+			// Idempotent: second claim succeeds with "already managed" message.
+			if _, err := partner.PostInto(fmt.Sprintf("/api/v1/employees/%d/request-access", poolEmpID), map[string]string{}, &resp); err != nil {
+				return fmt.Errorf("idempotent request access: %w", err)
+			}
+
+			// Scoped default list must now include the claimed employee.
+			var scoped []EmployeeResponse
+			if _, err := partner.GetInto("/api/v1/employees?pageSize=100&sortBy=created_at&sortOrder=desc", &scoped); err != nil {
+				return fmt.Errorf("scoped list: %w", err)
+			}
+			found := false
+			for _, emp := range scoped {
+				if emp.ID == poolEmpID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("claimed employee %d must appear in partner scoped list", poolEmpID)
+			}
+
+			// Claiming must also authorize the detail endpoint that the partner UI
+			// opens after a successful request-access action.
+			var detail EmployeeDetailedResponse
+			if _, err := partner.GetInto(fmt.Sprintf("/api/v1/employees/%d", poolEmpID), &detail); err != nil {
+				return fmt.Errorf("claimed employee detail: %w", err)
+			}
+			if detail.ID != poolEmpID {
+				return fmt.Errorf("claimed employee detail ID = %d, want %d", detail.ID, poolEmpID)
+			}
+			return nil
+		})
+	}
+
 	reporter.RunTest(flowEmployee, "Edge: update non-existent employee", func() error {
 		newName := "Ghost"
 		body := UpdateEmployeeRequest{Fullname: &newName}

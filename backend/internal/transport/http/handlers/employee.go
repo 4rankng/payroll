@@ -12,8 +12,8 @@ type EmployeeHandler struct {
 	*employeeHandler.Handler
 }
 
-func NewEmployeeHandlerWithServices(employeeService *employee.EmployeeService, timesheetService *timesheet.TimesheetService, projectEmployeeService *project.ProjectEmployeeService, auditService interface{}, clk clock.Clock) *EmployeeHandler {
+func NewEmployeeHandlerWithServices(employeeService *employee.EmployeeService, timesheetService *timesheet.TimesheetService, projectEmployeeService *project.ProjectEmployeeService, employeePermissionService *employee.EmployeePermissionService, auditService interface{}, clk clock.Clock) *EmployeeHandler {
 	return &EmployeeHandler{
-		Handler: employeeHandler.NewHandlerWithServices(employeeService, timesheetService, projectEmployeeService, auditService, clk),
+		Handler: employeeHandler.NewHandlerWithServices(employeeService, timesheetService, projectEmployeeService, employeePermissionService, auditService, clk),
 	}
 }

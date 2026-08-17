@@ -140,15 +140,23 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 		if isScopedPartnerRole(userRole) && m.isEmployeeSpecificRoute(resource) && m.employeePermissionService != nil {
 			employeeID := m.extractEmployeeID(resource)
 			if employeeID != nil {
-				hasAccess, err := m.employeePermissionService.CanUserAccessEmployee(
-					c.Request.Context(),
-					*employeeID,
-					userID.(uint),
-				)
-				if err != nil || !hasAccess {
-					response.Forbidden(c, "No access to this employee")
-					c.Abort()
-					return
+				// Read-only preview: scoped partners may GET any employee's
+				// profile (global pool — lets them inspect before requesting
+				// management). Writes and the detail export still require
+				// access; the handler masks sensitive fields for unclaimed
+				// employees.
+				isReadOnlyPreview := action == "GET" && !strings.Contains(resource, "/export")
+				if !isReadOnlyPreview {
+					hasAccess, err := m.employeePermissionService.CanUserAccessEmployee(
+						c.Request.Context(),
+						*employeeID,
+						userID.(uint),
+					)
+					if err != nil || !hasAccess {
+						response.Forbidden(c, "No access to this employee")
+						c.Abort()
+						return
+					}
 				}
 			}
 		}
@@ -247,6 +255,13 @@ func (m *AuthorizationMiddleware) isEmployeeSpecificRoute(path string) bool {
 		return false
 	}
 	if strings.Contains(path, "/users") {
+		return false
+	}
+
+	// Self-service claim: by design it targets employees the partner does NOT
+	// yet have access to — the service layer enforces its own rules (partner
+	// role, idempotency). Blocking it here would make claiming impossible.
+	if strings.Contains(path, "/request-access") {
 		return false
 	}
 

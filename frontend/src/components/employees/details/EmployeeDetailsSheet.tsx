@@ -6,7 +6,7 @@ import { DeleteEmployeeModal } from "./components/DeleteEmployeeModal";
 import { ResetPasswordModalContainer } from "@/components/modals/ResetPasswordModalContainer";
 import { useEmployeeForm } from "@/hooks/employees/useEmployeeForm";
 import { useEmployeeDetails } from "@/hooks/employees/useEmployeeDetails";
-import { useUpdateEmployee, useDeleteEmployee } from "@/hooks/api/useEmployees";
+import { useUpdateEmployee, useDeleteEmployee, useRequestEmployeeAccess } from "@/hooks/api/useEmployees";
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   AtSign,
   FileDown,
   Pencil,
+  HandHeart,
 } from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { format } from "date-fns";
@@ -163,6 +164,18 @@ export function EmployeeDetailsSheet({
   const isAdmin = userRole === 'admin';
   const canManageEmployeeAccess = isAdmin || isEmployeeCreator;
 
+  // Preview mode: partner viewing an employee they don't manage (global pool).
+  // Backend already masks bank/address and omits summaries; hide all mutating
+  // actions and offer the one action that makes sense: request management.
+  const isPreviewOnly = !isAdmin && employee?.is_accessible === false;
+  const requestAccess = useRequestEmployeeAccess();
+  const handleClaimAccess = useCallback(() => {
+    if (!employee) return;
+    requestAccess.mutate(employee.id, {
+      onSuccess: () => handleClose(),
+    });
+  }, [employee, requestAccess, handleClose]);
+
   const avatar = useMemo(() => ({
     custom: employee ? <EmployeeHeader employee={employee} showName={true} /> : null
   }), [employee]);
@@ -210,7 +223,7 @@ export function EmployeeDetailsSheet({
   }, [employee]);
 
   const headerActions = useMemo(() => {
-    if (!employee || isEditing) return undefined;
+    if (!employee || isEditing || isPreviewOnly) return undefined;
     return (
       <Button
         variant="outline"
@@ -223,23 +236,24 @@ export function EmployeeDetailsSheet({
         {!isNarrowViewport && "Xuất Excel"}
       </Button>
     );
-  }, [employee, isEditing, handleExport, isExporting, isNarrowViewport]);
+  }, [employee, isEditing, isPreviewOnly, handleExport, isExporting, isNarrowViewport]);
 
   const footer = useMemo(() => {
     if (!employee || isEditing) return null;
 
-    const canDelete = employee.can_delete !== false && !employee.current_projects.some(
+    const currentProjects = employee.current_projects ?? [];
+    const canDelete = employee.can_delete !== false && !currentProjects.some(
       (project) => project.payment_schedule === "flexible",
     );
 
     return (
       <EmployeeActions
-        onDelete={canDelete ? () => (onDelete || defaultOnDelete)(employee) : undefined}
-        onResetPassword={() => setIsResetPasswordModalOpen(true)}
+        onDelete={isPreviewOnly ? undefined : (canDelete ? () => (onDelete || defaultOnDelete)(employee) : undefined)}
+        onResetPassword={isPreviewOnly ? undefined : () => setIsResetPasswordModalOpen(true)}
         onClose={handleClose}
       />
     );
-  }, [employee, isEditing, onDelete, defaultOnDelete, handleClose]);
+  }, [employee, isEditing, onDelete, defaultOnDelete, handleClose, isPreviewOnly]);
 
   const editingFooter = useMemo(() => {
     if (!employee || !isEditing) return null;
@@ -333,16 +347,34 @@ export function EmployeeDetailsSheet({
             <>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin cá nhân</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEditClick}
-                  className={isNarrowViewport ? "min-h-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1 text-xs"}
-                >
-                  <Pencil className="h-3 w-3" />
-                  Chỉnh sửa
-                </Button>
+                {!isPreviewOnly && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditClick}
+                    className={isNarrowViewport ? "min-h-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1 text-xs"}
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Chỉnh sửa
+                  </Button>
+                )}
               </div>
+              {isPreviewOnly && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-info/30 bg-info/5 px-3 py-2.5">
+                  <p className="text-xs text-foreground/80">
+                    Bạn đang xem bản xem trước. Thông tin ngân hàng, địa chỉ và lịch sử được ẩn.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleClaimAccess}
+                    disabled={requestAccess.isPending}
+                    className="shrink-0 gap-1.5"
+                  >
+                    <HandHeart className="h-3.5 w-3.5" />
+                    Yêu cầu quản lý
+                  </Button>
+                </div>
+              )}
               <EmployeePersonalInfo employee={employee} />
 
               {/* ── Bank info (view only) ── */}
@@ -355,31 +387,33 @@ export function EmployeeDetailsSheet({
               <div className="border-t pt-3">
                 <EmployeeProjectSection
                   employee={employee}
-                  onRemove={handleProjectRemove}
+                  onRemove={isPreviewOnly ? undefined : handleProjectRemove}
                   isRemoving={removeEmployee.isPending}
                   isEditing={false}
                   projectChanges={projectChanges}
                   onProjectChange={handleProjectChange}
                   onProjectApply={applyProjectChanges}
-                  allowProjectLinking={true}
+                  allowProjectLinking={!isPreviewOnly}
                 />
               </div>
 
-              {/* ── Statistics ── */}
-              <div className="border-t pt-3">
-                <EmployeeStatistics
-                  employee={employee}
-                  summaryData={summaryData}
-                  summaryLoading={summaryLoading}
-                  timesheetData={timesheetData}
-                  timesheetLoading={timesheetLoading}
-                  timesheetFilters={timesheetFilters}
-                  timesheetSorting={timesheetSorting}
-                  onTimesheetSortingChange={setTimesheetSorting}
-                  onPageChange={handlePageChange}
-                  onDateRangeChange={handleDateRangeChange}
-                />
-              </div>
+              {/* ── Statistics (management data — hidden in preview) ── */}
+              {!isPreviewOnly && (
+                <div className="border-t pt-3">
+                  <EmployeeStatistics
+                    employee={employee}
+                    summaryData={summaryData}
+                    summaryLoading={summaryLoading}
+                    timesheetData={timesheetData}
+                    timesheetLoading={timesheetLoading}
+                    timesheetFilters={timesheetFilters}
+                    timesheetSorting={timesheetSorting}
+                    onTimesheetSortingChange={setTimesheetSorting}
+                    onPageChange={handlePageChange}
+                    onDateRangeChange={handleDateRangeChange}
+                  />
+                </div>
+              )}
 
               {/* ── Permissions ── */}
               {canManageEmployeeAccess && (

@@ -19,6 +19,7 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 		employees.GET("/unassigned", container.Handlers.Employee.GetUnassignedEmployees)
 		employees.GET("/missing-bank-details", container.Handlers.Employee.GetEmployeesMissingBankDetails)
 		employees.GET("/cccd/:cccd", container.Handlers.Employee.GetEmployeeByCCCD)
+		employees.GET("/duplicate-check", container.Handlers.Employee.CheckEmployeeDuplicates)
 		employees.GET("/:id", container.Handlers.Employee.GetEmployee)
 		employees.GET("/:id/export", container.Handlers.Employee.ExportEmployeeDetail)
 		employees.PUT("/:id", container.Handlers.Employee.UpdateEmployee)
@@ -28,6 +29,7 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 		employees.PUT("/:id/projects", container.Handlers.Employee.UpdateEmployeeProject)
 
 		employees.GET("/:id/users", container.Handlers.EmployeeUsers.ListEmployeeUsers)
+		employees.POST("/:id/request-access", container.Handlers.EmployeeUsers.RequestEmployeeAccess)
 		employees.POST("/:id/users", container.Handlers.EmployeeUsers.GrantEmployeeAccess)
 		employees.DELETE("/:id/users/:userId", container.Handlers.EmployeeUsers.RevokeEmployeeAccess)
 

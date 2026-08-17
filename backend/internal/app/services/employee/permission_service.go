@@ -99,6 +99,59 @@ func (s *EmployeePermissionService) GrantEmployeeAccess(ctx context.Context, emp
 	return nil
 }
 
+// RequestEmployeeAccess lets a partner self-service claim management of an
+// employee from the global pool: creates an employee_users row so the employee
+// appears in the partner's scoped list (ApplyAccessControl shared branch).
+// Idempotent — requesting an already-managed employee is a success, not an error.
+func (s *EmployeePermissionService) RequestEmployeeAccess(ctx context.Context, employeeID, userID uint, requesterRole string) (alreadyManaged bool, err error) {
+	employee, err := s.employeeRepo.GetByID(ctx, employeeID)
+	if err != nil {
+		return false, err
+	}
+
+	// Self-service claim is a partner feature; admins already see everything.
+	if requesterRole != string(domain.RolePartner) {
+		return false, domain.NewValidationError(constants.MsgOnlyPartnerCanRequestEmployeeAccessVN)
+	}
+
+	// The creator already manages their own employee.
+	if userID == employee.CreatedBy {
+		return true, nil
+	}
+
+	// Idempotency: already-claimed employees succeed without a duplicate row.
+	existing, err := s.employeeUserRepo.GetByEmployeeAndUser(ctx, employeeID, userID)
+	if err != nil {
+		return false, err
+	}
+	if existing != nil {
+		return true, nil
+	}
+
+	employeeUser := &domain.EmployeeUser{
+		EmployeeID: employeeID,
+		UserID:     userID,
+		// Self-grant: the requester is both grantee and granter, auditable as such.
+		GrantedBy: userID,
+	}
+
+	if err := s.employeeUserRepo.Create(ctx, employeeUser); err != nil {
+		return false, err
+	}
+
+	// Publish the same permission event as an explicit grant for audit trail.
+	if s.eventBus != nil {
+		employeeName := strings.TrimSpace(employee.Fullname)
+		actorFullName := audit.GetActorFullName(ctx, s.userRepo, userID)
+		event := domain.NewEmployeeAccessGrantedEvent(ctx, employeeID, employeeName, "", 0, requesterRole, userID, actorFullName)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish EmployeeAccessGrantedEvent", "error", err)
+		}
+	}
+
+	return false, nil
+}
+
 // RevokeEmployeeAccess revokes employee access from a user
 func (s *EmployeePermissionService) RevokeEmployeeAccess(ctx context.Context, employeeID, userID, revokedBy uint, revokerRole string) error {
 	// Verify revoker is employee creator or admin

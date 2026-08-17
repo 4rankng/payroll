@@ -167,7 +167,9 @@ func (h *Handler) parseEmployeeFilters(c *gin.Context) (domain.EmployeeFilters, 
 }
 
 // buildEmployeeListResponse converts a slice of EmployeeWithProjects to response DTOs.
-func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects) []dto.EmployeeResponse {
+// When maskInaccessible is true (global-pool listing for a partner), rows outside
+// the requester's accessible set get bank details withheld and is_accessible=false.
+func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects, accessibleIDs map[uint]bool, maskInaccessible bool) []dto.EmployeeResponse {
 	result := make([]dto.EmployeeResponse, 0, len(employees))
 	for _, emp := range employees {
 		var dobStr *string
@@ -194,6 +196,22 @@ func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects) []dto.E
 		}
 		// emp is *domain.EmployeeWithProjects which embeds domain.Employee.
 		r.BankAccountStatus, r.BankAccountInvalidReason, r.BankAccountValidatedAt = bankAccountStatusFields(&emp.Employee)
+
+		// Global-pool annotation: flag accessibility and, for rows the partner does
+		// not manage, withhold bank details (cross-partner PII guard).
+		if maskInaccessible {
+			accessible := accessibleIDs[emp.ID]
+			r.IsAccessible = &accessible
+			creatorName := emp.Creator.Fullname
+			r.CreatorName = &creatorName
+			if !accessible {
+				r.Bank = nil
+				r.BankAccountNumber = ""
+				r.BankAccountName = ""
+				r.Address = ""
+			}
+		}
+
 		for _, p := range emp.CurrentProjects {
 			r.CurrentProjects = append(r.CurrentProjects, buildProjectInfo(p))
 		}
@@ -217,6 +235,7 @@ func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects) []dto.E
 // @Param projectId query int false "Filter employees assigned to specific project"
 // @Param fromDate query string false "Filter employees created from this date (YYYY-MM-DD)"
 // @Param toDate query string false "Filter employees created until this date (YYYY-MM-DD)"
+// @Param scope query string false "Partner-only: 'global' lists ALL employees (global pool); default lists only accessible employees"
 // @Success 200 {object} dto.ListEmployeesResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
@@ -226,6 +245,15 @@ func (h *Handler) ListEmployees(c *gin.Context) {
 	filters, page, pageSize, ok := h.parseEmployeeFilters(c)
 	if !ok {
 		return
+	}
+
+	// Partner global-pool scope: list all employees, annotated with is_accessible
+	// and with bank/address withheld for rows the partner does not manage.
+	// Only this endpoint honors scope=global — export/unassigned/summary stay scoped.
+	globalPool := false
+	if c.Query("scope") == "global" && c.GetString(constants.CtxUserRole) == string(domain.RolePartner) {
+		globalPool = true
+		filters.AccessibleBy = nil
 	}
 
 	if status := c.Query("status"); status != "" {
@@ -265,7 +293,25 @@ func (h *Handler) ListEmployees(c *gin.Context) {
 		return
 	}
 
-	employeeResponses := buildEmployeeListResponse(employees)
+	// For the global pool, resolve the partner's accessible set to annotate rows.
+	accessibleIDs := map[uint]bool{}
+	if globalPool {
+		uid, err := h.validator.ValidateUserContext(c)
+		if err != nil {
+			response.HandleDomainError(c, err)
+			return
+		}
+		ids, err := h.employeeService.ListAccessibleIDs(c.Request.Context(), uid)
+		if err != nil {
+			response.InternalServerError(c, constants.MsgFailedToListEmployeesVN)
+			return
+		}
+		for _, id := range ids {
+			accessibleIDs[id] = true
+		}
+	}
+
+	employeeResponses := buildEmployeeListResponse(employees, accessibleIDs, globalPool)
 	pagination := helpers.CalculatePagination(page, pageSize, total)
 
 	if len(employeeResponses) == 0 {
@@ -314,7 +360,7 @@ func (h *Handler) GetEmployeesMissingBankDetails(c *gin.Context) {
 		return
 	}
 
-	employeeResponses := buildEmployeeListResponse(employees)
+	employeeResponses := buildEmployeeListResponse(employees, nil, false)
 	pagination := helpers.CalculatePagination(page, pageSize, total)
 
 	if len(employeeResponses) == 0 {

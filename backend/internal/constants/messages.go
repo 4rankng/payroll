@@ -201,6 +201,11 @@ const (
 	MsgEmployeeUsersRetrievedSuccessfullyVN  = "Lấy danh sách người dùng nhân viên thành công"
 	MsgAccessGrantedSuccessfullyVN           = "Cấp quyền truy cập thành công"
 	MsgAccessRevokedSuccessfullyVN           = "Thu hồi quyền truy cập thành công"
+	MsgEmployeeAccessRequestedVN             = "Đã thêm nhân viên vào danh sách quản lý của bạn"
+	MsgEmployeeAccessAlreadyRequestedVN      = "Bạn đã quản lý nhân viên này"
+	MsgOnlyPartnerCanRequestEmployeeAccessVN = "Chỉ người dùng có vai trò quản lý mới có thể yêu cầu quản lý nhân viên"
+	MsgDuplicateCheckRequiresIdentifierVN    = "Cần nhập ít nhất một tiêu chí: CCCD, số điện thoại hoặc email"
+	MsgEmployeeDuplicatesFoundVN             = "Phát hiện nhân viên trùng khớp"
 	MsgCanOnlyGrantProjectAccessToPartnerVN  = "Chỉ có thể cấp quyền truy cập dự án cho người dùng có vai trò quản lý"
 	MsgCanOnlyGrantEmployeeAccessToPartnerVN = "Chỉ có thể cấp quyền truy cập nhân viên cho người dùng có vai trò quản lý"
 

@@ -261,6 +261,11 @@ func (m *MockEmployeeRepository) ListWithAllProjects(ctx context.Context, filter
 	return args.Get(0).([]*domain.EmployeeWithProjects), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]uint), args.Error(1)
+}
+
 func (m *MockEmployeeRepository) Count(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	args := m.Called(ctx, filters)
 	return args.Get(0).(int64), args.Error(1)

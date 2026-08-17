@@ -22,7 +22,8 @@ import type {
   EmployeeCurrentProjectsFilters,
   EmployeeUser,
   EmployeeUsersResponse,
-  GrantEmployeeAccessData
+  GrantEmployeeAccessData,
+  DuplicateCheckResponse
 } from '@/types/api/employee.types';
 
 class EmployeeService {
@@ -134,6 +135,7 @@ class EmployeeService {
     project_id?: number;
     fromDate?: string;
     toDate?: string;
+    scope?: 'global';
   }): Promise<EmployeesResponse> {
     // Convert month to date range if provided and no explicit fromDate/toDate
     const apiParams: Record<string, unknown> = { ...params };
@@ -353,31 +355,33 @@ class EmployeeService {
   }
 
   /**
-   * Validate CCCD uniqueness
+   * Check for duplicate employees by CCCD, mobile, or email before creating.
+   * Global by design — surfaces employees created by other partners.
+   * Only identifiers the requester typed are revealed, masked.
    */
-  async validateCCCD(cccd: string, excludeId?: number): Promise<boolean> {
-    try {
-      const response = await apiClient.get<boolean>(
-        `${API_ENDPOINTS.employees.base}/validate-cccd?cccd=${cccd}${excludeId ? `&exclude=${excludeId}` : ''}`
-      );
-      return response.data === true;
-    } catch (error) {
-      return false;
-    }
+  async duplicateCheck(params: {
+    cccd?: string;
+    mobile?: string;
+    email?: string;
+  }): Promise<DuplicateCheckResponse> {
+    const response = await apiClient.get<DuplicateCheckResponse>(
+      `${API_ENDPOINTS.employees.base}/duplicate-check`,
+      { params }
+    );
+    return (
+      response.data || { has_duplicates: false, data: [] }
+    );
   }
 
   /**
-   * Validate email uniqueness
+   * Partner self-service claim: add an employee from the global pool to the
+   * partner's managed list. Idempotent.
    */
-  async validateEmail(email: string, excludeId?: number): Promise<boolean> {
-    try {
-      const response = await apiClient.get<boolean>(
-        `${API_ENDPOINTS.employees.base}/validate-email?email=${email}${excludeId ? `&exclude=${excludeId}` : ''}`
-      );
-      return response.data === true;
-    } catch (error) {
-      return false;
-    }
+  async requestEmployeeAccess(employeeId: number): Promise<{ message?: string }> {
+    const response = await apiClient.post<null>(
+      `${API_ENDPOINTS.employees.base}/${employeeId}/request-access`
+    );
+    return { message: response.message };
   }
 
   /**

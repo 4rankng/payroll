@@ -409,19 +409,40 @@ export const useExportEmployees = () => {
   });
 };
 
-// Validate CCCD uniqueness
-export const useValidateCCCD = () => {
-  return useMutation({
-    mutationFn: ({ cccd, excludeId }: { cccd: string; excludeId?: number }) =>
-      employeeService.validateCCCD(cccd, excludeId),
+// Check for duplicate employees by typed identifiers (create-form guard).
+// Debounce inputs at the call site; pass undefined for fields not yet filled.
+export const useDuplicateCheck = (params: {
+  cccd?: string;
+  mobile?: string;
+  email?: string;
+}) => {
+  const hasIdentifier = Boolean(params.cccd || params.mobile || params.email);
+
+  return useQuery({
+    queryKey: QueryKeys.employees.duplicateCheck(params),
+    queryFn: () => employeeService.duplicateCheck(params),
+    enabled: hasIdentifier,
+    staleTime: 0,
+    retry: false,
   });
 };
 
-// Validate email uniqueness
-export const useValidateEmail = () => {
+// Partner self-service claim: add an employee from the global pool to the
+// partner's managed list.
+export const useRequestEmployeeAccess = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: ({ email, excludeId }: { email: string; excludeId?: number }) =>
-      employeeService.validateEmail(email, excludeId),
+    mutationFn: (employeeId: number) =>
+      employeeService.requestEmployeeAccess(employeeId),
+    onSuccess: (response) => {
+      // Scoped list and global pool both change on claim
+      queryClient.invalidateQueries({ queryKey: QueryKeys.employees.lists() });
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+    // Error handling is done globally in React Query
   });
 };
 

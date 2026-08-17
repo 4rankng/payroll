@@ -24,25 +24,27 @@ import (
 )
 
 type Handler struct {
-	employeeService        *employee.EmployeeService
-	timesheetService       *timesheet.TimesheetService
-	projectEmployeeService *project.ProjectEmployeeService
-	validator              *validation.RequestValidator
-	auditService           interface{} // Will be *infrastructure.AuditService
-	clock                  clock.Clock
+	employeeService           *employee.EmployeeService
+	timesheetService          *timesheet.TimesheetService
+	projectEmployeeService    *project.ProjectEmployeeService
+	employeePermissionService *employee.EmployeePermissionService
+	validator                 *validation.RequestValidator
+	auditService              interface{} // Will be *infrastructure.AuditService
+	clock                     clock.Clock
 }
 
-func NewHandlerWithServices(employeeService *employee.EmployeeService, timesheetService *timesheet.TimesheetService, projectEmployeeService *project.ProjectEmployeeService, auditService interface{}, clk clock.Clock) *Handler {
+func NewHandlerWithServices(employeeService *employee.EmployeeService, timesheetService *timesheet.TimesheetService, projectEmployeeService *project.ProjectEmployeeService, employeePermissionService *employee.EmployeePermissionService, auditService interface{}, clk clock.Clock) *Handler {
 	if clk == nil {
 		clk = clock.New()
 	}
 	return &Handler{
-		employeeService:        employeeService,
-		timesheetService:       timesheetService,
-		projectEmployeeService: projectEmployeeService,
-		validator:              validation.NewRequestValidator(),
-		auditService:           auditService,
-		clock:                  clk,
+		employeeService:           employeeService,
+		timesheetService:          timesheetService,
+		projectEmployeeService:    projectEmployeeService,
+		employeePermissionService: employeePermissionService,
+		validator:                 validation.NewRequestValidator(),
+		auditService:              auditService,
+		clock:                     clk,
 	}
 }
 
@@ -134,7 +136,7 @@ func (h *Handler) buildEmployeeResponse(ctx context.Context, employee *domain.Em
 		}
 
 		if assignments, err := h.projectEmployeeService.ListAssignments(ctx, filters); err == nil {
-			var currentProjects []dto.EmployeeProjectInfo
+			currentProjects := make([]dto.EmployeeProjectInfo, 0, len(assignments))
 
 			for _, assignment := range assignments {
 				// Only include active assignments (LastDate is nil)
@@ -282,7 +284,7 @@ func (h *Handler) buildDetailedEmployeeResponse(ctx context.Context, emp *domain
 
 	// Collect project assignments
 	if ar := <-projectCh; ar.err == nil {
-		var currentProjects []dto.EmployeeCurrentProject
+		currentProjects := make([]dto.EmployeeCurrentProject, 0, len(ar.assignments))
 		for _, assignment := range ar.assignments {
 			if assignment.LastDate != nil {
 				continue // skip ended assignments
@@ -409,6 +411,31 @@ func (h *Handler) GetEmployee(c *gin.Context) {
 	if err != nil {
 		response.InternalServerError(c, constants.MsgFailedToBuildComprehensiveResponseVN)
 		return
+	}
+
+	// 4. Partner preview masking: scoped partners may view any employee
+	// (global pool preview before requesting management). For employees they
+	// don't manage, bank details and address are withheld and edit actions
+	// should be hidden (is_accessible=false).
+	userRole := c.GetString(constants.CtxUserRole)
+	if userRole == string(domain.RolePartner) || userRole == string(domain.RoleAdvPartner) {
+		accessible := false
+		if h.employeePermissionService != nil {
+			userID := c.GetUint(constants.CtxUserID)
+			accessible, _ = h.employeePermissionService.CanUserAccessEmployee(c.Request.Context(), id, userID)
+		}
+		employeeResponse.IsAccessible = &accessible
+		if !accessible {
+			employeeResponse.Bank = nil
+			employeeResponse.BankAccountNumber = ""
+			employeeResponse.BankAccountName = ""
+			employeeResponse.Address = ""
+			employeeResponse.DateOfBirth = nil
+			// Management data (earnings, work history) stays with the managing
+			// partner; a preview only needs identity + current projects.
+			employeeResponse.PayrollSummary = nil
+			employeeResponse.TimesheetSummary = nil
+		}
 	}
 
 	response.Success(c, employeeResponse, constants.MsgEmployeeRetrievedSuccessfullyVN)

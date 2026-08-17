@@ -65,6 +65,13 @@ type EmployeeResponse struct {
 	UpdatedAt                time.Time             `json:"updated_at"`
 	CanDelete                bool                  `json:"can_delete"`
 	CurrentProjects          []EmployeeProjectInfo `json:"current_projects"`
+	// IsAccessible indicates whether the requesting partner already manages this
+	// employee (created/shared/project-assigned). Only set on global-pool listings
+	// (scope=global, partner role); omitted elsewhere.
+	IsAccessible *bool `json:"is_accessible,omitempty"`
+	// CreatorName is the display name of the employee's creator. Exposed so the
+	// global pool can show "Được quản lý bởi" without exposing the creator user ID.
+	CreatorName *string `json:"creator_name,omitempty"`
 }
 
 // EmployeeProjectInfo represents project information for an employee
@@ -90,6 +97,26 @@ type ListEmployeesResponse struct {
 	Total     int64              `json:"total"`
 	Limit     int                `json:"limit"`
 	Offset    int                `json:"offset"`
+}
+
+// DuplicateCheckItemResponse is one existing employee matching the typed
+// identifiers. Only identifiers the requester typed are revealed, masked.
+type DuplicateCheckItemResponse struct {
+	ID                  uint      `json:"id"`
+	Fullname            string    `json:"fullname"`
+	CCCDMasked          string    `json:"cccd_masked,omitempty"`
+	MobileMasked        string    `json:"mobile_masked,omitempty"`
+	EmailMasked         string    `json:"email_masked,omitempty"`
+	CurrentProjectNames []string  `json:"current_project_names"`
+	CreatedByName       string    `json:"created_by_name"`
+	CreatedAt           time.Time `json:"created_at"`
+	MatchedOn           []string  `json:"matched_on"`
+}
+
+// DuplicateCheckResponse is the payload for GET /employees/duplicate-check
+type DuplicateCheckResponse struct {
+	HasDuplicates bool                         `json:"has_duplicates"`
+	Data          []DuplicateCheckItemResponse `json:"data"`
 }
 
 // EmployeesSummaryResponse represents the response for employees summary
@@ -202,6 +229,11 @@ type EmployeeDetailedResponse struct {
 
 	// Payroll summary
 	PayrollSummary *EmployeeSummaryResponse `json:"payroll_summary,omitempty"`
+
+	// True when the requesting partner already manages this employee
+	// (created/shared/project-assigned). When false, bank/address are masked
+	// and edit actions should be hidden. Only meaningful for partner callers.
+	IsAccessible *bool `json:"is_accessible,omitempty"`
 }
 
 // GrantEmployeeAccessRequest represents the request to grant employee access to a user

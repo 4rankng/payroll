@@ -114,6 +114,47 @@ func (h *EmployeeUsersHandler) GrantEmployeeAccess(c *gin.Context) {
 	response.Success(c, nil, constants.MsgAccessGrantedSuccessfullyVN)
 }
 
+// RequestEmployeeAccess lets a partner self-service claim management of an employee
+// @Summary Request to manage an employee
+// @Description Partner self-service claim: adds the employee to the partner's managed list (employee_users). Idempotent.
+// @Tags employees
+// @Accept json
+// @Produce json
+// @Param id path int true "Employee ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/employees/{id}/request-access [post]
+func (h *EmployeeUsersHandler) RequestEmployeeAccess(c *gin.Context) {
+	employeeID, ok := helpers.ParseIDParam(c, "id", constants.MsgInvalidEmployeeIDVN)
+	if !ok {
+		return
+	}
+
+	userID := c.GetUint(constants.CtxUserID)
+	userRole := c.GetString(constants.CtxUserRole)
+
+	alreadyManaged, err := h.employeePermissionService.RequestEmployeeAccess(
+		c.Request.Context(),
+		employeeID,
+		userID,
+		userRole,
+	)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	if alreadyManaged {
+		response.Success(c, nil, constants.MsgEmployeeAccessAlreadyRequestedVN)
+		return
+	}
+	response.Success(c, nil, constants.MsgEmployeeAccessRequestedVN)
+}
+
 // RevokeEmployeeAccess revokes access to an employee from a user
 // @Summary Revoke employee access
 // @Description Revoke access to an employee from a specific user (employee creator or admin can revoke access)

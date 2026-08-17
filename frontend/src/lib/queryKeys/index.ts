@@ -103,6 +103,8 @@ export const QueryKeys = {
     details: () => [...QueryKeys.employees.all, 'detail'] as const,
     detail: (id: number) => [...QueryKeys.employees.details(), id] as const,
     summary: () => [...QueryKeys.employees.all, 'summary'] as const,
+    duplicateCheck: (params: { cccd?: string; mobile?: string; email?: string }) =>
+      [...QueryKeys.employees.all, 'duplicate-check', params] as const,
 
     // Employee relationships
     projects: (id: number, params?: EmployeeProjectListParams) =>

@@ -195,6 +195,10 @@ type EmployeeRepository interface {
 	GetRecentEmployeesPaginated(ctx context.Context, startDate, endDate time.Time, limit, offset int) ([]*Employee, error)
 	CountRecentEmployees(ctx context.Context, startDate, endDate time.Time) (int64, error)
 	SearchEmployees(ctx context.Context, search string, limit int) ([]*EmployeeWithProject, error)
+	// ListAccessibleIDs returns IDs of all employees accessible to a user
+	// (created by them, shared via employee_users, or assigned to their projects).
+	// Used to annotate global-pool list rows with is_accessible.
+	ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error)
 	GetEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
 	CountEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) (int64, error)
 	// UpdateColumns performs a targeted update of specific columns for an employee.

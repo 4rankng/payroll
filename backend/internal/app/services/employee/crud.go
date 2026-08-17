@@ -39,6 +39,10 @@ func (s *EmployeeService) ListEmployeesWithProjects(ctx context.Context, filters
 	return s.EmployeeRepo.ListWithProjects(ctx, filters)
 }
 
+func (s *EmployeeService) ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error) {
+	return s.EmployeeRepo.ListAccessibleIDs(ctx, userID)
+}
+
 func (s *EmployeeService) ListEmployeesWithAllProjects(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
 	// Apply a short-lived microcache for high-traffic employee list endpoints.
 	if filters.Limit > 0 {
