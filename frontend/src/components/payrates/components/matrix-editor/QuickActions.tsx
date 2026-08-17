@@ -49,9 +49,9 @@ export function QuickActions({
   if (readOnly) return null;
 
   return (
-    <div className={`grid gap-3 pt-1 ${isFlexible ? 'grid-cols-1 sm:grid-cols-[1fr_1.4fr]' : 'grid-cols-1 sm:grid-cols-2'}`}>
+    <div className={`grid border-t border-border/70 ${isFlexible ? 'grid-cols-1 sm:grid-cols-[1fr_1.4fr]' : 'grid-cols-1 sm:grid-cols-2'}`}>
       {/* Add position */}
-      <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
+      <section className="space-y-3 px-4 py-4 sm:px-0 sm:pr-5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vị trí</span>
           {!showAddPosition && (
@@ -105,7 +105,7 @@ export function QuickActions({
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Add hour type — flexible projects get a time-picker UI, others get text input */}
       {isFlexible ? (
@@ -116,7 +116,7 @@ export function QuickActions({
           readOnly={readOnly}
         />
       ) : (
-        <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
+        <section className="space-y-3 border-t border-border/70 px-4 py-4 sm:border-l sm:border-t-0 sm:px-0 sm:pl-5">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Khung giờ</span>
             {!showAddHourType && (
@@ -170,7 +170,7 @@ export function QuickActions({
               ))}
             </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Lock, CornerDownRight, Zap } from 'lucide-react';
+import { ArrowLeft, Save, Lock, CornerDownRight, Zap, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -335,71 +335,116 @@ export default function PayrateEditPage() {
               </div>
             )}
 
-            {/* ── Effective period (hidden for flexible — edits take effect immediately) ── */}
-            {!isFlexible && (<section className={cn(
-              "rounded-xl border bg-card p-4 transition-all",
-              fromDateIsActionable ? "border-amber-400 ring-2 ring-amber-200" : "border-border",
+            {/* ── Compact editor controls ── */}
+            <section className={cn(
+              "border-y bg-card px-4 transition-colors",
+              fromDateIsActionable ? "border-amber-400 bg-amber-50/30" : "border-border",
             )}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  Thời gian hiệu lực
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-6">
-                {/* From date */}
-                <div className="flex flex-col gap-0.5">
-                  <Label htmlFor="fromDate" className={cn(
-                    "text-xs font-medium flex items-center gap-1",
-                    fromDateLocked && !fromDateIsActionable ? "text-muted-foreground" : "text-foreground",
-                    sf?.effective_from.status === 'error' && !fromDateIsActionable && "text-red-600",
-                    fromDateIsActionable && "text-amber-700 font-semibold",
-                  )}>
-                    Từ ngày <span className="text-destructive">*</span>
-                    {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3 text-muted-foreground" />}
-                    {fromDateIsActionable && <span className="text-[10px] font-normal text-amber-600">(cập nhật tại đây)</span>}
-                  </Label>
-                  <Input
-                    ref={fromDateRef}
-                    id="fromDate"
-                    type="date"
-                    value={config.fromDate || ''}
-                    readOnly={fromDateLocked && !fromDateIsActionable}
-                    min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
-                    autoFocus={fromDateIsActionable}
-                    onChange={e => {
-                      if (fromDateLocked && !fromDateIsActionable) return;
-                      setConfig(prev => ({ ...prev, fromDate: e.target.value }));
-                      clearServerField('effective_from');
-                    }}
-                    className={cn(
-                      "h-8 text-sm w-40",
-                      fromDateLocked && !fromDateIsActionable && "bg-muted/50 cursor-not-allowed opacity-60",
-                      fromDateIsActionable && "border-amber-400 ring-2 ring-amber-200 bg-amber-50/40",
-                      !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
-                    )}
-                  />
-                  {/* When fromDateIsActionable, show the suggested new start date */}
-                  {fromDateIsActionable && sf?.rates.suggested_value && (
-                    <div className="mt-1.5 rounded-xl px-3 py-2 text-xs space-y-1 bg-amber-50 border border-amber-200 text-amber-800">
-                      <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
-                      <p className="text-xs opacity-80">Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
-                      <p className="text-xs opacity-80">Ngày bắt đầu sớm nhất có thể: <strong>{sf.rates.suggested_value}</strong> (sau bảng công đã thanh toán gần nhất).</p>
+              <div className="grid gap-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                {!isFlexible ? (
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                        <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hiệu lực cấu hình</p>
+                        <p className="text-xs text-muted-foreground">Áp dụng liên tục từ ngày bắt đầu</p>
+                      </div>
+                      <div className="ml-2 flex flex-col gap-1">
+                        <Label htmlFor="fromDate" className={cn(
+                          "flex items-center gap-1 text-xs font-medium",
+                          fromDateLocked && !fromDateIsActionable ? "text-muted-foreground" : "text-foreground",
+                          sf?.effective_from.status === 'error' && !fromDateIsActionable && "text-red-600",
+                          fromDateIsActionable && "font-semibold text-amber-700",
+                        )}>
+                          Từ ngày <span className="text-destructive">*</span>
+                          {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3" aria-hidden="true" />}
+                        </Label>
+                        <Input
+                          ref={fromDateRef}
+                          id="fromDate"
+                          type="date"
+                          value={config.fromDate || ''}
+                          readOnly={fromDateLocked && !fromDateIsActionable}
+                          min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
+                          autoFocus={fromDateIsActionable}
+                          onChange={e => {
+                            if (fromDateLocked && !fromDateIsActionable) return;
+                            setConfig(prev => ({ ...prev, fromDate: e.target.value }));
+                            clearServerField('effective_from');
+                          }}
+                          className={cn(
+                            "h-9 w-44 text-sm",
+                            fromDateLocked && !fromDateIsActionable && "cursor-not-allowed bg-muted/50 opacity-60",
+                            fromDateIsActionable && "border-amber-400 bg-amber-50/40 ring-2 ring-amber-200",
+                            !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
+                          )}
+                        />
+                      </div>
                     </div>
-                  )}
-                  {!fromDateIsActionable && (
-                    <FieldFeedback
-                      field={sf?.effective_from}
-                      onApplySuggestion={v => {
-                        setConfig(prev => ({ ...prev, fromDate: v }));
-                        clearServerField('effective_from');
-                      }}
-                    />
-                  )}
-                </div>
+                    {fromDateIsActionable && sf?.rates.suggested_value && (
+                      <div className="ml-12 mt-2 space-y-1 border-l-2 border-amber-300 pl-3 text-xs text-amber-800">
+                        <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
+                        <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
+                        <p>Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong>.</p>
+                      </div>
+                    )}
+                    {!fromDateIsActionable && (
+                      <div className="ml-12 max-w-xl">
+                        <FieldFeedback
+                          field={sf?.effective_from}
+                          onApplySuggestion={v => {
+                            setConfig(prev => ({ ...prev, fromDate: v }));
+                            clearServerField('effective_from');
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 py-1">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                      <Zap className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cấu hình linh hoạt</p>
+                      <p className="text-xs text-muted-foreground">Quản lý vị trí, ca làm việc và mức lương</p>
+                    </div>
+                  </div>
+                )}
 
+                <div className="md:pt-1">
+                  <p className="mb-1 text-[11px] font-medium text-muted-foreground">Chế độ chỉnh sửa</p>
+                  <div className="flex border-b border-border" role="tablist" aria-label="Chế độ chỉnh sửa cấu hình lương">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={viewMode === 'matrix'}
+                      onClick={() => setViewMode('matrix')}
+                      className={cn(
+                        "min-h-10 border-b-2 px-4 text-xs font-semibold transition-colors",
+                        viewMode === 'matrix' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      Ma trận
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={viewMode === 'json'}
+                      onClick={() => setViewMode('json')}
+                      className={cn(
+                        "min-h-10 border-b-2 px-4 text-xs font-semibold transition-colors",
+                        viewMode === 'json' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      JSON
+                    </button>
+                  </div>
+                </div>
               </div>
-            </section>)}
+            </section>
 
             {/* ── Client-side validation — only shown after first save attempt ── */}
             {hasAttemptedSave && !clientValidation.valid && (
@@ -411,16 +456,8 @@ export default function PayrateEditPage() {
               </div>
             )}
 
-            {/* ── Matrix editor ── */}
-            <div className="flex justify-end mb-2">
-              <div className="flex bg-muted/50 p-1 rounded-lg">
-                <button type="button" onClick={() => setViewMode('matrix')} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", viewMode === 'matrix' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900')}>Ma trận</button>
-                <button type="button" onClick={() => setViewMode('json')} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", viewMode === 'json' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900')}>JSON (Linh hoạt)</button>
-              </div>
-            </div>
-
             <section className={cn(
-              "rounded-xl border bg-card overflow-hidden transition-all",
+              "overflow-hidden border-y bg-card transition-all",
               ratesLocked ? "border-muted" : "border-border",
               sf?.rates?.status === 'error' && "border-red-300 ring-2 ring-red-100",
             )}>

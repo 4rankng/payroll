@@ -75,7 +75,7 @@ export function FlexibleShiftManager({
   const availablePresets = PRESET_SHIFTS.filter(p => !hourTypes.includes(p.value));
 
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2.5">
+    <section className="space-y-3 border-t border-border/70 px-4 py-4 sm:border-l sm:border-t-0 sm:px-0 sm:pl-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
@@ -184,6 +184,6 @@ export function FlexibleShiftManager({
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

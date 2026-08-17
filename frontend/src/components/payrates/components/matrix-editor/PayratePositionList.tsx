@@ -152,7 +152,7 @@ export function PayratePositionList({
                   <legend className="mb-2 text-xs font-medium text-muted-foreground">
                     {DAY_LABELS[dayType]}
                   </legend>
-                  <div className="grid min-w-0 grid-cols-2 gap-2">
+                  <div className="grid min-w-0 grid-cols-2 gap-2 max-[359px]:grid-cols-1">
                     {hourTypes.map(hourType => {
                       const rate = (rates[position]?.[dayType]?.[hourType] as number) || 0;
                       return (

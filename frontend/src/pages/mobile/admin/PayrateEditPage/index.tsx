@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { MobileSubPageHeader } from '@/components/shared/MobileSubPageHeader';
-import { MobileSectionHeader } from '@/components/shared/MobileSectionHeader';
 import { PayrateMatrixEditor } from '@/components/payrates/components/PayrateMatrixEditor';
 import { FlexiblePayrateEditor } from '@/components/payrates/components/FlexiblePayrateEditor';
 import { PayrateJsonEditor } from '@/components/payrates/components/PayrateJsonEditor';
@@ -244,7 +243,7 @@ export default function PayrateEditPageMobile() {
   const fromDateIsActionable = false;
 
   return (
-    <MobilePageShell className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
+    <MobilePageShell>
       <MobileSubPageHeader
         title={isNew ? 'Tạo cấu hình lương' : 'Sửa cấu hình lương'}
         subtitle={isLoadingProject ? undefined : project?.name}
@@ -252,7 +251,7 @@ export default function PayrateEditPageMobile() {
         onBack={goBack}
       />
 
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 py-4">
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 rounded-xl" />
@@ -276,68 +275,101 @@ export default function PayrateEditPageMobile() {
               </div>
             )}
 
-            {/* Effective period (hidden for flexible) */}
-            {!isFlexible && (
-              <section className={cn(
-                'rounded-2xl border bg-card p-4 transition-all',
-                fromDateIsActionable
-                  ? 'border-amber-400 ring-2 ring-amber-200'
-                  : 'border-[hsl(var(--surface-border))]',
-              )}>
-                <MobileSectionHeader icon={CalendarClock} title="Thời gian hiệu lực" />
-                <div className="max-w-sm">
-                  {/* From date */}
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="fromDate" className={cn(
-                      'flex items-center gap-1 text-xs font-medium',
-                      fromDateLocked && !fromDateIsActionable ? 'text-muted-foreground' : 'text-foreground',
-                      sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-red-600',
-                      fromDateIsActionable && 'font-semibold text-amber-700',
-                    )}>
-                      Từ ngày <span className="text-destructive">*</span>
-                      {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3 text-muted-foreground" />}
-                    </Label>
-                    <Input
-                      ref={fromDateRef}
-                      id="fromDate"
-                      type="date"
-                      value={config.fromDate || ''}
-                      readOnly={fromDateLocked && !fromDateIsActionable}
-                      min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
-                      autoFocus={fromDateIsActionable}
-                      onChange={e => {
-                        if (fromDateLocked && !fromDateIsActionable) return;
-                        setConfig(prev => ({ ...prev, fromDate: e.target.value }));
-                        clearServerField('effective_from');
-                      }}
-                      className={cn(
-                        'h-11 w-full text-sm',
-                        fromDateLocked && !fromDateIsActionable && 'cursor-not-allowed bg-muted/50 opacity-60',
-                        fromDateIsActionable && 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-200',
-                        !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
-                      )}
-                    />
-                    {fromDateIsActionable && sf?.rates.suggested_value && (
-                      <div className="mt-1 space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                        <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
-                        <p className="opacity-80">Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
-                        <p className="opacity-80">Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong> (sau bảng công đã thanh toán gần nhất).</p>
+            {/* Compact editor controls */}
+            <section className={cn(
+              '-mx-4 border-y bg-card transition-colors',
+              fromDateIsActionable ? 'border-amber-400 bg-amber-50/30' : 'border-[hsl(var(--surface-border))]',
+            )}>
+              {!isFlexible && (
+                <div className="px-4 py-3">
+                  <div className="grid gap-3 min-[380px]:grid-cols-[minmax(0,1fr)_9.5rem] min-[380px]:items-end">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                        <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hiệu lực cấu hình</p>
+                        <p className="text-xs text-muted-foreground">Áp dụng liên tục từ ngày bắt đầu</p>
                       </div>
-                    )}
-                    {!fromDateIsActionable && (
-                      <FieldFeedback
-                        field={sf?.effective_from}
-                        onApplySuggestion={v => {
-                          setConfig(prev => ({ ...prev, fromDate: v }));
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="fromDate" className={cn(
+                        'flex items-center gap-1 text-xs font-medium',
+                        fromDateLocked && !fromDateIsActionable ? 'text-muted-foreground' : 'text-foreground',
+                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-red-600',
+                        fromDateIsActionable && 'font-semibold text-amber-700',
+                      )}>
+                        Từ ngày <span className="text-destructive">*</span>
+                        {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3" aria-hidden="true" />}
+                      </Label>
+                      <Input
+                        ref={fromDateRef}
+                        id="fromDate"
+                        type="date"
+                        value={config.fromDate || ''}
+                        readOnly={fromDateLocked && !fromDateIsActionable}
+                        min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
+                        autoFocus={fromDateIsActionable}
+                        onChange={e => {
+                          if (fromDateLocked && !fromDateIsActionable) return;
+                          setConfig(prev => ({ ...prev, fromDate: e.target.value }));
                           clearServerField('effective_from');
                         }}
+                        className={cn(
+                          'h-11 w-full text-sm',
+                          fromDateLocked && !fromDateIsActionable && 'cursor-not-allowed bg-muted/50 opacity-60',
+                          fromDateIsActionable && 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-200',
+                          !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
+                        )}
                       />
-                    )}
+                    </div>
                   </div>
-
+                  {fromDateIsActionable && sf?.rates.suggested_value && (
+                    <div className="mt-3 space-y-1 border-l-2 border-amber-300 pl-3 text-xs text-amber-800">
+                      <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
+                      <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật.</p>
+                      <p>Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong>.</p>
+                    </div>
+                  )}
+                  {!fromDateIsActionable && (
+                    <FieldFeedback
+                      field={sf?.effective_from}
+                      onApplySuggestion={v => {
+                        setConfig(prev => ({ ...prev, fromDate: v }));
+                        clearServerField('effective_from');
+                      }}
+                    />
+                  )}
                 </div>
-              </section>
-            )}
+              )}
+
+              <div className={cn('grid grid-cols-2 border-t border-border/70', isFlexible && 'border-t-0')} role="tablist" aria-label="Chế độ chỉnh sửa cấu hình lương">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === 'matrix'}
+                  onClick={() => setViewMode('matrix')}
+                  className={cn(
+                    'min-h-11 border-b-2 px-4 text-xs font-semibold transition-colors',
+                    viewMode === 'matrix' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground',
+                  )}
+                >
+                  Ma trận
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === 'json'}
+                  onClick={() => setViewMode('json')}
+                  className={cn(
+                    'min-h-11 border-b-2 px-4 text-xs font-semibold transition-colors',
+                    viewMode === 'json' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground',
+                  )}
+                >
+                  JSON
+                </button>
+              </div>
+            </section>
 
             {/* Client-side validation */}
             {hasAttemptedSave && !clientValidation.valid && (
@@ -349,33 +381,9 @@ export default function PayrateEditPageMobile() {
               </div>
             )}
 
-            {/* View-mode segmented control */}
-            <div className="inline-grid w-fit grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1">
-              <button
-                type="button"
-                onClick={() => setViewMode('matrix')}
-                className={cn(
-                  'min-h-11 min-w-24 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
-                  viewMode === 'matrix' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/60',
-                )}
-              >
-                Ma trận
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('json')}
-                className={cn(
-                  'min-h-11 min-w-24 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
-                  viewMode === 'json' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/60',
-                )}
-              >
-                JSON
-              </button>
-            </div>
-
             {/* Matrix / JSON editor */}
             <section className={cn(
-              'overflow-hidden rounded-2xl border bg-card transition-all',
+              '-mx-4 overflow-hidden border-y bg-card transition-all',
               ratesLocked ? 'border-muted' : 'border-[hsl(var(--surface-border))]',
               sf?.rates?.status === 'error' && 'ring-2 ring-red-100',
             )}>
@@ -419,15 +427,13 @@ export default function PayrateEditPageMobile() {
         )}
       </div>
 
-      {/* Sticky bottom save bar — sits above the mobile nav */}
-      <footer
-        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 mx-auto grid max-w-full grid-cols-1 gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-md min-[380px]:grid-cols-2"
-      >
+      {/* Actions remain in document flow above the mobile navigation. */}
+      <footer className="mt-4 grid grid-cols-1 gap-2 border-t border-border py-4 min-[380px]:grid-cols-2">
         <Button variant="outline" className="h-11 w-full" onClick={goBack} disabled={isValidating || isSaving}>
           Hủy
         </Button>
         <Button
-          className="btn-admin-primary h-11 w-full"
+          className="btn-admin-primary !h-11 w-full"
           onClick={handleValidate}
           disabled={isValidating || isSaving || !canProceed}
         >

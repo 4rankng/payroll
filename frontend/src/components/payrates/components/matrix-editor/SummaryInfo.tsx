@@ -14,7 +14,7 @@ export function SummaryInfo({ rates, isFlexible = false }: SummaryInfoProps) {
       dayTotal + Object.values(hourConfig).filter((r: number) => r > 0).length, 0), 0);
 
   return (
-    <div className="flex items-center gap-3 pt-2 text-xs text-muted-foreground border-t border-border/40">
+    <div className="flex flex-wrap items-center gap-3 border-t border-border/40 px-4 pt-3 text-xs text-muted-foreground sm:px-0">
       <span>{positions.length} vị trí</span>
       <span className="text-border">·</span>
       <span>{hourTypes.length} {isFlexible ? 'ca làm việc' : 'khung giờ'}</span>
