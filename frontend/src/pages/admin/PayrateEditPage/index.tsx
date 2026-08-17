@@ -116,8 +116,7 @@ export default function PayrateEditPage() {
   // Only show client-side validation errors after the user first presses save
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
-  // Ref to auto-scroll to first error field after validation
-  const toDateRef = useRef<HTMLInputElement>(null);
+  // Ref to auto-scroll to the first error field after validation.
   const fromDateRef = useRef<HTMLInputElement>(null);
 
   const isFlexible = !!project?.is_flexible;
@@ -144,13 +143,12 @@ export default function PayrateEditPage() {
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
         fromDate,
-        toDate: targetPayrate.toDate,
       });
     }
   }, [targetPayrate, numProjectId]);
 
   // Clear server result when user edits a field
-  const clearServerField = useCallback((field: 'effective_from' | 'effective_to' | 'rates') => {
+  const clearServerField = useCallback((field: 'effective_from' | 'rates') => {
     setValidateError(null);
     if (!serverResult) return;
     setServerResult(prev => {
@@ -199,10 +197,13 @@ export default function PayrateEditPage() {
     setServerResult(null);
     setValidateError(null);
     try {
+      const ratesChanged =
+        editorMode === 'edit' && targetPayrate &&
+        JSON.stringify(targetPayrate.rates ?? {}) !== JSON.stringify(config.rates ?? {});
       const result = await payRateService.dryRunValidate(
         numProjectId,
-        { rates: config.rates, effective_from: config.fromDate, effective_to: config.toDate },
-        numPayrateId ?? undefined,
+        { rates: config.rates, effective_from: config.fromDate },
+        ratesChanged ? undefined : numPayrateId ?? undefined,
       );
       setServerResult(result);
 
@@ -214,18 +215,15 @@ export default function PayrateEditPage() {
           // closes the previous one the day before the new effective_from.
           // Only a start-date correction without rate changes updates in place
           // (re-pricing mutable, i.e. unpaid and unapproved, timesheets).
-          const ratesChanged =
-            editorMode === 'edit' && targetPayrate &&
-            JSON.stringify(targetPayrate.rates ?? {}) !== JSON.stringify(config.rates ?? {});
           if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
             await updateMutation.mutateAsync({
               payRateId: targetPayrate.id,
-              data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
+              data: { rates: config.rates!, effective_from: config.fromDate! },
             });
           } else {
             await createMutation.mutateAsync({
               projectId: numProjectId,
-              data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
+              data: { rates: config.rates!, effective_from: config.fromDate! },
             });
           }
           goBack();
@@ -238,8 +236,6 @@ export default function PayrateEditPage() {
         setTimeout(() => {
           if (result.fields.effective_from.status === 'error') {
             fromDateRef.current?.focus();
-          } else if (result.fields.effective_to.status === 'error') {
-            toDateRef.current?.focus();
           }
         }, 50);
       }
@@ -262,7 +258,6 @@ export default function PayrateEditPage() {
   // Otherwise every field stays editable: moving the start date earlier or
   // changing rates re-prices mutable (unpaid, unapproved) timesheets on save.
   const fromDateIsActionable = false;
-  const toDateIsActionable = false;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -343,17 +338,12 @@ export default function PayrateEditPage() {
             {/* ── Effective period (hidden for flexible — edits take effect immediately) ── */}
             {!isFlexible && (<section className={cn(
               "rounded-xl border bg-card p-4 transition-all",
-              (toDateIsActionable || fromDateIsActionable) ? "border-amber-400 ring-2 ring-amber-200" : "border-border",
+              fromDateIsActionable ? "border-amber-400 ring-2 ring-amber-200" : "border-border",
             )}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                   Thời gian hiệu lực
                 </p>
-                {toDateIsActionable && (
-                  <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                    ← Chỉ có thể sửa ngày kết thúc
-                  </span>
-                )}
               </div>
 
               <div className="flex flex-wrap gap-6">
@@ -408,44 +398,6 @@ export default function PayrateEditPage() {
                   )}
                 </div>
 
-                {/* To date */}
-                <div className="flex flex-col gap-0.5">
-                  <Label htmlFor="toDate" className={cn(
-                    "text-xs font-medium flex items-center gap-1",
-                    toDateIsActionable ? "text-amber-700 font-semibold" : "text-muted-foreground",
-                    sf?.effective_to.status === 'error' && "text-red-600",
-                  )}>
-                    Đến ngày
-                    {toDateIsActionable
-                      ? <span className="text-[10px] text-amber-600 font-normal">(cập nhật tại đây)</span>
-                      : <span className="text-[10px] font-normal">(tuỳ chọn)</span>}
-                  </Label>
-                  <Input
-                    ref={toDateRef}
-                    id="toDate"
-                    type="date"
-                    value={config.toDate || ''}
-                    min={sf?.effective_to.min_value}
-                    autoFocus={toDateIsActionable}
-                    onChange={e => {
-                      setConfig(prev => ({ ...prev, toDate: e.target.value || null }));
-                      clearServerField('effective_to');
-                    }}
-                    className={cn(
-                      "h-8 text-sm w-40",
-                      toDateIsActionable && !sf?.effective_to.status
-                        ? "border-amber-400 ring-2 ring-amber-200 bg-amber-50/40"
-                        : fieldBorderClass(sf?.effective_to),
-                    )}
-                  />
-                  <FieldFeedback
-                    field={sf?.effective_to}
-                    onApplySuggestion={v => {
-                      setConfig(prev => ({ ...prev, toDate: v }));
-                      clearServerField('effective_to');
-                    }}
-                  />
-                </div>
               </div>
             </section>)}
 

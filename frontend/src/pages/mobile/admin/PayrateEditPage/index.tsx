@@ -110,7 +110,6 @@ export default function PayrateEditPageMobile() {
   const [validateError, setValidateError] = useState<string | null>(null);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
-  const toDateRef = useRef<HTMLInputElement>(null);
   const fromDateRef = useRef<HTMLInputElement>(null);
 
   const isFlexible = !!project?.is_flexible;
@@ -134,12 +133,11 @@ export default function PayrateEditPageMobile() {
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
         fromDate,
-        toDate: targetPayrate.toDate,
       });
     }
   }, [targetPayrate, numProjectId]);
 
-  const clearServerField = useCallback((field: 'effective_from' | 'effective_to' | 'rates') => {
+  const clearServerField = useCallback((field: 'effective_from' | 'rates') => {
     setValidateError(null);
     if (!serverResult) return;
     setServerResult(prev => {
@@ -187,10 +185,13 @@ export default function PayrateEditPageMobile() {
     setServerResult(null);
     setValidateError(null);
     try {
+      const ratesChanged =
+        editorMode === 'edit' && targetPayrate &&
+        JSON.stringify(targetPayrate.rates ?? {}) !== JSON.stringify(config.rates ?? {});
       const result = await payRateService.dryRunValidate(
         numProjectId,
-        { rates: config.rates, effective_from: config.fromDate, effective_to: config.toDate },
-        numPayrateId ?? undefined,
+        { rates: config.rates, effective_from: config.fromDate },
+        ratesChanged ? undefined : numPayrateId ?? undefined,
       );
       setServerResult(result);
 
@@ -201,18 +202,15 @@ export default function PayrateEditPageMobile() {
           // closes the previous one the day before the new effective_from.
           // Only a start-date correction without rate changes updates in place
           // (re-pricing mutable, i.e. unpaid and unapproved, timesheets).
-          const ratesChanged =
-            editorMode === 'edit' && targetPayrate &&
-            JSON.stringify(targetPayrate.rates ?? {}) !== JSON.stringify(config.rates ?? {});
           if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
             await updateMutation.mutateAsync({
               payRateId: targetPayrate.id,
-              data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
+              data: { rates: config.rates!, effective_from: config.fromDate! },
             });
           } else {
             await createMutation.mutateAsync({
               projectId: numProjectId,
-              data: { rates: config.rates!, effective_from: config.fromDate!, effective_to: config.toDate || undefined },
+              data: { rates: config.rates!, effective_from: config.fromDate! },
             });
           }
           goBack();
@@ -223,7 +221,6 @@ export default function PayrateEditPageMobile() {
         setSaveStep('idle');
         setTimeout(() => {
           if (result.fields.effective_from.status === 'error') fromDateRef.current?.focus();
-          else if (result.fields.effective_to.status === 'error') toDateRef.current?.focus();
         }, 50);
       }
     } catch (err: unknown) {
@@ -245,7 +242,6 @@ export default function PayrateEditPageMobile() {
   // Otherwise every field stays editable: moving the start date earlier or
   // changing rates re-prices mutable (unpaid, unapproved) timesheets on save.
   const fromDateIsActionable = false;
-  const toDateIsActionable = false;
 
   return (
     <MobilePageShell className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
@@ -284,18 +280,12 @@ export default function PayrateEditPageMobile() {
             {!isFlexible && (
               <section className={cn(
                 'rounded-2xl border bg-card p-4 transition-all',
-                (toDateIsActionable || fromDateIsActionable)
+                fromDateIsActionable
                   ? 'border-amber-400 ring-2 ring-amber-200'
                   : 'border-[hsl(var(--surface-border))]',
               )}>
                 <MobileSectionHeader icon={CalendarClock} title="Thời gian hiệu lực" />
-                {toDateIsActionable && (
-                  <p className="mb-3 text-xs font-semibold text-amber-700">
-                    ← Chỉ có thể sửa ngày kết thúc
-                  </p>
-                )}
-
-                <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
+                <div className="max-w-sm">
                   {/* From date */}
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="fromDate" className={cn(
@@ -345,42 +335,6 @@ export default function PayrateEditPageMobile() {
                     )}
                   </div>
 
-                  {/* To date */}
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="toDate" className={cn(
-                      'flex items-center gap-1 text-xs font-medium',
-                      toDateIsActionable ? 'font-semibold text-amber-700' : 'text-muted-foreground',
-                      sf?.effective_to.status === 'error' && 'text-red-600',
-                    )}>
-                      Đến ngày
-                      <span className="text-[11px] font-normal opacity-70">(tuỳ chọn)</span>
-                    </Label>
-                    <Input
-                      ref={toDateRef}
-                      id="toDate"
-                      type="date"
-                      value={config.toDate || ''}
-                      min={sf?.effective_to.min_value}
-                      autoFocus={toDateIsActionable}
-                      onChange={e => {
-                        setConfig(prev => ({ ...prev, toDate: e.target.value || null }));
-                        clearServerField('effective_to');
-                      }}
-                      className={cn(
-                        'h-11 w-full text-sm',
-                        toDateIsActionable && !sf?.effective_to.status
-                          ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-200'
-                          : fieldBorderClass(sf?.effective_to),
-                      )}
-                    />
-                    <FieldFeedback
-                      field={sf?.effective_to}
-                      onApplySuggestion={v => {
-                        setConfig(prev => ({ ...prev, toDate: v }));
-                        clearServerField('effective_to');
-                      }}
-                    />
-                  </div>
                 </div>
               </section>
             )}
