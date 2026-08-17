@@ -177,6 +177,7 @@ type EmployeeRepository interface {
 	GetByBankAccountNumber(ctx context.Context, bankAccountNumber string) (*Employee, error)
 	Update(ctx context.Context, employee *Employee) error
 	Delete(ctx context.Context, id uint) error
+	HardDelete(ctx context.Context, id uint) error
 	List(ctx context.Context, filters EmployeeFilters) ([]*Employee, error)
 	ListWithProjects(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProject, error)
 	ListWithAllProjects(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)

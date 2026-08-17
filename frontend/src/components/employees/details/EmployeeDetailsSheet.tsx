@@ -228,9 +228,13 @@ export function EmployeeDetailsSheet({
   const footer = useMemo(() => {
     if (!employee || isEditing) return null;
 
+    const canDelete = employee.can_delete !== false && !employee.current_projects.some(
+      (project) => project.payment_schedule === "flexible",
+    );
+
     return (
       <EmployeeActions
-        onDelete={() => (onDelete || defaultOnDelete)(employee)}
+        onDelete={canDelete ? () => (onDelete || defaultOnDelete)(employee) : undefined}
         onResetPassword={() => setIsResetPasswordModalOpen(true)}
         onClose={handleClose}
       />

@@ -52,6 +52,11 @@ type TimesheetRepository interface {
 	GetLatestTimesheetDate(ctx context.Context, projectID, employeeID uint) (*time.Time, error)
 	CountTimesheets(ctx context.Context, projectID, employeeID uint) (int64, error)
 	CountTimesheetsByEmployeeID(ctx context.Context, employeeID uint) (int64, error)
+	// HasProtectedTimesheetsByEmployeeID reports whether the employee has a
+	// financial or approved/rejected-payroll record that must remain auditable.
+	// A bank-result worker can settle exported rows after an Admin rejection.
+	HasProtectedTimesheetsByEmployeeID(ctx context.Context, employeeID uint) (bool, error)
+	HardDeleteOperationalByEmployeeID(ctx context.Context, employeeID uint) error
 	HasTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
 	HasTimesheetsForAssignment(ctx context.Context, projectID, employeeID uint) (bool, error)
 	HasNonEditableTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)

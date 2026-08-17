@@ -79,6 +79,15 @@ func buildProjectInfo(project domain.CurrentProject) dto.EmployeeProjectInfo {
 	}
 }
 
+func hasFlexiblePaymentSchedule(projects []domain.CurrentProject) bool {
+	for _, project := range projects {
+		if project.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
+			return true
+		}
+	}
+	return false
+}
+
 // allowedEmployeeSortFields is a set of valid sort fields to prevent SQL injection.
 var allowedEmployeeSortFields = map[string]struct{}{
 	"created_at": {}, "updated_at": {}, "fullname": {}, "email": {}, "cccd": {},
@@ -180,6 +189,7 @@ func buildEmployeeListResponse(employees []*domain.EmployeeWithProjects) []dto.E
 			CreatedBy:         emp.CreatedBy,
 			CreatedAt:         emp.CreatedAt,
 			UpdatedAt:         emp.UpdatedAt,
+			CanDelete:         !hasFlexiblePaymentSchedule(emp.CurrentProjects),
 			CurrentProjects:   make([]dto.EmployeeProjectInfo, 0, len(emp.CurrentProjects)),
 		}
 		// emp is *domain.EmployeeWithProjects which embeds domain.Employee.

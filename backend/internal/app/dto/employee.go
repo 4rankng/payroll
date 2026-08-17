@@ -63,6 +63,7 @@ type EmployeeResponse struct {
 	CreatedBy                uint                  `json:"created_by"`
 	CreatedAt                time.Time             `json:"created_at"`
 	UpdatedAt                time.Time             `json:"updated_at"`
+	CanDelete                bool                  `json:"can_delete"`
 	CurrentProjects          []EmployeeProjectInfo `json:"current_projects"`
 }
 

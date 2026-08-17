@@ -71,6 +71,16 @@ func (m *MockProjectEmployeeRepository) DeleteAssignmentsByEmployeeID(ctx contex
 	return args.Error(0)
 }
 
+func (m *MockProjectEmployeeRepository) HardDeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error {
+	args := m.Called(ctx, employeeID)
+	return args.Error(0)
+}
+
+func (m *MockProjectEmployeeRepository) HasActiveFlexiblePaymentScheduleByEmployeeID(ctx context.Context, employeeID uint) (bool, error) {
+	args := m.Called(ctx, employeeID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) List(ctx context.Context, filters domain.ProjectEmployeeFilters) ([]*domain.ProjectEmployee, error) {
 	args := m.Called(ctx, filters)
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
@@ -227,6 +237,11 @@ func (m *MockEmployeeRepository) Update(ctx context.Context, employee *domain.Em
 }
 
 func (m *MockEmployeeRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockEmployeeRepository) HardDelete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }

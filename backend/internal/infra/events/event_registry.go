@@ -81,6 +81,12 @@ func (r *EventRegistry) registerAllEvents() {
 		return event, err
 	})
 
+	r.register("EmployeeProjectAssignmentsRemoved", func(data []byte) (domain.DomainEvent, error) {
+		var event domain.EmployeeProjectAssignmentsRemovedEvent
+		err := json.Unmarshal(data, &event)
+		return event, err
+	})
+
 	r.register("EmployeeProfileUpdated", func(data []byte) (domain.DomainEvent, error) {
 		var event domain.EmployeeProfileUpdatedEvent
 		err := json.Unmarshal(data, &event)

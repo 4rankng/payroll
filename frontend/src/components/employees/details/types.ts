@@ -18,7 +18,7 @@ export interface EmployeeActionsProps {
   onEdit?: () => void;
   onSave?: () => void;
   onCancel?: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onResetPassword?: () => void;
   onClose?: () => void;
   isDirty?: boolean;

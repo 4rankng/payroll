@@ -70,6 +70,63 @@ func TestPaymentFinalizationAndRejectionRemainMutuallyExclusive(t *testing.T) {
 	})
 }
 
+func TestProtectedHistoryPreventsOperationalHardDelete(t *testing.T) {
+	repo, db := newPaymentGuardRepository(t)
+	approvedPending := seedPaymentGuardTimesheet(t, db)
+	approvedPending.EmployeeID = 901
+	if err := db.Model(approvedPending).Update("employee_id", approvedPending.EmployeeID).Error; err != nil {
+		t.Fatalf("move approved timesheet to employee: %v", err)
+	}
+
+	operational := seedPaymentGuardTimesheet(t, db)
+	operational.EmployeeID = 902
+	operational.Status = domain.TimesheetStatusPendingApproval
+	if err := db.Model(operational).Updates(map[string]any{
+		"employee_id":      operational.EmployeeID,
+		"timesheet_status": operational.Status,
+	}).Error; err != nil {
+		t.Fatalf("prepare operational timesheet: %v", err)
+	}
+
+	protected, err := repo.HasProtectedTimesheetsByEmployeeID(context.Background(), 901)
+	if err != nil {
+		t.Fatalf("check approved payroll protection: %v", err)
+	}
+	if !protected {
+		t.Fatal("approved payroll must be retained while an asynchronous bank result can still arrive")
+	}
+
+	protected, err = repo.HasProtectedTimesheetsByEmployeeID(context.Background(), 902)
+	if err != nil {
+		t.Fatalf("check operational history: %v", err)
+	}
+	if protected {
+		t.Fatal("pending, unpaid operational timesheet should not prevent permanent deletion")
+	}
+
+	if err := repo.HardDeleteOperationalByEmployeeID(context.Background(), 901); err != nil {
+		t.Fatalf("hard delete approved employee operational rows: %v", err)
+	}
+	var approvedRemaining int64
+	if err := db.Model(&domain.Timesheet{}).Where("employee_id = ?", 901).Count(&approvedRemaining).Error; err != nil {
+		t.Fatalf("count approved employee timesheets: %v", err)
+	}
+	if approvedRemaining != 1 {
+		t.Fatalf("approved timesheet was deleted, remaining=%d", approvedRemaining)
+	}
+
+	if err := repo.HardDeleteOperationalByEmployeeID(context.Background(), 902); err != nil {
+		t.Fatalf("hard delete operational employee rows: %v", err)
+	}
+	var operationalRemaining int64
+	if err := db.Model(&domain.Timesheet{}).Where("employee_id = ?", 902).Count(&operationalRemaining).Error; err != nil {
+		t.Fatalf("count operational employee timesheets: %v", err)
+	}
+	if operationalRemaining != 0 {
+		t.Fatalf("operational timesheet was retained, remaining=%d", operationalRemaining)
+	}
+}
+
 func newPaymentGuardRepository(t *testing.T) (domain.TimesheetRepository, *gorm.DB) {
 	t.Helper()
 	databaseName := strings.NewReplacer("/", "_", " ", "_").Replace(t.Name())

@@ -119,6 +119,7 @@ func (h *Handler) buildEmployeeResponse(ctx context.Context, employee *domain.Em
 		CreatedBy:         employee.CreatedBy,
 		CreatedAt:         employee.CreatedAt,
 		UpdatedAt:         employee.UpdatedAt,
+		CanDelete:         true,
 		CurrentProjects:   []dto.EmployeeProjectInfo{}, // Initialize empty array
 	}
 	response.BankAccountStatus, response.BankAccountInvalidReason, response.BankAccountValidatedAt = bankAccountStatusFields(employee)
@@ -138,6 +139,9 @@ func (h *Handler) buildEmployeeResponse(ctx context.Context, employee *domain.Em
 			for _, assignment := range assignments {
 				// Only include active assignments (LastDate is nil)
 				if assignment.LastDate == nil {
+					if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
+						response.CanDelete = false
+					}
 					currentProjects = append(currentProjects, buildProjectInfoFromAssignment(*assignment))
 				}
 			}
@@ -541,11 +545,16 @@ func (h *Handler) DeleteEmployee(c *gin.Context) {
 		}
 	}
 
-	if err := h.employeeService.DeleteEmployee(c.Request.Context(), uint(id), userID.(uint)); err != nil {
+	result, err := h.employeeService.DeleteEmployee(c.Request.Context(), uint(id), userID.(uint))
+	if err != nil {
 		response.HandleDomainError(c, err)
 		return
 	}
 
+	if result.RetainedForFinancialHistory {
+		response.Success(c, nil, constants.MsgEmployeeUnlinkedFromProjectsVN)
+		return
+	}
 	response.Success(c, nil, constants.MsgEmployeeDeletedWithAssignmentsVN)
 }
 

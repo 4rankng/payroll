@@ -11,9 +11,10 @@ import (
 // Config consolidates all dependencies for EmployeeService
 // This reduces constructor complexity from 11 parameters to 1
 type Config struct {
-	// Repositories (6)
+	// Repositories (7)
 	EmployeeRepo        domain.EmployeeRepository
 	TimesheetRepo       domain.TimesheetRepository
+	AttendanceRepo      domain.AttendanceRepository
 	BankRepo            domain.BankRepository
 	ProjectEmployeeRepo domain.ProjectEmployeeRepository
 	EmployeeUserRepo    domain.EmployeeUserRepository

@@ -21,6 +21,7 @@ type EmployeeService struct {
 	// Repositories - for data access only
 	EmployeeRepo        domain.EmployeeRepository
 	TimesheetRepo       domain.TimesheetRepository
+	AttendanceRepo      domain.AttendanceRepository
 	BankRepo            domain.BankRepository
 	ProjectEmployeeRepo domain.ProjectEmployeeRepository
 	EmployeeUserRepo    domain.EmployeeUserRepository
@@ -46,6 +47,7 @@ func NewEmployeeService(cfg *Config) *EmployeeService {
 	return &EmployeeService{
 		EmployeeRepo:          cfg.EmployeeRepo,
 		TimesheetRepo:         cfg.TimesheetRepo,
+		AttendanceRepo:        cfg.AttendanceRepo,
 		BankRepo:              cfg.BankRepo,
 		ProjectEmployeeRepo:   cfg.ProjectEmployeeRepo,
 		EmployeeUserRepo:      cfg.EmployeeUserRepo,
@@ -369,45 +371,69 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 	return nil
 }
 
-func (s *EmployeeService) DeleteEmployee(ctx context.Context, id uint, deletedBy uint) error {
+// DeleteEmployeeResult reports whether the employee's financial history required
+// the record to be retained after its project assignments were removed.
+type DeleteEmployeeResult struct {
+	RetainedForFinancialHistory bool
+}
+
+func (s *EmployeeService) DeleteEmployee(ctx context.Context, id uint, deletedBy uint) (*DeleteEmployeeResult, error) {
 	var deletedEmployee *domain.Employee
+	result := &DeleteEmployeeResult{}
 
 	// Orchestrate employee deletion within a transaction
 	err := s.TransactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		// 1. Get employee details before deletion for event
 		var err error
-		deletedEmployee, err = s.EmployeeRepo.GetByID(txCtx, id)
+		deletedEmployee, err = s.EmployeeRepo.GetByIDForUpdate(txCtx, id)
 		if err != nil {
 			return fmt.Errorf("failed to get employee for deletion: %w", err)
 		}
 
-		// 2. Validate if employee can be deleted and get assignments to delete
-		canDelete, assignments, err := s.EmployeeDomainService.CanDeleteEmployee(txCtx, id)
+		// Active flexible-pay assignments have their own payment lifecycle and
+		// must be removed explicitly before the employee can be deleted.
+		hasActiveFlexiblePaymentSchedule, err := s.ProjectEmployeeRepo.HasActiveFlexiblePaymentScheduleByEmployeeID(txCtx, id)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to check employee flexible payment schedule: %w", err)
+		}
+		if hasActiveFlexiblePaymentSchedule {
+			return domain.NewValidationError(constants.MsgCannotDeleteEmployeeFlexiblePaymentVN)
 		}
 
-		if !canDelete {
-			return err // Error is already properly formatted from domain service
+		// Financial outcomes and approved payroll are immutable. An approved row
+		// can be settled asynchronously after its bank export is created, so keep
+		// the employee and only remove current project memberships in either case.
+		hasProtectedTimesheets, err := s.TimesheetRepo.HasProtectedTimesheetsByEmployeeID(txCtx, id)
+		if err != nil {
+			return fmt.Errorf("failed to check employee protected timesheets: %w", err)
 		}
-
-		// 3. Delete all project assignments first
-		if len(assignments) > 0 {
+		if hasProtectedTimesheets {
 			if err := s.ProjectEmployeeRepo.DeleteAssignmentsByEmployeeID(txCtx, id); err != nil {
-				logger := observability.GetLogger()
-				logger.Error("Failed to delete employee project assignments", "employee_id", id, "error", err)
 				return fmt.Errorf("%s: %w", constants.MsgFailedToDeleteEmployeeAssignmentsVN, err)
 			}
+			result.RetainedForFinancialHistory = true
+			return nil
 		}
 
-		// 4. Delete the employee (soft delete)
-		if err := s.EmployeeRepo.Delete(txCtx, id); err != nil {
-			logger := observability.GetLogger()
-			logger.Error("Failed to delete employee", "employee_id", id, "error", err)
+		// No financial or approved-payroll record exists, so operational records
+		// can be removed together before permanently removing the employee row.
+		if err := s.ProjectEmployeeRepo.HardDeleteAssignmentsByEmployeeID(txCtx, id); err != nil {
+			return fmt.Errorf("%s: %w", constants.MsgFailedToDeleteEmployeeAssignmentsVN, err)
+		}
+		if err := s.TimesheetRepo.HardDeleteOperationalByEmployeeID(txCtx, id); err != nil {
+			return fmt.Errorf("failed to delete employee operational timesheets: %w", err)
+		}
+		if s.AttendanceRepo == nil {
+			return fmt.Errorf("attendance repository is required to hard delete employee")
+		}
+		if err := s.AttendanceRepo.HardDeleteByEmployeeID(txCtx, id); err != nil {
+			return fmt.Errorf("failed to delete employee attendance: %w", err)
+		}
+		if err := s.EmployeeRepo.HardDelete(txCtx, id); err != nil {
 			return fmt.Errorf("%s: %w", constants.MsgFailedToDeleteEmployeeVN, err)
 		}
 
-		// 5. Delete related user if exists (soft delete)
+		// The login is no longer associated with an employee, so disable it too.
 		if deletedEmployee.UserID != nil {
 			if err := s.UserRepo.Delete(txCtx, *deletedEmployee.UserID); err != nil {
 				logger := observability.GetLogger()
@@ -420,7 +446,17 @@ func (s *EmployeeService) DeleteEmployee(ctx context.Context, id uint, deletedBy
 	})
 
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	if result.RetainedForFinancialHistory {
+		actorFullName := audit.GetActorFullName(ctx, s.UserRepo, deletedBy)
+		event := domain.NewEmployeeProjectAssignmentsRemovedEvent(ctx, deletedEmployee, deletedBy, actorFullName)
+		if err := s.events.Publish(ctx, event); err != nil {
+			logger := observability.GetLogger()
+			logger.Warn("Failed to publish EmployeeProjectAssignmentsRemovedEvent", "employee_id", id, "error", err)
+		}
+		return result, nil
 	}
 
 	// Publish domain event (outside transaction)
@@ -431,7 +467,7 @@ func (s *EmployeeService) DeleteEmployee(ctx context.Context, id uint, deletedBy
 		logger.Warn("Failed to publish EmployeeDeletedEvent", "employee_id", id, "error", err)
 	}
 
-	return nil
+	return result, nil
 }
 
 // createUserForEmployee creates a user account for an employee with auto-generated username and default password

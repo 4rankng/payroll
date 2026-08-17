@@ -138,6 +138,12 @@ type EmployeeDeletedEvent struct {
 	CCCD     string
 }
 
+type EmployeeProjectAssignmentsRemovedEvent struct {
+	BaseEvent
+	Fullname string
+	CCCD     string
+}
+
 type EmployeeProfileUpdatedEvent struct {
 	BaseEvent
 	Fullname      string

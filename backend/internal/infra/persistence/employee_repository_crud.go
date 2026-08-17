@@ -178,6 +178,12 @@ func (r *EmployeeRepository) Delete(ctx context.Context, id uint) error {
 	return r.SafeDelete(ctx, &domain.Employee{}, id)
 }
 
+func (r *EmployeeRepository) HardDelete(ctx context.Context, id uint) error {
+	return r.dbForContext(ctx).
+		Unscoped().
+		Delete(&domain.Employee{}, id).Error
+}
+
 func (r *EmployeeRepository) BulkCreate(ctx context.Context, employees []*domain.Employee) error {
 	if len(employees) == 0 {
 		return nil

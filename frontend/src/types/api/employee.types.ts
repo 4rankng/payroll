@@ -67,6 +67,7 @@ export interface Employee {
   /** RFC3339 timestamp of the last OnePay validation. */
   bank_account_validated_at?: string | null;
   date_of_birth?: string;
+  can_delete?: boolean;
   current_projects: CurrentProject[];
   timesheet_summary?: TimesheetSummary;
   payroll_summary?: PayrollSummary;

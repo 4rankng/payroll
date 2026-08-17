@@ -138,6 +138,11 @@ func (h *AuditEventHandler) buildMetadata(event domain.DomainEvent) map[string]i
 			"fullname": e.Fullname,
 			"cccd":     e.CCCD,
 		}
+	case domain.EmployeeProjectAssignmentsRemovedEvent:
+		return map[string]interface{}{
+			"fullname": e.Fullname,
+			"cccd":     e.CCCD,
+		}
 	case domain.EmployeeProfileUpdatedEvent:
 		if len(e.ChangedFields) > 0 {
 			return map[string]interface{}{"changed_fields": e.ChangedFields}

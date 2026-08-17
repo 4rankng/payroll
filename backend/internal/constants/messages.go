@@ -296,14 +296,16 @@ const (
 	MsgProjectionRetrievedVN            = "Lấy dữ liệu dự báo thành công"
 
 	// Employee Messages - Vietnamese
-	MsgEmployeeCreatedSuccessfullyVN       = "Tạo nhân viên thành công"
-	MsgEmployeeRetrievedSuccessfullyVN     = "Lấy thông tin nhân viên thành công"
-	MsgEmployeeUpdatedSuccessfullyVN       = "Cập nhật nhân viên thành công"
-	MsgEmployeeDeletedSuccessfullyVN       = "Xóa nhân viên thành công"
-	MsgEmployeeTimesheetSummaryRetrievedVN = "Lấy tổng hợp timesheet nhân viên thành công"
-	MsgEmployeeProjectAssignmentUpdatedVN  = "Cập nhật phân công dự án nhân viên thành công"
-	MsgCannotDeleteEmployeeHasTimesheetsVN = "Không thể xóa nhân viên vì đã có bảng chấm công liên kết. Vui lòng xóa tất cả bảng chấm công trước khi xóa nhân viên"
-	MsgEmployeeDeletedWithAssignmentsVN    = "Xóa nhân viên và tất cả phân công dự án thành công"
+	MsgEmployeeCreatedSuccessfullyVN         = "Tạo nhân viên thành công"
+	MsgEmployeeRetrievedSuccessfullyVN       = "Lấy thông tin nhân viên thành công"
+	MsgEmployeeUpdatedSuccessfullyVN         = "Cập nhật nhân viên thành công"
+	MsgEmployeeDeletedSuccessfullyVN         = "Xóa nhân viên thành công"
+	MsgEmployeeTimesheetSummaryRetrievedVN   = "Lấy tổng hợp timesheet nhân viên thành công"
+	MsgEmployeeProjectAssignmentUpdatedVN    = "Cập nhật phân công dự án nhân viên thành công"
+	MsgCannotDeleteEmployeeHasTimesheetsVN   = "Không thể xóa nhân viên vì đã có bảng chấm công liên kết. Vui lòng xóa tất cả bảng chấm công trước khi xóa nhân viên"
+	MsgEmployeeDeletedWithAssignmentsVN      = "Xóa nhân viên và tất cả phân công dự án thành công"
+	MsgEmployeeUnlinkedFromProjectsVN        = "Đã gỡ nhân viên khỏi các dự án vì có lịch sử thanh toán hoặc bảng lương đã duyệt"
+	MsgCannotDeleteEmployeeFlexiblePaymentVN = "Không thể xóa nhân viên đang thuộc dự án có chế độ thanh toán linh hoạt"
 
 	// Asset Messages - Vietnamese
 	MsgInvalidFormDataVN                   = "Dữ liệu form không hợp lệ"

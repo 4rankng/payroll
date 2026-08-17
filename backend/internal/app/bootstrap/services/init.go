@@ -515,6 +515,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	employeeConfig := &employee.Config{
 		EmployeeRepo:          repos.Employee,
 		TimesheetRepo:         repos.Timesheet,
+		AttendanceRepo:        repos.Attendance,
 		BankRepo:              repos.Bank,
 		ProjectEmployeeRepo:   repos.ProjectEmployee,
 		EmployeeUserRepo:      repos.EmployeeUser,

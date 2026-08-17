@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 )
 
 // NewEmployeeCreatedEvent creates an EmployeeCreatedEvent
@@ -15,6 +16,17 @@ func NewEmployeeCreatedEvent(ctx context.Context, employee *Employee, actorUserI
 
 	return EmployeeCreatedEvent{
 		BaseEvent: newBaseEventWithActor(ctx, "EmployeeCreated", employee.ID, actorUserID, AuditActionCreate, EntityTypeEmployee, auditMessage),
+		Fullname:  employee.Fullname,
+		CCCD:      employee.CCCD,
+	}
+}
+
+// NewEmployeeProjectAssignmentsRemovedEvent records the non-destructive delete
+// outcome used when financial history requires the employee record to remain.
+func NewEmployeeProjectAssignmentsRemovedEvent(ctx context.Context, employee *Employee, actorUserID uint, actorFullName string) EmployeeProjectAssignmentsRemovedEvent {
+	auditMessage := fmt.Sprintf("%s đã gỡ nhân viên %s khỏi tất cả dự án để bảo toàn lịch sử tài chính", actorFullName, employee.Fullname)
+	return EmployeeProjectAssignmentsRemovedEvent{
+		BaseEvent: newBaseEventWithActor(ctx, "EmployeeProjectAssignmentsRemoved", employee.ID, actorUserID, AuditActionUpdate, EntityTypeEmployee, auditMessage),
 		Fullname:  employee.Fullname,
 		CCCD:      employee.CCCD,
 	}

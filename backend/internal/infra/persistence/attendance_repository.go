@@ -61,6 +61,13 @@ func (r *attendanceRepository) Update(ctx context.Context, attendance *domain.At
 	return r.getDB(ctx).Save(attendance).Error
 }
 
+func (r *attendanceRepository) HardDeleteByEmployeeID(ctx context.Context, employeeID uint) error {
+	return r.getDB(ctx).
+		Unscoped().
+		Where("employee_id = ?", employeeID).
+		Delete(&domain.Attendance{}).Error
+}
+
 // MarkAutoRejected atomically rejects an open, unrejected attendance. The
 // conditional WHERE (check_out_time IS NULL AND salary_reject_reason IS NULL
 // AND review_action IS NULL) is the race guard: a concurrent CheckOut, prior

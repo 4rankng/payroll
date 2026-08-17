@@ -425,6 +425,36 @@ func (r *TimesheetRepository) CountTimesheetsByEmployeeID(ctx context.Context, e
 	return count, err
 }
 
+func (r *TimesheetRepository) HasProtectedTimesheetsByEmployeeID(ctx context.Context, employeeID uint) (bool, error) {
+	var count int64
+	err := r.getDB(ctx).
+		Unscoped().
+		Model(&domain.Timesheet{}).
+		Where("employee_id = ?", employeeID).
+		Where(
+			"payment_status IN ? OR timesheet_status IN ?",
+			[]domain.PaymentStatus{
+				domain.PaymentStatusPaid,
+				domain.PaymentStatusFailed,
+				domain.PaymentStatusCancelled,
+			},
+			[]domain.TimesheetStatus{
+				domain.TimesheetStatusApproved,
+				domain.TimesheetStatusRejected,
+			},
+		).
+		Count(&count).Error
+	return count > 0, err
+}
+
+func (r *TimesheetRepository) HardDeleteOperationalByEmployeeID(ctx context.Context, employeeID uint) error {
+	return r.getDB(ctx).
+		Unscoped().
+		Where("employee_id = ? AND payment_status = ?", employeeID, domain.PaymentStatusPending).
+		Where("timesheet_status = ?", domain.TimesheetStatusPendingApproval).
+		Delete(&domain.Timesheet{}).Error
+}
+
 // HasTimesheetsAfterDate checks if there are any timesheets after the given date
 func (r *TimesheetRepository) HasTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error) {
 	var count int64

@@ -42,6 +42,88 @@ func TestProjectEmployeeRepository_UpdatePositionIfCurrent(t *testing.T) {
 	require.Equal(t, "Lương 700", position)
 }
 
+func TestProjectEmployeeRepository_GetActiveAssignmentsUsesTransactionContext(t *testing.T) {
+	dsn := fmt.Sprintf("file:project-employee-active-assignments-%d?mode=memory&cache=shared", time.Now().UnixNano())
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.Exec(`
+		CREATE TABLE project_employees (
+			id INTEGER PRIMARY KEY,
+			project_id INTEGER NOT NULL,
+			employee_id INTEGER NOT NULL,
+			employee_name TEXT NOT NULL,
+			employee_cccd TEXT NOT NULL,
+			position TEXT NOT NULL,
+			start_date DATETIME NOT NULL,
+			last_date DATETIME,
+			payment_schedule TEXT NOT NULL,
+			check_in_enabled BOOLEAN NOT NULL DEFAULT 0,
+			created_by INTEGER NOT NULL,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		);
+		CREATE TABLE projects (id INTEGER PRIMARY KEY, deleted_at DATETIME);
+		CREATE TABLE employees (id INTEGER PRIMARY KEY, deleted_at DATETIME);
+		CREATE TABLE users (id INTEGER PRIMARY KEY, deleted_at DATETIME);
+	`).Error)
+
+	repo := &ProjectEmployeeRepository{BaseRepository: &BaseRepository{DB: db}}
+	tx := db.Begin()
+	require.NoError(t, tx.Error)
+	defer func() { _ = tx.Rollback().Error }()
+
+	require.NoError(t, tx.Exec(`
+		INSERT INTO project_employees (
+			id, project_id, employee_id, employee_name, employee_cccd, position,
+			start_date, payment_schedule, check_in_enabled, created_by
+		) VALUES (1, 74, 1288, 'Nhân viên thử nghiệm', '031095000444', 'Lương 520', ?, 'weekly', 0, 1353)
+	`, time.Now().AddDate(0, -1, 0)).Error)
+
+	ctx := transactionContextForTest(tx)
+	assignments, err := repo.GetActiveAssignments(ctx, 74)
+	require.NoError(t, err)
+	require.Len(t, assignments, 1)
+	require.Equal(t, uint(1288), assignments[0].EmployeeID)
+}
+
+func TestProjectEmployeeRepository_HasActiveFlexiblePaymentScheduleByEmployeeID(t *testing.T) {
+	dsn := fmt.Sprintf("file:project-employee-flexible-payment-%d?mode=memory&cache=shared", time.Now().UnixNano())
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.Exec(`
+		CREATE TABLE project_employees (
+			id INTEGER PRIMARY KEY,
+			employee_id INTEGER NOT NULL,
+			start_date DATETIME NOT NULL,
+			last_date DATETIME,
+			payment_schedule TEXT NOT NULL,
+			deleted_at DATETIME
+		)
+	`).Error)
+
+	today := time.Now()
+	require.NoError(t, db.Exec(`
+		INSERT INTO project_employees (id, employee_id, start_date, last_date, payment_schedule) VALUES
+			(1, 201, ?, NULL, 'flexible'),
+			(2, 202, ?, ?, 'flexible'),
+			(3, 203, ?, NULL, 'weekly')
+	`, today.AddDate(0, 0, -1), today.AddDate(0, 0, -7), today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)).Error)
+
+	repo := &ProjectEmployeeRepository{BaseRepository: &BaseRepository{DB: db}}
+	hasFlexible, err := repo.HasActiveFlexiblePaymentScheduleByEmployeeID(context.Background(), 201)
+	require.NoError(t, err)
+	require.True(t, hasFlexible)
+
+	hasFlexible, err = repo.HasActiveFlexiblePaymentScheduleByEmployeeID(context.Background(), 202)
+	require.NoError(t, err)
+	require.False(t, hasFlexible)
+
+	hasFlexible, err = repo.HasActiveFlexiblePaymentScheduleByEmployeeID(context.Background(), 203)
+	require.NoError(t, err)
+	require.False(t, hasFlexible)
+}
+
 // TestHasAccessViaProject_ProjectCreator verifies that a user who CREATED a project
 // can access an employee actively assigned to it — even when the creator has NO
 // project_users row (creators are intentionally never stored in project_users; see

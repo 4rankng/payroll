@@ -122,6 +122,7 @@ type AttendanceRepository interface {
 	// earning and review audit data, returning false if another writer won.
 	CompleteApprovedOpen(ctx context.Context, id uint, checkOutTime time.Time, checkOutGate string) (bool, error)
 	Update(ctx context.Context, attendance *Attendance) error
+	HardDeleteByEmployeeID(ctx context.Context, employeeID uint) error
 	List(ctx context.Context, filters AttendanceFilters) ([]*Attendance, error)
 	Count(ctx context.Context, filters AttendanceFilters) (int64, error)
 	// MarkAutoRejected atomically finalizes an attendance whose checkout window

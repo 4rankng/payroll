@@ -12,6 +12,7 @@ import (
 	"api-server/internal/infra/persistence/common"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ProjectEmployeeRepository struct {
@@ -269,7 +270,7 @@ func (r *ProjectEmployeeRepository) GetActiveAssignments(ctx context.Context, pr
 	var assignments []*domain.ProjectEmployee
 	today := timeutil.StartOfDay(clock.NowUTC())
 
-	query := r.DB.WithContext(ctx).Where("project_id = ? AND (last_date IS NULL OR last_date >= ?)", projectID, today)
+	query := r.getDB(ctx).Where("project_id = ? AND (last_date IS NULL OR last_date >= ?)", projectID, today)
 	err := r.applyCommonPreloads(query).Find(&assignments).Error
 
 	return assignments, err
@@ -687,9 +688,38 @@ func (r *ProjectEmployeeRepository) countDistinctProjectEmployees(ctx context.Co
 
 // DeleteAssignmentsByEmployeeID soft deletes all project assignments for an employee
 func (r *ProjectEmployeeRepository) DeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error {
-	return r.DB.WithContext(ctx).
+	return r.getDB(ctx).
 		Where("employee_id = ?", employeeID).
 		Delete(&domain.ProjectEmployee{}).Error
+}
+
+func (r *ProjectEmployeeRepository) HardDeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error {
+	return r.dbForContext(ctx).
+		Unscoped().
+		Where("employee_id = ?", employeeID).
+		Delete(&domain.ProjectEmployee{}).Error
+}
+
+// HasActiveFlexiblePaymentScheduleByEmployeeID locks the employee's active
+// assignments in a deletion transaction before checking their payment schedule.
+func (r *ProjectEmployeeRepository) HasActiveFlexiblePaymentScheduleByEmployeeID(ctx context.Context, employeeID uint) (bool, error) {
+	var schedules []string
+	today := timeutil.StartOfDay(clock.NowUTC())
+	err := r.getDB(ctx).
+		Model(&domain.ProjectEmployee{}).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("employee_id = ? AND start_date <= ? AND last_date IS NULL", employeeID, today).
+		Pluck("payment_schedule", &schedules).Error
+	if err != nil {
+		return false, err
+	}
+
+	for _, schedule := range schedules {
+		if schedule == string(domain.PaymentScheduleFlexible) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // CountWorkingEmployees returns the count of distinct employees with active assignments

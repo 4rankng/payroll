@@ -65,18 +65,20 @@ export const EmployeeActions = memo(({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       {/* Secondary actions group */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onDelete}
-          className={cn(
-            "min-h-11 border border-destructive/30 bg-destructive/10 text-destructive",
-            "hover:bg-destructive/20 hover:text-destructive",
-          )}
-        >
-          <Trash2 className="h-4 w-4" />
-          Xóa
-        </Button>
+        {onDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onDelete}
+            className={cn(
+              "min-h-11 border border-destructive/30 bg-destructive/10 text-destructive",
+              "hover:bg-destructive/20 hover:text-destructive",
+            )}
+          >
+            <Trash2 className="h-4 w-4" />
+            Xóa
+          </Button>
+        )}
 
         {canResetPassword && onResetPassword && (
           <Button

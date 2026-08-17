@@ -65,6 +65,8 @@ type ProjectEmployeeRepository interface {
 	Delete(ctx context.Context, id uint) error
 	DeleteByProjectID(ctx context.Context, projectID uint) error
 	DeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error
+	HardDeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error
+	HasActiveFlexiblePaymentScheduleByEmployeeID(ctx context.Context, employeeID uint) (bool, error)
 	List(ctx context.Context, filters ProjectEmployeeFilters) ([]*ProjectEmployee, error)
 	Count(ctx context.Context, filters ProjectEmployeeFilters) (int64, error)
 	GetByProject(ctx context.Context, projectID uint) ([]*ProjectEmployee, error)
