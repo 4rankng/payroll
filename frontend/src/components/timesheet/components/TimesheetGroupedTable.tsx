@@ -110,7 +110,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
                 Giờ
               </TableHead>
               <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
-                Đơn giá
+                {userRole === "admin" ? "Dự án · Đơn giá" : "Đơn giá"}
               </TableHead>
               <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 Thành tiền
@@ -211,9 +211,13 @@ const GroupRow = memo(function GroupRow({
                 {group.totalHours}h
               </span>
             </TableCell>
-            {/* [5] rate — not meaningful for an aggregate */}
+            {/* [5] Project preview for Admin summaries; rate lives in expanded rows. */}
             <TableCell className="py-3.5 px-3 text-right">
-              <span className="text-xs text-muted-foreground/35">—</span>
+              {userRole === "admin" ? (
+                <AdminGroupProjectColumn group={group} />
+              ) : (
+                <span className="text-xs text-muted-foreground/35">—</span>
+              )}
             </TableCell>
             {/* [6] total amount */}
             <TableCell className="py-3.5 px-3 text-right">
@@ -263,6 +267,27 @@ const PartnerGroupColumn = memo(function PartnerGroupColumn({ group }: { group: 
           </p>
         );
       })()}
+    </div>
+  );
+});
+
+const AdminGroupProjectColumn = memo(function AdminGroupProjectColumn({ group }: { group: EmployeeGroupedTimesheet }) {
+  const projects = [...new Set(group.entries.map((entry) => entry.projectName).filter(Boolean))];
+  const projectLabel = projects.length === 1
+    ? projects[0]
+    : projects.length > 1
+      ? `${projects[0]} +${projects.length - 1}`
+      : "—";
+
+  return (
+    <div
+      className="ml-auto flex w-full min-w-0 items-center justify-end gap-1.5 text-left"
+      title={projects.join(", ")}
+    >
+      <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+      <span className="min-w-0 truncate text-xs font-semibold text-foreground">
+        {projectLabel}
+      </span>
     </div>
   );
 });
