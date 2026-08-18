@@ -36,13 +36,14 @@ import {
   useTimesheetSummary,
 } from "@/hooks/api/useTimesheets";
 import { PayrollControlCenter } from "@/components/timesheet/PayrollControlCenter";
-import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { useEmployeeModals, useModalNavigation } from "@/hooks/useModalNavigation";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { MODAL_IDS } from "@/constants/modalRegistry";
 import { toast } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MobileTimesheetEntry } from "@/components/sheets/timesheet-entry/mobile/MobileTimesheetEntry";
 import { createProjectBulkApprovalContent } from "@/utils/timesheetBulkHelpers";
+import type { Employee } from "@/types/api/employee.types";
 import type { Timesheet } from "@/types/api/timesheet.types";
 
 const TimesheetPageMobile = () => {
@@ -94,12 +95,18 @@ const TimesheetPageMobile = () => {
   const timesheetManagement = useTimesheetManagement({ userRole: "admin" });
   const queryClient = useQueryClient();
   const { openModal } = useModalNavigation();
+  const { openEmployeeDetails } = useEmployeeModals();
   const { data: bulkTransferSetting } = useSettingByKey(
     "bulk_transfer_payment_percentage",
   );
   const bulkTransferPercentage = bulkTransferSetting?.value
     ? parseFloat(bulkTransferSetting.value)
     : 0;
+
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
 
   useEffect(() => {
     if (
@@ -395,7 +402,7 @@ const TimesheetPageMobile = () => {
         onFilterChange={timesheetManagement.setStatusFilter}
       />
 
-      <MissingBankDetailsSection />
+      <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
 
       <TimesheetDisplaySection
         timesheetManagement={timesheetManagement}

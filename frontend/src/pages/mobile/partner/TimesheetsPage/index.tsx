@@ -17,12 +17,13 @@ import { GroupedStatCard } from "@/components/shared/GroupedStatCard";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { useTimesheetManagement } from "@/hooks/timesheet/useTimesheetManagement";
-import { useTimesheetModals } from "@/hooks/useModalNavigation";
+import { useEmployeeModals, useTimesheetModals } from "@/hooks/useModalNavigation";
 import { useExportApprovedTimesheets } from "@/hooks/api/usePayrolls";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { useCreateEditRequest } from "@/hooks/api/useTimesheetEditRequests";
 import { useTimesheetStatsConfig } from "@/hooks/useTimesheetStatsConfig";
 import { MobileTimesheetEntry } from "@/components/sheets/timesheet-entry/mobile/MobileTimesheetEntry";
+import type { Employee } from "@/types/api/employee.types";
 import type { Timesheet } from "@/types/api/timesheet.types";
 
 export default function TimesheetsPageMobile() {
@@ -35,7 +36,13 @@ export default function TimesheetsPageMobile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { openTimesheetEntry, openTimesheetDetails } = useTimesheetModals();
+  const { openEmployeeDetails } = useEmployeeModals();
   const queryClient = useQueryClient();
+
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
 
   const createEditRequestMutation = useCreateEditRequest();
   const [requestingTimesheetId, setRequestingTimesheetId] = useState<
@@ -285,7 +292,7 @@ export default function TimesheetsPageMobile() {
       )}
 
       <MobileSurface className="p-3">
-        <MissingBankDetailsSection />
+        <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
       </MobileSurface>
 
       <MobileSurface className="overflow-hidden p-3">

@@ -16,7 +16,7 @@ import { PaymentHistorySheet } from "@/components/payroll/PaymentHistorySheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { useTimesheetManagement } from "@/hooks/timesheet/useTimesheetManagement";
-import { useTimesheetModals } from "@/hooks/useModalNavigation";
+import { useEmployeeModals, useTimesheetModals } from "@/hooks/useModalNavigation";
 import { useExportApprovedTimesheets } from "@/hooks/api/usePayrolls";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { useCreateEditRequest } from "@/hooks/api/useTimesheetEditRequests";
@@ -26,6 +26,7 @@ import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { PartnerTimesheetActions } from "@/components/timesheet/PartnerTimesheetActions";
 import { cn } from "@/lib/utils";
+import type { Employee } from "@/types/api/employee.types";
 import type { Timesheet } from "@/types/api/timesheet.types";
 
 /* ------------------------------------------------------------------ */
@@ -183,8 +184,14 @@ export default function TimesheetsPage() {
   const [bccHistoryOpen, setBccHistoryOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { openTimesheetEntry, openTimesheetDetails } = useTimesheetModals();
+  const { openEmployeeDetails } = useEmployeeModals();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
 
   const createEditRequestMutation = useCreateEditRequest();
   const [requestingTimesheetId, setRequestingTimesheetId] = useState<
@@ -461,7 +468,7 @@ export default function TimesheetsPage() {
           onRowClick={handleEditRequestRowClick}
         />
 
-        <MissingBankDetailsSection />
+        <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
 
         {/* Filters + Table */}
         <TimesheetProvider

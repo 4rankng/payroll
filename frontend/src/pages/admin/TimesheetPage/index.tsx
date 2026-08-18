@@ -21,11 +21,12 @@ import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
 import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
 import { useExportOnePayBulk } from '@/hooks/api/useOnePayExport';
 import { PayrollControlCenter } from '@/components/timesheet/PayrollControlCenter';
-import { useModalNavigation } from '@/hooks/useModalNavigation';
+import { useEmployeeModals, useModalNavigation } from '@/hooks/useModalNavigation';
 import { useSettingByKey } from '@/hooks/api/useSettings';
 import { MODAL_IDS } from '@/constants/modalRegistry';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Employee } from '@/types/api/employee.types';
 import type { Timesheet } from '@/types/api/timesheet.types';
 import type { BulkTransferExportParams } from '@/services/api/bulk-transfer.service';
 
@@ -52,6 +53,7 @@ const TimesheetPage = () => {
   const timesheetManagement = useTimesheetManagement({ userRole: 'admin' });
   const queryClient = useQueryClient();
   const { openModal } = useModalNavigation();
+  const { openEmployeeDetails } = useEmployeeModals();
   const { data: bulkTransferSetting } = useSettingByKey('bulk_transfer_payment_percentage');
 
   // Calculate bulk transfer percentage from setting
@@ -115,6 +117,11 @@ const TimesheetPage = () => {
   const handleAddTimesheet = () => {
     openModal(MODAL_IDS.TIMESHEET_ENTRY);
   };
+
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
 
   const handleEditTimesheet = (timesheet: Timesheet) => {
     openModal(MODAL_IDS.TIMESHEET_ENTRY, {
@@ -353,7 +360,7 @@ const TimesheetPage = () => {
         onFilterChange={timesheetManagement.setStatusFilter}
       />
 
-      <MissingBankDetailsSection />
+      <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
 
       <TimesheetDisplaySection
         timesheetManagement={timesheetManagement}

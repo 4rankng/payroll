@@ -6,6 +6,7 @@ const navigate = vi.fn();
 const setSearchParams = vi.fn();
 const setStatusFilter = vi.fn();
 const setSelectedProject = vi.fn();
+const openEmployeeDetails = vi.fn();
 let routeSearchParams = new URLSearchParams();
 
 vi.mock("react-router-dom", () => ({
@@ -71,7 +72,15 @@ vi.mock("@/components/payroll/PaymentHistorySheet", () => ({
 }));
 
 vi.mock("@/components/employees/MissingBankDetailsSection", () => ({
-  MissingBankDetailsSection: () => <div />,
+  MissingBankDetailsSection: ({
+    onEmployeeClick,
+  }: {
+    onEmployeeClick?: (employee: { id: number }) => void;
+  }) => (
+    <button onClick={() => onEmployeeClick?.({ id: 42 })}>
+      Nhân viên thiếu thông tin ngân hàng
+    </button>
+  ),
 }));
 
 vi.mock("@/components/shared/GroupedStatCard", () => ({
@@ -132,6 +141,9 @@ vi.mock("@/hooks/useModalNavigation", () => ({
     openTimesheetEntry: vi.fn(),
     openTimesheetDetails: vi.fn(),
   }),
+  useEmployeeModals: () => ({
+    openEmployeeDetails,
+  }),
 }));
 
 vi.mock("@/hooks/api/usePayrolls", () => ({
@@ -170,7 +182,18 @@ describe("partner mobile timesheet actions", () => {
     setSearchParams.mockClear();
     setStatusFilter.mockClear();
     setSelectedProject.mockClear();
+    openEmployeeDetails.mockClear();
     routeSearchParams = new URLSearchParams();
+  });
+
+  it("opens the employee profile drawer from a bank-warning row", () => {
+    render(<TimesheetsPageMobile />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Nhân viên thiếu thông tin ngân hàng" }),
+    );
+
+    expect(openEmployeeDetails).toHaveBeenCalledWith("42");
   });
 
   it("opens the restored partner workflows and applies the approved filter", () => {
