@@ -1,9 +1,11 @@
 package onepay
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -627,8 +629,10 @@ func TestProvider_CheckAccount_NameMismatch(t *testing.T) {
 	}))
 	defer srv.Close()
 
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
 	c := testClient(t, srv.URL, fixedTime)
-	p := NewProvider(c, nil)
+	p := NewProvider(c, logger)
 
 	req := validAccountCheckRequest()
 	req.AccountName = "NGUYEN VAN A"
@@ -648,6 +652,9 @@ func TestProvider_CheckAccount_NameMismatch(t *testing.T) {
 	}
 	if !strings.Contains(res.RawMessage, "NGUYEN VAN A") || !strings.Contains(res.RawMessage, "TRAN THI B") {
 		t.Errorf("RawMessage should contain both names, got %q", res.RawMessage)
+	}
+	if strings.Contains(logs.String(), "NGUYEN VAN A") || strings.Contains(logs.String(), "TRAN THI B") {
+		t.Fatalf("name mismatch logs leaked holder names: %s", logs.String())
 	}
 }
 

@@ -90,6 +90,17 @@ func performEmployeeAccountCheck(t *testing.T, handler *ManualDisbursementHandle
 	return recorder
 }
 
+func performCustomAccountCheck(t *testing.T, handler *ManualDisbursementHandler, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/check-account", strings.NewReader(body))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	handler.CheckAccount(ctx)
+	return recorder
+}
+
 func TestCheckEmployeeAccountUsesPersistedBankDataWithoutTransfer(t *testing.T) {
 	provider := &employeeAccountVerifierStub{
 		checkResult: &infrastructure.AccountCheckResult{
@@ -251,5 +262,69 @@ func TestCheckEmployeeAccountProviderFailureDoesNotLogAccountNumber(t *testing.T
 	}
 	if !strings.Contains(recorder.Body.String(), "account_verification_provider_error") {
 		t.Fatalf("missing provider error code: %s", recorder.Body.String())
+	}
+}
+
+func TestCheckAccountProviderFailureDoesNotExposeCustomAccountData(t *testing.T) {
+	const sentinel = "CUSTOM-ACCOUNT-SENTINEL-0123456789"
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	provider := &employeeAccountVerifierStub{checkErr: errors.New(sentinel)}
+	handler := NewManualDisbursementHandler(
+		disbursementservice.NewRegistry(provider), nil, nil,
+		nil, nil, nil, logger, nil,
+	)
+
+	recorder := performCustomAccountCheck(t, handler, `{"bank_code":"TESTVNVX","account_no":"0123456789","account_name":"NGUYEN VAN B","account_type":"0"}`)
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500; body = %s", recorder.Code, recorder.Body.String())
+	}
+	if strings.Contains(logs.String(), sentinel) || strings.Contains(recorder.Body.String(), sentinel) {
+		t.Fatalf("custom lookup exposed provider error data; logs=%s body=%s", logs.String(), recorder.Body.String())
+	}
+}
+
+func TestCheckAccountUsesTwentyCharacterRequestID(t *testing.T) {
+	provider := &employeeAccountVerifierStub{checkResult: &infrastructure.AccountCheckResult{Valid: true}}
+	handler := NewManualDisbursementHandler(
+		disbursementservice.NewRegistry(provider), nil, nil,
+		nil, nil, nil, slog.Default(), nil,
+	)
+
+	recorder := performCustomAccountCheck(t, handler, `{"bank_code":"TESTVNVX","account_no":"0123456789","account_name":"NGUYEN VAN B","account_type":"0"}`)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", recorder.Code, recorder.Body.String())
+	}
+	if len(provider.lastRequest.RequestID) != 20 || !strings.HasPrefix(provider.lastRequest.RequestID, "mdcheck") {
+		t.Fatalf("request ID = %q, want 20 characters with mdcheck prefix", provider.lastRequest.RequestID)
+	}
+}
+
+func TestCheckAccountRejectsMalformedCustomValuesBeforeProviderCall(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "short account", body: `{"bank_code":"TESTVNVX","account_no":"12345","account_name":"NGUYEN VAN B","account_type":"0"}`},
+		{name: "malformed swift", body: `{"bank_code":"BAD","account_no":"123456","account_name":"NGUYEN VAN B","account_type":"0"}`},
+		{name: "short holder name", body: `{"bank_code":"TESTVNVX","account_no":"123456","account_name":"A","account_type":"0"}`},
+		{name: "invalid account type", body: `{"bank_code":"TESTVNVX","account_no":"123456","account_name":"NGUYEN VAN B","account_type":"9"}`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider := &employeeAccountVerifierStub{checkResult: &infrastructure.AccountCheckResult{Valid: true}}
+			handler := NewManualDisbursementHandler(
+				disbursementservice.NewRegistry(provider), nil, nil,
+				nil, nil, nil, slog.Default(), nil,
+			)
+			recorder := performCustomAccountCheck(t, handler, test.body)
+			if recorder.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want 400; body = %s", recorder.Code, recorder.Body.String())
+			}
+			if provider.checkCalls != 0 {
+				t.Fatalf("provider calls = %d, want 0", provider.checkCalls)
+			}
+		})
 	}
 }

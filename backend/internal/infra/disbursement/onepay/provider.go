@@ -170,7 +170,8 @@ func (p *Provider) CheckAccount(ctx context.Context, req infrastructure.AccountC
 		if mismatchMsg, ok := infrastructure.MatchAccountName(req.AccountName, resp.HolderName); !ok {
 			p.logger.Info("onepay: name mismatch",
 				"request_id", req.RequestID,
-				"raw_expected", req.AccountName, "raw_actual", resp.HolderName)
+				"outcome", "name_mismatch",
+			)
 			return &infrastructure.AccountCheckResult{
 				Valid:        false,
 				AccountName:  resp.HolderName,

@@ -18,6 +18,8 @@ Build one responsive Admin wallet dialog composed from existing Dialog, Command,
 
 - Vietnamese action label: `Tra cứu tài khoản`.
 - Search employees by the established debounced, paginated server API.
+- Offer a clearly separated manual-entry mode for custom bank/SWIFT, account
+  number, and account name values without implying that they will be saved.
 - Single employee selection; no lookup until explicit confirmation.
 - Reset stale results when employee changes or dialog closes.
 - Render stored bank information separately from the current provider result.
@@ -47,7 +49,8 @@ Build one responsive Admin wallet dialog composed from existing Dialog, Command,
 ## Success Criteria
 
 - [x] Desktop and mobile Admin wallet expose equivalent lookup capability.
-- [x] UI never accepts manually supplied bank/account values for this flow.
+- [x] Employee mode never accepts client-supplied bank/account values.
+- [x] Employee mode stays server-authoritative; manual mode is explicitly labeled as one-off and non-persistent.
 - [x] Provider-confirmed name is visually distinguishable from the stored name.
 - [x] Loading, error, empty, retry, close, and employee-change interactions are deterministic.
 - [x] Keyboard focus, accessible names, and mobile touch targets meet project requirements.

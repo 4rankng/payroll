@@ -160,6 +160,11 @@ or `unverified`, alongside the stored bank tuple and provider result. Common
 errors are `employee_not_found`, `employee_bank_data_incomplete`,
 `account_verifier_unavailable`, and `account_verification_provider_error`.
 
+The Admin wallet lookup dialog also supports one-off manual input through
+`POST /admin/manual-disbursement/check-account`. That request accepts
+`bank_code`, `account_no`, `account_name`, and `account_type`; it is read-only
+and does not persist the entered values or create a transfer.
+
 ### Dashboard (`/api/v1/dashboard`)
 
 20+ endpoints for admin analytics: financial overview, bank usage, employee activity, historical data, check-in health, project profitability, weekly profit, quota anomalies, salary distribution, cash flow, top-paid employees, new employees, recent activities, system notifications, partner dashboard.

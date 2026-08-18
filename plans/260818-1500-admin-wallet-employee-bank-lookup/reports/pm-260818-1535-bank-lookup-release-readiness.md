@@ -5,8 +5,8 @@
 | Gate | Evidence | Result |
 |------|----------|--------|
 | Backend | `go test ./... -race -cover` | Pass |
-| Frontend | 112 Vitest files, 416 tests | Pass |
-| Feature UI | 4 files, 7 tests | Pass |
+| Frontend | 112 Vitest files, 419 tests | Pass |
+| Feature UI | 4 files, 9 tests | Pass |
 | Production build | `pnpm build` | Pass |
 | Repository lint | `pnpm lint`; backend lint/vet | Pass |
 | CI TypeScript references | `pnpm exec tsc -b` | Existing repository-wide failures; no lookup file diagnostics |
@@ -19,6 +19,7 @@
 - Admin-only employee lookup uses the persisted bank tuple and active OnePay verifier.
 - No transfer, wallet payment, transaction code, or employee write is possible through the new handler.
 - Desktop and mobile Admin wallet paths share one accessible Vietnamese dialog.
+- The shared dialog supports employee-backed lookup and explicitly non-persistent custom entry.
 - OnePay client logs no signed credentials, request/response bodies, account numbers, or holder names.
 
 ### Known Limitations

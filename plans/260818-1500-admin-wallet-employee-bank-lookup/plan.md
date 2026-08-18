@@ -34,6 +34,9 @@ Add `Tra cứu tài khoản` to both Admin wallet render paths. The shared dialo
 - Missing bank data never calls the provider.
 - Provider/configuration failures stay distinct from confirmed invalid or name-mismatch results.
 - One shared responsive dialog; both desktop and mobile Admin pages expose the action.
+- The dialog also offers a one-off manual mode for bank/SWIFT, account number,
+  and account name; custom values use the existing read-only account-check API
+  and are never persisted.
 
 ## Phases
 
@@ -53,6 +56,7 @@ Add `Tra cứu tài khoản` to both Admin wallet render paths. The shared dialo
 - Admin can find an employee by the existing server-side search and explicitly run a current lookup.
 - Request payload contains only `employee_id`; provider input comes from persisted employee/bank data.
 - UI shows stored bank, account number/name, provider-confirmed name, and a clear Vietnamese outcome.
+- Admin can switch to manual entry and verify custom values without selecting an employee.
 - Missing data, invalid account, name mismatch, unavailable verifier, and transport failure are distinguishable.
 - Desktop at 1280px and mobile at 390px/320px retain action parity, readable wrapping, no horizontal overflow, and 44px touch targets.
 - Focused backend/frontend tests, frontend lint/type-check, backend checks, `make api-test`, and graph updates are classified with evidence.

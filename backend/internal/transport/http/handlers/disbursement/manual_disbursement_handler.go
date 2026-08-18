@@ -635,6 +635,21 @@ func (h *ManualDisbursementHandler) CheckAccount(c *gin.Context) {
 		response.BadRequest(c, "invalid request body: "+err.Error())
 		return
 	}
+	body.BankCode = strings.ToUpper(strings.TrimSpace(body.BankCode))
+	body.AccountNo = strings.TrimSpace(body.AccountNo)
+	body.AccountName = strings.TrimSpace(body.AccountName)
+	if !isAccountNumber(body.AccountNo) {
+		response.BadRequest(c, "Số tài khoản phải có 6–20 chữ số")
+		return
+	}
+	if nameLength := len([]rune(body.AccountName)); nameLength < 3 || nameLength > 100 {
+		response.BadRequest(c, "Tên chủ tài khoản phải có 3–100 ký tự")
+		return
+	}
+	if body.AccountType != "" && body.AccountType != "0" && body.AccountType != "1" {
+		response.BadRequest(c, "Loại tài khoản không hợp lệ")
+		return
+	}
 
 	provider, err := h.resolveProvider(c)
 	if err != nil {
@@ -653,9 +668,13 @@ func (h *ManualDisbursementHandler) CheckAccount(c *gin.Context) {
 	}
 
 	swiftCode := h.resolveSwiftCode(c.Request.Context(), body.BankCode)
+	if !isSwiftCode(swiftCode) {
+		response.BadRequest(c, "Mã SWIFT phải có 8–11 ký tự chữ hoặc số")
+		return
+	}
 
 	result, err := verifier.CheckAccount(c.Request.Context(), infrastructure.AccountCheckRequest{
-		RequestID:   "mdcheck" + strings.ReplaceAll(uuid.New().String()[:8], "-", ""),
+		RequestID:   "mdcheck" + strings.ReplaceAll(uuid.New().String(), "-", "")[:13],
 		BankCode:    body.BankCode,
 		SwiftCode:   swiftCode,
 		AccountNo:   body.AccountNo,
@@ -664,8 +683,10 @@ func (h *ManualDisbursementHandler) CheckAccount(c *gin.Context) {
 	})
 	if err != nil {
 		h.logger.Warn("manual disbursement: check-account failed",
-			"bank_code", body.BankCode, "error", err)
-		response.InternalServerError(c, err.Error())
+			"bank_code", body.BankCode,
+			"error_type", fmt.Sprintf("%T", err),
+		)
+		response.InternalServerError(c, "Không thể kết nối dịch vụ tra cứu ngân hàng")
 		return
 	}
 
@@ -745,6 +766,18 @@ func isSwiftCode(s string) bool {
 			if c < '0' || c > '9' {
 				return false
 			}
+		}
+	}
+	return true
+}
+
+func isAccountNumber(value string) bool {
+	if len(value) < 6 || len(value) > 20 {
+		return false
+	}
+	for _, character := range value {
+		if character < '0' || character > '9' {
+			return false
 		}
 	}
 	return true

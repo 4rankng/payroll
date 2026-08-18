@@ -12,8 +12,22 @@ const lookupMutation = vi.hoisted(() => ({
   reset: vi.fn(),
 }));
 
+const customLookupMutation = vi.hoisted(() => ({
+  data: null as unknown,
+  error: null as unknown,
+  isError: false,
+  isPending: false,
+  mutate: vi.fn(),
+  reset: vi.fn(),
+}));
+
 vi.mock('@/hooks/api/useManualDisbursement', () => ({
   useEmployeeAccountLookup: () => lookupMutation,
+  useVerifyManualDisbursementAccount: () => customLookupMutation,
+  useManualDisbursementBanks: () => ({
+    data: [{ bank_code: 'VCB', swift_code: 'BFTVVNVX', bank_name: 'Vietcombank' }],
+    isLoading: false,
+  }),
 }));
 
 vi.mock('@/components/ui/EmployeeSingleSelector', () => ({
@@ -36,6 +50,12 @@ describe('EmployeeAccountLookupDialog', () => {
     lookupMutation.isPending = false;
     lookupMutation.mutate.mockClear();
     lookupMutation.reset.mockClear();
+    customLookupMutation.data = null;
+    customLookupMutation.error = null;
+    customLookupMutation.isError = false;
+    customLookupMutation.isPending = false;
+    customLookupMutation.mutate.mockClear();
+    customLookupMutation.reset.mockClear();
   });
 
   it('sends only the selected employee ID after explicit confirmation', () => {
@@ -106,5 +126,38 @@ describe('EmployeeAccountLookupDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tra cứu' }));
 
     expect(lookupMutation.mutate).toHaveBeenCalledWith({ employee_id: 21 });
+  });
+
+  it('allows a one-off custom lookup without an employee ID', () => {
+    render(<EmployeeAccountLookupDialog open onOpenChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Nhập thủ công' }));
+    fireEvent.change(screen.getByLabelText('Mã SWIFT'), { target: { value: 'bftvvnvx' } });
+    fireEvent.change(screen.getByLabelText('Số tài khoản'), { target: { value: '123 456abc789' } });
+    fireEvent.change(screen.getByLabelText('Tên chủ tài khoản'), { target: { value: 'NGUYEN VAN B' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Tra cứu' }));
+
+    expect(customLookupMutation.mutate).toHaveBeenCalledWith({
+      bank_code: 'BFTVVNVX',
+      account_no: '123456789',
+      account_name: 'NGUYEN VAN B',
+      account_type: '0',
+    });
+    expect(lookupMutation.mutate).not.toHaveBeenCalled();
+  });
+
+  it('blocks malformed custom values with inline guidance', () => {
+    render(<EmployeeAccountLookupDialog open onOpenChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Nhập thủ công' }));
+    fireEvent.change(screen.getByLabelText('Mã SWIFT'), { target: { value: 'bad' } });
+    fireEvent.change(screen.getByLabelText('Số tài khoản'), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText('Tên chủ tài khoản'), { target: { value: 'A' } });
+
+    expect(screen.getByText('Mã SWIFT phải có 8–11 ký tự chữ hoặc số.')).toBeInTheDocument();
+    expect(screen.getByText('Số tài khoản phải có 6–20 chữ số.')).toBeInTheDocument();
+    expect(screen.getByText('Tên chủ tài khoản phải có 3–100 ký tự.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tra cứu' })).toBeDisabled();
+    expect(customLookupMutation.mutate).not.toHaveBeenCalled();
   });
 });
