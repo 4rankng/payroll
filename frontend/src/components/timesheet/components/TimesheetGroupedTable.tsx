@@ -20,6 +20,7 @@ import {
 import {
   groupTimesheetsByEmployee,
   groupEmployeeEntriesByProject,
+  formatTimesheetHours,
   getPaytypeDetail,
   EmployeeGroupedTimesheet,
   ProjectTimesheetSection,
@@ -208,7 +209,7 @@ const GroupRow = memo(function GroupRow({
             {/* [4] total hours */}
             <TableCell className="border-l border-border/30 py-3.5 px-3 text-right">
               <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-background/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
-                {group.totalHours}h
+                {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
             {/* [5] Project preview for Admin summaries; rate lives in expanded rows. */}
@@ -365,7 +366,7 @@ const ProjectSection = memo(function ProjectSection({
               </div>
             </div>
           </TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{project.totalHours}h</TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{formatTimesheetHours(project.totalHours)}h</TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground/35">—</TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">
             {project.totalAmount.toLocaleString("vi-VN")}
@@ -484,7 +485,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
             isShortShift ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800",
           )}
         >
-          {hoursWorked}h
+          {formatTimesheetHours(hoursWorked)}h
         </span>
       </TableCell>
       <TableCell className="py-2 px-3 text-right">

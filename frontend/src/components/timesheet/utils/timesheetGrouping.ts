@@ -1,4 +1,10 @@
 import { Timesheet } from '@/types/api/timesheet.types';
+import { formatNumber } from '@/utils/formatters';
+
+/** Formats displayed work hours without exposing floating-point precision noise. */
+export function formatTimesheetHours(hours: number): string {
+  return formatNumber(Number.isFinite(hours) ? hours : 0, 2);
+}
 
 export interface EmployeeGroupedTimesheet {
   groupKey: string; // employeeId_effectiveStatus

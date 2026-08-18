@@ -5,7 +5,7 @@ import { Clock, Banknote, ClipboardEdit, ChevronRight, ChevronDown } from 'lucid
 import { Timesheet } from '@/types/api/timesheet.types';
 import { TimesheetEntryModal } from './components/TimesheetEntryModal';
 import { showErrorNotification } from '@/utils/error-handler';
-import { groupTimesheetsByEmployeeDate, sortGroupedTimesheets } from './utils/timesheetGrouping';
+import { formatTimesheetHours, groupTimesheetsByEmployeeDate, sortGroupedTimesheets } from './utils/timesheetGrouping';
 import { formatDateWithWeekday, getMergedStatusBadge, getPaytypeText } from './utils/timesheetHelpers';
 import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
@@ -162,7 +162,7 @@ export function TimesheetMobileList() {
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
                     <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <span className="font-semibold text-foreground tabular-nums">{group.totalHours}h</span>
+                    <span className="font-semibold text-foreground tabular-nums">{formatTimesheetHours(group.totalHours)}h</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Banknote className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -194,7 +194,7 @@ export function TimesheetMobileList() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="text-right">
-                          <p className="text-xs font-semibold text-foreground tabular-nums">{entry.hours_worked}h</p>
+                          <p className="text-xs font-semibold text-foreground tabular-nums">{formatTimesheetHours(entry.hours_worked)}h</p>
                           <p className="text-xs text-muted-foreground tabular-nums">{formatCurrency(entry.amount)}</p>
                         </div>
                         {getMergedStatusBadge(entry.status, entry.payment_status)}

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Timesheet } from '@/types/api/timesheet.types';
 import {
+  formatTimesheetHours,
   getPaytypeDetail,
   groupEmployeeEntriesByProject,
 } from './timesheetGrouping';
@@ -33,6 +34,11 @@ function makeTimesheet(overrides: Partial<Timesheet>): Timesheet {
 }
 
 describe('timesheet display grouping', () => {
+  it('always displays hours with two rounded decimal places', () => {
+    expect(formatTimesheetHours(85.53999999999999)).toBe('85,54');
+    expect(formatTimesheetHours(36)).toBe('36,00');
+  });
+
   it('groups entries by project, sorts dates newest first, and totals each section', () => {
     const sections = groupEmployeeEntriesByProject([
       makeTimesheet({ id: 2, date: '2026-07-10', hours_worked: 2, amount: 120_000 }),
