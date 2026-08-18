@@ -47,7 +47,7 @@ Full CRUD. Additional: `POST /:id/reset-password`, `GET /summary`, `GET /:id/act
 
 ### Employees (`/api/v1/employees`)
 
-CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details`, `POST /init-users`, `GET /unassigned`, payment schedule management.
+CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details` (bank_account_status='invalid' rows are listed unconditionally while the employee is assigned to an active project; missing-info rows additionally require pending timesheet/advance), `POST /init-users`, `GET /unassigned`, payment schedule management.
 
 ### Projects (`/api/v1/projects`)
 

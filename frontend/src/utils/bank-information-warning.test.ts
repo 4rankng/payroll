@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBankInformationWarningReason } from './bank-information-warning';
+import {
+  getBankInformationWarningKind,
+  getBankInformationWarningReason,
+} from './bank-information-warning';
 
 const completeBankInformation = {
   bank: { id: 1 },
@@ -46,5 +49,34 @@ describe('getBankInformationWarningReason', () => {
         bank_account_invalid_reason: reason,
       }),
     ).toBe('Tài khoản ngân hàng không hợp lệ');
+  });
+});
+
+describe('getBankInformationWarningKind', () => {
+  it('classifies a OnePay-confirmed invalid account as invalid', () => {
+    expect(
+      getBankInformationWarningKind({
+        ...completeBankInformation,
+        bank_account_status: 'invalid',
+      }),
+    ).toBe('invalid');
+  });
+
+  it('classifies incomplete valid-status info as missing', () => {
+    expect(
+      getBankInformationWarningKind({
+        ...completeBankInformation,
+        bank_account_number: '',
+      }),
+    ).toBe('missing');
+  });
+
+  it('falls back to missing when status is absent (stale payload)', () => {
+    expect(
+      getBankInformationWarningKind({
+        ...completeBankInformation,
+        bank_account_status: undefined,
+      }),
+    ).toBe('missing');
   });
 });

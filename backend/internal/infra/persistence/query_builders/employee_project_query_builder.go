@@ -225,18 +225,27 @@ func (b *EmployeeProjectQueryBuilder) BuildGetByProjectQuery(projectID uint, cre
 	return query.Preload("Creator")
 }
 
-const missingBankDetailsPredicate = `(
+// missingBankFieldsPredicate matches employees with incomplete banking
+// information. A confirmed-invalid status is handled separately (see
+// buildMissingBankDetailsBaseQuery) so invalid rows are not gated on
+// pending work the way missing-info rows are.
+const missingBankFieldsPredicate = `(
 	employees.bank_id IS NULL
 	OR COALESCE(TRIM(employees.bank_account_number), '') = ''
 	OR COALESCE(TRIM(employees.bank_account_name), '') = ''
-	OR employees.bank_account_status = 'invalid'
 )`
 
 // buildMissingBankDetailsBaseQuery builds the shared base query for missing bank details queries.
-// Filters employees who:
-//   - Have missing banking information (no bank or empty account details)
-//   - Are currently assigned to active projects
-//   - Have at least one pending timesheet or pending advance payment request
+// Filters employees who either:
+//   - Have a confirmed-invalid bank account (bank_account_status = 'invalid'):
+//     listed unconditionally, subject only to current active-project assignment,
+//     so admins/partners are always reminded to fix the info.
+//   - Have missing banking information (no bank or empty account details):
+//     additionally require at least one pending timesheet or pending advance
+//     payment request (unchanged gating).
+//
+// `unverified` is deliberately excluded in both branches so OnePay outages
+// don't flood admins with false alarms.
 func (b *EmployeeProjectQueryBuilder) buildMissingBankDetailsBaseQuery(filters domain.EmployeeFilters) *gorm.DB {
 	activeProjectSubquery := b.db.Model(&domain.ProjectEmployee{}).
 		Select("DISTINCT project_employees.employee_id").
@@ -247,20 +256,25 @@ func (b *EmployeeProjectQueryBuilder) buildMissingBankDetailsBaseQuery(filters d
 
 	query = b.applyFilters(query, filters)
 
-	// Missing any required banking field OR a confirmed-invalid account.
-	// `unverified` is deliberately excluded so OnePay outages don't flood
-	// admins with false alarms.
-	query = query.Where(missingBankDetailsPredicate)
-
-	// Currently assigned to active projects
-	query = query.Where("employees.id IN (?)", activeProjectSubquery)
-
-	// Has pending timesheet or pending advance payment request
+	// Single grouped OR: branch A (confirmed-invalid → always listed while
+	// assigned to an active project) OR branch B (missing fields → also needs
+	// pending work). Both branches keep the active-project requirement.
 	query = query.Where(`(
-		EXISTS (SELECT 1 FROM timesheets t WHERE t.employee_id = employees.id AND t.timesheet_status = 'pending_approval')
+		(
+			employees.bank_account_status = 'invalid'
+			AND employees.id IN (?)
+		)
 		OR
-		EXISTS (SELECT 1 FROM advance_payment_requests apr WHERE apr.employee_id = employees.id AND apr.status = 'PENDING')
-	)`)
+		(
+			`+missingBankFieldsPredicate+`
+			AND employees.id IN (?)
+			AND (
+				EXISTS (SELECT 1 FROM timesheets t WHERE t.employee_id = employees.id AND t.timesheet_status = 'pending_approval')
+				OR
+				EXISTS (SELECT 1 FROM advance_payment_requests apr WHERE apr.employee_id = employees.id AND apr.status = 'PENDING')
+			)
+		)
+	)`, activeProjectSubquery, activeProjectSubquery)
 
 	return query
 }

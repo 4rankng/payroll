@@ -5,7 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { useMissingBankDetails } from '@/hooks/employees/useMissingBankDetails';
 import { VIETNAMESE_EMPLOYEE_LABELS } from '@/types/api/employee.types';
 import type { Employee, CurrentProject } from '@/types/api/employee.types';
-import { getBankInformationWarningReason } from '@/utils/bank-information-warning';
+import {
+  getBankInformationWarningKind,
+  getBankInformationWarningReason,
+} from '@/utils/bank-information-warning';
 
 interface MissingBankDetailsSectionProps {
   onEmployeeClick?: (employee: Employee) => void;
@@ -45,7 +48,21 @@ export const MissingBankDetailsSection = ({
 
   const toggle = useCallback(() => setIsExpanded(v => !v), []);
 
-  const rows = useMemo(() => employees, [employees]);
+  // Group rows by warning kind, invalid first: OnePay-confirmed wrong data
+  // outranks incomplete data. Server order is preserved within each group.
+  const { rows, invalidCount, missingCount } = useMemo(() => {
+    const invalid = employees.filter(
+      employee => getBankInformationWarningKind(employee) === 'invalid',
+    );
+    const missing = employees.filter(
+      employee => getBankInformationWarningKind(employee) !== 'invalid',
+    );
+    return {
+      rows: [...invalid, ...missing],
+      invalidCount: invalid.length,
+      missingCount: missing.length,
+    };
+  }, [employees]);
 
   if (isLoading || totalCount === 0) return null;
 
@@ -58,9 +75,16 @@ export const MissingBankDetailsSection = ({
           <span className="min-w-0 text-pretty text-sm font-semibold text-amber-900">
             Thông tin ngân hàng không hợp lệ
           </span>
-          <Badge className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 text-xs font-semibold shrink-0">
-            {totalCount}
-          </Badge>
+          {invalidCount > 0 && (
+            <Badge className="border-rose-300 bg-rose-100 text-xs font-semibold text-rose-800 hover:bg-rose-100 shrink-0">
+              Sai thông tin: {invalidCount}
+            </Badge>
+          )}
+          {missingCount > 0 && (
+            <Badge className="border-amber-300 bg-amber-100 text-xs font-semibold text-amber-800 hover:bg-amber-100 shrink-0">
+              Thiếu thông tin: {missingCount}
+            </Badge>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -99,6 +123,8 @@ export const MissingBankDetailsSection = ({
               <tbody className="bg-card divide-y divide-amber-100">
                 {rows.map((employee, index) => {
                   const hasPending = (employee.timesheet_summary?.pending_timesheets ?? 0) > 0;
+                  const warningKind = getBankInformationWarningKind(employee);
+                  const isInvalid = warningKind === 'invalid';
                   const warningReason = getBankInformationWarningReason(employee);
                   return (
                     <tr
@@ -140,10 +166,25 @@ export const MissingBankDetailsSection = ({
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{employee.cccd}</td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex max-w-[240px] items-start gap-1 rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium leading-4 text-amber-900">
-                          <AlertTriangle className="mt-0.5 h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-                          <span className="break-words">{warningReason}</span>
-                        </span>
+                        <div className="flex flex-wrap items-start gap-1">
+                          <span
+                            className={`inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${
+                              isInvalid
+                                ? 'border-rose-300 bg-rose-100 text-rose-800'
+                                : 'border-amber-300 bg-amber-100 text-amber-900'
+                            }`}
+                          >
+                            <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                            {isInvalid ? 'Sai thông tin' : 'Thiếu thông tin'}
+                          </span>
+                          <span className={`inline-flex max-w-[240px] items-start gap-1 rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${
+                            isInvalid
+                              ? 'border-rose-300 bg-rose-100 text-rose-800'
+                              : 'border-amber-300 bg-amber-100 text-amber-900'
+                          }`}>
+                            <span className="break-words">{warningReason}</span>
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <ProjectCell projects={employee.current_projects} />

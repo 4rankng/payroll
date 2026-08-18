@@ -72,6 +72,25 @@ describe('MissingBankDetailsSection', () => {
     expect(screen.queryByText(/OnePay|invalid account/i)).not.toBeInTheDocument();
   });
 
+  it('shows split counts for invalid vs missing kinds in the header', () => {
+    render(<MissingBankDetailsSection />);
+
+    expect(screen.getByText('Sai thông tin: 1')).toBeInTheDocument();
+    expect(screen.getByText('Thiếu thông tin: 3')).toBeInTheDocument();
+  });
+
+  it('orders invalid rows first and labels each row with its kind', () => {
+    render(<MissingBankDetailsSection />);
+    fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách' }));
+
+    const kindBadges = screen.getAllByText(/^(Sai thông tin|Thiếu thông tin)$/);
+    // Rows are re-ordered invalid-first: the sole invalid employee (id 4)
+    // renders before the three missing-info employees.
+    expect(kindBadges).toHaveLength(4);
+    expect(kindBadges[0]).toHaveTextContent('Sai thông tin');
+    expect(kindBadges.slice(1).every(b => b.textContent === 'Thiếu thông tin')).toBe(true);
+  });
+
   it('keeps optional row activation available to pointer and keyboard users', () => {
     const handleEmployeeClick = vi.fn();
     render(<MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />);
