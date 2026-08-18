@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"api-server/internal/domain/ports/infrastructure"
 
@@ -149,6 +151,68 @@ func TestProvider_InitiateTransfer_APIErrorBecomesFailedResult(t *testing.T) {
 	}
 }
 
+func TestProvider_InitiateTransfer_504BecomesPendingForInquiry(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusGatewayTimeout)
+		_, _ = w.Write([]byte(`{
+			"response_code": "01",
+			"name": "TXN_PENDING",
+			"message": "Txn is pending",
+			"state": "pending"
+		}`))
+	}))
+	defer srv.Close()
+
+	c := testClient(t, srv.URL, fixedTime)
+	p := NewProvider(c, nil)
+
+	res, err := p.InitiateTransfer(context.Background(), validTransferRequest())
+	if err != nil {
+		t.Fatalf("504 must become an inquiry-required pending result: %v", err)
+	}
+	if res.Status != infrastructure.TransferStatusPending {
+		t.Fatalf("Status = %q, want pending", res.Status)
+	}
+	if res.RequestID != "FT-001" || res.RawErrorCode != "01" {
+		t.Fatalf("pending result lost correlation: %+v", res)
+	}
+}
+
+func TestProvider_InitiateTransfer_PostWriteTimeoutBecomesPendingForInquiry(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"state":"pending","response_code":"01"}`))
+	}))
+	defer srv.Close()
+
+	c, err := NewClient(Config{
+		PartnerID:   testPartnerID,
+		PartnerKey:  testPartnerKey,
+		AccountID:   testAccountID,
+		Endpoint:    srv.URL,
+		HTTPTimeout: 50 * time.Millisecond,
+	}, nil)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	c.now = func() time.Time { return fixedTime }
+	p := NewProvider(c, nil)
+
+	res, err := p.InitiateTransfer(context.Background(), validTransferRequest())
+	if err != nil {
+		t.Fatalf("post-write timeout must become an inquiry-required pending result: %v", err)
+	}
+	if res.Status != infrastructure.TransferStatusPending || res.RequestID != "FT-001" {
+		t.Fatalf("result = %+v, want pending FT-001", res)
+	}
+}
+
 func TestProvider_InitiateTransfer_ValidationErrors(t *testing.T) {
 	c, _ := NewClient(Config{
 		PartnerID: testPartnerID, PartnerKey: testPartnerKey, AccountID: testAccountID,
@@ -180,7 +244,7 @@ func TestProvider_InitiateTransfer_ValidationErrors(t *testing.T) {
 	}
 }
 
-func TestProvider_InitiateTransfer_DuplicateTxnIsFailedNotError(t *testing.T) {
+func TestProvider_InitiateTransfer_DuplicateTxnRemainsPendingForInquiry(t *testing.T) {
 	fixedTime := mustParseDate(t, "20260108T112907Z")
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -202,8 +266,8 @@ func TestProvider_InitiateTransfer_DuplicateTxnIsFailedNotError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("should not bubble error for duplicate: %v", err)
 	}
-	if res.Status != infrastructure.TransferStatusFailed {
-		t.Errorf("Status = %q, want failed", res.Status)
+	if res.Status != infrastructure.TransferStatusPending {
+		t.Errorf("Status = %q, want pending", res.Status)
 	}
 	if res.RawErrorCode != "07" {
 		t.Errorf("RawErrorCode = %q, want 07", res.RawErrorCode)
@@ -398,6 +462,28 @@ func TestProvider_CheckStatus_Failed(t *testing.T) {
 	}
 	if res.Status != infrastructure.TransferStatusFailed {
 		t.Errorf("Status = %q, want failed", res.Status)
+	}
+}
+
+func TestProvider_CheckStatus_NotFoundReturnsPortableSentinel(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{
+			"response_code":"38",
+			"name":"TXN_NOT_FOUND",
+			"message":"Transaction not found",
+			"state":"failed"
+		}`))
+	}))
+	defer srv.Close()
+
+	p := NewProvider(testClient(t, srv.URL, fixedTime), nil)
+	_, err := p.CheckStatus(context.Background(), "FT-MISSING")
+	if !errors.Is(err, infrastructure.ErrTransferNotFound) {
+		t.Fatalf("CheckStatus error = %v, want ErrTransferNotFound", err)
 	}
 }
 

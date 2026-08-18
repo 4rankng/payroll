@@ -239,6 +239,13 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	// Wallet settlement worker — only when employee disbursement is enabled
 	var walletSettlementWorker *workers.WalletSettlementWorker
 	var statusInquiryPollerWorker *workers.StatusInquiryPollerWorker
+	bulkBatchFinalizer := workers.NewBulkBatchFinalizer(
+		repos.BulkTransferBatch,
+		repos.TxWalletPayment,
+		asynqClient,
+		walletBulkSvc,
+		infra.Logger,
+	)
 	// wallet_bulk row worker. The service itself is constructed earlier
 	// (above initHandlers) so the HTTP handler can capture it.
 	var walletBulkRowWorker *workers.WalletBulkTransferRowWorker
@@ -257,7 +264,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.DisbursementRegistry,
 			services.BulkTransferPayment,
 			infra.Logger,
-		)
+		).WithBulkBatchFinalizer(bulkBatchFinalizer).
+			WithBankRepository(repos.Bank)
 		walletBulkRowWorker = workers.NewWalletBulkTransferRowWorker(
 			services.ProviderTransactions,
 			services.Wallet, // Step-0 balance guard (C6 fix); nil-safe inside worker
@@ -293,13 +301,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		),
 		workers.NewFlexPaySalaryNotificationWorker(services.FlexPaySalaryDelivery),
 		workers.NewIPNProcessWorker(services.ProviderTransactions, repos.WalletIPN, services.BulkTransferPayment, infra.Logger).
-			WithBulkBatchFinalizer(workers.NewBulkBatchFinalizer(
-				repos.BulkTransferBatch,
-				repos.TxWalletPayment,
-				asynqClient,
-				walletBulkSvc,
-				infra.Logger,
-			)),
+			WithBulkBatchFinalizer(bulkBatchFinalizer),
 		disbursementPollerWorker,
 		disbursementExecuteWorker,
 		ninePayBulkExecuteWorker,

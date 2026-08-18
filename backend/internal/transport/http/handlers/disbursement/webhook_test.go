@@ -1,15 +1,39 @@
 package disbursement
 
 import (
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	disbursementservice "api-server/internal/app/services/disbursement"
+	"api-server/internal/domain/ports/infrastructure"
+	"api-server/internal/infra/persistence"
+
+	"github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
 )
+
+type onepayAckTestProvider struct{}
+
+func (onepayAckTestProvider) Name() string { return "1pay" }
+
+func (onepayAckTestProvider) InitiateTransfer(context.Context, infrastructure.TransferRequest) (*infrastructure.TransferResult, error) {
+	return nil, nil
+}
+
+func (onepayAckTestProvider) VerifyAndParseWebhook(context.Context, map[string]any) (*infrastructure.WebhookEvent, error) {
+	return &infrastructure.WebhookEvent{
+		RequestID:   "FT-ACK-001",
+		ProviderRef: "OP-ACK-001",
+		Status:      infrastructure.TransferStatusSuccess,
+		Amount:      200_000,
+	}, nil
+}
 
 // TestDecodeWebhookPayload_PreservesPlusInFormBody locks in the fix for
 // the base64-corruption bug observed in production on 2026-05-07.
@@ -99,5 +123,69 @@ func TestParseFormPreservingPlus_HandlesEdgeCases(t *testing.T) {
 				t.Errorf("%s: got %v, want %q", c.key, got, c.want)
 			}
 		})
+	}
+}
+
+func TestWriteWebhookAcknowledgement_OnePayExactContract(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+
+	writeWebhookAcknowledgement(c, "1pay")
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", recorder.Code)
+	}
+	var got map[string]string
+	if err := json.Unmarshal(recorder.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode acknowledgement: %v", err)
+	}
+	want := map[string]string{"error_code": "0", "message": "Success"}
+	if got["error_code"] != want["error_code"] || got["message"] != want["message"] || len(got) != len(want) {
+		t.Fatalf("acknowledgement = %v, want %v", got, want)
+	}
+}
+
+func TestWebhookReceive_ValidDuplicateOnePayIPNReturnsSuccessAck(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mini := miniredis.RunT(t)
+	redisClient, err := persistence.NewRedisClient(persistence.RedisConfig{Addr: mini.Addr()})
+	if err != nil {
+		t.Fatalf("NewRedisClient: %v", err)
+	}
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			t.Errorf("close Redis client: %v", err)
+		}
+	}()
+
+	handler := NewWebhookHandler(
+		disbursementservice.NewRegistry(onepayAckTestProvider{}),
+		nil,
+		nil,
+		nil,
+		redisClient,
+		nil,
+		nil,
+	)
+
+	for attempt := 1; attempt <= 2; attempt++ {
+		recorder := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(recorder)
+		c.Request = httptest.NewRequest(http.MethodPut, "/api/v1/webhooks/disbursement/1pay", strings.NewReader(`{}`))
+		c.Request.Header.Set("Content-Type", "application/json")
+
+		handler.ReceiveFrom("1pay")(c)
+
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("attempt %d status = %d, want 200; body=%s", attempt, recorder.Code, recorder.Body.String())
+		}
+		var got map[string]string
+		if err := json.Unmarshal(recorder.Body.Bytes(), &got); err != nil {
+			t.Fatalf("attempt %d decode acknowledgement: %v", attempt, err)
+		}
+		if got["error_code"] != "0" || got["message"] != "Success" || len(got) != 2 {
+			t.Fatalf("attempt %d acknowledgement = %v", attempt, got)
+		}
 	}
 }

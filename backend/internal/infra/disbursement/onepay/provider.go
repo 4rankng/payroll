@@ -82,12 +82,28 @@ func (p *Provider) InitiateTransfer(ctx context.Context, req infrastructure.Tran
 	if err != nil {
 		var apiErr *APIError
 		if errors.As(err, &apiErr) {
+			if apiErr.StatusCode == 504 || apiErr.ResponseCode == "01" || apiErr.ResponseCode == ErrorCodeDuplicateTransactionID {
+				return &infrastructure.TransferResult{
+					RequestID:    req.RequestID,
+					Status:       infrastructure.TransferStatusPending,
+					RawErrorCode: apiErr.ResponseCode,
+					RawMessage:   apiErr.Message,
+				}, nil
+			}
 			return &infrastructure.TransferResult{
 				RequestID:     req.RequestID,
 				Status:        infrastructure.TransferStatusFailed,
 				FailureReason: apiErr.Message,
 				RawErrorCode:  apiErr.ResponseCode,
 				RawMessage:    apiErr.Message,
+			}, nil
+		}
+		if errors.Is(err, ErrTransferOutcomeUnknown) {
+			return &infrastructure.TransferResult{
+				RequestID:    req.RequestID,
+				Status:       infrastructure.TransferStatusPending,
+				RawErrorCode: "outcome_unknown",
+				RawMessage:   err.Error(),
 			}, nil
 		}
 		return nil, err
@@ -223,6 +239,10 @@ func (p *Provider) TranslateError(code string) string { return MessageVI(code) }
 func (p *Provider) CheckStatus(ctx context.Context, requestID string) (*infrastructure.TransferResult, error) {
 	resp, err := p.client.InquiryFundsTransfer(ctx, requestID)
 	if err != nil {
+		var apiErr *APIError
+		if errors.As(err, &apiErr) && (apiErr.ResponseCode == "38" || apiErr.ResponseCode == "39") {
+			return nil, fmt.Errorf("%w: request_id=%s", infrastructure.ErrTransferNotFound, requestID)
+		}
 		return nil, err
 	}
 	return &infrastructure.TransferResult{

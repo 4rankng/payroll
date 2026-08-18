@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/domain/wallet"
 	asynqinfra "api-server/internal/infra/asynq"
+	onepayinfra "api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/transport/http/response"
 
@@ -160,7 +162,7 @@ func (h *WebhookHandler) Receive(c *gin.Context) {
 			"provider", providerName,
 			"request_id", event.RequestID,
 			"provider_ref", event.ProviderRef)
-		response.Conflict(c, "duplicate IPN within replay window")
+		writeWebhookAcknowledgement(c, providerName)
 		return
 	}
 
@@ -208,11 +210,19 @@ func (h *WebhookHandler) Receive(c *gin.Context) {
 				"error", err)
 			h.applyIPNSync(c, providerName, event)
 		}
-		response.Success(c, gin.H{"received": true}, "webhook accepted")
+		writeWebhookAcknowledgement(c, providerName)
 		return
 	}
 
 	h.applyIPNSync(c, providerName, event)
+	writeWebhookAcknowledgement(c, providerName)
+}
+
+func writeWebhookAcknowledgement(c *gin.Context, providerName string) {
+	if providerName == "1pay" {
+		c.JSON(http.StatusOK, onepayinfra.IPNAck{ErrorCode: "0", Message: "Success"})
+		return
+	}
 	response.Success(c, gin.H{"received": true}, "webhook accepted")
 }
 

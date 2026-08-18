@@ -9,9 +9,11 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"api-server/internal/pkg/clock"
@@ -25,6 +27,27 @@ const (
 	pathFundsTransfer = "/onepayout/api/v1/accounts/%s/funds_transfers/%s"
 	pathBalance       = "/onepayout/api/v1/accounts/%s"
 )
+
+// ErrTransferOutcomeUnknown marks a transfer request that was written to
+// OnePay but whose response could not be observed. Callers must query the
+// original funds_transfer_id instead of treating it as failed or issuing a
+// new transfer immediately.
+var ErrTransferOutcomeUnknown = errors.New("onepay: transfer outcome unknown; status inquiry required")
+
+type requestTransportError struct {
+	err            error
+	requestWritten bool
+}
+
+func (e *requestTransportError) Error() string { return fmt.Sprintf("onepay: http: %v", e.err) }
+func (e *requestTransportError) Unwrap() error { return e.err }
+
+type responseDecodeError struct{ err error }
+
+func (e *responseDecodeError) Error() string {
+	return fmt.Sprintf("onepay: decode response: %v", e.err)
+}
+func (e *responseDecodeError) Unwrap() error { return e.err }
 
 // Named error codes that callers want to special-case.
 const (
@@ -102,6 +125,11 @@ func (c *Client) CreateFundsTransfer(ctx context.Context, req FundsTransferReque
 	path := fmt.Sprintf(pathFundsTransfer, c.cfg.AccountID, req.FundsTransferID)
 	var out FundsTransferResponse
 	if err := c.doSigned(ctx, http.MethodPut, path, nil, req, &out); err != nil {
+		var transportErr *requestTransportError
+		var decodeErr *responseDecodeError
+		if (errors.As(err, &transportErr) && transportErr.requestWritten) || errors.As(err, &decodeErr) {
+			return nil, fmt.Errorf("%w: %w", ErrTransferOutcomeUnknown, err)
+		}
 		return nil, err
 	}
 	return &out, nil
@@ -199,13 +227,26 @@ func (c *Client) doSigned(
 		"method", method,
 	)
 
+	var requestWritten atomic.Bool
+	trace := &httptrace.ClientTrace{
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			if info.Err == nil {
+				requestWritten.Store(true)
+			}
+		},
+	}
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("onepay: http: %w", err)
+		return &requestTransportError{err: err, requestWritten: requestWritten.Load()}
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	respBody, readErr := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if readErr != nil {
+		return &responseDecodeError{err: readErr}
+	}
 	c.logger.Info("onepay response",
 		"method", method,
 		"status", resp.StatusCode,
@@ -214,7 +255,10 @@ func (c *Client) doSigned(
 		if out == nil {
 			return nil
 		}
-		return json.Unmarshal(respBody, out)
+		if err := json.Unmarshal(respBody, out); err != nil {
+			return &responseDecodeError{err: err}
+		}
+		return nil
 	}
 
 	// Non-200: try to parse as error envelope
@@ -228,6 +272,9 @@ func (c *Client) doSigned(
 			MessageVI:    errResp.MessageVI,
 			State:        errResp.State,
 		}
+	}
+	if resp.StatusCode == http.StatusGatewayTimeout {
+		return &APIError{StatusCode: resp.StatusCode, State: "pending"}
 	}
 	return fmt.Errorf("onepay: unexpected non-JSON response (http %d)", resp.StatusCode)
 }

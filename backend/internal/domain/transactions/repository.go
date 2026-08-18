@@ -40,12 +40,13 @@ type WalletPaymentRepository interface {
 	// reconciliation (e.g. OnePay) to poll individual transfer status.
 	ListByProviderAndCreatedRange(ctx context.Context, provider string, from, to time.Time) ([]*WalletPayment, error)
 
-	// ListStaleAuthorised returns authorised payments older than cutoff for a
-	// given provider, ordered oldest-first. Used by the status inquiry poller
-	// to resolve stuck payments when IPN has not arrived.
+	// ListStaleAuthorised returns verified or authorised payments older than
+	// cutoff for a given provider, ordered oldest-first. Verified rows represent
+	// requests whose transfer response was lost before the accepted state could
+	// be persisted; authorised rows are waiting for a terminal IPN.
 	ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*WalletPayment, error)
 
-	// HasPendingForRecipient checks whether a non-terminal (pending or authorised)
+	// HasPendingForRecipient checks whether a non-terminal (pending, verified, or authorised)
 	// wallet payment already exists for the given recipient + provider.
 	// Used to prevent double disbursement when both auto-poller and manual
 	// admin flows target the same employee simultaneously.
@@ -93,6 +94,7 @@ type WalletPaymentRepository interface {
 type UpdatePatch struct {
 	Status           *State
 	InvoiceNo        *string
+	RecipientName    *string
 	ErrorCode        *string
 	ErrorMessage     *string
 	Description      *string

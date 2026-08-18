@@ -32,27 +32,60 @@ const (
 // The worker reuses WalletPaymentService.RecordIPN to drive the same FSM
 // transitions as real IPN callbacks — idempotent by design.
 type StatusInquiryPollerWorker struct {
-	walletPaymentRepo    domaintx.WalletPaymentRepository
-	walletPaymentService *disbursement.WalletPaymentService
+	walletPaymentRepo    statusInquiryPaymentRepository
+	finalizationRepo     bulkFinalizationCandidateRepository
+	walletPaymentService statusInquiryPaymentService
 	registry             *disbursement.Registry
 	timesheetUpdater     TransferTimesheetUpdater
+	batchFinalizer       BulkBatchFinalizer
+	bankRepo             bankCodeResolver
 	logger               *slog.Logger
 }
 
+// WithBulkBatchFinalizer wires the same idempotent bulk-batch finalizer used
+// by the IPN worker. Status inquiry is a substitute resolution source when an
+// IPN is lost, so it must complete the same downstream batch workflow.
+func (w *StatusInquiryPollerWorker) WithBulkBatchFinalizer(f BulkBatchFinalizer) *StatusInquiryPollerWorker {
+	w.batchFinalizer = f
+	return w
+}
+
+// WithBankRepository enables safe automatic re-send after OnePay explicitly
+// confirms a verified transfer ID does not exist.
+func (w *StatusInquiryPollerWorker) WithBankRepository(repo bankCodeResolver) *StatusInquiryPollerWorker {
+	w.bankRepo = repo
+	return w
+}
+
+type statusInquiryPaymentRepository interface {
+	ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error)
+}
+
+type bulkFinalizationCandidateRepository interface {
+	ListStaleBulkFinalizationCandidates(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error)
+}
+
+type statusInquiryPaymentService interface {
+	syncResponseRecorder
+	RecordIPN(ctx context.Context, result disbursement.IPNResult) (*domaintx.WalletPayment, error)
+}
+
 func NewStatusInquiryPollerWorker(
-	walletPaymentRepo domaintx.WalletPaymentRepository,
-	walletPaymentService *disbursement.WalletPaymentService,
+	walletPaymentRepo statusInquiryPaymentRepository,
+	walletPaymentService statusInquiryPaymentService,
 	registry *disbursement.Registry,
 	timesheetUpdater TransferTimesheetUpdater,
 	logger *slog.Logger,
 ) *StatusInquiryPollerWorker {
-	return &StatusInquiryPollerWorker{
+	worker := &StatusInquiryPollerWorker{
 		walletPaymentRepo:    walletPaymentRepo,
 		walletPaymentService: walletPaymentService,
 		registry:             registry,
 		timesheetUpdater:     timesheetUpdater,
 		logger:               logger,
 	}
+	worker.finalizationRepo, _ = walletPaymentRepo.(bulkFinalizationCandidateRepository)
+	return worker
 }
 
 // ProcessJob queries stale authorised payments and polls each via the
@@ -79,14 +112,12 @@ func (w *StatusInquiryPollerWorker) ProcessJob(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("status inquiry: query stale authorised: %w", err)
 	}
-	if len(payments) == 0 {
-		return nil
+	if len(payments) > 0 {
+		w.logger.Info("status inquiry: polling stale authorised payments",
+			"provider", providerName,
+			"count", len(payments),
+			"cutoff", cutoff.Format("2006-01-02 15:04:05"))
 	}
-
-	w.logger.Info("status inquiry: polling stale authorised payments",
-		"provider", providerName,
-		"count", len(payments),
-		"cutoff", cutoff.Format("2006-01-02 15:04:05"))
 
 	// Step 4: Poll payments concurrently with bounded parallelism
 	g := new(errgroup.Group)
@@ -96,12 +127,30 @@ func (w *StatusInquiryPollerWorker) ProcessJob(ctx context.Context) error {
 
 	for _, p := range payments {
 		g.Go(func() error {
-			w.processPayment(ctx, poller, providerName, p, &resolved, &skipped, &errorCount)
+			w.processPayment(ctx, provider, poller, providerName, p, &resolved, &skipped, &errorCount)
 			return nil // never propagate error — one failure must not cancel the batch
 		})
 	}
 
 	_ = g.Wait() // always nil since closures return nil
+
+	// A payment transition and its bulk-batch finalization are separate DB
+	// operations. If finalization failed after the payment committed terminal,
+	// retry it from a durable query source on subsequent poller runs.
+	if w.batchFinalizer != nil && w.finalizationRepo != nil {
+		candidates, listErr := w.finalizationRepo.ListStaleBulkFinalizationCandidates(ctx, providerName, cutoff, statusInquiryBatchSize)
+		if listErr != nil {
+			return fmt.Errorf("status inquiry: list bulk finalization candidates: %w", listErr)
+		}
+		for _, candidate := range candidates {
+			if finalizeErr := w.batchFinalizer.FinalizeBulkBatchForIPN(ctx, candidate); finalizeErr != nil {
+				w.logger.Warn("status inquiry: retry bulk batch finalize failed",
+					"request_id", candidate.RequestID,
+					"error", finalizeErr)
+				errorCount.Add(1)
+			}
+		}
+	}
 
 	r := resolved.Load()
 	s := skipped.Load()
@@ -120,12 +169,29 @@ func (w *StatusInquiryPollerWorker) ProcessJob(ctx context.Context) error {
 // operations for safe concurrent use.
 func (w *StatusInquiryPollerWorker) processPayment(
 	ctx context.Context,
+	provider infrastructure.DisbursementProvider,
 	poller infrastructure.StatusPoller,
 	providerName string,
 	p *domaintx.WalletPayment,
 	resolved, skipped, errorCount *atomic.Int64,
 ) {
-	result, err := poller.CheckStatus(ctx, p.RequestID)
+	var result *infrastructure.TransferResult
+	var err error
+	if p.Status == domaintx.StateVerified {
+		var notFound bool
+		result, notFound, err = recoverVerifiedTransfer(ctx, provider, w.walletPaymentService, p)
+		if notFound {
+			var retriedRow *domaintx.WalletPayment
+			result, retriedRow, err = retryVerifiedTransfer(ctx, provider, w.walletPaymentService, w.bankRepo, p)
+			if err == nil && retriedRow != nil && retriedRow.IsTerminal() {
+				w.applyTerminalSideEffects(ctx, retriedRow, errorCount)
+				resolved.Add(1)
+				return
+			}
+		}
+	} else {
+		result, err = poller.CheckStatus(ctx, p.RequestID)
+	}
 	if err != nil {
 		w.logger.Warn("status inquiry: check failed",
 			"request_id", p.RequestID,
@@ -169,15 +235,7 @@ func (w *StatusInquiryPollerWorker) processPayment(
 		return
 	}
 
-	// Update timesheet payment status (mirrors IPNProcessWorker post-RecordIPN logic)
-	if w.timesheetUpdater != nil && row != nil && row.IsTerminal() {
-		completed := row.Status == domaintx.StateCompleted
-		if updateErr := w.timesheetUpdater.UpdateForTransfer(ctx, row.RequestID, completed, row.GetInvoiceNo()); updateErr != nil {
-			w.logger.Warn("status inquiry: per-transfer timesheet update failed (non-fatal)",
-				"request_id", row.RequestID,
-				"error", updateErr)
-		}
-	}
+	w.applyTerminalSideEffects(ctx, row, errorCount)
 
 	w.logger.Info("status inquiry: resolved",
 		"request_id", p.RequestID,
@@ -185,4 +243,27 @@ func (w *StatusInquiryPollerWorker) processPayment(
 		"status", string(result.Status),
 		"provider_ref", result.ProviderRef)
 	resolved.Add(1)
+}
+
+func (w *StatusInquiryPollerWorker) applyTerminalSideEffects(ctx context.Context, row *domaintx.WalletPayment, errorCount *atomic.Int64) {
+	if row == nil || !row.IsTerminal() {
+		return
+	}
+	if w.timesheetUpdater != nil {
+		completed := row.Status == domaintx.StateCompleted
+		if updateErr := w.timesheetUpdater.UpdateForTransfer(ctx, row.RequestID, completed, row.GetInvoiceNo()); updateErr != nil {
+			w.logger.Warn("status inquiry: per-transfer timesheet update failed (non-fatal)",
+				"request_id", row.RequestID,
+				"error", updateErr)
+		}
+	}
+	if row.BulkTransferBatchID != nil && w.batchFinalizer != nil {
+		if finalizeErr := w.batchFinalizer.FinalizeBulkBatchForIPN(ctx, row); finalizeErr != nil {
+			w.logger.Warn("status inquiry: bulk batch finalize failed; durable poller retry will re-attempt",
+				"request_id", row.RequestID,
+				"batch_id", *row.BulkTransferBatchID,
+				"error", finalizeErr)
+			errorCount.Add(1)
+		}
+	}
 }

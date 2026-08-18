@@ -78,6 +78,11 @@ func newTestRepo(t *testing.T) (*TxWalletPaymentRepository, *gorm.DB) {
 		reconciled_at DATETIME,
 		resolution_source TEXT
 	)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE bulk_transfer_batches (
+		id INTEGER PRIMARY KEY,
+		status TEXT NOT NULL,
+		total_count INTEGER NOT NULL
+	)`).Error)
 
 	// Build the repository by hand — the public constructor takes
 	// our internal *Database wrapper, which we don't have here.
@@ -404,4 +409,103 @@ func TestRepository_HasNonTerminalByEntityID(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, got, "%s row for this entity should be in-flight", st)
 	}
+}
+
+func TestRepository_ListStaleAuthorisedIncludesVerifiedInquiryCandidates(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+	cutoff := time.Now().Add(-5 * time.Minute)
+
+	for _, status := range []domaintx.State{domaintx.StateVerified, domaintx.StateAuthorised} {
+		row := newRow(t)
+		row.Provider = "1pay"
+		row.Status = status
+		row.CreatedAt = cutoff.Add(-time.Minute)
+		row.UpdatedAt = cutoff.Add(-time.Minute)
+		require.NoError(t, repo.Create(ctx, row))
+	}
+
+	rows, err := repo.ListStaleAuthorised(ctx, "1pay", cutoff, 10)
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
+	require.ElementsMatch(t,
+		[]domaintx.State{domaintx.StateVerified, domaintx.StateAuthorised},
+		[]domaintx.State{rows[0].Status, rows[1].Status},
+	)
+}
+
+func TestRepository_HasPendingForRecipientIncludesVerified(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+
+	row := newRow(t)
+	row.Provider = "1pay"
+	row.Status = domaintx.StateVerified
+	require.NoError(t, repo.Create(ctx, row))
+
+	hasPending, err := repo.HasPendingForRecipient(ctx, row.RecipientAccountNo, row.RecipientBank, row.Provider)
+	require.NoError(t, err)
+	require.True(t, hasPending, "verified transfer must block a second transfer to the same recipient")
+}
+
+func TestRepository_ListStaleBulkFinalizationCandidates(t *testing.T) {
+	t.Parallel()
+	repo, db := newTestRepo(t)
+	ctx := context.Background()
+	cutoff := time.Now().Add(-5 * time.Minute)
+	batchID := uint64(91)
+
+	require.NoError(t, db.Exec("INSERT INTO bulk_transfer_batches (id, status, total_count) VALUES (?, ?, ?)", batchID, "processing", 1).Error)
+	row := newRow(t)
+	row.Provider = "1pay"
+	row.Status = domaintx.StateCompleted
+	row.BulkTransferBatchID = &batchID
+	row.CreatedAt = cutoff.Add(-time.Minute)
+	row.UpdatedAt = cutoff.Add(-time.Minute)
+	require.NoError(t, repo.Create(ctx, row))
+
+	rows, err := repo.ListStaleBulkFinalizationCandidates(ctx, "1pay", cutoff, 10)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Equal(t, row.RequestID, rows[0].RequestID)
+
+	require.NoError(t, db.Exec("UPDATE bulk_transfer_batches SET status = 'completing' WHERE id = ?", batchID).Error)
+	rows, err = repo.ListStaleBulkFinalizationCandidates(ctx, "1pay", cutoff, 10)
+	require.NoError(t, err)
+	require.Empty(t, rows, "completing recovery owns the batch after the status flip")
+}
+
+func TestRepository_BulkFinalizationCandidatesSkipIncompleteBatchesBeforeLimit(t *testing.T) {
+	t.Parallel()
+	repo, db := newTestRepo(t)
+	ctx := context.Background()
+	cutoff := time.Now().Add(-5 * time.Minute)
+
+	require.NoError(t, db.Exec("INSERT INTO bulk_transfer_batches (id, status, total_count) VALUES (101, 'processing', 3), (102, 'processing', 1)").Error)
+	for index := 0; index < 2; index++ {
+		row := newRow(t)
+		batchID := uint64(101)
+		row.Provider = "1pay"
+		row.Status = domaintx.StateCompleted
+		row.BulkTransferBatchID = &batchID
+		row.CreatedAt = cutoff.Add(-time.Duration(3-index) * time.Minute)
+		row.UpdatedAt = row.CreatedAt
+		require.NoError(t, repo.Create(ctx, row))
+	}
+	completeRow := newRow(t)
+	completeBatchID := uint64(102)
+	completeRow.Provider = "1pay"
+	completeRow.Status = domaintx.StateCompleted
+	completeRow.BulkTransferBatchID = &completeBatchID
+	completeRow.CreatedAt = cutoff.Add(-time.Minute)
+	completeRow.UpdatedAt = completeRow.CreatedAt
+	require.NoError(t, repo.Create(ctx, completeRow))
+
+	rows, err := repo.ListStaleBulkFinalizationCandidates(ctx, "1pay", cutoff, 1)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Equal(t, completeBatchID, *rows[0].BulkTransferBatchID,
+		"an older incomplete batch must not starve a fully terminal batch")
 }

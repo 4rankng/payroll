@@ -171,13 +171,6 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 		return fmt.Errorf("initiate: %w", err)
 	}
 
-	// === CANONICAL STATE GUARD (mirror disbursement_execute_worker.go:127-131) ===
-	if row.Status != domaintx.StatePending {
-		logger.Info("wallet_bulk_row: skipping — already processed", "status", row.Status)
-		w.ensureBulkBatchLink(ctx, row.ID, p.BatchID, p.Row)
-		return w.markRowTerminal(ctx, p.BatchID)
-	}
-
 	w.ensureBulkBatchLink(ctx, row.ID, p.BatchID, p.Row)
 
 	// === Step 2: Get active provider ===
@@ -186,37 +179,66 @@ func (w *WalletBulkTransferRowWorker) ProcessJob(ctx context.Context, t *asynqli
 		return fmt.Errorf("no active provider: %w", err)
 	}
 
+	// A retry may resume from verified after a lost transfer response or a
+	// failed DB update. Query first and only re-send when OnePay explicitly says
+	// the original funds_transfer_id does not exist.
+	switch row.Status {
+	case domaintx.StatePending:
+		// Normal first attempt.
+	case domaintx.StateVerified:
+		recovered, notFound, recoverErr := recoverVerifiedTransfer(ctx, provider, w.walletPaymentSvc, row)
+		if recoverErr != nil {
+			return fmt.Errorf("recover verified transfer: %w", recoverErr)
+		}
+		if !notFound {
+			logger.Info("wallet_bulk_row: recovered existing provider transfer",
+				"provider_ref", recovered.ProviderRef,
+				"status", recovered.Status)
+			return nil
+		}
+		logger.Info("wallet_bulk_row: provider confirmed transfer not found; retrying same request_id")
+	default:
+		logger.Info("wallet_bulk_row: skipping — already processed", "status", row.Status)
+		return w.markRowTerminal(ctx, p.BatchID)
+	}
+
 	// === Step 3: Verify beneficiary account when supported ===
 	transferAccountName := p.Row.AccountName
-	if verifier, ok := provider.(infrastructure.AccountVerifier); ok {
-		check, err := verifier.CheckAccount(ctx, infrastructure.AccountCheckRequest{
-			RequestID:   p.Row.VFICCode,
-			BankCode:    p.Row.SwiftCode,
-			SwiftCode:   p.Row.SwiftCode,
-			AccountNo:   p.Row.AccountNo,
-			AccountName: p.Row.AccountName,
-			Amount:      p.Row.Amount,
-			AccountType: infrastructure.AccountTypeBankAccount,
-		})
-		if err != nil {
-			return fmt.Errorf("check account: %w", err)
-		}
-		if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{
-			Verified: check.Valid, RawErrorCode: check.RawErrorCode,
-			RawMessage: check.RawMessage, FeeWaived: !check.Valid,
-		}); err != nil {
+	if row.Status == domaintx.StateVerified {
+		transferAccountName = row.RecipientName
+	}
+	if row.Status == domaintx.StatePending {
+		verifier, ok := provider.(infrastructure.AccountVerifier)
+		if ok {
+			check, err := verifier.CheckAccount(ctx, infrastructure.AccountCheckRequest{
+				RequestID:   p.Row.VFICCode,
+				BankCode:    p.Row.SwiftCode,
+				SwiftCode:   p.Row.SwiftCode,
+				AccountNo:   p.Row.AccountNo,
+				AccountName: p.Row.AccountName,
+				Amount:      p.Row.Amount,
+				AccountType: infrastructure.AccountTypeBankAccount,
+			})
+			if err != nil {
+				return fmt.Errorf("check account: %w", err)
+			}
+			if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{
+				Verified: check.Valid, AccountName: check.AccountName, RawErrorCode: check.RawErrorCode,
+				RawMessage: check.RawMessage, FeeWaived: !check.Valid,
+			}); err != nil {
+				return fmt.Errorf("record account check: %w", err)
+			}
+			if !check.Valid {
+				logger.Info("wallet_bulk_row: account check rejected",
+					"error_code", check.RawErrorCode, "message", check.RawMessage)
+				return w.markRowTerminal(ctx, p.BatchID)
+			}
+			if check.AccountName != "" {
+				transferAccountName = check.AccountName
+			}
+		} else if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{Verified: true}); err != nil {
 			return fmt.Errorf("record account check: %w", err)
 		}
-		if !check.Valid {
-			logger.Info("wallet_bulk_row: account check rejected",
-				"error_code", check.RawErrorCode, "message", check.RawMessage)
-			return w.markRowTerminal(ctx, p.BatchID)
-		}
-		if check.AccountName != "" {
-			transferAccountName = check.AccountName
-		}
-	} else if _, err := w.walletPaymentSvc.RecordAccountCheck(ctx, p.Row.VFICCode, disbursement.AccountCheckOutcome{Verified: true}); err != nil {
-		return fmt.Errorf("record account check: %w", err)
 	}
 
 	// === Step 4: Initiate transfer via provider (rate-limited by QueuedProvider) ===

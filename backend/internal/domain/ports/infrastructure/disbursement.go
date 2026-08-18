@@ -18,6 +18,12 @@ import (
 // keeping SUM(fee) equal to the fees actually charged.
 var ErrPreflightValidation = errors.New("disbursement: pre-flight validation rejected before provider call")
 
+// ErrTransferNotFound is returned by a provider status inquiry when the
+// original idempotency key has not been recorded. Callers may only retry the
+// same logical transfer after receiving this explicit result; timeouts and
+// other ambiguous errors are not proof that no transfer exists.
+var ErrTransferNotFound = errors.New("disbursement: transfer not found by provider inquiry")
+
 // TransferStatus is the normalized lifecycle state of a disbursement,
 // independent of any specific provider's vocabulary.
 type TransferStatus string

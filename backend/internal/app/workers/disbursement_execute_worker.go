@@ -123,17 +123,34 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		return fmt.Errorf("initiate wallet_payment: %w", err)
 	}
 
-	// If the row is past pending, another worker already processed it
-	if row.Status != domaintx.StatePending {
-		logger.Info("disbursement execute: skipping — already processed",
-			"status", row.Status)
-		return nil
-	}
-
 	// Step 2: Get active provider
 	provider, err := w.registry.Active(ctx)
 	if err != nil {
 		return fmt.Errorf("no active provider: %w", err)
+	}
+
+	// A retry may find the row verified because the previous attempt completed
+	// account validation but lost the transfer response or failed to persist it.
+	// Query first; only an explicit provider not-found permits re-sending the
+	// same idempotency key.
+	switch row.Status {
+	case domaintx.StatePending:
+		// Normal first attempt; continue through account validation.
+	case domaintx.StateVerified:
+		recovered, notFound, recoverErr := recoverVerifiedTransfer(ctx, provider, w.walletPaymentService, row)
+		if recoverErr != nil {
+			return fmt.Errorf("recover verified transfer: %w", recoverErr)
+		}
+		if !notFound {
+			logger.Info("disbursement execute: recovered existing provider transfer",
+				"provider_ref", recovered.ProviderRef,
+				"status", recovered.Status)
+			return nil
+		}
+		logger.Info("disbursement execute: provider confirmed transfer not found; retrying same request_id")
+	default:
+		logger.Info("disbursement execute: skipping — already processed", "status", row.Status)
+		return nil
 	}
 
 	// transferAccountName is the holder name sent to the provider on the
@@ -143,45 +160,52 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 	// OnePay compares the transfer's holder_name against the registered name
 	// and rejects any divergence with response_code 15 "Invalid account info".
 	transferAccountName := p.RecipientName
+	if row.Status == domaintx.StateVerified {
+		transferAccountName = row.RecipientName
+	}
 
 	// Step 3: Check account (if supported)
-	if verifier, ok := provider.(infrastructure.AccountVerifier); ok {
-		swiftCode, err := w.resolveSwiftCode(ctx, p.RecipientBank)
-		if err != nil {
-			return fmt.Errorf("check account: %w", err)
-		}
-		checkResult, err := verifier.CheckAccount(ctx, infrastructure.AccountCheckRequest{
-			RequestID:   p.RequestID,
-			BankCode:    p.RecipientBank,
-			SwiftCode:   swiftCode,
-			AccountNo:   p.RecipientAccountNo,
-			AccountName: p.RecipientName,
-			AccountType: infrastructure.AccountTypeBankAccount,
-			Amount:      p.RequestedAmount,
-		})
-		if err != nil {
-			return fmt.Errorf("check account: %w", err)
-		}
+	if row.Status == domaintx.StatePending {
+		verifier, ok := provider.(infrastructure.AccountVerifier)
+		if ok {
+			swiftCode, err := w.resolveSwiftCode(ctx, p.RecipientBank)
+			if err != nil {
+				return fmt.Errorf("check account: %w", err)
+			}
+			checkResult, err := verifier.CheckAccount(ctx, infrastructure.AccountCheckRequest{
+				RequestID:   p.RequestID,
+				BankCode:    p.RecipientBank,
+				SwiftCode:   swiftCode,
+				AccountNo:   p.RecipientAccountNo,
+				AccountName: p.RecipientName,
+				AccountType: infrastructure.AccountTypeBankAccount,
+				Amount:      p.RequestedAmount,
+			})
+			if err != nil {
+				return fmt.Errorf("check account: %w", err)
+			}
 
-		_, err = w.walletPaymentService.RecordAccountCheck(ctx, p.RequestID, disbursement.AccountCheckOutcome{
-			Verified:     checkResult.Valid,
-			RawErrorCode: checkResult.RawErrorCode,
-			RawMessage:   checkResult.RawMessage,
-			FeeWaived:    !checkResult.Valid,
-		})
-		if err != nil {
-			return fmt.Errorf("record account check: %w", err)
-		}
+			_, err = w.walletPaymentService.RecordAccountCheck(ctx, p.RequestID, disbursement.AccountCheckOutcome{
+				Verified:     checkResult.Valid,
+				AccountName:  checkResult.AccountName,
+				RawErrorCode: checkResult.RawErrorCode,
+				RawMessage:   checkResult.RawMessage,
+				FeeWaived:    !checkResult.Valid,
+			})
+			if err != nil {
+				return fmt.Errorf("record account check: %w", err)
+			}
 
-		if !checkResult.Valid {
-			logger.Info("disbursement execute: account check failed",
-				"error_code", checkResult.RawErrorCode)
-			return nil // terminal — don't retry
-		}
+			if !checkResult.Valid {
+				logger.Info("disbursement execute: account check failed",
+					"error_code", checkResult.RawErrorCode)
+				return nil // terminal — don't retry
+			}
 
-		// Prefer the bank-confirmed holder name for the transfer.
-		if checkResult.AccountName != "" {
-			transferAccountName = checkResult.AccountName
+			// Prefer the bank-confirmed holder name for the transfer.
+			if checkResult.AccountName != "" {
+				transferAccountName = checkResult.AccountName
+			}
 		}
 	}
 

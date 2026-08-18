@@ -262,6 +262,7 @@ func isDuplicateRequestIDError(err error) bool {
 // refused the account.
 type AccountCheckOutcome struct {
 	Verified     bool
+	AccountName  string
 	RawErrorCode string
 	RawMessage   string
 	// FeeWaived is true when an account rejection prevents any transfer API
@@ -292,6 +293,9 @@ func (s *WalletPaymentService) RecordAccountCheck(ctx context.Context, requestID
 // actual outcome).
 func (s *WalletPaymentService) accountCheckPatch(o AccountCheckOutcome) domaintx.UpdatePatch {
 	patch := domaintx.UpdatePatch{}
+	if o.Verified && o.AccountName != "" {
+		patch.RecipientName = &o.AccountName
+	}
 	code := o.RawErrorCode
 	patch.ErrorCode = &code
 	msg := s.translateMessage(o.RawErrorCode, o.RawMessage)

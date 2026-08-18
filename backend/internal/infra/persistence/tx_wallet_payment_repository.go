@@ -136,6 +136,9 @@ func (r *TxWalletPaymentRepository) UpdateExpected(ctx context.Context, id uint6
 	if patch.InvoiceNo != nil {
 		updates["invoice_no"] = *patch.InvoiceNo
 	}
+	if patch.RecipientName != nil {
+		updates["recipient_name"] = *patch.RecipientName
+	}
 	if patch.ErrorCode != nil {
 		updates["error_code"] = *patch.ErrorCode
 	}
@@ -354,14 +357,14 @@ func (r *TxWalletPaymentRepository) ListByProviderAndCreatedRange(ctx context.Co
 	return rows, nil
 }
 
-// ListStaleAuthorised returns authorised payments older than cutoff for a
-// given provider, ordered oldest-first. Used by the status inquiry poller
-// to resolve stuck payments when IPN has not arrived.
+// ListStaleAuthorised returns verified or authorised payments older than
+// cutoff for a given provider, ordered oldest-first. The former covers a lost
+// synchronous response/DB update; the latter covers a missing terminal IPN.
 func (r *TxWalletPaymentRepository) ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error) {
 	var rows []*domaintx.WalletPayment
 	if err := r.DB.WithContext(ctx).
-		Where("provider = ? AND status = ? AND updated_at < ?",
-			provider, string(domaintx.StateAuthorised), cutoff).
+		Where("provider = ? AND status IN ? AND updated_at < ?",
+			provider, []domaintx.State{domaintx.StateVerified, domaintx.StateAuthorised}, cutoff).
 		Order("updated_at ASC").
 		Limit(limit).
 		Find(&rows).Error; err != nil {
@@ -370,11 +373,40 @@ func (r *TxWalletPaymentRepository) ListStaleAuthorised(ctx context.Context, pro
 	return rows, nil
 }
 
+// ListStaleBulkFinalizationCandidates returns terminal wallet payments whose
+// owning bulk batch is still processing. This is the durable retry source for
+// a finalization attempt that failed after the payment transition committed.
+func (r *TxWalletPaymentRepository) ListStaleBulkFinalizationCandidates(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error) {
+	terminalStatuses := []domaintx.State{domaintx.StateCompleted, domaintx.StateFailed, domaintx.StateReversed}
+	eligibleBatches := r.DB.WithContext(ctx).
+		Table("wallet_payments AS terminal_payments").
+		Select("MIN(terminal_payments.id) AS payment_id, MAX(terminal_payments.updated_at) AS latest_terminal_at").
+		Joins("JOIN bulk_transfer_batches AS candidate_batches ON candidate_batches.id = terminal_payments.bulk_transfer_batch_id").
+		Where("terminal_payments.provider = ? AND terminal_payments.status IN ? AND candidate_batches.status = ?",
+			provider, terminalStatuses, domain.BulkTransferBatchStatusProcessing).
+		Group("terminal_payments.bulk_transfer_batch_id, candidate_batches.total_count").
+		Having("COUNT(*) >= candidate_batches.total_count AND MAX(terminal_payments.updated_at) < ?", cutoff).
+		Order("latest_terminal_at ASC").
+		Limit(limit)
+
+	var rows []*domaintx.WalletPayment
+	err := r.DB.WithContext(ctx).
+		Table("wallet_payments").
+		Select("wallet_payments.*").
+		Joins("JOIN (?) AS eligible_batches ON eligible_batches.payment_id = wallet_payments.id", eligibleBatches).
+		Order("eligible_batches.latest_terminal_at ASC").
+		Find(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("wallet_payments: list stale bulk finalization candidates: %w", err)
+	}
+	return rows, nil
+}
+
 func (r *TxWalletPaymentRepository) HasPendingForRecipient(ctx context.Context, accountNo, bank, provider string) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).Model(&domaintx.WalletPayment{}).
 		Where("recipient_account_no = ? AND recipient_bank = ? AND provider = ? AND status IN ?",
-			accountNo, bank, provider, []domaintx.State{domaintx.StatePending, domaintx.StateAuthorised}).
+			accountNo, bank, provider, []domaintx.State{domaintx.StatePending, domaintx.StateVerified, domaintx.StateAuthorised}).
 		Limit(1).
 		Count(&count).Error
 	if err != nil {

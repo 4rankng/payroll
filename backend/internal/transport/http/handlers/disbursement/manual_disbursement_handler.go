@@ -492,6 +492,7 @@ func (h *ManualDisbursementHandler) Initiate(c *gin.Context) {
 
 	if _, recordErr := h.providerTxs.RecordAccountCheck(c.Request.Context(), requestID, disbursement.AccountCheckOutcome{
 		Verified:     checkResult.Valid,
+		AccountName:  checkResult.AccountName,
 		RawErrorCode: checkResult.RawErrorCode,
 		RawMessage:   checkResult.RawMessage,
 	}); recordErr != nil {
@@ -512,13 +513,17 @@ func (h *ManualDisbursementHandler) Initiate(c *gin.Context) {
 		return
 	}
 
+	transferAccountName := body.AccountName
+	if checkResult.AccountName != "" {
+		transferAccountName = checkResult.AccountName
+	}
 	h.logProvider("onepay: transfer request",
 		"request_id", requestID,
 		"amount", body.Amount,
 		"bank_code", body.BankCode,
 		"swift_code", swiftCode,
 		"account_no", body.AccountNo,
-		"account_name", body.AccountName,
+		"account_name", transferAccountName,
 		"description", body.Description)
 
 	result, err := provider.InitiateTransfer(c.Request.Context(), infrastructure.TransferRequest{
@@ -528,7 +533,7 @@ func (h *ManualDisbursementHandler) Initiate(c *gin.Context) {
 		BankCode:    body.BankCode,
 		SwiftCode:   swiftCode,
 		AccountNo:   body.AccountNo,
-		AccountName: body.AccountName,
+		AccountName: transferAccountName,
 		AccountType: body.AccountType,
 	})
 	if err != nil {
