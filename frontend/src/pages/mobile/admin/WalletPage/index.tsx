@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, RefreshCw, Wallet as WalletIcon, Loader2, TrendingDown, Upload } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, SearchCheck, Wallet as WalletIcon, Loader2, TrendingDown, Upload } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import WalletTransactionsList from '@/components/wallet/WalletTransactionsList';
 import CreateManualDisbursementDialog from '@/components/wallet/CreateManualDisbursementDialog';
+import { EmployeeAccountLookupDialog } from '@/components/wallet/EmployeeAccountLookupDialog';
 import { BulkTransferBatchList } from '@/components/wallet/BulkTransferBatchList';
 import { BulkTransferUploadDialog } from '@/components/wallet/BulkTransferUploadDialog';
 import { walletService } from '@/services/api/wallet.service';
@@ -33,6 +34,7 @@ function BalanceFigure({ value }: { value: number | undefined }) {
 export default function WalletPageMobile() {
   const queryClient = useQueryClient();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
+  const [employeeAccountLookupOpen, setEmployeeAccountLookupOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
   const [selectedBulkTransferBatchId, setSelectedBulkTransferBatchId] =
     useState<number | null>(null);
@@ -136,6 +138,14 @@ export default function WalletPageMobile() {
         <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
           <button
             type="button"
+            onClick={() => setEmployeeAccountLookupOpen(true)}
+            className="ct-btn ct-btn-outline h-11 min-h-11 gap-2 rounded-xl border-base-100/20 bg-base-100/5 text-sm font-semibold normal-case text-neutral-content shadow-none min-[360px]:col-span-2"
+          >
+            <SearchCheck className="h-4 w-4" />
+            Tra cứu tài khoản
+          </button>
+          <button
+            type="button"
             onClick={() => setBulkTransferDialogOpen(true)}
             className="ct-btn ct-btn-outline h-11 min-h-11 gap-2 rounded-xl border-base-100/20 bg-base-100/5 text-sm font-semibold normal-case text-neutral-content shadow-none"
           >
@@ -168,6 +178,10 @@ export default function WalletPageMobile() {
         open={disbursementOpen}
         onOpenChange={setDisbursementOpen}
         onSuccess={invalidateAll}
+      />
+      <EmployeeAccountLookupDialog
+        open={employeeAccountLookupOpen}
+        onOpenChange={setEmployeeAccountLookupOpen}
       />
       <BulkTransferUploadDialog
         open={bulkTransferDialogOpen}

@@ -56,4 +56,37 @@ func runDisbursementTests(client *APIClient, data *TestData, reporter *Reporter,
 		}
 		return nil
 	})
+
+	reporter.RunTest(flowDisbursement, "Employee account lookup requires an employee", func() error {
+		_, statusCode, err := admin.Post(
+			"/api/v1/admin/manual-disbursement/employee-account-check",
+			EmployeeAccountCheckRequest{},
+		)
+		if err != nil {
+			return err
+		}
+		if statusCode != 400 {
+			return fmt.Errorf("expected 400 for missing employee_id, got %d", statusCode)
+		}
+		return nil
+	})
+
+	reporter.RunTest(flowDisbursement, "Employee account lookup is admin only", func() error {
+		if len(data.Partners) == 0 || data.Partners[0].Token == "" {
+			fmt.Println("    Skipped: no partner token available")
+			return nil
+		}
+		partner := client.WithToken(data.Partners[0].Token)
+		_, statusCode, err := partner.Post(
+			"/api/v1/admin/manual-disbursement/employee-account-check",
+			EmployeeAccountCheckRequest{EmployeeID: 1},
+		)
+		if err != nil {
+			return err
+		}
+		if statusCode != 403 {
+			return fmt.Errorf("expected 403 for partner lookup, got %d", statusCode)
+		}
+		return nil
+	})
 }

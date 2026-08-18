@@ -7,6 +7,7 @@ import {
   TrendingDown,
   Wallet as WalletIcon,
   CheckCircle2,
+  SearchCheck,
   Upload,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import WalletTransactionsList from "@/components/wallet/WalletTransactionsList";
 import CreateManualDisbursementDialog from "@/components/wallet/CreateManualDisbursementDialog";
+import { EmployeeAccountLookupDialog } from "@/components/wallet/EmployeeAccountLookupDialog";
 import {
   BulkTransferBatchList,
 } from "@/components/wallet/BulkTransferBatchList";
@@ -155,6 +157,7 @@ function HeroBalance({ balance, asOf, syncing, onSync }: HeroBalanceProps) {
 export default function WalletPage() {
   const queryClient = useQueryClient();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
+  const [employeeAccountLookupOpen, setEmployeeAccountLookupOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
   const [selectedBulkTransferBatchId, setSelectedBulkTransferBatchId] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -235,6 +238,15 @@ export default function WalletPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setEmployeeAccountLookupOpen(true)}
+              className="h-9 gap-1.5"
+            >
+              <SearchCheck className="size-3.5" />
+              Tra cứu tài khoản
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleSync}
               disabled={syncing}
               className="gap-1.5 h-9"
@@ -296,6 +308,10 @@ export default function WalletPage() {
         open={disbursementOpen}
         onOpenChange={setDisbursementOpen}
         onSuccess={invalidateAll}
+      />
+      <EmployeeAccountLookupDialog
+        open={employeeAccountLookupOpen}
+        onOpenChange={setEmployeeAccountLookupOpen}
       />
 
       <BulkTransferUploadDialog

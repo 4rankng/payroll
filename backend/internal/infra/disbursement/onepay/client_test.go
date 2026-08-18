@@ -1,10 +1,12 @@
 package onepay
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -163,6 +165,69 @@ func TestClient_GetAccountInfo_SendsCorrectHeaders(t *testing.T) {
 	}
 	if resp.HolderName != "NGUYEN VAN A" {
 		t.Errorf("HolderName = %q", resp.HolderName)
+	}
+}
+
+func TestClient_GetAccountInfo_DoesNotLogCredentialsOrAccountData(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+	const (
+		accountNumber = "ACCOUNT-SENTINEL-1023020330000"
+		holderName    = "HOLDER-SENTINEL-NGUYEN-VAN-A"
+		partnerID     = "PARTNER-SENTINEL"
+		partnerKey    = "KEY-SENTINEL"
+		accountID     = "ACCOUNT-ID-SENTINEL"
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(AccountInfoResponse{
+			AccountNumber: accountNumber,
+			HolderName:    holderName,
+			State:         "approved",
+			ResponseCode:  "00",
+		})
+	}))
+	defer srv.Close()
+
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	c, err := NewClient(Config{
+		PartnerID:  partnerID,
+		PartnerKey: partnerKey,
+		AccountID:  accountID,
+		Endpoint:   srv.URL,
+	}, logger)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	c.now = func() time.Time { return fixedTime }
+
+	_, err = c.GetAccountInfo(context.Background(), AccountInfoRequest{
+		RequestID:     "REQ-SENTINEL",
+		SwiftCode:     "VCBVNVVX",
+		AccountNumber: accountNumber,
+		Amount:        50000,
+		AccountID:     accountID,
+	})
+	if err != nil {
+		t.Fatalf("GetAccountInfo: %v", err)
+	}
+
+	got := logs.String()
+	for _, secret := range []string{
+		accountNumber,
+		holderName,
+		partnerID,
+		partnerKey,
+		accountID,
+		"X-OP-Authorization",
+		"canonical_request",
+		"string_to_sign",
+		"signature",
+	} {
+		if strings.Contains(got, secret) {
+			t.Fatalf("OnePay logs contain sensitive sentinel %q: %s", secret, got)
+		}
 	}
 }
 
@@ -384,10 +449,11 @@ func TestClient_APIError_Decoding(t *testing.T) {
 
 func TestClient_NonJSON500(t *testing.T) {
 	fixedTime := mustParseDate(t, "20260108T112907Z")
+	const upstreamBody = "upstream-error-ACCOUNT-SENTINEL-1023020330000"
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("upstream error"))
+		_, _ = w.Write([]byte(upstreamBody))
 	}))
 	defer srv.Close()
 
@@ -400,6 +466,9 @@ func TestClient_NonJSON500(t *testing.T) {
 	var apiErr *APIError
 	if isAPIError(err, &apiErr) {
 		t.Fatalf("should not be *APIError for non-JSON response")
+	}
+	if strings.Contains(err.Error(), upstreamBody) {
+		t.Fatalf("error leaked upstream response body: %v", err)
 	}
 }
 

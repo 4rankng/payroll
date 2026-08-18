@@ -471,6 +471,7 @@ export const API_ENDPOINTS = {
     base: '/admin/manual-disbursement',
     byTxnId: (txnId: string) => `/admin/manual-disbursement/${txnId}`,
     checkAccount: '/admin/manual-disbursement/check-account',
+    employeeAccountCheck: '/admin/manual-disbursement/employee-account-check',
     reconciliationDownload: '/admin/manual-disbursement/reconciliation/download',
   },
 

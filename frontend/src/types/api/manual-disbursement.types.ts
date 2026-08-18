@@ -51,6 +51,34 @@ export interface VerifyAccountResponse {
   RawMessage: string;
 }
 
+export type EmployeeAccountLookupOutcome =
+  | 'valid'
+  | 'invalid'
+  | 'name_mismatch'
+  | 'unverified';
+
+/** The server resolves every bank field from the selected employee's record. */
+export interface EmployeeAccountLookupRequest {
+  employee_id: number;
+}
+
+export interface EmployeeAccountLookupResponse {
+  employee: {
+    id: number;
+    fullname: string;
+  };
+  stored_bank: {
+    bank_id: number;
+    bank_name: string;
+    bank_code: string;
+    swift_code: string;
+    account_number: string;
+    account_name: string;
+  };
+  outcome: EmployeeAccountLookupOutcome;
+  provider_result: VerifyAccountResponse;
+}
+
 export const TERMINAL_STATUSES: ManualDisbursementStatus[] = [
   "completed",
   "failed",

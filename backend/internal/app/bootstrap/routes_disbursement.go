@@ -74,6 +74,7 @@ func setupManualDisbursementRoutes(v1 *gin.RouterGroup, container *Container) {
 		md.GET("/banks", container.Handlers.ManualDisbursement.Banks)
 		md.POST("", container.Handlers.ManualDisbursement.Initiate)
 		md.POST("/check-account", container.Handlers.ManualDisbursement.CheckAccount)
+		md.POST("/employee-account-check", container.Middleware.StrictRateLimit, container.Handlers.ManualDisbursement.CheckEmployeeAccount)
 		md.GET("/balance", container.Handlers.Wallet.GetBalance)
 		if container.Handlers.ReconciliationExport != nil {
 			md.GET("/reconciliation/download", container.Handlers.ReconciliationExport.Download)

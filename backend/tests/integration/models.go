@@ -1071,6 +1071,10 @@ type CheckAccountRequest struct {
 	AccountName string `json:"account_name,omitempty"`
 }
 
+type EmployeeAccountCheckRequest struct {
+	EmployeeID uint `json:"employee_id"`
+}
+
 // --- Transaction wrapper ---
 
 type TransactionWithLedgerResponse struct {

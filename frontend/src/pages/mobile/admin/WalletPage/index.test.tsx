@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import WalletPageMobile from "./index";
 
 const bulkTransferBatchListProps = vi.fn();
+const employeeAccountLookupDialogProps = vi.fn();
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({
@@ -21,6 +22,13 @@ vi.mock("@/components/wallet/WalletTransactionsList", () => ({
 
 vi.mock("@/components/wallet/CreateManualDisbursementDialog", () => ({
   default: () => null,
+}));
+
+vi.mock('@/components/wallet/EmployeeAccountLookupDialog', () => ({
+  EmployeeAccountLookupDialog: (props: { open: boolean }) => {
+    employeeAccountLookupDialogProps(props);
+    return props.open ? <div>Hộp thoại tra cứu tài khoản</div> : null;
+  },
 }));
 
 vi.mock("@/components/wallet/BulkTransferBatchList", () => ({
@@ -72,6 +80,14 @@ describe("WalletPageMobile", () => {
     );
     expect(screen.getByRole("button", { name: "Chuyển tiền" })).toHaveClass(
       "min-h-11",
+    );
+
+    const lookupButton = screen.getByRole('button', { name: 'Tra cứu tài khoản' });
+    expect(lookupButton).toHaveClass('min-h-11');
+    fireEvent.click(lookupButton);
+    expect(screen.getByText('Hộp thoại tra cứu tài khoản')).toBeInTheDocument();
+    expect(employeeAccountLookupDialogProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ open: true }),
     );
   });
 });

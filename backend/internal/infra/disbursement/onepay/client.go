@@ -190,19 +190,6 @@ func (c *Client) doSigned(
 	cred := Credential(c.cfg.PartnerID, now)
 	auth := AuthorizationHeader(cred, strings.Join(signedHeaders, ";"), sig)
 
-	c.logger.Info("onepay signing debug",
-		"method", method,
-		"full_url", fullURL,
-		"partner_id", c.cfg.PartnerID,
-		"cred", cred,
-		"signed_headers", strings.Join(signedHeaders, ";"),
-		"x_op_date", xopDate,
-		"canonical_request", canonical,
-		"string_to_sign", sts,
-		"signature", sig,
-		"auth_header", auth,
-	)
-
 	headers["X-OP-Authorization"] = auth
 	for k, v := range headers {
 		req.Header.Set(k, v)
@@ -210,9 +197,6 @@ func (c *Client) doSigned(
 
 	c.logger.Info("onepay request",
 		"method", method,
-		"url", fullURL,
-		"x-op-date", xopDate,
-		"body", string(bodyBytes),
 	)
 
 	resp, err := c.http.Do(req)
@@ -224,9 +208,7 @@ func (c *Client) doSigned(
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	c.logger.Info("onepay response",
 		"method", method,
-		"url", fullURL,
 		"status", resp.StatusCode,
-		"body", string(respBody),
 	)
 	if resp.StatusCode == http.StatusOK {
 		if out == nil {
@@ -247,7 +229,7 @@ func (c *Client) doSigned(
 			State:        errResp.State,
 		}
 	}
-	return fmt.Errorf("onepay: http %d: %s", resp.StatusCode, truncate(string(respBody), 256))
+	return fmt.Errorf("onepay: unexpected non-JSON response (http %d)", resp.StatusCode)
 }
 
 // APIError is a typed error for callers that want to special-case
@@ -263,11 +245,4 @@ type APIError struct {
 
 func (e *APIError) Error() string {
 	return fmt.Sprintf("onepay: %s (%s): %s", e.ResponseCode, e.Name, e.Message)
-}
-
-func truncate(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "...(truncated)"
 }

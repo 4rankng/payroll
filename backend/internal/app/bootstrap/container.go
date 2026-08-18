@@ -444,7 +444,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			cfg.Disbursement.Ninepay.EnabledForBulkTransfer,
 		),
 		DisbursementFee: disbursementHandlers.NewFeeScheduleHandler(services.DisbursementFeeSchedule, clk),
-		ManualDisbursement: disbursementHandlers.NewManualDisbursementHandler(services.DisbursementRegistry, services.ProviderTransactions, repos.Bank, repos.TransactionCode, services.Wallet, logger, func() *slog.Logger {
+		ManualDisbursement: disbursementHandlers.NewManualDisbursementHandler(services.DisbursementRegistry, services.ProviderTransactions, repos.Employee, repos.Bank, repos.TransactionCode, services.Wallet, logger, func() *slog.Logger {
 			if cfg.Disbursement.Onepay.Enabled {
 				l, _ := observability.NewFileLogger("logs/payment-gateway.log")
 				return l

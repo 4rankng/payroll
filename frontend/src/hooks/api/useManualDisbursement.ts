@@ -13,6 +13,8 @@ import {
 } from "@/utils/error-handler";
 import type {
   BankInfoResponse,
+  EmployeeAccountLookupRequest,
+  EmployeeAccountLookupResponse,
   InitiateManualDisbursementRequest,
   ManualDisbursementResponse,
   VerifyAccountRequest,
@@ -120,5 +122,19 @@ export function useVerifyManualDisbursementAccount() {
     // Verify-account does not mutate server state; on error we surface
     // the message inline next to the form, NOT via a toast — the toast
     // would interrupt the user's flow as they retype the account number.
+  });
+}
+
+/** Read-only check: the server loads the selected employee's persisted bank tuple. */
+export function useEmployeeAccountLookup() {
+  return useMutation<
+    EmployeeAccountLookupResponse | null,
+    unknown,
+    EmployeeAccountLookupRequest
+  >({
+    mutationFn: async (body) => {
+      const res = await manualDisbursementService.checkEmployeeAccount(body);
+      return res.data ?? null;
+    },
   });
 }

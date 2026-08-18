@@ -148,7 +148,17 @@ Manual disbursement, bulk transfer, auto-bulk-transfer, fee estimation, reconcil
 |--------|------|---------|
 | POST | `/auto-bulk-transfer` | Trigger automatic bulk transfer |
 | POST | `/check-account` | Pre-flight bank account verification |
+| POST | `/admin/manual-disbursement/employee-account-check` | Admin-only, rate-limited read-only verification of an employee's persisted bank account through the active disbursement provider |
 | POST | `/webhooks/disbursement/{provider}` | Payment provider IPN webhook |
+
+`POST /admin/manual-disbursement/employee-account-check` accepts `{ "employee_id": <number> }`.
+The server loads the employee's persisted bank, SWIFT code, account number, and
+account name; callers cannot provide or override those bank details. The lookup
+does not create a payment, transfer, transaction code, wallet entry, or employee
+update. The response reports `outcome` as `valid`, `invalid`, `name_mismatch`,
+or `unverified`, alongside the stored bank tuple and provider result. Common
+errors are `employee_not_found`, `employee_bank_data_incomplete`,
+`account_verifier_unavailable`, and `account_verification_provider_error`.
 
 ### Dashboard (`/api/v1/dashboard`)
 

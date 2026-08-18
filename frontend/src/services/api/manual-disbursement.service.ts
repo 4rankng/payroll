@@ -7,6 +7,8 @@ import { API_ENDPOINTS } from "@/config/api.config";
 import type {
   BankInfoResponse,
   InitiateManualDisbursementRequest,
+  EmployeeAccountLookupRequest,
+  EmployeeAccountLookupResponse,
   ManualDisbursementResponse,
   VerifyAccountRequest,
   VerifyAccountResponse,
@@ -40,6 +42,15 @@ class ManualDisbursementService {
   ): Promise<ApiResponse<VerifyAccountResponse>> {
     return apiClient.post<VerifyAccountResponse>(
       API_ENDPOINTS.manualDisbursement.checkAccount,
+      body,
+    );
+  }
+
+  checkEmployeeAccount(
+    body: EmployeeAccountLookupRequest,
+  ): Promise<ApiResponse<EmployeeAccountLookupResponse>> {
+    return apiClient.post<EmployeeAccountLookupResponse>(
+      API_ENDPOINTS.manualDisbursement.employeeAccountCheck,
       body,
     );
   }

@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 
 	"api-server/internal/app/services/disbursement"
 	"api-server/internal/constants"
@@ -62,6 +63,7 @@ func classifyTransportError(err error) string {
 type ManualDisbursementHandler struct {
 	registry       *disbursement.Registry
 	providerTxs    *disbursement.WalletPaymentService
+	employeeRepo   employeeAccountLookupRepository
 	bankRepo       domain.BankRepository
 	tcRepo         domain.TransactionCodeRepository
 	walletSvc      wallet.WalletService
@@ -69,9 +71,14 @@ type ManualDisbursementHandler struct {
 	providerLogger *slog.Logger
 }
 
+type employeeAccountLookupRepository interface {
+	GetByID(ctx context.Context, id uint) (*domain.Employee, error)
+}
+
 func NewManualDisbursementHandler(
 	registry *disbursement.Registry,
 	providerTxs *disbursement.WalletPaymentService,
+	employeeRepo employeeAccountLookupRepository,
 	bankRepo domain.BankRepository,
 	tcRepo domain.TransactionCodeRepository,
 	walletSvc wallet.WalletService,
@@ -88,12 +95,173 @@ func NewManualDisbursementHandler(
 	return &ManualDisbursementHandler{
 		registry:       registry,
 		providerTxs:    providerTxs,
+		employeeRepo:   employeeRepo,
 		bankRepo:       bankRepo,
 		tcRepo:         tcRepo,
 		walletSvc:      walletSvc,
 		logger:         logger,
 		providerLogger: providerLogger,
 	}
+}
+
+type employeeAccountCheckRequest struct {
+	EmployeeID uint `json:"employee_id" binding:"required"`
+}
+
+type employeeAccountCheckIdentity struct {
+	ID       uint   `json:"id"`
+	Fullname string `json:"fullname"`
+}
+
+type employeeAccountCheckBank struct {
+	BankID        uint   `json:"bank_id"`
+	BankName      string `json:"bank_name"`
+	BankCode      string `json:"bank_code"`
+	SwiftCode     string `json:"swift_code"`
+	AccountNumber string `json:"account_number"`
+	AccountName   string `json:"account_name"`
+}
+
+type employeeAccountCheckResponse struct {
+	Employee       employeeAccountCheckIdentity       `json:"employee"`
+	StoredBank     employeeAccountCheckBank           `json:"stored_bank"`
+	Outcome        string                             `json:"outcome"`
+	ProviderResult *infrastructure.AccountCheckResult `json:"provider_result"`
+}
+
+const (
+	employeeAccountOutcomeValid        = "valid"
+	employeeAccountOutcomeInvalid      = "invalid"
+	employeeAccountOutcomeNameMismatch = "name_mismatch"
+	employeeAccountOutcomeUnverified   = "unverified"
+)
+
+func classifyEmployeeAccountCheck(result *infrastructure.AccountCheckResult) string {
+	if result != nil && result.Valid {
+		return employeeAccountOutcomeValid
+	}
+	if result != nil {
+		switch result.RawErrorCode {
+		case "name_mismatch":
+			return employeeAccountOutcomeNameMismatch
+		case "12", "13", "19":
+			return employeeAccountOutcomeUnverified
+		}
+	}
+	return employeeAccountOutcomeInvalid
+}
+
+func writeEmployeeAccountCheckError(c *gin.Context, status int, code, message string) {
+	c.JSON(status, response.ErrorResponse{
+		Status:     "error",
+		Message:    message,
+		HTTPStatus: status,
+		Code:       code,
+	})
+}
+
+// CheckEmployeeAccount loads the employee's persisted bank tuple and performs
+// a read-only provider lookup. The client supplies only the employee ID, so it
+// cannot substitute recipient details. This endpoint never creates a wallet
+// payment, transaction code, transfer, or employee update.
+func (h *ManualDisbursementHandler) CheckEmployeeAccount(c *gin.Context) {
+	var body employeeAccountCheckRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		writeEmployeeAccountCheckError(c, 400, "invalid_request", "Vui lòng chọn nhân viên cần tra cứu")
+		return
+	}
+	if h.employeeRepo == nil {
+		writeEmployeeAccountCheckError(c, 503, "employee_lookup_unavailable", "Chức năng tra cứu nhân viên chưa sẵn sàng")
+		return
+	}
+
+	employee, err := h.employeeRepo.GetByID(c.Request.Context(), body.EmployeeID)
+	if err != nil {
+		var domainErr *domain.DomainError
+		if errors.As(err, &domainErr) && strings.EqualFold(domainErr.Type, "not_found") {
+			writeEmployeeAccountCheckError(c, 404, "employee_not_found", "Không tìm thấy nhân viên")
+			return
+		}
+		h.logger.Error("employee account lookup: employee read failed", "employee_id", body.EmployeeID, "error", err)
+		writeEmployeeAccountCheckError(c, 500, "employee_lookup_failed", "Không thể tải thông tin nhân viên")
+		return
+	}
+
+	if employee.BankID == nil || employee.Bank == nil || employee.Bank.SwiftCode == "" ||
+		strings.TrimSpace(employee.BankAccountNumber) == "" || strings.TrimSpace(employee.BankAccountName) == "" {
+		writeEmployeeAccountCheckError(c, 422, "employee_bank_data_incomplete", "Nhân viên chưa có đủ thông tin ngân hàng để tra cứu")
+		return
+	}
+
+	if h.registry == nil {
+		writeEmployeeAccountCheckError(c, 503, "account_verifier_unavailable", "Dịch vụ tra cứu tài khoản chưa sẵn sàng")
+		return
+	}
+	provider, err := h.registry.Active(c.Request.Context())
+	if err != nil {
+		h.logger.Warn("employee account lookup: active provider unavailable", "employee_id", employee.ID, "error", err)
+		writeEmployeeAccountCheckError(c, 503, "account_verifier_unavailable", "Dịch vụ tra cứu tài khoản chưa sẵn sàng")
+		return
+	}
+	verifier, ok := provider.(infrastructure.AccountVerifier)
+	if !ok {
+		writeEmployeeAccountCheckError(c, 503, "account_verifier_unavailable", "Nhà cung cấp hiện tại không hỗ trợ tra cứu tài khoản")
+		return
+	}
+
+	requestID := "emplook" + strings.ReplaceAll(uuid.New().String(), "-", "")[:13]
+	checkCtx, cancel := context.WithTimeout(c.Request.Context(), 8*time.Second)
+	defer cancel()
+	result, err := verifier.CheckAccount(checkCtx, infrastructure.AccountCheckRequest{
+		RequestID:   requestID,
+		BankCode:    employee.Bank.BankCode,
+		SwiftCode:   employee.Bank.SwiftCode,
+		AccountNo:   employee.BankAccountNumber,
+		AccountName: employee.BankAccountName,
+		AccountType: infrastructure.AccountTypeBankAccount,
+	})
+	if err != nil {
+		h.logger.Warn("employee account lookup: provider call failed",
+			"employee_id", employee.ID,
+			"request_id", requestID,
+			"provider", provider.Name(),
+			"error", err,
+		)
+		writeEmployeeAccountCheckError(c, 502, "account_verification_provider_error", "Không thể kết nối dịch vụ tra cứu ngân hàng")
+		return
+	}
+	if result == nil {
+		h.logger.Warn("employee account lookup: provider returned empty result",
+			"employee_id", employee.ID,
+			"request_id", requestID,
+			"provider", provider.Name(),
+		)
+		writeEmployeeAccountCheckError(c, 502, "account_verification_empty_result", "Dịch vụ tra cứu không trả về kết quả")
+		return
+	}
+
+	outcome := classifyEmployeeAccountCheck(result)
+	h.logger.Info("employee account lookup completed",
+		"employee_id", employee.ID,
+		"request_id", requestID,
+		"provider", provider.Name(),
+		"outcome", outcome,
+		"provider_code", result.RawErrorCode,
+	)
+
+	response.Success(c, employeeAccountCheckResponse{
+		Employee: employeeAccountCheckIdentity{ID: employee.ID, Fullname: employee.Fullname},
+		StoredBank: employeeAccountCheckBank{
+			BankID:        *employee.BankID,
+			BankName:      employee.Bank.BranchName,
+			BankCode:      employee.Bank.BankCode,
+			SwiftCode:     employee.Bank.SwiftCode,
+			AccountNumber: employee.BankAccountNumber,
+			AccountName:   employee.BankAccountName,
+		},
+		Outcome:        outcome,
+		ProviderResult: result,
+	}, "Tra cứu tài khoản thành công")
 }
 
 // logProvider logs to the payment-gateway file logger.
