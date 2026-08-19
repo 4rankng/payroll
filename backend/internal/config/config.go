@@ -414,7 +414,7 @@ func Load() (*Config, error) {
 			DefaultCC:         []string{},
 			DefaultBCC:        []string{},
 			ResendAPIKey:      getEnv("RESEND_API_KEY", ""),
-			SendTimeout:       5 * time.Second,
+			SendTimeout:       parseDuration(getEnv("EMAIL_SEND_TIMEOUT", "30s")),
 			VAPIDPublicKey:    getEnv("VAPID_PUBLIC_KEY", ""),
 			VAPIDPrivateKey:   getEnv("VAPID_PRIVATE_KEY", ""),
 			VAPIDSubject:      getEnv("VAPID_SUBJECT", "mailto:admin@tingting.vip"),
