@@ -155,116 +155,134 @@ export const SettingCard = ({
   };
 
   return (
-    <div className="group min-w-0 overflow-hidden rounded-xl border bg-card p-4 transition-colors hover:border-border/80 sm:p-5">
-      <div className="space-y-0.5">
-        <Label htmlFor={inputId} className="block break-words text-sm font-semibold text-foreground">
-          {title}
-        </Label>
-        {description && (
-          <p
-            id={descriptionId}
-            className="break-words text-xs leading-relaxed text-muted-foreground"
+    <div
+      data-slot="setting-row"
+      className={cn(
+        'group min-w-0 px-4 py-4 transition-colors sm:px-5',
+        isDirty && 'bg-warning/5',
+      )}
+    >
+      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(15rem,20rem)] md:items-start md:gap-6">
+        <div className="min-w-0 space-y-1 md:py-2">
+          <Label
+            htmlFor={inputId}
+            className="block break-words text-sm font-semibold leading-5 text-foreground"
           >
-            {description}
-          </p>
-        )}
-      </div>
-
-      <div className="mt-3 space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Input
-              id={inputId}
-              name={inputId}
-              autoComplete="off"
-              type={displayMode === 'currency-vnd' || displayMode === 'account-number' ? 'text' : type}
-              inputMode={
-                displayMode === 'currency-vnd' || displayMode === 'account-number'
-                  ? 'numeric'
-                  : undefined
-              }
-              value={displayValue}
-              onChange={(event) => handleValueChange(event.target.value)}
-              disabled={isSaving || isUnavailable}
-              className={cn(
-                'h-11 min-w-0 text-base font-medium',
-                visibleSuffix && 'pr-8',
-                displayMode === 'currency-vnd' && 'text-right tabular-nums',
-                displayMode === 'account-number' && 'tabular-nums',
-                hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',
-                isDirty && !hasVisibleError && 'border-amber-400 focus-visible:ring-amber-400/20',
-                inputClassName
-              )}
-              min={type === 'number' && displayMode === 'default' ? String(min) : undefined}
-              max={type === 'number' && displayMode === 'default' ? String(max) : undefined}
-              step={type === 'number' && displayMode === 'default' ? String(step) : undefined}
-              aria-invalid={hasVisibleError}
-              aria-describedby={[
-                description ? descriptionId : null,
-                visibleError ? errorId : null,
-              ].filter(Boolean).join(' ') || undefined}
-            />
-            {visibleSuffix && (
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-                {visibleSuffix}
-              </span>
-            )}
-          </div>
+            {title}
+          </Label>
+          {description && (
+            <p
+              id={descriptionId}
+              className="break-words text-sm leading-5 text-muted-foreground"
+            >
+              {description}
+            </p>
+          )}
         </div>
 
-        {visibleError && (
-          <div
-            id={errorId}
-            role="alert"
-            aria-live="polite"
-            className="flex min-w-0 items-start gap-1.5 text-destructive"
-          >
-            <AlertCircle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span className="min-w-0 break-words text-xs">{visibleError}</span>
+        <div className="min-w-0 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Input
+                id={inputId}
+                name={inputId}
+                autoComplete="off"
+                type={
+                  displayMode === 'currency-vnd' || displayMode === 'account-number'
+                    ? 'text'
+                    : type
+                }
+                inputMode={
+                  displayMode === 'currency-vnd' || displayMode === 'account-number'
+                    ? 'numeric'
+                    : undefined
+                }
+                value={displayValue}
+                onChange={(event) => handleValueChange(event.target.value)}
+                disabled={isSaving || isUnavailable}
+                className={cn(
+                  'h-11 min-w-0 text-base font-medium',
+                  visibleSuffix && 'pr-8',
+                  displayMode === 'currency-vnd' && 'text-right tabular-nums',
+                  displayMode === 'account-number' && 'tabular-nums',
+                  hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',
+                  isDirty &&
+                    !hasVisibleError &&
+                    'border-warning focus-visible:ring-warning/20',
+                  inputClassName,
+                )}
+                min={type === 'number' && displayMode === 'default' ? String(min) : undefined}
+                max={type === 'number' && displayMode === 'default' ? String(max) : undefined}
+                step={type === 'number' && displayMode === 'default' ? String(step) : undefined}
+                aria-invalid={hasVisibleError}
+                aria-describedby={
+                  [description ? descriptionId : null, visibleError ? errorId : null]
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
+              />
+              {visibleSuffix && (
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                  {visibleSuffix}
+                </span>
+              )}
+            </div>
           </div>
-        )}
 
-        {isUnavailable && onRetry ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onRetry}
-            disabled={isSaving}
-            className="h-11 w-full gap-1.5 text-xs"
-          >
-            <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
-            Thử lại
-          </Button>
-        ) : isDirty ? (
-          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+          {visibleError && (
+            <div
+              id={errorId}
+              role="alert"
+              aria-live="polite"
+              className="flex min-w-0 items-start gap-1.5 text-destructive"
+            >
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 break-words text-xs">{visibleError}</span>
+            </div>
+          )}
+
+          {isUnavailable && onRetry ? (
             <Button
               type="button"
               size="sm"
-              variant="ghost"
-              onClick={() => {
-                setCurrencyInputError(null);
-                onReset();
-              }}
+              variant="outline"
+              onClick={onRetry}
               disabled={isSaving}
-              className="h-11 w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              className="h-11 w-full gap-1.5 text-xs"
             >
-              <X aria-hidden="true" className="h-3 w-3" />
-              Hủy
+              <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
+              Thử lại
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="default"
-              onClick={onSave}
-              disabled={isSaving || isInvalid}
-              className="h-11 w-full gap-1.5 bg-emerald-600 text-xs text-white hover:bg-emerald-700"
-            >
-              <Check aria-hidden="true" className="h-3 w-3" />
-              <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu'}</span>
-            </Button>
-          </div>
-        ) : null}
+          ) : isDirty ? (
+            <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setCurrencyInputError(null);
+                  onReset();
+                }}
+                disabled={isSaving}
+                className="h-11 w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <X aria-hidden="true" className="h-3 w-3" />
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                onClick={onSave}
+                disabled={isSaving || isInvalid}
+                className="h-11 w-full gap-1.5 text-xs"
+              >
+                <Check aria-hidden="true" className="h-3 w-3" />
+                <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu'}</span>
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

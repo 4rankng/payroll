@@ -220,8 +220,8 @@ func TestPayrollTemplateUsesTingTingBanner(t *testing.T) {
 	if bannerFormat == nil {
 		t.Fatal("Payroll Report!A8 banner has no drawing format")
 	}
-	if math.Abs(bannerFormat.ScaleX-0.25) > 0.001 || math.Abs(bannerFormat.ScaleY-0.25) > 0.001 {
-		t.Fatalf("banner scale = %.3f x %.3f, want 0.25 x 0.25 (320 x 128 px)", bannerFormat.ScaleX, bannerFormat.ScaleY)
+	if math.Abs(bannerFormat.ScaleX-0.5) > 0.001 || math.Abs(bannerFormat.ScaleY-0.5) > 0.001 {
+		t.Fatalf("banner scale = %.3f x %.3f, want 0.5 x 0.5 (320 x 128 px from the 640-px compressed banner)", bannerFormat.ScaleX, bannerFormat.ScaleY)
 	}
 	if bannerFormat.OffsetX != 0 || bannerFormat.OffsetY != 0 || bannerFormat.Positioning != "oneCell" {
 		t.Fatalf("banner anchor = offset (%d, %d), positioning %q; want A8 with zero offset and oneCell positioning", bannerFormat.OffsetX, bannerFormat.OffsetY, bannerFormat.Positioning)

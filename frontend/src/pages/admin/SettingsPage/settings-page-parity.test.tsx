@@ -20,6 +20,12 @@ const mocks = vi.hoisted(() => ({
     originalSelfCheckInAdvancePercentage: '70',
     selfCheckInAdvanceHoldHours: '24',
     originalSelfCheckInAdvanceHoldHours: '24',
+    transferBankHolder: 'CONG TY TNHH MTV GPPM TING TING',
+    originalTransferBankHolder: 'CONG TY TNHH MTV GPPM TING TING',
+    transferBankNumber: '271866699',
+    originalTransferBankNumber: '271866699',
+    transferBankName: 'Ngân hàng Quân đội (MB)',
+    originalTransferBankName: 'Ngân hàng Quân đội (MB)',
     bulkTransferWorkbookLimitSaveError: null,
     bulkTransferWorkbookLimitUnavailableMessage: null,
     loadError: null as string | null,
@@ -31,12 +37,16 @@ const mocks = vi.hoisted(() => ({
     setBulkTransferWorkbookLimitVnd: vi.fn(),
     setSelfCheckInAdvancePercentage: vi.fn(),
     setSelfCheckInAdvanceHoldHours: vi.fn(),
+    setTransferBankHolder: vi.fn(),
+    setTransferBankNumber: vi.fn(),
+    setTransferBankName: vi.fn(),
     handleSaveWeeklyPayment: vi.fn(),
     handleSaveMonthlyPayment: vi.fn(),
     handleSavePartnerCompany: vi.fn(),
     handleSaveBulkTransferWorkbookLimitVnd: vi.fn(),
     handleSaveSelfCheckInAdvancePercentage: vi.fn(),
     handleSaveSelfCheckInAdvanceHoldHours: vi.fn(),
+    handleSaveTransferBank: vi.fn(),
     retryLoading: vi.fn(),
   },
 }));
@@ -111,6 +121,20 @@ describe.each([
     expect(holdInput).toHaveAttribute('min', '0');
     expect(holdInput).toHaveAttribute('max', '720');
     expect(holdInput).toHaveAttribute('step', '1');
+  });
+
+  it('keeps the transfer account settings available in both responsive views', () => {
+    render(
+      <MemoryRouter>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText('Chủ tài khoản')).toHaveValue(
+      'CONG TY TNHH MTV GPPM TING TING',
+    );
+    expect(screen.getByLabelText('Số tài khoản')).toHaveValue('271866699');
+    expect(screen.getByLabelText('Ngân hàng')).toHaveValue('Ngân hàng Quân đội (MB)');
   });
 
   it('shows a page-level retry state when any required setting cannot load', () => {
