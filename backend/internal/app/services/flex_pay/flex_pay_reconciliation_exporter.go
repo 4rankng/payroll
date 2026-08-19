@@ -1,11 +1,13 @@
 package flex_pay
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sort"
 	"time"
 
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/app/services/excel"
 	serviceports "api-server/internal/domain/ports/services"
 	domainServices "api-server/internal/domain/services"
@@ -20,21 +22,38 @@ const (
 	internalTypeAdvance = "type:advance_payment"
 )
 
+// TransferBankInfoProvider supplies beneficiary bank details for FlexPay
+// reconciliation exports. Implemented by *config.SettingsConfigService.
+type TransferBankInfoProvider interface {
+	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
+}
+
 // FlexPayReconciliationExporter handles Excel generation for FlexPay reconciliation report
 type FlexPayReconciliationExporter struct {
-	logger *slog.Logger
+	logger       *slog.Logger
+	bankSettings TransferBankInfoProvider
 }
 
 // NewFlexPayReconciliationExporter creates a new exporter
-func NewFlexPayReconciliationExporter() *FlexPayReconciliationExporter {
+func NewFlexPayReconciliationExporter(bankSettings TransferBankInfoProvider) *FlexPayReconciliationExporter {
 	return &FlexPayReconciliationExporter{
-		logger: observability.GetLogger(),
+		logger:       observability.GetLogger(),
+		bankSettings: bankSettings,
 	}
+}
+
+// resolveBankInfo returns the configured beneficiary bank details, falling
+// back to defaults when no settings provider is bound.
+func (e *FlexPayReconciliationExporter) resolveBankInfo(ctx context.Context) appconfig.TransferBankInfo {
+	if e.bankSettings == nil {
+		return appconfig.DefaultTransferBankInfo()
+	}
+	return e.bankSettings.GetTransferBankInfo(ctx)
 }
 
 // GenerateExcel creates a multi-sheet Excel file with FlexPay reconciliation reports
 // Uses the same template as the existing timesheet sao ke exporter
-func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServices.ProjectFlexPayReportData, atDate time.Time) ([]byte, *serviceports.PayrollReportSummary, error) {
+func (e *FlexPayReconciliationExporter) GenerateExcel(ctx context.Context, reportData []*domainServices.ProjectFlexPayReportData, atDate time.Time) ([]byte, *serviceports.PayrollReportSummary, error) {
 	e.logger.Info("Starting Excel generation",
 		"projectCount", len(reportData),
 		"atDate", atDate.Format("2006-01-02"))
@@ -171,7 +190,7 @@ func (e *FlexPayReconciliationExporter) GenerateExcel(reportData []*domainServic
 	// Update Summary sheet
 	summary := e.buildSummary(totalAmountAllProjects, totalRequestedAmountAllProjects, atDate)
 
-	if err := e.updateSummarySheet(f, reportData, summary, atDate, currencyStyleWhite, currencyStyleGray); err != nil {
+	if err := e.updateSummarySheet(ctx, f, reportData, summary, atDate, currencyStyleWhite, currencyStyleGray); err != nil {
 		return nil, nil, fmt.Errorf("failed to update summary sheet: %w", err)
 	}
 
@@ -332,6 +351,7 @@ func (e *FlexPayReconciliationExporter) populateProjectSheet(
 
 // updateSummarySheet updates the Summary sheet with totals and project breakdown
 func (e *FlexPayReconciliationExporter) updateSummarySheet(
+	ctx context.Context,
 	f *excelize.File,
 	reportData []*domainServices.ProjectFlexPayReportData,
 	summary *serviceports.PayrollReportSummary,
@@ -339,7 +359,17 @@ func (e *FlexPayReconciliationExporter) updateSummarySheet(
 	currencyStyleWhite, currencyStyleGray int,
 ) error {
 	summarySheet := "Summary"
-	whiteRowStyleID, err := e.buildSummaryRowStyle(f, false)
+	// Override the static beneficiary bank rows with the configured values.
+	if err := f.SetCellValue(summarySheet, "E8", e.resolveBankInfo(ctx).Holder); err != nil {
+		return fmt.Errorf("failed to set E8 bank holder: %w", err)
+	}
+	if err := f.SetCellValue(summarySheet, "E9", e.resolveBankInfo(ctx).Number); err != nil {
+		return fmt.Errorf("failed to set E9 bank number: %w", err)
+	}
+	if err := f.SetCellValue(summarySheet, "E10", e.resolveBankInfo(ctx).Name); err != nil {
+		return fmt.Errorf("failed to set E10 bank name: %w", err)
+	}
+	whiteRowStyleID, err := e.buildSummaryRowStyle(f,  false)
 	if err != nil {
 		return err
 	}

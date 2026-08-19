@@ -28,5 +28,5 @@ type PayrollReportSummary struct {
 // PayrollReportPort defines the interface for payroll report operations
 type PayrollReportPort interface {
 	GetProjectsForPayrollReport(ctx context.Context, atDate time.Time) ([]*domainServices.ProjectReportData, error)
-	GenerateExcel(reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *PayrollReportSummary, error)
+	GenerateExcel(ctx context.Context, reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *PayrollReportSummary, error)
 }

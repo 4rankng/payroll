@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMultipleSettings, useUpdateSetting } from '@/hooks/api/useSettings';
+import { useCreateSetting, useMultipleSettings, useUpdateSetting } from '@/hooks/api/useSettings';
 
 const SETTINGS_KEYS = {
   WEEKLY_PAYMENT_PERCENTAGE: 'bulk_transfer_payment_percentage',
@@ -8,6 +8,16 @@ const SETTINGS_KEYS = {
   BULK_TRANSFER_WORKBOOK_LIMIT_VND: 'bulk_transfer_workbook_limit_vnd',
   SELF_CHECK_IN_ADVANCE_PERCENTAGE: 'self_check_in_advance_percentage',
   SELF_CHECK_IN_ADVANCE_HOLD_HOURS: 'self_check_in_advance_hold_hours',
+  TRANSFER_BANK_HOLDER: 'transfer_bank_account_holder',
+  TRANSFER_BANK_NUMBER: 'transfer_bank_account_number',
+  TRANSFER_BANK_NAME: 'transfer_bank_name',
+} as const;
+
+// Defaults shown until the admin saves a value (must mirror backend defaults).
+const TRANSFER_BANK_DEFAULTS = {
+  HOLDER: 'CONG TY TNHH MTV GPPM TING TING',
+  NUMBER: '271866699',
+  NAME: 'Ngân hàng Quân đội (MB)',
 } as const;
 
 export interface SettingsFormState {
@@ -25,6 +35,12 @@ export interface SettingsFormState {
   originalSelfCheckInAdvancePercentage: string;
   selfCheckInAdvanceHoldHours: string;
   originalSelfCheckInAdvanceHoldHours: string;
+  transferBankHolder: string;
+  originalTransferBankHolder: string;
+  transferBankNumber: string;
+  originalTransferBankNumber: string;
+  transferBankName: string;
+  originalTransferBankName: string;
   loadError: string | null;
   isSaving: boolean;
   isLoading: boolean;
@@ -34,12 +50,16 @@ export interface SettingsFormState {
   setBulkTransferWorkbookLimitVnd: (v: string) => void;
   setSelfCheckInAdvancePercentage: (v: string) => void;
   setSelfCheckInAdvanceHoldHours: (v: string) => void;
+  setTransferBankHolder: (v: string) => void;
+  setTransferBankNumber: (v: string) => void;
+  setTransferBankName: (v: string) => void;
   handleSaveWeeklyPayment: () => void;
   handleSaveMonthlyPayment: () => void;
   handleSavePartnerCompany: () => void;
   handleSaveBulkTransferWorkbookLimitVnd: () => Promise<void>;
   handleSaveSelfCheckInAdvancePercentage: () => void;
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
+  handleSaveTransferBank: () => void;
   retryLoading: () => void;
 }
 
@@ -56,9 +76,13 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.BULK_TRANSFER_WORKBOOK_LIMIT_VND,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
+    SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
+    SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
+    SETTINGS_KEYS.TRANSFER_BANK_NAME,
   ]);
 
   const updateMutation = useUpdateSetting();
+  const createMutation = useCreateSetting();
 
   const [weeklyPaymentPercentage, setWeeklyPaymentPercentage] = useState('');
   const [originalWeeklyPayment, setOriginalWeeklyPayment] = useState('');
@@ -72,6 +96,12 @@ export function useSettingsForm(): SettingsFormState {
   const [originalSelfCheckInAdvancePercentage, setOriginalSelfCheckInAdvancePercentage] = useState('');
   const [selfCheckInAdvanceHoldHours, setSelfCheckInAdvanceHoldHours] = useState('');
   const [originalSelfCheckInAdvanceHoldHours, setOriginalSelfCheckInAdvanceHoldHours] = useState('');
+  const [transferBankHolder, setTransferBankHolder] = useState('');
+  const [originalTransferBankHolder, setOriginalTransferBankHolder] = useState('');
+  const [transferBankNumber, setTransferBankNumber] = useState('');
+  const [originalTransferBankNumber, setOriginalTransferBankNumber] = useState('');
+  const [transferBankName, setTransferBankName] = useState('');
+  const [originalTransferBankName, setOriginalTransferBankName] = useState('');
   const [bulkTransferWorkbookLimitSaveError, setBulkTransferWorkbookLimitSaveError] =
     useState<string | null>(null);
 
@@ -88,6 +118,15 @@ export function useSettingsForm(): SettingsFormState {
       );
       const selfCheckInAdvanceHoldHoursSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
+      );
+      const transferBankHolderSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
+      );
+      const transferBankNumberSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
+      );
+      const transferBankNameSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NAME,
       );
 
       if (weeklySetting?.value) {
@@ -116,6 +155,14 @@ export function useSettingsForm(): SettingsFormState {
         setSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
         setOriginalSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
       }
+      // Missing rows fall back to the shared defaults so admins see what is
+      // currently printed on statements before saving an override.
+      setTransferBankHolder(transferBankHolderSetting?.value ?? TRANSFER_BANK_DEFAULTS.HOLDER);
+      setOriginalTransferBankHolder(transferBankHolderSetting?.value ?? TRANSFER_BANK_DEFAULTS.HOLDER);
+      setTransferBankNumber(transferBankNumberSetting?.value ?? TRANSFER_BANK_DEFAULTS.NUMBER);
+      setOriginalTransferBankNumber(transferBankNumberSetting?.value ?? TRANSFER_BANK_DEFAULTS.NUMBER);
+      setTransferBankName(transferBankNameSetting?.value ?? TRANSFER_BANK_DEFAULTS.NAME);
+      setOriginalTransferBankName(transferBankNameSetting?.value ?? TRANSFER_BANK_DEFAULTS.NAME);
     }
   }, [settings]);
 
@@ -207,6 +254,42 @@ export function useSettingsForm(): SettingsFormState {
     }
   };
 
+  const handleSaveTransferBank = () => {
+    if (!settings || !Array.isArray(settings)) return;
+    const fields: Array<{
+      key: string;
+      value: string;
+      setting?: { id: number };
+    }> = [
+      { key: SETTINGS_KEYS.TRANSFER_BANK_HOLDER, value: transferBankHolder, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) },
+      { key: SETTINGS_KEYS.TRANSFER_BANK_NUMBER, value: transferBankNumber, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) },
+      { key: SETTINGS_KEYS.TRANSFER_BANK_NAME, value: transferBankName, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) },
+    ];
+    for (const field of fields) {
+      if (field.setting?.id) {
+        updateMutation.mutate(
+          { id: field.setting.id, data: { value: field.value } },
+          { onSuccess: () => {
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) setOriginalTransferBankHolder(field.value);
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) setOriginalTransferBankNumber(field.value);
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) setOriginalTransferBankName(field.value);
+          } },
+        );
+      } else {
+        // Row does not exist yet (e.g. first save on an environment where the
+        // key was never seeded) — create it.
+        createMutation.mutate(
+          { key: field.key, value: field.value, value_type: 'string' },
+          { onSuccess: () => {
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) setOriginalTransferBankHolder(field.value);
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) setOriginalTransferBankNumber(field.value);
+            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) setOriginalTransferBankName(field.value);
+          } },
+        );
+      }
+    }
+  };
+
   const retryLoading = () => {
     void refetch();
   };
@@ -226,6 +309,12 @@ export function useSettingsForm(): SettingsFormState {
     originalSelfCheckInAdvancePercentage,
     selfCheckInAdvanceHoldHours,
     originalSelfCheckInAdvanceHoldHours,
+    transferBankHolder,
+    originalTransferBankHolder,
+    transferBankNumber,
+    originalTransferBankNumber,
+    transferBankName,
+    originalTransferBankName,
     loadError,
     isSaving: updateMutation.isPending,
     isLoading,
@@ -235,12 +324,16 @@ export function useSettingsForm(): SettingsFormState {
     setBulkTransferWorkbookLimitVnd,
     setSelfCheckInAdvancePercentage,
     setSelfCheckInAdvanceHoldHours,
+    setTransferBankHolder,
+    setTransferBankNumber,
+    setTransferBankName,
     handleSaveWeeklyPayment,
     handleSaveMonthlyPayment,
     handleSavePartnerCompany,
     handleSaveBulkTransferWorkbookLimitVnd,
     handleSaveSelfCheckInAdvancePercentage,
     handleSaveSelfCheckInAdvanceHoldHours,
+    handleSaveTransferBank,
     retryLoading,
   };
 }

@@ -125,8 +125,8 @@ func TestPayrollStatementTemplatesKeepCompanyBeneficiaryReadable(t *testing.T) {
 			})
 
 			assertTemplateCell(t, workbook, tt.sheet, tt.holderCell, "CONG TY TNHH MTV GPPM TING TING")
-			assertTemplateCell(t, workbook, tt.sheet, tt.accountCell, "283866888")
-			assertTemplateCell(t, workbook, tt.sheet, tt.bankCell, "TECHCOMBANK")
+			assertTemplateCell(t, workbook, tt.sheet, tt.accountCell, "271866699")
+			assertTemplateCell(t, workbook, tt.sheet, tt.bankCell, "Ngân hàng Quân đội (MB)")
 
 			width, err := workbook.GetColWidth(tt.sheet, "E")
 			if err != nil {

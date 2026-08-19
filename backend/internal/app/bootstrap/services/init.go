@@ -164,7 +164,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	emailNotificationPublisher := notification.NewEmailNotificationPublisher(repos.Notification, logger)
 	payCycleNotificationPublisher := notification.NewPaymentCycleNotificationPublisher(repos.Notification, logger)
 	payrollReportByProjectService := payroll.NewPayrollReportByProjectService(repos.Timesheet, repos.Project, repos.Employee)
-	payrollReportByProjectExporter := payroll.NewPayrollReportByProjectExporter()
+	payrollReportByProjectExporter := payroll.NewPayrollReportByProjectExporter(settingsConfigService)
 	payrollReportAdapter := notification.NewPayrollReportAdapter(payrollReportByProjectService, payrollReportByProjectExporter)
 
 	// Select email provider based on environment
@@ -174,7 +174,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	} else {
 		emailProvider = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
-	emailService := notification.NewEmailService(cfg.Notification, emailProvider, payrollReportAdapter, repos.Notification, repos.User, emailNotificationPublisher, assetService, logger)
+	emailService := notification.NewEmailService(cfg.Notification, emailProvider, payrollReportAdapter, repos.Notification, repos.User, emailNotificationPublisher, assetService, settingsConfigService, logger)
 
 	// Create notification adapter port
 	notificationPort := notificationAdapter.NewEmailAdapter(notificationService, emailService)
@@ -335,7 +335,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	advancePaymentService := advance_payment.NewService(advancePaymentConfig, logger)
 
 	// Initialize FlexPay reconciliation exporter
-	flexPayReconciliationExporter := flex_pay.NewFlexPayReconciliationExporter()
+	flexPayReconciliationExporter := flex_pay.NewFlexPayReconciliationExporter(settingsConfigService)
 
 	// Initialize FlexPay settlement service
 	flexPaySettlementService := flex_pay.NewFlexPaySettlementService(

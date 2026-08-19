@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/app/services/excel"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/infra/observability"
@@ -36,6 +37,7 @@ type PayrollReportExcelData struct {
 type SettingsConfigProvider interface {
 	GetWeeklyPaymentPercentage(ctx context.Context) float64
 	GetAdvanceCashFeePercentage(ctx context.Context) float64
+	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
 }
 
 // PayrollReportExporter centralizes payroll report Excel generation so HTTP handlers
@@ -157,6 +159,12 @@ func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toD
 	sheetName := sheetList[0]
 	mainSheetIndex, _ := f.GetSheetIndex(sheetName)
 	excelService := excel.NewExportService()
+
+	// Override the static beneficiary bank rows with the configured values.
+	bankInfo := e.resolveBankInfo(ctx)
+	if err := writeBankInfoCells(f, sheetName, "E9", "E10", "E11", bankInfo); err != nil {
+		return nil, nil, fmt.Errorf("failed to write bank info cells: %w", err)
+	}
 
 	dataStyleWhite, err := excelService.SetupDataStyle(f, false)
 	if err != nil {
@@ -287,6 +295,31 @@ func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toD
 	}
 
 	return buffer.Bytes(), summary, nil
+}
+
+// resolveBankInfo returns the configured beneficiary bank details, falling
+// back to defaults when no settings provider is bound.
+func (e *PayrollReportExporter) resolveBankInfo(ctx context.Context) appconfig.TransferBankInfo {
+	if e.settingsConfigService == nil {
+		return appconfig.DefaultTransferBankInfo()
+	}
+	return e.settingsConfigService.GetTransferBankInfo(ctx)
+}
+
+// writeBankInfoCells writes the beneficiary holder, account number, and bank
+// name into the template's static bank rows.
+func writeBankInfoCells(f *excelize.File, sheetName, holderCell, numberCell, nameCell string, bankInfo appconfig.TransferBankInfo) error {
+	cells := map[string]string{
+		holderCell: bankInfo.Holder,
+		numberCell: bankInfo.Number,
+		nameCell:   bankInfo.Name,
+	}
+	for cell, value := range cells {
+		if err := f.SetCellValue(sheetName, cell, value); err != nil {
+			return fmt.Errorf("failed to set %s: %w", cell, err)
+		}
+	}
+	return nil
 }
 
 func sortStrings(values []string) {

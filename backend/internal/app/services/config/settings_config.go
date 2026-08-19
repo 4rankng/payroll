@@ -22,7 +22,18 @@ const (
 	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
 	SettingKeySelfCheckInAdvancePercent = "self_check_in_advance_percentage"
 	SettingKeySelfCheckInAdvanceHold    = "self_check_in_advance_hold_hours"
+	SettingKeyTransferBankHolder        = "transfer_bank_account_holder"
+	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
+	SettingKeyTransferBankName          = "transfer_bank_name"
 )
+
+// TransferBankInfo carries the beneficiary identity printed on payroll
+// statements (email body and Excel attachment).
+type TransferBankInfo struct {
+	Holder string
+	Number string
+	Name   string
+}
 
 // Default values
 const (
@@ -38,7 +49,22 @@ const (
 	MinBulkTransferWorkbookLimit     = int64(2)
 	MaxSelfCheckInAdvanceHoldHours   = uint64(720)
 	CacheTTL                         = constants.SettingsCacheTTL // Use centralized cache TTL
+
+	// Defaults for the beneficiary bank printed on payroll statements.
+	DefaultTransferBankHolder = "CONG TY TNHH MTV GPPM TING TING"
+	DefaultTransferBankNumber = "271866699"
+	DefaultTransferBankName   = "Ngân hàng Quân đội (MB)"
 )
+
+// DefaultTransferBankInfo returns the fallback beneficiary bank details used
+// when the settings rows are not configured.
+func DefaultTransferBankInfo() TransferBankInfo {
+	return TransferBankInfo{
+		Holder: DefaultTransferBankHolder,
+		Number: DefaultTransferBankNumber,
+		Name:   DefaultTransferBankName,
+	}
+}
 
 // Validation constants for advance payment
 const (
@@ -413,6 +439,45 @@ func (s *SettingsConfigService) GetPartnerCompany(ctx context.Context) string {
 	s.setCache(SettingKeyPartnerCompany, value)
 
 	return value
+}
+
+// getTransferBankString reads one transfer-bank string setting with caching,
+// falling back to defaultValue when the row is missing or empty.
+func (s *SettingsConfigService) getTransferBankString(ctx context.Context, key, defaultValue string) string {
+	if s.settingsService == nil {
+		return defaultValue
+	}
+
+	if cached, ok := s.getFromCache(key); ok {
+		return cached.(string)
+	}
+
+	setting, err := s.settingsService.GetSettingByKey(ctx, key)
+	if err != nil {
+		observability.GetLogger().Warn("failed to get transfer bank setting, using default", "key", key, "error", err)
+		return defaultValue
+	}
+
+	value := setting.GetStringValue()
+	if value == "" {
+		observability.GetLogger().Warn("transfer bank setting is empty, using default", "key", key)
+		return defaultValue
+	}
+
+	s.setCache(key, value)
+
+	return value
+}
+
+// GetTransferBankInfo retrieves the beneficiary bank details printed on
+// payroll statement emails and Excel attachments. Unconfigured rows fall back
+// to the MB bank defaults.
+func (s *SettingsConfigService) GetTransferBankInfo(ctx context.Context) TransferBankInfo {
+	return TransferBankInfo{
+		Holder: s.getTransferBankString(ctx, SettingKeyTransferBankHolder, DefaultTransferBankHolder),
+		Number: s.getTransferBankString(ctx, SettingKeyTransferBankNumber, DefaultTransferBankNumber),
+		Name:   s.getTransferBankString(ctx, SettingKeyTransferBankName, DefaultTransferBankName),
+	}
 }
 
 // GetAdvancePaymentPercentage retrieves the advance payment percentage setting (with caching)

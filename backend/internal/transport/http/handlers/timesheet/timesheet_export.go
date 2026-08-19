@@ -167,7 +167,7 @@ func (h *Handler) PayrollReportExport(c *gin.Context) {
 		}
 
 		var buf []byte
-		buf, _, err = h.payrollReportByProjectExporter.GenerateExcel(reportData, fromDate)
+		buf, _, err = h.payrollReportByProjectExporter.GenerateExcel(c.Request.Context(), reportData, fromDate)
 		if err != nil {
 			response.InternalServerError(c, constants.MsgFailedToGeneratePayrollReportVN)
 			return
@@ -198,7 +198,7 @@ func (h *Handler) PayrollReportExport(c *gin.Context) {
 		}
 
 		var buf []byte
-		buf, _, err = h.payrollReportByProjectExporter.GenerateExcel(reportData, atDate)
+		buf, _, err = h.payrollReportByProjectExporter.GenerateExcel(c.Request.Context(), reportData, atDate)
 		if err != nil {
 			response.InternalServerError(c, constants.MsgFailedToGeneratePayrollReportVN)
 			return

@@ -381,7 +381,7 @@ func (h *AdvancePaymentHandler) ExportReconciliation(c *gin.Context) {
 	atDate := time.Date(parsedMonth.Year(), parsedMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
 
 	// Generate Excel file
-	excelBytes, summary, err := h.flexPayReconciliationExporter.GenerateExcel(reportData, atDate)
+	excelBytes, summary, err := h.flexPayReconciliationExporter.GenerateExcel(c.Request.Context(), reportData, atDate)
 	if err != nil {
 		logger.Error("Failed to generate Excel", "error", err)
 		response.InternalServerError(c, constants.MsgFailedToGenerateReconciliationFileVN)

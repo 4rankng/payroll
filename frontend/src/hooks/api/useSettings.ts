@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsService } from '@/services/api/settings.service';
 import { QueryKeys } from '@/lib/queryKeys';
 import { showSuccessNotification } from '@/utils/error-handler';
-import type { SettingsFilters, UpdateSettingData } from '@/types/api/settings.types';
+import type { CreateSettingData, SettingsFilters, UpdateSettingData } from '@/types/api/settings.types';
 
 // Get paginated settings list
 export const useSettings = (filters?: SettingsFilters) => {
@@ -49,11 +49,29 @@ export const useUpdateSetting = () => {
   });
 };
 
-// Get multiple settings by keys
+// Create setting (upsert path for keys that may not exist yet)
+export const useCreateSetting = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateSettingData) => settingsService.createSetting(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.settings.all });
+    },
+  });
+};
+
+// Get multiple settings by keys. Missing keys (never-configured rows) resolve
+// to undefined instead of failing the whole query.
 export const useMultipleSettings = (keys: string[]) => {
   return useQuery({
     queryKey: [...QueryKeys.settings.all, 'multiple', keys],
-    queryFn: () => Promise.all(keys.map((key) => settingsService.getSettingByKey(key))),
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        keys.map((key) => settingsService.getSettingByKey(key)),
+      );
+      return results.map((result) => (result.status === 'fulfilled' ? result.value : undefined));
+    },
     enabled: keys.length > 0,
   });
 };

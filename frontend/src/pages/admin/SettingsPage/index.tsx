@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Settings, Percent, Building2, Receipt, Mail, Bell, AlertCircle, RefreshCw, MessageCircle } from 'lucide-react';
+import { Settings, Percent, Building2, Receipt, Mail, Bell, AlertCircle, RefreshCw, MessageCircle, Landmark } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -256,6 +256,58 @@ const SettingsPage = () => {
                 onSave={form.handleSavePartnerCompany}
                 onReset={() => form.setPartnerCompany(form.originalPartnerCompany)}
                 isDirty={form.partnerCompany !== form.originalPartnerCompany}
+                isSaving={form.isSaving}
+              />
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-500/10">
+                <Landmark className="h-3.5 w-3.5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold">Thông tin tài khoản nhận chuyển khoản</h2>
+                <p className="text-xs text-muted-foreground">
+                  Hiển thị trên email sao kê và file Excel đính kèm
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <SettingCard
+                title="Chủ tài khoản"
+                description="Tên chủ tài khoản thụ hưởng in trên sao kê"
+                value={form.transferBankHolder}
+                originalValue={form.originalTransferBankHolder}
+                onChange={form.setTransferBankHolder}
+                onSave={form.handleSaveTransferBank}
+                onReset={() => form.setTransferBankHolder(form.originalTransferBankHolder)}
+                isDirty={form.transferBankHolder !== form.originalTransferBankHolder}
+                isSaving={form.isSaving}
+              />
+              <SettingCard
+                title="Số tài khoản"
+                description="Số tài khoản nhận chuyển khoản in trên sao kê"
+                value={form.transferBankNumber}
+                originalValue={form.originalTransferBankNumber}
+                onChange={form.setTransferBankNumber}
+                onSave={form.handleSaveTransferBank}
+                onReset={() => form.setTransferBankNumber(form.originalTransferBankNumber)}
+                isDirty={form.transferBankNumber !== form.originalTransferBankNumber}
+                isSaving={form.isSaving}
+                displayMode="account-number"
+              />
+              <SettingCard
+                title="Ngân hàng"
+                description="Tên ngân hàng in trên sao kê"
+                value={form.transferBankName}
+                originalValue={form.originalTransferBankName}
+                onChange={form.setTransferBankName}
+                onSave={form.handleSaveTransferBank}
+                onReset={() => form.setTransferBankName(form.originalTransferBankName)}
+                isDirty={form.transferBankName !== form.originalTransferBankName}
                 isSaving={form.isSaving}
               />
             </div>

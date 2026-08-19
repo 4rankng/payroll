@@ -1,6 +1,7 @@
 package notification
 
 import (
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/utils"
 	"context"
@@ -31,7 +32,14 @@ type EmailService struct {
 	userRepo         domain.UserRepository
 	eventPublisher   domain.EmailEventPublisher
 	assetSvc         AssetStoragePort
+	bankSettings     TransferBankInfoProvider
 	logger           *slog.Logger
+}
+
+// TransferBankInfoProvider supplies beneficiary bank details for payroll
+// statement emails. Implemented by *config.SettingsConfigService.
+type TransferBankInfoProvider interface {
+	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
 }
 
 const (
@@ -56,6 +64,7 @@ func NewEmailService(
 	userRepo domain.UserRepository,
 	eventPublisher domain.EmailEventPublisher,
 	assetSvc AssetStoragePort,
+	bankSettings TransferBankInfoProvider,
 	logger *slog.Logger,
 ) *EmailService {
 	return &EmailService{
@@ -66,6 +75,7 @@ func NewEmailService(
 		userRepo:         userRepo,
 		eventPublisher:   eventPublisher,
 		assetSvc:         assetSvc,
+		bankSettings:     bankSettings,
 		logger:           logger,
 	}
 }
@@ -119,12 +129,12 @@ func (s *EmailService) SendPayrollReportEmail(ctx context.Context, payload *dto.
 		return "", domain.NewValidationError(constants.MsgNoPayrollDataForPeriodVN)
 	}
 
-	reportBytes, summary, err := s.payrollReportSvc.GenerateExcel(reportData, reportAtDate)
+	reportBytes, summary, err := s.payrollReportSvc.GenerateExcel(ctx, reportData, reportAtDate)
 	if err != nil {
 		return "", domain.NewInternalError(constants.MsgFailedToGeneratePayrollEmailReportVN, err)
 	}
 
-	msg, err := s.buildPayrollReportMessage(payload, reportAtDate, summary, reportBytes)
+	msg, err := s.buildPayrollReportMessage(ctx, payload, reportAtDate, summary, reportBytes)
 	if err != nil {
 		return "", err
 	}
@@ -517,7 +527,7 @@ func (s *EmailService) buildGenericMessage(payload *dto.SendEmailRequest) (*doma
 	return msg, nil
 }
 
-func (s *EmailService) buildPayrollReportMessage(payload *dto.SendPayrollReportEmailRequest, reportAtDate time.Time, summary *services.PayrollReportSummary, reportBytes []byte) (*domain.EmailMessage, error) {
+func (s *EmailService) buildPayrollReportMessage(ctx context.Context, payload *dto.SendPayrollReportEmailRequest, reportAtDate time.Time, summary *services.PayrollReportSummary, reportBytes []byte) (*domain.EmailMessage, error) {
 	recipients := chooseAddresses(payload.Recipients, s.cfg.DefaultRecipients)
 	if len(recipients) == 0 {
 		return nil, domain.NewValidationError(constants.MsgRecipientsCannotBeEmptyVN)
@@ -567,7 +577,8 @@ func (s *EmailService) buildPayrollReportMessage(payload *dto.SendPayrollReportE
 	feeAmount := utils.FormatNumber(feeAmountValue) + " đ"
 	totalCollect := utils.FormatNumber(totalWithFee) + " đ"
 
-	htmlBody, err := renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect)
+	bankInfo := s.resolveBankInfo(ctx)
+	htmlBody, err := renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect, bankInfo)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToRenderPayrollEmailTemplateVN, err)
 	}
@@ -739,7 +750,16 @@ func chooseAddresses(requested, defaults []string) []string {
 	return defaults
 }
 
-func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string) (string, error) {
+// resolveBankInfo returns the configured beneficiary bank details for payroll
+// statement emails, falling back to defaults when no provider is bound.
+func (s *EmailService) resolveBankInfo(ctx context.Context) appconfig.TransferBankInfo {
+	if s.bankSettings == nil {
+		return appconfig.DefaultTransferBankInfo()
+	}
+	return s.bankSettings.GetTransferBankInfo(ctx)
+}
+
+func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string, bankInfo appconfig.TransferBankInfo) (string, error) {
 	content, err := os.ReadFile(pkgConstants.PayrollEmailTemplatePath)
 	if err != nil {
 		return "", err
@@ -756,6 +776,9 @@ func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string) (
 		"TotalPaid":    totalPaid,
 		"FeeAmount":    feeAmount,
 		"TotalCollect": totalCollect,
+		"BankHolder":   bankInfo.Holder,
+		"BankNumber":   bankInfo.Number,
+		"BankName":     bankInfo.Name,
 	}
 
 	if err := tmpl.Execute(&builder, data); err != nil {

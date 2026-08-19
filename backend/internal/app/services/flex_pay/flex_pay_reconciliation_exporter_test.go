@@ -1,6 +1,7 @@
 package flex_pay
 
 import (
+	"context"
 	"archive/zip"
 	"bytes"
 	"encoding/xml"
@@ -52,7 +53,7 @@ func TestGenerateExcelDoesNotCreateOrphanedTableRelationships(t *testing.T) {
 		},
 	}
 
-	bytes, _, err := NewFlexPayReconciliationExporter().GenerateExcel(reportData, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC))
+	bytes, _, err := NewFlexPayReconciliationExporter(nil).GenerateExcel(context.Background(), reportData, time.Date(2026, time.June, 1, 0, 0, 0, 0, time.UTC))
 	require.NoError(t, err)
 	require.NoError(t, assertNoOrphanedWorksheetTableRelationships(bytes))
 	require.NoError(t, assertContiguousWorksheetParts(bytes))

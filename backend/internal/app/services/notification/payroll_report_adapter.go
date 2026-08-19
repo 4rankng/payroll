@@ -32,8 +32,8 @@ func (a *PayrollReportAdapter) GetProjectsForPayrollReport(ctx context.Context, 
 }
 
 // GenerateExcel generates Excel report and returns bytes with summary
-func (a *PayrollReportAdapter) GenerateExcel(reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *services.PayrollReportSummary, error) {
-	bytes, summary, err := a.exporterService.GenerateExcel(reportData, atDate)
+func (a *PayrollReportAdapter) GenerateExcel(ctx context.Context, reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *services.PayrollReportSummary, error) {
+	bytes, summary, err := a.exporterService.GenerateExcel(ctx, reportData, atDate)
 	if err != nil {
 		return nil, nil, err
 	}

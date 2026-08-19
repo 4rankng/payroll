@@ -18,7 +18,7 @@ interface SettingCardProps {
   type?: 'text' | 'number';
   suffix?: string;
   inputClassName?: string;
-  displayMode?: 'default' | 'currency-vnd';
+  displayMode?: 'default' | 'currency-vnd' | 'account-number';
   errorMessage?: string | null;
   unavailableMessage?: string | null;
   onRetry?: () => void;
@@ -49,11 +49,17 @@ const validateValue = (
   type: 'text' | 'number',
   min: number | string,
   max: number | string,
-  displayMode: 'default' | 'currency-vnd',
+  displayMode: 'default' | 'currency-vnd' | 'account-number',
   wholeNumber: boolean,
 ): { isValid: boolean; errorMessage?: string } => {
   if (!value || value.trim() === '') {
     return { isValid: false, errorMessage: 'Giá trị không được để trống' };
+  }
+  if (displayMode === 'account-number') {
+    if (!/^\d{6,24}$/.test(value)) {
+      return { isValid: false, errorMessage: 'Số tài khoản chỉ gồm chữ số (6-24 số)' };
+    }
+    return { isValid: true };
   }
   if (displayMode === 'currency-vnd') {
     if (!/^\d+$/.test(value)) {
@@ -171,8 +177,12 @@ export const SettingCard = ({
               id={inputId}
               name={inputId}
               autoComplete="off"
-              type={displayMode === 'currency-vnd' ? 'text' : type}
-              inputMode={displayMode === 'currency-vnd' ? 'numeric' : undefined}
+              type={displayMode === 'currency-vnd' || displayMode === 'account-number' ? 'text' : type}
+              inputMode={
+                displayMode === 'currency-vnd' || displayMode === 'account-number'
+                  ? 'numeric'
+                  : undefined
+              }
               value={displayValue}
               onChange={(event) => handleValueChange(event.target.value)}
               disabled={isSaving || isUnavailable}
@@ -180,6 +190,7 @@ export const SettingCard = ({
                 'h-11 min-w-0 text-base font-medium',
                 visibleSuffix && 'pr-8',
                 displayMode === 'currency-vnd' && 'text-right tabular-nums',
+                displayMode === 'account-number' && 'tabular-nums',
                 hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',
                 isDirty && !hasVisibleError && 'border-amber-400 focus-visible:ring-amber-400/20',
                 inputClassName

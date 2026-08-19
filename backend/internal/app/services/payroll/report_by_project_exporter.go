@@ -1,12 +1,14 @@
 package payroll
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sort"
 	"strings"
 	"time"
 
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/app/services/excel"
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
@@ -16,20 +18,28 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// TransferBankInfoProvider supplies beneficiary bank details for payroll
+// statement Excel exports. Implemented by *config.SettingsConfigService.
+type TransferBankInfoProvider interface {
+	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
+}
+
 // PayrollReportByProjectExporter handles Excel generation for payroll report by project
 type PayrollReportByProjectExporter struct {
-	logger *slog.Logger
+	logger       *slog.Logger
+	bankSettings TransferBankInfoProvider
 }
 
 // NewPayrollReportByProjectExporter creates a new exporter
-func NewPayrollReportByProjectExporter() *PayrollReportByProjectExporter {
+func NewPayrollReportByProjectExporter(bankSettings TransferBankInfoProvider) *PayrollReportByProjectExporter {
 	return &PayrollReportByProjectExporter{
-		logger: observability.GetLogger(),
+		logger:       observability.GetLogger(),
+		bankSettings: bankSettings,
 	}
 }
 
 // GenerateExcel creates a multi-sheet Excel file with project payroll reports
-func (e *PayrollReportByProjectExporter) GenerateExcel(reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *PayrollReportSummary, error) {
+func (e *PayrollReportByProjectExporter) GenerateExcel(ctx context.Context, reportData []*domainServices.ProjectReportData, atDate time.Time) ([]byte, *PayrollReportSummary, error) {
 	e.logger.Info("Starting Excel generation",
 		"projectCount", len(reportData),
 		"atDate", atDate.Format("2006-01-02"))
@@ -164,7 +174,7 @@ func (e *PayrollReportByProjectExporter) GenerateExcel(reportData []*domainServi
 	// Update Summary sheet
 	summary := e.buildSummary(totalAmountAllProjects, atDate)
 
-	if err := e.updateSummarySheet(f, reportData, summary, atDate, currencyStyleWhite, currencyStyleGray); err != nil {
+	if err := e.updateSummarySheet(ctx, f, reportData, summary, atDate, currencyStyleWhite, currencyStyleGray); err != nil {
 		return nil, nil, fmt.Errorf("failed to update summary sheet: %w", err)
 	}
 
@@ -197,6 +207,15 @@ func (e *PayrollReportByProjectExporter) GenerateExcel(reportData []*domainServi
 		"fileSize", len(excelBytes))
 
 	return excelBytes, summary, nil
+}
+
+// resolveBankInfo returns the configured beneficiary bank details, falling
+// back to defaults when no settings provider is bound.
+func (e *PayrollReportByProjectExporter) resolveBankInfo(ctx context.Context) appconfig.TransferBankInfo {
+	if e.bankSettings == nil {
+		return appconfig.DefaultTransferBankInfo()
+	}
+	return e.bankSettings.GetTransferBankInfo(ctx)
 }
 
 func (e *PayrollReportByProjectExporter) buildSummary(totalAmount int64, atDate time.Time) *PayrollReportSummary {
@@ -521,6 +540,7 @@ func (e *PayrollReportByProjectExporter) populateProjectSheet(
 
 // updateSummarySheet updates the Summary sheet with totals and project breakdown
 func (e *PayrollReportByProjectExporter) updateSummarySheet(
+	ctx context.Context,
 	f *excelize.File,
 	reportData []*domainServices.ProjectReportData,
 	summary *PayrollReportSummary,
@@ -528,6 +548,10 @@ func (e *PayrollReportByProjectExporter) updateSummarySheet(
 	currencyStyleWhite, currencyStyleGray int,
 ) error {
 	summarySheet := "Summary"
+	// Override the static beneficiary bank rows with the configured values.
+	if err := writeBankInfoCells(f, summarySheet, "E8", "E9", "E10", e.resolveBankInfo(ctx)); err != nil {
+		return fmt.Errorf("failed to write bank info cells: %w", err)
+	}
 	whiteRowStyleID, err := e.buildSummaryRowStyle(f, false)
 	if err != nil {
 		return err

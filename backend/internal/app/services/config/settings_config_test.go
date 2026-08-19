@@ -256,3 +256,56 @@ func TestParseSelfCheckInAdvancePercentBoundaries(t *testing.T) {
 func stringPointer(value string) *string {
 	return &value
 }
+
+func stringSetting(key, value string) *domain.Settings {
+	v := value
+	return &domain.Settings{
+		Key:       key,
+		Value:     &v,
+		ValueType: domain.ValueTypeString,
+	}
+}
+
+func TestGetTransferBankInfoReturnsConfiguredValues(t *testing.T) {
+	values := map[string]string{
+		SettingKeyTransferBankHolder: "TEN CONG TY MOI",
+		SettingKeyTransferBankNumber: "999888777",
+		SettingKeyTransferBankName:   "Ngân hàng Test (TT)",
+	}
+	reader := &keyedStubSettingReader{values: values}
+	service := NewSettingsConfigService(reader)
+
+	info := service.GetTransferBankInfo(context.Background())
+	assert.Equal(t, "TEN CONG TY MOI", info.Holder)
+	assert.Equal(t, "999888777", info.Number)
+	assert.Equal(t, "Ngân hàng Test (TT)", info.Name)
+}
+
+type keyedStubSettingReader struct {
+	values map[string]string
+}
+
+func (s *keyedStubSettingReader) GetSettingByKey(_ context.Context, key string) (*domain.Settings, error) {
+	value, ok := s.values[key]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return stringSetting(key, value), nil
+}
+
+func (s *keyedStubSettingReader) GetSettingByKeyAuthoritative(ctx context.Context, key string) (*domain.Settings, error) {
+	return s.GetSettingByKey(ctx, key)
+}
+
+func (s *keyedStubSettingReader) GetSettingByKeyAuthoritativeForUpdate(ctx context.Context, key string) (*domain.Settings, error) {
+	return s.GetSettingByKey(ctx, key)
+}
+
+func TestGetTransferBankInfoFallsBackToDefaults(t *testing.T) {
+	service := NewSettingsConfigService(&stubSettingReader{setting: nil, err: errors.New("not found")})
+
+	info := service.GetTransferBankInfo(context.Background())
+	assert.Equal(t, DefaultTransferBankHolder, info.Holder)
+	assert.Equal(t, DefaultTransferBankNumber, info.Number)
+	assert.Equal(t, DefaultTransferBankName, info.Name)
+}

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
 	serviceports "api-server/internal/domain/ports/services"
@@ -25,6 +26,7 @@ func TestRenderPayrollTemplateUsesResponsiveFinancialLayout(t *testing.T) {
 		"2.069.229.050 đ",
 		"41.384.581 đ",
 		"2.110.613.631 đ",
+		appconfig.DefaultTransferBankInfo(),
 	)
 	if err != nil {
 		t.Fatalf("render payroll email template: %v", err)
@@ -45,8 +47,8 @@ func TestRenderPayrollTemplateUsesResponsiveFinancialLayout(t *testing.T) {
 		{name: "rendered total collect", want: `2.110.613.631 đ`},
 		{name: "rendered due date", want: `15/08/2026`},
 		{name: "beneficiary", want: `CONG TY TNHH MTV GPPM TING TING`},
-		{name: "account number", want: `283866888`},
-		{name: "bank", want: `TECHCOMBANK`},
+		{name: "account number", want: `271866699`},
+		{name: "bank", want: `Ngân hàng Quân đội (MB)`},
 	}
 
 	for _, check := range checks {
@@ -67,6 +69,7 @@ func TestPayrollTemplateStaysAlignedAfterProviderBranding(t *testing.T) {
 	reportBytes := []byte("xlsx-content")
 	service := &EmailService{}
 	message, err := service.buildPayrollReportMessage(
+		context.Background(),
 		&dto.SendPayrollReportEmailRequest{Recipients: []string{"recipient@example.com"}},
 		reportDate,
 		&serviceports.PayrollReportSummary{

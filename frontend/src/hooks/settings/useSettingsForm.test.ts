@@ -60,6 +60,10 @@ vi.mock('@/hooks/api/useSettings', () => ({
     mutateAsync: mocks.mutateAsync,
     isPending: false,
   }),
+  useCreateSetting: () => ({
+    mutate: mocks.mutate,
+    isPending: false,
+  }),
 }));
 
 describe('useSettingsForm', () => {
