@@ -74,11 +74,11 @@ func BuildSaoKeEmailBodies(forMonth, dueDate, totalCollect string) (htmlBody, te
                       </tr>
                       <tr>
                         <td style="padding:14px 18px;border-bottom:1px solid #edf2f7;color:#64748b;font-size:14px;line-height:20px;">Số tài khoản</td>
-                        <td align="right" style="padding:14px 18px;border-bottom:1px solid #edf2f7;color:#111827;font-size:14px;line-height:20px;font-weight:700;">283866888</td>
+                        <td align="right" style="padding:14px 18px;border-bottom:1px solid #edf2f7;color:#111827;font-size:14px;line-height:20px;font-weight:700;">271866699</td>
                       </tr>
                       <tr>
                         <td style="padding:14px 18px;color:#64748b;font-size:14px;line-height:20px;">Ngân hàng</td>
-                        <td align="right" style="padding:14px 18px;color:#111827;font-size:14px;line-height:20px;font-weight:700;">TECHCOMBANK</td>
+                        <td align="right" style="padding:14px 18px;color:#111827;font-size:14px;line-height:20px;font-weight:700;">Ngân hàng Quân đội (MB)</td>
                       </tr>
                     </table>
                   </td>
@@ -114,8 +114,8 @@ Tổng tiền thanh toán: %s
 
 Thông tin chuyển khoản:
 Chủ tài khoản: CONG TY TNHH MTV GPPM TING TING
-Số tài khoản: 283866888
-Ngân hàng: TECHCOMBANK
+Số tài khoản: 271866699
+Ngân hàng: Ngân hàng Quân đội (MB)
 
 Trân trọng cảm ơn Quý Công Ty đã hợp tác và tin tưởng sử dụng dịch vụ.
 

@@ -54,3 +54,19 @@ func TestBuildSaoKeEmailBodiesUsesPublicBannerURL(t *testing.T) {
 		t.Fatalf("expected text thank-you sentence not to include TING TING SOFT")
 	}
 }
+
+func TestBuildSaoKeEmailBodiesUsesMBTransferDetails(t *testing.T) {
+	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 đ")
+
+	for _, body := range []string{htmlBody, textBody} {
+		if !strings.Contains(body, "271866699") {
+			t.Fatalf("expected transfer details to include MB account number")
+		}
+		if !strings.Contains(body, "Ngân hàng Quân đội (MB)") {
+			t.Fatalf("expected transfer details to include MB bank name")
+		}
+		if strings.Contains(body, "283866888") || strings.Contains(body, "TECHCOMBANK") {
+			t.Fatalf("expected legacy Techcombank transfer details to be absent")
+		}
+	}
+}
