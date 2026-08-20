@@ -51,7 +51,7 @@ CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details` 
 
 ### Projects (`/api/v1/projects`)
 
-CRUD, payrates per project, timesheets per project, entry table, employee assignment, `POST /activate`, partner summary, `PATCH /:id/employees/:employeeId/checkin-enabled`.
+CRUD, payrates per project, timesheets per project, entry table, employee assignment, `POST /activate`, partner summary, `PATCH /:id/employees/:employeeId/checkin-enabled` (enable defers to day 1 of next month; disable is instant), `DELETE /:id/employees/:employeeId/checkin-enabled` (cancel a pending enable), `PATCH /:id/employees/checkin-enabled/bulk`.
 
 ### Project Employees (`/api/v1/project-employees`)
 
