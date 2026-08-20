@@ -38,6 +38,9 @@ const (
 type EmployeeScheduleInfo struct {
 	PaymentSchedule             string
 	CheckInEnabled              bool
+	// Deferred check-in activation: enable is pending until day 1 of next month.
+	PendingCheckInEnabled       bool
+	CheckInEffectiveFrom        *time.Time
 	CheckInTargetStatus         CheckInTargetStatus
 	CheckInTarget               *CheckInTargetInfo
 	CheckInGeofenceRadiusMeters *uint
@@ -140,6 +143,10 @@ func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, em
 		if assignment.LastDate == nil {
 			if assignment.CheckInEnabled {
 				info.CheckInEnabled = true
+			}
+			if !info.CheckInEnabled && assignment.HasPendingCheckInEnable() {
+				info.PendingCheckInEnabled = true
+				info.CheckInEffectiveFrom = assignment.CheckInEffectiveFrom
 			}
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
 				info.PaymentSchedule = string(domain.PaymentScheduleFlexible)

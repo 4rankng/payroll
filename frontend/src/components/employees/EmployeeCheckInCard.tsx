@@ -75,6 +75,10 @@ function safeFormatTime(time: string | undefined | null, fallback = "--:--"): st
 interface EmployeeCheckInCardProps {
   className?: string;
   checkInTarget?: CheckInTarget | null;
+  /** Deferred activation: when set, the service is pending and this date is
+   *  when it activates (day 1 of next month). Renders a countdown-only card. */
+  pendingEffectiveFrom?: string;
+  isPendingActivation?: boolean;
   /** Advisory shift window (from the profile DTO). Null/absent = no timing gate. */
   shiftStart?: string;
   shiftEnd?: string;
@@ -376,6 +380,8 @@ export function AttendanceReference({
 export function EmployeeCheckInCard({
   className,
   checkInTarget,
+  pendingEffectiveFrom,
+  isPendingActivation,
   shiftStart,
   shiftEnd,
   checkInWindowStart,
@@ -802,6 +808,39 @@ export function EmployeeCheckInCard({
     }
     previousWithinWindow.current = withinWindow;
   }, [withinWindow]);
+
+  // Deferred activation: the check-in service was enabled by an admin but has
+  // not activated yet (activates day 1 of next month). Show a countdown-only
+  // card — no check-in/out actions, no geofence reference.
+  if (isPendingActivation) {
+    const effectiveLabel = pendingEffectiveFrom
+      ? format(new Date(pendingEffectiveFrom), "dd/MM")
+      : "ngày 1 tháng sau";
+    return (
+      <>
+        <div
+          className={`rounded-2xl border border-slate-200 bg-white p-4 ${className ?? ""}`}
+          style={style}
+        >
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <CalendarClock className="h-8 w-8 text-[var(--employee-accent)]" aria-hidden="true" />
+            <p className="employee-type-card-title text-[var(--employee-text)]">
+              Dịch vụ tự chấm công sẽ kích hoạt từ {effectiveLabel}
+            </p>
+            <p className="employee-type-body-sm text-[var(--employee-text-secondary)]">
+              Khi dịch vụ kích hoạt, bạn có thể chấm công và tan ca tại đây.
+            </p>
+          </div>
+        </div>
+        <EmployeeAttendanceActionDock
+          action="loading"
+          actionLabel="Chưa kích hoạt"
+          actionDisabled
+          onAdvanceRequest={onAdvanceRequest}
+        />
+      </>
+    );
+  }
 
   if (isLoading) {
     return (

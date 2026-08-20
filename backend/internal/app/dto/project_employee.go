@@ -80,9 +80,12 @@ type ProjectEmployeeAssignmentResponse struct {
 	PendingPaymentSchedule *string    `json:"pending_payment_schedule,omitempty"`
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 	CheckInEnabled         bool       `json:"check_in_enabled"`
-	CreatedBy              uint       `json:"created_by"`
-	CreatedAt              time.Time  `json:"created_at"`
-	UpdatedAt              time.Time  `json:"updated_at"`
+	// Deferred check-in activation: enable is pending until day 1 of next month.
+	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty"`
+	CreatedBy             uint       `json:"created_by"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 // ProjectEmployeeResponse represents the response for listing employees (GET /projects/:id/employees)
@@ -101,9 +104,12 @@ type ProjectEmployeeResponse struct {
 	PendingPaymentSchedule *string    `json:"pending_payment_schedule,omitempty"`
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 	CheckInEnabled         bool       `json:"check_in_enabled"`
-	CreatedBy              uint       `json:"created_by"`
-	CreatedAt              time.Time  `json:"created_at"`
-	UpdatedAt              time.Time  `json:"updated_at"`
+	// Deferred check-in activation: enable is pending until day 1 of next month.
+	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty"`
+	CreatedBy             uint       `json:"created_by"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 // ListProjectEmployeesResponse represents the response for listing project employee assignments
@@ -127,9 +133,12 @@ type ProjectEmployeeWithDetailsResponse struct {
 	PendingPaymentSchedule *string    `json:"pending_payment_schedule,omitempty"`
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 	CheckInEnabled         bool       `json:"check_in_enabled"`
-	CreatedBy              uint       `json:"created_by"`
-	CreatedAt              time.Time  `json:"created_at"`
-	UpdatedAt              time.Time  `json:"updated_at"`
+	// Deferred check-in activation: enable is pending until day 1 of next month.
+	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty"`
+	CreatedBy             uint       `json:"created_by"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 
 	// Project details
 	ProjectName   string `json:"project_name"`

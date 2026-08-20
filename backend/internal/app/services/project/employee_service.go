@@ -702,7 +702,85 @@ func (s *ProjectEmployeeService) CancelPaymentScheduleChange(ctx context.Context
 	})
 }
 
-// ApplyPendingScheduleChanges applies all pending payment schedule changes whose effective date has arrived
+// CancelPendingCheckInEnable cancels a pending (not yet activated) check-in enable.
+func (s *ProjectEmployeeService) CancelPendingCheckInEnable(ctx context.Context, assignmentID uint, canceledBy uint) error {
+	return s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		assignment, err := s.projectEmployeeRepo.GetByID(ctx, assignmentID)
+		if err != nil {
+			return err
+		}
+
+		if err := assignment.CancelPendingCheckInEnable(); err != nil {
+			return err
+		}
+
+		if err := s.projectEmployeeRepo.Update(ctx, assignment); err != nil {
+			return err
+		}
+
+		if s.eventBus != nil {
+			emp, errEmp := s.employeeRepo.GetByID(ctx, assignment.EmployeeID)
+			if errEmp == nil && emp != nil {
+				assignment.Employee = *emp
+			}
+			proj, errProj := s.projectRepo.GetByID(ctx, assignment.ProjectID)
+			if errProj == nil && proj != nil {
+				assignment.Project = *proj
+			}
+
+			event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
+			if err := s.eventBus.Publish(ctx, event); err != nil {
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (cancel pending check-in)", "error", err)
+			}
+		}
+
+		return nil
+	})
+}
+
+// ApplyPendingCheckInEnables activates all pending check-in enables whose
+// effective date (day 1 of the month) has arrived. Self-healing: the query is
+// date-driven (`effective <= today`), so a missed run applies on the next one.
+func (s *ProjectEmployeeService) ApplyPendingCheckInEnables(ctx context.Context) error {
+	return s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
+		now := clock.Now()
+		startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+		assignments, err := s.projectEmployeeRepo.GetEmployeesWithPendingCheckInEnable(ctx, startOfToday)
+		if err != nil {
+			return err
+		}
+
+		for _, assignment := range assignments {
+			if !assignment.ApplyPendingCheckIn() {
+				continue
+			}
+
+			if err := s.projectEmployeeRepo.Update(ctx, assignment); err != nil {
+				observability.GetLogger().Warn("failed to apply pending check-in enable", "assignmentID", assignment.ID, "error", err)
+				continue
+			}
+
+			if s.eventBus != nil {
+				emp, errEmp := s.employeeRepo.GetByID(ctx, assignment.EmployeeID)
+				if errEmp == nil && emp != nil {
+					assignment.Employee = *emp
+				}
+				proj, errProj := s.projectRepo.GetByID(ctx, assignment.ProjectID)
+				if errProj == nil && proj != nil {
+					assignment.Project = *proj
+				}
+
+				event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
+				if err := s.eventBus.Publish(ctx, event); err != nil {
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (apply pending check-in)", "error", err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
 // This method can be called by a background job or manually
 
 func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context) error {
@@ -791,7 +869,11 @@ func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context
 	return nil
 }
 
-// ToggleCheckInEnabled toggles the check-in enabled status for an employee in a project
+// ToggleCheckInEnabled toggles the check-in enabled status for an employee in a project.
+// Enabling is DEFERRED: it activates on day 1 of the next month (strict — enabling
+// on the 1st still defers to the following month). Disabling stays instant and
+// zeroes out quota for the current month onward; disabling a pending (not yet
+// active) enable just cancels the pending request without touching quota.
 func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, projectID, employeeID uint, enabled bool, updatedBy uint) error {
 	// Require an active payrate before enabling check-in — without it attendance
 	// records cannot be priced and timesheets would fail to process.
@@ -811,21 +893,33 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 			return err
 		}
 
-		if assignment.CheckInEnabled == enabled {
-			return nil // No change needed
-		}
-
-		assignment.CheckInEnabled = enabled
-		if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
-			return err
-		}
-
-		// If disabled, zero out quota for current month onward (as per spec)
-		if !enabled {
-			currentMonth := clock.Now().Format("2006-01")
-			if err := s.advancePaymentRepo.ZeroOutQuota(txCtx, projectID, employeeID, currentMonth); err != nil {
+		if enabled {
+			if assignment.CheckInEnabled || assignment.HasPendingCheckInEnable() {
+				return nil // Already active or already pending — no change needed
+			}
+			if err := assignment.RequestCheckInEnable(firstDayOfNextMonth(clock.Now())); err != nil {
 				return err
 			}
+		} else {
+			if assignment.HasPendingCheckInEnable() {
+				// Cancel the pending enable: check-in was never active, so there is
+				// no quota to zero out.
+				assignment.PendingCheckInEnabled = nil
+				assignment.CheckInEffectiveFrom = nil
+			} else if assignment.CheckInEnabled {
+				assignment.CheckInEnabled = false
+				// Zero out quota for current month onward (as per spec)
+				currentMonth := clock.Now().Format("2006-01")
+				if err := s.advancePaymentRepo.ZeroOutQuota(txCtx, projectID, employeeID, currentMonth); err != nil {
+					return err
+				}
+			} else {
+				return nil // Already disabled with nothing pending — no change needed
+			}
+		}
+
+		if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
+			return err
 		}
 
 		// Publish domain event
@@ -842,6 +936,8 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 
 // BulkToggleCheckInEnabled toggles the check-in enabled status for multiple employees in a project.
 // The toggle logic is inlined within a single transaction to avoid nested transactions and ensure atomicity.
+// Enabling is deferred to day 1 of the next month (same rule as the single toggle);
+// disabling cancels any pending enable first (no quota zeroing for never-active rows).
 func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, projectID uint, employeeIDs []uint, enabled bool, updatedBy uint) error {
 	// Require an active payrate before enabling check-in — without it attendance
 	// records cannot be priced and timesheets would fail to process.
@@ -863,17 +959,28 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 				return err
 			}
 
-			if assignment.CheckInEnabled == enabled {
-				continue
+			if enabled {
+				if assignment.CheckInEnabled || assignment.HasPendingCheckInEnable() {
+					continue
+				}
+				if err := assignment.RequestCheckInEnable(firstDayOfNextMonth(clock.Now())); err != nil {
+					return err
+				}
+			} else {
+				if assignment.HasPendingCheckInEnable() {
+					// Cancel pending enable — never active, no quota to zero.
+					assignment.PendingCheckInEnabled = nil
+					assignment.CheckInEffectiveFrom = nil
+				} else if assignment.CheckInEnabled {
+					assignment.CheckInEnabled = false
+					disabledIDs = append(disabledIDs, empID)
+				} else {
+					continue
+				}
 			}
 
-			assignment.CheckInEnabled = enabled
 			if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
 				return err
-			}
-
-			if !enabled {
-				disabledIDs = append(disabledIDs, empID)
 			}
 
 			if s.eventBus != nil {

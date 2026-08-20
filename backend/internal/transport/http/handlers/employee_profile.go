@@ -115,6 +115,8 @@ func (h *EmployeeProfileHandler) mapEmployeeProfileResponse(c *gin.Context, empl
 		BankAccountName:             employee.BankAccountName,
 		PaymentSchedule:             scheduleInfo.PaymentSchedule,
 		CheckInEnabled:              scheduleInfo.CheckInEnabled,
+		PendingCheckInEnabled:       scheduleInfo.PendingCheckInEnabled,
+		CheckInEffectiveFrom:        scheduleInfo.CheckInEffectiveFrom,
 		CheckInTargetStatus:         string(scheduleInfo.CheckInTargetStatus),
 		CheckInTarget:               mapCheckInTarget(scheduleInfo.CheckInTarget),
 		CheckInGeofenceRadiusMeters: scheduleInfo.CheckInGeofenceRadiusMeters,

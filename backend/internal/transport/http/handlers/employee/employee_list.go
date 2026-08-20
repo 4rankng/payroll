@@ -76,6 +76,8 @@ func buildProjectInfo(project domain.CurrentProject) dto.EmployeeProjectInfo {
 		ScheduleEffectiveFrom:  formatDatePointer(project.ScheduleEffectiveFrom),
 		IsFlexible:             project.IsFlexible,
 		CheckInEnabled:         project.CheckInEnabled,
+		PendingCheckInEnabled:  project.PendingCheckInEnabled,
+		CheckInEffectiveFrom:   formatDatePointer(project.CheckInEffectiveFrom),
 	}
 }
 

@@ -161,6 +161,11 @@ func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingScheduleChanges(c
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
 }
 
+func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+	args := m.Called(ctx, effectiveDate)
+	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) ApplyScheduleChanges(ctx context.Context, employeeIDs []uint) error {
 	args := m.Called(ctx, employeeIDs)
 	return args.Error(0)

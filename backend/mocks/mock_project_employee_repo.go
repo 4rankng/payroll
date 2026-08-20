@@ -374,6 +374,21 @@ func (mr *MockProjectEmployeeRepositoryMockRecorder) GetEmployeesWithPendingSche
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithPendingScheduleChanges", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetEmployeesWithPendingScheduleChanges), arg0, arg1)
 }
 
+// GetEmployeesWithPendingCheckInEnable mocks base method.
+func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnable(arg0 context.Context, arg1 time.Time) ([]*domain.ProjectEmployee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEmployeesWithPendingCheckInEnable", arg0, arg1)
+	ret0, _ := ret[0].([]*domain.ProjectEmployee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEmployeesWithPendingCheckInEnable indicates an expected call of GetEmployeesWithPendingCheckInEnable.
+func (mr *MockProjectEmployeeRepositoryMockRecorder) GetEmployeesWithPendingCheckInEnable(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithPendingCheckInEnable", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetEmployeesWithPendingCheckInEnable), arg0, arg1)
+}
+
 // GetOverlappingAssignments mocks base method.
 func (m *MockProjectEmployeeRepository) GetOverlappingAssignments(arg0 context.Context, arg1 uint, arg2, arg3 *time.Time) ([]*domain.ProjectEmployee, error) {
 	m.ctrl.T.Helper()

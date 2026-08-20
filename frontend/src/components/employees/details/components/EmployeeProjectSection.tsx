@@ -382,6 +382,8 @@ function ProjectCard({
                 project_id: project.project_id,
                 employee_id: employeeId ?? 0,
                 check_in_enabled: project.check_in_enabled,
+                pending_check_in_enabled: project.pending_check_in_enabled ?? null,
+                check_in_effective_from: project.check_in_effective_from ?? null,
               } as ProjectEmployeeAssignment}
             />
           </div>

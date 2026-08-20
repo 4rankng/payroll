@@ -241,8 +241,24 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 	now := clock.Now()
 
 	currentCalMonth := now.Format("2006-01")
+	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
-	if !eligibility.hasCheckInEnabled && !isRequestMonthAllowed(now, forMonth) {
+	if eligibility.hasCheckInEnabled {
+		// Hybrid employee (self-checkin enabled): the regular endpoint serves
+		// ONLY the previous-period tail — days 1-8 of the current month, for the
+		// previous month. Current-month requests must go through the self-checkin
+		// flow (/me/check-in-advance), whose window opens on day 10; allowing the
+		// current month here from day 9 would bypass that window.
+		if !IsBeforeCutoff(now) {
+			if forMonth == prevCalMonth {
+				return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
+			}
+			return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
+		}
+		if forMonth != prevCalMonth {
+			return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
+		}
+	} else if !isRequestMonthAllowed(now, forMonth) {
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -252,7 +268,7 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		return nil, errors.Wrap(err, "failed to get advance payments")
 	}
 	if len(advPayments) == 0 {
-		if !eligibility.hasCheckInEnabled && IsInLockedGap(now) && forMonth == currentCalMonth {
+		if IsInLockedGap(now) && forMonth == currentCalMonth {
 			return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
 		}
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)

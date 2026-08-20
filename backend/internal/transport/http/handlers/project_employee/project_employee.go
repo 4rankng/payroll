@@ -181,19 +181,21 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 		var assignmentResponses []dto.ProjectEmployeeResponse
 		for _, assignment := range paginatedAssignments {
 			assignmentResponses = append(assignmentResponses, dto.ProjectEmployeeResponse{
-				ID:             assignment.ID,
-				ProjectID:      assignment.ProjectID,
-				EmployeeID:     assignment.EmployeeID,
-				EmployeeName:   assignment.EmployeeName,
-				EmployeeCCCD:   assignment.EmployeeCCCD,
-				EmployeeCode:   assignment.EmployeeCode,
-				Position:       assignment.Position,
-				StartDate:      assignment.StartDate,
-				LastDate:       assignment.LastDate,
-				CheckInEnabled: assignment.CheckInEnabled,
-				CreatedBy:      assignment.CreatedBy,
-				CreatedAt:      assignment.CreatedAt,
-				UpdatedAt:      assignment.UpdatedAt,
+				ID:                    assignment.ID,
+				ProjectID:             assignment.ProjectID,
+				EmployeeID:            assignment.EmployeeID,
+				EmployeeName:          assignment.EmployeeName,
+				EmployeeCCCD:          assignment.EmployeeCCCD,
+				EmployeeCode:          assignment.EmployeeCode,
+				Position:              assignment.Position,
+				StartDate:             assignment.StartDate,
+				LastDate:              assignment.LastDate,
+				CheckInEnabled:        assignment.CheckInEnabled,
+				PendingCheckInEnabled: assignment.PendingCheckInEnabled,
+				CheckInEffectiveFrom:  assignment.CheckInEffectiveFrom,
+				CreatedBy:             assignment.CreatedBy,
+				CreatedAt:             assignment.CreatedAt,
+				UpdatedAt:             assignment.UpdatedAt,
 			})
 		}
 
@@ -269,6 +271,8 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 			PendingPaymentSchedule: assignment.PendingPaymentSchedule,
 			ScheduleEffectiveFrom:  assignment.ScheduleEffectiveFrom,
 			CheckInEnabled:         assignment.CheckInEnabled,
+			PendingCheckInEnabled:  assignment.PendingCheckInEnabled,
+			CheckInEffectiveFrom:   assignment.CheckInEffectiveFrom,
 			CreatedBy:              assignment.CreatedBy,
 			CreatedAt:              assignment.CreatedAt,
 			UpdatedAt:              assignment.UpdatedAt,
@@ -400,6 +404,8 @@ func (h *Handler) GetPendingScheduleChanges(c *gin.Context) {
 			PendingPaymentSchedule: stringPtr(string(*emp.PendingPaymentSchedule)),
 			ScheduleEffectiveFrom:  emp.ScheduleEffectiveFrom,
 			CheckInEnabled:         emp.CheckInEnabled,
+			PendingCheckInEnabled:  emp.PendingCheckInEnabled,
+			CheckInEffectiveFrom:   emp.CheckInEffectiveFrom,
 			CreatedBy:              emp.CreatedBy,
 			CreatedAt:              emp.CreatedAt,
 			UpdatedAt:              emp.UpdatedAt,
@@ -542,4 +548,55 @@ func (h *Handler) BulkToggleCheckInEnabled(c *gin.Context) {
 	}
 
 	response.Success(c, nil, "Check-in statuses updated successfully")
+}
+
+// CancelPendingCheckInEnable handles DELETE /api/v1/projects/:id/employees/:employeeId/checkin-enabled
+func (h *Handler) CancelPendingCheckInEnable(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
+		return
+	}
+
+	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
+		return
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Unauthorized(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	assignment, err := h.projectEmployeeService.GetAssignmentByProjectAndEmployee(c.Request.Context(), uint(projectID), uint(employeeID))
+	if err != nil {
+		if domainErr, ok := err.(*domain.DomainError); ok && domainErr.Type == "NOT_FOUND" {
+			response.NotFound(c, domainErr.Message)
+			return
+		}
+		response.InternalServerError(c, "Failed to find assignment")
+		return
+	}
+	if assignment == nil {
+		response.NotFound(c, "Không tìm thấy phân công của nhân viên trong dự án")
+		return
+	}
+
+	if err := h.projectEmployeeService.CancelPendingCheckInEnable(c.Request.Context(), assignment.ID, uid); err != nil {
+		if domainErr, ok := err.(*domain.DomainError); ok {
+			response.BadRequest(c, domainErr.Message)
+			return
+		}
+		response.InternalServerError(c, "Failed to cancel pending check-in enable")
+		return
+	}
+
+	response.Success(c, nil, "Đã hủy yêu cầu bật chấm công đang chờ kích hoạt")
 }

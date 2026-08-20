@@ -494,4 +494,6 @@ type CurrentProject struct {
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 	IsFlexible             bool       `json:"is_flexible"`
 	CheckInEnabled         bool       `json:"check_in_enabled"`
+	PendingCheckInEnabled  *bool      `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom   *time.Time `json:"check_in_effective_from,omitempty"`
 }

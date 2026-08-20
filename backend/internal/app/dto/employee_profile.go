@@ -16,6 +16,9 @@ type EmployeeProfileResponse struct {
 	Bank                        *BankInfo          `json:"bank,omitempty"`
 	PaymentSchedule             string             `json:"payment_schedule"`
 	CheckInEnabled              bool               `json:"check_in_enabled"`
+	// Deferred check-in activation: enable is pending until day 1 of next month.
+	PendingCheckInEnabled       bool               `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom        *time.Time         `json:"check_in_effective_from,omitempty"`
 	CheckInTargetStatus         string             `json:"check_in_target_status"`
 	CheckInTarget               *CheckInTargetInfo `json:"check_in_target,omitempty"`
 	CheckInGeofenceRadiusMeters *uint              `json:"check_in_geofence_radius_meters,omitempty"`

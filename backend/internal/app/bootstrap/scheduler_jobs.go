@@ -111,6 +111,22 @@ func registerSchedulerJobs(
 		},
 	})
 
+	// 1b. Apply pending check-in enables (deferred activation, day 1 of month)
+	s.AddJob(scheduler.Job{
+		Name:    "apply_pending_check_in_enables",
+		Cron:    "10 1 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			logger.Info("Starting pending check-in enable application")
+			if err := projectEmployeeService.ApplyPendingCheckInEnables(ctx); err != nil {
+				logger.Error("Failed to apply pending check-in enables", "error", err)
+			} else {
+				logger.Info("Pending check-in enables applied successfully")
+			}
+		},
+	})
+
 	// 2. Cleanup old API metrics
 	s.AddJob(scheduler.Job{
 		Name:    "cleanup_old_api_metrics",

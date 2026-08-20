@@ -37,6 +37,11 @@ type ProjectEmployee struct {
 
 	CheckInEnabled bool `json:"check_in_enabled" gorm:"column:check_in_enabled;type:tinyint(1);not null;default:0"`
 
+	// Deferred check-in activation: enabling check-in takes effect on day 1 of
+	// the next month. NULL pending fields = no pending change.
+	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty" gorm:"type:tinyint(1);comment:'Pending check-in enable awaiting activation'"`
+	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty" gorm:"type:date;comment:'Date when the pending check-in enable becomes effective'"`
+
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 	CreatedBy uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
 	CreatedAt time.Time      `json:"created_at"`
@@ -86,6 +91,9 @@ type ProjectEmployeeRepository interface {
 	CountActiveEmployeesByPaymentSchedule(ctx context.Context, schedule PaymentSchedule) (int, error)
 	GetEmployeesWithPendingScheduleChanges(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
 	ApplyScheduleChanges(ctx context.Context, employeeIDs []uint) error
+
+	// Deferred check-in activation methods
+	GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
 
 	// HasAccessViaProject checks if user can access employee through project assignments
 	HasAccessViaProject(ctx context.Context, employeeID, userID uint) (bool, error)
@@ -142,6 +150,10 @@ type ProjectEmployeeWithDetails struct {
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 
 	CheckInEnabled bool `json:"check_in_enabled"`
+
+	// Deferred check-in activation
+	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty"`
 
 	// Project details
 	ProjectName   string        `json:"project_name"`
@@ -424,6 +436,68 @@ func (pe *ProjectEmployee) CancelPendingScheduleChange() error {
 
 	pe.PendingPaymentSchedule = nil
 	pe.ScheduleEffectiveFrom = nil
+
+	return nil
+}
+
+// Deferred check-in activation methods (mirror the schedule-pending pattern).
+
+// HasPendingCheckInEnable returns true if a check-in enable is awaiting activation
+func (pe *ProjectEmployee) HasPendingCheckInEnable() bool {
+	return pe.PendingCheckInEnabled != nil && *pe.PendingCheckInEnabled && pe.CheckInEffectiveFrom != nil
+}
+
+// RequestCheckInEnable records a deferred check-in enable: activation happens
+// on day 1 of the month AFTER the effective date's request time (strict next
+// month — enabling on the 1st still defers to the following month).
+func (pe *ProjectEmployee) RequestCheckInEnable(effectiveDate time.Time) error {
+	if !pe.IsCurrentlyAssigned() {
+		return NewValidationError("Chỉ có thể bật chấm công cho nhân viên đang làm việc")
+	}
+
+	if pe.CheckInEnabled {
+		return NewValidationError("Nhân viên đã được bật chấm công")
+	}
+
+	if pe.HasPendingCheckInEnable() {
+		return NewValidationError("Đã có yêu cầu bật chấm công đang chờ kích hoạt")
+	}
+
+	enabled := true
+	pe.PendingCheckInEnabled = &enabled
+	pe.CheckInEffectiveFrom = &effectiveDate
+
+	return nil
+}
+
+// ApplyPendingCheckIn activates the pending check-in enable if the effective
+// date has arrived. Returns true when the row changed.
+func (pe *ProjectEmployee) ApplyPendingCheckIn() bool {
+	if !pe.HasPendingCheckInEnable() {
+		return false
+	}
+
+	now := clock.Now()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	if !pe.CheckInEffectiveFrom.After(startOfToday) {
+		pe.CheckInEnabled = true
+		pe.PendingCheckInEnabled = nil
+		pe.CheckInEffectiveFrom = nil
+		return true
+	}
+
+	return false
+}
+
+// CancelPendingCheckInEnable cancels a pending check-in enable
+func (pe *ProjectEmployee) CancelPendingCheckInEnable() error {
+	if !pe.HasPendingCheckInEnable() {
+		return NewValidationError("Không có yêu cầu bật chấm công nào đang chờ kích hoạt")
+	}
+
+	pe.PendingCheckInEnabled = nil
+	pe.CheckInEffectiveFrom = nil
 
 	return nil
 }

@@ -461,6 +461,35 @@ export function useToggleCheckInEnabled() {
   });
 }
 
+export function useCancelPendingCheckInEnable() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      employeeId,
+    }: {
+      projectId: number;
+      employeeId: number;
+    }) =>
+      projectEmployeeService.cancelPendingCheckInEnable(projectId, employeeId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          shouldInvalidateForProjectEmployeeChange(
+            query.queryKey,
+            variables.projectId,
+            [variables.employeeId]
+          ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: projectAssignmentStatsKey(variables.projectId),
+      });
+      showSuccessNotification("Đã hủy yêu cầu bật điểm danh đang chờ kích hoạt");
+    },
+  });
+}
+
 export function useBulkToggleCheckInEnabled() {
   const queryClient = useQueryClient();
 

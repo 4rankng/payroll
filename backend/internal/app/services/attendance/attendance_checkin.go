@@ -44,6 +44,12 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 			return err
 		}
 		if !assignment.CheckInEnabled {
+			if assignment.HasPendingCheckInEnable() && assignment.CheckInEffectiveFrom != nil {
+				return domain.NewValidationError(fmt.Sprintf(
+					"Dịch vụ tự chấm công sẽ kích hoạt từ %s.",
+					assignment.CheckInEffectiveFrom.Format("02/01"),
+				))
+			}
 			return domain.NewValidationError("Bạn chưa được cấp quyền chấm công")
 		}
 

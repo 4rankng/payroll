@@ -6,7 +6,9 @@ import {
   getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
   getInitialEmployeeAdvanceMonth,
+  getInitialHybridAdvanceMonth,
   isPastAdvancePaymentPeriod,
+  isPriorMonthRequestable,
 } from "./advancePaymentHelpers";
 import type {
   AdvancePaymentHistoryItem,
@@ -366,5 +368,77 @@ describe("getDefaultAdvanceMonth", () => {
 
   it("returns a YYYY-MM string when called with no argument", () => {
     expect(getDefaultAdvanceMonth()).toMatch(/^\d{4}-\d{2}$/);
+  });
+});
+
+describe("isPriorMonthRequestable", () => {
+  const prevMonth = "2026-07";
+  const infoWithPrevQuota = {
+    forMonth: "2026-08",
+    quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 3_000_000 }],
+  } as never;
+
+  it("allows the prior month on day 8 when prev-month quota exists", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 8, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
+  });
+
+  it("rejects the prior month from day 9 (tail closed)", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 9, 0, 0), prevMonth, infoWithPrevQuota)).toBe(false);
+    expect(isPriorMonthRequestable(new Date(2026, 7, 31), prevMonth, infoWithPrevQuota)).toBe(false);
+  });
+
+  it("rejects when no prev-month quota exists", () => {
+    const emptyInfo = { forMonth: "2026-08", quotas: [] } as never;
+    expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, emptyInfo)).toBe(false);
+  });
+
+  it("rejects when quota exists but is zero", () => {
+    const zeroQuota = {
+      forMonth: "2026-08",
+      quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 0 }],
+    } as never;
+    expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, zeroQuota)).toBe(false);
+  });
+
+  it("rejects when regular info is unavailable", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, undefined)).toBe(false);
+  });
+});
+
+describe("getInitialHybridAdvanceMonth", () => {
+  it("opens on the prior month while its tail is open with unused quota", () => {
+    const info = {
+      forMonth: "2026-08",
+      quotas: [
+        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 1_000_000 },
+      ],
+    } as never;
+    expect(
+      getInitialHybridAdvanceMonth(new Date(2026, 7, 5), "2026-08", "2026-07", info),
+    ).toBe("2026-07");
+  });
+
+  it("opens on the current month after day 8", () => {
+    const info = {
+      forMonth: "2026-08",
+      quotas: [
+        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 1_000_000 },
+      ],
+    } as never;
+    expect(
+      getInitialHybridAdvanceMonth(new Date(2026, 7, 9), "2026-08", "2026-07", info),
+    ).toBe("2026-08");
+  });
+
+  it("opens on the current month when prev quota is exhausted", () => {
+    const info = {
+      forMonth: "2026-08",
+      quotas: [
+        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 0 },
+      ],
+    } as never;
+    expect(
+      getInitialHybridAdvanceMonth(new Date(2026, 7, 5), "2026-08", "2026-07", info),
+    ).toBe("2026-08");
   });
 });

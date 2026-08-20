@@ -20,6 +20,7 @@ func setupProjectRoutes(protected *gin.RouterGroup, container *Container) {
 		projects.GET("/:id/employees", container.Handlers.ProjectEmployee.ListProjectEmployees)
 		projects.PATCH("/:id/employees/:employeeId/checkin-enabled", container.Handlers.ProjectEmployee.ToggleCheckInEnabled)
 		projects.PATCH("/:id/employees/checkin-enabled/bulk", container.Handlers.ProjectEmployee.BulkToggleCheckInEnabled)
+		projects.DELETE("/:id/employees/:employeeId/checkin-enabled", container.Handlers.ProjectEmployee.CancelPendingCheckInEnable)
 
 		projects.GET("/:id/payrate", container.Handlers.Project.GetCurrentProjectPayrate)
 		projects.POST("/:id/payrate", container.Handlers.Project.CreateProjectPayrate)

@@ -13,6 +13,9 @@ export interface ProjectEmployeeAssignment {
   last_date?: string | null;
   status: AssignmentStatus;
   check_in_enabled?: boolean;
+  // Deferred check-in activation: enable is pending until day 1 of next month.
+  pending_check_in_enabled?: boolean | null;
+  check_in_effective_from?: string | null;
   payment_schedule?: "weekly" | "monthly" | "flexible";
   pending_payment_schedule?: "weekly" | "monthly" | "flexible" | null;
   schedule_effective_from?: string | null;

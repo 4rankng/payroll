@@ -321,6 +321,20 @@ export class ProjectEmployeeService {
     );
     return response.data!;
   }
+
+  /**
+   * Cancel a pending (not yet activated) check-in enable.
+   * The enable activates on day 1 of the next month; cancel removes it.
+   */
+  async cancelPendingCheckInEnable(
+    projectId: number,
+    employeeId: number
+  ): Promise<{ status: "success"; message: string }> {
+    const response = await apiClient.delete<{ status: "success"; message: string }>(
+      `/projects/${projectId}/employees/${employeeId}/checkin-enabled`
+    );
+    return response.data!;
+  }
 }
 
 // Export singleton instance

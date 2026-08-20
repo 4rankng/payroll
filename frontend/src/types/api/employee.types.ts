@@ -22,6 +22,9 @@ export interface CurrentProject {
   schedule_effective_from?: string | null;
   is_flexible?: boolean;
   check_in_enabled?: boolean;
+  // Deferred check-in activation: enable is pending until day 1 of next month.
+  pending_check_in_enabled?: boolean | null;
+  check_in_effective_from?: string | null;
 }
 
 export interface TimesheetSummary {

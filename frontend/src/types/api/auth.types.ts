@@ -118,6 +118,9 @@ export interface EmployeeProfile {
   bank_account_name?: string;
   payment_schedule?: "weekly" | "monthly" | "flexible";
   check_in_enabled?: boolean;
+  // Deferred check-in activation: enable is pending until day 1 of next month.
+  pending_check_in_enabled?: boolean;
+  check_in_effective_from?: string;
   check_in_target_status?: CheckInTargetStatus;
   check_in_target?: CheckInTarget | null;
   check_in_geofence_radius_meters?: number;

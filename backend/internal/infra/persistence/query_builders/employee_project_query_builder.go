@@ -53,6 +53,8 @@ type ProjectAssignmentWithPayment struct {
 	ScheduleEffectiveFrom  *time.Time `gorm:"column:schedule_effective_from"`
 	IsFlexible             bool       `gorm:"column:is_flexible"`
 	CheckInEnabled         bool       `gorm:"column:check_in_enabled"`
+	PendingCheckInEnabled  *bool      `gorm:"column:pending_check_in_enabled"`
+	CheckInEffectiveFrom   *time.Time `gorm:"column:check_in_effective_from"`
 }
 
 // BuildListWithProjectsQuery builds the employee query for ListWithProjects
@@ -108,7 +110,8 @@ func (b *EmployeeProjectQueryBuilder) BuildProjectAssignmentsWithPaymentQuery(ct
 		Select(`project_employees.id as project_employee_id, project_employees.employee_id, project_employees.project_id, p.name as project_name, p.code as project_code,
 			p.client_name as project_client_name, project_employees.position, project_employees.start_date, project_employees.last_date,
 			project_employees.payment_schedule, project_employees.pending_payment_schedule, project_employees.schedule_effective_from,
-			p.is_flexible, project_employees.check_in_enabled`).
+			p.is_flexible, project_employees.check_in_enabled,
+		project_employees.pending_check_in_enabled, project_employees.check_in_effective_from`).
 		Joins("INNER JOIN projects p ON project_employees.project_id = p.id").
 		Where("project_employees.employee_id IN ? AND project_employees.last_date IS NULL AND project_employees.start_date <= CURDATE()", employeeIDs)
 }
@@ -199,6 +202,8 @@ func (b *EmployeeProjectQueryBuilder) MapToEmployeeWithProjects(employees []*dom
 					ScheduleEffectiveFrom:  assignment.ScheduleEffectiveFrom,
 					IsFlexible:             assignment.IsFlexible,
 					CheckInEnabled:         assignment.CheckInEnabled,
+					PendingCheckInEnabled:  assignment.PendingCheckInEnabled,
+					CheckInEffectiveFrom:   assignment.CheckInEffectiveFrom,
 				}
 				empWithAllProjects.CurrentProjects = append(empWithAllProjects.CurrentProjects, project)
 			}

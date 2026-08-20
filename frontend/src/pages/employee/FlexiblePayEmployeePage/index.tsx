@@ -33,7 +33,9 @@ import { NotificationSheet } from "@/components/notifications/NotificationSheet"
 import {
   formatPayrollMonthRange,
   getInitialEmployeeAdvanceMonth,
+  getInitialHybridAdvanceMonth,
   isPastAdvancePaymentPeriod,
+  isPriorMonthRequestable,
 } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
@@ -79,11 +81,26 @@ const FlexiblePayEmployeePage = () => {
     value: selectedMonth,
   } = month;
   // Check-in-enabled employees use the dedicated /me/check-in-advance flow
-  // (Admin-configured advanceable cap, calendar-month window); others use the admin-upload flow.
+  // (Admin-configured advanceable cap, calendar-month window) for the CURRENT
+  // month. During the days 1-8 tail they may ALSO request the previous payroll
+  // month through the regular admin-upload flow, so both surfaces stay live.
   const isCheckInEnabled = Boolean(profile?.check_in_enabled);
-  const isCheckIn = isCheckInEnabled;
-  const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckIn });
-  const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckIn });
+  const isPendingCheckIn = Boolean(profile?.pending_check_in_enabled);
+  // Which surface owns the selected month: current calendar month → checkin
+  // flow; previous month during the tail → regular flow.
+  const currentCalMonth = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+  const prevCalMonth = useMemo(() => {
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+  // Hybrid: checkin-enabled AND viewing the prior month while its tail is open.
+  const isCheckIn = isCheckInEnabled && selectedMonth === currentCalMonth;
+  const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckInEnabled || !isCheckIn });
+  const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckInEnabled });
   const {
     data: infoResponse,
     isLoading: infoLoading,
@@ -102,7 +119,11 @@ const FlexiblePayEmployeePage = () => {
   const calculateFeeMutation = useCalculateFee();
   const regularRequestMutation = useRequestAdvancePayment();
   const checkInRequestMutation = useRequestCheckInAdvance();
+  // Month decides the endpoint: current month → checkin flow, prior month
+  // during the tail → regular flow. Both mutations share the same payload.
   const requestMutation = isCheckIn ? checkInRequestMutation : regularRequestMutation;
+  // After a submit, refetch whichever surface owns the requested month.
+  const refetchOwnedInfo = isCheckIn ? checkInInfoQuery.refetch : regularInfoQuery.refetch;
   const cancelMutation = useCancelAdvancePaymentRequest();
   const updatePasswordMutation = useUpdateEmployeePassword();
 
@@ -113,14 +134,17 @@ const FlexiblePayEmployeePage = () => {
   // A non-check-in employee can request against the previous payroll month
   // through the cutoff. The API's forMonth is authoritative; only use it for
   // the initial view so explicit URL and navigator selections stay intact.
+  // Hybrid (checkin-enabled) employees open on the prior month when its tail
+  // is open with unused quota, otherwise on the current checkin month.
   useEffect(() => {
     if (profileLoading || !profile || infoLoading || !info || initialMonthResolvedRef.current) return;
 
-    const initialMonth = getInitialEmployeeAdvanceMonth(
-      info?.forMonth,
-      isCheckIn,
-      hasExplicitMonth,
-    );
+    let initialMonth: string | undefined;
+    if (isCheckInEnabled) {
+      initialMonth = getInitialHybridAdvanceMonth(new Date(), currentCalMonth, prevCalMonth, regularInfoQuery.data?.data);
+    } else {
+      initialMonth = getInitialEmployeeAdvanceMonth(info?.forMonth, false, hasExplicitMonth);
+    }
     initialMonthResolvedRef.current = true;
 
     if (initialMonth && selectedMonth !== initialMonth) {
@@ -129,10 +153,13 @@ const FlexiblePayEmployeePage = () => {
   }, [
     info,
     infoLoading,
-    isCheckIn,
+    isCheckInEnabled,
     hasExplicitMonth,
     profileLoading,
     profile,
+    regularInfoQuery.data,
+    currentCalMonth,
+    prevCalMonth,
     selectedMonth,
     setMonth,
   ]);
@@ -200,11 +227,11 @@ const FlexiblePayEmployeePage = () => {
       setLatestAmount(0);
       setLatestMonth("");
       setServerFeeDetails(null);
-      void Promise.all([refetchInfo(), refetchHistory()]).finally(() => setConfirmationDataReady(true));
+      void Promise.all([refetchInfo(), refetchOwnedInfo(), refetchHistory()]).finally(() => setConfirmationDataReady(true));
     } catch {
       /* handled */
     }
-  }, [latestAmount, latestMonth, requestMutation, refetchHistory, refetchInfo]);
+  }, [latestAmount, latestMonth, requestMutation, refetchHistory, refetchInfo, refetchOwnedInfo]);
 
   useEffect(() => {
     if (!requestConfirmation) return;
@@ -274,7 +301,7 @@ const FlexiblePayEmployeePage = () => {
       onNotificationClick={() => setNotificationSheetOpen(true)}
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
-      hasActionToolbar={isCheckInEnabled}
+      hasActionToolbar={isCheckInEnabled || isPendingCheckIn}
       contentClassName="max-w-6xl space-y-4 sm:space-y-5 lg:space-y-6"
     >
       <EmployeeMonthNavigator month={month} className="lg:min-h-[68px]" />
@@ -304,7 +331,11 @@ const FlexiblePayEmployeePage = () => {
               key={`${formKey}-${month.value}`}
               info={info}
               viewMonth={month.value}
-              isPastMonth={isPastAdvancePaymentPeriod(month.value, info.forMonth)}
+              isPastMonth={
+                isCheckInEnabled && selectedMonth === prevCalMonth
+                  ? !isPriorMonthRequestable(new Date(), prevCalMonth, regularInfoQuery.data?.data)
+                  : isPastAdvancePaymentPeriod(month.value, info.forMonth)
+              }
               isSelfCheckInFlow={isCheckIn}
               history={history}
               feeDetails={feeDetails}
@@ -322,7 +353,7 @@ const FlexiblePayEmployeePage = () => {
         <section
           id="employee-history"
           className={
-            isCheckInEnabled
+            isCheckInEnabled || isPendingCheckIn
               ? "scroll-mt-24 lg:col-start-2 lg:row-start-1"
               : "scroll-mt-24 lg:col-span-2 lg:row-start-2"
           }
@@ -340,16 +371,18 @@ const FlexiblePayEmployeePage = () => {
 
         <section
           id="employee-bank"
-          className={isCheckInEnabled
+          className={isCheckInEnabled || isPendingCheckIn
             ? "scroll-mt-24 lg:col-start-2 lg:row-start-2"
             : "scroll-mt-24 lg:col-start-2 lg:row-start-1 lg:self-stretch"}
         >
           <EmployeeBankInfoCard profile={profile!} />
         </section>
 
-        {isCheckInEnabled && (
+        {(isCheckInEnabled || isPendingCheckIn) && (
           <section id="employee-check-in" className="scroll-mt-24 lg:col-start-1 lg:row-start-2">
             <EmployeeCheckInCard
+              isPendingActivation={isPendingCheckIn && !isCheckInEnabled}
+              pendingEffectiveFrom={profile.check_in_effective_from}
               checkInTarget={profile.check_in_target}
               shiftStart={profile.shift_start}
               shiftEnd={profile.shift_end}
@@ -364,7 +397,7 @@ const FlexiblePayEmployeePage = () => {
           </section>
         )}
 
-        {isCheckInEnabled && (
+        {(isCheckInEnabled || isPendingCheckIn) && (
           <EmployeeAttendanceHistoryCard
             fromDate={month.fromDate}
             toDate={month.toDate}

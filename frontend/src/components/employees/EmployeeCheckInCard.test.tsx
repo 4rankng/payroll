@@ -526,3 +526,52 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     expect(requestPermission).toHaveBeenCalledOnce();
   });
 });
+
+describe("EmployeeCheckInCard pending activation", () => {
+  const renderCard = (ui: React.ReactElement) =>
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        {ui}
+      </QueryClientProvider>,
+    );
+
+  beforeEach(() => {
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      fatalError: null,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      retry: vi.fn(),
+    });
+  });
+
+  it("renders the countdown-only card when activation is pending", () => {
+    renderCard(
+      <EmployeeCheckInCard
+        isPendingActivation
+        pendingEffectiveFrom="2026-09-01T00:00:00+07:00"
+        onAdvanceRequest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/kích hoạt từ 01\/09/i)).toBeInTheDocument();
+  });
+
+  it("falls back to a generic date label when the effective date is missing", () => {
+    renderCard(
+      <EmployeeCheckInCard isPendingActivation onAdvanceRequest={vi.fn()} />,
+    );
+
+    expect(screen.getByText(/ngày 1 tháng sau/i)).toBeInTheDocument();
+  });
+
+  it("renders the normal card when not pending", () => {
+    attendanceQueryMock.data = { data: null };
+    renderCard(<EmployeeCheckInCard onAdvanceRequest={vi.fn()} />);
+
+    expect(screen.queryByText(/kích hoạt từ/i)).not.toBeInTheDocument();
+  });
+});

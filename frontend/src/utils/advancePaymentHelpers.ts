@@ -314,6 +314,32 @@ export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: strin
 }
 
 /**
+ * Whether a self-check-in employee may still request the PREVIOUS payroll
+ * month via the regular (admin-upload) flow — the days 1–8 tail that closes
+ * at the FlexPay request cutoff.
+ *
+ * UX-only gate: the backend re-validates the window in
+ * `CreateRequest` (`isRequestMonthAllowed` / `IsBeforeCutoff`), so a stale
+ * client clock can at worst produce a rejection toast.
+ *
+ * @param now                client "today" (injectable for tests)
+ * @param prevMonth          previous payroll month (YYYY-MM)
+ * @param regularInfo        regular-flow advance info (the quota source)
+ */
+export function isPriorMonthRequestable(
+  now: Date,
+  prevMonth: string,
+  regularInfo: AdvancePaymentInfo | undefined,
+): boolean {
+  if (now.getDate() > ADVANCE_REQUEST_CUTOFF_DAY) return false;
+  const quotas = Array.isArray(regularInfo?.quotas) ? regularInfo.quotas : [];
+  return quotas.some((quota) => quota.forMonth === prevMonth && quota.maxAdvanceAmount > 0);
+}
+
+/** Last day of the month-overhang tail (parity with backend RequestCutoffDay). */
+export const ADVANCE_REQUEST_CUTOFF_DAY = 8;
+
+/**
  * Select the API-provided active payroll period when a non-check-in employee
  * first opens FlexiblePay without choosing a month. Before the cutoff that
  * period can be the prior calendar month, so the calendar default is wrong.
@@ -323,8 +349,31 @@ export function getInitialEmployeeAdvanceMonth(
   isCheckIn: boolean,
   hasExplicitMonth: boolean,
 ): string | undefined {
-  if (!activeMonth || isCheckIn || hasExplicitMonth) return undefined;
+  if (!activeMonth || hasExplicitMonth) return undefined;
+  if (isCheckIn) return undefined;
   return activeMonth;
+}
+
+/**
+ * Initial month for a hybrid (self-check-in enabled) employee: the current
+ * calendar month (checkin surface) unless the prior-month tail is still open
+ * AND carries unused quota and no view was explicitly chosen — then open on
+ * the prior month so the requestable tail is visible.
+ */
+export function getInitialHybridAdvanceMonth(
+  now: Date,
+  currentCalMonth: string,
+  prevCalMonth: string,
+  regularInfo: AdvancePaymentInfo | undefined,
+): string {
+  if (isPriorMonthRequestable(now, prevCalMonth, regularInfo)) {
+    const quotas = Array.isArray(regularInfo?.quotas) ? regularInfo.quotas : [];
+    const prevQuota = quotas.find((q) => q.forMonth === prevCalMonth);
+    if (prevQuota && (prevQuota.remainingAmount ?? prevQuota.maxAdvanceAmount) > 0) {
+      return prevCalMonth;
+    }
+  }
+  return currentCalMonth;
 }
 
 /**
