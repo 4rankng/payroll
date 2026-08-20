@@ -373,6 +373,61 @@ func (r *TxWalletPaymentRepository) ListStaleAuthorised(ctx context.Context, pro
 	return rows, nil
 }
 
+// ListStaleAdvancePending returns advance-payment rows that were persisted but
+// never moved past the pre-transfer pending state. Their original Asynq task
+// may have been lost during a process or Redis interruption, so they must be
+// recovered with the same provider idempotency key rather than treated as a
+// new payment.
+func (r *TxWalletPaymentRepository) ListStaleAdvancePending(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error) {
+	var rows []*domaintx.WalletPayment
+	if err := r.DB.WithContext(ctx).
+		Table("wallet_payments AS pending").
+		Select("pending.*").
+		Joins("JOIN advance_payment_requests AS advance_request ON advance_request.id = pending.entity_id").
+		Where("pending.provider = ? AND pending.status = ? AND pending.entity_id IS NOT NULL AND pending.updated_at < ?",
+			provider, domaintx.StatePending, cutoff).
+		Where("advance_request.status = ?", domain.AdvancePaymentStatusApproved).
+		Where(`NOT EXISTS (
+			SELECT 1 FROM wallet_payments AS sibling
+			WHERE sibling.entity_id = pending.entity_id
+			  AND sibling.id <> pending.id
+			  AND sibling.status NOT IN ('completed', 'failed', 'reversed')
+		)`).
+		Order("pending.updated_at ASC").
+		Limit(limit).
+		Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("wallet_payments: list stale advance pending: %w", err)
+	}
+	return rows, nil
+}
+
+// GetStaleAdvancePendingByEntityID returns a single stale pre-transfer payment
+// for an advance request. It deliberately excludes verified and authorised
+// rows because they may already have reached the provider.
+func (r *TxWalletPaymentRepository) GetStaleAdvancePendingByEntityID(ctx context.Context, entityID uint64, cutoff time.Time) (*domaintx.WalletPayment, error) {
+	var row domaintx.WalletPayment
+	if err := r.DB.WithContext(ctx).
+		Table("wallet_payments AS pending").
+		Select("pending.*").
+		Joins("JOIN advance_payment_requests AS advance_request ON advance_request.id = pending.entity_id").
+		Where("pending.entity_id = ? AND pending.status = ? AND pending.updated_at < ?", entityID, domaintx.StatePending, cutoff).
+		Where("advance_request.status = ?", domain.AdvancePaymentStatusApproved).
+		Where(`NOT EXISTS (
+			SELECT 1 FROM wallet_payments AS sibling
+			WHERE sibling.entity_id = pending.entity_id
+			  AND sibling.id <> pending.id
+			  AND sibling.status NOT IN ('completed', 'failed', 'reversed')
+		)`).
+		Order("pending.updated_at ASC").
+		First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domaintx.ErrNotFound
+		}
+		return nil, fmt.Errorf("wallet_payments: get stale advance pending by entity: %w", err)
+	}
+	return &row, nil
+}
+
 // ListStaleBulkFinalizationCandidates returns terminal wallet payments whose
 // owning bulk batch is still processing. This is the durable retry source for
 // a finalization attempt that failed after the payment transition committed.

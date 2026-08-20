@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -11,15 +12,22 @@ import (
 	disbursementservice "api-server/internal/app/services/disbursement"
 	"api-server/internal/domain/ports/infrastructure"
 	domaintx "api-server/internal/domain/transactions"
+
+	asynqlib "github.com/hibiken/asynq"
 )
 
 type statusInquiryRepo struct {
 	payments               []*domaintx.WalletPayment
+	pendingPayments        []*domaintx.WalletPayment
 	finalizationCandidates []*domaintx.WalletPayment
 }
 
 func (r *statusInquiryRepo) ListStaleAuthorised(context.Context, string, time.Time, int) ([]*domaintx.WalletPayment, error) {
 	return r.payments, nil
+}
+
+func (r *statusInquiryRepo) ListStaleAdvancePending(context.Context, string, time.Time, int) ([]*domaintx.WalletPayment, error) {
+	return r.pendingPayments, nil
 }
 
 func (r *statusInquiryRepo) ListStaleBulkFinalizationCandidates(context.Context, string, time.Time, int) ([]*domaintx.WalletPayment, error) {
@@ -34,6 +42,57 @@ type statusInquiryRecorder struct {
 type statusInquiryFinalizer struct {
 	calls int
 	err   error
+}
+
+type statusInquiryTaskEnqueuer struct {
+	tasks []*asynqlib.Task
+}
+
+func (e *statusInquiryTaskEnqueuer) Enqueue(task *asynqlib.Task, _ ...asynqlib.Option) (*asynqlib.TaskInfo, error) {
+	e.tasks = append(e.tasks, task)
+	return &asynqlib.TaskInfo{}, nil
+}
+
+func TestStatusInquiryPoller_RequeuesStaleAdvancePendingPaymentWithOriginalRequest(t *testing.T) {
+	advanceRequestID := uint64(157)
+	enqueuer := &statusInquiryTaskEnqueuer{}
+	worker := NewStatusInquiryPollerWorker(
+		&statusInquiryRepo{pendingPayments: []*domaintx.WalletPayment{{
+			ID:                 150,
+			RequestID:          "tt-stuck-001",
+			Provider:           "1pay",
+			Status:             domaintx.StatePending,
+			RequestedAmount:    345_000,
+			RecipientName:      "NGUYEN VAN A",
+			RecipientAccountNo: "0123456789",
+			RecipientBank:      "VCBVVNVX",
+			EntityID:           &advanceRequestID,
+		}}},
+		&statusInquiryRecorder{},
+		disbursementservice.NewRegistry(&verifiedRecoveryProvider{}),
+		nil,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	).WithDisbursementTaskEnqueuer(enqueuer)
+
+	if err := worker.ProcessJob(context.Background()); err != nil {
+		t.Fatalf("ProcessJob: %v", err)
+	}
+	if len(enqueuer.tasks) != 1 {
+		t.Fatalf("recovery task count = %d, want 1", len(enqueuer.tasks))
+	}
+	if got := enqueuer.tasks[0].Type(); got != TaskDisbursementExecute {
+		t.Fatalf("recovery task type = %q, want %q", got, TaskDisbursementExecute)
+	}
+	var payload DisbursementExecutePayload
+	if err := json.Unmarshal(enqueuer.tasks[0].Payload(), &payload); err != nil {
+		t.Fatalf("decode recovery payload: %v", err)
+	}
+	if payload.RequestID != "tt-stuck-001" || payload.AdvanceRequestID != advanceRequestID {
+		t.Fatalf("recovery payload = %+v, want original request and advance IDs", payload)
+	}
+	if payload.RecipientBank != "VCBVVNVX" || payload.RequestedAmount != 345_000 {
+		t.Fatalf("recovery payload did not preserve persisted payment snapshot: %+v", payload)
+	}
 }
 
 func (f *statusInquiryFinalizer) FinalizeBulkBatchForIPN(context.Context, *domaintx.WalletPayment) error {

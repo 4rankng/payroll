@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +14,7 @@ import (
 	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/pkg/clock"
 
+	asynqlib "github.com/hibiken/asynq"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -39,6 +41,7 @@ type StatusInquiryPollerWorker struct {
 	timesheetUpdater     TransferTimesheetUpdater
 	batchFinalizer       BulkBatchFinalizer
 	bankRepo             bankCodeResolver
+	disbursementTasks    disbursementTaskEnqueuer
 	logger               *slog.Logger
 }
 
@@ -57,8 +60,21 @@ func (w *StatusInquiryPollerWorker) WithBankRepository(repo bankCodeResolver) *S
 	return w
 }
 
+// WithDisbursementTaskEnqueuer enables recovery of a persisted pre-transfer
+// payment when its original queue task was lost. The recovery task uses the
+// original provider idempotency key and recipient snapshot.
+func (w *StatusInquiryPollerWorker) WithDisbursementTaskEnqueuer(enqueuer disbursementTaskEnqueuer) *StatusInquiryPollerWorker {
+	w.disbursementTasks = enqueuer
+	return w
+}
+
 type statusInquiryPaymentRepository interface {
 	ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error)
+	ListStaleAdvancePending(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*domaintx.WalletPayment, error)
+}
+
+type disbursementTaskEnqueuer interface {
+	Enqueue(task *asynqlib.Task, opts ...asynqlib.Option) (*asynqlib.TaskInfo, error)
 }
 
 type bulkFinalizationCandidateRepository interface {
@@ -106,6 +122,20 @@ func (w *StatusInquiryPollerWorker) ProcessJob(ctx context.Context) error {
 
 	providerName := provider.Name()
 	cutoff := clock.Now().Add(-statusInquiryMinAge)
+
+	// A pending row has not reached the transfer call yet, so provider status
+	// inquiry cannot resolve it. Re-enqueue it from durable DB state with its
+	// original idempotency key; the execute worker resumes the existing row.
+	pendingPayments, err := w.walletPaymentRepo.ListStaleAdvancePending(ctx, providerName, cutoff, statusInquiryBatchSize)
+	if err != nil {
+		return fmt.Errorf("status inquiry: query stale advance pending: %w", err)
+	}
+	for _, payment := range pendingPayments {
+		if err := w.enqueuePendingRecovery(payment); err != nil {
+			w.logger.Warn("status inquiry: re-enqueue stale pending payment failed",
+				"payment_id", payment.ID, "request_id", payment.RequestID, "error", err)
+		}
+	}
 
 	// Step 3: Query stale authorised payments
 	payments, err := w.walletPaymentRepo.ListStaleAuthorised(ctx, providerName, cutoff, statusInquiryBatchSize)
@@ -157,10 +187,44 @@ func (w *StatusInquiryPollerWorker) ProcessJob(ctx context.Context) error {
 	e := errorCount.Load()
 	w.logger.Info("status inquiry: batch complete",
 		"polled", len(payments),
+		"pending_recovery", len(pendingPayments),
 		"resolved", r,
 		"skipped", s,
 		"errors", e)
 
+	return nil
+}
+
+func (w *StatusInquiryPollerWorker) enqueuePendingRecovery(payment *domaintx.WalletPayment) error {
+	if w.disbursementTasks == nil {
+		return errors.New("disbursement task enqueuer unavailable")
+	}
+	if payment == nil || payment.EntityID == nil {
+		return errors.New("stale pending payment is not linked to an advance request")
+	}
+
+	payload, err := json.Marshal(DisbursementExecutePayload{
+		RequestID:          payment.RequestID,
+		AdvanceRequestID:   *payment.EntityID,
+		RequestedAmount:    payment.RequestedAmount,
+		RecipientName:      payment.RecipientName,
+		RecipientAccountNo: payment.RecipientAccountNo,
+		RecipientBank:      payment.RecipientBank,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal pending recovery payload: %w", err)
+	}
+
+	task := asynqlib.NewTask(TaskDisbursementExecute, payload)
+	if _, err := w.disbursementTasks.Enqueue(task,
+		asynqlib.MaxRetry(5),
+		asynqlib.TaskID(fmt.Sprintf("disbursement:recover:%d", payment.ID)),
+	); err != nil {
+		return fmt.Errorf("enqueue pending recovery: %w", err)
+	}
+
+	w.logger.Info("status inquiry: re-enqueued stale pending advance payment",
+		"payment_id", payment.ID, "request_id", payment.RequestID, "advance_request_id", *payment.EntityID)
 	return nil
 }
 

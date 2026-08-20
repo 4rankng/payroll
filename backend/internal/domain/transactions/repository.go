@@ -46,6 +46,16 @@ type WalletPaymentRepository interface {
 	// be persisted; authorised rows are waiting for a terminal IPN.
 	ListStaleAuthorised(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*WalletPayment, error)
 
+	// ListStaleAdvancePending returns advance-payment rows whose initial
+	// pre-transfer task was lost before account verification began.
+	ListStaleAdvancePending(ctx context.Context, provider string, cutoff time.Time, limit int) ([]*WalletPayment, error)
+
+	// GetStaleAdvancePendingByEntityID returns the stale pre-transfer payment
+	// for one advance request. It is used by an explicit admin retry to resume
+	// a lost task with its original provider idempotency key, never to create a
+	// second transfer.
+	GetStaleAdvancePendingByEntityID(ctx context.Context, entityID uint64, cutoff time.Time) (*WalletPayment, error)
+
 	// HasPendingForRecipient checks whether a non-terminal (pending, verified, or authorised)
 	// wallet payment already exists for the given recipient + provider.
 	// Used to prevent double disbursement when both auto-poller and manual

@@ -292,6 +292,14 @@ func (r *fakeOnePayFeeWalletPayments) ListStaleAuthorised(context.Context, strin
 	return nil, nil
 }
 
+func (r *fakeOnePayFeeWalletPayments) ListStaleAdvancePending(context.Context, string, time.Time, int) ([]*domaintx.WalletPayment, error) {
+	return nil, nil
+}
+
+func (r *fakeOnePayFeeWalletPayments) GetStaleAdvancePendingByEntityID(context.Context, uint64, time.Time) (*domaintx.WalletPayment, error) {
+	return nil, domaintx.ErrNotFound
+}
+
 func (r *fakeOnePayFeeWalletPayments) HasPendingForRecipient(context.Context, string, string, string) (bool, error) {
 	return false, nil
 }

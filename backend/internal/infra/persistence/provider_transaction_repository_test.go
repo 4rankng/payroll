@@ -83,6 +83,10 @@ func newTestRepo(t *testing.T) (*TxWalletPaymentRepository, *gorm.DB) {
 		status TEXT NOT NULL,
 		total_count INTEGER NOT NULL
 	)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE advance_payment_requests (
+		id INTEGER PRIMARY KEY,
+		status TEXT NOT NULL
+	)`).Error)
 
 	// Build the repository by hand — the public constructor takes
 	// our internal *Database wrapper, which we don't have here.
@@ -433,6 +437,51 @@ func TestRepository_ListStaleAuthorisedIncludesVerifiedInquiryCandidates(t *test
 		[]domaintx.State{domaintx.StateVerified, domaintx.StateAuthorised},
 		[]domaintx.State{rows[0].Status, rows[1].Status},
 	)
+}
+
+func TestRepository_GetStaleAdvancePendingByEntityIDRequiresApprovedSolePendingAttempt(t *testing.T) {
+	t.Parallel()
+	repo, db := newTestRepo(t)
+	ctx := context.Background()
+	entityID := uint64(157)
+	cutoff := time.Now().Add(-5 * time.Minute)
+	require.NoError(t, db.Exec("INSERT INTO advance_payment_requests (id, status) VALUES (?, ?)", entityID, "APPROVED").Error)
+
+	pending := newRow(t)
+	pending.Provider = "1pay"
+	pending.Status = domaintx.StatePending
+	pending.EntityID = &entityID
+	pending.CreatedAt = cutoff.Add(-time.Minute)
+	pending.UpdatedAt = cutoff.Add(-time.Minute)
+	require.NoError(t, repo.Create(ctx, pending))
+
+	got, err := repo.GetStaleAdvancePendingByEntityID(ctx, entityID, cutoff)
+	require.NoError(t, err)
+	require.Equal(t, pending.ID, got.ID)
+	require.Equal(t, domaintx.StatePending, got.Status)
+
+	verified := newRow(t)
+	verified.Provider = "1pay"
+	verified.Status = domaintx.StateVerified
+	verified.EntityID = &entityID
+	verified.CreatedAt = cutoff.Add(-time.Minute)
+	verified.UpdatedAt = cutoff.Add(-time.Minute)
+	require.NoError(t, repo.Create(ctx, verified))
+
+	_, err = repo.GetStaleAdvancePendingByEntityID(ctx, entityID, cutoff)
+	require.ErrorIs(t, err, domaintx.ErrNotFound)
+
+	otherEntityID := uint64(158)
+	require.NoError(t, db.Exec("INSERT INTO advance_payment_requests (id, status) VALUES (?, ?)", otherEntityID, "CANCELLED").Error)
+	cancelledPending := newRow(t)
+	cancelledPending.Provider = "1pay"
+	cancelledPending.EntityID = &otherEntityID
+	cancelledPending.CreatedAt = cutoff.Add(-time.Minute)
+	cancelledPending.UpdatedAt = cutoff.Add(-time.Minute)
+	require.NoError(t, repo.Create(ctx, cancelledPending))
+
+	_, err = repo.GetStaleAdvancePendingByEntityID(ctx, otherEntityID, cutoff)
+	require.ErrorIs(t, err, domaintx.ErrNotFound)
 }
 
 func TestRepository_HasPendingForRecipientIncludesVerified(t *testing.T) {

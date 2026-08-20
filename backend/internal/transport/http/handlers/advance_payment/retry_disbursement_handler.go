@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/workers"
 	"api-server/internal/domain"
+	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -53,24 +55,12 @@ func (h *AdvancePaymentHandler) RetryDisbursement(c *gin.Context) {
 		req.Status = domain.AdvancePaymentStatusApproved
 	}
 
-	// Step 4: Load employee with bank details
-	employee, err := h.service.GetConfig().EmployeeRepo.GetByID(ctx, req.EmployeeID)
-	if err != nil {
-		response.InternalServerError(c, "Không tìm thấy thông tin nhân viên")
-		return
-	}
-
-	// Step 5: Validate bank details
-	if employee.BankAccountNumber == "" || employee.BankAccountName == "" || employee.BankID == nil || employee.Bank == nil {
-		response.BadRequest(c, "Nhân viên chưa có thông tin ngân hàng. Vui lòng cập nhật trước khi thử lại.")
-		return
-	}
-
-	// Step 5.5: Refuse if a wallet_payment for this advance request is still
-	// in flight (pending/verified/authorised). The execute worker is already
-	// idempotent, so this is not a double-pay guard — it stops a second click
-	// from piling on a duplicate task while one is mid-flight. A stuck row must
-	// be cleared via reconciliation before retrying.
+	// Step 4: Refuse an active provider attempt, except for a stale pending row.
+	// Pending is the pre-transfer state: no account check completed and no
+	// OnePay transfer was initiated. After five minutes it is safe to restart
+	// the exact persisted request; verified and authorised rows remain blocked
+	// because OnePay may already have received them.
+	var stalePending *domaintx.WalletPayment
 	if h.txWalletPaymentRepo != nil {
 		inFlight, err := h.txWalletPaymentRepo.HasNonTerminalByEntityID(ctx, requestID)
 		if err != nil {
@@ -80,22 +70,53 @@ func (h *AdvancePaymentHandler) RetryDisbursement(c *gin.Context) {
 			return
 		}
 		if inFlight {
-			response.Conflict(c, "Đang có lệnh chuyển tiền đang xử lý cho yêu cầu này. Vui lòng đợi hoặc xoá khoản đang kẹt qua đối soát.")
-			return
+			stalePending, err = h.txWalletPaymentRepo.GetStaleAdvancePendingByEntityID(ctx, requestID, h.clock.Now().Add(-5*time.Minute))
+			if err != nil && !errors.Is(err, domaintx.ErrNotFound) {
+				slog.Error("retry disbursement: stale pending lookup failed",
+					"request_id", requestID, "error", err)
+				response.InternalServerError(c, "Không thể kiểm tra trạng thái chuyển tiền. Vui lòng thử lại sau.")
+				return
+			}
+			if stalePending == nil {
+				response.Conflict(c, "Đang có lệnh chuyển tiền đang xử lý cho yêu cầu này. Vui lòng đợi hoặc xoá khoản đang kẹt qua đối soát.")
+				return
+			}
 		}
 	}
 
-	// Step 6: Enqueue disbursement:execute task (same logic as poller's enqueueRequest)
-	disbursementRequestID := advance_payment.GenerateTransactionCode(true, true)
-
-	payload := workers.DisbursementExecutePayload{
-		RequestID:          disbursementRequestID,
-		AdvanceRequestID:   requestID,
-		RequestedAmount:    int64(req.NetAmount),
-		RecipientName:      employee.BankAccountName,
-		RecipientAccountNo: employee.BankAccountNumber,
-		RecipientBank:      employee.Bank.BankCode,
+	// Step 5: Build the execute payload. Stale pending recovery must use the
+	// original idempotency key and recipient snapshot. A normal retry starts a
+	// new provider request using the employee's current bank data.
+	var payload workers.DisbursementExecutePayload
+	if stalePending != nil {
+		payload = workers.DisbursementExecutePayload{
+			RequestID:          stalePending.RequestID,
+			AdvanceRequestID:   requestID,
+			RequestedAmount:    stalePending.RequestedAmount,
+			RecipientName:      stalePending.RecipientName,
+			RecipientAccountNo: stalePending.RecipientAccountNo,
+			RecipientBank:      stalePending.RecipientBank,
+		}
+	} else {
+		employee, err := h.service.GetConfig().EmployeeRepo.GetByID(ctx, req.EmployeeID)
+		if err != nil {
+			response.InternalServerError(c, "Không tìm thấy thông tin nhân viên")
+			return
+		}
+		if employee.BankAccountNumber == "" || employee.BankAccountName == "" || employee.BankID == nil || employee.Bank == nil {
+			response.BadRequest(c, "Nhân viên chưa có thông tin ngân hàng. Vui lòng cập nhật trước khi thử lại.")
+			return
+		}
+		payload = workers.DisbursementExecutePayload{
+			RequestID:          advance_payment.GenerateTransactionCode(true, true),
+			AdvanceRequestID:   requestID,
+			RequestedAmount:    int64(req.NetAmount),
+			RecipientName:      employee.BankAccountName,
+			RecipientAccountNo: employee.BankAccountNumber,
+			RecipientBank:      employee.Bank.BankCode,
+		}
 	}
+	disbursementRequestID := payload.RequestID
 
 	data, err := json.Marshal(payload)
 	if err != nil {

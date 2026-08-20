@@ -27,6 +27,12 @@ import (
 // that are vanishingly rare.
 const maxTransitionRetries = 3
 
+// ErrIdempotencyPayloadMismatch prevents one caller from reusing another
+// transfer's provider idempotency key with different money or beneficiary
+// details. Resuming a lost task must be byte-for-byte the same logical
+// transfer, never a new transfer disguised as a retry.
+var ErrIdempotencyPayloadMismatch = errors.New("disbursement: idempotency key reused with different transfer details")
+
 // DisbursementFeeProvider is the read-side surface the service uses to
 // stamp the per-transfer disbursement fee onto new rows. Implemented by
 // *FeeScheduleService.GetDisbursementFeeVND, which resolves the active
@@ -123,6 +129,39 @@ type InitiateInput struct {
 // whether to call the provider again or simply observe the in-flight
 // state.
 func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (*domaintx.WalletPayment, error) {
+	// Resolve bank code → SWIFT code before the idempotency lookup so both a
+	// normal execute task (bank code) and its durable recovery (stored SWIFT)
+	// compare the same immutable recipient identity.
+	recipientBank := in.RecipientBank
+	if s.bankRepo != nil && recipientBank != "" {
+		if bank, err := s.bankRepo.FindByBankCode(ctx, recipientBank); err == nil && bank != nil && bank.SwiftCode != "" {
+			recipientBank = bank.SwiftCode
+		}
+	}
+
+	// Resume a previously-created payment before applying the recipient-level
+	// concurrent-payment guard. A worker can crash after persisting the initial
+	// pending row but before account validation; treating that same request ID
+	// as a different in-flight payment makes recovery impossible forever.
+	existing, err := s.repo.GetByRequestID(ctx, in.RequestID)
+	if err == nil {
+		if !sameInitiateInput(existing, in, recipientBank) {
+			return nil, ErrIdempotencyPayloadMismatch
+		}
+		if s.registry != nil {
+			if provider, providerErr := s.registry.Active(ctx); providerErr == nil && existing.Provider != provider.Name() {
+				return nil, ErrIdempotencyPayloadMismatch
+			}
+		}
+		s.logger.Info("provider_transactions: idempotent initiate; returning existing row",
+			"id", existing.ID, "txn_id", existing.TxnID.String(), "request_id", existing.RequestID,
+			"current_status", existing.Status, "entity_id", existing.EntityID)
+		return existing, nil
+	}
+	if !errors.Is(err, domaintx.ErrNotFound) {
+		return nil, fmt.Errorf("provider_transactions: lookup existing request %q: %w", in.RequestID, err)
+	}
+
 	// Resolve provider name (needed for fee stamp, duplicate guard, and row storage).
 	var fee int64
 	var providerName string
@@ -144,18 +183,6 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 	} else {
 		s.logger.Warn("provider_transactions: fee provider not wired; stamping fee=0",
 			"request_id", in.RequestID)
-	}
-
-	// Resolve bank code → SWIFT code early.
-	// Callers pass bank code (e.g. "MB"); we persist the SWIFT code
-	// (e.g. "MBVNVNVN") so recipient_bank is always a SWIFT code.
-	// Resolution must happen BEFORE the duplicate guard so the guard
-	// queries with the same SWIFT code stored in the DB.
-	recipientBank := in.RecipientBank
-	if s.bankRepo != nil && recipientBank != "" {
-		if bank, err := s.bankRepo.FindByBankCode(ctx, recipientBank); err == nil && bank != nil && bank.SwiftCode != "" {
-			recipientBank = bank.SwiftCode
-		}
 	}
 
 	// Duplicate guard: prevent simultaneous payments to the same recipient
@@ -197,7 +224,7 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 		CreatedBy:          in.CreatedBy,
 		BatchID:            in.BatchID,
 	}
-	err := s.repo.Create(ctx, row)
+	err = s.repo.Create(ctx, row)
 	if err == nil {
 		s.logger.Info("provider_transactions: initiated",
 			"id", row.ID, "txn_id", row.TxnID.String(), "request_id", row.RequestID,
@@ -211,10 +238,30 @@ func (s *WalletPaymentService) Initiate(ctx context.Context, in InitiateInput) (
 	if lookupErr != nil {
 		return nil, fmt.Errorf("provider_transactions: initiate: duplicate request_id %q but lookup failed: %w", in.RequestID, lookupErr)
 	}
+	if !sameInitiateInput(existing, in, recipientBank) || (providerName != "" && existing.Provider != providerName) {
+		return nil, ErrIdempotencyPayloadMismatch
+	}
 	s.logger.Info("provider_transactions: idempotent initiate; returning existing row",
 		"id", existing.ID, "txn_id", existing.TxnID.String(), "request_id", existing.RequestID,
 		"current_status", existing.Status, "entity_id", existing.EntityID)
 	return existing, nil
+}
+
+func sameInitiateInput(existing *domaintx.WalletPayment, in InitiateInput, recipientBank string) bool {
+	existingDescription := ""
+	if existing != nil && existing.Description != nil {
+		existingDescription = *existing.Description
+	}
+	if existing == nil || existing.RequestedAmount != in.RequestedAmount ||
+		existing.RecipientName != in.RecipientName ||
+		existing.RecipientAccountNo != in.RecipientAccountNo ||
+		existing.RecipientBank != recipientBank || existingDescription != in.Description {
+		return false
+	}
+	if (existing.EntityID == nil) != (in.EntityID == nil) {
+		return false
+	}
+	return existing.EntityID == nil || *existing.EntityID == *in.EntityID
 }
 
 // GetByTxnID returns the current state of a provider transaction by its

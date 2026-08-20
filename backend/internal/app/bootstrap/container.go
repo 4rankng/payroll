@@ -265,7 +265,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.BulkTransferPayment,
 			infra.Logger,
 		).WithBulkBatchFinalizer(bulkBatchFinalizer).
-			WithBankRepository(repos.Bank)
+			WithBankRepository(repos.Bank).
+			WithDisbursementTaskEnqueuer(asynqClient.AsynqClient())
 		walletBulkRowWorker = workers.NewWalletBulkTransferRowWorker(
 			services.ProviderTransactions,
 			services.Wallet, // Step-0 balance guard (C6 fix); nil-safe inside worker

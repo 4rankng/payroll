@@ -24,6 +24,30 @@ type fakeProviderTxRepo struct {
 	byRequestID map[string]*domaintx.WalletPayment
 	createCalls int
 	createErr   error
+	hasPending  bool
+}
+
+// raceProviderTxRepo simulates the only interleaving that the early lookup
+// cannot see: another caller inserts the same request ID between our lookup
+// and INSERT, but with a different immutable payload.
+type raceProviderTxRepo struct {
+	*fakeProviderTxRepo
+	lookupCount int
+	winner      *domaintx.WalletPayment
+}
+
+func (r *raceProviderTxRepo) GetByRequestID(ctx context.Context, requestID string) (*domaintx.WalletPayment, error) {
+	r.lookupCount++
+	if r.lookupCount == 1 {
+		return nil, domaintx.ErrNotFound
+	}
+	return r.fakeProviderTxRepo.GetByRequestID(ctx, requestID)
+}
+
+func (r *raceProviderTxRepo) Create(_ context.Context, _ *domaintx.WalletPayment) error {
+	winner := *r.winner
+	r.byRequestID[winner.RequestID] = &winner
+	return errors.New("Error 1062: Duplicate entry '" + winner.RequestID + "' for key 'idx_pt_request_id'")
 }
 
 func newFakeRepo() *fakeProviderTxRepo {
@@ -120,11 +144,19 @@ func (r *fakeProviderTxRepo) ListStaleAuthorised(_ context.Context, provider str
 	return nil, nil
 }
 
+func (r *fakeProviderTxRepo) ListStaleAdvancePending(context.Context, string, time.Time, int) ([]*domaintx.WalletPayment, error) {
+	return nil, nil
+}
+
+func (r *fakeProviderTxRepo) GetStaleAdvancePendingByEntityID(context.Context, uint64, time.Time) (*domaintx.WalletPayment, error) {
+	return nil, domaintx.ErrNotFound
+}
+
 func (r *fakeProviderTxRepo) HasPendingForRecipient(_ context.Context, accountNo, bank, provider string) (bool, error) {
 	_ = accountNo
 	_ = bank
 	_ = provider
-	return false, nil
+	return r.hasPending, nil
 }
 
 func (r *fakeProviderTxRepo) HasNonTerminalByEntityID(_ context.Context, entityID uint64) (bool, error) {
@@ -318,12 +350,111 @@ func TestInitiate_IsIdempotentOnDuplicateRequestID(t *testing.T) {
 	if second.RequestID != requestID {
 		t.Fatalf("retry RequestID = %q, want %q", second.RequestID, requestID)
 	}
-	// Both Create attempts hit the repo, but only one row exists.
-	if repo.createCalls != 2 {
-		t.Fatalf("repo.createCalls = %d, want 2 (original + duplicate-rejected retry)", repo.createCalls)
+	// The retry reads the existing row before the recipient-level duplicate
+	// guard, so it never issues a second INSERT.
+	if repo.createCalls != 1 {
+		t.Fatalf("repo.createCalls = %d, want 1 (original insert only)", repo.createCalls)
 	}
 	if got := len(repo.byRequestID); got != 1 {
 		t.Fatalf("repo row count = %d, want 1", got)
+	}
+}
+
+// TestInitiate_ReturnsExistingRequestBeforeDuplicateRecipientGuard protects
+// recovery of a task that was lost after its payment row was created. The
+// existing row belongs to the same request, so it must be resumed rather than
+// rejected as a concurrent payment for the recipient.
+func TestInitiate_ReturnsExistingRequestBeforeDuplicateRecipientGuard(t *testing.T) {
+	t.Parallel()
+	repo := newFakeRepo()
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+
+	requestID := "tt" + uuid.New().String()[:14]
+	first, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
+		RequestID:          requestID,
+		RequestedAmount:    150_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+	})
+	if err != nil {
+		t.Fatalf("first Initiate: %v", err)
+	}
+
+	repo.hasPending = true
+	second, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
+		RequestID:          requestID,
+		RequestedAmount:    150_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+	})
+	if err != nil {
+		t.Fatalf("recovery Initiate: %v", err)
+	}
+	if second.ID != first.ID {
+		t.Fatalf("recovery returned a different row: first.ID=%d, second.ID=%d", first.ID, second.ID)
+	}
+	if repo.createCalls != 1 {
+		t.Fatalf("repo.createCalls = %d, want 1 (existing request must be read before duplicate guard)", repo.createCalls)
+	}
+}
+
+func TestInitiate_RejectsExistingRequestIDWithDifferentTransferDetails(t *testing.T) {
+	t.Parallel()
+	repo := newFakeRepo()
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+
+	requestID := "tt" + uuid.New().String()[:14]
+	_, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
+		RequestID:          requestID,
+		RequestedAmount:    150_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+	})
+	if err != nil {
+		t.Fatalf("first Initiate: %v", err)
+	}
+
+	_, err = svc.Initiate(context.Background(), disbursement.InitiateInput{
+		RequestID:          requestID,
+		RequestedAmount:    151_000,
+		RecipientName:      "NGUYEN VAN B",
+		RecipientAccountNo: "8888000011",
+		RecipientBank:      "MB",
+	})
+	if !errors.Is(err, disbursement.ErrIdempotencyPayloadMismatch) {
+		t.Fatalf("mismatched request reuse error = %v, want ErrIdempotencyPayloadMismatch", err)
+	}
+}
+
+func TestInitiate_RejectsMismatchedPayloadWhenConcurrentInsertWins(t *testing.T) {
+	t.Parallel()
+	requestID := "tt" + uuid.New().String()[:14]
+	winner := &domaintx.WalletPayment{
+		ID:                 1,
+		TxnID:              uuid.New(),
+		RequestID:          requestID,
+		Provider:           "",
+		RequestedAmount:    151_000,
+		RecipientName:      "NGUYEN VAN B",
+		RecipientAccountNo: "8888000011",
+		RecipientBank:      "MB",
+		Status:             domaintx.StatePending,
+	}
+	repo := &raceProviderTxRepo{fakeProviderTxRepo: newFakeRepo(), winner: winner}
+	svc := disbursement.NewWalletPaymentService(repo, nil, nil, nil, nil, fakeFee(200), nil, nil, slog.Default())
+
+	_, err := svc.Initiate(context.Background(), disbursement.InitiateInput{
+		RequestID:          requestID,
+		RequestedAmount:    150_000,
+		RecipientName:      "NGUYEN VAN A",
+		RecipientAccountNo: "9999000011",
+		RecipientBank:      "VCB",
+	})
+	if !errors.Is(err, disbursement.ErrIdempotencyPayloadMismatch) {
+		t.Fatalf("concurrent duplicate reuse error = %v, want ErrIdempotencyPayloadMismatch", err)
 	}
 }
 

@@ -59,6 +59,9 @@ func NewDisbursementExecuteWorker(
 // Returns ("", nil) when the bank exists but has no SwiftCode, or when
 // bankRepo is nil (graceful degradation).
 func (w *DisbursementExecuteWorker) resolveSwiftCode(ctx context.Context, bankCode string) (string, error) {
+	if isSwiftCode(bankCode) {
+		return bankCode, nil
+	}
 	if w.bankRepo == nil {
 		return "", nil
 	}
@@ -82,8 +85,25 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		"request_id", p.RequestID,
 	)
 
+	// A retry that finds its own persisted pending row is resuming funds already
+	// counted in wallet.Available. Do not deduct the same reservation a second
+	// time or a lost pre-transfer task can never recover after the balance
+	// changes. Verified rows are intentionally excluded: they are no longer
+	// reserved in the wallet balance and must pass a fresh funds check before a
+	// provider-not-found resend.
+	resumingExisting := false
+	if w.walletPaymentService != nil {
+		existing, lookupErr := w.walletPaymentService.GetByRequestID(ctx, p.RequestID)
+		switch {
+		case lookupErr == nil && existing != nil && existing.Status == domaintx.StatePending:
+			resumingExisting = true
+		case lookupErr != nil && !errors.Is(lookupErr, domaintx.ErrNotFound):
+			return fmt.Errorf("lookup existing wallet_payment: %w", lookupErr)
+		}
+	}
+
 	// Step 0: Pre-flight balance check (safety net for races between poller and execute)
-	if w.walletSvc != nil {
+	if w.walletSvc != nil && !resumingExisting {
 		balance, balErr := w.walletSvc.GetBalance(ctx)
 		if balErr != nil {
 			logger.Warn("disbursement execute: balance check failed, proceeding", "error", balErr)
