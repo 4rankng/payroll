@@ -39,10 +39,10 @@ export function CheckInEmployeeCard({
   return (
     <Card
       role="listitem"
-      className="flex min-h-[10.5rem] flex-col overflow-hidden shadow-none transition-colors hover:border-primary/35"
+      className="flex min-h-[8.5rem] flex-col overflow-hidden shadow-none transition-colors hover:border-primary/35"
     >
-      <div className="flex min-w-0 items-start justify-between gap-2.5 border-b border-border/70 p-3 pb-2.5">
-        <div className="min-w-0">
+      <div className="flex min-w-0 items-center gap-2 border-b border-border/70 p-3 pb-2.5">
+        <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold leading-5 text-foreground" title={employee.employee_name}>
             {employee.employee_name}
           </h2>
@@ -55,6 +55,18 @@ export function CheckInEmployeeCard({
           <StatusIcon className="h-3.5 w-3.5" aria-hidden />
           {presentation.label}
         </Badge>
+        <Button
+          type="button"
+          variant={isEnabledOrPending ? "outline" : "default"}
+          size="sm"
+          className="h-11 min-h-11 shrink-0 px-3 sm:h-8 sm:min-h-0 sm:px-2.5"
+          disabled={disabled}
+          onClick={() => onToggle(employee)}
+          aria-label={`${actionLabel} điểm danh cho ${employee.employee_name}`}
+        >
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+          {actionLabel}
+        </Button>
       </div>
 
       <div className="grid flex-1 grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] gap-3 p-3 py-2.5">
@@ -72,20 +84,6 @@ export function CheckInEmployeeCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-end border-t border-border/70 bg-muted/20 px-3 py-2">
-        <Button
-          type="button"
-          variant={isEnabledOrPending ? "outline" : "default"}
-          size="sm"
-          className="h-11 min-h-11 px-4 sm:h-8 sm:min-h-0 sm:px-2.5"
-          disabled={disabled}
-          onClick={() => onToggle(employee)}
-          aria-label={`${actionLabel} điểm danh cho ${employee.employee_name}`}
-        >
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-          {actionLabel}
-        </Button>
-      </div>
     </Card>
   );
 }

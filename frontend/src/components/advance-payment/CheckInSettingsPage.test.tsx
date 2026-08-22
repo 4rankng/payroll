@@ -142,6 +142,74 @@ describe("CheckInSettingsPage", () => {
     });
   });
 
+  it("updates attendance data and cohort totals when a month is selected", async () => {
+    const currentMonth = startOfMonth(new Date());
+    const previousMonth = subMonths(currentMonth, 1);
+    const previousMonthValue = format(previousMonth, "yyyy-MM");
+    const currentConfiguration = {
+      ...configuration,
+      month: format(currentMonth, "yyyy-MM"),
+      employees: [{
+        ...configuration.employees[0],
+        attendance_count: 14,
+        last_check_in_at: "2026-08-22T08:58:00+07:00",
+      }],
+      summary: { ...configuration.summary, active: 1, inactive: 0 },
+    };
+    const historicalConfiguration = {
+      ...configuration,
+      month: previousMonthValue,
+      employees: [{
+        ...configuration.employees[0],
+        attendance_count: 0,
+        last_check_in_at: null,
+      }],
+      summary: { ...configuration.summary, active: 0, inactive: 1 },
+    };
+    useInfiniteCheckInConfigurationMock.mockImplementation(
+      (_projectId: number, params: { month?: string }) => ({
+        data: {
+          pages: [params.month === previousMonthValue
+            ? historicalConfiguration
+            : currentConfiguration],
+          pageParams: [1],
+        },
+        isLoading: false,
+        isFetching: false,
+        isError: false,
+        refetch: vi.fn(),
+        fetchNextPage: fetchNextPageMock,
+        hasNextPage: false,
+        isFetchingNextPage: false,
+      }),
+    );
+
+    renderPage();
+
+    let card = await screen.findByRole("listitem");
+    expect(within(card).getByText("14")).toBeInTheDocument();
+    expect(within(card).getByText("Đã điểm danh")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Đã điểm danh\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Chưa điểm danh\s*0/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Chọn tháng điểm danh/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Chọn năm điểm danh" }), {
+      target: { value: previousMonth.getFullYear() },
+    });
+    fireEvent.click(screen.getByRole("button", {
+      name: `Tháng ${previousMonth.getMonth() + 1} năm ${previousMonth.getFullYear()}`,
+    }));
+
+    await waitFor(() => {
+      card = screen.getByRole("listitem");
+      expect(within(card).getByText("0")).toBeInTheDocument();
+      expect(within(card).getByText("Chưa có")).toBeInTheDocument();
+      expect(within(card).getByText("Chưa điểm danh")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Đã điểm danh\s*0/ })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Chưa điểm danh\s*1/ })).toBeInTheDocument();
+    });
+  });
+
   it("renders one responsive compact-card matrix instead of duplicate table and mobile markup", async () => {
     renderPage();
 
@@ -152,6 +220,20 @@ describe("CheckInSettingsPage", () => {
     expect(screen.getAllByRole("button", {
       name: "Tắt điểm danh cho Nguyễn Hoàng An",
     })).toHaveLength(1);
+  });
+
+  it("keeps the employee name, attendance status, and toggle in one header row", async () => {
+    renderPage();
+
+    const card = await screen.findByRole("listitem");
+    const employeeName = within(card).getByRole("heading", { name: "Nguyễn Hoàng An" });
+    const cardHeader = employeeName.parentElement?.parentElement;
+
+    expect(cardHeader).not.toBeNull();
+    expect(within(cardHeader as HTMLElement).getByText("Chưa điểm danh")).toBeInTheDocument();
+    expect(within(cardHeader as HTMLElement).getByRole("button", {
+      name: "Tắt điểm danh cho Nguyễn Hoàng An",
+    })).toBeInTheDocument();
   });
 
   it("uses coherent Vietnamese status labels", async () => {

@@ -456,6 +456,43 @@ func TestProjectEmployeeRepository_GetCheckInConfigurationClassifiesCurrentMonth
 	require.Nil(t, result.Employees[1].LastCheckInAt)
 }
 
+func TestProjectEmployeeRepository_GetCheckInConfigurationUsesSelectedMonthForUsageData(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+	require.NoError(t, db.Exec(`
+		INSERT INTO attendances (id, project_id, employee_id, check_in_time)
+		VALUES (6, 7, 101, '2026-07-15 08:30:00')
+	`).Error)
+
+	result, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusEnabled,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, domain.CheckInConfigurationSummary{
+		Enabled:  2,
+		Active:   2,
+		Inactive: 0,
+		Pending:  1,
+	}, result.Summary)
+	require.Equal(t, int64(2), result.Total)
+	require.Len(t, result.Employees, 2)
+
+	employeesByID := make(map[uint]domain.CheckInConfigurationEmployee, len(result.Employees))
+	for _, employee := range result.Employees {
+		employeesByID[employee.EmployeeID] = employee
+	}
+	require.Equal(t, int64(1), employeesByID[101].AttendanceCount)
+	require.NotNil(t, employeesByID[101].LastCheckInAt)
+	require.Equal(t, int64(1), employeesByID[102].AttendanceCount)
+	require.NotNil(t, employeesByID[102].LastCheckInAt)
+}
+
 func TestProjectEmployeeRepository_GetCheckInConfigurationFiltersInactiveAcrossAllRows(t *testing.T) {
 	repo, db := newCheckInConfigurationTestRepository(t)
 	seedCheckInConfigurationTestData(t, db)

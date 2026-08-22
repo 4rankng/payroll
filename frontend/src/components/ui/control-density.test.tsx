@@ -76,15 +76,30 @@ describe('shared control density', () => {
     expect(headingDefaults).not.toMatch(/h2\s*\{\s*font-size:/);
   });
 
-  it('uses the compact illustrated empty state instead of an inflated heading', () => {
+  it('uses a compact horizontal illustration with contextual employee imagery', () => {
     const { container } = render(
-      <EmptyState title="Không có dữ liệu" description="Chưa có dữ liệu để hiển thị." size="sm" />,
+      <EmptyState title="Không có nhân viên trong nhóm này" description="Chọn nhóm khác để tiếp tục quản lý." size="sm" />,
     );
 
-    expect(screen.getByText('Không có dữ liệu')).toHaveClass('text-sm');
+    expect(screen.getByText('Không có nhân viên trong nhóm này')).toHaveClass('text-xs');
+    expect(container.querySelector('[data-slot="empty-state"]')).toHaveClass('flex', 'items-center', 'text-left');
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      '/images/empty-states/payroll-empty-state-illustration.png',
+      '/images/empty-states/employees-empty-state-illustration.png',
+    );
+  });
+
+  it('maps project and finance empty states to their matching illustrations', () => {
+    const { rerender, container } = render(<EmptyState title="Chưa có dự án nào" size="sm" />);
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      '/images/empty-states/projects-empty-state-illustration.png',
+    );
+
+    rerender(<EmptyState title="Không có giao dịch nào" size="sm" />);
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      '/images/empty-states/finance-empty-state-illustration.png',
     );
   });
 });
