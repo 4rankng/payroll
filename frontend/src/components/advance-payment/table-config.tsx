@@ -7,6 +7,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, X } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/utils/formatters";
 import { format, differenceInMinutes } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -437,21 +438,17 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
 ];
 
 export const requestEmptyState = (
-  <div className="text-center py-12">
-    <Wallet className="mx-auto h-12 w-12 text-muted-foreground/50" />
-    <h3 className="mt-4 text-lg font-semibold">Chưa có yêu cầu nào</h3>
-    <p className="mt-2 text-sm text-muted-foreground">
-      Yêu cầu ứng lương sẽ hiển thị tại đây sau khi nhân viên gửi.
-    </p>
-  </div>
+  <EmptyState
+    title="Chưa có yêu cầu nào"
+    description="Yêu cầu ứng lương sẽ hiển thị tại đây sau khi nhân viên gửi."
+    size="sm"
+  />
 );
 
 export const flexPayEmptyState = (
-  <div className="text-center py-12">
-    <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-    <h3 className="mt-4 text-lg font-semibold">Chưa có dữ liệu</h3>
-    <p className="mt-2 text-sm text-muted-foreground">
-      Vui lòng nhập file bảng lương để xem danh sách nhân viên.
-    </p>
-  </div>
+  <EmptyState
+    title="Chưa có dữ liệu"
+    description="Vui lòng nhập file bảng lương để xem danh sách nhân viên."
+    size="sm"
+  />
 );

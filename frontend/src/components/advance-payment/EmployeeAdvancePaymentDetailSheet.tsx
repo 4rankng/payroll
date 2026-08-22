@@ -15,6 +15,7 @@ import {
 import { formatCurrency } from "@/utils/formatters";
 import { useAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type {
   AdvancePaymentListItem,
   FlexPayEmployeeListItem,
@@ -289,9 +290,8 @@ function RequestsList({ requests }: { requests: AdvancePaymentListItem[] }) {
       </div>
 
       {requests.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-100 py-8 text-center">
-          <Wallet className="mx-auto h-7 w-7 text-slate-300 mb-2" />
-          <p className="text-xs text-slate-400">Chưa có yêu cầu nào</p>
+        <div className="bg-white rounded-xl border border-slate-100 px-3">
+          <EmptyState title="Chưa có yêu cầu nào" size="sm" className="py-4" />
         </div>
       ) : (
         <div className="space-y-2">

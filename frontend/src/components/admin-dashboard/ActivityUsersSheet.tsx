@@ -4,13 +4,14 @@ import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X, User } from 'lucide-react';
+import { X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useActiveEmployeesBySchedule } from '@/hooks/api/useDashboard';
 import { EmployeeDetailsSheet } from '@/components/employees/details/EmployeeDetailsSheet';
 import { useEmployee, useUpdateEmployee, useDeleteEmployee } from '@/hooks/api/useEmployees';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Employee } from '@/types/api/employee.types';
 import type { Bank } from '@/types/api/bank.types';
 
@@ -105,10 +106,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
                 ))}
               </div>
             ) : !users || users.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-sm gap-2">
-                <User className="h-8 w-8 opacity-30" />
-                <span>Không có nhân viên nào đăng nhập</span>
-              </div>
+              <EmptyState title="Không có nhân viên nào đăng nhập" size="sm" className="py-4" />
             ) : (
               <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 {users.map((user) => (

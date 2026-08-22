@@ -117,6 +117,7 @@ export type CheckInConfigurationStatus = "all" | "enabled" | "active" | "inactiv
 
 export interface CheckInConfigurationParams {
   status: CheckInConfigurationStatus;
+  month?: string;
   search?: string;
   page?: number;
   pageSize?: number;

@@ -19,6 +19,7 @@ import { SlideSheetTemplate } from '@/components/sheets/templates/SlideSheetTemp
 import { usePartnerImportHistory } from '@/hooks/timesheet/usePartnerImportHistory';
 import { timesheetService } from '@/services/api/timesheet.service';
 import { parseImportErrors } from '@/utils/import-errors';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { PartnerImportFile } from '@/types/api/timesheet.types';
 
 interface UploadHistorySheetProps {
@@ -167,15 +168,11 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
         )}
 
         {!isLoading && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="rounded-full bg-muted p-5 mb-4">
-              <UploadCloud className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium text-foreground">Chưa có tệp nào được tải lên</p>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-xs">
-              Sử dụng nút "Tải lên BCC" để nhập dữ liệu bảng công từ tệp Excel
-            </p>
-          </div>
+          <EmptyState
+            title="Chưa có tệp nào được tải lên"
+            description="Sử dụng nút Tải lên BCC để nhập dữ liệu bảng công từ tệp Excel"
+            size="sm"
+          />
         )}
 
         {!isLoading && items.map((item) => (

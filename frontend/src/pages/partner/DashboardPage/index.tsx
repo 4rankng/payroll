@@ -23,6 +23,7 @@ import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type {
   TopPaidEmployeeItem,
   PartnerEmployeeListType,
@@ -348,15 +349,11 @@ const PartnerDashboardPage = () => {
             {isLoading ? (
               <LeaderboardSkeleton />
             ) : topEmployees.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/50 mb-3">
-                  <Crown className="h-5 w-5 text-muted-foreground/40" />
-                </div>
-                <p className="text-[13px] font-medium text-foreground">Chưa có dữ liệu thanh toán</p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Sẽ hiển thị khi có nhân viên được thanh toán trong {periodLabel}.
-                </p>
-              </div>
+              <EmptyState
+                title="Chưa có dữ liệu thanh toán"
+                description={`Sẽ hiển thị khi có nhân viên được thanh toán trong ${periodLabel}.`}
+                size="sm"
+              />
             ) : (
               <div className="grid grid-cols-1 gap-x-4 gap-y-0.5 min-[1120px]:grid-cols-2">
                 {topEmployees.map((item, idx) => (

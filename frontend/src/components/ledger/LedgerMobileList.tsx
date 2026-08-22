@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -87,11 +88,11 @@ export function LedgerMobileList({
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Calendar className="mx-auto h-10 w-10 text-muted-foreground/40" />
-        <p className="mt-3 text-sm font-medium text-muted-foreground">Không tìm thấy bút toán nào</p>
-        <p className="mt-1 text-xs text-muted-foreground">Thử điều chỉnh bộ lọc</p>
-      </div>
+      <EmptyState
+        title="Không tìm thấy bút toán nào"
+        description="Thử điều chỉnh bộ lọc"
+        size="sm"
+      />
     );
   }
 

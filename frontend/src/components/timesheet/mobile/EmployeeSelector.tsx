@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface Employee {
   id: number;
@@ -100,10 +101,7 @@ export function EmployeeSelector({
       </Select>
       
       {employees.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="typography-body-medium">Chưa có nhân viên trong dự án</p>
-        </div>
+        <EmptyState title="Chưa có nhân viên trong dự án" size="sm" className="py-4" />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useUsersByIds } from '@/hooks/api/useUsers';
 import { transactionService, getTransactionRemainingAmount } from '@/services/api/transaction.service';
 import type { Transaction } from '@/services/api/transaction.service';
 import { Receipt, TrendingUp, TrendingDown } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface SettlementHistorySectionProps {
   transaction: Transaction;
@@ -78,10 +79,7 @@ export function SettlementHistorySection({ transaction }: SettlementHistorySecti
       {/* Settlement List */}
       <div>
         {settlements.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Chưa có thanh toán nào</p>
-          </div>
+          <EmptyState title="Chưa có thanh toán nào" size="sm" className="py-4" />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3">

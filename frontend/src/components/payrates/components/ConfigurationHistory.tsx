@@ -16,6 +16,7 @@ import {
   STATUS_LABELS
 } from '../types';
 import { payRateService } from '@/services/api/payrate.service';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ConfigurationHistoryProps {
   configs: FlexiblePayrateConfig[];
@@ -122,13 +123,11 @@ export function ConfigurationHistory({
       
       <CardContent>
         {configs.length === 0 ? (
-          <div className="text-center py-12">
-            <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-2">Chưa có lịch sử cấu hình</h3>
-            <p className="typography-body-medium text-muted-foreground">
-              Các cấu hình đã tạo sẽ xuất hiện ở đây
-            </p>
-          </div>
+          <EmptyState
+            title="Chưa có lịch sử cấu hình"
+            description="Các cấu hình đã tạo sẽ xuất hiện ở đây"
+            size="sm"
+          />
         ) : (
           <div className="space-y-3">
             {configs.map((config) => (

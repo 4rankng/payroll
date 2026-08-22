@@ -1,6 +1,6 @@
 import React from "react";
-import { Users } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { User } from "@/types/user";
 
 interface UserMobileListProps {
@@ -72,15 +72,7 @@ const UserGridCard = React.memo(function UserGridCard({
 export function UserMobileList({ users, onRowClick, emptyState }: UserMobileListProps) {
   if (users.length === 0) {
     return (
-      <div className="text-center py-12">
-        {emptyState || (
-          <>
-            <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mt-4 text-base font-semibold">Không tìm thấy người dùng nào</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Không có dữ liệu để hiển thị.</p>
-          </>
-        )}
-      </div>
+      emptyState || <EmptyState title="Không tìm thấy người dùng nào" description="Không có dữ liệu để hiển thị." size="sm" />
     );
   }
 

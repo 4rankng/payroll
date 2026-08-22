@@ -1,10 +1,28 @@
 import type {
   CheckInConfigurationEmployee,
+  CheckInConfigurationResponse,
   CheckInConfigurationStatus,
 } from "@/types/api/project-employee.types";
 import { formatDateTime } from "@/utils/formatters";
 
 export const DEFAULT_CHECK_IN_PAGE_SIZE = 20;
+
+export function getCurrentCheckInMonthValue(now = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+}
+
+export function flattenCheckInConfigurationEmployees(
+  pages?: CheckInConfigurationResponse[],
+): CheckInConfigurationEmployee[] {
+  const employees = new Map<number, CheckInConfigurationEmployee>();
+  for (const page of pages ?? []) {
+    for (const employee of page.employees) {
+      employees.set(employee.assignment_id, employee);
+    }
+  }
+  return Array.from(employees.values());
+}
 
 export type CheckInEmployeeState =
   | "pending"

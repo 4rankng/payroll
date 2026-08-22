@@ -8,6 +8,7 @@ import type { Loan } from "@/types/api/loan.types";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Landmark } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatVND, daysUntil, getPaymentUrgencyColor } from "@/utils/loanHelpers";
 
 // ---------------------------------------------------------------------------
@@ -257,13 +258,11 @@ export const lenderMobileFields: MobileField<Lender>[] = [
 // ---------------------------------------------------------------------------
 
 export const loansEmptyState = (
-  <div className="text-center py-12">
-    <Landmark className="mx-auto h-12 w-12 text-muted-foreground/50" />
-    <h3 className="mt-4 typography-title-large">Chưa có khoản vay nào</h3>
-    <p className="mt-2 typography-body-medium text-muted-foreground">
-      Tạo khoản vay đầu tiên để bắt đầu quản lý.
-    </p>
-  </div>
+  <EmptyState
+    title="Chưa có khoản vay nào"
+    description="Tạo khoản vay đầu tiên để bắt đầu quản lý."
+    size="sm"
+  />
 );
 
 // ---------------------------------------------------------------------------

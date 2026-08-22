@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { assetService } from '@/services/api/asset.service';
 import { useDownloadAsset, useDeleteAsset } from '@/hooks/api/useAssets';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Asset } from '@/types/api/financial.types';
 
 interface FileListProps {
@@ -81,8 +82,8 @@ export function FileList({
 
   if (files.length === 0) {
     return (
-      <div className={cn("text-center py-4 text-gray-500 typography-body-medium", className)}>
-        Chưa có file chứng từ
+      <div className={cn("rounded-lg border border-dashed border-border/60 px-3", className)}>
+        <EmptyState title="Chưa có tệp chứng từ" size="sm" className="py-3" />
       </div>
     );
   }

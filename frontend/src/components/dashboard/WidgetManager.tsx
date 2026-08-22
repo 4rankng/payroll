@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Grip, Plus, Settings, RotateCw, Layout } from 'lucide-react';
+import { Grip, Plus, Settings, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 export interface WidgetConfig {
   id: string;
@@ -222,16 +223,13 @@ export const WidgetManager: React.FC<WidgetManagerProps> = ({
         </DndContext>
 
         {visibleWidgets.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed rounded-xl">
-            <Layout className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="typography-title-large mb-2">Không có widget nào</h3>
-            <p className="text-muted-foreground mb-4">
-              Thêm widget để tùy chỉnh dashboard của bạn
-            </p>
-            <Button onClick={() => setShowAddDialog(true)} variant="default">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm widget đầu tiên
-            </Button>
+          <div className="border-2 border-dashed rounded-xl px-4">
+            <EmptyState
+              title="Không có widget nào"
+              description="Thêm widget để tùy chỉnh dashboard của bạn"
+              action={{ label: 'Thêm widget đầu tiên', onClick: () => setShowAddDialog(true) }}
+              size="sm"
+            />
           </div>
         )}
       </div>

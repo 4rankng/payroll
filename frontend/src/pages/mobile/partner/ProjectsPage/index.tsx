@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectMobileList } from "@/components/projects/ProjectMobileList";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
@@ -233,19 +234,11 @@ const ProjectsPageMobile = () => {
             navigate(`/partner/timesheet?project=${project.id}`)
           }
           emptyState={
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                <Briefcase className="h-7 w-7 text-muted-foreground/50" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  Không có dự án nào
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Bạn chưa được phân quyền truy cập vào dự án nào.
-                </p>
-              </div>
-            </div>
+            <EmptyState
+              title="Không có dự án nào"
+              description="Bạn chưa được phân quyền truy cập vào dự án nào."
+              size="sm"
+            />
           }
         />
 

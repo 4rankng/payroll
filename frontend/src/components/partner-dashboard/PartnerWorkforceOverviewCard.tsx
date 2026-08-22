@@ -8,6 +8,7 @@ import {
 import { CircleDollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface PartnerWorkforceOverviewCardProps {
   active: number;
@@ -61,8 +62,8 @@ function PartnerWorkforceDonut({
 
   if (total === 0) {
     return (
-      <div className="flex h-[180px] items-center justify-center text-[12px] text-muted-foreground">
-        Chưa có dữ liệu
+      <div className="h-[180px] px-3">
+        <EmptyState title="Chưa có dữ liệu" size="sm" className="h-full py-2" />
       </div>
     );
   }

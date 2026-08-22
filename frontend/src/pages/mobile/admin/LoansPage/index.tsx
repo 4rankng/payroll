@@ -13,6 +13,7 @@ import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.typ
 import { AddLoanSheet } from '@/components/sheets/AddLoanSheet';
 import { LoanDetailsSheet } from '@/components/sheets/LoanDetailsSheet';
 import { MobileSearchInput } from '@/components/shared/MobileSearchInput';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
 import { splitCurrencyDisplay } from '@/utils/formatters';
@@ -248,11 +249,11 @@ const LoansPageMobile = () => {
       {/* Loan list */}
       <div className="flex-1 px-4">
         {filteredLoans.length === 0 ? (
-          <div className="text-center py-12">
-            <Landmark className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mt-4 typography-title-large">Chưa có khoản vay nào</h3>
-            <p className="mt-2 typography-body-medium text-muted-foreground">Tạo khoản vay đầu tiên để bắt đầu quản lý.</p>
-          </div>
+          <EmptyState
+            title="Chưa có khoản vay nào"
+            description="Tạo khoản vay đầu tiên để bắt đầu quản lý."
+            size="sm"
+          />
         ) : (
           <>
             <div className="space-y-2">

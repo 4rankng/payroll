@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { format, startOfMonth, subMonths } from "date-fns";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,21 +7,23 @@ import CheckInSettingsPage from "./CheckInSettingsPage";
 
 const {
   useCheckInConfigurableProjectsMock,
-  useCheckInConfigurationMock,
+  useInfiniteCheckInConfigurationMock,
   disableInactiveMutateMock,
   disablePendingMutateMock,
+  fetchNextPageMock,
 } = vi.hoisted(() => ({
   useCheckInConfigurableProjectsMock: vi.fn(),
-  useCheckInConfigurationMock: vi.fn(),
+  useInfiniteCheckInConfigurationMock: vi.fn(),
   disableInactiveMutateMock: vi.fn(),
   disablePendingMutateMock: vi.fn(),
+  fetchNextPageMock: vi.fn(),
 }));
 
 vi.mock("@/hooks/api/useProjectEmployees", () => ({
   useCheckInConfigurableProjects: (...args: unknown[]) =>
     useCheckInConfigurableProjectsMock(...args),
-  useCheckInConfiguration: (...args: unknown[]) =>
-    useCheckInConfigurationMock(...args),
+  useInfiniteCheckInConfiguration: (...args: unknown[]) =>
+    useInfiniteCheckInConfigurationMock(...args),
   useDisableInactiveCheckInEmployees: () => ({
     isPending: false,
     mutate: disableInactiveMutateMock,
@@ -56,7 +59,7 @@ const configuration = {
     inactive: 12,
     pending: 3,
   },
-  month: "2026-08",
+  month: format(startOfMonth(new Date()), "yyyy-MM"),
   pagination: {
     page: 1,
     pageSize: 20,
@@ -79,20 +82,76 @@ function renderPage(initialPath = "/admin/advance-payments/check-in-settings") {
 }
 
 describe("CheckInSettingsPage", () => {
+  let intersectionCallback: IntersectionObserverCallback;
+
   beforeEach(() => {
+    fetchNextPageMock.mockClear();
+    class IntersectionObserverMock implements IntersectionObserver {
+      readonly root = null;
+      readonly rootMargin = "0px";
+      readonly thresholds = [0];
+      disconnect = vi.fn();
+      observe = vi.fn();
+      takeRecords = vi.fn(() => []);
+      unobserve = vi.fn();
+
+      constructor(callback: IntersectionObserverCallback) {
+        intersectionCallback = callback;
+      }
+    }
+    vi.stubGlobal("IntersectionObserver", IntersectionObserverMock);
     useCheckInConfigurableProjectsMock.mockReturnValue({
       data: [{ id: 7, name: "LGD", code: "LGD", status: "active", is_flexible: true }],
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
     });
-    useCheckInConfigurationMock.mockReturnValue({
-      data: configuration,
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: { pages: [configuration], pageParams: [1] },
       isLoading: false,
       isFetching: false,
       isError: false,
       refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: true,
+      isFetchingNextPage: false,
     });
+  });
+
+  it("replaces manual refresh with an accessible month selector", async () => {
+    renderPage();
+
+    expect(screen.queryByRole("button", { name: "Làm mới" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Chọn tháng điểm danh/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Xem tháng điểm danh trước" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Xem tháng điểm danh sau" })).toBeDisabled();
+  });
+
+  it("requests the selected historical month", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Xem tháng điểm danh trước" }));
+
+    const previousMonth = format(subMonths(startOfMonth(new Date()), 1), "yyyy-MM");
+    await waitFor(() => {
+      expect(useInfiniteCheckInConfigurationMock).toHaveBeenLastCalledWith(
+        7,
+        expect.objectContaining({ month: previousMonth, status: "enabled" }),
+        true,
+      );
+    });
+  });
+
+  it("renders one responsive compact-card matrix instead of duplicate table and mobile markup", async () => {
+    renderPage();
+
+    const list = await screen.findByRole("list", { name: "Nhân viên cấu hình điểm danh" });
+    expect(list).toHaveClass("grid");
+    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", {
+      name: "Tắt điểm danh cho Nguyễn Hoàng An",
+    })).toHaveLength(1);
   });
 
   it("uses coherent Vietnamese status labels", async () => {
@@ -106,14 +165,14 @@ describe("CheckInSettingsPage", () => {
     expect(screen.queryByRole("tab", { name: /Inactive/ })).not.toBeInTheDocument();
   });
 
-  it("keeps row actions compact on desktop and touch-safe on smaller screens", async () => {
+  it("keeps the shared card action touch-safe on mobile and compact on desktop", async () => {
     renderPage();
 
     const actions = await screen.findAllByRole("button", {
       name: "Tắt điểm danh cho Nguyễn Hoàng An",
     });
-    expect(actions.some((action) => action.classList.contains("h-8"))).toBe(true);
-    expect(actions.some((action) => action.classList.contains("h-11"))).toBe(true);
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toHaveClass("h-11", "sm:h-8");
 
     const backButton = screen.getByRole("button", { name: "Quay lại" });
     expect(backButton).toHaveClass("h-11", "sm:h-9");
@@ -125,9 +184,9 @@ describe("CheckInSettingsPage", () => {
     fireEvent.click(await screen.findByRole("tab", { name: /Chưa điểm danh/ }));
 
     await waitFor(() => {
-      expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
+      expect(useInfiniteCheckInConfigurationMock).toHaveBeenLastCalledWith(
         7,
-        { page: 1, pageSize: 20, status: "inactive" },
+        expect.objectContaining({ pageSize: 20, status: "inactive" }),
         true,
       );
     });
@@ -140,7 +199,7 @@ describe("CheckInSettingsPage", () => {
     ).toBeInTheDocument();
     const confirmation = screen.getByRole("alertdialog");
     expect(within(confirmation).getByText(/LGD/)).toBeInTheDocument();
-    expect(within(confirmation).getByText(/tháng 08\/2026/)).toBeInTheDocument();
+    expect(within(confirmation).getByText(new RegExp(format(startOfMonth(new Date()), "MM/yyyy")))).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Xác nhận tắt" }));
     expect(disableInactiveMutateMock).toHaveBeenCalledWith(
@@ -155,9 +214,9 @@ describe("CheckInSettingsPage", () => {
     fireEvent.click(await screen.findByRole("tab", { name: /Chờ kích hoạt/ }));
 
     await waitFor(() => {
-      expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
+      expect(useInfiniteCheckInConfigurationMock).toHaveBeenLastCalledWith(
         7,
-        { page: 1, pageSize: 20, status: "pending" },
+        expect.objectContaining({ pageSize: 20, status: "pending" }),
         true,
       );
     });
@@ -174,18 +233,40 @@ describe("CheckInSettingsPage", () => {
     );
   });
 
-  it("requests the next page from the backend with a bounded page size", async () => {
+  it("loads the next bounded page when the scroll sentinel enters view", async () => {
     renderPage();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Trang tiếp" }));
-
-    await waitFor(() => {
-      expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
-        7,
-        { page: 2, pageSize: 20, status: "enabled" },
-        true,
+    await screen.findByText("Cuộn để tải thêm");
+    act(() => {
+      intersectionCallback(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
       );
     });
+
+    await waitFor(() => {
+      expect(fetchNextPageMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("keeps loaded cards visible when only the next page fails", async () => {
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: { pages: [configuration], pageParams: [1] },
+      isLoading: false,
+      isFetching: false,
+      isError: true,
+      isFetchNextPageError: true,
+      refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: true,
+      isFetchingNextPage: false,
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole("list", { name: "Nhân viên cấu hình điểm danh" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Thử tải thêm nhân viên" }));
+    expect(fetchNextPageMock).toHaveBeenCalledTimes(1);
   });
 
   it("returns to the role-specific advance payment page", async () => {
@@ -203,13 +284,15 @@ describe("CheckInSettingsPage", () => {
   });
 
   it("does not expose stale employee actions while switching projects", async () => {
-    useCheckInConfigurationMock.mockReturnValue({
-      data: configuration,
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: undefined,
       isLoading: false,
       isFetching: true,
-      isPlaceholderData: true,
       isError: false,
       refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: false,
+      isFetchingNextPage: false,
     });
 
     renderPage();

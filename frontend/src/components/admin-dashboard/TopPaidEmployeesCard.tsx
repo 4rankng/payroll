@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useTopPaidEmployees } from '@/hooks/api/useDashboard';
 import type { TopPaidEmployeeItem } from '@/types/api/dashboard.types';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
@@ -109,10 +110,7 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
             ))}
           </div>
         ) : employees.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Trophy className="w-8 h-8 text-muted-foreground/30 mb-2" />
-            <p className="text-xs text-muted-foreground">Chưa có dữ liệu thanh toán</p>
-          </div>
+          <EmptyState title="Chưa có dữ liệu thanh toán" size="sm" className="py-4" />
         ) : (
           <div>
             {employees.map((item) => (

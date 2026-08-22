@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Receipt, Banknote, User, Briefcase, Calendar } from 'lucide-react';
+import { Banknote, User, Briefcase, Calendar } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { PaymentHistory } from '@/types/api/payroll.types';
@@ -33,13 +34,11 @@ export function PaymentHistoryMobileList({ data, isLoading }: PaymentHistoryMobi
   // Empty state
   if (data.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Receipt className="mx-auto h-12 w-12 text-muted-foreground/50" />
-        <h3 className="mt-4 typography-title-large">Không tìm thấy lịch sử thanh toán</h3>
-        <p className="mt-2 typography-body-medium text-muted-foreground">
-          Chưa có lịch sử thanh toán nào trong khoảng thời gian này.
-        </p>
-      </div>
+      <EmptyState
+        title="Không tìm thấy lịch sử thanh toán"
+        description="Chưa có lịch sử thanh toán nào trong khoảng thời gian này."
+        size="sm"
+      />
     );
   }
 

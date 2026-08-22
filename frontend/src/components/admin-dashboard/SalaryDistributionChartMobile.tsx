@@ -4,6 +4,7 @@ import { BarChart3 } from 'lucide-react';
 import { useSalaryDistribution, getCycleSections, buildFixedBins } from '@/hooks/admin-dashboard/useSalaryDistribution';
 import { formatCurrency } from '@/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 export function SalaryDistributionChartMobile() {
   const [isVisible, setIsVisible] = useState(false);
@@ -55,7 +56,7 @@ export function SalaryDistributionChartMobile() {
         {cycleSections.length > 0 ? cycleSections.map((section) => (
           <MobileCycleSection key={section.cycle} section={section} />
         )) : (
-          <p className="text-sm text-muted-foreground text-center py-8">Không có dữ liệu cho khoảng thời gian này</p>
+          <EmptyState title="Không có dữ liệu cho khoảng thời gian này" size="sm" className="py-4" />
         )}
       </div>
     </div>

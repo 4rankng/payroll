@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { FileText, Search, ArrowUpDown, ChevronDown, X } from 'lucide-react';
+import { Search, ArrowUpDown, ChevronDown, X } from 'lucide-react';
 import { SlideSheetTemplate } from '@/components/sheets/templates/SlideSheetTemplate';
 import { FilterChipBar } from '@/components/ui/filter-chip-bar';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import type { AdvancePaymentFileType } from './UnifiedFileCard';
 import { useAdvancePaymentFileHistory } from '@/hooks/api/useAdvancePayments';
 import { groupFilesByDate } from '@/utils/fileGrouping';
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { AdvancePaymentFileHistoryItem } from '@/types/api/advance-payment.types';
 
 interface FileHistorySheetProps {
@@ -113,22 +114,17 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
 
     if (allFiles.length === 0) {
       return (
-        <div className="text-center py-16 text-muted-foreground">
-          <FileText className="mx-auto h-12 w-12 mb-3 opacity-40" />
-          <p className="text-sm">Chưa có file nào được tải lên</p>
-        </div>
+        <EmptyState title="Chưa có tệp nào được tải lên" size="sm" />
       );
     }
 
     if (filteredFiles.length === 0) {
       return (
-        <div className="text-center py-16 text-muted-foreground">
-          <Search className="mx-auto h-10 w-10 mb-3 opacity-40" />
-          <p className="text-sm mb-3">Không tìm thấy file nào</p>
-          <Button variant="outline" size="sm" onClick={handleClearFilters}>
-            Xóa bộ lọc
-          </Button>
-        </div>
+        <EmptyState
+          title="Không tìm thấy tệp nào"
+          action={{ label: 'Xóa bộ lọc', onClick: handleClearFilters }}
+          size="sm"
+        />
       );
     }
 

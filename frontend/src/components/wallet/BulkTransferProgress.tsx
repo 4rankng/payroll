@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import {
   Tooltip,
   TooltipContent,
@@ -264,7 +265,7 @@ function RowsView({
   emptyMessage: string;
 }) {
   if (rows.length === 0) {
-    return <div className="rounded-xl border border-border/60 p-4 text-center text-xs text-muted-foreground">{emptyMessage}</div>;
+    return <div className="rounded-xl border border-border/60 px-4"><EmptyState title={emptyMessage} size="sm" className="py-4" /></div>;
   }
   if (isMobile) return <MobileRowList rows={rows} />;
   return (
@@ -354,9 +355,9 @@ interface MobileRowListProps {
 const MobileRowList = memo(function MobileRowList({ rows }: MobileRowListProps) {
   if (rows.length === 0) {
     return (
-      <p className="rounded-xl border border-border/60 bg-muted/30 px-4 py-6 text-center text-xs text-muted-foreground">
-        Chưa có dòng nào trong lô này.
-      </p>
+      <div className="rounded-xl border border-border/60 bg-muted/30 px-4">
+        <EmptyState title="Chưa có dòng nào trong lô này." size="sm" className="py-4" />
+      </div>
     );
   }
   return (

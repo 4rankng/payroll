@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Loader2, CheckCheck, Bell, X, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCheck, X, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { InfiniteScrollContainer } from '@/components/ui/infinite-scroll-container';
 import { NotificationItem } from './NotificationItem';
 import { NotificationDetailModal } from './NotificationDetailModal';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { PushNotificationToggle } from './PushNotificationToggle';
 import {
   useInfiniteNotifications,
@@ -74,14 +75,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
     setIsModalOpen(true);
   };
 
-  const renderEmpty = (message: string) => (
-    <div className="flex flex-col items-center justify-center py-20 px-6">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Bell className="h-7 w-7 text-gray-300" />
-      </div>
-      <p className="text-sm font-medium text-gray-400">{message}</p>
-    </div>
-  );
+  const renderEmpty = (message: string) => <EmptyState title={message} size="sm" />;
 
   const renderLoading = () => (
     <div className="flex items-center justify-center py-16">

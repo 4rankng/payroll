@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useAllBanks, useCreateBank } from '@/hooks/api/useBanks';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Bank } from '@/types/api/bank.types';
 
 interface BankSelectorProps {
@@ -80,9 +81,7 @@ function BankList({ value, onSelect, canCreateBank, searchValue, scrollHeight = 
       )}
 
       {!isLoading && banks.length === 0 && (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Không tìm thấy ngân hàng nào
-        </div>
+        <EmptyState title="Không tìm thấy ngân hàng nào" size="sm" className="py-4" />
       )}
 
       {!isLoading && banks.length > 0 && (

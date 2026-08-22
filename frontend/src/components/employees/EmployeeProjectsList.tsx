@@ -9,6 +9,7 @@ import { Briefcase, Calendar, Clock, DollarSign, ChevronLeft, ChevronRight } fro
 import { useEmployeeProjects } from '@/hooks/api/useEmployees';
 import { formatCurrency } from '@/utils/formatters';
 import { formatDate } from '@/utils/formatters';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { Employee, EmployeeProjectAssignment } from '@/types/api/employee.types';
 
 interface EmployeeProjectsListProps {
@@ -131,12 +132,12 @@ export function EmployeeProjectsList({ employee, className }: EmployeeProjectsLi
 
       <CardContent>
         {projects.length === 0 ? (
-          <div className="text-center py-8">
-            <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              {status ? 'Không tìm thấy dự án nào với trạng thái này' : 'Nhân viên chưa tham gia dự án nào'}
-            </p>
-          </div>
+          <EmptyState
+            title={status ? 'Không tìm thấy dự án nào' : 'Nhân viên chưa tham gia dự án nào'}
+            description={status ? 'Thử điều chỉnh trạng thái để xem kết quả khác.' : undefined}
+            size="sm"
+            className="py-4"
+          />
         ) : (
           <div className="space-y-4">
             {/* Table for larger screens */}

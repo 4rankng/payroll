@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useBankUsageAllProjects } from '@/hooks/api/useDashboard';
 import type { ProjectBankUsageItem } from '@/types/api/dashboard.types';
 
@@ -151,15 +152,12 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
             totalEmployees={displayData.totalEmployees}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium text-foreground">Chưa có dữ liệu ngân hàng</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Dữ liệu sẽ xuất hiện khi nhân viên có thông tin nhận lương.
-            </p>
-          </div>
+          <EmptyState
+            title="Chưa có dữ liệu ngân hàng"
+            description="Dữ liệu sẽ xuất hiện khi nhân viên có thông tin nhận lương."
+            size="sm"
+            className="py-4"
+          />
         )}
       </CardContent>
     </Card>

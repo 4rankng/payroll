@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2, Download, Loader2, FileText, AlertCircle, RefreshCw, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { showErrorNotification } from '@/utils/error-handler';
 import { useEmailHistory, useSettleFromEmailHistory, useStandaloneSettlementUpload } from '@/hooks/api/useEmails';
 import { apiClient } from '@/services/api/client';
@@ -300,13 +301,11 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
               )}
 
               {isEmpty && (
-                <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <FileText className="h-8 w-8 text-muted-foreground/30" />
-                  <p className="text-sm font-medium">Chưa có sao kê nào</p>
-                  <p className="text-xs text-muted-foreground">
-                    Nhấn <span className="font-medium text-foreground">Gửi sao kê</span> để tạo báo cáo
-                  </p>
-                </div>
+                <EmptyState
+                  title="Chưa có sao kê nào"
+                  description="Nhấn Gửi sao kê để tạo báo cáo"
+                  size="sm"
+                />
               )}
 
               {!isLoading && !isError && records.map((r) => (

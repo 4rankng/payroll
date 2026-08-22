@@ -21,6 +21,7 @@ import { showErrorNotification } from '@/utils/error-handler';
 import { TimesheetEntryModal } from './components/TimesheetEntryModal';
 import { GroupBulkRejectDialog } from './components/GroupBulkRejectDialog';
 import { TimesheetEntryCard } from './components/TimesheetEntryCard';
+import { EmptyState } from '@/components/shared/EmptyState';
 import {
   groupTimesheetsByEmployeeDate,
   sortGroupedTimesheets,
@@ -183,13 +184,11 @@ export function TimesheetGroupedTable({
 
   if (groupedTimesheets.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Calendar className="mx-auto h-12 w-12 text-muted-foreground/50" />
-        <h3 className="mt-4 typography-title-large">Không tìm thấy dữ liệu bảng công</h3>
-        <p className="mt-2 typography-body-medium text-muted-foreground">
-          Hãy kiểm tra lại bộ lọc hoặc thử tìm kiếm khác.
-        </p>
-      </div>
+      <EmptyState
+        title="Không tìm thấy dữ liệu bảng công"
+        description="Hãy kiểm tra lại bộ lọc hoặc thử tìm kiếm khác."
+        size="sm"
+      />
     );
   }
 

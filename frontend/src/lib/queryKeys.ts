@@ -49,8 +49,28 @@ export function checkInConfigurationKey(
     'check-in-configuration',
     {
       status: params.status,
+      month: params.month,
       search: params.search?.trim() || undefined,
       page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+    },
+  ] as const;
+}
+
+export function checkInConfigurationInfiniteKey(
+  projectId: number,
+  params: Omit<CheckInConfigurationParams, 'page'>,
+) {
+  return [
+    'projects',
+    projectId,
+    'employees',
+    'check-in-configuration',
+    'infinite',
+    {
+      status: params.status,
+      month: params.month,
+      search: params.search?.trim() || undefined,
       pageSize: params.pageSize ?? 20,
     },
   ] as const;

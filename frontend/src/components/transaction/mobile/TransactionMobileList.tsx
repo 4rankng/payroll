@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
-import { Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useMetadata } from '@/contexts';
 import { transactionService } from '@/services/api/transaction.service';
 import { MobilePagination } from '@/components/shared/MobilePagination';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/services/api/transaction.service';
 
@@ -67,11 +67,7 @@ export function TransactionMobileList({
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Receipt className="mx-auto h-10 w-10 text-muted-foreground/40" />
-        <p className="mt-3 text-sm font-medium text-muted-foreground">Không tìm thấy giao dịch</p>
-        <p className="mt-1 text-xs text-muted-foreground">Thử điều chỉnh bộ lọc</p>
-      </div>
+      <EmptyState title="Không tìm thấy giao dịch" description="Thử điều chỉnh bộ lọc" size="sm" />
     );
   }
 

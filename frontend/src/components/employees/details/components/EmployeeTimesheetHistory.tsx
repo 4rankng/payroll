@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { getMergedStatusBadge } from "@/components/timesheet/utils/timesheetHelpers";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { EmployeeTimesheetResponse } from "@/types/api/timesheet.types";
 import type { EmployeeTimesheetEntry } from "@/types/api/employee.types";
 import type { EmployeeTimesheetFilters } from "@/types/api/employee.types";
@@ -179,8 +180,8 @@ export const EmployeeTimesheetHistory = memo(({
       </div>
 
       {timesheetEntries.length === 0 ? (
-        <div className="text-center py-8 text-sm text-muted-foreground border rounded-xl">
-          Chưa có dữ liệu chấm công
+        <div className="border rounded-xl px-3">
+          <EmptyState title="Chưa có dữ liệu chấm công" size="sm" className="py-4" />
         </div>
       ) : (
         <div className="space-y-1.5">

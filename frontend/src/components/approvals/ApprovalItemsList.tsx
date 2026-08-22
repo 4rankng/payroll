@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { ApprovalItem } from '@/types/approval';
 import { ApprovalItemCard } from './ApprovalItemCard';
 import { SelectAllCheckbox } from './SelectAllCheckbox';
@@ -26,15 +26,14 @@ export const ApprovalItemsList = ({
   if (items.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="typography-title-large mb-2">Không có yêu cầu nào</h3>
-          <p className="text-muted-foreground">
-            {hasFilters 
+        <CardContent className="px-4">
+          <EmptyState
+            title="Không có yêu cầu nào"
+            description={hasFilters
               ? 'Không tìm thấy yêu cầu phù hợp với bộ lọc'
-              : 'Hiện tại không có yêu cầu phê duyệt nào'
-            }
-          </p>
+              : 'Hiện tại không có yêu cầu phê duyệt nào'}
+            size="sm"
+          />
         </CardContent>
       </Card>
     );

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobilePageShell, MobileSurface } from '@/components/shared/MobilePageShell';
+import { EmptyState } from '@/components/shared/EmptyState';
 import {
   MobileOperationsPanel,
   MobileTaskList,
@@ -348,13 +349,11 @@ const PartnerDashboardMobile = () => {
               </div>
             ))
           ) : topEmployees.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted ring-1 ring-border/60">
-                <Users className="w-6 h-6 text-muted-foreground/50" />
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">Chưa có dữ liệu thanh toán</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Chọn tháng khác để xem</p>
-            </div>
+            <EmptyState
+              title="Chưa có dữ liệu thanh toán"
+              description="Chọn tháng khác để xem"
+              size="sm"
+            />
           ) : (
             topEmployees.map((item) => (
               <TopEmployeeRow key={item.employee_id} item={item} maxPaid={maxPaid} />

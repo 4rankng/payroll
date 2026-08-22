@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useAppState } from '@/contexts';
-import { ClipboardList, Loader2, SearchX } from 'lucide-react';
+import { ClipboardList, Loader2 } from 'lucide-react';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { AuditLogFilters } from './AuditLogFilters';
 import { AuditLogCard, AuditLogCardSkeleton } from './AuditLogCard';
 import { AuditLogDetailSheet } from './AuditLogDetailSheet';
@@ -76,13 +77,11 @@ export default function AuditLogPage() {
 
         {/* Cards */}
         {!isLoading && logs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <SearchX className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm font-medium text-foreground">Không có dữ liệu</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Thử thay đổi bộ lọc để xem kết quả khác
-            </p>
-          </div>
+          <EmptyState
+            title="Không có dữ liệu"
+            description="Thử thay đổi bộ lọc để xem kết quả khác"
+            size="sm"
+          />
         )}
 
         {!isLoading && logs.length > 0 && (

@@ -5,6 +5,7 @@ import { Clock, Edit, Trash2, CheckCircle, AlertCircle, XCircle, Calendar } from
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatters';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface TimesheetEntry {
   id: number;
@@ -76,13 +77,12 @@ export function ExistingEntriesDisplay({
     return (
       <Card className="border-none shadow-sm">
         <CardContent className="pt-6">
-          <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="typography-body-medium">Chưa có bảng công nào cho ngày này</p>
-            <p className="typography-body-small mt-1">
-              {format(new Date(date + 'T00:00:00'), 'EEEE, dd/MM/yyyy', { locale: vi })}
-            </p>
-          </div>
+          <EmptyState
+            title="Chưa có bảng công nào cho ngày này"
+            description={format(new Date(date + 'T00:00:00'), 'EEEE, dd/MM/yyyy', { locale: vi })}
+            size="sm"
+            className="py-4"
+          />
         </CardContent>
       </Card>
     );

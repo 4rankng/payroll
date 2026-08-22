@@ -8,6 +8,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useProjects } from '@/hooks/api/useProjects';
 import { Briefcase, Loader2 } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface Project {
   id: number;
@@ -100,10 +101,7 @@ export function ProjectSelector({
       </Select>
       
       {projects.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <Briefcase className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="typography-body-medium">Chưa có dự án nào</p>
-        </div>
+        <EmptyState title="Chưa có dự án nào" size="sm" className="py-4" />
       )}
     </div>
   );

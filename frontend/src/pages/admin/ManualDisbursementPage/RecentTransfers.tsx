@@ -13,6 +13,7 @@ import {
   useManualDisbursementList,
 } from "@/hooks/api/useManualDisbursement";
 import type { ManualDisbursementResponse } from "@/types/api/manual-disbursement.types";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 import {
   type BankOption,
@@ -53,8 +54,8 @@ export function RecentTransfers({ limit = 20 }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-        Chưa có giao dịch chuyển tiền nào.
+      <div className="rounded-md border border-dashed px-4">
+        <EmptyState title="Chưa có giao dịch chuyển tiền nào" size="sm" className="py-4" />
       </div>
     );
   }

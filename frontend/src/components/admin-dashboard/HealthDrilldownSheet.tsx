@@ -17,7 +17,6 @@ import {
   Clock,
   Crosshair,
   Hourglass,
-  Inbox,
   Layers,
   Lock,
   LogIn,
@@ -33,6 +32,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO, subDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { EmptyState as SharedEmptyState } from '@/components/shared/EmptyState';
 
 import { useFailedAttempts, useQuotaAnomalies } from '@/hooks/api/useDashboard';
 import { useAdminAttendances } from '@/hooks/api/useAdminAttendance';
@@ -752,11 +752,8 @@ function TableSkeleton({ cols, rows }: { cols: number; rows: number }) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Inbox className="h-6 w-6" />
-      </span>
-      <span className="text-sm text-muted-foreground">{label}</span>
+    <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4">
+      <SharedEmptyState title={label} size="sm" />
     </div>
   );
 }

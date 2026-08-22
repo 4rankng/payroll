@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEmailHistory } from '@/hooks/api/useEmails';
 import { useSenderProfiles } from '@/hooks/useSenderProfiles';
+import { EmptyState } from '@/components/shared/EmptyState';
 import type { EmailHistoryRecord } from '@/types/api/email.types';
 
 interface EmailHistorySheetProps {
@@ -393,12 +394,12 @@ export const EmailHistorySheet = memo(function EmailHistorySheet({
           )}
 
           {!isLoading && !isError && isEmpty && (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/50/80 px-6 py-12 text-center">
-              <Mail className="mb-3 h-10 w-10 text-slate-300" aria-hidden="true" />
-              <p className="typography-title-medium mb-1">Chưa có email nào</p>
-              <p className="typography-body-small text-muted-foreground">
-                Hệ thống chưa ghi nhận email thanh toán nào được gửi đi.
-              </p>
+            <div className="rounded-xl border border-dashed border-border bg-muted/50/80 px-6">
+              <EmptyState
+                title="Chưa có email nào"
+                description="Hệ thống chưa ghi nhận email thanh toán nào được gửi đi."
+                size="sm"
+              />
             </div>
           )}
 

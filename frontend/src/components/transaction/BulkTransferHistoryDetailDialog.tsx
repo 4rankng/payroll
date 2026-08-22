@@ -11,6 +11,7 @@ import { dateToString } from '@/utils/dateHelpers';
 import { bulkTransferService } from '@/services/api/bulk-transfer.service';
 import { cn } from '@/lib/utils';
 import { formatCurrencyFromString } from '@/utils/formatters';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 // --- Helpers ---
 
@@ -234,16 +235,11 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center py-10">
-                  <p className="text-sm text-slate-400">Không có giao dịch nào</p>
-                </div>
+                <EmptyState title="Không có giao dịch nào" size="sm" className="py-4" />
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileSpreadsheet className="w-8 h-8 text-slate-300 mb-2" />
-              <p className="text-sm text-muted-foreground">Không tìm thấy dữ liệu</p>
-            </div>
+            <EmptyState title="Không tìm thấy dữ liệu" size="sm" />
           )}
         </div>
       </DialogContent>

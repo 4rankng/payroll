@@ -1,7 +1,8 @@
 import React from 'react';
-import { Activity, AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ActivityEmptyStateProps {
   type: 'loading' | 'error' | 'empty';
@@ -65,29 +66,11 @@ export const ActivityEmptyState: React.FC<ActivityEmptyStateProps> = ({
 
   // Empty state
   return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-      <div className="p-3 rounded-full bg-muted">
-        <Activity className="h-6 w-6 text-muted-foreground" />
-      </div>
-      <div className="text-center space-y-2">
-        <h4 className="text-sm font-medium text-foreground">
-          Chưa có hoạt động nào
-        </h4>
-        <p className="text-xs text-muted-foreground max-w-xs">
-          Chưa có hoạt động nào được ghi nhận gần đây
-        </p>
-        {onRefresh && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            className="mt-3"
-          >
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Làm mới
-          </Button>
-        )}
-      </div>
-    </div>
+    <EmptyState
+      title="Chưa có hoạt động nào"
+      description="Chưa có hoạt động nào được ghi nhận gần đây"
+      action={onRefresh ? { label: 'Làm mới', onClick: onRefresh } : undefined}
+      size="sm"
+    />
   );
 };

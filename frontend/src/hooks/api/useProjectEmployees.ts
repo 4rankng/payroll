@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectEmployeeService } from '@/services/api/project-employee.service';
 import { showSuccessNotification } from '@/utils/error-handler';
 import {
@@ -11,6 +11,7 @@ import {
   pendingScheduleChangesKey,
   shouldInvalidateForProjectEmployeeChange,
   checkInConfigurationKey,
+  checkInConfigurationInfiniteKey,
   checkInConfigurableProjectsKey,
 } from '@/lib/queryKeys';
 import type {
@@ -69,6 +70,27 @@ export function useCheckInConfiguration(
     queryFn: () => projectEmployeeService.getCheckInConfiguration(projectId, params),
     enabled,
     placeholderData: undefined,
+  });
+}
+
+export function useInfiniteCheckInConfiguration(
+  projectId: number,
+  params: Omit<CheckInConfigurationParams, 'page'>,
+  enabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: checkInConfigurationInfiniteKey(projectId, params),
+    queryFn: ({ pageParam }) => projectEmployeeService.getCheckInConfiguration(projectId, {
+      ...params,
+      page: pageParam,
+    }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (
+      lastPage.pagination.page < lastPage.pagination.totalPages
+        ? lastPage.pagination.page + 1
+        : undefined
+    ),
+    enabled,
   });
 }
 

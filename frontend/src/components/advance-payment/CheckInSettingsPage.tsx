@@ -2,17 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
   Loader2,
-  Power,
   PowerOff,
-  RefreshCw,
   ScanFace,
-  SearchX,
-  Users,
 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,9 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PaginationControls } from "@/components/ui/pagination-controls";
 import {
   Select,
   SelectContent,
@@ -37,22 +27,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { SearchBar } from "@/components/shared/SearchBar";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { CheckInEmployeeCard } from "@/components/advance-payment/CheckInEmployeeCard";
+import { CheckInMonthSelector } from "@/components/advance-payment/CheckInMonthSelector";
 import {
   useCheckInConfigurableProjects,
-  useCheckInConfiguration,
+  useInfiniteCheckInConfiguration,
   useDisableInactiveCheckInEmployees,
   useDisablePendingCheckInEmployees,
   useToggleCheckInEnabled,
 } from "@/hooks/api/useProjectEmployees";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { cn } from "@/lib/utils";
 import type {
   CheckInConfigurationEmployee,
@@ -61,74 +47,10 @@ import type {
 import {
   buildCheckInStatusFilters,
   DEFAULT_CHECK_IN_PAGE_SIZE,
+  flattenCheckInConfigurationEmployees,
   formatCheckInMonth,
-  formatLastCheckIn,
-  getCheckInEmployeeState,
+  getCurrentCheckInMonthValue,
 } from "@/utils/checkInSettingsHelpers";
-
-const employeeStatePresentation = {
-  pending: { label: "Chờ kích hoạt", icon: Clock3, badge: "warning" as const },
-  disabled: { label: "Đang tắt", icon: PowerOff, badge: "secondary" as const },
-  used: { label: "Đã điểm danh", icon: CheckCircle2, badge: "success" as const },
-  unused: { label: "Chưa điểm danh", icon: Power, badge: "outline" as const },
-};
-
-interface EmployeeStatusBadgeProps {
-  employee: CheckInConfigurationEmployee;
-}
-
-function EmployeeStatusBadge({ employee }: EmployeeStatusBadgeProps) {
-  const state = getCheckInEmployeeState(employee);
-  const presentation = employeeStatePresentation[state];
-  const Icon = presentation.icon;
-  return (
-    <Badge variant={presentation.badge} className="gap-1 whitespace-nowrap">
-      <Icon className="h-3.5 w-3.5" aria-hidden />
-      {presentation.label}
-    </Badge>
-  );
-}
-
-interface EmployeeActionProps {
-  employee: CheckInConfigurationEmployee;
-  disabled: boolean;
-  pending: boolean;
-  mobile?: boolean;
-  onToggle: (employee: CheckInConfigurationEmployee) => void;
-}
-
-function EmployeeAction({
-  employee,
-  disabled,
-  pending,
-  mobile = false,
-  onToggle,
-}: EmployeeActionProps) {
-  const isEnabledOrPending = employee.check_in_enabled || employee.pending_check_in_enable;
-  const label = employee.pending_check_in_enable
-    ? "Hủy chờ"
-    : employee.check_in_enabled
-      ? "Tắt"
-      : "Bật";
-
-  return (
-    <Button
-      type="button"
-      variant={isEnabledOrPending ? "outline" : "default"}
-      size="sm"
-      className={cn(
-        "min-w-0",
-        mobile ? "h-11 min-h-11 px-4" : "h-8 min-h-0 px-2.5 text-xs",
-      )}
-      disabled={disabled}
-      onClick={() => onToggle(employee)}
-      aria-label={`${label} điểm danh cho ${employee.employee_name}`}
-    >
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-      {label}
-    </Button>
-  );
-}
 
 type BulkAction = "inactive" | "pending" | null;
 
@@ -142,8 +64,7 @@ export default function CheckInSettingsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [status, setStatus] = useState<CheckInConfigurationStatus>("enabled");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_CHECK_IN_PAGE_SIZE);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentCheckInMonthValue);
   const [pendingEmployeeId, setPendingEmployeeId] = useState<number | null>(null);
   const [bulkAction, setBulkAction] = useState<BulkAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -165,14 +86,14 @@ export default function CheckInSettingsPage() {
   const queryParams = useMemo(() => {
     const trimmedSearch = search.trim();
     return {
-      page,
-      pageSize,
+      pageSize: DEFAULT_CHECK_IN_PAGE_SIZE,
       status,
+      month: selectedMonth,
       ...(trimmedSearch ? { search: trimmedSearch } : {}),
     };
-  }, [page, pageSize, search, status]);
+  }, [search, selectedMonth, status]);
 
-  const configurationQuery = useCheckInConfiguration(
+  const configurationQuery = useInfiniteCheckInConfiguration(
     selectedProjectId ?? 0,
     queryParams,
     Boolean(selectedProjectId),
@@ -181,11 +102,12 @@ export default function CheckInSettingsPage() {
   const disableInactiveMutation = useDisableInactiveCheckInEmployees();
   const disablePendingMutation = useDisablePendingCheckInEmployees();
 
-  const configuration = configurationQuery.isPlaceholderData
-    ? undefined
-    : configurationQuery.data;
+  const configuration = configurationQuery.data?.pages[0];
   const summary = configuration?.summary;
-  const employees = configuration?.employees ?? [];
+  const employees = useMemo(
+    () => flattenCheckInConfigurationEmployees(configurationQuery.data?.pages),
+    [configurationQuery.data?.pages],
+  );
   const selectedProject = flexibleProjects.find(
     (project) => project.id === selectedProjectId,
   );
@@ -195,16 +117,20 @@ export default function CheckInSettingsPage() {
     disableInactiveMutation.isPending ||
     disablePendingMutation.isPending;
   const statusFilters = buildCheckInStatusFilters(summary);
-
-  useEffect(() => {
-    if (!configuration || configurationQuery.isFetching) return;
-    const lastPage = Math.max(1, configuration.pagination.totalPages);
-    if (page > lastPage) setPage(lastPage);
-  }, [configuration, configurationQuery.isFetching, page]);
+  const isCurrentMonth = selectedMonth === getCurrentCheckInMonthValue();
+  const { observerRef } = useInfiniteScroll({
+    hasMore: Boolean(configurationQuery.hasNextPage),
+    isLoading: configurationQuery.isFetchingNextPage,
+    onLoadMore: () => {
+      void configurationQuery.fetchNextPage();
+    },
+    enabled: employees.length > 0,
+    rootMargin: "320px",
+    threshold: 0.1,
+  });
 
   const handleStatusChange = (value: CheckInConfigurationStatus) => {
     setStatus(value);
-    setPage(1);
     setActionError(null);
   };
 
@@ -212,18 +138,11 @@ export default function CheckInSettingsPage() {
     setSelectedProjectId(Number(value));
     setStatus("enabled");
     setSearch("");
-    setPage(1);
     setActionError(null);
   };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1);
-  };
-
-  const handlePageSizeChange = (value: number) => {
-    setPageSize(value);
-    setPage(1);
   };
 
   const handleToggleEmployee = (employee: CheckInConfigurationEmployee) => {
@@ -261,7 +180,6 @@ export default function CheckInSettingsPage() {
       {
         onSuccess: () => {
           setBulkAction(null);
-          setPage(1);
         },
         onError: (error: unknown) => {
           const apiError = error as {
@@ -362,12 +280,12 @@ export default function CheckInSettingsPage() {
           </Button>
         </div>
       ) : flexibleProjects.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border px-4 py-12 text-center">
-          <Users className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-          <h2 className="mt-3 font-semibold text-foreground">Không có dự án linh động</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Chỉ dự án linh động mới sử dụng cấu hình điểm danh.
-          </p>
+        <div className="rounded-xl border border-dashed border-border px-4">
+          <EmptyState
+            title="Không có dự án linh động"
+            description="Chỉ dự án linh động mới sử dụng cấu hình điểm danh."
+            size="sm"
+          />
         </div>
       ) : (
         <>
@@ -416,27 +334,23 @@ export default function CheckInSettingsPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                <div className="mr-auto min-w-[7rem] text-sm text-muted-foreground lg:mr-1 lg:text-right">
-                  <p className="font-medium text-foreground">{monthLabel}</p>
-                  <p className="text-xs tabular-nums">
-                    {configuration?.pagination.totalRecords ?? 0} kết quả
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-11 min-h-11 gap-1.5 px-3 text-sm sm:h-9 sm:min-h-0"
-                  onClick={() => configurationQuery.refetch()}
-                  disabled={configurationQuery.isFetching}
+                <CheckInMonthSelector
+                  value={selectedMonth}
+                  onValueChange={(value) => {
+                    setSelectedMonth(value);
+                    setActionError(null);
+                  }}
+                />
+                <p
+                  className="mr-auto min-w-[5.5rem] text-xs tabular-nums text-muted-foreground lg:mr-1 lg:text-right"
+                  aria-live="polite"
                 >
-                  <RefreshCw
-                    className={cn("h-4 w-4", configurationQuery.isFetching && "animate-spin")}
-                    aria-hidden
-                  />
-                  Làm mới
-                </Button>
-                {status === "inactive" && (summary?.inactive ?? 0) > 0 ? (
+                  <span className="block font-semibold text-foreground">
+                    {configuration?.pagination.totalRecords ?? 0}
+                  </span>
+                  kết quả
+                </p>
+                {isCurrentMonth && status === "inactive" && (summary?.inactive ?? 0) > 0 ? (
                   <Button
                     type="button"
                     variant="destructive"
@@ -450,7 +364,7 @@ export default function CheckInSettingsPage() {
                     Tắt tất cả ({summary?.inactive ?? 0})
                   </Button>
                 ) : null}
-                {status === "pending" && (summary?.pending ?? 0) > 0 ? (
+                {isCurrentMonth && status === "pending" && (summary?.pending ?? 0) > 0 ? (
                   <Button
                     type="button"
                     variant="destructive"
@@ -473,7 +387,7 @@ export default function CheckInSettingsPage() {
               </Alert>
             ) : null}
 
-            {configurationQuery.isError ? (
+            {configurationQuery.isError && !configuration ? (
               <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-10 text-center">
                 <h2 className="font-semibold text-foreground">Không thể tải danh sách</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -488,163 +402,68 @@ export default function CheckInSettingsPage() {
                   Thử lại
                 </Button>
               </div>
-            ) : configurationQuery.isLoading || configurationQuery.isPlaceholderData ? (
-              <div className="space-y-2">
+            ) : configurationQuery.isLoading ? (
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" aria-label="Đang tải nhân viên">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <Skeleton key={index} className="h-16 rounded-lg" />
+                  <Skeleton key={index} className="h-[10.5rem] rounded-lg" />
                 ))}
               </div>
             ) : employees.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border px-4 py-12 text-center">
-                <SearchX className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-                <h2 className="mt-3 font-semibold text-foreground">
-                  {search ? "Không tìm thấy nhân viên" : "Không có nhân viên trong nhóm này"}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {search ? "Thử tên, CCCD hoặc mã nhân viên khác." : "Chọn nhóm khác để tiếp tục quản lý."}
-                </p>
+              <div className="rounded-xl border border-dashed border-border px-4">
+                <EmptyState
+                  title={search ? "Không tìm thấy nhân viên" : "Không có nhân viên trong nhóm này"}
+                  description={search ? "Thử tên, CCCD hoặc mã nhân viên khác." : "Chọn nhóm khác để tiếp tục quản lý."}
+                  size="sm"
+                />
               </div>
             ) : (
-              <>
-                <div className="hidden overflow-hidden rounded-lg border border-border bg-card xl:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/35 hover:bg-muted/35">
-                        <TableHead>Nhân viên</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead className="text-right">Lượt điểm danh</TableHead>
-                        <TableHead>Lần gần nhất</TableHead>
-                        <TableHead className="w-24 text-right">Hành động</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {employees.map((employee) => (
-                        <TableRow key={employee.assignment_id} className="h-14">
-                          <TableCell>
-                            <div className="max-w-md">
-                              <p className="font-medium text-foreground">{employee.employee_name}</p>
-                              <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                                {employee.employee_cccd}
-                                {employee.employee_code ? ` · ${employee.employee_code}` : ""}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell><EmployeeStatusBadge employee={employee} /></TableCell>
-                          <TableCell className="text-right font-medium tabular-nums">
-                            {employee.attendance_count}
-                          </TableCell>
-                          <TableCell className="text-sm tabular-nums text-muted-foreground">
-                            {formatLastCheckIn(employee.last_check_in_at)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <EmployeeAction
-                              employee={employee}
-                              disabled={isMutating}
-                              pending={pendingEmployeeId === employee.employee_id}
-                              onToggle={handleToggleEmployee}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="divide-y divide-border rounded-lg border border-border bg-card xl:hidden">
-                  {employees.map((employee) => (
-                    <article key={employee.assignment_id} className="p-3">
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h2 className="break-words text-sm font-semibold leading-5 text-foreground">
-                            {employee.employee_name}
-                          </h2>
-                          <p className="mt-0.5 break-all text-xs tabular-nums text-muted-foreground">
-                            {employee.employee_cccd}
-                            {employee.employee_code ? ` · ${employee.employee_code}` : ""}
-                          </p>
-                        </div>
-                        <EmployeeStatusBadge employee={employee} />
-                      </div>
-                      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
-                        <dl className="grid min-w-0 grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <dt className="text-xs text-muted-foreground">Lượt điểm danh</dt>
-                            <dd className="mt-0.5 font-semibold tabular-nums text-foreground">
-                              {employee.attendance_count}
-                            </dd>
-                          </div>
-                          <div className="min-w-0">
-                            <dt className="text-xs text-muted-foreground">Lần gần nhất</dt>
-                            <dd className="mt-0.5 break-words text-xs tabular-nums text-foreground">
-                              {formatLastCheckIn(employee.last_check_in_at)}
-                            </dd>
-                          </div>
-                        </dl>
-                        <EmployeeAction
-                          employee={employee}
-                          disabled={isMutating}
-                          pending={pendingEmployeeId === employee.employee_id}
-                          mobile
-                          onToggle={handleToggleEmployee}
-                        />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </>
+              <div
+                role="list"
+                aria-label="Nhân viên cấu hình điểm danh"
+                className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+              >
+                {employees.map((employee) => (
+                  <CheckInEmployeeCard
+                    key={employee.assignment_id}
+                    employee={employee}
+                    disabled={isMutating}
+                    pending={pendingEmployeeId === employee.employee_id}
+                    onToggle={handleToggleEmployee}
+                  />
+                ))}
+              </div>
             )}
 
-            {configuration ? (
-              <>
-                <div className="hidden border-t border-border xl:block">
-                  <PaginationControls
-                    pagination={configuration.pagination}
-                    onPageChange={setPage}
-                    onPageSizeChange={handlePageSizeChange}
-                  />
-                </div>
-                {configuration.pagination.totalPages > 1 ? (
-                  <nav
-                    aria-label="Phân trang nhân viên"
-                    className="flex items-center justify-between border-t border-border pt-3 xl:hidden"
+            {employees.length > 0 ? (
+              <div
+                ref={observerRef}
+                className="flex min-h-11 items-center justify-center border-t border-border pt-3 text-xs text-muted-foreground"
+                aria-live="polite"
+              >
+                {configurationQuery.isFetchNextPageError ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-11 min-h-11 sm:h-8 sm:min-h-0"
+                    aria-label="Thử tải thêm nhân viên"
+                    onClick={() => {
+                      void configurationQuery.fetchNextPage();
+                    }}
                   >
-                    <p className="text-xs tabular-nums text-muted-foreground">
-                      {(configuration.pagination.page - 1) * configuration.pagination.pageSize + 1}–
-                      {Math.min(
-                        configuration.pagination.page * configuration.pagination.pageSize,
-                        configuration.pagination.totalRecords,
-                      )} / {configuration.pagination.totalRecords}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-11 w-11"
-                        aria-label="Trang trước trên thiết bị nhỏ"
-                        disabled={page <= 1 || isMutating}
-                        onClick={() => setPage((current) => Math.max(1, current - 1))}
-                      >
-                        <ChevronLeft className="h-4 w-4" aria-hidden />
-                      </Button>
-                      <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground">
-                        {configuration.pagination.page}/{configuration.pagination.totalPages}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-11 w-11"
-                        aria-label="Trang sau"
-                        disabled={page >= configuration.pagination.totalPages || isMutating}
-                        onClick={() => setPage((current) => current + 1)}
-                      >
-                        <ChevronRight className="h-4 w-4" aria-hidden />
-                      </Button>
-                    </div>
-                  </nav>
-                ) : null}
-              </>
+                    Thử tải thêm
+                  </Button>
+                ) : configurationQuery.isFetchingNextPage ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Đang tải thêm nhân viên...
+                  </span>
+                ) : configurationQuery.hasNextPage ? (
+                  "Cuộn để tải thêm"
+                ) : (
+                  `Đã hiển thị tất cả ${employees.length} nhân viên`
+                )}
+              </div>
             ) : null}
           </section>
         </>
