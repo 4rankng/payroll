@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 type MobileField<T> = {
   key: keyof T | string;
@@ -78,13 +79,8 @@ export function MobileTable<T extends Record<string, unknown>>({
   // Render empty state
   if (!data?.length) {
     return (
-      <div
-        data-slot="mobile-table-empty"
-        className={cn("rounded-2xl border border-dashed border-border/70 bg-card/80 px-5 py-12 text-center", className)}
-      >
-        <div className="typography-body-medium text-muted-foreground">
-          {emptyState ?? "Không có dữ liệu"}
-        </div>
+      <div data-slot="mobile-table-empty" className={cn("rounded-xl border border-dashed border-border/70 bg-card/80 px-4", className)}>
+        {emptyState ?? <EmptyState title="Không có dữ liệu" description="Chưa có dữ liệu để hiển thị." size="sm" />}
       </div>
     );
   }

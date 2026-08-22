@@ -1,6 +1,7 @@
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyStateIllustration } from '@/components/shared/EmptyStateIllustration';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
@@ -11,6 +12,7 @@ export interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  children?: ReactNode;
   size?: 'sm' | 'default';
   className?: string;
 }
@@ -20,10 +22,10 @@ export interface EmptyStateProps {
  * Implements Requirement 6 criterion 2.
  */
 export const EmptyState = memo(function EmptyState({
-  icon: Icon,
   title,
   description,
   action,
+  children,
   size = 'default',
   className,
 }: EmptyStateProps) {
@@ -32,26 +34,12 @@ export const EmptyState = memo(function EmptyState({
       data-slot="empty-state"
       data-admin-surface="empty-state"
       className={cn(
-        'admin-empty-state flex flex-col items-center justify-center gap-3',
-        size === 'default' ? 'py-12' : 'py-10',
+        'admin-empty-state flex flex-col items-center justify-center gap-2.5',
+        size === 'default' ? 'py-8 sm:py-10' : 'py-6',
         className,
       )}
     >
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-2xl bg-muted/60',
-          size === 'default' ? 'h-14 w-14' : 'h-10 w-10',
-        )}
-      >
-        {Icon && (
-          <Icon
-            className={cn(
-              'text-muted-foreground/50',
-              size === 'default' ? 'h-7 w-7' : 'h-5 w-5',
-            )}
-          />
-        )}
-      </div>
+      <EmptyStateIllustration className={size === 'default' ? undefined : 'h-14 w-14 sm:h-14 sm:w-14'} />
       <div className="text-center">
         <p className="text-sm font-medium text-foreground">{title}</p>
         {description && (
@@ -63,6 +51,7 @@ export const EmptyState = memo(function EmptyState({
           {action.label}
         </Button>
       )}
+      {children}
     </div>
   );
 });

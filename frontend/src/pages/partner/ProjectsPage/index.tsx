@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useProjectFilters } from '@/hooks/projects/useProjectFilters';
 import { useProjectModals } from '@/hooks/useModalNavigation';
@@ -361,28 +362,16 @@ const ProjectsPage = () => {
           ))}
         </div>
       ) : projects.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/80 bg-card/78 py-20 px-6 text-center shadow-[0_18px_48px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4 ring-1 ring-border">
-            <Briefcase className="h-6 w-6 text-muted-foreground/50" />
-          </div>
-          <p className="text-base font-bold text-foreground">Không có dự án nào</p>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-            {filterControls.hasFilters
-              ? 'Thử bỏ bộ lọc hoặc đổi từ khoá tìm kiếm.'
-              : 'Bạn chưa được phân quyền truy cập vào dự án nào.'}
-          </p>
-          {filterControls.hasFilters && (
-            <button
-              type="button"
-              onClick={() => {
-                filterControls.clearFilters();
-              }}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-muted/60 px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-muted transition-colors"
-            >
-              Xóa bộ lọc
-            </button>
-          )}
-        </div>
+        <EmptyState
+          title="Không có dự án nào"
+          description={filterControls.hasFilters
+            ? 'Thử bỏ bộ lọc hoặc đổi từ khoá tìm kiếm.'
+            : 'Bạn chưa được phân quyền truy cập vào dự án nào.'}
+          action={filterControls.hasFilters
+            ? { label: 'Xóa bộ lọc', onClick: filterControls.clearFilters }
+            : undefined}
+          className="rounded-xl border border-dashed border-border/80 bg-card/78 px-6"
+        />
       ) : (
         <div className="animate-fade-in-up">
           <div className="flex items-center gap-1.5 mb-2.5 px-1 text-[11.5px] text-muted-foreground">

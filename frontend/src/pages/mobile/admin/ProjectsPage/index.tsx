@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProjectMobileList } from "@/components/projects/ProjectMobileList";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
@@ -178,11 +179,11 @@ const ProjectsPageMobile = () => {
           projects={paginatedProjects}
           onRowClick={handleProjectClick}
           emptyState={
-            <div className="text-center py-12">
-              <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 typography-title-large">Không tìm thấy dự án nào</h3>
-              <p className="mt-2 typography-body-medium text-muted-foreground">Hãy tạo dự án đầu tiên để bắt đầu quản lý.</p>
-            </div>
+            <EmptyState
+              title="Không tìm thấy dự án nào"
+              description="Hãy tạo dự án đầu tiên để bắt đầu quản lý."
+              size="sm"
+            />
           }
         />
         {hasMore && (

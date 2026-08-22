@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { EmptyState as SharedEmptyState } from "@/components/shared/EmptyState";
 
 interface SkeletonProps {
   className?: string;
@@ -87,11 +88,13 @@ export function EmptyState({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="text-center py-12">
-      <h3 className="typography-title-large text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground mb-4">{description}</p>
+    <SharedEmptyState
+      title={title}
+      description={description}
+      className="py-8 sm:py-10"
+    >
       {children}
-    </div>
+    </SharedEmptyState>
   );
 }
 

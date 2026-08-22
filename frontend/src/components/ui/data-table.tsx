@@ -13,9 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ArrowUpDown, ArrowUp, ArrowDown, Inbox } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 const toCssSize = (value?: number | string) =>
   value === undefined
@@ -57,6 +58,7 @@ interface DataTableProps<TData, TValue> {
    *  inside an existing card/panel container. Pagination gets a top-border
    *  separator and horizontal padding instead. */
   embedded?: boolean;
+  emptyState?: React.ReactNode;
 }
 
 // Mobile Card Row Component
@@ -197,6 +199,7 @@ export function DataTable<TData, TValue>({
   onPageSizeChange,
   showPagination = true,
   embedded = false,
+  emptyState,
 }: DataTableProps<TData, TValue>) {
   const sorting = externalSorting ?? [];
 
@@ -333,14 +336,14 @@ export function DataTable<TData, TValue>({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-40 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2 py-8">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/70 ring-1 ring-border/60">
-                          <Inbox className="h-5 w-5 text-muted-foreground/70" />
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">Không có dữ liệu</p>
-                        <p className="text-xs text-muted-foreground">Thử thay đổi bộ lọc hoặc tìm kiếm khác.</p>
-                      </div>
+                    <TableCell colSpan={columns.length} className="text-center">
+                      {emptyState ?? (
+                        <EmptyState
+                          title="Không có dữ liệu"
+                          description="Thử thay đổi bộ lọc hoặc tìm kiếm khác."
+                          size="sm"
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 )}
@@ -365,16 +368,14 @@ export function DataTable<TData, TValue>({
           </div>
         ) : (
           <Card className="mx-1 rounded-2xl border-dashed bg-card/80">
-            <CardContent className="p-10 text-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center ring-1 ring-border/60">
-                  <Inbox className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-foreground typography-body-medium font-semibold">Không có dữ liệu</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Thử đổi bộ lọc hoặc tìm kiếm khác.</p>
-                </div>
-              </div>
+            <CardContent className="px-4">
+              {emptyState ?? (
+                <EmptyState
+                  title="Không có dữ liệu"
+                  description="Thử đổi bộ lọc hoặc tìm kiếm khác."
+                  size="sm"
+                />
+              )}
             </CardContent>
           </Card>
         )}

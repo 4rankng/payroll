@@ -3,8 +3,8 @@ import { Calendar, Users } from 'lucide-react';
 import type { Project } from '@/types/api/project.types';
 import { Badge } from '@/components/ui/badge';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
-import { Briefcase } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ProjectMobileListProps {
   projects: Project[];
@@ -97,15 +97,9 @@ export function ProjectMobileList({
 }: ProjectMobileListProps) {
   if (projects.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div>
         {emptyState || (
-          <>
-            <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mt-4 typography-title-large">Không tìm thấy dự án nào</h3>
-            <p className="mt-2 typography-body-medium text-muted-foreground">
-              Không có dữ liệu để hiển thị.
-            </p>
-          </>
+          <EmptyState title="Không tìm thấy dự án nào" description="Không có dữ liệu để hiển thị." />
         )}
       </div>
     );

@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface InfiniteListProps<T> {
   items: T[];
@@ -49,9 +50,7 @@ const ItemSkeleton = ({ className }: { className?: string }) => (
 );
 
 const DefaultEmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-12 px-4">
-    <p className="text-muted-foreground text-center">Không có dữ liệu</p>
-  </div>
+  <EmptyState title="Không có dữ liệu" description="Chưa có dữ liệu để hiển thị." size="sm" />
 );
 
 export function InfiniteList<T>({

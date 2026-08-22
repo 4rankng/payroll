@@ -10,7 +10,7 @@
  */
 import { memo, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Inbox, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ import {
   type BulkTransferBatchStatus,
 } from '@/types/wallet-bulk-transfer';
 import { cn } from '@/lib/utils';
+import { EmptyState as SharedEmptyState } from '@/components/shared/EmptyState';
 
 const PAGE_SIZE = 10;
 
@@ -294,15 +295,12 @@ function Counter({ label, value, tone }: CounterProps) {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-10 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-        <Inbox className="h-5 w-5 text-muted-foreground" />
-      </div>
-      <p className="text-sm font-medium text-foreground">Chưa có lô chuyển tiền nào</p>
-      <p className="max-w-xs text-xs text-muted-foreground">
-        Tải lên file Yêu cầu chuyển tiền (.xlsx) từ Bảng công để tạo lô đầu tiên.
-      </p>
-    </div>
+    <SharedEmptyState
+      title="Chưa có lô chuyển tiền nào"
+      description="Tải lên file Yêu cầu chuyển tiền (.xlsx) từ Bảng công để tạo lô đầu tiên."
+      size="sm"
+      className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4"
+    />
   );
 }
 

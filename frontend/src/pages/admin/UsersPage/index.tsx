@@ -9,7 +9,8 @@ import { useUsersSummary, useResetPassword } from "@/hooks/api/useUsers";
 import { createUserColumns } from "@/config/user-table-columns";
 import { createUserMobileConfig } from "@/config/user-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useCallback } from "react";
 import { useTableSorting } from "@/utils/sorting";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -127,17 +128,13 @@ const UsersPage = () => {
         sorting={sorting}
         onSortingChange={onSortingChange}
         emptyState={
-            <div className="text-center py-12">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 typography-title-large">
-                Không tìm thấy người dùng nào
-              </h3>
-              <p className="mt-2 typography-body-medium text-muted-foreground">
-                {filterState.hasActiveFilters
-                  ? "Không có kết quả phù hợp với bộ lọc của bạn."
-                  : "Hãy tạo người dùng đầu tiên để bắt đầu quản lý."}
-              </p>
-            </div>
+            <EmptyState
+              title="Không tìm thấy người dùng nào"
+              description={filterState.hasActiveFilters
+                ? "Không có kết quả phù hợp với bộ lọc của bạn."
+                : "Hãy tạo người dùng đầu tiên để bắt đầu quản lý."}
+              size="sm"
+            />
           }
           accordionType="single"
         />

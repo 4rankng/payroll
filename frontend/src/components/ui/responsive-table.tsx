@@ -107,6 +107,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
           caption={caption}
           getRowClassName={getRowClassName}
           embedded={embedded}
+          emptyState={emptyState}
         />
       </div>
     );

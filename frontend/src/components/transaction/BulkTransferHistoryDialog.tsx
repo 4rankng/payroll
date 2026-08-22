@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { EmptyState as SharedEmptyState } from '@/components/shared/EmptyState';
 import { dateToString } from '@/utils/dateHelpers';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -53,11 +54,11 @@ function HistorySkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-14 text-center px-6">
-      <FileSpreadsheet className="w-8 h-8 text-slate-300 mb-2" />
-      <p className="text-sm font-medium text-muted-foreground mb-0.5">Chưa có lịch sử</p>
-      <p className="text-xs text-slate-400">Chưa có file kết quả chuyển tiền nào được tải lên</p>
-    </div>
+    <SharedEmptyState
+      title="Chưa có lịch sử"
+      description="Chưa có file kết quả chuyển tiền nào được tải lên."
+      size="sm"
+    />
   );
 }
 

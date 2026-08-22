@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserMobileList } from "@/components/users/UserMobileList";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useUserDataInfinite } from "@/hooks/users/useUserDataInfinite";
 import { useUserModals } from "@/hooks/useModalNavigation";
 import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";
@@ -256,17 +257,13 @@ const UsersPageMobile = () => {
           users={userData.users.filter((u) => u.role !== 'adv_partner')}
           onRowClick={(user) => openUserDetails(user.id.toString())}
           emptyState={
-            <div className="text-center py-12">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 typography-title-large">
-                Không tìm thấy người dùng nào
-              </h3>
-              <p className="mt-2 typography-body-medium text-muted-foreground">
-                {filterState.hasActiveFilters
-                  ? "Không có kết quả phù hợp."
-                  : "Hãy tạo người dùng đầu tiên."}
-              </p>
-            </div>
+            <EmptyState
+              title="Không tìm thấy người dùng nào"
+              description={filterState.hasActiveFilters
+                ? "Không có kết quả phù hợp."
+                : "Hãy tạo người dùng đầu tiên."}
+              size="sm"
+            />
           }
         />
         {userData.hasMore && (

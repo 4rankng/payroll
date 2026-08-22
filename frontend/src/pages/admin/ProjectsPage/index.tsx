@@ -10,8 +10,9 @@ import { useProjectModals } from "@/hooks/useModalNavigation";
 import { createProjectColumns } from "@/config/project-table-columns";
 import { createProjectMobileConfig } from "@/config/project-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, FolderPlus } from "lucide-react";
+import { FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { CreateProjectData } from "@/types/api/project.types";
 import { useTableSorting } from "@/utils/sorting";
 
@@ -131,31 +132,12 @@ const ProjectsPage = () => {
             sorting={sorting}
             onSortingChange={onSortingChange}
             emptyState={
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="relative mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/5 border border-primary/10">
-                    <Briefcase className="h-9 w-9 text-primary/30" />
-                  </div>
-                  <div className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-lg bg-background border shadow-sm">
-                    <FolderPlus className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-                <h3 className="typography-headline-small text-foreground mb-1">
-                  Không tìm thấy dự án nào
-                </h3>
-                <p className="typography-body-medium text-muted-foreground max-w-xs text-center mb-6">
-                  Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương.
-                </p>
-                <Button
-                  onClick={() => openCreateProject()}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                >
-                  <FolderPlus className="h-3.5 w-3.5" />
-                  Tạo dự án
-                </Button>
-              </div>
+              <EmptyState
+                title="Không tìm thấy dự án nào"
+                description="Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương."
+                action={{ label: "Tạo dự án", onClick: () => openCreateProject() }}
+                className="py-8"
+              />
             }
             accordionType="single"
           />

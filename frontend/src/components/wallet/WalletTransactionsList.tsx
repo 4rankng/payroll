@@ -3,7 +3,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  Inbox,
   RefreshCw,
   ArrowDownLeft,
   ArrowUpRight,
@@ -42,6 +41,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { FilterPill } from "@/components/shared/FilterPill";
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from "@/lib/utils";
+import { EmptyState as SharedEmptyState } from "@/components/shared/EmptyState";
 import { walletService } from "@/services/api/wallet.service";
 import { formatDateTime, formatCurrency as formatVND } from "@/utils/formatters";
 import type {
@@ -776,25 +776,20 @@ function EmptyState({
 }) {
   if (hasFilters) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-          <Inbox className="h-5 w-5 text-slate-400" />
-        </div>
-        <p className="text-sm text-slate-600">Không tìm thấy giao dịch khớp bộ lọc</p>
-        <button type="button" onClick={onResetFilters} className="text-xs text-slate-500 hover:text-slate-800 underline underline-offset-2">
-          Xoá bộ lọc
-        </button>
-      </div>
+      <SharedEmptyState
+        title="Không tìm thấy giao dịch khớp bộ lọc"
+        action={{ label: 'Xoá bộ lọc', onClick: onResetFilters }}
+        size="sm"
+      />
     );
   }
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center px-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
-        <Inbox className="h-5 w-5 text-slate-400" />
-      </div>
-      <p className="text-sm font-medium text-slate-700 mb-1">Chưa có giao dịch nào</p>
-      <p className="text-xs text-slate-400">Số dư được đồng bộ tự động từ nhà cung cấp</p>
-    </div>
+    <SharedEmptyState
+      title="Chưa có giao dịch nào"
+      description="Số dư được đồng bộ tự động từ nhà cung cấp."
+      size="sm"
+      className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4"
+    />
   );
 }
 

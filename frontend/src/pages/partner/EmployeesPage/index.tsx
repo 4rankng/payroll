@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { InlineStatStrip } from "@/components/shared/InlineStatStrip";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { FilterPill } from "@/components/shared/FilterPill";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { usePartnerEmployeesData } from "@/hooks/partner-employees/usePartnerEmployeesData";
 import { useEmployeesSummary, useRequestEmployeeAccess } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
@@ -26,7 +27,6 @@ import {
   Phone,
   Clock,
   X,
-  UserPlus,
   UserRoundCheck,
   Globe,
   HandHeart,
@@ -663,22 +663,11 @@ const EmployeesPage = () => {
             sorting={sorting}
             onSortingChange={onSortingChange}
             emptyState={
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="relative mb-6">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/5 border border-primary/15">
-                    <Users className="h-9 w-9 text-primary/45" />
-                  </div>
-                  <div className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-lg bg-background border shadow-sm">
-                    <UserPlus className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-                <h3 className="typography-headline-small text-foreground mb-1">
-                  Không có nhân viên nào
-                </h3>
-                <p className="typography-body-medium text-muted-foreground max-w-xs text-center">
-                  Chưa có nhân viên nào trong các dự án được phân quyền.
-                </p>
-              </div>
+              <EmptyState
+                title="Không có nhân viên nào"
+                description="Chưa có nhân viên nào trong các dự án được phân quyền."
+                size="sm"
+              />
             }
             accordionType="single"
           />

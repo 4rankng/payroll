@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useFlexPayEmployeesInfinite } from "@/hooks/api/useAdvancePayments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState as SharedEmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { FlexPayEmployeeListItem } from "@/types/api/advance-payment.types";
 import EditAdvPartnerUserSheet from "./EditAdvPartnerUserSheet";
@@ -82,17 +83,13 @@ function CardSkeleton() {
 
 function EmptyState({ hasSearch }: { hasSearch: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-        <User className="w-7 h-7 text-muted-foreground/50" />
-      </div>
-      <p className="font-semibold text-base">Không tìm thấy nhân viên nào</p>
-      <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-        {hasSearch
-          ? "Không có kết quả phù hợp với từ khoá tìm kiếm."
-          : "Chưa có nhân viên FlexPay nào."}
-      </p>
-    </div>
+    <SharedEmptyState
+      title="Không tìm thấy nhân viên nào"
+      description={hasSearch
+        ? "Không có kết quả phù hợp với từ khoá tìm kiếm."
+        : "Chưa có nhân viên FlexPay nào."}
+      size="sm"
+    />
   );
 }
 

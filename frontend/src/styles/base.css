@@ -38,31 +38,13 @@
      DISTINCTIVE TYPOGRAPHY - Breaking Anti-Patterns
      ======================================================================== */
 
-  /* Display Headers - Manrope Bold, Confident */
+  /* Semantic headings must not silently become display typography. Individual
+     page and metric components opt into their required scale explicitly. */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-family-display);
     line-height: var(--leading-tight);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-semibold);
     letter-spacing: var(--tracking-tight);
-  }
-
-  h1 {
-    font-size: var(--text-5xl);
-    font-weight: var(--font-extrabold);
-  }
-
-  h2 {
-    font-size: var(--text-4xl);
-  }
-
-  h3 {
-    font-size: var(--text-3xl);
-    font-weight: var(--font-semibold);
-  }
-
-  h4 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-semibold);
   }
 
   /* ========================================================================
