@@ -21,9 +21,9 @@ export const DashboardSectionHeader = ({
   actions,
 }: DashboardSectionHeaderProps) => (
   <div className={cn('admin-dashboard-section-header flex items-start justify-between gap-3', className)}>
-    <div className="flex min-w-0 items-start gap-3">
+    <div className="flex min-w-0 items-start gap-2.5">
       {Icon && (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
           <Icon className="h-4 w-4 text-primary/70" />
         </div>
       )}
@@ -33,7 +33,7 @@ export const DashboardSectionHeader = ({
             {eyebrow}
           </p>
         )}
-        <h2 className="text-sm font-semibold tracking-wide text-foreground sm:text-base">{title}</h2>
+        <h2 className="text-sm font-semibold tracking-wide text-foreground">{title}</h2>
         {subtitle && <p className="text-xs leading-relaxed text-muted-foreground">{subtitle}</p>}
       </div>
     </div>

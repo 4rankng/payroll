@@ -47,7 +47,7 @@ describe('TimesheetFilters', () => {
     });
   });
 
-  it('uses the same white 44px surface for every desktop dropdown trigger', () => {
+  it('keeps a touch-safe base and compacts every desktop dropdown trigger', () => {
     render(<TimesheetFilters />);
 
     const triggers = [
@@ -59,6 +59,7 @@ describe('TimesheetFilters', () => {
 
     for (const trigger of triggers) {
       expect(trigger).toHaveClass('min-h-11');
+      expect(trigger).toHaveClass('sm:min-h-9');
       expect(trigger).toHaveClass('bg-card');
     }
   });

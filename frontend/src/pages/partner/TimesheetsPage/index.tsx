@@ -361,7 +361,7 @@ export default function TimesheetsPage() {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5 animate-fade-in">
+      <div className="mx-auto max-w-[1280px] animate-fade-in space-y-4 p-3 sm:p-4">
         <div className="space-y-2">
           <Skeleton className="h-7 w-28" />
           <Skeleton className="h-4 w-56" />
@@ -397,11 +397,11 @@ export default function TimesheetsPage() {
   }
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
+    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] p-3 sm:p-4">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+        <div className="relative overflow-hidden rounded-xl border border-primary/15 bg-card p-3 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] sm:p-4">
           <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-primary/15" />
           <div className="relative flex items-start justify-between gap-4 flex-wrap">
             <div>
@@ -483,7 +483,7 @@ export default function TimesheetsPage() {
         >
           <div className="space-y-3">
             <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-              <div className="flex items-center gap-2.5 flex-wrap rounded-2xl border border-border/60 bg-card px-3 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card px-3 py-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
                 <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />
                   <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc dữ liệu</span>
@@ -492,8 +492,8 @@ export default function TimesheetsPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
-              <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+              <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-3 py-2 sm:px-4">
                 <div>
                   <p className="text-[12px] font-bold text-foreground">Chi tiết bảng công</p>
                   <p className="mt-0.5 text-[10.5px] text-muted-foreground">Nhấn vào một dòng để xem hoặc xử lý</p>

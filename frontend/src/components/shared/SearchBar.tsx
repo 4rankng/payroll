@@ -63,7 +63,7 @@ export const SearchBar = React.memo(function SearchBar({
   return (
     <div
       className={cn(
-        'inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-0 text-sm',
+        'inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-0 text-sm sm:min-h-9 sm:px-2.5',
         'border border-border/60 bg-card text-muted-foreground',
         'hover:border-border hover:text-foreground transition-colors duration-100',
         'focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20',
@@ -83,7 +83,7 @@ export const SearchBar = React.memo(function SearchBar({
       {showClearButton && localValue && (
         <button
           onClick={handleClear}
-          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-50 transition-all hover:bg-muted hover:opacity-100"
+          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-50 transition-all hover:bg-muted hover:opacity-100 sm:-mr-1.5 sm:h-8 sm:w-8"
           aria-label="Xóa tìm kiếm"
         >
           <X className="h-3.5 w-3.5" />

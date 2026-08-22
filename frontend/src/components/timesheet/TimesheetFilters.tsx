@@ -184,7 +184,7 @@ export const TimesheetFilters = () => {
         placeholder="Dự án"
         searchPlaceholder="Tìm dự án..."
         emptyMessage="Không tìm thấy dự án nào."
-        className="h-11 min-h-11 rounded-xl bg-card px-3 text-sm"
+        className="h-11 min-h-11 rounded-xl bg-card px-3 text-sm sm:h-9 sm:min-h-9 sm:px-2.5"
         allOption={{ value: 'all', label: 'Dự án' }}
         pillStyle
       />
@@ -194,7 +194,7 @@ export const TimesheetFilters = () => {
         onChange={onEmployeeChange}
         selectedProject={selectedProject}
         placeholder="Nhân viên"
-        className="inline-flex h-11 min-h-11 items-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-0 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-100 hover:border-border hover:bg-accent/40 hover:text-foreground [&>svg]:h-3.5 [&>svg]:w-3.5"
+        className="inline-flex h-11 min-h-11 items-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-0 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-100 hover:border-border hover:bg-accent/40 hover:text-foreground sm:h-9 sm:min-h-9 sm:px-2.5 [&>svg]:h-3.5 [&>svg]:w-3.5"
         availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as unknown as Employee[]}
         includeAvailableOnly={shouldUseProjectEmployees}
         pillStyle

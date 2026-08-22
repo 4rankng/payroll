@@ -98,14 +98,14 @@ function MetricContent({ item }: { item: DashboardMetricItem }) {
         <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
         <span
           className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border',
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
             styles.iconSurface,
           )}
         >
           <item.icon className={cn('h-4 w-4', styles.icon)} aria-hidden="true" />
         </span>
       </div>
-      <p className="mt-3 font-display text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground tabular-nums">
         {item.value}
       </p>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.context}</p>
@@ -121,7 +121,7 @@ export function DashboardMetricStrip({ items }: DashboardMetricStripProps) {
     >
       {items.map((item, index) => {
         const className = cn(
-          'min-w-0 px-4 py-4 text-left sm:px-5',
+          'min-w-0 px-3 py-3 text-left sm:px-4',
           METRIC_CELL_BORDERS[index],
           item.onClick &&
             'cursor-pointer transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring motion-reduce:transition-none',
@@ -148,7 +148,7 @@ export function DashboardPriorityList({
 }: DashboardPriorityListProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
-      <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex flex-col gap-2.5 border-b border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Hàng đợi vận hành
@@ -163,7 +163,7 @@ export function DashboardPriorityList({
           onClick={onRefresh}
           disabled={isRefreshing}
           aria-busy={isRefreshing}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-9 motion-reduce:transition-none"
         >
           {isRefreshing ? (
             <Loader2
@@ -184,7 +184,7 @@ export function DashboardPriorityList({
             <>
               <div
                 className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border',
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border sm:h-8 sm:w-8',
                   styles.iconSurface,
                 )}
               >
@@ -218,12 +218,12 @@ export function DashboardPriorityList({
               key={item.title}
               type="button"
               onClick={item.onClick}
-              className="flex min-h-[76px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5 motion-reduce:transition-none"
+              className="flex min-h-[68px] w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:min-h-[60px] sm:px-4 sm:py-2 motion-reduce:transition-none"
             >
               {content}
             </button>
           ) : (
-            <div key={item.title} className="flex min-h-[76px] items-center gap-3 px-4 py-3 sm:px-5">
+            <div key={item.title} className="flex min-h-[68px] items-center gap-3 px-3 py-2.5 sm:min-h-[60px] sm:px-4 sm:py-2">
               {content}
             </div>
           );
@@ -242,7 +242,7 @@ export function DashboardActivityPanel({
 }: DashboardActivityPanelProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
-      <div className="border-b border-border/70 px-4 py-4 sm:px-5">
+      <div className="border-b border-border/70 px-3 py-3 sm:px-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Tín hiệu sử dụng · {monthLabel}
         </p>
@@ -275,7 +275,7 @@ export function DashboardActivityPanel({
           </p>
         ) : isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="flex min-h-11 items-center justify-between px-4 py-3 sm:px-5">
+            <div key={index} className="flex min-h-11 items-center justify-between px-3 py-2.5 sm:min-h-9 sm:px-4 sm:py-2">
               <span className="h-3 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
               <span className="h-4 w-8 animate-pulse rounded bg-muted motion-reduce:animate-none" />
             </div>
@@ -286,7 +286,7 @@ export function DashboardActivityPanel({
             type="button"
             onClick={item.onClick}
             disabled={!item.onClick}
-            className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent sm:px-5 motion-reduce:transition-none"
+            className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent sm:min-h-9 sm:px-4 sm:py-2 motion-reduce:transition-none"
           >
             <span className="flex items-center gap-2 text-sm text-foreground">
               <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -314,7 +314,7 @@ export function DashboardAreaHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 border-b border-border/70 pb-3 sm:flex-row sm:items-end sm:justify-between',
+        'flex flex-col gap-2 border-b border-border/70 pb-2 sm:flex-row sm:items-end sm:justify-between',
         className,
       )}
     >

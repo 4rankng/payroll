@@ -99,13 +99,13 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
     <section
       aria-label="Trung tâm điều khiển bảng công"
       className={cn(
-        'rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] sm:p-5',
+        'rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-soft)] sm:p-4',
         className,
       )}
     >
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
         {/* Cash readiness — 5 columns */}
-        <div className="lg:col-span-5 lg:border-r lg:border-border lg:pr-6">
+        <div className="lg:col-span-5 lg:border-r lg:border-border lg:pr-4">
           <CashReadinessCard
             data={cashReadiness.data}
             isLoading={cashReadiness.isLoading}
@@ -115,7 +115,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
 
         {/* Operational KPIs — 7 columns */}
         <div className="lg:col-span-7">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="font-display text-[13px] font-bold tracking-tight text-foreground">
               Chỉ số vận hành
             </h2>
@@ -124,7 +124,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-1 gap-2.5 min-[480px]:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+          <div className="grid auto-rows-fr grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-4">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}

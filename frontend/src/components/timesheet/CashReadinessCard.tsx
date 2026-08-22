@@ -41,7 +41,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" aria-hidden="true" />
           Dự báo tiền trả
         </span>
-        <p className="mt-2 text-[13px] text-muted-foreground">
+        <p className="mt-2 text-[12px] text-muted-foreground">
           Tạm thời không có dữ liệu dự báo thanh toán.
         </p>
       </div>
@@ -61,7 +61,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
           Nên chuẩn bị
         </p>
-        <p className="mt-1 break-words font-financial text-[clamp(1.5rem,4vw,2rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
+        <p className="mt-1 break-words font-financial text-[clamp(1.375rem,3.5vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
           {formatCurrency(display.recommendedReserve)}
         </p>
         {display.showExpectedPayout && (
@@ -84,19 +84,19 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         </p>
       )}
 
-      <div className="mt-3 border-t border-border/60 pt-3 lg:mt-auto">
+      <div className="mt-2.5 border-t border-border/60 pt-2.5 lg:mt-auto">
         <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
         <dl
           className="mt-1.5 grid grid-cols-2 gap-2"
           aria-label={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
         >
-          <div className="min-w-0 rounded-md bg-muted/45 px-2.5 py-2">
+          <div className="min-w-0 rounded-md bg-muted/45 px-2.5 py-1.5">
             <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Từ</dt>
             <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-foreground">
               {formatCurrency(display.intervalLower)}
             </dd>
           </div>
-          <div className="min-w-0 rounded-md bg-primary/5 px-2.5 py-2 text-right">
+          <div className="min-w-0 rounded-md bg-primary/5 px-2.5 py-1.5 text-right">
             <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">Đến</dt>
             <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-primary">
               {formatCurrency(display.intervalUpper)}

@@ -98,25 +98,25 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/40">
               <TableHead className="p-0" />
-              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
               </TableHead>
-              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Dự án · Loại ngày" : "Loại ngày"}
               </TableHead>
-              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 Ca làm · Trạng thái
               </TableHead>
-              <TableHead className="border-l border-border/30 py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
+              <TableHead className="border-l border-border/30 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 Giờ
               </TableHead>
-              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
+              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 {userRole === "admin" ? "Dự án · Đơn giá" : "Đơn giá"}
               </TableHead>
-              <TableHead className="py-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
+              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 Thành tiền
               </TableHead>
-              <TableHead className="py-3 px-2" />
+              <TableHead className="px-2 py-2" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -176,10 +176,10 @@ const GroupRow = memo(function GroupRow({
           >
             {/* [0] status strip */}
             <TableCell className="p-0">
-              <div className={cn("w-1 h-full min-h-[52px] rounded-r-full transition-colors", groupStripBg)} />
+              <div className={cn("h-full min-h-[44px] w-1 rounded-r-full transition-colors", groupStripBg)} />
             </TableCell>
             {/* [1] employee */}
-            <TableCell className="py-3.5 px-3">
+            <TableCell className="px-3 py-2.5">
               <div className="flex items-center gap-2.5 min-w-0">
                 <UserAvatar email={group.employeeCode} name={group.employeeName} size="sm" />
                 <div className="min-w-0 flex-1">
@@ -193,7 +193,7 @@ const GroupRow = memo(function GroupRow({
               </div>
             </TableCell>
             {/* [2] role-specific column */}
-            <TableCell className="py-3.5 px-3">
+            <TableCell className="px-3 py-2.5">
               {userRole === "partner" ? (
                 <PartnerGroupColumn group={group} />
               ) : (
@@ -203,17 +203,17 @@ const GroupRow = memo(function GroupRow({
               )}
             </TableCell>
             {/* [3] status summary */}
-            <TableCell className="py-3.5 px-3">
+            <TableCell className="px-3 py-2.5">
               <GroupStatusSummary group={group} />
             </TableCell>
             {/* [4] total hours */}
-            <TableCell className="border-l border-border/30 py-3.5 px-3 text-right">
+            <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
               <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-background/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
             {/* [5] Project preview for Admin summaries; rate lives in expanded rows. */}
-            <TableCell className="py-3.5 px-3 text-right">
+            <TableCell className="px-3 py-2.5 text-right">
               {userRole === "admin" ? (
                 <AdminGroupProjectColumn group={group} />
               ) : (
@@ -221,14 +221,14 @@ const GroupRow = memo(function GroupRow({
               )}
             </TableCell>
             {/* [6] total amount */}
-            <TableCell className="py-3.5 px-3 text-right">
+            <TableCell className="px-3 py-2.5 text-right">
               <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 typography-body-medium font-bold text-emerald-800 tabular-nums whitespace-nowrap">
                 {group.totalAmount.toLocaleString("vi-VN")}
                 <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
               </span>
             </TableCell>
             {/* [7] chevron */}
-            <TableCell className="py-3.5 px-2">
+            <TableCell className="px-2 py-2.5">
               <div className="flex justify-center text-muted-foreground group-hover:text-foreground transition-colors">
                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </div>

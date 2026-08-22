@@ -271,7 +271,7 @@ export default {
 			fontSize: {
 				'xs': ['0.6875rem', { lineHeight: '1.4' }],    // 11px
 				'sm': ['0.75rem', { lineHeight: '1.4' }],     // 12px
-				'base': ['0.8125rem', { lineHeight: '1.5' }],  // 13px
+				'base': ['0.75rem', { lineHeight: '1.5' }],    // 12px
 				'lg': ['0.875rem', { lineHeight: '1.4' }],    // 14px
 				'xl': ['1rem', { lineHeight: '1.3' }],        // 16px
 				'2xl': ['1.125rem', { lineHeight: '1.3' }],   // 18px

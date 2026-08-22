@@ -210,7 +210,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-dashboard-page p-4 lg:p-6">
+      <div className="admin-dashboard-page p-3 sm:p-4">
         <DashboardLoadingSkeleton />
       </div>
     );
@@ -218,7 +218,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard-page min-h-full bg-transparent">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-6 overflow-x-hidden p-4 lg:p-6">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-4 overflow-x-hidden p-3 sm:p-4">
         <div className="motion-reduce:animate-none motion-reduce:opacity-100">
           <DashboardHeader value={selectedMonth} onChange={handleMonthChange} />
         </div>

@@ -138,7 +138,7 @@
        Use the semantic role tokens below for UI hierarchy decisions. */
     --text-xs: 0.6875rem;     /* 11px - labels, badges */
     --text-sm: 0.75rem;       /* 12px - table data, secondary */
-    --text-base: 0.8125rem;   /* 13px - body text */
+    --text-base: 0.75rem;     /* 12px - body text */
     --text-lg: 0.875rem;      /* 14px - section headers */
     --text-xl: 1rem;          /* 16px - card headers */
     --text-2xl: 1.125rem;     /* 18px - page headers */
@@ -150,8 +150,8 @@
     --type-caption: var(--text-xs);        /* 11px */
     --type-count-badge: 0.5625rem;         /* 9px - tiny numeric badges */
     --type-label: var(--text-sm);          /* 12px */
-    --type-body-sm: var(--text-base);      /* 13px */
-    --type-body: var(--text-lg);           /* 14px */
+    --type-body-sm: var(--text-xs);        /* 11px */
+    --type-body: var(--text-sm);           /* 12px */
     --type-card-title: var(--text-xl);     /* 16px */
     --type-section-title: var(--text-2xl); /* 18px */
     --type-page-title: var(--text-4xl);    /* 24px */

@@ -453,7 +453,18 @@
     [data-admin-ui] .admin-filter-bar button,
     [data-admin-ui] .admin-filter-bar input,
     [data-admin-ui] .admin-filter-bar [role="combobox"] {
-      min-height: 2.5rem;
+      min-height: 2.25rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] button,
+    [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"],
+    [data-admin-ui] .admin-filter-bar button,
+    [data-admin-ui] .admin-filter-bar input,
+    [data-admin-ui] .admin-filter-bar [role="combobox"],
+    [data-admin-ui] .admin-dashboard-bento :is(button, [role="button"]) {
+      min-height: 2.25rem;
     }
   }
 

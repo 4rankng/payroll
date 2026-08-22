@@ -70,7 +70,7 @@ const ChartTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   const sorted = [...payload].filter(e => e.value !== 0).sort((a, b) => b.value - a.value);
   if (!sorted.length) return null;
   return (
-    <div className="bg-card border border-border rounded-xl p-3 text-xs max-w-[220px]">
+    <div className="max-w-[220px] rounded-lg border border-border bg-card p-2.5 text-xs">
       <p className="text-muted-foreground mb-2 font-medium tracking-wide uppercase" style={{ fontSize: 11 }}>
         Lũy kế đến {label && typeof label === 'string' && label.includes('-') ? formatTooltipDate(label) : label}
       </p>
@@ -254,7 +254,7 @@ export const ProjectProfitabilityCard = memo(() => {
 
           {/* Legend chips — clicking one dims all others to 20% (cross-fade) */}
           {allSeries.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="mt-1.5 flex flex-wrap gap-1">
               {allSeries.map(s => {
                 const hidden = hiddenIds.has(s.project_id);
                 const dimmed = hasFocus && focusedId !== s.project_id;
@@ -271,7 +271,7 @@ export const ProjectProfitabilityCard = memo(() => {
                         handleLegendClick(s.project_id);
                       }
                     }}
-                    className={`flex min-h-11 items-center gap-1.5 rounded-xl border px-2 py-1 text-xs select-none
+                    className={`flex min-h-11 items-center gap-1.5 rounded-lg border px-2 py-1 text-xs select-none sm:min-h-8
                       transition-all duration-200
                       ${hidden
                         ? 'border-border/30 bg-muted/30 text-muted-foreground/40'

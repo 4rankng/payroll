@@ -279,7 +279,7 @@
 }
 
 [data-partner-ui] .partner-subtle-copy {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   line-height: 1.55;
   color: hsl(var(--muted-foreground));
 }
@@ -387,6 +387,16 @@ html.partner-route-active :is([role="menu"], [role="listbox"]) {
 @media (min-width: 1024px) {
   [data-partner-ui] .partner-page-frame {
     padding-bottom: 2rem;
+  }
+}
+
+@media (min-width: 640px) {
+  [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] button,
+  [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] [role="combobox"],
+  [data-partner-ui] .partner-filter-bar button,
+  [data-partner-ui] .partner-filter-bar input,
+  [data-partner-ui] .partner-filter-bar [role="combobox"] {
+    min-height: 2.25rem;
   }
 }
 

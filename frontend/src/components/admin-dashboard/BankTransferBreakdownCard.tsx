@@ -99,7 +99,7 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
 
   return (
     <Card className="overflow-hidden shadow-none">
-      <CardContent className="p-4 sm:p-5">
+      <CardContent className="p-3 sm:p-4">
         {isLoading ? (
           <div aria-label="Đang tải phân bổ ngân hàng">
             <div className="flex items-end justify-between gap-4">
@@ -135,7 +135,7 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
             <Button
               type="button"
               variant="outline"
-              className="h-11 shrink-0"
+              className="h-11 shrink-0 sm:h-9"
               disabled={isFetching}
               onClick={() => void refetch()}
             >

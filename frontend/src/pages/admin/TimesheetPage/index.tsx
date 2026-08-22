@@ -245,7 +245,7 @@ const TimesheetPage = () => {
 
   if (timesheetManagement.isLoading && timesheetManagement.timesheets.length === 0) {
     return (
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-4">
+      <div className="mx-auto max-w-[1280px] space-y-3 p-3 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
             <Skeleton className="h-7 w-40" />
@@ -264,7 +264,7 @@ const TimesheetPage = () => {
   }
 
   return (
-    <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
+    <div className="mx-auto max-w-[1280px] space-y-4 p-3 sm:p-4">
       {/* ── Header ── */}
       <PageHeader
         title="Bảng công"
