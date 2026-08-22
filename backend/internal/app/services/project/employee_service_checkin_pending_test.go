@@ -309,6 +309,65 @@ func TestDisableInactiveCheckInEmployeesDisablesEntireCurrentMonthCohort(t *test
 	}
 }
 
+func TestDisablePendingCheckInEmployeesCancelsEntireServerCohort(t *testing.T) {
+	setFakeClock(t, time.Date(2026, 8, 22, 10, 0, 0, 0, clock.DefaultLocation))
+	effectiveFrom := time.Date(2026, 9, 1, 0, 0, 0, 0, clock.DefaultLocation)
+	pending := true
+	first := &domain.ProjectEmployee{
+		ID: 1, ProjectID: 5, EmployeeID: 101,
+		PendingCheckInEnabled: &pending, CheckInEffectiveFrom: &effectiveFrom,
+	}
+	second := &domain.ProjectEmployee{
+		ID: 2, ProjectID: 5, EmployeeID: 102,
+		PendingCheckInEnabled: &pending, CheckInEffectiveFrom: &effectiveFrom,
+	}
+	active := &domain.ProjectEmployee{
+		ID: 3, ProjectID: 5, EmployeeID: 103, CheckInEnabled: true,
+	}
+	repo := &inactiveCheckInAssignmentRepo{
+		configuration: &domain.CheckInConfigurationResult{
+			Employees: []domain.CheckInConfigurationEmployee{
+				{ProjectID: 5, EmployeeID: 101, PendingCheckInEnable: true},
+				{ProjectID: 5, EmployeeID: 102, PendingCheckInEnable: true},
+			},
+			Total: 2,
+		},
+		current: []*domain.ProjectEmployee{first, second, active},
+	}
+	advanceRepo := &checkinPendingAdvanceRepo{}
+	svc := newCheckinPendingService(repo, advanceRepo)
+
+	disabled, err := svc.DisablePendingCheckInEmployees(context.Background(), 5, 77)
+	if err != nil {
+		t.Fatalf("disable pending: %v", err)
+	}
+
+	if disabled != 2 {
+		t.Fatalf("disabled = %d, want 2", disabled)
+	}
+	if repo.query.Status != domain.CheckInConfigurationStatusPending {
+		t.Fatalf("status = %q, want pending", repo.query.Status)
+	}
+	if repo.query.Limit != 0 || repo.query.Offset != 0 {
+		t.Fatalf("bulk action must ignore UI pagination, got limit=%d offset=%d", repo.query.Limit, repo.query.Offset)
+	}
+	if !repo.locked {
+		t.Fatal("current assignments must be locked before canceling the pending cohort")
+	}
+	if first.HasPendingCheckInEnable() || second.HasPendingCheckInEnable() {
+		t.Fatal("all pending assignments must be canceled")
+	}
+	if !active.CheckInEnabled {
+		t.Fatal("already-active employee must not be changed")
+	}
+	if len(repo.savedIDs) != 2 {
+		t.Fatalf("saved ids = %v, want two pending assignments", repo.savedIDs)
+	}
+	if len(advanceRepo.zeroedMonths) != 0 {
+		t.Fatalf("never-active pending employees must not have quota zeroed: %v", advanceRepo.zeroedMonths)
+	}
+}
+
 func TestToggleCheckInDuplicateEnableIsNoop(t *testing.T) {
 	setFakeClock(t, time.Date(2026, 8, 20, 10, 0, 0, 0, clock.DefaultLocation))
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}

@@ -97,6 +97,10 @@ type CheckInConfigurationResponse struct {
 	Pagination Pagination                             `json:"pagination"`
 }
 
+type DisableCheckInEmployeesResponse struct {
+	DisabledCount int `json:"disabled_count"`
+}
+
 // --- Employees ---
 
 type EmployeeResponse struct {

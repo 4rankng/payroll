@@ -122,6 +122,7 @@ p, adv_partner, /api/v1/projects/checkin-configurable, GET, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-configuration, GET, allow
 p, adv_partner, /api/v1/projects/:id/employees/:employeeId/checkin-enabled, PATCH, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-inactive, PATCH, allow
+p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-pending, PATCH, allow
 
 # Users - read only (broad PUT removed: adv_partner edits route through the
 # scoped /adv-partner/users/* handler, which enforces project-scope ownership).

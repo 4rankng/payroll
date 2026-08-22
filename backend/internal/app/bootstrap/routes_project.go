@@ -23,6 +23,7 @@ func setupProjectRoutes(protected *gin.RouterGroup, container *Container) {
 		projects.PATCH("/:id/employees/:employeeId/checkin-enabled", container.Handlers.ProjectEmployee.ToggleCheckInEnabled)
 		projects.PATCH("/:id/employees/checkin-enabled/bulk", container.Handlers.ProjectEmployee.BulkToggleCheckInEnabled)
 		projects.PATCH("/:id/employees/checkin-enabled/disable-inactive", container.Handlers.ProjectEmployee.DisableInactiveCheckInEmployees)
+		projects.PATCH("/:id/employees/checkin-enabled/disable-pending", container.Handlers.ProjectEmployee.DisablePendingCheckInEmployees)
 		projects.DELETE("/:id/employees/:employeeId/checkin-enabled", container.Handlers.ProjectEmployee.CancelPendingCheckInEnable)
 
 		projects.GET("/:id/payrate", container.Handlers.Project.GetCurrentProjectPayrate)

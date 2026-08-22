@@ -51,7 +51,7 @@ export function checkInConfigurationKey(
       status: params.status,
       search: params.search?.trim() || undefined,
       page: params.page ?? 1,
-      pageSize: params.pageSize ?? 50,
+      pageSize: params.pageSize ?? 20,
     },
   ] as const;
 }

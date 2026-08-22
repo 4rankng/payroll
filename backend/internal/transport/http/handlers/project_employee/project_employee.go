@@ -405,7 +405,7 @@ func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
 	if value, parseErr := strconv.Atoi(c.Query("page")); parseErr == nil && value > 0 {
 		page = value
 	}
-	pageSize := 50
+	pageSize := 20
 	if value, parseErr := strconv.Atoi(c.Query("pageSize")); parseErr == nil && value > 0 && value <= 100 {
 		pageSize = value
 	}
@@ -752,13 +752,54 @@ func (h *Handler) DisableInactiveCheckInEmployees(c *gin.Context) {
 			"user_id", uid,
 			"error", err,
 		)
-		response.InternalServerError(c, "Không thể tắt điểm danh cho nhân viên Inactive")
+		response.InternalServerError(c, "Không thể tắt điểm danh cho nhân viên chưa điểm danh")
 		return
 	}
 
 	response.Success(c, dto.DisableInactiveCheckInEmployeesResponse{
 		DisabledCount: disabledCount,
-	}, "Đã tắt điểm danh cho nhân viên Inactive")
+	}, "Đã tắt điểm danh cho nhân viên chưa điểm danh")
+}
+
+func (h *Handler) DisablePendingCheckInEmployees(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
+		return
+	}
+	if !h.requireCheckInConfigurationAccess(c, uint(projectID)) {
+		return
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Unauthorized(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	disabledCount, err := h.projectEmployeeService.DisablePendingCheckInEmployees(
+		c.Request.Context(),
+		uint(projectID),
+		uid,
+	)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to disable pending check-in employees",
+			"project_id", projectID,
+			"user_id", uid,
+			"error", err,
+		)
+		response.InternalServerError(c, "Không thể hủy kích hoạt điểm danh đang chờ")
+		return
+	}
+
+	response.Success(c, dto.DisablePendingCheckInEmployeesResponse{
+		DisabledCount: disabledCount,
+	}, "Đã hủy kích hoạt điểm danh đang chờ")
 }
 
 // CancelPendingCheckInEnable handles DELETE /api/v1/projects/:id/employees/:employeeId/checkin-enabled

@@ -163,6 +163,18 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return nil
 	})
 
+	reporter.RunTest(flowProject, "Cancel complete pending check-in cohort", func() error {
+		if testProjectID == 0 {
+			return fmt.Errorf("no test project ID")
+		}
+		var resp DisableCheckInEmployeesResponse
+		path := fmt.Sprintf("/api/v1/projects/%d/employees/checkin-enabled/disable-pending", testProjectID)
+		if _, err := admin.PatchInto(path, map[string]any{}, &resp); err != nil {
+			return fmt.Errorf("cancel pending check-in cohort: %w", err)
+		}
+		return AssertEqual("disabled pending employees", 0, resp.DisabledCount)
+	})
+
 	reporter.RunTest(flowProject, "Remove employee from project", func() error {
 		if testProjectID == 0 || len(data.Employees) == 0 {
 			return fmt.Errorf("missing test project or employees")

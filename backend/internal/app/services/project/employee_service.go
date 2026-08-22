@@ -1096,6 +1096,64 @@ func (s *ProjectEmployeeService) DisableInactiveCheckInEmployees(
 	return disabledCount, err
 }
 
+// DisablePendingCheckInEmployees cancels the complete server-authoritative
+// pending activation cohort for a project. The cohort is re-read without UI
+// pagination or search filters while current assignments are locked.
+func (s *ProjectEmployeeService) DisablePendingCheckInEmployees(
+	ctx context.Context,
+	projectID uint,
+	updatedBy uint,
+) (int, error) {
+	disabledCount := 0
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		monthStart, monthEnd, asOfDate := currentCheckInMonthWindow()
+		assignments, err := s.projectEmployeeRepo.GetCurrentAssignmentsForProjectForUpdate(txCtx, projectID, asOfDate)
+		if err != nil {
+			return err
+		}
+		result, err := s.projectEmployeeRepo.GetCheckInConfiguration(txCtx, domain.CheckInConfigurationQuery{
+			ProjectID:  projectID,
+			MonthStart: monthStart,
+			MonthEnd:   monthEnd,
+			AsOfDate:   asOfDate,
+			Status:     domain.CheckInConfigurationStatusPending,
+		})
+		if err != nil {
+			return err
+		}
+		if len(result.Employees) == 0 {
+			return nil
+		}
+
+		pendingEmployeeIDs := make(map[uint]struct{}, len(result.Employees))
+		for _, employee := range result.Employees {
+			pendingEmployeeIDs[employee.EmployeeID] = struct{}{}
+		}
+
+		for _, assignment := range assignments {
+			if _, shouldDisable := pendingEmployeeIDs[assignment.EmployeeID]; !shouldDisable {
+				continue
+			}
+			assignment.CheckInEnabled = false
+			assignment.PendingCheckInEnabled = nil
+			assignment.CheckInEffectiveFrom = nil
+			if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
+				return err
+			}
+			if s.eventBus != nil {
+				event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
+				if err := s.eventBus.Publish(txCtx, event); err != nil {
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (disable pending)", "error", err)
+				}
+			}
+		}
+
+		disabledCount = len(pendingEmployeeIDs)
+		return nil
+	})
+	return disabledCount, err
+}
+
 // GetEmployeesByPaymentSchedule retrieves all employees with a specific payment schedule
 func (s *ProjectEmployeeService) GetEmployeesByPaymentSchedule(ctx context.Context, schedule domain.PaymentSchedule) ([]*domain.ProjectEmployee, error) {
 	// Simple delegation to repository - no business logic needed

@@ -180,6 +180,7 @@ func TestAdvPartnerRole_AllowList(t *testing.T) {
 		{"/api/v1/projects/7/employees/checkin-configuration", "GET"},
 		{"/api/v1/projects/7/employees/101/checkin-enabled", "PATCH"},
 		{"/api/v1/projects/7/employees/checkin-enabled/disable-inactive", "PATCH"},
+		{"/api/v1/projects/7/employees/checkin-enabled/disable-pending", "PATCH"},
 
 		// Notifications (wildcard)
 		{"/api/v1/notifications", "GET"},

@@ -18,6 +18,7 @@ import type {
   CheckInConfigurationParams,
   CheckInConfigurationResponse,
   DisableInactiveCheckInEmployeesResponse,
+  DisablePendingCheckInEmployeesResponse,
   CheckInConfigurableProject,
 } from '@/types/api/project-employee.types';
 
@@ -349,6 +350,16 @@ export class ProjectEmployeeService {
   ): Promise<DisableInactiveCheckInEmployeesResponse> {
     const response = await apiClient.patch<DisableInactiveCheckInEmployeesResponse>(
       `/projects/${projectId}/employees/checkin-enabled/disable-inactive`,
+      {},
+    );
+    return response.data!;
+  }
+
+  async disablePendingCheckInEmployees(
+    projectId: number,
+  ): Promise<DisablePendingCheckInEmployeesResponse> {
+    const response = await apiClient.patch<DisablePendingCheckInEmployeesResponse>(
+      `/projects/${projectId}/employees/checkin-enabled/disable-pending`,
       {},
     );
     return response.data!;

@@ -157,6 +157,10 @@ export interface DisableInactiveCheckInEmployeesResponse {
   disabled_count: number;
 }
 
+export interface DisablePendingCheckInEmployeesResponse {
+  disabled_count: number;
+}
+
 export interface EmployeeProjectListParams {
   status?: AssignmentStatus;
   page?: number;

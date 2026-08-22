@@ -492,6 +492,40 @@ func TestProjectEmployeeRepository_GetCheckInConfigurationListsAllCurrentAssignm
 	require.Len(t, result.Employees, 4)
 }
 
+func TestProjectEmployeeRepository_GetCheckInConfigurationPaginatesInDatabase(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+
+	query := domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusAll,
+		Limit:      2,
+	}
+
+	firstPage, err := repo.GetCheckInConfiguration(context.Background(), query)
+	require.NoError(t, err)
+	require.Equal(t, int64(4), firstPage.Total)
+	require.Len(t, firstPage.Employees, 2)
+
+	query.Offset = 2
+	secondPage, err := repo.GetCheckInConfiguration(context.Background(), query)
+	require.NoError(t, err)
+	require.Equal(t, int64(4), secondPage.Total)
+	require.Len(t, secondPage.Employees, 2)
+
+	seen := make(map[uint]struct{}, 4)
+	for _, employee := range append(firstPage.Employees, secondPage.Employees...) {
+		if _, duplicate := seen[employee.EmployeeID]; duplicate {
+			t.Fatalf("employee %d appeared on more than one server page", employee.EmployeeID)
+		}
+		seen[employee.EmployeeID] = struct{}{}
+	}
+	require.Len(t, seen, 4)
+}
+
 func TestProjectEmployeeRepository_GetCheckInConfigurationUsesLatestCurrentAssignmentPerEmployee(t *testing.T) {
 	repo, db := newCheckInConfigurationTestRepository(t)
 	seedCheckInConfigurationTestData(t, db)

@@ -569,8 +569,31 @@ export function useDisableInactiveCheckInEmployees() {
       });
       showSuccessNotification(
         result.disabled_count > 0
-          ? `Đã tắt điểm danh cho ${result.disabled_count} nhân viên Inactive`
-          : "Không còn nhân viên Inactive cần tắt",
+          ? `Đã tắt điểm danh cho ${result.disabled_count} nhân viên chưa điểm danh`
+          : "Không còn nhân viên chưa điểm danh cần tắt",
+      );
+    },
+  });
+}
+
+export function useDisablePendingCheckInEmployees() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId }: { projectId: number }) =>
+      projectEmployeeService.disablePendingCheckInEmployees(projectId),
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          shouldInvalidateForProjectEmployeeChange(
+            query.queryKey,
+            variables.projectId,
+          ),
+      });
+      showSuccessNotification(
+        result.disabled_count > 0
+          ? `Đã hủy chờ kích hoạt cho ${result.disabled_count} nhân viên`
+          : "Không còn nhân viên chờ kích hoạt",
       );
     },
   });

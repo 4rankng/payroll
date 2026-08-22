@@ -221,3 +221,7 @@ type CheckInConfigurationResponse struct {
 type DisableInactiveCheckInEmployeesResponse struct {
 	DisabledCount int `json:"disabled_count"`
 }
+
+type DisablePendingCheckInEmployeesResponse struct {
+	DisabledCount int `json:"disabled_count"`
+}

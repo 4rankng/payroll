@@ -8,10 +8,12 @@ const {
   useCheckInConfigurableProjectsMock,
   useCheckInConfigurationMock,
   disableInactiveMutateMock,
+  disablePendingMutateMock,
 } = vi.hoisted(() => ({
   useCheckInConfigurableProjectsMock: vi.fn(),
   useCheckInConfigurationMock: vi.fn(),
   disableInactiveMutateMock: vi.fn(),
+  disablePendingMutateMock: vi.fn(),
 }));
 
 vi.mock("@/hooks/api/useProjectEmployees", () => ({
@@ -22,6 +24,10 @@ vi.mock("@/hooks/api/useProjectEmployees", () => ({
   useDisableInactiveCheckInEmployees: () => ({
     isPending: false,
     mutate: disableInactiveMutateMock,
+  }),
+  useDisablePendingCheckInEmployees: () => ({
+    isPending: false,
+    mutate: disablePendingMutateMock,
   }),
   useToggleCheckInEnabled: () => ({
     isPending: false,
@@ -53,9 +59,9 @@ const configuration = {
   month: "2026-08",
   pagination: {
     page: 1,
-    pageSize: 50,
-    totalPages: 1,
-    totalRecords: 12,
+    pageSize: 20,
+    totalPages: 3,
+    totalRecords: 50,
   },
 };
 
@@ -89,32 +95,45 @@ describe("CheckInSettingsPage", () => {
     });
   });
 
-  it("uses the exact short Active and Inactive labels", async () => {
+  it("uses coherent Vietnamese status labels", async () => {
     renderPage();
 
     expect(useCheckInConfigurableProjectsMock).toHaveBeenCalledWith();
 
-    expect(await screen.findByRole("tab", { name: /Active/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Inactive/ })).toBeInTheDocument();
-    expect(screen.queryByText("Đã điểm danh tháng này")).not.toBeInTheDocument();
-    expect(screen.queryByText("Chưa điểm danh tháng này")).not.toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /Đã điểm danh/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Chưa điểm danh/ })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Active/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Inactive/ })).not.toBeInTheDocument();
   });
 
-  it("filters to Inactive and confirms disabling the entire cohort", async () => {
+  it("keeps row actions compact on desktop and touch-safe on smaller screens", async () => {
     renderPage();
 
-    fireEvent.click(await screen.findByRole("tab", { name: /Inactive/ }));
+    const actions = await screen.findAllByRole("button", {
+      name: "Tắt điểm danh cho Nguyễn Hoàng An",
+    });
+    expect(actions.some((action) => action.classList.contains("h-8"))).toBe(true);
+    expect(actions.some((action) => action.classList.contains("h-11"))).toBe(true);
+
+    const backButton = screen.getByRole("button", { name: "Quay lại" });
+    expect(backButton).toHaveClass("h-11", "sm:h-9");
+  });
+
+  it("filters to employees without attendance and confirms disabling the entire cohort", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("tab", { name: /Chưa điểm danh/ }));
 
     await waitFor(() => {
       expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
         7,
-        { page: 1, pageSize: 50, status: "inactive" },
+        { page: 1, pageSize: 20, status: "inactive" },
         true,
       );
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Tắt 12 nhân viên Inactive" }),
+      screen.getByRole("button", { name: "Tắt tất cả 12 nhân viên chưa điểm danh" }),
     );
     expect(
       screen.getByRole("heading", { name: "Tắt điểm danh cho 12 nhân viên?" }),
@@ -128,6 +147,45 @@ describe("CheckInSettingsPage", () => {
       { projectId: 7 },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
+  });
+
+  it("confirms canceling every pending activation in the selected project", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("tab", { name: /Chờ kích hoạt/ }));
+
+    await waitFor(() => {
+      expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
+        7,
+        { page: 1, pageSize: 20, status: "pending" },
+        true,
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Hủy chờ tất cả 3 nhân viên" }));
+    expect(
+      screen.getByRole("heading", { name: "Hủy kích hoạt đang chờ của 3 nhân viên?" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận hủy chờ" }));
+    expect(disablePendingMutateMock).toHaveBeenCalledWith(
+      { projectId: 7 },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+  });
+
+  it("requests the next page from the backend with a bounded page size", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Trang tiếp" }));
+
+    await waitFor(() => {
+      expect(useCheckInConfigurationMock).toHaveBeenLastCalledWith(
+        7,
+        { page: 2, pageSize: 20, status: "enabled" },
+        true,
+      );
+    });
   });
 
   it("returns to the role-specific advance payment page", async () => {
