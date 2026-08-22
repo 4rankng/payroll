@@ -1,8 +1,10 @@
 package project_employee
 
 import (
+	"errors"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -15,6 +17,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+const checkInConfigurationMonthsBack = 24
+
+func resolveCheckInConfigurationMonth(value string, now time.Time) (time.Time, error) {
+	currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return currentMonth, nil
+	}
+
+	selectedMonth, err := time.ParseInLocation("2006-01", trimmed, now.Location())
+	if err != nil {
+		return time.Time{}, errors.New("tháng điểm danh phải có định dạng YYYY-MM")
+	}
+	oldestMonth := currentMonth.AddDate(0, -checkInConfigurationMonthsBack, 0)
+	if selectedMonth.After(currentMonth) || selectedMonth.Before(oldestMonth) {
+		return time.Time{}, errors.New("tháng điểm danh nằm ngoài phạm vi cho phép")
+	}
+	return selectedMonth, nil
+}
 
 type Handler struct {
 	projectEmployeeService    *project.ProjectEmployeeService
@@ -421,6 +443,11 @@ func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
 		response.BadRequest(c, "Trạng thái điểm danh không hợp lệ")
 		return
 	}
+	selectedMonth, err := resolveCheckInConfigurationMonth(c.Query("month"), h.clock.Now())
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
 	result, monthStart, _, err := h.projectEmployeeService.GetCheckInConfiguration(
 		c.Request.Context(),
@@ -429,6 +456,7 @@ func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
 		c.Query("search"),
 		page,
 		pageSize,
+		selectedMonth,
 	)
 	if err != nil {
 		h.logger.ErrorContext(c.Request.Context(), "Failed to get check-in configuration",

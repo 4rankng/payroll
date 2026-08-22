@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api-server/internal/pkg/clock"
 	"fmt"
 )
 
@@ -161,6 +162,23 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			return fmt.Errorf("expected current month in response")
 		}
 		return nil
+	})
+
+	reporter.RunTest(flowProject, "List check-in configuration for a selected month", func() error {
+		if testProjectID == 0 {
+			return fmt.Errorf("no test project ID")
+		}
+		selectedMonth := clock.Now().AddDate(0, -1, 0).Format("2006-01")
+		var resp CheckInConfigurationResponse
+		path := fmt.Sprintf(
+			"/api/v1/projects/%d/employees/checkin-configuration?status=all&page=1&pageSize=50&month=%s",
+			testProjectID,
+			selectedMonth,
+		)
+		if _, err := admin.GetInto(path, &resp); err != nil {
+			return fmt.Errorf("list check-in configuration for selected month: %w", err)
+		}
+		return AssertEqual("selected check-in month", selectedMonth, resp.Month)
 	})
 
 	reporter.RunTest(flowProject, "Cancel complete pending check-in cohort", func() error {

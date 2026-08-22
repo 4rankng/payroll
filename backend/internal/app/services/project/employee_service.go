@@ -1012,6 +1012,19 @@ func currentCheckInMonthWindow() (time.Time, time.Time, time.Time) {
 	return monthStart, monthEnd, asOfDate
 }
 
+func selectedCheckInMonthWindow(selectedMonth time.Time) (time.Time, time.Time, time.Time) {
+	now := clock.Now()
+	if selectedMonth.IsZero() {
+		selectedMonth = now
+	}
+	monthStart := time.Date(
+		selectedMonth.Year(), selectedMonth.Month(), 1, 0, 0, 0, 0, selectedMonth.Location(),
+	)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	asOfDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return monthStart, monthEnd, asOfDate
+}
+
 func (s *ProjectEmployeeService) GetCheckInConfiguration(
 	ctx context.Context,
 	projectID uint,
@@ -1019,8 +1032,9 @@ func (s *ProjectEmployeeService) GetCheckInConfiguration(
 	search string,
 	page int,
 	pageSize int,
+	selectedMonth time.Time,
 ) (*domain.CheckInConfigurationResult, time.Time, time.Time, error) {
-	monthStart, monthEnd, asOfDate := currentCheckInMonthWindow()
+	monthStart, monthEnd, asOfDate := selectedCheckInMonthWindow(selectedMonth)
 	result, err := s.projectEmployeeRepo.GetCheckInConfiguration(ctx, domain.CheckInConfigurationQuery{
 		ProjectID:  projectID,
 		MonthStart: monthStart,
