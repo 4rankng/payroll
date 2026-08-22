@@ -29,7 +29,6 @@ import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advanc
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
-import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { StatementDialog } from "@/components/advance-payment/StatementDialog";
 import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
@@ -176,7 +175,6 @@ const AdvancePaymentsPageMobile = () => {
   const [isStatementSheetOpen, setIsStatementSheetOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("requests");
   const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
   const [selectedAttendance, setSelectedAttendance] =
@@ -329,13 +327,18 @@ const AdvancePaymentsPageMobile = () => {
                   onClick={() => { setIsResultUploadOpen(true); close(); }}
                 />
               )}
-              {!isAdvPartner && (
-                <MobileOverflowAction
-                  icon={CalendarCheck}
-                  label="Chấm công"
-                  onClick={() => { setIsCheckInDialogOpen(true); close(); }}
-                />
-              )}
+              <MobileOverflowAction
+                icon={CalendarCheck}
+                label="Cấu hình điểm danh"
+                onClick={() => {
+                  navigate(
+                    isAdvPartner
+                      ? "/adv-partner/advance-payments/check-in-settings"
+                      : "/admin/advance-payments/check-in-settings",
+                  );
+                  close();
+                }}
+              />
               <MobileOverflowAction
                 icon={FileText}
                 label="Sao kê"
@@ -584,7 +587,6 @@ const AdvancePaymentsPageMobile = () => {
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />
       <FlexibleEmployeeListUploadDialog open={isEmployeeListUploadOpen} onOpenChange={setIsEmployeeListUploadOpen} />
       <AdvancePaymentResultUploadDialog open={isResultUploadOpen} onOpenChange={setIsResultUploadOpen} />
-      <CheckInBulkDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} />
       <StatementDialog open={isStatementSheetOpen} onOpenChange={setIsStatementSheetOpen} forMonth={page.flexPayMonth} />
       <FileHistorySheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen} />
       <AttendanceReviewDialogs

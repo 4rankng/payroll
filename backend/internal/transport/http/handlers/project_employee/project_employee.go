@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"api-server/internal/app/dto"
+	"api-server/internal/app/services/employee"
+	"api-server/internal/app/services/project"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/clock"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
-
-	"api-server/internal/app/services/employee"
-	"api-server/internal/app/services/project"
-	"api-server/internal/pkg/clock"
 )
 
 type Handler struct {
@@ -40,6 +39,90 @@ func NewHandler(projectEmployeeService *project.ProjectEmployeeService, employee
 		logger:                    logger,
 		clock:                     clk,
 	}
+}
+
+func (h *Handler) requireCheckInConfigurationAccess(c *gin.Context, projectID uint) bool {
+	role := c.GetString(constants.CtxUserRole)
+	if role == string(domain.RoleAdmin) {
+		return true
+	}
+	if role != string(domain.RoleAdvPartner) {
+		response.Forbidden(c, "Bạn không có quyền cấu hình điểm danh")
+		return false
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+		return false
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return false
+	}
+
+	canModify, err := h.projectPermissionService.CanUserModifyProject(c.Request.Context(), projectID, uid)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to check check-in project permission",
+			"project_id", projectID,
+			"user_id", uid,
+			"error", err,
+		)
+		response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+		return false
+	}
+	if !canModify {
+		response.Forbidden(c, "Bạn không có quyền cấu hình điểm danh cho dự án này")
+		return false
+	}
+	return true
+}
+
+func (h *Handler) ListCheckInConfigurableProjects(c *gin.Context) {
+	role := c.GetString(constants.CtxUserRole)
+	if role != string(domain.RoleAdmin) && role != string(domain.RoleAdvPartner) {
+		response.Forbidden(c, "Bạn không có quyền cấu hình điểm danh")
+		return
+	}
+
+	filters := domain.ProjectFilters{
+		ProjectStatus: []domain.ProjectStatus{domain.ProjectStatusRunning},
+		Limit:         -1,
+		SortBy:        "name",
+		SortOrder:     "asc",
+	}
+	if role == string(domain.RoleAdvPartner) {
+		userID, exists := c.Get(constants.CtxUserID)
+		uid, ok := userID.(uint)
+		if !exists || !ok {
+			response.Forbidden(c, constants.MsgInvalidUserIDVN)
+			return
+		}
+		filters.ModifiableBy = &uid
+	}
+
+	projects, err := h.projectService.ListProjects(c.Request.Context(), filters)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to list check-in configurable projects", "error", err)
+		response.InternalServerError(c, constants.MsgFailedToListProjectsVN)
+		return
+	}
+
+	result := make([]dto.CheckInConfigurableProjectResponse, 0, len(projects))
+	for _, project := range projects {
+		if !project.IsFlexible {
+			continue
+		}
+		result = append(result, dto.CheckInConfigurableProjectResponse{
+			ID:         project.ID,
+			Name:       project.Name,
+			Code:       project.Code,
+			Status:     project.ProjectStatus,
+			IsFlexible: project.IsFlexible,
+		})
+	}
+	response.Success(c, result, "Check-in configurable projects retrieved successfully")
 }
 
 func (h *Handler) ListProjectEmployees(c *gin.Context) {
@@ -308,6 +391,90 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 	response.SuccessWithPagination(c, assignmentResponses, message, pagination)
 }
 
+func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
+		return
+	}
+	if !h.requireCheckInConfigurationAccess(c, uint(projectID)) {
+		return
+	}
+
+	page := 1
+	if value, parseErr := strconv.Atoi(c.Query("page")); parseErr == nil && value > 0 {
+		page = value
+	}
+	pageSize := 50
+	if value, parseErr := strconv.Atoi(c.Query("pageSize")); parseErr == nil && value > 0 && value <= 100 {
+		pageSize = value
+	}
+
+	status := domain.CheckInConfigurationStatus(c.DefaultQuery("status", string(domain.CheckInConfigurationStatusEnabled)))
+	switch status {
+	case domain.CheckInConfigurationStatusAll,
+		domain.CheckInConfigurationStatusEnabled,
+		domain.CheckInConfigurationStatusActive,
+		domain.CheckInConfigurationStatusInactive,
+		domain.CheckInConfigurationStatusPending:
+	default:
+		response.BadRequest(c, "Trạng thái điểm danh không hợp lệ")
+		return
+	}
+
+	result, monthStart, _, err := h.projectEmployeeService.GetCheckInConfiguration(
+		c.Request.Context(),
+		uint(projectID),
+		status,
+		c.Query("search"),
+		page,
+		pageSize,
+	)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to get check-in configuration",
+			"project_id", projectID,
+			"error", err,
+		)
+		response.InternalServerError(c, "Không thể tải cấu hình điểm danh")
+		return
+	}
+
+	employees := make([]dto.CheckInConfigurationEmployeeResponse, 0, len(result.Employees))
+	for _, employee := range result.Employees {
+		employees = append(employees, dto.CheckInConfigurationEmployeeResponse{
+			AssignmentID:         employee.AssignmentID,
+			ProjectID:            employee.ProjectID,
+			EmployeeID:           employee.EmployeeID,
+			EmployeeName:         employee.EmployeeName,
+			EmployeeCCCD:         employee.EmployeeCCCD,
+			EmployeeCode:         employee.EmployeeCode,
+			CheckInEnabled:       employee.CheckInEnabled,
+			PendingCheckInEnable: employee.PendingCheckInEnable,
+			CheckInEffectiveFrom: employee.CheckInEffectiveFrom,
+			AttendanceCount:      employee.AttendanceCount,
+			LastCheckInAt:        employee.LastCheckInAt,
+		})
+	}
+
+	totalPages := (int(result.Total) + pageSize - 1) / pageSize
+	response.Success(c, dto.CheckInConfigurationResponse{
+		Employees: employees,
+		Summary: dto.CheckInConfigurationSummaryResponse{
+			Enabled:  result.Summary.Enabled,
+			Active:   result.Summary.Active,
+			Inactive: result.Summary.Inactive,
+			Pending:  result.Summary.Pending,
+		},
+		Month: monthStart.Format("2006-01"),
+		Pagination: dto.CheckInConfigurationPaginationResponse{
+			Page:         page,
+			PageSize:     pageSize,
+			TotalPages:   totalPages,
+			TotalRecords: int(result.Total),
+		},
+	}, "Đã tải cấu hình điểm danh")
+}
+
 // RequestPaymentScheduleChange handles POST /api/v1/project-employees/:id/payment-schedule
 func (h *Handler) RequestPaymentScheduleChange(c *gin.Context) {
 	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 32)
@@ -477,6 +644,9 @@ func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
 	}
+	if !h.requireCheckInConfigurationAccess(c, uint(projectID)) {
+		return
+	}
 
 	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
 	if err != nil {
@@ -548,6 +718,47 @@ func (h *Handler) BulkToggleCheckInEnabled(c *gin.Context) {
 	}
 
 	response.Success(c, nil, "Check-in statuses updated successfully")
+}
+
+func (h *Handler) DisableInactiveCheckInEmployees(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
+		return
+	}
+	if !h.requireCheckInConfigurationAccess(c, uint(projectID)) {
+		return
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Unauthorized(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	disabledCount, err := h.projectEmployeeService.DisableInactiveCheckInEmployees(
+		c.Request.Context(),
+		uint(projectID),
+		uid,
+	)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to disable inactive check-in employees",
+			"project_id", projectID,
+			"user_id", uid,
+			"error", err,
+		)
+		response.InternalServerError(c, "Không thể tắt điểm danh cho nhân viên Inactive")
+		return
+	}
+
+	response.Success(c, dto.DisableInactiveCheckInEmployeesResponse{
+		DisabledCount: disabledCount,
+	}, "Đã tắt điểm danh cho nhân viên Inactive")
 }
 
 // CancelPendingCheckInEnable handles DELETE /api/v1/projects/:id/employees/:employeeId/checkin-enabled

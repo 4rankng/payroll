@@ -1,6 +1,7 @@
 import type {
   ProjectEmployeeListParams,
   EmployeeProjectListParams,
+  CheckInConfigurationParams,
 } from '@/types/api/project-employee.types';
 
 // Re-export QueryKeys from the centralized queryKeys/index.ts
@@ -35,6 +36,28 @@ export function projectEmployeesKey(projectId: number, params: ProjectEmployeeLi
   );
 
   return ['projects', projectId, 'employees', cleanParams] as const;
+}
+
+export function checkInConfigurationKey(
+  projectId: number,
+  params: CheckInConfigurationParams,
+) {
+  return [
+    'projects',
+    projectId,
+    'employees',
+    'check-in-configuration',
+    {
+      status: params.status,
+      search: params.search?.trim() || undefined,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 50,
+    },
+  ] as const;
+}
+
+export function checkInConfigurableProjectsKey() {
+  return ['projects', 'check-in-configurable'] as const;
 }
 
 /**

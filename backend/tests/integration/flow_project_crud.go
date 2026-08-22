@@ -139,6 +139,30 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return nil
 	})
 
+	reporter.RunTest(flowProject, "List check-in configuration cohorts", func() error {
+		if testProjectID == 0 || len(data.Employees) == 0 {
+			return fmt.Errorf("missing test project or employees")
+		}
+		var resp CheckInConfigurationResponse
+		path := fmt.Sprintf("/api/v1/projects/%d/employees/checkin-configuration?status=all&page=1&pageSize=50", testProjectID)
+		if _, err := admin.GetInto(path, &resp); err != nil {
+			return fmt.Errorf("list check-in configuration: %w", err)
+		}
+		if err := AssertEqual("total records", int64(1), resp.Pagination.TotalRecords); err != nil {
+			return err
+		}
+		if len(resp.Employees) != 1 {
+			return fmt.Errorf("expected 1 configured employee, got %d", len(resp.Employees))
+		}
+		if err := AssertEqual("employee id", data.Employees[0].ID, resp.Employees[0].EmployeeID); err != nil {
+			return err
+		}
+		if resp.Month == "" {
+			return fmt.Errorf("expected current month in response")
+		}
+		return nil
+	})
+
 	reporter.RunTest(flowProject, "Remove employee from project", func() error {
 		if testProjectID == 0 || len(data.Employees) == 0 {
 			return fmt.Errorf("missing test project or employees")

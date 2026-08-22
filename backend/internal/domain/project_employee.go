@@ -59,6 +59,7 @@ type ProjectEmployeeRepository interface {
 	GetByID(ctx context.Context, id uint) (*ProjectEmployee, error)
 	GetByProjectAndEmployee(ctx context.Context, projectID, employeeID uint) (*ProjectEmployee, error)
 	GetActiveAssignmentByProjectAndEmployee(ctx context.Context, projectID, employeeID uint) (*ProjectEmployee, error)
+	GetCurrentAssignmentsForProjectForUpdate(ctx context.Context, projectID uint, asOfDate time.Time) ([]*ProjectEmployee, error)
 	GetActiveAssignmentsByProjectsAndEmployees(ctx context.Context, projectIDs []uint, employeeIDs []uint) ([]*ProjectEmployee, error)
 	Update(ctx context.Context, assignment *ProjectEmployee) error
 	// UpdatePosition updates only the position column, avoiding full-row Save() that
@@ -94,9 +95,58 @@ type ProjectEmployeeRepository interface {
 
 	// Deferred check-in activation methods
 	GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
+	GetCheckInConfiguration(ctx context.Context, query CheckInConfigurationQuery) (*CheckInConfigurationResult, error)
 
 	// HasAccessViaProject checks if user can access employee through project assignments
 	HasAccessViaProject(ctx context.Context, employeeID, userID uint) (bool, error)
+}
+
+type CheckInConfigurationStatus string
+
+const (
+	CheckInConfigurationStatusAll      CheckInConfigurationStatus = "all"
+	CheckInConfigurationStatusEnabled  CheckInConfigurationStatus = "enabled"
+	CheckInConfigurationStatusActive   CheckInConfigurationStatus = "active"
+	CheckInConfigurationStatusInactive CheckInConfigurationStatus = "inactive"
+	CheckInConfigurationStatusPending  CheckInConfigurationStatus = "pending"
+)
+
+type CheckInConfigurationQuery struct {
+	ProjectID  uint
+	MonthStart time.Time
+	MonthEnd   time.Time
+	AsOfDate   time.Time
+	Status     CheckInConfigurationStatus
+	Search     string
+	Limit      int
+	Offset     int
+}
+
+type CheckInConfigurationEmployee struct {
+	AssignmentID         uint       `json:"assignment_id"`
+	ProjectID            uint       `json:"project_id"`
+	EmployeeID           uint       `json:"employee_id"`
+	EmployeeName         string     `json:"employee_name"`
+	EmployeeCCCD         string     `json:"employee_cccd"`
+	EmployeeCode         string     `json:"employee_code"`
+	CheckInEnabled       bool       `json:"check_in_enabled"`
+	PendingCheckInEnable bool       `json:"pending_check_in_enable"`
+	CheckInEffectiveFrom *time.Time `json:"check_in_effective_from,omitempty"`
+	AttendanceCount      int64      `json:"attendance_count"`
+	LastCheckInAt        *string    `json:"last_check_in_at,omitempty"`
+}
+
+type CheckInConfigurationSummary struct {
+	Enabled  int64 `json:"enabled"`
+	Active   int64 `json:"active"`
+	Inactive int64 `json:"inactive"`
+	Pending  int64 `json:"pending"`
+}
+
+type CheckInConfigurationResult struct {
+	Employees []CheckInConfigurationEmployee
+	Summary   CheckInConfigurationSummary
+	Total     int64
 }
 
 // ProjectEmployeeFilters represents filtering options for project employee queries

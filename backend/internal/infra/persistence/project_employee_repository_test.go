@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func TestProjectEmployeeRepository_UpdatePositionIfCurrent(t *testing.T) {
@@ -85,6 +86,23 @@ func TestProjectEmployeeRepository_GetActiveAssignmentsUsesTransactionContext(t 
 	require.NoError(t, err)
 	require.Len(t, assignments, 1)
 	require.Equal(t, uint(1288), assignments[0].EmployeeID)
+}
+
+func TestWithAssignmentUpdateLockUsesTheSharedTransactionProtocol(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+
+	unlocked := withAssignmentUpdateLock(context.Background(), db.Model(&domain.ProjectEmployee{}))
+	_, hasLock := unlocked.Statement.Clauses["FOR"]
+	require.False(t, hasLock)
+
+	tx := db.Begin()
+	require.NoError(t, tx.Error)
+	defer func() { _ = tx.Rollback().Error }()
+	locked := withAssignmentUpdateLock(transactionContextForTest(tx), tx.Model(&domain.ProjectEmployee{}))
+	lockClause, hasLock := locked.Statement.Clauses["FOR"]
+	require.True(t, hasLock)
+	require.Equal(t, clause.Locking{Strength: "UPDATE"}, lockClause.Expression)
 }
 
 func TestProjectEmployeeRepository_HasActiveFlexiblePaymentScheduleByEmployeeID(t *testing.T) {
@@ -343,4 +361,171 @@ func TestProjectEmployeeRepository_SearchVietnameseAndCountBeforePagination(t *t
 	if total != 2 {
 		t.Fatalf("accent-insensitive search total = %d, want 2", total)
 	}
+}
+
+func newCheckInConfigurationTestRepository(t *testing.T) (*ProjectEmployeeRepository, *gorm.DB) {
+	t.Helper()
+
+	dsn := fmt.Sprintf("file:project-employee-checkin-configuration-%d?mode=memory&cache=shared", time.Now().UnixNano())
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.Exec(`
+		CREATE TABLE project_employees (
+			id INTEGER PRIMARY KEY,
+			project_id INTEGER NOT NULL,
+			employee_id INTEGER NOT NULL,
+			employee_name TEXT NOT NULL,
+			employee_cccd TEXT NOT NULL,
+			employee_code TEXT,
+			start_date DATETIME NOT NULL,
+			last_date DATETIME,
+			check_in_enabled BOOLEAN NOT NULL DEFAULT 0,
+			pending_check_in_enabled BOOLEAN,
+			check_in_effective_from DATETIME,
+			created_at DATETIME NOT NULL,
+			deleted_at DATETIME
+		);
+		CREATE TABLE attendances (
+			id INTEGER PRIMARY KEY,
+			project_id INTEGER NOT NULL,
+			employee_id INTEGER NOT NULL,
+			check_in_time DATETIME NOT NULL
+		);
+	`).Error)
+
+	repo := &ProjectEmployeeRepository{
+		BaseRepository: &BaseRepository{DB: db},
+		filterBuilder:  common.NewFilterBuilder(db),
+	}
+	return repo, db
+}
+
+func seedCheckInConfigurationTestData(t *testing.T, db *gorm.DB) {
+	t.Helper()
+
+	require.NoError(t, db.Exec(`
+		INSERT INTO project_employees (
+			id, project_id, employee_id, employee_name, employee_cccd,
+			employee_code, start_date, last_date, check_in_enabled,
+			pending_check_in_enabled, created_at
+		) VALUES
+			(1, 7, 101, 'Nguyễn Hoàng An', '001201000101', 'NV-101', '2026-01-01', NULL, 1, NULL, '2026-01-01 00:00:00'),
+			(2, 7, 102, 'Trần Bình Minh', '001201000102', 'NV-102', '2026-01-01', NULL, 1, NULL, '2026-01-01 00:00:00'),
+			(3, 7, 103, 'Lê Chi Lan', '001201000103', 'NV-103', '2026-01-01', NULL, 0, NULL, '2026-01-01 00:00:00'),
+			(4, 7, 104, 'Phạm Duy Khang', '001201000104', 'NV-104', '2026-01-01', NULL, 0, 1, '2026-01-01 00:00:00'),
+			(5, 7, 105, 'Vũ Gia Hân', '001201000105', 'NV-105', '2026-01-01', '2026-07-31', 1, NULL, '2026-01-01 00:00:00'),
+			(6, 8, 106, 'Đỗ Hải Nam', '001201000106', 'NV-106', '2026-01-01', NULL, 1, NULL, '2026-01-01 00:00:00')
+	`).Error)
+	require.NoError(t, db.Exec(`
+		INSERT INTO attendances (id, project_id, employee_id, check_in_time) VALUES
+			(1, 7, 101, '2026-08-03 08:00:00'),
+			(2, 7, 101, '2026-08-10 08:15:00'),
+			(3, 7, 102, '2026-07-31 23:59:59'),
+			(4, 7, 103, '2026-08-05 08:00:00'),
+			(5, 8, 106, '2026-08-06 08:00:00')
+	`).Error)
+}
+
+func TestProjectEmployeeRepository_GetCheckInConfigurationClassifiesCurrentMonth(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+
+	result, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusEnabled,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, domain.CheckInConfigurationSummary{
+		Enabled:  2,
+		Active:   1,
+		Inactive: 1,
+		Pending:  1,
+	}, result.Summary)
+	require.Equal(t, int64(2), result.Total)
+	require.Len(t, result.Employees, 2)
+	require.Equal(t, uint(101), result.Employees[0].EmployeeID)
+	require.Equal(t, int64(2), result.Employees[0].AttendanceCount)
+	require.NotNil(t, result.Employees[0].LastCheckInAt)
+	require.Equal(t, uint(102), result.Employees[1].EmployeeID)
+	require.Zero(t, result.Employees[1].AttendanceCount)
+	require.Nil(t, result.Employees[1].LastCheckInAt)
+}
+
+func TestProjectEmployeeRepository_GetCheckInConfigurationFiltersInactiveAcrossAllRows(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+
+	result, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusInactive,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, int64(1), result.Total)
+	require.Len(t, result.Employees, 1)
+	require.Equal(t, uint(102), result.Employees[0].EmployeeID)
+}
+
+func TestProjectEmployeeRepository_GetCheckInConfigurationListsAllCurrentAssignments(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+
+	result, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusAll,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, int64(4), result.Total)
+	require.Len(t, result.Employees, 4)
+}
+
+func TestProjectEmployeeRepository_GetCheckInConfigurationUsesLatestCurrentAssignmentPerEmployee(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+	require.NoError(t, db.Exec(`
+		INSERT INTO project_employees (
+			id, project_id, employee_id, employee_name, employee_cccd,
+			employee_code, start_date, last_date, check_in_enabled,
+			pending_check_in_enabled, created_at
+		) VALUES (
+			7, 7, 102, 'Trần Bình Minh', '001201000102', 'NV-102-new',
+			'2026-02-01', NULL, 0, NULL, '2026-02-01 00:00:00'
+		)
+	`).Error)
+
+	result, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusAll,
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(4), result.Total)
+	require.Equal(t, int64(1), result.Summary.Enabled)
+	require.Equal(t, int64(1), result.Summary.Active)
+	require.Zero(t, result.Summary.Inactive)
+
+	var employee102 []domain.CheckInConfigurationEmployee
+	for _, employee := range result.Employees {
+		if employee.EmployeeID == 102 {
+			employee102 = append(employee102, employee)
+		}
+	}
+	require.Len(t, employee102, 1)
+	require.Equal(t, uint(7), employee102[0].AssignmentID)
+	require.False(t, employee102[0].CheckInEnabled)
 }

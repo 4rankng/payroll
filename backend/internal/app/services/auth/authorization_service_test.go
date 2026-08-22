@@ -175,6 +175,12 @@ func TestAdvPartnerRole_AllowList(t *testing.T) {
 		{"/api/v1/employees", "GET"},
 		{"/api/v1/employees/1", "GET"},
 
+		// Check-in configuration workspace (project scope is enforced by handlers)
+		{"/api/v1/projects/checkin-configurable", "GET"},
+		{"/api/v1/projects/7/employees/checkin-configuration", "GET"},
+		{"/api/v1/projects/7/employees/101/checkin-enabled", "PATCH"},
+		{"/api/v1/projects/7/employees/checkin-enabled/disable-inactive", "PATCH"},
+
 		// Notifications (wildcard)
 		{"/api/v1/notifications", "GET"},
 		{"/api/v1/notifications/unread/count", "GET"},
@@ -212,9 +218,11 @@ func TestAdvPartnerRole_DenyList(t *testing.T) {
 		// Employee data
 		{"/api/v1/employees/import", "POST"},
 
-		// Projects
-		{"/api/v1/projects", "GET"},
+		// Projects outside the bounded check-in workspace
+		{"/api/v1/projects", "POST"},
 		{"/api/v1/projects/1", "PUT"},
+		{"/api/v1/projects/1", "DELETE"},
+		{"/api/v1/projects/1/employees", "POST"},
 
 		// Payroll, timesheets, payrates
 		{"/api/v1/payrolls/histories", "GET"},

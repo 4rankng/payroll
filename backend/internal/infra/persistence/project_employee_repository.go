@@ -1,15 +1,16 @@
 package persistence
 
 import (
-	"api-server/internal/pkg/clock"
-	"api-server/internal/pkg/timeutil"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/common"
+	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/timeutil"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -35,6 +36,13 @@ func (r *ProjectEmployeeRepository) getDB(ctx context.Context) *gorm.DB {
 		return txCtx.TX.WithContext(ctx)
 	}
 	return r.DB.WithContext(ctx)
+}
+
+func withAssignmentUpdateLock(ctx context.Context, query *gorm.DB) *gorm.DB {
+	if _, inTransaction := domain.GetTransactionFromContext(ctx); inTransaction {
+		return query.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	return query
 }
 
 // applyCommonPreloads centralizes the loading of common related entities
@@ -85,11 +93,12 @@ func (r *ProjectEmployeeRepository) GetActiveAssignmentByProjectAndEmployee(ctx 
 	// Check for active assignment: no end date OR end date is today or in the future
 	today := timeutil.StartOfDay(clock.NowUTC())
 
-	err := r.getDB(ctx).
+	query := r.getDB(ctx).
 		Where("project_id = ? AND employee_id = ? AND (last_date IS NULL OR last_date >= ?)",
 			projectID, employeeID, today).
-		Order("created_at DESC, id DESC").
-		First(&assignment).Error
+		Order("created_at DESC, id DESC")
+	query = withAssignmentUpdateLock(ctx, query)
+	err := query.First(&assignment).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -99,6 +108,130 @@ func (r *ProjectEmployeeRepository) GetActiveAssignmentByProjectAndEmployee(ctx 
 	}
 
 	return &assignment, nil
+}
+
+func (r *ProjectEmployeeRepository) GetCurrentAssignmentsForProjectForUpdate(
+	ctx context.Context,
+	projectID uint,
+	asOfDate time.Time,
+) ([]*domain.ProjectEmployee, error) {
+	var assignments []*domain.ProjectEmployee
+	err := r.getDB(ctx).
+		Where("project_id = ?", projectID).
+		Where("deleted_at IS NULL").
+		Where("start_date <= ?", asOfDate).
+		Where("last_date IS NULL OR last_date >= ?", asOfDate).
+		Order("id ASC").
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Find(&assignments).Error
+	return assignments, err
+}
+
+func (r *ProjectEmployeeRepository) checkInConfigurationBaseQuery(
+	ctx context.Context,
+	query domain.CheckInConfigurationQuery,
+) *gorm.DB {
+	monthAttendance := r.getDB(ctx).
+		Table("attendances").
+		Select("project_id, employee_id, COUNT(*) AS attendance_count, MAX(check_in_time) AS last_check_in_at").
+		Where("check_in_time >= ? AND check_in_time < ?", query.MonthStart, query.MonthEnd).
+		Group("project_id, employee_id")
+
+	return r.getDB(ctx).
+		Table("project_employees").
+		Joins("LEFT JOIN (?) AS month_attendance ON month_attendance.project_id = project_employees.project_id AND month_attendance.employee_id = project_employees.employee_id", monthAttendance).
+		Where("project_employees.project_id = ?", query.ProjectID).
+		Where("project_employees.deleted_at IS NULL").
+		Where("project_employees.start_date <= ?", query.AsOfDate).
+		Where("project_employees.last_date IS NULL OR project_employees.last_date >= ?", query.AsOfDate).
+		Where(`NOT EXISTS (
+			SELECT 1 FROM project_employees AS newer_assignment
+			WHERE newer_assignment.project_id = project_employees.project_id
+				AND newer_assignment.employee_id = project_employees.employee_id
+				AND newer_assignment.deleted_at IS NULL
+				AND newer_assignment.start_date <= ?
+				AND (newer_assignment.last_date IS NULL OR newer_assignment.last_date >= ?)
+				AND (
+					newer_assignment.created_at > project_employees.created_at
+					OR (newer_assignment.created_at = project_employees.created_at AND newer_assignment.id > project_employees.id)
+				)
+		)`, query.AsOfDate, query.AsOfDate)
+}
+
+func applyCheckInConfigurationStatus(query *gorm.DB, status domain.CheckInConfigurationStatus) *gorm.DB {
+	switch status {
+	case domain.CheckInConfigurationStatusAll:
+		return query
+	case domain.CheckInConfigurationStatusActive:
+		return query.Where("project_employees.check_in_enabled = 1 AND COALESCE(month_attendance.attendance_count, 0) > 0")
+	case domain.CheckInConfigurationStatusInactive:
+		return query.Where("project_employees.check_in_enabled = 1 AND COALESCE(month_attendance.attendance_count, 0) = 0")
+	case domain.CheckInConfigurationStatusPending:
+		return query.Where("project_employees.check_in_enabled = 0 AND project_employees.pending_check_in_enabled = 1")
+	default:
+		return query.Where("project_employees.check_in_enabled = 1")
+	}
+}
+
+func (r *ProjectEmployeeRepository) GetCheckInConfiguration(
+	ctx context.Context,
+	query domain.CheckInConfigurationQuery,
+) (*domain.CheckInConfigurationResult, error) {
+	var summary domain.CheckInConfigurationSummary
+	if err := r.checkInConfigurationBaseQuery(ctx, query).
+		Select(`
+			COALESCE(SUM(CASE WHEN project_employees.check_in_enabled = 1 THEN 1 ELSE 0 END), 0) AS enabled,
+			COALESCE(SUM(CASE WHEN project_employees.check_in_enabled = 1 AND COALESCE(month_attendance.attendance_count, 0) > 0 THEN 1 ELSE 0 END), 0) AS active,
+			COALESCE(SUM(CASE WHEN project_employees.check_in_enabled = 1 AND COALESCE(month_attendance.attendance_count, 0) = 0 THEN 1 ELSE 0 END), 0) AS inactive,
+			COALESCE(SUM(CASE WHEN project_employees.check_in_enabled = 0 AND project_employees.pending_check_in_enabled = 1 THEN 1 ELSE 0 END), 0) AS pending
+		`).
+		Scan(&summary).Error; err != nil {
+		return nil, err
+	}
+
+	filtered := applyCheckInConfigurationStatus(r.checkInConfigurationBaseQuery(ctx, query), query.Status)
+	if search := strings.TrimSpace(query.Search); search != "" {
+		searchFilter := domain.ProjectEmployeeFilters{Search: search}
+		filtered = r.filterBuilder.ApplyVietnameseSearch(filtered, &searchFilter)
+	}
+
+	var total int64
+	if err := filtered.Count(&total).Error; err != nil {
+		return nil, err
+	}
+
+	var employees []domain.CheckInConfigurationEmployee
+	listQuery := filtered.
+		Select(`
+			project_employees.id AS assignment_id,
+			project_employees.project_id,
+			project_employees.employee_id,
+			project_employees.employee_name,
+			project_employees.employee_cccd,
+			project_employees.employee_code,
+			project_employees.check_in_enabled,
+			CASE WHEN project_employees.pending_check_in_enabled = 1 THEN 1 ELSE 0 END AS pending_check_in_enable,
+			project_employees.check_in_effective_from,
+			COALESCE(month_attendance.attendance_count, 0) AS attendance_count,
+			month_attendance.last_check_in_at
+		`).
+		Order("COALESCE(month_attendance.attendance_count, 0) DESC").
+		Order("project_employees.employee_name ASC")
+	if query.Limit > 0 {
+		listQuery = listQuery.Limit(query.Limit)
+	}
+	if query.Offset > 0 {
+		listQuery = listQuery.Offset(query.Offset)
+	}
+	if err := listQuery.Scan(&employees).Error; err != nil {
+		return nil, err
+	}
+
+	return &domain.CheckInConfigurationResult{
+		Employees: employees,
+		Summary:   summary,
+		Total:     total,
+	}, nil
 }
 
 // GetActiveAssignmentsByProjectsAndEmployees batch fetches active assignments for multiple project-employee pairs

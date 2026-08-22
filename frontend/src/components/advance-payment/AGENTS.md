@@ -23,7 +23,7 @@ Components for the advance payment (FlexPay) feature that allows employees to re
 | `AdvancePaymentMobileList.tsx` | Mobile-optimized advance payment list |
 | `AdvancePaymentMobileEmployeeList.tsx` | Mobile employee list for advance payment selection |
 | `EmployeeAdvancePaymentDetailSheet.tsx` | Detailed sheet for individual employee advance payments |
-| `CheckInBulkDialog.tsx` | Bulk check-in dialog for flexible employees |
+| `CheckInSettingsPage.tsx` | Responsive check-in configuration page with usage cohorts and bulk inactive disable |
 | `FileDropZone.tsx` | File drag-and-drop upload zone |
 | `FileHistoryCard.tsx` | File upload history card |
 | `FileHistorySheet.tsx` | File history slide-over panel |

@@ -64,6 +64,71 @@ func (f *checkinPendingAdvanceRepo) BatchZeroOutQuota(_ context.Context, _ uint,
 	return nil
 }
 
+type inactiveCheckInAssignmentRepo struct {
+	domain.ProjectEmployeeRepository
+	configuration *domain.CheckInConfigurationResult
+	assignments   map[uint]*domain.ProjectEmployee
+	current       []*domain.ProjectEmployee
+	savedIDs      []uint
+	query         domain.CheckInConfigurationQuery
+	locked        bool
+}
+
+func (f *inactiveCheckInAssignmentRepo) GetCurrentAssignmentsForProjectForUpdate(_ context.Context, _ uint, _ time.Time) ([]*domain.ProjectEmployee, error) {
+	f.locked = true
+	if f.current != nil {
+		return f.current, nil
+	}
+	assignments := make([]*domain.ProjectEmployee, 0, len(f.assignments))
+	for _, assignment := range f.assignments {
+		assignments = append(assignments, assignment)
+	}
+	return assignments, nil
+}
+
+func TestDisableInactiveCheckInEmployeesDisablesDuplicateCurrentAssignments(t *testing.T) {
+	setFakeClock(t, time.Date(2026, 8, 22, 10, 0, 0, 0, clock.DefaultLocation))
+	older := &domain.ProjectEmployee{ID: 1, ProjectID: 5, EmployeeID: 101, CheckInEnabled: true}
+	newer := &domain.ProjectEmployee{ID: 2, ProjectID: 5, EmployeeID: 101, CheckInEnabled: true}
+	repo := &inactiveCheckInAssignmentRepo{
+		configuration: &domain.CheckInConfigurationResult{
+			Employees: []domain.CheckInConfigurationEmployee{{ProjectID: 5, EmployeeID: 101, CheckInEnabled: true}},
+			Total:     1,
+		},
+		current: []*domain.ProjectEmployee{older, newer},
+	}
+	advanceRepo := &checkinPendingAdvanceRepo{}
+	svc := newCheckinPendingService(repo, advanceRepo)
+
+	disabled, err := svc.DisableInactiveCheckInEmployees(context.Background(), 5, 77)
+	if err != nil {
+		t.Fatalf("disable inactive duplicates: %v", err)
+	}
+	if disabled != 1 {
+		t.Fatalf("disabled employees = %d, want 1", disabled)
+	}
+	if older.CheckInEnabled || newer.CheckInEnabled {
+		t.Fatal("every current duplicate assignment must be disabled")
+	}
+	if len(repo.savedIDs) != 2 {
+		t.Fatalf("saved duplicate assignments = %v, want 2", repo.savedIDs)
+	}
+}
+
+func (f *inactiveCheckInAssignmentRepo) GetCheckInConfiguration(_ context.Context, query domain.CheckInConfigurationQuery) (*domain.CheckInConfigurationResult, error) {
+	f.query = query
+	return f.configuration, nil
+}
+
+func (f *inactiveCheckInAssignmentRepo) GetActiveAssignmentByProjectAndEmployee(_ context.Context, _ uint, employeeID uint) (*domain.ProjectEmployee, error) {
+	return f.assignments[employeeID], nil
+}
+
+func (f *inactiveCheckInAssignmentRepo) Update(_ context.Context, assignment *domain.ProjectEmployee) error {
+	f.savedIDs = append(f.savedIDs, assignment.EmployeeID)
+	return nil
+}
+
 type checkinPendingPayrateRepo struct {
 	domain.PayrateRepository
 	hasRates bool
@@ -192,6 +257,55 @@ func TestToggleCheckInDisableActiveStillZeroesQuota(t *testing.T) {
 	}
 	if len(advanceRepo.zeroedMonths) != 1 || advanceRepo.zeroedMonths[0] != "2026-08" {
 		t.Errorf("ZeroOutQuota(current month) must fire exactly once, got %v", advanceRepo.zeroedMonths)
+	}
+}
+
+func TestDisableInactiveCheckInEmployeesDisablesEntireCurrentMonthCohort(t *testing.T) {
+	setFakeClock(t, time.Date(2026, 8, 22, 10, 0, 0, 0, clock.DefaultLocation))
+	repo := &inactiveCheckInAssignmentRepo{
+		configuration: &domain.CheckInConfigurationResult{
+			Employees: []domain.CheckInConfigurationEmployee{
+				{ProjectID: 5, EmployeeID: 101, CheckInEnabled: true},
+				{ProjectID: 5, EmployeeID: 102, CheckInEnabled: true},
+			},
+			Total: 2,
+		},
+		assignments: map[uint]*domain.ProjectEmployee{
+			101: {ProjectID: 5, EmployeeID: 101, CheckInEnabled: true},
+			102: {ProjectID: 5, EmployeeID: 102, CheckInEnabled: true},
+		},
+	}
+	advanceRepo := &checkinPendingAdvanceRepo{}
+	svc := newCheckinPendingService(repo, advanceRepo)
+
+	disabled, err := svc.DisableInactiveCheckInEmployees(context.Background(), 5, 77)
+	if err != nil {
+		t.Fatalf("disable inactive: %v", err)
+	}
+
+	if disabled != 2 {
+		t.Fatalf("disabled = %d, want 2", disabled)
+	}
+	if repo.query.Status != domain.CheckInConfigurationStatusInactive {
+		t.Fatalf("status = %q, want inactive", repo.query.Status)
+	}
+	if !repo.locked {
+		t.Fatal("current assignments must be locked before the inactive cohort is classified")
+	}
+	if got := repo.query.MonthStart.Format("2006-01-02 15:04:05"); got != "2026-08-01 00:00:00" {
+		t.Fatalf("month start = %s", got)
+	}
+	if got := repo.query.MonthEnd.Format("2006-01-02 15:04:05"); got != "2026-09-01 00:00:00" {
+		t.Fatalf("month end = %s", got)
+	}
+	if repo.assignments[101].CheckInEnabled || repo.assignments[102].CheckInEnabled {
+		t.Fatal("all inactive assignments must be disabled")
+	}
+	if len(repo.savedIDs) != 2 {
+		t.Fatalf("saved ids = %v, want two assignments", repo.savedIDs)
+	}
+	if len(advanceRepo.zeroedMonths) != 1 || advanceRepo.zeroedMonths[0] != "2026-08" {
+		t.Fatalf("quota month = %v, want 2026-08", advanceRepo.zeroedMonths)
 	}
 }
 

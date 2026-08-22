@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
   // Projects
   projects: {
     base: '/projects',
+    checkInConfigurable: '/projects/checkin-configurable',
     summary: '/projects/summary',
     partnerSummary: '/projects/partner-summary',
     byId: (id: number) => `/projects/${id}`,

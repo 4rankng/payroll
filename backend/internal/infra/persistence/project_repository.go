@@ -214,8 +214,18 @@ func (r *ProjectRepository) applyFilters(query *gorm.DB, filters domain.ProjectF
 
 	// Apply creator filter only if not using AccessibleBy filter
 	// (AccessibleBy will handle the creator check as part of its logic)
-	if filters.CreatedBy != nil && filters.AccessibleBy == nil {
+	if filters.CreatedBy != nil && filters.AccessibleBy == nil && filters.ModifiableBy == nil {
 		query = r.filterBuilder.ApplyCreator(query, &filters)
+	}
+
+	if filters.ModifiableBy != nil {
+		query = query.Where(`
+			projects.created_by = ? OR EXISTS (
+				SELECT 1 FROM project_users
+				WHERE project_users.project_id = projects.id
+					AND project_users.user_id = ?
+					AND project_users.deleted_at IS NULL
+			)`, *filters.ModifiableBy, *filters.ModifiableBy)
 	}
 
 	// Filter for accessible projects (owned, shared, or with assigned employees)

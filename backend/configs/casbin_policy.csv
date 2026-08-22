@@ -116,6 +116,13 @@ p, adv_partner, /api/v1/advance-payments/import-employee-list, POST, allow
 p, adv_partner, /api/v1/employees, GET, allow
 p, adv_partner, /api/v1/employees/*, GET, allow
 
+# Check-in configuration workspace. Project-specific middleware still enforces
+# per-project read/modify access for every route carrying a project id.
+p, adv_partner, /api/v1/projects/checkin-configurable, GET, allow
+p, adv_partner, /api/v1/projects/:id/employees/checkin-configuration, GET, allow
+p, adv_partner, /api/v1/projects/:id/employees/:employeeId/checkin-enabled, PATCH, allow
+p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-inactive, PATCH, allow
+
 # Users - read only (broad PUT removed: adv_partner edits route through the
 # scoped /adv-partner/users/* handler, which enforces project-scope ownership).
 p, adv_partner, /api/v1/users, GET, allow

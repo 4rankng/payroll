@@ -2,7 +2,17 @@ package dto
 
 import (
 	"time"
+
+	"api-server/internal/domain"
 )
+
+type CheckInConfigurableProjectResponse struct {
+	ID         uint                 `json:"id"`
+	Name       string               `json:"name"`
+	Code       string               `json:"code"`
+	Status     domain.ProjectStatus `json:"status"`
+	IsFlexible bool                 `json:"is_flexible"`
+}
 
 // CreateProjectEmployeeRequest represents the request to assign an employee to a project
 type CreateProjectEmployeeRequest struct {
@@ -171,4 +181,43 @@ type ToggleCheckInEnabledRequest struct {
 type BulkToggleCheckInEnabledRequest struct {
 	EmployeeIDs    []uint `json:"employee_ids" binding:"required,min=1"`
 	CheckInEnabled bool   `json:"check_in_enabled"`
+}
+
+type CheckInConfigurationEmployeeResponse struct {
+	AssignmentID         uint       `json:"assignment_id"`
+	ProjectID            uint       `json:"project_id"`
+	EmployeeID           uint       `json:"employee_id"`
+	EmployeeName         string     `json:"employee_name"`
+	EmployeeCCCD         string     `json:"employee_cccd"`
+	EmployeeCode         string     `json:"employee_code"`
+	CheckInEnabled       bool       `json:"check_in_enabled"`
+	PendingCheckInEnable bool       `json:"pending_check_in_enable"`
+	CheckInEffectiveFrom *time.Time `json:"check_in_effective_from,omitempty"`
+	AttendanceCount      int64      `json:"attendance_count"`
+	LastCheckInAt        *string    `json:"last_check_in_at,omitempty"`
+}
+
+type CheckInConfigurationSummaryResponse struct {
+	Enabled  int64 `json:"enabled"`
+	Active   int64 `json:"active"`
+	Inactive int64 `json:"inactive"`
+	Pending  int64 `json:"pending"`
+}
+
+type CheckInConfigurationPaginationResponse struct {
+	Page         int `json:"page"`
+	PageSize     int `json:"pageSize"`
+	TotalPages   int `json:"totalPages"`
+	TotalRecords int `json:"totalRecords"`
+}
+
+type CheckInConfigurationResponse struct {
+	Employees  []CheckInConfigurationEmployeeResponse `json:"employees"`
+	Summary    CheckInConfigurationSummaryResponse    `json:"summary"`
+	Month      string                                 `json:"month"`
+	Pagination CheckInConfigurationPaginationResponse `json:"pagination"`
+}
+
+type DisableInactiveCheckInEmployeesResponse struct {
+	DisabledCount int `json:"disabled_count"`
 }

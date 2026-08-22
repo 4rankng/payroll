@@ -42,6 +42,14 @@ export interface ProjectInfo {
   status: "draft" | "active" | "completed" | "cancelled";
 }
 
+export interface CheckInConfigurableProject {
+  id: number;
+  name: string;
+  code: string;
+  status: "active";
+  is_flexible: boolean;
+}
+
 export interface TimesheetSummary {
   assignment_id: number;
   employee_id: number;
@@ -103,6 +111,50 @@ export interface ProjectEmployeeListParams {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+}
+
+export type CheckInConfigurationStatus = "all" | "enabled" | "active" | "inactive" | "pending";
+
+export interface CheckInConfigurationParams {
+  status: CheckInConfigurationStatus;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CheckInConfigurationEmployee {
+  assignment_id: number;
+  project_id: number;
+  employee_id: number;
+  employee_name: string;
+  employee_cccd: string;
+  employee_code: string;
+  check_in_enabled: boolean;
+  pending_check_in_enable: boolean;
+  check_in_effective_from?: string | null;
+  attendance_count: number;
+  last_check_in_at?: string | null;
+}
+
+export interface CheckInConfigurationResponse {
+  employees: CheckInConfigurationEmployee[];
+  summary: {
+    enabled: number;
+    active: number;
+    inactive: number;
+    pending: number;
+  };
+  month: string;
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalRecords: number;
+  };
+}
+
+export interface DisableInactiveCheckInEmployeesResponse {
+  disabled_count: number;
 }
 
 export interface EmployeeProjectListParams {

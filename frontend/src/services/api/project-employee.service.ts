@@ -14,7 +14,11 @@ import type {
   ChangePaymentScheduleRequest,
   ChangePaymentScheduleResponse,
   CancelScheduleChangeResponse,
-  PendingScheduleChangesResponse
+  PendingScheduleChangesResponse,
+  CheckInConfigurationParams,
+  CheckInConfigurationResponse,
+  DisableInactiveCheckInEmployeesResponse,
+  CheckInConfigurableProject,
 } from '@/types/api/project-employee.types';
 
 /**
@@ -25,6 +29,13 @@ export class ProjectEmployeeService {
   private readonly baseUrl = '/project-employees';
 
   // ========== PROJECT-BASED OPERATIONS ==========
+
+  async getCheckInConfigurableProjects(): Promise<CheckInConfigurableProject[]> {
+    const response = await apiClient.get<CheckInConfigurableProject[]>(
+      API_ENDPOINTS.projects.checkInConfigurable,
+    );
+    return response.data ?? [];
+  }
 
   /**
    * Get all employee assignments for a specific project
@@ -318,6 +329,27 @@ export class ProjectEmployeeService {
     const response = await apiClient.patch<{ status: "success"; message: string }>(
       `/projects/${projectId}/employees/checkin-enabled/bulk`,
       { employee_ids: employeeIds, check_in_enabled: enabled }
+    );
+    return response.data!;
+  }
+
+  async getCheckInConfiguration(
+    projectId: number,
+    params: CheckInConfigurationParams,
+  ): Promise<CheckInConfigurationResponse> {
+    const queryString = buildQueryString(params);
+    const response = await apiClient.get<CheckInConfigurationResponse>(
+      `/projects/${projectId}/employees/checkin-configuration${queryString}`,
+    );
+    return response.data!;
+  }
+
+  async disableInactiveCheckInEmployees(
+    projectId: number,
+  ): Promise<DisableInactiveCheckInEmployeesResponse> {
+    const response = await apiClient.patch<DisableInactiveCheckInEmployeesResponse>(
+      `/projects/${projectId}/employees/checkin-enabled/disable-inactive`,
+      {},
     );
     return response.data!;
   }

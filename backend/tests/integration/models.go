@@ -74,6 +74,29 @@ type ListProjectsResponse struct {
 	Total    int64             `json:"total"`
 }
 
+type CheckInConfigurationEmployeeResponse struct {
+	AssignmentID         uint   `json:"assignment_id"`
+	EmployeeID           uint   `json:"employee_id"`
+	EmployeeName         string `json:"employee_name"`
+	CheckInEnabled       bool   `json:"check_in_enabled"`
+	PendingCheckInEnable bool   `json:"pending_check_in_enable"`
+	AttendanceCount      int64  `json:"attendance_count"`
+}
+
+type CheckInConfigurationSummaryResponse struct {
+	Enabled  int64 `json:"enabled"`
+	Active   int64 `json:"active"`
+	Inactive int64 `json:"inactive"`
+	Pending  int64 `json:"pending"`
+}
+
+type CheckInConfigurationResponse struct {
+	Employees  []CheckInConfigurationEmployeeResponse `json:"employees"`
+	Summary    CheckInConfigurationSummaryResponse    `json:"summary"`
+	Month      string                                 `json:"month"`
+	Pagination Pagination                             `json:"pagination"`
+}
+
 // --- Employees ---
 
 type EmployeeResponse struct {

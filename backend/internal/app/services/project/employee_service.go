@@ -1,18 +1,19 @@
 package project
 
 import (
-	"api-server/internal/constants"
-	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
 	"time"
 
 	"api-server/internal/app/services/infrastructure"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	infraports "api-server/internal/domain/ports/infrastructure"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/clock"
 	auditctx "api-server/internal/pkg/context"
+
 	"gorm.io/gorm"
 )
 
@@ -781,6 +782,7 @@ func (s *ProjectEmployeeService) ApplyPendingCheckInEnables(ctx context.Context)
 		return nil
 	})
 }
+
 // This method can be called by a background job or manually
 
 func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context) error {
@@ -1000,6 +1002,98 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 		}
 		return nil
 	})
+}
+
+func currentCheckInMonthWindow() (time.Time, time.Time, time.Time) {
+	now := clock.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	asOfDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	return monthStart, monthEnd, asOfDate
+}
+
+func (s *ProjectEmployeeService) GetCheckInConfiguration(
+	ctx context.Context,
+	projectID uint,
+	status domain.CheckInConfigurationStatus,
+	search string,
+	page int,
+	pageSize int,
+) (*domain.CheckInConfigurationResult, time.Time, time.Time, error) {
+	monthStart, monthEnd, asOfDate := currentCheckInMonthWindow()
+	result, err := s.projectEmployeeRepo.GetCheckInConfiguration(ctx, domain.CheckInConfigurationQuery{
+		ProjectID:  projectID,
+		MonthStart: monthStart,
+		MonthEnd:   monthEnd,
+		AsOfDate:   asOfDate,
+		Status:     status,
+		Search:     search,
+		Limit:      pageSize,
+		Offset:     (page - 1) * pageSize,
+	})
+	return result, monthStart, monthEnd, err
+}
+
+func (s *ProjectEmployeeService) DisableInactiveCheckInEmployees(
+	ctx context.Context,
+	projectID uint,
+	updatedBy uint,
+) (int, error) {
+	disabledCount := 0
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		monthStart, monthEnd, asOfDate := currentCheckInMonthWindow()
+		assignments, err := s.projectEmployeeRepo.GetCurrentAssignmentsForProjectForUpdate(txCtx, projectID, asOfDate)
+		if err != nil {
+			return err
+		}
+		result, err := s.projectEmployeeRepo.GetCheckInConfiguration(txCtx, domain.CheckInConfigurationQuery{
+			ProjectID:  projectID,
+			MonthStart: monthStart,
+			MonthEnd:   monthEnd,
+			AsOfDate:   asOfDate,
+			Status:     domain.CheckInConfigurationStatusInactive,
+		})
+		if err != nil {
+			return err
+		}
+		if len(result.Employees) == 0 {
+			return nil
+		}
+
+		inactiveEmployeeIDs := make(map[uint]struct{}, len(result.Employees))
+		employeeIDs := make([]uint, 0, len(result.Employees))
+		for _, employee := range result.Employees {
+			if _, exists := inactiveEmployeeIDs[employee.EmployeeID]; exists {
+				continue
+			}
+			inactiveEmployeeIDs[employee.EmployeeID] = struct{}{}
+			employeeIDs = append(employeeIDs, employee.EmployeeID)
+		}
+
+		for _, assignment := range assignments {
+			if _, shouldDisable := inactiveEmployeeIDs[assignment.EmployeeID]; !shouldDisable {
+				continue
+			}
+			assignment.CheckInEnabled = false
+			assignment.PendingCheckInEnabled = nil
+			assignment.CheckInEffectiveFrom = nil
+			if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
+				return err
+			}
+			if s.eventBus != nil {
+				event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
+				if err := s.eventBus.Publish(txCtx, event); err != nil {
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (disable inactive)", "error", err)
+				}
+			}
+		}
+		if err := s.advancePaymentRepo.BatchZeroOutQuota(txCtx, projectID, employeeIDs, clock.Now().Format("2006-01")); err != nil {
+			return err
+		}
+		disabledCount = len(employeeIDs)
+		return nil
+	})
+	return disabledCount, err
 }
 
 // GetEmployeesByPaymentSchedule retrieves all employees with a specific payment schedule

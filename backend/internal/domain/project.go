@@ -112,6 +112,7 @@ type ProjectFilters struct {
 	ProjectStatus           []ProjectStatus
 	CreatedBy               *uint
 	AccessibleBy            *uint // New field for filtering accessible projects (owned or shared)
+	ModifiableBy            *uint // creator or explicit project_users access; excludes employee-only read paths
 	SkipAccessibilityFilter bool  // Skip accessibility filter for separate query approach
 	FromDate                *time.Time
 	ToDate                  *time.Time

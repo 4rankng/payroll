@@ -25,6 +25,7 @@ const TransactionsPage = lazy(() => import("./pages/admin/TransactionsPage"));
 const LoansPage = lazy(() => import("./pages/admin/LoansPage"));
 const AdvancePaymentsPage = lazy(() => import("./pages/admin/AdvancePaymentsPage"));
 const AdvPartnerAdvancePaymentsPage = lazy(() => import("./pages/admin/AdvancePaymentsPage/AdvPartnerView"));
+const CheckInSettingsPage = lazy(() => import("./components/advance-payment/CheckInSettingsPage"));
 const SettingsPage = lazy(() => import("./pages/admin/SettingsPage"));
 const WalletPage = lazy(() => import("./pages/admin/WalletPage"));
 const EmailPage = lazy(() => import("./pages/admin/EmailPage"));
@@ -265,6 +266,7 @@ const AppContent = () => {
           <Route path="loans" element={<ResponsivePage desktopComponent={LoansPage} mobileComponent={LoansPageMobile} />} />
           <Route path="loans/lenders" element={<LendersPageMobile />} />
           <Route path="advance-payments" element={<ResponsivePage desktopComponent={AdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />} />
+          <Route path="advance-payments/check-in-settings" element={<CheckInSettingsPage />} />
           <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
           <Route path="advance-payment-fees" element={<Navigate to="/admin/settings?tab=fee-config" replace />} />
           <Route path="approvals" element={<ResponsivePage desktopComponent={TimesheetPage} mobileComponent={TimesheetPageMobile} />} />
@@ -301,6 +303,7 @@ const AppContent = () => {
             path="advance-payments"
             element={<ResponsivePage desktopComponent={AdvPartnerAdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />}
           />
+          <Route path="advance-payments/check-in-settings" element={<CheckInSettingsPage />} />
           <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
           <Route
             path="users"

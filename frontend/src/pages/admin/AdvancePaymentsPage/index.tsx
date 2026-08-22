@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -34,7 +35,6 @@ import { ActionBar, ButtonGroup, ImportAction, ExportListAction, ExportBatchActi
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
-import { CheckInBulkDialog } from "@/components/advance-payment/CheckInBulkDialog";
 import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
 import { EmployeeAdvancePaymentDetailSheet } from "@/components/advance-payment/EmployeeAdvancePaymentDetailSheet";
 import {
@@ -79,13 +79,13 @@ import type {
 import type { ActiveTab } from "./types";
 
 const AdvancePaymentsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isUploadResultDialogOpen, setIsUploadResultDialogOpen] = useState(false);
   const [isEmployeeListUploadDialogOpen, setIsEmployeeListUploadDialogOpen] =
     useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     useState<FlexPayEmployeeListItem | null>(null);
   const [selectedAttendance, setSelectedAttendance] =
@@ -401,7 +401,7 @@ const AdvancePaymentsPage = () => {
                   <UploadResultAction onClick={() => setIsUploadResultDialogOpen(true)} />
                 </ButtonGroup>
               )}
-              <CheckInAction onClick={() => setIsCheckInDialogOpen(true)} />
+              <CheckInAction onClick={() => navigate("/admin/advance-payments/check-in-settings")} />
               {!isAdvPartner && (
                 <HistoryAction onClick={() => setIsHistorySheetOpen(true)} />
               )}
@@ -598,11 +598,6 @@ const AdvancePaymentsPage = () => {
         <EmployeeAdvancePaymentDetailSheet
           employee={selectedEmployee}
           onClose={handleEmployeeClose}
-        />
-
-        <CheckInBulkDialog
-          open={isCheckInDialogOpen}
-          onOpenChange={setIsCheckInDialogOpen}
         />
 
         <AlertDialog

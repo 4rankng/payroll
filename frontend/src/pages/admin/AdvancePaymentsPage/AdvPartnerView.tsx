@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -11,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Wallet, Users, Calendar, ChevronLeft, ChevronRight, Upload, Download, FileText, History } from "lucide-react";
+import { Wallet, Users, Calendar, ChevronLeft, ChevronRight, Download, FileText, History, ScanFace } from "lucide-react";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { SearchBar } from "@/components/shared/SearchBar";
 import {
@@ -177,6 +178,7 @@ function MonthNavigator({
 /* ------------------------------------------------------------------ */
 
 const AdvPartnerAdvancePaymentsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
   const [isEmployeeListUploadDialogOpen, setIsEmployeeListUploadDialogOpen] =
@@ -259,6 +261,14 @@ const AdvPartnerAdvancePaymentsPage = () => {
 
         {/* Action row */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Button
+            size="sm"
+            onClick={() => navigate("/adv-partner/advance-payments/check-in-settings")}
+            className="h-8 gap-1.5 rounded-lg px-3 text-[13px] font-medium"
+          >
+            <ScanFace className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Cấu hình điểm danh
+          </Button>
           <Button
             size="sm"
             onClick={() => {

@@ -9,7 +9,9 @@ import {
   projectAssignmentStatsKey,
   employeeAssignmentStatsKey,
   pendingScheduleChangesKey,
-  shouldInvalidateForProjectEmployeeChange
+  shouldInvalidateForProjectEmployeeChange,
+  checkInConfigurationKey,
+  checkInConfigurableProjectsKey,
 } from '@/lib/queryKeys';
 import type {
   ProjectEmployeeListParams,
@@ -22,10 +24,19 @@ import type {
   ChangePaymentScheduleRequest,
   ChangePaymentScheduleResponse,
   CancelScheduleChangeResponse,
-  PendingScheduleChangesResponse
+  PendingScheduleChangesResponse,
+  CheckInConfigurationParams,
 } from '@/types/api/project-employee.types';
 
 // ========== PROJECT EMPLOYEE QUERIES ==========
+
+export function useCheckInConfigurableProjects() {
+  return useQuery({
+    queryKey: checkInConfigurableProjectsKey(),
+    queryFn: () => projectEmployeeService.getCheckInConfigurableProjects(),
+    retry: false,
+  });
+}
 
 export function useProjectEmployees(
   projectId: number,
@@ -46,6 +57,19 @@ export function useActiveProjectEmployees(projectId: number, enabled = true) {
     { status: 'current', sortBy: 'start_date', sortOrder: 'desc' },
     enabled
   );
+}
+
+export function useCheckInConfiguration(
+  projectId: number,
+  params: CheckInConfigurationParams,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: checkInConfigurationKey(projectId, params),
+    queryFn: () => projectEmployeeService.getCheckInConfiguration(projectId, params),
+    enabled,
+    placeholderData: undefined,
+  });
 }
 
 export function useEmployeeProjects(
@@ -524,6 +548,29 @@ export function useBulkToggleCheckInEnabled() {
         variables.enabled
           ? `Đã bật điểm danh cho ${variables.employeeIds.length} nhân viên`
           : `Đã tắt điểm danh cho ${variables.employeeIds.length} nhân viên`
+      );
+    },
+  });
+}
+
+export function useDisableInactiveCheckInEmployees() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId }: { projectId: number }) =>
+      projectEmployeeService.disableInactiveCheckInEmployees(projectId),
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          shouldInvalidateForProjectEmployeeChange(
+            query.queryKey,
+            variables.projectId,
+          ),
+      });
+      showSuccessNotification(
+        result.disabled_count > 0
+          ? `Đã tắt điểm danh cho ${result.disabled_count} nhân viên Inactive`
+          : "Không còn nhân viên Inactive cần tắt",
       );
     },
   });

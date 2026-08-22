@@ -36,6 +36,11 @@ func (m *MockProjectEmployeeRepository) GetActiveAssignmentByProjectAndEmployee(
 	return args.Get(0).(*domain.ProjectEmployee), args.Error(1)
 }
 
+func (m *MockProjectEmployeeRepository) GetCurrentAssignmentsForProjectForUpdate(ctx context.Context, projectID uint, asOfDate time.Time) ([]*domain.ProjectEmployee, error) {
+	args := m.Called(ctx, projectID, asOfDate)
+	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmployees(ctx context.Context, projectIDs []uint, employeeIDs []uint) ([]*domain.ProjectEmployee, error) {
 	args := m.Called(ctx, projectIDs, employeeIDs)
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
@@ -164,6 +169,12 @@ func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingScheduleChanges(c
 func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
 	args := m.Called(ctx, effectiveDate)
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
+}
+
+func (m *MockProjectEmployeeRepository) GetCheckInConfiguration(ctx context.Context, query domain.CheckInConfigurationQuery) (*domain.CheckInConfigurationResult, error) {
+	args := m.Called(ctx, query)
+	result, _ := args.Get(0).(*domain.CheckInConfigurationResult)
+	return result, args.Error(1)
 }
 
 func (m *MockProjectEmployeeRepository) ApplyScheduleChanges(ctx context.Context, employeeIDs []uint) error {
