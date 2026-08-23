@@ -330,7 +330,7 @@ func (h *PayrateHandler) applyLinkedTimesheetConstraints(
 
 // applyPaidFloorConstraints enforces the single immutable boundary shared by
 // create and update: a configuration's start date must fall after the
-// project's most recent paid timesheet. Rates are always editable in place —
+// project's most recent salary payout. Rates are always editable in place —
 // mutable (unpaid and unapproved) rows are recalculated on save.
 func (h *PayrateHandler) applyCreateConstraints(
 	c *gin.Context,
@@ -352,7 +352,7 @@ func (h *PayrateHandler) applyCreateConstraints(
 	earliestDateStr := earliestDate.Format(timeutil.DateFormat)
 
 	fromField.Status = FieldError
-	fromField.Message = fmt.Sprintf("Ngày %s có trước bảng công đã thanh toán gần nhất của dự án.", submittedFrom)
+	fromField.Message = fmt.Sprintf("Ngày %s có trước ngày trả lương gần nhất của dự án.", submittedFrom)
 	fromField.Hint = fmt.Sprintf("Chọn ngày từ %s trở đi để chỉ cập nhật các bảng công chưa thanh toán và chưa duyệt.", earliestDateStr)
 	fromField.MinValue = earliestDateStr
 	fromField.SuggestedValue = earliestDateStr

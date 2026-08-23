@@ -32,7 +32,7 @@ export interface PayRate {
   rates: PayrateStructure;
   fromDate: string;
   toDate: string | null;
-  /** Day after the project's most recent paid timesheet — earliest allowed start. */
+  /** Day after the project's most recent salary payout — earliest allowed start. */
   earliest_effective_from?: string;
   /** True when the start date has no legal move (paid floor below, linked timesheets above) — render read-only. */
   from_date_locked?: boolean;

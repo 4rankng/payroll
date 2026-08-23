@@ -29,6 +29,7 @@ func TestPayrateTemporalServiceUsesPaidCutoffAndRecalculatesOnlyMutableTimesheet
 		newPayrateTemporalTimesheet(projectID, paidDate, domain.TimesheetStatusApproved, domain.PaymentStatusPaid),
 		newPayrateTemporalTimesheet(projectID, fromDate, domain.TimesheetStatusApproved, domain.PaymentStatusPending),
 		newPayrateTemporalTimesheet(projectID, fromDate.AddDate(0, 0, 1), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending),
+		newPayrateTemporalTimesheet(projectID, fromDate.AddDate(0, 0, 3), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending),
 		newPayrateTemporalTimesheet(projectID, fromDate.AddDate(0, 0, 2), domain.TimesheetStatusRejected, domain.PaymentStatusFailed),
 		newPayrateTemporalTimesheet(projectID, paidDate.AddDate(0, 0, -1), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending),
 	}
@@ -62,7 +63,38 @@ func TestPayrateTemporalServiceUsesPaidCutoffAndRecalculatesOnlyMutableTimesheet
 	assertTimesheetRateUnchanged(t, db, timesheets[1].ID)
 	assertTimesheetRateUpdated(t, db, timesheets[2].ID, payrate.ID)
 	assertTimesheetRateUpdated(t, db, timesheets[3].ID, payrate.ID)
-	assertTimesheetRateUnchanged(t, db, timesheets[4].ID)
+	assertTimesheetRateUpdated(t, db, timesheets[4].ID, payrate.ID)
+	assertTimesheetRateUnchanged(t, db, timesheets[5].ID)
+}
+
+func TestPayrateTemporalServiceUsesLatestSalaryPaymentDateForEffectiveDate(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	service := NewPayrateTemporalService(db, nil)
+
+	const projectID uint = 48
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+
+	// The work was recorded on Aug 2, but the salary was paid on Aug 15.
+	// The effective date must therefore be after Aug 15, not merely after Aug 2.
+	paid := newPayrateTemporalTimesheet(
+		projectID,
+		time.Date(2026, 8, 2, 0, 0, 0, 0, time.Local),
+		domain.TimesheetStatusApproved,
+		domain.PaymentStatusPaid,
+	)
+	paidAt := time.Date(2026, 8, 15, 10, 30, 0, 0, time.Local)
+	paid.PaidAt = &paidAt
+	seedPayrateTemporalTimesheet(t, db, paid)
+
+	err := db.Transaction(func(tx *gorm.DB) error {
+		return service.validateEffectiveDateTx(ctx, tx, projectID, paidAt)
+	})
+	require.EqualError(t, err, "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày trả lương gần nhất")
+
+	require.NoError(t, db.Transaction(func(tx *gorm.DB) error {
+		return service.validateEffectiveDateTx(ctx, tx, projectID, paidAt.AddDate(0, 0, 1))
+	}))
 }
 
 func TestPayrateTemporalServiceUsesConfiguredTotalForFlexibleProjects(t *testing.T) {
@@ -290,6 +322,7 @@ func newPayrateTemporalTestDB(t *testing.T) *gorm.DB {
 			amount INTEGER NOT NULL,
 			timesheet_status TEXT NOT NULL,
 			payment_status TEXT NOT NULL,
+			paid_at DATETIME,
 			created_by INTEGER NOT NULL,
 			deleted_at DATETIME,
 			updated_at DATETIME
@@ -327,8 +360,8 @@ func seedPayrateTemporalTimesheet(t *testing.T, db *gorm.DB, timesheet *domain.T
 	result := db.Exec(`
 		INSERT INTO timesheets (
 			project_id, employee_id, payrate_id, date, hours_worked, paytype,
-			payrate, amount, timesheet_status, payment_status, created_by
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			payrate, amount, timesheet_status, payment_status, paid_at, created_by
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		timesheet.ProjectID,
 		timesheet.EmployeeID,
@@ -340,6 +373,7 @@ func seedPayrateTemporalTimesheet(t *testing.T, db *gorm.DB, timesheet *domain.T
 		timesheet.Amount,
 		timesheet.Status,
 		timesheet.PaymentStatus,
+		timesheet.PaidAt,
 		timesheet.CreatedBy,
 	)
 	require.NoError(t, result.Error)
