@@ -153,6 +153,20 @@ describe('BankTransferHistoryPageContent', () => {
     expect(disclosure.closest('details')).toHaveClass('xl:rounded-none', 'xl:border-0', 'xl:shadow-none');
   });
 
+  it('marks the expanded record with a distinct tint so it stands out from neighbours', () => {
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const record = container.querySelector('details');
+    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
+    const detailsBody = document.getElementById(
+      disclosure.getAttribute('aria-controls')!,
+    );
+
+    expect(record).toHaveClass('open:bg-emerald-50/60', 'open:border-emerald-300');
+    expect(disclosure).toHaveClass('group-open/record:hover:bg-transparent');
+    expect(detailsBody).toHaveClass('group-open/record:border-emerald-200');
+  });
+
   it('keeps employee identity readable on narrow screens', () => {
     render(<BankTransferHistoryPageContent />);
 

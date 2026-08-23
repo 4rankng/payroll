@@ -189,11 +189,11 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
 
   return (
     <article>
-      <details className="group/record overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-24px_rgba(15,23,42,0.42)] transition-[border-color,background-color] open:border-emerald-200 hover:border-slate-300 xl:rounded-none xl:border-0 xl:shadow-none xl:open:border-0">
+      <details className="group/record overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-24px_rgba(15,23,42,0.42)] transition-[border-color,background-color] hover:border-slate-300 open:border-emerald-300 open:bg-emerald-50/60 xl:rounded-none xl:border-0 xl:shadow-none">
         <summary
           aria-controls={detailsId}
           aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
-          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
+          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
         >
           <div className="col-span-2 flex min-w-0 items-center gap-2.5 pr-12 xl:col-span-1 xl:pr-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-700 xl:h-8 xl:w-8">
@@ -264,7 +264,7 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
           </div>
         </summary>
 
-        <div id={detailsId} className="border-t border-slate-200/80">
+        <div id={detailsId} className="border-t border-slate-200/80 group-open/record:border-emerald-200">
           <TransferReferences item={item} />
         </div>
       </details>
