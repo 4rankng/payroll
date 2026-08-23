@@ -55,7 +55,7 @@ describe('BankTransferHistoryPageContent', () => {
     render(<BankTransferHistoryPageContent />);
 
     expect(screen.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
-    expect(screen.getByText('2 bút toán')).toBeInTheDocument();
+    expect(screen.getByText('2 bút toán ngân hàng')).toBeInTheDocument();
     expect(screen.getByText('FT26198846619959')).not.toBeVisible();
 
     const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
@@ -176,7 +176,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(detailsBody).toHaveClass('group-open/record:border-emerald-300');
     // The expanded panel is its own deeper emerald surface, not a gray slab.
     expect(panel).toHaveClass('bg-emerald-100/45');
-    expect(panel!.firstElementChild).toHaveClass('border-emerald-300/50');
+    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-emerald-200/70');
     expect(panel!.querySelector('[role="list"]')).toHaveClass('xl:divide-emerald-200/70');
     expect(chevron).toHaveClass('group-open/record:text-emerald-600');
   });

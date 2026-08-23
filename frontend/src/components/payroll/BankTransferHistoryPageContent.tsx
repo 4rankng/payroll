@@ -118,19 +118,6 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
 function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
     <div className="bg-emerald-100/45">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300/50 px-3 py-2.5 sm:px-4">
-        <div>
-          <p className="flex items-center gap-2 font-display text-[11px] font-bold text-slate-900">
-            <Landmark className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
-            Chi tiết giao dịch ngân hàng
-          </p>
-          <p className="mt-0.5 text-[10px] text-slate-500">Mã đối soát và thời gian xử lý của từng bút toán</p>
-        </div>
-        <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 font-financial text-[10px] font-bold tabular-nums text-emerald-800">
-          {item.transfers.length} bút toán
-        </span>
-      </div>
-
       <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-emerald-200/70 px-4 py-2 xl:grid">
         <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
         <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
