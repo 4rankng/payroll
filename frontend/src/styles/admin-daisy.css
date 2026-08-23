@@ -289,6 +289,17 @@
     box-shadow: none;
   }
 
+  /* This page's filter row already sits inside the workspace card via its own
+   * bordered wrapper — the shared .admin-filter-bar card treatment on top of
+   * that reads as a card nested inside a card, so flatten it here only. */
+  [data-admin-ui] .admin-payment-history-workspace .admin-filter-bar {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   [data-admin-ui] .admin-filter-bar {
     gap: 0.55rem;
     padding: 0.75rem;
