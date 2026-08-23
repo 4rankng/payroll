@@ -12,14 +12,11 @@ import (
 	"api-server/internal/pkg/retry"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Date utility functions to avoid repetitive conversions
-func toUTCDateOnly(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-}
-
-// toLocalDateOnly mirrors toUTCDateOnly but in time.Local. Under a loc=Local
+// toLocalDateOnly normalizes date-only values in time.Local. Under a loc=Local
 // MySQL DSN the driver converts bound time.Time values to Local before
 // sending, so a UTC-midnight bound shifts +7h on the UTC+7 box and silently
 // misses same-day DATE rows (timesheet dates are stored at local midnight).
@@ -62,7 +59,13 @@ func NewPayrateTemporalService(db *gorm.DB, payrateRepo domain.PayrateRepository
 
 // CreateEffectiveDatedPayrate implements the temporal algorithm for payrates
 func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
+	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
+
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := s.lockProjectTimelineTx(ctx, tx, payrate.ProjectID); err != nil {
+			return err
+		}
+
 		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
 			return err
 		}
@@ -97,8 +100,7 @@ func (s *PayrateTemporalService) GetActivePayrateForProject(ctx context.Context,
 
 // GetActivePayrateOnDate retrieves the active payrate for a project on a specific date
 func (s *PayrateTemporalService) GetActivePayrateOnDate(ctx context.Context, projectID uint, date time.Time) (*domain.Payrate, error) {
-	// Use UTC date-only comparison to avoid timezone issues
-	date = toUTCDateOnly(date)
+	date = toLocalDateOnly(date)
 
 	var payrate domain.Payrate
 	err := s.dbHelper.ExecuteWithRetry(ctx, func(db *gorm.DB) error {
@@ -120,10 +122,13 @@ func (s *PayrateTemporalService) GetActivePayrateOnDate(ctx context.Context, pro
 
 // EndActivePayrateForProject manually ends the currently active payrate for a project
 func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context, projectID uint, endDate time.Time) error {
-	// Use UTC date-only comparison to avoid timezone issues
-	endDate = toUTCDateOnly(endDate)
+	endDate = toLocalDateOnly(endDate)
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := s.lockProjectTimelineTx(ctx, tx, projectID); err != nil {
+			return err
+		}
+
 		activePayrates, err := s.payrateRepo.FindActiveByProject(ctx, tx, projectID)
 		if err != nil {
 			return fmt.Errorf("failed to find active payrate: %w", err)
@@ -154,8 +159,13 @@ func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context,
 //     payrate with the latest from_date on or before that date.
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	logger := observability.GetLogger()
+	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
 
 	return s.dbHelper.ExecuteInTransactionWithRetry(ctx, func(tx *gorm.DB) error {
+		if err := s.lockProjectTimelineTx(ctx, tx, payrate.ProjectID); err != nil {
+			return err
+		}
+
 		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
 			return err
 		}
@@ -165,6 +175,10 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 		}
 
 		if err := s.ensureEarliestPaidTimesheetCoveredTx(ctx, tx, payrate); err != nil {
+			return err
+		}
+
+		if err := s.synchronizePredecessorEndDateTx(ctx, tx, payrate); err != nil {
 			return err
 		}
 
@@ -179,6 +193,43 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 }
 
 // Private helper methods
+
+// lockProjectTimelineTx serializes all payrate timeline changes for one project.
+// Locking the project row works even when the project has no payrates yet, unlike
+// locking only existing payrate rows.
+func (s *PayrateTemporalService) lockProjectTimelineTx(ctx context.Context, tx *gorm.DB, projectID uint) error {
+	var project domain.Project
+	if err := tx.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Select("id").
+		First(&project, projectID).Error; err != nil {
+		return fmt.Errorf("failed to lock payrate timeline for project %d: %w", projectID, err)
+	}
+	return nil
+}
+
+// synchronizePredecessorEndDateTx preserves a non-overlapping visible timeline
+// whenever the most recent configuration is moved. Rate resolution already uses
+// the latest from_date; this keeps to_date accurate for history and reporting.
+func (s *PayrateTemporalService) synchronizePredecessorEndDateTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
+	var predecessor domain.Payrate
+	err := tx.WithContext(ctx).
+		Where("project_id = ? AND id <> ? AND from_date < ?", payrate.ProjectID, payrate.ID, toLocalDateOnly(payrate.FromDate)).
+		Order("from_date DESC, id DESC").
+		First(&predecessor).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to find preceding payrate: %w", err))
+	}
+
+	endDate := toLocalDateOnly(payrate.FromDate).AddDate(0, 0, -1)
+	if err := tx.WithContext(ctx).Model(&predecessor).Update("to_date", endDate).Error; err != nil {
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to synchronize preceding payrate: %w", err))
+	}
+	return nil
+}
 
 // ensureLatestConfigTx enforces the single-config-per-date model: the payrate
 // being updated must remain the project's most recent configuration, so no
@@ -195,7 +246,7 @@ func (s *PayrateTemporalService) ensureLatestConfigTx(ctx context.Context, tx *g
 		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check sibling payrates: %w", err))
 	}
 	if count > 0 {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
+		return domain.NewValidationError(constants.MsgCannotUpdatePayrateConflictingConfigVN)
 	}
 	return nil
 }
@@ -220,7 +271,7 @@ func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx contex
 		return nil
 	}
 	if toLocalDateOnly(payrate.FromDate).After(*earliest.MinDate) {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
+		return domain.NewValidationError(constants.MsgCannotUpdatePayratePastLinkedTimesheetVN)
 	}
 	return nil
 }
@@ -350,6 +401,7 @@ func (s *PayrateTemporalService) recalculateMutableTimesheets(ctx context.Contex
 // manageActivePayrates validates and manages existing active payrates using repository
 func (s *PayrateTemporalService) manageActivePayrates(ctx context.Context, tx *gorm.DB, projectID uint, newFromDate time.Time) error {
 	logger := observability.GetLogger()
+	newFromDate = toLocalDateOnly(newFromDate)
 
 	// Get existing active payrates using repository
 	activePayrates, err := s.payrateRepo.FindActiveByProject(ctx, tx, projectID)
@@ -364,16 +416,17 @@ func (s *PayrateTemporalService) manageActivePayrates(ctx context.Context, tx *g
 
 	// Check for duplicate dates
 	for _, p := range activePayrates {
-		if newFromDate.Equal(p.FromDate) {
+		if newFromDate.Equal(toLocalDateOnly(p.FromDate)) {
 			return domain.NewValidationError(fmt.Sprintf(constants.MsgPayrateAlreadyExistsForDateVN, formatDateString(p.FromDate)))
 		}
 	}
 
 	// Determine if new payrate is earlier or later than existing ones
-	earliestExisting := activePayrates[0].FromDate
+	earliestExisting := toLocalDateOnly(activePayrates[0].FromDate)
 	for _, p := range activePayrates {
-		if p.FromDate.Before(earliestExisting) {
-			earliestExisting = p.FromDate
+		fromDate := toLocalDateOnly(p.FromDate)
+		if fromDate.Before(earliestExisting) {
+			earliestExisting = fromDate
 		}
 	}
 

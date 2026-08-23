@@ -90,11 +90,30 @@ func TestPayrateTemporalServiceUsesLatestPaidTimesheetWorkDateForEffectiveDate(t
 	err := db.Transaction(func(tx *gorm.DB) error {
 		return service.validateEffectiveDateTx(ctx, tx, projectID, paid.Date)
 	})
-	require.EqualError(t, err, "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày trả lương gần nhất")
+	require.EqualError(t, err, "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày chấm công đã trả lương gần nhất")
 
 	require.NoError(t, db.Transaction(func(tx *gorm.DB) error {
 		return service.validateEffectiveDateTx(ctx, tx, projectID, paid.Date.AddDate(0, 0, 1))
 	}))
+}
+
+func TestPayrateTemporalServiceRejectsDuplicateCalendarDateAcrossTimezones(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+
+	const projectID uint = 49
+	storedDate := time.Date(2026, 8, 22, 0, 0, 0, 0, time.Local)
+	requestDate := time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC)
+	repository := &payrateTemporalRepositoryStub{
+		activePayrates: []*domain.Payrate{{ProjectID: projectID, FromDate: storedDate}},
+	}
+	service := NewPayrateTemporalService(db, repository)
+
+	err := db.Transaction(func(tx *gorm.DB) error {
+		return service.manageActivePayrates(ctx, tx, projectID, requestDate)
+	})
+
+	require.EqualError(t, err, "Đã tồn tại mức lương với ngày hiệu lực 2026-08-22")
 }
 
 func TestPayrateTemporalServiceUsesConfiguredTotalForFlexibleProjects(t *testing.T) {
@@ -201,6 +220,36 @@ func TestPayrateTemporalServiceMovesStartDateEarlierAndRecalculatesMutableTimesh
 	require.True(t, persisted.FromDate.Equal(newStart))
 }
 
+func TestPayrateTemporalServiceMovingLatestRateSynchronizesPredecessorEndDate(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	service := NewPayrateTemporalService(db, nil)
+
+	const projectID uint = 50
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+
+	previousEnd := time.Date(2026, 8, 21, 0, 0, 0, 0, time.Local)
+	previous := &domain.Payrate{
+		ID: 13, ProjectID: projectID,
+		FromDate: time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		ToDate:   &previousEnd,
+	}
+	target := &domain.Payrate{
+		ID: 14, ProjectID: projectID,
+		FromDate: time.Date(2026, 8, 22, 0, 0, 0, 0, time.Local),
+	}
+	seedPayrateTemporalPayrate(t, db, previous)
+	seedPayrateTemporalPayrate(t, db, target)
+
+	target.FromDate = time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local)
+	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
+
+	var persistedPrevious domain.Payrate
+	require.NoError(t, db.First(&persistedPrevious, previous.ID).Error)
+	require.NotNil(t, persistedPrevious.ToDate)
+	require.Equal(t, "2026-08-14", persistedPrevious.ToDate.Format("2006-01-02"))
+}
+
 func TestPayrateTemporalServiceRejectsStartDateOnOrBeforeLatestPaidTimesheet(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
@@ -271,10 +320,15 @@ func seedPayrateTemporalPayrate(t *testing.T, db *gorm.DB, payrate *domain.Payra
 
 type payrateTemporalRepositoryStub struct {
 	domain.PayrateRepository
+	activePayrates []*domain.Payrate
 }
 
 func (s *payrateTemporalRepositoryStub) FindActiveByProject(context.Context, any, uint) ([]*domain.Payrate, error) {
-	return nil, nil
+	return s.activePayrates, nil
+}
+
+func (s *payrateTemporalRepositoryStub) CloseActiveByProject(context.Context, any, uint, time.Time) error {
+	return nil
 }
 
 func (s *payrateTemporalRepositoryStub) CreateWithTx(_ context.Context, _ any, payrate *domain.Payrate) error {

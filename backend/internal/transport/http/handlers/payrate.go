@@ -148,7 +148,7 @@ func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 	}
 
 	// Parse from date string to time.Time for database
-	fromDate, err := time.Parse("2006-01-02", req.EffectiveFrom)
+	fromDate, err := time.ParseInLocation("2006-01-02", req.EffectiveFrom, time.Local)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidEffectiveFromFormatVN)
 		return
@@ -157,7 +157,7 @@ func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 	// Parse to date if provided
 	var toDate *time.Time
 	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
-		parsedToDate, err := time.Parse("2006-01-02", *req.EffectiveTo)
+		parsedToDate, err := time.ParseInLocation("2006-01-02", *req.EffectiveTo, time.Local)
 		if err != nil {
 			response.BadRequest(c, constants.MsgInvalidToDateFormatVN)
 			return
@@ -477,7 +477,7 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 		"payrate_id", uint(id))
 
 	// Parse effective from date string to time.Time for database
-	fromDate, err := time.Parse("2006-01-02", req.EffectiveFrom)
+	fromDate, err := time.ParseInLocation("2006-01-02", req.EffectiveFrom, time.Local)
 	if err != nil {
 		logger.Error("Invalid effective_from date format",
 			"payrate_id", uint(id),
@@ -490,7 +490,7 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 	// Parse effective to date if provided
 	var toDate *time.Time
 	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
-		parsedToDate, err := time.Parse("2006-01-02", *req.EffectiveTo)
+		parsedToDate, err := time.ParseInLocation("2006-01-02", *req.EffectiveTo, time.Local)
 		if err != nil {
 			logger.Error("Invalid effective_to date format",
 				"payrate_id", uint(id),
