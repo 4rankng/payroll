@@ -153,7 +153,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(disclosure.closest('details')).toHaveClass('xl:rounded-none', 'xl:border-0', 'xl:shadow-none');
   });
 
-  it('marks the expanded record with a distinct tint so it stands out from neighbours', () => {
+  it('marks the expanded record with a distinctive premium treatment', () => {
     const { container } = render(<BankTransferHistoryPageContent />);
 
     const record = container.querySelector('details');
@@ -161,10 +161,22 @@ describe('BankTransferHistoryPageContent', () => {
     const detailsBody = document.getElementById(
       disclosure.getAttribute('aria-controls')!,
     );
+    const chevron = Array.from(disclosure.querySelectorAll('svg')).find((icon) =>
+      icon.classList.contains('group-open/record:rotate-180'),
+    );
 
-    expect(record).toHaveClass('open:bg-emerald-50/60', 'open:border-emerald-300');
-    expect(disclosure).toHaveClass('group-open/record:hover:bg-transparent');
-    expect(detailsBody).toHaveClass('group-open/record:border-emerald-200');
+    expect(record).toHaveClass(
+      'open:bg-emerald-50/80',
+      'open:border-emerald-300',
+      'open:shadow-[inset_4px_0_0_0_#059669,0_16px_40px_-24px_rgba(5,150,105,0.5)]',
+      'xl:open:shadow-[inset_4px_0_0_0_#059669]',
+    );
+    expect(disclosure).toHaveClass(
+      'group-open/record:bg-emerald-100/40',
+      'group-open/record:hover:bg-transparent',
+    );
+    expect(detailsBody).toHaveClass('group-open/record:border-emerald-300');
+    expect(chevron).toHaveClass('group-open/record:text-emerald-600');
   });
 
   it('keeps employee identity readable on narrow screens', () => {

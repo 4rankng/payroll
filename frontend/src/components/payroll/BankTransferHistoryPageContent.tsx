@@ -189,11 +189,11 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
 
   return (
     <article>
-      <details className="group/record overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-24px_rgba(15,23,42,0.42)] transition-[border-color,background-color] hover:border-slate-300 open:border-emerald-300 open:bg-emerald-50/60 xl:rounded-none xl:border-0 xl:shadow-none">
+      <details className="group/record overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-24px_rgba(15,23,42,0.42)] transition-[border-color,background-color,box-shadow] hover:border-slate-300 open:border-emerald-300 open:bg-emerald-50/80 open:shadow-[inset_4px_0_0_0_#059669,0_16px_40px_-24px_rgba(5,150,105,0.5)] xl:rounded-none xl:border-0 xl:shadow-none xl:open:shadow-[inset_4px_0_0_0_#059669]">
         <summary
           aria-controls={detailsId}
           aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
-          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
+          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 group-open/record:bg-emerald-100/40 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
         >
           <div className="col-span-2 flex min-w-0 items-center gap-2.5 pr-12 xl:col-span-1 xl:pr-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-700 xl:h-8 xl:w-8">
@@ -259,12 +259,12 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
 
           <div className="absolute right-3 top-3 flex items-center justify-end xl:static">
             <span className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition-[color,background-color] group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700 xl:h-8 xl:w-8">
-              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180" aria-hidden="true" />
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180 group-open/record:text-emerald-600" aria-hidden="true" />
             </span>
           </div>
         </summary>
 
-        <div id={detailsId} className="border-t border-slate-200/80 group-open/record:border-emerald-200">
+        <div id={detailsId} className="border-t border-slate-200/80 group-open/record:border-emerald-300">
           <TransferReferences item={item} />
         </div>
       </details>
