@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BankTransferHistoryPageContent } from './BankTransferHistoryPageContent';
@@ -43,6 +43,7 @@ describe('BankTransferHistoryPageContent', () => {
             { transfer_code: 'VFIC7a193042', bank_reference: 'FT26198940380850', amount: 450_000, paid_at: '2026-07-17T20:31:00+07:00' },
           ],
         }],
+        summary: { total_amount: 1_998_000, transfer_count: 2, employee_count: 1 },
         pagination: { page: 1, pageSize: 20, totalPages: 1, totalRecords: 1 },
       },
       isLoading: false,
@@ -54,7 +55,7 @@ describe('BankTransferHistoryPageContent', () => {
   it('shows every bank posting and the employee-cycle total', () => {
     render(<BankTransferHistoryPageContent />);
 
-    expect(screen.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    expect(screen.getAllByText(/1\.998\.000\s*₫/)).toHaveLength(2);
     expect(screen.getByText('2 bút toán ngân hàng')).toBeInTheDocument();
     expect(screen.getByText('FT26198846619959')).not.toBeVisible();
 
@@ -120,24 +121,22 @@ describe('BankTransferHistoryPageContent', () => {
   it('scopes daisyUI card behavior to the admin variant', () => {
     const { container, rerender } = render(<BankTransferHistoryPageContent />);
 
-    expect(container.querySelector('.admin-payment-history-filters')).not.toBeInTheDocument();
     expect(container.querySelector('.admin-payment-history-workspace')).not.toBeInTheDocument();
 
     rerender(<BankTransferHistoryPageContent variant="admin" />);
 
-    expect(container.querySelector('.admin-payment-history-filters')).toHaveClass('ct-card');
     expect(container.querySelector('.admin-payment-history-workspace')).toHaveClass('ct-card');
   });
 
   it('keeps touch-safe mobile filters while using compact desktop controls', () => {
     render(<BankTransferHistoryPageContent />);
 
-    expect(screen.getByRole('button', { name: /Chọn tháng kỳ lương/ })).toHaveClass('h-11', 'sm:h-8');
-    expect(screen.getByRole('combobox')).toHaveClass('h-11', 'sm:h-8');
-    expect(screen.getByRole('textbox')).toHaveClass('h-11', 'sm:h-8');
-    // Icon sits at left-3 + w-4 (ends 28px in); keep 36px padding at every
-    // breakpoint so the placeholder never slides under the search icon.
-    expect(screen.getByRole('textbox')).toHaveClass('pl-9', 'sm:pl-9');
+    expect(screen.getByRole('button', { name: /Chọn tháng kỳ lương/ })).toHaveClass('h-11', 'sm:h-9');
+    expect(screen.getByRole('combobox')).toHaveClass('min-h-11', 'sm:min-h-9');
+    // The shared SearchBar keeps the icon and input as flex siblings (sizing on
+    // the wrapper), so the placeholder can never slide under the search icon.
+    expect(screen.getByRole('textbox').parentElement).toHaveClass('min-h-11', 'sm:min-h-9');
+    expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng');
   });
 
   it('groups completed payments into one compact comparison workspace on wide screens', () => {
@@ -147,13 +146,61 @@ describe('BankTransferHistoryPageContent', () => {
     const records = container.querySelector('[data-slot="payment-history-records"]');
     const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
 
-    expect(workspace).toHaveClass('xl:overflow-hidden', 'xl:border', 'xl:bg-white');
-    expect(records).toHaveClass('xl:divide-y');
-    expect(disclosure).toHaveClass('xl:min-h-[64px]', 'xl:px-4', 'xl:py-2');
-    expect(disclosure.closest('details')).toHaveClass('xl:rounded-none', 'xl:border-0', 'xl:shadow-none');
+    expect(workspace).toHaveClass('overflow-hidden', 'bg-white', 'rounded-xl', 'xl:overflow-visible', 'xl:rounded-none');
+    // Records are flat hairline rows of the workspace module at every
+    // breakpoint — no nested per-record cards.
+    expect(records).toHaveClass('divide-y', 'divide-slate-200/80');
+    expect(records.className).not.toContain('space-y-');
+    expect(records.className).not.toContain('gap-');
+    expect(records.className).not.toContain('p-2');
+    const recordRow = disclosure.closest('details')!;
+    expect(recordRow.className).not.toContain('rounded-');
+    expect(recordRow.className).not.toContain('bg-white');
+    expect(recordRow.className).not.toContain('border-');
+    expect(recordRow.className).not.toContain('shadow-[0_');
+    expect(disclosure).toHaveClass('xl:min-h-[48px]', 'xl:px-4', 'xl:py-1.5');
+    // Sticky column header keeps the dense table scannable mid-scroll.
+    expect(container.querySelector('[data-slot="payment-history-header"]')).toHaveClass(
+      'xl:sticky',
+      'xl:top-0',
+      'xl:z-10',
+      'xl:bg-slate-50/95',
+      'xl:backdrop-blur',
+    );
+    // The identity badge shrinks from a card-style avatar to a table-style dot.
+    expect(disclosure.firstElementChild!.firstElementChild).toHaveClass('xl:h-5', 'xl:w-5');
   });
 
-  it('marks the expanded record with a distinctive premium treatment', () => {
+  it('answers the month total at a glance and paginates without leaving the module', () => {
+    const result = useBankTransferHistories();
+    result.data.pagination = { page: 1, pageSize: 20, totalPages: 11, totalRecords: 207 };
+    useBankTransferHistories.mockReturnValue(result);
+
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const statStrip = within(container.querySelector('.shadow-soft')!);
+    expect(statStrip.getByText('Tổng đã chuyển')).toBeInTheDocument();
+    expect(statStrip.getByText('Bút toán ngân hàng')).toBeInTheDocument();
+    expect(statStrip.getByText('Nhân viên')).toBeInTheDocument();
+    expect(statStrip.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    expect(within(container.querySelector('[data-slot="payment-history-records"]')!).getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+
+    // The toolbar lives inside the workspace module, not on a floating card.
+    const toolbar = container.querySelector('[data-slot="filter-bar"]');
+    expect(toolbar).toBeInTheDocument();
+    expect(toolbar!.closest('[data-slot="payment-history-workspace"]')).toBeInTheDocument();
+
+    // Identical per-row status is noise; the module carries the completed state.
+    expect(screen.queryByText('Đã chuyển')).not.toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Trang 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Trang cuối' })).toBeInTheDocument();
+    expect(screen.getByText('1–20')).toBeInTheDocument();
+    // Desktop counter and the mobile pager both report the totals.
+    expect(screen.getAllByText(/207/)).toHaveLength(2);
+  });
+
+  it('marks the expanded record with a single restrained accent, not a green wash', () => {
     const { container } = render(<BankTransferHistoryPageContent />);
 
     const record = container.querySelector('details');
@@ -166,25 +213,89 @@ describe('BankTransferHistoryPageContent', () => {
     );
     const panel = detailsBody!.firstElementChild;
 
-    expect(record).toHaveClass(
-      'open:bg-emerald-50/80',
-      'open:border-emerald-300',
-      'open:shadow-[inset_4px_0_0_0_#059669,0_16px_40px_-24px_rgba(5,150,105,0.5)]',
-      'xl:open:shadow-[inset_4px_0_0_0_#059669]',
-    );
+    // Ownership is signaled by one left accent bar on a flat row, not a
+    // full-row/panel green wash or a per-record card.
+    expect(record).toHaveClass('open:shadow-[inset_4px_0_0_0_#059669]');
+    expect(record.className).not.toContain('open:bg-emerald-50/80');
+    expect(record.className).not.toContain('open:border-emerald-300');
+    expect(record.className).not.toContain('open:border-slate-300');
+    expect(record.className).not.toContain('rounded-');
     expect(disclosure).toHaveClass('group-open/record:hover:bg-transparent');
-    expect(detailsBody).toHaveClass('group-open/record:border-emerald-300');
-    // The expanded panel is its own deeper emerald surface, not a gray slab.
-    expect(panel).toHaveClass('bg-emerald-100/45');
-    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-emerald-200/70');
-    expect(panel!.querySelector('[role="list"]')).toHaveClass('xl:divide-emerald-200/70');
+    // The wrapper drops its border-t when open so the panel's own hairline is
+    // the only seam — summary and expanded rows keep exactly one divider.
+    expect(detailsBody).toHaveClass('group-open/record:border-t-0');
+    // The expanded panel is a flat neutral surface, not a nested card or a green slab.
+    expect(panel).toHaveClass('bg-slate-50/80', 'border-t', 'border-slate-200/80');
+    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-slate-200/80');
+    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-slate-200/70');
+    // Emerald is reserved for the money value and the open-state chevron.
     expect(chevron).toHaveClass('group-open/record:text-emerald-600');
   });
 
   it('keeps employee identity readable on narrow screens', () => {
     render(<BankTransferHistoryPageContent />);
 
-    expect(screen.getByText('LÒ THỊ MINH THU')).toHaveClass('break-words', 'xl:truncate');
+    const name = screen.getByText('LÒ THỊ MINH THU');
+    expect(name).toHaveClass('break-words', 'xl:truncate');
+    // Desktop runs name, CCCD and projects on a single baseline row.
+    expect(name.parentElement).toHaveClass('xl:flex', 'xl:items-baseline', 'xl:gap-x-1.5');
+    expect(screen.getByText('CCCD 031189014251')).toHaveClass('xl:mt-0');
+  });
+
+  it('expands only one record at a time and collapses it on page change', () => {
+    const result = useBankTransferHistories();
+    result.data.data.push({
+      ...result.data.data[0],
+      employee_id: 83,
+      employee_name: 'TRẦN VĂN B',
+      employee_cccd: '031199001234',
+    });
+    result.data.pagination = { page: 1, pageSize: 50, totalPages: 2, totalRecords: 2 };
+    useBankTransferHistories.mockReturnValue(result);
+
+    render(<BankTransferHistoryPageContent />);
+
+    const [first, second] = screen.getAllByLabelText(/Chi tiết giao dịch/i);
+    fireEvent.click(first);
+    expect(first.closest('details')).toHaveAttribute('open');
+    expect(second.closest('details')).not.toHaveAttribute('open');
+
+    fireEvent.click(second);
+    expect(second.closest('details')).toHaveAttribute('open');
+    expect(first.closest('details')).not.toHaveAttribute('open');
+
+    // Leaving the page collapses the open record instead of stranding it.
+    fireEvent.click(screen.getByRole('button', { name: 'Trang 2' }));
+    expect(second.closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('requests a denser default page now that rows are compact', () => {
+    render(<BankTransferHistoryPageContent />);
+
+    expect(useBankTransferHistories).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, pageSize: 50 }),
+    );
+  });
+
+  it('renders loading placeholders as flat rows of the workspace module', () => {
+    useBankTransferHistories.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const skeleton = container.querySelector('[aria-label="Đang tải lịch sử trả lương"]');
+    expect(skeleton).toHaveClass('divide-y', 'divide-slate-200/80');
+    // rounded-none is load-bearing: it overrides the Skeleton base rounded-md
+    // so placeholder rows match the flat record rows they stand in for.
+    const rows = Array.from(skeleton!.children);
+    expect(rows).toHaveLength(6);
+    for (const row of rows) {
+      expect(row).toHaveClass('h-36', 'rounded-none', 'xl:h-16');
+    }
   });
 
   it.each(['admin', 'partner'] as const)('keeps the %s header below the iOS safe area at every breakpoint', (variant) => {

@@ -72,6 +72,11 @@ export interface BankTransferHistoryListResponse {
   status: string;
   message: string;
   data: BankTransferHistory[];
+  summary?: {
+    total_amount: number;
+    transfer_count: number;
+    employee_count: number;
+  };
   pagination: {
     page: number;
     pageSize: number;
