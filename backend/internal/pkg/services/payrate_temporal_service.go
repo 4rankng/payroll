@@ -146,7 +146,7 @@ func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context,
 }
 
 // UpdateEffectiveDatedPayrate handles updates to payrates following these rules:
-//  1. The new start date must fall after the project's most recent salary payout
+//  1. The new start date must fall after the project's most recent paid timesheet work date
 //  2. The payrate must remain the project's most recent configuration
 //     (no sibling payrate may start on or after the new start date)
 //  3. Mutable timesheets inside the config's reign are recalculated in the same
@@ -243,11 +243,10 @@ func (s *PayrateTemporalService) GetEarliestTimesheetDateForPayrate(ctx context.
 	return earliest.MinDate, nil
 }
 
-// GetLatestPaidTimesheetDateForProject returns the latest salary payout date
-// that establishes a project's immutable payrate boundary. Older paid rows
-// without paid_at retain their work date as a safe historical fallback.
-// Unapproved or unpaid entries remain eligible for recalculation by a later
-// configuration.
+// GetLatestPaidTimesheetDateForProject returns the latest work date among paid
+// timesheets. That date establishes the project's immutable payrate boundary;
+// the payment transfer timestamp does not change it. Unapproved or unpaid
+// entries remain eligible for recalculation by a later configuration.
 func (s *PayrateTemporalService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
 	return s.getLatestPaidTimesheetDate(ctx, s.db, projectID)
 }
@@ -275,18 +274,15 @@ func (s *PayrateTemporalService) getLatestPaidTimesheetDate(ctx context.Context,
 	var timesheet domain.Timesheet
 	err := db.WithContext(ctx).
 		Model(&domain.Timesheet{}).
-		Select("date", "paid_at").
+		Select("date").
 		Where("project_id = ? AND payment_status = ?", projectID, domain.PaymentStatusPaid).
-		Order("paid_at DESC, date DESC").
+		Order("date DESC").
 		First(&timesheet).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
 		return nil, err
-	}
-	if timesheet.PaidAt != nil {
-		return timesheet.PaidAt, nil
 	}
 	return &timesheet.Date, nil
 }

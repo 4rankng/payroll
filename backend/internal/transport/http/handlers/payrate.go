@@ -52,9 +52,9 @@ func formatDateToString(t *time.Time) *string {
 	return &dateStr
 }
 
-// earliestEffectiveFrom returns the day after the project's most recent salary
-// payout — the earliest start date a payrate update may take. Returns ""
-// when the project has no salary payouts (nothing anchors the floor). The
+// earliestEffectiveFrom returns the day after the project's most recent paid
+// timesheet work date — the earliest start date a payrate update may take.
+// Returns "" when the project has no paid timesheets (nothing anchors the floor). The
 // date is formatted in its stored location: converting to UTC first would
 // shift it back a day under a loc=Local MySQL DSN.
 func (h *PayrateHandler) earliestEffectiveFrom(ctx context.Context, projectID uint) string {

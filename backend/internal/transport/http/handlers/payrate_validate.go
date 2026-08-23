@@ -330,7 +330,7 @@ func (h *PayrateHandler) applyLinkedTimesheetConstraints(
 
 // applyPaidFloorConstraints enforces the single immutable boundary shared by
 // create and update: a configuration's start date must fall after the
-// project's most recent salary payout. Rates are always editable in place —
+// project's most recent paid timesheet work date. Rates are always editable in place —
 // mutable (unpaid and unapproved) rows are recalculated on save.
 func (h *PayrateHandler) applyCreateConstraints(
 	c *gin.Context,

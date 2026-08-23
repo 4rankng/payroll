@@ -133,8 +133,8 @@ export default function PayrateEditPage() {
 
   useEffect(() => {
     if (targetPayrate) {
-      // Default the start date to the paid floor (day after the latest salary
-      // payout) whenever the stored start sits before it — the backend
+      // Default the start date to the paid floor (day after the latest paid
+      // timesheet work date) whenever the stored start sits before it — the backend
       // rejects anything earlier, so pre-clamp instead of surfacing an error.
       const floor = targetPayrate.earliest_effective_from;
       const fromDate =

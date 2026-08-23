@@ -67,7 +67,7 @@ func TestPayrateTemporalServiceUsesPaidCutoffAndRecalculatesOnlyMutableTimesheet
 	assertTimesheetRateUnchanged(t, db, timesheets[5].ID)
 }
 
-func TestPayrateTemporalServiceUsesLatestSalaryPaymentDateForEffectiveDate(t *testing.T) {
+func TestPayrateTemporalServiceUsesLatestPaidTimesheetWorkDateForEffectiveDate(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
 	service := NewPayrateTemporalService(db, nil)
@@ -75,25 +75,25 @@ func TestPayrateTemporalServiceUsesLatestSalaryPaymentDateForEffectiveDate(t *te
 	const projectID uint = 48
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
 
-	// The work was recorded on Aug 2, but the salary was paid on Aug 15.
-	// The effective date must therefore be after Aug 15, not merely after Aug 2.
+	// Work on Aug 14 was paid on Aug 17. Its work date—not the later transfer
+	// timestamp—sets the new payrate boundary, so Aug 15 is allowed.
 	paid := newPayrateTemporalTimesheet(
 		projectID,
-		time.Date(2026, 8, 2, 0, 0, 0, 0, time.Local),
+		time.Date(2026, 8, 14, 0, 0, 0, 0, time.Local),
 		domain.TimesheetStatusApproved,
 		domain.PaymentStatusPaid,
 	)
-	paidAt := time.Date(2026, 8, 15, 10, 30, 0, 0, time.Local)
+	paidAt := time.Date(2026, 8, 17, 10, 30, 0, 0, time.Local)
 	paid.PaidAt = &paidAt
 	seedPayrateTemporalTimesheet(t, db, paid)
 
 	err := db.Transaction(func(tx *gorm.DB) error {
-		return service.validateEffectiveDateTx(ctx, tx, projectID, paidAt)
+		return service.validateEffectiveDateTx(ctx, tx, projectID, paid.Date)
 	})
 	require.EqualError(t, err, "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày trả lương gần nhất")
 
 	require.NoError(t, db.Transaction(func(tx *gorm.DB) error {
-		return service.validateEffectiveDateTx(ctx, tx, projectID, paidAt.AddDate(0, 0, 1))
+		return service.validateEffectiveDateTx(ctx, tx, projectID, paid.Date.AddDate(0, 0, 1))
 	}))
 }
 
