@@ -356,7 +356,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
                   value={search}
                   onChange={(event) => { setSearch(event.target.value); resetPage(); }}
                   placeholder="Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng"
-                  className="h-11 border-slate-200 bg-slate-50/70 pl-9 pr-11 text-[12px] shadow-none hover:border-slate-300 focus-visible:bg-white sm:h-8 sm:pr-9"
+                  className="h-11 border-slate-200 bg-slate-50/70 pl-9 pr-11 text-[12px] shadow-none hover:border-slate-300 focus-visible:bg-white sm:h-8 sm:pl-9 sm:pr-9"
                 />
                 {search && (
                   <button

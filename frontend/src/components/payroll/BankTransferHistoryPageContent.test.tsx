@@ -135,6 +135,9 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByRole('button', { name: /Chọn tháng kỳ lương/ })).toHaveClass('h-11', 'sm:h-8');
     expect(screen.getByRole('combobox')).toHaveClass('h-11', 'sm:h-8');
     expect(screen.getByRole('textbox')).toHaveClass('h-11', 'sm:h-8');
+    // Icon sits at left-3 + w-4 (ends 28px in); keep 36px padding at every
+    // breakpoint so the placeholder never slides under the search icon.
+    expect(screen.getByRole('textbox')).toHaveClass('pl-9', 'sm:pl-9');
   });
 
   it('groups completed payments into one compact comparison workspace on wide screens', () => {
