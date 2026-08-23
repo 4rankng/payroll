@@ -201,16 +201,6 @@ func (h *DatabaseHelper) WrapDatabaseError(err error) error {
 
 	// Handle constraint violations
 	if strings.Contains(errStr, "constraint") || strings.Contains(errStr, "duplicate") || strings.Contains(errStr, "1062") {
-		if strings.Contains(errStr, "chk_payrates_date_order") {
-			return domain.NewValidationError(constants.MsgCannotProcessPayrateInvalidDateVN)
-		}
-		if strings.Contains(errStr, "uq_payrates_live_project_from_date") {
-			return domain.NewValidationError(constants.MsgPayrateDuplicateEffectiveDateVN)
-		}
-		if strings.Contains(errStr, "uq_payrates_one_open_per_project") {
-			return domain.NewValidationError(constants.MsgPayrateMultipleOpenConfigurationsVN)
-		}
-
 		// Handle MySQL duplicate key errors for employees
 		if strings.Contains(errStr, "idx_employees_cccd") || strings.Contains(errStr, "cccd") {
 			return domain.NewConflictError(constants.MsgEmployeeWithCCCDExistsVN)

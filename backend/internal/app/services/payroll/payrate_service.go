@@ -3,7 +3,6 @@ package payroll
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"api-server/internal/constants"
@@ -74,10 +73,6 @@ func (s *PayrateService) UpdatePayrate(ctx context.Context, payrate *domain.Payr
 		// Preserve domain errors as-is, wrap others
 		if _, ok := err.(*domain.DomainError); ok {
 			return err
-		}
-		// Check for constraint violation and return user-friendly error
-		if strings.Contains(err.Error(), "Check constraint 'chk_payrates_date_order' is violated") {
-			return domain.NewValidationError(constants.MsgCannotUpdatePayrateInvalidDateVN)
 		}
 		return fmt.Errorf("failed to update temporal payrate: %w", err)
 	}
