@@ -121,12 +121,39 @@ describe('BankTransferHistoryPageContent', () => {
     const { container, rerender } = render(<BankTransferHistoryPageContent />);
 
     expect(container.querySelector('.admin-payment-history-filters')).not.toBeInTheDocument();
-    expect(container.querySelector('.admin-payment-history-record')).not.toBeInTheDocument();
+    expect(container.querySelector('.admin-payment-history-workspace')).not.toBeInTheDocument();
 
     rerender(<BankTransferHistoryPageContent variant="admin" />);
 
     expect(container.querySelector('.admin-payment-history-filters')).toHaveClass('ct-card');
-    expect(container.querySelector('.admin-payment-history-record')).toHaveClass('ct-card');
+    expect(container.querySelector('.admin-payment-history-workspace')).toHaveClass('ct-card');
+  });
+
+  it('keeps touch-safe mobile filters while using compact desktop controls', () => {
+    render(<BankTransferHistoryPageContent />);
+
+    expect(screen.getByRole('button', { name: /Chọn tháng kỳ lương/ })).toHaveClass('h-11', 'sm:h-8');
+    expect(screen.getByRole('combobox')).toHaveClass('h-11', 'sm:h-8');
+    expect(screen.getByRole('textbox')).toHaveClass('h-11', 'sm:h-8');
+  });
+
+  it('groups completed payments into one compact comparison workspace on wide screens', () => {
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const workspace = container.querySelector('[data-slot="payment-history-workspace"]');
+    const records = container.querySelector('[data-slot="payment-history-records"]');
+    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
+
+    expect(workspace).toHaveClass('xl:overflow-hidden', 'xl:border', 'xl:bg-white');
+    expect(records).toHaveClass('xl:divide-y');
+    expect(disclosure).toHaveClass('xl:min-h-[64px]', 'xl:px-4', 'xl:py-2');
+    expect(disclosure.closest('details')).toHaveClass('xl:rounded-none', 'xl:border-0', 'xl:shadow-none');
+  });
+
+  it('keeps employee identity readable on narrow screens', () => {
+    render(<BankTransferHistoryPageContent />);
+
+    expect(screen.getByText('LÒ THỊ MINH THU')).toHaveClass('break-words', 'xl:truncate');
   });
 
   it.each(['admin', 'partner'] as const)('keeps the %s header below the iOS safe area at every breakpoint', (variant) => {
