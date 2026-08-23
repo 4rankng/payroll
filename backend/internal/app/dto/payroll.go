@@ -222,9 +222,18 @@ type BankTransferHistoryItem struct {
 	Transfers    []BankTransferHistoryTransfer `json:"transfers"`
 }
 
+// BankTransferHistorySummary aggregates all filtered results (not just the page)
+// so the history view can show at-a-glance totals.
+type BankTransferHistorySummary struct {
+	TotalAmount   int64 `json:"total_amount"`
+	TransferCount int   `json:"transfer_count"`
+	EmployeeCount int   `json:"employee_count"`
+}
+
 type ListBankTransferHistoriesResponse struct {
-	Data       []BankTransferHistoryItem `json:"data"`
-	Pagination PaginationResponse        `json:"pagination"`
+	Data       []BankTransferHistoryItem  `json:"data"`
+	Pagination PaginationResponse         `json:"pagination"`
+	Summary    BankTransferHistorySummary `json:"summary"`
 }
 
 // BulkTransferSuccessfulPayment represents a single successful payment in the bulk transfer result

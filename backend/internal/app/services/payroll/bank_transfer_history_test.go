@@ -255,6 +255,99 @@ func TestGetBankTransferHistoriesGroupsSplitReferencesScopesPartnerAndMatchesVie
 			require.Equal(t, "2026-07-17T20:24:00+07:00", result.Data[0].Transfers[0].PaidAt)
 			require.Equal(t, "2026-07-17T20:24:00+07:00", result.Data[0].Transfers[1].PaidAt)
 			require.Equal(t, int64(1_998_000), result.Data[0].TotalAmount)
+			// Summary aggregates the SEARCH-FILTERED result set, not the raw scan.
+			require.Equal(t, int64(1_998_000), result.Summary.TotalAmount)
+			require.Equal(t, 2, result.Summary.TransferCount)
+			require.Equal(t, 1, result.Summary.EmployeeCount)
 		})
 	}
+}
+
+// TestGetBankTransferHistoriesSummaryAggregatesAllScopedEmployees proves the
+// summary spans every accessible employee-cycle, not just the current page,
+// and stays consistent with the deduped per-item totals.
+func TestGetBankTransferHistoriesSummaryAggregatesAllScopedEmployees(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+
+	uploadedAt := time.Date(2026, time.July, 17, 20, 24, 0, 0, clock.DefaultLocation)
+	rows := []dto.BulkTransferFileData{
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-1", Amount: 1_548_000, TransferStatus: "completed", BankTxnRef: "FT26198846619959"},
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-2", Amount: 450_000, TransferStatus: "completed", BankTxnRef: "FT26198940380850"},
+		{EmployeeID: 99, ProjectID: 2, TransactionCode: "TX-5", Amount: 700_000, TransferStatus: "completed", BankTxnRef: "FT-UNRELATED"},
+	}
+	data, err := json.Marshal(rows)
+	require.NoError(t, err)
+	assetID := uint(7)
+	cycle := "weekly"
+	file := &domain.BulkTransferFile{ID: 5, Cycle: &cycle, AssetID: &assetID, Data: string(data), UploadedAt: &uploadedAt, CreatedAt: historyDate(2026, time.September, 1)}
+
+	fromDate := historyDate(2026, time.July, 8)
+	toDate := historyDate(2026, time.July, 14)
+	transactionRows := make([]*domain.TransactionCode, 0, 3)
+	for index, code := range []string{"TX-1", "TX-2", "TX-5"} {
+		employeeID, projectID := uint(82), uint(1)
+		if code == "TX-5" {
+			employeeID, projectID = 99, 2
+		}
+		codeData, marshalErr := json.Marshal(domain.TransactionCodeData{WeeklyPay: &domain.CyclePayData{
+			TimesheetIDs: []uint{uint(index + 1)}, EmployeeID: employeeID, ProjectID: projectID,
+			FromDate: &fromDate, ToDate: &toDate, CycleNum: 2,
+		}})
+		require.NoError(t, marshalErr)
+		transactionRows = append(transactionRows, &domain.TransactionCode{Code: code, Data: codeData})
+	}
+
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Times(0)
+	employeeRepo.EXPECT().GetByIDs(gomock.Any(), gomock.Any()).Return([]*domain.Employee{
+		{ID: 82, Fullname: "LÒ THỊ MINH THU", CCCD: "031189014251"},
+		{ID: 99, Fullname: "NGUYỄN VĂN B", CCCD: "031000001111"},
+	}, nil).AnyTimes()
+	projectRepo := bankHistoryProjectRepoStub{
+		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}, {ID: 2, Name: "Dự án B"}},
+		byID:       map[uint]*domain.Project{1: {ID: 1, Name: "Dự án A"}, 2: {ID: 2, Name: "Dự án B"}},
+	}
+
+	service := &PayrollService{
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{rows: transactionRows},
+		bankTransferHistoryRepo: bankHistoryFileRepoStub{files: []*domain.BulkTransferFile{file}},
+	}
+
+	// Page size 1: summary must still cover BOTH employee-cycles.
+	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+		Month: "2026-07", Page: 1, PageSize: 1,
+	}, 44, "partner")
+	require.NoError(t, err)
+	require.Len(t, result.Data, 1)
+	require.Equal(t, int64(2), result.Pagination.TotalRecords)
+	require.Equal(t, int64(2_698_000), result.Summary.TotalAmount)
+	require.Equal(t, 3, result.Summary.TransferCount)
+	require.Equal(t, 2, result.Summary.EmployeeCount)
+}
+
+// TestGetBankTransferHistoriesSummaryZeroWhenEmpty covers the no-data path.
+func TestGetBankTransferHistoriesSummaryZeroWhenEmpty(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+	projectRepo := bankHistoryProjectRepoStub{}
+
+	service := &PayrollService{
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{},
+		bankTransferHistoryRepo: bankHistoryFileRepoStub{},
+	}
+
+	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+		Month: "2026-07", Page: 1, PageSize: 20,
+	}, 44, "partner")
+	require.NoError(t, err)
+	require.Empty(t, result.Data)
+	require.Equal(t, dto.BankTransferHistorySummary{}, result.Summary)
 }

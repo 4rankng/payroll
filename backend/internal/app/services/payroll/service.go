@@ -520,6 +520,12 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 		return items[i].EmployeeName < items[j].EmployeeName
 	})
 
+	summary := dto.BankTransferHistorySummary{EmployeeCount: len(items)}
+	for _, item := range items {
+		summary.TotalAmount += item.TotalAmount
+		summary.TransferCount += len(item.Transfers)
+	}
+
 	total := len(items)
 	start := (req.Page - 1) * req.PageSize
 	if start > total {
@@ -536,6 +542,7 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 	return &dto.ListBankTransferHistoriesResponse{
 		Data:       items[start:end],
 		Pagination: dto.PaginationResponse{Page: req.Page, PageSize: req.PageSize, TotalPages: totalPages, TotalRecords: int64(total)},
+		Summary:    summary,
 	}, nil
 }
 
