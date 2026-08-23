@@ -117,8 +117,8 @@ function PayrollMonthPicker({ value, onValueChange }: PayrollMonthPickerProps) {
 
 function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
-    <div className="bg-slate-50/90">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2.5 sm:px-4">
+    <div className="bg-emerald-100/45">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300/50 px-3 py-2.5 sm:px-4">
         <div>
           <p className="flex items-center gap-2 font-display text-[11px] font-bold text-slate-900">
             <Landmark className="h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
@@ -126,12 +126,12 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
           </p>
           <p className="mt-0.5 text-[10px] text-slate-500">Mã đối soát và thời gian xử lý của từng bút toán</p>
         </div>
-        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-financial text-[10px] font-bold tabular-nums text-slate-600">
+        <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 font-financial text-[10px] font-bold tabular-nums text-emerald-800">
           {item.transfers.length} bút toán
         </span>
       </div>
 
-      <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-slate-200/80 bg-white/70 px-4 py-2 xl:grid">
+      <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-emerald-200/70 px-4 py-2 xl:grid">
         <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
         <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
         <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Mã giao dịch ngân hàng</span>
@@ -139,11 +139,11 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
         <span className="text-right font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Số tiền</span>
       </div>
 
-      <div className="space-y-2 p-2.5 xl:space-y-0 xl:divide-y xl:divide-slate-200/80 xl:p-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
+      <div className="space-y-2 p-2.5 xl:space-y-0 xl:divide-y xl:divide-emerald-200/70 xl:p-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
         {item.transfers.map((transfer, index) => (
           <div
             key={`${transfer.transfer_code}-${transfer.bank_reference}-${transfer.amount}`}
-            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2.5 rounded-lg border border-slate-200/90 bg-white p-3 shadow-[0_8px_24px_-24px_rgba(15,23,42,0.4)] xl:min-h-11 xl:grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] xl:items-center xl:gap-4 xl:rounded-none xl:border-0 xl:bg-transparent xl:px-4 xl:py-2.5 xl:shadow-none"
+            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2.5 rounded-lg border border-emerald-200/80 bg-white p-3 shadow-[0_8px_24px_-24px_rgba(15,23,42,0.4)] xl:min-h-11 xl:grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] xl:items-center xl:gap-4 xl:rounded-none xl:border-0 xl:bg-transparent xl:px-4 xl:py-2.5 xl:shadow-none"
             role="listitem"
           >
             <span className="inline-flex h-7 items-center justify-center rounded-md bg-slate-100 px-2 font-display text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500 xl:h-7 xl:w-7 xl:px-0 xl:font-financial xl:text-[10px] xl:tracking-normal">
@@ -193,7 +193,7 @@ function HistoryRecord({ item }: { item: BankTransferHistory }) {
         <summary
           aria-controls={detailsId}
           aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
-          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 group-open/record:bg-emerald-100/40 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
+          className="group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-slate-50/70 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[64px] xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px] xl:items-center xl:gap-4 xl:px-4 xl:py-2 [&::-webkit-details-marker]:hidden"
         >
           <div className="col-span-2 flex min-w-0 items-center gap-2.5 pr-12 xl:col-span-1 xl:pr-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-700 xl:h-8 xl:w-8">
