@@ -150,6 +150,22 @@ function AddEmployeeSheetComponent({
   const isAdmin = userRole === 'admin';
   const requestAccess = useRequestEmployeeAccess();
 
+  const [formData, setFormData] = useState<CreateEmployeeData>({
+    fullname: '',
+    email: '',
+    cccd: '',
+    address: '',
+    mobile: '',
+    bank_id: undefined,
+    bank_account_number: '',
+    bank_account_name: '',
+    date_of_birth: ''
+  });
+
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   // --- Duplicate detection (global, pre-create) ---
   // Debounced check on the three stable identifiers; CCCD match is a hard
   // block (backend 409s anyway), mobile/email matches are soft warnings.
@@ -190,22 +206,6 @@ function AddEmployeeSheetComponent({
       // Error notification handled globally
     }
   };
-
-  const [formData, setFormData] = useState<CreateEmployeeData>({
-    fullname: '',
-    email: '',
-    cccd: '',
-    address: '',
-    mobile: '',
-    bank_id: undefined,
-    bank_account_number: '',
-    bank_account_name: '',
-    date_of_birth: ''
-  });
-
-  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (isOpen) {
