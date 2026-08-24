@@ -14,6 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input"> &
   return (
     <input
       type={type}
+      lang={type === 'date' ? 'vi-VN' : undefined}
       className={cn(variants[variant], className)}
       ref={ref}
       {...props}
