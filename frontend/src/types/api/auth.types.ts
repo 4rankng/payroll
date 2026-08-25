@@ -11,6 +11,10 @@ export interface User {
   last_login?: string;
   created_at: string;
   updated_at: string;
+  // True when this account's current password still matches the default
+  // employee password. Only meaningful for role "employee"; only populated
+  // by GET /auth/me.
+  must_change_password?: boolean;
 }
 
 export interface BasicUserProfile {

@@ -36,6 +36,11 @@ type UserResponse struct {
 	LastLogin *time.Time `json:"last_login"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
+	// MustChangePassword is true when this account's current password still
+	// matches the default employee password (employee.DefaultEmployeePassword).
+	// Only populated by /auth/me (GetProfile) for the caller's own profile —
+	// left false elsewhere (list/admin views) to avoid a per-row hash compare.
+	MustChangePassword bool `json:"must_change_password,omitempty"`
 }
 
 // LoginRequest represents the login request

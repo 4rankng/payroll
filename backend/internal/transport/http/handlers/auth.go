@@ -5,6 +5,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/auth"
+	"api-server/internal/app/services/employee"
 	passwordreset "api-server/internal/app/services/passwordreset"
 	"api-server/internal/app/services/user"
 	"api-server/internal/app/services/zaloreset"
@@ -294,6 +295,12 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 
 	// Convert to UserResponse DTO
 	userResponse := dto.ToUserResponse(user)
+	// Employees who haven't changed their auto-assigned default password must
+	// be forced to set a real one — checked here (not in ToUserResponse) so
+	// list/admin views of many users never pay for a per-row hash compare.
+	if user.IsEmployee() {
+		userResponse.MustChangePassword = h.userService.VerifyPasswordHash(employee.DefaultEmployeePassword, user.Password)
+	}
 	response.Success(c, userResponse, "User profile retrieved successfully")
 }
 

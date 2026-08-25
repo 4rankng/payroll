@@ -80,6 +80,7 @@ import { authManager } from "@/lib/auth";
 import { SecureModalProvider } from "@/components/modals/SecureModalProvider";
 import ModalRouter from "@/components/modals/ModalRouter";
 import { EmailPromptGate } from "@/components/EmailPromptGate";
+import { ForceChangePasswordDialog } from "@/components/ForceChangePasswordDialog";
 import { showErrorNotification, isNetworkError, handleNetworkError } from "@/utils/error-handler";
 import { initInvalidationService } from "@/lib/cache/invalidationService";
 import { setupQueryPersistence } from "@/lib/cache/queryPersister";
@@ -322,6 +323,9 @@ const AppContent = () => {
 
       {/* Prompts admin/partner/adv_partner users with no email to provide one. */}
       <EmailPromptGate />
+
+      {/* Blocks employee accounts still on the default password behind a compulsory change-password dialog. */}
+      <ForceChangePasswordDialog />
     </>
   );
 };
