@@ -106,7 +106,7 @@ func TestPayrollStatementTemplatesKeepCompanyBeneficiaryReadable(t *testing.T) {
 			holderCell:  "E8",
 			accountCell: "E9",
 			bankCell:    "E10",
-			columnWidth: 24.28515625,
+			columnWidth: 38.0,
 		},
 	}
 
