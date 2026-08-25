@@ -21,6 +21,7 @@ import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
+import { EmployeeCanopy } from "@/components/employees/EmployeeCanopy";
 import { EmployeeCheckInCard } from "@/components/employees/EmployeeCheckInCard";
 import { EmployeeAttendanceHistoryCard } from "@/components/employees/EmployeeAttendanceHistoryCard";
 import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavigator";
@@ -283,12 +284,12 @@ const FlexiblePayEmployeePage = () => {
 
   if (isInitialLoading) {
     return (
-      <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-5">
-        <Skeleton className="h-14 w-full rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
-        <div className="space-y-2.5">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-32 w-full rounded-xl" />
+      <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-4">
+        <Skeleton className="h-14 w-full rounded-2xl border border-slate-200/60 bg-white" />
+        <Skeleton className="h-64 w-full rounded-2xl border border-slate-200/60 bg-white" />
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-40 rounded-xl" />
+          <Skeleton className="h-36 w-full rounded-2xl border border-slate-200/60 bg-white" />
         </div>
       </EmployeeMobileShell>
     );
@@ -302,24 +303,34 @@ const FlexiblePayEmployeePage = () => {
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
       hasActionToolbar={isCheckInEnabled || isPendingCheckIn}
-      contentClassName="max-w-6xl space-y-4 sm:space-y-5 lg:space-y-6"
+      contentClassName="max-w-6xl space-y-4 sm:space-y-5"
+      canopy={
+        <EmployeeCanopy
+          employeeName={profile?.fullname}
+          unreadCount={unreadNotifications?.count}
+          onNotificationClick={() => setNotificationSheetOpen(true)}
+          onChangePassword={() => setPasswordSheetOpen(true)}
+          onLogout={handleLogout}
+          periodSlot={<EmployeeMonthNavigator month={month} variant="canopy" />}
+        />
+      }
     >
-      <EmployeeMonthNavigator month={month} className="lg:min-h-[68px]" />
-
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)] lg:items-start lg:gap-6">
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-start lg:gap-6">
         {infoError ? (
           <section
             id="employee-advance-request"
-            className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-white px-4 py-5 text-center lg:col-start-1 lg:row-start-1"
+            className="scroll-mt-24 rounded-2xl border border-slate-200/60 bg-white px-5 py-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)] lg:col-start-1 lg:row-start-1"
             role="alert"
           >
-            <AlertCircle className="mx-auto h-5 w-5 text-[var(--employee-error)]" aria-hidden="true" />
-            <h2 className="employee-type-card-title mt-2 text-[var(--employee-text)]">Chưa tải được hạn mức ứng lương</h2>
-            <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Kiểm tra kết nối rồi thử lại.</p>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-400">
+              <AlertCircle className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h2 className="mt-3 text-[1rem] font-semibold text-slate-700">Chưa tải được hạn mức ứng lương</h2>
+            <p className="mt-1 text-[0.8125rem] text-slate-400">Kiểm tra kết nối rồi thử lại.</p>
             <button
               type="button"
               onClick={() => { void refetchInfo(); }}
-              className="employee-type-action mt-3 inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-[var(--employee-border-strong)] px-4 text-[#344054] transition-colors duration-200 hover:bg-[var(--employee-surface-muted)] active:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-accent)]"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại
@@ -345,7 +356,6 @@ const FlexiblePayEmployeePage = () => {
               onBankAction={handleBankAction}
               isPending={requestMutation.isPending}
               requestConfirmation={requestConfirmation}
-              className="overflow-hidden p-4 sm:p-5"
             />
           </section>
         ) : null}

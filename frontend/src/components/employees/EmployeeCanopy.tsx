@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Bell, Eye, EyeOff, LogOut, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -14,8 +14,11 @@ import { formatCurrency } from "@/utils/formatters";
 
 const MASKED_AMOUNT = "••••••";
 
-const CANOPY_GRADIENT =
-  "linear-gradient(158deg, #0b9a53 0%, #08783e 52%, #065c32 100%)";
+interface EmployeeCanopyWalletProps {
+  model: EmployeeHomeViewModel;
+  paidAmount: number;
+  totalAmount: number;
+}
 
 interface EmployeeCanopyProps {
   employeeName?: string;
@@ -23,9 +26,14 @@ interface EmployeeCanopyProps {
   onNotificationClick: () => void;
   onChangePassword: () => void;
   onLogout: () => void;
-  model: EmployeeHomeViewModel;
-  paidAmount: number;
-  totalAmount: number;
+  /** Omit to render identity chrome only — no amount/progress block. */
+  wallet?: EmployeeCanopyWalletProps;
+  /**
+   * Period scope for everything below the canopy — e.g. the month navigator.
+   * Rendered on the emerald surface so period selection sits with the identity
+   * chrome instead of occupying a separate white card.
+   */
+  periodSlot?: ReactNode;
 }
 
 export function EmployeeCanopy({
@@ -34,137 +42,158 @@ export function EmployeeCanopy({
   onNotificationClick,
   onChangePassword,
   onLogout,
-  model,
-  paidAmount,
-  totalAmount,
+  wallet,
+  periodSlot,
 }: EmployeeCanopyProps) {
   const [amountVisible, setAmountVisible] = useState(true);
   const todayLabel = format(new Date(), "EEEE, d 'tháng' M", { locale: vi });
+  const paidAmount = wallet?.paidAmount ?? 0;
+  const totalAmount = wallet?.totalAmount ?? 0;
   const progressPercent =
     totalAmount > 0 ? Math.min(100, Math.round((paidAmount / totalAmount) * 100)) : 0;
   const remainingAmount = Math.max(0, totalAmount - paidAmount);
-  const showProgress = totalAmount > 0;
+  const showProgress = Boolean(wallet) && totalAmount > 0;
 
   return (
     <section
-      className="relative isolate overflow-hidden rounded-b-[28px] px-4 pb-6 text-white"
+      className="relative isolate overflow-hidden rounded-b-[32px] text-white"
       style={{
-        backgroundImage: CANOPY_GRADIENT,
-        paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.875rem)",
+        // Anchored on the TingTing brand emerald (--employee-accent #08783e).
+        // A tight, low-chroma range reads as payroll rather than consumer app;
+        // bright mint (#10b981) is deliberately out of the ramp.
+        background: "linear-gradient(168deg, #0a7a41 0%, #08783e 42%, #065c32 78%, #054d2a 100%)",
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)",
+        paddingBottom: wallet || periodSlot ? "1.5rem" : "1.25rem",
       }}
-      aria-label={model.title}
+      aria-label={wallet?.model.title ?? "Thông tin tài khoản"}
     >
+      {/* One restrained highlight. Stacked blurred orbs made the surface look
+          hazy and washed out instead of like a solid brand block. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_-14%,rgba(255,255,255,0.28),transparent_58%)]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-20 -z-10 h-52 w-52 rounded-full bg-white/8 blur-2xl"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(120% 80% at 88% -20%, rgba(255,255,255,0.10) 0%, transparent 60%)",
+        }}
       />
 
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="employee-type-body-sm truncate capitalize text-white/60">{todayLabel}</p>
-          <h1 className="employee-type-header-name truncate text-white" title={employeeName}>
-            {employeeName || "bạn"}
-          </h1>
+      <div className="mx-auto max-w-lg px-4 sm:px-5">
+        {/* Identity row */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.8125rem] font-medium tracking-wide text-white/70">{todayLabel}</p>
+            <h1
+              className="mt-0.5 truncate text-[1.375rem] font-bold tracking-tight text-white drop-shadow-sm"
+              title={employeeName}
+            >
+              {employeeName || "bạn"}
+            </h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onNotificationClick}
+              aria-label="Thông báo"
+              className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-white/90 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+            >
+              <Bell className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} aria-hidden="true" />
+              {unreadCount != null && unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white px-1 text-[0.6875rem] font-bold leading-none text-[var(--employee-accent-strong)] ring-2 ring-[#065c32]">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 p-1 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+                  aria-label="Menu tài khoản"
+                >
+                  <img
+                    src="/icons/employee-avatar.png"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="h-full w-full rounded-xl object-contain"
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-52 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+                data-employee-ui=""
+                data-theme="employee"
+              >
+                <DropdownMenuItem onClick={onChangePassword} className="gap-3 rounded-xl py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-900">
+                  <Settings className="h-4 w-4 text-slate-400" />
+                  <span className="text-[0.875rem] font-medium">Đổi mật khẩu</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                <DropdownMenuItem onClick={onLogout} className="gap-3 rounded-xl py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700">
+                  <LogOut className="h-4 w-4" />
+                  <span className="text-[0.875rem] font-medium">Đăng xuất</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={onNotificationClick}
-            aria-label="Thông báo"
-            className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-white/18 bg-white/14 text-white/90 backdrop-blur-sm transition-colors hover:bg-white/22"
-          >
-            <Bell className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
-            {unreadCount != null && unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] rounded-full bg-[var(--employee-warning-border)] px-1 text-[11px] font-semibold leading-[18px] text-[var(--employee-warning-strong)]">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+
+        {/* Wallet section */}
+        {wallet && (
+          <div className="mt-6">
+            <p className="text-[0.8125rem] font-medium text-white/65">{wallet.model.amountLabel}</p>
+            <div className="mt-2 flex items-end justify-between gap-3">
+              <p className="truncate text-[2rem] font-bold tabular-nums tracking-tight text-white drop-shadow-md">
+                {amountVisible ? wallet.model.amount : MASKED_AMOUNT}
+              </p>
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/18 bg-white/14 p-1 backdrop-blur-sm transition-colors hover:bg-white/22"
-                aria-label="Menu tài khoản"
+                onClick={() => setAmountVisible((visible) => !visible)}
+                className="mb-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-white/80 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+                aria-label={amountVisible ? "Ẩn số tiền" : "Hiện số tiền"}
+                aria-pressed={!amountVisible}
               >
-                <img
-                  src="/icons/employee-avatar.png"
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="h-full w-full rounded-lg object-contain"
-                />
+                {amountVisible ? (
+                  <Eye className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  <EyeOff className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                )}
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-48 rounded-xl border-base-300 shadow-none"
-              data-employee-ui=""
-              data-theme="employee"
-            >
-              <DropdownMenuItem onClick={onChangePassword} className="gap-2.5 rounded-lg py-2.5">
-                <Settings className="h-4 w-4 text-base-content/50" />
-                <span className="type-body">Đổi mật khẩu</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="gap-2.5 rounded-lg py-2.5 text-error">
-                <LogOut className="h-4 w-4" />
-                <span className="type-body">Đăng xuất</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+            </div>
 
-      <div className="mx-auto mt-5 max-w-lg">
-        <p className="employee-type-label text-white/65">{model.amountLabel}</p>
-        <div className="mt-1.5 flex items-end justify-between gap-3">
-          <p className="employee-type-hero-amount truncate text-white tabular-nums [text-shadow:0_2px_12px_rgba(0,0,0,0.18)]">
-            {amountVisible ? model.amount : MASKED_AMOUNT}
-          </p>
-          <button
-            type="button"
-            onClick={() => setAmountVisible((visible) => !visible)}
-            className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/18 bg-white/14 text-white/80 backdrop-blur-sm transition-colors hover:bg-white/22"
-            aria-label={amountVisible ? "Ẩn số tiền" : "Hiện số tiền"}
-            aria-pressed={!amountVisible}
-          >
-            {amountVisible ? (
-              <Eye className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
-            ) : (
-              <EyeOff className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+            {showProgress && (
+              <div className="mt-5">
+                {/* Progress bar with glass effect */}
+                <div className="relative h-2 overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)] transition-[width] duration-700 ease-out"
+                    style={{ width: `${amountVisible ? progressPercent : 0}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex items-baseline justify-between gap-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[0.75rem] font-medium text-white/60">Đã nhận</span>
+                    <span className="text-[0.875rem] font-bold tabular-nums text-white">
+                      {amountVisible ? formatCurrency(paidAmount) : MASKED_AMOUNT}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[0.75rem] font-medium text-white/60">Còn lại</span>
+                    <span className="text-[0.875rem] font-bold tabular-nums text-white">
+                      {amountVisible ? formatCurrency(remainingAmount) : MASKED_AMOUNT}
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
-          </button>
-        </div>
-
-        {showProgress && (
-          <div className="mt-4">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/20">
-              <div
-                className="h-full rounded-full bg-white transition-[width]"
-                style={{ width: `${amountVisible ? progressPercent : 0}%` }}
-              />
-            </div>
-            <div className="mt-2.5 flex items-baseline justify-between gap-3">
-              <p className="employee-type-label-caps text-white/60">
-                Đã nhận
-                <span className="employee-type-inline-amount ml-1.5 block text-white tabular-nums sm:inline">
-                  {amountVisible ? formatCurrency(paidAmount) : MASKED_AMOUNT}
-                </span>
-              </p>
-              <p className="employee-type-label-caps text-right text-white/60">
-                Còn lại
-                <span className="employee-type-inline-amount ml-1.5 block text-white tabular-nums sm:inline">
-                  {amountVisible ? formatCurrency(remainingAmount) : MASKED_AMOUNT}
-                </span>
-              </p>
-            </div>
           </div>
         )}
+
+        {/* Period scope for the content below — sits on the canopy so the
+            month selector does not need a competing white card of its own. */}
+        {periodSlot && <div className={wallet ? "mt-5" : "mt-4"}>{periodSlot}</div>}
       </div>
     </section>
   );

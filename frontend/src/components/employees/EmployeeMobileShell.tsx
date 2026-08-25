@@ -77,20 +77,18 @@ export function EmployeeMobileShell({
     if (chrome === "skeleton") {
       return (
         <div
-          className="border-b border-[var(--employee-border)] bg-[var(--employee-surface)]"
+          className="overflow-hidden rounded-b-[32px] bg-gradient-to-br from-emerald-500 to-emerald-700"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
           aria-label="Đang tải thông tin nhân viên"
         >
-          <div
-            className="mx-auto flex max-w-lg items-center justify-between px-4 pb-3"
-            style={employeeShellHeaderStyle}
-          >
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-44" />
-              <Skeleton className="h-4 w-28" />
+          <div className="mx-auto flex max-w-lg items-center justify-between px-5 pb-5">
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-40 bg-white/20" />
+              <Skeleton className="h-7 w-48 bg-white/25" />
             </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-11 w-11 rounded-xl" />
-              <Skeleton className="h-11 w-11 rounded-xl" />
+            <div className="flex gap-2.5">
+              <Skeleton className="h-11 w-11 rounded-2xl bg-white/20" />
+              <Skeleton className="h-11 w-11 rounded-2xl bg-white/20" />
             </div>
           </div>
         </div>
@@ -112,7 +110,7 @@ export function EmployeeMobileShell({
 
       <main
         className={cn(
-          "employee-portal-card-stack mx-auto max-w-6xl space-y-5 px-4 py-5 pb-[calc(var(--employee-action-toolbar-block-size)+2.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6 lg:px-8 lg:py-8",
+          "employee-portal-card-stack mx-auto max-w-6xl space-y-5 px-3 py-5 pb-[calc(var(--employee-action-toolbar-block-size)+2.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6 lg:px-8 lg:py-8",
           contentClassName
         )}
       >

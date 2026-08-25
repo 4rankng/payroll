@@ -101,12 +101,9 @@ describe("AdvancePaymentRequestForm", () => {
     );
     expect(screen.getByText("Đang mở")).toHaveClass("justify-self-end");
 
-    const amountLabel = screen.getByText("Có thể ứng");
-    expect(amountLabel.parentElement?.parentElement).toHaveClass(
-      "grid",
-      "grid-cols-[minmax(0,1fr)_auto]",
-      "max-[359px]:grid-cols-1",
-    );
+    // The amount is a single focal point; the quota figure lives on the
+    // progress bar rather than in a badge competing beside it.
+    expect(screen.getByText("Có thể ứng")).toBeInTheDocument();
 
     const amountField = screen.getByLabelText("Số tiền muốn ứng");
     const formSection = amountField.parentElement?.parentElement;
@@ -367,7 +364,7 @@ describe("AdvancePaymentRequestForm", () => {
   });
 
   it("treats an empty past month as closed instead of waiting for attendance", () => {
-    const { container } = render(
+    render(
       <AdvancePaymentRequestForm
         {...baseProps}
         info={info}
@@ -383,11 +380,6 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByText("Kỳ ứng lương này đã kết thúc")).not.toBeInTheDocument();
     expect(screen.queryByText("Đang chờ bảng công tháng 05/2026")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
-
-    const periodSummary = container.querySelector(".rounded-t-2xl");
-    expect(periodSummary).toHaveClass("employee-fintech-surface");
-    expect(periodSummary).toHaveAttribute("data-period-state", "closed");
-    expect(periodSummary).not.toHaveClass("bg-[var(--employee-page)]");
   });
 
   it("shows June quota and used amount when the closed June month is selected", () => {

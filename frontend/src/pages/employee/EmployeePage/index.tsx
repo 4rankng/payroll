@@ -171,9 +171,7 @@ const EmployeePage = () => {
           onNotificationClick={() => setNotificationSheetOpen(true)}
           onChangePassword={() => setPasswordSheetOpen(true)}
           onLogout={handleLogout}
-          model={homeModel}
-          paidAmount={totalPaid}
-          totalAmount={monthlyTotalSalary}
+          wallet={{ model: homeModel, paidAmount: totalPaid, totalAmount: monthlyTotalSalary }}
         />
       }
     >

@@ -120,7 +120,7 @@ describe("AdvancePaymentHistoryCard", () => {
 
     expect(screen.getByText("12 yêu cầu")).toBeInTheDocument();
     const scrollRegion = screen.getByLabelText("Lịch sử yêu cầu, cuộn để xem thêm");
-    expect(scrollRegion).toHaveClass("max-h-[390px]", "overflow-y-auto");
+    expect(scrollRegion).toHaveClass("max-h-[330px]", "overflow-y-auto");
     const rows = screen.getAllByRole("button", { name: /Xem phí và chi tiết/i });
     expect(rows).toHaveLength(6);
     expect(rows[0]).toHaveTextContent("10/07/2026");

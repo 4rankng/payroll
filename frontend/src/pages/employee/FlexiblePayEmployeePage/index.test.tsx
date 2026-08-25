@@ -59,7 +59,7 @@ vi.mock("@/hooks/api/useAdvancePayments", () => ({
 }));
 
 vi.mock("@/hooks/api/useNotifications", () => ({ useUnreadNotifications: () => ({ data: { count: 0 } }) }));
-vi.mock("@/components/employees/EmployeeMobileShell", () => ({ EmployeeMobileShell: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock("@/components/employees/EmployeeMobileShell", () => ({ EmployeeMobileShell: ({ canopy, children }: { canopy?: ReactNode; children: ReactNode }) => <>{canopy}{children}</> }));
 vi.mock("@/components/employees/EmployeeMonthNavigator", () => ({ EmployeeMonthNavigator: ({ month }: { month: { value: string } }) => <output aria-label="Tháng đang xem">{month.value}</output> }));
 vi.mock("@/components/advance-payment/AdvancePaymentRequestForm", () => ({ AdvancePaymentRequestForm: ({ viewMonth, isPastMonth }: { viewMonth: string; isPastMonth: boolean }) => <output aria-label="Hạn mức đang xem">{`${viewMonth}:${isPastMonth}`}</output> }));
 vi.mock("@/components/employees/EmployeeBankInfoCard", () => ({ EmployeeBankInfoCard: () => null }));
