@@ -316,7 +316,7 @@
     border: 1px solid var(--employee-border);
     border-radius: var(--employee-radius-card);
     background: var(--employee-surface);
-    box-shadow: none;
+    box-shadow: var(--employee-shadow);
   }
 
   .employee-fintech-surface {

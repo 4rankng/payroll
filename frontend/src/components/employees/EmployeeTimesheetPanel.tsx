@@ -55,16 +55,16 @@ export function EmployeeTimesheetPanel({
       <EmployeeMonthNavigator month={month} className="mb-3" />
 
       <div className="ct-card employee-surface-card overflow-hidden rounded-[var(--employee-radius-feature)] bg-base-100">
-        <div className="flex items-center justify-between gap-3 border-b border-base-300 px-4 py-4 sm:px-5">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-4 py-4 sm:px-5">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[var(--employee-accent-border)] bg-base-100 text-[var(--employee-accent)]">
               <ClipboardList className="h-4.5 w-4.5" strokeWidth={1.9} aria-hidden="true" />
             </span>
-            <h2 id="employee-timesheets-title" className="employee-type-card-title text-base-content">
+            <h2 id="employee-timesheets-title" className="employee-type-card-title text-[var(--employee-accent-strong)]">
               Bảng công
             </h2>
           </div>
-          <span className="ct-badge ct-badge-ghost employee-type-pill h-auto shrink-0 px-2.5 py-1 text-base-content/60">
+          <span className="ct-badge ct-badge-ghost employee-type-pill h-auto shrink-0 px-2.5 py-1 text-[var(--employee-accent)]">
             {totalRecords} mục
           </span>
         </div>
@@ -96,7 +96,7 @@ export function EmployeeTimesheetPanel({
                 const status = paymentStatusStyles[paymentStatus];
 
                 return (
-                  <article key={day.date} className="relative overflow-hidden rounded-[18px] border border-base-300 bg-base-100 transition-colors hover:border-base-content/20">
+                  <article key={day.date} className="relative overflow-hidden rounded-[18px] border border-base-300 bg-base-100 shadow-[var(--employee-shadow)] transition-colors hover:border-base-content/20">
                     <div className="flex items-center justify-between gap-3 px-3.5 py-3 sm:px-4">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <span className={cn("relative z-10 h-2.5 w-2.5 shrink-0 rounded-full ring-4 ring-base-100", status.dot)} aria-hidden="true" />

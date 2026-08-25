@@ -93,9 +93,9 @@
     --employee-info: #175cd3;
     --employee-info-soft: #eff8ff;
     --employee-info-border: #b2ddff;
-    --employee-shadow: none;
-    --employee-shadow-raised: none;
-    --employee-cta-shadow: none;
+    --employee-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+    --employee-shadow-raised: 0 2px 4px rgba(16, 24, 40, 0.06), 0 4px 8px rgba(16, 24, 40, 0.08);
+    --employee-cta-shadow: 0 2px 4px rgba(8, 120, 62, 0.16), 0 4px 12px rgba(8, 120, 62, 0.14);
     --employee-radius-control: 0.75rem;
     --employee-radius-card: 1rem;
     --employee-radius-feature: 1.25rem;
