@@ -56,7 +56,10 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uint, currentPa
 	// Verify current password
 	if !s.VerifyPasswordHash(currentPassword, user.Password) {
 		s.logger.Info("Incorrect current password during password change", "user_id", userID)
-		return domain.NewUnauthorizedError(constants.MsgCurrentPasswordIncorrectVN)
+		// 400, not 401: the session itself is valid, only the submitted
+		// current_password is wrong. A 401 here makes the SPA's global
+		// interceptor treat the typo as session expiry and log the user out.
+		return domain.NewValidationError(constants.MsgCurrentPasswordIncorrectVN)
 	}
 
 	// Hash new password

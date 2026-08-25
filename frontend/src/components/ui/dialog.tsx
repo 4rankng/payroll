@@ -59,10 +59,14 @@ const DialogContent = React.forwardRef<
         )}
         {...props}
       >
-        {/* Provide visually-hidden fallbacks for title/description so DialogContent is accessible
-          even when callers omit DialogTitle/DialogDescription. */}
-        <DialogPrimitive.Title className="sr-only">{title ?? 'Dialog'}</DialogPrimitive.Title>
-        <DialogPrimitive.Description className="sr-only">{description ?? ''}</DialogPrimitive.Description>
+        {/* Visually-hidden fallbacks so DialogContent stays accessible when a
+          caller supplies neither a visible DialogTitle/DialogDescription nor
+          the props. When the props are absent we defer to the caller's own
+          Title/Description instead of rendering a second, generic "Dialog"
+          label that competes for the accessible name (Radix binds
+          aria-labelledby to the first Title in the DOM). */}
+        {title ? <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title> : null}
+        {description ? <DialogPrimitive.Description className="sr-only">{description}</DialogPrimitive.Description> : null}
         {children}
         {!hideCloseButton && (
           <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 outline-none focus:ring-2 focus:ring-white/30 sm:right-5 sm:top-5">

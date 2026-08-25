@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -42,6 +43,26 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		body := map[string]interface{}{"fullname": "Frank Ng"}
 		_, _, err := admin.Put("/api/v1/auth/me", body)
 		return err
+	})
+
+	// Wrong current_password must be a 400 validation error, not 401: the
+	// session is valid and only the submitted field is wrong. A 401 makes the
+	// SPA's global interceptor treat the typo as session expiry and log the
+	// user out mid-change — the captive force-change dialog's core error path.
+	reporter.RunTest(flowAuth, "Edge: change password with wrong current password returns 400", func() error {
+		body := map[string]interface{}{
+			"current_password": "WrongCurrent@9",
+			"new_password":     "NewValid@2026x",
+		}
+		apiErr, status, err := admin.PostExpectError("/api/v1/auth/change-password", body)
+		if err != nil {
+			return fmt.Errorf("expected error response: %w", err)
+		}
+		if status != http.StatusBadRequest {
+			return fmt.Errorf("expected 400 (validation), got %d (msg=%s)", status, apiErr.Message)
+		}
+		fmt.Printf("    Wrong current password rejected with %d: %s\n", status, apiErr.Message)
+		return nil
 	})
 
 	// --- Auth edge cases ---

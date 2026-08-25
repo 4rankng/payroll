@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator';
-import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, ShieldAlert, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts';
-import { useProfile } from '@/hooks/api/useProfile';
+import { useLogout } from '@/hooks/api/useAuth';
 import { authService } from '@/services/api/auth.service';
+import type { ChangePasswordRequest, User } from '@/types/api/auth.types';
+import { showSuccessNotification } from '@/utils/error-handler';
 
 /**
  * ForceChangePasswordDialog
@@ -58,16 +59,38 @@ export const ForceChangePasswordDialog = () => {
 
   const isEmployee = isAuthenticated && user?.role === 'employee';
 
+  const queryClient = useQueryClient();
+  // Once /auth/me has answered "no change needed" this session, idle the
+  // query: every employee /auth/me runs an argon2id compare (~64MB alloc,
+  // tens of ms CPU), so refetching on every window focus would tax the auth
+  // path forever. A per-app-load check is all the "catch sessions that
+  // predate this gate" goal needs.
+  const cachedUser = queryClient.getQueryData<User>(['currentUser']);
+  const cleared = cachedUser ? !cachedUser.must_change_password : false;
+
   const currentUserQuery = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => authService.getCurrentUser(),
-    enabled: isEmployee,
+    enabled: isEmployee && !cleared,
     staleTime: 0,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 
-  const { changePasswordMutation } = useProfile();
+  // Dedicated mutation instead of useProfile()'s shared one — mounting
+  // useProfile here would light up its complete-user-profile query for every
+  // admin/partner session too, not just employees inside this gate.
+  const logoutMutation = useLogout();
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: ChangePasswordRequest) => authService.changePassword(data),
+    onSuccess: (response) => {
+      if (response?.message) {
+        showSuccessNotification(response.message);
+      }
+      // Wait 3 seconds before logging out and redirecting to login
+      setTimeout(() => logoutMutation.mutate(), 3000);
+    },
+  });
 
   const form = useForm<ForceChangePasswordFormData>({
     resolver: zodResolver(forceChangePasswordSchema),
@@ -93,6 +116,9 @@ export const ForceChangePasswordDialog = () => {
 
   const isPending = changePasswordMutation.isPending;
   const newPassword = form.watch('newPassword');
+  // Same rules the resolver enforces, so the live indicator can never disagree
+  // with what submit actually rejects.
+  const newPasswordValid = forceChangePasswordSchema.shape.newPassword.safeParse(newPassword).success;
 
   return (
     <Dialog open>
@@ -180,7 +206,20 @@ export const ForceChangePasswordDialog = () => {
                         </button>
                       </div>
                     </FormControl>
-                    {newPassword && <PasswordStrengthIndicator password={newPassword} showRequirements={false} />}
+                    {newPassword && (
+                      <p
+                        className={`ct-label flex items-center gap-1.5 px-0 ${
+                          newPasswordValid ? 'text-[#067647]' : 'text-red-600'
+                        }`}
+                      >
+                        {newPasswordValid ? (
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                          <XCircle className="h-4 w-4" aria-hidden="true" />
+                        )}
+                        {newPasswordValid ? 'Mật khẩu hợp lệ' : 'Mật khẩu chưa hợp lệ'}
+                      </p>
+                    )}
                     <p className="ct-label px-0 text-[var(--employee-text-secondary)]">Gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
                     <FormMessage />
                   </FormItem>

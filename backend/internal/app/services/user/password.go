@@ -81,8 +81,6 @@ func (s *UserService) hashPassword(password string) (string, error) {
 
 // VerifyPasswordHash verifies a password against an encoded hash using constant-time comparison
 func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
-	s.logger.Info("Verifying password hash", "method", "argon2id")
-
 	// Parse the encoded hash
 	var version int
 	var memory, iterations uint32
@@ -138,12 +136,6 @@ func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
 
 	// Compare hashes using constant time comparison for security
 	isValid := subtle.ConstantTimeCompare(hashBytes, providedHash) == 1
-
-	s.logger.Info("Password verification completed",
-		"is_valid", isValid,
-		"memory", memory,
-		"iterations", iterations,
-		"parallelism", parallelism)
 
 	return isValid
 }

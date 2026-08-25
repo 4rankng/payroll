@@ -10,6 +10,15 @@ const flowBulk = "BulkTransfer"
 func runBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter) {
 	reporter.PrintSection("FLOW 1: Weekly/Monthly Payment via Auto Bulk Transfer")
 
+	// Discovery-dependent flow: nothing to drive without a weekly/monthly
+	// project AND an employee (with bank details) on it — skip loudly instead
+	// of nil-dereferencing below when the local DB has no qualifying data.
+	if data.WeeklyProject == nil || data.WeeklyEmployee == nil ||
+		data.MonthlyProject == nil || data.MonthlyEmployee == nil {
+		fmt.Println("    SKIPPED: discovery found no weekly/monthly project+employee with bank details")
+		return
+	}
+
 	cleanupEmployeeTimesheets(client, data.WeeklyProject.ID, data.WeeklyEmployee.ID)
 	cleanupEmployeeTimesheets(client, data.MonthlyProject.ID, data.MonthlyEmployee.ID)
 
