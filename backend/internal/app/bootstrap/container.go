@@ -213,6 +213,8 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 			services.DisbursementRegistry,
 			repos.Bank,
 			services.Wallet,
+			repos.AdvancePaymentRequest,
+			services.EmployeeNotifier,
 			infra.Logger,
 		)
 		infra.Logger.Info("disbursement poller: enabled")

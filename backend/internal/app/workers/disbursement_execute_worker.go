@@ -10,6 +10,7 @@ import (
 	asynqlib "github.com/hibiken/asynq"
 
 	"api-server/internal/app/services/disbursement"
+	"api-server/internal/app/services/notification"
 	"api-server/internal/domain"
 	"api-server/internal/domain/ports/infrastructure"
 	domaintx "api-server/internal/domain/transactions"
@@ -34,6 +35,8 @@ type DisbursementExecuteWorker struct {
 	registry             *disbursement.Registry
 	bankRepo             domain.BankRepository
 	walletSvc            wallet.WalletService
+	advanceReqRepo       domain.AdvancePaymentRequestRepository
+	employeeNotifier     notification.EmployeeNotifier
 	logger               *slog.Logger
 }
 
@@ -42,6 +45,8 @@ func NewDisbursementExecuteWorker(
 	registry *disbursement.Registry,
 	bankRepo domain.BankRepository,
 	walletSvc wallet.WalletService,
+	advanceReqRepo domain.AdvancePaymentRequestRepository,
+	employeeNotifier notification.EmployeeNotifier,
 	logger *slog.Logger,
 ) *DisbursementExecuteWorker {
 	return &DisbursementExecuteWorker{
@@ -49,6 +54,8 @@ func NewDisbursementExecuteWorker(
 		registry:             registry,
 		bankRepo:             bankRepo,
 		walletSvc:            walletSvc,
+		advanceReqRepo:       advanceReqRepo,
+		employeeNotifier:     employeeNotifier,
 		logger:               logger,
 	}
 }
@@ -219,6 +226,13 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 			if !checkResult.Valid {
 				logger.Info("disbursement execute: account check failed",
 					"error_code", checkResult.RawErrorCode)
+				// Permanent account-data errors (e.g. the recipient name does
+				// not match the bank-registered holder) will never succeed on
+				// retry. Fail the request so orphan recovery stops re-enqueueing
+				// it every cycle, and tell the employee what to fix.
+				if isPermanentAccountCheckFailure(checkResult.RawErrorCode) {
+					w.failAdvanceRequest(ctx, p, checkResult.RawErrorCode, checkResult.RawMessage)
+				}
 				return nil // terminal — don't retry
 			}
 
@@ -280,4 +294,46 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		"provider_ref", result.ProviderRef, "status", string(result.Status))
 
 	return nil
+}
+
+// isPermanentAccountCheckFailure reports whether an account-check error code
+// describes a data error that no retry can fix. name_mismatch means the bank
+// confirmed the account belongs to a different holder than the one we stored —
+// without this terminal classification the poller's orphan recovery re-enqueues
+// the request every ~20s forever. Transport errors and provider outages surface
+// as CheckAccount err != nil (asynq retry) or other codes (kept retryable).
+func isPermanentAccountCheckFailure(errorCode string) bool {
+	return errorCode == "name_mismatch"
+}
+
+// failAdvanceRequest marks an advance request FAILED (with the error code as
+// the payment_reference reason, matching the poller's convention for
+// budget_exceeded / missing bank details) and notifies the employee with the
+// provider's message so they can fix their bank info and re-request.
+// Best-effort: failures are logged, never propagated — the wallet_payment row
+// is already recorded as failed, which is the audit trail that matters.
+func (w *DisbursementExecuteWorker) failAdvanceRequest(ctx context.Context, p DisbursementExecutePayload, reason, detail string) {
+	logger := w.logger.With("advance_request_id", p.AdvanceRequestID, "reason", reason)
+
+	req, err := w.advanceReqRepo.GetByID(ctx, p.AdvanceRequestID)
+	if err != nil {
+		logger.Error("disbursement execute: failed to load request for terminal failure", "error", err)
+		return
+	}
+	// Only fail requests still awaiting disbursement — never overwrite a status
+	// an admin already resolved (e.g. cancelled) or that already completed.
+	if req.Status != domain.AdvancePaymentStatusApproved && req.Status != domain.AdvancePaymentStatusPending {
+		logger.Info("disbursement execute: skipping terminal failure — request already resolved", "status", string(req.Status))
+		return
+	}
+
+	if err := w.advanceReqRepo.UpdateStatus(ctx, p.AdvanceRequestID, domain.AdvancePaymentStatusFailed, reason, nil); err != nil {
+		logger.Error("disbursement execute: failed to mark request FAILED", "error", err)
+		return
+	}
+	logger.Info("disbursement execute: request marked FAILED after permanent account-check failure")
+
+	if w.employeeNotifier != nil {
+		w.employeeNotifier.NotifyAdvancePaymentFailed(ctx, req.EmployeeID, req.RequestAmount, detail)
+	}
 }

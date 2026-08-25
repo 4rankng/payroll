@@ -91,6 +91,7 @@ type Services struct {
 	TransactionPort                   serviceports.TransactionPort
 	SettlementUpload                  *settlement.SettlementUploadService
 	Notification                      *notification.NotificationService
+	EmployeeNotifier                  notification.EmployeeNotifier
 	Settings                          *config.SettingsService
 	SettingsConfig                    *config.SettingsConfigService
 	ExcelConverter                    *reporting.ExcelConverterService
@@ -722,6 +723,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Payroll:                           payrollSvc,
 		Ledger:                            ledgerService,
 		Notification:                      notificationService,
+		EmployeeNotifier:                  employeeNotificationService,
 		Settings:                          settingsService,
 		SettingsConfig:                    settingsConfigService,
 		ExcelConverter:                    excelConverterService,
