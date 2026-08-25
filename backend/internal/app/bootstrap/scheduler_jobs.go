@@ -288,10 +288,10 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 9. Cancel pending flexible advance payment requests - 8th at 23:59
+	// 9. Cancel pending flexible advance payment requests - 9th at 23:59 (last day of the tail window)
 	s.AddJob(scheduler.Job{
 		Name:    "cancel_flexible_pending_requests",
-		Cron:    "59 23 8 * *",
+		Cron:    "59 23 9 * *",
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()

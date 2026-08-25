@@ -10,8 +10,8 @@ import (
 // eligibility, and locked-gap detection all branch on this exact value, so a
 // silent change would shift the three-phase window app-wide.
 func TestRequestCutoffDayValue(t *testing.T) {
-	if RequestCutoffDay != 8 {
-		t.Fatalf("RequestCutoffDay = %d, want 8 (window = day 20 of M -> day 8 of M+1)", RequestCutoffDay)
+	if RequestCutoffDay != 9 {
+		t.Fatalf("RequestCutoffDay = %d, want 9 (window = day 20 of M -> day 9 of M+1)", RequestCutoffDay)
 	}
 	if PeriodCycleStartDay != 20 {
 		t.Fatalf("PeriodCycleStartDay = %d, want 20", PeriodCycleStartDay)
@@ -19,11 +19,11 @@ func TestRequestCutoffDayValue(t *testing.T) {
 }
 
 // TestRequestWindowBoundaries exercises the three-phase window around the
-// day-8 cutoff using Asia/Ho_Chi_Minh local dates (the timezone the business
+// day-9 cutoff using Asia/Ho_Chi_Minh local dates (the timezone the business
 // runs in). July 2026 anchors the phases relative to calendar July:
 //
-//	days 1–8  -> tail of the previous period (for_month = June)
-//	days 9–19 -> locked gap
+//	days 1–9  -> tail of the previous period (for_month = June)
+//	days 10–19 -> locked gap
 //	days 20+   → new period opens (for_month rolls to July/August)
 func TestRequestWindowBoundaries(t *testing.T) {
 	vn, err := time.LoadLocation("Asia/Ho_Chi_Minh")
@@ -39,10 +39,10 @@ func TestRequestWindowBoundaries(t *testing.T) {
 		effectiveMonth string
 	}
 	cases := []expect{
-		{8, true, false, false, "2026-06"},  // final cutoff day, still previous period
-		{9, false, true, true, "2026-07"},   // sao ke day, requests locked
-		{10, false, true, true, "2026-07"},  // locked gap
-		{11, false, true, true, "2026-07"},  // mid locked gap
+		{9, true, false, false, "2026-06"},  // final cutoff day, still previous period
+		{10, false, true, true, "2026-07"},  // sao ke day, requests locked
+		{11, false, true, true, "2026-07"},  // locked gap
+		{15, false, true, true, "2026-07"},  // mid locked gap
 		{19, false, true, true, "2026-07"},  // last locked-gap day
 		{20, false, false, true, "2026-08"}, // new period opens
 	}

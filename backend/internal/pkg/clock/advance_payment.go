@@ -13,8 +13,8 @@ const (
 	// month) through which employees may still request an advance for the
 	// previous period.  The request window runs from PeriodCycleStartDay of
 	// the current month through RequestCutoffDay of the next month (inclusive).
-	// Concretely the window is day 20 of month M through day 8 of month M+1.
-	RequestCutoffDay = 8
+	// Concretely the window is day 20 of month M through day 9 of month M+1.
+	RequestCutoffDay = 9
 )
 
 // CurrentAdvanceMonth returns the advance payment period month for "now".
@@ -46,8 +46,8 @@ func NextAdvanceMonthFromTime(t time.Time) string {
 
 // EffectiveAdvanceMonth returns the month that CreateRequest would use right now,
 // accounting for the three-phase window rule:
-//   - Days 1–8   (tail of previous period): request for the previous advance month
-//   - Days 9–19  (locked gap): locked unless the current month's salary data exists
+//   - Days 1–9   (tail of previous period): request for the previous advance month
+//   - Days 10–19 (locked gap): locked unless the current month's salary data exists
 //   - Days 20+   (new period open): request for the current advance month,
 //     provided admin has already uploaded bang lương for that month
 func EffectiveAdvanceMonth(c Clock) string {

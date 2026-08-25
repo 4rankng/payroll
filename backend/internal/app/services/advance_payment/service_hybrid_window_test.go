@@ -12,7 +12,7 @@ import (
 )
 
 // Hybrid employees (self-checkin enabled + prior-month FlexPay quota) may use
-// the regular endpoint ONLY for the previous-period tail (days 1-8). The
+// the regular endpoint ONLY for the previous-period tail (days 1-9). The
 // current month must go through the self-checkin flow whose window opens on
 // day 10 — the regular endpoint must never serve it to them.
 func TestCreateRequestHybridWindow(t *testing.T) {
@@ -23,11 +23,11 @@ func TestCreateRequestHybridWindow(t *testing.T) {
 		wantErr  bool
 	}{
 		{"day 5 prev month (tail open)", time.Date(2026, 8, 5, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
-		{"day 8 prev month (last tail day)", time.Date(2026, 8, 8, 23, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
-		{"day 9 prev month (tail closed)", time.Date(2026, 8, 9, 0, 0, 30, 0, clock.DefaultLocation), "2026-07", true},
+		{"day 9 prev month (last tail day)", time.Date(2026, 8, 9, 23, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
+		{"day 10 prev month (tail closed)", time.Date(2026, 8, 10, 0, 0, 30, 0, clock.DefaultLocation), "2026-07", true},
 		{"day 31 prev month (closes the hole)", time.Date(2026, 8, 31, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", true},
 		{"day 5 current month (tail is prev-only)", time.Date(2026, 8, 5, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},
-		{"day 9 current month (checkin window bypass)", time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},
+		{"day 10 current month (checkin window bypass)", time.Date(2026, 8, 10, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},
 		{"day 15 current month (checkin window bypass)", time.Date(2026, 8, 15, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},
 		{"day 25 current month (checkin window bypass)", time.Date(2026, 8, 25, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},
 	}
@@ -79,8 +79,8 @@ func TestCreateRequestNonHybridWindowUnchanged(t *testing.T) {
 		wantErr  bool
 	}{
 		{"day 5 prev month", time.Date(2026, 8, 5, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
-		{"day 9 prev month", time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", true},
-		{"day 9 current month with quota", time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", false},
+		{"day 10 prev month", time.Date(2026, 8, 10, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", true},
+		{"day 10 current month with quota", time.Date(2026, 8, 10, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", false},
 		{"day 25 current month", time.Date(2026, 8, 25, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", false},
 	}
 

@@ -378,12 +378,12 @@ describe("isPriorMonthRequestable", () => {
     quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 3_000_000 }],
   } as never;
 
-  it("allows the prior month on day 8 when prev-month quota exists", () => {
-    expect(isPriorMonthRequestable(new Date(2026, 7, 8, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
+  it("allows the prior month on day 9 when prev-month quota exists", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 9, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
   });
 
-  it("rejects the prior month from day 9 (tail closed)", () => {
-    expect(isPriorMonthRequestable(new Date(2026, 7, 9, 0, 0), prevMonth, infoWithPrevQuota)).toBe(false);
+  it("rejects the prior month from day 10 (tail closed)", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 10, 0, 0), prevMonth, infoWithPrevQuota)).toBe(false);
     expect(isPriorMonthRequestable(new Date(2026, 7, 31), prevMonth, infoWithPrevQuota)).toBe(false);
   });
 
@@ -418,7 +418,7 @@ describe("getInitialHybridAdvanceMonth", () => {
     ).toBe("2026-07");
   });
 
-  it("opens on the current month after day 8", () => {
+  it("opens on the current month after day 9", () => {
     const info = {
       forMonth: "2026-08",
       quotas: [
@@ -426,7 +426,7 @@ describe("getInitialHybridAdvanceMonth", () => {
       ],
     } as never;
     expect(
-      getInitialHybridAdvanceMonth(new Date(2026, 7, 9), "2026-08", "2026-07", info),
+      getInitialHybridAdvanceMonth(new Date(2026, 7, 10), "2026-08", "2026-07", info),
     ).toBe("2026-08");
   });
 

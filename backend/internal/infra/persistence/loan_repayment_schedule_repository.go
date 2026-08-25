@@ -20,13 +20,24 @@ func NewLoanRepaymentScheduleRepository(db *Database) domain.LoanRepaymentSchedu
 	}
 }
 
+// db returns the appropriate DB instance for the context — the caller's
+// open transaction when one exists (row locks, inserts, and updates must
+// share it; a second pooled connection would self-deadlock on locks this
+// transaction holds and break atomicity).
+func (r *LoanRepaymentScheduleRepository) db(ctx context.Context) *gorm.DB {
+	if txCtx, ok := domain.GetTransactionFromContext(ctx); ok && txCtx.TX != nil {
+		return txCtx.TX.WithContext(ctx)
+	}
+	return r.DB.WithContext(ctx)
+}
+
 func (r *LoanRepaymentScheduleRepository) Create(ctx context.Context, schedule *domain.LoanRepaymentSchedule) error {
-	return r.DB.WithContext(ctx).Create(schedule).Error
+	return r.db(ctx).Create(schedule).Error
 }
 
 func (r *LoanRepaymentScheduleRepository) GetByID(ctx context.Context, id uint) (*domain.LoanRepaymentSchedule, error) {
 	var schedule domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).First(&schedule, id).Error
+	err := r.db(ctx).First(&schedule, id).Error
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -54,7 +65,7 @@ func (r *LoanRepaymentScheduleRepository) GetByIDForUpdate(ctx context.Context, 
 
 func (r *LoanRepaymentScheduleRepository) GetByLoanID(ctx context.Context, loanID uint) ([]*domain.LoanRepaymentSchedule, error) {
 	var schedules []*domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Where("loan_id = ?", loanID).
 		Order("period ASC").
 		Find(&schedules).Error
@@ -71,7 +82,7 @@ func (r *LoanRepaymentScheduleRepository) GetByLoanIDs(ctx context.Context, loan
 		return make(map[uint][]*domain.LoanRepaymentSchedule), nil
 	}
 	var schedules []*domain.LoanRepaymentSchedule
-	if err := r.DB.WithContext(ctx).
+	if err := r.db(ctx).
 		Where("loan_id IN ?", loanIDs).
 		Order("loan_id, period ASC").
 		Find(&schedules).Error; err != nil {
@@ -86,7 +97,7 @@ func (r *LoanRepaymentScheduleRepository) GetByLoanIDs(ctx context.Context, loan
 
 func (r *LoanRepaymentScheduleRepository) GetPendingSchedulesByLoan(ctx context.Context, loanID uint) ([]*domain.LoanRepaymentSchedule, error) {
 	var schedules []*domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Where("loan_id = ? AND status = ?", loanID, domain.ScheduleStatusPending).
 		Order("due_date ASC").
 		Find(&schedules).Error
@@ -96,7 +107,7 @@ func (r *LoanRepaymentScheduleRepository) GetPendingSchedulesByLoan(ctx context.
 
 func (r *LoanRepaymentScheduleRepository) GetDueSchedules(ctx context.Context, dueDate time.Time) ([]*domain.LoanRepaymentSchedule, error) {
 	var schedules []*domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Where("status = ? AND transaction_id IS NULL AND due_date <= ?", domain.ScheduleStatusPending, dueDate).
 		Order("due_date ASC, id ASC").
 		Find(&schedules).Error
@@ -106,7 +117,7 @@ func (r *LoanRepaymentScheduleRepository) GetDueSchedules(ctx context.Context, d
 
 func (r *LoanRepaymentScheduleRepository) ListPendingForReminder(ctx context.Context, start, end time.Time) ([]*domain.LoanRepaymentReminder, error) {
 	var reminders []*domain.LoanRepaymentReminder
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Table("loan_repayment_schedules AS schedules").
 		Select(`
 			schedules.id AS schedule_id,
@@ -127,7 +138,7 @@ func (r *LoanRepaymentScheduleRepository) ListPendingForReminder(ctx context.Con
 
 func (r *LoanRepaymentScheduleRepository) GetByTransactionID(ctx context.Context, transactionID uint) (*domain.LoanRepaymentSchedule, error) {
 	var schedule domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Where("transaction_id = ?", transactionID).
 		First(&schedule).Error
 	if err != nil {
@@ -146,7 +157,7 @@ func (r *LoanRepaymentScheduleRepository) ListByTransactionIDs(ctx context.Conte
 	}
 
 	var schedules []*domain.LoanRepaymentSchedule
-	err := r.DB.WithContext(ctx).
+	err := r.db(ctx).
 		Where("transaction_id IN ?", transactionIDs).
 		Find(&schedules).Error
 
@@ -154,9 +165,9 @@ func (r *LoanRepaymentScheduleRepository) ListByTransactionIDs(ctx context.Conte
 }
 
 func (r *LoanRepaymentScheduleRepository) Update(ctx context.Context, schedule *domain.LoanRepaymentSchedule) error {
-	return r.DB.WithContext(ctx).Save(schedule).Error
+	return r.db(ctx).Save(schedule).Error
 }
 
 func (r *LoanRepaymentScheduleRepository) Delete(ctx context.Context, id uint) error {
-	return r.DB.WithContext(ctx).Delete(&domain.LoanRepaymentSchedule{}, id).Error
+	return r.db(ctx).Delete(&domain.LoanRepaymentSchedule{}, id).Error
 }
