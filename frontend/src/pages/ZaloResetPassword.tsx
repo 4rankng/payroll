@@ -53,13 +53,27 @@ const ZaloResetPassword = () => {
   }, []);
 
   const handleCodeChange = useCallback((idx: number, val: string) => {
-    const digit = val.replace(/\D/g, "").slice(-1);
+    const digits = val.replace(/\D/g, "");
+    // Mobile "autofill from message" drops the whole code into whichever box
+    // is focused as one multi-digit value (no `paste` event fires) — split it
+    // across the remaining boxes the same way handleCodePaste does.
+    if (digits.length > 1) {
+      setCode((prev) => {
+        const next = [...prev];
+        for (let i = 0; i < digits.length && idx + i < 6; i++) {
+          next[idx + i] = digits[i];
+        }
+        return next;
+      });
+      inputsRef.current[Math.min(idx + digits.length, 5)]?.focus();
+      return;
+    }
     setCode((prev) => {
       const next = [...prev];
-      next[idx] = digit;
+      next[idx] = digits;
       return next;
     });
-    if (digit && idx < 5) {
+    if (digits && idx < 5) {
       inputsRef.current[idx + 1]?.focus();
     }
   }, []);
