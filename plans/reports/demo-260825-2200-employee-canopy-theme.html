@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Employee portal — emerald canopy theme</title>
+<style>
+  :root {
+    --page: #f5f7f9;
+    --page-warm: #f3f6f4;
+    --surface: #ffffff;
+    --text: #101828;
+    --text-2: #667085;
+    --text-3: #98a2b3;
+    --border: #e4e7ec;
+    --accent: #08783e;
+    --accent-strong: #075c33;
+    --accent-soft: #eaf8f0;
+    --accent-border: #b7e4ca;
+    --warn: #b54708;
+    --warn-strong: #93370d;
+    --warn-soft: #fff7e8;
+    --warn-border: #fedf89;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+    --cta-shadow: 0 4px 16px rgba(8,120,62,.20);
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0; background: #d8dde1;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 70px 12px 40px;
+  }
+  .toggle-bar {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 50;
+    display: flex; gap: 4px; background: #101828; padding: 5px; border-radius: 11px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+  .toggle-bar button {
+    border: none; background: transparent; color: #98a2b3;
+    font-size: 12px; font-weight: 500; padding: 7px 16px; border-radius: 7px;
+    cursor: pointer; font-family: inherit;
+  }
+  .toggle-bar button.active { background: #fff; color: #101828; }
+
+  .stage { display: flex; gap: 28px; align-items: flex-start; }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phone-label { font-size: 11px; font-weight: 600; color: #475467; letter-spacing: .04em; text-transform: uppercase; }
+  .phone {
+    width: 360px; height: 720px; overflow-y: auto; overflow-x: hidden;
+    background: var(--page); border-radius: 34px; border: 9px solid #16181a;
+    box-shadow: 0 22px 50px rgba(0,0,0,.32);
+  }
+  .phone::-webkit-scrollbar { width: 0; }
+
+  /* ================= CURRENT ================= */
+  .cur-appbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 12px; background: #fff; border-bottom: 1px solid var(--border);
+  }
+  .cur-appbar .nm { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
+  .cur-appbar .rl { font-size: 12px; color: var(--text-3); margin: 2px 0 0; }
+  .ic-btn {
+    width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border);
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    color: var(--text-2); font-size: 16px;
+  }
+  .cur-main { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  .cur-hero {
+    border-radius: 16px; padding: 20px; color: #fff;
+    background: linear-gradient(150deg,#0a8f4d 0%,#08783e 46%,#065f33 100%);
+  }
+  .cur-hero .eb { font-size: 12px; color: rgba(255,255,255,.65); margin: 0 0 14px; }
+  .cur-hero .lb { font-size: 13px; color: rgba(255,255,255,.7); margin: 0 0 4px; }
+  .cur-hero .am { font-size: 28px; font-weight: 600; margin: 0 0 16px; }
+  .cur-hero .st { display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: rgba(255,255,255,.15); border-radius: 10px; overflow: hidden; }
+  .cur-hero .st > div { background: rgba(255,255,255,.07); padding: 10px 12px; }
+  .cur-hero .st p:first-child { font-size: 11px; color: rgba(255,255,255,.55); margin: 0 0 3px; }
+  .cur-hero .st p:last-child { font-size: 14px; font-weight: 600; margin: 0; }
+  .cur-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .cur-cardhead {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+  .cur-cardhead h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text); }
+  .cur-cardhead .ct { font-size: 11px; color: var(--text-3); }
+  .cur-chip {
+    width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--accent-border);
+    background: var(--accent-soft); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .cur-daylist { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .cur-day { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .cur-day .top { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; }
+  .cur-day .top .l { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  .cur-grid { display: grid; grid-template-columns: 1fr 1fr 1fr;
+    border-top: 1px solid var(--border); background: #f5f7f9; }
+  .cur-grid > div { text-align: center; padding: 9px 4px; border-right: 1px solid var(--border); }
+  .cur-grid > div:last-child { border-right: none; }
+  .cur-grid p:first-child { font-size: 10px; color: var(--text-3); margin: 0 0 3px; }
+  .cur-grid p:last-child { font-size: 12px; font-weight: 600; color: var(--text); margin: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.paid { background: var(--accent); }
+  .dot.part { background: var(--warn); }
+  .dot.none { background: var(--text-3); }
+  .bdg { font-size: 10px; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .bdg.part { background: var(--warn-soft); color: var(--warn-strong); border: 1px solid var(--warn-border); }
+  .bdg.none { background: #f5f7f9; color: var(--text-2); border: 1px solid var(--border); }
+  .cur-bank { padding: 16px; }
+  .cur-bank h2 { font-size: 14px; font-weight: 600; margin: 0 0 12px; }
+  .brow { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .brow:last-child { border-bottom: none; }
+  .brow span:first-child { color: var(--text-2); }
+  .brow span:last-child { color: var(--text); font-weight: 500; }
+
+  /* ================= NEW: CANOPY ================= */
+  .nw { background: var(--page-warm); min-height: 100%; }
+  .canopy {
+    background: linear-gradient(158deg,#0b9a53 0%,#08783e 52%,#065c32 100%);
+    padding: 18px 18px 26px; color: #fff; position: relative;
+    border-radius: 0 0 26px 26px;
+  }
+  .canopy::after {
+    content: ""; position: absolute; right: -30px; top: -40px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: rgba(255,255,255,.07);
+  }
+  .cn-top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+  .cn-greet { font-size: 12px; color: rgba(255,255,255,.62); margin: 0 0 2px; }
+  .cn-name { font-size: 16px; font-weight: 600; margin: 0; }
+  .cn-icons { display: flex; gap: 8px; }
+  .cn-ic {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    position: relative;
+  }
+  .cn-ic .badge-dot {
+    position: absolute; top: 7px; right: 8px; width: 8px; height: 8px;
+    border-radius: 50%; background: #fedf89; border: 1.5px solid #08783e;
+  }
+  .cn-body { margin-top: 22px; position: relative; z-index: 1; }
+  .cn-lbl { font-size: 13px; color: rgba(255,255,255,.68); margin: 0 0 6px; display: flex; align-items: center; gap: 7px; }
+  .cn-amt-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+  .cn-amt { font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -.01em; line-height: 1.1; }
+  .cn-eye {
+    width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.18); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; margin-bottom: 4px; flex-shrink: 0;
+  }
+  .cn-prog { margin-top: 18px; position: relative; z-index: 1; }
+  .cn-prog-track { height: 7px; border-radius: 99px; background: rgba(255,255,255,.20); overflow: hidden; }
+  .cn-prog-fill { height: 100%; width: 65%; border-radius: 99px; background: #fff; }
+  .cn-prog-meta { display: flex; justify-content: space-between; margin-top: 9px; }
+  .cn-prog-meta p { margin: 0; font-size: 11px; color: rgba(255,255,255,.62); }
+  .cn-prog-meta strong { display: block; font-size: 13px; font-weight: 600; color: #fff; margin-top: 2px; }
+  .cn-prog-meta .r { text-align: right; }
+
+  .nw-main { padding: 16px 16px 30px; display: flex; flex-direction: column; gap: 18px; }
+
+  .mo-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 9px 10px; box-shadow: var(--shadow);
+  }
+  .mo-nav .arw {
+    width: 32px; height: 32px; border-radius: 9px; background: var(--accent-soft);
+    color: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .mo-nav .mo { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .sec-head h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
+  .sec-head .ct { font-size: 12px; color: var(--text-2); }
+
+  .day-rows { display: flex; flex-direction: column; gap: 8px; }
+  .day-row {
+    display: flex; align-items: stretch; background: #fff;
+    border: 1px solid var(--border); border-radius: 13px; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .rail { width: 4px; flex-shrink: 0; }
+  .rail.paid { background: var(--accent); }
+  .rail.part { background: var(--warn); }
+  .rail.none { background: #d0d5dd; }
+  .day-in { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 12px 13px; gap: 10px; min-width: 0; }
+  .day-l { min-width: 0; }
+  .day-date { font-size: 14px; font-weight: 600; color: var(--text); margin: 0; text-transform: capitalize; }
+  .day-meta { font-size: 12px; color: var(--text-2); margin: 3px 0 0; display: flex; align-items: center; gap: 5px; }
+  .day-r { text-align: right; flex-shrink: 0; }
+  .day-amt { font-size: 16px; font-weight: 600; color: var(--text); margin: 0; font-variant-numeric: tabular-nums; }
+  .day-stat { font-size: 11px; margin: 3px 0 0; font-weight: 500; display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+  .day-stat.paid { color: var(--accent); }
+  .day-stat.part { color: var(--warn-strong); }
+  .day-stat.none { color: var(--text-3); }
+
+  .bank-new { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .bank-head { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-bottom: 1px solid var(--border); }
+  .bank-head .chip {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft);
+    border: 1px solid var(--accent-border); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .bank-head h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text); }
+  .bank-body { padding: 4px 14px 12px; }
+
+  .cta {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: #fff; border-radius: 13px;
+    padding: 15px; font-size: 15px; font-weight: 600; box-shadow: var(--cta-shadow);
+  }
+</style>
+</head>
+<body>
+
+<div class="toggle-bar">
+  <button class="active" onclick="show('both',this)">So sánh</button>
+  <button onclick="show('cur',this)">Hiện tại</button>
+  <button onclick="show('new',this)">Đề xuất</button>
+</div>
+
+<div class="stage" id="stage">
+
+  <div class="phone-wrap" id="w-cur">
+    <span class="phone-label">Hiện tại</span>
+    <div class="phone">
+      <div class="cur-appbar">
+        <div><p class="nm">Nguyễn Văn A</p><p class="rl">Nhân viên</p></div>
+        <div style="display:flex;gap:8px"><div class="ic-btn">&#9993;</div><div class="ic-btn">&#9776;</div></div>
+      </div>
+      <div class="cur-main">
+        <div class="cur-hero">
+          <p class="eb">VÍ LƯƠNG CỦA BẠN</p>
+          <p class="lb">Tổng lương tháng 8, 2026</p>
+          <p class="am">1.850.000 &#8363;</p>
+          <div class="st">
+            <div><p>Giờ công</p><p>96 giờ</p></div>
+            <div><p>Ngày công</p><p>12 ngày</p></div>
+          </div>
+        </div>
+        <div class="cur-card">
+          <div class="cur-cardhead">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="cur-chip">&#9636;</span><h2>Bảng công</h2>
+            </div>
+            <span class="ct">12 mục</span>
+          </div>
+          <div class="cur-daylist">
+            <div class="cur-day">
+              <div class="top"><span class="l"><span class="dot paid"></span>Thứ hai, 24/08</span></div>
+              <div class="cur-grid">
+                <div><p>Giờ công</p><p>8 giờ</p></div>
+                <div><p>Tổng lương</p><p>320.000</p></div>
+                <div><p>Đã nhận</p><p>320.000</p></div>
+              </div>
+            </div>
+            <div class="cur-day">
+              <div class="top"><span class="l"><span class="dot part"></span>Chủ nhật, 23/08</span><span class="bdg part">Đã trả một phần</span></div>
+              <div class="cur-grid">
+                <div><p>Giờ công</p><p>7 giờ</p></div>
+                <div><p>Tổng lương</p><p>280.000</p></div>
+                <div><p>Đã nhận</p><p>140.000</p></div>
+              </div>
+            </div>
+            <div class="cur-day">
+              <div class="top"><span class="l"><span class="dot none"></span>Thứ bảy, 22/08</span><span class="bdg none">Chưa trả</span></div>
+              <div class="cur-grid">
+                <div><p>Giờ công</p><p>8 giờ</p></div>
+                <div><p>Tổng lương</p><p>320.000</p></div>
+                <div><p>Đã nhận</p><p>0</p></div>
+              </div>
+            </div>
+            <div class="cur-day">
+              <div class="top"><span class="l"><span class="dot paid"></span>Thứ sáu, 21/08</span></div>
+              <div class="cur-grid">
+                <div><p>Giờ công</p><p>8 giờ</p></div>
+                <div><p>Tổng lương</p><p>320.000</p></div>
+                <div><p>Đã nhận</p><p>320.000</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cur-card cur-bank">
+          <h2>Thông tin ngân hàng</h2>
+          <div class="brow"><span>Ngân hàng</span><span>MB Bank</span></div>
+          <div class="brow"><span>Số tài khoản</span><span>0123456789</span></div>
+          <div class="brow"><span>Chủ tài khoản</span><span>NGUYEN VAN A</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phone-wrap" id="w-new">
+    <span class="phone-label">Đề xuất — emerald canopy</span>
+    <div class="phone">
+      <div class="nw">
+        <div class="canopy">
+          <div class="cn-top">
+            <div>
+              <p class="cn-greet">Chào buổi tối</p>
+              <p class="cn-name">Nguyễn Văn A</p>
+            </div>
+            <div class="cn-icons">
+              <div class="cn-ic">&#9993;<span class="badge-dot"></span></div>
+              <div class="cn-ic">&#9776;</div>
+            </div>
+          </div>
+
+          <div class="cn-body">
+            <p class="cn-lbl">Tổng lương tháng 8, 2026</p>
+            <div class="cn-amt-row">
+              <p class="cn-amt">1.850.000 &#8363;</p>
+              <div class="cn-eye">&#128065;</div>
+            </div>
+          </div>
+
+          <div class="cn-prog">
+            <div class="cn-prog-track"><div class="cn-prog-fill"></div></div>
+            <div class="cn-prog-meta">
+              <p>Đã nhận<strong>1.200.000 &#8363;</strong></p>
+              <p class="r">Còn lại<strong>650.000 &#8363;</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="nw-main">
+          <div class="mo-nav">
+            <span class="arw">&#8249;</span>
+            <span class="mo">Tháng 8, 2026</span>
+            <span class="arw">&#8250;</span>
+          </div>
+
+          <div>
+            <div class="sec-head">
+              <h2>Bảng công</h2>
+              <span class="ct">12 ngày &middot; 96 giờ</span>
+            </div>
+            <div class="day-rows">
+
+              <div class="day-row">
+                <div class="rail paid"></div>
+                <div class="day-in">
+                  <div class="day-l">
+                    <p class="day-date">Thứ hai, 24/08</p>
+                    <p class="day-meta">8 giờ &middot; Ca ngày</p>
+                  </div>
+                  <div class="day-r">
+                    <p class="day-amt">320.000 &#8363;</p>
+                    <p class="day-stat paid">&#10003; Đã trả đủ</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="day-row">
+                <div class="rail part"></div>
+                <div class="day-in">
+                  <div class="day-l">
+                    <p class="day-date">Chủ nhật, 23/08</p>
+                    <p class="day-meta">7 giờ &middot; Ca ngày</p>
+                  </div>
+                  <div class="day-r">
+                    <p class="day-amt">280.000 &#8363;</p>
+                    <p class="day-stat part">&#9679; Đã trả 140.000</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="day-row">
+                <div class="rail none"></div>
+                <div class="day-in">
+                  <div class="day-l">
+                    <p class="day-date">Thứ bảy, 22/08</p>
+                    <p class="day-meta">8 giờ &middot; Ca đêm</p>
+                  </div>
+                  <div class="day-r">
+                    <p class="day-amt">320.000 &#8363;</p>
+                    <p class="day-stat none">&#9675; Chưa trả</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="day-row">
+                <div class="rail paid"></div>
+                <div class="day-in">
+                  <div class="day-l">
+                    <p class="day-date">Thứ sáu, 21/08</p>
+                    <p class="day-meta">8 giờ &middot; Ca ngày</p>
+                  </div>
+                  <div class="day-r">
+                    <p class="day-amt">320.000 &#8363;</p>
+                    <p class="day-stat paid">&#10003; Đã trả đủ</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="day-row">
+                <div class="rail paid"></div>
+                <div class="day-in">
+                  <div class="day-l">
+                    <p class="day-date">Thứ năm, 20/08</p>
+                    <p class="day-meta">8 giờ &middot; Ca ngày</p>
+                  </div>
+                  <div class="day-r">
+                    <p class="day-amt">320.000 &#8363;</p>
+                    <p class="day-stat paid">&#10003; Đã trả đủ</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="bank-new">
+            <div class="bank-head">
+              <span class="chip">&#8801;</span>
+              <h2>Tài khoản nhận lương</h2>
+            </div>
+            <div class="bank-body">
+              <div class="brow"><span>Ngân hàng</span><span>MB Bank</span></div>
+              <div class="brow"><span>Số tài khoản</span><span>0123456789</span></div>
+              <div class="brow"><span>Chủ tài khoản</span><span>NGUYEN VAN A</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(mode, btn) {
+  document.querySelectorAll('.toggle-bar button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('w-cur').style.display = (mode === 'new') ? 'none' : 'flex';
+  document.getElementById('w-new').style.display = (mode === 'cur') ? 'none' : 'flex';
+}
+</script>
+</body>
+</html>

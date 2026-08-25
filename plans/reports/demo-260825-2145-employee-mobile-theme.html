@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Employee portal — mobile theme demo</title>
+<style>
+  :root {
+    --employee-page: #f5f7f9;
+    --employee-surface: #ffffff;
+    --employee-text: #101828;
+    --employee-text-secondary: #667085;
+    --employee-text-muted: #98a2b3;
+    --employee-border: #e4e7ec;
+    --employee-accent: #08783e;
+    --employee-accent-strong: #075c33;
+    --employee-accent-soft: #eaf8f0;
+    --employee-accent-border: #b7e4ca;
+    --employee-warning: #b54708;
+    --employee-warning-strong: #93370d;
+    --employee-warning-soft: #fff7e8;
+    --employee-warning-border: #fedf89;
+    --employee-shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+    --employee-cta-shadow: 0 2px 4px rgba(8,120,62,.16), 0 4px 12px rgba(8,120,62,.14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #dfe3e6;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+  }
+  .toggle-bar {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    gap: 8px;
+    background: #101828;
+    padding: 6px;
+    border-radius: 10px;
+  }
+  .toggle-bar button {
+    border: none;
+    background: transparent;
+    color: #98a2b3;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .toggle-bar button.active { background: #ffffff; color: #101828; }
+  .phone {
+    width: 375px;
+    max-width: 100vw;
+    background: var(--employee-page);
+    border-radius: 36px;
+    border: 8px solid #1a1a1a;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    margin-top: 48px;
+  }
+  .phone.before .accent-header { background: #ffffff !important; border-color: var(--employee-border) !important; }
+  .phone.before .accent-header h2, .phone.before .accent-header .count { color: var(--employee-text-secondary) !important; }
+  .phone.before .accent-header .chip { background: var(--employee-accent-soft) !important; }
+  .phone.before .day-card { box-shadow: none !important; }
+  .phone.before .bank-card { box-shadow: none !important; }
+  .header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    background: var(--employee-surface);
+    border-bottom: 1px solid var(--employee-border);
+  }
+  .header-bar .name { font-size: 15px; font-weight: 600; color: var(--employee-text); margin: 0; }
+  .header-bar .role { font-size: 12px; color: var(--employee-text-muted); margin: 2px 0 0; }
+  .header-icons { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    border: 1px solid var(--employee-border); background: var(--employee-surface);
+    display: flex; align-items: center; justify-content: center; color: var(--employee-text-secondary);
+  }
+  main { padding: 16px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+  .hero {
+    border-radius: 18px;
+    padding: 20px;
+    color: #fff;
+    background: linear-gradient(150deg, #0a8f4d 0%, #08783e 46%, #065f33 100%);
+    box-shadow: var(--employee-cta-shadow);
+  }
+  .hero .eyebrow { font-size: 12px; letter-spacing: .02em; color: rgba(255,255,255,.65); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .hero .eyebrow .wallet-ic { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; }
+  .hero .title { font-size: 14px; color: rgba(255,255,255,.75); margin: 0 0 4px; }
+  .hero .amount { font-size: 30px; font-weight: 600; margin: 0 0 16px; }
+  .hero .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; overflow: hidden; }
+  .hero .stat { background: rgba(255,255,255,.06); padding: 10px 12px; }
+  .hero .stat p:first-child { font-size: 11px; color: rgba(255,255,255,.55); margin: 0 0 4px; }
+  .hero .stat p:last-child { font-size: 14px; font-weight: 600; margin: 0; }
+  .card { background: var(--employee-surface); border: 1px solid var(--employee-border); border-radius: 16px; overflow: hidden; box-shadow: var(--employee-shadow); }
+  .accent-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; background: var(--employee-accent-soft); border-bottom: 1px solid var(--employee-accent-border);
+  }
+  .accent-header .left { display: flex; align-items: center; gap: 10px; }
+  .accent-header .chip { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--employee-accent-border); background: #fff; display: flex; align-items: center; justify-content: center; color: var(--employee-accent); }
+  .accent-header h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--employee-accent-strong); }
+  .accent-header .count { font-size: 11px; color: var(--employee-accent); background: transparent; }
+  .day-list { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .day-card { border: 1px solid var(--employee-border); border-radius: 14px; overflow: hidden; box-shadow: var(--employee-shadow); }
+  .day-card .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; }
+  .day-card .row .left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--employee-text); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.paid { background: var(--employee-accent); }
+  .dot.partial { background: var(--employee-warning); }
+  .dot.none { background: var(--employee-text-muted); }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; }
+  .badge.partial { background: var(--employee-warning-soft); color: var(--employee-warning-strong); border: 1px solid var(--employee-warning-border); }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--employee-border); background: #f5f7f9; }
+  .stat-row > div { text-align: center; padding: 8px; border-right: 1px solid var(--employee-border); }
+  .stat-row > div:last-child { border-right: none; }
+  .stat-row p:first-child { font-size: 10px; color: var(--employee-text-muted); margin: 0 0 2px; }
+  .stat-row p:last-child { font-size: 12px; font-weight: 600; color: var(--employee-text); margin: 0; }
+  .stat-row .paid-amt { color: var(--employee-accent); }
+  .stat-row .warn-amt { color: var(--employee-warning); }
+  .bank-card { padding: 16px; }
+  .bank-card h2 { font-size: 14px; font-weight: 600; margin: 0 0 12px; color: var(--employee-text); }
+  .bank-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--employee-border); font-size: 13px; }
+  .bank-row:last-child { border-bottom: none; }
+  .bank-row span:first-child { color: var(--employee-text-secondary); }
+  .bank-row span:last-child { color: var(--employee-text); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="toggle-bar">
+  <button class="active" onclick="setMode('after')">Đề xuất</button>
+  <button onclick="setMode('before')">Hiện tại</button>
+</div>
+
+<div class="phone" id="phone">
+  <div class="header-bar">
+    <div>
+      <p class="name">Nguyễn Văn A</p>
+      <p class="role">Nhân viên</p>
+    </div>
+    <div class="header-icons">
+      <div class="icon-btn">&#128276;</div>
+      <div class="icon-btn">&#8942;</div>
+    </div>
+  </div>
+
+  <main>
+    <div class="hero">
+      <p class="eyebrow"><span class="wallet-ic">&#128176;</span> Ví lương của bạn</p>
+      <p class="title">Tháng 8, 2026</p>
+      <p class="amount">1.850.000 &#8363;</p>
+      <div class="stats">
+        <div class="stat"><p>Giờ công</p><p>96 giờ</p></div>
+        <div class="stat"><p>Ngày công</p><p>12 ngày</p></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="accent-header">
+          <div class="left">
+            <span class="chip">&#128203;</span>
+            <h2>Bảng công</h2>
+          </div>
+          <span class="count">12 mục</span>
+        </div>
+        <div class="day-list">
+          <div class="day-card">
+            <div class="row">
+              <span class="left"><span class="dot paid"></span>Thứ hai, 24/08</span>
+            </div>
+            <div class="stat-row">
+              <div><p>Giờ công</p><p>8 giờ</p></div>
+              <div><p>Tổng lương</p><p>320.000</p></div>
+              <div><p>Đã nhận</p><p class="paid-amt">320.000</p></div>
+            </div>
+          </div>
+          <div class="day-card">
+            <div class="row">
+              <span class="left"><span class="dot partial"></span>Chủ nhật, 23/08</span>
+              <span class="badge partial">Đã trả một phần</span>
+            </div>
+            <div class="stat-row">
+              <div><p>Giờ công</p><p>7 giờ</p></div>
+              <div><p>Tổng lương</p><p>280.000</p></div>
+              <div><p>Đã nhận</p><p class="warn-amt">140.000</p></div>
+            </div>
+          </div>
+          <div class="day-card">
+            <div class="row">
+              <span class="left"><span class="dot none"></span>Thứ bảy, 22/08</span>
+            </div>
+            <div class="stat-row">
+              <div><p>Giờ công</p><p>8 giờ</p></div>
+              <div><p>Tổng lương</p><p>320.000</p></div>
+              <div><p>Đã nhận</p><p>0</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bank-card">
+      <h2>Thông tin ngân hàng</h2>
+      <div class="bank-row"><span>Ngân hàng</span><span>MB Bank</span></div>
+      <div class="bank-row"><span>Số tài khoản</span><span>0123456789</span></div>
+      <div class="bank-row"><span>Chủ tài khoản</span><span>NGUYEN VAN A</span></div>
+    </div>
+  </main>
+</div>
+
+<script>
+function setMode(mode) {
+  var phone = document.getElementById('phone');
+  var btns = document.querySelectorAll('.toggle-bar button');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  event.target.classList.add('active');
+  phone.className = 'phone ' + mode;
+}
+</script>
+</body>
+</html>
