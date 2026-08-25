@@ -257,7 +257,7 @@ const ZaloResetPassword = () => {
             <button
               type="submit"
               disabled={mutation.isPending || code.some((d) => !d) || newPassword.length < 8}
-              className="ct-btn-primary w-full"
+              className="ct-btn ct-btn-primary ct-btn-lg h-12 w-full rounded-xl text-sm font-extrabold normal-case"
             >
               {mutation.isPending ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang đặt lại...</>
