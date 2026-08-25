@@ -97,8 +97,6 @@ export const ForceChangePasswordDialog = () => {
   return (
     <Dialog open>
       <DialogContent
-        title="Đổi mật khẩu bắt buộc"
-        description="Tài khoản đang dùng mật khẩu mặc định, vui lòng đặt mật khẩu mới để tiếp tục"
         hideCloseButton
         contentPadding="none"
         data-theme="congtruong"

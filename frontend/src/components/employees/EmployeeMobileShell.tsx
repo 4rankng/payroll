@@ -26,6 +26,12 @@ interface EmployeeMobileShellInteractiveProps extends EmployeeMobileShellBasePro
   onNotificationClick: () => void;
   onChangePassword: () => void;
   onLogout: () => void;
+  /**
+   * Full-bleed replacement for the default white app bar — e.g. an emerald
+   * canopy that merges identity chrome with a hero metric. When omitted, the
+   * shell falls back to the plain EmployeePortalHeader.
+   */
+  canopy?: ReactNode;
 }
 
 interface EmployeeMobileShellStaticProps extends EmployeeMobileShellBaseProps {
@@ -51,9 +57,12 @@ export function EmployeeMobileShell({
   style,
   hasActionToolbar = false,
   chrome = "interactive",
-}: EmployeeMobileShellProps) {
+  canopy,
+}: EmployeeMobileShellProps & { canopy?: ReactNode }) {
   const renderChrome = () => {
     if (chrome === "interactive") {
+      if (canopy) return canopy;
+
       return (
         <EmployeePortalHeader
           employeeName={employeeName}

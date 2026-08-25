@@ -17,7 +17,7 @@ import type { EmployeeTimesheetFilters } from "@/types/api/auth.types";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
-import { EmployeeWalletHero } from "@/components/employees/EmployeeWalletHero";
+import { EmployeeCanopy } from "@/components/employees/EmployeeCanopy";
 import { EmployeeTimesheetPanel } from "@/components/employees/EmployeeTimesheetPanel";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
@@ -164,25 +164,30 @@ const EmployeePage = () => {
       onNotificationClick={() => setNotificationSheetOpen(true)}
       onChangePassword={() => setPasswordSheetOpen(true)}
       onLogout={handleLogout}
-    >
-      <div className="grid gap-5 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)] lg:items-start lg:gap-6">
-        <EmployeeWalletHero
+      canopy={
+        <EmployeeCanopy
+          employeeName={profile?.fullname}
+          unreadCount={unreadNotifications?.count}
+          onNotificationClick={() => setNotificationSheetOpen(true)}
+          onChangePassword={() => setPasswordSheetOpen(true)}
+          onLogout={handleLogout}
           model={homeModel}
-          className="order-1 lg:sticky lg:top-28 lg:col-start-1 lg:row-start-1"
+          paidAmount={totalPaid}
+          totalAmount={monthlyTotalSalary}
         />
-
+      }
+    >
+      <div className="space-y-5">
         <EmployeeTimesheetPanel
           month={month}
           days={groupedDays}
-          totalRecords={totalRecords}
           bulkTransferPercentage={bulkTransferPercentage}
           isLoading={timesheetsLoading}
           isFetchingNextPage={isFetchingNextPage}
           observerRef={observerRef}
-          className="order-2 lg:col-start-2 lg:row-span-2 lg:row-start-1"
         />
 
-        <section id="employee-bank" className="order-3 scroll-mt-4 lg:col-start-1 lg:row-start-2">
+        <section id="employee-bank" className="scroll-mt-4">
           <EmployeeBankInfoCard profile={profile!} />
         </section>
       </div>
