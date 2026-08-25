@@ -181,6 +181,36 @@ func TestProjectStatementTemplateGivesWrappedBeneficiaryEnoughHeight(t *testing.
 	assertWrappedBeneficiaryRow(t, workbook, "Summary", "E8", 8)
 }
 
+func TestProjectStatementTemplateUsesMergedBeneficiaryValueRange(t *testing.T) {
+	t.Parallel()
+
+	workbook, err := excelize.OpenFile(templatePath(t, "sao_ke_tt_theo_du_an.xlsx"))
+	if err != nil {
+		t.Fatalf("open template: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := workbook.Close(); err != nil {
+			t.Errorf("close template: %v", err)
+		}
+	})
+
+	// The holder cell must remain merged across Summary!E8:F8 so the long
+	// Vietnamese company name (e.g. "CÔNG TY TRÁCH NHIỆM HỮU HẠN MỘT THÀNH
+	// VIÊN GIAI PHÁP PHAN") wraps to two lines inside the 32pt row instead
+	// of overflowing into the "Số Tài Khoản" row below.
+	mergedCells, err := workbook.GetMergeCells("Summary")
+	if err != nil {
+		t.Fatalf("read merged cells: %v", err)
+	}
+	for _, mergedCell := range mergedCells {
+		if mergedCell.GetStartAxis() == "E8" && mergedCell.GetEndAxis() == "F8" {
+			assertWrappedBeneficiaryRow(t, workbook, "Summary", "E8", 8)
+			return
+		}
+	}
+	t.Fatal("beneficiary holder value must remain merged across Summary!E8:F8 so the long company name does not clip the next row")
+}
+
 func TestPayrollTemplateUsesTingTingBanner(t *testing.T) {
 	t.Parallel()
 
