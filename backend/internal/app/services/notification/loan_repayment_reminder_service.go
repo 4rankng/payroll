@@ -31,9 +31,10 @@ type loanRepaymentReminderEmailSender interface {
 	SendGenericEmail(ctx context.Context, payload *dto.SendEmailRequest) (string, error)
 }
 
-// LoanRepaymentReminderService sends a consolidated one-day-ahead reminder to
-// every administrator. Push and email are independent best-effort channels;
-// this service never mutates loan or repayment state.
+// LoanRepaymentReminderService sends a consolidated due-date reminder to
+// every administrator on the interest payout day itself (never in advance).
+// Push and email are independent best-effort channels; this service never
+// mutates loan or repayment state.
 type LoanRepaymentReminderService struct {
 	schedules     loanRepaymentReminderRepository
 	users         loanRepaymentReminderUserRepository
@@ -61,15 +62,14 @@ func NewLoanRepaymentReminderService(
 	}
 }
 
-// Send finds schedules due today or on the next calendar day in now's
-// location and dispatches one consolidated reminder. Including today makes
-// the reminder self-healing: if a run is missed (deploy, downtime), the
-// schedule is still surfaced the next morning instead of silently skipped.
-// It returns the number of schedules.
+// Send finds schedules due today (the interest payout date itself) in now's
+// location and dispatches one consolidated reminder — same day only, never
+// in advance. A missed run (deploy, downtime) therefore skips that day's
+// reminder; the daily 09:00 cron is monitored via cron_job_status. It
+// returns the number of schedules.
 func (s *LoanRepaymentReminderService) Send(ctx context.Context, now time.Time) (int, error) {
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	tomorrow := today.AddDate(0, 0, 1)
-	start, end := today, tomorrow.AddDate(0, 0, 1)
+	start, end := today, today.AddDate(0, 0, 1)
 
 	reminders, err := s.schedules.ListPendingForReminder(ctx, start, end)
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *LoanRepaymentReminderService) Send(ctx context.Context, now time.Time) 
 		return reminders[i].LoanCode < reminders[j].LoanCode
 	})
 
-	title, textBody, htmlBody := buildLoanRepaymentReminderContent(today, tomorrow, reminders)
+	title, textBody, htmlBody := buildLoanRepaymentReminderContent(today, reminders)
 	var deliveryErrors []error
 
 	if s.notifications == nil {
@@ -136,29 +136,11 @@ func (s *LoanRepaymentReminderService) Send(ctx context.Context, now time.Time) 
 	return len(reminders), errors.Join(deliveryErrors...)
 }
 
-func buildLoanRepaymentReminderContent(today, tomorrow time.Time, reminders []*domain.LoanRepaymentReminder) (string, string, string) {
-	hasToday, hasTomorrow := false, false
-	for _, reminder := range reminders {
-		due := reminder.DueDate.In(today.Location()).Format("2006-01-02")
-		switch due {
-		case today.Format("2006-01-02"):
-			hasToday = true
-		case tomorrow.Format("2006-01-02"):
-			hasTomorrow = true
-		}
-	}
-
-	var when string
+func buildLoanRepaymentReminderContent(today time.Time, reminders []*domain.LoanRepaymentReminder) (string, string, string) {
+	// The query window is [today, tomorrow), so every reminder is due today.
 	var textBody strings.Builder
 	var htmlBody strings.Builder
-	switch {
-	case hasToday && hasTomorrow:
-		when = "hôm nay " + today.Format("02/01/2006") + " và ngày mai " + tomorrow.Format("02/01/2006")
-	case hasToday:
-		when = "hôm nay " + today.Format("02/01/2006")
-	default:
-		when = "ngày mai " + tomorrow.Format("02/01/2006")
-	}
+	when := "hôm nay " + today.Format("02/01/2006")
 	title := "Nhắc thanh toán lãi vay: " + when
 
 	fmt.Fprintf(&textBody, "Có %d kỳ thanh toán khoản vay đến hạn %s:\n", len(reminders), when)

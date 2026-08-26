@@ -343,7 +343,8 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 11. Loan repayment reminder - daily at 9:00 AM, one calendar day ahead.
+	// 11. Loan repayment reminder - daily at 9:00 AM, on the due date itself
+	// (same-day only; never sent in advance).
 	s.AddJob(scheduler.Job{
 		Name:    "loan_repayment_reminder",
 		Cron:    "0 9 * * *",
@@ -356,7 +357,7 @@ func registerSchedulerJobs(
 				return
 			}
 			if count == 0 {
-				logger.Info("No loan repayments due tomorrow, skipping reminder")
+				logger.Info("No loan repayments due today, skipping reminder")
 				return
 			}
 			logger.Info("Loan repayment reminders sent", "schedule_count", count)

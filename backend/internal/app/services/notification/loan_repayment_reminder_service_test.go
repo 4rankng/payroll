@@ -95,8 +95,8 @@ func TestLoanRepaymentReminderService_NoSchedulesSendsNothing(t *testing.T) {
 func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testing.T) {
 	schedules := &fakeReminderScheduleRepo{rows: []*domain.LoanRepaymentReminder{
 		{ScheduleID: 3, LoanCode: "LOAN-2026-003", LenderName: "Ngân hàng C", Period: 2, Amount: 2000000, DueDate: time.Date(2026, 8, 14, 0, 0, 0, 0, reminderLocation)},
-		{ScheduleID: 2, LoanCode: "LOAN-2026-002", LenderName: "Ngân hàng B", Period: 3, Amount: 5000000, DueDate: time.Date(2026, 8, 15, 0, 0, 0, 0, reminderLocation)},
-		{ScheduleID: 1, LoanCode: "LOAN-2026-001", LenderName: "Ngân hàng A", Period: 1, Amount: 1000000, DueDate: time.Date(2026, 8, 15, 0, 0, 0, 0, reminderLocation)},
+		{ScheduleID: 2, LoanCode: "LOAN-2026-002", LenderName: "Ngân hàng B", Period: 3, Amount: 5000000, DueDate: time.Date(2026, 8, 14, 0, 0, 0, 0, reminderLocation)},
+		{ScheduleID: 1, LoanCode: "LOAN-2026-001", LenderName: "Ngân hàng A", Period: 1, Amount: 1000000, DueDate: time.Date(2026, 8, 14, 0, 0, 0, 0, reminderLocation)},
 	}}
 	notifier := &fakeReminderNotifier{}
 	email := &fakeReminderEmail{}
@@ -126,8 +126,11 @@ func TestLoanRepaymentReminderService_ConsolidatesContentAndRecipients(t *testin
 	if notifier.nType != domain.NotificationTypeLoanInterestDue {
 		t.Fatalf("expected NotificationTypeLoanInterestDue, got %v", notifier.nType)
 	}
-	if !strings.Contains(notifier.title, "14/08/2026") || !strings.Contains(notifier.title, "15/08/2026") {
-		t.Fatalf("title should carry today 14/08/2026 and tomorrow 15/08/2026, got %q", notifier.title)
+	if !strings.Contains(notifier.title, "hôm nay") || !strings.Contains(notifier.title, "14/08/2026") {
+		t.Fatalf("title should carry today 14/08/2026, got %q", notifier.title)
+	}
+	if strings.Contains(notifier.title, "ngày mai") {
+		t.Fatalf("same-day reminder must not mention tomorrow, got %q", notifier.title)
 	}
 	// Consolidation: sorted loan codes, lender names, vi-VN amounts, and total.
 	lower := notifier.message
@@ -208,28 +211,15 @@ func TestLoanRepaymentReminderService_ChannelsAreIndependent(t *testing.T) {
 	}
 }
 
-func TestLoanRepaymentReminderService_ComputesTomorrowWindowInNowLocation(t *testing.T) {
+func TestLoanRepaymentReminderService_ComputesSameDayWindowInNowLocation(t *testing.T) {
 	cases := []struct {
-		name        string
-		now         time.Time
-		wantStart   time.Time
-		wantEndHour int
+		name string
+		now  time.Time
 	}{
-		{
-			name:      "month rollover",
-			now:       time.Date(2026, 1, 31, 9, 0, 0, 0, reminderLocation),
-			wantStart: time.Date(2026, 2, 1, 0, 0, 0, 0, reminderLocation),
-		},
-		{
-			name:      "year rollover",
-			now:       time.Date(2026, 12, 31, 9, 0, 0, 0, reminderLocation),
-			wantStart: time.Date(2027, 1, 1, 0, 0, 0, 0, reminderLocation),
-		},
-		{
-			name:      "leap day window",
-			now:       time.Date(2028, 2, 28, 9, 0, 0, 0, reminderLocation),
-			wantStart: time.Date(2028, 2, 29, 0, 0, 0, 0, reminderLocation),
-		},
+		{name: "regular day", now: time.Date(2026, 8, 14, 9, 0, 0, 0, reminderLocation)},
+		{name: "month rollover", now: time.Date(2026, 1, 31, 9, 0, 0, 0, reminderLocation)},
+		{name: "year rollover", now: time.Date(2026, 12, 31, 9, 0, 0, 0, reminderLocation)},
+		{name: "leap day window", now: time.Date(2028, 2, 28, 9, 0, 0, 0, reminderLocation)},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -243,7 +233,9 @@ func TestLoanRepaymentReminderService_ComputesTomorrowWindowInNowLocation(t *tes
 			if !schedules.gotStart.Equal(wantStart) {
 				t.Fatalf("window start = %v, want %v", schedules.gotStart, wantStart)
 			}
-			wantEnd := wantStart.AddDate(0, 0, 2)
+			// Same-day only: the window ends at midnight starting tomorrow —
+			// due-tomorrow schedules must NOT be included.
+			wantEnd := wantStart.AddDate(0, 0, 1)
 			if !schedules.gotEnd.Equal(wantEnd) {
 				t.Fatalf("window end = %v, want %v", schedules.gotEnd, wantEnd)
 			}
