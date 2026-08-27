@@ -120,6 +120,10 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         <Input
                           {...field}
                           type={showCurrentPassword ? 'text' : 'password'}
+                          autoComplete="current-password"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="Nhập mật khẩu hiện tại"
                           className="ct-input ct-input-bordered h-12 rounded-xl border-[var(--employee-border-strong)] bg-white pr-12 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:ring-[var(--employee-accent-ring)]"
                           disabled={changePasswordMutation.isPending}
@@ -151,6 +155,10 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         <Input
                           {...field}
                           type={showNewPassword ? 'text' : 'password'}
+                          autoComplete="new-password"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="Tối thiểu 8 ký tự"
                           className="ct-input ct-input-bordered h-12 rounded-xl border-[var(--employee-border-strong)] bg-white pr-12 text-[var(--employee-text)] placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:ring-[var(--employee-accent-ring)]"
                           disabled={changePasswordMutation.isPending}

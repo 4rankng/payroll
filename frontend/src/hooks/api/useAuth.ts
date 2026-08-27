@@ -5,6 +5,7 @@ import { showSuccessNotification, showErrorNotification } from '@/utils/error-ha
 import { useAuth } from '@/contexts';
 import { generateAvatarUrl } from '@/utils/avatarHelpers';
 import type { LoginCredentials, ChangePasswordData } from '@/types/api/auth.types';
+import type { ApiResponse } from '@/services/api/client';
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -105,13 +106,25 @@ export const useGoogleLogin = () => {
   });
 };
 
-export const useLogout = () => {
+/**
+ * Logout mutation. Pass { skipApiCall: true } when the backend has already
+ * invalidated the session token (the /auth/change-password flow blacklists
+ * the current token on success) — calling POST /auth/logout then can only
+ * ever return 401 and pollute API error metrics without any effect.
+ */
+export const useLogout = (options?: { skipApiCall?: boolean }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { logout } = useAuth();
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: (): Promise<ApiResponse<void>> => {
+      if (options?.skipApiCall) {
+        authService.clearLocalSession();
+        return Promise.resolve({} as ApiResponse<void>);
+      }
+      return authService.logout();
+    },
     onSuccess: (response) => {
       // Clear all cached data
       queryClient.clear();

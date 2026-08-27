@@ -157,6 +157,22 @@ class AuthService {
   }
 
   /**
+   * Clear all locally-stored session data (token + cached user fields).
+   * Shared by logout() and by callers that skip the logout API call because
+   * the backend already invalidated the token (e.g. after a password change).
+   */
+  clearLocalSession(): void {
+    authManager.removeToken();
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userUsername');
+    localStorage.removeItem('userCreatedAt');
+    localStorage.removeItem('userUpdatedAt');
+    localStorage.removeItem('userLastLogin');
+  }
+
+  /**
    * Logout user and blacklist token
    */
   async logout(): Promise<ApiResponse<void>> {
@@ -165,14 +181,7 @@ class AuthService {
       return response as ApiResponse<void>;
     } finally {
       // Clear local storage even if API call fails
-      authManager.removeToken();
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userUsername');
-      localStorage.removeItem('userCreatedAt');
-      localStorage.removeItem('userUpdatedAt');
-      localStorage.removeItem('userLastLogin');
+      this.clearLocalSession();
     }
   }
 

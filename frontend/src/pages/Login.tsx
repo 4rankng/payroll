@@ -297,6 +297,9 @@ const Login = () => {
                         <input
                           id="password"
                           type={showPassword ? "text" : "password"}
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="Nhập mật khẩu của bạn"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
