@@ -29,7 +29,7 @@ export type ModalSubject =
   | 'Notification'
   | 'all';
 
-export type UserRole = 'admin' | 'partner' | 'adv_partner' | 'employee';
+export type UserRole = 'admin' | 'partner' | 'adv_partner' | 'employee' | 'accountant';
 
 /**
  * Deeplink configuration for modal

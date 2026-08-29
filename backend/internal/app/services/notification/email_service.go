@@ -771,7 +771,7 @@ func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string, b
 	}
 
 	var builder strings.Builder
-	data := map[string]string{
+	data := map[string]any{
 		"DueDate":      dueDate,
 		"TotalPaid":    totalPaid,
 		"FeeAmount":    feeAmount,
@@ -779,6 +779,7 @@ func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string, b
 		"BankHolder":   bankInfo.Holder,
 		"BankNumber":   bankInfo.Number,
 		"BankName":     bankInfo.Name,
+		"ShowBank":     !bankInfo.Hidden,
 	}
 
 	if err := tmpl.Execute(&builder, data); err != nil {

@@ -42,14 +42,14 @@ const UsersPage = () => {
   };
 
   const handleRoleSelect = useCallback(
-    (role?: "admin" | "partner" | "employee") => {
+    (role?: "admin" | "partner" | "employee" | "accountant") => {
       filterState.setRole(role);
     },
     [filterState],
   );
 
   const handleDropdownRoleChange = useCallback(
-    (role: "admin" | "partner" | "employee" | undefined) => {
+    (role: "admin" | "partner" | "employee" | "accountant" | undefined) => {
       filterState.setRole(role);
     },
     [filterState],

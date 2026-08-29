@@ -123,7 +123,7 @@ func (h *Handler) PayrollReportExport(c *gin.Context) {
 		return
 	}
 
-	if userRole != string(domain.RoleAdmin) && userRole != string(domain.RolePartner) {
+	if userRole != string(domain.RoleAdmin) && userRole != string(domain.RolePartner) && userRole != string(domain.RoleAccountant) {
 		response.Forbidden(c, constants.MsgForbiddenVN)
 		return
 	}

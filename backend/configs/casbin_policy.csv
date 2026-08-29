@@ -132,6 +132,40 @@ p, adv_partner, /api/v1/users/*, GET, allow
 # Adv partner user management
 p, adv_partner, /api/v1/adv-partner/users/*, *, allow
 
+# Accountant role - internal accounting workspace: duyệt công (approve
+# timesheets) and the weekly bulk-transfer / sao ke pipeline. Read-only
+# reference data for the export dialogs. No settings, users, wallet,
+# bulk-reject, edit-requests, or auto bulk transfer (OTP-gated admin flow).
+p, accountant, /api/v1/auth/me, GET, allow
+p, accountant, /api/v1/auth/logout, POST, allow
+p, accountant, /api/v1/auth/change-password, POST, allow
+# Timesheets - list/detail/summary + approve only (no reject/reset/edit)
+p, accountant, /api/v1/timesheets, GET, allow
+p, accountant, /api/v1/timesheets/:id, GET, allow
+p, accountant, /api/v1/timesheets/summary, GET, allow
+p, accountant, /api/v1/timesheets/grouped, GET, allow
+p, accountant, /api/v1/timesheets/bulk-approve, POST, allow
+# Sao ke export + bulk transfer file pipeline
+p, accountant, /api/v1/timesheets/payroll/report, GET, allow
+p, accountant, /api/v1/payrolls/bulk-transfer-template, GET, allow
+p, accountant, /api/v1/payrolls/export-bulk-transfer, POST, allow
+p, accountant, /api/v1/payrolls/bulk-transfer-result, POST, allow
+p, accountant, /api/v1/payrolls/bulk-transfer-upload-histories, GET, allow
+p, accountant, /api/v1/payrolls/bulk-transfer-upload-histories/*, GET, allow
+# Reference data for export dialogs
+p, accountant, /api/v1/projects, GET, allow
+p, accountant, /api/v1/employees, GET, allow
+p, accountant, /api/v1/employees/*, GET, allow
+# Deny carve-outs: keyMatch2 widens ":id" to any single-segment path and
+# "/*" to any deeper path, so the rows above would otherwise also grant the
+# bulk data exports and edit-request/import reads this role must not have.
+p, accountant, /api/v1/timesheets/edit-requests, GET, deny
+p, accountant, /api/v1/timesheets/export, GET, deny
+p, accountant, /api/v1/timesheets/cash-readiness, GET, deny
+p, accountant, /api/v1/timesheets/partner-import, GET, deny
+p, accountant, /api/v1/employees/export, GET, deny
+p, accountant, /api/v1/employees/*/export, GET, deny
+
 # Employee role - self-service only
 p, employee, /api/v1/me, GET, allow
 p, employee, /api/v1/me, PUT, allow

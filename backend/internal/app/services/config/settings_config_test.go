@@ -279,6 +279,37 @@ func TestGetTransferBankInfoReturnsConfiguredValues(t *testing.T) {
 	assert.Equal(t, "TEN CONG TY MOI", info.Holder)
 	assert.Equal(t, "999888777", info.Number)
 	assert.Equal(t, "Ngân hàng Test (TT)", info.Name)
+	// Row missing => default visible.
+	assert.False(t, info.Hidden)
+}
+
+func TestGetTransferBankInfoHiddenWhenToggleFalse(t *testing.T) {
+	values := map[string]string{
+		SettingKeyTransferBankHolder:  "TEN CONG TY MOI",
+		SettingKeyTransferBankNumber:  "999888777",
+		SettingKeyTransferBankName:    "Ngân hàng Test (TT)",
+		SettingKeyTransferBankVisible: "false",
+	}
+	reader := &keyedStubSettingReader{values: values}
+	service := NewSettingsConfigService(reader)
+
+	info := service.GetTransferBankInfo(context.Background())
+	assert.True(t, info.Hidden, "transfer_bank_visible=false must hide the beneficiary block")
+
+	visibleService := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankVisible: "true",
+	}})
+	assert.False(t, visibleService.GetTransferBankInfo(context.Background()).Hidden)
+
+	// Non-"true" values hide; empty value behaves like a missing row (visible).
+	zeroService := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankVisible: "0",
+	}})
+	assert.True(t, zeroService.GetTransferBankInfo(context.Background()).Hidden)
+	emptyService := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankVisible: "",
+	}})
+	assert.False(t, emptyService.GetTransferBankInfo(context.Background()).Hidden)
 }
 
 type keyedStubSettingReader struct {
@@ -308,4 +339,5 @@ func TestGetTransferBankInfoFallsBackToDefaults(t *testing.T) {
 	assert.Equal(t, DefaultTransferBankHolder, info.Holder)
 	assert.Equal(t, DefaultTransferBankNumber, info.Number)
 	assert.Equal(t, DefaultTransferBankName, info.Name)
+	assert.False(t, info.Hidden, "missing toggle row must default to visible")
 }

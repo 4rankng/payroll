@@ -35,6 +35,11 @@ export function describeRuleFragments(
   }
 
   if (tiers.length === 1) {
+    // minFeeVnd = 0 means no floor (e.g. a fully free schedule) — omit the
+    // misleading "mức tối thiểu 0 ₫" clause entirely.
+    if (minFeeVnd === 0) {
+      return [{ type: "emphasis", value: formatPercentVi(tiers[0].percentage) }];
+    }
     return [
       { type: "emphasis", value: formatPercentVi(tiers[0].percentage) },
       { type: "text", value: " với mức tối thiểu " },
@@ -74,6 +79,12 @@ export function describeRuleFragments(
       });
     }
   });
+
+  // minFeeVnd = 0 means no floor — the "mức tối thiểu 0 ₫" clause would be
+  // misleading, so omit it (same as the single-tier branch above).
+  if (minFeeVnd === 0) {
+    return parts;
+  }
 
   parts.push({ type: "text", value: " (mức tối thiểu " });
   parts.push({ type: "emphasis", value: formatCurrency(minFeeVnd) });

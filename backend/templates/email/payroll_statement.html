@@ -67,6 +67,7 @@
                     </table>
                   </td>
                 </tr>
+                {{if .ShowBank}}
                 <tr>
                   <td class="email-content" style="padding:22px 24px 0;">
                     <p style="margin:0 0 10px;color:#0f172a;font-size:16px;line-height:24px;font-weight:700;">Thông tin chuyển khoản</p>
@@ -86,6 +87,13 @@
                     </table>
                   </td>
                 </tr>
+                {{else}}
+                <tr>
+                  <td class="email-content" style="padding:22px 24px 0;">
+                    <p style="margin:0;color:#475569;font-size:14px;line-height:22px;">Đây là sao kê thanh toán lương tuần gửi kèm file đính kèm để Quý Công ty tiện theo dõi và đối chiếu.</p>
+                  </td>
+                </tr>
+                {{end}}
                 <tr>
                   <td class="email-content" style="padding:22px 24px 24px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background:#eff6ff;border-left:3px solid #2563eb;border-collapse:separate;border-spacing:0;">

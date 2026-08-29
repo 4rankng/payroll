@@ -42,7 +42,8 @@ type FeeScheduleEntry struct {
 
 // Validate enforces the structural invariants: at least one tier, first tier
 // has MinAmount == 0, tiers strictly increasing by MinAmount, percentages in
-// [0, 100], MinFeeVND > 0, and a parseable effective_date.
+// [0, 100], MinFeeVND >= 0 (0 disables the minimum-fee floor, allowing a
+// fully free advance), and a parseable effective_date.
 func (e *FeeScheduleEntry) Validate() error {
 	if e.ID == "" {
 		return NewValidationError("fee schedule entry id is required")
@@ -55,9 +56,6 @@ func (e *FeeScheduleEntry) Validate() error {
 	}
 	if e.Tiers[0].MinAmount != 0 {
 		return NewValidationError("first tier must have min_amount = 0")
-	}
-	if e.MinFeeVND == 0 {
-		return NewValidationError("min_fee_vnd must be greater than 0")
 	}
 	prev := uint64(0)
 	for i, tier := range e.Tiers {

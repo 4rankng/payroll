@@ -199,6 +199,7 @@ function UserDetailsSheet({
                       <SelectItem value="admin">Quản trị viên</SelectItem>
                       <SelectItem value="partner">Quản lý</SelectItem>
                       <SelectItem value="employee">Nhân viên</SelectItem>
+                      <SelectItem value="accountant">Kế toán</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

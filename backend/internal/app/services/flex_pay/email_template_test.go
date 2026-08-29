@@ -3,10 +3,12 @@ package flex_pay
 import (
 	"strings"
 	"testing"
+
+	"api-server/internal/app/services/config"
 )
 
 func TestBuildSaoKeEmailBodiesUsesPublicBannerURL(t *testing.T) {
-	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 d")
+	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 d", config.DefaultTransferBankInfo())
 
 	if !strings.Contains(htmlBody, `src="https://tingting.vip/email-banner.jpg?v=20260709"`) {
 		t.Fatalf("expected HTML body to include public email banner URL")
@@ -56,7 +58,7 @@ func TestBuildSaoKeEmailBodiesUsesPublicBannerURL(t *testing.T) {
 }
 
 func TestBuildSaoKeEmailBodiesUsesMBTransferDetails(t *testing.T) {
-	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 đ")
+	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 đ", config.DefaultTransferBankInfo())
 
 	for _, body := range []string{htmlBody, textBody} {
 		if !strings.Contains(body, "271866699") {
@@ -68,5 +70,29 @@ func TestBuildSaoKeEmailBodiesUsesMBTransferDetails(t *testing.T) {
 		if strings.Contains(body, "283866888") || strings.Contains(body, "TECHCOMBANK") {
 			t.Fatalf("expected legacy Techcombank transfer details to be absent")
 		}
+	}
+}
+
+func TestBuildSaoKeEmailBodiesHidesBankWhenHidden(t *testing.T) {
+	bank := config.DefaultTransferBankInfo()
+	bank.Hidden = true
+
+	htmlBody, textBody := BuildSaoKeEmailBodies("2026-06", "31/07/2026", "118.110.000 đ", bank)
+
+	for _, body := range []string{htmlBody, textBody} {
+		if strings.Contains(body, "Thông tin chuyển khoản") {
+			t.Fatalf("expected transfer instructions heading to be absent when hidden")
+		}
+		if strings.Contains(body, "271866699") || strings.Contains(body, config.DefaultTransferBankHolder) {
+			t.Fatalf("expected beneficiary account details to be absent when hidden")
+		}
+	}
+	if !strings.Contains(htmlBody, "Đây là sao kê dịch vụ") {
+		t.Fatalf("expected informational statement note in HTML body when hidden")
+	}
+	// The hidden branch contributes an empty bank block; the template must not
+	// leave a double blank line where the transfer instructions used to be.
+	if strings.Contains(textBody, "\n\n\n") {
+		t.Fatalf("expected no stacked blank lines in text body when hidden")
 	}
 }

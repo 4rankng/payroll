@@ -79,7 +79,7 @@ func (h *AdvancePaymentHandler) SendReconciliationEmail(c *gin.Context) {
 	dueDate := endOfNextMonth.Format("02/01/2006")
 	totalCollect := utils.FormatNumber(summary.TotalWithFee) + " đ"
 
-	htmlBody, textBody := flex_pay.BuildSaoKeEmailBodies(req.ForMonth, dueDate, totalCollect)
+	htmlBody, textBody := flex_pay.BuildSaoKeEmailBodies(req.ForMonth, dueDate, totalCollect, h.flexPayReconciliationExporter.BankInfoForStatement(ctx))
 
 	// Send email with asset + metadata storage
 	emailID, err := h.emailService.SendAdvancePaymentReconciliationEmail(ctx, &notification.ReconciliationEmailParams{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -307,17 +308,57 @@ func (e *PayrollReportExporter) resolveBankInfo(ctx context.Context) appconfig.T
 }
 
 // writeBankInfoCells writes the beneficiary holder, account number, and bank
-// name into the template's static bank rows.
+// name into the template's static bank rows. When the beneficiary block is
+// hidden (bankInfo.Hidden == true), the value cells are cleared together
+// with the template's static label cells in column D of the same rows and
+// the section heading row directly above the holder row, so the statement
+// prints no receiving-account information.
 func writeBankInfoCells(f *excelize.File, sheetName, holderCell, numberCell, nameCell string, bankInfo appconfig.TransferBankInfo) error {
 	cells := map[string]string{
 		holderCell: bankInfo.Holder,
 		numberCell: bankInfo.Number,
 		nameCell:   bankInfo.Name,
 	}
+	if bankInfo.Hidden {
+		for cell := range cells {
+			if err := clearBankInfoCell(f, sheetName, cell); err != nil {
+				return err
+			}
+		}
+		// The heading sits one row above the holder row in both statement
+		// templates (payroll_template.xlsx D8/E8 over E9-E11, the sao ke
+		// Summary sheet D7/E7 over E8-E10); leaving it would print an orphan
+		// "TÀI KHOẢN THỤ HƯỞNG" banner over the blanked rows.
+		row, _, err := excelize.CellNameToCoordinates(holderCell)
+		if err != nil {
+			return fmt.Errorf("failed to parse holder cell %s: %w", holderCell, err)
+		}
+		headingRow := strconv.Itoa(row - 1)
+		for _, col := range []string{"D", "E"} {
+			if err := f.SetCellValue(sheetName, col+headingRow, ""); err != nil {
+				return fmt.Errorf("failed to clear bank heading %s%s: %w", col, headingRow, err)
+			}
+		}
+		return nil
+	}
 	for cell, value := range cells {
 		if err := f.SetCellValue(sheetName, cell, value); err != nil {
 			return fmt.Errorf("failed to set %s: %w", cell, err)
 		}
+	}
+	return nil
+}
+
+// clearBankInfoCell empties a beneficiary value cell plus the static template
+// label in column D of the same row. Value cells are always in column E in
+// both statement templates, so the label cell is D + row.
+func clearBankInfoCell(f *excelize.File, sheetName, cell string) error {
+	labelCell := "D" + cell[1:]
+	if err := f.SetCellValue(sheetName, cell, ""); err != nil {
+		return fmt.Errorf("failed to clear %s: %w", cell, err)
+	}
+	if err := f.SetCellValue(sheetName, labelCell, ""); err != nil {
+		return fmt.Errorf("failed to clear label %s: %w", labelCell, err)
 	}
 	return nil
 }

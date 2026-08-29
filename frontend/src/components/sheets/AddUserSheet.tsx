@@ -262,6 +262,7 @@ function AddUserSheet({
                         <SelectItem value="partner">Quản lý</SelectItem>
                         <SelectItem value="employee">Nhân viên</SelectItem>
                         <SelectItem value="adv_partner">Quản lý ứng lương</SelectItem>
+                        <SelectItem value="accountant">Kế toán</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.role && <p className="text-xs text-red-500 mt-0.5">{errors.role}</p>}

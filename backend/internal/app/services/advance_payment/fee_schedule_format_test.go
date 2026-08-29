@@ -56,6 +56,25 @@ func TestFormatScheduleSummary(t *testing.T) {
 			in:   domain.FeeScheduleEntry{MinFeeVND: 10000},
 			want: "",
 		},
+		{
+			name: "zero min fee omits the floor clause",
+			in: domain.FeeScheduleEntry{
+				Tiers:     []domain.FeeScheduleTier{{MinAmount: 0, Percentage: 0}},
+				MinFeeVND: 0,
+			},
+			want: "0%",
+		},
+		{
+			name: "zero min fee omits the floor clause for tiered schedules",
+			in: domain.FeeScheduleEntry{
+				Tiers: []domain.FeeScheduleTier{
+					{MinAmount: 0, Percentage: 0},
+					{MinAmount: 3_500_000, Percentage: 1.0},
+				},
+				MinFeeVND: 0,
+			},
+			want: "0% / 1% trên 3.500.000 VND",
+		},
 	}
 
 	for _, c := range cases {

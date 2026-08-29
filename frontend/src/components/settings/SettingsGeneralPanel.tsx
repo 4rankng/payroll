@@ -2,6 +2,9 @@ import { type LucideIcon, Building2, Landmark, Percent } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 
 import { SettingCard } from '@/components/settings/SettingCard';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import type { SettingsFormState } from '@/hooks/settings/useSettingsForm';
 
 interface SettingsSectionProps {
@@ -10,6 +13,73 @@ interface SettingsSectionProps {
   description: string;
   children: ReactNode;
 }
+
+interface SettingToggleCardProps {
+  title: string;
+  description: string;
+  checked: boolean;
+  originalChecked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  onSave: () => void;
+  onReset: () => void;
+  isSaving: boolean;
+}
+
+const SettingToggleCard = ({
+  title,
+  description,
+  checked,
+  originalChecked,
+  onCheckedChange,
+  onSave,
+  onReset,
+  isSaving,
+}: SettingToggleCardProps) => {
+  const generatedId = useId().replace(/:/g, '');
+  const switchId = `setting-toggle-${generatedId}`;
+  const descriptionId = `${switchId}-description`;
+  const isDirty = checked !== originalChecked;
+
+  return (
+    <div
+      data-slot="setting-row"
+      className={`group min-w-0 px-4 py-4 transition-colors sm:px-5 ${isDirty ? 'bg-warning/5' : ''}`}
+    >
+      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(15rem,20rem)] md:items-start md:gap-6">
+        <div className="min-w-0 space-y-1 md:py-2">
+          <Label
+            htmlFor={switchId}
+            className="block break-words text-sm font-semibold leading-5 text-foreground"
+          >
+            {title}
+          </Label>
+          <p id={descriptionId} className="break-words text-sm leading-5 text-muted-foreground">
+            {description}
+          </p>
+        </div>
+        <div className="flex min-w-0 items-center gap-2 md:justify-end md:pt-2">
+          <Switch
+            id={switchId}
+            checked={checked}
+            onCheckedChange={onCheckedChange}
+            aria-describedby={descriptionId}
+            disabled={isSaving}
+          />
+          {isDirty && (
+            <>
+              <Button size="sm" onClick={onSave} disabled={isSaving}>
+                Lưu
+              </Button>
+              <Button size="sm" variant="outline" onClick={onReset} disabled={isSaving}>
+                Hoàn tác
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SettingsSection = ({ icon: Icon, title, description, children }: SettingsSectionProps) => {
   const generatedId = useId().replace(/:/g, '');
@@ -166,6 +236,16 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       title="Tài khoản nhận chuyển khoản"
       description="Thông tin thụ hưởng in trên email sao kê và file Excel đính kèm."
     >
+      <SettingToggleCard
+        title="Hiện tài khoản nhận chuyển khoản"
+        description="Khi tắt, sao kê (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."
+        checked={form.transferBankVisible}
+        originalChecked={form.originalTransferBankVisible}
+        onCheckedChange={form.setTransferBankVisible}
+        onSave={form.handleSaveTransferBankVisible}
+        onReset={() => form.setTransferBankVisible(form.originalTransferBankVisible)}
+        isSaving={form.isSaving}
+      />
       <SettingCard
         title="Chủ tài khoản"
         description="Tên chủ tài khoản thụ hưởng in trên sao kê."

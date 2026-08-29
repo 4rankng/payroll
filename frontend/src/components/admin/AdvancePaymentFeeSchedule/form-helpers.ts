@@ -145,8 +145,12 @@ export function validateFormState(
     }
     prev = tier.minAmount;
   }
-  if (state.minFeeVnd <= 0) {
-    return "Phí tối thiểu phải lớn hơn 0";
+  // minFeeVnd = 0 is a deliberate admin choice (no minimum-fee floor, e.g. a
+  // fully free advance schedule). Negative input is rejected here because a
+  // typed minus sign passes <input type="number" min={0}>, and the backend's
+  // uint64 field would fail with an opaque binding error.
+  if (state.minFeeVnd < 0) {
+    return "Phí tối thiểu không được âm";
   }
   return null;
 }
@@ -181,8 +185,10 @@ export function computeFieldErrors(
     errors.effectiveDate = "Phải là hôm nay hoặc tương lai";
   }
 
-  if (state.minFeeVnd <= 0) {
-    errors.minFee = "Phải lớn hơn 0";
+  // minFeeVnd = 0 is allowed (no floor — free advance schedule); only a
+  // typed negative is invalid (input min={0} does not block the minus key).
+  if (state.minFeeVnd < 0) {
+    errors.minFee = "Phải bằng 0 hoặc lớn hơn 0";
   }
 
   let prevMin = -1;

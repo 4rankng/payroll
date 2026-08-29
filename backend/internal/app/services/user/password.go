@@ -81,6 +81,15 @@ func (s *UserService) hashPassword(password string) (string, error) {
 
 // VerifyPasswordHash verifies a password against an encoded hash using constant-time comparison
 func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
+	return VerifyArgon2idHash(password, encodedHash, s.hashSecret, s.hashSalt)
+}
+
+// VerifyArgon2idHash verifies a password against an encoded Argon2id hash
+// ($argon2id$v=N$m=..,t=..,p=..$salt$hash) using the same peppering scheme as
+// HashPassword and the parameters parsed from the hash itself. Package-level
+// so dev tooling (cmd/argoncheck) reuses the exact production verification
+// instead of re-implementing — and diverging from — it.
+func VerifyArgon2idHash(password, encodedHash, hashSecret, hashSalt string) bool {
 	// Parse the encoded hash
 	var version int
 	var memory, iterations uint32
@@ -89,19 +98,16 @@ func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
 
 	parts := strings.Split(encodedHash, "$")
 	if len(parts) != 6 || parts[0] != "" || parts[1] != "argon2id" {
-		s.logger.Info("Invalid hash format", "parts_count", len(parts))
 		return false
 	}
 
 	// Parse version
 	if _, err := fmt.Sscanf(parts[2], "v=%d", &version); err != nil {
-		s.logger.Info("Failed to parse version from hash", "error", err)
 		return false
 	}
 
 	// Parse parameters
 	if _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &iterations, &parallelism); err != nil {
-		s.logger.Info("Failed to parse parameters from hash", "error", err)
 		return false
 	}
 
@@ -111,18 +117,16 @@ func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
 	// Decode salt and hash
 	saltBytes, err := base64.RawStdEncoding.DecodeString(salt)
 	if err != nil {
-		s.logger.Info("Failed to decode salt", "error", err)
 		return false
 	}
 
 	hashBytes, err := base64.RawStdEncoding.DecodeString(hash)
 	if err != nil {
-		s.logger.Info("Failed to decode hash", "error", err)
 		return false
 	}
 
 	// Apply peppering (same as hashing)
-	peppered := s.applyPeppering(password)
+	peppered := ApplyPeppering(password, hashSecret, hashSalt)
 
 	// Hash the provided password with the same parameters
 	providedHash := argon2.IDKey(
@@ -135,9 +139,7 @@ func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
 	)
 
 	// Compare hashes using constant time comparison for security
-	isValid := subtle.ConstantTimeCompare(hashBytes, providedHash) == 1
-
-	return isValid
+	return subtle.ConstantTimeCompare(hashBytes, providedHash) == 1
 }
 
 // ValidatePassword validates a password using Vietnamese requirements

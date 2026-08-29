@@ -29,6 +29,11 @@ func FormatScheduleSummary(entry domain.FeeScheduleEntry) string {
 		}
 		parts = append(parts, fmt.Sprintf("%s trên %s VND", pct, formatVNDInt(tier.MinAmount)))
 	}
+	// MinFeeVND = 0 means no minimum-fee floor (e.g. a fully free schedule);
+	// the "tối thiểu 0 VND" clause would be misleading, so omit it.
+	if entry.MinFeeVND == 0 {
+		return strings.Join(parts, " / ")
+	}
 	return fmt.Sprintf("%s (tối thiểu %s VND)", strings.Join(parts, " / "), formatVNDInt(entry.MinFeeVND))
 }
 

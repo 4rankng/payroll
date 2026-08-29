@@ -15,6 +15,7 @@ const (
 	RolePartner    UserRole = "partner"
 	RoleEmployee   UserRole = "employee"
 	RoleAdvPartner UserRole = "adv_partner"
+	RoleAccountant UserRole = "accountant"
 )
 
 // User represents a user entity in the domain
@@ -130,8 +131,8 @@ func (u *User) ValidateFullname() error {
 
 // ValidateRole validates the user's role
 func (u *User) ValidateRole() error {
-	if u.Role != RoleAdmin && u.Role != RolePartner && u.Role != RoleEmployee && u.Role != RoleAdvPartner {
-		return NewValidationError("role must be either 'admin', 'partner', 'employee', or 'adv_partner'")
+	if u.Role != RoleAdmin && u.Role != RolePartner && u.Role != RoleEmployee && u.Role != RoleAdvPartner && u.Role != RoleAccountant {
+		return NewValidationError("role must be either 'admin', 'partner', 'employee', 'adv_partner', or 'accountant'")
 	}
 	return nil
 }
@@ -171,4 +172,11 @@ func (u *User) IsEmployee() bool {
 // IsAdvPartner returns true if user role is adv_partner
 func (u *User) IsAdvPartner() bool {
 	return u.Role == RoleAdvPartner
+}
+
+// IsAccountant returns true if user role is accountant (kế toán). The
+// accountant workspace covers timesheet approval and the bulk-transfer / sao
+// ke pipeline only — enforced by Casbin, not by this predicate.
+func (u *User) IsAccountant() bool {
+	return u.Role == RoleAccountant
 }

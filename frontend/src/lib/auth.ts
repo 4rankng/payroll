@@ -1,6 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 
-export type AppRole = 'admin' | 'partner' | 'employee' | 'adv_partner';
+export type AppRole = 'admin' | 'partner' | 'employee' | 'adv_partner' | 'accountant';
 
 interface TokenPayload {
   exp: number;

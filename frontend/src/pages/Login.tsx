@@ -87,6 +87,7 @@ const Login = () => {
       if (role === "admin") navigate("/admin", { replace: true });
       else if (role === "partner") navigate("/partner/dashboard", { replace: true });
       else if (role === "adv_partner") navigate("/adv-partner/advance-payments", { replace: true });
+      else if (role === "accountant") navigate("/accountant", { replace: true });
       else if (role === "employee") navigate("/employee", { replace: true });
       else navigate("/", { replace: true });
     }

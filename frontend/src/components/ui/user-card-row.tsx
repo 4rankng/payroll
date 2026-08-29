@@ -50,6 +50,8 @@ export function UserCardRow({ user, onEdit, onDelete }: UserCardRowProps) {
         return <Badge variant="partner" className="typography-body-small">Partner</Badge>;
       case "adv_partner":
         return <Badge variant="manager" className="typography-body-small">Manager</Badge>;
+      case "accountant":
+        return <Badge variant="role" className="typography-body-small">Kế toán</Badge>;
       case "employee":
         return <Badge variant="role" className="typography-body-small">Nhân viên</Badge>;
       default:

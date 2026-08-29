@@ -35,8 +35,10 @@ type FeeScheduleListResponse struct {
 type CreateFeeScheduleRequest struct {
 	EffectiveDate string               `json:"effectiveDate" binding:"required"` // YYYY-MM-DD
 	Tiers         []FeeScheduleTierDTO `json:"tiers" binding:"required,min=1"`
-	MinFeeVND     uint64               `json:"minFeeVnd" binding:"required,min=1"`
-	Notes         string               `json:"notes,omitempty"`
+	// MinFeeVND has no binding guard: 0 is a valid value (no minimum-fee
+	// floor, e.g. a fully free schedule) and uint64 rules out negatives.
+	MinFeeVND uint64               `json:"minFeeVnd"`
+	Notes     string               `json:"notes,omitempty"`
 }
 
 // UpdateFeeScheduleRequest is the body for PATCH /admin/advance-payment-fees/{id}.
@@ -46,6 +48,8 @@ type CreateFeeScheduleRequest struct {
 type UpdateFeeScheduleRequest struct {
 	EffectiveDate string               `json:"effectiveDate" binding:"required"`
 	Tiers         []FeeScheduleTierDTO `json:"tiers" binding:"required,min=1"`
-	MinFeeVND     uint64               `json:"minFeeVnd" binding:"required,min=1"`
-	Notes         string               `json:"notes,omitempty"`
+	// MinFeeVND has no binding guard: 0 is a valid value (no minimum-fee
+	// floor, e.g. a fully free schedule) and uint64 rules out negatives.
+	MinFeeVND uint64               `json:"minFeeVnd"`
+	Notes     string               `json:"notes,omitempty"`
 }

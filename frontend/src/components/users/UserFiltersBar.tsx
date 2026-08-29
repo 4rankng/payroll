@@ -3,11 +3,13 @@ import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
 import { cn } from '@/lib/utils';
 
+type UserRoleFilter = 'admin' | 'partner' | 'employee' | 'accountant';
+
 interface UserFiltersBarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  role: 'admin' | 'partner' | 'employee' | undefined;
-  onRoleChange: (role: 'admin' | 'partner' | 'employee' | undefined) => void;
+  role: UserRoleFilter | undefined;
+  onRoleChange: (role: UserRoleFilter | undefined) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
   hideRoleFilter?: boolean;
@@ -35,12 +37,13 @@ export const UserFiltersBar = ({
       {!hideRoleFilter && (
         <FilterPill
           value={role ?? 'all'}
-          onChange={(v) => onRoleChange(v === 'all' ? undefined : v as 'admin' | 'partner' | 'employee')}
+          onChange={(v) => onRoleChange(v === 'all' ? undefined : v as UserRoleFilter)}
           placeholder="Vai trò"
           options={[
             { value: 'admin', label: 'Quản trị viên' },
             { value: 'partner', label: 'Quản lý' },
             { value: 'employee', label: 'Nhân viên' },
+            { value: 'accountant', label: 'Kế toán' },
           ]}
         />
       )}

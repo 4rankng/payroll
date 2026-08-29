@@ -64,6 +64,9 @@ export const createUserColumns = (
       } else if (role === "adv_partner") {
         roleLabel = "Quản lý ứng lương";
         variant = "outline";
+      } else if (role === "accountant") {
+        roleLabel = "Kế toán";
+        variant = "outline";
       }
 
       return <Badge variant={variant}>{roleLabel}</Badge>;

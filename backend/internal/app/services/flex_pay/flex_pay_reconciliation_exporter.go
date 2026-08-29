@@ -51,6 +51,13 @@ func (e *FlexPayReconciliationExporter) resolveBankInfo(ctx context.Context) app
 	return e.bankSettings.GetTransferBankInfo(ctx)
 }
 
+// BankInfoForStatement exposes the configured beneficiary bank details
+// (including the visibility flag) to statement email builders that hold the
+// exporter but not the settings service directly.
+func (e *FlexPayReconciliationExporter) BankInfoForStatement(ctx context.Context) appconfig.TransferBankInfo {
+	return e.resolveBankInfo(ctx)
+}
+
 // GenerateExcel creates a multi-sheet Excel file with FlexPay reconciliation reports
 // Uses the same template as the existing timesheet sao ke exporter
 func (e *FlexPayReconciliationExporter) GenerateExcel(ctx context.Context, reportData []*domainServices.ProjectFlexPayReportData, atDate time.Time) ([]byte, *serviceports.PayrollReportSummary, error) {
@@ -359,15 +366,28 @@ func (e *FlexPayReconciliationExporter) updateSummarySheet(
 	currencyStyleWhite, currencyStyleGray int,
 ) error {
 	summarySheet := "Summary"
-	// Override the static beneficiary bank rows with the configured values.
-	if err := f.SetCellValue(summarySheet, "E8", e.resolveBankInfo(ctx).Holder); err != nil {
-		return fmt.Errorf("failed to set E8 bank holder: %w", err)
-	}
-	if err := f.SetCellValue(summarySheet, "E9", e.resolveBankInfo(ctx).Number); err != nil {
-		return fmt.Errorf("failed to set E9 bank number: %w", err)
-	}
-	if err := f.SetCellValue(summarySheet, "E10", e.resolveBankInfo(ctx).Name); err != nil {
-		return fmt.Errorf("failed to set E10 bank name: %w", err)
+	// Override the static beneficiary bank rows with the configured values,
+	// or clear both values and labels when the beneficiary block is hidden.
+	bankInfo := e.resolveBankInfo(ctx)
+	if !bankInfo.Hidden {
+		if err := f.SetCellValue(summarySheet, "E8", bankInfo.Holder); err != nil {
+			return fmt.Errorf("failed to set E8 bank holder: %w", err)
+		}
+		if err := f.SetCellValue(summarySheet, "E9", bankInfo.Number); err != nil {
+			return fmt.Errorf("failed to set E9 bank number: %w", err)
+		}
+		if err := f.SetCellValue(summarySheet, "E10", bankInfo.Name); err != nil {
+			return fmt.Errorf("failed to set E10 bank name: %w", err)
+		}
+	} else {
+		// Clear values, labels, and the "TÀI KHOẢN THỤ HƯỞNG" heading row
+		// directly above (D7/E7 in the sao ke Summary template) so no orphan
+		// beneficiary banner prints over the blanked rows.
+		for _, cell := range []string{"E8", "E9", "E10", "D8", "D9", "D10", "D7", "E7"} {
+			if err := f.SetCellValue(summarySheet, cell, ""); err != nil {
+				return fmt.Errorf("failed to clear bank cell %s: %w", cell, err)
+			}
+		}
 	}
 	whiteRowStyleID, err := e.buildSummaryRowStyle(f,  false)
 	if err != nil {

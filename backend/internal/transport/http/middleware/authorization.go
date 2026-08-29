@@ -93,9 +93,11 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 		// group middleware) so it covers EVERY route that does RBAC, including
 		// /wallet and /admin/manual-disbursement which are mounted on v1 directly
 		// rather than the shared `protected` group. When the flag is on and the
-		// caller is admin/partner, the token must carry otp_verified=true (set
-		// only after a successful /auth/login/verify). Flag off → no-op.
-		if m.otpConfig.Enabled && (userRole == string(domain.RoleAdmin) || userRole == string(domain.RolePartner)) {
+		// caller is admin/partner/accountant, the token must carry
+		// otp_verified=true (set only after a successful /auth/login/verify).
+		// Flag off → no-op. Keep this role set in sync with
+		// AuthService.requiresOTP.
+		if m.otpConfig.Enabled && (userRole == string(domain.RoleAdmin) || userRole == string(domain.RolePartner) || userRole == string(domain.RoleAccountant)) {
 			otpVerified, _ := c.Get("otp_verified")
 			verified, _ := otpVerified.(bool)
 			if !verified {

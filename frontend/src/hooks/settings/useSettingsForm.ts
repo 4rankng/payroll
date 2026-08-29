@@ -11,6 +11,7 @@ const SETTINGS_KEYS = {
   TRANSFER_BANK_HOLDER: 'transfer_bank_account_holder',
   TRANSFER_BANK_NUMBER: 'transfer_bank_account_number',
   TRANSFER_BANK_NAME: 'transfer_bank_name',
+  TRANSFER_BANK_VISIBLE: 'transfer_bank_visible',
 } as const;
 
 // Defaults shown until the admin saves a value (must mirror backend defaults).
@@ -41,6 +42,8 @@ export interface SettingsFormState {
   originalTransferBankNumber: string;
   transferBankName: string;
   originalTransferBankName: string;
+  transferBankVisible: boolean;
+  originalTransferBankVisible: boolean;
   loadError: string | null;
   isSaving: boolean;
   isLoading: boolean;
@@ -53,6 +56,7 @@ export interface SettingsFormState {
   setTransferBankHolder: (v: string) => void;
   setTransferBankNumber: (v: string) => void;
   setTransferBankName: (v: string) => void;
+  setTransferBankVisible: (v: boolean) => void;
   handleSaveWeeklyPayment: () => void;
   handleSaveMonthlyPayment: () => void;
   handleSavePartnerCompany: () => void;
@@ -60,6 +64,7 @@ export interface SettingsFormState {
   handleSaveSelfCheckInAdvancePercentage: () => void;
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
   handleSaveTransferBank: () => void;
+  handleSaveTransferBankVisible: () => void;
   retryLoading: () => void;
 }
 
@@ -79,6 +84,7 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
     SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
     SETTINGS_KEYS.TRANSFER_BANK_NAME,
+    SETTINGS_KEYS.TRANSFER_BANK_VISIBLE,
   ]);
 
   const updateMutation = useUpdateSetting();
@@ -102,6 +108,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalTransferBankNumber, setOriginalTransferBankNumber] = useState('');
   const [transferBankName, setTransferBankName] = useState('');
   const [originalTransferBankName, setOriginalTransferBankName] = useState('');
+  const [transferBankVisible, setTransferBankVisibleState] = useState(true);
+  const [originalTransferBankVisible, setOriginalTransferBankVisible] = useState(true);
   const [bulkTransferWorkbookLimitSaveError, setBulkTransferWorkbookLimitSaveError] =
     useState<string | null>(null);
 
@@ -127,6 +135,9 @@ export function useSettingsForm(): SettingsFormState {
       );
       const transferBankNameSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NAME,
+      );
+      const transferBankVisibleSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_VISIBLE,
       );
 
       if (weeklySetting?.value) {
@@ -163,6 +174,12 @@ export function useSettingsForm(): SettingsFormState {
       setOriginalTransferBankNumber(transferBankNumberSetting?.value ?? TRANSFER_BANK_DEFAULTS.NUMBER);
       setTransferBankName(transferBankNameSetting?.value ?? TRANSFER_BANK_DEFAULTS.NAME);
       setOriginalTransferBankName(transferBankNameSetting?.value ?? TRANSFER_BANK_DEFAULTS.NAME);
+      // Mirrors the backend parse: missing/empty row => default visible;
+      // otherwise only an explicit "true" keeps the block visible.
+      const rawBankVisible = transferBankVisibleSetting?.value?.trim().toLowerCase();
+      const bankVisible = rawBankVisible === undefined || rawBankVisible === '' || rawBankVisible === 'true';
+      setTransferBankVisibleState(bankVisible);
+      setOriginalTransferBankVisible(bankVisible);
     }
   }, [settings]);
 
@@ -290,6 +307,23 @@ export function useSettingsForm(): SettingsFormState {
     }
   };
 
+  const handleSaveTransferBankVisible = () => {
+    if (!settings || !Array.isArray(settings)) return;
+    const setting = settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_VISIBLE);
+    const value = transferBankVisible ? 'true' : 'false';
+    if (setting?.id) {
+      updateMutation.mutate(
+        { id: setting.id, data: { value } },
+        { onSuccess: () => setOriginalTransferBankVisible(transferBankVisible) },
+      );
+    } else {
+      createMutation.mutate(
+        { key: SETTINGS_KEYS.TRANSFER_BANK_VISIBLE, value, value_type: 'string' },
+        { onSuccess: () => setOriginalTransferBankVisible(transferBankVisible) },
+      );
+    }
+  };
+
   const retryLoading = () => {
     void refetch();
   };
@@ -315,8 +349,12 @@ export function useSettingsForm(): SettingsFormState {
     originalTransferBankNumber,
     transferBankName,
     originalTransferBankName,
+    transferBankVisible,
+    originalTransferBankVisible,
     loadError,
-    isSaving: updateMutation.isPending,
+    // Covers both save paths: a missing settings row (e.g. the not-yet-seeded
+    // transfer_bank_visible toggle) is created, an existing one updated.
+    isSaving: updateMutation.isPending || createMutation.isPending,
     isLoading,
     setWeeklyPaymentPercentage,
     setMonthlyPaymentPercentage,
@@ -327,6 +365,7 @@ export function useSettingsForm(): SettingsFormState {
     setTransferBankHolder,
     setTransferBankNumber,
     setTransferBankName,
+    setTransferBankVisible: setTransferBankVisibleState,
     handleSaveWeeklyPayment,
     handleSaveMonthlyPayment,
     handleSavePartnerCompany,
@@ -334,6 +373,7 @@ export function useSettingsForm(): SettingsFormState {
     handleSaveSelfCheckInAdvancePercentage,
     handleSaveSelfCheckInAdvanceHoldHours,
     handleSaveTransferBank,
+    handleSaveTransferBankVisible,
     retryLoading,
   };
 }

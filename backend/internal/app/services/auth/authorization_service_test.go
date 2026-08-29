@@ -464,3 +464,107 @@ func TestPartnerRole_GetTimesheet(t *testing.T) {
 	assert.True(t, svc.CanAccess("admin", "/api/v1/timesheets/1", "GET"),
 		"admin should be allowed GET /timesheets/:id")
 }
+
+// TestAccountantRole_AllowList asserts every endpoint the accountant role is
+// allowed to reach: duyệt công (timesheet approve), bulk-transfer file export
+// + result import, sao ke export, and read-only reference data.
+func TestAccountantRole_AllowList(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	allow := []struct {
+		path   string
+		method string
+	}{
+		// Auth
+		{"/api/v1/auth/me", "GET"},
+		{"/api/v1/auth/logout", "POST"},
+		{"/api/v1/auth/change-password", "POST"},
+
+		// Timesheets - read + approve only
+		{"/api/v1/timesheets", "GET"},
+		{"/api/v1/timesheets/123", "GET"},
+		{"/api/v1/timesheets/summary", "GET"},
+		{"/api/v1/timesheets/grouped", "GET"},
+		{"/api/v1/timesheets/bulk-approve", "POST"},
+
+		// Sao ke + bulk transfer pipeline
+		{"/api/v1/timesheets/payroll/report", "GET"},
+		{"/api/v1/payrolls/bulk-transfer-template", "GET"},
+		{"/api/v1/payrolls/export-bulk-transfer", "POST"},
+		{"/api/v1/payrolls/bulk-transfer-result", "POST"},
+		{"/api/v1/payrolls/bulk-transfer-upload-histories", "GET"},
+		{"/api/v1/payrolls/bulk-transfer-upload-histories/1", "GET"},
+
+		// Reference data for export dialogs
+		{"/api/v1/projects", "GET"},
+		{"/api/v1/employees", "GET"},
+		{"/api/v1/employees/1", "GET"},
+	}
+	for _, tc := range allow {
+		assert.True(t,
+			svc.CanAccess("accountant", tc.path, tc.method),
+			"accountant should be allowed %s %s", tc.method, tc.path,
+		)
+	}
+}
+
+// TestAccountantRole_DenyList asserts the accountant role does NOT inherit
+// admin permissions: no bulk-reject/reset, no settings/users/wallet, no
+// auto bulk transfer (OTP-gated), no timesheet mutation.
+func TestAccountantRole_DenyList(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	deny := []struct {
+		path   string
+		method string
+	}{
+		// Timesheet mutations beyond approve
+		{"/api/v1/timesheets", "POST"},
+		{"/api/v1/timesheets/1", "PUT"},
+		{"/api/v1/timesheets/1", "DELETE"},
+		{"/api/v1/timesheets/bulk-reject", "POST"},
+		{"/api/v1/timesheets/bulk-reset", "POST"},
+		{"/api/v1/timesheets/approve-all", "POST"},
+		{"/api/v1/timesheets/edit-requests/1", "GET"},
+
+		// Single-segment GET sub-routes that keyMatch2 would otherwise match
+		// via the /timesheets/:id allow row.
+		{"/api/v1/timesheets/edit-requests", "GET"},
+		{"/api/v1/timesheets/export", "GET"},
+		{"/api/v1/timesheets/cash-readiness", "GET"},
+		{"/api/v1/timesheets/partner-import", "GET"},
+
+		// Admin-only payroll flows
+		{"/api/v1/payrolls/auto-bulk-transfer", "POST"},
+		{"/api/v1/payrolls/auto-bulk-transfer/estimate-fee", "POST"},
+		{"/api/v1/payrolls/bulk-transfer-external-mark", "POST"},
+		{"/api/v1/timesheets/payroll/report/send-email", "POST"},
+		{"/api/v1/timesheets/payroll/upload-settlement-result", "POST"},
+
+		// Settings / users / wallet / fees
+		{"/api/v1/settings", "GET"},
+		{"/api/v1/settings/1", "PUT"},
+		{"/api/v1/users", "POST"},
+		{"/api/v1/users/1", "DELETE"},
+		{"/api/v1/wallet/bulk-transfer", "POST"},
+		{"/api/v1/admin/advance-payment-fees", "GET"},
+		{"/api/v1/admin/disbursement-fees", "GET"},
+
+		// Reference data writes
+		{"/api/v1/projects", "POST"},
+		{"/api/v1/projects/1", "PUT"},
+		{"/api/v1/employees/import", "POST"},
+		{"/api/v1/employees/1", "PUT"},
+
+		// Bulk employee data exports (PII incl. bank details) — the /employees/*
+		// reference-data wildcard must not reach them.
+		{"/api/v1/employees/export", "GET"},
+		{"/api/v1/employees/1/export", "GET"},
+	}
+	for _, tc := range deny {
+		assert.False(t,
+			svc.CanAccess("accountant", tc.path, tc.method),
+			"accountant should be DENIED %s %s", tc.method, tc.path,
+		)
+	}
+}

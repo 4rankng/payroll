@@ -3,7 +3,7 @@ import type { UserFilters } from '@/services/api/user.service';
 
 export const useUserFiltersWithBackend = () => {
   const [search, setSearch] = useState('');
-  const [role, setRole] = useState<'admin' | 'partner' | 'employee' | undefined>(undefined);
+  const [role, setRole] = useState<'admin' | 'partner' | 'employee' | 'accountant' | undefined>(undefined);
   const [lastLoginToday, setLastLoginToday] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -64,7 +64,7 @@ export const useUserFiltersWithBackend = () => {
     setPage(1);
   }, []);
 
-  const handleRoleChange = useCallback((value: 'admin' | 'partner' | 'employee' | undefined) => {
+  const handleRoleChange = useCallback((value: 'admin' | 'partner' | 'employee' | 'accountant' | undefined) => {
     setRole(value);
     setPage(1);
   }, []);

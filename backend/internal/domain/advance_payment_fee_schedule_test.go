@@ -71,14 +71,24 @@ func TestFeeScheduleEntry_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "min fee zero",
+			// 0-min-fee is a deliberate admin choice (fee schedule with no
+			// floor), so it must validate.
+			name: "min fee zero is allowed",
 			entry: FeeScheduleEntry{
 				ID:            "abc",
 				EffectiveDate: "2025-01-01",
 				Tiers:         []FeeScheduleTier{{MinAmount: 0, Percentage: 2.0}},
 				MinFeeVND:     0,
 			},
-			wantErr: true,
+		},
+		{
+			name: "zero percent tier is allowed",
+			entry: FeeScheduleEntry{
+				ID:            "abc",
+				EffectiveDate: "2025-01-01",
+				Tiers:         []FeeScheduleTier{{MinAmount: 0, Percentage: 0}},
+				MinFeeVND:     0,
+			},
 		},
 		{
 			name: "bad date format",
@@ -126,6 +136,19 @@ func TestFeeScheduleEntry_ResolveFee_FlatRate(t *testing.T) {
 	// Above floor
 	if got := e.ResolveFee(1_000_000); got != 20000 {
 		t.Errorf("1M @ 2%% = 20000, got %d", got)
+	}
+}
+
+func TestFeeScheduleEntry_ResolveFee_ZeroPercentFreeAdvance(t *testing.T) {
+	e := FeeScheduleEntry{
+		ID:            "abc",
+		EffectiveDate: "2026-09-01",
+		Tiers:         []FeeScheduleTier{{MinAmount: 0, Percentage: 0}},
+		MinFeeVND:     0,
+	}
+
+	if got := e.ResolveFee(4_000_000); got != 0 {
+		t.Errorf("0%% schedule with 0 floor must be free, got %d", got)
 	}
 }
 

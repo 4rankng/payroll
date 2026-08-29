@@ -7,7 +7,7 @@ export interface UserFilters {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  role?: 'admin' | 'partner' | 'employee';
+  role?: 'admin' | 'partner' | 'employee' | 'accountant';
   search?: string;
   ids?: string; // Comma-separated user IDs for batch lookup (e.g., "1,2,3")
   last_login_today?: boolean;

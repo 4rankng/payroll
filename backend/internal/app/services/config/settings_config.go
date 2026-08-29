@@ -25,14 +25,21 @@ const (
 	SettingKeyTransferBankHolder        = "transfer_bank_account_holder"
 	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
 	SettingKeyTransferBankName          = "transfer_bank_name"
+	SettingKeyTransferBankVisible       = "transfer_bank_visible"
 )
 
 // TransferBankInfo carries the beneficiary identity printed on payroll
-// statements (email body and Excel attachment).
+// statements (email body and Excel attachment). Hidden=true suppresses the
+// beneficiary block entirely: Excel cells are cleared and statement emails
+// become informational-only (no transfer instructions). The zero value keeps
+// the block visible so existing struct literals stay backward compatible.
 type TransferBankInfo struct {
 	Holder string
 	Number string
 	Name   string
+	// Hidden is driven by the transfer_bank_visible setting (row missing or
+	// unparsable => visible, i.e. Hidden=false).
+	Hidden bool
 }
 
 // Default values
@@ -470,14 +477,56 @@ func (s *SettingsConfigService) getTransferBankString(ctx context.Context, key, 
 }
 
 // GetTransferBankInfo retrieves the beneficiary bank details printed on
-// payroll statement emails and Excel attachments. Unconfigured rows fall back
-// to the MB bank defaults.
+// payroll statement emails and Excel attachments, plus the visibility flag.
+// Unconfigured rows fall back to the MB bank defaults; the visibility flag
+// defaults to true.
 func (s *SettingsConfigService) GetTransferBankInfo(ctx context.Context) TransferBankInfo {
 	return TransferBankInfo{
 		Holder: s.getTransferBankString(ctx, SettingKeyTransferBankHolder, DefaultTransferBankHolder),
 		Number: s.getTransferBankString(ctx, SettingKeyTransferBankNumber, DefaultTransferBankNumber),
 		Name:   s.getTransferBankString(ctx, SettingKeyTransferBankName, DefaultTransferBankName),
+		Hidden: !s.getTransferBankBool(ctx, SettingKeyTransferBankVisible, true),
 	}
+}
+
+// getTransferBankBool reads one boolean setting with caching, falling back to
+// defaultValue when the row is missing or holds an unrecognized value.
+func (s *SettingsConfigService) getTransferBankBool(ctx context.Context, key string, defaultValue bool) bool {
+	if s.settingsService == nil {
+		return defaultValue
+	}
+
+	if cached, ok := s.getFromCache(key); ok {
+		if v, ok := cached.(bool); ok {
+			return v
+		}
+		return defaultValue
+	}
+
+	setting, err := s.settingsService.GetSettingByKey(ctx, key)
+	if err != nil {
+		// Cache the fallback too (short TTL): the transfer_bank_visible row
+		// does not exist until an admin first saves the toggle, and without
+		// negative caching every sao-ke email/export pays a DB round-trip
+		// for the same not-found answer. Staleness is bounded by the TTL.
+		observability.GetLogger().Warn("failed to get boolean setting, using default", "key", key, "error", err)
+		s.setCache(key, defaultValue)
+		return defaultValue
+	}
+
+	raw := strings.TrimSpace(setting.GetStringValue())
+	if raw == "" {
+		// Empty row value behaves like a missing row (default), matching the
+		// frontend toggle's parse.
+		s.setCache(key, defaultValue)
+		return defaultValue
+	}
+	// Only an explicit "true" (any case) keeps the block visible; anything
+	// else ("false", "0", garbage) hides it — same rule the frontend applies.
+	value := strings.EqualFold(raw, "true")
+	s.setCache(key, value)
+
+	return value
 }
 
 // GetAdvancePaymentPercentage retrieves the advance payment percentage setting (with caching)

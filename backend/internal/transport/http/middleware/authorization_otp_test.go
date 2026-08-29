@@ -51,14 +51,20 @@ func TestAuthorize_OTPEnforcement_Admin(t *testing.T) {
 	cases := []struct {
 		name       string
 		role       string
+		path       string
 		otpSet     bool
 		otpValue   bool
 		wantStatus int
 	}{
 		// RT-C1: admin reaching a money route without OTP -> 403.
-		{"admin unverified -> 403", string(domain.RoleAdmin), false, false, http.StatusForbidden},
-		{"admin otp_verified=false -> 403", string(domain.RoleAdmin), true, false, http.StatusForbidden},
-		{"admin otp_verified=true -> 200", string(domain.RoleAdmin), true, true, http.StatusOK},
+		{"admin unverified -> 403", string(domain.RoleAdmin), "/api/v1/wallet/balance", false, false, http.StatusForbidden},
+		{"admin otp_verified=false -> 403", string(domain.RoleAdmin), "/api/v1/wallet/balance", true, false, http.StatusForbidden},
+		{"admin otp_verified=true -> 200", string(domain.RoleAdmin), "/api/v1/wallet/balance", true, true, http.StatusOK},
+		// The accountant is money-adjacent (approves payroll, exports bank
+		// transfer files), so it is OTP-gated like admin/partner. Probed on a
+		// route the policy explicitly allows the accountant.
+		{"accountant unverified -> 403", string(domain.RoleAccountant), "/api/v1/timesheets/summary", false, false, http.StatusForbidden},
+		{"accountant otp_verified=true -> 200", string(domain.RoleAccountant), "/api/v1/timesheets/summary", true, true, http.StatusOK},
 	}
 
 	for _, tc := range cases {
@@ -76,8 +82,11 @@ func TestAuthorize_OTPEnforcement_Admin(t *testing.T) {
 			// /wallet is mounted on v1 directly in production (not behind the
 			// `protected` group) — exactly the RT-C1 blind spot.
 			router.GET("/api/v1/wallet/balance", func(c *gin.Context) { c.Status(http.StatusOK) })
+			// A route the accountant policy explicitly allows, used by the
+			// accountant cases below.
+			router.GET("/api/v1/timesheets/summary", func(c *gin.Context) { c.Status(http.StatusOK) })
 
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/wallet/balance", nil)
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 

@@ -23,7 +23,8 @@ import type { Employee, EmployeesResponse, CurrentProject, EmployeeProjectsRespo
 // Get projects summary
 export const useProjectsSummary = () => {
   const userRole = authManager.getUserRole();
-  const hasPermission = (userRole === 'admin' || userRole === 'partner') && userRole !== null;
+  const hasPermission =
+    (userRole === 'admin' || userRole === 'partner' || userRole === 'accountant') && userRole !== null;
 
   return useQuery({
     queryKey: QueryKeys.projects.summary(),
@@ -36,8 +37,11 @@ export const useProjectsSummary = () => {
 // Get paginated projects list
 export const useProjects = (filters?: ProjectFilters, options?: { enabled?: boolean }) => {
   const userRole = authManager.getUserRole();
-  // Only allow if explicitly admin or partner - deny if null, employee, or any other role
-  const hasPermission = (userRole === 'admin' || userRole === 'partner') && userRole !== null;
+  // Only allow if explicitly admin, partner, or accountant (casbin grants the
+  // accountant GET /api/v1/projects for the bulk-transfer export dialogs) -
+  // deny if null, employee, or any other role
+  const hasPermission =
+    (userRole === 'admin' || userRole === 'partner' || userRole === 'accountant') && userRole !== null;
 
   return useQuery({
     queryKey: QueryKeys.projects.list(filters),
@@ -54,7 +58,8 @@ export const useProjects = (filters?: ProjectFilters, options?: { enabled?: bool
 // omit projects beyond the backend's 100-row page limit.
 export const useAllProjects = (options?: { enabled?: boolean }) => {
   const userRole = authManager.getUserRole();
-  const hasPermission = (userRole === 'admin' || userRole === 'partner') && userRole !== null;
+  const hasPermission =
+    (userRole === 'admin' || userRole === 'partner' || userRole === 'accountant') && userRole !== null;
 
   return useQuery({
     queryKey: [...QueryKeys.projects.all, 'all-pages'],

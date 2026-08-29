@@ -70,6 +70,7 @@ const PartnerDashboardMobile = lazy(() => import("./pages/mobile/partner/Dashboa
 
 // Adv Partner Desktop Pages (lazy-loaded)
 const AdvPartnerUsersPage = lazy(() => import("./pages/adv-partner/UsersPage"));
+const AccountantPage = lazy(() => import("./pages/accountant/AccountantPage"));
 
 // Employee Pages (lazy-loaded)
 const EmployeeRouter = lazy(() => import("./pages/employee/EmployeeRouter"));
@@ -113,6 +114,9 @@ const RootRedirect = () => {
   }
   if (isTokenValid && userRole === "adv_partner") {
     return <Navigate to="/adv-partner/advance-payments" replace />;
+  }
+  if (isTokenValid && userRole === "accountant") {
+    return <Navigate to="/accountant" replace />;
   }
   if (isTokenValid && userRole === "employee") {
     return <Navigate to="/employee" replace />;
@@ -296,6 +300,9 @@ const AppContent = () => {
 
         {/* Employee Routes */}
         <Route path="/employee" element={<ProtectedRoute requiredRole="employee"><EmployeeRouter /></ProtectedRoute>} />
+
+        {/* Accountant Routes — single no-sidebar workspace (duyệt công, chuyển lô, sao kê) */}
+        <Route path="/accountant" element={<ProtectedRoute requiredRole="accountant"><AccountantPage /></ProtectedRoute>} />
 
         {/* Advance Payment Partner Routes */}
         <Route path="/adv-partner" element={<ProtectedRoute requiredRole="adv_partner"><AdminLayout /></ProtectedRoute>}>

@@ -384,7 +384,7 @@ export const FeeScheduleFormDialog = ({
                 <Input
                   id="minFee"
                   type="number"
-                  min={1}
+                  min={0}
                   value={formState.minFeeVnd}
                   className={cn(
                     fieldErrors.minFee &&
