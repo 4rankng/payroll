@@ -50,7 +50,8 @@ const forceChangePasswordSchema = z.object({
     .regex(/[A-Z]/, 'Mật khẩu phải chứa ít nhất một chữ hoa')
     .regex(/[a-z]/, 'Mật khẩu phải chứa ít nhất một chữ thường')
     .regex(/[0-9]/, 'Mật khẩu phải chứa ít nhất một số')
-    .regex(SPECIAL_CHAR_REGEX, 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt (!@#$%^&*()_+-=[]{}|;:,.<>?)'),
+    .regex(SPECIAL_CHAR_REGEX, 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt (!@#$%^&*()_+-=[]{}|;:,.<>?)')
+    .max(72, 'Mật khẩu không được vượt quá 72 ký tự'),
 });
 
 type ForceChangePasswordFormData = z.infer<typeof forceChangePasswordSchema>;
@@ -67,6 +68,7 @@ const PASSWORD_RULES: ReadonlyArray<{ label: string; test: (value: string) => bo
   { label: 'Chữ thường', test: (value) => /[a-z]/.test(value) },
   { label: 'Chữ số', test: (value) => /[0-9]/.test(value) },
   { label: 'Ký tự đặc biệt', test: (value) => SPECIAL_CHAR_REGEX.test(value) },
+  { label: 'Tối đa 72 ký tự', test: (value) => value.length <= 72 },
 ];
 
 const passwordFieldClass =

@@ -38,7 +38,8 @@ const changePasswordSchema = z.object({
     .regex(/[A-Z]/, 'Mật khẩu phải chứa ít nhất một chữ hoa')
     .regex(/[a-z]/, 'Mật khẩu phải chứa ít nhất một chữ thường')
     .regex(/[0-9]/, 'Mật khẩu phải chứa ít nhất một số')
-    .regex(SPECIAL_CHAR_REGEX, 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt (!@#$%^&*()_+-=[]{}|;:,.<>?)'),
+    .regex(SPECIAL_CHAR_REGEX, 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt (!@#$%^&*()_+-=[]{}|;:,.<>?)')
+    .max(72, 'Mật khẩu không được vượt quá 72 ký tự'),
 });
 
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
