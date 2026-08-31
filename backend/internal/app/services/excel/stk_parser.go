@@ -85,8 +85,9 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 		row := rows[i]
 		// Interior blank spacer rows must not terminate parsing — partner
 		// sheets use them as visual separators, and stopping here would
-		// silently drop every row below.
-		if len(row) == 0 {
+		// silently drop every row below. Rows carrying only a stray leading
+		// cell (e.g. an orphan STT) are treated as spacers too.
+		if len(row) <= 1 {
 			continue
 		}
 		cccd := stkCell(row, cols.cccd)

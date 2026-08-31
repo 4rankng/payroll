@@ -205,6 +205,7 @@ func TestFlatRatesHaveBucket(t *testing.T) {
 		"chia chọn.ngày thường.tăng ca": 56250,
 		"lái xe nâng.ngày lễ.ca ngày":   112500,
 		"odd.depth.here.ca ngày":        1,
+		"chia chọn.ngày nghỉ.ca ngày":   0,
 	}
 	assert.True(t, flatRatesHaveBucket(flatRates, "ngày thường", "ca ngày"))
 	assert.True(t, flatRatesHaveBucket(flatRates, "Ngày Thường", "Tăng Ca"))

@@ -130,7 +130,13 @@ func shiftLabelHourType(label string) (string, bool) {
 func flatRatesHaveBucket(flatRates map[string]int, dayType, hourType string) bool {
 	wantDay := canonicalBCCRateKeySegment(dayType)
 	wantHour := canonicalBCCRateKeySegment(hourType)
-	for path := range flatRates {
+	for path, rate := range flatRates {
+		if rate == 0 {
+			// A bucket explicitly configured at 0 VND is equivalent to absent
+			// (the legacy rate path skips zero rates) — surface the standard
+			// missing-rate error instead of passing the import gate.
+			continue
+		}
 		parts := strings.Split(path, ".")
 		if len(parts) != 3 {
 			continue
