@@ -286,7 +286,7 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Tìm theo tên tệp…"
               aria-label="Tìm theo tên tệp"
-              className="h-11 sm:h-11 pl-9 pr-9"
+              className="h-11 sm:h-11 pl-9 pr-9 sm:pl-9 sm:pr-9"
             />
             {searchInput && (
               <button
