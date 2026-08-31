@@ -196,7 +196,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
   // The review actions are hidden once the attendance reaches a terminal state:
   // "Duyệt" is hidden on Hoàn thành (completed) or Đã duyệt (approved); "Từ chối"
   // is hidden on Đã từ chối (rejected) or Đã huỷ (review-rejected) or once the
-  // quota is credited; "Cộng hạn mức ngay" shows only on completed shifts still
+  // quota is credited; "Cộng ngay" shows only on completed shifts still
   // waiting out their quota-credit hold, and only when the page supplies the
   // (admin-only) callback. Omitted entirely when no callbacks are provided so
   // the table stays read-only in contexts that don't need it.
@@ -238,7 +238,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                 {showCreditQuota && (
                   <DropdownMenuItem onClick={() => onCreditQuota(att)}>
                     <Zap className="mr-2 h-4 w-4" />
-                    Cộng hạn mức ngay
+                    Cộng ngay
                   </DropdownMenuItem>
                 )}
                 {showReject && (

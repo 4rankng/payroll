@@ -100,7 +100,7 @@ export function useCreditAttendanceQuota() {
     onSuccess: (updated: AdminAttendanceResponse) => {
       queryClient.setQueryData(ADMIN_ATTENDANCE_QUERY_KEYS.detail(updated.id), { data: updated });
       invalidateAttendanceLists(queryClient);
-      toast.success("Đã cộng hạn mức ngay");
+      toast.success("Đã cộng hạn mức");
     },
   });
 }

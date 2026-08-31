@@ -155,7 +155,7 @@ export function AttendanceMobileCard({
             onClick={() => onCreditQuota(row)}
           >
             <Zap className="h-4 w-4" />
-            Cộng hạn mức
+            Cộng ngay
           </Button>
         )}
         {showReject && (

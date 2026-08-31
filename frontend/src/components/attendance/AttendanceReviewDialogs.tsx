@@ -109,7 +109,7 @@ export function AttendanceReviewDialogs({
         onOpenChange={(open) => {
           if (!open) onClose();
         }}
-        title="Cộng hạn mức ứng ngay?"
+        title="Cộng ngay?"
         description={
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
