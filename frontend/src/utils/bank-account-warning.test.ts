@@ -68,6 +68,18 @@ describe("getBankAccountNameMismatch", () => {
     });
   });
 
+  it("extracts the bank-reported name from the quoted two-sided reason", () => {
+    expect(
+      getBankAccountNameMismatch(
+        'Tên chủ tài khoản không khớp với ngân hàng (hệ thống ghi: "MB BANK", ngân hàng ghi: "Dao Ngoc Tien")',
+        "Đào Ngọc Tiến",
+      ),
+    ).toEqual({
+      enteredName: "Đào Ngọc Tiến",
+      bankName: "Dao Ngoc Tien",
+    });
+  });
+
   it("does not turn other bank validation errors into a name comparison", () => {
     expect(
       getBankAccountNameMismatch(

@@ -13,7 +13,10 @@ export interface BankAccountWarning {
 const BANK_NAME_MISMATCH_PREFIX = "tên chủ tài khoản không khớp";
 const INVALID_ACCOUNT_NUMBER_PREFIX = "số tài khoản không hợp lệ";
 const MISSING_SWIFT_CODE_PREFIX = "không có mã swift";
-const BANK_REPORTED_NAME_PATTERN = /\(ngân hàng ghi:\s*(.+?)\)\s*$/i;
+// Reason tail pattern. Handles both persisted formats:
+//   old: "... (ngân hàng ghi: NGUYEN VAN A)"
+//   new: "... (hệ thống ghi: "MB BANK", ngân hàng ghi: "Dao Ngoc Tien")"
+const BANK_REPORTED_NAME_PATTERN = /ngân hàng ghi:\s*"?(.+?)"?\s*\)\s*$/i;
 const BANK_ACCOUNT_INVALID_ERROR_CODE = "BANK_ACCOUNT_INVALID";
 
 export function getRejectedBankAccountWarning(

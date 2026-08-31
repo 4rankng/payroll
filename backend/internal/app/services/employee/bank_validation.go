@@ -207,7 +207,7 @@ func (v *BankAccountValidator) Validate(ctx context.Context, bankID *uint, accou
 	case res.Valid:
 		r = ValidationResult{Status: domain.BankAccountStatusValid}
 	default:
-		r = ValidationResult{Status: domain.BankAccountStatusInvalid, Reason: translateInvalidReason(res)}
+		r = ValidationResult{Status: domain.BankAccountStatusInvalid, Reason: translateInvalidReason(res, accountName)}
 	}
 
 	// Best-effort cache of the OnePay outcome so the next check of the
@@ -263,12 +263,26 @@ func writeCachedResult(ctx context.Context, c domain.CacheServiceUseCase, key st
 
 // translateInvalidReason maps a provider AccountCheckResult to a
 // Vietnamese human-readable reason string for the warning list UI.
-func translateInvalidReason(res *infrastructure.AccountCheckResult) *string {
+//
+// For name_mismatch both sides of the comparison are quoted: the holder
+// name stored on the employee (what the system actually compared — it can
+// be wrong, e.g. a bank name entered by mistake) and the bank-confirmed
+// name. Showing only the bank side made correct verdicts look like false
+// positives whenever the stored name happened to match the employee's
+// display name.
+func translateInvalidReason(res *infrastructure.AccountCheckResult, storedName string) *string {
 	switch res.RawErrorCode {
 	case "name_mismatch":
 		msg := "Tên chủ tài khoản không khớp với ngân hàng"
+		var parts []string
+		if storedName != "" {
+			parts = append(parts, fmt.Sprintf("hệ thống ghi: %q", storedName))
+		}
 		if res.AccountName != "" {
-			msg = fmt.Sprintf("%s (ngân hàng ghi: %s)", msg, res.AccountName)
+			parts = append(parts, fmt.Sprintf("ngân hàng ghi: %q", res.AccountName))
+		}
+		if len(parts) > 0 {
+			msg = fmt.Sprintf("%s (%s)", msg, strings.Join(parts, ", "))
 		}
 		return &msg
 	default:
