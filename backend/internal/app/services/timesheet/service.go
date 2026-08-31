@@ -470,6 +470,10 @@ func (s *TimesheetService) BulkReject(ctx context.Context, timesheetIDs []uint, 
 		return err
 	}
 
+	// Invalidate timesheet caches synchronously so subsequent reads see fresh data
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:list:*")
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:summary:*")
+
 	// Publish bulk rejected event after transaction
 	event := domain.NewTimesheetBulkRejectedEvent(ctx, len(timesheetIDs), nil, rejectedBy)
 	if err := s.events.Publish(ctx, event); err != nil {
@@ -494,6 +498,10 @@ func (s *TimesheetService) BulkReset(ctx context.Context, timesheetIDs []uint, r
 	if err != nil {
 		return err
 	}
+
+	// Invalidate timesheet caches synchronously so subsequent reads see fresh data
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:list:*")
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:summary:*")
 
 	// Publish bulk reset event after transaction
 	event := domain.NewTimesheetBulkResetEvent(ctx, len(timesheetIDs), nil, resetBy)
