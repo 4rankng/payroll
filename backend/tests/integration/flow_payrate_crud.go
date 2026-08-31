@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 const flowPayrate = "PayrateCRUD"
@@ -18,6 +20,7 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 
 	projectID := data.WeeklyProject.ID
 	var testPayrateID uint
+	adopted := false
 
 	reporter.RunTest(flowPayrate, "List payrates for project", func() error {
 		var resp interface{}
@@ -33,16 +36,38 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			EffectiveFrom: today(),
 		}
 		var resp PayrateResponse
-		if _, err := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body, &resp); err != nil {
+		if _, err := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body, &resp); err == nil {
+			testPayrateID = resp.ID
+			fmt.Printf("    Created payrate ID %d for project %d\n", resp.ID, projectID)
+			return AssertGreaterThan("id", uint(0), resp.ID)
+		} else if existing, found := findTodayPayrate(admin, projectID); found {
+			// A same-day payrate already exists. If it carries this test's exact
+			// rates it is residue from an interrupted earlier run (or a concurrent
+			// suite instance) — remove it and retry. Otherwise it is real business
+			// data: adopt it for the update steps without claiming ownership.
+			if isTestPayrateRates(existing.Rates) {
+				if _, _, delErr := admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", existing.ID)); delErr != nil {
+					return fmt.Errorf("remove leftover test payrate %d: %v (create: %w)", existing.ID, delErr, err)
+				}
+				var retry PayrateResponse
+				if _, retryErr := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body, &retry); retryErr != nil {
+					return fmt.Errorf("create payrate after cleanup: %w", retryErr)
+				}
+				testPayrateID = retry.ID
+				fmt.Printf("    Created payrate ID %d for project %d (after residue cleanup)\n", retry.ID, projectID)
+				return AssertGreaterThan("id", uint(0), retry.ID)
+			}
+			testPayrateID = existing.ID
+			adopted = true
+			fmt.Printf("    Adopted pre-existing payrate ID %d for project %d\n", existing.ID, projectID)
+			return nil
+		} else {
 			return fmt.Errorf("create payrate: %w", err)
 		}
-		testPayrateID = resp.ID
-		fmt.Printf("    Created payrate ID %d for project %d\n", resp.ID, projectID)
-		return AssertGreaterThan("id", uint(0), resp.ID)
 	})
 
 	defer func() {
-		if testPayrateID != 0 {
+		if testPayrateID != 0 && !adopted {
 			_, _, _ = admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", testPayrateID))
 		}
 	}()
@@ -80,6 +105,10 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		if testPayrateID == 0 {
 			return fmt.Errorf("no test payrate ID")
 		}
+		if adopted {
+			fmt.Printf("    Skipping delete — payrate %d pre-existed this run\n", testPayrateID)
+			return nil
+		}
 		if _, _, err := admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", testPayrateID)); err != nil {
 			return fmt.Errorf("delete payrate: %w", err)
 		}
@@ -110,4 +139,39 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		}
 		return nil
 	})
+}
+
+// findTodayPayrate returns the project's active payrate whose effective date is
+// today, if one exists.
+func findTodayPayrate(admin *APIClient, projectID uint) (*PayrateResponse, bool) {
+	var payrates []PayrateResponse
+	if _, err := admin.GetInto(fmt.Sprintf("/api/v1/payrates?project_id=%d", projectID), &payrates); err != nil {
+		return nil, false
+	}
+	for i := range payrates {
+		if payrates[i].FromDate == today() && payrates[i].ToDate == nil {
+			return &payrates[i], true
+		}
+	}
+	return nil, false
+}
+
+// isTestPayrateRates reports whether raw matches the exact rates document this
+// flow writes (create signature 250000 or post-update signature 300000), i.e.
+// a leftover from an earlier run of this test rather than business data.
+func isTestPayrateRates(raw json.RawMessage) bool {
+	var got interface{}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		return false
+	}
+	for _, sig := range []string{
+		`{"Nhân viên":{"Ngày thường":{"Ca ngày":250000}}}`,
+		`{"Nhân viên":{"Ngày thường":{"Ca ngày":300000}}}`,
+	} {
+		var want interface{}
+		if err := json.Unmarshal([]byte(sig), &want); err == nil && reflect.DeepEqual(got, want) {
+			return true
+		}
+	}
+	return false
 }

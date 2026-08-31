@@ -111,15 +111,19 @@ func (s *PayrateService) DeletePayrate(ctx context.Context, id uint, deletedBy u
 	if err != nil && !domain.IsNotFoundError(err) {
 		return fmt.Errorf("failed to load previous payrate: %w", err)
 	}
+	// Soft-delete the target before extending the predecessor. Extending first
+	// would briefly leave two open payrates for the project (target still open,
+	// predecessor re-opened) and violate uq_payrates_one_open_per_project
+	// (error 1062) whenever the target is the currently open payrate.
+	if err := s.PayrateRepo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete payrate: %w", err)
+	}
+
 	if previousPayrate != nil {
 		previousPayrate.ToDate = payrate.ToDate
 		if err := s.PayrateRepo.Update(ctx, previousPayrate); err != nil {
 			return fmt.Errorf("failed to extend previous payrate: %w", err)
 		}
-	}
-
-	if err := s.PayrateRepo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete payrate: %w", err)
 	}
 
 	// Publish domain event
