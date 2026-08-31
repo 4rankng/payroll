@@ -79,9 +79,15 @@ but the explicit-file-list discipline stays.
       ordering, 100/101 boundary; partner `cuongnv` scoped to own 70 uploads
       (single `uploaded_by`), search stays scoped.
 - [x] `make api-test` passes: 296 total, 273 passed, 0 failed, 23 skipped.
-- [ ] Browser visual pass of the sheet (grouped headers, dropdown, filter
-      clear-on-close) — deferred to user; every API behavior it relies on is
-      proven, diff reviewed, types green.
+- [x] Browser visual pass of the sheet — scripted Playwright QA against
+      localhost:3000 (system-Chrome channel, token pre-injected): 16/16
+      assertions across admin desktop, partner desktop, partner mobile
+      (390px), covering grouped headers, lowercase search → GEORIM rows,
+      clear-X restore, dropdown → flat list, reopen-cleared, filter-row fit.
+      Screenshots visually confirmed (group headers render named; case-
+      insensitive matching visible). Admin trigger: "Thêm tùy chọn" menu →
+      "Lịch sử BCC"; partner: "Tác vụ bảng công" card button; mobile partner:
+      bottom-sheet "Tùy chọn"; route is /partner/timesheet (singular).
 - [ ] Single focused feature commit + separate plan commit; `git show --stat`
       verified for both.
 
