@@ -49,10 +49,15 @@ type AssetFilters struct {
 	FromDate      *time.Time
 	ToDate        *time.Time
 	MetadataQuery map[string]string // JSON path key → value for metadata filtering
-	Limit         int
-	Offset        int
-	SortBy        string
-	SortOrder     string
+	MetadataLike  map[string]string // JSON path key → substring term (LIKE %term%)
+	// MetadataNotNull requires metadata IS NOT NULL (the renderer drops NULL rows).
+	MetadataNotNull bool
+	// GroupByProject orders by metadata project_id, then created_at DESC.
+	GroupByProject bool
+	Limit          int
+	Offset         int
+	SortBy         string
+	SortOrder      string
 }
 
 type AssetUploadRequest struct {

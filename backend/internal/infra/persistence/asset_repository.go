@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"api-server/internal/domain"
@@ -92,18 +93,25 @@ func (r *AssetRepository) List(ctx context.Context, filters domain.AssetFilters)
 	query := r.DB.WithContext(ctx).Model(&domain.Asset{})
 	query = applyAssetFilters(query, filters)
 
-	// Default sorting
-	sortBy := "created_at"
-	if filters.SortBy != "" {
-		sortBy = filters.SortBy
-	}
+	// Project grouping must REPLACE the sanitize-whitelist ordering: a JSON
+	// expression is not an identifier, and SanitizeSortColumn would silently
+	// revert it to created_at.
+	if filters.GroupByProject {
+		query = query.Order("JSON_EXTRACT(metadata, '$.project_id') ASC, created_at DESC")
+	} else {
+		// Default sorting
+		sortBy := "created_at"
+		if filters.SortBy != "" {
+			sortBy = filters.SortBy
+		}
 
-	sortOrder := "desc"
-	if filters.SortOrder != "" {
-		sortOrder = filters.SortOrder
-	}
+		sortOrder := "desc"
+		if filters.SortOrder != "" {
+			sortOrder = filters.SortOrder
+		}
 
-	query = query.Order(common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
+		query = query.Order(common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC"))
+	}
 
 	// Default pagination
 	if filters.Limit <= 0 {
@@ -204,5 +212,33 @@ func applyAssetFilters(query *gorm.DB, filters domain.AssetFilters) *gorm.DB {
 		query = query.Where("JSON_UNQUOTE(JSON_EXTRACT(metadata, ?)) = ?", fmt.Sprintf("$.%s", key), value)
 	}
 
+	if filters.MetadataNotNull {
+		query = query.Where("metadata IS NOT NULL")
+	}
+
+	// JSON function results carry utf8mb4_bin regardless of table collation, so
+	// the comparison needs an explicit accent/case-insensitive COLLATE for
+	// substring search. The term is a bound parameter; escapeLike keeps its
+	// metacharacters literal.
+	for key, term := range filters.MetadataLike {
+		query = query.Where(
+			"JSON_UNQUOTE(JSON_EXTRACT(metadata, ?)) COLLATE utf8mb4_0900_ai_ci LIKE ? ESCAPE '\\\\'",
+			fmt.Sprintf("$.%s", key), "%"+escapeLike(term)+"%")
+	}
+
 	return query
+}
+
+// escapeLike escapes the SQL LIKE metacharacters so a user-supplied term
+// matches as a literal substring under the ESCAPE '\\' clause applied in
+// applyAssetFilters. Backslash must be escaped FIRST: escaping `%` before `\`
+// would leave the freshly inserted `\` characters unescaped and turn
+// `100\%` into a literal backslash plus a live wildcard. Single backslashes
+// are correct because the pattern travels as a bound parameter, never as a
+// SQL literal.
+func escapeLike(term string) string {
+	term = strings.ReplaceAll(term, `\`, `\\`)
+	term = strings.ReplaceAll(term, "%", `\%`)
+	term = strings.ReplaceAll(term, "_", `\_`)
+	return term
 }

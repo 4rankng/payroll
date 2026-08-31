@@ -543,6 +543,7 @@ export default function TimesheetsPage() {
             ? parseInt(timesheetManagement.selectedProject, 10)
             : undefined
         }
+        projects={timesheetManagement.projects}
       />
     </div>
   );

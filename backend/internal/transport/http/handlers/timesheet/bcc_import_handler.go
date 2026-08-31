@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	appservices "api-server/internal/app/services"
 	"api-server/internal/app/services/infrastructure"
@@ -183,8 +184,9 @@ func (h *BCCImportHandler) ListPartnerImports(c *gin.Context) {
 
 	bccType := domain.UploadTypePartnerBCCImport
 	filters := domain.AssetFilters{
-		UploadType:    &bccType,
-		MetadataQuery: make(map[string]string),
+		UploadType:      &bccType,
+		MetadataQuery:   make(map[string]string),
+		MetadataNotNull: true, // exclude NULL/unparseable rows the renderer drops via assetToImportItem
 	}
 
 	if pid := c.Query("project_id"); pid != "" {
@@ -193,6 +195,21 @@ func (h *BCCImportHandler) ListPartnerImports(c *gin.Context) {
 	if fm := c.Query("for_month"); fm != "" {
 		filters.MetadataQuery["for_month"] = fm
 	}
+
+	if search := strings.TrimSpace(c.Query("search")); search != "" {
+		if utf8.RuneCountInString(search) > 100 {
+			response.BadRequest(c, "search không được vượt quá 100 ký tự")
+			return
+		}
+		if filters.MetadataLike == nil {
+			filters.MetadataLike = make(map[string]string)
+		}
+		filters.MetadataLike["original_name"] = search
+	}
+
+	// Grouped view: project ASC, newest-first within each project, so groups
+	// stay contiguous across pages.
+	filters.GroupByProject = c.Query("sort") == "project"
 
 	// Partners only see their own uploads; admin sees all.
 	if userRole == string(domain.RolePartner) {

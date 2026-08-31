@@ -347,6 +347,7 @@ export default function TimesheetsPageMobile() {
             ? parseInt(timesheetManagement.selectedProject, 10)
             : undefined
         }
+        projects={timesheetManagement.projects}
       />
 
       <PaymentHistorySheet

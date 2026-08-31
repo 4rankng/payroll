@@ -488,6 +488,8 @@ export interface ImportError {
 export interface PartnerImportListParams {
   project_id?: number;
   for_month?: string;
+  search?: string;
+  sort?: string;
   page?: number;
   page_size?: number;
 }
