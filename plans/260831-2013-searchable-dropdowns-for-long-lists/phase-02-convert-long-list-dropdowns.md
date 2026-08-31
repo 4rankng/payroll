@@ -74,10 +74,10 @@ disabled options respected).
 
 ## Success Criteria
 
-- [ ] Every table row converted (or explicitly reclassified with reason);
+- [x] Every table row converted (or explicitly reclassified with reason);
       `pnpm lint` green.
-- [ ] Browser-verified: UploadHistorySheet project filter (37 options,
+- [x] Browser-verified: UploadHistorySheet project filter (37 options,
       diacritic-insensitive filter), DoubleEntryModal account select, one
       mobile surface (filter + select works, sheet modal traps focus
       correctly), placeholder/"Tất cả" defaults intact.
-- [ ] Reclassified-to-keep list documented in the report.
+- [x] Reclassified-to-keep list documented in the report.

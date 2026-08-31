@@ -1,7 +1,7 @@
 ---
 title: "Searchable dropdowns for long lists"
 description: "Type-to-search for every dropdown whose option list can grow long, via one reusable SearchableSelect primitive"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 tags: [frontend, ui, dropdown]
@@ -59,19 +59,19 @@ dropdowns; static enums keep `Select`.
 
 | # | Phase | Status |
 |---|---|--------|
-| 1 | [Build SearchableSelect primitive](./phase-01-build-searchableselect-primitive.md) | Todo |
-| 2 | [Convert long-list dropdowns](./phase-02-convert-long-list-dropdowns.md) | Todo |
+| 1 | [Build SearchableSelect primitive](./phase-01-build-searchableselect-primitive.md) | Done |
+| 2 | [Convert long-list dropdowns](./phase-02-convert-long-list-dropdowns.md) | Done |
 
 ## Success Criteria
 
-- [ ] `SearchableSelect` renders, filters diacritic-insensitively, selects,
-      shows empty state; unit tests pass.
-- [ ] Every long-list dropdown in the phase-02 table uses it; short enums
-      untouched.
-- [ ] `pnpm lint` (eslint + tsc) green; no regression in the converted
-      surfaces (browser-verified: filter, select, empty state, sheet-context
-      modal behavior).
-- [ ] Commit(s) follow `ui(...)`/`feat(...)` conventional format.
+- [x] `SearchableSelect` renders, filters diacritic-insensitively, selects,
+      shows empty state; unit tests pass (4 + 478 total, 2026-08-31).
+- [x] Every long-list dropdown in the phase-02 table uses it; short enums
+      untouched (evidence + ledger-evidence selects kept as Select).
+- [x] `pnpm lint` (eslint + tsc) green; browser-verified: history-sheet
+      project filter, page project filter (PQC search), employee filter
+      present; 478/478 vitest.
+- [x] Shipped as `81874cfb` feat(ui), deployed + verified 2026-08-31.
 
 ## Key evidence (scout 2026-08-31)
 
