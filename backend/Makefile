@@ -84,18 +84,23 @@ IMAGE_NAME := ghcr.io/$(GHCR_OWNER)/payroll-backend
 GIT_SHA    := $(shell git rev-parse --short HEAD)
 BUILDER    := bb
 
-# GHCR auth token. Prefer an explicit shell env var; otherwise read it from
-# ~/.zshrc (per .env comment, the token lives there — not in .env) so deploys
-# work from non-interactive shells (editors, CI, this agent) that never source
-# ~/.zshrc. awk (not sed) because Make's $(shell) mis-parses sed + tr pipes.
-GHCR_TOKEN ?= $(shell awk -F= '/export GHCR_TOKEN=/{print $$2}' $(HOME)/.zshrc | head -1)
+# GHCR auth token is resolved inside the push recipe at runtime via
+# ../scripts/ghcr-token.sh (env GHCR_TOKEN → Docker keychain → legacy ~/.zshrc).
+# It is deliberately NOT a make variable: a $(shell) failure would silently
+# expand to an empty token and surface as a cryptic "denied: denied" at login,
+# and make -n would print the expanded token.
+# NOTE for future editors: ../scripts resolves from backend/ (and frontend/) to
+# the repo-root scripts dir; this only holds while these Makefiles sit one
+# level below the repo root.
 
 push:
 	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || docker buildx create --name $(BUILDER) --driver docker-container --use
 	@docker buildx use $(BUILDER)
 	@docker buildx inspect --bootstrap >/dev/null
-	@echo "🔐 Logging into GHCR as $(GHCR_OWNER)..."
-	@echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_OWNER)" --password-stdin
+	@GHCR_TOKEN=$$(../scripts/ghcr-token.sh payroll-backend) || { \
+		echo "❌ GHCR token resolution failed — see message above."; exit 1; }; \
+	echo "🔐 Logging into GHCR as $(GHCR_OWNER)..."; \
+	printf '%s\n' "$$GHCR_TOKEN" | docker login ghcr.io -u "$(GHCR_OWNER)" --password-stdin
 
 	@echo "🏗️  Building & pushing AMD64 image (with inline cache)..."
 	docker buildx build \
