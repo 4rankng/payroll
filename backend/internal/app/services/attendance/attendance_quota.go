@@ -36,6 +36,41 @@ func (s *AttendanceService) CreditScheduledAttendanceQuota(ctx context.Context, 
 	return s.creditAttendanceQuota(ctx, attendanceID, true)
 }
 
+// CreditAttendanceQuotaNow banks a completed self-check-out's earning into the
+// advance-payment quota pool immediately, skipping the configured post-checkout
+// hold. It is the admin "credit now" action for healthy completed shifts: unlike
+// Approve it does not recompute the earning or overwrite the employee's
+// check-out. Rows with nothing payable are rejected; already-credited rows are
+// an idempotent success. Returns the reloaded attendance so the response mapper
+// sees the stamped quota_credited_at.
+func (s *AttendanceService) CreditAttendanceQuotaNow(ctx context.Context, attendanceID, adminID uint) (*domain.Attendance, error) {
+	att, err := s.attendanceRepo.GetByID(ctx, attendanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load attendance: %w", err)
+	}
+	if att == nil {
+		return nil, domain.NewNotFoundError("Không tìm thấy bản ghi chấm công")
+	}
+	if att.CheckOutTime == nil || att.EarningAmount == nil || *att.EarningAmount <= 0 {
+		return nil, domain.NewValidationError("Ca này chưa có thu nhập để cộng hạn mức")
+	}
+	if att.QuotaCreditedAt != nil {
+		// Already banked — idempotent success; return the current record.
+		return att, nil
+	}
+	if _, err := s.CreditAttendanceQuota(ctx, attendanceID); err != nil {
+		return nil, fmt.Errorf("failed to credit attendance quota: %w", err)
+	}
+	observability.GetLogger().Info("admin credited attendance quota before hold elapsed",
+		"attendance_id", attendanceID,
+		"employee_id", att.EmployeeID,
+		"admin_id", adminID,
+		"earning_amount", *att.EarningAmount,
+	)
+	// Reload with associations so the response mapper has Employee/Project.
+	return s.attendanceRepo.GetByID(ctx, attendanceID)
+}
+
 func (s *AttendanceService) creditAttendanceQuota(ctx context.Context, attendanceID uint, requireEligibility bool) (bool, error) {
 	credited := false
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {

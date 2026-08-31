@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { MoreHorizontal, MapPin, Check, X } from "lucide-react";
+import { MoreHorizontal, MapPin, Check, X, Zap } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import {
@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   canApproveAttendance,
+  canCreditAttendanceQuota,
   canRejectAttendance,
   getAttendanceOperationalStatus,
   getAttendanceReviewStatusLabel,
@@ -24,6 +25,10 @@ export interface AttendanceRowActions {
   onViewMap: (row: AdminAttendanceResponse) => void;
   onApprove: (row: AdminAttendanceResponse) => void;
   onReject: (row: AdminAttendanceResponse) => void;
+  /** Admin-only "credit now": bank a completed shift's earning into the
+   * advance quota immediately, skipping the post-checkout hold. Omitted by
+   * pages for roles without the admin attendance endpoints. */
+  onCreditQuota?: (row: AdminAttendanceResponse) => void;
 }
 
 const SYSTEM_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -42,12 +47,22 @@ function StatusBadges({
   status,
   reviewAction,
   checkOutTime,
+  quotaCreditedAt,
+  earningAmount,
 }: {
   status: string;
   reviewAction?: string | null;
   checkOutTime?: string | null;
+  quotaCreditedAt?: string | null;
+  earningAmount?: number;
 }) {
-  const attendance = { status, review_action: reviewAction, check_out_time: checkOutTime };
+  const attendance = {
+    status,
+    review_action: reviewAction,
+    check_out_time: checkOutTime,
+    quota_credited_at: quotaCreditedAt,
+    earning_amount: earningAmount,
+  };
   const reviewStatusLabel = getAttendanceReviewStatusLabel(attendance);
   if (needsAttendanceApprovalRepair(attendance)) {
     return (
@@ -77,6 +92,11 @@ function StatusBadges({
         <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border", review.className)}>
           {reviewAction === "approved" ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
           {reviewStatusLabel ?? review.label}
+        </div>
+      )}
+      {canCreditAttendanceQuota(attendance) && (
+        <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold border border-amber-200 bg-amber-50 text-amber-700">
+          Chờ cộng hạn mức
         </div>
       )}
     </div>
@@ -165,17 +185,21 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
           status={row.original.status}
           reviewAction={row.original.review_action}
           checkOutTime={row.original.check_out_time}
+          quotaCreditedAt={row.original.quota_credited_at}
+          earningAmount={row.original.earning_amount}
         />
       ),
     },
   ];
 
-  // Actions column: a kebab menu with View map (always) + Approve/Reject. The
-  // review actions are hidden once the attendance reaches a terminal state:
+  // Actions column: a kebab menu with View map (always) + Approve/Credit/Reject.
+  // The review actions are hidden once the attendance reaches a terminal state:
   // "Duyệt" is hidden on Hoàn thành (completed) or Đã duyệt (approved); "Từ chối"
-  // is hidden on Đã từ chối (rejected) or Đã huỷ (review-rejected). Omitted
-  // entirely when no callbacks are provided so the table stays read-only in
-  // contexts that don't need it.
+  // is hidden on Đã từ chối (rejected) or Đã huỷ (review-rejected) or once the
+  // quota is credited; "Cộng hạn mức ngay" shows only on completed shifts still
+  // waiting out their quota-credit hold, and only when the page supplies the
+  // (admin-only) callback. Omitted entirely when no callbacks are provided so
+  // the table stays read-only in contexts that don't need it.
   if (actions) {
     cols.push({
       id: "actions",
@@ -185,6 +209,8 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
         const att = row.original;
         const showApprove = canApproveAttendance(att);
         const showReject = canRejectAttendance(att);
+        const onCreditQuota = actions.onCreditQuota;
+        const showCreditQuota = onCreditQuota != null && canCreditAttendanceQuota(att);
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -207,6 +233,12 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                   <DropdownMenuItem onClick={() => actions.onApprove(att)}>
                     <Check className="mr-2 h-4 w-4" />
                     {needsAttendanceApprovalRepair(att) ? "Duyệt lại" : "Duyệt"}
+                  </DropdownMenuItem>
+                )}
+                {showCreditQuota && (
+                  <DropdownMenuItem onClick={() => onCreditQuota(att)}>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Cộng hạn mức ngay
                   </DropdownMenuItem>
                 )}
                 {showReject && (

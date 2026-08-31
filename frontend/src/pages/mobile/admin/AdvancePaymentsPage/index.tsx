@@ -21,9 +21,10 @@ import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendan
 import {
   useApproveAttendance,
   useRejectAttendance,
+  useCreditAttendanceQuota,
 } from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck } from "lucide-react";
+import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck, Zap } from "lucide-react";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
@@ -55,6 +56,7 @@ import { cn } from "@/lib/utils";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import {
   canApproveAttendance,
+  canCreditAttendanceQuota,
   canRejectAttendance,
   getAttendanceOperationalStatus,
   getAttendanceReviewStatusLabel,
@@ -79,11 +81,15 @@ export function AttendanceMobileCard({
   onViewMap,
   onApprove,
   onReject,
+  onCreditQuota,
 }: {
   row: AdminAttendanceResponse;
   onViewMap: (row: AdminAttendanceResponse) => void;
   onApprove: (row: AdminAttendanceResponse) => void;
   onReject: (row: AdminAttendanceResponse) => void;
+  /** Admin-only "credit now": bank the earning into the advance quota
+   * immediately, skipping the post-checkout hold. */
+  onCreditQuota?: (row: AdminAttendanceResponse) => void;
 }) {
   const fmtTime = (t?: string) =>
     t ? (() => { try { return format(new Date(t), "HH:mm"); } catch { return "-"; } })() : "-";
@@ -96,6 +102,7 @@ export function AttendanceMobileCard({
     : ATTENDANCE_STATUS_LABEL[getAttendanceOperationalStatus(row)] ?? row.status;
   const showApprove = canApproveAttendance(row);
   const showReject = canRejectAttendance(row);
+  const showCreditQuota = onCreditQuota != null && canCreditAttendanceQuota(row);
 
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">
@@ -116,6 +123,9 @@ export function AttendanceMobileCard({
         <AttendanceMetric label="Vào" value={fmtTime(row.check_in_time)} />
         <AttendanceMetric label="Ra" value={fmtTime(row.check_out_time)} />
       </div>
+      {showCreditQuota && (
+        <p className="mt-2 text-[10px] font-medium text-amber-700">Chờ cộng hạn mức</p>
+      )}
       <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
         <Button
           type="button"
@@ -135,6 +145,17 @@ export function AttendanceMobileCard({
           >
             <Check className="h-4 w-4" />
             {needsAttendanceApprovalRepair(row) ? "Duyệt lại" : "Duyệt"}
+          </Button>
+        )}
+        {showCreditQuota && (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5 px-2 text-xs text-amber-700"
+            onClick={() => onCreditQuota(row)}
+          >
+            <Zap className="h-4 w-4" />
+            Cộng hạn mức
           </Button>
         )}
         {showReject && (
@@ -188,6 +209,7 @@ const AdvancePaymentsPageMobile = () => {
   const attendance = useAdminAttendancePage({ active: activeTab === "attendances" });
   const approveAttendanceMutation = useApproveAttendance();
   const rejectAttendanceMutation = useRejectAttendance();
+  const creditQuotaMutation = useCreditAttendanceQuota();
   const exportBatchMutation = useExportAdvancePayments();
   const sendEmailMutation = useSendPayrollReportEmail();
 
@@ -280,6 +302,16 @@ const AdvancePaymentsPageMobile = () => {
       );
     },
     [rejectAttendanceMutation, handleReviewClose],
+  );
+
+  const handleCreditAttendanceQuota = useCallback(
+    (row: AdminAttendanceResponse) => {
+      creditQuotaMutation.mutate(
+        row.id,
+        { onSuccess: handleReviewClose },
+      );
+    },
+    [creditQuotaMutation, handleReviewClose],
   );
 
   if (page.summaryLoading && page.requests.length === 0) {
@@ -555,6 +587,10 @@ const AdvancePaymentsPageMobile = () => {
                       setReviewRow(attendanceRow);
                       setReviewMode("approve");
                     }}
+                    onCreditQuota={(attendanceRow) => {
+                      setReviewRow(attendanceRow);
+                      setReviewMode("credit");
+                    }}
                     onReject={(attendanceRow) => {
                       setReviewRow(attendanceRow);
                       setReviewMode("reject");
@@ -595,8 +631,10 @@ const AdvancePaymentsPageMobile = () => {
         onClose={handleReviewClose}
         onApprove={handleApproveAttendance}
         onReject={handleRejectAttendance}
+        onCreditQuota={handleCreditAttendanceQuota}
         approveLoading={approveAttendanceMutation.isPending}
         rejectLoading={rejectAttendanceMutation.isPending}
+        creditLoading={creditQuotaMutation.isPending}
       />
       <AdminCreateCheckInDialog
         open={isCreateCheckInOpen}

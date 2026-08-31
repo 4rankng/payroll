@@ -59,6 +59,7 @@ import {
 import {
   useApproveAttendance,
   useRejectAttendance,
+  useCreditAttendanceQuota,
 } from "@/hooks/api/useAdminAttendance";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHeroStrip";
@@ -96,6 +97,7 @@ const AdvancePaymentsPage = () => {
 
   const approveAttendanceMutation = useApproveAttendance();
   const rejectAttendanceMutation = useRejectAttendance();
+  const creditQuotaMutation = useCreditAttendanceQuota();
 
   const { user } = useAuth();
   const isAdvPartner = user?.role === "adv_partner";
@@ -190,12 +192,20 @@ const AdvancePaymentsPage = () => {
         setReviewRow(row);
         setReviewMode("approve");
       },
+      ...(isAdvPartner
+        ? {}
+        : {
+            onCreditQuota: (row: AdminAttendanceResponse) => {
+              setReviewRow(row);
+              setReviewMode("credit");
+            },
+          }),
       onReject: (row: AdminAttendanceResponse) => {
         setReviewRow(row);
         setReviewMode("reject");
       },
     }),
-    [],
+    [isAdvPartner],
   );
 
   const attendanceColumns = useMemo(
@@ -230,6 +240,18 @@ const AdvancePaymentsPage = () => {
       );
     },
     [rejectAttendanceMutation, handleReviewClose],
+  );
+
+  const handleCreditAttendanceQuota = useCallback(
+    (row: AdminAttendanceResponse) => {
+      creditQuotaMutation.mutate(
+        row.id,
+        {
+          onSuccess: () => handleReviewClose(),
+        },
+      );
+    },
+    [creditQuotaMutation, handleReviewClose],
   );
 
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
@@ -632,8 +654,10 @@ const AdvancePaymentsPage = () => {
           onClose={handleReviewClose}
           onApprove={handleApproveAttendance}
           onReject={handleRejectAttendance}
+          onCreditQuota={handleCreditAttendanceQuota}
           approveLoading={approveAttendanceMutation.isPending}
           rejectLoading={rejectAttendanceMutation.isPending}
+          creditLoading={creditQuotaMutation.isPending}
         />
         <AdminCreateCheckInDialog
           open={isCreateCheckInOpen}

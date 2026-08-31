@@ -91,6 +91,20 @@ export function useRejectAttendance() {
   });
 }
 
+/** useCreditAttendanceQuota — admin banks a completed shift's earning into the
+ * employee's advance quota immediately, skipping the post-checkout hold. */
+export function useCreditAttendanceQuota() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => attendanceService.adminCreditQuota(id),
+    onSuccess: (updated: AdminAttendanceResponse) => {
+      queryClient.setQueryData(ADMIN_ATTENDANCE_QUERY_KEYS.detail(updated.id), { data: updated });
+      invalidateAttendanceLists(queryClient);
+      toast.success("Đã cộng hạn mức ngay");
+    },
+  });
+}
+
 /** useAdminCreateCheckIn — records only the check-in; checkout remains employee-owned. */
 export function useAdminCreateCheckIn() {
   const queryClient = useQueryClient();

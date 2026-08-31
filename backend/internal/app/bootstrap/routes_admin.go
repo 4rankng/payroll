@@ -65,6 +65,7 @@ func setupAdminAttendanceRoutes(v1 *gin.RouterGroup, container *Container) {
 	admin.GET("/:id", container.Handlers.AdminAttendance.Get)
 	admin.POST("/:id/approve", container.Handlers.AdminAttendance.Approve)
 	admin.POST("/:id/reject", container.Handlers.AdminAttendance.Reject)
+	admin.POST("/:id/credit-quota", container.Handlers.AdminAttendance.CreditQuota)
 }
 
 // setupProviderTransactionsAdminRoutes mounts the read-only stats endpoint

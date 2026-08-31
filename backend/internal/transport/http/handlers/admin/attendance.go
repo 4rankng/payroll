@@ -197,6 +197,30 @@ func (h *AttendanceHandler) Reject(c *gin.Context) {
 	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã từ chối chấm công")
 }
 
+// CreditQuota handles POST /api/v1/admin/attendances/:id/credit-quota. It banks
+// the completed shift's earning into the employee's advance quota immediately,
+// skipping the configured post-checkout hold. It changes neither the check-out
+// nor the earning — use Approve/Reject for disputed shifts.
+func (h *AttendanceHandler) CreditQuota(c *gin.Context) {
+	id, ok := helpers.ParseIDParam(c, "id", "ID không hợp lệ")
+	if !ok {
+		return
+	}
+
+	adminID, ok := helpers.GetUserIDOrRespond(c)
+	if !ok {
+		return
+	}
+
+	att, err := h.attendanceService.CreditAttendanceQuotaNow(c.Request.Context(), id, adminID)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã cộng hạn mức ứng ngay")
+}
+
 // ListCreateCheckInShifts returns today's configured shifts for the selected
 // employee/project before an admin records a missed check-in.
 func (h *AttendanceHandler) ListCreateCheckInShifts(c *gin.Context) {

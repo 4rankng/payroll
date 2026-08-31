@@ -205,6 +205,7 @@ export const API_ENDPOINTS = {
       byId: (id: number) => `/admin/attendances/${id}`,
       approve: (id: number) => `/admin/attendances/${id}/approve`,
       reject: (id: number) => `/admin/attendances/${id}/reject`,
+      creditQuota: (id: number) => `/admin/attendances/${id}/credit-quota`,
     },
     mobile: {
       today: '/mobile/attendance/today',

@@ -344,6 +344,113 @@ func TestApproveCreditsQuotaImmediately(t *testing.T) {
 	}
 }
 
+func TestCreditAttendanceQuotaNowBanksWhileHoldPending(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkOut := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
+	eligible := checkOut.Add(24 * time.Hour)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID:                    20,
+		ProjectID:             55,
+		EmployeeID:            123,
+		Date:                  time.Date(2026, 6, 22, 0, 0, 0, 0, loc),
+		CheckInTime:           time.Date(2026, 6, 22, 8, 0, 0, 0, loc),
+		CheckOutTime:          &checkOut,
+		EarningAmount:         &earn,
+		QuotaCreditEligibleAt: &eligible,
+	}
+	repo := &fakeAttendanceRepo{byID: att}
+	advRepo := &fakeAdvancePaymentRepo{}
+	svc := &AttendanceService{
+		attendanceRepo:     repo,
+		advancePaymentRepo: advRepo,
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(checkOut.Add(time.Hour)), // inside the hold window
+	}
+
+	res, err := svc.CreditAttendanceQuotaNow(context.Background(), 20, 42)
+	if err != nil {
+		t.Fatalf("CreditAttendanceQuotaNow returned error: %v", err)
+	}
+	if got := advRepo.salaryFor(123, "2026-06"); got != 300000 {
+		t.Fatalf("expected 300000 credited immediately despite pending hold, got %d", got)
+	}
+	if att.QuotaCreditedAt == nil {
+		t.Fatal("expected quota_credited_at stamped by immediate credit")
+	}
+	if res == nil || res.QuotaCreditedAt == nil {
+		t.Fatal("expected reloaded attendance to carry quota_credited_at")
+	}
+	// The employee's own check-out data must stay untouched.
+	if res.CheckOutTime == nil || !res.CheckOutTime.Equal(checkOut) {
+		t.Fatalf("immediate credit must not alter check-out time, got %v", res.CheckOutTime)
+	}
+	if res.EarningAmount == nil || *res.EarningAmount != earn {
+		t.Fatalf("immediate credit must not alter earning, got %v", res.EarningAmount)
+	}
+}
+
+func TestCreditAttendanceQuotaNowIdempotentWhenAlreadyCredited(t *testing.T) {
+	loc := clock.DefaultLocation
+	checkOut := time.Date(2026, 6, 22, 17, 0, 0, 0, loc)
+	credited := checkOut.Add(24 * time.Hour)
+	earn := int64(300000)
+	att := &domain.Attendance{
+		ID: 21, ProjectID: 55, EmployeeID: 123,
+		Date:            time.Date(2026, 6, 22, 0, 0, 0, 0, loc),
+		CheckInTime:     time.Date(2026, 6, 22, 8, 0, 0, 0, loc),
+		CheckOutTime:    &checkOut,
+		EarningAmount:   &earn,
+		QuotaCreditedAt: &credited,
+	}
+	advRepo := &fakeAdvancePaymentRepo{}
+	svc := &AttendanceService{
+		attendanceRepo:     &fakeAttendanceRepo{byID: att},
+		advancePaymentRepo: advRepo,
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(credited.Add(time.Hour)),
+	}
+
+	res, err := svc.CreditAttendanceQuotaNow(context.Background(), 21, 42)
+	if err != nil {
+		t.Fatalf("expected idempotent success for already-credited row, got %v", err)
+	}
+	if got := advRepo.salaryFor(123, "2026-06"); got != 0 {
+		t.Fatalf("already-credited row must not bank again, got %d", got)
+	}
+	if res == nil || res.QuotaCreditedAt == nil {
+		t.Fatal("expected current record returned on idempotent no-op")
+	}
+}
+
+func TestCreditAttendanceQuotaNowRejectsNothingPayable(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 6, 23, 9, 0, 0, 0, loc)
+
+	// Missing record → not found.
+	missingSvc := &AttendanceService{
+		attendanceRepo:     &fakeAttendanceRepo{}, // byID nil
+		advancePaymentRepo: &fakeAdvancePaymentRepo{},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+	if _, err := missingSvc.CreditAttendanceQuotaNow(context.Background(), 99, 42); !domain.IsNotFoundError(err) {
+		t.Fatalf("expected not-found error for missing record, got %v", err)
+	}
+
+	// Open shift (no checkout) → validation error.
+	att := &domain.Attendance{ID: 22, ProjectID: 55, EmployeeID: 123, Date: now, CheckInTime: now}
+	openSvc := &AttendanceService{
+		attendanceRepo:     &fakeAttendanceRepo{byID: att},
+		advancePaymentRepo: &fakeAdvancePaymentRepo{},
+		transactionManager: &fakeTransactionManager{},
+		clock:              clock.NewFake(now),
+	}
+	if _, err := openSvc.CreditAttendanceQuotaNow(context.Background(), 22, 42); !domain.IsValidationError(err) {
+		t.Fatalf("expected validation error for open shift, got %v", err)
+	}
+}
+
 func TestCreditOverduePendingQuotaSweep(t *testing.T) {
 	loc := clock.DefaultLocation
 	earn := int64(250000)

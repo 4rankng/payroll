@@ -14,7 +14,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { formatCurrency } from "@/utils/formatters";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 
-export type ReviewMode = "approve" | "reject" | null;
+export type ReviewMode = "approve" | "reject" | "credit" | null;
 
 export interface AttendanceReviewDialogsProps {
   mode: ReviewMode;
@@ -22,15 +22,19 @@ export interface AttendanceReviewDialogsProps {
   onClose: () => void;
   onApprove: (row: AdminAttendanceResponse, note: string) => void;
   onReject: (row: AdminAttendanceResponse, note: string) => void;
+  onCreditQuota: (row: AdminAttendanceResponse) => void;
   approveLoading?: boolean;
   rejectLoading?: boolean;
+  creditLoading?: boolean;
 }
 
 /**
- * Renders BOTH the approve and reject flows for an attendance row.
+ * Renders the approve, reject, and credit-quota flows for an attendance row.
  *  - Approve uses ConfirmDialog (note optional; backend recomputes earning).
  *  - Reject uses a Dialog with a required reason Textarea.
- * Which dialog is open is controlled by `mode` (null = both closed).
+ *  - Credit uses ConfirmDialog (no note; banks the completed shift's earning
+ *    into the advance quota immediately, skipping the post-checkout hold).
+ * Which dialog is open is controlled by `mode` (null = all closed).
  */
 export function AttendanceReviewDialogs({
   mode,
@@ -38,8 +42,10 @@ export function AttendanceReviewDialogs({
   onClose,
   onApprove,
   onReject,
+  onCreditQuota,
   approveLoading = false,
   rejectLoading = false,
+  creditLoading = false,
 }: AttendanceReviewDialogsProps) {
   const [rejectNote, setRejectNote] = useState("");
   const [approveNote, setApproveNote] = useState("");
@@ -95,6 +101,34 @@ export function AttendanceReviewDialogs({
         onConfirm={() => {
           if (!row) return;
           onApprove(row, approveNote.trim());
+        }}
+      />
+
+      <ConfirmDialog
+        open={mode === "credit" && row !== null}
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+        title="Cộng hạn mức ứng ngay?"
+        description={
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Thu nhập của ca này sẽ được cộng ngay vào hạn mức ứng lương của nhân viên, không cần chờ hết thời gian giữ sau tan ca.
+            </p>
+            {employeeLabel && (
+              <p className="text-xs font-medium text-foreground">{employeeLabel}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Thu nhập: <span className="font-semibold text-foreground">{formatCurrency(currentEarning)}</span>
+            </p>
+          </div>
+        }
+        confirmText="Cộng ngay"
+        confirmVariant="default"
+        loading={creditLoading}
+        onConfirm={() => {
+          if (!row) return;
+          onCreditQuota(row);
         }}
       />
 

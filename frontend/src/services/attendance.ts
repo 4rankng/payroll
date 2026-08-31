@@ -110,6 +110,15 @@ export const attendanceService = {
     return data;
   },
 
+  // Banks the completed shift's earning into the employee's advance quota
+  // immediately, skipping the post-checkout hold. Changes nothing else.
+  adminCreditQuota: async (id: number) => {
+    const { data } = await apiClient.post<AdminAttendanceResponse>(
+      API_ENDPOINTS.attendance.admin.creditQuota(id)
+    );
+    return data;
+  },
+
   adminGetCheckInShifts: async (employeeId: number, projectId: number, date: string) => {
     const { data } = await apiClient.get<AdminCheckInShiftResponse>(
       API_ENDPOINTS.attendance.admin.shifts,
