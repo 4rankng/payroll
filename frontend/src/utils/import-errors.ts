@@ -31,6 +31,9 @@ export function getSafeImportErrorReason(reason: string): string {
   if (normalized.includes('không tìm thấy mức lương')) {
     return 'Chưa cấu hình mức lương phù hợp cho ca làm việc';
   }
+  if (normalized.includes('bảng lương') || normalized.includes('payrate')) {
+    return 'Chưa cấu hình bảng lương cho dự án';
+  }
   if (
     normalized.includes('ngày trong tương lai') ||
     normalized.includes('ngày chấm công chưa đến')

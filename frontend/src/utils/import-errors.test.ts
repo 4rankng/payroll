@@ -58,6 +58,18 @@ describe('parseImportErrors', () => {
     }]);
   });
 
+  it('maps a missing project payrate to a config hint instead of the generic fallback', () => {
+    expect(parseImportErrors(JSON.stringify([{
+      row: 0,
+      employee: '',
+      reason: 'không tìm thấy bảng lương cho dự án: no active payrate found for this project and date',
+    }]))).toEqual([{
+      row: 0,
+      employee: '',
+      reason: 'Chưa cấu hình bảng lương cho dự án',
+    }]);
+  });
+
   it('explains a future attendance date without exposing internal details', () => {
     expect(parseImportErrors(JSON.stringify([{
       employee: 'Nguyễn Văn An',
