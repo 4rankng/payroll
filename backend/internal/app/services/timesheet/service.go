@@ -513,6 +513,10 @@ func (s *TimesheetService) ResetAllTimesheets(ctx context.Context, resetBy uint)
 		return 0, err
 	}
 
+	// Invalidate timesheet caches synchronously so subsequent reads see fresh data
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:list:*")
+	_ = s.cache.InvalidatePattern(ctx, "timesheets:summary:*")
+
 	// Publish bulk reset event after the update
 	event := domain.NewTimesheetBulkResetEvent(ctx, int(reset), nil, resetBy)
 	if err := s.events.Publish(ctx, event); err != nil {
