@@ -3,13 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
   Download,
   ChevronLeft,
@@ -178,7 +172,7 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 350);
-  // 'all' or a project id as a string (shadcn Select values are strings).
+  // 'all' or a project id as a string (dropdown values are strings).
   const [projectFilter, setProjectFilter] = useState('all');
   const showProjectFilter = !projectId && !!projects && projects.length > 0;
   const effectiveProjectId = projectFilter !== 'all' ? Number(projectFilter) : projectId;
@@ -300,17 +294,17 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
             )}
           </div>
           {showProjectFilter && (
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="h-11 sm:h-11 w-full sm:w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả dự án</SelectItem>
-                {projects?.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={projectFilter}
+              onChange={setProjectFilter}
+              placeholder="Tất cả dự án"
+              searchPlaceholder="Tìm dự án..."
+              triggerClassName="w-full sm:w-[200px]"
+              options={[
+                { value: 'all', label: 'Tất cả dự án' },
+                ...(projects?.map((p) => ({ value: String(p.id), label: p.name })) ?? []),
+              ]}
+            />
           )}
         </div>
 

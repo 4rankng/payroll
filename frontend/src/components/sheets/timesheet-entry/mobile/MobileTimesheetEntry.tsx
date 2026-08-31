@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   ChevronLeft,
   Save,
@@ -420,23 +421,19 @@ export function MobileTimesheetEntry({
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
             Dự án
           </p>
-          <Select
+          <SearchableSelect
             value={formData.projectId ? String(formData.projectId) : "all"}
-            onValueChange={handleProjectSelect}
-          >
-            <SelectTrigger className="h-11 text-sm bg-muted/40 border-0 focus:ring-1">
-              <SelectValue placeholder="Chọn dự án" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả dự án</SelectItem>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={String(p.id)}>
-                  {p.name}
-                  {p.code ? ` · ${p.code}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={handleProjectSelect}
+            placeholder="Chọn dự án"
+            searchPlaceholder="Tìm dự án..."
+            options={[
+              { value: "all", label: "Tất cả dự án" },
+              ...projects.map((p) => ({
+                value: String(p.id),
+                label: `${p.name}${p.code ? ` · ${p.code}` : ""}`,
+              })),
+            ]}
+          />
         </div>
 
         {availableEmployees.length > 0 && (
@@ -444,24 +441,21 @@ export function MobileTimesheetEntry({
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
               Nhân viên
             </p>
-            <Select
+            <SearchableSelect
               value={filterEmployeeId ? String(filterEmployeeId) : "all"}
-              onValueChange={(v) =>
+              onChange={(v) =>
                 setFilterEmployeeId(v === "all" ? null : Number(v))
               }
-            >
-              <SelectTrigger className="h-11 text-sm bg-muted/40 border-0 focus:ring-1">
-                <SelectValue placeholder="Tất cả nhân viên" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả nhân viên</SelectItem>
-                {availableEmployees.map((e) => (
-                  <SelectItem key={e.id} value={String(e.id)}>
-                    {e.fullname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Tất cả nhân viên"
+              searchPlaceholder="Tìm nhân viên..."
+              options={[
+                { value: "all", label: "Tất cả nhân viên" },
+                ...availableEmployees.map((e) => ({
+                  value: String(e.id),
+                  label: e.fullname,
+                })),
+              ]}
+            />
           </div>
         )}
 

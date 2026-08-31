@@ -40,5 +40,5 @@ One reusable single-select searchable dropdown, closing the gap between
 
 ## Success Criteria
 
-- [ ] Primitive + tests written; `pnpm lint` green; `pnpm test:run --
+- [x] Primitive + tests written; `pnpm lint` green; `pnpm test:run --
       searchable-select` green.

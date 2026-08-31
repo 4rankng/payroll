@@ -4,6 +4,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { MobileSearchInput } from '@/components/shared/MobileSearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CalendarDays, X } from 'lucide-react';
 import { dateToString } from '@/utils/dateHelpers';
@@ -151,20 +152,20 @@ export function TransactionFiltersMobile({
           </>
         ) : (
           <>
-            <Select
+            <SearchableSelect
               value={filters.transaction_type || 'all'}
-              onValueChange={(v) => set('transaction_type', v === 'all' ? undefined : v)}
-            >
-              <SelectTrigger className="h-11 text-sm">
-                <SelectValue placeholder="Loại GD" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả loại</SelectItem>
-                {transactionMetadata?.transaction_types.map((t) => (
-                  <SelectItem key={t.type} value={t.type}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(v) => set('transaction_type', v === 'all' ? undefined : v)}
+              placeholder="Loại GD"
+              searchPlaceholder="Tìm loại giao dịch..."
+              triggerClassName="text-sm"
+              options={[
+                { value: 'all', label: 'Tất cả loại' },
+                ...(transactionMetadata?.transaction_types.map((t) => ({
+                  value: t.type,
+                  label: t.label,
+                })) ?? []),
+              ]}
+            />
 
             <Select
               value={filters.status || 'all'}

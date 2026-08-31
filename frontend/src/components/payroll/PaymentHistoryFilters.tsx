@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Input } from '@/components/ui/input';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useEmployees } from '@/hooks/api/useEmployees';
@@ -94,34 +94,31 @@ export const PaymentHistoryFilters = memo(function PaymentHistoryFilters({
         aria-label="Đến ngày"
       />
 
-      <Select value={selectedProjectId?.toString() || 'all'} onValueChange={handleProjectChange}>
-        <SelectTrigger className="h-8 min-h-0 w-[148px] text-xs">
-          <SelectValue placeholder="Tất cả dự án" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tất cả dự án</SelectItem>
-          {projectsData?.data?.map((p) => (
-            <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableSelect
+        value={selectedProjectId?.toString() || 'all'}
+        onChange={handleProjectChange}
+        options={[
+          { value: 'all', label: 'Tất cả dự án' },
+          ...(projectsData?.data?.map((p) => ({ value: p.id.toString(), label: p.name })) ?? []),
+        ]}
+        placeholder="Tất cả dự án"
+        searchPlaceholder="Tìm dự án..."
+        triggerClassName="h-8 min-h-0 w-[148px] text-xs"
+      />
 
-      <Select
+      <SearchableSelect
         key={selectedProjectId || 'all'}
         value={selectedEmployeeId?.toString() || 'all'}
-        onValueChange={handleEmployeeChange}
+        onChange={handleEmployeeChange}
+        options={[
+          { value: 'all', label: 'Tất cả nhân viên' },
+          ...(employeesData?.data?.map((e) => ({ value: e.id.toString(), label: e.name })) ?? []),
+        ]}
+        placeholder={isLoadingEmployees ? 'Đang tải...' : 'Tất cả nhân viên'}
         disabled={isLoadingEmployees}
-      >
-        <SelectTrigger className="h-8 min-h-0 w-[148px] text-xs">
-          <SelectValue placeholder={isLoadingEmployees ? 'Đang tải...' : 'Tất cả nhân viên'} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tất cả nhân viên</SelectItem>
-          {employeesData?.data?.map((e) => (
-            <SelectItem key={e.id} value={e.id.toString()}>{e.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        searchPlaceholder="Tìm nhân viên..."
+        triggerClassName="h-8 min-h-0 w-[148px] text-xs"
+      />
 
       {hasFilters && (
         <button

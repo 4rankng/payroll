@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
@@ -516,26 +517,22 @@ const EmployeesPageMobile = () => {
             {projects.length > 0 && (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Dự án</label>
-                <Select
+                <SearchableSelect
                   value={projectId ? projectId.toString() : "all"}
-                  onValueChange={(v) =>
+                  onChange={(v) =>
                     updateFilters({
                       projectId: v === "all" ? undefined : parseInt(v),
                     })
                   }
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Tất cả dự án" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả dự án</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  searchPlaceholder="Tìm dự án..."
+                  options={[
+                    { value: "all", label: "Tất cả dự án" },
+                    ...projects.map((p) => ({
+                      value: p.id.toString(),
+                      label: p.name,
+                    })),
+                  ]}
+                />
               </div>
             )}
             {/* Date-range filter — restores desktop capability */}

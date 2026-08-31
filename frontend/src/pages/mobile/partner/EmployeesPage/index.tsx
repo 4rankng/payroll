@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
@@ -430,24 +431,20 @@ const EmployeesPageMobile = () => {
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Dự án
                 </label>
-                <Select
+                <SearchableSelect
                   value={projectId ? projectId.toString() : "all"}
-                  onValueChange={(v) =>
+                  onChange={(v) =>
                     filterByProject(v === "all" ? null : parseInt(v))
                   }
-                >
-                  <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue placeholder="Tất cả dự án" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả dự án</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  searchPlaceholder="Tìm dự án..."
+                  options={[
+                    { value: "all", label: "Tất cả dự án" },
+                    ...projects.map((p) => ({
+                      value: p.id.toString(),
+                      label: p.name,
+                    })),
+                  ]}
+                />
               </div>
             )}
 

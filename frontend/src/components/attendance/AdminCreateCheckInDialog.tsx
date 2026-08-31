@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmployeeSelector } from "@/components/ui/employee-selector";
 import { ProjectSelector } from "@/components/ui/project-selector";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAdminCheckInShifts, useAdminCreateCheckIn } from "@/hooks/api/useAdminAttendance";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { Employee } from "@/types/api/employee.types";
@@ -113,19 +107,20 @@ export function AdminCreateCheckInDialog({ open, onOpenChange }: AdminCreateChec
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium" htmlFor="admin-check-in-shift">Ca làm việc hôm nay</label>
-              <Select value={shiftIndex} onValueChange={setShiftIndex} disabled={!employee || !project || shiftsQuery.isLoading}>
-                <SelectTrigger id="admin-check-in-shift" className="min-h-11">
-                  <SelectValue placeholder={shiftsQuery.isLoading ? "Đang lấy ca làm việc..." : "Chọn ca làm việc"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {shifts.map((shift) => (
-                    <SelectItem key={shift.index} value={String(shift.index)}>
-                      {shift.label}{shift.position ? ` · ${shift.position}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label htmlFor="checkin-shift" className="text-sm font-medium">Ca làm việc hôm nay</label>
+              <SearchableSelect
+                triggerId="checkin-shift"
+                value={shiftIndex}
+                onChange={setShiftIndex}
+                disabled={!employee || !project || shiftsQuery.isLoading}
+                placeholder={shiftsQuery.isLoading ? "Đang lấy ca làm việc..." : "Chọn ca làm việc"}
+                searchPlaceholder="Tìm ca làm việc..."
+                triggerClassName="min-h-11"
+                options={shifts.map((shift) => ({
+                  value: String(shift.index),
+                  label: `${shift.label}${shift.position ? ` · ${shift.position}` : ""}`,
+                }))}
+              />
               {employee && project && shifts.length === 0 && !shiftsQuery.isLoading && (
                 <p className="text-xs text-muted-foreground">Không có ca làm việc hợp lệ cho phân công này.</p>
               )}

@@ -4,13 +4,7 @@ import { AlertCircle, Building2, RefreshCw } from 'lucide-react';
 import { BankDistributionChart } from '@/components/admin-dashboard/BankDistributionChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useBankUsageAllProjects } from '@/hooks/api/useDashboard';
@@ -29,37 +23,24 @@ export const ProjectSelector = memo(function ProjectSelector({
   selectedId,
   onSelect,
 }: ProjectSelectorProps) {
-  const selected = projects.find((project) => project.project_id === selectedId);
-
   return (
-    <Select
+    <SearchableSelect
       value={selectedId === null ? 'all' : String(selectedId)}
-      onValueChange={(value) => onSelect(value === 'all' ? null : Number(value))}
-    >
-      <SelectTrigger
-        className="w-[min(58vw,14rem)] border-border/60 bg-card text-xs shadow-none"
-        aria-label="Lọc phân bổ ngân hàng theo dự án"
-      >
-        <SelectValue>{selected?.project_name ?? 'Tất cả dự án'}</SelectValue>
-      </SelectTrigger>
-      <SelectContent align="end" className="max-h-72 min-w-56">
-        <SelectItem value="all">Tất cả dự án</SelectItem>
-        {projects.map((project) => (
-          <SelectItem
-            key={project.project_id}
-            value={String(project.project_id)}
-            textValue={project.project_name}
-          >
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate">{project.project_name}</span>
-              <span className="text-[11px] text-muted-foreground">
-                {project.total_employees.toLocaleString('vi-VN')} nhân viên
-              </span>
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      onChange={(value) => onSelect(value === 'all' ? null : Number(value))}
+      placeholder="Tất cả dự án"
+      searchPlaceholder="Tìm dự án..."
+      triggerAriaLabel="Lọc phân bổ ngân hàng theo dự án"
+      contentAlign="end"
+      triggerClassName="w-[min(58vw,14rem)]"
+      options={[
+        { value: 'all', label: 'Tất cả dự án' },
+        ...projects.map((project) => ({
+          value: String(project.project_id),
+          label: project.project_name,
+          searchText: `${project.total_employees.toLocaleString('vi-VN')} nhân viên`,
+        })),
+      ]}
+    />
   );
 });
 

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CalendarDays, Filter, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -192,40 +193,27 @@ export function LedgerFiltersMobile({
               {/* Account type */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">Loại tài khoản</p>
-                <Select
+                <SearchableSelect
                   value={filters.account || 'all'}
-                  onValueChange={(v) => set('account', v === 'all' ? undefined : v)}
+                  onChange={(v) => set('account', v === 'all' ? undefined : v)}
+                  options={[{ value: 'all', label: 'Tất cả' }, ...accountOptions]}
                   disabled={isLoadingAccountMetadata}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder={isLoadingAccountMetadata ? 'Đang tải...' : 'Tất cả'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    {accountOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  searchPlaceholder="Tìm loại tài khoản..."
+                />
               </div>
 
               {/* Project */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">Dự án</p>
-                <Select
+                <SearchableSelect
                   value={filters.project_id?.toString() || 'all'}
-                  onValueChange={(v) => set('project_id', v === 'all' ? undefined : parseInt(v))}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Tất cả" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(v) => set('project_id', v === 'all' ? undefined : parseInt(v))}
+                  options={[
+                    { value: 'all', label: 'Tất cả' },
+                    ...projects.map((p) => ({ value: p.id.toString(), label: p.name })),
+                  ]}
+                  searchPlaceholder="Tìm dự án..."
+                />
               </div>
 
               {/* Evidence */}

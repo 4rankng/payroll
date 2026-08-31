@@ -9,6 +9,7 @@ import { useLoans, useLenders } from '@/hooks/api/useLoans';
 import { formatVND, daysUntil, getPaymentUrgencyColor } from '@/utils/loanHelpers';
 import { Plus, Landmark, ArrowDownUp } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.types';
 import { AddLoanSheet } from '@/components/sheets/AddLoanSheet';
 import { LoanDetailsSheet } from '@/components/sheets/LoanDetailsSheet';
@@ -199,15 +200,20 @@ const LoansPageMobile = () => {
               <SelectItem value="overdue">Quá hạn</SelectItem>
             </SelectContent>
           </Select>
-          <Select onValueChange={handleLenderChange} defaultValue="all">
-            <SelectTrigger className="min-h-11 flex-1"><SelectValue placeholder="Chủ nợ" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {lenders.map((lender) => (
-                <SelectItem key={lender.id} value={lender.id.toString()}>{lender.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={loanFilters.lender_id ? String(loanFilters.lender_id) : 'all'}
+            onChange={handleLenderChange}
+            placeholder="Chủ nợ"
+            searchPlaceholder="Tìm chủ nợ..."
+            triggerClassName="min-h-11 flex-1"
+            options={[
+              { value: 'all', label: 'Tất cả' },
+              ...lenders.map((lender) => ({
+                value: lender.id.toString(),
+                label: lender.name,
+              })),
+            ]}
+          />
         </div>
         {/* Sort selector — restores desktop sorting capability */}
         <div className="flex items-center gap-2">

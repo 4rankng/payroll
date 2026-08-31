@@ -19,13 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -236,24 +230,18 @@ export default function CheckInSettingsPage() {
             <label className="text-xs font-medium text-muted-foreground" htmlFor="check-in-project">
               Dự án
             </label>
-            <Select
+            <SearchableSelect
+              triggerId="check-in-project"
               value={selectedProjectId ? String(selectedProjectId) : ""}
-              onValueChange={handleProjectChange}
-            >
-              <SelectTrigger
-                id="check-in-project"
-                className="h-11 min-h-11 w-full sm:h-9 sm:min-h-0"
-              >
-                <SelectValue placeholder="Chọn dự án..." />
-              </SelectTrigger>
-              <SelectContent>
-                {flexibleProjects.map((project) => (
-                  <SelectItem key={project.id} value={String(project.id)}>
-                    {project.name}{project.code ? ` (${project.code})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={handleProjectChange}
+              placeholder="Chọn dự án..."
+              searchPlaceholder="Tìm dự án..."
+              triggerClassName="w-full"
+              options={flexibleProjects.map((project) => ({
+                value: String(project.id),
+                label: `${project.name}${project.code ? ` (${project.code})` : ""}`,
+              }))}
+            />
           </div>
         </div>
       </header>

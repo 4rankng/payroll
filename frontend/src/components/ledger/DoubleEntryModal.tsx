@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Plus, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -319,21 +319,14 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
                       <div className="grid grid-cols-12 gap-3 items-start">
                         {/* Account */}
                         <div className="col-span-2">
-                          <Select
+                          <SearchableSelect
                             value={watch(`entries.${index}.account`)}
-                            onValueChange={(value) => setValue(`entries.${index}.account`, value)}
-                          >
-                            <SelectTrigger className="min-h-11 typography-body-small">
-                              <SelectValue placeholder="Chọn tài khoản" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {accountOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value} className="typography-body-small">
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            onChange={(value) => setValue(`entries.${index}.account`, value)}
+                            options={accountOptions}
+                            placeholder="Chọn tài khoản"
+                            searchPlaceholder="Tìm tài khoản..."
+                            triggerClassName="typography-body-small"
+                          />
                         </div>
 
                         {/* Party / User (capital contributions fetch admin only) */}
@@ -391,22 +384,20 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
 
                         {/* Project */}
                         <div className="col-span-1 flex items-center gap-2">
-                          <Select
+                          <SearchableSelect
                             value={watch(`entries.${index}.project_id`)}
-                            onValueChange={(value) => setValue(`entries.${index}.project_id`, value)}
-                          >
-                            <SelectTrigger className="min-h-11 typography-body-small">
-                              <SelectValue placeholder="-" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none" className="typography-body-small">Không</SelectItem>
-                              {projects.map((project) => (
-                                <SelectItem key={project.id} value={project.id.toString()} className="typography-body-small">
-                                  {project.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            onChange={(value) => setValue(`entries.${index}.project_id`, value)}
+                            options={[
+                              { value: 'none', label: 'Không' },
+                              ...projects.map((project) => ({
+                                value: project.id.toString(),
+                                label: project.name,
+                              })),
+                            ]}
+                            placeholder="-"
+                            searchPlaceholder="Tìm dự án..."
+                            triggerClassName="typography-body-small"
+                          />
 
                           {fields.length > 2 && (
                             <Button

@@ -33,25 +33,27 @@ vi.mock("@/components/ui/project-selector", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/select", () => ({
-  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectValue: () => null,
-  SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectItem: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
-  ),
-}));
-
 vi.mock("@/components/ui/alert", () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+  configurable: true,
+  value: vi.fn(),
+});
+
 describe("AdminCreateCheckInDialog", () => {
-  it("submits only a check-in payload and explains that checkout remains employee-owned", () => {
+  it("submits only a check-in payload and explains that checkout remains employee-owned", async () => {
     useAdminCheckInShiftsMock.mockReturnValue({
-      data: { shifts: [{ index: 0, label: "08:00 - 17:00", start: "", end: "", amount: 300000, position: "Công nhân" }] },
+      data: { shifts: [{ index: 0, "label": "08:00 - 17:00", start: "", end: "", amount: 300000, position: "Công nhân" }] },
       isLoading: false,
       error: null,
     });
@@ -63,9 +65,15 @@ describe("AdminCreateCheckInDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Chọn dự án thử" }));
     expect(screen.getByRole("button", { name: "Chọn dự án thử" })).toHaveAttribute("data-flexible-only", "true");
 
-    // The rendered shift button proves the server-provided shift is the sole
-    // selectable attendance time; no checkout input is present in this form.
-    expect(screen.getByRole("button", { name: /08:00 - 17:00/ })).toBeInTheDocument();
+    // The shift dropdown is a SearchableSelect: opening it and picking the
+    // server-provided shift proves it is the sole selectable attendance time.
+    const shiftTrigger = screen.getByRole("combobox", { name: "Ca làm việc hôm nay" });
+    // Radix Popover opens on pointerdown; jsdom has no PointerEvent, so the
+    // event needs an explicit button to pass Radix's primary-button check.
+    fireEvent.pointerDown(shiftTrigger, { button: 0 });
+    fireEvent.click(shiftTrigger);
+    fireEvent.click(await screen.findByText(/08:00 - 17:00/));  // label renders as "08:00 - 17:00 · Công nhân"
+    expect(shiftTrigger).toHaveTextContent(/08:00 - 17:00/);
     expect(screen.queryByLabelText(/check-out/i)).not.toBeInTheDocument();
   });
 });

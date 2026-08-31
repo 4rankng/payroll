@@ -10,8 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Download, X, Calendar } from 'lucide-react';
 import { dateToString } from '@/utils/dateHelpers';
 import { useMetadata } from '@/contexts';
@@ -203,19 +203,19 @@ export function ExportTransactionDialog({
                 {isLoadingTransactionMetadata ? (
                   <Skeleton className="w-full h-10" />
                 ) : (
-                  <Select value={transactionType} onValueChange={setTransactionType}>
-                    <SelectTrigger id="transactionType">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả</SelectItem>
-                      {transactionMetadata?.transaction_types.map((type) => (
-                        <SelectItem key={type.type} value={type.type}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    triggerId="transactionType"
+                    value={transactionType}
+                    onChange={setTransactionType}
+                    searchPlaceholder="Tìm loại giao dịch..."
+                    options={[
+                      { value: 'all', label: 'Tất cả' },
+                      ...(transactionMetadata?.transaction_types.map((type) => ({
+                        value: type.type,
+                        label: type.label,
+                      })) ?? []),
+                    ]}
+                  />
                 )}
               </div>
             </div>

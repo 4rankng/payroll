@@ -29,9 +29,15 @@ interface SearchableSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   disabled?: boolean;
+  /** DOM id for the trigger button — lets a <label htmlFor> target it. */
+  triggerId?: string;
+  /** Accessible name for the trigger when the visible text is not enough. */
+  triggerAriaLabel?: string;
   /** Layout/width classes applied to the outline trigger button. */
   triggerClassName?: string;
   contentClassName?: string;
+  /** Alignment of the popover relative to the trigger. */
+  contentAlign?: 'start' | 'center' | 'end';
   /** Render the popover with modal focus trapping (sheets/dialogs). */
   modal?: boolean;
 }
@@ -51,8 +57,11 @@ export function SearchableSelect({
   searchPlaceholder = 'Tìm kiếm...',
   emptyMessage = 'Không tìm thấy.',
   disabled = false,
+  triggerId,
+  triggerAriaLabel,
   triggerClassName,
   contentClassName,
+  contentAlign = 'start',
   modal = true,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
@@ -91,6 +100,8 @@ export function SearchableSelect({
       <PopoverTrigger asChild>
         <Button
           type="button"
+          id={triggerId}
+          aria-label={triggerAriaLabel}
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -103,7 +114,7 @@ export function SearchableSelect({
       </PopoverTrigger>
       <PopoverContent
         className={cn('w-[--radix-popover-trigger-width] p-0', contentClassName)}
-        align="start"
+        align={contentAlign}
       >
         <Command shouldFilter={false} className="bg-card">
           <div className="relative">

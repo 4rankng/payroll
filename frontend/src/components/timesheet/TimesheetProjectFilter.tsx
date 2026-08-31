@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Project } from '@/types/api/project.types';
 
 interface TimesheetProjectFilterProps {
@@ -25,33 +25,28 @@ export function TimesheetProjectFilter({
     onProjectChange(project || null);
   };
 
+  // The 'none' entry doubles as the placeholder value; when no project is
+  // active it becomes the disabled notice row, matching the old Select.
+  const options = activeProjects.length === 0
+    ? [{ value: 'none', label: 'Không có dự án đang hoạt động', disabled: true }]
+    : [
+        { value: 'none', label: 'Chọn dự án' },
+        ...activeProjects.map((project) => ({
+          value: project.id.toString(),
+          label: `${project.code} - ${project.name}`,
+        })),
+      ];
+
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-muted-foreground whitespace-nowrap">Dự án:</span>
-      <Select
+      <SearchableSelect
         value={selectedProject?.id.toString() || 'none'}
-        onValueChange={handleProjectChange}
-      >
-        <SelectTrigger className="h-8 w-[180px] text-xs">
-          <SelectValue placeholder="Chọn dự án" />
-        </SelectTrigger>
-        <SelectContent>
-          {activeProjects.length === 0 ? (
-            <SelectItem value="none" disabled>
-              Không có dự án đang hoạt động
-            </SelectItem>
-          ) : (
-            <>
-              <SelectItem value="none">Chọn dự án</SelectItem>
-              {activeProjects.map((project) => (
-                <SelectItem key={project.id} value={project.id.toString()}>
-                  {project.code} - {project.name}
-                </SelectItem>
-              ))}
-            </>
-          )}
-        </SelectContent>
-      </Select>
+        onChange={handleProjectChange}
+        placeholder="Chọn dự án"
+        options={options}
+        triggerClassName="w-[180px]"
+      />
     </div>
   );
 }
