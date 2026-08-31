@@ -149,6 +149,10 @@ func (r *TimesheetRepository) Reset(ctx context.Context, id uint) error {
 	return r.commandRepo.Reset(ctx, id)
 }
 
+func (r *TimesheetRepository) ResetAllApproved(ctx context.Context) (int64, error) {
+	return r.commandRepo.ResetAllApproved(ctx)
+}
+
 func (r *TimesheetRepository) GetSummaryStats(ctx context.Context, filters domain.TimesheetFilters) (*domain.TimesheetSummaryStats, error) {
 	return r.analyticsRepo.GetSummaryStats(ctx, filters)
 }

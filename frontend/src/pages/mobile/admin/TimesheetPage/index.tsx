@@ -32,6 +32,7 @@ import {
 import { useExportOnePayBulk } from "@/hooks/api/useOnePayExport";
 import {
   useApproveAllTimesheets,
+  useResetAllTimesheets,
   useCashReadiness,
   useTimesheetSummary,
 } from "@/hooks/api/useTimesheets";
@@ -70,6 +71,7 @@ const TimesheetPageMobile = () => {
   const [bccUploadOpen, setBccUploadOpen] = useState(false);
   const [rejectUnpaidDialogOpen, setRejectUnpaidDialogOpen] = useState(false);
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
+  const [resetAllDialogOpen, setResetAllDialogOpen] = useState(false);
   const [projectBulkApproveDialogOpen, setProjectBulkApproveDialogOpen] =
     useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -176,6 +178,7 @@ const TimesheetPageMobile = () => {
   const exportPayrollReportMutation = useExportPayrollReport();
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
+  const resetAllMutation = useResetAllTimesheets();
 
   // Global (unfiltered) summary for the "Duyệt hết" confirm — backend
   // approveAll() ignores filters and approves system-wide, so we show the
@@ -226,6 +229,22 @@ const TimesheetPageMobile = () => {
     refetchGlobalSummary();
     setBulkApproveDialogOpen(true);
   }, [refetchGlobalSummary]);
+
+  // "Huỷ duyệt hết" — reset all approved (unpaid) timesheets to pending
+  // (matches desktop: refresh the global summary for honest counts).
+  const handleResetAll = useCallback(() => {
+    refetchGlobalSummary();
+    setResetAllDialogOpen(true);
+  }, [refetchGlobalSummary]);
+
+  const handleConfirmResetAll = async () => {
+    try {
+      await resetAllMutation.mutateAsync();
+      setResetAllDialogOpen(false);
+    } catch {
+      /* handled by mutation */
+    }
+  };
 
   const handleProjectBulkApprove = useCallback(() => {
     if (timesheetManagement.projectPendingTimesheets.length === 0) {
@@ -375,6 +394,7 @@ const TimesheetPageMobile = () => {
         onBulkTransferResultUpload={() => setBulkTransferResultDialogOpen(true)}
         onBulkTransferHistory={handleBulkTransferHistory}
         onBulkApprove={handleBulkApprove}
+        onResetAll={handleResetAll}
         onChuyenLo={() => setChuyenLoDialogOpen(true)}
         onBccHistory={handleBccHistory}
         onBccUpload={() => setBccUploadOpen(true)}
@@ -492,6 +512,35 @@ const TimesheetPageMobile = () => {
         onConfirm={handleConfirmBulkApprove}
         loading={approveAllMutation.isPending}
         disabled={(globalSummary?.pendingApproval ?? 0) === 0}
+      />
+      <ConfirmDialog
+        open={resetAllDialogOpen}
+        onOpenChange={setResetAllDialogOpen}
+        title="Huỷ duyệt tất cả bảng công"
+        description={
+          <div className="space-y-0 divide-y divide-border/60">
+            <div className="flex flex-col gap-1 py-2 text-sm min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+              <span className="text-muted-foreground">Bảng công đã duyệt</span>
+              <span className="font-semibold tabular-nums min-[380px]:text-right">
+                {globalSummary?.approvedEntries ?? 0}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 py-2 text-sm min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+              <span className="text-muted-foreground">Bảng công đã thanh toán</span>
+              <span className="font-semibold tabular-nums min-[380px]:text-right">
+                {globalSummary?.paidEntries ?? 0}
+              </span>
+            </div>
+            <p className="py-2 text-xs text-muted-foreground">
+              Toàn bộ bảng công đã duyệt (chưa thanh toán) sẽ trở về trạng thái chờ duyệt. Bảng công đã thanh toán không bị ảnh hưởng.
+            </p>
+          </div>
+        }
+        confirmText="Huỷ duyệt"
+        confirmVariant="destructive"
+        onConfirm={handleConfirmResetAll}
+        loading={resetAllMutation.isPending}
+        disabled={(globalSummary?.approvedEntries ?? 0) === 0}
       />
       <ConfirmDialog
         open={projectBulkApproveDialogOpen}

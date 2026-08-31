@@ -378,6 +378,22 @@ export const useApproveAllTimesheets = () => {
   });
 };
 
+// Reset all approved timesheets back to pending approval (admin "Huỷ duyệt hết")
+export const useResetAllTimesheets = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => timesheetService.resetAll(),
+    onSuccess: (result) => {
+      // Invalidate all affected queries
+      queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });
+
+      showBulkOperationNotification(result, 'reset');
+    },
+    // Error handling is now done globally in React Query - will display response.message from backend
+  });
+};
+
 // Bulk reject timesheets
 export const useBulkRejectTimesheets = () => {
   const queryClient = useQueryClient();

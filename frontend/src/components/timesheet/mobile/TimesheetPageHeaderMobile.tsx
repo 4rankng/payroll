@@ -3,7 +3,7 @@ import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
-import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon, Banknote, Trash2 } from 'lucide-react';
+import { Plus, MoreHorizontal, FileText, ArrowRightLeft, History, Upload, FileDown, CheckSquare, X, FileSpreadsheet, FileUp, FileSpreadsheet as TableIcon, Banknote, Trash2, Undo2 } from 'lucide-react';
 
 interface TimesheetPageHeaderMobileProps {
   onAddTimesheet: () => void;
@@ -15,6 +15,8 @@ interface TimesheetPageHeaderMobileProps {
   onBulkTransferResultUpload?: () => void;
   onBulkTransferHistory?: () => void;
   onBulkApprove?: () => void;
+  /** Admin-only "Huỷ duyệt hết" — reset all approved timesheets to pending. */
+  onResetAll?: () => void;
   /** Unified "Chuyển lô" batch-transfer flow — admin only. */
   onChuyenLo?: () => void;
   onBccHistory?: () => void;
@@ -39,6 +41,7 @@ export function TimesheetPageHeaderMobile({
   onBulkTransferResultUpload,
   onBulkTransferHistory,
   onBulkApprove,
+  onResetAll,
   onChuyenLo,
   onBccHistory,
   onBccUpload,
@@ -170,7 +173,7 @@ export function TimesheetPageHeaderMobile({
                 )}
 
                 {/* Actions */}
-                {(onBulkApprove || onBulkTransferHistory || onPaymentHistory || (onRejectUnpaid && userRole === 'admin')) && (
+                {(onBulkApprove || onResetAll || onBulkTransferHistory || onPaymentHistory || (onRejectUnpaid && userRole === 'admin')) && (
                   <div className="h-px bg-border mx-1 my-1" />
                 )}
 
@@ -182,6 +185,17 @@ export function TimesheetPageHeaderMobile({
                   >
                     <CheckSquare className="h-5 w-5 text-muted-foreground shrink-0" />
                     <span className="text-sm font-medium">Duyệt hết</span>
+                  </Button>
+                )}
+
+                {onResetAll && (
+                  <Button
+                    variant="ghost"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
+                    onClick={() => { onResetAll(); close(); }}
+                  >
+                    <Undo2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Huỷ duyệt hết</span>
                   </Button>
                 )}
 

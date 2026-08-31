@@ -32,6 +32,10 @@ type TimesheetRepository interface {
 	BulkReject(ctx context.Context, ids []uint, rejectionReason string) error
 	Reject(ctx context.Context, id uint, rejectionReason string) error
 	Reset(ctx context.Context, id uint) error
+	// ResetAllApproved resets every approved, unpaid timesheet back to pending
+	// approval (admin mass un-approval). Paid timesheets are never touched.
+	// Returns the number of timesheets reset.
+	ResetAllApproved(ctx context.Context) (int64, error)
 	GetSummaryByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) (*TimesheetSummary, error)
 	GetSummaryStats(ctx context.Context, filters TimesheetFilters) (*TimesheetSummaryStats, error)
 	GetByProjectEmployeeDatePaytype(ctx context.Context, projectID, employeeID uint, date time.Time, paytype string) (*Timesheet, error)

@@ -562,6 +562,49 @@ func (h *Handler) ApproveAllTimesheets(c *gin.Context) {
 	response.Success(c, bulkResponse, message)
 }
 
+// ResetAllTimesheets resets all approved timesheets back to pending approval
+// (admin "Huỷ duyệt hết" — inverse of approve-all). Paid timesheets are never
+// touched (excluded by the repository predicate).
+// @Summary Cancel approval for all approved timesheets
+// @Description Resets every approved, unpaid timesheet back to pending_approval
+// @Tags timesheets
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.BulkOperationResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security ApiKeyAuth
+// @Router /timesheets/reset-all [post]
+func (h *Handler) ResetAllTimesheets(c *gin.Context) {
+	userID, _, ok := h.getUserContext(c)
+	if !ok {
+		return
+	}
+
+	reset, err := h.timesheetService.ResetAllTimesheets(c.Request.Context(), userID)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	if reset == 0 {
+		response.Success(c, dto.BulkOperationResponse{
+			Approved: 0,
+			Skipped:  0,
+			Failed:   0,
+			Results:  []dto.BulkOperationResult{},
+		}, "Không có bảng chấm công nào có thể hủy duyệt")
+		return
+	}
+
+	response.Success(c, dto.BulkOperationResponse{
+		Approved: int(reset),
+		Skipped:  0,
+		Failed:   0,
+		Results:  []dto.BulkOperationResult{},
+	}, fmt.Sprintf("Đã hủy duyệt thành công tất cả %d bảng chấm công", reset))
+}
+
 // formatBulkRequestForLogging creates a log-friendly representation of bulk requests
 func (h *Handler) formatBulkRequestForLogging(requests dto.BulkCreateTimesheetRequest) []map[string]interface{} {
 	formatted := make([]map[string]interface{}, len(requests))

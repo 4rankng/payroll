@@ -33,7 +33,7 @@ p, partner, /api/v1/timesheets, POST, allow
 p, partner, /api/v1/timesheets/:id, DELETE, allow
 # Partner may read a timesheet by id (edit-modal detail fetch, delete/update pre-fetch).
 # Read-only; partners obtain ids from their project-scoped list. The single-segment
-# :id does not weaken existing denies (bulk-approve/reject/reset/approve-all and
+# :id does not weaken existing denies (bulk-approve/reject/reset/reset-all/approve-all and
 # edit-requests/* are deny-overridden). The list rule above (/timesheets, GET) does
 # not cover :id under keyMatch2 (no prefix match), so this rule is required.
 p, partner, /api/v1/timesheets/:id, GET, allow
@@ -61,6 +61,7 @@ p, partner, /api/v1/timesheets/bulk-reject, *, deny
 p, partner, /api/v1/timesheets/reject-unpaid, *, deny
 p, partner, /api/v1/timesheets/bulk-reset, *, deny
 p, partner, /api/v1/timesheets/approve-all, *, deny
+p, partner, /api/v1/timesheets/reset-all, *, deny
 # Edit requests: partner may list their own (handler scopes by RequestedBy);
 # detail and approve/reject remain admin-only.
 p, partner, /api/v1/timesheets/edit-requests, GET, allow

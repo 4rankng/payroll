@@ -296,6 +296,27 @@ func (r *TimesheetCommandRepository) Reset(ctx context.Context, id uint) error {
 		}).Error
 }
 
+// ResetAllApproved mass-resets every approved, unpaid timesheet back to
+// pending approval in a single set-based UPDATE (same field updates as Reset).
+// The status and payment predicates are part of the UPDATE, so a row that
+// becomes paid before this statement acquires its write lock cannot be reset.
+// Returns the number of timesheets reset.
+func (r *TimesheetCommandRepository) ResetAllApproved(ctx context.Context) (int64, error) {
+	result := r.getDB(ctx).
+		Model(&domain.Timesheet{}).
+		Where("timesheet_status = ?", domain.TimesheetStatusApproved).
+		Where("payment_status IS NULL OR payment_status <> ?", domain.PaymentStatusPaid).
+		Updates(map[string]interface{}{
+			"timesheet_status": domain.TimesheetStatusPendingApproval,
+			"approved_by":      nil,
+			"approved_at":      nil,
+			"rejection_reason": "",
+			"force_payroll":    false,
+			"request_edit_id":  nil,
+		})
+	return result.RowsAffected, result.Error
+}
+
 // SetForcePayroll sets the force_payroll flag on a timesheet
 func (r *TimesheetCommandRepository) SetForcePayroll(ctx context.Context, id uint, flag bool) error {
 	return r.db.WithContext(ctx).

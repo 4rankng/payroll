@@ -504,6 +504,24 @@ func (s *TimesheetService) BulkReset(ctx context.Context, timesheetIDs []uint, r
 	return nil
 }
 
+// ResetAllTimesheets resets every approved, unpaid timesheet back to pending
+// approval (admin "Huỷ duyệt hết"). Paid timesheets are excluded by the
+// repository predicate. Returns the number of timesheets reset.
+func (s *TimesheetService) ResetAllTimesheets(ctx context.Context, resetBy uint) (int64, error) {
+	reset, err := s.timesheetRepo.ResetAllApproved(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	// Publish bulk reset event after the update
+	event := domain.NewTimesheetBulkResetEvent(ctx, int(reset), nil, resetBy)
+	if err := s.events.Publish(ctx, event); err != nil {
+		s.logger.Warn("Failed to publish TimesheetBulkResetEvent", "count", reset, "error", err)
+	}
+
+	return reset, nil
+}
+
 // GetTimesheetsByProject orchestrates timesheet retrieval by project
 func (s *TimesheetService) GetTimesheetsByProject(ctx context.Context, projectID uint, fromDate, toDate time.Time) ([]*domain.Timesheet, error) {
 	// Simple delegation to repository - no business logic needed

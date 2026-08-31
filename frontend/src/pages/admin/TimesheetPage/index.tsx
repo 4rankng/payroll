@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2 } from 'lucide-react';
+import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2, Undo2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -18,7 +18,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTimesheetManagement } from '@/hooks/timesheet/useTimesheetManagement';
 import { useExportApprovedTimesheets } from '@/hooks/api/usePayrolls';
-import { useApproveAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
+import { useApproveAllTimesheets, useResetAllTimesheets, useCashReadiness, useTimesheetSummary } from '@/hooks/api/useTimesheets';
 import { useExportOnePayBulk } from '@/hooks/api/useOnePayExport';
 import { PayrollControlCenter } from '@/components/timesheet/PayrollControlCenter';
 import { useEmployeeModals, useModalNavigation } from '@/hooks/useModalNavigation';
@@ -35,6 +35,7 @@ const TimesheetPage = () => {
   const [onePayDialogOpen, setOnePayDialogOpen] = useState(false);
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] = useState(false);
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
+  const [resetAllDialogOpen, setResetAllDialogOpen] = useState(false);
   const [bulkTransferResultDialogOpen, setBulkTransferResultDialogOpen] = useState(false);
   const [bulkTransferHistoryDialogOpen, setBulkTransferHistoryDialogOpen] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
@@ -112,6 +113,7 @@ const TimesheetPage = () => {
 
   const exportApprovedTimesheetsMutation = useExportApprovedTimesheets();
   const approveAllMutation = useApproveAllTimesheets();
+  const resetAllMutation = useResetAllTimesheets();
   const exportOnePayMutation = useExportOnePayBulk();
 
   const handleAddTimesheet = () => {
@@ -150,6 +152,23 @@ const TimesheetPage = () => {
     try {
       await approveAllMutation.mutateAsync();
       setBulkApproveDialogOpen(false);
+    } catch {
+      // Error is handled by the mutation
+    }
+  };
+
+  // "Huỷ duyệt hết" — resets all approved (unpaid) timesheets back to pending.
+  // Mirrors the "Duyệt hết" flow: refresh the global summary first so the
+  // confirm dialog shows accurate, unfiltered counts.
+  const handleResetAll = () => {
+    refetchGlobalSummary();
+    setResetAllDialogOpen(true);
+  };
+
+  const handleConfirmResetAll = async () => {
+    try {
+      await resetAllMutation.mutateAsync();
+      setResetAllDialogOpen(false);
     } catch {
       // Error is handled by the mutation
     }
@@ -281,6 +300,13 @@ const TimesheetPage = () => {
           >
             <CheckCheck className="h-4 w-4 shrink-0" />
             Duyệt hết
+          </button>
+          <button
+            onClick={handleResetAll}
+            className="inline-flex items-center gap-1.5 h-8 px-3 bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
+          >
+            <Undo2 className="h-4 w-4 shrink-0" />
+            Huỷ duyệt
           </button>
           <button
             onClick={handleChuyenLo}
@@ -416,6 +442,32 @@ const TimesheetPage = () => {
         onConfirm={handleConfirmBulkApprove}
         loading={approveAllMutation.isPending}
         disabled={(globalSummary?.pendingApproval ?? 0) === 0}
+      />
+
+      <ConfirmDialog
+        open={resetAllDialogOpen}
+        onOpenChange={setResetAllDialogOpen}
+        title="Huỷ duyệt tất cả bảng công"
+        description={
+          <div className="space-y-0 divide-y divide-border/60">
+            <div className="flex items-center justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Bảng công đã duyệt</span>
+              <span className="font-semibold tabular-nums">{globalSummary?.approvedEntries ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2 text-sm">
+              <span className="text-muted-foreground">Bảng công đã thanh toán</span>
+              <span className="font-semibold tabular-nums">{globalSummary?.paidEntries ?? 0}</span>
+            </div>
+            <p className="py-2 text-xs text-muted-foreground">
+              Toàn bộ bảng công đã duyệt (chưa thanh toán) sẽ trở về trạng thái chờ duyệt. Bảng công đã thanh toán không bị ảnh hưởng.
+            </p>
+          </div>
+        }
+        confirmText="Huỷ duyệt"
+        confirmVariant="destructive"
+        onConfirm={handleConfirmResetAll}
+        loading={resetAllMutation.isPending}
+        disabled={(globalSummary?.approvedEntries ?? 0) === 0}
       />
 
       {/* Bulk Transfer Result Upload Dialog */}

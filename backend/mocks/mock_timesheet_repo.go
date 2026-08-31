@@ -966,6 +966,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) Reset(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockTimesheetRepository)(nil).Reset), arg0, arg1)
 }
 
+// ResetAllApproved mocks base method.
+func (m *MockTimesheetRepository) ResetAllApproved(arg0 context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetAllApproved", arg0)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResetAllApproved indicates an expected call of ResetAllApproved.
+func (mr *MockTimesheetRepositoryMockRecorder) ResetAllApproved(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetAllApproved", reflect.TypeOf((*MockTimesheetRepository)(nil).ResetAllApproved), arg0)
+}
+
 // SetForcePayroll mocks base method.
 func (m *MockTimesheetRepository) SetForcePayroll(arg0 context.Context, arg1 uint, arg2 bool) error {
 	m.ctrl.T.Helper()

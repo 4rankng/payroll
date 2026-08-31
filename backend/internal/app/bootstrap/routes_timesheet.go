@@ -24,6 +24,7 @@ func setupTimesheetRoutes(protected *gin.RouterGroup, container *Container) {
 		timesheets.POST("/reject-unpaid", container.Handlers.Timesheet.RejectUnpaidTimesheets)
 		timesheets.POST("/bulk-reset", container.Handlers.Timesheet.BulkReset)
 		timesheets.POST("/approve-all", container.Handlers.Timesheet.ApproveAllTimesheets)
+		timesheets.POST("/reset-all", container.Handlers.Timesheet.ResetAllTimesheets)
 
 		// Edit request routes
 		timesheets.GET("/edit-requests", container.Handlers.TimesheetEditRequest.ListEditRequests)

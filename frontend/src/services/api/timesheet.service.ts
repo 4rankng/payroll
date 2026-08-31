@@ -332,6 +332,24 @@ class TimesheetService {
   }
 
   /**
+   * Reset all approved timesheets back to pending (Admin only — "Huỷ duyệt hết").
+   * Paid timesheets are skipped by the backend.
+   */
+  async resetAll(): Promise<BulkResetResult> {
+    if (!canApproveTimesheet()) {
+      throw new Error('Chỉ Admin mới có thể hủy duyệt timesheet');
+    }
+
+    const response = await apiClient.post<BulkResetResult>(
+      API_ENDPOINTS.timesheets.resetAll
+    );
+    if (!response.data) {
+      throw new Error('API response missing expected data');
+    }
+    return response.data;
+  }
+
+  /**
    * Bulk reset timesheets (Admin only)
    * Resets approved/rejected timesheets back to pending_approval status
    */
