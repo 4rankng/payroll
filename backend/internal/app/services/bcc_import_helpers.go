@@ -98,6 +98,51 @@ func deducePosition(flatRates map[string]int, shiftRates map[string]int64) strin
 	return best
 }
 
+// shiftLabelHourType maps a rateless BCC shift label to a payrate hour type.
+// Rateless templates (e.g. Samsung SDS) carry no VND rate row; their columns
+// only distinguish regular hours (CB, CN, HC) from overtime (OT, OT CN).
+// Regular labels are matched as whole tokens — substring matching would
+// mis-bucket compact codes from other templates (e.g. "TCN" = tăng ca đêm)
+// as regular hours and silently underpay them. Returns false for labels
+// outside the vocabulary so unknown columns still surface the missing-rate
+// error instead of being silently mis-mapped.
+func shiftLabelHourType(label string) (string, bool) {
+	v := strings.ToUpper(strings.TrimSpace(label))
+	if v == "" {
+		return "", false
+	}
+	if strings.Contains(v, "OT") {
+		return "tăng ca", true
+	}
+	for _, tok := range strings.Fields(v) {
+		switch tok {
+		case "CB", "CN", "HC":
+			return "ca ngày", true
+		}
+	}
+	return "", false
+}
+
+// flatRatesHaveBucket reports whether any flattened payrate path carries the
+// given (dayType, hourType) combination, regardless of position. The rateless
+// label fallback uses it so unknown buckets surface the standard missing-rate
+// row error instead of a generic bulk-create failure downstream.
+func flatRatesHaveBucket(flatRates map[string]int, dayType, hourType string) bool {
+	wantDay := canonicalBCCRateKeySegment(dayType)
+	wantHour := canonicalBCCRateKeySegment(hourType)
+	for path := range flatRates {
+		parts := strings.Split(path, ".")
+		if len(parts) != 3 {
+			continue
+		}
+		if canonicalBCCRateKeySegment(parts[1]) == wantDay &&
+			canonicalBCCRateKeySegment(parts[2]) == wantHour {
+			return true
+		}
+	}
+	return false
+}
+
 // applySTKBankFields populates the bank-related fields on an Employee being
 // created from an STK row. It is intentionally tolerant of incomplete STK
 // data: bank info is only attached when we can build a *complete* banking

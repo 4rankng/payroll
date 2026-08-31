@@ -67,6 +67,9 @@ func buildBCCHeaderMap(f *excelize.File, sheet string) *bccHeaderMap {
 			if strings.Contains(v, "bộ phận") && hm.deptCol == 0 {
 				hm.deptCol = col
 			}
+			if strings.Contains(v, "chức danh") && hm.deptCol == 0 {
+				hm.deptCol = col
+			}
 		}
 	}
 
@@ -118,12 +121,19 @@ func ParseBCCFile(f *excelize.File) (*BCCImportData, error) {
 
 	hm := buildBCCHeaderMap(f, sheet)
 
-	startCol, colToDayNum, stopCol, err := buildDayColMap(f, sheet)
+	startCol, colToDayNum, stopCol, dayRow, err := buildDayColMap(f, sheet)
 	if err != nil {
 		return nil, fmt.Errorf("ParseBCCFile: %w", err)
 	}
 
 	shiftRow, rateRow := detectShiftRows(f, sheet, startCol, stopCol)
+	// When the detected "rate row" is actually the date row (labels sit right
+	// under the dates with no rate row between), its cells are date serials —
+	// parsing them as VND rates yields garbage like 46258₫. Leave rates empty
+	// so the rateless label path applies instead.
+	if rateRow == dayRow {
+		rateRow = 0
+	}
 	colToShift := buildShiftColMap(f, sheet, startCol, stopCol, shiftRow)
 	shiftRates := buildShiftRates(f, sheet, colToShift, startCol, stopCol, rateRow)
 
@@ -161,7 +171,7 @@ func resolveBCCSheet(f *excelize.File) string {
 // The day-number row itself is detected by detectDayRow: legacy monthly templates
 // put day numbers in row 8 (weekdays T2..CN in row 7), while newer weekly-cycle
 // templates swap the two (day numbers in row 7, weekdays in row 8).
-func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, error) {
+func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, int, error) {
 	dataRow := detectDayRow(f, sheet)
 	colToDayNum := make(map[int]int)
 	currentDay := 0
@@ -191,7 +201,12 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 			break
 		}
 		if val != "" {
-			if d, err2 := strconv.Atoi(val); err2 == nil {
+			if t, ok := parseExcelDate(val); ok {
+				// Full date serial (e.g. 2026-08-25 as 46259): take the day of
+				// month. Must be tried before Atoi — an integer-valued serial
+				// also parses as an int but is not a day number.
+				currentDay = t.Day()
+			} else if d, err2 := strconv.Atoi(val); err2 == nil {
 				currentDay = d
 			} else if serial, err3 := strconv.ParseFloat(val, 64); err3 == nil && serial >= 1 {
 				// Fractional serial: round to nearest integer (day number).
@@ -203,9 +218,9 @@ func buildDayColMap(f *excelize.File, sheet string) (int, map[int]int, int, erro
 		}
 	}
 	if len(colToDayNum) == 0 {
-		return 0, nil, 0, fmt.Errorf("buildDayColMap: no day-of-month columns found in rows 7-8")
+		return 0, nil, 0, dataRow, fmt.Errorf("buildDayColMap: no day-of-month columns found in rows 7-8")
 	}
-	return startColIdx, colToDayNum, stopCol, nil
+	return startColIdx, colToDayNum, stopCol, dataRow, nil
 }
 
 // detectDayRow returns the row (7 or 8) that holds the day-of-month numbers.
@@ -250,7 +265,10 @@ func firstDayColumn(f *excelize.File, sheet string, row int) int {
 			continue
 		}
 		dayNum := 0
-		if n, err := strconv.Atoi(val); err == nil {
+		if t, ok := parseExcelDate(val); ok {
+			// Full date serial (e.g. 2026-08-01): a real date column.
+			dayNum = t.Day()
+		} else if n, err := strconv.Atoi(val); err == nil {
 			dayNum = n
 		} else if serial, err := strconv.ParseFloat(val, 64); err == nil {
 			dayNum = int(serial)
@@ -329,8 +347,12 @@ func buildShiftColMap(f *excelize.File, sheet string, startCol, stopCol, shiftRo
 }
 
 // buildShiftRates reads the detected rate row: first occurrence of each shift label wins.
+// A zero rateRow means no trustworthy rate row exists (see ParseBCCFile).
 func buildShiftRates(f *excelize.File, sheet string, colToShift map[int]string, startCol, stopCol, rateRow int) map[string]int64 {
 	rates := make(map[string]int64)
+	if rateRow <= 0 {
+		return rates
+	}
 	for colIdx := startCol; colIdx < stopCol; colIdx++ {
 		label, ok := colToShift[colIdx]
 		if !ok || label == "" {

@@ -57,8 +57,20 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC tuần: %v", err))
 	}
 
-	// 2-3. Shared setup: month parsing, lock, payrate lookup.
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
+	// 2-3. Shared setup: month parsing, lock, payrate lookup. The earliest
+	// worked day lets the lookup accept a payrate that starts mid-month but
+	// is already active on the file's first worked day.
+	earliestDay := 0
+	for _, sh := range parsed.Sheets {
+		for _, emp := range sh.Employees {
+			for _, e := range emp.Entries {
+				if d := e.Date.Day(); d > 0 && (earliestDay == 0 || d < earliestDay) {
+					earliestDay = d
+				}
+			}
+		}
+	}
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
 		return fail("failed", err.Error())
 	}
@@ -706,8 +718,20 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	}
 	positionByCCCD, blockedEmployeeCCCDs, positionErrors := buildWeeklyPaymentPositions(parsed.Sheets)
 
-	// 2-3. Shared setup: month parsing, lock, payrate lookup.
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
+	// 2-3. Shared setup: month parsing, lock, payrate lookup. The earliest
+	// worked day lets the lookup accept a payrate that starts mid-month but
+	// is already active on the file's first worked day.
+	earliestDay := 0
+	for _, sh := range parsed.Sheets {
+		for _, emp := range sh.Employees {
+			for _, e := range emp.Entries {
+				if e.Day > 0 && (earliestDay == 0 || e.Day < earliestDay) {
+					earliestDay = e.Day
+				}
+			}
+		}
+	}
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
 		return fail("failed", err.Error())
 	}

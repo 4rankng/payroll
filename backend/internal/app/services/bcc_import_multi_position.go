@@ -59,8 +59,20 @@ func (s *BCCImportService) processMultiPositionUpload(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC đa vị trí: %v", err))
 	}
 
-	// 2-4. Shared setup: month parsing, lock, payrate lookup.
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
+	// 2-4. Shared setup: month parsing, lock, payrate lookup. The earliest
+	// worked day lets the lookup accept a payrate that starts mid-month but
+	// is already active on the file's first worked day.
+	earliestDay := 0
+	for _, sh := range parsed.Sheets {
+		for _, emp := range sh.Employees {
+			for _, e := range emp.Entries {
+				if e.DayNum > 0 && (earliestDay == 0 || e.DayNum < earliestDay) {
+					earliestDay = e.DayNum
+				}
+			}
+		}
+	}
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
 		return fail("failed", err.Error())
 	}

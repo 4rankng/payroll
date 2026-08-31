@@ -81,8 +81,18 @@ func (s *BCCImportService) processAssetData(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
-	// 5-6. Shared setup: month parsing, lock, payrate lookup.
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
+	// 5-6. Shared setup: month parsing, lock, payrate lookup. The earliest
+	// worked day lets the lookup accept a payrate that starts mid-month but
+	// is already active on the file's first worked day.
+	earliestDay := 0
+	for _, emp := range parsed.Employees {
+		for _, e := range emp.Entries {
+			if e.DayNum > 0 && (earliestDay == 0 || e.DayNum < earliestDay) {
+				earliestDay = e.DayNum
+			}
+		}
+	}
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
 		return fail("failed", err.Error())
 	}
@@ -94,6 +104,11 @@ func (s *BCCImportService) processAssetData(
 	// Rate is king: as long as the rate matches, the entry is valid.
 	// On collision (same rate, multiple paths), prefer "ngay thuong".
 	// Normalize day type: accept both short names (Thường, Nghỉ, Lễ) and full names (ngày thường, ngày nghỉ, ngày lễ)
+	//
+	// ratelessFile: templates without any rate row (e.g. Samsung SDS) can't do
+	// rate matching at all — their entries fall back to label + calendar
+	// mapping below. Files that carry rates keep the strict rate path.
+	ratelessFile := len(parsed.ShiftRates) == 0
 	dayTypePriority := map[string]int{
 		"ngày thường": 0, "thường": 0,
 		"ngày nghỉ": 1, "nghỉ": 1,
@@ -388,6 +403,19 @@ func (s *BCCImportService) processAssetData(
 
 			rate := int(parsed.ShiftRates[entry.ShiftLabel])
 			target, ok := rateToTarget[rate]
+			if !ok && ratelessFile {
+				// Rateless template: derive the payrate bucket from the column
+				// label (regular vs overtime) plus the calendar day type. The
+				// bucket must exist in the project payrate — otherwise the
+				// standard missing-rate row error applies.
+				if hourType, labelOK := shiftLabelHourType(entry.ShiftLabel); labelOK {
+					cand := rateTarget{dayType: determineDayType(date), hourType: hourType}
+					if flatRatesHaveBucket(flatRates, cand.dayType, cand.hourType) {
+						target = cand
+						ok = true
+					}
+				}
+			}
 			if !ok {
 				importErrors = append(importErrors, domain.ImportError{
 					Row:      rowNum,

@@ -361,9 +361,11 @@ func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint
 }
 
 // prepareImportContext performs the shared setup: month parsing, distributed lock,
-// and payrate lookup. Returns the context and a cleanup function that must be
+// and payrate lookup. earliestEntryDay is the smallest day-of-month (within the
+// import month) carrying hours in the uploaded file, or 0 when the file has no
+// entries yet. Returns the context and a cleanup function that must be
 // deferred by the caller to release the lock.
-func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string) (*bccImportContext, func(), error) {
+func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string, earliestEntryDay int) (*bccImportContext, func(), error) {
 	// Use time.Local so the lookup date matches the MySQL driver's location: the DSN uses
 	// loc=Local, so cfg.Loc == time.Local. clock.Now() is pinned to Asia/Ho_Chi_Minh, which
 	// diverges from time.Local in UTC containers (e.g. the scratch prod image) and shifts the
@@ -384,8 +386,19 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 
 	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
 	if err != nil {
-		release()
-		return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
+		// A payrate whose effective date starts mid-month (e.g. a project
+		// created Aug 30 with payrate from Aug 24) has no rate at the month
+		// boundary. Accept it only when it is already active on or before the
+		// file's earliest timesheet day — never retroactively for worked days
+		// that precede the payrate's effective date.
+		if domain.IsNotFoundError(err) && earliestEntryDay > 0 {
+			probe := time.Date(year, month, earliestEntryDay, 0, 0, 0, 0, loc)
+			payrate, err = s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, probe)
+		}
+		if err != nil {
+			release()
+			return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
+		}
 	}
 	flatRates, err := payrate.Payrate.Flatten()
 	if err != nil {

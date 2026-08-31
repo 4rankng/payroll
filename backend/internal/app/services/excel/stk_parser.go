@@ -48,10 +48,77 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 
 	// STK sheet layouts vary: some have a merged title on row 1 (so the column
 	// header lands on row 2 and data on row 3), others place the header on
-	// row 3 with data from row 4. Detect the header row by its labels rather
-	// than assuming a fixed offset, otherwise a shifted layout silently yields
-	// zero rows and no bank account is created.
+	// row 3 with data from row 4. Column ORDER varies too: the classic layout
+	// is ID | Tên | Stk | Tên Ngân hàng | …, while e.g. the Samsung SDS
+	// template ships TÊN | SỐ CCCD | TÊN NGÂN HÀNG | SỐ TÀI KHOẢN — reading
+	// fixed positions there stores the bank name as the employee's name.
+	// Detect the header row AND map each column from its label; fall back to
+	// the historical fixed layout when no labelled header is found.
 	headerRow := -1
+	var cols stkColumnMap
+	scanLimit := min(len(rows), 10)
+	for i := range scanLimit {
+		if c := detectSTKHeaderColumns(rows[i]); c != nil {
+			headerRow = i
+			cols = *c
+			break
+		}
+	}
+
+	var dataStart int
+	if headerRow >= 0 {
+		dataStart = headerRow + 1
+	} else if loose := detectSTKHeaderRowLoose(rows); loose >= 0 {
+		// Partially-labelled header (e.g. only "ID" present): keep the classic
+		// fixed column order but honour the detected header position.
+		dataStart = loose + 1
+		cols = stkColumnMap{cccd: 1, name: 2, bankAccount: 3, bankName: 4, note: 5, mobile: 6}
+	} else {
+		// No header labels at all: preserve the historical assumption of 3
+		// header rows (data from row 4) with the classic fixed column order.
+		dataStart = 3
+		cols = stkColumnMap{cccd: 1, name: 2, bankAccount: 3, bankName: 4, note: 5, mobile: 6}
+	}
+
+	var stkRows []STKRow
+	for i := dataStart; i < len(rows); i++ {
+		row := rows[i]
+		// Interior blank spacer rows must not terminate parsing — partner
+		// sheets use them as visual separators, and stopping here would
+		// silently drop every row below.
+		if len(row) == 0 {
+			continue
+		}
+		cccd := stkCell(row, cols.cccd)
+		fullName := stkCell(row, cols.name)
+
+		// Stop when both CCCD and Name are empty
+		if cccd == "" && fullName == "" {
+			break
+		}
+		if cccd == "" {
+			continue
+		}
+
+		stkRows = append(stkRows, STKRow{
+			CCCD:        cccd,
+			FullName:    fullName,
+			BankAccount: stkCell(row, cols.bankAccount),
+			BankName:    stkCell(row, cols.bankName),
+			Note:        stkCell(row, cols.note),
+			Mobile:      sanitizeMobile(stkCell(row, cols.mobile)),
+		})
+	}
+
+	return stkRows, nil
+}
+
+// detectSTKHeaderRowLoose replicates the original header detection: a row is a
+// header when ANY ONE of the identity / name / account labels appears in
+// columns B, C, or D. Used when full label mapping failed, so partially
+// labelled sheets keep their detected data-start row instead of falling back
+// to the fixed row-3 assumption.
+func detectSTKHeaderRowLoose(rows [][]string) int {
 	scanLimit := min(len(rows), 10)
 	for i := range scanLimit {
 		row := rows[i]
@@ -65,69 +132,101 @@ func ParseSTKSheet(f *excelize.File) ([]STKRow, error) {
 		if len(row) > 3 {
 			colD = normHeader(row[3])
 		}
-		// Match the identity / bank-account header labels (any Vietnamese variant).
 		isIDCol := colB == "id" || colB == "cccd" || strings.Contains(colB, "mã nhân viên")
 		isNameCol := colC == "tên" || strings.Contains(colC, "họ tên") || strings.Contains(colC, "họ và tên")
 		isSTKCol := colD == "stk" || colD == "số tk" || strings.Contains(colD, "số tài khoản") || strings.Contains(colD, "so tai khoan")
 		if isIDCol || isNameCol || isSTKCol {
-			headerRow = i
-			break
+			return i
+		}
+	}
+	return -1
+}
+
+// stkColumnMap holds 0-based column indexes into an STK sheet row.
+type stkColumnMap struct {
+	cccd        int
+	name        int
+	bankAccount int
+	bankName    int
+	note        int
+	mobile      int
+}
+
+// stkCell reads one trimmed cell by index, tolerating short rows.
+func stkCell(row []string, idx int) string {
+	if idx < 0 || idx >= len(row) {
+		return ""
+	}
+	return strings.TrimSpace(row[idx])
+}
+
+// detectSTKHeaderColumns maps a row to column positions by its header labels.
+// Specific labels are claimed before generic ones so "tên ngân hàng" resolves
+// to the bank column instead of the employee-name column. Returns nil when the
+// row is not an STK header (missing identity or name column).
+func detectSTKHeaderColumns(row []string) *stkColumnMap {
+	cols := stkColumnMap{cccd: -1, name: -1, bankAccount: -1, bankName: -1, note: -1, mobile: -1}
+	claimed := make(map[int]bool)
+
+	claim := func(idx int, target *int) {
+		if !claimed[idx] && *target == -1 {
+			claimed[idx] = true
+			*target = idx
 		}
 	}
 
-	// Data starts on the row after the detected header. If no header label was
-	// found, preserve the historical assumption of 3 header rows (data from
-	// row 4) so previously-supported sheets keep parsing unchanged.
-	dataStart := 3
-	if headerRow >= 0 {
-		dataStart = headerRow + 1
-	}
-
-	var stkRows []STKRow
-	for i := dataStart; i < len(rows); i++ {
-		row := rows[i]
-		if len(row) < 3 {
+	// Pass 1 — specific labels.
+	for idx, cell := range row {
+		v := normHeader(cell)
+		if v == "" {
 			continue
 		}
-		cccd := strings.TrimSpace(row[1])
-		fullName := strings.TrimSpace(row[2])
-
-		// Stop when both CCCD and Name are empty
-		if cccd == "" && fullName == "" {
-			break
+		isAccount := v == "stk" || v == "số tk" || v == "so tk" ||
+			strings.Contains(v, "số tài khoản") || strings.Contains(v, "so tai khoan") ||
+			strings.Contains(v, "tài khoản") || strings.Contains(v, "tai khoan")
+		isBank := strings.Contains(v, "ngân hàng") || strings.Contains(v, "ngan hang") ||
+			v == "bank" || strings.Contains(v, "chi nhánh") || strings.Contains(v, "chi nhanh")
+		if isAccount {
+			claim(idx, &cols.bankAccount)
+		} else if isBank {
+			claim(idx, &cols.bankName)
 		}
-		if cccd == "" {
-			continue
-		}
-
-		bankAccount := ""
-		if len(row) > 3 {
-			bankAccount = strings.TrimSpace(row[3])
-		}
-		bankName := ""
-		if len(row) > 4 {
-			bankName = strings.TrimSpace(row[4])
-		}
-		note := ""
-		if len(row) > 5 {
-			note = strings.TrimSpace(row[5])
-		}
-		mobile := ""
-		if len(row) > 6 {
-			mobile = sanitizeMobile(row[6])
-		}
-
-		stkRows = append(stkRows, STKRow{
-			CCCD:        cccd,
-			FullName:    fullName,
-			BankAccount: bankAccount,
-			BankName:    bankName,
-			Note:        note,
-			Mobile:      mobile,
-		})
 	}
 
-	return stkRows, nil
+	// Pass 2 — identity, then name, then optional columns.
+	for idx, cell := range row {
+		v := normHeader(cell)
+		if v == "" || claimed[idx] {
+			continue
+		}
+		isCCCD := v == "cccd" || v == "số cccd" || v == "so cccd" || v == "cmnd" ||
+			v == "id" || strings.Contains(v, "mã nhân viên") || strings.Contains(v, "ma nhan vien")
+		if isCCCD {
+			claim(idx, &cols.cccd)
+			continue
+		}
+		isName := v == "tên" || v == "ten" || v == "họ tên" || v == "ho ten" ||
+			strings.Contains(v, "họ và tên") || strings.Contains(v, "ho va ten")
+		if isName {
+			claim(idx, &cols.name)
+			continue
+		}
+		isMobile := v == "sdt" || v == "sđt" || v == "số đt" || v == "phone" ||
+			strings.Contains(v, "điện thoại") || strings.Contains(v, "dien thoai") || strings.Contains(v, "số phone")
+		if isMobile {
+			claim(idx, &cols.mobile)
+			continue
+		}
+		isNote := strings.Contains(v, "ghi chú") || strings.Contains(v, "ghi chu") || v == "note"
+		if isNote {
+			claim(idx, &cols.note)
+		}
+	}
+
+	if cols.cccd == -1 || cols.name == -1 {
+		return nil
+	}
+	return &cols
 }
 
 // sanitizeMobile strips non-digit characters (spaces, +, -, parens) so the
