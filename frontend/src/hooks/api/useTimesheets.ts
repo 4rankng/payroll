@@ -378,7 +378,7 @@ export const useApproveAllTimesheets = () => {
   });
 };
 
-// Reset all approved timesheets back to pending approval (admin "Huỷ duyệt hết")
+// Reset all approved timesheets back to pending approval (admin "Bỏ duyệt hết")
 export const useResetAllTimesheets = () => {
   const queryClient = useQueryClient();
 

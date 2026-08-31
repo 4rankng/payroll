@@ -230,7 +230,7 @@ const TimesheetPageMobile = () => {
     setBulkApproveDialogOpen(true);
   }, [refetchGlobalSummary]);
 
-  // "Huỷ duyệt hết" — reset all approved (unpaid) timesheets to pending
+  // "Bỏ duyệt hết" — reset all approved (unpaid) timesheets to pending
   // (matches desktop: refresh the global summary for honest counts).
   const handleResetAll = useCallback(() => {
     refetchGlobalSummary();
@@ -516,7 +516,7 @@ const TimesheetPageMobile = () => {
       <ConfirmDialog
         open={resetAllDialogOpen}
         onOpenChange={setResetAllDialogOpen}
-        title="Huỷ duyệt tất cả bảng công"
+        title="Bỏ duyệt tất cả bảng công"
         description={
           <div className="space-y-0 divide-y divide-border/60">
             <div className="flex flex-col gap-1 py-2 text-sm min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
@@ -536,7 +536,7 @@ const TimesheetPageMobile = () => {
             </p>
           </div>
         }
-        confirmText="Huỷ duyệt"
+        confirmText="Bỏ duyệt"
         confirmVariant="destructive"
         onConfirm={handleConfirmResetAll}
         loading={resetAllMutation.isPending}

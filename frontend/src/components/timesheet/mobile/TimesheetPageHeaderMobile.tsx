@@ -15,7 +15,7 @@ interface TimesheetPageHeaderMobileProps {
   onBulkTransferResultUpload?: () => void;
   onBulkTransferHistory?: () => void;
   onBulkApprove?: () => void;
-  /** Admin-only "Huỷ duyệt hết" — reset all approved timesheets to pending. */
+  /** Admin-only "Bỏ duyệt hết" — reset all approved timesheets to pending. */
   onResetAll?: () => void;
   /** Unified "Chuyển lô" batch-transfer flow — admin only. */
   onChuyenLo?: () => void;
@@ -195,7 +195,7 @@ export function TimesheetPageHeaderMobile({
                     onClick={() => { onResetAll(); close(); }}
                   >
                     <Undo2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium">Huỷ duyệt hết</span>
+                    <span className="text-sm font-medium">Bỏ duyệt hết</span>
                   </Button>
                 )}
 

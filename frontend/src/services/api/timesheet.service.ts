@@ -332,12 +332,12 @@ class TimesheetService {
   }
 
   /**
-   * Reset all approved timesheets back to pending (Admin only — "Huỷ duyệt hết").
+   * Reset all approved timesheets back to pending (Admin only — "Bỏ duyệt hết").
    * Paid timesheets are skipped by the backend.
    */
   async resetAll(): Promise<BulkResetResult> {
     if (!canApproveTimesheet()) {
-      throw new Error('Chỉ Admin mới có thể hủy duyệt timesheet');
+      throw new Error('Chỉ Admin mới có thể bỏ duyệt timesheet');
     }
 
     const response = await apiClient.post<BulkResetResult>(

@@ -563,7 +563,7 @@ func (h *Handler) ApproveAllTimesheets(c *gin.Context) {
 }
 
 // ResetAllTimesheets resets all approved timesheets back to pending approval
-// (admin "Huỷ duyệt hết" — inverse of approve-all). Paid timesheets are never
+// (admin "Bỏ duyệt hết" — inverse of approve-all). Paid timesheets are never
 // touched (excluded by the repository predicate).
 // @Summary Cancel approval for all approved timesheets
 // @Description Resets every approved, unpaid timesheet back to pending_approval
@@ -593,7 +593,7 @@ func (h *Handler) ResetAllTimesheets(c *gin.Context) {
 			Skipped:  0,
 			Failed:   0,
 			Results:  []dto.BulkOperationResult{},
-		}, "Không có bảng chấm công nào có thể hủy duyệt")
+		}, "Không có bảng chấm công nào có thể bỏ duyệt")
 		return
 	}
 
@@ -602,7 +602,7 @@ func (h *Handler) ResetAllTimesheets(c *gin.Context) {
 		Skipped:  0,
 		Failed:   0,
 		Results:  []dto.BulkOperationResult{},
-	}, fmt.Sprintf("Đã hủy duyệt thành công tất cả %d bảng chấm công", reset))
+	}, fmt.Sprintf("Đã bỏ duyệt thành công tất cả %d bảng chấm công", reset))
 }
 
 // formatBulkRequestForLogging creates a log-friendly representation of bulk requests

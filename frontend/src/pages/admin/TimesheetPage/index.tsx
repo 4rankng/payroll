@@ -157,7 +157,7 @@ const TimesheetPage = () => {
     }
   };
 
-  // "Huỷ duyệt hết" — resets all approved (unpaid) timesheets back to pending.
+  // "Bỏ duyệt hết" — resets all approved (unpaid) timesheets back to pending.
   // Mirrors the "Duyệt hết" flow: refresh the global summary first so the
   // confirm dialog shows accurate, unfiltered counts.
   const handleResetAll = () => {
@@ -306,7 +306,7 @@ const TimesheetPage = () => {
             className="inline-flex items-center gap-1.5 h-8 px-3 bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
           >
             <Undo2 className="h-4 w-4 shrink-0" />
-            Huỷ duyệt
+            Bỏ duyệt
           </button>
           <button
             onClick={handleChuyenLo}
@@ -447,7 +447,7 @@ const TimesheetPage = () => {
       <ConfirmDialog
         open={resetAllDialogOpen}
         onOpenChange={setResetAllDialogOpen}
-        title="Huỷ duyệt tất cả bảng công"
+        title="Bỏ duyệt tất cả bảng công"
         description={
           <div className="space-y-0 divide-y divide-border/60">
             <div className="flex items-center justify-between py-2 text-sm">
@@ -463,7 +463,7 @@ const TimesheetPage = () => {
             </p>
           </div>
         }
-        confirmText="Huỷ duyệt"
+        confirmText="Bỏ duyệt"
         confirmVariant="destructive"
         onConfirm={handleConfirmResetAll}
         loading={resetAllMutation.isPending}
