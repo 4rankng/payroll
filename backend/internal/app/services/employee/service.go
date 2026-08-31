@@ -484,8 +484,13 @@ func (s *EmployeeService) createUserForEmployee(ctx context.Context, employee *d
 
 	logger.Info("Generated base username", "base_username", baseUsername)
 
-	// Ensure username is unique
-	username := s.ensureUniqueUsername(ctx, baseUsername)
+	// Ensure username is unique. An error from the prefix lookup must abort
+	// account creation: silently falling back to the base username guarantees
+	// a duplicate-key failure at INSERT time.
+	username, err := s.ensureUniqueUsername(ctx, baseUsername)
+	if err != nil {
+		return 0, err
+	}
 	logger.Info("Ensured unique username", "final_username", username)
 
 	// Prepare email for user account
@@ -525,13 +530,18 @@ func (s *EmployeeService) createUserForEmployee(ctx context.Context, employee *d
 // ensureUniqueUsername generates a unique username by appending numbers if needed.
 // Uses a single DB query to fetch all existing variants with the same prefix,
 // then picks the lowest available suffix in memory — O(1) DB round-trips.
-func (s *EmployeeService) ensureUniqueUsername(ctx context.Context, baseUsername string) string {
+// The lookup runs on the caller's transaction connection so a base username
+// generated earlier in the same import transaction is detected and suffixed.
+func (s *EmployeeService) ensureUniqueUsername(ctx context.Context, baseUsername string) (string, error) {
 	logger := observability.GetLogger()
 
 	existing, err := s.UserRepo.GetUsernamesByPrefix(ctx, baseUsername)
-	if err != nil || len(existing) == 0 {
+	if err != nil {
+		return "", fmt.Errorf("failed to list existing usernames for %q: %w", baseUsername, err)
+	}
+	if len(existing) == 0 {
 		// No conflicts found — base username is available.
-		return baseUsername
+		return baseUsername, nil
 	}
 
 	// Build a set of taken usernames for O(1) lookup.
@@ -542,20 +552,20 @@ func (s *EmployeeService) ensureUniqueUsername(ctx context.Context, baseUsername
 
 	// Base username available?
 	if _, conflict := taken[baseUsername]; !conflict {
-		return baseUsername
+		return baseUsername, nil
 	}
 
 	// Find the lowest available numeric suffix.
 	for counter := 2; counter <= 1000; counter++ {
 		candidate := baseUsername + strconv.Itoa(counter)
 		if _, conflict := taken[candidate]; !conflict {
-			logger.Debug("Generated unique username", "base", baseUsername, "result", candidate)
-			return candidate
+			logger.Debug("Generated username", "base", baseUsername, "result", candidate)
+			return candidate, nil
 		}
 	}
 
 	// Fallback: append a short random suffix (extremely unlikely to be needed).
 	fallback := baseUsername + strconv.FormatInt(clock.Now().UnixNano()%10000, 10)
 	logger.Warn("Username counter exceeded 1000, using timestamp fallback", "base", baseUsername, "fallback", fallback)
-	return fallback
+	return fallback, nil
 }

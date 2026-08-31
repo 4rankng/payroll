@@ -143,9 +143,12 @@ func (r *UserRepository) GetByUsernameIncludingDeleted(ctx context.Context, user
 
 // GetUsernamesByPrefix returns all usernames (including soft-deleted) that start with the given prefix.
 // Used to find existing username variants in a single query instead of N sequential lookups.
+// Must resolve the transaction from ctx: employees auto-created inside one
+// import transaction can share a base username, and only the tx connection
+// sees the first, still-uncommitted insert.
 func (r *UserRepository) GetUsernamesByPrefix(ctx context.Context, prefix string) ([]string, error) {
 	var usernames []string
-	err := r.DB.WithContext(ctx).
+	err := r.dbForContext(ctx).
 		Unscoped().
 		Model(&domain.User{}).
 		Where("username LIKE ?", prefix+"%").
