@@ -278,6 +278,7 @@ const (
 	MsgCannotUpdatePayrateInvalidDateVN         = "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày chấm công đã trả lương gần nhất"
 	MsgCannotUpdatePayrateConflictingConfigVN   = "Không thể cập nhật mức lương: đã có cấu hình mức lương hiệu lực từ ngày này hoặc muộn hơn"
 	MsgCannotUpdatePayratePastLinkedTimesheetVN = "Không thể cập nhật mức lương: ngày hiệu lực không thể sau bảng công đã áp dụng mức lương này"
+	MsgCannotUpdateEndedPayrateVN               = "Không thể cập nhật cấu hình lương đã kết thúc — hãy chỉnh sửa cấu hình lương hiện hành"
 	MsgCannotDeletePayrateUsedByTimesheetsVN    = "Không thể xóa mức lương đã được sử dụng bởi bảng chấm công"
 	MsgAtLeastOneEntryRequiredVN                = "Ít nhất một mục nhập là bắt buộc"
 	MsgFromDateAfterToDateVN                    = "ngày bắt đầu không thể sau ngày kết thúc"

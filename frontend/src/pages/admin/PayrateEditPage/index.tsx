@@ -136,9 +136,11 @@ export default function PayrateEditPage() {
       // Default the start date to the paid floor (day after the latest paid
       // timesheet work date) whenever the stored start sits before it — the backend
       // rejects anything earlier, so pre-clamp instead of surfacing an error.
+      // Ended configs are exempt: their stored start legitimately predates the
+      // floor, and pre-clamping would point at the current config's date.
       const floor = targetPayrate.earliest_effective_from;
       const fromDate =
-        floor && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
+        floor && !targetPayrate.toDate && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
       setConfig({
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
@@ -172,11 +174,15 @@ export default function PayrateEditPage() {
       : validatePayrateStructure(config.rates);
   }, [config.rates, isFlexible]);
 
-  const ratesLocked = serverResult?.fields.rates.locked ?? false;
+  // Ended configs (a newer config took over) are history: rows under them are
+  // priced, and the backend rejects any update. Render everything read-only
+  // instead of offering an edit that can only fail.
+  const isEnded = editorMode === 'edit' && !!targetPayrate?.toDate;
+  const ratesLocked = isEnded || (serverResult?.fields.rates.locked ?? false);
   // The server flags configs whose start date has no legal move (paid floor
   // below, linked timesheets above) — render the date read-only instead of
   // letting the save hit a 400.
-  const fromDateLocked = (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
+  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
 
   const handleRatesChange = useCallback((rates: PayrateStructure) => {
     if (ratesLocked) return;
@@ -279,7 +285,7 @@ export default function PayrateEditPage() {
             <Button variant="ghost" size="sm" onClick={goBack} disabled={isValidating || isSaving} className="hidden sm:flex">
               Hủy
             </Button>
-            <Button size="sm" variant="default" onClick={handleValidate} disabled={isValidating || isSaving || !canProceed} className="min-w-[130px]">
+            <Button size="sm" variant="default" onClick={handleValidate} disabled={isValidating || isSaving || !canProceed || isEnded} className="min-w-[130px]">
               {isValidating || isSaving ? (
                 <span className="flex items-center gap-1.5">
                   <span className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
@@ -392,6 +398,11 @@ export default function PayrateEditPage() {
                     )}
                     {!fromDateIsActionable && (
                       <div className="ml-12 max-w-xl">
+                        {isEnded && (
+                          <p className="mb-1 text-xs text-muted-foreground">
+                            Cấu hình đã kết thúc (hiệu lực đến {targetPayrate?.toDate}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
+                          </p>
+                        )}
                         <FieldFeedback
                           field={sf?.effective_from}
                           onApplySuggestion={v => {
@@ -506,7 +517,7 @@ export default function PayrateEditPage() {
         <Button variant="outline" className="flex-1" onClick={goBack} disabled={isValidating || isSaving}>
           Hủy
         </Button>
-        <Button className="flex-1" variant="default" onClick={handleValidate} disabled={isValidating || isSaving || !canProceed}>
+        <Button className="flex-1" variant="default" onClick={handleValidate} disabled={isValidating || isSaving || !canProceed || isEnded}>
           {isValidating || isSaving ? 'Đang xử lý...' : editorMode === 'create' ? 'Tạo cấu hình' : 'Lưu thay đổi'}
         </Button>
       </footer>

@@ -127,7 +127,7 @@ export default function PayrateEditPageMobile() {
       // rejects anything earlier, so pre-clamp instead of surfacing an error.
       const floor = targetPayrate.earliest_effective_from;
       const fromDate =
-        floor && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
+        floor && !targetPayrate.toDate && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
       setConfig({
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
@@ -160,11 +160,12 @@ export default function PayrateEditPageMobile() {
       : validatePayrateStructure(config.rates);
   }, [config.rates, isFlexible]);
 
-  const ratesLocked = serverResult?.fields.rates.locked ?? false;
-  // The server flags configs whose start date has no legal move (paid floor
-  // below, linked timesheets above) — render the date read-only instead of
-  // letting the save hit a 400.
-  const fromDateLocked = (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
+  // Ended configs (a newer config took over) are history: rows under them are
+  // priced, and the backend rejects any update. Render everything read-only
+  // instead of offering an edit that can only fail.
+  const isEnded = editorMode === 'edit' && !!targetPayrate?.toDate;
+  const ratesLocked = isEnded || (serverResult?.fields.rates.locked ?? false);
+  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
 
   const handleRatesChange = useCallback((rates: PayrateStructure) => {
     if (ratesLocked) return;
@@ -435,7 +436,7 @@ export default function PayrateEditPageMobile() {
         <Button
           className="btn-admin-primary !h-11 w-full"
           onClick={handleValidate}
-          disabled={isValidating || isSaving || !canProceed}
+          disabled={isValidating || isSaving || !canProceed || isEnded}
         >
           {isValidating || isSaving ? (
             <span className="flex items-center gap-1.5">

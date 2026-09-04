@@ -340,6 +340,33 @@ func TestPayrateTemporalServiceSplitsConfigWhenStartDateMovesLater(t *testing.T)
 	assertTimesheetRateOnConfig(t, db, pending.ID, 99, 250000)
 }
 
+func TestPayrateTemporalServiceSplitsConfigWithNoLinkedTimesheets(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	repository := &payrateTemporalRepositoryStub{}
+	service := NewPayrateTemporalService(db, repository)
+
+	const projectID uint = 52
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	target := &domain.Payrate{
+		ID:        16,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	}
+	seedPayrateTemporalPayrate(t, db, target)
+
+	// No timesheets at all: the split still applies, recalculation is a no-op.
+	target.FromDate = time.Date(2026, 8, 4, 0, 0, 0, 0, time.Local)
+	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
+
+	var persisted domain.Payrate
+	require.NoError(t, db.First(&persisted, 16).Error)
+	require.NotNil(t, persisted.ToDate)
+	require.Equal(t, "2026-08-03", persisted.ToDate.Format("2006-01-02"))
+	require.Equal(t, uint(99), target.ID, "caller receives the new config identity")
+}
+
 func TestPayrateTemporalServiceRejectsSplitOfClosedConfig(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
@@ -357,10 +384,25 @@ func TestPayrateTemporalServiceRejectsSplitOfClosedConfig(t *testing.T) {
 	}
 	seedPayrateTemporalPayrate(t, db, closed)
 
-	// A historical (closed) config cannot be split — that would open a second
-	// config alongside the project's current one.
-	closed.FromDate = time.Date(2026, 8, 4, 0, 0, 0, 0, time.Local)
-	require.Error(t, service.UpdateEffectiveDatedPayrate(ctx, closed))
+	// Ended configs are history: any start-date move — later, unchanged, or
+	// earlier — is rejected with the dedicated message, and nothing changes.
+	for name, from := range map[string]time.Time{
+		"later":   time.Date(2026, 8, 4, 0, 0, 0, 0, time.Local),
+		"earlier": time.Date(2026, 7, 30, 0, 0, 0, 0, time.Local),
+	} {
+		t.Run(name, func(t *testing.T) {
+			target := *closed
+			target.FromDate = from
+			err := service.UpdateEffectiveDatedPayrate(ctx, &target)
+			require.EqualError(t, err, "Không thể cập nhật cấu hình lương đã kết thúc — hãy chỉnh sửa cấu hình lương hiện hành")
+
+			var persisted domain.Payrate
+			require.NoError(t, db.First(&persisted, closed.ID).Error)
+			require.True(t, persisted.FromDate.Equal(closed.FromDate))
+			require.NotNil(t, persisted.ToDate)
+			require.True(t, persisted.ToDate.Equal(*closed.ToDate))
+		})
+	}
 }
 
 func assertTimesheetRateOnConfig(t *testing.T, db *gorm.DB, timesheetID, payrateID uint, rate int64) {

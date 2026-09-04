@@ -169,13 +169,20 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 			return err
 		}
 
-		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
-			return err
-		}
-
 		var existing domain.Payrate
 		if err := tx.WithContext(ctx).First(&existing, payrate.ID).Error; err != nil {
 			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to load existing payrate: %w", err))
+		}
+
+		// Ended configs are history: their rows are priced and immutable, and a
+		// newer config owns the project's present. Reject before the floor or
+		// sibling checks, whose generic errors would only confuse here.
+		if existing.ToDate != nil {
+			return domain.NewValidationError(constants.MsgCannotUpdateEndedPayrateVN)
+		}
+
+		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
+			return err
 		}
 
 		if payrate.FromDate.After(toLocalDateOnly(existing.FromDate)) {
@@ -212,10 +219,6 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 // new open-ended row. Mutable rows on/after the new start are re-linked and
 // re-priced under the new config.
 func (s *PayrateTemporalService) splitUpdateTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate, existing *domain.Payrate) error {
-	if existing.ToDate != nil {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayrateConflictingConfigVN)
-	}
-
 	if err := s.ensureLatestConfigTx(ctx, tx, payrate); err != nil {
 		return err
 	}
