@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"math"
 	"regexp"
 	"strconv"
@@ -26,6 +27,178 @@ import (
 )
 
 const onePayFeeParty = "OnePay"
+
+// Statement banners (company header, title, signature blocks) sit above the
+// data, so sheet-content scans only need a bounded row prefix.
+const detailHeaderScanRows = 30
+
+// Header spellings shared by every observed OnePay statement layout. The
+// diacritic-free spellings catch files stored in a different unicode form.
+var commonDetailHeaderAliases = map[string]string{
+	"merchant id":               "merchant id",
+	"merchant name":             "merchant name",
+	"merchant fund transfer id": "merchant fund transfer id",
+	"op transaction id":         "op transaction id",
+	"currency":                  "currency",
+	"beneficiary account":       "beneficiary account",
+	"số tài khoản":              "beneficiary account",
+	"so tai khoan":              "beneficiary account",
+	"beneficiary account name":  "beneficiary account name",
+	"tên chủ tài khoản":         "beneficiary account name",
+	"ten chu tai khoan":         "beneficiary account name",
+	"beneficiary bank":          "beneficiary bank",
+	"ngân hàng":                 "beneficiary bank",
+	"ngan hang":                 "beneficiary bank",
+	"state":                     "state",
+	"trạng thái":                "state",
+	"trang thai":                "state",
+}
+
+// onePayDetailTemplate is the parsing strategy for one known OnePay statement
+// layout: which sheet carries the transactions, how its headers are spelled,
+// and which columns must be present. A sheet matches a template only when some
+// header row resolves every required column through the template's aliases,
+// so templates never collide and a renamed sheet still parses.
+type onePayDetailTemplate struct {
+	name            string
+	sheetNames      []string
+	headerAliases   map[string]string
+	requiredColumns []string
+}
+
+// Known OnePay statement layouts, tried in order. To support a new export
+// format, describe it here — the parsing loop stays untouched.
+var onePayDetailTemplates = []*onePayDetailTemplate{
+	{
+		// Legacy transaction export: "GD" sheet, flat English headers on the
+		// first row, State column mandatory.
+		name:       "GD",
+		sheetNames: []string{"GD"},
+		headerAliases: mergeDetailHeaderAliases(map[string]string{
+			"create date": "create date",
+			"amount":      "amount",
+		}),
+		requiredColumns: []string{
+			"merchant id", "merchant fund transfer id", "op transaction id", "create date",
+			"beneficiary account", "beneficiary account name", "beneficiary bank", "amount", "state",
+		},
+	},
+	{
+		// Monthly statement: "CHI TIET THANG" sheet behind banner rows,
+		// bilingual VN/EN header rows, no State column. Also accepts the
+		// legacy English spellings so future layout merges keep parsing.
+		name:       "CHI TIET THANG",
+		sheetNames: []string{"CHI TIET THANG"},
+		headerAliases: mergeDetailHeaderAliases(map[string]string{
+			"create date":         "create date",
+			"transaction date":    "create date",
+			"thời gian giao dịch": "create date",
+			"thoi gian giao dich": "create date",
+			"amount":              "amount",
+			"transaction amount":  "amount",
+			"giá trị gd":          "amount",
+			"gia tri gd":          "amount",
+		}),
+		requiredColumns: []string{
+			"merchant id", "merchant fund transfer id", "op transaction id", "create date",
+			"beneficiary account", "beneficiary account name", "beneficiary bank", "amount",
+		},
+	},
+}
+
+func mergeDetailHeaderAliases(templateSpecific map[string]string) map[string]string {
+	merged := make(map[string]string, len(commonDetailHeaderAliases)+len(templateSpecific))
+	maps.Copy(merged, commonDetailHeaderAliases)
+	maps.Copy(merged, templateSpecific)
+	return merged
+}
+
+func (tpl *onePayDetailTemplate) resolveHeader(s string) string {
+	key := normalizeHeader(s)
+	if key == "" {
+		return ""
+	}
+	if canonical, ok := tpl.headerAliases[key]; ok {
+		return canonical
+	}
+	// Vietnamese text may arrive in either unicode form; retry diacritic-free.
+	if canonical, ok := tpl.headerAliases[normalizeHeader(unidecode.Unidecode(s))]; ok {
+		return canonical
+	}
+	return ""
+}
+
+// locateDetailSheet returns the template and sheet matching the workbook.
+// Preferred sheet names are tried first; otherwise every non-summary sheet is
+// scanned for a satisfying header row, so renamed sheets still parse.
+func locateDetailSheet(f *excelize.File, summarySheet string) (*onePayDetailTemplate, string) {
+	for _, tpl := range onePayDetailTemplates {
+		for _, want := range tpl.sheetNames {
+			if name := findSheet(f, want); name != "" && name != summarySheet && tpl.hasHeaderRow(f, name) {
+				return tpl, name
+			}
+		}
+	}
+	for _, tpl := range onePayDetailTemplates {
+		for _, name := range f.GetSheetList() {
+			if name == summarySheet {
+				continue
+			}
+			if tpl.hasHeaderRow(f, name) {
+				return tpl, name
+			}
+		}
+	}
+	return nil, ""
+}
+
+// hasHeaderRow reports whether one of the sheet's first rows resolves every
+// required column of the template.
+func (tpl *onePayDetailTemplate) hasHeaderRow(f *excelize.File, sheet string) bool {
+	rows, err := f.Rows(sheet)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = rows.Close() }()
+	for i := 0; i < detailHeaderScanRows && rows.Next(); i++ {
+		cols, err := rows.Columns()
+		if err != nil {
+			return false
+		}
+		if tpl.headerRowMatches(cols) {
+			return true
+		}
+	}
+	return false
+}
+
+func (tpl *onePayDetailTemplate) headerRowMatches(cols []string) bool {
+	resolved := make(map[string]bool, len(cols))
+	for _, c := range cols {
+		if canonical := tpl.resolveHeader(c); canonical != "" {
+			resolved[canonical] = true
+		}
+	}
+	for _, required := range tpl.requiredColumns {
+		if !resolved[required] {
+			return false
+		}
+	}
+	return true
+}
+
+// detailHeaderIndex finds the header row within the full row set. Row indices
+// here can differ from the streaming scan when a sheet omits leading empty
+// rows, so detection always re-runs on the same slice the parser walks.
+func (tpl *onePayDetailTemplate) detailHeaderIndex(rows [][]string) int {
+	limit := min(len(rows), detailHeaderScanRows)
+	for i := range limit {
+		if tpl.headerRowMatches(rows[i]) {
+			return i
+		}
+	}
+	return -1
+}
 
 type OnePayFeeImportValidationError struct {
 	Message string
@@ -234,14 +407,14 @@ func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportI
 	}
 	defer func() { _ = f.Close() }()
 
-	summarySheet := findSheet(f, "PHI THANG")
-	detailSheet := findSheet(f, "GD")
+	summarySheet := findSummarySheet(f)
+	detailTemplate, detailSheet := locateDetailSheet(f, summarySheet)
 	var issues []dto.OnePayFeeReportIssue
 	if summarySheet == "" {
 		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet tổng hợp phí PHI THANG"))
 	}
 	if detailSheet == "" {
-		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet chi tiết giao dịch GD"))
+		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet chi tiết giao dịch (GD hoặc CHI TIET THANG)"))
 	}
 	if len(issues) > 0 {
 		return nil, issues, nil
@@ -249,12 +422,12 @@ func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportI
 
 	summary, summaryIssues := parseSummarySheet(f, summarySheet)
 	issues = append(issues, summaryIssues...)
-	details, detailTotalAmount, detailIssues := parseDetailSheet(f, detailSheet, summary.PeriodFrom, summary.PeriodTo)
+	details, detailTotalAmount, detailIssues := parseDetailSheet(f, detailSheet, detailTemplate, summary.PeriodFrom, summary.PeriodTo)
 	summary.DetailTotalAmount = detailTotalAmount
 	issues = append(issues, detailIssues...)
 
 	if len(details) != summary.TransactionCount {
-		issues = append(issues, issue("transaction_count_mismatch", 0, "", fmt.Sprintf("Sheet GD có %d giao dịch, sheet PHI THANG ghi %d giao dịch", len(details), summary.TransactionCount)))
+		issues = append(issues, issue("transaction_count_mismatch", 0, "", fmt.Sprintf("Sheet chi tiết có %d giao dịch, sheet PHI THANG ghi %d giao dịch", len(details), summary.TransactionCount)))
 	}
 	expectedTotalFee := summary.FeePerTransaction * int64(summary.TransactionCount)
 	if expectedTotalFee != summary.TotalFee {
@@ -326,29 +499,37 @@ func parseSummarySheet(f *excelize.File, sheet string) (dto.OnePayFeeReportSumma
 	return summary, issues
 }
 
-func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo string) ([]onePayFeeReportDetail, int64, []dto.OnePayFeeReportIssue) {
+func parseDetailSheet(f *excelize.File, sheet string, tpl *onePayDetailTemplate, periodFrom, periodTo string) ([]onePayFeeReportDetail, int64, []dto.OnePayFeeReportIssue) {
 	rows, err := f.GetRows(sheet)
 	if err != nil || len(rows) == 0 {
-		return nil, 0, []dto.OnePayFeeReportIssue{issue("detail_read_failed", 0, "", "Không thể đọc sheet GD")}
+		return nil, 0, []dto.OnePayFeeReportIssue{issue("detail_read_failed", 0, "", "Không thể đọc sheet chi tiết giao dịch")}
 	}
 
-	headers := make(map[string]int)
-	for i, h := range rows[0] {
-		headers[normalizeHeader(h)] = i
+	headerIdx := tpl.detailHeaderIndex(rows)
+	if headerIdx < 0 {
+		return nil, 0, []dto.OnePayFeeReportIssue{issue("missing_header_row", 0, "", "Không tìm thấy dòng tiêu đề trong sheet chi tiết giao dịch")}
 	}
-	// OnePay's monthly export has two valid layouts. Older exports include the
-	// merchant-name and currency metadata; current VND-only exports omit both.
-	// Keep every field used to reconcile an application payment mandatory.
-	required := []string{"merchant id", "merchant fund transfer id", "op transaction id", "create date", "beneficiary account", "beneficiary account name", "beneficiary bank", "amount", "state"}
+	headers := make(map[string]int)
+	for i, h := range rows[headerIdx] {
+		if canonical := tpl.resolveHeader(h); canonical != "" {
+			if _, exists := headers[canonical]; !exists {
+				headers[canonical] = i
+			}
+		}
+	}
+	// Every field used to reconcile an application payment stays mandatory.
+	// State is validated whenever the column exists, but only the legacy GD
+	// template demands it — monthly statements omit it entirely.
 	var issues []dto.OnePayFeeReportIssue
-	for _, h := range required {
-		if _, ok := headers[h]; !ok {
-			issues = append(issues, issue("missing_column", 1, h, fmt.Sprintf("Thiếu cột %s trong sheet GD", h)))
+	for _, required := range tpl.requiredColumns {
+		if _, ok := headers[required]; !ok {
+			issues = append(issues, issue("missing_column", headerIdx+1, required, fmt.Sprintf("Thiếu cột %s trong sheet chi tiết giao dịch", required)))
 		}
 	}
 	if len(issues) > 0 {
 		return nil, 0, issues
 	}
+	stateColumn, hasState := headers["state"]
 
 	var from, to time.Time
 	if periodFrom != "" && periodTo != "" {
@@ -358,12 +539,13 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 	}
 
 	seen := map[string]int{}
-	details := make([]onePayFeeReportDetail, 0, len(rows)-1)
+	details := make([]onePayFeeReportDetail, 0, len(rows)-headerIdx-1)
 	var totalAmount int64
-	for idx := 1; idx < len(rows); idx++ {
+	for idx := headerIdx + 1; idx < len(rows); idx++ {
 		row := rows[idx]
-		if strings.TrimSpace(cell(row, headers["merchant fund transfer id"])) == "" {
-			continue
+		fundTransferID := strings.TrimSpace(cell(row, headers["merchant fund transfer id"]))
+		if fundTransferID == "" || normalizeHeader(fundTransferID) == "merchant fund transfer id" {
+			continue // blank/banner row, trailing total, or repeated bilingual header
 		}
 
 		merchantName := ""
@@ -374,19 +556,23 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 		if currencyColumn, ok := headers["currency"]; ok {
 			currency = strings.TrimSpace(cell(row, currencyColumn))
 		}
+		state := ""
+		if hasState {
+			state = strings.TrimSpace(cell(row, stateColumn))
+		}
 
 		detail := onePayFeeReportDetail{
 			row:                    idx + 1,
 			merchantID:             strings.TrimSpace(cell(row, headers["merchant id"])),
 			merchantName:           merchantName,
-			fundTransferID:         strings.TrimSpace(cell(row, headers["merchant fund transfer id"])),
+			fundTransferID:         fundTransferID,
 			opTransactionID:        strings.TrimSpace(cell(row, headers["op transaction id"])),
 			currency:               currency,
 			beneficiaryAccount:     strings.TrimSpace(cell(row, headers["beneficiary account"])),
 			beneficiaryAccountName: strings.TrimSpace(cell(row, headers["beneficiary account name"])),
 			beneficiaryBank:        strings.TrimSpace(cell(row, headers["beneficiary bank"])),
 			amount:                 parseMoney(cell(row, headers["amount"])),
-			state:                  strings.TrimSpace(cell(row, headers["state"])),
+			state:                  state,
 		}
 		detail.createDate, _ = parseOnePayDate(cell(row, headers["create date"]))
 
@@ -400,7 +586,7 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 		if !strings.EqualFold(detail.currency, "VND") {
 			issues = append(issues, issue("currency_mismatch", detail.row, detail.fundTransferID, "Đơn vị tiền tệ không phải VND"))
 		}
-		if !strings.EqualFold(detail.state, "Approved") {
+		if hasState && !strings.EqualFold(detail.state, "Approved") {
 			issues = append(issues, issue("state_mismatch", detail.row, detail.fundTransferID, fmt.Sprintf("Trạng thái OnePay là %s, không phải Approved", detail.state)))
 		}
 		if detail.amount <= 0 {
@@ -414,7 +600,7 @@ func parseDetailSheet(f *excelize.File, sheet string, periodFrom, periodTo strin
 	}
 
 	if len(details) == 0 {
-		issues = append(issues, issue("no_detail_rows", 0, "", "Sheet GD không có giao dịch hợp lệ"))
+		issues = append(issues, issue("no_detail_rows", 0, "", "Sheet chi tiết giao dịch không có giao dịch hợp lệ"))
 	}
 	return details, totalAmount, issues
 }
@@ -433,6 +619,44 @@ func findSheet(f *excelize.File, want string) string {
 		}
 	}
 	return ""
+}
+
+// findSummarySheet prefers the canonical summary sheet name and falls back to
+// any sheet carrying the SLGD summary header, so renamed copies still parse.
+func findSummarySheet(f *excelize.File) string {
+	if name := findSheet(f, "PHI THANG"); name != "" {
+		return name
+	}
+	for _, name := range f.GetSheetList() {
+		if sheetPrefixHasCell(f, name, "SLGD") {
+			return name
+		}
+	}
+	return ""
+}
+
+func sheetPrefixHasCell(f *excelize.File, sheet, want string) bool {
+	key := normalizeHeader(want)
+	if key == "" {
+		return false
+	}
+	rows, err := f.Rows(sheet)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = rows.Close() }()
+	for i := 0; i < detailHeaderScanRows && rows.Next(); i++ {
+		cols, err := rows.Columns()
+		if err != nil {
+			return false
+		}
+		for _, c := range cols {
+			if normalizeHeader(c) == key {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func cell(row []string, idx int) string {
@@ -503,6 +727,8 @@ func parseOnePayDate(s string) (time.Time, bool) {
 	for _, layout := range []string{
 		"02-01-2006 03:04 PM",
 		"02/01/2006 03:04 PM",
+		"02/01/2006 15:04:05",
+		"02-01-2006 15:04:05",
 		"2006-01-02 15:04:05",
 		time.RFC3339,
 	} {

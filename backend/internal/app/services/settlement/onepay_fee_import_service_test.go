@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -77,6 +78,134 @@ func TestParseOnePayFeeReportRequiresOPTransactionID(t *testing.T) {
 	_, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
 	require.NoError(t, err)
 	require.Contains(t, issues, issue("op_transaction_id_missing", 2, "tt001", "Thiếu mã giao dịch OnePay"))
+}
+
+func TestParseOnePayFeeReportAcceptsVietnameseDetailSheetLayout(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	require.NoError(t, buildOnePayFeeWorkbookWithVietnameseDetailLayout().Write(&buf))
+
+	report, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Empty(t, issues)
+	require.NotNil(t, report)
+
+	require.Equal(t, "VFICPO", report.summary.MerchantID)
+	require.Equal(t, "2026-08-01", report.summary.PeriodFrom)
+	require.Equal(t, "2026-08-31", report.summary.PeriodTo)
+	require.Equal(t, 2, report.summary.TransactionCount)
+	require.Equal(t, int64(3850), report.summary.FeePerTransaction)
+	require.Equal(t, int64(7700), report.summary.TotalFee)
+	require.Equal(t, int64(12550160), report.summary.DetailTotalAmount)
+	require.Equal(t, "ONEPAY-FEE:VFICPO:2026-08", report.summary.ImportReference)
+
+	require.Len(t, report.details, 2)
+	first := report.details[0]
+	require.Equal(t, "ttdb8149edc65d49", first.fundTransferID)
+	require.Equal(t, "D4166EB4A258", first.opTransactionID)
+	require.Equal(t, "0388063902", first.beneficiaryAccount)
+	require.Equal(t, "DO TRUONG GIANG", first.beneficiaryAccountName)
+	require.Equal(t, "MB", first.beneficiaryBank)
+	require.Equal(t, int64(2009000), first.amount)
+	require.Equal(t, "2026-08-31 19:29:37", first.createDate.Format("2006-01-02 15:04:05"))
+	require.Empty(t, first.state, "no State column in this variant, nothing to validate")
+}
+
+func TestParseOnePayFeeReportFindsDetailSheetByContent(t *testing.T) {
+	t.Parallel()
+
+	wb := buildOnePayFeeWorkbookWithVietnameseDetailLayout()
+	require.NoError(t, wb.SetSheetName("CHI TIET THANG", "Detail 08"))
+
+	var buf bytes.Buffer
+	require.NoError(t, wb.Write(&buf))
+
+	report, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Empty(t, issues)
+	require.Len(t, report.details, 2)
+}
+
+func TestParseOnePayFeeReportFindsSummarySheetByContent(t *testing.T) {
+	t.Parallel()
+
+	wb := buildOnePayFeeWorkbookWithVietnameseDetailLayout()
+	require.NoError(t, wb.SetSheetName("PHI THANG", "Summary 08"))
+
+	var buf bytes.Buffer
+	require.NoError(t, wb.Write(&buf))
+
+	report, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Empty(t, issues)
+	require.Equal(t, 2, report.summary.TransactionCount)
+}
+
+func TestParseOnePayFeeReportStillFlagsBadStateWhenColumnPresent(t *testing.T) {
+	t.Parallel()
+
+	wb := buildOnePayFeeWorkbook()
+	require.NoError(t, wb.SetCellValue("GD", "Q2", "Pending"))
+
+	var buf bytes.Buffer
+	require.NoError(t, wb.Write(&buf))
+
+	_, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+	require.Equal(t, "state_mismatch", issues[0].Code)
+}
+
+func TestParseOnePayFeeReportMissingDetailSheetMentionsKnownNames(t *testing.T) {
+	t.Parallel()
+
+	wb := buildOnePayFeeWorkbook()
+	require.NoError(t, wb.DeleteSheet("GD"))
+
+	var buf bytes.Buffer
+	require.NoError(t, wb.Write(&buf))
+
+	_, issues, err := parseOnePayFeeReport(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+	require.Equal(t, "missing_sheet", issues[0].Code)
+	require.Contains(t, issues[0].Message, "CHI TIET THANG")
+}
+
+func TestParseOnePayDateAcceptsTwentyFourHourFormats(t *testing.T) {
+	t.Parallel()
+
+	parsed, ok := parseOnePayDate("31/08/2026 19:29:37")
+	require.True(t, ok)
+	require.Equal(t, "2026-08-31 19:29:37", parsed.Format("2006-01-02 15:04:05"))
+
+	parsed, ok = parseOnePayDate("31-08-2026 19:29:37")
+	require.True(t, ok)
+	require.Equal(t, "2026-08-31 19:29:37", parsed.Format("2006-01-02 15:04:05"))
+}
+
+// TestParseOnePayFeeReportRealFile runs the parser against an unmodified
+// statement downloaded from OnePay. Point ONEPAY_FEE_REAL_FILE at the file to
+// run it; real beneficiary data must never be committed to the repo.
+func TestParseOnePayFeeReportRealFile(t *testing.T) {
+	t.Parallel()
+
+	path := os.Getenv("ONEPAY_FEE_REAL_FILE")
+	if path == "" {
+		t.Skip("ONEPAY_FEE_REAL_FILE not set")
+	}
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	report, issues, err := parseOnePayFeeReport(bytes.NewReader(data))
+	require.NoError(t, err)
+	require.Empty(t, issues)
+	require.Equal(t, 177, report.summary.TransactionCount)
+	require.Equal(t, int64(3850), report.summary.FeePerTransaction)
+	require.Equal(t, int64(681450), report.summary.TotalFee)
+	require.Len(t, report.details, 177)
+	require.Equal(t, "ONEPAY-FEE:VFICPO:2026-08", report.summary.ImportReference)
 }
 
 func TestParseMoney(t *testing.T) {
@@ -224,6 +353,47 @@ func buildOnePayFeeWorkbookWithOfficialDetailLayout() *excelize.File {
 	_ = wb.SetSheetRow("GD", "A1", &headers)
 	_ = wb.SetSheetRow("GD", "A2", &[]any{1, "VFICPO", "tt001", "OP001", "BANK001", "06-07-2026 12:26 PM", "00112233", "NGUYEN VAN A", "MB", 100000, "tt001", "Approved"})
 	_ = wb.SetSheetRow("GD", "A3", &[]any{2, "VFICPO", "tt002", "OP002", "BANK002", "07-07-2026 11:04 AM", "00445566", "TRAN VAN B", "MSB", 200000, "tt002", "Approved"})
+
+	return wb
+}
+
+// buildOnePayFeeWorkbookWithVietnameseDetailLayout mirrors OnePay's monthly
+// statement export: a "CHI TIET THANG" detail sheet behind banner rows with
+// bilingual VN/EN header rows, data from row 10, a leading empty column, a
+// trailing total row, no State/Currency columns, and 24h dd/mm/yyyy dates.
+func buildOnePayFeeWorkbookWithVietnameseDetailLayout() *excelize.File {
+	wb := excelize.NewFile()
+	defaultSheet := wb.GetSheetName(0)
+	_ = wb.SetSheetName(defaultSheet, "PHI THANG")
+	_, _ = wb.NewSheet("CHI TIET THANG")
+
+	_ = wb.SetCellValue("PHI THANG", "C2", "CÔNG TY CỔ PHẦN THƯƠNG MẠI VÀ DỊCH VỤ TRỰC TUYẾN ONEPAY")
+	_ = wb.SetCellValue("PHI THANG", "A5", "BIÊN BẢN XÁC NHẬN ĐỐI SOÁT SỐ LIỆU DỊCH VỤ")
+	_ = wb.SetCellValue("PHI THANG", "A6", "Từ ngày  01/08/2026 Đến ngày  31/08/2026")
+	_ = wb.SetCellValue("PHI THANG", "A7", " CÔNG TY CỔ PHẦN QUỐC TẾ THƯƠNG MẠI VÀ DỊCH VỤ VIỆT PHÁP - PO -  VFICPO")
+	_ = wb.SetCellValue("PHI THANG", "A10", "STT")
+	_ = wb.SetCellValue("PHI THANG", "B10", "Thời gian giao dịch")
+	_ = wb.SetCellValue("PHI THANG", "C10", "SLGD")
+	_ = wb.SetCellValue("PHI THANG", "D10", "Phí XLGD")
+	_ = wb.SetCellValue("PHI THANG", "E10", "Tổng phí")
+	_ = wb.SetCellValue("PHI THANG", "A11", 1)
+	_ = wb.SetCellValue("PHI THANG", "B11", "Tháng 08.2026")
+	_ = wb.SetCellValue("PHI THANG", "C11", 2)
+	_ = wb.SetCellValue("PHI THANG", "D11", 3850)
+	_ = wb.SetCellValue("PHI THANG", "E11", 7700)
+
+	_ = wb.SetCellValue("CHI TIET THANG", "C2", "CÔNG TY CỔ PHẦN THƯƠNG MẠI VÀ DỊCH VỤ TRỰC TUYẾN ONEPAY")
+	_ = wb.SetCellValue("CHI TIET THANG", "B6", "DANH SÁCH CHI TIẾT GIAO DỊCH")
+	vnHeaders := []any{"", "STT", "Merchant Id", "Merchant Account", "Merchant Fund Transfer ID", "OP Transaction ID", "Thời gian giao dịch", "Số Tài khoản", "Tên chủ tài khoản", "Ngân hàng", "Nội dung", "Dịch vụ", "Giá trị GD", "Phí XLGD", "Tổng phí"}
+	_ = wb.SetSheetRow("CHI TIET THANG", "A8", &vnHeaders)
+	enHeaders := []any{"", "No", "Merchant Id", "Merchant Account", "Merchant Fund Transfer ID", "OP Transaction ID", "Transaction Date", "Beneficiary Account", "Beneficiary Account Name", "Beneficiary Bank", "Remark", "Service", "Transaction Amount", "Fix Fee", "Total Fee"}
+	_ = wb.SetSheetRow("CHI TIET THANG", "A9", &enHeaders)
+	row10 := []any{"", 1, "VFICPO", "666999764888", "ttdb8149edc65d49", "D4166EB4A258", "31/08/2026 19:29:37", "0388063902", "DO TRUONG GIANG", "MB", "ttdb8149edc65d49", "PO", 2009000, 3850, 3850}
+	row11 := []any{"", 2, "VFICPO", "666999764888", "tt25bf8659cf3b4e", "52B4BA10606E", "05/08/2026 15:46:02", "03001012849321", "LUONG XUAN HAI", "MSB", "tt25bf8659cf3b4e", "PO", 10541160, 3850, 3850}
+	_ = wb.SetSheetRow("CHI TIET THANG", "A10", &row10)
+	_ = wb.SetSheetRow("CHI TIET THANG", "A11", &row11)
+	_ = wb.SetCellValue("CHI TIET THANG", "B12", "Tổng cuối (Total)")
+	_ = wb.SetCellValue("CHI TIET THANG", "O12", 7700)
 
 	return wb
 }
