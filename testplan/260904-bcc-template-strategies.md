@@ -46,3 +46,21 @@ Source of truth: real file `/Users/dev/Downloads/BCC BUMHAN T09.2026 Mẫu mức
 |---|----------|--------|
 | 12 | POST `/api/v1/timesheets/partner-import` (admin, project 78, for_month=2026-09) with the real T09 file against the rebuilt backend | status `completed`; 17 employees found; timesheets created for Sep days; no "nhân viên không tìm thấy" errors |
 | 13 | Same upload re-run | idempotent: re-upload = safe upsert, no duplicate employees/assignments |
+
+## Live import results (2026-09-04, local dev, project 78)
+
+- **Root cause of the reported "14 nhân viên không tìm thấy"**: three orphaned
+  air daemons (Aug 24 / Aug 31 / fresh) raced the same binary — the HTTP server
+  ran the new code while stale workers consumed the async import jobs with
+  pre-strategy code. After killing all airs and starting one clean instance,
+  the same upload routes date-row (format=4), parses 17 employees, creates
+  employees + assignments.
+- **for_month=2026-09**: file has ZERO September hours (all 161 non-zero cells
+  are Aug 22–28; header says "Tháng 8 năm 2026") → correctly no in-month data.
+  Shipped improvement: error now names the actual data range
+  ("file chỉ chứa giờ công ngoài tháng 2026-09 (dữ liệu từ 22/08/2026 đến
+  28/08/2026) — chọn tháng tương ứng") instead of generic "không có dữ liệu hợp lệ".
+- **for_month=2026-08**: `completed` — 17 employees, **161 timesheets created**,
+  0 errors; DB confirms rows on exactly Aug 22–28 (19/16/23/23/32/23/25 per day).
+- Assets: 482 (Sep, clear range error) / 483 (Aug, completed). Process hygiene:
+  exactly one `air` daemon now owns :8080 + asynq.
