@@ -20,14 +20,19 @@ const (
 	// FormatWeeklyPayment is the format with numeric salary tier sheets (e.g. 520, 700, 750)
 	// where row 10 contains per-cell shift codes (HC, TCN, NN, TCNN).
 	FormatWeeklyPayment
+	// FormatDateRow is the partner layout with a full-date header row (one
+	// merged date cell per two-sub-column day) and per-sub-column shift codes
+	// below it (e.g. BUMHAN "M1" sheets: NT, OT, T7, OT T7, CN, OT CN).
+	FormatDateRow
 )
 
-// FormatDetectionResult holds the result of format detection.
+// FormatDetectionResult carries the detected format plus its sheet list.
 type FormatDetectionResult struct {
 	Format              BCCFormat
 	PositionSheets      []string // sheet names that are position sheets (for FormatMultiPosition)
 	WeeklyBCCSheets     []string // sheet names like "BCC-HC", "BCC-OT150" (for FormatWeeklyBCC)
 	WeeklyPaymentSheets []string // sheet names like "520", "700", "750" (for FormatWeeklyPayment)
+	DateRowSheets       []string // sheets with a full-date header row (for FormatDateRow)
 }
 
 // DetectFormat determines whether the given Excel file uses the old single-BCC-sheet
@@ -48,6 +53,7 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 	var positionSheets []string
 	var weeklyBCCSheets []string
 	var weeklyPaymentSheets []string
+	var dateRowSheets []string
 
 	for _, sheetName := range f.GetSheetList() {
 		// Skip hidden sheets
@@ -90,6 +96,12 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 		if isPositionSheet(f, sheetName) {
 			positionSheets = append(positionSheets, sheetName)
 		}
+
+		// Check for a date-row BCC sheet (full-date header row + shift codes
+		// below it, e.g. BUMHAN "M1")
+		if isDateRowBCCSheet(f, sheetName) {
+			dateRowSheets = append(dateRowSheets, sheetName)
+		}
 	}
 
 	// BCC sheet wins as tiebreaker (even if position sheets also exist)
@@ -119,6 +131,16 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 		return &FormatDetectionResult{
 			Format:         FormatMultiPosition,
 			PositionSheets: positionSheets,
+		}, nil
+	}
+
+	// Date-row BCC takes lowest priority: it is the loosest fingerprint (any
+	// sheet with a full-date header row), so every named-pattern format gets
+	// first refusal.
+	if len(dateRowSheets) > 0 {
+		return &FormatDetectionResult{
+			Format:        FormatDateRow,
+			DateRowSheets: dateRowSheets,
 		}, nil
 	}
 

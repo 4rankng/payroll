@@ -230,3 +230,68 @@ func buildSTKBankUpdates(
 	}
 	return updates
 }
+
+// rateTarget is the (dayType, hourType) payrate bucket a BCC entry resolves to.
+type rateTarget struct{ dayType, hourType string }
+
+// dayTypePriority orders payrate day types when several buckets could serve
+// the same rate or label: normal days first, then rest days, then holidays.
+var dayTypePriority = map[string]int{
+	"ngày thường": 0, "thường": 0,
+	"ngày nghỉ": 1, "nghỉ": 1,
+	"ngày lễ": 2, "lễ": 2,
+}
+
+// labelRateTarget resolves a shift label directly against payrate hour-type
+// leaves (label-keyed model): the file's column codes must exist in the
+// config, and the rate is determined purely by the label. Position is
+// intentionally ignored — single-position projects do not key rates by
+// assignment position. When several day types carry the same label,
+// dayTypePriority picks the winner (ngày thường first).
+func labelRateTarget(flatRates map[string]int, label string) (rateTarget, bool) {
+	want := canonicalBCCRateKeySegment(label)
+	if want == "" {
+		return rateTarget{}, false
+	}
+	found := false
+	best := rateTarget{}
+	bestPri := 0
+	for path, rate := range flatRates {
+		if rate == 0 {
+			continue
+		}
+		parts := strings.Split(path, ".")
+		if len(parts) != 3 {
+			continue
+		}
+		if canonicalBCCRateKeySegment(parts[2]) != want {
+			continue
+		}
+		pri, known := dayTypePriority[parts[1]]
+		if !known {
+			continue
+		}
+		if !found || pri < bestPri {
+			best = rateTarget{parts[1], parts[2]}
+			bestPri = pri
+			found = true
+		}
+	}
+	return best, found
+}
+
+// dateRowEmployeeToSTKRows converts date-row template employees into STK rows
+// so the existing employee upsert block (create-if-missing + bank refresh +
+// project assignment) runs unchanged for the new template.
+func dateRowEmployeeToSTKRows(employees []excelparser.BCCEmployeeData) []excelparser.STKRow {
+	rows := make([]excelparser.STKRow, 0, len(employees))
+	for _, emp := range employees {
+		rows = append(rows, excelparser.STKRow{
+			CCCD:        emp.CCCD,
+			FullName:    emp.FullName,
+			BankAccount: emp.BankAccount,
+			BankName:    emp.BankName,
+		})
+	}
+	return rows
+}

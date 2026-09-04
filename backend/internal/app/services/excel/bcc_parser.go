@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xuri/excelize/v2"
 	"golang.org/x/text/unicode/norm"
@@ -23,7 +24,11 @@ type BCCEmployeeData struct {
 	CCCD         string
 	FullName     string
 	Department   string
-	Entries      []BCCEntryData
+	// Bank info captured by the date-row template's employee columns
+	// ("TK Ngân hàng", "Ngân hàng"); empty for legacy files.
+	BankAccount string
+	BankName    string
+	Entries     []BCCEntryData
 }
 
 // BCCEntryData represents a single non-zero hours entry.
@@ -31,6 +36,10 @@ type BCCEntryData struct {
 	DayNum     int
 	ShiftLabel string
 	Hours      float64
+	// FullDate, when set, carries the exact calendar date read from the file
+	// (date-row templates). When nil, the pipeline derives the date from
+	// (forMonth year/month, DayNum) as before.
+	FullDate *time.Time
 }
 
 // bccHeaderMap holds dynamically-detected column positions from header rows 7-8.

@@ -65,6 +65,7 @@ func (s *BCCImportService) processAssetData(
 		return fail("failed", fmt.Sprintf("không nhận diện được định dạng file: %v", detectErr))
 	}
 
+	var parsed *excelparser.BCCImportData
 	switch formatResult.Format {
 	case excelparser.FormatMultiPosition:
 		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
@@ -72,11 +73,14 @@ func (s *BCCImportService) processAssetData(
 		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
 	case excelparser.FormatWeeklyPayment:
 		return s.processWeeklyPaymentUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
+	case excelparser.FormatDateRow:
+		// Partner date-row template (BUMHAN M1-style): entries carry exact
+		// calendar dates and the file has no rate row (rateless path).
+		parsed, err = excelparser.ParseDateRowBCCFile(xf, formatResult.DateRowSheets)
 	default:
 		// FormatLegacy — continue with existing BCC parsing below
+		parsed, err = excelparser.ParseBCCFile(xf)
 	}
-
-	parsed, err := excelparser.ParseBCCFile(xf)
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
@@ -109,12 +113,6 @@ func (s *BCCImportService) processAssetData(
 	// rate matching at all — their entries fall back to label + calendar
 	// mapping below. Files that carry rates keep the strict rate path.
 	ratelessFile := len(parsed.ShiftRates) == 0
-	dayTypePriority := map[string]int{
-		"ngày thường": 0, "thường": 0,
-		"ngày nghỉ": 1, "nghỉ": 1,
-		"ngày lễ": 2, "lễ": 2,
-	}
-	type rateTarget struct{ dayType, hourType string }
 	rateToTarget := make(map[int]rateTarget)
 	for path, rate := range flatRates {
 		if rate == 0 {
@@ -143,9 +141,18 @@ func (s *BCCImportService) processAssetData(
 	// Pre-declare importErrors so STK auto-creation failures are surfaced to the user.
 	var importErrors []domain.ImportError
 
-	stkRows, stkErr := excelparser.ParseSTKSheet(xf)
-	if stkErr != nil {
-		slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
+	var stkRows []excelparser.STKRow
+	if formatResult.Format == excelparser.FormatDateRow {
+		// New date-row template: the BCC sheet itself carries employee and
+		// bank info, so employees are upserted from the parsed rows. Legacy
+		// templates keep reading the STK sheet unchanged.
+		stkRows = dateRowEmployeeToSTKRows(parsed.Employees)
+	} else {
+		var stkErr error
+		stkRows, stkErr = excelparser.ParseSTKSheet(xf)
+		if stkErr != nil {
+			slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
+		}
 	}
 
 	// Build STK CCCD→Name lookup for cross-validation against BCC employee names.
@@ -397,12 +404,26 @@ func (s *BCCImportService) processAssetData(
 
 		for _, entry := range emp.Entries {
 			date := time.Date(year, month, entry.DayNum, 0, 0, 0, 0, loc)
-			if date.Month() != month {
+			if entry.FullDate != nil {
+				// Date-row templates carry exact calendar dates; the in-month
+				// filter below drops days belonging to other months.
+				date = *entry.FullDate
+			}
+			if date.Year() != year || date.Month() != month {
 				continue
 			}
 
 			rate := int(parsed.ShiftRates[entry.ShiftLabel])
 			target, ok := rateToTarget[rate]
+			if !ok && ratelessFile {
+				// Label-keyed resolution first: partner templates whose column
+				// codes exist as payrate shift leaves (e.g. BUMHAN NT/OT/T7).
+				// The rate follows the label; position is not considered.
+				if cand, found := labelRateTarget(flatRates, entry.ShiftLabel); found {
+					target = cand
+					ok = true
+				}
+			}
 			if !ok && ratelessFile {
 				// Rateless template: derive the payrate bucket from the column
 				// label (regular vs overtime) plus the calendar day type. The
