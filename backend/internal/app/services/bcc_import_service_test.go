@@ -433,3 +433,42 @@ func TestSTKCrossCheckLooseMatch(t *testing.T) {
 		t.Errorf("Expected loose normalization to match for %q and %q", bccName, stkName)
 	}
 }
+
+func TestPlanBCCReplacementZeroHourEntryDeletesPendingOnly(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		// Explicit-zero cell against a pending row: the row must go stale
+		// (hard-delete) and the entry survives to reach bulk create, which
+		// silently skips it.
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "HC", HoursWorked: 0},
+		// Explicit zero against an approved row: protected, never deleted.
+		{EmployeeID: 2, Date: "2026-08-08", HourType: "HC", HoursWorked: 0},
+		// Explicit zero with no existing row: nothing to delete, entry kept
+		// (bulk create no-ops on a missing zero row).
+		{EmployeeID: 3, Date: "2026-08-08", HourType: "HC", HoursWorked: 0},
+	}
+	existing := []*domain.Timesheet{
+		{ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending},
+		{ID: 21, EmployeeID: 2, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending},
+	}
+
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+
+	if len(staleIDs) != 1 || staleIDs[0] != 11 {
+		t.Fatalf("stale IDs = %v, want only pending timesheet 11 (zero = delete pending)", staleIDs)
+	}
+	if protectedSkipped != 1 {
+		t.Fatalf("protected skipped = %d, want 1 (approved row immune to zero)", protectedSkipped)
+	}
+	if len(filtered) != 2 {
+		t.Fatalf("filtered entries = %#v, want the pending and missing zero entries", filtered)
+	}
+	for _, e := range filtered {
+		if e.HoursWorked != 0 {
+			t.Fatalf("filtered entry for employee %d = %.1f h, want 0", e.EmployeeID, e.HoursWorked)
+		}
+	}
+	if got := countZeroHourEntries(filtered); got != 2 {
+		t.Fatalf("countZeroHourEntries = %d, want 2", got)
+	}
+}

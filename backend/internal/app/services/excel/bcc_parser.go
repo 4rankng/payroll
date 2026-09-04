@@ -38,7 +38,8 @@ type BCCEmployeeData struct {
 	Entries  []BCCEntryData
 }
 
-// BCCEntryData represents a single non-zero hours entry.
+// BCCEntryData represents a single hours entry. Hours == 0 means the cell
+// explicitly held 0 — a request to delete the matching timesheet row.
 type BCCEntryData struct {
 	DayNum     int
 	ShiftLabel string
@@ -425,13 +426,17 @@ func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNu
 			// with format "0" would otherwise be returned as "8" (rounded) and
 			// silently lost — see the Nguyễn Trọng Thắng 7.5h→8h bug.
 			val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
-			if err != nil || val == "" || val == "0" {
+			if err != nil || val == "" {
 				continue
 			}
 			hours, err := strconv.ParseFloat(strings.TrimSpace(val), 64)
-			if err != nil || hours == 0 {
+			if err != nil {
 				continue
 			}
+			// hours == 0 means the cell explicitly holds 0: keep it as a
+			// zero-hour entry so the import deletes the matching chờ duyệt
+			// timesheet. Blank cells were skipped above — they carry no
+			// information either way.
 			emp.Entries = append(emp.Entries, BCCEntryData{
 				DayNum:     dayNum,
 				ShiftLabel: label,
@@ -439,9 +444,12 @@ func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNu
 			})
 		}
 
-		// Skip rows that have blank STT AND have zero entries (filters out draft rows while keeping active employees with blank STT)
+		// Skip rows that have blank STT AND no positive hours (filters out draft
+		// rows while keeping active employees with blank STT). Zero-hour entries
+		// do not count: a row of explicit zeros is a bulk deletion request for a
+		// real employee, not a draft.
 		stt := bccCell(f, sheet, hm.sttCol, row)
-		if stt == "" && len(emp.Entries) == 0 {
+		if stt == "" && !bccRowHasPositiveHours(emp.Entries) {
 			continue
 		}
 
@@ -460,4 +468,17 @@ func bccCell(f *excelize.File, sheet string, col, row int) string {
 		return ""
 	}
 	return strings.TrimSpace(val)
+}
+
+// bccRowHasPositiveHours reports whether any entry carries positive hours. It
+// identifies draft rows: a row whose cells are all blank or 0-except-identity
+// is a placeholder, while a row of explicit zeros for a real employee is a
+// bulk deletion request and must survive the filter.
+func bccRowHasPositiveHours(entries []BCCEntryData) bool {
+	for _, e := range entries {
+		if e.Hours > 0 {
+			return true
+		}
+	}
+	return false
 }

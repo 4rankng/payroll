@@ -140,10 +140,14 @@ func parseDateRowBCCSheet(f *excelize.File, sheet string) ([]BCCEmployeeData, er
 			if !hasLabel || label == "" || currentDate.IsZero() {
 				continue
 			}
-			hours := dateRowNumericCell(f, sheet, col, row)
-			if hours == 0 {
+			hours, present := dateRowNumericCell(f, sheet, col, row)
+			if !present {
 				continue
 			}
+			// hours == 0 here means the cell explicitly holds 0: keep it as a
+			// zero-hour entry so the import deletes the matching chờ duyệt
+			// timesheet instead of leaving stale data behind. Blank cells were
+			// skipped above — they carry no information either way.
 			d := currentDate
 			emp.Entries = append(emp.Entries, BCCEntryData{
 				DayNum:     d.Day(),
@@ -259,7 +263,7 @@ func rosterContinuesWithin(f *excelize.File, sheet string, blankRow int, hm date
 			continue
 		}
 		for col := dateRowBCCMinCol; col <= lastDayCol; col++ {
-			if dateRowNumericCell(f, sheet, col, row) != 0 {
+			if _, present := dateRowNumericCell(f, sheet, col, row); present {
 				return true
 			}
 		}
@@ -389,21 +393,23 @@ func stripDiacritics(s string) string {
 }
 
 // dateRowNumericCell reads a data cell as a raw number (format-proof) and
-// returns 0 for blank or non-numeric cells.
-func dateRowNumericCell(f *excelize.File, sheet string, col, row int) float64 {
+// reports whether the cell carries an explicit numeric value. Blank and
+// non-numeric cells return (0, false); a cell storing an explicit 0 returns
+// (0, true) — the import reads that as a deletion request for the day.
+func dateRowNumericCell(f *excelize.File, sheet string, col, row int) (float64, bool) {
 	cn, err := excelize.CoordinatesToCellName(col, row)
 	if err != nil {
-		return 0
+		return 0, false
 	}
 	val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
-	if err != nil || val == "" || val == "0" {
-		return 0
+	if err != nil || val == "" {
+		return 0, false
 	}
 	hours, err := strconv.ParseFloat(strings.TrimSpace(val), 64)
-	if err != nil || hours == 0 {
-		return 0
+	if err != nil {
+		return 0, false
 	}
-	return hours
+	return hours, true
 }
 
 // isDateRowBCCSheet reports whether a sheet matches the date-row BCC

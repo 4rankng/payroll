@@ -85,10 +85,11 @@ func TestParseWeeklyBCCFile_WithBCClgdFile(t *testing.T) {
 	assert.Empty(t, firstEmp.Project) // new fixture has no "Dự án" column
 	assert.NotEmpty(t, firstEmp.Entries)
 
-	// Verify date entries have reasonable values
+	// Verify date entries have reasonable values. Hours may be 0: an explicit
+	// 0 cell is a deletion request for that day's chờ duyệt timesheet.
 	for _, entry := range firstEmp.Entries {
 		assert.True(t, entry.Date.Year() >= 2020 && entry.Date.Year() <= 2040, "date year should be reasonable")
-		assert.Greater(t, entry.Hours, float64(0))
+		assert.GreaterOrEqual(t, entry.Hours, float64(0))
 	}
 
 	// Verify BCC-OT150 sheet (no "Dự án" column — dates start at col D)

@@ -574,7 +574,7 @@ func (s *BCCImportService) processAssetData(
 
 	// 11. Count results.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount + countZeroHourEntries(entries)
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 

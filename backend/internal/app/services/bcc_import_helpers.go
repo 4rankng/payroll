@@ -335,12 +335,14 @@ func mergeSTKRows(base, stk []excelparser.STKRow) []excelparser.STKRow {
 // earliestInMonthDay returns the smallest day-of-month carrying hours inside
 // the import month, or 0 when the file has no in-month entries. Date-row
 // files straddle months (e.g. 21/08–24/09): out-of-month days must not feed
-// the payrate probe, which targets a day of the import month.
+// the payrate probe, which targets a day of the import month. Zero-hour
+// entries (deletion requests) are skipped too — removing công must not
+// demand a payrate.
 func earliestInMonthDay(employees []excelparser.BCCEmployeeData, year int, month time.Month) int {
 	earliest := 0
 	for _, emp := range employees {
 		for _, e := range emp.Entries {
-			if e.DayNum <= 0 {
+			if e.DayNum <= 0 || e.Hours <= 0 {
 				continue
 			}
 			if e.FullDate != nil && (e.FullDate.Year() != year || e.FullDate.Month() != month) {

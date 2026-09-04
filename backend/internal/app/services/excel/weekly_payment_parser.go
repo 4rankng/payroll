@@ -336,15 +336,18 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 			}
 
 			val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
-			if err != nil || val == "" || val == "0" {
+			if err != nil || val == "" {
 				continue
 			}
 
 			hours, err := strconv.ParseFloat(strings.TrimSpace(val), 64)
-			if err != nil || hours == 0 {
+			if err != nil {
 				continue
 			}
 
+			// hours == 0 is an explicit zero: keep the entry so the import
+			// deletes the matching chờ duyệt timesheet; blank cells above
+			// stay skipped.
 			emp.Entries = append(emp.Entries, WeeklyPaymentEntryData{
 				Day:      dayNum,
 				ShiftKey: shiftCode,
@@ -352,8 +355,9 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 			})
 		}
 
-		// Skip rows with empty code AND no entries
-		if empCode == "" && len(emp.Entries) == 0 {
+		// Skip rows with empty code AND no positive hours (zero-hour entries do
+		// not count — an all-zero row is a bulk deletion request, not a draft).
+		if empCode == "" && !weeklyPaymentRowHasPositiveHours(emp.Entries) {
 			continue
 		}
 
@@ -477,4 +481,16 @@ func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[s
 	}
 
 	return result
+}
+
+// weeklyPaymentRowHasPositiveHours reports whether any entry carries positive
+// hours, so a placeholder row (blank code, no positive hours) stays filtered
+// while an all-zero row for a real employee survives as a deletion request.
+func weeklyPaymentRowHasPositiveHours(entries []WeeklyPaymentEntryData) bool {
+	for _, e := range entries {
+		if e.Hours > 0 {
+			return true
+		}
+	}
+	return false
 }

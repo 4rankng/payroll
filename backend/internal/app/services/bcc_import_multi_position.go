@@ -469,7 +469,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 11. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount + countZeroHourEntries(entries)
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 

@@ -100,8 +100,8 @@ func TestEarliestInMonthDay(t *testing.T) {
 
 	straddling := []excelparser.BCCEmployeeData{{
 		Entries: []excelparser.BCCEntryData{
-			{DayNum: 26, FullDate: jul(26)}, {DayNum: 31, FullDate: jul(31)},
-			{DayNum: 1, FullDate: aug(1)}, {DayNum: 25, FullDate: aug(25)},
+			{DayNum: 26, Hours: 8, FullDate: jul(26)}, {DayNum: 31, Hours: 8, FullDate: jul(31)},
+			{DayNum: 1, Hours: 8, FullDate: aug(1)}, {DayNum: 25, Hours: 8, FullDate: aug(25)},
 		},
 	}}
 	if got := earliestInMonthDay(straddling, 2026, time.August); got != 1 {
@@ -109,21 +109,21 @@ func TestEarliestInMonthDay(t *testing.T) {
 	}
 	sepFile := []excelparser.BCCEmployeeData{{
 		Entries: []excelparser.BCCEntryData{
-			{DayNum: 21, FullDate: aug(21)}, {DayNum: 1, FullDate: sep(1)}, {DayNum: 15, FullDate: sep(15)},
+			{DayNum: 21, Hours: 8, FullDate: aug(21)}, {DayNum: 1, Hours: 8, FullDate: sep(1)}, {DayNum: 15, Hours: 8, FullDate: sep(15)},
 		},
 	}}
 	if got := earliestInMonthDay(sepFile, 2026, time.September); got != 1 {
 		t.Errorf("September file = %d, want 1", got)
 	}
 	outOfMonthOnly := []excelparser.BCCEmployeeData{{
-		Entries: []excelparser.BCCEntryData{{DayNum: 26, FullDate: jul(26)}},
+		Entries: []excelparser.BCCEntryData{{DayNum: 26, Hours: 8, FullDate: jul(26)}},
 	}}
 	if got := earliestInMonthDay(outOfMonthOnly, 2026, time.August); got != 0 {
 		t.Errorf("out-of-month-only = %d, want 0", got)
 	}
 	// Legacy files (no FullDate) keep day numbers as-is.
 	legacy := []excelparser.BCCEmployeeData{{
-		Entries: []excelparser.BCCEntryData{{DayNum: 3}, {DayNum: 17}},
+		Entries: []excelparser.BCCEntryData{{DayNum: 3, Hours: 8}, {DayNum: 17, Hours: 8}},
 	}}
 	if got := earliestInMonthDay(legacy, 2026, time.August); got != 3 {
 		t.Errorf("legacy = %d, want 3", got)
@@ -152,5 +152,21 @@ func TestMergeSTKRows(t *testing.T) {
 	}
 	if merged[2].CCCD != "C" || merged[2].BankAccount != "only" {
 		t.Errorf("STK-only row appended: %+v", merged[2])
+	}
+}
+
+func TestEarliestInMonthDayIgnoresZeroHourEntries(t *testing.T) {
+	aug := func(day int) *time.Time { d := time.Date(2026, 8, day, 0, 0, 0, 0, time.Local); return &d }
+	// A zero-only prefix before the payrate start date must not drive the
+	// probe: deletion requests carry no rate burden.
+	emps := []excelparser.BCCEmployeeData{{
+		Entries: []excelparser.BCCEntryData{
+			{DayNum: 21, Hours: 0, FullDate: aug(21)},
+			{DayNum: 22, Hours: 0, FullDate: aug(22)},
+			{DayNum: 23, Hours: 8, FullDate: aug(23)},
+		},
+	}}
+	if got := earliestInMonthDay(emps, 2026, time.August); got != 23 {
+		t.Errorf("zero-prefix file = %d, want 23 (zeros skipped)", got)
 	}
 }

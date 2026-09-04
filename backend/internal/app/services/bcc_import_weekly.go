@@ -100,11 +100,16 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	}
 
 	// 4b. Validate that every sheet's shift type exists in the payrate config
-	//     active for the dates that sheet actually has entries on.
+	//     active for the dates that sheet actually has entries on. Zero-hour
+	//     entries (deletion requests) carry no rate burden: a date whose only
+	//     entry is a 0 must not fail the file on missing config.
 	for _, sheet := range parsed.Sheets {
 		checkedDates := make(map[string]bool)
 		for _, emp := range sheet.Employees {
 			for _, entry := range emp.Entries {
+				if entry.Hours <= 0 {
+					continue
+				}
 				realDate := time.Date(year, month, entry.Date.Day(), 0, 0, 0, 0, loc)
 				if realDate.Month() != month {
 					continue
@@ -539,6 +544,21 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 				// of day-of-week — the shift type already encodes the rate.
 				dayType := "ngày thường"
 
+				// Zero-hour entries are deletion requests: they carry no rate
+				// burden, so skip the payrate resolution entirely and let the
+				// replacement plan delete the matching pending row.
+				if entry.Hours <= 0 {
+					entries = append(entries, domainservices.BulkCreateTimesheetEntry{
+						ProjectID:   projectID,
+						EmployeeID:  assignment.EmployeeID,
+						Date:        dateStr,
+						HoursWorked: entry.Hours,
+						HourType:    shiftType,
+						DayType:     &dayType,
+					})
+					continue
+				}
+
 				// Resolve the rate set for THIS date's payrate, then look up
 				// position + dayType + shiftType.
 				shiftRates := shiftRatesFor(realDate)
@@ -641,7 +661,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	// 10. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount + countZeroHourEntries(entries)
 	// Map bulk-create failures through the shared helper so each error carries
 	// the employee's name and the affected date instead of a technical
 	// "employee_id=…" string the UI strips as unsafe detail.
@@ -1133,6 +1153,22 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 				// This template has one day-type rate set: all entries use ngày thường.
 				// The column header itself selects the configured shift rate.
 				dayType := "ngày thường"
+
+				// Zero-hour entries are deletion requests: no rate burden, so
+				// skip payrate resolution and let the replacement plan delete
+				// the matching pending row.
+				if entry.Hours <= 0 {
+					entries = append(entries, domainservices.BulkCreateTimesheetEntry{
+						ProjectID:   projectID,
+						EmployeeID:  assignment.EmployeeID,
+						Date:        dateStr,
+						HoursWorked: entry.Hours,
+						HourType:    entry.ShiftKey,
+						DayType:     &dayType,
+					})
+					continue
+				}
+
 				shiftRates := buildShiftRatesForShift(flatRatesFor(realDate), entry.ShiftKey)
 				key := weeklyPaymentRateKey(sheetPosition)
 				if _, found := shiftRates[key]; !found {
@@ -1242,7 +1278,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 
 	// 10. Finalize.
 	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
+	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount + countZeroHourEntries(entries)
 	// Map bulk-create failures through the shared helper so each error carries
 	// the employee's name and the affected date instead of a technical
 	// "employee_id=…" string the UI strips as unsafe detail.
