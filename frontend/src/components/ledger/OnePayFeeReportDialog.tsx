@@ -17,6 +17,7 @@ interface OnePayFeeReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpload: (file: File) => Promise<void>;
+  onFileChange?: (file: File | null) => void;
   isUploading: boolean;
   result: OnePayFeeImportResponse | null;
   issues: OnePayFeeReportIssue[];
@@ -26,6 +27,7 @@ export function OnePayFeeReportDialog({
   open,
   onOpenChange,
   onUpload,
+  onFileChange,
   isUploading,
   result,
   issues,
@@ -33,8 +35,15 @@ export function OnePayFeeReportDialog({
   const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = async () => {
-    if (!file || result) return;
+    if (!file || result || issues.length > 0) return;
     await onUpload(file);
+  };
+
+  // A failed attempt invalidates the previous selection: drop the stale
+  // validation result as soon as the user picks or removes a file.
+  const handleFileChange = (nextFile: File | null) => {
+    setFile(nextFile);
+    onFileChange?.(nextFile);
   };
 
   const hasIssues = issues.length > 0;
@@ -52,7 +61,7 @@ export function OnePayFeeReportDialog({
         <div className="space-y-4">
           <FileDropZone
             file={file}
-            onFileChange={setFile}
+            onFileChange={handleFileChange}
             accept=".xlsx,.xls"
             inputId="onepay-fee-report-file"
           />
@@ -100,7 +109,7 @@ export function OnePayFeeReportDialog({
             Đóng
           </Button>
           {!result && (
-            <Button onClick={handleSubmit} disabled={!file || isUploading}>
+            <Button onClick={handleSubmit} disabled={!file || isUploading || hasIssues}>
               {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Đối soát và tạo chi phí
             </Button>

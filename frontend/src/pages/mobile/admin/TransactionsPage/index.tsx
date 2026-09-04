@@ -303,6 +303,10 @@ const TransactionsPageMobile = () => {
         open={onePayFeeDialogOpen}
         onOpenChange={handleOnePayFeeDialogOpenChange}
         onUpload={handleImportOnePayFeeReport}
+        onFileChange={() => {
+          setOnePayFeeResult(null);
+          setOnePayFeeIssues([]);
+        }}
         isUploading={isImportingOnePayFeeReport}
         result={onePayFeeResult}
         issues={onePayFeeIssues}

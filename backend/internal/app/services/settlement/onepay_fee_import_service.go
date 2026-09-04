@@ -238,10 +238,10 @@ func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportI
 	detailSheet := findSheet(f, "GD")
 	var issues []dto.OnePayFeeReportIssue
 	if summarySheet == "" {
-		issues = append(issues, issue("missing_sheet", 0, "PHI THANG", "Không tìm thấy sheet tổng hợp phí PHI THANG"))
+		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet tổng hợp phí PHI THANG"))
 	}
 	if detailSheet == "" {
-		issues = append(issues, issue("missing_sheet", 0, "GD", "Không tìm thấy sheet chi tiết giao dịch GD"))
+		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet chi tiết giao dịch GD"))
 	}
 	if len(issues) > 0 {
 		return nil, issues, nil
