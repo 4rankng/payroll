@@ -53,7 +53,7 @@ func daysInMonth(year int, month time.Month) int {
 
 // maxCycleDay returns the last cycle-day index for the period that begins on
 // day 20 of forMonth: (daysInMonth(forMonth) - 20 + 1) + RequestCutoffDay.
-// 30-day June → 19; 31-day July → 20; 28-day Feb → 17; 29-day Feb → 18.
+// 30-day June → 20; 31-day July → 21; 28-day Feb → 18; 29-day Feb → 19.
 func maxCycleDay(forMonth string) int {
 	m, err := clock.ParseMonth(forMonth)
 	if err != nil {

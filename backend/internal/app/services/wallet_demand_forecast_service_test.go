@@ -52,7 +52,9 @@ func (w *walletDemandForecastWalletStub) GetBalance(context.Context) (*walletdom
 }
 
 func TestWalletDemandForecastLockedGapUsesUpcomingCycle(t *testing.T) {
-	now := time.Date(2026, 7, 9, 9, 0, 0, 0, clock.DefaultLocation)
+	// Day 12 sits in the locked gap (request cutoff day 9 < day < period
+	// start day 20): the forecast targets the upcoming, not-yet-open cycle.
+	now := time.Date(2026, 7, 12, 9, 0, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
 		rows: []domain.CohortRow{
 			{ForMonth: "2026-06", CycleDay: 1, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 90_000_000},
@@ -119,7 +121,7 @@ func TestWalletDemandForecastForMonthSelection(t *testing.T) {
 		},
 		{
 			desc: "locked_gap_looks_at_upcoming_period",
-			now:  time.Date(2026, 7, 9, 9, 0, 0, 0, clock.DefaultLocation),
+			now:  time.Date(2026, 7, 12, 9, 0, 0, 0, clock.DefaultLocation),
 			want: "2026-07",
 		},
 		{
@@ -129,7 +131,7 @@ func TestWalletDemandForecastForMonthSelection(t *testing.T) {
 		},
 		{
 			desc: "cutoff_uses_open_previous_period",
-			now:  time.Date(2026, 8, 8, 9, 0, 0, 0, clock.DefaultLocation),
+			now:  time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation),
 			want: "2026-07",
 		},
 	}
@@ -372,12 +374,15 @@ func TestWalletDemandForecastOnlyCountsPayableStatusesWithoutHistory(t *testing.
 }
 
 func TestWalletDemandForecastIncludesResidualDemandOnCutoffDay(t *testing.T) {
-	now := time.Date(2026, 8, 8, 9, 0, 0, 0, clock.DefaultLocation)
+	// Aug 9 is the request cutoff day: the last cycle day of period 2026-07
+	// (July has 31 days -> maxCycleDay 21), so same-day residual demand from
+	// history must still be included on top of what today already requested.
+	now := time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
 		rows: []domain.CohortRow{
-			{ForMonth: "2026-07", CycleDay: 20, Status: string(domain.AdvancePaymentStatusPending), TotalAmount: 40_000_000},
-			{ForMonth: "2026-05", CycleDay: 20, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
-			{ForMonth: "2026-03", CycleDay: 20, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
+			{ForMonth: "2026-07", CycleDay: 21, Status: string(domain.AdvancePaymentStatusPending), TotalAmount: 40_000_000},
+			{ForMonth: "2026-05", CycleDay: 21, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
+			{ForMonth: "2026-03", CycleDay: 21, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
 		},
 	}
 	walletSvc := &walletDemandForecastWalletStub{balance: &walletdomain.WalletBalance{Available: 0}}
@@ -404,7 +409,10 @@ func TestWalletDemandForecastIncludesResidualDemandOnCutoffDay(t *testing.T) {
 }
 
 func TestWalletDemandForecastIncludesPriorPeriodPayableCarryover(t *testing.T) {
-	now := time.Date(2026, 7, 9, 9, 0, 0, 0, clock.DefaultLocation)
+	// Inside the locked gap (request cutoff day 9 < day < period start day 20)
+	// the forecast targets the upcoming period while the prior period's
+	// payable must still carry over into the recommendation.
+	now := time.Date(2026, 7, 12, 9, 0, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
 		rows: []domain.CohortRow{
 			{ForMonth: "2026-06", CycleDay: 19, Status: string(domain.AdvancePaymentStatusPending), TotalAmount: 40_000_000},
