@@ -78,8 +78,17 @@ func (s *BCCImportService) processAssetData(
 		// calendar dates and the file has no rate row (rateless path).
 		parsed, err = excelparser.ParseDateRowBCCFile(xf, formatResult.DateRowSheets)
 	default:
-		// FormatLegacy — continue with existing BCC parsing below
-		parsed, err = excelparser.ParseBCCFile(xf)
+		// The "BCC" sheet name can carry a date-row layout (partner T09
+		// template), so route by parse outcome: ordered strategies run until
+		// one actually reads the file, and the format reflects the winner so
+		// post-parse behavior keys to the parser that ran.
+		var winner excelparser.BCCFormat
+		parsed, winner, err = excelparser.ParseBCCData(xf)
+		if err == nil {
+			slog.Info("BCCImport: strategy routing picked parser",
+				"format", winner, "filename", filename)
+			formatResult.Format = winner
+		}
 	}
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
@@ -291,6 +300,15 @@ func (s *BCCImportService) processAssetData(
 							}
 						}
 						empPosition = deducePosition(flatRates, empRates)
+					}
+
+					// Date-row templates carry each employee's position in the
+					// file's "Vị trí" column; it outranks rate-based deduction,
+					// which is meaningless for rateless files (always "phổ
+					// thông"). Blank cells keep the deduced default.
+					if formatResult.Format == excelparser.FormatDateRow &&
+						matchedParsedEmp != nil && strings.TrimSpace(matchedParsedEmp.Position) != "" {
+						empPosition = strings.TrimSpace(matchedParsedEmp.Position)
 					}
 
 					assignment := &domain.ProjectEmployee{

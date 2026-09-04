@@ -5,7 +5,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
+
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -19,6 +22,10 @@ import (
 const (
 	dateRowBCCMinCol  = 5  // day region starts at col E in every known template
 	dateRowBCCScanMax = 96 // 2 sub-columns x 31 days from col 5 ends at col 66; headroom for wide layouts
+	// The "Vị trí" (Position) column sits right of the day grid and its index
+	// drifts with the month's day count (31 days → CX), so the header scan
+	// must reach past every possible day-column layout.
+	dateRowBCCPositionScanMax = 200
 )
 
 // dateRowEmployeeCols holds the employee-info column positions detected for a
@@ -30,6 +37,7 @@ type dateRowEmployeeCols struct {
 	bankAccountCol int // "TK Ngân hàng"
 	bankNameCol    int // "Ngân hàng" (without the TK prefix)
 	phoneCol       int // "SĐT"/"Điện thoại" when the template carries one
+	positionCol    int // "Vị trí" — located by header name, index drifts with month length
 }
 
 // ParseDateRowBCCFile parses partner BCC sheets headed by a row of full-date
@@ -114,6 +122,7 @@ func parseDateRowBCCSheet(f *excelize.File, sheet string) ([]BCCEmployeeData, er
 			BankAccount:  bccCell(f, sheet, hm.bankAccountCol, row),
 			BankName:     bccCell(f, sheet, hm.bankNameCol, row),
 			Mobile:       bccCell(f, sheet, hm.phoneCol, row),
+			Position:     bccCell(f, sheet, hm.positionCol, row),
 		}
 
 		// Walk the day region left to right. A column's date is its own anchor
@@ -311,6 +320,7 @@ func findDateRowEmployeeCols(f *excelize.File, sheet string, dateRow int) dateRo
 			if v == "" {
 				continue
 			}
+
 			if (strings.Contains(v, "cccd") || strings.Contains(v, "mã nv") || strings.Contains(v, "mã nhân viên")) && hm.cccdCol == 0 {
 				hm.cccdCol = col
 			}
@@ -330,6 +340,14 @@ func findDateRowEmployeeCols(f *excelize.File, sheet string, dateRow int) dateRo
 				hm.phoneCol = col
 			}
 		}
+		// The "Vị trí" (Position) column's index drifts with the month's day
+		// count (a 31-day month pushes it to CX), so locate it by header name
+		// alone, anywhere right of the employee block; diacritics optional.
+		for col := 1; hm.positionCol == 0 && col <= dateRowBCCPositionScanMax; col++ {
+			if isPositionHeader(normHeader(bccCell(f, sheet, col, row))) {
+				hm.positionCol = col
+			}
+		}
 		// Complete only after the whole row is scanned so trailing columns
 		// (bank info) are not cut off by an early exit at the name column.
 		if hm.cccdCol != 0 && hm.nameCol != 0 && hm.empCodeCol != 0 && hm.bankAccountCol != 0 {
@@ -347,6 +365,27 @@ func findDateRowEmployeeCols(f *excelize.File, sheet string, dateRow int) dateRo
 		hm.nameCol = 3
 	}
 	return hm
+}
+
+// isPositionHeader reports whether a header cell names the Position column
+// ("Vị trí"). The match is diacritic-insensitive: stripping tone marks turns
+// "Vị trí" and "Vi tri" into the same needle, so templates written without
+// dấu still resolve the column.
+func isPositionHeader(v string) bool {
+	return strings.Contains(stripDiacritics(v), "vi tri")
+}
+
+// stripDiacritics drops NFD combining marks so Vietnamese header matching
+// tolerates templates written without tone marks.
+func stripDiacritics(s string) string {
+	var b strings.Builder
+	for _, r := range norm.NFD.String(s) {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 // dateRowNumericCell reads a data cell as a raw number (format-proof) and

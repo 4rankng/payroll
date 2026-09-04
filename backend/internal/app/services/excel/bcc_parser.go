@@ -30,8 +30,12 @@ type BCCEmployeeData struct {
 	BankName    string
 	// Mobile captured from the date-row template's phone column
 	// ("SĐT"/"Điện thoại") when present; empty otherwise.
-	Mobile  string
-	Entries []BCCEntryData
+	Mobile string
+	// Position read from the date-row template's "Vị trí" column, located by
+	// header name because its column index drifts with the month's day count.
+	// Empty for templates without the column and for legacy files.
+	Position string
+	Entries  []BCCEntryData
 }
 
 // BCCEntryData represents a single non-zero hours entry.
