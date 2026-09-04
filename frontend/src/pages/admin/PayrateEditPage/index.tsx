@@ -179,10 +179,9 @@ export default function PayrateEditPage() {
   // instead of offering an edit that can only fail.
   const isEnded = editorMode === 'edit' && !!targetPayrate?.toDate;
   const ratesLocked = isEnded || (serverResult?.fields.rates.locked ?? false);
-  // The server flags configs whose start date has no legal move (paid floor
-  // below, linked timesheets above) — render the date read-only instead of
-  // letting the save hit a 400.
-  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
+  // Ended configs are fully locked above; for live configs only the server's
+  // dry-run locks the date (completed/cancelled projects).
+  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false);
 
   const handleRatesChange = useCallback((rates: PayrateStructure) => {
     if (ratesLocked) return;

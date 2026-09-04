@@ -162,18 +162,28 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 		}
 	}
 
+	// ── Ended-config check (update parity) ────────────────────────────────
+	// The update transaction rejects configs a newer config has replaced
+	// (MsgCannotUpdateEndedPayrateVN); mirror it here so the dry-run never
+	// reports a save that cannot succeed.
+	if !projectBlocked && isUpdate && existingPayrate != nil && existingPayrate.ToDate != nil {
+		endedMessage := constants.MsgCannotUpdateEndedPayrateVN
+		fromResult.field.Status = FieldError
+		fromResult.field.Locked = true
+		fromResult.field.Message = endedMessage
+		ratesResult.Status = FieldError
+		ratesResult.Locked = true
+		ratesResult.Message = endedMessage
+	}
+
 	// ── Temporal / timesheet conflict checks ──────────────────────────────
 	if !projectBlocked && len(fromResult.errors) == 0 && len(ratesResult.Message) == 0 {
 		// Updates and creates share the same constraint set: the paid floor.
 		// Moving a start date later is handled by the update-as-create split,
-		// so linked timesheets never cap an update's start date.
-		if (isUpdate && existingPayrate != nil) || projectID > 0 {
-			if isUpdate && existingPayrate != nil {
-				projectID = existingPayrate.ProjectID
-			}
-			if fromResult.parsedDate != nil {
-				h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
-			}
+		// so linked timesheets never cap an update's start date. projectID is
+		// already resolved from existingPayrate for updates above.
+		if projectID > 0 && fromResult.parsedDate != nil {
+			h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
 		}
 	}
 

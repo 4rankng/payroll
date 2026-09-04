@@ -163,6 +163,16 @@ func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context,
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	logger := observability.GetLogger()
 	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
+	// End dates are not part of the model — configs close only via the
+	// timeline. Mirror CreateEffectiveDatedPayrate's normalization so no
+	// caller can persist one and mark the config "ended" by our own guard.
+	payrate.ToDate = nil
+
+	// Capture the target row's ID outside the transaction closure: the closure
+	// is retried on transient errors, and splitUpdateTx rewrites payrate.ID when
+	// it inserts the replacement config — a retried attempt must still load the
+	// original row, not the rolled-back replacement's ID (or zero).
+	targetID := payrate.ID
 
 	return s.dbHelper.ExecuteInTransactionWithRetry(ctx, func(tx *gorm.DB) error {
 		if err := s.lockProjectTimelineTx(ctx, tx, payrate.ProjectID); err != nil {
@@ -170,7 +180,7 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 		}
 
 		var existing domain.Payrate
-		if err := tx.WithContext(ctx).First(&existing, payrate.ID).Error; err != nil {
+		if err := tx.WithContext(ctx).First(&existing, targetID).Error; err != nil {
 			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to load existing payrate: %w", err))
 		}
 
@@ -225,20 +235,23 @@ func (s *PayrateTemporalService) splitUpdateTx(ctx context.Context, tx *gorm.DB,
 
 	// Close the existing config before inserting the new open-ended row; both
 	// open at once violates uq_payrates_one_open_per_project (error 1062).
-	endDate := toLocalDateOnly(payrate.FromDate).AddDate(0, 0, -1)
-	if err := tx.WithContext(ctx).Model(&domain.Payrate{}).Where("id = ?", existing.ID).
-		Update("to_date", endDate).Error; err != nil {
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to close previous config: %w", err))
+	if err := s.closePayrateTx(ctx, tx, existing.ID, payrate.FromDate); err != nil {
+		return fmt.Errorf("failed to close previous config: %w", err)
 	}
 
 	// Insert as a fresh row so immutable timesheets keep pointing at the config
-	// that priced them.
-	payrate.ID = 0
-	payrate.CreatedAt = time.Time{}
-	payrate.ToDate = nil // Open-ended
-	if err := s.payrateRepo.CreateWithTx(ctx, tx, payrate); err != nil {
+	// that priced them. Build from a local copy and only publish the new ID on
+	// the caller's object after the insert succeeds: the enclosing closure can
+	// be retried on transient errors, and a retried attempt must see payrate
+	// un-mutated enough to re-load the original row.
+	created := *payrate
+	created.ID = 0
+	created.CreatedAt = time.Time{}
+	created.ToDate = nil // Open-ended
+	if err := s.payrateRepo.CreateWithTx(ctx, tx, &created); err != nil {
 		return err
 	}
+	payrate.ID = created.ID
 
 	observability.GetLogger().Info("payrate update split into new config",
 		"project_id", payrate.ProjectID,
@@ -247,6 +260,18 @@ func (s *PayrateTemporalService) splitUpdateTx(ctx context.Context, tx *gorm.DB,
 		"from_date", formatDateString(payrate.FromDate),
 	)
 	return s.recalculateMutableTimesheets(ctx, tx, payrate)
+}
+
+// closePayrateTx ends a config's reign the day before nextStart, keeping the
+// timeline boundary invariant (to_date = next from_date - 1) in one place for
+// both the update-as-create split and predecessor synchronization.
+func (s *PayrateTemporalService) closePayrateTx(ctx context.Context, tx *gorm.DB, payrateID uint, nextStart time.Time) error {
+	endDate := toLocalDateOnly(nextStart).AddDate(0, 0, -1)
+	if err := tx.WithContext(ctx).Model(&domain.Payrate{}).Where("id = ?", payrateID).
+		Update("to_date", endDate).Error; err != nil {
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to set to_date for payrate %d: %w", payrateID, err))
+	}
+	return nil
 }
 
 // Private helper methods
@@ -281,9 +306,8 @@ func (s *PayrateTemporalService) synchronizePredecessorEndDateTx(ctx context.Con
 		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to find preceding payrate: %w", err))
 	}
 
-	endDate := toLocalDateOnly(payrate.FromDate).AddDate(0, 0, -1)
-	if err := tx.WithContext(ctx).Model(&predecessor).Update("to_date", endDate).Error; err != nil {
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to synchronize preceding payrate: %w", err))
+	if err := s.closePayrateTx(ctx, tx, predecessor.ID, payrate.FromDate); err != nil {
+		return fmt.Errorf("failed to synchronize preceding payrate: %w", err)
 	}
 	return nil
 }

@@ -165,7 +165,7 @@ export default function PayrateEditPageMobile() {
   // instead of offering an edit that can only fail.
   const isEnded = editorMode === 'edit' && !!targetPayrate?.toDate;
   const ratesLocked = isEnded || (serverResult?.fields.rates.locked ?? false);
-  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false) || (editorMode === 'edit' && !!targetPayrate?.from_date_locked);
+  const fromDateLocked = isEnded || (serverResult?.fields.effective_from.locked ?? false);
 
   const handleRatesChange = useCallback((rates: PayrateStructure) => {
     if (ratesLocked) return;
@@ -333,13 +333,20 @@ export default function PayrateEditPageMobile() {
                     </div>
                   )}
                   {!fromDateIsActionable && (
-                    <FieldFeedback
+                    <>
+                      {isEnded && (
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Cấu hình đã kết thúc (hiệu lực đến {targetPayrate?.toDate}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
+                        </p>
+                      )}
+                      <FieldFeedback
                       field={sf?.effective_from}
                       onApplySuggestion={v => {
                         setConfig(prev => ({ ...prev, fromDate: v }));
                         clearServerField('effective_from');
                       }}
                     />
+                    </>
                   )}
                 </div>
               )}

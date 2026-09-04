@@ -492,10 +492,15 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 		"from_date", fromDate.Format("2006-01-02"),
 		"to_date", toDate)
 
-	// Update fields (keep existing project_id, don't change it)
+	// Update fields (keep existing project_id, don't change it).
+	// effective_to is not part of the model: create drops it at the service
+	// level and configs close only via the timeline (update-as-create split /
+	// predecessor sync / EndActivePayrateForProject). A supplied effective_to
+	// is parsed above for a clear 400 on malformed input but deliberately
+	// ignored — mirroring create. Persisting it would mark the config "ended"
+	// by our own guard and brick it from further edits.
 	payrate.Payrate = updatedPayrate.Payrate
 	payrate.FromDate = fromDate
-	payrate.ToDate = toDate
 
 	logger.Info("Calling payrate service to update payrate",
 		"payrate_id", payrate.ID)

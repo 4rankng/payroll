@@ -118,3 +118,26 @@ Legend: [A]=automated unit (sqlite harness) · [API]=curl vs :8080 · [UI]=brows
   salary-period rows (Georim/SAM SUNG), not the raw config list.
 - Gates: build+vet ✓ · unit suites ✓ (12 temporal tests incl. 3 new) ·
   integration 275/0/21 ✓ · eslint+tsc ✓
+
+## Review round (2026-09-04, adversarial review of the deployed arc)
+
+Three independent reviewer lanes (opus payrate-review agent, angle swarm,
+/code-review --fix) converged; verdict: no CRITICAL/MAJOR. Fixes applied:
+
+| # | Case | Expected | Status |
+|---|------|----------|--------|
+| R.1 | Transient DB error mid-split, retry re-enters closure | targetID captured outside the retried closure; replacement created from a local copy; retry loads the original row | ☑ unit |
+| R.2 | /validate dry-run on an ended config | rejects with MsgCannotUpdateEndedPayrateVN (fields error+locked); no more valid:true → guaranteed-400 | ☑ |
+| R.3 | Update with supplied effective_to (ruling: not needed) | handler ignores it; service normalizes ToDate=nil mirroring create; row stays open-ended | ☑ unit TestPayrateTemporalServiceDropsSuppliedEndDateOnUpdate |
+| R.4 | Mobile edit page, ended config | hint paragraph matches admin wording | ☑ |
+| R.5 | Dead from_date_locked clause / stale DTO comment | removed / corrected; wire field kept (contract removal separate) | ☑ |
+| R.6 | from−1 close invariant duplicated in split + predecessor sync | closePayrateTx extracted, both callers use it | ☑ refactor |
+
+Report-only (not fixed this pass): split publishes PayrateUpdatedEvent with
+"update" semantics (audit-accuracy only; consumers are pattern-keyed); update
+response echoes the old CreatedAt after a split (cosmetic); pre-existing:
+DeletePayrate takes no project lock and is non-atomic;
+uq_payrates_one_open_per_project lives only in prod (no repo migration).
+
+Gates re-run after fixes: go build ✓ · vet (touched pkgs) ✓ · 13/13 temporal
+unit ✓ · eslint+tsc ✓ · integration 275/0/21 ✓

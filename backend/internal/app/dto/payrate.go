@@ -74,9 +74,10 @@ type PayrateResponse struct {
 	// timesheet work date — the earliest start date an update may take. Empty
 	// when the project has no paid timesheets (no floor beyond today).
 	EarliestEffectiveFrom string `json:"earliest_effective_from,omitempty"`
-	// FromDateLocked marks a config whose start date has no legal move: it
-	// cannot go earlier (at/under the paid floor) nor later (timesheets are
-	// already linked from that date). The UI renders it read-only.
+	// FromDateLocked is vestigial: start dates are never load-time locked
+	// anymore (later moves split the config via update-as-create). Retained on
+	// the wire as always-false for API compatibility; removal is a contract
+	// decision. The validate endpoint's per-field locked flag is the live one.
 	FromDateLocked bool `json:"from_date_locked"`
 }
 

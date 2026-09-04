@@ -405,6 +405,33 @@ func TestPayrateTemporalServiceRejectsSplitOfClosedConfig(t *testing.T) {
 	}
 }
 
+func TestPayrateTemporalServiceDropsSuppliedEndDateOnUpdate(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	service := NewPayrateTemporalService(db, nil)
+
+	const projectID uint = 53
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	target := &domain.Payrate{
+		ID:        16,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 10, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	}
+	seedPayrateTemporalPayrate(t, db, target)
+
+	// A caller (or legacy API client) supplying effective_to must not be able
+	// to end the config: persisting it would make the row "ended" by the
+	// update guard and brick it from further edits — same ruling as create.
+	suppliedEnd := time.Date(2026, 8, 20, 0, 0, 0, 0, time.Local)
+	target.ToDate = &suppliedEnd
+	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
+
+	var persisted domain.Payrate
+	require.NoError(t, db.First(&persisted, target.ID).Error)
+	require.Nil(t, persisted.ToDate, "update must keep the config open-ended despite a supplied effective_to")
+}
+
 func assertTimesheetRateOnConfig(t *testing.T, db *gorm.DB, timesheetID, payrateID uint, rate int64) {
 	t.Helper()
 	var timesheet domain.Timesheet
