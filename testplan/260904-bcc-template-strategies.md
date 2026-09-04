@@ -39,3 +39,10 @@ Source of truth: real file `/Users/dev/Downloads/BCC BUMHAN T09.2026 Mẫu mức
   rate resolution depends on project payrate config having ngày lễ leaves,
   which is data, not code).
 - Multi-position / weekly-payment / weekly-BCC flows untouched.
+
+## Live import gate (local dev, project 78)
+
+| # | Scenario | Expect |
+|---|----------|--------|
+| 12 | POST `/api/v1/timesheets/partner-import` (admin, project 78, for_month=2026-09) with the real T09 file against the rebuilt backend | status `completed`; 17 employees found; timesheets created for Sep days; no "nhân viên không tìm thấy" errors |
+| 13 | Same upload re-run | idempotent: re-upload = safe upsert, no duplicate employees/assignments |
