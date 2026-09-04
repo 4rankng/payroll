@@ -264,7 +264,7 @@ export default function PayrateEditPage() {
 
       {/* ── Top bar ── */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
+        <div className="px-4 sm:px-6 h-14 flex items-center gap-3">
           <button onClick={goBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
             <ArrowLeft className="h-4 w-4" />
             Quay lại
@@ -297,7 +297,7 @@ export default function PayrateEditPage() {
       </header>
 
       {/* ── Page title ── */}
-      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6 pb-2">
+      <div className="w-full px-4 sm:px-6 pt-6 pb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-xl font-semibold">
             {isNew ? 'Tạo cấu hình lương mới' : 'Chỉnh sửa cấu hình lương'}
@@ -319,7 +319,7 @@ export default function PayrateEditPage() {
       </div>
 
       {/* ── Body ── */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-4 space-y-5">
+      <main className="flex-1 w-full px-4 sm:px-6 py-4 space-y-5">
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 rounded-xl" />
