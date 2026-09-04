@@ -75,6 +75,13 @@ describe('parseImportErrors', () => {
     }]);
   });
 
+  it('passes the out-of-month file-level reason through with its data range intact', () => {
+    const raw =
+      'file chỉ chứa giờ công ngoài tháng 2026-09 (dữ liệu từ 22/08/2026 đến 28/08/2026) — chọn tháng tương ứng với dữ liệu file';
+    expect(parseImportErrors(JSON.stringify([{ row: 0, employee: '', reason: raw }])))
+      .toEqual([{ row: 0, employee: '', reason: raw }]);
+  });
+
   it('keeps the affected date beside the future-attendance reason so duplicates stay groupable', () => {
     expect(parseImportErrors(JSON.stringify([{
       employee: 'Nguyễn Văn An',
