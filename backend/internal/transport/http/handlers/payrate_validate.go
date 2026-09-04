@@ -164,11 +164,16 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 
 	// ── Temporal / timesheet conflict checks ──────────────────────────────
 	if !projectBlocked && len(fromResult.errors) == 0 && len(ratesResult.Message) == 0 {
-		if isUpdate && existingPayrate != nil {
-			h.applyCreateConstraints(c, existingPayrate.ProjectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
-			h.applyLinkedTimesheetConstraints(c, existingPayrate, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
-		} else if projectID > 0 && fromResult.parsedDate != nil {
-			h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
+		// Updates and creates share the same constraint set: the paid floor.
+		// Moving a start date later is handled by the update-as-create split,
+		// so linked timesheets never cap an update's start date.
+		if (isUpdate && existingPayrate != nil) || projectID > 0 {
+			if isUpdate && existingPayrate != nil {
+				projectID = existingPayrate.ProjectID
+			}
+			if fromResult.parsedDate != nil {
+				h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
+			}
 		}
 	}
 
@@ -294,38 +299,6 @@ func validateRates(rates []byte) RatesFieldResult {
 
 	r.Status = FieldOK
 	return r
-}
-
-// applyLinkedTimesheetConstraints mirrors the transactional guard for update
-// dry-runs: a config's start date cannot move past the earliest timesheet
-// already linked to it, because those rows are priced under this config.
-// Only flag when the date actually moves later than that row — unchanged or
-// earlier moves are covered by the paid-floor constraint.
-func (h *PayrateHandler) applyLinkedTimesheetConstraints(
-	c *gin.Context,
-	existing *domain.Payrate,
-	submittedFrom string,
-	fromDate *time.Time,
-	fromField *FieldResult,
-) {
-	if fromDate == nil {
-		return
-	}
-	earliestLinked, err := h.payrateService.GetEarliestTimesheetDateForPayrate(c.Request.Context(), existing.ID)
-	if err != nil || earliestLinked == nil {
-		return
-	}
-	// Wall-clock comparison — see earliestEffectiveFrom for the DSN caveat.
-	// Instant comparison is wrong here: the submitted date parses as UTC
-	// midnight while the stored date reads back as Local midnight, so the
-	// same calendar day compares as "after".
-	if fromDate.Format("2006-01-02") <= earliestLinked.Format("2006-01-02") {
-		return
-	}
-	fromField.Status = FieldError
-	fromField.Message = fmt.Sprintf("Ngày %s nằm sau bảng công đã gắn với cấu hình này (ngày đầu tiên: %s).", submittedFrom, earliestLinked.Format("2006-01-02"))
-	fromField.Hint = fmt.Sprintf("Ngày bắt đầu không thể muộn hơn %s vì đã có bảng công dùng cấu hình này.", earliestLinked.Format("2006-01-02"))
-	fromField.SuggestedValue = earliestLinked.Format("2006-01-02")
 }
 
 // applyPaidFloorConstraints enforces the single immutable boundary shared by

@@ -175,9 +175,3 @@ func (s *PayrateService) GetLatestTimesheetDateForPayrate(ctx context.Context, p
 func (s *PayrateService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
 	return s.TemporalService.GetLatestPaidTimesheetDateForProject(ctx, projectID)
 }
-
-// GetEarliestTimesheetDateForPayrate returns the earliest work date linked to
-// a payrate config; its start date cannot move later than that.
-func (s *PayrateService) GetEarliestTimesheetDateForPayrate(ctx context.Context, payrateID uint) (*time.Time, error) {
-	return s.TemporalService.GetEarliestTimesheetDateForPayrate(ctx, payrateID)
-}

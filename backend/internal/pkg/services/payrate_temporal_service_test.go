@@ -289,25 +289,86 @@ func TestPayrateTemporalServiceRejectsUpdateWhenSiblingStartsLater(t *testing.T)
 	require.Error(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 }
 
-func TestPayrateTemporalServiceRejectsMovingStartDatePastLinkedTimesheets(t *testing.T) {
+func TestPayrateTemporalServiceSplitsConfigWhenStartDateMovesLater(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
-	service := NewPayrateTemporalService(db, nil)
+	repository := &payrateTemporalRepositoryStub{}
+	service := NewPayrateTemporalService(db, repository)
 
 	const projectID uint = 47
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
-	target := &domain.Payrate{ID: 12, ProjectID: projectID, FromDate: time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local)}
+	target := &domain.Payrate{
+		ID:        12,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":100000}}}`),
+	}
 	seedPayrateTemporalPayrate(t, db, target)
 
-	// Immutable rows priced under the config start Aug 1.
-	paidDate := time.Date(2026, 8, 3, 0, 0, 0, 0, time.Local)
-	paid := newPayrateTemporalTimesheet(projectID, paidDate, domain.TimesheetStatusApproved, domain.PaymentStatusPaid)
+	// Aug 15–21 were worked, approved, and paid under this config.
+	paid := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local), domain.TimesheetStatusApproved, domain.PaymentStatusPaid)
 	paid.PayrateID = target.ID
 	seedPayrateTemporalTimesheet(t, db, paid)
+	paidLater := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 21, 0, 0, 0, 0, time.Local), domain.TimesheetStatusApproved, domain.PaymentStatusPaid)
+	paidLater.PayrateID = target.ID
+	seedPayrateTemporalTimesheet(t, db, paidLater)
 
-	// Moving the start past its own paid rows must be rejected.
-	target.FromDate = paidDate.AddDate(0, 0, 1)
-	require.Error(t, service.UpdateEffectiveDatedPayrate(ctx, target))
+	// Aug 22 onward is uploaded but still mutable, linked to the same config.
+	pending := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 22, 0, 0, 0, 0, time.Local), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending)
+	pending.PayrateID = target.ID
+	seedPayrateTemporalTimesheet(t, db, pending)
+
+	// Moving the start to Aug 22 (the day after the last paid row) must treat
+	// the update as a create: the old config closes at Aug 21, a new open
+	// config takes over from Aug 22, paid rows stay on the old config, and
+	// mutable rows are re-linked and re-priced under the new one.
+	target.FromDate = time.Date(2026, 8, 22, 0, 0, 0, 0, time.Local)
+	target.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
+	oldID := target.ID
+	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
+
+	var persisted domain.Payrate
+	require.NoError(t, db.First(&persisted, oldID).Error)
+	require.NotNil(t, persisted.ToDate)
+	require.Equal(t, "2026-08-21", persisted.ToDate.Format("2006-01-02"))
+
+	// The handler carries the new config's identity after the split.
+	require.Equal(t, uint(99), target.ID)
+
+	assertTimesheetRateOnConfig(t, db, paid.ID, 12, 100000)
+	assertTimesheetRateOnConfig(t, db, paidLater.ID, 12, 100000)
+	assertTimesheetRateOnConfig(t, db, pending.ID, 99, 250000)
+}
+
+func TestPayrateTemporalServiceRejectsSplitOfClosedConfig(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	repository := &payrateTemporalRepositoryStub{}
+	service := NewPayrateTemporalService(db, repository)
+
+	const projectID uint = 51
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	endDate := time.Date(2026, 8, 5, 0, 0, 0, 0, time.Local)
+	closed := &domain.Payrate{
+		ID:        15,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		ToDate:    &endDate,
+	}
+	seedPayrateTemporalPayrate(t, db, closed)
+
+	// A historical (closed) config cannot be split — that would open a second
+	// config alongside the project's current one.
+	closed.FromDate = time.Date(2026, 8, 4, 0, 0, 0, 0, time.Local)
+	require.Error(t, service.UpdateEffectiveDatedPayrate(ctx, closed))
+}
+
+func assertTimesheetRateOnConfig(t *testing.T, db *gorm.DB, timesheetID, payrateID uint, rate int64) {
+	t.Helper()
+	var timesheet domain.Timesheet
+	require.NoError(t, db.First(&timesheet, timesheetID).Error)
+	require.Equal(t, payrateID, timesheet.PayrateID)
+	require.Equal(t, rate, timesheet.PayRate)
 }
 
 func seedPayrateTemporalPayrate(t *testing.T, db *gorm.DB, payrate *domain.Payrate) {

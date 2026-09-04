@@ -65,41 +65,10 @@ func (h *PayrateHandler) earliestEffectiveFrom(ctx context.Context, projectID ui
 	return latestPaid.AddDate(0, 0, 1).Format("2006-01-02")
 }
 
-// fromDateLocked reports whether a payrate's start date has no legal move at
-// all: the paid floor (cannot go earlier) and the config's own earliest
-// linked timesheet (cannot go later) leave no date satisfying both bounds.
-//
-// This must check whether the [floor, earliestLinked] *window* is empty, not
-// whether the *currently stored* fromDate happens to sit outside it — a
-// stored date outside the window is a correctable validation error (the
-// dry-run /validate endpoint already reports it with a suggested_value), not
-// a locked field. Locking the input in that case strands the user: they see
-// the error and the "use suggested value" fix, but can't type into a
-// read-only box, and the suggestion only patches React state — it never
-// re-clears the stale lock a prior /validate call (or this GET) set.
-func (h *PayrateHandler) fromDateLocked(ctx context.Context, payrate *domain.Payrate) bool {
-	floor := h.earliestEffectiveFrom(ctx, payrate.ProjectID)
-	if floor == "" {
-		return false
-	}
-	earliestLinked, err := h.payrateService.GetEarliestTimesheetDateForPayrate(ctx, payrate.ID)
-	if err != nil || earliestLinked == nil {
-		return false
-	}
-	// Wall-clock comparison: the stored dates may carry different locations
-	// (Local via the DSN vs UTC), which breaks instant equality on the same
-	// calendar day.
-	return startDateWindowEmpty(floor, earliestLinked.Format("2006-01-02"))
-}
-
-// startDateWindowEmpty reports whether the legal start-date window
-// [floor, earliestLinked] is empty, i.e. the paid floor already sits after
-// the config's own earliest linked timesheet. Dates are pre-formatted
-// "2006-01-02" strings so callers can pass values from either time.Time or
-// pre-resolved external state without re-parsing.
-func startDateWindowEmpty(floor, earliestLinked string) bool {
-	return floor > earliestLinked
-}
+// Start-date fields are never load-time locked: moving a start date later now
+// splits the config (update-as-create), so any stored state is correctable via
+// the normal edit flow. Completed/cancelled projects are rejected by the
+// validate endpoint and the update handler itself.
 
 func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 	var req dto.CreatePayrateRequest
@@ -262,7 +231,7 @@ func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 		CreatedAt:             payrate.CreatedAt,
 		UpdatedAt:             payrate.UpdatedAt,
 		EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
-		FromDateLocked:        h.fromDateLocked(c.Request.Context(), payrate),
+		FromDateLocked:        false,
 	}
 
 	response.Success(c, payrateResponse, constants.MsgPayrateRetrievedSuccessfullyVN)
@@ -361,7 +330,7 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 			CreatedAt:             payrate.CreatedAt,
 			UpdatedAt:             payrate.UpdatedAt,
 			EarliestEffectiveFrom: h.earliestEffectiveFrom(c.Request.Context(), payrate.ProjectID),
-			FromDateLocked:        h.fromDateLocked(c.Request.Context(), payrate),
+			FromDateLocked:        false,
 		})
 	}
 

@@ -154,7 +154,10 @@ func (s *PayrateTemporalService) EndActivePayrateForProject(ctx context.Context,
 //  1. The new start date must fall after the project's most recent paid timesheet work date
 //  2. The payrate must remain the project's most recent configuration
 //     (no sibling payrate may start on or after the new start date)
-//  3. Mutable timesheets inside the config's reign are recalculated in the same
+//  3. Moving the start date later follows the create model: the existing config
+//     is closed the day before and a new open-ended config takes over, so rows
+//     already priced under the old config keep it (update-as-create split)
+//  4. Mutable timesheets inside the config's reign are recalculated in the same
 //     transaction. The config in effect for a work date is always the project
 //     payrate with the latest from_date on or before that date.
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
@@ -168,6 +171,15 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 
 		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
 			return err
+		}
+
+		var existing domain.Payrate
+		if err := tx.WithContext(ctx).First(&existing, payrate.ID).Error; err != nil {
+			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to load existing payrate: %w", err))
+		}
+
+		if payrate.FromDate.After(toLocalDateOnly(existing.FromDate)) {
+			return s.splitUpdateTx(ctx, tx, payrate, &existing)
 		}
 
 		if err := s.ensureLatestConfigTx(ctx, tx, payrate); err != nil {
@@ -190,6 +202,48 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 		logger.Info("Payrate updated successfully", "payrate_id", payrate.ID)
 		return s.recalculateMutableTimesheets(ctx, tx, payrate)
 	})
+}
+
+// splitUpdateTx applies the update-as-create model when a config's start date
+// moves later. Timesheets already linked to the config — priced and possibly
+// paid under it — must keep that config, so instead of re-dating the row (which
+// would strand those rows before their config's reign), the existing config is
+// closed the day before the new start and the submitted configuration becomes a
+// new open-ended row. Mutable rows on/after the new start are re-linked and
+// re-priced under the new config.
+func (s *PayrateTemporalService) splitUpdateTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate, existing *domain.Payrate) error {
+	if existing.ToDate != nil {
+		return domain.NewValidationError(constants.MsgCannotUpdatePayrateConflictingConfigVN)
+	}
+
+	if err := s.ensureLatestConfigTx(ctx, tx, payrate); err != nil {
+		return err
+	}
+
+	// Close the existing config before inserting the new open-ended row; both
+	// open at once violates uq_payrates_one_open_per_project (error 1062).
+	endDate := toLocalDateOnly(payrate.FromDate).AddDate(0, 0, -1)
+	if err := tx.WithContext(ctx).Model(&domain.Payrate{}).Where("id = ?", existing.ID).
+		Update("to_date", endDate).Error; err != nil {
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to close previous config: %w", err))
+	}
+
+	// Insert as a fresh row so immutable timesheets keep pointing at the config
+	// that priced them.
+	payrate.ID = 0
+	payrate.CreatedAt = time.Time{}
+	payrate.ToDate = nil // Open-ended
+	if err := s.payrateRepo.CreateWithTx(ctx, tx, payrate); err != nil {
+		return err
+	}
+
+	observability.GetLogger().Info("payrate update split into new config",
+		"project_id", payrate.ProjectID,
+		"previous_payrate_id", existing.ID,
+		"new_payrate_id", payrate.ID,
+		"from_date", formatDateString(payrate.FromDate),
+	)
+	return s.recalculateMutableTimesheets(ctx, tx, payrate)
 }
 
 // Private helper methods
@@ -251,10 +305,12 @@ func (s *PayrateTemporalService) ensureLatestConfigTx(ctx context.Context, tx *g
 	return nil
 }
 
-// ensureEarliestPaidTimesheetCoveredTx blocks moving a config's start date
-// forward past timesheets already linked to it. Immutable rows reference the
-// config they were priced under; shifting its from_date later would silently
-// reassign them to an older sibling config in date-based resolution.
+// ensureEarliestPaidTimesheetCoveredTx blocks in-place start-date moves that
+// would strand timesheets already linked to this config: immutable rows
+// reference the config they were priced under, so a from_date later than the
+// earliest linked row would silently reassign them to an older sibling config
+// in date-based resolution. Start dates moving later go through
+// splitUpdateTx instead, which keeps the linked rows on the closed config.
 func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
 	var earliest struct {
 		MinDate *time.Time
@@ -274,24 +330,6 @@ func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx contex
 		return domain.NewValidationError(constants.MsgCannotUpdatePayratePastLinkedTimesheetVN)
 	}
 	return nil
-}
-
-// GetEarliestTimesheetDateForPayrate returns the earliest work date linked to
-// a payrate config. The start date cannot move past it (rows are already
-// priced under this config), which is what makes the field UI-lockable.
-func (s *PayrateTemporalService) GetEarliestTimesheetDateForPayrate(ctx context.Context, payrateID uint) (*time.Time, error) {
-	var earliest struct {
-		MinDate *time.Time
-	}
-	err := s.db.WithContext(ctx).
-		Model(&domain.Timesheet{}).
-		Select("MIN(date) as min_date").
-		Where("payrate_id = ?", payrateID).
-		Scan(&earliest).Error
-	if err != nil {
-		return nil, err
-	}
-	return earliest.MinDate, nil
 }
 
 // GetLatestPaidTimesheetDateForProject returns the latest work date among paid
