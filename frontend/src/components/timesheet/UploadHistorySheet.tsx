@@ -23,7 +23,7 @@ import { SlideSheetTemplate } from '@/components/sheets/templates/SlideSheetTemp
 import { usePartnerImportHistory } from '@/hooks/timesheet/usePartnerImportHistory';
 import { useDebounce } from '@/hooks/useDebounce';
 import { timesheetService } from '@/services/api/timesheet.service';
-import { parseImportErrors } from '@/utils/import-errors';
+import { parseImportErrors, groupImportErrors, describeGroupedError } from '@/utils/import-errors';
 import { EmptyState } from '@/components/shared/EmptyState';
 import type { PartnerImportFile } from '@/types/api/timesheet.types';
 
@@ -135,6 +135,7 @@ function ImportCard({ item, projectMap, onDownload }: {
 function ErrorDetail({ detail }: { detail?: string | null }) {
   const [open, setOpen] = useState(false);
   const errors = parseImportErrors(detail);
+  const groups = groupImportErrors(errors);
   if (errors.length === 0) return null;
   return (
     <div>
@@ -143,17 +144,21 @@ function ErrorDetail({ detail }: { detail?: string | null }) {
         className="flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive transition-colors"
       >
         <ChevronRight className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-90' : ''}`} />
-        {open ? 'Ẩn lỗi' : `Xem ${errors.length} lỗi`}
+        {open
+          ? 'Ẩn lỗi'
+          : `Xem ${errors.length} lỗi${groups.length < errors.length ? ` (${groups.length} nhóm)` : ''}`}
       </button>
       {open && (
         <ul className="mt-2 max-h-28 overflow-y-auto rounded-md bg-destructive/5 border border-destructive/15 p-2.5 text-xs text-destructive space-y-1">
-          {errors.map((e, i) => (
+          {groups.map((group, i) => (
             <li key={i} className="flex gap-1.5">
               <span className="shrink-0 mt-px">•</span>
               <span>
-                {e.row > 0 && <strong>Dòng {e.row}: </strong>}
-                {e.employee ? <strong>{e.employee}: </strong> : ''}
-                {e.reason}
+                {group.employee ? <strong>{group.employee}: </strong> : ''}
+                {group.reason}
+                {describeGroupedError(group) && (
+                  <span className="text-destructive/80">{describeGroupedError(group)}</span>
+                )}
               </span>
             </li>
           ))}

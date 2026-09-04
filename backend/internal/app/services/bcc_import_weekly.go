@@ -642,12 +642,10 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	// 10. Finalize.
 	createdCount := len(result.CreatedTimesheets)
 	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
-	for _, f := range result.FailedEntries {
-		importErrors = append(importErrors, domain.ImportError{
-			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),
-			Reason:   f.Error,
-		})
-	}
+	// Map bulk-create failures through the shared helper so each error carries
+	// the employee's name and the affected date instead of a technical
+	// "employee_id=…" string the UI strips as unsafe detail.
+	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 
 	now := clock.Now()
@@ -1245,12 +1243,10 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	// 10. Finalize.
 	createdCount := len(result.CreatedTimesheets)
 	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount
-	for _, f := range result.FailedEntries {
-		importErrors = append(importErrors, domain.ImportError{
-			Employee: fmt.Sprintf("employee_id=%d date=%s", f.Request.EmployeeID, f.Request.Date),
-			Reason:   f.Error,
-		})
-	}
+	// Map bulk-create failures through the shared helper so each error carries
+	// the employee's name and the affected date instead of a technical
+	// "employee_id=…" string the UI strips as unsafe detail.
+	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	errorCount := len(importErrors)
 
 	now := clock.Now()

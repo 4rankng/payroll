@@ -161,8 +161,9 @@ describe('BCCUploadModal result states', () => {
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument();
     expect(screen.getByText('Không thể tạo hồ sơ nhân viên')).toBeInTheDocument();
     expect(screen.getByText('Thiếu dữ liệu bắt buộc')).toBeInTheDocument();
-    expect(screen.getByText(/Dòng 2:/)).toBeInTheDocument();
-    expect(screen.getByText(/Dòng 3:/)).toBeInTheDocument();
+    // Grouped rendering folds affected rows into detail suffixes.
+    expect(screen.getByText(/\(dòng 2\)/)).toBeInTheDocument();
+    expect(screen.getByText(/\(dòng 3\)/)).toBeInTheDocument();
     expect(screen.queryByText(/failed|employee_id|CCCD 123/i)).not.toBeInTheDocument();
   });
 

@@ -36,6 +36,7 @@ import {
   parseResultErrors,
   getMonthOptions,
 } from '@/hooks/timesheet/useBCCUploadModal';
+import { groupImportErrors, describeGroupedError } from '@/utils/import-errors';
 import type { PartnerImportFile } from '@/types/api/timesheet.types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -288,17 +289,22 @@ const ResultErrorDetails = memo(function ResultErrorDetails({
                 {employee}
               </p>
               <ul className="space-y-1">
-                {errors.map((error) => (
-                  <li
-                    key={`${error.row}-${error.reason}`}
-                    className="break-words border-l-2 border-rose-300 pl-3 text-sm leading-relaxed text-rose-700 dark:border-rose-700 dark:text-rose-300/80"
-                  >
-                    {error.row > 0 && (
-                      <span className="font-semibold">Dòng {error.row}: </span>
-                    )}
-                    {error.reason}
-                  </li>
-                ))}
+                {groupImportErrors(errors).map((group) => {
+                  const detail = describeGroupedError(group);
+                  return (
+                    <li
+                      key={`${group.employee}-${group.reason}`}
+                      className="break-words border-l-2 border-rose-300 pl-3 text-sm leading-relaxed text-rose-700 dark:border-rose-700 dark:text-rose-300/80"
+                    >
+                      {group.reason}
+                      {detail && (
+                        <span className="font-normal text-rose-600/90 dark:text-rose-300/70">
+                          {detail}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

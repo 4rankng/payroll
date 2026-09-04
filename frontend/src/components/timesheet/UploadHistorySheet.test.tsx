@@ -55,8 +55,10 @@ describe('UploadHistorySheet', () => {
 
     expect(screen.getByText('Hoàn tất một phần')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Xem 1 lỗi' }));
-    expect(screen.getByText('Dòng 2:')).toBeInTheDocument();
+    // Grouped rendering: one line per (employee, reason) with the affected
+    // rows folded into a detail suffix instead of "Dòng N:" prefixes.
     expect(screen.getByText('Không thể xử lý dòng dữ liệu này')).toBeInTheDocument();
+    expect(screen.getByText(/\(dòng 2\)/)).toBeInTheDocument();
     expect(screen.queryByText(/OnePay|provider|failed|employee_id/i)).not.toBeInTheDocument();
   });
 });

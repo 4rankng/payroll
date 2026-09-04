@@ -483,6 +483,8 @@ export interface ImportError {
   row: number;
   employee: string;
   reason: string;
+  /** Affected date (DD/MM/YYYY) parsed from the raw reason, when present. */
+  date?: string;
 }
 
 export interface PartnerImportListParams {
