@@ -98,9 +98,13 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 		}
 
 		// Check for a date-row BCC sheet (full-date header row + shift codes
-		// below it, e.g. BUMHAN "M1")
-		if isDateRowBCCSheet(f, sheetName) {
-			dateRowSheets = append(dateRowSheets, sheetName)
+		// below it, e.g. BUMHAN "M1"). The fingerprint is the loosest one, so
+		// only run its cell scan while no higher-priority format has matched —
+		// date-row can never win once any named pattern exists.
+		if !hasBCCSheet && len(weeklyBCCSheets) == 0 && len(weeklyPaymentSheets) == 0 && len(positionSheets) == 0 {
+			if isDateRowBCCSheet(f, sheetName) {
+				dateRowSheets = append(dateRowSheets, sheetName)
+			}
 		}
 	}
 

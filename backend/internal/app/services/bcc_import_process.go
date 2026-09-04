@@ -87,14 +87,12 @@ func (s *BCCImportService) processAssetData(
 
 	// 5-6. Shared setup: month parsing, lock, payrate lookup. The earliest
 	// worked day lets the lookup accept a payrate that starts mid-month but
-	// is already active on the file's first worked day.
+	// is already active on the file's first worked day. Date-row files can
+	// straddle months (e.g. 21/08–24/09); only days inside the import month
+	// count, so the payrate probe never targets an out-of-month day.
 	earliestDay := 0
-	for _, emp := range parsed.Employees {
-		for _, e := range emp.Entries {
-			if e.DayNum > 0 && (earliestDay == 0 || e.DayNum < earliestDay) {
-				earliestDay = e.DayNum
-			}
-		}
+	if importY, importM, mErr := parseForMonth(effectiveMonth); mErr == nil {
+		earliestDay = earliestInMonthDay(parsed.Employees, importY, importM)
 	}
 	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
@@ -143,10 +141,16 @@ func (s *BCCImportService) processAssetData(
 
 	var stkRows []excelparser.STKRow
 	if formatResult.Format == excelparser.FormatDateRow {
-		// New date-row template: the BCC sheet itself carries employee and
-		// bank info, so employees are upserted from the parsed rows. Legacy
-		// templates keep reading the STK sheet unchanged.
+		// Date-row template: the BCC sheet itself carries employee and bank
+		// info, so employees are upserted from the parsed rows. A real STK
+		// sheet, when present, still wins for bank/mobile corrections and
+		// STK-only hires.
 		stkRows = dateRowEmployeeToSTKRows(parsed.Employees)
+		if stkParsed, stkErr := excelparser.ParseSTKSheet(xf); stkErr != nil {
+			slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
+		} else {
+			stkRows = mergeSTKRows(stkRows, stkParsed)
+		}
 	} else {
 		var stkErr error
 		stkRows, stkErr = excelparser.ParseSTKSheet(xf)
@@ -338,6 +342,12 @@ func (s *BCCImportService) processAssetData(
 	}
 
 	// 8. Build timesheet entries, collecting employee errors.
+	// Label-keyed resolution (column code = payrate shift leaf) is a date-row
+	// template concept: only there do column codes like NT/T7/CN name payrate
+	// leaves. Legacy rateless files must keep the calendar path — their CN
+	// means "ca ngày" while a date-row config's CN leaf means Chủ Nhật, so
+	// running label-first on them silently re-prices old templates.
+	labelKeyedFile := ratelessFile && formatResult.Format == excelparser.FormatDateRow
 	var (
 		entries             []domainservices.BulkCreateTimesheetEntry
 		flexibleEmployeeIDs = make(map[uint]struct{})
@@ -413,35 +423,18 @@ func (s *BCCImportService) processAssetData(
 				continue
 			}
 
-			rate := int(parsed.ShiftRates[entry.ShiftLabel])
-			target, ok := rateToTarget[rate]
-			if !ok && ratelessFile {
-				// Label-keyed resolution first: partner templates whose column
-				// codes exist as payrate shift leaves (e.g. BUMHAN NT/OT/T7).
-				// The rate follows the label; position is not considered.
-				if cand, found := labelRateTarget(flatRates, entry.ShiftLabel); found {
-					target = cand
-					ok = true
-				}
-			}
-			if !ok && ratelessFile {
-				// Rateless template: derive the payrate bucket from the column
-				// label (regular vs overtime) plus the calendar day type. The
-				// bucket must exist in the project payrate — otherwise the
-				// standard missing-rate row error applies.
-				if hourType, labelOK := shiftLabelHourType(entry.ShiftLabel); labelOK {
-					cand := rateTarget{dayType: determineDayType(date), hourType: hourType}
-					if flatRatesHaveBucket(flatRates, cand.dayType, cand.hourType) {
-						target = cand
-						ok = true
-					}
-				}
-			}
+			target, ok := resolveBCCEntryTarget(parsed.ShiftRates, rateToTarget, flatRates, entry.ShiftLabel, date, ratelessFile, labelKeyedFile)
 			if !ok {
+				// Rateless files have no VND figure to quote — "(0 VND)" would
+				// read as a zero-rate config error rather than an unmapped code.
+				reason := fmt.Sprintf("không tìm thấy mức lương cho ca %s", entry.ShiftLabel)
+				if rate := parsed.ShiftRates[entry.ShiftLabel]; rate > 0 {
+					reason = fmt.Sprintf("%s (%d VND)", reason, rate)
+				}
 				importErrors = append(importErrors, domain.ImportError{
 					Row:      rowNum,
 					Employee: emp.FullName,
-					Reason:   fmt.Sprintf("không tìm thấy mức lương cho ca %s (%d VND)", entry.ShiftLabel, parsed.ShiftRates[entry.ShiftLabel]),
+					Reason:   reason,
 				})
 				continue
 			}

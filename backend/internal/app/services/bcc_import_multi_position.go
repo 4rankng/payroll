@@ -293,12 +293,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 8. Build timesheet entries for each position sheet.
 	// Normalize day type: accept both short names (Thường, Nghỉ, Lễ) and full names (ngày thường, ngày nghỉ, ngày lễ)
-	dayTypePriority := map[string]int{
-		"ngày thường": 0, "thường": 0,
-		"ngày nghỉ": 1, "nghỉ": 1,
-		"ngày lễ": 2, "lễ": 2,
-	}
-	type rateTarget struct{ dayType, hourType string }
+	// (dayTypePriority and rateTarget are the shared package-level declarations.)
 
 	var entries []domainservices.BulkCreateTimesheetEntry
 	flexibleEmployeeIDs := make(map[uint]struct{})

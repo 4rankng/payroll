@@ -28,7 +28,10 @@ type BCCEmployeeData struct {
 	// ("TK Ngân hàng", "Ngân hàng"); empty for legacy files.
 	BankAccount string
 	BankName    string
-	Entries     []BCCEntryData
+	// Mobile captured from the date-row template's phone column
+	// ("SĐT"/"Điện thoại") when present; empty otherwise.
+	Mobile  string
+	Entries []BCCEntryData
 }
 
 // BCCEntryData represents a single non-zero hours entry.

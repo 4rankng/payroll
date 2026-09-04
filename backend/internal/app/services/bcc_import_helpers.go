@@ -247,7 +247,9 @@ var dayTypePriority = map[string]int{
 // config, and the rate is determined purely by the label. Position is
 // intentionally ignored — single-position projects do not key rates by
 // assignment position. When several day types carry the same label,
-// dayTypePriority picks the winner (ngày thường first).
+// dayTypePriority picks the winner (ngày thường first); equal-priority ties
+// (synonym day types, multi-position configs) resolve to the smallest day
+// type string so the result never depends on map iteration order.
 func labelRateTarget(flatRates map[string]int, label string) (rateTarget, bool) {
 	want := canonicalBCCRateKeySegment(label)
 	if want == "" {
@@ -271,7 +273,7 @@ func labelRateTarget(flatRates map[string]int, label string) (rateTarget, bool) 
 		if !known {
 			continue
 		}
-		if !found || pri < bestPri {
+		if !found || pri < bestPri || (pri == bestPri && parts[1] < best.dayType) {
 			best = rateTarget{parts[1], parts[2]}
 			bestPri = pri
 			found = true
@@ -291,7 +293,99 @@ func dateRowEmployeeToSTKRows(employees []excelparser.BCCEmployeeData) []excelpa
 			FullName:    emp.FullName,
 			BankAccount: emp.BankAccount,
 			BankName:    emp.BankName,
+			Mobile:      emp.Mobile,
 		})
 	}
 	return rows
+}
+
+// mergeSTKRows folds rows parsed from a real STK sheet into the BCC-derived
+// rows. STK is the bank-dedicated sheet, so for the same CCCD its account,
+// bank, and mobile win over the BCC sheet's columns; STK-only rows (hires
+// absent from the BCC sheet) are appended so they are created and assigned.
+func mergeSTKRows(base, stk []excelparser.STKRow) []excelparser.STKRow {
+	idx := make(map[string]int, len(base))
+	for i, r := range base {
+		if r.CCCD != "" {
+			idx[r.CCCD] = i
+		}
+	}
+	for _, r := range stk {
+		if r.CCCD == "" {
+			continue
+		}
+		if i, ok := idx[r.CCCD]; ok {
+			if r.BankAccount != "" {
+				base[i].BankAccount = r.BankAccount
+			}
+			if r.BankName != "" {
+				base[i].BankName = r.BankName
+			}
+			if r.Mobile != "" {
+				base[i].Mobile = r.Mobile
+			}
+			continue
+		}
+		idx[r.CCCD] = len(base)
+		base = append(base, r)
+	}
+	return base
+}
+
+// earliestInMonthDay returns the smallest day-of-month carrying hours inside
+// the import month, or 0 when the file has no in-month entries. Date-row
+// files straddle months (e.g. 21/08–24/09): out-of-month days must not feed
+// the payrate probe, which targets a day of the import month.
+func earliestInMonthDay(employees []excelparser.BCCEmployeeData, year int, month time.Month) int {
+	earliest := 0
+	for _, emp := range employees {
+		for _, e := range emp.Entries {
+			if e.DayNum <= 0 {
+				continue
+			}
+			if e.FullDate != nil && (e.FullDate.Year() != year || e.FullDate.Month() != month) {
+				continue
+			}
+			if earliest == 0 || e.DayNum < earliest {
+				earliest = e.DayNum
+			}
+		}
+	}
+	return earliest
+}
+
+// resolveBCCEntryTarget maps one imported entry to its payrate bucket. Order:
+// the file's own rate row first (rate is king); then label-keyed resolution —
+// only for date-row templates, whose column codes name payrate shift leaves;
+// then the rateless calendar fallback (label regular/overtime + calendar day
+// type). labelKeyed must be false for legacy files: their CN means "ca ngày"
+// while a date-row config's CN leaf means Chủ Nhật, so label-first would
+// silently re-price old templates. The calendar fallback applies to rateless
+// templates only — rate-carrying files must fail loudly on an unknown rate.
+func resolveBCCEntryTarget(
+	shiftRates map[string]int64,
+	rateToTarget map[int]rateTarget,
+	flatRates map[string]int,
+	label string,
+	date time.Time,
+	rateless, labelKeyed bool,
+) (rateTarget, bool) {
+	rate := int(shiftRates[label])
+	if target, ok := rateToTarget[rate]; ok {
+		return target, true
+	}
+	if labelKeyed {
+		if cand, found := labelRateTarget(flatRates, label); found {
+			return cand, true
+		}
+	}
+	if rateless {
+		if hourType, labelOK := shiftLabelHourType(label); labelOK {
+			cand := rateTarget{dayType: determineDayType(date), hourType: hourType}
+			if flatRatesHaveBucket(flatRates, cand.dayType, cand.hourType) {
+				return cand, true
+			}
+		}
+	}
+	return rateTarget{}, false
 }
