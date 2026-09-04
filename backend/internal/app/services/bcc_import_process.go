@@ -94,6 +94,16 @@ func (s *BCCImportService) processAssetData(
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
+	// Parse summary for import diagnostics: employees/entries as read from the
+	// file (pre in-month filter) and whether the file carries a rate row.
+	totalEntries := 0
+	for _, emp := range parsed.Employees {
+		totalEntries += len(emp.Entries)
+	}
+	slog.Info("BCCImport: parsed file summary",
+		"employees", len(parsed.Employees), "entries", totalEntries,
+		"rates", len(parsed.ShiftRates))
+
 	// 5-6. Shared setup: month parsing, lock, payrate lookup. The earliest
 	// worked day lets the lookup accept a payrate that starts mid-month but
 	// is already active on the file's first worked day. Date-row files can
@@ -500,6 +510,32 @@ func (s *BCCImportService) processAssetData(
 			})
 		}
 		reason := "không có dữ liệu hợp lệ để tạo bảng chấm công"
+		// Date-row files carry exact calendar dates; when every entry fell
+		// outside the selected month, the generic reason hides the actual fix
+		// (pick the month the data belongs to). Quote the file's data range.
+		if len(importErrors) == 0 {
+			var minDate, maxDate time.Time
+			datedEntries := 0
+			for _, emp := range parsed.Employees {
+				for _, e := range emp.Entries {
+					if e.FullDate == nil {
+						continue
+					}
+					datedEntries++
+					if minDate.IsZero() || e.FullDate.Before(minDate) {
+						minDate = *e.FullDate
+					}
+					if maxDate.IsZero() || e.FullDate.After(maxDate) {
+						maxDate = *e.FullDate
+					}
+				}
+			}
+			if datedEntries > 0 {
+				reason = fmt.Sprintf(
+					"file chỉ chứa giờ công ngoài tháng %s (dữ liệu từ %s đến %s) — chọn tháng tương ứng với dữ liệu file",
+					effectiveMonth, minDate.Format("02/01/2006"), maxDate.Format("02/01/2006"))
+			}
+		}
 		if len(importErrors) > 0 {
 			detail := marshalErrors(importErrors)
 			now := clock.Now()
