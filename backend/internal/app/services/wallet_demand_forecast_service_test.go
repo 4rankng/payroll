@@ -131,8 +131,13 @@ func TestWalletDemandForecastForMonthSelection(t *testing.T) {
 		},
 		{
 			desc: "cutoff_uses_open_previous_period",
-			now:  time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation),
+			now:  time.Date(2026, 8, 8, 9, 0, 0, 0, clock.DefaultLocation),
 			want: "2026-07",
+		},
+		{
+			desc: "sao_ke_day_locks_to_current_period",
+			now:  time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation),
+			want: "2026-08",
 		},
 	}
 
@@ -374,15 +379,15 @@ func TestWalletDemandForecastOnlyCountsPayableStatusesWithoutHistory(t *testing.
 }
 
 func TestWalletDemandForecastIncludesResidualDemandOnCutoffDay(t *testing.T) {
-	// Aug 9 is the request cutoff day: the last cycle day of period 2026-07
-	// (July has 31 days -> maxCycleDay 21), so same-day residual demand from
+	// Aug 8 is the request cutoff day: the last cycle day of period 2026-07
+	// (July has 31 days -> maxCycleDay 20), so same-day residual demand from
 	// history must still be included on top of what today already requested.
-	now := time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation)
+	now := time.Date(2026, 8, 8, 9, 0, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
 		rows: []domain.CohortRow{
-			{ForMonth: "2026-07", CycleDay: 21, Status: string(domain.AdvancePaymentStatusPending), TotalAmount: 40_000_000},
-			{ForMonth: "2026-05", CycleDay: 21, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
-			{ForMonth: "2026-03", CycleDay: 21, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
+			{ForMonth: "2026-07", CycleDay: 20, Status: string(domain.AdvancePaymentStatusPending), TotalAmount: 40_000_000},
+			{ForMonth: "2026-05", CycleDay: 20, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
+			{ForMonth: "2026-03", CycleDay: 20, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 100_000_000},
 		},
 	}
 	walletSvc := &walletDemandForecastWalletStub{balance: &walletdomain.WalletBalance{Available: 0}}

@@ -378,12 +378,12 @@ describe("isPriorMonthRequestable", () => {
     quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 3_000_000 }],
   } as never;
 
-  it("allows the prior month on day 9 when prev-month quota exists", () => {
-    expect(isPriorMonthRequestable(new Date(2026, 7, 9, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
+  it("allows the prior month on day 8 when prev-month quota exists", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 8, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
   });
 
-  it("rejects the prior month from day 10 (tail closed)", () => {
-    expect(isPriorMonthRequestable(new Date(2026, 7, 10, 0, 0), prevMonth, infoWithPrevQuota)).toBe(false);
+  it("rejects the prior month from day 9 (sao kê day — tail closed)", () => {
+    expect(isPriorMonthRequestable(new Date(2026, 7, 9, 0, 0), prevMonth, infoWithPrevQuota)).toBe(false);
     expect(isPriorMonthRequestable(new Date(2026, 7, 31), prevMonth, infoWithPrevQuota)).toBe(false);
   });
 

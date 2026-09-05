@@ -17,7 +17,7 @@ import "time"
 //
 // cycle-day 1 is the Ky's work-start calendar day; the pay date lands on
 // MaxCycleDay. This is a DISTINCT cycle from the advance-payment period
-// (day 20 → day 9, modelled in advance_payment.go) — the two must never share
+// (day 20 → day 8, modelled in advance_payment.go) — the two must never share
 // constants.
 
 const (

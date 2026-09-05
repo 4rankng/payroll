@@ -23,7 +23,8 @@ func TestCreateRequestHybridWindow(t *testing.T) {
 		wantErr  bool
 	}{
 		{"day 5 prev month (tail open)", time.Date(2026, 8, 5, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
-		{"day 9 prev month (last tail day)", time.Date(2026, 8, 9, 23, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
+		{"day 8 prev month (last tail day)", time.Date(2026, 8, 8, 23, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
+		{"day 9 prev month (cutoff passed — sao kê day)", time.Date(2026, 8, 9, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", true},
 		{"day 10 prev month (tail closed)", time.Date(2026, 8, 10, 0, 0, 30, 0, clock.DefaultLocation), "2026-07", true},
 		{"day 31 prev month (closes the hole)", time.Date(2026, 8, 31, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", true},
 		{"day 5 current month (tail is prev-only)", time.Date(2026, 8, 5, 9, 0, 0, 0, clock.DefaultLocation), "2026-08", true},

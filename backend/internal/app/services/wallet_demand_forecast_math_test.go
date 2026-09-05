@@ -9,12 +9,12 @@ import (
 
 func TestMaxCycleDay(t *testing.T) {
 	cases := map[string]int{
-		"2026-01": (31 - 20 + 1) + 9, // January -> 21
-		"2026-02": (28 - 20 + 1) + 9, // Feb non-leap -> 18
-		"2024-02": (29 - 20 + 1) + 9, // Feb leap 2024 -> 19
-		"2026-04": (30 - 20 + 1) + 9, // April -> 20
-		"2026-06": (30 - 20 + 1) + 9, // June -> 20
-		"2026-07": (31 - 20 + 1) + 9, // July -> 21
+		"2026-01": (31 - 20 + 1) + 8, // January -> 20
+		"2026-02": (28 - 20 + 1) + 8, // Feb non-leap -> 17
+		"2024-02": (29 - 20 + 1) + 8, // Feb leap 2024 -> 18
+		"2026-04": (30 - 20 + 1) + 8, // April -> 19
+		"2026-06": (30 - 20 + 1) + 8, // June -> 19
+		"2026-07": (31 - 20 + 1) + 8, // July -> 20
 	}
 	for fm, want := range cases {
 		if got := maxCycleDay(fm); got != want {
@@ -28,8 +28,8 @@ func TestCycleDayFor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load Asia/Ho_Chi_Minh: %v", err)
 	}
-	// Period "2026-06" runs June 20 -> July 9 (request cutoff day 9).
-	// June has 30 days -> maxCycleDay 20.
+	// Period "2026-06" runs June 20 -> July 8 (request cutoff day 8).
+	// June has 30 days -> maxCycleDay 19.
 	cases := []struct {
 		desc string
 		t    time.Time
@@ -38,9 +38,9 @@ func TestCycleDayFor(t *testing.T) {
 		{"june20_start", time.Date(2026, 6, 20, 12, 0, 0, 0, loc), 1},
 		{"june30", time.Date(2026, 6, 30, 23, 0, 0, 0, loc), 11},
 		{"july1", time.Date(2026, 7, 1, 0, 0, 0, 0, loc), 12},
-		{"july8", time.Date(2026, 7, 8, 23, 0, 0, 0, loc), 19},
-		{"july9_cutoff", time.Date(2026, 7, 9, 23, 0, 0, 0, loc), 20},
-		{"july10_sao_ke_day", time.Date(2026, 7, 10, 0, 0, 0, 0, loc), 0},
+		{"july8_cutoff", time.Date(2026, 7, 8, 23, 0, 0, 0, loc), 19},
+		{"july9_sao_ke_day", time.Date(2026, 7, 9, 23, 0, 0, 0, loc), 0},
+		{"july10", time.Date(2026, 7, 10, 0, 0, 0, 0, loc), 0},
 		{"june19_before_start", time.Date(2026, 6, 19, 23, 0, 0, 0, loc), 0},
 	}
 	for _, c := range cases {
@@ -63,8 +63,8 @@ func TestCycleDayForHandlesYearBoundary(t *testing.T) {
 	}{
 		{"dec20_start", time.Date(2026, 12, 20, 12, 0, 0, 0, loc), 1},
 		{"jan1_tail", time.Date(2027, 1, 1, 12, 0, 0, 0, loc), 13},
-		{"jan8", time.Date(2027, 1, 8, 12, 0, 0, 0, loc), 20},
-		{"jan9_cutoff", time.Date(2027, 1, 9, 12, 0, 0, 0, loc), 21},
+		{"jan8_cutoff", time.Date(2027, 1, 8, 12, 0, 0, 0, loc), 20},
+		{"jan9_sao_ke_day", time.Date(2027, 1, 9, 12, 0, 0, 0, loc), 0},
 		{"jan10_closed", time.Date(2027, 1, 10, 12, 0, 0, 0, loc), 0},
 	}
 	for _, c := range cases {

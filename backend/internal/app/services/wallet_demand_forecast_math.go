@@ -16,7 +16,7 @@ import (
 // makes the forecast logic trivially unit-testable.
 //
 // Period model: the advance-payment period for forMonth M runs from day 20 of M
-// through day 9 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
+// through day 8 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
 // net employee-requested amounts (request_amount - fee), plus completed/grand

@@ -315,7 +315,7 @@ export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: strin
 
 /**
  * Whether a self-check-in employee may still request the PREVIOUS payroll
- * month via the regular (admin-upload) flow — the days 1–9 tail that closes
+ * month via the regular (admin-upload) flow — the days 1–8 tail that closes
  * at the FlexPay request cutoff.
  *
  * UX-only gate: the backend re-validates the window in
@@ -337,7 +337,7 @@ export function isPriorMonthRequestable(
 }
 
 /** Last day of the month-overhang tail (parity with backend RequestCutoffDay). */
-export const ADVANCE_REQUEST_CUTOFF_DAY = 9;
+export const ADVANCE_REQUEST_CUTOFF_DAY = 8;
 
 /**
  * Select the API-provided active payroll period when a non-check-in employee
