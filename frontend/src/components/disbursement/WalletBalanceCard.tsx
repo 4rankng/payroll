@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,8 @@ import { walletService } from "@/services/api/wallet.service";
 import { formatCurrency } from "@/utils/formatters";
 import { showErrorNotification } from "@/utils/error-handler";
 import { useDisbursementSettings } from "@/hooks/useDisbursementSettings";
+import { formatVietnameseDateTime } from "@/utils/vietnamese";
+import type { WalletBalance } from "@/types/api/wallet.types";
 
 interface WalletBalanceCardProps {
   monthlyProviderFee?: number;
@@ -33,6 +35,16 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
   const [adjusting, setAdjusting] = useState(false);
 
   const { data: settings, isLoading } = useDisbursementSettings();
+
+  // Wallet-page meta (as_of, pending_out) lives on the wallet-balance query,
+  // not on disbursement-settings. Only the non-compact form consumes it; band
+  // usages pass fee props instead and keep the fee rail.
+  const { data: walletBalance } = useQuery<WalletBalance>({
+    queryKey: ["wallet", "balance"],
+    queryFn: () => walletService.getBalance(),
+    enabled: !compact,
+  });
+  const showFeeRail = monthlyProviderFee != null || totalProviderFee != null;
 
   const available = settings?.internal_balance?.available ?? 0;
   const isLow = available < 1_000_000;
@@ -181,31 +193,51 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   Số dư thấp — cân nhắc nạp thêm
                 </div>
               )}
+
+              {!compact && walletBalance?.as_of && (
+                <p className="mt-2 text-xs tabular-nums tracking-wide text-white/55">
+                  Cập nhật {formatVietnameseDateTime(walletBalance.as_of)}
+                </p>
+              )}
             </div>
 
-            {/* Meta Grid */}
+            {/* Footer rail — fee grid when fee props are supplied (band
+                usages); otherwise the wallet-page companion: pending out. */}
             <div
               className={cn(
-                "treasury-rail treasury-rail--dark grid grid-cols-2",
-                compact ? "mt-3 gap-2 pt-3" : "mt-[22px] gap-3.5 pt-3.5",
+                "treasury-rail treasury-rail--dark",
+                compact ? "mt-3 pt-3" : "mt-[22px] pt-3.5",
               )}
             >
-              <div className="min-w-0">
-                <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
-                  Tổng phí trả
+              {showFeeRail ? (
+                <div className={cn("grid grid-cols-2", compact ? "gap-2" : "gap-3.5")}>
+                  <div className="min-w-0">
+                    <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
+                      Tổng phí trả
+                    </div>
+                    <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
+                      {formatCurrency(totalProviderFee ?? 0)}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
+                      Phí tháng này
+                    </div>
+                    <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
+                      {formatCurrency(monthlyProviderFee ?? 0)}
+                    </div>
+                  </div>
                 </div>
-                <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
-                  {formatCurrency(totalProviderFee ?? 0)}
+              ) : (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                    Đang chi trả
+                  </span>
+                  <span className="break-words font-financial text-[15px] font-medium leading-snug tabular-nums text-white">
+                    {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}
+                  </span>
                 </div>
-              </div>
-              <div className="min-w-0">
-                <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
-                  Phí tháng này
-                </div>
-                <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
-                  {formatCurrency(monthlyProviderFee ?? 0)}
-                </div>
-              </div>
+              )}
             </div>
           </>
         ) : (
