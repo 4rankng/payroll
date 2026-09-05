@@ -221,6 +221,7 @@ const AdvancePaymentsPageMobile = () => {
   const heroProps = useMemo(
     () => ({
       totalAmount: summaryData?.totalAmount ?? 0,
+      totalPaid: summaryData?.totalPaid ?? 0,
     }),
     [summaryData],
   );
@@ -244,8 +245,6 @@ const AdvancePaymentsPageMobile = () => {
   const feePanelProps = useMemo(
     () => ({
       totalFeeEarned: summaryData?.totalFeeEarned ?? 0,
-      totalPaid: summaryData?.totalPaid ?? 0,
-      totalRequests: summaryData?.totalRequests ?? 0,
       feePercentage: summaryData?.feePercentage ?? 0,
       avgFeePerRequest: summaryData?.avgFeePerRequest ?? 0,
       avgFeePerEmployee: summaryData?.avgFeePerEmployee ?? 0,

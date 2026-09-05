@@ -9,13 +9,11 @@ import { formatCurrency } from "@/utils/formatters";
 
 export interface TreasuryFeePanelProps {
   totalFeeEarned: number;
-  totalPaid: number;
-  totalRequests: number;
   /** From backend — fee earned / paid amount * 100 */
   feePercentage: number;
-  /** From backend — fee earned / total paid */
+  /** From backend — fee earned / completed requests */
   avgFeePerRequest: number;
-  /** From backend — fee earned / total requests */
+  /** From backend — fee earned / employees in the period */
   avgFeePerEmployee: number;
   isLoading?: boolean;
   className?: string;
@@ -28,8 +26,6 @@ export interface TreasuryFeePanelProps {
 
 export const TreasuryFeePanel = memo(function TreasuryFeePanel({
   totalFeeEarned,
-  totalPaid,
-  totalRequests,
   feePercentage,
   avgFeePerRequest,
   avgFeePerEmployee,
@@ -37,20 +33,32 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
   className,
   compact = false,
 }: TreasuryFeePanelProps) {
+  // Footer companions: the two fee averages. Request/employee counts stay in
+  // the pipeline band — repeating them here would duplicate adjacent metrics.
+  const footerCols = [
+    { label: "Phí /yc", value: avgFeePerRequest },
+    { label: "Phí /nv", value: avgFeePerEmployee },
+  ];
+
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col justify-center",
+        "relative flex h-full flex-col",
         compact ? "p-3.5" : "p-5 sm:p-6",
         "bg-[radial-gradient(90%_70%_at_50%_0%,rgba(8,120,62,0.05),transparent_70%)]",
         className,
       )}
     >
       {isLoading ? (
-        <div className="space-y-2.5">
+        <div className="flex h-full flex-col">
           <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-3 w-44" />
+          <Skeleton className="mt-2.5 h-6 w-40" />
+          <div className="mt-auto pt-3">
+            <div className="grid grid-cols-2 gap-3 border-t border-border/60 pt-2.5">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -73,20 +81,20 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             <span className="text-[11px] text-muted-foreground">trên giải ngân</span>
           </div>
 
-          {/* Micro stats — per-request / per-employee averages with counts */}
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11px] leading-snug text-muted-foreground">
-            <span className="whitespace-nowrap">
-              <span className="font-financial font-semibold text-foreground/75 tabular-nums">
-                {avgFeePerRequest > 0 ? `~${formatCurrency(avgFeePerRequest)}` : "—"}
-              </span>{" "}
-              /yc · {totalPaid} yc
-            </span>
-            <span className="whitespace-nowrap">
-              <span className="font-financial font-semibold text-foreground/75 tabular-nums">
-                {avgFeePerEmployee > 0 ? `~${formatCurrency(avgFeePerEmployee)}` : "—"}
-              </span>{" "}
-              /nv · {totalRequests} NV
-            </span>
+          {/* Footer rail — pinned via mt-auto to the shared band baseline. */}
+          <div className="mt-auto pt-3">
+            <div className="border-t border-border/60 pt-2.5 grid grid-cols-2 gap-3">
+              {footerCols.map((col) => (
+                <div key={col.label} className="min-w-0">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    {col.label}
+                  </div>
+                  <div className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums">
+                    {col.value > 0 ? `~${formatCurrency(col.value)}` : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}
