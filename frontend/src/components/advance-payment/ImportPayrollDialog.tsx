@@ -162,19 +162,14 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
             {/* Body */}
             <div className="px-5 py-4 space-y-5">
               {/* Derived salary period (display only — backend derives from the upload date) */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3.5 py-2.5">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm text-muted-foreground">Kỳ lương</span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatMonthDisplay(salaryPeriodMonth)}
-                  </span>
+              <div className="flex items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3.5 py-2.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground">Kỳ lương</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Tự động xác định theo ngày nhập (20/8 – 8/9 thuộc kỳ tháng 8).
-                </p>
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatMonthDisplay(salaryPeriodMonth)}
+                </span>
               </div>
 
               <div className="border-t border-dashed border-border/60" />

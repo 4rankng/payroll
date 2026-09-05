@@ -46,7 +46,6 @@ describe('ImportPayrollDialog', () => {
     render(<ImportPayrollDialog open onOpenChange={vi.fn()} />);
 
     expect(screen.getByText('Kỳ lương')).toBeInTheDocument();
-    expect(screen.getByText(/Tự động xác định theo ngày nhập/)).toBeInTheDocument();
     // No month chips to select.
     expect(screen.queryByRole('button', { name: /\/2026/ })).not.toBeInTheDocument();
   });
