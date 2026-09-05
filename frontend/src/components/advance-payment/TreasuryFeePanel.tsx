@@ -40,8 +40,9 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
   return (
     <div
       className={cn(
-        "flex h-full flex-col justify-center",
+        "relative flex h-full flex-col justify-center",
         compact ? "p-3.5" : "p-5 sm:p-6",
+        "bg-[radial-gradient(90%_70%_at_50%_0%,rgba(8,120,62,0.05),transparent_70%)]",
         className,
       )}
     >
@@ -55,8 +56,8 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
         <>
           {/* Label */}
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]" />
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
               Phí thu kỳ này
             </span>
           </div>
@@ -66,7 +67,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             <span className="max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums">
               {formatCurrency(totalFeeEarned)}
             </span>
-            <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-semibold text-foreground/70">
+            <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/60">
               {feePercentage.toFixed(1)}%
             </span>
             <span className="text-[11px] text-muted-foreground">trên giải ngân</span>

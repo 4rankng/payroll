@@ -96,17 +96,21 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       aria-label="Ví tiền"
       className={cn(
         "relative h-full overflow-hidden p-[22px] px-6 text-white",
-        "bg-[#06452E]",
+        "bg-[radial-gradient(130%_130%_at_0%_0%,#0C7A50_0%,#06452E_48%,#032B1D_100%)]",
+        "ring-1 ring-inset ring-white/[0.08]",
         compact && "p-3.5",
         className
       )}
     >
-      {/* Grid pattern overlay */}
-      <div 
+      {/* Grid pattern overlay — masked so the HUD grid is strongest at the
+          top-left corner and dissolves toward the bottom-right. */}
+      <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage: 'linear-gradient(rgba(183,228,202,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(183,228,202,0.10) 1px, transparent 1px)',
-          backgroundSize: '28px 28px'
+          backgroundSize: '28px 28px',
+          maskImage: 'radial-gradient(140%_110%_at_0%_0%, black 25%, transparent 78%)',
+          WebkitMaskImage: 'radial-gradient(140%_110%_at_0%_0%, black 25%, transparent 78%)',
         }}
       />
 
@@ -171,7 +175,12 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             </div>
 
             {/* Meta Grid */}
-            <div className={cn("grid grid-cols-2", compact ? "mt-3 gap-2" : "mt-[22px] gap-3.5")}>
+            <div
+              className={cn(
+                "grid grid-cols-2 border-t border-white/10",
+                compact ? "mt-3 gap-2 pt-3" : "mt-[22px] gap-3.5 pt-3.5",
+              )}
+            >
               <div className="min-w-0">
                 <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
                   Tổng phí trả

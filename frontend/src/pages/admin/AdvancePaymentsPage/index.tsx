@@ -110,6 +110,10 @@ const AdvancePaymentsPage = () => {
   // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
   // gating the query prevents a 403 storm on the shared mobile component.
   const { data: demandForecast } = useWalletDemandForecast(!isAdvPartner);
+  // The demand panel only earns a band slot when it carries an actionable
+  // warning — a satisfied wallet would just re-display the Ví tiền balance
+  // that Panel 1 already shows.
+  const needsTopUp = (demandForecast?.prediction?.shortfall ?? 0) > 0;
 
   const summaryData = page.summary?.data;
 
@@ -301,7 +305,9 @@ const AdvancePaymentsPage = () => {
             "grid divide-border/50",
             isAdvPartner
               ? "grid-cols-1 divide-y lg:grid-cols-[1fr_300px] lg:divide-y-0 lg:divide-x"
-              : "grid-cols-1 divide-y lg:grid-cols-4 lg:divide-y-0 lg:divide-x",
+              : needsTopUp
+                ? "grid-cols-1 divide-y lg:grid-cols-4 lg:divide-y-0 lg:divide-x"
+                : "grid-cols-1 divide-y lg:grid-cols-3 lg:divide-y-0 lg:divide-x",
           )}>
 
             {/* Panel A: Wallet — admins only (desktop only; mobile shows it above) */}
@@ -331,8 +337,8 @@ const AdvancePaymentsPage = () => {
               compact={!isAdvPartner}
             />
 
-            {/* Panel D: Wallet top-up need — admins only */}
-            {!isAdvPartner && (
+            {/* Panel D: Wallet top-up warning — admins, only when actionable */}
+            {!isAdvPartner && needsTopUp && (
               <WalletDemandCard data={demandForecast} compact className="p-3.5" />
             )}
           </div>

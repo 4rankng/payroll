@@ -39,6 +39,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         "relative flex flex-col justify-between",
         compact ? "p-3.5" : "p-[22px] px-7",
         "rounded-xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]",
+        "bg-[radial-gradient(90%_70%_at_50%_0%,rgba(8,120,62,0.05),transparent_70%)]",
         className,
       )}
     >
@@ -49,8 +50,8 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         </div>
       ) : (
         <div>
-          <div className={cn("flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-muted-foreground", compact ? "text-[11px]" : "text-[11px]")}>
-            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+          <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]" />
             Giải ngân kỳ này
           </div>
           <div className={cn("mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}>

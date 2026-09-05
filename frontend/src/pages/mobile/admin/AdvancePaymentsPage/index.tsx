@@ -429,7 +429,9 @@ const AdvancePaymentsPageMobile = () => {
               compact
               isLoading={page.summaryLoading}
             />
-            {!isAdvPartner && (
+            {/* Only when actionable — a satisfied wallet just repeats the
+                balance card rendered above this section. */}
+            {!isAdvPartner && (demandForecast?.prediction?.shortfall ?? 0) > 0 && (
               <WalletDemandCard compact data={demandForecast} className="p-3.5" />
             )}
           </div>
