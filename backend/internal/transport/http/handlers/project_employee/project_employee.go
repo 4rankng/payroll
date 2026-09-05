@@ -112,12 +112,19 @@ func (h *Handler) requireCheckInConfigurationAccess(c *gin.Context, projectID ui
 }
 
 // requireAdvanceToggleAccess gates the per-employee advance payment kill
-// switch ("tạm ngừng ứng lương").
-func (h *Handler) requireAdvanceToggleAccess(c *gin.Context, projectID uint) bool {
-	return h.requireProjectModifyAccess(c, projectID,
-		"Bạn không có quyền tạm ngừng ứng lương",
-		"Bạn không có quyền tạm ngừng ứng lương cho dự án này",
-		"advance toggle")
+// switch ("tạm ngừng ứng lương"). adv_partner is the FlexPay pipeline operator
+// with project-agnostic write access (they already import/export/reconcile
+// every project's advance data), so this gate is role-based — NOT the
+// per-project CanUserModifyProject ownership the check-in toggles use
+// (advance projects are routinely admin-created with no project_users rows;
+// an ownership check here 403s legitimate adv_partner operators).
+func (h *Handler) requireAdvanceToggleAccess(c *gin.Context) bool {
+	role := c.GetString(constants.CtxUserRole)
+	if role == string(domain.RoleAdmin) || role == string(domain.RoleAdvPartner) {
+		return true
+	}
+	response.Forbidden(c, "Bạn không có quyền tạm ngừng ứng lương")
+	return false
 }
 
 func (h *Handler) ListCheckInConfigurableProjects(c *gin.Context) {
@@ -737,7 +744,7 @@ func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
 	}
-	if !h.requireAdvanceToggleAccess(c, uint(projectID)) {
+	if !h.requireAdvanceToggleAccess(c) {
 		return
 	}
 

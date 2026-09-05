@@ -227,7 +227,12 @@ func (m *AuthorizationMiddleware) extractProjectID(path string) *uint {
 func (m *AuthorizationMiddleware) isProjectSpecificRoute(path string) bool {
 	return strings.Contains(path, "/projects/") &&
 		!strings.Contains(path, "/projects/summary") &&
-		!strings.Contains(path, "/projects/shared")
+		!strings.Contains(path, "/projects/shared") &&
+		// The advance kill switch is authorized by role (casbin + handler):
+		// adv_partner is the FlexPay pipeline operator with project-agnostic
+		// write access, and advance projects are routinely admin-created with
+		// no project_users rows — the per-project modify gate would 403 them.
+		!strings.Contains(path, "/advance-request-enabled")
 }
 
 // extractEmployeeID extracts employee ID from URL path
@@ -275,6 +280,11 @@ func (m *AuthorizationMiddleware) isEmployeeSpecificRoute(path string) bool {
 
 	// Exclude routes with their own creator-only/access control logic
 	if strings.Contains(path, "/change-password") {
+		return false
+	}
+	// Advance kill switch: role-authorized (casbin + handler) — adv_partner is
+	// the FlexPay pipeline operator; per-employee modify gates don't apply.
+	if strings.Contains(path, "/advance-request-enabled") {
 		return false
 	}
 	if strings.Contains(path, "/users") {
