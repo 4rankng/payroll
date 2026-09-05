@@ -220,9 +220,9 @@ function SortHeader({ label, field, ctx }: { label: string; field: string; ctx: 
 }
 
 // Shared kill-switch renderer: one place for the fallback semantics so the
-// desktop column and the mobile card fields cannot drift. Rendered only when
-// the row carries a project (the PATCH needs its id).
-function renderAdvanceToggle(row: FlexPayEmployeeListItem) {
+// desktop column, the mobile card fields, and the employee list card cannot
+// drift. Rendered only when the row carries a project (the PATCH needs its id).
+export function renderAdvanceToggle(row: FlexPayEmployeeListItem) {
   if (!row.project) return "-";
   return (
     <AdvanceRequestToggle

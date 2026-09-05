@@ -2,10 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdvanceRequestToggle } from "./AdvanceRequestToggle";
 
-const mutateMock = vi.hoisted(() => vi.fn());
+const mutateAsyncMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
 vi.mock("@/hooks/api/useAdvancePayments", () => ({
-  useToggleAdvanceRequestEnabled: () => ({ isPending: false, mutate: mutateMock }),
+  useToggleAdvanceRequestEnabled: () => ({ isPending: false, mutateAsync: mutateAsyncMock }),
 }));
 
 const renderToggle = (enabled: boolean, onParentClick?: () => void) =>
@@ -16,7 +16,7 @@ const renderToggle = (enabled: boolean, onParentClick?: () => void) =>
   );
 
 beforeEach(() => {
-  mutateMock.mockReset();
+  mutateAsyncMock.mockClear();
 });
 
 describe("AdvanceRequestToggle", () => {
@@ -25,11 +25,11 @@ describe("AdvanceRequestToggle", () => {
 
     fireEvent.click(screen.getByRole("switch"));
 
-    expect(mutateMock).not.toHaveBeenCalled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
     expect(screen.getByText("Tạm ngừng ứng lương?")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Tạm ngừng" }));
-    expect(mutateMock).toHaveBeenCalledWith({
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
       projectId: 7,
       employeeId: 42,
       enabled: false,
@@ -42,7 +42,7 @@ describe("AdvanceRequestToggle", () => {
     fireEvent.click(screen.getByRole("switch"));
     fireEvent.click(screen.getByRole("button", { name: "Giữ lại" }));
 
-    expect(mutateMock).not.toHaveBeenCalled();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
   it("re-enabling fires immediately without a confirmation dialog", () => {
@@ -51,7 +51,7 @@ describe("AdvanceRequestToggle", () => {
     expect(screen.getByText("Đang tạm ngừng")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("switch"));
-    expect(mutateMock).toHaveBeenCalledWith({
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
       projectId: 7,
       employeeId: 42,
       enabled: true,

@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToggleAdvanceRequestEnabled } from "@/hooks/api/useAdvancePayments";
 
 interface AdvanceRequestToggleProps {
@@ -35,7 +26,9 @@ export function AdvanceRequestToggle({
 
   const fire = (value: boolean) => {
     if (toggleMutation.isPending) return; // guard double-fire during a slow PATCH
-    toggleMutation.mutate({ projectId, employeeId, enabled: value });
+    return toggleMutation
+      .mutateAsync({ projectId, employeeId, enabled: value })
+      .then(() => undefined);
   };
 
   const handleToggle = (checked: boolean) => {
@@ -60,27 +53,16 @@ export function AdvanceRequestToggle({
           Đang tạm ngừng
         </span>
       )}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Tạm ngừng ứng lương?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Nhân viên sẽ không thể tạo yêu cầu ứng lương mới. Các yêu cầu đang
-              chờ hoặc đã duyệt vẫn được giữ nguyên.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Giữ lại</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-amber-600 hover:bg-amber-700"
-              disabled={toggleMutation.isPending}
-              onClick={() => fire(false)}
-            >
-              Tạm ngừng
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Tạm ngừng ứng lương?"
+        description="Nhân viên sẽ không thể tạo yêu cầu ứng lương mới. Các yêu cầu đang chờ hoặc đã duyệt vẫn được giữ nguyên."
+        confirmText="Tạm ngừng"
+        cancelText="Giữ lại"
+        confirmVariant="destructive"
+        onConfirm={() => fire(false)}
+      />
     </div>
   );
 }
