@@ -15,6 +15,14 @@ const RELIABILITY_DOT = {
   measured: 'bg-emerald-500/80',
 } as const;
 
+/** Label LED tones — calibration semantics, matching RELIABILITY_DOT at full
+ *  strength so the pulsing signal reads at panel scale. */
+const SIGNAL_TONE = {
+  uncalibrated: 'bg-muted-foreground/40',
+  learning: 'bg-amber-500',
+  measured: 'bg-emerald-500',
+} as const;
+
 const fmtDate = (rfc3339: string): string => {
   const date = new Date(rfc3339);
   if (Number.isNaN(date.getTime())) return rfc3339;
@@ -25,7 +33,7 @@ const fmtDate = (rfc3339: string): string => {
 export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCardProps) {
   if (isLoading) {
     return (
-      <div className="flex h-full flex-col gap-3" aria-busy="true" aria-label="Đang tải dự báo tiền trả">
+      <div className="treasury-panel flex h-full flex-col gap-3" aria-busy="true" aria-label="Đang tải dự báo tiền trả">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-9 w-52" />
         <Skeleton className="h-14 w-full" />
@@ -36,7 +44,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
 
   if (isError || !data) {
     return (
-      <div className="flex h-full flex-col justify-center" role="status">
+      <div className="treasury-panel flex h-full flex-col justify-center" role="status">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" aria-hidden="true" />
           Dự báo tiền trả
@@ -51,17 +59,24 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
   const display = getCashReadinessDisplay(data);
 
   return (
-    <section className="flex h-full flex-col" aria-label={`Dự báo tiền trả kỳ ${data.ky}`}>
-      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/60" aria-hidden="true" />
+    <section className="treasury-panel flex h-full flex-col" aria-label={`Dự báo tiền trả kỳ ${data.ky}`}>
+      {/* Measurement mesh — faint dot grid under the panel label. */}
+      <div className="treasury-mesh" aria-hidden />
+
+      <span className="relative z-[1] inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span
+          className={`treasury-signal ${SIGNAL_TONE[display.reliabilityState]}`}
+          aria-hidden="true"
+          title={display.reliabilityLabel}
+        />
         Dự báo tiền trả
       </span>
 
-      <div className="mt-2 min-w-0">
+      <div className="relative z-[1] mt-2 min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
           Nên chuẩn bị
         </p>
-        <p className="mt-1 break-words font-financial text-[clamp(1.375rem,3.5vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
+        <p className="treasury-value mt-1 break-words font-financial text-[clamp(1.375rem,3.5vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
           {formatCurrency(display.recommendedReserve)}
         </p>
         {display.showExpectedPayout && (
@@ -84,7 +99,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         </p>
       )}
 
-      <div className="mt-2.5 border-t border-border/60 pt-2.5 lg:mt-auto">
+      <div className="treasury-rail relative z-[1] mt-2.5 pt-2.5 lg:mt-auto">
         <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
         <dl
           className="mt-1.5 grid grid-cols-2 gap-2"

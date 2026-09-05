@@ -103,9 +103,13 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
         className,
       )}
     >
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
-        {/* Cash readiness — 5 columns */}
-        <div className="lg:col-span-5 lg:border-r lg:border-border lg:pr-4">
+      {/* treasury-grid — the fading seam between the forecast zone and the KPI
+          zone replaces the old hard lg:border-r divider. */}
+      <div className="treasury-grid grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-0">
+        {/* Cash readiness — 5 columns. Zone ownership: this panel owns the
+            forecast numbers (reserve, interval, reliability); the KPI grid owns
+            the operational counts. No metric appears in both zones. */}
+        <div className="lg:col-span-5 lg:pr-5">
           <CashReadinessCard
             data={cashReadiness.data}
             isLoading={cashReadiness.isLoading}
@@ -114,7 +118,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
         </div>
 
         {/* Operational KPIs — 7 columns */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 lg:pl-5">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="font-display text-[13px] font-bold tracking-tight text-foreground">
               Chỉ số vận hành
