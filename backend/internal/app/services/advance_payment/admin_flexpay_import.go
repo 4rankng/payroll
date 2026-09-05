@@ -276,9 +276,11 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 			}
 
 			if shouldNotifyFlexPayZNS(hanMuc, mobile, assignment) {
-				// The template uses the end of the selected payroll month as the
-				// request deadline. Invalid months cannot be made requestable, so
-				// they must not produce a notification.
+				// The card's "Hạn cuối" must match the ENFORCED request window:
+				// requests for payroll month M are accepted through
+				// RequestCutoffDay of month M+1 (inclusive) — not the end of
+				// month M. Invalid months cannot be made requestable, so they
+				// must not produce a notification.
 				expiryDate, err := time.Parse("2006-01", forMonth)
 				if err == nil {
 					key := fmt.Sprintf("%d:%d", project.ID, employee.ID)
@@ -288,7 +290,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 						EmployeeName: fullName,
 						Mobile:       mobile,
 						Amount:       int64(hanMuc),
-						ExpiryDate:   expiryDate.AddDate(0, 1, -1),
+						ExpiryDate:   expiryDate.AddDate(0, 1, clock.RequestCutoffDay-1),
 					}
 					if pos, exists := employeeZNSIndex[key]; exists {
 						employeeZNSData[pos] = notification
