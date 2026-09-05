@@ -61,7 +61,7 @@ function MetricCard({
   value: string;
   unit?: string;
   color: 'emerald' | 'amber' | 'teal';
-  footer: React.ReactNode;
+  footer?: React.ReactNode;
   detail?: React.ReactNode;
   isLoading: boolean;
 }) {
@@ -99,9 +99,11 @@ function MetricCard({
             {unit ? <span className="ml-0.5 text-xs font-bold text-muted-foreground">{unit}</span> : null}
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] leading-snug text-muted-foreground">
-          {footer}
-        </div>
+        {footer ? (
+          <div className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] leading-snug text-muted-foreground">
+            {footer}
+          </div>
+        ) : null}
       </div>
       {detail && <div className="mt-3">{detail}</div>}
     </div>
