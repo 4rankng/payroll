@@ -56,6 +56,16 @@ Rollback: 105 down.sql + previous image.
 - **I1–I8 (integration):** PASS — `make api-test` Total 304 | Passed 281 | Failed 0 | Skipped 23 (first run had 1 FAIL = test-side swapped AssertContains args; fixed, behavior was correct).
 - **F1 (tsc):** 0 errors in touched files (134 pre-existing backlog unchanged; older test files lack vitest global imports — not mine).
 - **F2 (lint):** exit 0.
-- **F3 (vitest component):** 5/5 pass (confirm-on-disable, cancel, immediate-enable, labels, stopPropagation). Full-suite run pending below.
-- **F4–F7 (manual browser):** pending — local dev server QA + post-deploy smoke.
-- **P1–P3 (prod):** pending.
+- **F3 (vitest component):** 5/5 pass (confirm-on-disable, cancel, immediate-enable, labels, stopPropagation).
+- **P1–P3 (prod):** migration 105 applied pre-deploy (column verified); deployed 18:31 — image Created postdates commits; containers recreated.
+
+## Post-deploy adversarial review round (`3c96640d`)
+
+Findings verified in source, then fixed:
+- **AssignEmployee Create→Save auto-pause** (GORM zero-value full-row Save) — CONFIRMED + fixed with explicit `AdvanceRequestEnabled: true` at all 9 assignment-creation sites (assign handler, employee import, FlexPay import, BCC weekly/multi/process imports); integration canary added (freshly re-added employee must start enabled) — PASS `employee 439 → project 58 (LGD), advance_request_enabled=true`.
+- **Paused info returned zeroed quota** — fixed: both info endpoints populate real data; pause notice overrides at the end (employee sees frozen quota + "Tạm ngừng ứng lương", not zeros).
+- **Stats dedup MIN/MAX cross-pairing** — fixed with COALESCE active-row preference; legacy fallback keeps ended-only employees listed.
+- Double-fire on confirm dialog (pending guard), access-helper duplication (shared requireProjectModifyAccess), predicate→prefix invalidation, missing-project PATCH guard (shared renderer), EmployeeCard guard merge, unused `disabled` prop.
+- Sibling-wave UI regressions (7831419d): '—' placeholders restored in TreasuryFeePanel, 0 ₫ amounts shown again in status overview, misleading progressbar aria removed, 44px wallet-sync target restored.
+- Dismissed as stale/false: "missing 105 down.sql" (committed, verified in ls-tree); "deploy-order hazard" (migration applied pre-deploy); "global-block semantics" (deliberate strict-by-default on a money gate; user confirmed 1 employee = 1 project).
+- Re-verification: go unit ok; api-test 304/281/0; vitest 52/52; tsc baseline 134 unchanged; lint 0.

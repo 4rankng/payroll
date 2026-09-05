@@ -177,9 +177,11 @@ type ToggleCheckInEnabledRequest struct {
 	CheckInEnabled bool `json:"check_in_enabled"`
 }
 
-// ToggleAdvanceRequestEnabledRequest represents the request to toggle the per-employee advance payment kill switch
+// ToggleAdvanceRequestEnabledRequest represents the request to toggle the per-employee advance payment kill switch.
+// The field is a pointer with required so an absent or mistyped key is a 400
+// instead of silently binding Go's zero value (false = "pause the employee").
 type ToggleAdvanceRequestEnabledRequest struct {
-	AdvanceRequestEnabled bool `json:"advance_request_enabled"`
+	AdvanceRequestEnabled *bool `json:"advance_request_enabled" binding:"required"`
 }
 
 // BulkToggleCheckInEnabledRequest represents the request to toggle check-in for multiple employees

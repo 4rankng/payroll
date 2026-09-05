@@ -771,7 +771,7 @@ func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
 		return
 	}
 
-	if err := h.projectEmployeeService.ToggleAdvanceRequestEnabled(c.Request.Context(), uint(projectID), uint(employeeID), req.AdvanceRequestEnabled, uid); err != nil {
+	if err := h.projectEmployeeService.ToggleAdvanceRequestEnabled(c.Request.Context(), uint(projectID), uint(employeeID), *req.AdvanceRequestEnabled, uid); err != nil {
 		if domain.IsNotFoundError(err) {
 			response.NotFound(c, err.Error())
 			return

@@ -297,6 +297,18 @@ func (r *AdvancePaymentRepository) GetLatestForMonth(ctx context.Context) (strin
 	return result.ForMonth, nil
 }
 
+// flexPayEmployeeDedupSubquery collapses an employee's flexible
+// project_employees rows to one, picking project_id and id from the SAME row —
+// the active assignment (last_date IS NULL) preferred, newest first — so the
+// displayed kill-switch flag and the toggle PATCH always target the same
+// project_employee row (independent MIN/MAX aggregates can cross-pair rows and
+// brick the toggle for multi-assignment employees). Shared by the data and
+// count queries so pagination totals are computed over the same rows.
+const flexPayEmployeeDedupSubquery = `(SELECT employee_id,
+	CAST(SUBSTRING_INDEX(GROUP_CONCAT(project_id ORDER BY (last_date IS NULL) DESC, id DESC), ',', 1) AS UNSIGNED) as project_id,
+	CAST(SUBSTRING_INDEX(GROUP_CONCAT(id ORDER BY (last_date IS NULL) DESC, id DESC), ',', 1) AS UNSIGNED) as project_employee_id
+	FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe`
+
 // GetEmployeeAdvanceStats returns employees with their advance payment statistics
 // Uses project_employees as base table for flexible payment schedule employees
 func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, filters domain.EmployeeAdvanceStatsFilters) ([]*domain.EmployeeAdvanceStats, int64, error) {
@@ -305,16 +317,8 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 
 	// Build base query using project_employees as the base table for flexible payment schedule.
 	// Deduplicate via subquery to avoid row multiplication from duplicate entries.
-	// project_id and project_employee_id are picked from the SAME row — the
-	// active assignment (last_date IS NULL) preferred, newest first — so the
-	// displayed kill-switch flag and the toggle PATCH always target the same
-	// project_employee row (independent MIN/MAX aggregates can cross-pair rows
-	// and brick the toggle for multi-assignment employees).
 	query := r.DB.WithContext(ctx).
-		Table(`(SELECT employee_id,
-			CAST(SUBSTRING_INDEX(GROUP_CONCAT(project_id ORDER BY (last_date IS NULL) DESC, id DESC), ',', 1) AS UNSIGNED) as project_id,
-			CAST(SUBSTRING_INDEX(GROUP_CONCAT(id ORDER BY (last_date IS NULL) DESC, id DESC), ',', 1) AS UNSIGNED) as project_employee_id
-			FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe`, domain.PaymentScheduleFlexible).
+		Table(flexPayEmployeeDedupSubquery, domain.PaymentScheduleFlexible).
 		Select(`
 			e.id as employee_id,
 			e.fullname,
@@ -392,9 +396,12 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 		query = query.Where("e.fullname LIKE ? OR e.cccd LIKE ?", searchTerm, searchTerm)
 	}
 
-	// Count total using a separate query
+	// Count total using a separate query. Same dedup subquery as the data
+	// query: the count must resolve each employee to the same picked
+	// assignment row, or ForMonth/Search filtering can disagree with the
+	// rows actually returned (pagination totals drift).
 	countQuery := r.DB.WithContext(ctx).
-		Table("(SELECT employee_id, MIN(project_id) as project_id, MAX(id) as project_employee_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
+		Table(flexPayEmployeeDedupSubquery, domain.PaymentScheduleFlexible).
 		Joins("JOIN employees e ON pe.employee_id = e.id").
 		Joins("JOIN project_employees pe_detail ON pe_detail.id = pe.project_employee_id").
 		Joins("JOIN projects p ON pe.project_id = p.id")
