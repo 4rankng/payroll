@@ -13,7 +13,7 @@ import {
   useCancelEditRequest,
   useApproveEditRequest,
 } from "@/hooks/api/useTimesheetEditRequests";
-import { useCurrentPayRate } from "@/hooks/api/usePayRates";
+import { useCurrentPayRate, isForbiddenError } from "@/hooks/api/usePayRates";
 import { useActiveProjectEmployees } from "@/hooks/api/useProjectEmployees";
 import { useProject } from "@/hooks/api/useProjects";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,8 +73,11 @@ export function useTimesheetEntryForm({
   const approveEditRequestMutation = useApproveEditRequest();
   const { user } = useAuth();
 
-  const { data: payrateData, isLoading: isPayrateLoading, isError: isPayrateError } =
+  const { data: payrateData, isLoading: isPayrateLoading, isError: isPayrateError, error: payrateError } =
     useCurrentPayRate(projectId, isOpen && !!projectId);
+  // 403 = the user's role cannot access this project's payrate — show a
+  // permission message instead of the "project has no payrate config" setup flow.
+  const payrateForbidden = isForbiddenError(payrateError);
   const {
     data: projectData,
     isLoading: isPayUnitLoading,
@@ -383,6 +386,7 @@ export function useTimesheetEntryForm({
     isLoading,
     isPayrateLoading,
     isPayrateError,
+    payrateForbidden,
     isPayUnitLoading,
     isPayUnitError,
     // Computed

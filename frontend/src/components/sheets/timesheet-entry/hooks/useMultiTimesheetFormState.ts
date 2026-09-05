@@ -53,6 +53,7 @@ export const useMultiTimesheetFormState = ({
   const {
     payRateData,
     isLoadingPayRate,
+    payRateForbidden,
     isPayRateReady,
     getDayTypesForPosition,
     getHourTypesForEntry,
@@ -245,6 +246,7 @@ export const useMultiTimesheetFormState = ({
     formOptions,
     validation,
     isLoadingPayRate,
+    payRateForbidden,
     isPayRateReady,
     isLoadingProjectEmployees,
     getDayTypesForPosition,

@@ -1,9 +1,12 @@
 import { useCallback, useRef, useEffect, useMemo } from 'react';
-import { useCurrentPayRate } from '@/hooks/api/usePayRates';
+import { useCurrentPayRate, isForbiddenError } from '@/hooks/api/usePayRates';
 import type { RateCategory } from '@/types/api/payrate.types';
 
 export const usePayRateData = (projectId: number) => {
-  const { data: payRateData, isLoading: isLoadingPayRate } = useCurrentPayRate(projectId || 0);
+  const { data: payRateData, isLoading: isLoadingPayRate, error: payRateError } = useCurrentPayRate(projectId || 0);
+  // 403 = no access to this project's payrate (partner IDOR guard) — consumers
+  // show a permission message instead of "project has no payrate config".
+  const payRateForbidden = isForbiddenError(payRateError);
   const payRateDataRef = useRef(payRateData);
 
   useEffect(() => {
@@ -112,6 +115,7 @@ export const usePayRateData = (projectId: number) => {
   return {
     payRateData,
     isLoadingPayRate,
+    payRateForbidden,
     isPayRateReady,
     getDayTypesForPosition,
     getHourTypesForEntry,

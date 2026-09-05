@@ -9,23 +9,40 @@ import type {
   RateCategory
 } from '@/types/api/payrate.types';
 
-// Type guard for checking if error has 404 status
-function isNotFoundError(error: unknown): boolean {
+// Type guard for checking the HTTP status of an error (axios or API error shape)
+function hasHttpStatus(error: unknown, status: number): boolean {
   if (!error || typeof error !== 'object') return false;
 
   // Check axios error format
   if ('response' in error) {
     const axiosError = error as { response?: { status?: number } };
-    return axiosError.response?.status === 404;
+    return axiosError.response?.status === status;
   }
 
   // Check API error format
   if ('http_status' in error) {
     const apiError = error as { http_status?: number };
-    return apiError.http_status === 404;
+    return apiError.http_status === status;
   }
 
   return false;
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return hasHttpStatus(error, 404);
+}
+
+// 403 = the caller's role has no access to this project (authorization
+// middleware IDOR guard). Retrying cannot change the answer.
+export function isForbiddenError(error: unknown): boolean {
+  return hasHttpStatus(error, 403);
+}
+
+// Shared retry policy for payrate queries: 404 (no payrate exists) and 403
+// (no project access) are terminal; retry only transient errors, max 3 times.
+export function payrateQueryRetry(failureCount: number, error: unknown): boolean {
+  if (isNotFoundError(error) || isForbiddenError(error)) return false;
+  return failureCount < 3;
 }
 
 // ========== PAY RATE QUERIES ==========
@@ -42,14 +59,7 @@ export function useCurrentPayRate(projectId: number, enabled = true) {
     },
     enabled: enabled && !!projectId,
     gcTime: 15 * 60 * 1000, // 15 minutes
-    retry: (failureCount, error: unknown) => {
-      // Don't retry on 404 - it means no payrate exists for this project
-      if (isNotFoundError(error)) {
-        return false;
-      }
-      // Retry other errors up to 3 times
-      return failureCount < 3;
-    },
+    retry: payrateQueryRetry,
   });
 }
 
@@ -66,14 +76,7 @@ export function useProjectPayRates(
     queryFn: () => payRateService.getProjectPayRates(projectId, params),
     enabled,
     gcTime: 15 * 60 * 1000, // 15 minutes
-    retry: (failureCount, error: unknown) => {
-      // Don't retry on 404 - it means no payrates exist for this project
-      if (isNotFoundError(error)) {
-        return false;
-      }
-      // Retry other errors up to 3 times
-      return failureCount < 3;
-    },
+    retry: payrateQueryRetry,
   });
 }
 

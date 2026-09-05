@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PayratePreview } from './PayratePreview';
 import { ExistingEntriesDisplay } from './ExistingEntriesDisplay';
-import { useProjectPayRates, useCurrentPayRate } from '@/hooks/api/usePayRates';
+import { useProjectPayRates, useCurrentPayRate, isForbiddenError } from '@/hooks/api/usePayRates';
 import { useProjectEmployees } from '@/hooks/api/useProjectEmployees';
 import { useTimesheetsByProjectAndDate } from '@/hooks/api/useTimesheets';
 import { timesheetService } from '@/services/api/timesheet.service';
@@ -53,10 +53,13 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
     {}, 
     !!selectedProject
   );
-  const { data: payRateData } = useCurrentPayRate(
-    selectedProject?.id || 0, 
+  const { data: payRateData, error: payRateError } = useCurrentPayRate(
+    selectedProject?.id || 0,
     !!selectedProject
   );
+  // 403 = the current user cannot access this project's payrate — show a
+  // permission notice instead of letting the form read as "no payrate config".
+  const payRateForbidden = isForbiddenError(payRateError);
   
   const formattedDate = selectedDate.toISOString().split('T')[0];
   const { data: existingTimesheets, refetch: refetchTimesheets } = useTimesheetsByProjectAndDate(
@@ -162,6 +165,11 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
       <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
         {/* Header */}
         <MobileFormHeader />
+        {payRateForbidden && (
+          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">
+            Bạn không có quyền truy cập bảng lương của dự án này.
+          </p>
+        )}
 
         {/* Employee Selection */}
         <MobileEmployeeSelector

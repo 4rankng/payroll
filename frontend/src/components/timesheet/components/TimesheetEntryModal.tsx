@@ -88,7 +88,15 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
             <InlineAlert severity="error" icon={AlertTriangle} message={f.dateValidation.errorMessage ?? ""} />
           )}
           {f.isPayrateError && (
-            <InlineAlert severity="error" icon={AlertTriangle} message="Không thể tải cấu hình bảng lương. Vui lòng thử lại." />
+            <InlineAlert
+              severity="error"
+              icon={AlertTriangle}
+              message={
+                f.payrateForbidden
+                  ? "Bạn không có quyền truy cập bảng lương của dự án này."
+                  : "Không thể tải cấu hình bảng lương. Vui lòng thử lại."
+              }
+            />
           )}
           {f.isPayUnitError && (
             <InlineAlert severity="error" icon={AlertTriangle} message="Không thể xác định cách tính lương của dự án. Vui lòng thử lại." />

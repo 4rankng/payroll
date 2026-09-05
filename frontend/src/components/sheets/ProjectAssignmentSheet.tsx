@@ -10,7 +10,7 @@ import { Employee, getEmployeeProjects } from "@/types/api/employee.types";
 import { Project } from "@/types/api/project.types";
 import { AssignEmployeeData } from "@/types/api/project.types";
 import { SlideSheetTemplate } from "./templates/SlideSheetTemplate";
-import { useCurrentPayRate } from "@/hooks/api/usePayRates";
+import { useCurrentPayRate, isForbiddenError } from "@/hooks/api/usePayRates";
 import { extractPositionsFromPayrates } from "@/types/api/payrate.types";
 import { useProjectModals } from "@/hooks/useModalNavigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -54,7 +54,7 @@ function ProjectAssignmentSheet({
   const [selectedProject, setSelectedProject] = useState<Project | null>(initialSelectedProject || null);
 
   // Fetch current payrate for the selected project to get available positions
-  const { data: payrateData } = useCurrentPayRate(
+  const { data: payrateData, error: payrateError } = useCurrentPayRate(
     selectedProject?.id || 0,
     !!selectedProject?.id
   );
@@ -72,6 +72,10 @@ function ProjectAssignmentSheet({
 
   // Check if payrates exist for the selected project
   const hasPayrates = availablePositions.length > 0;
+
+  // 403 from the payrate query means the current user (partner) has no access
+  // to the selected project — distinct from "project has no payrate config".
+  const payrateForbidden = isForbiddenError(payrateError);
 
   // Check if project can be assigned employees (not completed or cancelled)
   const canAssignEmployees = useMemo(() => {
@@ -260,7 +264,13 @@ function ProjectAssignmentSheet({
                       >
                         <SelectTrigger className="h-11 w-full">
                           <SelectValue
-                            placeholder={hasPayrates ? "Chọn vị trí" : "Dự án chưa có bảng lương"}
+                            placeholder={
+                              payrateForbidden
+                                ? "Bạn không có quyền xem bảng lương của dự án này"
+                                : hasPayrates
+                                  ? "Chọn vị trí"
+                                  : "Dự án chưa có bảng lương"
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>

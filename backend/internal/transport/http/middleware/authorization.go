@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"api-server/internal/config"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
+	"api-server/internal/infra/observability"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -76,6 +78,7 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 		if strings.Contains(resource, "/timesheets/") && (action == "PUT" || action == "DELETE") && userRole == "partner" {
 			timesheetID := extractTimesheetID(resource)
 			if !m.authorizationService.CanAccessTimesheet(c.Request.Context(), userRole, resource, action, timesheetID) {
+				m.logAuthorizationDenied(userID, userRole, resource, action, "approved timesheet modification")
 				response.Forbidden(c, "Cannot modify approved timesheet")
 				c.Abort()
 				return
@@ -83,6 +86,7 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 		} else {
 			// Standard Casbin authorization check
 			if !m.authorizationService.CanAccess(userRole, resource, action) {
+				m.logAuthorizationDenied(userID, userRole, resource, action, "casbin policy")
 				response.Forbidden(c, "Insufficient permissions")
 				c.Abort()
 				return
@@ -131,6 +135,7 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 				}
 
 				if err != nil || !hasAccess {
+					m.logAuthorizationDenied(userID, userRole, resource, action, fmt.Sprintf("no access to project %d", *projectID))
 					response.Forbidden(c, "No access to this project")
 					c.Abort()
 					return
@@ -155,6 +160,7 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 						userID.(uint),
 					)
 					if err != nil || !hasAccess {
+						m.logAuthorizationDenied(userID, userRole, resource, action, fmt.Sprintf("no access to employee %d", *employeeID))
 						response.Forbidden(c, "No access to this employee")
 						c.Abort()
 						return
@@ -173,6 +179,21 @@ func (m *AuthorizationMiddleware) Authorize() gin.HandlerFunc {
 func (m *AuthorizationMiddleware) logAuthorizationSuccess(userID interface{}, userRole, resource, action string) {
 	// Only log in debug mode to avoid spam
 	// Could be enhanced with proper structured logging
+}
+
+// logAuthorizationDenied records why a request was rejected. Denials were
+// previously silent, which made 403 spikes (e.g. partner payrate fetches for
+// non-owned projects) visible only as counts in api_metrics — the logs held
+// no corresponding entry to diagnose from.
+func (m *AuthorizationMiddleware) logAuthorizationDenied(userID interface{}, userRole, resource, action, reason string) {
+	logger := observability.GetLogger()
+	logger.Warn("Authorization denied",
+		"user_id", userID,
+		"user_role", userRole,
+		"method", action,
+		"path", resource,
+		"reason", reason,
+	)
 }
 
 func extractTimesheetID(path string) *uint {

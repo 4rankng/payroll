@@ -82,6 +82,7 @@ export function MobileTimesheetEntry({
     triggerPreview,
     isPayRateReady,
     isLoadingPayRate,
+    payRateForbidden,
     isPreviewLoading,
     allEntriesValid,
     getValidationErrors,
@@ -478,7 +479,9 @@ export function MobileTimesheetEntry({
           <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-2">
             {isLoadingPayRate
               ? "Đang tải cấu hình lương..."
-              : "Dự án chưa có cấu hình lương."}
+              : payRateForbidden
+                ? "Bạn không có quyền truy cập bảng lương của dự án này."
+                : "Dự án chưa có cấu hình lương."}
           </p>
         )}
 
@@ -518,7 +521,7 @@ export function MobileTimesheetEntry({
   ) : !isPayRateReady ? (
     <div className="flex-1 flex items-center justify-center">
       <p className="text-sm text-muted-foreground">
-        {isLoadingPayRate ? "Đang tải..." : "Dự án chưa có cấu hình lương."}
+        {isLoadingPayRate ? "Đang tải..." : payRateForbidden ? "Bạn không có quyền truy cập bảng lương của dự án này." : "Dự án chưa có cấu hình lương."}
       </p>
     </div>
   ) : visibleEmployees.length === 0 ? (
