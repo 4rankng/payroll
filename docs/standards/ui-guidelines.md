@@ -2,9 +2,9 @@
 
 Design system, component conventions, and accessibility rules for the payroll frontend. See [Frontend AGENTS.md](../../frontend/AGENTS.md) for the full DO/DON'T list and [Code Standards](../code-standards.md) for frontend coding conventions.
 
-## Design System: Navy & Gold
+## Design System: TingTing Emerald
 
-The frontend uses a **Navy & Gold** design system built on shadcn/ui. Theme tokens are defined in `frontend/tailwind.config.ts`.
+The frontend uses a **TingTing Emerald** design system built on shadcn/ui (primary `#08783e`). Theme tokens are defined in `frontend/tailwind.config.ts` and `frontend/src/styles/variables.css`. Gold accents are reserved for the employee-portal gold card only — never on admin surfaces.
 
 ### Philosophy
 
@@ -27,6 +27,39 @@ The frontend uses a **Navy & Gold** design system built on shadcn/ui. Theme toke
 - Domain components live in `src/components/<domain>/` (e.g., `timesheet/`, `wallet/`, `ledger/`, `employees/`).
 - **Barrel exports**: Every component directory has an `index.ts` re-exporting public API.
 - **No duplicate components** — Don't maintain multiple versions. Don't prefix with "Modern", "Improved", "Enhanced". Keep only the best version.
+
+### Stat Band (Treasury)
+
+For money-summary stat rows on admin pages. Vocabulary lives in `frontend/src/styles/premium.css` ("TREASURY INSTRUMENT BAND" section); reference implementation is the advance-payments hero band.
+
+**Principles**
+
+1. **One instrument, not a row of cards** — the stat row is a single `treasury-grid` surface; panels are separated by the grid's fading seams, never by boxed cards (max one Card nesting level).
+2. **Metric ownership zones** — each panel exclusively owns its metrics. A metric must never appear in two adjacent zones; enforce ownership in a code comment.
+3. **Presence = signal** — advisory panels render only in their signal state (e.g. the demand panel appears only on shortfall). No permanently-empty panels.
+4. **Color = semantics, not decoration** — tone lands on the value (emerald ok / amber mid / red risk), never on chrome. The `--alert` variant swaps the whole panel wash to rose. Never invent a signal state the data cannot support.
+5. **Financial typography** — `font-financial` (JetBrains Mono) + `tabular-nums` for every money value; `~` prefix for derived averages; `—` for empty.
+6. **Backend owns derived math** — SQL aggregation on the backend; the frontend renders precomputed values.
+7. **KPIs may double as filters** — tile selection syncs with the table's filter state so the two can never disagree.
+
+**Classes**
+
+| Class | Purpose |
+|-------|---------|
+| `treasury-grid` | Band wrapper; injects fading seams between panels automatically |
+| `treasury-panel` (`--dark`, `--alert`) | Panel shell: resting wash + hover light-rail; dark = wallet panel, alert = rose |
+| `treasury-mesh` (`--alert`) | Faint dot-grid measurement layer, always `aria-hidden` |
+| `treasury-signal` | Pulsing LED status dot on panel labels |
+| `treasury-rail` (`--dark`) | Footer divider with accent tick; pin to the shared baseline with `mt-auto` |
+| `treasury-value` | Headline value blur-in |
+| `treasury-aurora` | Drifting glow — dark panel only, **one per page max** |
+| `band-sheen(--glass)`, `led-pulse` | Light sweep / generic LED |
+
+**When to use / not use**
+
+- Use: money-summary bands on admin pages (dashboard strips, payroll control center, wallet hero).
+- Don't: CRUD/utility surfaces (audit log, settings, users), the employee portal (it has its own `--employee-*` token system), or a second `treasury-aurora` on any page.
+- All effect layers are atmosphere, never information: `aria-hidden`, `pointer-events-none`, `prefers-reduced-motion` guards (already built into `premium.css`).
 
 ### Naming
 
