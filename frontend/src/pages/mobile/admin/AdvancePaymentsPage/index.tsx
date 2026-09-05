@@ -416,7 +416,7 @@ const AdvancePaymentsPageMobile = () => {
           aria-label="Tổng quan kỳ ứng lương"
           className="overflow-hidden rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
         >
-          <div className="divide-y divide-[#D8E2EE]">
+          <div className="treasury-grid">
             <AdvPartnerHeroStrip
               {...heroProps}
               compact

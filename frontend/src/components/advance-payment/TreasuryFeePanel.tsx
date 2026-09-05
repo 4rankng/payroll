@@ -2,6 +2,7 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/utils/formatters";
+import { AnimatedCurrency } from "@/components/ui/animated-currency";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -43,12 +44,14 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col",
+        "treasury-panel flex h-full flex-col",
         compact ? "p-3.5" : "p-5 sm:p-6",
-        "bg-[radial-gradient(90%_70%_at_50%_0%,rgba(8,120,62,0.05),transparent_70%)]",
         className,
       )}
     >
+      {/* Measurement mesh — faint dot grid under the panel label. */}
+      <div className="treasury-mesh" aria-hidden />
+
       {isLoading ? (
         <div className="flex h-full flex-col">
           <Skeleton className="h-3 w-28" />
@@ -63,19 +66,19 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
       ) : (
         <>
           {/* Label */}
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]" />
+          <div className="relative z-[1] flex items-center gap-1.5">
+            <span className="treasury-signal bg-emerald-500" />
             <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
               Phí thu kỳ này
             </span>
           </div>
 
           {/* Value + rate chip */}
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums">
-              {formatCurrency(totalFeeEarned)}
+          <div className="relative z-[1] mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="treasury-value max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums">
+              <AnimatedCurrency target={totalFeeEarned} />
             </span>
-            <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/60">
+            <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/60 shadow-[0_0_14px_rgba(16,185,129,0.18)]">
               {feePercentage.toFixed(1)}%
             </span>
             <span className="text-[11px] text-muted-foreground">trên giải ngân</span>
@@ -83,7 +86,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
 
           {/* Footer rail — pinned via mt-auto to the shared band baseline. */}
           <div className="mt-auto pt-3">
-            <div className="border-t border-border/60 pt-2.5 grid grid-cols-2 gap-3">
+            <div className="treasury-rail grid grid-cols-2 gap-3 pt-2.5">
               {footerCols.map((col) => (
                 <div key={col.label} className="min-w-0">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">

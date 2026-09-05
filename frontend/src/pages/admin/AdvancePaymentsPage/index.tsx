@@ -301,12 +301,12 @@ const AdvancePaymentsPage = () => {
           )}
         >
           <div className={cn(
-            "grid divide-border/50",
+            "treasury-grid grid",
             isAdvPartner
-              ? "grid-cols-1 divide-y lg:grid-cols-[1fr_300px] lg:divide-y-0 lg:divide-x"
+              ? "grid-cols-1 lg:grid-cols-[1fr_300px]"
               : needsTopUp
-                ? "grid-cols-1 divide-y lg:grid-cols-4 lg:divide-y-0 lg:divide-x"
-                : "grid-cols-1 divide-y lg:grid-cols-3 lg:divide-y-0 lg:divide-x",
+                ? "grid-cols-1 lg:grid-cols-4"
+                : "grid-cols-1 lg:grid-cols-3",
           )}>
 
             {/* Panel A: Wallet — admins only (desktop only; mobile shows it above) */}

@@ -2,7 +2,7 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/utils/formatters";
-import { useCountUp } from "@/hooks/useCountUp";
+import { AnimatedCurrency } from "@/components/ui/animated-currency";
 
 export interface AdvPartnerHeroStripProps {
   /** Gross total of completed advance requests this period
@@ -16,19 +16,6 @@ export interface AdvPartnerHeroStripProps {
   className?: string;
   compact?: boolean;
 }
-
-const AnimatedCurrency = memo(function AnimatedCurrency({
-  target,
-}: {
-  target: number;
-}) {
-  const animated = useCountUp(target, 700);
-  return (
-    <span className="font-financial tabular-nums tracking-normal">
-      {formatCurrency(animated)}
-    </span>
-  );
-});
 
 export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
   totalAmount,
@@ -44,13 +31,15 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
     <section
       aria-label="Giải ngân"
       className={cn(
-        "relative flex flex-col",
+        "treasury-panel flex flex-col",
         compact ? "p-3.5" : "p-[22px] px-7",
         "rounded-xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]",
-        "bg-[radial-gradient(90%_70%_at_50%_0%,rgba(8,120,62,0.05),transparent_70%)]",
         className,
       )}
     >
+      {/* Measurement mesh — faint dot grid under the panel label. */}
+      <div className="treasury-mesh" aria-hidden />
+
       {isLoading ? (
         <div className="flex h-full flex-col space-y-4">
           <Skeleton className="h-4 w-32" />
@@ -61,18 +50,18 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]" />
+          <div className="relative z-[1] flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="treasury-signal bg-emerald-500" />
             Giải ngân kỳ này
           </div>
-          <div className={cn("mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}>
+          <div className={cn("treasury-value relative z-[1] mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground [text-shadow:0_0_36px_rgba(16,185,129,0.22)]", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}>
             <AnimatedCurrency target={totalAmount} />
           </div>
 
           {/* Footer rail — pinned via mt-auto to the shared band baseline so the
               wallet, disbursement and fee panels read as one instrument strip. */}
           <div className="mt-auto pt-3">
-            <div className="border-t border-border/60 pt-2.5">
+            <div className="treasury-rail pt-2.5">
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 Trung bình /yc
               </div>

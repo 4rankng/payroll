@@ -95,26 +95,33 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
     <section
       aria-label="Ví tiền"
       className={cn(
-        "relative h-full overflow-hidden p-[22px] px-6 text-white",
+        "treasury-panel--dark relative h-full overflow-hidden p-[22px] px-6 text-white",
         "bg-[radial-gradient(130%_130%_at_0%_0%,#0C7A50_0%,#06452E_48%,#032B1D_100%)]",
         "ring-1 ring-inset ring-white/[0.08]",
         compact && "p-3.5",
         className
       )}
     >
+      {/* Aurora — slow emerald drift behind the HUD grid, keeps the panel alive
+          without competing with the balance figure. */}
+      <div className="treasury-aurora" aria-hidden />
+
       {/* Grid pattern overlay — masked so the HUD grid is strongest at the
           top-left corner and dissolves toward the bottom-right. */}
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 z-[1]"
         style={{
           backgroundImage: 'linear-gradient(rgba(183,228,202,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(183,228,202,0.10) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
-          maskImage: 'radial-gradient(140%_110%_at_0%_0%, black 25%, transparent 78%)',
-          WebkitMaskImage: 'radial-gradient(140%_110%_at_0%_0%, black 25%, transparent 78%)',
+          maskImage: 'radial-gradient(140% 110% at 0% 0%, black 25%, transparent 78%)',
+          WebkitMaskImage: 'radial-gradient(140% 110% at 0% 0%, black 25%, transparent 78%)',
         }}
       />
 
-      <div className="relative flex h-full flex-col justify-between">
+      {/* Light sweep across the glass — same primitive the mobile band uses. */}
+      <div className="band-sheen band-sheen--glass pointer-events-none absolute inset-0 z-[1]" aria-hidden />
+
+      <div className="relative z-[2] flex h-full flex-col justify-between">
         {isLoading ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -134,7 +141,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
+                  <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
                   <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
                     Ví tiền
                   </span>
@@ -152,9 +159,11 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
 
               {/* Main Balance */}
               <div className={cn(
-                "mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
+                "treasury-value mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
                 compact ? "text-[clamp(1.375rem,7.5vw,1.5rem)]" : "text-[clamp(1.75rem,8vw,2rem)]",
-                isLow ? "text-red-400" : "text-white"
+                isLow
+                  ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
+                  : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
               )}>
                 {formatCurrency(available).replace('₫', '')}
                 <span className={cn("ml-1 font-medium", compact ? "text-base" : "text-lg", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
@@ -177,7 +186,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             {/* Meta Grid */}
             <div
               className={cn(
-                "grid grid-cols-2 border-t border-white/10",
+                "treasury-rail treasury-rail--dark grid grid-cols-2",
                 compact ? "mt-3 gap-2 pt-3" : "mt-[22px] gap-3.5 pt-3.5",
               )}
             >

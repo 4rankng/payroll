@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Wallet as WalletIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
+import { AnimatedCurrency } from '@/components/ui/animated-currency';
 import type { WalletDemandForecastResponse } from '@/types/api/wallet.types';
 
 interface WalletDemandCardProps {
@@ -24,11 +25,20 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
 
   if (compact) {
     return (
-      <div className={cn('flex h-full flex-col justify-center', className)}>
+      <div
+        className={cn(
+          'flex h-full flex-col justify-center',
+          needsTopUp ? 'treasury-panel--alert' : 'treasury-panel',
+          className,
+        )}
+      >
+        {/* Measurement mesh — tinted to match the panel's state. */}
+        <div className={cn('treasury-mesh', needsTopUp && 'treasury-mesh--alert')} aria-hidden />
+
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              'h-1.5 w-1.5 rounded-full',
+              'treasury-signal',
               !pred
                 ? 'bg-muted-foreground/40'
                 : needsTopUp
@@ -50,11 +60,13 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
         ) : (
           <p
             className={cn(
-              'mt-1.5 break-words font-financial text-[clamp(1.375rem,7vw,1.625rem)] font-semibold leading-[1.08] tracking-normal tabular-nums',
-              needsTopUp ? 'text-rose-700' : 'text-emerald-800',
+              'treasury-value relative z-[1] mt-1.5 break-words font-financial text-[clamp(1.375rem,7vw,1.625rem)] font-semibold leading-[1.08] tracking-normal tabular-nums',
+              needsTopUp
+                ? 'text-rose-700 [text-shadow:0_0_36px_rgba(225,29,72,0.16)]'
+                : 'text-emerald-800 [text-shadow:0_0_36px_rgba(16,185,129,0.16)]',
             )}
           >
-            {formatCurrency(needsTopUp ? pred.shortfall : pred.current_available)}
+            <AnimatedCurrency target={needsTopUp ? pred.shortfall : pred.current_available} />
           </p>
         )}
       </div>
