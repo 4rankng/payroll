@@ -40,19 +40,12 @@ export function AdvanceRequestToggle({
   };
 
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
       <Switch
         checked={enabled}
         onCheckedChange={handleToggle}
         disabled={toggleMutation.isPending}
       />
-      {enabled ? (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Bật</span>
-      ) : (
-        <span className="whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-          Đang tạm ngừng
-        </span>
-      )}
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

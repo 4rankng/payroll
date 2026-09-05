@@ -48,8 +48,6 @@ describe("AdvanceRequestToggle", () => {
   it("re-enabling fires immediately without a confirmation dialog", () => {
     renderToggle(false);
 
-    expect(screen.getByText("Đang tạm ngừng")).toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("switch"));
     expect(mutateAsyncMock).toHaveBeenCalledWith({
       projectId: 7,
@@ -59,17 +57,11 @@ describe("AdvanceRequestToggle", () => {
     expect(screen.queryByText("Tạm ngừng ứng lương?")).not.toBeInTheDocument();
   });
 
-  it("shows the enabled label when not paused", () => {
-    renderToggle(true);
-    expect(screen.getByText("Bật")).toBeInTheDocument();
-  });
-
   it("stops click propagation so tappable rows do not fire", () => {
     const parentClick = vi.fn();
     renderToggle(true, parentClick);
 
     fireEvent.click(screen.getByRole("switch"));
-    fireEvent.click(screen.getByText("Bật"));
 
     expect(parentClick).not.toHaveBeenCalled();
   });
