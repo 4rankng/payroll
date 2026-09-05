@@ -9,7 +9,9 @@ export interface DashboardMetricItem {
   label: string;
   value: string;
   context: string;
-  icon: LucideIcon;
+  /** Kept for API compatibility; the treasury strip renders a signal LED
+   *  instead of an icon tile. */
+  icon?: LucideIcon;
   tone: DashboardTone;
   onClick?: () => void;
 }
@@ -82,58 +84,68 @@ const TONE_STYLES: Record<
   },
 };
 
-const METRIC_CELL_BORDERS = [
-  'border-b sm:border-r xl:border-b-0',
-  'border-b xl:border-r xl:border-b-0',
-  'border-b sm:border-b-0 sm:border-r',
-  '',
-];
+/** Signal LED tones — semantics only: primary/success emerald, warning amber,
+ *  neutral muted. The strip's color carries meaning, never decoration. */
+const SIGNAL_TONE: Record<DashboardTone, string> = {
+  primary: 'bg-primary',
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  neutral: 'bg-muted-foreground/40',
+};
 
 function MetricContent({ item }: { item: DashboardMetricItem }) {
-  const styles = TONE_STYLES[item.tone];
-
   return (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
-        <span
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
-            styles.iconSurface,
-          )}
-        >
-          <item.icon className={cn('h-4 w-4', styles.icon)} aria-hidden="true" />
-        </span>
+      <div className="relative z-[1] flex items-center gap-1.5">
+        <span className={cn('treasury-signal', SIGNAL_TONE[item.tone])} aria-hidden="true" />
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          {item.label}
+        </p>
       </div>
-      <p className="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+      <p className="treasury-value relative z-[1] mt-2 break-words font-financial text-2xl font-semibold leading-tight tracking-normal text-foreground tabular-nums">
         {item.value}
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.context}</p>
+      <p className="relative z-[1] mt-1 text-xs leading-relaxed text-muted-foreground">
+        {item.context}
+      </p>
     </>
   );
 }
 
 export function DashboardMetricStrip({ items }: DashboardMetricStripProps) {
+  // treasury-grid: fading seams between cells replace per-cell borders.
+  const xlCols = items.length >= 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
+
   return (
     <section
       aria-label="Tóm tắt kỳ lương"
-      className="grid overflow-hidden rounded-xl border border-border/80 bg-card sm:grid-cols-2 xl:grid-cols-4"
+      className={cn(
+        'treasury-grid grid grid-cols-1 overflow-hidden rounded-xl border border-border/80 bg-card sm:grid-cols-2',
+        xlCols,
+      )}
     >
-      {items.map((item, index) => {
+      {items.map((item) => {
         const className = cn(
-          'min-w-0 px-3 py-3 text-left sm:px-4',
-          METRIC_CELL_BORDERS[index],
+          'treasury-panel min-w-0 px-3 py-3 text-left sm:px-4',
           item.onClick &&
             'cursor-pointer transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring motion-reduce:transition-none',
         );
 
+        const content = (
+          <>
+            {/* Measurement mesh — faint dot grid under the cell label. */}
+            <div className="treasury-mesh" aria-hidden />
+            <MetricContent item={item} />
+          </>
+        );
+
         return item.onClick ? (
           <button key={item.label} type="button" onClick={item.onClick} className={className}>
-            <MetricContent item={item} />
+            {content}
           </button>
         ) : (
           <div key={item.label} className={className}>
-            <MetricContent item={item} />
+            {content}
           </div>
         );
       })}

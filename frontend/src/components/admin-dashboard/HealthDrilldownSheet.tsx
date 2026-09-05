@@ -280,15 +280,15 @@ function FailedAttemptsTable({
     <div className="space-y-3">
       <CountSummary total={total} isFetching={isFetching} noun="bản ghi" />
 
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-none sm:block">
-        <div className="grid grid-cols-[minmax(160px,1.15fr)_minmax(220px,1.55fr)_minmax(112px,.75fr)_minmax(180px,1.35fr)_minmax(90px,.55fr)] border-b border-slate-200 bg-slate-50/80 px-4 py-3">
+      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-none sm:block">
+        <div className="grid grid-cols-[minmax(160px,1.15fr)_minmax(220px,1.55fr)_minmax(112px,.75fr)_minmax(180px,1.35fr)_minmax(90px,.55fr)] border-b border-border bg-muted/50 px-4 py-3">
           <FailedAttemptHeader>Nhân viên</FailedAttemptHeader>
           <FailedAttemptHeader>Lý do</FailedAttemptHeader>
           <FailedAttemptHeader>Khoảng cách</FailedAttemptHeader>
           <FailedAttemptHeader>Địa điểm</FailedAttemptHeader>
           <FailedAttemptHeader>Thời gian</FailedAttemptHeader>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border/60">
           {rows.map((row) => (
             <FailedAttemptDesktopRow
               key={row.id}
@@ -792,7 +792,7 @@ const MONOGRAM_PALETTE = [
   'bg-teal-500/10 text-teal-600',
   'bg-rose-500/10 text-rose-600',
   'bg-sky-500/10 text-sky-600',
-  'bg-slate-500/10 text-slate-600',
+  'bg-primary/10 text-primary',
 ];
 
 function monogramColor(seed: string): string {
@@ -966,7 +966,7 @@ function FailedAttemptOverrideAction({ row }: { row: AdminFailedAttempt }) {
 
 function FailedAttemptHeader({ children }: { children: ReactNode }) {
   return (
-    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
       {children}
     </span>
   );
@@ -982,10 +982,10 @@ function FailedAttemptDesktopRow({
   const meta = reasonMeta(row.reason_category);
 
   return (
-    <div className="grid min-h-[92px] grid-cols-[minmax(160px,1.15fr)_minmax(220px,1.55fr)_minmax(112px,.75fr)_minmax(180px,1.35fr)_minmax(90px,.55fr)] px-4 py-3.5 transition-colors hover:bg-slate-50/70">
+    <div className="grid min-h-[92px] grid-cols-[minmax(160px,1.15fr)_minmax(220px,1.55fr)_minmax(112px,.75fr)_minmax(180px,1.35fr)_minmax(90px,.55fr)] px-4 py-3.5 transition-colors hover:bg-muted/40">
       <div className="flex min-w-0 items-start gap-2.5 pr-4">
         <Monogram name={row.employee_name} />
-        <p className="min-w-0 break-words text-sm font-medium leading-snug text-slate-950">
+        <p className="min-w-0 break-words text-sm font-medium leading-snug text-foreground">
           {row.employee_name ?? `#${row.employee_id}`}
         </p>
       </div>
@@ -1006,7 +1006,7 @@ function FailedAttemptDesktopRow({
           type="button"
           variant="ghost"
           size="sm"
-          className="mt-2 min-h-11 gap-1.5 rounded-full px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+          className="mt-2 min-h-11 gap-1.5 rounded-full px-3 text-xs font-semibold text-muted-foreground hover:bg-muted/60 hover:text-foreground"
           onClick={onOpenMap}
         >
           <Map className="h-3.5 w-3.5" />
@@ -1031,15 +1031,15 @@ function FailedAttemptCard({
   const meta = reasonMeta(row.reason_category);
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-3 shadow-none">
+    <article className="rounded-xl border border-border bg-card p-3 shadow-none">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <Monogram name={row.employee_name} />
           <div className="min-w-0">
-            <p className="break-words text-sm font-medium leading-snug text-slate-950">
+            <p className="break-words text-sm font-medium leading-snug text-foreground">
               {row.employee_name ?? `#${row.employee_id}`}
             </p>
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0 truncate">{row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}</span>
             </p>
@@ -1050,17 +1050,17 @@ function FailedAttemptCard({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-muted/50 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-w-0">
-          <p className="mb-1 text-[11px] font-semibold uppercase text-slate-400">Khoảng cách</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground/80">Khoảng cách</p>
           <ContextualDistance row={row} />
         </div>
-        <div className="min-w-0 border-t border-slate-200 pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
-          <p className="mb-1 text-[11px] font-semibold uppercase text-slate-400">Địa điểm</p>
-          <p className="break-words text-sm font-semibold text-slate-950">
+        <div className="min-w-0 border-t border-border pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
+          <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground/80">Địa điểm</p>
+          <p className="break-words text-sm font-semibold text-foreground">
             {row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}
           </p>
-          <p className="mt-0.5 text-xs text-slate-500">{formatGpsAccuracy(row.accuracy)}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{formatGpsAccuracy(row.accuracy)}</p>
         </div>
       </div>
 
@@ -1074,7 +1074,7 @@ function FailedAttemptCard({
           type="button"
           variant="outline"
           size="sm"
-          className="min-h-11 flex-1 gap-1.5 rounded-full text-xs font-semibold text-slate-700"
+          className="min-h-11 flex-1 gap-1.5 rounded-full text-xs font-semibold text-foreground"
           onClick={onOpenMap}
         >
           <Map className="h-4 w-4" />

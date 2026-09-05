@@ -10,7 +10,6 @@ import {
   TrendingUp,
   Trophy,
   Users,
-  WalletCards,
 } from 'lucide-react';
 
 import { DashboardLoadingSkeleton } from '@/components/ui/loading-states';
@@ -120,44 +119,32 @@ const AdminDashboard = () => {
       return [];
     }
 
+    // Zone ownership: the strip owns period OUTCOMES only. Pending payouts and
+    // approval-queue counts belong to DashboardPriorityList below — never
+    // repeat a metric between the two adjacent zones.
     return [
       {
         label: 'Đã trả kỳ này',
         value: formatVND(data.dashboardSummary.paid_salary_this_month),
         context: `Tổng đã trả ${formatVND(data.dashboardSummary.total_paid_salary)}`,
-        icon: WalletCards,
         tone: 'primary',
-        onClick: dashboardNav.navigateToSalaryLedger,
-      },
-      {
-        label: 'Chờ giải ngân',
-        value: formatVND(data.dashboardSummary.pending_salary_this_month),
-        context: hasPendingError
-          ? 'Không thể tải hàng đợi bảng công'
-          : pendingApprovals === null
-            ? 'Đang tải hàng đợi bảng công'
-            : `${pendingApprovals.toLocaleString('vi-VN')} bảng công chờ duyệt trên toàn hệ thống`,
-        icon: ArrowRightLeft,
-        tone: data.dashboardSummary.pending_salary_this_month > 0 ? 'warning' : 'neutral',
         onClick: dashboardNav.navigateToSalaryLedger,
       },
       {
         label: 'Lợi nhuận kỳ này',
         value: formatVND(data.dashboardSummary.total_profit_this_month),
         context: `Lũy kế ${formatVND(data.dashboardSummary.total_profit)}`,
-        icon: TrendingUp,
         tone: 'success',
       },
       {
         label: 'Nhân sự đang làm',
         value: data.dashboardSummary.total_working_employees.toLocaleString('vi-VN'),
         context: `${data.dashboardSummary.total_employees.toLocaleString('vi-VN')} nhân viên · ${data.dashboardSummary.employees_hired_this_month.toLocaleString('vi-VN')} mới`,
-        icon: Users,
         tone: 'neutral',
         onClick: dashboardNav.navigateToActiveEmployees,
       },
     ];
-  }, [dashboardNav, data.dashboardSummary, hasPendingError, pendingApprovals]);
+  }, [dashboardNav, data.dashboardSummary]);
 
   const priorityItems = useMemo<DashboardPriorityItem[]>(() => {
     if (!data.dashboardSummary) {
@@ -197,7 +184,8 @@ const AdminDashboard = () => {
       },
       {
         title: 'Lương chờ giải ngân',
-        detail: `Đã trả ${formatVND(data.dashboardSummary.paid_salary_this_month)} trong kỳ ${monthLabel}.`,
+        // No paid-salary figure here — that metric belongs to the strip above.
+        detail: `Số tiền sẽ giải ngân sau khi chốt công kỳ ${monthLabel}.`,
         value: formatVND(data.dashboardSummary.pending_salary_this_month),
         statusLabel:
           data.dashboardSummary.pending_salary_this_month > 0 ? 'Cần theo dõi' : 'Đã giải ngân',
