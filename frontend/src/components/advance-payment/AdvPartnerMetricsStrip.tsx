@@ -1,8 +1,7 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
-import { CheckCircle2, Clock, DollarSign } from 'lucide-react';
+import { CheckCircle2, Clock, DollarSign, type LucideIcon } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 
 export interface AdvPartnerMetricsStripProps {
@@ -29,11 +28,18 @@ function formatSeconds(secs: number): string {
   return rem > 0 ? `${mins}m ${rem}s` : `${mins}m`;
 }
 
-// Each metric composes the shared KpiHeroCard; the secondary stats ride in the
-// additive `footer` slot so we no longer maintain a parallel MetricCard clone.
-// The loading skeleton matches KpiHeroCard's compact shape.
+const ICON_COLOR_STYLES: Record<'emerald' | 'amber' | 'teal', string> = {
+  emerald: 'bg-primary/10 text-primary',
+  amber: 'bg-warning/10 text-warning',
+  teal: 'bg-success/10 text-success',
+};
+
+// Compact single-row stat: icon | label + value | footer, all on one line.
+// Deliberately bespoke (not the shared KpiHeroCard) — that component's
+// vertical card shape leaves large empty space once these three cards are
+// stretched across a full-width row.
 function MetricCard({
-  icon,
+  icon: Icon,
   label,
   value,
   unit,
@@ -41,7 +47,7 @@ function MetricCard({
   footer,
   isLoading,
 }: {
-  icon: typeof CheckCircle2;
+  icon: LucideIcon;
   label: string;
   value: string;
   unit?: string;
@@ -51,26 +57,32 @@ function MetricCard({
 }) {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border/40 bg-card p-3 shadow-soft">
-        <div className="space-y-1.5">
+      <div className="flex items-center gap-3 rounded-xl border border-border/40 bg-card p-3 shadow-soft">
+        <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
+        <div className="min-w-0 flex-1 space-y-1.5">
           <Skeleton className="h-2.5 w-24" />
-          <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-3 w-36" />
+          <Skeleton className="h-5 w-20" />
         </div>
       </div>
     );
   }
 
   return (
-    <KpiHeroCard
-      label={label}
-      value={value}
-      unit={unit}
-      icon={icon}
-      color={color}
-      footer={footer}
-      className="h-full"
-    />
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-soft">
+      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', ICON_COLOR_STYLES[color])}>
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold leading-tight text-muted-foreground">{label}</p>
+        <p className="mt-0.5 font-display font-extrabold tabular-nums leading-tight tracking-[-0.035em] text-foreground">
+          <span className="text-lg">{value}</span>
+          {unit ? <span className="ml-0.5 text-xs font-bold text-muted-foreground">{unit}</span> : null}
+        </p>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] leading-snug text-muted-foreground">
+        {footer}
+      </div>
+    </div>
   );
 }
 
