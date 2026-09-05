@@ -18,6 +18,10 @@ export interface AdvPartnerStatusOverviewProps {
   successRate: number;
   isLoading?: boolean;
   className?: string;
+  /** Hide the "✓ N%" header chip when the success rate is already shown
+   *  adjacent — e.g. the admin band renders the hiệu suất ring gauge right
+   *  next to this zone, so the number must not appear twice. */
+  showSuccessBadge?: boolean;
   /** Strip the card chrome (border/bg/padding) so the pipeline can be embedded
    *  in a shared surface, e.g. the admin "pipeline + health" band. */
   bare?: boolean;
@@ -38,7 +42,7 @@ const CELLS: StatusCellDef[] = [
   {
     key: "completed",
     label: "Hoàn tất",
-    barClass: "bg-emerald-500",
+    barClass: "bg-gradient-to-r from-emerald-500 to-emerald-400",
     dotClass: "bg-emerald-500",
     getValue: (p) => p.totalPaid,
     getAmount: (p) => p.totalPaidAmount,
@@ -83,6 +87,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
   isLoading = false,
   className,
   bare = false,
+  showSuccessBadge = true,
 }: AdvPartnerStatusOverviewProps) {
   const props = {
     totalPaid,
@@ -115,7 +120,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
           <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-muted-foreground">
             {totalRequests}
           </span>
-          {totalRequests > 0 && (
+          {showSuccessBadge && totalRequests > 0 && (
             <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-foreground/70">
               <CheckCircle2 className="h-3 w-3" />
               {successRate.toFixed(0)}%
@@ -140,32 +145,46 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
         </div>
       ) : (
         <>
-          {/* Segmented distribution rail — thin futuristic bar; numbers live in
-              the cells below so no segment ever clips its value. Not a progress
-              indicator, so no progressbar role (screen readers would announce a
-              misleading completion percentage). */}
+          {/* Segmented distribution rail — LED-style notched meter; numbers
+              live in the cells below so no segment ever clips its value. Not a
+              progress indicator, so no progressbar role (screen readers would
+              announce a misleading completion percentage). */}
           <div
-            className="mt-2.5 flex h-1.5 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-black/[0.06]"
+            className={cn(
+              "relative mt-2.5 h-2 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-black/[0.06]",
+              totalPaid > 0 && "shadow-[0_0_10px_rgba(16,185,129,0.20)]",
+            )}
             aria-hidden="true"
           >
-            {CELLS.map((cell) => {
-              const value = cell.getValue(props);
-              const width = totalRequests > 0 ? (value / totalRequests) * 100 : 0;
-              if (width === 0) return null;
+            <div className="absolute inset-0 flex">
+              {CELLS.map((cell) => {
+                const value = cell.getValue(props);
+                const width = totalRequests > 0 ? (value / totalRequests) * 100 : 0;
+                if (width === 0) return null;
 
-              return (
-                <div
-                  key={cell.key}
-                  title={`${cell.label}: ${value}`}
-                  aria-label={`${cell.label}: ${value}`}
-                  className={cn(
-                    "h-full transition-[filter] hover:brightness-110",
-                    cell.barClass,
-                  )}
-                  style={{ width: `${width}%` }}
-                />
-              );
-            })}
+                return (
+                  <div
+                    key={cell.key}
+                    title={`${cell.label}: ${value}`}
+                    aria-label={`${cell.label}: ${value}`}
+                    className={cn(
+                      "h-full transition-[filter] hover:brightness-110",
+                      cell.barClass,
+                    )}
+                    style={{ width: `${width}%` }}
+                  />
+                );
+              })}
+            </div>
+            {/* Tick separators — notch track + fill with the band surface
+                color to get the discrete LED-cell look. */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(90deg, transparent 0, transparent 10px, #ffffff 10px, #ffffff 12px)",
+              }}
+            />
           </div>
 
           {/* Status cells — dot + uppercase micro label over count + amount */}

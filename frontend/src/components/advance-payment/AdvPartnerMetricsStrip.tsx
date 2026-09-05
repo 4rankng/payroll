@@ -4,6 +4,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export interface AdvPartnerMetricsStripProps {
   totalPaid: number;
+  /** Kept for the paired zone's props shape — per-status counts are
+   *  displayed by AdvPartnerStatusOverview, never here. */
   totalRequests: number;
   totalCancelled: number;
   completedUnder30s: number;
@@ -24,10 +26,16 @@ export interface AdvPartnerMetricsStripProps {
   bare?: boolean;
 }
 
+/** Gauge arc + halo per success band; dot classes stay Tailwind tokens. */
+const GAUGE_TRACK = '#e4e7ec'; // --color-border
+const gaugeTones = {
+  ok: { from: '#34d399', to: '#059669', dot: 'bg-emerald-500', halo: 'drop-shadow-[0_0_5px_rgba(5,150,105,0.45)]' },
+  warn: { from: '#fbbf24', to: '#d97706', dot: 'bg-amber-500', halo: 'drop-shadow-[0_0_5px_rgba(217,119,6,0.40)]' },
+  bad: { from: '#f87171', to: '#dc2626', dot: 'bg-red-500', halo: 'drop-shadow-[0_0_5px_rgba(220,38,38,0.40)]' },
+} as const;
+
 export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
   totalPaid,
-  totalRequests,
-  totalCancelled,
   completedUnder30s,
   completed30sTo2m,
   completed2mTo5m,
@@ -38,15 +46,6 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
   className,
   bare = false,
 }: AdvPartnerMetricsStripProps) {
-  const effectiveTotal = totalRequests - totalCancelled;
-
-  // Success rail segments (share of ALL requests) + status dot tone.
-  const railTotal = Math.max(totalRequests, 1);
-  const paidShare = (totalPaid / railTotal) * 100;
-  const cancelledShare = (totalCancelled / railTotal) * 100;
-  const successDotTone =
-    successRate >= 99 ? 'bg-emerald-500' : successRate >= 90 ? 'bg-amber-500' : 'bg-red-500';
-
   // Processing-time cells over completed requests (paid_at − created_at):
   // <30s / <5m / >5m — the last two cells each sum two backend buckets.
   // Tone encodes the speed: fast = emerald, mid = amber, slow = red.
@@ -55,6 +54,10 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
     { label: '<5 phút', count: completed30sTo2m + completed2mTo5m, tone: 'text-amber-600' },
     { label: '>5 phút', count: completed5mTo15m + completedOver15m, tone: 'text-red-600' },
   ];
+
+  const tone =
+    successRate >= 99 ? gaugeTones.ok : successRate >= 90 ? gaugeTones.warn : gaugeTones.bad;
+  const gaugeRate = Math.min(100, Math.max(0, successRate));
 
   const chrome = bare
     ? 'rounded-none border-0 bg-transparent p-0 shadow-none'
@@ -77,31 +80,35 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         </div>
       ) : (
         <div className="divide-y divide-border/60">
-          {/* Success hero — status dot + label left, big tabular % right,
-              hairline rail below shows paid vs cancelled share of all requests. */}
-          <div className="px-4 py-2.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                <span
-                  aria-hidden="true"
-                  className={cn('h-1.5 w-1.5 shrink-0 rounded-full', successDotTone)}
-                />
-                Tỉ lệ thành công
-              </div>
-              <div className="font-financial text-[20px] font-bold leading-none tabular-nums text-foreground">
-                {successRate.toFixed(1)}
-                <span className="text-[12px] font-semibold text-muted-foreground">%</span>
-              </div>
-            </div>
+          {/* Success hero — HUD ring gauge carrying the success rate. The
+              per-status counts intentionally live in the paired
+              AdvPartnerStatusOverview zone; do NOT re-display them here. */}
+          <div className="flex items-center gap-3 px-4 py-2.5">
             <div
-              aria-hidden="true"
-              className="mt-2 flex h-1 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-black/[0.06]"
+              role="img"
+              aria-label={`Tỷ lệ thành công ${successRate.toFixed(1)}%`}
+              className={cn(
+                'relative h-[52px] w-[52px] shrink-0 rounded-full',
+                totalPaid > 0 && tone.halo,
+              )}
+              style={{
+                background: `conic-gradient(from 0deg, ${tone.from} 0%, ${tone.to} ${gaugeRate}%, ${GAUGE_TRACK} ${gaugeRate}%, ${GAUGE_TRACK} 100%)`,
+              }}
             >
-              <div className="bg-emerald-500" style={{ width: `${paidShare}%` }} />
-              <div className="bg-zinc-400/60" style={{ width: `${cancelledShare}%` }} />
+              <div className="absolute inset-[5px] rounded-full bg-card shadow-[inset_0_1px_3px_rgba(16,24,40,0.10)]" />
+              <div className="absolute inset-0 grid place-items-center">
+                <span className="font-financial text-[13px] font-bold leading-none tabular-nums text-foreground">
+                  {successRate.toFixed(1)}
+                  <span className="text-[9px] font-semibold text-muted-foreground">%</span>
+                </span>
+              </div>
             </div>
-            <div className="mt-1 text-right font-financial text-[10.5px] text-muted-foreground tabular-nums">
-              {totalPaid}/{effectiveTotal} HT · {totalCancelled} hủy
+            <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn('h-1.5 w-1.5 shrink-0 rounded-full', tone.dot)}
+              />
+              Tỷ lệ thành công
             </div>
           </div>
 

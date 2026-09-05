@@ -355,6 +355,7 @@ const AdvancePaymentsPage = () => {
           <div className="grid grid-cols-1 divide-y divide-border/60 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:divide-y-0 lg:divide-x">
             <AdvPartnerStatusOverview
               bare
+              showSuccessBadge={false}
               {...statusProps}
               isLoading={page.summaryLoading}
             />
