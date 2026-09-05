@@ -226,6 +226,10 @@ type AdvancePaymentStatsSummary struct {
 	TotalProviderFee      uint64
 	AvgProcessingTimeSecs float64
 	CompletedUnder30s     int64
+	Completed30sTo2m      int64
+	Completed2mTo5m       int64
+	Completed5mTo15m      int64
+	CompletedOver15m      int64
 }
 
 // EmployeePendingRequests represents pending requests grouped by employee for export

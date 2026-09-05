@@ -145,6 +145,10 @@ type AdvancePaymentSummaryResponse struct {
 	TotalProviderFeeAllTime uint64  `json:"totalProviderFeeAllTime"`
 	AvgProcessingTimeSecs   float64 `json:"avgProcessingTimeSecs"`
 	CompletedUnder30s       int64   `json:"completedUnder30s"`
+	Completed30sTo2m        int64   `json:"completed30sTo2m"`
+	Completed2mTo5m         int64   `json:"completed2mTo5m"`
+	Completed5mTo15m        int64   `json:"completed5mTo15m"`
+	CompletedOver15m        int64   `json:"completedOver15m"`
 	FeePercentage           float64 `json:"feePercentage"`
 	AvgFeePerRequest        uint64  `json:"avgFeePerRequest"`
 	AvgFeePerEmployee       uint64  `json:"avgFeePerEmployee"`

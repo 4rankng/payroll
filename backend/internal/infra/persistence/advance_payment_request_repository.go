@@ -495,6 +495,10 @@ func (r *AdvancePaymentRequestRepository) GetStatsSummary(ctx context.Context, f
 		TotalProviderFee      uint64
 		AvgProcessingTimeSecs float64
 		CompletedUnder30s     int64
+		Completed30sTo2m      int64
+		Completed2mTo5m       int64
+		Completed5mTo15m      int64
+		CompletedOver15m      int64
 	}
 
 	var result statsResult
@@ -518,7 +522,11 @@ func (r *AdvancePaymentRequestRepository) GetStatsSummary(ctx context.Context, f
 				SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' THEN advance_payment_requests.fee - COALESCE(advance_payment_requests.provider_fee, 0) ELSE 0 END) as total_fee_earned,
 				SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' THEN COALESCE(advance_payment_requests.provider_fee, 0) ELSE 0 END) as total_provider_fee,
 					COALESCE(AVG(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) END), 0) as avg_processing_time_secs,
-					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) <= 30 THEN 1 ELSE 0 END) as completed_under30s
+					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) <= 30 THEN 1 ELSE 0 END) as completed_under30s,
+					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) > 30 AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) <= 120 THEN 1 ELSE 0 END) as completed_30s_2m,
+					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) > 120 AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) <= 300 THEN 1 ELSE 0 END) as completed_2m_5m,
+					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) > 300 AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) <= 900 THEN 1 ELSE 0 END) as completed_5m_15m,
+					SUM(CASE WHEN advance_payment_requests.status = 'COMPLETED' AND advance_payment_requests.paid_at IS NOT NULL AND TIMESTAMPDIFF(SECOND, advance_payment_requests.created_at, advance_payment_requests.paid_at) > 900 THEN 1 ELSE 0 END) as completed_over_15m
 				FROM advance_payment_requests
 	`
 
@@ -555,6 +563,10 @@ func (r *AdvancePaymentRequestRepository) GetStatsSummary(ctx context.Context, f
 		TotalProviderFee:      result.TotalProviderFee,
 		AvgProcessingTimeSecs: result.AvgProcessingTimeSecs,
 		CompletedUnder30s:     result.CompletedUnder30s,
+		Completed30sTo2m:      result.Completed30sTo2m,
+		Completed2mTo5m:       result.Completed2mTo5m,
+		Completed5mTo15m:      result.Completed5mTo15m,
+		CompletedOver15m:      result.CompletedOver15m,
 	}, nil
 }
 

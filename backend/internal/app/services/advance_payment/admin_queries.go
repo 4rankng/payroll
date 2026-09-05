@@ -54,6 +54,10 @@ func (s *Service) GetSummary(ctx context.Context, fromDate, toDate time.Time, fo
 		TotalProviderFeeAllTime: allTimeProviderFee,
 		AvgProcessingTimeSecs:   stats.AvgProcessingTimeSecs,
 		CompletedUnder30s:       stats.CompletedUnder30s,
+		Completed30sTo2m:        stats.Completed30sTo2m,
+		Completed2mTo5m:         stats.Completed2mTo5m,
+		Completed5mTo15m:        stats.Completed5mTo15m,
+		CompletedOver15m:        stats.CompletedOver15m,
 	}
 
 	// Derived metrics — computed server-side, no client-side calculation needed
