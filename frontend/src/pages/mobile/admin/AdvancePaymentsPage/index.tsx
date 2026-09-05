@@ -412,27 +412,28 @@ const AdvancePaymentsPageMobile = () => {
           />
         )}
 
-        <div className="grid grid-cols-1 gap-3">
-          <AdvPartnerHeroStrip
-            {...heroProps}
-            compact
-            isLoading={page.summaryLoading}
-            className="rounded-2xl border-[#D8E2EE] bg-white"
-          />
-          <TreasuryFeePanel
-            {...feePanelProps}
-            compact
-            isLoading={page.summaryLoading}
-            className="rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
-          />
-          {!isAdvPartner && (
-            <WalletDemandCard
-              data={demandForecast}
+        {/* Treasury summary — one card, stacked stat rows (mirrors desktop hero) */}
+        <section
+          aria-label="Tổng quan kỳ ứng lương"
+          className="overflow-hidden rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+        >
+          <div className="divide-y divide-[#D8E2EE]">
+            <AdvPartnerHeroStrip
+              {...heroProps}
               compact
-              className="rounded-2xl border border-[#D8E2EE] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+              isLoading={page.summaryLoading}
+              className="rounded-none border-0 shadow-none"
             />
-          )}
-        </div>
+            <TreasuryFeePanel
+              {...feePanelProps}
+              compact
+              isLoading={page.summaryLoading}
+            />
+            {!isAdvPartner && (
+              <WalletDemandCard compact data={demandForecast} className="p-3.5" />
+            )}
+          </div>
+        </section>
       </div>
 
       {/* Tab switcher: Yêu cầu / Chấm công — restores desktop tab parity */}
