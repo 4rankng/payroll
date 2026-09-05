@@ -575,3 +575,38 @@ func TestChronologicalGrandTotals(t *testing.T) {
 		}
 	}
 }
+
+// The pace scale cap keeps an outlier cycle's ratio from stretching the
+// historical tail into an over-compounded safety margin, while calm-cycle
+// down-scaling stays exact.
+func TestConditionDistributionOnCurrentPaceScaleCap(t *testing.T) {
+	dist := demandDistribution{
+		samples: []float64{10_000_000, 20_000_000, 30_000_000, 40_000_000},
+		p50:     25_000_000,
+		p90:     37_000_000,
+		p95:     39_000_000,
+		p99:     40_000_000,
+		method:  "monte-carlo",
+	}
+
+	// targetP50 = 8x the raw p50 — the cap must hold the upscale at 2x.
+	got := conditionDistributionOnCurrentPace(dist, 200_000_000, -1, 2.0)
+	if got.p50 != 50_000_000 {
+		t.Fatalf("p50 = %f, want 50000000 (scale capped at 2x)", got.p50)
+	}
+	if got.p95 > 39_000_000*2.0*1.001 {
+		t.Fatalf("p95 = %f, want ≤ 2x raw p95 (78000000)", got.p95)
+	}
+
+	// Down-scaling (calm cycle) is never capped. Fresh dist: the function
+	// mutates the samples slice in place, so reuse would mix states.
+	fresh := demandDistribution{
+		samples: []float64{10_000_000, 20_000_000, 30_000_000, 40_000_000},
+		p50:     25_000_000,
+		method:  "monte-carlo",
+	}
+	gotDown := conditionDistributionOnCurrentPace(fresh, 12_500_000, -1, 2.0)
+	if gotDown.p50 != 12_500_000 {
+		t.Fatalf("p50 = %f, want 12500000 (exact down-scale)", gotDown.p50)
+	}
+}

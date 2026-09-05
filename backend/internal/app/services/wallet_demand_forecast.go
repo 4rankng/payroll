@@ -141,7 +141,7 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 				maxFuture = int64(cycleState.MaxAdvanceAmount - cycleState.UsedRequestAmount)
 			}
 		}
-		cycleDist = conditionDistributionOnCurrentPace(cycleDist, projectedFuture, maxFuture)
+		cycleDist = conditionDistributionOnCurrentPace(cycleDist, projectedFuture, maxFuture, s.cfg.PaceScaleCap)
 	}
 	sl := serviceLevelConfig{
 		Quantile:          s.cfg.ServiceLevel,

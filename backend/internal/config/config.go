@@ -229,6 +229,13 @@ type WalletForecastConfig struct {
 	HistoryMonths     int     // env WALLET_FORECAST_HISTORY_MONTHS, default 6
 	LeadDays          int     // response metadata; env WALLET_FORECAST_LEAD_DAYS, default 2
 	UncertaintyFactor float64 // env WALLET_FORECAST_UNCERTAINTY_FACTOR, default 0
+	// PaceScaleCap bounds how far the current cycle's pace may upscale the
+	// historical remaining-cycle distribution during conditioning. The tail
+	// spread is historical evidence — multiplying the worst observed tail by a
+	// large pace ratio (outlier cycles produce 5-8x) compounds two safety
+	// margins. env WALLET_FORECAST_PACE_SCALE_CAP, default 2. Down-scaling is
+	// never capped.
+	PaceScaleCap float64
 }
 
 // CashForecastConfig governs the advisory timesheet cash-readiness forecast on
@@ -485,6 +492,7 @@ func Load() (*Config, error) {
 			HistoryMonths:     parseInt(getEnv("WALLET_FORECAST_HISTORY_MONTHS", "6")),
 			LeadDays:          parseInt(getEnv("WALLET_FORECAST_LEAD_DAYS", "2")),
 			UncertaintyFactor: parseFloat(getEnv("WALLET_FORECAST_UNCERTAINTY_FACTOR", "0")),
+			PaceScaleCap:      parseFloat(getEnv("WALLET_FORECAST_PACE_SCALE_CAP", "2")),
 		},
 		CashForecast: CashForecastConfig{
 			ServiceLevel:              parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),

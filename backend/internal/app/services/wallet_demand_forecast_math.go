@@ -252,6 +252,10 @@ func completionRate(historical []cohortSeries) float64 {
 // the basis is treated as stationary and the gamma fit is trusted at face value.
 const trendRatioCutoff = 3.0
 
+// defaultPaceScaleCap bounds the pace-conditioning upscale factor when no
+// explicit cap is configured (see conditionDistributionOnCurrentPace).
+const defaultPaceScaleCap = 2.0
+
 // demandDistribution is the predictive distribution of the current period's
 // REMAINING net cash-out (cash still to leave the wallet from tomorrow through
 // cycle end), conditional on demand observed through todayCycleDay. All fields
@@ -491,11 +495,21 @@ func forecastRemainingCycleDistribution(
 // uploaded request capacity; a negative value means no authoritative ceiling is
 // available. The historical shape and tail remain intact while the forecast
 // level follows the current cycle.
+//
+// scaleCap bounds how far the current pace may stretch the historical
+// distribution upward. The tail spread is historical evidence; multiplying the
+// worst observed tail by a large pace ratio compounds two safety margins into
+// an over-conservative recommendation (an outlier cycle easily produces a 5-8x
+// ratio). Down-scaling (calm cycle) is never capped.
 func conditionDistributionOnCurrentPace(
 	dist demandDistribution,
 	targetP50 int64,
 	maxFuture int64,
+	scaleCap float64,
 ) demandDistribution {
+	if scaleCap <= 0 {
+		scaleCap = defaultPaceScaleCap
+	}
 	if dist.method == "no-history" || len(dist.samples) == 0 {
 		return dist
 	}
@@ -510,6 +524,9 @@ func conditionDistributionOnCurrentPace(
 	shift := 0.0
 	if dist.p50 > 0 {
 		scale = float64(targetP50) / dist.p50
+		if scale > scaleCap {
+			scale = scaleCap
+		}
 	} else if targetP50 > 0 {
 		scale = 1
 		shift = float64(targetP50)
