@@ -140,7 +140,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   disabled={isSyncing}
                   title="Đồng bộ số dư với nhà cung cấp"
                   aria-label="Đồng bộ số dư"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation sm:h-8 sm:w-8"
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
                 </button>
@@ -149,7 +149,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
               {/* Main Balance */}
               <div className={cn(
                 "mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
-                compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.75rem,8vw,2rem)]",
+                compact ? "text-[clamp(1.375rem,7.5vw,1.5rem)]" : "text-[clamp(1.75rem,8vw,2rem)]",
                 isLow ? "text-red-400" : "text-white"
               )}>
                 {formatCurrency(available).replace('₫', '')}

@@ -340,25 +340,33 @@ const AdvancePaymentsPage = () => {
 
             {/* Panel D: Wallet top-up need — admins only */}
             {!isAdvPartner && (
-              <WalletDemandCard data={demandForecast} compact className="p-5 sm:p-6" />
+              <WalletDemandCard data={demandForecast} compact className="p-3.5" />
             )}
           </div>
         </section>
 
-        {/* ─── 3. Pipeline + operating health ─── */}
+        {/* ─── 3. Pipeline + operating health — single command band ─── */}
         <section
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
-          className="grid gap-3 sm:gap-4"
+          className={cn(
+            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
+            isMobile && "mobile-section-enter",
+          )}
         >
-          <AdvPartnerStatusOverview
-            {...statusProps}
-            isLoading={page.summaryLoading}
-          />
-          <AdvPartnerMetricsStrip
-            {...metricsProps}
-            isLoading={page.summaryLoading}
-          />
+          <div className="grid grid-cols-1 divide-y divide-border/60 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:divide-y-0 lg:divide-x">
+            <AdvPartnerStatusOverview
+              bare
+              {...statusProps}
+              isLoading={page.summaryLoading}
+            />
+            <AdvPartnerMetricsStrip
+              bare
+              {...metricsProps}
+              isLoading={page.summaryLoading}
+            />
+          </div>
         </section>
 
         {/* ─── 5. Operations — tabs + filters + table ─── */}
