@@ -91,8 +91,9 @@ func TestGetEmployeeAdvanceInfoFallsBackToPreviousMonthWhileCurrentUploadMissing
 		ProjectEmployeeRepo: &employeeInfoProjectEmployeeRepo{
 			assignments: []*domain.ProjectEmployee{
 				{
-					EmployeeID:      99,
-					PaymentSchedule: string(domain.PaymentScheduleFlexible),
+					EmployeeID:            99,
+					PaymentSchedule:       string(domain.PaymentScheduleFlexible),
+					AdvanceRequestEnabled: true,
 				},
 			},
 		},

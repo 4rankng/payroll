@@ -241,11 +241,12 @@ type EmployeeAdvanceBankInfo struct {
 
 // EmployeeAdvanceProjectInfo represents project information for an employee
 type EmployeeAdvanceProjectInfo struct {
-	ID             uint   `json:"id"`
-	Name           string `json:"name"`
-	Code           string `json:"code"`
-	AssignmentID   uint   `json:"assignment_id"`
-	CheckInEnabled bool   `json:"check_in_enabled"`
+	ID                    uint   `json:"id"`
+	Name                  string `json:"name"`
+	Code                  string `json:"code"`
+	AssignmentID          uint   `json:"assignment_id"`
+	CheckInEnabled        bool   `json:"check_in_enabled"`
+	AdvanceRequestEnabled bool   `json:"advance_request_enabled"`
 }
 
 // EmployeeAdvanceItem represents an employee with advance payment statistics

@@ -37,6 +37,14 @@ type ProjectEmployee struct {
 
 	CheckInEnabled bool `json:"check_in_enabled" gorm:"column:check_in_enabled;type:tinyint(1);not null;default:0"`
 
+	// AdvanceRequestEnabled gates NEW advance payment requests (both the
+	// regular flow and the self-check-in flow). false = admin/adv_partner
+	// paused ("tạm ngừng") advance requests for this employee; existing
+	// pending/approved requests are untouched. The default:true tag is
+	// load-bearing: without it GORM Create() writes the zero value (false)
+	// explicitly and every new assignment would start disabled.
+	AdvanceRequestEnabled bool `json:"advance_request_enabled" gorm:"column:advance_request_enabled;type:tinyint(1);not null;default:true"`
+
 	// Deferred check-in activation: enabling check-in takes effect on day 1 of
 	// the next month. NULL pending fields = no pending change.
 	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty" gorm:"type:tinyint(1);comment:'Pending check-in enable awaiting activation'"`
@@ -200,6 +208,8 @@ type ProjectEmployeeWithDetails struct {
 	ScheduleEffectiveFrom  *time.Time `json:"schedule_effective_from,omitempty"`
 
 	CheckInEnabled bool `json:"check_in_enabled"`
+
+	AdvanceRequestEnabled bool `json:"advance_request_enabled"`
 
 	// Deferred check-in activation
 	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty"`

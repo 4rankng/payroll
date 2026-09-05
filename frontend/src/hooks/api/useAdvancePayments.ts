@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/sonner";
 import { advancePaymentService } from "@/services/api/advance-payment.service";
+import { projectEmployeeService } from "@/services/api/project-employee.service";
 import { QueryKeys } from "@/lib/queryKeys";
 import {
   showSuccessNotification,
@@ -531,6 +532,56 @@ export function useImportFlexibleEmployeeList(options?: ImportPollingOptions) {
 
       showSuccessNotification(
         `Nhập file thành công: ${response.total_rows} dòng, ${response.created_count} nhân viên mới, ${response.updated_count} đã cập nhật`,
+      );
+    },
+  });
+}
+
+// ============================================================================
+// Advance request kill switch (tạm ngừng ứng lương)
+// ============================================================================
+
+/**
+ * Toggle the per-employee advance request kill switch. Disabling blocks NEW
+ * advance requests for that employee (regular + check-in flows); pending and
+ * approved requests are untouched.
+ */
+export function useToggleAdvanceRequestEnabled() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      employeeId,
+      enabled,
+    }: {
+      projectId: number;
+      employeeId: number;
+      enabled: boolean;
+    }) =>
+      projectEmployeeService.toggleAdvanceRequestEnabled(
+        projectId,
+        employeeId,
+        enabled
+      ),
+    onSuccess: (_, variables) => {
+      // The flex-pay employee list key is filter-suffixed
+      // (['admin','advance-payments','flex-pay-employees', filters]), so match on the prefix.
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return (
+            Array.isArray(key) &&
+            key[0] === "admin" &&
+            key[1] === "advance-payments" &&
+            key[2] === "flex-pay-employees"
+          );
+        },
+      });
+      showSuccessNotification(
+        variables.enabled
+          ? "Đã bật lại ứng lương cho nhân viên"
+          : "Đã tạm ngừng ứng lương cho nhân viên"
       );
     },
   });

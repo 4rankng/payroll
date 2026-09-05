@@ -101,6 +101,47 @@ func (h *Handler) requireCheckInConfigurationAccess(c *gin.Context, projectID ui
 	return true
 }
 
+// requireAdvanceToggleAccess gates the per-employee advance payment kill
+// switch ("tạm ngừng ứng lương"): admin always, adv_partner only on projects
+// they can modify, everyone else 403.
+func (h *Handler) requireAdvanceToggleAccess(c *gin.Context, projectID uint) bool {
+	role := c.GetString(constants.CtxUserRole)
+	if role == string(domain.RoleAdmin) {
+		return true
+	}
+	if role != string(domain.RoleAdvPartner) {
+		response.Forbidden(c, "Bạn không có quyền tạm ngừng ứng lương")
+		return false
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
+		return false
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return false
+	}
+
+	canModify, err := h.projectPermissionService.CanUserModifyProject(c.Request.Context(), projectID, uid)
+	if err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to check advance toggle project permission",
+			"project_id", projectID,
+			"user_id", uid,
+			"error", err,
+		)
+		response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+		return false
+	}
+	if !canModify {
+		response.Forbidden(c, "Bạn không có quyền tạm ngừng ứng lương cho dự án này")
+		return false
+	}
+	return true
+}
+
 func (h *Handler) ListCheckInConfigurableProjects(c *gin.Context) {
 	role := c.GetString(constants.CtxUserRole)
 	if role != string(domain.RoleAdmin) && role != string(domain.RoleAdvPartner) {
@@ -709,6 +750,56 @@ func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
 	}
 
 	response.Success(c, nil, "Check-in status updated successfully")
+}
+
+// ToggleAdvanceRequestEnabled handles PATCH /api/v1/projects/:id/employees/:employeeId/advance-request-enabled
+func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
+		return
+	}
+	if !h.requireAdvanceToggleAccess(c, uint(projectID)) {
+		return
+	}
+
+	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
+		return
+	}
+
+	var req dto.ToggleAdvanceRequestEnabledRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, constants.MsgInvalidRequestBodyVN)
+		return
+	}
+
+	userID, exists := c.Get(constants.CtxUserID)
+	if !exists {
+		response.Unauthorized(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+	uid, ok := userID.(uint)
+	if !ok {
+		response.Forbidden(c, constants.MsgInvalidUserIDVN)
+		return
+	}
+
+	if err := h.projectEmployeeService.ToggleAdvanceRequestEnabled(c.Request.Context(), uint(projectID), uint(employeeID), req.AdvanceRequestEnabled, uid); err != nil {
+		if domain.IsNotFoundError(err) {
+			response.NotFound(c, err.Error())
+			return
+		}
+		if domainErr, ok := err.(*domain.DomainError); ok {
+			response.BadRequest(c, domainErr.Message)
+			return
+		}
+		response.InternalServerError(c, "Failed to toggle advance request status")
+		return
+	}
+
+	response.Success(c, nil, "Advance request status updated successfully")
 }
 
 // BulkToggleCheckInEnabled handles PATCH /api/v1/projects/:id/employees/checkin-enabled/bulk

@@ -6,6 +6,7 @@ import type {
 } from "@/types/api/advance-payment.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AdvanceRequestToggle } from "@/components/advance-payment/AdvanceRequestToggle";
 import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, X } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/utils/formatters";
@@ -303,6 +304,18 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
       </div>
     ),
   },
+  {
+    id: "advanceRequest",
+    header: "Ứng lương",
+    size: 110,
+    cell: ({ row }) => (
+      <AdvanceRequestToggle
+        projectId={row.original.project?.id ?? 0}
+        employeeId={row.original.employeeId}
+        enabled={row.original.project?.advance_request_enabled !== false}
+      />
+    ),
+  },
 ];
 }
 
@@ -434,6 +447,18 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
         </div>
       );
     },
+  },
+  {
+    key: "advanceRequest",
+    label: "Ứng lương",
+    priority: 2,
+    render: (row) => (
+      <AdvanceRequestToggle
+        projectId={row.project?.id ?? 0}
+        employeeId={row.employeeId}
+        enabled={row.project?.advance_request_enabled !== false}
+      />
+    ),
   },
 ];
 

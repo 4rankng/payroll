@@ -177,6 +177,11 @@ type ToggleCheckInEnabledRequest struct {
 	CheckInEnabled bool `json:"check_in_enabled"`
 }
 
+// ToggleAdvanceRequestEnabledRequest represents the request to toggle the per-employee advance payment kill switch
+type ToggleAdvanceRequestEnabledRequest struct {
+	AdvanceRequestEnabled bool `json:"advance_request_enabled"`
+}
+
 // BulkToggleCheckInEnabledRequest represents the request to toggle check-in for multiple employees
 type BulkToggleCheckInEnabledRequest struct {
 	EmployeeIDs    []uint `json:"employee_ids" binding:"required,min=1"`

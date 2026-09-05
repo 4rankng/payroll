@@ -98,6 +98,13 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 		HasFlexible:   eligibility.hasFlexible,
 	}
 
+	if eligibility.advanceRequestDisabled {
+		info.CanRequest = false
+		info.CanRequestTitle = constants.MsgAdvanceRequestPausedTitleVN
+		info.CanRequestReason = constants.MsgAdvanceRequestPausedReasonVN
+		return info, nil
+	}
+
 	if !eligibility.hasCheckInEnabled {
 		info.CanRequest = false
 		info.CanRequestTitle = "Chưa bật dịch vụ tự chấm công"
@@ -179,6 +186,9 @@ func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID ui
 	eligibility, err := s.getAdvanceEligibility(ctx, employeeID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to check payment schedule")
+	}
+	if eligibility.advanceRequestDisabled {
+		return nil, domain.NewValidationError(constants.MsgAdvanceRequestsDisabledVN)
 	}
 	if !eligibility.hasCheckInEnabled {
 		return nil, domain.NewValidationError("Tài khoản chưa được cấp quyền sử dụng dịch vụ tự chấm công")

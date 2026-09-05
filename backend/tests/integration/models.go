@@ -394,9 +394,12 @@ type EmployeeAdvanceBankInfo struct {
 }
 
 type EmployeeAdvanceProjectInfo struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
-	Code string `json:"code"`
+	ID                    uint   `json:"id"`
+	Name                  string `json:"name"`
+	Code                  string `json:"code"`
+	AssignmentID          uint   `json:"assignment_id"`
+	CheckInEnabled        bool   `json:"check_in_enabled"`
+	AdvanceRequestEnabled bool   `json:"advance_request_enabled"`
 }
 
 // --- FlexPay Import ---

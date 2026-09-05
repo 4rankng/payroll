@@ -95,11 +95,12 @@ func (h *AdvancePaymentHandler) GetEmployees(c *gin.Context) {
 
 		// Set project info
 		item.Project = &dto.EmployeeAdvanceProjectInfo{
-			ID:             emp.ProjectID,
-			Name:           emp.ProjectName,
-			Code:           emp.ProjectCode,
-			AssignmentID:   emp.ProjectEmployeeID,
-			CheckInEnabled: emp.CheckInEnabled,
+			ID:                    emp.ProjectID,
+			Name:                  emp.ProjectName,
+			Code:                  emp.ProjectCode,
+			AssignmentID:          emp.ProjectEmployeeID,
+			CheckInEnabled:        emp.CheckInEnabled,
+			AdvanceRequestEnabled: emp.AdvanceRequestEnabled,
 		}
 
 		data[i] = item

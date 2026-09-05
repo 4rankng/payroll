@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { AccentStripCard } from "@/components/shared/AccentStripCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { MobilePagination, type PaginationInfo } from "@/components/shared/MobilePagination";
+import { AdvanceRequestToggle } from "@/components/advance-payment/AdvanceRequestToggle";
 import type { FlexPayEmployeeListItem } from "@/types/api/advance-payment.types";
 
 const EmployeeCard = memo(function EmployeeCard({
@@ -73,6 +74,17 @@ const EmployeeCard = memo(function EmployeeCard({
           <p className="text-xs text-muted-foreground mt-2 truncate">
             {emp.project.name}
           </p>
+        )}
+
+        {emp.project && (
+          <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Ứng lương</span>
+            <AdvanceRequestToggle
+              projectId={emp.project.id}
+              employeeId={emp.employeeId}
+              enabled={emp.project.advance_request_enabled !== false}
+            />
+          </div>
         )}
       </div>
     </AccentStripCard>

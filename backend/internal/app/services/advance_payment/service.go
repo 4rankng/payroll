@@ -71,6 +71,13 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		Quotas:              make([]domain.AdvancePaymentQuota, 0),
 	}
 
+	if eligibility.advanceRequestDisabled {
+		info.CanRequest = false
+		info.CanRequestTitle = constants.MsgAdvanceRequestPausedTitleVN
+		info.CanRequestReason = constants.MsgAdvanceRequestPausedReasonVN
+		return info, nil
+	}
+
 	if !eligibility.hasFlexible {
 		info.CanRequest = false
 		return info, nil
@@ -232,6 +239,9 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 	eligibility, err := s.getAdvanceEligibility(ctx, employeeID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to check payment schedule")
+	}
+	if eligibility.advanceRequestDisabled {
+		return nil, domain.NewValidationError(constants.MsgAdvanceRequestsDisabledVN)
 	}
 	if !eligibility.hasFlexible {
 		return nil, domain.NewValidationError(constants.MsgEmployeeNoFlexiblePayScheduleVN)
@@ -395,8 +405,9 @@ func (s *Service) CalculateFeePreview(ctx context.Context, requestAmount uint64)
 }
 
 type advanceEligibility struct {
-	hasFlexible       bool
-	hasCheckInEnabled bool
+	hasFlexible            bool
+	hasCheckInEnabled      bool
+	advanceRequestDisabled bool
 }
 
 func (s *Service) getAdvanceEligibility(ctx context.Context, employeeID uint64) (advanceEligibility, error) {
@@ -406,6 +417,15 @@ func (s *Service) getAdvanceEligibility(ctx context.Context, employeeID uint64) 
 		return advanceEligibility{}, err
 	}
 
+	return deriveAdvanceEligibility(assignments), nil
+}
+
+// deriveAdvanceEligibility folds project-employee assignments into advance
+// eligibility. Only ACTIVE flexible assignments count. Any active flexible
+// assignment with AdvanceRequestEnabled=false ("tạm ngừng ứng lương", set by
+// admin/adv_partner when the employee's quota data is wrong) blocks new
+// advance requests on both the regular and the self-check-in flow.
+func deriveAdvanceEligibility(assignments []*domain.ProjectEmployee) advanceEligibility {
 	var result advanceEligibility
 	for _, assignment := range assignments {
 		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) && assignment.LastDate == nil {
@@ -413,10 +433,13 @@ func (s *Service) getAdvanceEligibility(ctx context.Context, employeeID uint64) 
 			if assignment.CheckInEnabled {
 				result.hasCheckInEnabled = true
 			}
+			if !assignment.AdvanceRequestEnabled {
+				result.advanceRequestDisabled = true
+			}
 		}
 	}
 
-	return result, nil
+	return result
 }
 
 // GetPendingByDateRange returns pending requests within a date range

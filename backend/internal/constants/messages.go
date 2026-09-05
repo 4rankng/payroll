@@ -714,6 +714,9 @@ const (
 	MsgCannotCancelRequestVN            = "Bạn không có quyền hủy yêu cầu này"
 	MsgCanOnlyCancelPendingRequestVN    = "Chỉ có thể hủy yêu cầu đang chờ xử lý"
 	MsgCanOnlyCancelPendingOrApprovedVN = "Chỉ có thể hủy yêu cầu đang chờ xử lý hoặc đã duyệt"
+	MsgAdvanceRequestsDisabledVN        = "Tài khoản đã bị tạm ngừng ứng lương. Vui lòng liên hệ quản lý."
+	MsgAdvanceRequestPausedTitleVN      = "Tạm ngừng ứng lương"
+	MsgAdvanceRequestPausedReasonVN     = "Tài khoản của bạn tạm thời không thể tạo yêu cầu ứng lương mới. Vui lòng liên hệ quản lý."
 
 	// Advance Payment Cutoff Errors - Vietnamese
 	MsgAdvanceRequestCutoffVN       = "Đã quá hạn ngày 8, không thể yêu cầu ứng lương. Vui lòng đợi quản trị viên tải lên bảng lương cho kỳ tiếp theo."

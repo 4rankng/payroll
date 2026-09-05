@@ -125,6 +125,10 @@ p, adv_partner, /api/v1/projects/:id/employees/:employeeId/checkin-enabled, PATC
 p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-inactive, PATCH, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-pending, PATCH, allow
 
+# Per-employee advance request kill switch ("tạm ngừng ứng lương").
+# Same ownership enforcement as the check-in toggles via CanUserModifyProject.
+p, adv_partner, /api/v1/projects/:id/employees/:employeeId/advance-request-enabled, PATCH, allow
+
 # Users - read only (broad PUT removed: adv_partner edits route through the
 # scoped /adv-partner/users/* handler, which enforces project-scope ownership).
 p, adv_partner, /api/v1/users, GET, allow

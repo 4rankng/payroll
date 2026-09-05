@@ -79,6 +79,9 @@ func main() {
 	// Phase 6.5: Advance Payment - Removal Visibility
 	runAdvanceRemovalVisibilityTests(client, testData, reporter)
 
+	// Phase 6.7: Advance request kill switch (tạm ngừng ứng lương)
+	runAdvanceRequestKillSwitchTests(client, testData, reporter)
+
 	// Phase 7: Auth & User Management
 	runAuthUserTests(client, testData, reporter, cfg)
 

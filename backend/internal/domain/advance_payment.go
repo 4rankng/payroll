@@ -176,6 +176,7 @@ type EmployeeAdvanceStats struct {
 	CreatedAt              *time.Time `json:"created_at" gorm:"column:created_at"`
 	ProjectEmployeeID      uint       `json:"project_employee_id" gorm:"column:project_employee_id"`
 	CheckInEnabled         bool       `json:"check_in_enabled" gorm:"column:check_in_enabled"`
+	AdvanceRequestEnabled  bool       `json:"advance_request_enabled" gorm:"column:advance_request_enabled"`
 }
 
 // EmployeeAdvanceStatsFilters represents filters for querying employee advance stats

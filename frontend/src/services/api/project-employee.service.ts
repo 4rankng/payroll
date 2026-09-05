@@ -320,6 +320,23 @@ export class ProjectEmployeeService {
   }
 
   /**
+   * Toggle the per-employee advance payment kill switch (tạm ngừng ứng lương).
+   * enabled=false blocks NEW advance requests for this employee; existing
+   * pending/approved requests are untouched.
+   */
+  async toggleAdvanceRequestEnabled(
+    projectId: number,
+    employeeId: number,
+    enabled: boolean
+  ): Promise<{ status: "success"; message: string }> {
+    const response = await apiClient.patch<{ status: "success"; message: string }>(
+      `/projects/${projectId}/employees/${employeeId}/advance-request-enabled`,
+      { advance_request_enabled: enabled }
+    );
+    return response.data!;
+  }
+
+  /**
    * Bulk toggle check-in enabled status for multiple employees in a project
    */
   async bulkToggleCheckInEnabled(

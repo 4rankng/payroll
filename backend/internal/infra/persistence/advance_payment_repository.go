@@ -330,7 +330,8 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 			COALESCE(pending_stats.pending_count, 0) as pending_requests_count,
 			e.created_at,
 			pe_detail.id as project_employee_id,
-			pe_detail.check_in_enabled
+			pe_detail.check_in_enabled,
+			pe_detail.advance_request_enabled
 		`).
 		Joins("JOIN employees e ON pe.employee_id = e.id").
 		Joins("JOIN project_employees pe_detail ON pe_detail.id = pe.project_employee_id").

@@ -252,6 +252,8 @@ export interface FlexPayEmployeeProject {
   code: string;
   assignment_id?: number;
   check_in_enabled?: boolean;
+  /** Per-employee advance request kill switch. undefined/true = allowed. */
+  advance_request_enabled?: boolean;
 }
 
 /**

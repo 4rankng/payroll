@@ -936,6 +936,38 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 	})
 }
 
+// ToggleAdvanceRequestEnabled toggles the per-employee advance payment kill
+// switch ("tạm ngừng ứng lương"). Both directions take effect instantly;
+// disabling does NOT touch quota or existing pending/approved requests — it
+// only blocks NEW advance requests (regular and self-check-in flows).
+func (s *ProjectEmployeeService) ToggleAdvanceRequestEnabled(ctx context.Context, projectID, employeeID uint, enabled bool, updatedBy uint) error {
+	return s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, projectID, employeeID)
+		if err != nil {
+			return err
+		}
+
+		if assignment.AdvanceRequestEnabled == enabled {
+			return nil // Already in the requested state — no change needed
+		}
+		assignment.AdvanceRequestEnabled = enabled
+
+		if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
+			return err
+		}
+
+		// Publish domain event
+		if s.eventBus != nil {
+			event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
+			if err := s.eventBus.Publish(txCtx, event); err != nil {
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (toggle advance requests)", "error", err)
+			}
+		}
+
+		return nil
+	})
+}
+
 // BulkToggleCheckInEnabled toggles the check-in enabled status for multiple employees in a project.
 // The toggle logic is inlined within a single transaction to avoid nested transactions and ensure atomicity.
 // Enabling is deferred to day 1 of the next month (same rule as the single toggle);

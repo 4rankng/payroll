@@ -49,10 +49,11 @@ func TestCreateRequestHybridWindow(t *testing.T) {
 				ProjectEmployeeRepo: &hybridCreateProjectEmployeeRepo{
 					assignments: []*domain.ProjectEmployee{
 						{
-							EmployeeID:      99,
-							ProjectID:       5,
-							PaymentSchedule: string(domain.PaymentScheduleFlexible),
-							CheckInEnabled:  true,
+							EmployeeID:            99,
+							ProjectID:             5,
+							PaymentSchedule:       string(domain.PaymentScheduleFlexible),
+							CheckInEnabled:        true,
+							AdvanceRequestEnabled: true,
 						},
 					},
 				},
@@ -101,9 +102,10 @@ func TestCreateRequestNonHybridWindowUnchanged(t *testing.T) {
 				ProjectEmployeeRepo: &hybridCreateProjectEmployeeRepo{
 					assignments: []*domain.ProjectEmployee{
 						{
-							EmployeeID:      99,
-							ProjectID:       5,
-							PaymentSchedule: string(domain.PaymentScheduleFlexible),
+							EmployeeID:            99,
+							ProjectID:             5,
+							PaymentSchedule:       string(domain.PaymentScheduleFlexible),
+							AdvanceRequestEnabled: true,
 						},
 					},
 				},
