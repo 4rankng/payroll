@@ -15,17 +15,15 @@ const baseProps = {
 };
 
 describe('AdvPartnerStatusOverview', () => {
-  it('shows the success-rate chip by default (standalone views rely on it)', () => {
+  it('shows the success rate exactly once — the header chip', () => {
     render(<AdvPartnerStatusOverview {...baseProps} />);
 
-    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getAllByText('100%')).toHaveLength(1);
   });
 
-  it('hides the success-rate chip when the adjacent ring gauge owns the number', () => {
-    render(<AdvPartnerStatusOverview {...baseProps} showSuccessBadge={false} />);
+  it('renders the status cells — this zone owns the per-status counts', () => {
+    render(<AdvPartnerStatusOverview {...baseProps} />);
 
-    expect(screen.queryByText('100%')).not.toBeInTheDocument();
-    // Status cells stay — they are this zone's own data.
     expect(screen.getByText('Hoàn tất')).toBeInTheDocument();
     expect(screen.getByText('Đã hủy')).toBeInTheDocument();
     expect(screen.getByText('158')).toBeInTheDocument();

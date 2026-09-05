@@ -138,15 +138,11 @@ const AdvancePaymentsPage = () => {
 
   const metricsProps = useMemo(
     () => ({
-      totalPaid: summaryData?.totalPaid ?? 0,
-      totalRequests: summaryData?.totalRequests ?? 0,
-      totalCancelled: summaryData?.totalCancelled ?? 0,
       completedUnder30s: summaryData?.completedUnder30s ?? 0,
       completed30sTo2m: summaryData?.completed30sTo2m ?? 0,
       completed2mTo5m: summaryData?.completed2mTo5m ?? 0,
       completed5mTo15m: summaryData?.completed5mTo15m ?? 0,
       completedOver15m: summaryData?.completedOver15m ?? 0,
-      successRate: summaryData?.successRate ?? 0,
     }),
     [summaryData],
   );
@@ -355,7 +351,6 @@ const AdvancePaymentsPage = () => {
           <div className="grid grid-cols-1 divide-y divide-border/60 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:divide-y-0 lg:divide-x">
             <AdvPartnerStatusOverview
               bare
-              showSuccessBadge={false}
               {...statusProps}
               isLoading={page.summaryLoading}
             />

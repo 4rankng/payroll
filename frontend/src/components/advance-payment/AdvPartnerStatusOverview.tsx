@@ -18,10 +18,6 @@ export interface AdvPartnerStatusOverviewProps {
   successRate: number;
   isLoading?: boolean;
   className?: string;
-  /** Hide the "✓ N%" header chip when the success rate is already shown
-   *  adjacent — e.g. the admin band renders the hiệu suất ring gauge right
-   *  next to this zone, so the number must not appear twice. */
-  showSuccessBadge?: boolean;
   /** Strip the card chrome (border/bg/padding) so the pipeline can be embedded
    *  in a shared surface, e.g. the admin "pipeline + health" band. */
   bare?: boolean;
@@ -87,7 +83,6 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
   isLoading = false,
   className,
   bare = false,
-  showSuccessBadge = true,
 }: AdvPartnerStatusOverviewProps) {
   const props = {
     totalPaid,
@@ -120,7 +115,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
           <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-muted-foreground">
             {totalRequests}
           </span>
-          {showSuccessBadge && totalRequests > 0 && (
+          {totalRequests > 0 && (
             <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-foreground/70">
               <CheckCircle2 className="h-3 w-3" />
               {successRate.toFixed(0)}%
