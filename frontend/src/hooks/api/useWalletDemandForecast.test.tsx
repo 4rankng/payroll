@@ -18,12 +18,12 @@ describe('useWalletDemandForecast', () => {
     vi.mocked(useQuery).mockReset();
   });
 
-  it('keeps the page-session forecast until the browser page is refreshed', () => {
+  it('refetches the forecast every 30s and on window focus instead of pinning the first snapshot', () => {
     renderHook(() => useWalletDemandForecast());
 
     const options = vi.mocked(useQuery).mock.calls[0][0];
-    expect(options.staleTime).toBe(Number.POSITIVE_INFINITY);
-    expect(options.refetchOnWindowFocus).toBe(false);
+    expect(options.staleTime).toBe(30_000);
+    expect(options.refetchOnWindowFocus).toBe(true);
     expect(options).not.toHaveProperty('refetchInterval');
   });
 });
