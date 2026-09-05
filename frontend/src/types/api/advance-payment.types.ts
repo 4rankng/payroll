@@ -208,6 +208,10 @@ export interface AdvancePaymentSummary {
   totalProviderFeeAllTime: number;
   avgProcessingTimeSecs: number;
   completedUnder30s: number;
+  completed30sTo2m: number;
+  completed2mTo5m: number;
+  completed5mTo15m: number;
+  completedOver15m: number;
   feePercentage: number;
   avgFeePerRequest: number;
   avgFeePerEmployee: number;
