@@ -76,12 +76,10 @@ function MetricCard({
           </div>
         </div>
         {detail && (
-          <div className="mt-3 space-y-1">
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-2 w-2/3" />
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <Skeleton className="h-11 rounded-lg" />
+            <Skeleton className="h-11 rounded-lg" />
+            <Skeleton className="h-11 rounded-lg" />
           </div>
         )}
       </div>
@@ -128,16 +126,13 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
 }: AdvPartnerMetricsStripProps) {
   const effectiveTotal = totalRequests - totalCancelled;
 
-  // Processing-time distribution over completed requests (paid_at − created_at).
-  // Buckets: ≤30s / 30s–2m / 2–5m / 5–15m / >15m — mirrors the backend bucket SQL.
-  const distribution = [
+  // Processing-time cells over completed requests (paid_at − created_at):
+  // <30s / <5m / >5m — the last two cells each sum two backend buckets.
+  const processingCells = [
     { label: '<30 giây', count: completedUnder30s },
-    { label: '30 giây – 2 phút', count: completed30sTo2m },
-    { label: '2 – 5 phút', count: completed2mTo5m },
-    { label: '5 – 15 phút', count: completed5mTo15m },
-    { label: '>15 phút', count: completedOver15m },
+    { label: '<5 phút', count: completed30sTo2m + completed2mTo5m },
+    { label: '>5 phút', count: completed5mTo15m + completedOver15m },
   ];
-  const maxCount = Math.max(...distribution.map((b) => b.count), 1);
 
   return (
     <section aria-label="Chỉ số hiệu suất" className={cn('grid grid-cols-1 gap-3 sm:grid-cols-3', className)}>
@@ -164,23 +159,17 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         value={formatSeconds(avgProcessingTimeSecs)}
         color="amber"
         detail={
-          <div className="space-y-1">
-            {distribution.map((bucket) => {
-              const width = bucket.count === 0 ? 0 : Math.max((bucket.count / maxCount) * 100, 2);
-              return (
-                <div key={bucket.label} className="flex items-center gap-2">
-                  <span className="w-24 shrink-0 text-right text-[10px] font-medium tabular-nums text-muted-foreground">
-                    {bucket.label}
-                  </span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/60">
-                    <div className="h-full rounded-full bg-primary/70" style={{ width: `${width}%` }} />
-                  </div>
-                  <span className="w-9 shrink-0 text-right text-[10px] font-semibold tabular-nums text-foreground">
-                    {bucket.count}
-                  </span>
+          <div className="grid grid-cols-3 gap-2">
+            {processingCells.map((cell) => (
+              <div key={cell.label} className="rounded-lg border border-border/70 bg-muted/30 p-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  {cell.label}
                 </div>
-              );
-            })}
+                <div className="mt-0.5 font-financial text-sm font-bold leading-snug tabular-nums text-foreground">
+                  {cell.count}
+                </div>
+              </div>
+            ))}
           </div>
         }
         isLoading={isLoading}
