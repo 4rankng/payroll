@@ -172,20 +172,20 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 		return
 	}
 
-	forMonth := c.PostForm("forMonth")
-	forceReprocess, err := strconv.ParseBool(c.DefaultPostForm("force_reprocess", "false"))
-	if err != nil {
-		response.BadRequest(c, "force_reprocess không hợp lệ")
+	// The salary month is always DERIVED from the upload date — the admin no
+	// longer selects it in the UI: an upload between day 20 of month M and
+	// day 8 of M+1 belongs to M's salary period (GetCurrentMonth resolves the
+	// advance-period month from the injected clock). A stale form value, if
+	// still sent by an old client, is ignored.
+	forMonth := advance_payment.GetCurrentMonth()
+	if len(forMonth) != 7 {
+		response.BadRequest(c, "Tháng (forMonth) không hợp lệ với định dạng YYYY-MM")
 		return
 	}
 
-	// Auto-resolve forMonth if not provided
-	if forMonth == "" {
-		forMonth = advance_payment.GetCurrentMonth()
-	}
-
-	if forMonth == "" || len(forMonth) != 7 {
-		response.BadRequest(c, "Tháng (forMonth) không hợp lệ với định dạng YYYY-MM")
+	forceReprocess, err := strconv.ParseBool(c.DefaultPostForm("force_reprocess", "false"))
+	if err != nil {
+		response.BadRequest(c, "force_reprocess không hợp lệ")
 		return
 	}
 

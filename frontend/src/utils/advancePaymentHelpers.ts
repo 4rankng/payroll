@@ -339,6 +339,23 @@ export function isPriorMonthRequestable(
 /** Last day of the month-overhang tail (parity with backend RequestCutoffDay). */
 export const ADVANCE_REQUEST_CUTOFF_DAY = 8;
 
+/** Day the advance period rolls over (parity with backend PeriodCycleStartDay). */
+export const ADVANCE_PERIOD_START_DAY = 20;
+
+/**
+ * Salary month an upload made TODAY belongs to: day 20 of month M through
+ * day 8 of M+1 maps to M (parity with backend GetCurrentMonth /
+ * clock.AdvanceMonthFromTime). The upload dialog derives the month from the
+ * upload date — the admin no longer selects it.
+ */
+export function getSalaryUploadPeriodMonth(now: Date = new Date()): string {
+  const monthDate =
+    now.getDate() >= ADVANCE_PERIOD_START_DAY
+      ? now
+      : new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+}
+
 /**
  * Select the API-provided active payroll period when a non-check-in employee
  * first opens FlexiblePay without choosing a month. Before the cutoff that

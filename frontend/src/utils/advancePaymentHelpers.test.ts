@@ -7,6 +7,7 @@ import {
   getDefaultAdvanceMonth,
   getInitialEmployeeAdvanceMonth,
   getInitialHybridAdvanceMonth,
+  getSalaryUploadPeriodMonth,
   isPastAdvancePaymentPeriod,
   isPriorMonthRequestable,
 } from "./advancePaymentHelpers";
@@ -440,5 +441,19 @@ describe("getInitialHybridAdvanceMonth", () => {
     expect(
       getInitialHybridAdvanceMonth(new Date(2026, 7, 5), "2026-08", "2026-07", info),
     ).toBe("2026-08");
+  });
+});
+
+describe("getSalaryUploadPeriodMonth", () => {
+  it("maps the whole 20→8 window to the salary month M", () => {
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 7, 20))).toBe("2026-08"); // day 20 opens the period
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 5))).toBe("2026-08"); // Sept 5 → August
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 8, 23, 59))).toBe("2026-08"); // last cutoff day
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 20))).toBe("2026-09"); // next period opens
+  });
+
+  it("handles the year boundary", () => {
+    expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 8))).toBe("2026-12"); // Jan 8 → December
+    expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 20))).toBe("2027-01");
   });
 });

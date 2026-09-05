@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -10,9 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { FileDropZone } from "./FileDropZone";
 import { useImportFlexTemplate } from "@/hooks/api/useAdvancePayments";
-import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
+import { formatMonthDisplay, getSalaryUploadPeriodMonth } from "@/utils/advancePaymentHelpers";
 import { FileSpreadsheet, Loader2, CalendarDays, CheckCircle2, Users, FolderKanban, Link } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { ImportJobStatus, ImportJobStatusResponse } from "@/types/api/advance-payment.types";
 
 interface ImportPayrollDialogProps {
@@ -20,32 +19,17 @@ interface ImportPayrollDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const MONTH_OPTIONS = (() => {
-  const options: { value: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    options.push({ value, label: formatMonthDisplay(value) });
-  }
-  return options;
-})();
-
 export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [importProgress, setImportProgress] = useState<number>(0);
   const [importStatus, setImportStatus] = useState<ImportJobStatus | null>(null);
   const [importResult, setImportResult] = useState<ImportJobStatusResponse | null>(null);
   const [forceReprocess, setForceReprocess] = useState(false);
 
-  const monthOptions = useMemo(() => MONTH_OPTIONS, []);
-
-  useEffect(() => {
-    if (open && !selectedMonth && monthOptions.length > 0) {
-      setSelectedMonth(monthOptions[0].value);
-    }
-  }, [open, selectedMonth, monthOptions]);
+  // The salary period is derived from the upload date (day 20 of M → day 8
+  // of M+1 belongs to M); the backend derives it authoritatively from the
+  // server clock — this is display only.
+  const salaryPeriodMonth = getSalaryUploadPeriodMonth();
 
   const importTemplateMutation = useImportFlexTemplate({
     onProgress: (percentage) => setImportProgress(percentage),
@@ -54,7 +38,6 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
 
   const resetState = useCallback(() => {
     setSelectedFile(null);
-    setSelectedMonth("");
     setImportProgress(0);
     setImportStatus(null);
     setImportResult(null);
@@ -62,13 +45,12 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
   }, []);
 
   const handleImport = useCallback(() => {
-    if (!selectedFile || !selectedMonth) return;
+    if (!selectedFile) return;
     setImportProgress(0);
     setImportStatus("pending");
     setImportResult(null);
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("forMonth", selectedMonth);
     formData.append("force_reprocess", String(forceReprocess));
     importTemplateMutation.mutate(formData, {
       onSuccess: (response) => {
@@ -79,7 +61,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
         resetState();
       },
     });
-  }, [selectedFile, selectedMonth, forceReprocess, importTemplateMutation, onOpenChange, resetState]);
+  }, [selectedFile, forceReprocess, importTemplateMutation, onOpenChange, resetState]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -179,29 +161,20 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
           <>
             {/* Body */}
             <div className="px-5 py-4 space-y-5">
-              {/* Month selector */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-semibold">Tháng ứng lương</p>
+              {/* Derived salary period (display only — backend derives from the upload date) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3.5 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground">Kỳ lương</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {formatMonthDisplay(salaryPeriodMonth)}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {monthOptions.slice(0, 2).map((month) => (
-                    <button
-                      key={month.value}
-                      type="button"
-                      onClick={() => setSelectedMonth(month.value)}
-                      className={cn(
-                        "h-8 px-3 rounded-xl text-sm font-medium border transition-colors",
-                        selectedMonth === month.value
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background text-foreground border-border hover:bg-muted"
-                      )}
-                    >
-                      {month.label}
-                    </button>
-                  ))}
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tự động xác định theo ngày nhập (20/8 – 8/9 thuộc kỳ tháng 8).
+                </p>
               </div>
 
               <div className="border-t border-dashed border-border/60" />
@@ -265,7 +238,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
               </Button>
               <Button
                 onClick={handleImport}
-                disabled={!selectedFile || !selectedMonth || importTemplateMutation.isPending}
+                disabled={!selectedFile || importTemplateMutation.isPending}
                 className="flex-1 gap-1.5"
               >
                 {importTemplateMutation.isPending ? (

@@ -37,6 +37,17 @@ describe('ImportPayrollDialog', () => {
     await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
     const formData = mutate.mock.calls[0][0] as FormData;
     expect(formData.get('force_reprocess')).toBe('true');
-    expect(formData.get('forMonth')).toMatch(/^\d{4}-\d{2}$/);
+    // The salary month is derived server-side from the upload date — the
+    // client no longer sends it.
+    expect(formData.get('forMonth')).toBeNull();
+  });
+
+  it('shows the derived salary period instead of a month selector', () => {
+    render(<ImportPayrollDialog open onOpenChange={vi.fn()} />);
+
+    expect(screen.getByText('Kỳ lương')).toBeInTheDocument();
+    expect(screen.getByText(/Tự động xác định theo ngày nhập/)).toBeInTheDocument();
+    // No month chips to select.
+    expect(screen.queryByRole('button', { name: /\/2026/ })).not.toBeInTheDocument();
   });
 });
