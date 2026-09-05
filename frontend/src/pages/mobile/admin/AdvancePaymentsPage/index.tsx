@@ -38,7 +38,6 @@ import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHero
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
 import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
-import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
 import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
@@ -215,8 +214,7 @@ const AdvancePaymentsPageMobile = () => {
 
   // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
   // gating the query prevents a 403 storm on this shared mobile component.
-  const { data: demandForecast, isLoading: demandForecastLoading } =
-    useWalletDemandForecast(!isAdvPartner);
+  const { data: demandForecast } = useWalletDemandForecast(!isAdvPartner);
 
   const summaryData = page.summary?.data;
 
@@ -427,15 +425,14 @@ const AdvancePaymentsPageMobile = () => {
             isLoading={page.summaryLoading}
             className="rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
           />
+          {!isAdvPartner && (
+            <WalletDemandCard
+              data={demandForecast}
+              compact
+              className="rounded-2xl border border-[#D8E2EE] bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+            />
+          )}
         </div>
-
-        {/* Demand forecast (admin only) — chart then card, stacked */}
-        {!isAdvPartner && (
-          <>
-            <WalletDemandChart data={demandForecast} isLoading={demandForecastLoading} />
-            <WalletDemandCard data={demandForecast} />
-          </>
-        )}
       </div>
 
       {/* Tab switcher: Yêu cầu / Chấm công — restores desktop tab parity */}

@@ -1,9 +1,14 @@
 import { AlertTriangle, CheckCircle2, Wallet as WalletIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
 import type { WalletDemandForecastResponse } from '@/types/api/wallet.types';
 
 interface WalletDemandCardProps {
   data?: WalletDemandForecastResponse;
+  /** Renders only the top-up/sufficiency stat, dropping the recommended-balance
+   *  breakdown — for embedding as a single stat alongside other treasury panels. */
+  compact?: boolean;
+  className?: string;
 }
 
 /**
@@ -12,10 +17,49 @@ interface WalletDemandCardProps {
  *
  * DISPLAY ONLY — the backend never feeds this back into SyncBalance / topups.
  */
-export function WalletDemandCard({ data }: WalletDemandCardProps) {
+export function WalletDemandCard({ data, compact = false, className }: WalletDemandCardProps) {
   const pred = data?.prediction;
   const noHistory = pred?.method === 'no-history';
   const needsTopUp = (pred?.shortfall ?? 0) > 0;
+
+  if (compact) {
+    return (
+      <div className={cn('flex h-full flex-col justify-center', className)}>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              'h-1.5 w-1.5 rounded-full',
+              !pred
+                ? 'bg-muted-foreground/40'
+                : needsTopUp
+                  ? 'bg-rose-500'
+                  : 'bg-emerald-500',
+            )}
+          />
+          <span
+            className={cn(
+              'text-[11px] font-bold uppercase tracking-[0.12em]',
+              !pred ? 'text-muted-foreground' : needsTopUp ? 'text-rose-700' : 'text-emerald-700',
+            )}
+          >
+            {!pred ? 'Cần nạp thêm' : needsTopUp ? 'Cần nạp thêm' : 'Số dư ví hiện có'}
+          </span>
+        </div>
+        {!pred ? (
+          <p className="mt-2 text-xs text-muted-foreground">Chưa đủ dữ liệu</p>
+        ) : (
+          <p
+            className={cn(
+              'mt-1.5 break-words font-financial text-[clamp(1.375rem,7vw,1.625rem)] font-semibold leading-[1.08] tracking-normal tabular-nums',
+              needsTopUp ? 'text-rose-700' : 'text-emerald-800',
+            )}
+          >
+            {formatCurrency(needsTopUp ? pred.shortfall : pred.current_available)}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full flex flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card p-5 shadow-sm">

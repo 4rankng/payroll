@@ -4,7 +4,6 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
-import { WalletDemandChart } from "@/components/wallet/WalletDemandChart";
 import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import {
@@ -110,8 +109,7 @@ const AdvancePaymentsPage = () => {
 
   // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
   // gating the query prevents a 403 storm on the shared mobile component.
-  const { data: demandForecast, isLoading: demandForecastLoading } =
-    useWalletDemandForecast(!isAdvPartner);
+  const { data: demandForecast } = useWalletDemandForecast(!isAdvPartner);
 
   const summaryData = page.summary?.data;
 
@@ -306,7 +304,7 @@ const AdvancePaymentsPage = () => {
             "grid divide-border/50",
             isAdvPartner
               ? "grid-cols-1 divide-y lg:grid-cols-[1fr_300px] lg:divide-y-0 lg:divide-x"
-              : "grid-cols-1 divide-y lg:grid-cols-[280px_1fr_300px] xl:grid-cols-[320px_1fr_340px] lg:divide-y-0 lg:divide-x",
+              : "grid-cols-1 divide-y lg:grid-cols-4 lg:divide-y-0 lg:divide-x",
           )}>
 
             {/* Panel A: Wallet — admins only (desktop only; mobile shows it above) */}
@@ -315,6 +313,7 @@ const AdvancePaymentsPage = () => {
                 <WalletBalanceCard
                   monthlyProviderFee={page.providerFees.monthlyProviderFee}
                   totalProviderFee={page.providerFees.totalProviderFee}
+                  compact={!isAdvPartner}
                   className="rounded-none border-0 shadow-none"
                 />
               </div>
@@ -324,6 +323,7 @@ const AdvancePaymentsPage = () => {
             <AdvPartnerHeroStrip
               {...heroProps}
               isLoading={page.summaryLoading}
+              compact={!isAdvPartner}
               className="border-0 shadow-none"
             />
 
@@ -331,22 +331,15 @@ const AdvancePaymentsPage = () => {
             <TreasuryFeePanel
               {...feePanelProps}
               isLoading={page.summaryLoading}
+              compact={!isAdvPartner}
             />
+
+            {/* Panel D: Wallet top-up need — admins only */}
+            {!isAdvPartner && (
+              <WalletDemandCard data={demandForecast} compact className="p-5 sm:p-6" />
+            )}
           </div>
         </section>
-
-        {/* ─── Demand forecast: cohort chart + recommendation (admin only) ─── */}
-        {!isAdvPartner && (
-          <section
-            aria-label="Nhu cầu ứng lương"
-            className="grid grid-cols-1 gap-4 items-stretch md:grid-cols-3"
-          >
-            <div className="md:col-span-2">
-              <WalletDemandChart data={demandForecast} isLoading={demandForecastLoading} />
-            </div>
-            <WalletDemandCard data={demandForecast} />
-          </section>
-        )}
 
         {/* ─── 3. Pipeline + operating health ─── */}
         <section
