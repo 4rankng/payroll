@@ -140,14 +140,13 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
         </div>
       ) : (
         <>
-          {/* Segmented progress rail — thin futuristic bar; numbers live in the
-              cells below so no segment ever clips its value. */}
+          {/* Segmented distribution rail — thin futuristic bar; numbers live in
+              the cells below so no segment ever clips its value. Not a progress
+              indicator, so no progressbar role (screen readers would announce a
+              misleading completion percentage). */}
           <div
             className="mt-2.5 flex h-1.5 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-black/[0.06]"
-            role="progressbar"
-            aria-valuenow={totalPaid}
-            aria-valuemin={0}
-            aria-valuemax={totalRequests}
+            aria-hidden="true"
           >
             {CELLS.map((cell) => {
               const value = cell.getValue(props);
@@ -187,7 +186,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                     <span className="font-financial text-[17px] font-semibold leading-none tracking-[-0.01em] tabular-nums text-foreground">
                       {value}
                     </span>
-                    {amount !== undefined && amount > 0 && (
+                    {amount !== undefined && (
                       <span className="font-financial text-[10.5px] font-medium leading-none text-muted-foreground tabular-nums">
                         {formatCurrency(amount)}
                       </span>

@@ -520,7 +520,10 @@ func (s *Service) getOrCreateAssignment(ctx context.Context, projectID, employee
 		Position:        position,
 		StartDate:       startDate,
 		PaymentSchedule: string(domain.PaymentScheduleFlexible),
-		CreatedBy:       createdBy,
+		// Explicit so the returned struct matches the DB default and a later
+		// full-row Save cannot persist the zero value as paused.
+		AdvanceRequestEnabled: true,
+		CreatedBy:             createdBy,
 	}
 
 	if err := s.config.ProjectEmployeeRepo.Create(ctx, assignment); err != nil {

@@ -152,7 +152,10 @@ func (h *Handler) handleBatchAssignment(c *gin.Context, projectID uint, batchReq
 			StartDate:       startDate,
 			LastDate:        endDate,
 			PaymentSchedule: paymentSchedule,
-			CreatedBy:       userID,
+			// New assignments start advance-request enabled; explicit so a
+			// later full-row Save cannot persist the Go zero value as paused.
+			AdvanceRequestEnabled: true,
+			CreatedBy:             userID,
 		}
 
 		assignments = append(assignments, assignment)

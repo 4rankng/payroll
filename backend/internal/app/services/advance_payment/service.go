@@ -71,13 +71,6 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		Quotas:              make([]domain.AdvancePaymentQuota, 0),
 	}
 
-	if eligibility.advanceRequestDisabled {
-		info.CanRequest = false
-		info.CanRequestTitle = constants.MsgAdvanceRequestPausedTitleVN
-		info.CanRequestReason = constants.MsgAdvanceRequestPausedReasonVN
-		return info, nil
-	}
-
 	if !eligibility.hasFlexible {
 		info.CanRequest = false
 		return info, nil
@@ -190,6 +183,15 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 			info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(prevCalMonth))
 			info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
 		}
+	}
+
+	// Kill switch ("tạm ngừng ứng lương"): applied AFTER population so the
+	// employee still sees their real quota/usage; the pause notice overrides
+	// whatever the window/quota logic concluded.
+	if eligibility.advanceRequestDisabled {
+		info.CanRequest = false
+		info.CanRequestTitle = constants.MsgAdvanceRequestPausedTitleVN
+		info.CanRequestReason = constants.MsgAdvanceRequestPausedReasonVN
 	}
 
 	return info, nil

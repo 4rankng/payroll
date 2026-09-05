@@ -17,7 +17,6 @@ interface AdvanceRequestToggleProps {
   employeeId: number;
   /** false = "Đang tạm ngừng" — new advance requests blocked for this employee */
   enabled: boolean;
-  disabled?: boolean;
 }
 
 /**
@@ -30,12 +29,12 @@ export function AdvanceRequestToggle({
   projectId,
   employeeId,
   enabled,
-  disabled,
 }: AdvanceRequestToggleProps) {
   const toggleMutation = useToggleAdvanceRequestEnabled();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const fire = (value: boolean) => {
+    if (toggleMutation.isPending) return; // guard double-fire during a slow PATCH
     toggleMutation.mutate({ projectId, employeeId, enabled: value });
   };
 
@@ -52,7 +51,7 @@ export function AdvanceRequestToggle({
       <Switch
         checked={enabled}
         onCheckedChange={handleToggle}
-        disabled={disabled || toggleMutation.isPending}
+        disabled={toggleMutation.isPending}
       />
       {enabled ? (
         <span className="text-xs text-muted-foreground whitespace-nowrap">Bật</span>
@@ -74,6 +73,7 @@ export function AdvanceRequestToggle({
             <AlertDialogCancel>Giữ lại</AlertDialogCancel>
             <AlertDialogAction
               className="bg-amber-600 hover:bg-amber-700"
+              disabled={toggleMutation.isPending}
               onClick={() => fire(false)}
             >
               Tạm ngừng

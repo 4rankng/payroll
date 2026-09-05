@@ -98,17 +98,22 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 		HasFlexible:   eligibility.hasFlexible,
 	}
 
-	if eligibility.advanceRequestDisabled {
+	// Kill switch ("tạm ngừng ứng lương") wins over every other CanRequest
+	// reason, but data population still runs so the employee keeps seeing
+	// their real salary/remaining figures.
+	applyPaused := func() {
 		info.CanRequest = false
 		info.CanRequestTitle = constants.MsgAdvanceRequestPausedTitleVN
 		info.CanRequestReason = constants.MsgAdvanceRequestPausedReasonVN
-		return info, nil
 	}
 
 	if !eligibility.hasCheckInEnabled {
 		info.CanRequest = false
 		info.CanRequestTitle = "Chưa bật dịch vụ tự chấm công"
 		info.CanRequestReason = "Tài khoản chưa được cấp quyền sử dụng dịch vụ tự chấm công. Vui lòng liên hệ quản lý."
+		if eligibility.advanceRequestDisabled {
+			applyPaused()
+		}
 		return info, nil
 	}
 
@@ -146,6 +151,9 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 		info.CanRequest = false
 		info.CanRequestTitle = "Chưa đến kỳ xin ứng"
 		info.CanRequestReason = fmt.Sprintf("Bạn có thể xin ứng lương từ ngày %d đến cuối tháng.", SelfCheckInAdvanceWindowOpenDay)
+		if eligibility.advanceRequestDisabled {
+			applyPaused()
+		}
 		return info, nil
 	}
 
@@ -153,6 +161,9 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	if !info.CanRequest {
 		info.CanRequestTitle = "Chưa đủ hạn mức"
 		info.CanRequestReason = "Bạn chưa có tiền công được ứng còn lại. Vui lòng chấm công thêm ca làm việc."
+	}
+	if eligibility.advanceRequestDisabled {
+		applyPaused()
 	}
 	return info, nil
 }

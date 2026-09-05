@@ -305,8 +305,14 @@ func (r *AdvancePaymentRepository) GetEmployeeAdvanceStats(ctx context.Context, 
 
 	// Build base query using project_employees as the base table for flexible payment schedule.
 	// Deduplicate via subquery to avoid row multiplication from duplicate entries.
+	// The per-employee row PREFERs the active assignment (last_date IS NULL)
+	// so the displayed flag and the kill-switch PATCH target the same row;
+	// employees with only ended assignments keep the legacy MIN/MAX fallback.
 	query := r.DB.WithContext(ctx).
-		Table("(SELECT employee_id, MIN(project_id) as project_id, MAX(id) as project_employee_id FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe", domain.PaymentScheduleFlexible).
+		Table(`(SELECT employee_id,
+			COALESCE(MIN(CASE WHEN last_date IS NULL THEN project_id END), MIN(project_id)) as project_id,
+			COALESCE(MAX(CASE WHEN last_date IS NULL THEN id END), MAX(id)) as project_employee_id
+			FROM project_employees WHERE deleted_at IS NULL AND payment_schedule = ? GROUP BY employee_id) AS pe`, domain.PaymentScheduleFlexible).
 		Select(`
 			e.id as employee_id,
 			e.fullname,

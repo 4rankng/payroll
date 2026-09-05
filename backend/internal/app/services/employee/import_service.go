@@ -465,7 +465,10 @@ func (s *ImportService) getOrCreateAssignment(ctx context.Context, projectID, em
 		Position:        position,
 		StartDate:       startDate,
 		PaymentSchedule: paymentSchedule,
-		CreatedBy:       createdBy,
+		// New assignments start advance-request enabled; explicit so a later
+		// full-row Save cannot persist the Go zero value as paused.
+		AdvanceRequestEnabled: true,
+		CreatedBy:             createdBy,
 	}
 
 	if err := s.projectEmployeeRepo.Create(ctx, assignment); err != nil {

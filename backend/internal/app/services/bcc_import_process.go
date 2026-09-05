@@ -329,7 +329,10 @@ func (s *BCCImportService) processAssetData(
 						Position:        empPosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						CreatedBy:       uploaderID,
+						// New assignments start advance-request enabled (explicit;
+						// guards later full-row Saves from persisting the zero value).
+						AdvanceRequestEnabled: true,
+						CreatedBy:             uploaderID,
 					}
 
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {

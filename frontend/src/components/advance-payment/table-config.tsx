@@ -219,6 +219,20 @@ function SortHeader({ label, field, ctx }: { label: string; field: string; ctx: 
   );
 }
 
+// Shared kill-switch renderer: one place for the fallback semantics so the
+// desktop column and the mobile card fields cannot drift. Rendered only when
+// the row carries a project (the PATCH needs its id).
+function renderAdvanceToggle(row: FlexPayEmployeeListItem) {
+  if (!row.project) return "-";
+  return (
+    <AdvanceRequestToggle
+      projectId={row.project.id}
+      employeeId={row.employeeId}
+      enabled={row.project.advance_request_enabled !== false}
+    />
+  );
+}
+
 export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeListItem>[] {
   return [
   {
@@ -308,13 +322,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     id: "advanceRequest",
     header: "Ứng lương",
     size: 110,
-    cell: ({ row }) => (
-      <AdvanceRequestToggle
-        projectId={row.original.project?.id ?? 0}
-        employeeId={row.original.employeeId}
-        enabled={row.original.project?.advance_request_enabled !== false}
-      />
-    ),
+    cell: ({ row }) => renderAdvanceToggle(row.original),
   },
 ];
 }
@@ -452,13 +460,7 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
     key: "advanceRequest",
     label: "Ứng lương",
     priority: 2,
-    render: (row) => (
-      <AdvanceRequestToggle
-        projectId={row.project?.id ?? 0}
-        employeeId={row.employeeId}
-        enabled={row.project?.advance_request_enabled !== false}
-      />
-    ),
+    render: renderAdvanceToggle,
   },
 ];
 

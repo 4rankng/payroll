@@ -35,6 +35,13 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 				projectID = it.Project.ID
 				fmt.Printf("    employee %d -> project %d (%s), advance_request_enabled=%v\n",
 					employeeID, projectID, it.Project.Name, it.Project.AdvanceRequestEnabled)
+				// Canary: the removal-visibility flow re-adds this employee
+				// right before us; a freshly (re)assigned employee must start
+				// advance-request ENABLED — catches Create/Save zero-value
+				// regressions in the assignment flows.
+				if !it.Project.AdvanceRequestEnabled {
+					return fmt.Errorf("freshly assigned employee starts paused (advance_request_enabled=false)")
+				}
 				return nil
 			}
 		}

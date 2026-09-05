@@ -565,18 +565,9 @@ export function useToggleAdvanceRequestEnabled() {
         enabled
       ),
     onSuccess: (_, variables) => {
-      // The flex-pay employee list key is filter-suffixed
-      // (['admin','advance-payments','flex-pay-employees', filters]), so match on the prefix.
+      // Prefix match covers every filter-suffixed flex-pay-employees key.
       queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return (
-            Array.isArray(key) &&
-            key[0] === "admin" &&
-            key[1] === "advance-payments" &&
-            key[2] === "flex-pay-employees"
-          );
-        },
+        queryKey: ["admin", "advance-payments", "flex-pay-employees"],
       });
       showSuccessNotification(
         variables.enabled

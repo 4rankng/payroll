@@ -117,6 +117,13 @@ func (s *ProjectEmployeeService) AssignEmployee(ctx context.Context, assignment 
 		// 2. Set audit fields
 		assignment.CreatedBy = assignedBy
 
+		// New assignments always start with advance requests enabled.
+		// Explicit assignment matters: the gorm default:true tag omits the
+		// zero value on INSERT, but the full-row Update below would otherwise
+		// persist the Go zero value (false = "tạm ngừng") and silently pause
+		// every newly assigned employee.
+		assignment.AdvanceRequestEnabled = true
+
 		// 3. Create assignment using repository
 		if err := s.projectEmployeeRepo.Create(ctx, assignment); err != nil {
 			return err

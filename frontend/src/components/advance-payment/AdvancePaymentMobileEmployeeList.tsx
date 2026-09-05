@@ -70,21 +70,22 @@ const EmployeeCard = memo(function EmployeeCard({
           </div>
         )}
 
-        {emp.project?.name && (
-          <p className="text-xs text-muted-foreground mt-2 truncate">
-            {emp.project.name}
-          </p>
-        )}
-
         {emp.project && (
-          <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Ứng lương</span>
-            <AdvanceRequestToggle
-              projectId={emp.project.id}
-              employeeId={emp.employeeId}
-              enabled={emp.project.advance_request_enabled !== false}
-            />
-          </div>
+          <>
+            {emp.project.name && (
+              <p className="text-xs text-muted-foreground mt-2 truncate">
+                {emp.project.name}
+              </p>
+            )}
+            <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Ứng lương</span>
+              <AdvanceRequestToggle
+                projectId={emp.project.id}
+                employeeId={emp.employeeId}
+                enabled={emp.project.advance_request_enabled !== false}
+              />
+            </div>
+          </>
         )}
       </div>
     </AccentStripCard>

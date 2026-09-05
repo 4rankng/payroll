@@ -76,13 +76,13 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
           <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11px] leading-snug text-muted-foreground">
             <span className="whitespace-nowrap">
               <span className="font-financial font-semibold text-foreground/75 tabular-nums">
-                ~{formatCurrency(avgFeePerRequest)}
+                {avgFeePerRequest > 0 ? `~${formatCurrency(avgFeePerRequest)}` : "—"}
               </span>{" "}
               /yc · {totalPaid} yc
             </span>
             <span className="whitespace-nowrap">
               <span className="font-financial font-semibold text-foreground/75 tabular-nums">
-                ~{formatCurrency(avgFeePerEmployee)}
+                {avgFeePerEmployee > 0 ? `~${formatCurrency(avgFeePerEmployee)}` : "—"}
               </span>{" "}
               /nv · {totalRequests} NV
             </span>

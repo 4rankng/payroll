@@ -270,7 +270,10 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						Position:        defaultPosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						CreatedBy:       uploaderID,
+						// New assignments start advance-request enabled (explicit;
+						// guards later full-row Saves from persisting the zero value).
+						AdvanceRequestEnabled: true,
+						CreatedBy:             uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
 						blockedEmployeeCCCDs[cccd] = struct{}{}
@@ -432,7 +435,10 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 						Position:        defaultPosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						CreatedBy:       uploaderID,
+						// New assignments start advance-request enabled (explicit;
+						// guards later full-row Saves from persisting the zero value).
+						AdvanceRequestEnabled: true,
+						CreatedBy:             uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
 						blockedEmployeeCCCDs[m.cccd] = struct{}{}
@@ -904,7 +910,10 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 						Position:        employeePosition,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						CreatedBy:       uploaderID,
+						// New assignments start advance-request enabled (explicit;
+						// guards later full-row Saves from persisting the zero value).
+						AdvanceRequestEnabled: true,
+						CreatedBy:             uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
 						blockedEmployeeCCCDs[cccd] = struct{}{}
@@ -1065,7 +1074,10 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 						Position:        m.position,
 						StartDate:       monthStartDate,
 						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						CreatedBy:       uploaderID,
+						// New assignments start advance-request enabled (explicit;
+						// guards later full-row Saves from persisting the zero value).
+						AdvanceRequestEnabled: true,
+						CreatedBy:             uploaderID,
 					}
 					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
 						blockedEmployeeCCCDs[m.cccd] = struct{}{}

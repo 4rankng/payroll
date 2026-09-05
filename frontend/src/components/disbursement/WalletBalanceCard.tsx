@@ -140,7 +140,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   disabled={isSyncing}
                   title="Đồng bộ số dư với nhà cung cấp"
                   aria-label="Đồng bộ số dư"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation sm:h-8 sm:w-8"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
                 </button>
