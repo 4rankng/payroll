@@ -177,11 +177,15 @@ Findings en route (data/tooling, not parser defects):
    names+CCCDs collide with real partner files (1481/1482 squatted
    `070064285`/`031099005571`); real workers carried a zero-padded
    (`00070064285`) and a phone-number-as-CCCD — historical import garbage.
-4. **Open anomaly (unexplained, seen once)**: the r4 poll of asset 560
-   returned `completed/created=343/rows=17` while the stored metadata says
-   `failed/0/107` — a mixed-stats response from the status endpoint. Did not
-   reproduce on later reads (561–565 all read back correct). Follow-up:
-   inspect `GetPartnerImport` read path for a stale/recomputation source.
+4. **Anomaly closed (investigated, non-reproducible)**: the r4 poll of asset
+   560 once returned `completed/created=343/rows=17` while stored metadata
+   says `failed/0/107`. Investigation: `GetPartnerImport`→`assetToImportItem`
+   is a single-source parse of the asset's own metadata blob (cannot mix
+   assets); the import write path has no service-struct mutable state; a
+   stress repro (two concurrent imports + 150 ms polling with a
+   cross-contamination detector) showed zero foreign-field responses and
+   stored==served for all assets. Verdict: one-off transient in the status
+   display, self-corrected, no data impact — no code change.
 5. EVA's 749 skips in earlier runs = the file's 749 explicit-zero cells
    (deletion requests), matching `zero_hour` semantics exactly.
 
