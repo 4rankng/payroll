@@ -2,17 +2,8 @@ import { apiClient } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import type { AdBanner, AdBannerPayload } from '@/types/api/ad-banner.types';
 
-type AdBannerEnvelope<T> = {
-  status: string;
-  data: T;
-  message?: string;
-};
-
-type AdBannerListEnvelope = {
-  status: string;
-  data: { banners: AdBanner[] };
-  message?: string;
-};
+// apiClient.get/post/put already return the ApiResponse envelope once-unwrapped
+// ({ status, data, message }), so T is the SERVER's data payload itself.
 
 class AdBannerService {
   /**
@@ -20,10 +11,8 @@ class AdBannerService {
    * Returns null when no campaign targets them (data is null in the envelope).
    */
   async getMyAdBanner(): Promise<AdBanner | null> {
-    const response = await apiClient.get<AdBannerEnvelope<AdBanner | null>>(
-      API_ENDPOINTS.adBanners.myBanner,
-    );
-    return response.data?.data ?? null;
+    const result = await apiClient.get<AdBanner | null>(API_ENDPOINTS.adBanners.myBanner);
+    return result.data ?? null;
   }
 
   /**
@@ -38,32 +27,26 @@ class AdBannerService {
 
   /** Admin: every campaign, newest first, with per-CTA click counts. */
   async getAdBanners(): Promise<AdBanner[]> {
-    const response = await apiClient.get<AdBannerListEnvelope>(API_ENDPOINTS.adBanners.base);
-    return response.data?.data?.banners ?? [];
+    const result = await apiClient.get<{ banners: AdBanner[] }>(API_ENDPOINTS.adBanners.base);
+    return result.data?.banners ?? [];
   }
 
   /** Admin: publish a new campaign. */
   async createAdBanner(payload: AdBannerPayload): Promise<AdBanner> {
-    const response = await apiClient.post<AdBannerEnvelope<AdBanner>>(
-      API_ENDPOINTS.adBanners.base,
-      payload,
-    );
-    if (!response.data?.data) {
-      throw new Error('API response missing expected data');
+    const result = await apiClient.post<AdBanner>(API_ENDPOINTS.adBanners.base, payload);
+    if (!result.data) {
+      throw new Error(result.message || 'Tạo chiến dịch thất bại');
     }
-    return response.data.data;
+    return result.data;
   }
 
   /** Admin: replace a campaign's content and window. */
   async updateAdBanner(id: number, payload: AdBannerPayload): Promise<AdBanner> {
-    const response = await apiClient.put<AdBannerEnvelope<AdBanner>>(
-      API_ENDPOINTS.adBanners.byId(id),
-      payload,
-    );
-    if (!response.data?.data) {
-      throw new Error('API response missing expected data');
+    const result = await apiClient.put<AdBanner>(API_ENDPOINTS.adBanners.byId(id), payload);
+    if (!result.data) {
+      throw new Error(result.message || 'Cập nhật chiến dịch thất bại');
     }
-    return response.data.data;
+    return result.data;
   }
 
   /** Admin: soft-delete a campaign. */
