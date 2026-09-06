@@ -114,6 +114,77 @@ workers on 73, payrate windows spanning the file dates; 78's payrates start
 - Server PID recorded at start; if air rebuilds mid-run (background
   `/code-review --fix` may touch code), the affected case is re-run and noted.
 
+## Round 3 — guard size-path negatives (post caps fix, `f2c8d887`)
+
+| # | Case | Input | Expect | Result |
+|---|------|-------|--------|--------|
+| G1 | Body above the 20 MiB cap | ~21 MiB part, `.xlsx` name | 400 `File vượt quá giới hạn dung lượng` (MaxBytesReader aborts during parse) | **PASS** — 400, exact message (job —) |
+| G2 | The old 500 window (10–20 MiB) now clean | valid 10.1 MiB workbook (45 MiB single sheet), BCC upload | 202 accepted (guard 20 MiB passes; AcceptUpload 20 MiB passes — no 500) | **PASS** — 202 (import 555), worker failed gracefully at BCC structure validation (synthetic garbage columns), no 5xx |
+
+## Round 4 — row-level correctness audit (user-authorized DB prep)
+
+**Goal:** prove parse → import → DB produces CORRECT timesheet rows, not just
+"completed" jobs. User authorized local-dev DB changes: existing month rows
+are backed up to `timesheets_bak_260906` then hard-deleted for the target
+project/months, so uploads CREATE rows (previous runs skipped against
+prod-restored approved data).
+
+**Expected values** come from the byte-locked goldens for these exact files
+(`excel/testdata/goldens/`) — employee, day, hours per entry; amounts checked
+against the file's embedded rates (legacy/multi-position) or the project's
+payrate config (weekly formats).
+
+| # | Fixture | Project / month | Prep | Expect after upload | Row-level checks |
+|---|---------|-----------------|------|---------------------|------------------|
+| R1 | EVA T08 (legacy) | 10 / 2026-08 | delete T08 rows | completed, created>0 | every golden entry (Hours>0) → row with same date+hours; amount = hours × file `ShiftRates[label]` |
+| R2 | PQC (multi-position) | 7 / 2026-08 | delete T08 rows | completed, created>0 | golden entries {DayNum, Hours, RateVND} → row date+hours; amount = hours × RateVND; position in paytype |
+| R3 | TBD (weekly payment) | 74 / 2026-08 | delete T08 rows | completed, created>0 | shift key = `ShiftRows.ByCol[day]` (HC/TCN/NN/TCNN) in paytype; amount = hours × project-74 payrate |
+| R4 | LGD (weekly BCC) | 70 / 2026-07 | delete 2026-07 rows | completed, created>0 | entries → rows; shift = sheet ShiftType; amount = hours × project-70 payrate (HC etc.) |
+| R5 | BUMHAN T08 (date-row) | 73 | none (config-blocked) | — | diagnose which paytype keys August's successful rows used (was the NT/T7 file ever importable?) |
+
+Pass = every expected row present with matching date/hours (zero missing,
+zero unexpected), amounts correct on all rows where the rate is derivable.
+
+### Round 4 results (2026-09-06 ~12:30, jobs 556–560 + 561–565)
+
+DB prep applied (all backed up to `timesheets_bak_260906` / `payrates_bak_260906`
+/ `employees_bak_260906` first): month rows cleared for 10/7/74 (2026-08),
+70 (2026-07), 73 + 78 (2026-08); project-73 payrate rows 67+73 re-keyed to the
+file's label vocabulary (partner's own rate values, leaves NT/OT/T7/CN/OT T7/
+OT CN); api-test artifact employees 1481/1482 (squatted the file's CCCDs
+`070064285`/`031099005571`) junked + soft-deleted; real workers 1285/1352
+re-identified to the file's CCCDs.
+
+| Case | Import | Rows (exp=db) | Dates+Hours | Amounts | Paytype/DayType |
+|------|--------|---------------|-------------|---------|-----------------|
+| R1 EVA legacy | completed 343 | 343=343 | 0 miss / 0 extra | file-rate parity; 14 `OT Đ` cells priced `tc 150%` — **byte-identical to prod's own historical rows** (config-canonical, pre-existing) | historical parity |
+| R2 PQC multi-position | completed 82 | 82=82 | 0 / 0 | 0 bad (= embedded RateVND × hours) | positions ✓ |
+| R3 TBD weekly payment | completed 152 | 152=152 | 0 / 0 | 0 bad — full days = tier/8×8, partial days = hourly × hours (65k×3, 93.75k×4 …) | shift keys ✓ |
+| R4 LGD weekly BCC | completed 134 | 134=134 | 0 / 0 | 0 bad (= config rate × hours) | shift types ✓ |
+| R5 BUMHAN date-row | completed 161 | 161=161 | 0 / 0 | 0 bad (= config rate × hours) | labels ✓, weekday coherence ✓ (T7→Sat, CN→Sun only) |
+
+**VERDICT: all five formats parse → import → correct timesheet records.**
+
+Findings en route (data/tooling, not parser defects):
+1. **Payrate anchor semantics**: the import reads the payrate active at
+   *month start* (fallback to earliest worked day only on NotFound) —
+   re-keying row 73 (08-15→08-28) did nothing while row 67 (active 08-01)
+   carried the old keys. Config fixes must cover the month-anchor row.
+2. **Cross-project duplicate protection works**: pending rows on project 78
+   (this file's historical home) correctly blocked same-day entries on 73
+   until cleared.
+3. **api-test pollutes local dev**: each suite run creates employees whose
+   names+CCCDs collide with real partner files (1481/1482 squatted
+   `070064285`/`031099005571`); real workers carried a zero-padded
+   (`00070064285`) and a phone-number-as-CCCD — historical import garbage.
+4. **Open anomaly (unexplained, seen once)**: the r4 poll of asset 560
+   returned `completed/created=343/rows=17` while the stored metadata says
+   `failed/0/107` — a mixed-stats response from the status endpoint. Did not
+   reproduce on later reads (561–565 all read back correct). Follow-up:
+   inspect `GetPartnerImport` read path for a stale/recomputation source.
+5. EVA's 749 skips in earlier runs = the file's 749 explicit-zero cells
+   (deletion requests), matching `zero_hour` semantics exactly.
+
 ## Out of scope
 
 - Guard negative paths (oversized / wrong-magic) — covered by
