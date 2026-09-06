@@ -4,6 +4,7 @@ import (
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/excelkit"
 	"api-server/internal/transport/http/response"
 	"bytes"
 	"crypto/sha256"
@@ -11,7 +12,6 @@ import (
 	"io"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xuri/excelize/v2"
 )
 
 // UploadReconciliationSettlement handles uploading reconciliation file to settle receivables
@@ -43,7 +43,7 @@ func (h *AdvancePaymentHandler) UploadReconciliationSettlement(c *gin.Context) {
 	}
 
 	// Parse Excel file
-	xlsxFile, err := excelize.OpenReader(bytes.NewReader(fileContent))
+	xlsxFile, err := excelkit.OpenReader(bytes.NewReader(fileContent))
 	if err != nil {
 		response.BadRequest(c, "File Excel không hợp lệ")
 		return

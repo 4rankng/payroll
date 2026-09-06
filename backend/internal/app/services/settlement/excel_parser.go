@@ -26,6 +26,10 @@ const (
 
 	ColumnTimesheetID = 0 // Column A
 
+	// InternalTypePrefix is half of a writer/reader contract: payroll's
+	// report_internal_sheet.go writes "type:<kind>" into the INTERNAL sheet
+	// A1 cell; this parser routes on the prefix when re-importing sao-kê
+	// exports. Change both together.
 	InternalTypePrefix = "type:"
 )
 

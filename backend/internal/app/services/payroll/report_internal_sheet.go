@@ -8,6 +8,10 @@ import (
 
 const (
 	internalSheetName     = "INTERNAL"
+	// internalTypeTimesheet is half of a writer/reader contract: the
+	// settlement parser (settlement/excel_parser.go InternalTypePrefix)
+	// routes on this prefix when re-importing sao-kê exports. Change both
+	// together.
 	internalTypeTimesheet = "type:timesheet"
 )
 

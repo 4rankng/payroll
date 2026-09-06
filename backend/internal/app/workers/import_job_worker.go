@@ -7,12 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/xuri/excelize/v2"
-
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/zaloconnect"
 	"api-server/internal/domain"
+	"api-server/internal/pkg/excelkit"
 )
 
 // ImportJobWorker processes import jobs asynchronously
@@ -147,7 +146,7 @@ func (w *ImportJobWorker) processExcelFile(ctx context.Context, asset *domain.As
 	}()
 
 	// Parse with excelize
-	xlsxFile, err := excelize.OpenReader(file)
+	xlsxFile, err := excelkit.OpenReader(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Excel file: %w", err)
 	}

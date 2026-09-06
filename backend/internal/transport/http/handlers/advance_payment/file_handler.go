@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/xuri/excelize/v2"
 )
 
 // ListUploadedFiles lists all advance payment file history from assets table
@@ -454,7 +453,7 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 			fullPath := h.fileStorage.GetFilePath(existingAsset.FilePath)
 			if _, err := os.Stat(fullPath); err == nil {
 				// File exists on disk, reuse the existing asset
-				xlsxFile, processErr := excelize.OpenReader(bytes.NewReader(fileContent))
+				xlsxFile, processErr := excelkit.OpenReader(bytes.NewReader(fileContent))
 				if processErr != nil {
 					response.BadRequest(c, "File Excel không hợp lệ")
 					return
@@ -510,7 +509,7 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 		// Fall through to process the file below
 	}
 
-	xlsxFile, err := excelize.OpenReader(bytes.NewReader(fileContent))
+	xlsxFile, err := excelkit.OpenReader(bytes.NewReader(fileContent))
 	if err != nil {
 		response.BadRequest(c, "File Excel không hợp lệ")
 		return
@@ -911,7 +910,7 @@ func (h *AdvancePaymentHandler) ImportFlexibleEmployeeList(c *gin.Context) {
 	}
 
 	// Validate Excel file
-	xlsxFile, err := excelize.OpenReader(bytes.NewReader(fileContent))
+	xlsxFile, err := excelkit.OpenReader(bytes.NewReader(fileContent))
 	if err != nil {
 		response.BadRequest(c, "File Excel không hợp lệ")
 		return

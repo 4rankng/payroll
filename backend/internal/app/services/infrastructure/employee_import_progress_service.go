@@ -138,13 +138,6 @@ func (s *EmployeeImportProgressService) MarkAsProcessing(ctx context.Context, im
 	return s.cache.Set(ctx, s.GenerateImportKey(importID), progress, 24*time.Hour)
 }
 
-// EnqueueJob adds an import job to the queue (legacy — now handled by Asynq)
-// Kept for backward compatibility but is a no-op; enqueueing is done via Asynq client
-func (s *EmployeeImportProgressService) EnqueueJob(ctx context.Context, importID string) error {
-	// No-op: Asynq client handles enqueueing now
-	return nil
-}
-
 // CleanupProgress removes progress data (optional)
 func (s *EmployeeImportProgressService) CleanupProgress(ctx context.Context, importID string) error {
 	return s.cache.Delete(ctx, s.GenerateImportKey(importID))

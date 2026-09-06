@@ -11,6 +11,7 @@ import (
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/excelkit"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -34,7 +35,7 @@ func (s *BCCImportService) processAssetData(
 	fail := s.bccFailer(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth)
 
 	// 4. Parse the Excel file.
-	xf, err := excelize.OpenReader(bytes.NewReader(data))
+	xf, err := excelkit.OpenReader(bytes.NewReader(data))
 	if err != nil {
 		return fail(fmt.Sprintf("không thể mở file Excel: %v", err))
 	}

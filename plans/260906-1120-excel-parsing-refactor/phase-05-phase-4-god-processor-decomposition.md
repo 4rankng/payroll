@@ -14,10 +14,10 @@ Split the three ~500–680-line `process*Upload` functions. Smallest first: mult
 signatures unchanged.
 
 ## Requirements
-- [ ] `bcc_import_multi_position.go`: ≤ ~250 LOC format-specific; shared boilerplate (fail/stats, `prepareImportContext`, employee resolution, replacement planning) reused from Phase 3 helpers
-- [ ] `bcc_import_weekly.go` (1,324 LOC, 2 funcs) splits into `bcc_import_weekly_bcc.go` + `bcc_import_weekly_payment.go`
-- [ ] Each processor: parse → validate/provision → persist phases as named functions
-- [ ] After EACH format commit: `go test ./...` + `make api-test` (weekly flows especially)
+- [x] `bcc_import_multi_position.go`: ≤ ~250 LOC format-specific; shared boilerplate (fail/stats, `prepareImportContext`, employee resolution, replacement planning) reused from Phase 3 helpers
+- [x] `bcc_import_weekly.go` (1,324 LOC, 2 funcs) splits into `bcc_import_weekly_bcc.go` + `bcc_import_weekly_payment.go`
+- [x] Each processor: parse → validate/provision → persist phases as named functions
+- [x] After EACH format commit: `go test ./...` + `make api-test` (weekly flows especially)
 
 ## Implementation Steps
 1. multiPosition: extract blocks → verify → commit
@@ -25,8 +25,8 @@ signatures unchanged.
 3. weeklyBCC: extract + split file → verify → commit
 
 ## Success Criteria
-- [ ] No function > ~250 LOC in the BCC import pipeline
-- [ ] All suites green after each commit
+- [x] No function > ~250 LOC in the BCC import pipeline
+- [x] All suites green after each commit
 
 ## Risk Assessment
 High (LOC volume) but per-commit scope = one format; goldens + api-test guard.

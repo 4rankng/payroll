@@ -30,9 +30,6 @@ type bccImportItem struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-// bccMetadata mirrors the metadata stored in Asset.Metadata.
-type bccMetadata = appservices.BCCImportStats
-
 // BCCImportHandler handles partner BCC attendance file import endpoints.
 type BCCImportHandler struct {
 	bccImportService     *appservices.BCCImportService
@@ -335,7 +332,7 @@ func (h *BCCImportHandler) DownloadPartnerImport(c *gin.Context) {
 	// Use original name from metadata if available.
 	originalName := asset.Filename
 	if asset.Metadata != nil {
-		var meta bccMetadata
+		var meta appservices.BCCImportStats
 		if json.Unmarshal([]byte(*asset.Metadata), &meta) == nil && meta.OriginalName != "" {
 			originalName = meta.OriginalName
 		}
@@ -358,7 +355,7 @@ func assetToImportItem(a *domain.Asset) *bccImportItem {
 	if a.Metadata == nil {
 		return nil
 	}
-	var meta bccMetadata
+	var meta appservices.BCCImportStats
 	if err := json.Unmarshal([]byte(*a.Metadata), &meta); err != nil {
 		return nil
 	}

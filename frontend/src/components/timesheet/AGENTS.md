@@ -73,7 +73,7 @@ Components for the timesheet management feature: entry tables, calendar view, bu
 ### Common Patterns
 
 - **Grouped table**: Entries grouped by employee, with expand/collapse and subtotals.
-- **Import pattern**: Upload -> parse -> validate -> preview -> confirm import.
+- **Import pattern (BCC upload)**: Upload (multipart + Idempotency-Key) -> async job (`timesheet:bcc_import`) -> poll upload history -> per-row error details from `error_detail` metadata.
 - **Status badges**: `TimesheetStatusBadge` maps status enum to color and label.
 
 ## Dependencies

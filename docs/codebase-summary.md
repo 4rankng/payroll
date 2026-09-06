@@ -140,8 +140,9 @@ Background workers in `backend/internal/app/workers/` and `backend/internal/infr
 
 | Worker | Task Type | Purpose |
 |--------|-----------|---------|
-| `import_job_worker` | `import:job` | BCC file import processing |
+| `import_job_worker` | `import:job` | FlexPay file import processing |
 | `employee_import_worker` | `employee:import` | Employee data import from STK |
+| `bcc_import_worker` | `timesheet:bcc_import` | BCC timesheet import (all 5 formats) |
 | `ipn_process_worker` | `ipn:process` | Payment provider IPN handling |
 | `disbursement_execute_worker` | `disbursement:execute` | Individual disbursement execution |
 | `disbursement_poller_worker` | `disbursement:poller` | Periodic disbursement status polling |

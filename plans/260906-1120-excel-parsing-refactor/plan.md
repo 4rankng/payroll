@@ -1,7 +1,7 @@
 ---
 title: "excel-parsing-refactor"
 description: "Behavior-preserving refactor of all server-side Excel parsing: one registry extension point, shared excelkit primitives, decomposed god processors, unified error contract, hardened uploads."
-status: in-progress
+status: completed
 priority: P1
 effort: "8 phases"
 tags: [refactor, excel, bcc-import, backend]
@@ -39,13 +39,13 @@ change). No DB migrations. No frontend contract changes. Work on `main`.
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | [Phase 0: Characterization safety net](./phase-01-start.md) | In Progress |
-| 2 | [Phase 1: excelkit primitives](./phase-02-phase-1-excelkit-primitives.md) | Pending |
-| 3 | [Phase 2: registry-driven detection](./phase-03-phase-2-registry-driven-detection.md) | Pending |
-| 4 | [Phase 3: dispatch collapse](./phase-04-phase-3-dispatch-collapse.md) | Pending |
-| 5 | [Phase 4: god-processor decomposition](./phase-05-phase-4-god-processor-decomposition.md) | Pending |
-| 6 | [Phase 5: satellite adoption](./phase-06-phase-5-satellite-adoption.md) | Pending |
-| 7 | [Phase 6: upload guard](./phase-07-phase-6-upload-guard.md) | Pending |
-| 8 | [Phase 7: cleanup and docs](./phase-08-phase-7-cleanup-and-docs.md) | Pending |
+| 2 | [Phase 1: excelkit primitives](./phase-02-phase-1-excelkit-primitives.md) | Completed |
+| 3 | [Phase 2: registry-driven detection](./phase-03-phase-2-registry-driven-detection.md) | Completed |
+| 4 | [Phase 3: dispatch collapse](./phase-04-phase-3-dispatch-collapse.md) | Completed |
+| 5 | [Phase 4: god-processor decomposition](./phase-05-phase-4-god-processor-decomposition.md) | Completed |
+| 6 | [Phase 5: satellite adoption](./phase-06-phase-5-satellite-adoption.md) | Completed |
+| 7 | [Phase 6: upload guard](./phase-07-phase-6-upload-guard.md) | Completed |
+| 8 | [Phase 7: cleanup and docs](./phase-08-phase-7-cleanup-and-docs.md) | Completed |
 
 ## Success Criteria
 
@@ -54,6 +54,31 @@ change). No DB migrations. No frontend contract changes. Work on `main`.
 - [ ] Golden + routing characterization tests permanently green in CI-suite
 - [ ] Contracts preserved: winner-format (`bcc_import_process.go:90`) → `:162/:319/:381`; rateless/label-keyed resolution; explicit-0 delete; STK auto-create + upsert; "BCC"-named date-row (T09); day-number-only payrate; `clock.Now()` everywhere
 - [ ] External JSON payloads (error_detail, DTOs) unchanged; frontend untouched
+
+## Deviations from original phase text (verified during execution)
+
+1. **parseForMonth NOT unified** — the two implementations have divergent
+   contracts (accepted formats + user-visible error text); both kept,
+   cross-documented. "Single home" failed the identity test.
+2. **Parameterized header-map builder dropped** — the 7 builders use 4
+   different stop-column predicates and 2 header-normalization idioms;
+   unifying matching semantics is exactly the frozen-behavior boundary.
+   shared.go took only verified-identical helpers (isSummaryRow ×5 sites,
+   headerContainsAny ×3, sheet-name rules, excelkit delegates).
+3. **Provisioning trio fallback invoked** (allowed by plan) — getOrCreate
+   variants genuinely diverged (bank validation, StartDate/PaymentSchedule
+   parsing live only in the employee island); documented at both sites.
+4. **includeFlexibleEmployees removal DEFERRED** — the flag is hashed into
+   the idempotency fingerprint and persisted on TimesheetImportJob; removal
+   changes stored-fingerprint comparison for in-flight retries. Follow-up.
+5. **ResultStrategyFactory NOT deleted** — grep shows live callers
+   (result_processor.go:55,349); it is vestigial in shape but wired and
+   functional. Audit finding corrected.
+6. **Weekly split = one atomic commit** (vs per-format commits) — the file
+   split cannot land half-way; verification was still per-suite green.
+7. **clock.Location() not needed** — clock.DefaultLocation already exported.
+8. **"type:" consts cross-referenced, not unified** — a shared const would
+   add a package edge for two strings; both sites now document the contract.
 
 ## Non-goals (YAGNI)
 

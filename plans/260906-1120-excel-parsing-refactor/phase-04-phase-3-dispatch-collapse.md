@@ -14,11 +14,11 @@ production-contract sites as tested helpers. Pure extraction; no behavior deltas
 `BCCImportService` wiring untouched.
 
 ## Requirements
-- [ ] `resolveParseRoute(formatResult)` router helper replaces the switch (incl. legacy→ParseBCCData fallback + winner-format overwrite `:90`)
-- [ ] Extract `finalizeBCCImport` (kills the 3rd copy of stats marshaling)
-- [ ] Extract `autoCreateEmployeesFromSTK` (the `:162-357` STK block) + `crossCheckSTKNames`
-- [ ] Named predicates for contract sites: file-position precedence (`:319`), label-keyed resolution (`:381`)
-- [ ] NEW `bcc_import_dispatch_test.go`: golden asserting winner-format contract + predicate behavior by name
+- [x] `resolveParseRoute(formatResult)` router helper replaces the switch (incl. legacy→ParseBCCData fallback + winner-format overwrite `:90`)
+- [x] Extract `finalizeBCCImport` (kills the 3rd copy of stats marshaling)
+- [x] Extract `autoCreateEmployeesFromSTK` (the `:162-357` STK block) + `crossCheckSTKNames`
+- [x] Named predicates for contract sites: file-position precedence (`:319`), label-keyed resolution (`:381`)
+- [x] NEW `bcc_import_dispatch_test.go`: golden asserting winner-format contract + predicate behavior by name
 
 ## Implementation Steps
 1. Router helper + tests (dispatch golden)
@@ -27,8 +27,8 @@ production-contract sites as tested helpers. Pure extraction; no behavior deltas
 4. `go test ./...` + `make api-test` (flow_bcc_import critical)
 
 ## Success Criteria
-- [ ] `processAssetData` reads as: route → parse → shared pipeline steps (each named)
-- [ ] Dispatch golden proves winner-format contract (`:90` semantics) unchanged
+- [x] `processAssetData` reads as: route → parse → shared pipeline steps (each named)
+- [x] Dispatch golden proves winner-format contract (`:90` semantics) unchanged
 
 ## Risk Assessment
 High (production gotchas live here) but diff is mechanical and Phase 0/2 test-guarded.

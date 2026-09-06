@@ -27,9 +27,6 @@ type BCCImportResult struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-// bccImportMetadata is stored in the Asset.Metadata JSON column.
-type bccImportMetadata = BCCImportStats
-
 // buildResult creates a BCCImportResult from stats and asset fields.
 func buildResult(stats BCCImportStats, id, uploaderID uint, createdAt time.Time) *BCCImportResult {
 	return &BCCImportResult{

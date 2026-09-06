@@ -344,7 +344,7 @@ func (s *BCCImportService) ProcessUpload(
 	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth, false)
 }
 
-func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint, meta *bccImportMetadata) error {
+func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint, meta *BCCImportStats) error {
 	if deferTerminal, _ := ctx.Value(deferBCCTerminalMetadataKey{}).(bool); deferTerminal &&
 		(meta.Status == domain.TimesheetImportStatusCompleted ||
 			meta.Status == domain.TimesheetImportStatusFailed) {

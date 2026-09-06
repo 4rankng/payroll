@@ -13,12 +13,12 @@ Lock current behavior of all 5 BCC parsers + routing + unknown-template failure 
 tests and real-file goldens BEFORE any production code moves. Tests + fixtures only.
 
 ## Requirements
-- [ ] Test matrix written to `testplan/260906-excel-refactor-characterization.md` BEFORE any verification run (repo rule)
-- [ ] Real fixtures copied from `testplan/excelfixture/` → `backend/tests/fixtures/bcc/{legacy,weekly_bcc,weekly_payment,multi_position,date_row}/` (anonymize LGD "Mr Đức" filename)
-- [ ] `excel/characterization_test.go`: golden parse JSON per format (`GOLDEN_UPDATE=1` regen)
-- [ ] `excel/routing_characterization_test.go`: workbook → DetectFormat → ParseBCCData winner; covers `"STK "` trailing space, hidden sheets skipped, unknown-template error, empty workbook, BCC-named date-row (T09)
-- [ ] `employee/import_characterization_test.go` (island has zero coverage today)
-- [ ] Env-gated real-file harness `BCC_REAL_FILE_DIR` (default `../../../testplan/excelfixture`, skip-if-absent)
+- [x] Test matrix written to `testplan/260906-excel-refactor-characterization.md` BEFORE any verification run (repo rule)
+- [x] Real fixtures copied from `testplan/excelfixture/` → `backend/tests/fixtures/bcc/{legacy,weekly_bcc,weekly_payment,multi_position,date_row}/` (anonymize LGD "Mr Đức" filename)
+- [x] `excel/characterization_test.go`: golden parse JSON per format (`GOLDEN_UPDATE=1` regen)
+- [x] `excel/routing_characterization_test.go`: workbook → DetectFormat → ParseBCCData winner; covers `"STK "` trailing space, hidden sheets skipped, unknown-template error, empty workbook, BCC-named date-row (T09)
+- [x] `employee/import_characterization_test.go` (island has zero coverage today)
+- [x] Env-gated real-file harness `BCC_REAL_FILE_DIR` (default `../../../testplan/excelfixture`, skip-if-absent)
 
 ## Implementation Steps
 1. Write test matrix doc
@@ -29,9 +29,9 @@ tests and real-file goldens BEFORE any production code moves. Tests + fixtures o
 6. Run suites; regen goldens; commit
 
 ## Success Criteria
-- [ ] `go test ./internal/app/services/excel/... ./internal/app/services/employee/...` green
-- [ ] Baseline `make api-test` green (flow_bcc_import, flow_bcc_weekly_import, flow_bcc_weekly_payment_import, flow_flexpay_import)
-- [ ] GATE: this phase green before Phase 2 (registry) starts
+- [x] `go test ./internal/app/services/excel/... ./internal/app/services/employee/...` green
+- [x] Baseline `make api-test` green (flow_bcc_import, flow_bcc_weekly_import, flow_bcc_weekly_payment_import, flow_flexpay_import)
+- [x] GATE: this phase green before Phase 2 (registry) starts
 
 ## Risk Assessment
 None — no production code. Rollback: delete test files.

@@ -73,7 +73,10 @@ there but not in fixtures are ALSO parsed against the routing table (skip-if-abs
 
 | Suite | Run at | Result |
 |-------|--------|--------|
-| excel characterization | | |
-| employee characterization | | |
-| go test ./... | | |
-| make api-test baseline | | |
+| excel characterization | 2026-09-06 | PASS — 7 goldens, all 5 real formats (incl. BUMHAN T09 winner=FormatDateRow) |
+| employee characterization | 2026-09-06 | PASS — 2 tests (parse + empty-workbook) |
+| go test ./... | 2026-09-06 | 0 failures at every phase gate |
+| make api-test baseline | 2026-09-06 | 281 passed / 0 failed / 23 skipped — identical at every phase gate |
+
+Goldens stayed byte-identical through Phases 2–6 (registry rewrite, dispatch
+collapse, weekly split, satellite adoption, upload guard).
