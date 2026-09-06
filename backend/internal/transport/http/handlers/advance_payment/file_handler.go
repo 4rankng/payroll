@@ -6,7 +6,9 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/excelkit"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -189,27 +191,13 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 		return
 	}
 
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "File là bắt buộc")
-		return
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		response.InternalServerError(c, "Không thể mở file")
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		response.InternalServerError(c, "Không thể đọc file")
+	fileContent, filename, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 
 	// Validate Excel file before doing anything else
-	xlsxFile, err := excelize.OpenReader(bytes.NewReader(fileContent))
+	xlsxFile, err := excelkit.OpenReader(bytes.NewReader(fileContent))
 	if err != nil {
 		response.BadRequest(c, "File Excel không hợp lệ")
 		return
@@ -237,7 +225,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	if !forceReprocess {
 		existingAsset, lookupErr := h.service.GetConfig().AssetRepo.GetByChecksum(c.Request.Context(), checksum, domain.UploadTypeFlexPayImport)
 		if lookupErr == nil && existingAsset != nil {
-			assetReady := h.ensureAssetFileExists(c, existingAsset, fileContent, fileHeader.Filename)
+			assetReady := h.ensureAssetFileExists(c, existingAsset, fileContent, filename)
 			if !assetReady {
 				return
 			}
@@ -261,7 +249,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	}
 
 	// New file — store to disk and create asset
-	storedFile, err := h.fileStorage.StoreBytes(fileContent, fileHeader.Filename, domain.UploadTypeFlexPayImport)
+	storedFile, err := h.fileStorage.StoreBytes(fileContent, filename, domain.UploadTypeFlexPayImport)
 	if err != nil {
 		response.InternalServerError(c, fmt.Sprintf("Không thể lưu file: %v", err))
 		return
@@ -270,7 +258,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	createdBy := userID.(uint)
 
 	asset := &domain.Asset{
-		Filename:   fileHeader.Filename,
+		Filename:   filename,
 		FilePath:   storedFile.FilePath,
 		UploadType: domain.UploadTypeFlexPayImport,
 		Checksum:   &checksum,
@@ -280,7 +268,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	createdAsset, err := h.assetRepo.Create(c.Request.Context(), asset)
 	if err != nil {
 		logger := observability.GetLogger()
-		logger.Error("failed to create asset for flex pay import", "error", err, "filename", fileHeader.Filename)
+		logger.Error("failed to create asset for flex pay import", "error", err, "filename", filename)
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "Duplicate entry") || strings.Contains(errMsg, "1062") {
 			response.Conflict(c, "File này đã được import trước đó")
@@ -299,7 +287,7 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 	// Emit audit event for file import (non-blocking)
 	if h.auditService != nil {
 		go func() {
-			_ = h.auditService.LogFileImport(c.Request.Context(), "flexpay_employees", totalRows, fileHeader.Filename)
+			_ = h.auditService.LogFileImport(c.Request.Context(), "flexpay_employees", totalRows, filename)
 		}()
 	}
 

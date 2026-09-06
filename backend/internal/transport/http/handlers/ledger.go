@@ -16,6 +16,7 @@ import (
 	"api-server/internal/pkg/timeutil"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -88,9 +89,8 @@ func (h *LedgerHandler) UploadOnePayFeeReport(c *gin.Context) {
 		return
 	}
 
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "Vui lòng chọn file Excel phí OnePay")
+	fileHeader, ok := uploadguard.Validate(c, false)
+	if !ok {
 		return
 	}
 	file, err := fileHeader.Open()

@@ -3,9 +3,6 @@ package employee
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -17,6 +14,7 @@ import (
 	"api-server/internal/infra/observability"
 	"api-server/internal/infra/storage"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 )
 
 // ImportHandler handles employee import operations
@@ -73,24 +71,10 @@ func (h *ImportHandler) PostImportEmployees(c *gin.Context) {
 		return
 	}
 
-	// Parse uploaded file
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		logger.Warn("missing or invalid file in import request", "error", err)
-		response.BadRequest(c, "File is required")
-		return
-	}
-
-	// Validate file extension
-	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
-	if ext != ".xlsx" {
-		response.BadRequest(c, "Only .xlsx files are supported")
-		return
-	}
-
-	// Validate file size (max 10MB)
-	if err := storage.ValidateFileSize(fileHeader, 10*1024*1024); err != nil {
-		response.BadRequest(c, "File size exceeds 10MB limit")
+	// Guarded multipart parse: body cap, size cap, xlsx magic sniff
+	// (replaces the former extension + 10MB checks).
+	fileHeader, ok := uploadguard.Validate(c, false)
+	if !ok {
 		return
 	}
 

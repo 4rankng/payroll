@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,15 +56,9 @@ func (h *Handler) UploadSettlement(c *gin.Context) {
 		return
 	}
 
-	// Parse file upload
-	_, header, err := c.Request.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "Vui lòng tải lên file Excel")
-		return
-	}
-
-	if !strings.HasSuffix(strings.ToLower(header.Filename), ".xlsx") {
-		response.BadRequest(c, "File phải có định dạng .xlsx")
+	// Guarded multipart parse: body cap, size cap, xlsx magic sniff.
+	header, ok := uploadguard.Validate(c, false)
+	if !ok {
 		return
 	}
 

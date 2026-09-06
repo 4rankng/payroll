@@ -17,6 +17,7 @@ import (
 	"api-server/internal/infra/storage"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 )
@@ -114,21 +115,16 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		}
 	}
 
-	file, header, err := c.Request.FormFile("file")
+	header, ok := uploadguard.Validate(c, false)
+	if !ok {
+		return
+	}
+	file, err := header.Open()
 	if err != nil {
-		response.BadRequest(c, "Vui lòng tải lên file BCC (.xlsx)")
+		response.InternalServerError(c, "Không thể đọc file")
 		return
 	}
 	defer func() { _ = file.Close() }()
-
-	if !isExcelFile(header.Filename) {
-		response.BadRequest(c, "File phải có định dạng .xlsx")
-		return
-	}
-	if header.Size > 10<<20 {
-		response.BadRequest(c, "File quá lớn (tối đa 10MB)")
-		return
-	}
 
 	idempotencyKey := strings.TrimSpace(c.GetHeader("Idempotency-Key"))
 	if idempotencyKey == "" || len(idempotencyKey) > 128 {
