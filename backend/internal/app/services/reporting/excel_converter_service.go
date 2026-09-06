@@ -6,6 +6,8 @@ import (
 	"io"
 	"mime/multipart"
 
+	"api-server/internal/pkg/excelkit"
+
 	"github.com/xuri/excelize/v2"
 )
 
@@ -39,7 +41,7 @@ func (s *ExcelConverterService) ProcessExcelFile(fileHeader *multipart.FileHeade
 	}
 
 	// Open XLSX file directly
-	excelFile, err := excelize.OpenReader(buf)
+	excelFile, err := excelkit.OpenReader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open XLSX file: %w", err)
 	}

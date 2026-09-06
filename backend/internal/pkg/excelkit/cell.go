@@ -24,17 +24,6 @@ func Cell(f *excelize.File, sheet string, col, row int) string {
 	return strings.TrimSpace(val)
 }
 
-// RowCell indexes into an already-materialized row slice with bounds
-// guarding; out-of-range indexes return "".
-//
-// Verbatim port of settlement's cell helper.
-func RowCell(row []string, idx int) string {
-	if idx < 0 || idx >= len(row) {
-		return ""
-	}
-	return row[idx]
-}
-
 // NumericCell reads one cell as a raw number, bypassing the cell's display
 // format (so 7.5h shown as "8" still reads 7.5), and reports whether the
 // cell carried an explicit numeric value. Blank and non-numeric cells return

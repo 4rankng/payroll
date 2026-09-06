@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/excelkit"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -53,7 +54,7 @@ func (p *SettlementExcelParser) ParseSettlementFile(
 		_ = file.Close()
 	}()
 
-	excelFile, err := excelize.OpenReader(file)
+	excelFile, err := excelkit.OpenReader(file)
 	if err != nil {
 		return nil, domain.NewValidationError(constants.MsgCannotReadExcelFileVN)
 	}

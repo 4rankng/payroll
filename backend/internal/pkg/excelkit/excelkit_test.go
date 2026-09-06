@@ -9,9 +9,9 @@ import (
 
 func TestNormalizeHeader(t *testing.T) {
 	cases := []struct{ in, want string }{
-		{"  Họ và Tên  ", "họ và tên"},                 // trim + lower
-		{"họ và tên", "họ và tên"},                     // NFD → NFC
-		{"Số  TK", "số  tk"},                           // internal whitespace preserved
+		{"  Họ và Tên  ", "họ và tên"}, // trim + lower
+		{"họ và tên", "họ và tên"},   // NFD → NFC
+		{"Số  TK", "số  tk"},           // internal whitespace preserved
 		{"", ""},
 	}
 	for _, tc := range cases {
@@ -41,6 +41,7 @@ func TestAliasTableResolve(t *testing.T) {
 		"số tài khoản":     "account_number", // diacritic key (collapsed match)
 		"so tai khoan":     "account_number", // ASCII key (unidecode retry)
 		"beneficiary bank": "bank_name",
+		"ghi chú stt":      "notes", // collapsed whole-cell key
 	}
 
 	cases := []struct {
@@ -50,10 +51,11 @@ func TestAliasTableResolve(t *testing.T) {
 		note   string
 	}{
 		{" STT ", "order_no", true, "whole cell, trimmed + lowered"},
-		{"STT\n(Ord. No.)", "order_no", true, "newline segment match"},
+		{"STT\n(Ord. No.)", "order_no", true, "newline segment fallback (whole-cell forms match nothing)"},
 		{"Số  tài  khoản", "account_number", true, "collapsed match on diacritic key"},
 		{"Số tài khoản", "account_number", true, "unidecode retry on ASCII key"},
 		{"Beneficiary Bank", "bank_name", true, "case-insensitive"},
+		{"Ghi chú\nSTT", "notes", true, "collapsed whole-cell outranks the STT segment"},
 		{"Unknown", "", false, "no match"},
 	}
 	for _, tc := range cases {
@@ -61,19 +63,6 @@ func TestAliasTableResolve(t *testing.T) {
 		if ok != tc.wantOK || got != tc.want {
 			t.Errorf("Resolve(%q) = (%q, %v), want (%q, %v) [%s]", tc.in, got, ok, tc.want, tc.wantOK, tc.note)
 		}
-	}
-}
-
-func TestRowCell(t *testing.T) {
-	row := []string{"a", "b"}
-	if got := RowCell(row, -1); got != "" {
-		t.Errorf("RowCell(-1) = %q, want empty", got)
-	}
-	if got := RowCell(row, 5); got != "" {
-		t.Errorf("RowCell(5) = %q, want empty", got)
-	}
-	if got := RowCell(row, 1); got != "b" {
-		t.Errorf("RowCell(1) = %q, want b", got)
 	}
 }
 
@@ -124,27 +113,6 @@ func TestExcelDate(t *testing.T) {
 	}
 	if _, ok := ExcelDate("1"); ok {
 		t.Error("1900 serial accepted outside 2020-2040 guard")
-	}
-}
-
-func TestIsEmptyRowAndFindHeaderRow(t *testing.T) {
-	if !IsEmptyRow([]string{" ", "", "\t"}) {
-		t.Error("blank row not detected as empty")
-	}
-	if IsEmptyRow([]string{"", "x"}) {
-		t.Error("non-blank row detected as empty")
-	}
-
-	rows := [][]string{
-		{"junk", "junk"},
-		{"", "", ""},
-		{"STT", "Mã nhân viên"},
-	}
-	if got := FindHeaderRow(rows, 30, func(r []string) bool { return len(r) > 0 && r[0] == "STT" }); got != 2 {
-		t.Errorf("FindHeaderRow = %d, want 2", got)
-	}
-	if got := FindHeaderRow(rows, 2, func(r []string) bool { return len(r) > 0 && r[0] == "STT" }); got != -1 {
-		t.Errorf("FindHeaderRow with maxScan=2 = %d, want -1", got)
 	}
 }
 

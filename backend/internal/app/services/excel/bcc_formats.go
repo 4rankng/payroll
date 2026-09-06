@@ -27,14 +27,14 @@ type bccSheetClassification struct {
 // legacy candidate; "STK" (case-insensitive, whitespace-trimmed — partners
 // export "STK " etc.) is skipped so the bank sheet never leaks into data
 // detection; "BCC-"-prefixed sheets are weekly BCC; remaining sheets are
-// fingerprinted as weekly payment, then position, then date-row.
-//
-// Unlike the pre-registry detector, date-row sheets are collected
-// unconditionally — priority selection makes the old workbook-level gate
-// redundant (a gate-closed workbook could never select date-row anyway), and
-// collecting is what keeps this pass order-independent.
+// fingerprinted as weekly payment, then position. The date-row fingerprint
+// runs in a second phase, only when no higher-priority family claimed the
+// workbook: it is the loosest (any full-date header row) and most expensive
+// test, and by registry priority it can only win when everything else is
+// empty — so skipping it otherwise is outcome-identical.
 func classifyBCCSheets(f *excelize.File) bccSheetClassification {
 	var c bccSheetClassification
+	var unmatched []string
 	for _, sheetName := range f.GetSheetList() {
 		visible, err := f.GetSheetVisible(sheetName)
 		if err != nil {
@@ -63,8 +63,13 @@ func classifyBCCSheets(f *excelize.File) bccSheetClassification {
 			c.position = append(c.position, sheetName)
 			continue
 		}
-		if isDateRowBCCSheet(f, sheetName) {
-			c.dateRow = append(c.dateRow, sheetName)
+		unmatched = append(unmatched, sheetName)
+	}
+	if c.bccSheet == "" && len(c.weeklyBCC) == 0 && len(c.weeklyPayment) == 0 && len(c.position) == 0 {
+		for _, sheetName := range unmatched {
+			if isDateRowBCCSheet(f, sheetName) {
+				c.dateRow = append(c.dateRow, sheetName)
+			}
 		}
 	}
 	return c

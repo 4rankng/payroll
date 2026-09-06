@@ -7,10 +7,9 @@ import (
 	"mime/multipart"
 	"time"
 
-	"github.com/xuri/excelize/v2"
-
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/excelkit"
 )
 
 // ValidatedFile represents a validated and parsed file
@@ -149,7 +148,7 @@ func (v *FileValidator) readExportDate(
 		return nil
 	}
 
-	f, err := excelize.OpenFile(assetFilePath)
+	f, err := excelkit.OpenFile(assetFilePath)
 	if err != nil {
 		logger.Warn("Failed to open asset file to read H2", "error", err)
 		return nil

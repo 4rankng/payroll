@@ -116,10 +116,11 @@ func mergeDetailHeaderAliases(templateSpecific map[string]string) map[string]str
 }
 
 // resolveHeader maps a raw header cell to this template's canonical field.
-// Delegates to the shared excelkit AliasTable (a superset of this resolver:
-// its earlier whole-cell and newline-segment lookups can only match when the
-// collapsed form would have matched too), keeping one resolution algorithm
-// across importers.
+// Delegates to the shared excelkit AliasTable, keeping one resolution
+// algorithm across importers. The kit's order (whole cell → collapsed →
+// diacritic-free collapse → newline segments) preserves this template's
+// collapsed-first outcomes: segments run last and cannot preempt a
+// whole-cell match.
 func (tpl *onePayDetailTemplate) resolveHeader(s string) string {
 	key := normalizeHeader(s)
 	if key == "" {
@@ -398,7 +399,7 @@ func (s *OnePayFeeImportService) validateWalletPayments(ctx context.Context, rep
 }
 
 func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportIssue, error) {
-	f, err := excelize.OpenReader(r)
+	f, err := excelkit.OpenReader(r)
 	if err != nil {
 		return nil, nil, &OnePayFeeImportValidationError{
 			Message: "Không thể đọc file Excel OnePay",
