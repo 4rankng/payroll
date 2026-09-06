@@ -89,7 +89,9 @@ func buildRateToTarget(flatRates map[string]int, posPrefix string) map[int]rateT
 // planMonthReplacement loads the project's existing month timesheets and
 // plans the replacement: reviewed rows are preserved, pending rows become
 // stale (to delete), and protected/flexible rows are counted as skipped.
-// No-op when there are no entries to plan against.
+// hourTypeKeyed makes HourType part of the replacement key so an OT import
+// cannot replace HC (weekly formats); legacy/multi formats key on
+// employee+date only. No-op when there are no entries to plan against.
 func (s *BCCImportService) planMonthReplacement(
 	ctx context.Context,
 	projectID uint,
@@ -99,6 +101,7 @@ func (s *BCCImportService) planMonthReplacement(
 	loc *time.Location,
 	entries []domainservices.BulkCreateTimesheetEntry,
 	flexibleEmployeeIDs map[uint]struct{},
+	hourTypeKeyed bool,
 ) (plannedEntries []domainservices.BulkCreateTimesheetEntry, staleIDs []uint, protectedSkipped, flexibleSkipped int, err error) {
 	if len(entries) == 0 {
 		return entries, nil, 0, 0, nil
@@ -108,7 +111,7 @@ func (s *BCCImportService) planMonthReplacement(
 	if terr != nil {
 		return nil, nil, 0, 0, terr
 	}
-	entries, staleIDs, protected, flexible := planBCCReplacement(entries, existingTS, flexibleEmployeeIDs, false)
+	entries, staleIDs, protected, flexible := planBCCReplacement(entries, existingTS, flexibleEmployeeIDs, hourTypeKeyed)
 	return entries, staleIDs, protected, flexible, nil
 }
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	excelparser "api-server/internal/app/services/excel"
@@ -32,37 +31,19 @@ func (s *BCCImportService) processAssetData(
 	effectiveMonth := forMonth
 
 	// Helper to update asset metadata and return result.
-	fail := func(status, reason string) (*BCCImportResult, error) {
-		errs := []domain.ImportError{{Reason: reason}}
-		detail := marshalErrors(errs)
-		now := clock.Now()
-		stats := BCCImportStats{
-			ProjectID:    projectID,
-			OriginalName: filename,
-			ForMonth:     effectiveMonth,
-			Status:       status,
-			ErrorCount:   1,
-			ErrorDetail:  detail,
-			ProcessedAt:  &now,
-		}
-		if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
-			slog.Error("BCCImport: metadata update failed in fail path", "asset_id", createdAsset.ID, "error", metaErr)
-		}
-		return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt),
-			fmt.Errorf("import failed: %s", FirstErrorReason(detail))
-	}
+	fail := s.bccFailer(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth)
 
 	// 4. Parse the Excel file.
 	xf, err := excelize.OpenReader(bytes.NewReader(data))
 	if err != nil {
-		return fail("failed", fmt.Sprintf("không thể mở file Excel: %v", err))
+		return fail(fmt.Sprintf("không thể mở file Excel: %v", err))
 	}
 	defer func() { _ = xf.Close() }()
 
 	// 4a. Detect format: legacy BCC vs multi-position
 	formatResult, detectErr := excelparser.DetectFormat(xf)
 	if detectErr != nil {
-		return fail("failed", fmt.Sprintf("không nhận diện được định dạng file: %v", detectErr))
+		return fail(fmt.Sprintf("không nhận diện được định dạng file: %v", detectErr))
 	}
 
 	var parsed *excelparser.BCCImportData
@@ -81,7 +62,7 @@ func (s *BCCImportService) processAssetData(
 		parsed, err = parseLegacyRoute(xf, formatResult, filename)
 	}
 	if err != nil {
-		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
+		return fail(fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 
 	// Parse summary for import diagnostics: employees/entries as read from the
@@ -105,7 +86,7 @@ func (s *BCCImportService) processAssetData(
 	}
 	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
 	if err != nil {
-		return fail("failed", err.Error())
+		return fail(err.Error())
 	}
 	defer releaseLock()
 	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
@@ -120,25 +101,7 @@ func (s *BCCImportService) processAssetData(
 	// rate matching at all — their entries fall back to label + calendar
 	// mapping below. Files that carry rates keep the strict rate path.
 	ratelessFile := len(parsed.ShiftRates) == 0
-	rateToTarget := make(map[int]rateTarget)
-	for path, rate := range flatRates {
-		if rate == 0 {
-			continue
-		}
-		parts := strings.Split(path, ".")
-		if len(parts) != 3 {
-			continue
-		}
-		candidate := rateTarget{parts[1], parts[2]}
-		candPri, candKnown := dayTypePriority[candidate.dayType]
-		if !candKnown {
-			continue // skip unrecognized day types
-		}
-		existing, exists := rateToTarget[rate]
-		if !exists || candPri < dayTypePriority[existing.dayType] {
-			rateToTarget[rate] = candidate
-		}
-	}
+	rateToTarget := buildRateToTarget(flatRates, "")
 
 	// 6.5 Auto-create and assign employees from STK sheet if it exists.
 	// Deduce the best position from payrate rates matching BCC shift rates.
@@ -155,7 +118,7 @@ func (s *BCCImportService) processAssetData(
 	// 7. Load all active project employees, build lookup maps.
 	assignments, err := s.employeeService.GetActiveAssignments(ctx, projectID)
 	if err != nil {
-		return fail("failed", fmt.Sprintf("lỗi tải danh sách nhân viên: %v", err))
+		return fail(fmt.Sprintf("lỗi tải danh sách nhân viên: %v", err))
 	}
 	byCCCD := make(map[string]*domain.ProjectEmployee, len(assignments))
 	byCode := make(map[string]*domain.ProjectEmployee, len(assignments))
@@ -258,18 +221,10 @@ func (s *BCCImportService) processAssetData(
 	totalRows := len(parsed.Employees)
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
-	var staleIDs []uint
-	flexibleSkippedCount := 0
-	protectedSkippedCount := 0
-	if len(entries) > 0 {
-		monthEnd := time.Date(year, month+1, 0, 23, 59, 59, 0, loc)
-		existingTS, terr := s.timesheetReader.GetByProject(ctx, projectID, monthStart, monthEnd)
-		if terr != nil {
-			return fail("failed", fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", terr))
-		}
-		entries, staleIDs, protectedSkippedCount, flexibleSkippedCount = planBCCReplacement(
-			entries, existingTS, flexibleEmployeeIDs, false,
-		)
+	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, replErr := s.planMonthReplacement(
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false)
+	if replErr != nil {
+		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", replErr))
 	}
 
 	// 10. Call BulkCreateTimesheets.
@@ -318,7 +273,7 @@ func (s *BCCImportService) processAssetData(
 				TotalRows:    totalRows,
 			}, importErrors)
 		}
-		return fail("failed", reason)
+		return fail(reason)
 	}
 
 	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
@@ -332,7 +287,7 @@ func (s *BCCImportService) processAssetData(
 				TotalRows:    totalRows,
 			}, importErrors)
 		}
-		return fail("failed", fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
+		return fail(fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
 
 	// 11. Count results.
