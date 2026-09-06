@@ -90,7 +90,7 @@ func (s *AuthService) CaptchaRequiredForUsername(ctx context.Context, username s
 		return false
 	}
 	user, err := s.userService.UserRepo.GetByUsername(ctx, username)
-	if err != nil {
+	if err != nil && phone.IsCCCDFormat(username) {
 		user, err = s.userService.UserRepo.GetByCCCD(ctx, username)
 	}
 	if err != nil {
@@ -272,8 +272,13 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	// Try username first
 	user, err = userRepo.GetByUsername(ctx, req.Username)
 	if err != nil {
-		// If username not found, try User CCCD (for admin/partner)
-		user, err = userRepo.GetByCCCD(ctx, req.Username)
+		// CCCD lookup only for ID-shaped identifiers (9-digit CMND or
+		// 12-digit CCCD). A 10-digit identifier is a mobile number; matching
+		// it against users.cccd lets a mobile value wrongly stored in the
+		// CCCD field hijack the login ahead of the mobile lookups below.
+		if phone.IsCCCDFormat(req.Username) {
+			user, err = userRepo.GetByCCCD(ctx, req.Username)
+		}
 		if err != nil {
 			// Admin/Partner mobile belongs to users; Employee mobile belongs to
 			// employees. Both accept common Vietnamese phone formatting.
