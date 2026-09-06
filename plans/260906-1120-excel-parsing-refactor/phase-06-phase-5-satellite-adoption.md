@@ -17,7 +17,7 @@ internal error contract — WITHOUT losing their idioms. No unified framework.
 - [x] flexpay (`admin_flexpay_import.go`): triple `GetRows` → one; `detectColumnOffset` stays; silent-skip+counters regime PRESERVED (user-visible)
 - [x] onepay fee + wallet_bulk: alias matcher → `excelkit.AliasTable` (their tables stay local)
 - [ ] ~~NEW `internal/app/services/imports/provisioning.go`~~ — FALLBACK INVOKED (allowed): the getOrCreate variants genuinely diverged (bank validation, StartDate/PaymentSchedule parsing live only in the employee island); forcing unification = behavior drift risk. Documented at both sites instead. See plan.md deviations #3
-- [x] (contract type landed; islands adopt it when next touching error paths — not force-migrated) NEW `dto/import_issue.go`: `ImportRowIssue{Code,Message,Row,Reference}` (model: `OnePayFeeReportIssue`); islands adapt to existing external JSON — payloads unchanged
+- [ ] ~~NEW `dto/import_issue.go`~~ — REMOVED post-review: the type shipped with zero consumers (dead code from a dead-code-removal series). Re-introduce when an island actually adopts it. See plan.md deviations #9
 - [x] Do NOT restructure `admin_bulk_transfer.go` (adjacent to recently-dirty worker; only upload guard in Phase 6)
 
 ## Implementation Steps

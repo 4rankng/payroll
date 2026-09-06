@@ -14,7 +14,7 @@ guards. Oversized/misnamed/crafted files that were accepted now get 4xx.
 
 ## Requirements
 - [x] NEW `internal/transport/http/uploadguard.go` + tests, modeled on `wallet_bulk_transfer_handler.go:51-289` (gold standard): `MaxBytesReader` BEFORE `FormFile`, extension check, ZIP/OLE magic sniff, env-configurable cap (default ~20 MiB), typed Vietnamese errors matching handler style
-- [x] Adopt at: flexpay `advance_payment/file_handler.go` (replaces unbounded `io.ReadAll :205`), settlement ×2 (`timesheet/settlement_upload.go`, `settlement/upload_settlement.go`), OnePay fee (`handlers/ledger.go`), employee import, BCC import
+- [x] Adopt at ALL Excel upload endpoints: flexpay import + flexible-employee list, advance-payment result upload, wallet reconciliation, settlement ×2, OnePay fee, employee import, BCC import, timesheet template import, and bulk-transfer result (the only `.xls`/OLE2 acceptor, via allowXLS). Review blocker: first adoption wave missed five endpoints
 - [x] Upload-path `excelize.OpenReader/OpenFile` → `excelkit` (BCC process, flexpay handler+worker, advance-payment result + recon handlers); repo-bundled template reads left on plain excelize (trusted static files)
 
 ## Implementation Steps

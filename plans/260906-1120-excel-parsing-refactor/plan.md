@@ -79,6 +79,16 @@ change). No DB migrations. No frontend contract changes. Work on `main`.
 7. **clock.Location() not needed** — clock.DefaultLocation already exported.
 8. **"type:" consts cross-referenced, not unified** — a shared const would
    add a package edge for two strings; both sites now document the contract.
+9. **dto.ImportRowIssue removed post-review** — it shipped with zero
+   consumers (adversarial review blocker); re-introduce at first adoption.
+10. **Upload guard sweep completed post-review** — the first wave guarded 6
+    endpoints but claimed "all"; review found 5 more (flexible-employee
+    list, advance-payment result, wallet reconciliation, template import,
+    bulk-transfer result incl. `.xls` via allowXLS). All 11 now guarded.
+11. **AliasTable is deliberately a superset** — wallet-bulk gained the
+    unidecode retry and OnePay gained whole-cell/newline steps; strictly
+    more permissive on pathological headers, canonical mappings unchanged
+    (review disclosure, accepted).
 
 ## Non-goals (YAGNI)
 
