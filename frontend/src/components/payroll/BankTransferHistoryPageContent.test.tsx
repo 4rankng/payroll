@@ -298,13 +298,23 @@ describe('BankTransferHistoryPageContent', () => {
     }
   });
 
-  it.each(['admin', 'partner'] as const)('keeps the %s header below the iOS safe area at every breakpoint', (variant) => {
-    const { container } = render(<BankTransferHistoryPageContent variant={variant} />);
+  it('keeps the partner header below the iOS safe area at every breakpoint', () => {
+    const { container } = render(<BankTransferHistoryPageContent variant="partner" />);
 
     expect(container.querySelector('.admin-payment-history-page')).toHaveClass(
       'pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]',
       'sm:pt-[calc(env(safe-area-inset-top,0px)+1rem)]',
       'md:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]',
     );
+  });
+
+  it('rides the standard admin shell (canvas + glass header) on the admin variant', () => {
+    const { container } = render(<BankTransferHistoryPageContent variant="admin" />);
+
+    // Admin pages share the ambient canvas and glass header card idiom; the
+    // legacy standalone safe-area root belongs to the partner variant only.
+    expect(container.querySelector('.admin-payment-history-page')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-mobile-header]')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Lịch sử trả lương' })).toBeInTheDocument();
   });
 });

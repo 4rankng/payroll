@@ -4,6 +4,7 @@ import { Project } from '@/types/api/project.types';
 import { generateMonthOptions } from '@/utils/dateHelpers';
 import { getVietnameseProjectStatus } from '@/utils/vietnamese';
 import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProjectFiltersProps {
   searchTerm: string;
@@ -14,6 +15,8 @@ interface ProjectFiltersProps {
   onMonthFilterChange: (value: string | undefined) => void;
   hasFilters: boolean;
   onClearFilters: () => void;
+  /** Merge point for flattening the default card border inside a parent card. */
+  className?: string;
 }
 
 const STATUS_OPTIONS: Project['status'][] = ['active', 'paused', 'completed', 'cancelled'];
@@ -31,13 +34,19 @@ export const ProjectFilters = ({
   onMonthFilterChange,
   hasFilters,
   onClearFilters,
+  className,
 }: ProjectFiltersProps) => {
   const currentStatus = Array.isArray(statusFilter) && statusFilter.length === 1
     ? statusFilter[0]
     : 'all';
 
   return (
-    <div className="flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2">
+    <div
+      className={cn(
+        'flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2',
+        className,
+      )}
+    >
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={onSearchChange}

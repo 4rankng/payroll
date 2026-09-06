@@ -25,6 +25,8 @@ interface EmployeeListContentProps {
   onAddEmployee: () => void;
   sorting?: SortingState;
   onSortingChange?: OnChangeFn<SortingState>;
+  /** Render flush inside a parent operations card (no inner card wrapper). */
+  embedded?: boolean;
 }
 
 export const EmployeeListContent = ({
@@ -46,6 +48,7 @@ export const EmployeeListContent = ({
   onAddEmployee,
   sorting,
   onSortingChange,
+  embedded = false,
 }: EmployeeListContentProps) => {
   return (
     <div>
@@ -110,9 +113,10 @@ export const EmployeeListContent = ({
           getRowId={(row) => String(row.id)}
           onRowClick={onRowClick}
           emptyState={<EmployeeTableEmptyState onAddEmployee={onAddEmployee} />}
-          className="px-4 sm:px-0"
+          className={embedded ? undefined : 'px-4 sm:px-0'}
           sorting={sorting}
           onSortingChange={onSortingChange}
+          embedded={embedded}
         />
       )}
     </div>

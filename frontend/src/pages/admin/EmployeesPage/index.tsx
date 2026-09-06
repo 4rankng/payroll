@@ -1,10 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useEmployeeData } from "@/hooks/employees/useEmployeeData";
-import { TableLoadingSkeleton } from "@/components/ui/loading-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createEmployeeMobileConfig } from "@/config/employee-table-mobile";
 import { createEmployeeColumns } from "@/config/employee-table-desktop";
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from "@/components/shared/AdminPageFrame";
 import { InlineStatStrip } from "@/components/shared/InlineStatStrip";
 import { useEmployeeStatsConfig } from "@/hooks/useEmployeeStatsConfig";
 import { EmployeeFiltersBar } from "@/components/employees/EmployeeFiltersBar";
@@ -146,41 +151,36 @@ const EmployeesPage = () => {
 
   if (loading) {
     return (
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5 animate-fade-in">
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-28" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <Skeleton className="h-11 w-full max-w-md rounded-xl" />
-        <div className="rounded-lg border bg-background overflow-hidden">
-          <div className="border-b px-4 py-3">
-            <div className="flex gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-3 w-20" />
-              ))}
-            </div>
-          </div>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="border-b px-4 py-3 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-3.5 w-36" />
-                <Skeleton className="h-2.5 w-24" />
+      <AdminPageCanvas>
+        <AdminPageHeaderCard>
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="mt-2 h-4 w-72" />
+        </AdminPageHeaderCard>
+        <Skeleton className="h-14 rounded-xl" />
+        <AdminSectionCard>
+          <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
+          <div className="border-t border-slate-200/70">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 border-b border-slate-200/60 px-4 py-3 last:border-b-0">
+                <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-36" />
+                  <Skeleton className="h-2.5 w-24" />
+                </div>
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-3.5 w-20" />
               </div>
-              <Skeleton className="h-3.5 w-28" />
-              <Skeleton className="h-3.5 w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
+        </AdminSectionCard>
+      </AdminPageCanvas>
     );
   }
 
   return (
     <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-4">
-
-        <div className="opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
+      <AdminPageCanvas>
+        <AdminPageHeaderCard>
           <EmployeePageHeader
             totalEmployees={pagination.totalRecords}
             onAddEmployeeClick={() => openAddEmployee()}
@@ -188,47 +188,49 @@ const EmployeesPage = () => {
             onSearchFocus={handleSearchFocus}
             isExporting={isExporting}
           />
-        </div>
+        </AdminPageHeaderCard>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
-          <InlineStatStrip
-            items={employeeStats.statsConfig.map(s => ({
-              label: s.title,
-              value: s.value,
-              highlight: s.isActive,
-            }))}
-            isLoading={employeeStats.isLoading}
-          />
-        </div>
-
-        <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <EmployeeFiltersBar
-            searchTerm={searchTerm}
-            onSearchChange={searchEmployees}
-            statusFilter={currentFilters.status}
-            onStatusFilterChange={(status) => updateFilters({ status })}
-            month={currentFilters.month}
-            onMonthChange={(month) => updateFilters({ month })}
-            fromDate={currentFilters.fromDate}
-            toDate={currentFilters.toDate}
-            onDateRangeChange={(from, to) =>
-              updateFilters({ fromDate: from, toDate: to })
-            }
-            projectId={currentFilters.projectId || null}
-            onProjectChange={(projectId) =>
-              updateFilters({ projectId: projectId || undefined })
-            }
-            projects={projectsData?.data?.map((p) => ({
-              id: p.id,
-              name: p.name,
-              code: p.code,
-            }))}
-          />
-        </div>
+        <InlineStatStrip
+          items={employeeStats.statsConfig.map(s => ({
+            label: s.title,
+            value: s.value,
+            highlight: s.isActive,
+          }))}
+          isLoading={employeeStats.isLoading}
+        />
 
         <MissingBankDetailsSection onEmployeeClick={handleOpenEmployeeSheet} />
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+        <AdminSectionCard aria-label="Danh sách nhân viên">
+          <AdminFilterRow>
+            <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+            <div className="flex flex-1 items-center justify-end">
+              <EmployeeFiltersBar
+                searchTerm={searchTerm}
+                onSearchChange={searchEmployees}
+                statusFilter={currentFilters.status}
+                onStatusFilterChange={(status) => updateFilters({ status })}
+                month={currentFilters.month}
+                onMonthChange={(month) => updateFilters({ month })}
+                fromDate={currentFilters.fromDate}
+                toDate={currentFilters.toDate}
+                onDateRangeChange={(from, to) =>
+                  updateFilters({ fromDate: from, toDate: to })
+                }
+                projectId={currentFilters.projectId || null}
+                onProjectChange={(projectId) =>
+                  updateFilters({ projectId: projectId || undefined })
+                }
+                projects={projectsData?.data?.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  code: p.code,
+                }))}
+                className="rounded-none border-0 bg-transparent px-0 py-0 backdrop-blur-none"
+              />
+            </div>
+          </AdminFilterRow>
+
           <EmployeeListContent
             filteredEmployees={employees}
             dataToDisplay={employees}
@@ -247,16 +249,18 @@ const EmployeesPage = () => {
             onAddEmployee={() => openAddEmployee()}
             sorting={sorting}
             onSortingChange={onSortingChange}
+            embedded
           />
-        </div>
 
-        <PaginationControls
-          pagination={pagination}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-        />
-
-      </div>
+          <div className="border-t border-slate-200/70 px-3 py-2.5 sm:px-5">
+            <PaginationControls
+              pagination={pagination}
+              onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
+            />
+          </div>
+        </AdminSectionCard>
+      </AdminPageCanvas>
 
       <ExportEmployeesModal
         open={exportModalOpen}

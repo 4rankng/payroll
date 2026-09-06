@@ -1,6 +1,12 @@
 import { useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from "@/components/shared/AdminPageFrame";
 import { ProjectPageHeader } from "@/components/projects/ProjectPageHeader";
 import { ProjectFilters } from "@/components/projects/ProjectFilters";
 import { AddProjectSheet } from "@/components/sheets/AddProjectSheet";
@@ -10,8 +16,6 @@ import { useProjectModals } from "@/hooks/useModalNavigation";
 import { createProjectColumns } from "@/config/project-table-columns";
 import { createProjectMobileConfig } from "@/config/project-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FolderPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { CreateProjectData } from "@/types/api/project.types";
 import { useTableSorting } from "@/utils/sorting";
@@ -66,85 +70,81 @@ const ProjectsPage = () => {
 
   if (isLoading && projects.length === 0) {
     return (
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5 animate-fade-in">
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-32" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <Skeleton className="h-11 w-full max-w-md rounded-xl" />
-        <div className="rounded-lg border bg-background overflow-hidden">
-          <div className="border-b px-4 py-3">
-            <div className="flex gap-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-3 w-20" />
-              ))}
-            </div>
-          </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="border-b px-4 py-4 flex items-center gap-4">
-              <Skeleton className="h-9 w-9 rounded-lg" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-3.5 w-40" />
-                <Skeleton className="h-2.5 w-20" />
+      <AdminPageCanvas>
+        <AdminPageHeaderCard>
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-2 h-4 w-72" />
+        </AdminPageHeaderCard>
+        <AdminSectionCard>
+          <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
+          <div className="border-t border-slate-200/70">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 border-b border-slate-200/60 px-4 py-4 last:border-b-0">
+                <Skeleton className="h-9 w-9 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-2.5 w-20" />
+                </div>
+                <Skeleton className="h-6 w-20 rounded-md" />
+                <Skeleton className="h-3.5 w-24" />
               </div>
-              <Skeleton className="h-6 w-20 rounded-md" />
-              <Skeleton className="h-3.5 w-24" />
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
+        </AdminSectionCard>
+      </AdminPageCanvas>
     );
   }
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-4">
+    <AdminPageCanvas>
+      <AdminPageHeaderCard>
+        <ProjectPageHeader onCreateProject={() => openCreateProject()} />
+      </AdminPageHeaderCard>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards]">
-          <ProjectPageHeader onCreateProject={() => openCreateProject()} />
-        </div>
+      <AdminSectionCard aria-label="Danh sách dự án">
+        <AdminFilterRow>
+          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <div className="flex flex-1 items-center justify-end">
+            <ProjectFilters
+              searchTerm={filterControls.searchTerm}
+              onSearchChange={filterControls.setSearchTerm}
+              statusFilter={filterControls.statusFilter}
+              onStatusChange={filterControls.setStatusFilter}
+              monthFilter={filterControls.monthFilter}
+              onMonthFilterChange={filterControls.setMonthFilter}
+              hasFilters={filterControls.hasFilters}
+              onClearFilters={filterControls.clearFilters}
+              className="rounded-none border-0 bg-transparent px-0 py-0 backdrop-blur-none"
+            />
+          </div>
+        </AdminFilterRow>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
-          <ProjectFilters
-            searchTerm={filterControls.searchTerm}
-            onSearchChange={filterControls.setSearchTerm}
-            statusFilter={filterControls.statusFilter}
-            onStatusChange={filterControls.setStatusFilter}
-            monthFilter={filterControls.monthFilter}
-            onMonthFilterChange={filterControls.setMonthFilter}
-            hasFilters={filterControls.hasFilters}
-            onClearFilters={filterControls.clearFilters}
-          />
-        </div>
-
-        <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <ResponsiveTable
-            data={projects}
-            columns={columns}
-            mobileFields={mobileConfig.mobileFields}
-            rowTitle={mobileConfig.rowTitle}
-            rowSubtitle={mobileConfig.rowSubtitle}
-            getRowId={(row) => row.id.toString()}
-            onRowClick={(project) => openProjectDetails(project.id.toString())}
-            pagination={response?.pagination}
-            onPageChange={filterControls.setPage}
-            onPageSizeChange={filterControls.setPageSize}
-            sorting={sorting}
-            onSortingChange={onSortingChange}
-            emptyState={
-              <EmptyState
-                title="Không tìm thấy dự án nào"
-                description="Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương."
-                action={{ label: "Tạo dự án", onClick: () => openCreateProject() }}
-                className="py-8"
-              />
-            }
-            accordionType="single"
-          />
-        </div>
-
-      </div>
-    </div>
+        <ResponsiveTable
+          data={projects}
+          columns={columns}
+          mobileFields={mobileConfig.mobileFields}
+          rowTitle={mobileConfig.rowTitle}
+          rowSubtitle={mobileConfig.rowSubtitle}
+          getRowId={(row) => row.id.toString()}
+          onRowClick={(project) => openProjectDetails(project.id.toString())}
+          pagination={response?.pagination}
+          onPageChange={filterControls.setPage}
+          onPageSizeChange={filterControls.setPageSize}
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          emptyState={
+            <EmptyState
+              title="Không tìm thấy dự án nào"
+              description="Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương."
+              action={{ label: "Tạo dự án", onClick: () => openCreateProject() }}
+              className="py-8"
+            />
+          }
+          accordionType="single"
+          embedded
+        />
+      </AdminSectionCard>
+    </AdminPageCanvas>
   );
 };
 

@@ -1,4 +1,10 @@
 import { useState, useCallback } from 'react';
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from '@/components/shared/AdminPageFrame';
 import { TransactionPageHeader } from '@/components/transaction/TransactionPageHeader';
 import { TransactionSummaryCard } from '@/components/transaction/TransactionSummaryCard';
 import { CapitalContributionsCard } from '@/components/transaction/CapitalContributionsCard';
@@ -158,20 +164,22 @@ const TransactionsPage = () => {
   }, [importOnePayFeeReport]);
 
   return (
-    <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
-      <TransactionPageHeader
-        onAddTransaction={handleAddTransaction}
-        onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
-        onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}
-        onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}
-        onExportSaoKePayroll={() => setExportSaoKeDialogOpen(true)}
-        onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
-        onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
-        isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
-        onRunWalletSettlement={handleRunWalletSettlement}
-        isRunningWalletSettlement={isRunningWalletSettlement}
-        onSimulateSettlement={() => setSimulationDialogOpen(true)}
-      />
+    <AdminPageCanvas>
+      <AdminPageHeaderCard>
+        <TransactionPageHeader
+          onAddTransaction={handleAddTransaction}
+          onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
+          onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}
+          onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}
+          onExportSaoKePayroll={() => setExportSaoKeDialogOpen(true)}
+          onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
+          onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
+          isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
+          onRunWalletSettlement={handleRunWalletSettlement}
+          isRunningWalletSettlement={isRunningWalletSettlement}
+          onSimulateSettlement={() => setSimulationDialogOpen(true)}
+        />
+      </AdminPageHeaderCard>
 
       <TransactionSummaryCard
         ledgerSummary={ledgerSummary}
@@ -184,23 +192,31 @@ const TransactionsPage = () => {
         )}
       />
 
-      <TransactionFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onClearFilters={handleClearFilters}
-        hasFilters={hasFilters}
-        totalResults={totalRecords}
-      />
+      <AdminSectionCard aria-label="Danh sách bút toán">
+        <AdminFilterRow>
+          <p className="text-sm font-semibold text-slate-800">Bút toán</p>
+          <div className="flex flex-1 items-center justify-end">
+            <TransactionFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
+              hasFilters={hasFilters}
+              totalResults={totalRecords}
+            />
+          </div>
+        </AdminFilterRow>
 
-      <TransactionTable
-        transactions={transactions}
-        onRowClick={handleRowClick}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-        sorting={sorting}
-        onSortingChange={onSortingChange}
-      />
+        <TransactionTable
+          transactions={transactions}
+          onRowClick={handleRowClick}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          embedded
+        />
+      </AdminSectionCard>
 
       <SettlementResultUploadDialog
         open={showSettlementDialog}
@@ -248,7 +264,7 @@ const TransactionsPage = () => {
         open={simulationDialogOpen}
         onOpenChange={setSimulationDialogOpen}
       />
-    </div>
+    </AdminPageCanvas>
   );
 };
 

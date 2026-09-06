@@ -12,6 +12,10 @@ import {
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { FilterPill } from '@/components/shared/FilterPill';
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+} from '@/components/shared/AdminPageFrame';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
 import { MobilePagination } from '@/components/shared/MobilePagination';
@@ -341,23 +345,17 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
     { label: 'Nhân viên', value: summary?.employee_count ?? 0 },
   ];
 
-  return (
-    <div className="admin-payment-history-page space-y-3 px-3 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] sm:space-y-3.5 sm:px-5 sm:pb-4 sm:pt-[calc(env(safe-area-inset-top,0px)+1rem)] md:px-6 md:pb-6 md:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">
-      <header className="admin-payment-history-header px-0.5 py-0.5">
-        <PageHeader
-          className="[&_h1]:text-lg sm:[&_h1]:text-xl [&_[data-slot=page-header-description]]:text-xs"
-          icon={ReceiptText}
-          title={isAdmin ? "Lịch sử trả lương" : "Bút toán ngân hàng"}
-          description={isAdmin ? "Lịch sử trả lương theo nhân viên và kỳ lương." : "Bút toán ngân hàng theo nhân viên và kỳ lương."}
-        />
-      </header>
-
-      <InlineStatStrip items={statItems} isLoading={isLoading} />
-
-      <Card
-        data-slot="payment-history-workspace"
-        className={`${isAdmin ? 'ct-card admin-payment-history-workspace ' : ''}overflow-hidden rounded-xl border-slate-200/80 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.42)] xl:overflow-visible xl:rounded-none`}
-      >
+  // The records workspace (filters + accordion rows + pagination) is shared by
+  // both variants; only the page shell and the card treatment differ.
+  const workspace = (
+    <Card
+      data-slot="payment-history-workspace"
+      className={
+        isAdmin
+          ? 'ct-card admin-payment-history-workspace overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)] xl:overflow-visible'
+          : 'overflow-hidden rounded-xl border-slate-200/80 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.42)] xl:overflow-visible xl:rounded-none'
+      }
+    >
         <div className="border-b border-slate-200/80 p-2.5 sm:p-3 xl:py-1.5">
           <FilterBar className="gap-2">
             <PayrollMonthPicker
@@ -443,6 +441,38 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           </div>
         )}
       </Card>
+  );
+
+  // Admin variant rides the standard admin shell (ambient canvas + glass
+  // header card) shared with the other redesigned admin list pages.
+  if (isAdmin) {
+    return (
+      <AdminPageCanvas>
+        <AdminPageHeaderCard>
+          <PageHeader
+            icon={ReceiptText}
+            title="Lịch sử trả lương"
+            description="Lịch sử trả lương theo nhân viên và kỳ lương."
+          />
+        </AdminPageHeaderCard>
+        <InlineStatStrip items={statItems} isLoading={isLoading} />
+        {workspace}
+      </AdminPageCanvas>
+    );
+  }
+
+  return (
+    <div className="admin-payment-history-page space-y-3 px-3 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] sm:space-y-3.5 sm:px-5 sm:pb-4 sm:pt-[calc(env(safe-area-inset-top,0px)+1rem)] md:px-6 md:pb-6 md:pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]">
+      <header className="admin-payment-history-header px-0.5 py-0.5">
+        <PageHeader
+          className="[&_h1]:text-lg sm:[&_h1]:text-xl [&_[data-slot=page-header-description]]:text-xs"
+          icon={ReceiptText}
+          title="Bút toán ngân hàng"
+          description="Bút toán ngân hàng theo nhân viên và kỳ lương."
+        />
+      </header>
+      <InlineStatStrip items={statItems} isLoading={isLoading} />
+      {workspace}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText, Zap, Loader2, MoreHorizontal, ClipboardCheck } from 'lucide-react';
+import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText, Zap, Loader2, MoreHorizontal, ClipboardCheck, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -40,7 +40,7 @@ export function TransactionPageHeader({
   onSimulateSettlement,
 }: TransactionPageHeaderProps) {
   return (
-    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền">
+    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền" icon={BookOpen}>
       <div className="hidden max-w-full flex-wrap items-center justify-end gap-2 min-[1800px]:flex">
         <div className="flex max-w-full items-center divide-x divide-border overflow-hidden rounded-xl border border-border">
           <DropdownMenu>

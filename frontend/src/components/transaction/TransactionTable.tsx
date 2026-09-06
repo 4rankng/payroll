@@ -22,6 +22,8 @@ interface TransactionTableProps {
   onPageSizeChange?: (pageSize: number) => void;
   sorting?: SortingState;
   onSortingChange?: (sorting: SortingState) => void;
+  /** Render flush inside a parent operations card (no inner card wrapper). */
+  embedded?: boolean;
 }
 
 // Badge styles keyed by settlement status — mirrors the strip/legend colors
@@ -68,6 +70,7 @@ export function TransactionTable({
   onPageSizeChange,
   sorting,
   onSortingChange,
+  embedded = false,
 }: TransactionTableProps) {
   const { transactionMetadata } = useMetadata();
 
@@ -206,9 +209,14 @@ export function TransactionTable({
   ], [onRowClick]);
 
   return (
-    <div className="space-y-2">
+    <div className={embedded ? 'flex flex-col' : 'space-y-2'}>
       {/* Status legend */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div
+        className={cn(
+          'flex items-center gap-3 text-xs text-muted-foreground',
+          embedded && 'px-3 pt-3 sm:px-5',
+        )}
+      >
         {[
           { dot: 'bg-emerald-500', label: 'Đã thanh toán' },
           { dot: 'bg-amber-400',   label: 'Chờ thanh toán' },
@@ -233,6 +241,7 @@ export function TransactionTable({
         sorting={sorting}
         onSortingChange={onSortingChange}
         getRowClassName={getRowClassName}
+        embedded={embedded}
       />
     </div>
   );

@@ -23,7 +23,6 @@ import {
   Clock,
   ClipboardList,
   History,
-  ArrowRightLeft,
 } from "lucide-react";
 import type { NavGroup, NavLeaf } from "@/components/MobileBottomNav";
 
@@ -46,7 +45,6 @@ export const ADMIN_MORE_ITEMS: NavLeaf[] = [
   { title: "Nhân viên", icon: Users, path: "/admin/employees" },
   { title: "Lịch sử trả lương", icon: History, path: "/admin/payment-history" },
   { title: "Sổ cái", icon: BookOpen, path: "/admin/ledger" },
-  { title: "Giao dịch", icon: ArrowRightLeft, path: "/admin/transactions" },
   { title: "Khoản vay", icon: Landmark, path: "/admin/loans" },
   { title: "Ví", icon: Wallet, path: "/admin/wallet" },
   { title: "Lịch CV", icon: Calendar, path: "/admin/cron-health" },

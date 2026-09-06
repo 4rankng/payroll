@@ -7,9 +7,16 @@ describe('Admin financial navigation', () => {
   it.each([
     ['desktop and drawer', ADMIN_MENU_ITEMS],
     ['mobile more menu', ADMIN_MORE_ITEMS],
-  ])('keeps ledger and transactions discoverable in %s navigation', (_name, items) => {
+  ])('keeps the ledger discoverable in %s navigation', (_name, items) => {
     expect(items.map((item) => item.path)).toEqual(
-      expect.arrayContaining(['/admin/ledger', '/admin/transactions']),
+      expect.arrayContaining(['/admin/ledger']),
     );
+  });
+
+  it.each([
+    ['desktop and drawer', ADMIN_MENU_ITEMS],
+    ['mobile more menu', ADMIN_MORE_ITEMS],
+  ])('retires the legacy transactions entry in %s navigation', (_name, items) => {
+    expect(items.map((item) => item.path)).not.toContain('/admin/transactions');
   });
 });

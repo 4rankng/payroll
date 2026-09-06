@@ -41,7 +41,6 @@ const UsersPageMobile = lazy(() => import("./pages/mobile/admin/UsersPage"));
 const ProjectsPageMobile = lazy(() => import("./pages/mobile/admin/ProjectsPage"));
 const EmployeesPageMobile = lazy(() => import("./pages/mobile/admin/EmployeesPage"));
 const TimesheetPageMobile = lazy(() => import("./pages/mobile/admin/TimesheetPage"));
-const TransactionsPageMobile = lazy(() => import("./pages/mobile/admin/TransactionsPage"));
 const LedgerEntriesPageMobile = lazy(() => import("./pages/mobile/admin/LedgerEntriesPage"));
 const LoansPageMobile = lazy(() => import("./pages/mobile/admin/LoansPage"));
 const AdvancePaymentsPageMobile = lazy(() => import("./pages/mobile/admin/AdvancePaymentsPage"));
@@ -266,7 +265,9 @@ const AppContent = () => {
           <Route path="timesheet" element={<ResponsivePage desktopComponent={TimesheetPage} mobileComponent={TimesheetPageMobile} />} />
           <Route path="payment-history" element={<AdminPaymentHistoryPage />} />
           <Route path="timesheets" element={<Navigate to="/admin/timesheet" replace />} />
-          <Route path="transactions" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={TransactionsPageMobile} />} />
+          {/* Legacy "Giao dịch" entry point — Sổ cái (/admin/ledger) is the single
+              double-entry workspace; old links redirect there. */}
+          <Route path="transactions" element={<Navigate to="/admin/ledger" replace />} />
           <Route path="ledger" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={LedgerEntriesPageMobile} />} />
           <Route path="loans" element={<ResponsivePage desktopComponent={LoansPage} mobileComponent={LoansPageMobile} />} />
           <Route path="loans/lenders" element={<LendersPageMobile />} />

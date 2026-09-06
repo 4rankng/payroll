@@ -1,4 +1,10 @@
 import { ResponsiveTable } from "@/components/ui/responsive-table";
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from "@/components/shared/AdminPageFrame";
 import { UserPageHeader } from "@/components/users/UserPageHeader";
 import { UserStatsCards } from "@/components/users/UserStatsCards";
 import { UserFiltersBar } from "@/components/users/UserFiltersBar";
@@ -76,58 +82,70 @@ const UsersPage = () => {
 
   if (userData.isLoading && userData.users.length === 0) {
     return (
-      <div className="p-4 space-y-6">
-        <div className="space-y-2">
+      <AdminPageCanvas>
+        <AdminPageHeaderCard>
           <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Skeleton className="mt-2 h-4 w-96" />
+        </AdminPageHeaderCard>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
-        <Skeleton className="h-96" />
-      </div>
+        <AdminSectionCard>
+          <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
+          <Skeleton className="m-3 h-96 rounded-xl sm:m-4" />
+        </AdminSectionCard>
+      </AdminPageCanvas>
     );
   }
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
-        {!isAdvPartner && <UserPageHeader onAddUser={() => openAddUser()} />}
+    <AdminPageCanvas>
+      {!isAdvPartner && (
+        <AdminPageHeaderCard>
+          <UserPageHeader onAddUser={() => openAddUser()} />
+        </AdminPageHeaderCard>
+      )}
 
-        {!isAdvPartner && (
-          <UserStatsCards
-            stats={summaryData}
-            isLoading={summaryLoading}
-            error={!!summaryError}
-            onRoleSelect={handleRoleSelect}
-            selectedRole={filterState.role}
-            lastLoginToday={filterState.lastLoginToday}
-          />
-        )}
-
-        <UserFiltersBar
-          search={filterState.search}
-          onSearchChange={filterState.setSearch}
-          role={isAdvPartner ? undefined : filterState.role}
-          onRoleChange={handleDropdownRoleChange}
-          onClearFilters={filterState.clearFilters}
-          hasActiveFilters={filterState.hasActiveFilters}
-          hideRoleFilter={isAdvPartner}
+      {!isAdvPartner && (
+        <UserStatsCards
+          stats={summaryData}
+          isLoading={summaryLoading}
+          error={!!summaryError}
+          onRoleSelect={handleRoleSelect}
+          selectedRole={filterState.role}
+          lastLoginToday={filterState.lastLoginToday}
         />
+      )}
+
+      <AdminSectionCard aria-label="Danh sách người dùng">
+        <AdminFilterRow>
+          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <div className="flex flex-1 items-center justify-end">
+            <UserFiltersBar
+              search={filterState.search}
+              onSearchChange={filterState.setSearch}
+              role={isAdvPartner ? undefined : filterState.role}
+              onRoleChange={handleDropdownRoleChange}
+              onClearFilters={filterState.clearFilters}
+              hasActiveFilters={filterState.hasActiveFilters}
+              hideRoleFilter={isAdvPartner}
+            />
+          </div>
+        </AdminFilterRow>
 
         <ResponsiveTable
-        data={userData.users.filter((u) => u.role !== 'adv_partner')}
-        columns={columns}
-        mobileFields={mobileConfig.mobileFields}
-        rowTitle={mobileConfig.rowTitle}
-        rowSubtitle={mobileConfig.rowSubtitle}
-        getRowId={(row) => String(row.id)}
-        onRowClick={(user) => openUserDetails(user.id.toString())}
-        sorting={sorting}
-        onSortingChange={onSortingChange}
-        emptyState={
+          data={userData.users.filter((u) => u.role !== 'adv_partner')}
+          columns={columns}
+          mobileFields={mobileConfig.mobileFields}
+          rowTitle={mobileConfig.rowTitle}
+          rowSubtitle={mobileConfig.rowSubtitle}
+          getRowId={(row) => String(row.id)}
+          onRowClick={(user) => openUserDetails(user.id.toString())}
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          emptyState={
             <EmptyState
               title="Không tìm thấy người dùng nào"
               description={filterState.hasActiveFilters
@@ -137,6 +155,7 @@ const UsersPage = () => {
             />
           }
           accordionType="single"
+          embedded
         />
 
         {userData.hasMore && !userData.isFetchingNextPage && (
@@ -144,9 +163,9 @@ const UsersPage = () => {
         )}
 
         {userData.isFetchingNextPage && (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="ml-2 typography-body-medium text-muted-foreground">
+          <div className="flex items-center justify-center border-t border-slate-200/70 py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-sm text-muted-foreground">
               Đang tải thêm...
             </span>
           </div>
@@ -155,12 +174,12 @@ const UsersPage = () => {
         {!userData.hasMore &&
           !userData.isFetchingNextPage &&
           userData.users.length > 0 && (
-            <p className="text-center py-3 text-xs text-muted-foreground">
+            <p className="border-t border-slate-200/70 py-3 text-center text-xs text-muted-foreground">
               {userData.users.length} người dùng
             </p>
           )}
-      </div>
-    </div>
+      </AdminSectionCard>
+    </AdminPageCanvas>
   );
 };
 

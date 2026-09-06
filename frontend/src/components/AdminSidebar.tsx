@@ -22,7 +22,6 @@ import {
   Clock,
   ClipboardList,
   ReceiptText,
-  ArrowRightLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
@@ -76,7 +75,6 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { title: "Ứng lương", icon: HandCoins, path: "/admin/advance-payments", group: "quan-ly" },
   { title: "Lịch sử trả lương", icon: ReceiptText, path: "/admin/payment-history", group: "tai-chinh" },
   { title: "Sổ Cái", icon: BookOpen, path: "/admin/ledger", group: "tai-chinh" },
-  { title: "Giao dịch", icon: ArrowRightLeft, path: "/admin/transactions", group: "tai-chinh" },
   { title: "Khoản vay", icon: Landmark, path: "/admin/loans", group: "tai-chinh" },
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },
   { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health", group: "he-thong" },
