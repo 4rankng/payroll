@@ -115,7 +115,10 @@ func (r *AdvancePaymentRequestRepository) GetPendingSummary(ctx context.Context,
 	var result summaryResult
 	err := r.DB.WithContext(ctx).
 		Model(&domain.AdvancePaymentRequest{}).
-		Select("COUNT(*) as request_count, COUNT(DISTINCT employee_id) as employee_count, COALESCE(SUM(request_amount), 0) as total_amount").
+		// Qualify columns: the JOIN to advance_payments brings in its own
+		// employee_id/project_id, and unqualified references fail with
+		// MySQL 1052 (ambiguous column).
+		Select("COUNT(*) as request_count, COUNT(DISTINCT advance_payment_requests.employee_id) as employee_count, COALESCE(SUM(advance_payment_requests.request_amount), 0) as total_amount").
 		Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
 		Where("advance_payment_requests.status IN (?, ?)", domain.AdvancePaymentStatusPending, domain.AdvancePaymentStatusApproved).
 		Where("ap.for_month = ?", forMonth).
@@ -130,7 +133,7 @@ func (r *AdvancePaymentRequestRepository) CountCompletedProjectsByMonth(ctx cont
 	var count int64
 	err := r.DB.WithContext(ctx).
 		Model(&domain.AdvancePaymentRequest{}).
-		Select("COUNT(DISTINCT project_id)").
+		Select("COUNT(DISTINCT advance_payment_requests.project_id)").
 		Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
 		Where("advance_payment_requests.status = ?", domain.AdvancePaymentStatusCompleted).
 		Where("ap.for_month = ?", forMonth).
