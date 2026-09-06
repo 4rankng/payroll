@@ -171,7 +171,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                     </div>
                   </FormControl>
                   {newPassword ? (
-                    <PasswordStrengthIndicator password={newPassword} showRequirements={false} />
+                    <PasswordStrengthIndicator password={newPassword} />
                   ) : (
                     <p className="text-sm text-muted-foreground">Gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
                   )}
