@@ -1,6 +1,8 @@
 package response
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -157,6 +159,17 @@ func InternalServerError(c *gin.Context, message string) {
 }
 
 func InternalServerErrorWithCode(c *gin.Context, message, code string) {
+	// A cancelled request context means the client is gone (navigation) or a
+	// deadline fired — not a server fault. Surface 499/504 instead of a 500 so
+	// client aborts don't pollute error metrics and alerting.
+	if ctxErr := c.Request.Context().Err(); ctxErr != nil {
+		if errors.Is(ctxErr, context.Canceled) {
+			c.Status(499) // nginx convention: client closed request
+			return
+		}
+		c.Status(http.StatusGatewayTimeout)
+		return
+	}
 	response := ErrorResponse{
 		Status:     "error",
 		Message:    message,
@@ -186,6 +199,23 @@ func NewErrorResponse(status, message string) ErrorResponse {
 
 // HandleDomainError converts domain errors to appropriate HTTP responses
 func HandleDomainError(c *gin.Context, err error) {
+	// Cancelled/deadline errors are not server faults. Without this mapping a
+	// user navigating away mid-query (or a slow dashboard query losing the race
+	// against a client timeout) is recorded as a 500 in api_metrics.
+	if errors.Is(err, context.Canceled) {
+		c.Status(499) // nginx convention: client closed request
+		return
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		c.JSON(http.StatusGatewayTimeout, ErrorResponse{
+			Status:     "error",
+			Message:    "Xử lý quá thời gian, vui lòng thử lại",
+			HTTPStatus: http.StatusGatewayTimeout,
+			Code:       "REQUEST_TIMEOUT",
+		})
+		return
+	}
+
 	translator := GetErrorTranslator()
 
 	if domainErr, ok := err.(*domain.DomainError); ok {
