@@ -14,7 +14,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -422,22 +421,8 @@ func (h *AdvancePaymentHandler) ExportReconciliation(c *gin.Context) {
 
 // UploadAdvancePaymentResult uploads and processes a bank transfer result file
 func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "File là bắt buộc")
-		return
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		response.InternalServerError(c, "Không thể mở file")
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		response.InternalServerError(c, "Không thể đọc file")
+	fileContent, filename, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 
@@ -467,7 +452,7 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 				}
 
 				// Create bulk_transfer_files record for this result upload
-				h.createBulkTransferFileRecord(c.Request.Context(), existingAsset, result, fileHeader.Filename)
+				h.createBulkTransferFileRecord(c.Request.Context(), existingAsset, result, filename)
 
 				response.Success(c, map[string]interface{}{
 					"items":         result.Data,
@@ -488,7 +473,7 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 	}
 
 	// Store the file to disk (only if we don't have a copy or file was missing)
-	storedFile, err := h.fileStorage.StoreBytes(fileContent, fileHeader.Filename, domain.UploadTypeAdvancePaymentResult)
+	storedFile, err := h.fileStorage.StoreBytes(fileContent, filename, domain.UploadTypeAdvancePaymentResult)
 	if err != nil {
 		response.InternalServerError(c, fmt.Sprintf("Không thể lưu file: %v", err))
 		return
@@ -530,7 +515,7 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 	if existingAsset == nil {
 		// Use the actual stored file path from FileStorage (file already saved above)
 		newAsset := &domain.Asset{
-			Filename:   fileHeader.Filename,
+			Filename:   filename,
 			FilePath:   storedFile.FilePath,
 			UploadType: domain.UploadTypeAdvancePaymentResult,
 			Checksum:   &checksum,
@@ -550,12 +535,12 @@ func (h *AdvancePaymentHandler) UploadAdvancePaymentResult(c *gin.Context) {
 	}
 
 	// Create bulk_transfer_files record for this result upload
-	h.createBulkTransferFileRecord(c.Request.Context(), asset, result, fileHeader.Filename)
+	h.createBulkTransferFileRecord(c.Request.Context(), asset, result, filename)
 
 	// Emit audit event for file import (non-blocking)
 	if h.auditService != nil {
 		go func() {
-			_ = h.auditService.LogFileImport(c.Request.Context(), "bulk_transfer_result", result.TotalTxn, fileHeader.Filename)
+			_ = h.auditService.LogFileImport(c.Request.Context(), "bulk_transfer_result", result.TotalTxn, filename)
 		}()
 	}
 
@@ -890,22 +875,8 @@ func (h *AdvancePaymentHandler) ImportFlexibleEmployeeList(c *gin.Context) {
 		return
 	}
 
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "File là bắt buộc")
-		return
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		response.InternalServerError(c, "Không thể mở file")
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		response.InternalServerError(c, "Không thể đọc file")
+	fileContent, _, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 

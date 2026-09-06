@@ -12,6 +12,7 @@ import (
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,19 +37,9 @@ func (h *Handler) UploadTimesheetEntries(c *gin.Context) {
 		return
 	}
 
-	// Parse multipart form
-	file, header, err := c.Request.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "Vui lòng tải lên file Excel")
-		return
-	}
-	defer func() {
-		_ = file.Close()
-	}()
-
-	// Validate file extension
-	if !isExcelFile(header.Filename) {
-		response.BadRequest(c, "File phải có định dạng .xlsx")
+	// Guarded multipart parse: body cap, size cap, xlsx magic sniff.
+	header, ok := uploadguard.Validate(c, false)
+	if !ok {
 		return
 	}
 

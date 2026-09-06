@@ -17,6 +17,7 @@ import (
 	"api-server/internal/infra/storage"
 	"api-server/internal/transport/http/helpers"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 
@@ -334,36 +335,15 @@ func (h *PayrollHandler) ImportBulkTransferResult(c *gin.Context) {
 		return
 	}
 
-	// Get the uploaded file
-	file, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, constants.MsgNoFileUploadedVN)
-		return
-	}
-
-	// Validate file extension
-	if file.Filename == "" {
-		response.BadRequest(c, constants.MsgFileNameEmptyVN)
-		return
-	}
-
-	// Check file size (limit to 10MB)
-	const maxFileSize = 10 << 20 // 10MB
-	if file.Size > maxFileSize {
-		response.BadRequest(c, constants.MsgFileSizeExceedsLimitVN)
-		return
-	}
-
-	// Validate file format (should be .xlsx or .xls)
-	filename := file.Filename
-	lowerFilename := strings.ToLower(filename)
-	if !strings.HasSuffix(lowerFilename, ".xlsx") && !strings.HasSuffix(lowerFilename, ".xls") {
-		response.BadRequest(c, constants.MsgFileNotExcelFormatVN)
+	// Guarded multipart parse: body cap, size cap, and content magic sniff.
+	// This is the only endpoint that also accepts legacy .xls (OLE2).
+	header, ok := uploadguard.Validate(c, true)
+	if !ok {
 		return
 	}
 
 	// Process the bulk transfer result
-	result, err := h.payrollService.ProcessBulkTransferResult(c.Request.Context(), file, userID.(uint))
+	result, err := h.payrollService.ProcessBulkTransferResult(c.Request.Context(), header, userID.(uint))
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return

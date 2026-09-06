@@ -17,6 +17,7 @@ import (
 	"api-server/internal/infra/disbursement/ninepay"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 
 	"github.com/gin-gonic/gin"
 )
@@ -326,28 +327,14 @@ func (h *WalletHandler) ListPayments(c *gin.Context) {
 }
 
 func (h *WalletHandler) UploadReconciliation(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "File là bắt buộc")
-		return
-	}
-
-	f, err := file.Open()
-	if err != nil {
-		response.InternalServerError(c, "Không thể mở file")
-		return
-	}
-	defer func() { _ = f.Close() }()
-
-	data := make([]byte, file.Size)
-	if _, err := f.Read(data); err != nil {
-		response.InternalServerError(c, "Không thể đọc file")
+	fileContent, _, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 
 	adminUserID, _ := c.Get(constants.CtxUserID)
 	userID := uint64(adminUserID.(uint))
-	jobID, err := h.service.UploadReconciliation(c.Request.Context(), data, userID)
+	jobID, err := h.service.UploadReconciliation(c.Request.Context(), fileContent, userID)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return

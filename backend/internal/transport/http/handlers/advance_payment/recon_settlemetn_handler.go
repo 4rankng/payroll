@@ -6,10 +6,10 @@ import (
 	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/excelkit"
 	"api-server/internal/transport/http/response"
+	"api-server/internal/transport/http/uploadguard"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"io"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,24 +21,8 @@ func (h *AdvancePaymentHandler) UploadReconciliationSettlement(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Get file from form
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		response.BadRequest(c, "File là bắt buộc")
-		return
-	}
-
-	// Open the file
-	file, err := fileHeader.Open()
-	if err != nil {
-		response.InternalServerError(c, "Không thể mở file")
-		return
-	}
-	defer func() { _ = file.Close() }()
-
-	// Read file content
-	fileContent, err := io.ReadAll(file)
-	if err != nil {
-		response.InternalServerError(c, "Không thể đọc file")
+	fileContent, filename, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 
@@ -51,7 +35,7 @@ func (h *AdvancePaymentHandler) UploadReconciliationSettlement(c *gin.Context) {
 	defer func() { _ = xlsxFile.Close() }()
 
 	logger.Info("Processing reconciliation settlement upload",
-		"filename", fileHeader.Filename,
+		"filename", filename,
 		"size", len(fileContent))
 
 	// Process settlement using the service
@@ -66,7 +50,7 @@ func (h *AdvancePaymentHandler) UploadReconciliationSettlement(c *gin.Context) {
 		"settled_count", result.SettledCount,
 		"settled_at", result.SettledAt)
 
-	h.saveSaoKeResultAsset(c, fileContent, fileHeader.Filename)
+	h.saveSaoKeResultAsset(c, fileContent, filename)
 
 	response.Success(c, dto.ReconciliationSettlementResult{
 		SettledCount: result.SettledCount,
