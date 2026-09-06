@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/xuri/excelize/v2"
-	"golang.org/x/text/unicode/norm"
 )
 
 // BCCImportData holds all parsed data from a BCC Excel attendance file.
@@ -124,12 +123,7 @@ func buildBCCHeaderMap(f *excelize.File, sheet string) *bccHeaderMap {
 	return hm
 }
 
-// normHeader normalizes a header cell for matching: trim, NFC unicode, lower-case.
-// Vietnamese text in xlsx files from macOS sometimes arrives in NFD form, so NFC
-// normalisation prevents false misses like "ho va ten" vs "họ và tên".
-func normHeader(s string) string {
-	return strings.ToLower(strings.TrimSpace(norm.NFC.String(s)))
-}
+// normHeader lives in shared.go (delegates to excelkit.NormalizeHeader).
 
 // ParseBCCFile parses a BCC monthly attendance Excel file.
 // The sheet named "BCC" is used; if absent the first sheet is used.
@@ -398,7 +392,7 @@ func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNu
 		if cccd == "" && name == "" {
 			break
 		}
-		if strings.Contains(strings.ToLower(name), "tổng cộng") || strings.Contains(strings.ToLower(cccd), "tổng cộng") {
+		if isSummaryRow(name, cccd) {
 			break
 		}
 
@@ -458,17 +452,7 @@ func parseEmployees(f *excelize.File, sheet string, hm *bccHeaderMap, colToDayNu
 	return employees
 }
 
-func bccCell(f *excelize.File, sheet string, col, row int) string {
-	cn, err := excelize.CoordinatesToCellName(col, row)
-	if err != nil {
-		return ""
-	}
-	val, err := f.GetCellValue(sheet, cn)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(val)
-}
+// bccCell lives in shared.go (delegates to excelkit.Cell).
 
 // bccRowHasPositiveHours reports whether any entry carries positive hours. It
 // identifies draft rows: a row whose cells are all blank or 0-except-identity

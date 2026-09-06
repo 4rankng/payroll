@@ -298,8 +298,7 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 		consecutiveBlank = 0
 
 		// Skip summary rows
-		if strings.Contains(strings.ToLower(fullName), "tổng cộng") ||
-			strings.Contains(strings.ToLower(empCode), "tổng cộng") {
+		if isSummaryRow(fullName, empCode) {
 			break
 		}
 
@@ -392,6 +391,11 @@ func isStopColumn(val string) bool {
 }
 
 // parseForMonth parses a month string in "YYYY-MM" or "MM/YYYY" format.
+//
+// Deliberately NOT shared with services.parseForMonth (bcc_import_helpers.go):
+// that variant wraps clock.ParseMonth with a year-range guard and different
+// error text that flows into user-visible import metadata. The two look
+// duplicated but are different contracts — do not merge them.
 func parseForMonth(forMonth string) (year int, month time.Month, err error) {
 	forMonth = strings.TrimSpace(forMonth)
 
@@ -424,64 +428,6 @@ func parseForMonth(forMonth string) (year int, month time.Month, err error) {
 	return 0, 0, fmt.Errorf("định dạng tháng không hợp lệ: %s (expected YYYY-MM or MM/YYYY)", forMonth)
 }
 
-// buildWeekdayToDayMap builds a mapping from weekday labels to day numbers.
-// For example, if 2026-07-01 is Wednesday (T4), then T4=1, T5=2, ..., CN=7, T2=8, etc.
-func buildWeekdayToDayMap(year int, month time.Month, firstWeekday string) map[string]int {
-	// Vietnamese weekday labels
-	weekdayMap := map[string]string{
-		"T2": "Monday",
-		"T3": "Tuesday",
-		"T4": "Wednesday",
-		"T5": "Thursday",
-		"T6": "Friday",
-		"T7": "Saturday",
-		"CN": "Sunday",
-	}
-
-	// Find the day of month for the first occurrence of each weekday
-	result := make(map[string]int)
-
-	// Find which weekday corresponds to the first weekday in the file
-	firstWeekdayEN, ok := weekdayMap[strings.ToUpper(firstWeekday)]
-	if !ok {
-		// Default to treating unknown weekdays as Monday
-		firstWeekdayEN = "Monday"
-	}
-
-	// Find the first occurrence of this weekday in the month
-	for d := 1; d <= 7; d++ {
-		date := time.Date(year, month, d, 0, 0, 0, 0, time.UTC)
-		if date.Weekday().String() == firstWeekdayEN {
-			result[strings.ToUpper(firstWeekday)] = d
-			break
-		}
-	}
-
-	// Fill in the rest of the weekdays
-	weekdayOrder := []string{"T2", "T3", "T4", "T5", "T6", "T7", "CN"}
-	firstDay := result[strings.ToUpper(firstWeekday)]
-
-	for i, wd := range weekdayOrder {
-		if _, exists := result[wd]; !exists {
-			// Calculate day offset from first weekday
-			weekdayIndex := i
-			firstWeekdayIndex := -1
-			for j, w := range weekdayOrder {
-				if strings.EqualFold(w, firstWeekday) {
-					firstWeekdayIndex = j
-					break
-				}
-			}
-
-			if firstWeekdayIndex >= 0 {
-				offset := (weekdayIndex - firstWeekdayIndex + 7) % 7
-				result[wd] = firstDay + offset
-			}
-		}
-	}
-
-	return result
-}
 
 // weeklyPaymentRowHasPositiveHours reports whether any entry carries positive
 // hours, so a placeholder row (blank code, no positive hours) stays filtered

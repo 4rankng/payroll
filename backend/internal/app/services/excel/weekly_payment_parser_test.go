@@ -86,30 +86,6 @@ func TestParseForMonth(t *testing.T) {
 	}
 }
 
-// TestBuildWeekdayToDayMap tests the weekday to day mapping.
-func TestBuildWeekdayToDayMap(t *testing.T) {
-	// July 2026: July 1, 2026 is Wednesday (T4)
-	// So T4 should map to day 1, T5 to day 2, ..., CN to day 7, T2 to day 8, etc.
-	result := buildWeekdayToDayMap(2026, time.July, "T4")
-
-	expected := map[string]int{
-		"T4": 1, // Wednesday, July 1
-		"T5": 2, // Thursday
-		"T6": 3, // Friday
-		"T7": 4, // Saturday
-		"CN": 5, // Sunday
-		"T2": 6, // Monday (July 6)
-		"T3": 7, // Tuesday
-	}
-
-	for wd, wantDay := range expected {
-		if gotDay, ok := result[wd]; !ok {
-			t.Errorf("buildWeekdayToDayMap() missing weekday %s", wd)
-		} else if gotDay != wantDay {
-			t.Errorf("buildWeekdayToDayMap() for %s = %v, want %v", wd, gotDay, wantDay)
-		}
-	}
-}
 
 // TestDetectFormat_WeeklyPayment tests the format detection for weekly payment files.
 func TestDetectFormat_WeeklyPayment(t *testing.T) {

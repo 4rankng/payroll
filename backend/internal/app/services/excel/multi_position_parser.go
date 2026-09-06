@@ -102,10 +102,10 @@ func buildHeaderMap(f *excelize.File, sheet string) (*headerMap, error) {
 		if val == "STT" && hm.sttCol == 0 {
 			hm.sttCol = colIdx
 		}
-		if (strings.Contains(val, "Mã nhân viên") || strings.Contains(val, "Ma nhan vien")) && hm.empCodeCol == 0 {
+		if headerContainsAny(val, "Mã nhân viên", "Ma nhan vien") && hm.empCodeCol == 0 {
 			hm.empCodeCol = colIdx
 		}
-		if (strings.Contains(val, "Họ và tên") || strings.Contains(val, "Ho va ten") || strings.Contains(val, "Họ và Tên")) && hm.fullNameCol == 0 {
+		if headerContainsAny(val, "Họ và tên", "Ho va ten", "Họ và Tên") && hm.fullNameCol == 0 {
 			hm.fullNameCol = colIdx
 		}
 	}
@@ -254,8 +254,7 @@ func parsePositionEmployees(f *excelize.File, sheet string, hm *headerMap, rateB
 		consecutiveBlank = 0
 
 		// Skip summary rows
-		if strings.Contains(strings.ToLower(fullName), "tổng cộng") ||
-			strings.Contains(strings.ToLower(empCode), "tổng cộng") {
+		if isSummaryRow(fullName, empCode) {
 			break
 		}
 

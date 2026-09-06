@@ -3,7 +3,6 @@ package excel
 import (
 	"fmt"
 	"log/slog"
-	"strings"
 	"unicode"
 
 	"github.com/xuri/excelize/v2"
@@ -35,6 +34,13 @@ type BCCParseStrategy interface {
 // first: it is the strictest shape (its pricing comes from a dedicated VND
 // rate row), so a workbook it can actually read must not be re-interpreted by
 // the looser date-row strategy. Date-row takes whatever legacy rejects.
+//
+// Relationship to bccFormatRegistry (bcc_formats.go): the registry decides
+// which FORMAT family a workbook belongs to for dispatch; this list then
+// arbitrates the one ambiguous case — a "BCC"-named sheet whose content is
+// date-row (partner T09) — by parse-then-verify. Both share their sheet-name
+// and fingerprint helpers via shared.go, so there is one definition of each
+// layout test.
 var bccDataStrategies = []BCCParseStrategy{
 	legacyBCCStrategy{},
 	dateRowBCCStrategy{},
@@ -65,7 +71,7 @@ func ParseBCCData(f *excelize.File) (data *BCCImportData, format BCCFormat, err 
 	if lastErr != nil {
 		return nil, 0, lastErr
 	}
-	return nil, 0, fmt.Errorf("không nhận diện được định dạng file BCC")
+	return nil, 0, fmt.Errorf(unknownBCCFormatMsg)
 }
 
 // legacyBCCStrategy parses the original single-"BCC"-sheet format: day-number
@@ -77,7 +83,7 @@ func (legacyBCCStrategy) Format() BCCFormat { return FormatLegacy }
 
 func (legacyBCCStrategy) Match(f *excelize.File) ([]string, bool) {
 	for _, sheet := range f.GetSheetList() {
-		if sheet == "BCC" || strings.TrimSpace(sheet) == "BCC" {
+		if isBCCSheetName(sheet) {
 			return []string{sheet}, true
 		}
 	}

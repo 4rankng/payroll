@@ -108,7 +108,7 @@ func parseDateRowBCCSheet(f *excelize.File, sheet string) ([]BCCEmployeeData, er
 		lowName, lowCccd := strings.ToLower(name), strings.ToLower(cccd)
 		// "Tổng cộng" totals rows end the table; a bare "Cộng" label (this
 		// template's summary row) is skipped so any later rows still parse.
-		if strings.Contains(lowName, "tổng cộng") || strings.Contains(lowCccd, "tổng cộng") {
+		if isSummaryRow(lowName, lowCccd) {
 			break
 		}
 		if lowName == "cộng" || lowCccd == "cộng" {
@@ -392,25 +392,7 @@ func stripDiacritics(s string) string {
 	return b.String()
 }
 
-// dateRowNumericCell reads a data cell as a raw number (format-proof) and
-// reports whether the cell carries an explicit numeric value. Blank and
-// non-numeric cells return (0, false); a cell storing an explicit 0 returns
-// (0, true) — the import reads that as a deletion request for the day.
-func dateRowNumericCell(f *excelize.File, sheet string, col, row int) (float64, bool) {
-	cn, err := excelize.CoordinatesToCellName(col, row)
-	if err != nil {
-		return 0, false
-	}
-	val, err := f.GetCellValue(sheet, cn, excelize.Options{RawCellValue: true})
-	if err != nil || val == "" {
-		return 0, false
-	}
-	hours, err := strconv.ParseFloat(strings.TrimSpace(val), 64)
-	if err != nil {
-		return 0, false
-	}
-	return hours, true
-}
+// dateRowNumericCell lives in shared.go (delegates to excelkit.NumericCell).
 
 // isDateRowBCCSheet reports whether a sheet matches the date-row BCC
 // fingerprint. It delegates to findDateRowAndCols so detection and parsing

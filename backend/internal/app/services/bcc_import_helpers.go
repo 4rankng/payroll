@@ -35,6 +35,10 @@ func FirstErrorReason(detail *string) string {
 	return errs[0].Reason
 }
 
+// parseForMonth wraps clock.ParseMonth with the import pipeline's year-range
+// guard. Deliberately NOT shared with excelparser.parseForMonth (weekly
+// payment): that variant accepts a different format set with different error
+// text. The two look duplicated but are different contracts — do not merge.
 func parseForMonth(forMonth string) (int, time.Month, error) {
 	t, err := clock.ParseMonth(forMonth)
 	if err != nil {

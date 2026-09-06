@@ -35,120 +35,22 @@ type FormatDetectionResult struct {
 	DateRowSheets       []string // sheets with a full-date header row (for FormatDateRow)
 }
 
-// DetectFormat determines whether the given Excel file uses the old single-BCC-sheet
-// format, the multi-position format, the weekly BCC format, or the weekly payment format.
+// DetectFormat determines which BCC format family a workbook belongs to by
+// running the ordered registry in bcc_formats.go over a single sheet
+// classification pass. Priority: Legacy > WeeklyBCC > WeeklyPayment >
+// MultiPosition > DateRow (see bccFormatRegistry).
 //
-// Algorithm:
-//  1. Iterate all sheets, skip hidden ones (via GetSheetVisible)
-//  2. If any visible sheet is named exactly "BCC" → FormatLegacy (BCC wins tiebreaker)
-//  3. For each remaining visible sheet (not "STK" case-insensitive):
-//     a. If sheet name has "BCC-" prefix → weekly BCC sheet (shift type from suffix)
-//     b. If row 8 has weekly payment headers AND row 10 has shift codes → weekly payment sheet
-//     c. Otherwise check row 4 for headers: "STT" AND "Mã nhân viên" AND "Họ và tên"
-//     If all found → it's a position sheet (sheet name = position value)
-//  4. Priority: FormatLegacy > FormatWeeklyBCC > FormatWeeklyPayment > FormatMultiPosition
-//  5. Otherwise → error
+// The registry is the routing truth — strategies and this detector share the
+// same fingerprints, and adding a template family means adding a registry
+// entry, not editing this loop.
 func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
-	var hasBCCSheet bool
-	var positionSheets []string
-	var weeklyBCCSheets []string
-	var weeklyPaymentSheets []string
-	var dateRowSheets []string
-
-	for _, sheetName := range f.GetSheetList() {
-		// Skip hidden sheets
-		visible, err := f.GetSheetVisible(sheetName)
-		if err != nil {
-			// If visibility check fails, assume visible (don't block processing)
-			visible = true
-		}
-		if !visible {
-			continue
-		}
-
-		// Check for BCC sheet (exact or trimmed match — some files have trailing spaces)
-		if sheetName == "BCC" || strings.TrimSpace(sheetName) == "BCC" {
-			hasBCCSheet = true
-			// Don't break — we need to check all sheets, but BCC wins as tiebreaker
-			continue
-		}
-
-		// Skip STK sheet (case-insensitive, whitespace-trimmed — partners export
-		// it as "STK " etc.; without the trim the sheet leaks into position-sheet
-		// detection and can misroute the upload).
-		if strings.EqualFold(strings.TrimSpace(sheetName), "STK") {
-			continue
-		}
-
-		// Check for weekly BCC sheet (BCC-<shiftType> naming pattern, case-insensitive)
-		if strings.HasPrefix(strings.ToUpper(sheetName), "BCC-") {
-			weeklyBCCSheets = append(weeklyBCCSheets, sheetName)
-			continue
-		}
-
-		// Check for weekly payment sheet (numeric name + row 8/10 fingerprint)
-		if isWeeklyPaymentSheet(f, sheetName) {
-			weeklyPaymentSheets = append(weeklyPaymentSheets, sheetName)
-			continue
-		}
-
-		// Check row 4 for expected header pattern
-		if isPositionSheet(f, sheetName) {
-			positionSheets = append(positionSheets, sheetName)
-		}
-
-		// Check for a date-row BCC sheet (full-date header row + shift codes
-		// below it, e.g. BUMHAN "M1"). The fingerprint is the loosest one, so
-		// only run its cell scan while no higher-priority format has matched —
-		// date-row can never win once any named pattern exists.
-		if !hasBCCSheet && len(weeklyBCCSheets) == 0 && len(weeklyPaymentSheets) == 0 && len(positionSheets) == 0 {
-			if isDateRowBCCSheet(f, sheetName) {
-				dateRowSheets = append(dateRowSheets, sheetName)
-			}
+	classification := classifyBCCSheets(f)
+	for _, entry := range bccFormatRegistry {
+		if sheets := entry.sheets(classification); len(sheets) > 0 {
+			return formatDetectionResult(entry.format, sheets), nil
 		}
 	}
-
-	// BCC sheet wins as tiebreaker (even if position sheets also exist)
-	if hasBCCSheet {
-		return &FormatDetectionResult{
-			Format: FormatLegacy,
-		}, nil
-	}
-
-	// Weekly BCC takes priority over weekly payment and multi-position
-	if len(weeklyBCCSheets) > 0 {
-		return &FormatDetectionResult{
-			Format:          FormatWeeklyBCC,
-			WeeklyBCCSheets: weeklyBCCSheets,
-		}, nil
-	}
-
-	// Weekly payment takes priority over multi-position
-	if len(weeklyPaymentSheets) > 0 {
-		return &FormatDetectionResult{
-			Format:              FormatWeeklyPayment,
-			WeeklyPaymentSheets: weeklyPaymentSheets,
-		}, nil
-	}
-
-	if len(positionSheets) > 0 {
-		return &FormatDetectionResult{
-			Format:         FormatMultiPosition,
-			PositionSheets: positionSheets,
-		}, nil
-	}
-
-	// Date-row BCC takes lowest priority: it is the loosest fingerprint (any
-	// sheet with a full-date header row), so every named-pattern format gets
-	// first refusal.
-	if len(dateRowSheets) > 0 {
-		return &FormatDetectionResult{
-			Format:        FormatDateRow,
-			DateRowSheets: dateRowSheets,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("không nhận diện được định dạng file BCC")
+	return nil, fmt.Errorf(unknownBCCFormatMsg)
 }
 
 // isPositionSheet checks if a sheet has the expected header pattern in row 4:
@@ -170,10 +72,10 @@ func isPositionSheet(f *excelize.File, sheetName string) bool {
 		if val == "STT" {
 			hasSTT = true
 		}
-		if strings.Contains(val, "Mã nhân viên") || strings.Contains(val, "Ma nhan vien") {
+		if headerContainsAny(val, "Mã nhân viên", "Ma nhan vien") {
 			hasMaNV = true
 		}
-		if strings.Contains(val, "Họ và tên") || strings.Contains(val, "Ho va ten") || strings.Contains(val, "Họ và Tên") {
+		if headerContainsAny(val, "Họ và tên", "Ho va ten", "Họ và Tên") {
 			hasHoTen = true
 		}
 	}
@@ -230,16 +132,16 @@ func hasWeeklyPaymentHeader(f *excelize.File, sheet string) bool {
 		if val == "STT" {
 			hasSTT = true
 		}
-		if strings.Contains(val, "Mã nhân viên") || strings.Contains(val, "Ma nhan vien") {
+		if headerContainsAny(val, "Mã nhân viên", "Ma nhan vien") {
 			hasMaNV = true
 		}
-		if strings.Contains(val, "Họ và tên") || strings.Contains(val, "Ho va ten") || strings.Contains(val, "Họ và Tên") {
+		if headerContainsAny(val, "Họ và tên", "Ho va ten", "Họ và Tên") {
 			hasHoTen = true
 		}
-		if strings.Contains(val, "Bộ phận") || strings.Contains(val, "Bo phan") {
+		if headerContainsAny(val, "Bộ phận", "Bo phan") {
 			hasBoPhan = true
 		}
-		if strings.Contains(val, "Lương 8h") || strings.Contains(val, "Luong 8h") {
+		if headerContainsAny(val, "Lương 8h", "Luong 8h") {
 			hasLuong8h = true
 		}
 	}

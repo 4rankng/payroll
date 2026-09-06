@@ -2,7 +2,6 @@ package excel
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -203,8 +202,7 @@ func parseWeeklyBCCEmployees(f *excelize.File, sheet string, hm *weeklyBCCHeader
 		consecutiveBlank = 0
 
 		// Skip summary rows
-		if strings.Contains(strings.ToLower(fullName), "tổng cộng") ||
-			strings.Contains(strings.ToLower(empCode), "tổng cộng") {
+		if isSummaryRow(fullName, empCode) {
 			break
 		}
 
@@ -273,38 +271,7 @@ func isProjectColumn(val string) bool {
 		lower == "nhà máy"
 }
 
-// parseExcelDate attempts to parse a cell value as an Excel date serial number.
-// Returns the date and true if successful, or zero value and false.
-func parseExcelDate(val string) (time.Time, bool) {
-	// Try as float serial number
-	serial, err := strconv.ParseFloat(val, 64)
-	if err != nil {
-		return time.Time{}, false
-	}
-
-	// Excel date serial must be positive and reasonable (> 1 to skip small numbers)
-	if serial < 1 {
-		return time.Time{}, false
-	}
-
-	// Fractional part represents time — we only want the date
-	serial = math.Floor(serial)
-
-	// Convert Excel serial to time.Time
-	// Excel epoch: 1900-01-01 = serial 1 (with the Lotus 123 bug: 1900-02-29 = serial 60)
-	// excelize.ExcelDateToTime handles this correctly
-	t, err := excelize.ExcelDateToTime(serial, false)
-	if err != nil {
-		return time.Time{}, false
-	}
-
-	// Only accept dates in a reasonable range (year 2020-2040)
-	if t.Year() < 2020 || t.Year() > 2040 {
-		return time.Time{}, false
-	}
-
-	return t, true
-}
+// parseExcelDate lives in shared.go (delegates to excelkit.ExcelDate).
 
 // weeklyBCCRowHasPositiveHours reports whether any entry carries positive
 // hours, so a placeholder row (blank code, no positive hours) stays filtered
