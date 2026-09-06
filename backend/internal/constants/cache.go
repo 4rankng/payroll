@@ -39,6 +39,12 @@ const (
 	// Timesheet Cache TTLs (15 seconds for timesheet data)
 	TimesheetSummaryCacheTTL = 15 * time.Second
 	TimesheetListCacheTTL    = 15 * time.Second
+	// GroupedTimesheetsCacheTTL is longer than the plain list TTL: the grouped
+	// rebuild is three heavy queries (distinct count + group-by aggregate +
+	// full row fetch with relation loads), and every timesheet/payrate mutation
+	// already invalidates "timesheets:list:*", so staleness is bounded by event
+	// coverage rather than the TTL alone.
+	GroupedTimesheetsCacheTTL = 60 * time.Second
 
 	// Employee/Project Cache TTLs (15 seconds for reference data)
 	EmployeeListCacheTTL = 15 * time.Second

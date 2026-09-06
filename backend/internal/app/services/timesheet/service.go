@@ -934,7 +934,7 @@ func (s *TimesheetService) ListGroupedByEmployee(ctx context.Context, filters do
 			Groups:     groups,
 			Timesheets: timesheets,
 			Total:      total,
-		}, constants.TimesheetListCacheTTL)
+		}, constants.GroupedTimesheetsCacheTTL)
 	}
 
 	return groups, timesheets, total, nil
