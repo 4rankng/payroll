@@ -148,7 +148,11 @@ func runAdBannerTests(client *APIClient, data *TestData, reporter *Reporter, _ *
 		for i := range 2 {
 			resp, status, err := empClient.Post(fmt.Sprintf("/api/v1/me/ad-banner/%d/click", idB), map[string]int{"cta_index": 0})
 			if err != nil || status >= 300 {
-				return fmt.Errorf("click attempt %d failed: status=%d err=%v", i+1, status, err)
+				body := ""
+				if resp != nil {
+					body = string(resp.Data) + " / " + resp.Message
+				}
+				return fmt.Errorf("click attempt %d failed: status=%d err=%v body=%s", i+1, status, err, body)
 			}
 			_ = resp
 		}

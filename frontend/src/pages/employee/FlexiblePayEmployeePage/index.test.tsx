@@ -63,6 +63,7 @@ vi.mock("@/components/employees/EmployeeMobileShell", () => ({ EmployeeMobileShe
 vi.mock("@/components/employees/EmployeeMonthNavigator", () => ({ EmployeeMonthNavigator: ({ month }: { month: { value: string } }) => <output aria-label="Tháng đang xem">{month.value}</output> }));
 vi.mock("@/components/advance-payment/AdvancePaymentRequestForm", () => ({ AdvancePaymentRequestForm: ({ viewMonth, isPastMonth }: { viewMonth: string; isPastMonth: boolean }) => <output aria-label="Hạn mức đang xem">{`${viewMonth}:${isPastMonth}`}</output> }));
 vi.mock("@/components/employees/EmployeeBankInfoCard", () => ({ EmployeeBankInfoCard: () => null }));
+vi.mock("@/components/employees/EmployeeAdBanner", () => ({ EmployeeAdBanner: () => null }));
 vi.mock("@/components/employees/EmployeeCheckInCard", () => ({ EmployeeCheckInCard: () => null }));
 vi.mock("@/components/employees/EmployeeAttendanceHistoryCard", () => ({ EmployeeAttendanceHistoryCard: () => null }));
 vi.mock("@/components/employees/ChangePasswordSheet", () => ({ ChangePasswordSheet: () => null }));

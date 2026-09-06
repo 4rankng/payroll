@@ -334,3 +334,28 @@ func zaloResetSessionKeyGetter(c *gin.Context) string {
 	}
 	return "ip:" + c.ClientIP()
 }
+
+// CreateAdBannerClickRateLimit caps ad CTA click reporting per ACCOUNT (the
+// authenticated user id), not per IP. Per-IP keys on this stack share one
+// Redis counter across every per-IP limiter — the global API limiter inflates
+// that counter past 30 within a normal page burst, so a per-IP click cap
+// would 429 the first tap after any activity. Keying by the authenticated
+// user id (auth middleware runs before route middleware) gives the click
+// limiter an isolated keyspace, matching how the login limiter is keyed.
+func CreateAdBannerClickRateLimit(redisURL string) gin.HandlerFunc {
+	return createRateLimiterWithKey(
+		RateLimitConfig{Rate: "30-M", RedisURL: redisURL},
+		adBannerClickAccountKeyGetter,
+	)
+}
+
+func adBannerClickAccountKeyGetter(c *gin.Context) string {
+	if v, ok := c.Get(constants.CtxUserID); ok {
+		if id, ok := v.(uint); ok && id != 0 {
+			return "adclick-account:" + strconv.FormatUint(uint64(id), 10)
+		}
+	}
+	// Unauthenticated fallback (normally unreachable — Authenticate runs first
+	// and rejects); namespaced so it never joins the shared per-IP counter.
+	return "adclick-ip:" + c.ClientIP()
+}

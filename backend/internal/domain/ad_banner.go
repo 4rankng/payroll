@@ -47,7 +47,9 @@ type AdBanner struct {
 	Title            string         `json:"title" gorm:"type:varchar(255);not null"`
 	Body             string         `json:"body" gorm:"type:text"`
 	Bullets          []string       `json:"bullets" gorm:"type:json;serializer:json"`
-	CTAs             []AdBannerCTA  `json:"ctas" gorm:"type:json;serializer:json"`
+	// column is pinned: GORM's naming strategy would otherwise mangle the
+	// acronym into "ct_as" and every INSERT/UPDATE would fail.
+	CTAs             []AdBannerCTA  `json:"ctas" gorm:"type:json;serializer:json;column:ctas"`
 	Footer           string         `json:"footer" gorm:"type:varchar(255)"`
 	TargetProjectIDs []uint         `json:"target_project_ids" gorm:"type:json;serializer:json;comment:'JSON uint array; NULL or empty = every project'"`
 	Priority         int            `json:"priority" gorm:"not null;default:0"`
@@ -199,7 +201,7 @@ type AdBannerCTAClick struct {
 	ID         uint      `json:"id" gorm:"primarykey;type:bigint unsigned"`
 	BannerID   uint      `json:"banner_id" gorm:"not null;type:bigint unsigned"`
 	EmployeeID uint      `json:"employee_id" gorm:"not null;type:bigint unsigned"`
-	CTAIndex   int       `json:"cta_index" gorm:"not null;type:tinyint unsigned"`
+	CTAIndex   int       `json:"cta_index" gorm:"not null;type:tinyint unsigned;column:cta_index"`
 	ClickedAt  time.Time `json:"clicked_at" gorm:"type:datetime(3);not null"`
 }
 

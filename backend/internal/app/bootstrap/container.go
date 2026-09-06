@@ -494,7 +494,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 		ZaloResetConfirmRateLimit: middleware.CreateZaloResetConfirmRateLimit(cfg.Redis.Addr),
 		APIRateLimit:              middleware.CreateAPIRateLimit(cfg.Redis.Addr),
 		StrictRateLimit:           middleware.CreateStrictRateLimit(cfg.Redis.Addr),
-		AdBannerClickRateLimit:    middleware.CreateEndpointRateLimit("30-M", cfg.Redis.Addr),
+		AdBannerClickRateLimit:    middleware.CreateAdBannerClickRateLimit(cfg.Redis.Addr),
 		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
 		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}
