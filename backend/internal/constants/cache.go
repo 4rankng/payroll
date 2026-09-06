@@ -23,9 +23,12 @@ const (
 	AssetDetailCacheTTL = 3 * time.Second
 	SettingsCacheTTL    = 3 * time.Second
 
-	// Dashboard Cache TTLs (60 seconds for dashboard data)
-	DashboardSummaryCacheTTL       = 60 * time.Second
-	DashboardFinancialCacheTTL     = 60 * time.Second
+	// Dashboard Cache TTLs (5 minutes for advisory dashboard aggregates — they
+	// only change when timesheets/settlements mutate, and every mutation path
+	// already invalidates "dashboard:*" via the cache invalidation handler, so
+	// the TTL only bounds rebuild frequency for unrelated traffic)
+	DashboardSummaryCacheTTL       = 5 * time.Minute
+	DashboardFinancialCacheTTL     = 5 * time.Minute
 	DashboardSalaryDistributionTTL = 1 * time.Hour // Salary distribution changes less frequently
 	CashFlowSummaryCacheTTL        = 15 * time.Second
 	CheckInHealthCacheTTL          = 60 * time.Second // Health metrics need fresh data
