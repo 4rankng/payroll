@@ -10,7 +10,6 @@ import (
 	excelparser "api-server/internal/app/services/excel"
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
-	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/excelkit"
 
 	"github.com/xuri/excelize/v2"
@@ -230,15 +229,6 @@ func (s *BCCImportService) processAssetData(
 
 	// 10. Call BulkCreateTimesheets.
 	if len(entries) == 0 {
-		if len(importErrors) == 0 && protectedSkippedCount+flexibleSkippedCount > 0 {
-			return s.completeSkippedBCCImport(ctx, createdAsset, uploaderID, BCCImportStats{
-				ProjectID:    projectID,
-				OriginalName: filename,
-				ForMonth:     effectiveMonth,
-				TotalRows:    totalRows,
-				SkippedCount: protectedSkippedCount + flexibleSkippedCount,
-			})
-		}
 		reason := "không có dữ liệu hợp lệ để tạo bảng chấm công"
 		// Date-row files carry exact calendar dates; when every entry fell
 		// outside the selected month, the generic reason hides the actual fix
@@ -266,15 +256,8 @@ func (s *BCCImportService) processAssetData(
 					effectiveMonth, minDate.Format("02/01/2006"), maxDate.Format("02/01/2006"))
 			}
 		}
-		if len(importErrors) > 0 {
-			return s.failWithImportErrors(ctx, createdAsset, uploaderID, BCCImportStats{
-				ProjectID:    projectID,
-				OriginalName: filename,
-				ForMonth:     effectiveMonth,
-				TotalRows:    totalRows,
-			}, importErrors)
-		}
-		return fail(reason)
+		return s.finishEmptyBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
+			totalRows, protectedSkippedCount, flexibleSkippedCount, importErrors, reason)
 	}
 
 	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
@@ -291,33 +274,12 @@ func (s *BCCImportService) processAssetData(
 		return fail(fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
 
-	// 11. Count results.
-	createdCount := len(result.CreatedTimesheets)
-	skippedCount := len(result.DeletedTimesheets) + protectedSkippedCount + flexibleSkippedCount + countZeroHourEntries(entries)
+	// 11-12. Count results and persist the completed import's stats via the
+	// shared tail (counts skipped as deleted + protected + flexible + zero-hour).
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
-	errorCount := len(importErrors)
-
-	now := clock.Now()
-	finalStatus := "completed"
-	if createdCount == 0 && errorCount > 0 {
-		finalStatus = "failed"
-	}
-
-	// 12. Update asset metadata with final results.
-	errDetail := marshalErrors(importErrors)
-	stats := BCCImportStats{
-		ProjectID:    projectID,
-		OriginalName: filename,
-		ForMonth:     effectiveMonth,
-		Status:       finalStatus,
-		TotalRows:    totalRows,
-		CreatedCount: createdCount,
-		SkippedCount: skippedCount,
-		ErrorCount:   errorCount,
-		ErrorDetail:  errDetail,
-		ProcessedAt:  &now,
-	}
-	return s.finalizeBCCImport(ctx, createdAsset, uploaderID, stats)
+	return s.finalizeCreatedBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
+		totalRows, len(result.CreatedTimesheets), protectedSkippedCount, flexibleSkippedCount,
+		len(result.DeletedTimesheets), countZeroHourEntries(entries), importErrors)
 }
 
 // parseLegacyRoute handles the default (BCC-sheet-named) dispatch branch: the

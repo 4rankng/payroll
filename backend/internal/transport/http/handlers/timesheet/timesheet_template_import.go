@@ -154,8 +154,3 @@ func (h *Handler) UploadTimesheetEntries(c *gin.Context) {
 		FailedEntries: failedEntries,
 	}, message)
 }
-
-// isExcelFile checks if the filename has a valid Excel extension
-func isExcelFile(filename string) bool {
-	return len(filename) > 5 && filename[len(filename)-5:] == ".xlsx"
-}
