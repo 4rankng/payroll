@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"api-server/internal/pkg/excelkit"
+
 	"github.com/xuri/excelize/v2"
 )
 
@@ -188,35 +190,13 @@ func (p *YeuCauChuyenTienParser) Parse(ctx context.Context, r io.Reader) ([]Bulk
 	return parsed, nil
 }
 
-// resolveHeader maps one raw header cell to its canonical field name.
-// Tolerates multi-line headers (e.g. "STT\n(Ord. No.)") by trying each
-// newline-separated segment, then the full collapsed string. Returns
-// (canonical, true) on the first alias match.
+// resolveHeader maps one raw header cell to its canonical field name,
+// delegating to the shared excelkit AliasTable — the union of this
+// resolver's steps (whole cell, newline segments, collapsed) plus the
+// OnePay-style diacritic-free retry, so every importer resolves headers the
+// same way.
 func resolveHeader(cell string) (string, bool) {
-	// Try the whole cell first (single-line headers like "Beneficiary").
-	if canonical, ok := lookupAlias(cell); ok {
-		return canonical, true
-	}
-	// Split on newlines for bilingual multi-line headers — each segment
-	// is a valid alias on its own ("STT" or "(Ord. No.)").
-	for _, line := range strings.Split(cell, "\n") {
-		if canonical, ok := lookupAlias(line); ok {
-			return canonical, true
-		}
-	}
-	// Collapse internal whitespace and try once more (handles "Số  tài khoản").
-	collapsed := strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(cell)), " "))
-	if canonical, ok := headerAliases[collapsed]; ok {
-		return canonical, true
-	}
-	return "", false
-}
-
-// lookupAlias trims + lowercases s and looks it up in headerAliases.
-func lookupAlias(s string) (string, bool) {
-	key := strings.ToLower(strings.TrimSpace(s))
-	canonical, ok := headerAliases[key]
-	return canonical, ok
+	return excelkit.AliasTable(headerAliases).Resolve(cell)
 }
 
 // readHeader reads row 2 and returns a map: canonical_field_name → 0-based

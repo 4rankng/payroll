@@ -6,11 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/xuri/excelize/v2"
-
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/infrastructure"
+	"api-server/internal/pkg/excelkit"
 )
 
 // EmployeeImportWorker processes employee import jobs asynchronously
@@ -75,7 +74,7 @@ func (w *EmployeeImportWorker) processJob(ctx context.Context, importID string) 
 	}
 
 	// Open the Excel file
-	xlsxFile, err := excelize.OpenFile(filePath)
+	xlsxFile, err := excelkit.OpenFile(filePath)
 	if err != nil {
 		w.logger.Error("failed to open Excel file", "import_id", importID, "error", err)
 		w.markJobFailed(ctx, importID, "Failed to open Excel file")

@@ -119,6 +119,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 	// "UL", date-pattern sheets like "26.5", and any future naming convention.
 	// Skip auxiliary sheets: "ds" (passwords, different columns), "UL (2)"
 	// (prior round snapshot with different header).
+	rowsBySheet := make(map[string][][]string, len(sheets))
 	importSheets := make([]string, 0, len(sheets))
 	for _, sheetName := range sheets {
 		rows, err := file.GetRows(sheetName)
@@ -128,6 +129,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 		colB := strings.ToLower(strings.TrimSpace(rows[0][1]))
 		if strings.Contains(colB, "mã nhân viên") {
 			importSheets = append(importSheets, sheetName)
+			rowsBySheet[sheetName] = rows
 		}
 	}
 	if len(importSheets) == 0 {
@@ -137,12 +139,8 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 	// Count total rows across the import sheets for progress tracking
 	totalRows := 0
 	for _, sheetName := range importSheets {
-		rows, err := file.GetRows(sheetName)
-		if err != nil {
-			continue
-		}
-		for i := 1; i < len(rows); i++ {
-			row := rows[i]
+		for i := 1; i < len(rowsBySheet[sheetName]); i++ {
+			row := rowsBySheet[sheetName][i]
 			if len(row) > 1 && strings.TrimSpace(row[1]) != "" {
 				totalRows++
 			}
@@ -161,11 +159,7 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 	employeeZNSIndex := make(map[string]int)
 
 	for _, sheetName := range importSheets {
-		rows, err := file.GetRows(sheetName)
-		if err != nil {
-			s.logger.Warn("failed to read sheet", "sheet", sheetName, "error", err)
-			continue
-		}
+		rows := rowsBySheet[sheetName]
 
 		// Detect column layout by sniffing first data rows.
 		// Old: E(4)=Phone(digits), ..., I(8)=Bank, J(9)=Amount
@@ -395,6 +389,12 @@ func resolveUploadDate(uploadedAt time.Time) string {
 	return uploadedAt.In(clock.DefaultLocation).Format("2006-01-02")
 }
 
+// getOrCreateProject mirrors employee.ImportService.getOrCreateProject (the
+// only difference is the created-flag return); the two deliberately stay
+// separate — the employee variant's signature and logging are load-bearing
+// for its audit trail. The getOrCreateEmployee/getOrCreateAssignment pairs
+// below have genuinely diverged (bank validation, StartDate/PaymentSchedule
+// parsing live only in the employee variant) and must not be merged.
 func (s *Service) getOrCreateProject(ctx context.Context, code string, createdBy uint) (*domain.Project, bool, error) {
 	project, err := s.config.ProjectRepo.GetByCode(ctx, code)
 	if err == nil {

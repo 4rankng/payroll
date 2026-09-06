@@ -22,7 +22,9 @@ import (
 	bankmapping "api-server/internal/pkg/bank"
 	"api-server/internal/pkg/timeutil"
 
+	"api-server/internal/pkg/excelkit"
 	"github.com/gosimple/unidecode"
+
 	"github.com/xuri/excelize/v2"
 )
 
@@ -113,16 +115,17 @@ func mergeDetailHeaderAliases(templateSpecific map[string]string) map[string]str
 	return merged
 }
 
+// resolveHeader maps a raw header cell to this template's canonical field.
+// Delegates to the shared excelkit AliasTable (a superset of this resolver:
+// its earlier whole-cell and newline-segment lookups can only match when the
+// collapsed form would have matched too), keeping one resolution algorithm
+// across importers.
 func (tpl *onePayDetailTemplate) resolveHeader(s string) string {
 	key := normalizeHeader(s)
 	if key == "" {
 		return ""
 	}
-	if canonical, ok := tpl.headerAliases[key]; ok {
-		return canonical
-	}
-	// Vietnamese text may arrive in either unicode form; retry diacritic-free.
-	if canonical, ok := tpl.headerAliases[normalizeHeader(unidecode.Unidecode(s))]; ok {
+	if canonical, ok := excelkit.AliasTable(tpl.headerAliases).Resolve(s); ok {
 		return canonical
 	}
 	return ""

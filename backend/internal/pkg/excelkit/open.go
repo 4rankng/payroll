@@ -25,3 +25,11 @@ func OpenReader(r io.Reader) (*excelize.File, error) {
 		UnzipXMLSizeLimit: DefaultUnzipXMLSizeLimit,
 	})
 }
+
+// OpenFile opens a workbook from a path with decompression caps applied.
+func OpenFile(path string) (*excelize.File, error) {
+	return excelize.OpenFile(path, excelize.Options{
+		UnzipSizeLimit:    DefaultUnzipSizeLimit,
+		UnzipXMLSizeLimit: DefaultUnzipXMLSizeLimit,
+	})
+}
