@@ -3,12 +3,14 @@ import { settingsService } from '@/services/api/settings.service';
 import { QueryKeys } from '@/lib/queryKeys';
 import { showSuccessNotification } from '@/utils/error-handler';
 import type { CreateSettingData, SettingsFilters, UpdateSettingData } from '@/types/api/settings.types';
+import { REFERENCE_DATA_STALE_TIME_MS } from '@/lib/cache/queryCacheTimes';
 
 // Get paginated settings list
 export const useSettings = (filters?: SettingsFilters) => {
   return useQuery({
     queryKey: QueryKeys.settings.list(filters),
     queryFn: () => settingsService.getSettings(filters),
+    staleTime: REFERENCE_DATA_STALE_TIME_MS, // Admin saves invalidate these keys on success
   });
 };
 
@@ -18,6 +20,7 @@ export const useSetting = (id: number, enabled = true) => {
     queryKey: QueryKeys.settings.detail(id),
     queryFn: () => settingsService.getSettingById(id),
     enabled,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
@@ -27,6 +30,7 @@ export const useSettingByKey = (key: string, enabled = true) => {
     queryKey: QueryKeys.settings.byKey(key),
     queryFn: () => settingsService.getSettingByKey(key),
     enabled: enabled && key.length > 0,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
@@ -73,5 +77,6 @@ export const useMultipleSettings = (keys: string[]) => {
       return results.map((result) => (result.status === 'fulfilled' ? result.value : undefined));
     },
     enabled: keys.length > 0,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };

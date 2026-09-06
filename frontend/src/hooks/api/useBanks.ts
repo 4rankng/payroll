@@ -3,6 +3,7 @@ import { bankService } from '@/services/api/bank.service';
 import { QueryKeys } from '@/lib/queryKeys';
 import type { Bank, BankFilters, CreateBankRequest } from '@/types/api/bank.types';
 import type { ApiError } from '@/types/api.types';
+import { REFERENCE_DATA_STALE_TIME_MS } from '@/lib/cache/queryCacheTimes';
 
 // Fetch ALL banks — one request, cached for 30 minutes since banks rarely change
 export const useAllBanks = () => {
@@ -23,6 +24,7 @@ export const useBanks = (filters?: BankFilters) => {
   return useQuery({
     queryKey: [...QueryKeys.banks.list(), filters],
     queryFn: () => bankService.getBanks(filters),
+    staleTime: REFERENCE_DATA_STALE_TIME_MS, // Banks are near-static reference data
   });
 };
 

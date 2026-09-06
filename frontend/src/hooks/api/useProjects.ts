@@ -4,6 +4,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { QueryKeys } from '@/lib/queryKeys';
 import { showErrorNotification, showSuccessNotification } from '@/utils/error-handler';
 import { invalidateCache } from '@/lib/cache/invalidationService';
+import { REFERENCE_DATA_STALE_TIME_MS } from '@/lib/cache/queryCacheTimes';
 import { authManager } from '@/lib/auth';
 import type {
   CreateProjectData,
@@ -31,6 +32,7 @@ export const useProjectsSummary = () => {
     queryFn: () => projectService.getSummary(),
     enabled: hasPermission,
     retry: false,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
@@ -51,6 +53,9 @@ export const useProjects = (filters?: ProjectFilters, options?: { enabled?: bool
     },
     enabled: options?.enabled !== undefined ? (options.enabled && hasPermission) : hasPermission,
     retry: false, // Don't retry permission errors
+    // Reference data: mutations already invalidate these keys on change, so a
+    // longer staleTime only skips redundant focus/interval refetches.
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
@@ -104,7 +109,7 @@ export const useAllProjects = (options?: { enabled?: boolean }) => {
       ? options.enabled && hasPermission
       : hasPermission,
     retry: false,
-    staleTime: 60_000,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
@@ -148,6 +153,7 @@ export const useAssignableProjects = () => {
     queryFn: () => projectService.getProjects({ status: ['draft', 'active', 'paused'], pageSize: 50 }),
     enabled: hasPermission,
     retry: false,
+    staleTime: REFERENCE_DATA_STALE_TIME_MS,
   });
 };
 
