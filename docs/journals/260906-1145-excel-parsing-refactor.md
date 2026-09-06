@@ -92,3 +92,30 @@ island gained the other's resolution steps — strictly more permissive on
 pathological headers, canonical mappings unchanged); employee/BCC caps moved
 10MB→20MB and rejection strings are now Vietnamese (within the approved
 behavior-change class).
+
+## Review gate, round 2 (max-effort adversarial pass)
+
+A second review (`/code-review --fix max`, multi-agent) returned 13 findings;
+all fixed in three commits (`9ab5f463`, `d9d0af8c`, `159613b9`), verified by
+build/vet/unit (304 ok), `make api-test` identical to baseline (281/304/0/23),
+and a live fixture spot-check on the reloaded dev server (real EVA file
+completes 0/1092/0 as before; `.docx` → immediate 400 extension rejection;
+blank-filename part → 400 at the multipart layer). The two that mattered:
+
+1. **PostForm before the guard deadened the body cap** on UploadBCC and
+   ImportFlexPayFile — gin's PostForm parses the whole unbounded body before
+   MaxBytesReader wraps it. Fix: guard first; PostForm reads after the
+   guard's own parse are memory-only. Lesson: a request-body cap only works
+   if it wraps the body before ANY multipart read, including form fields.
+2. **AliasTable segment-before-collapsed ordering could rebind previously
+   correct columns** on stacked bilingual headers (the round-1 "strictly more
+   permissive" framing understated it — preemption, not just addition).
+   Fix: segments resolve last; provably restores both islands' original
+   per-cell outcomes.
+
+Also: extension/filename gates restored in uploadguard; sao-kê/OnePay-fee/
+template-converter/bulk-transfer opens routed through excelkit caps;
+date-row fingerprint deferred to a second classification phase (restores the
+old detector's early exit, outcome-identical); dead helpers deleted. Caps
+(50/10 MiB excelkit, 20 MiB guard) deliberately untouched — policy pending
+with the user (legit ~12k-row workbooks vs decompression-bomb bound).
