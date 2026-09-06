@@ -6,9 +6,12 @@ import (
 	"log/slog"
 	"math"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/config"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/domain/wallet"
 	"api-server/internal/pkg/clock"
@@ -104,6 +107,7 @@ type CashReadinessForecastService struct {
 	cfg           config.CashForecastConfig
 	paymentConfig WeeklyPaymentPercentageReader
 	measurement   domain.CashForecastSnapshotRepository
+	cache         domain.CacheServiceUseCase
 }
 
 // NewCashReadinessForecastService constructs the service. clk and provider
@@ -137,12 +141,32 @@ func NewCashReadinessForecastService(
 	return service
 }
 
+// WithCacheService attaches an optional short-TTL cache so advisory reads are
+// served from Redis instead of recomputing the months-long accrual cohort scan
+// on every request. Returns the service for constructor chaining.
+func (s *CashReadinessForecastService) WithCacheService(cs domain.CacheServiceUseCase) *CashReadinessForecastService {
+	s.cache = cs
+	return s
+}
+
 // GetCashReadiness builds the target-Ky forecast for the next pay date. Filters
 // scope the cohort by project/employee/role, but the current outstanding-payment
 // summary is deliberately not an input.
 func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, filters domain.TimesheetFilters) (*domain.CashReadiness, error) {
 	now := s.clock.Now()
 	pc := clock.NextTimesheetPayCycle(now)
+
+	// The cohort scan is months-deep; serve advisory reads from a short-lived
+	// cache (same "dashboard:*" invalidation family as the other aggregates).
+	var cacheKey string
+	if s.cache != nil {
+		cacheKey = s.cache.GenerateDashboardCacheKey(fmt.Sprintf("cash_readiness:%v:%s:%s", pc.Ky, cashReadinessModelVersion, cashReadinessScopeKey(filters)))
+		var cached domain.CashReadiness
+		if err := s.cache.Get(ctx, cacheKey, &cached); err == nil {
+			return &cached, nil
+		}
+	}
+
 	leadDays := s.leadDays()
 
 	// Read row-level point-in-time facts. Status is deliberately not constrained:
@@ -201,8 +225,56 @@ func (s *CashReadinessForecastService) GetCashReadiness(ctx context.Context, fil
 		GrowthRate:            1,
 		GeneratedAt:           now,
 	}
-	s.persistMeasurement(ctx, filters, result, pc, horizonDays)
+	if s.cache != nil {
+		_ = s.cache.Set(ctx, cacheKey, result, constants.DashboardSummaryCacheTTL)
+	}
+	// Snapshot persistence is advisory bookkeeping: it runs with a detached
+	// context so a client cancelling mid-request cannot abort the write, and
+	// only on cache recompute so hits don't rewrite the same cycle snapshot.
+	s.persistMeasurement(context.WithoutCancel(ctx), filters, result, pc, horizonDays)
 	return result, nil
+}
+
+// cashReadinessScopeKey renders the filter scope as a deterministic string so
+// different scopes (company-wide vs partner/project/employee) never collide on
+// the same cache entry.
+func cashReadinessScopeKey(filters domain.TimesheetFilters) string {
+	if !isScopedCashForecast(filters) {
+		return "company"
+	}
+	var parts []string
+	if filters.EmployeeID != nil {
+		parts = append(parts, fmt.Sprintf("emp:%d", *filters.EmployeeID))
+	}
+	if filters.EmployeeCreatedBy != nil {
+		parts = append(parts, fmt.Sprintf("cb:%d", *filters.EmployeeCreatedBy))
+	}
+	if filters.EmployeeAssignedByPartner != nil {
+		parts = append(parts, fmt.Sprintf("abp:%d", *filters.EmployeeAssignedByPartner))
+	}
+	if len(filters.ProjectIDs) > 0 {
+		ids := make([]string, len(filters.ProjectIDs))
+		for i, id := range filters.ProjectIDs {
+			ids[i] = strconv.Itoa(int(id))
+		}
+		sort.Strings(ids)
+		parts = append(parts, "proj:"+strings.Join(ids, ","))
+	}
+	if len(filters.EmployeeIDs) > 0 {
+		ids := filterEmployeeIDs(filters.EmployeeIDs)
+		sort.Strings(ids)
+		parts = append(parts, "emps:"+strings.Join(ids, ","))
+	}
+	return strings.Join(parts, "|")
+}
+
+// filterEmployeeIDs converts employee IDs to strings for the scope key.
+func filterEmployeeIDs(ids []uint) []string {
+	out := make([]string, len(ids))
+	for i, id := range ids {
+		out[i] = strconv.Itoa(int(id))
+	}
+	return out
 }
 
 func (s *CashReadinessForecastService) weeklyPaymentPercentage(ctx context.Context) float64 {
