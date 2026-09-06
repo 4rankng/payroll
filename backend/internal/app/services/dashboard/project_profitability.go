@@ -3,16 +3,26 @@ package dashboard
 import (
 	"api-server/internal/pkg/clock"
 	"context"
+	"fmt"
 	"sort"
 	"time"
 
 	"api-server/internal/app/dto"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 )
 
 // GetProjectProfitability returns profitability ranking for each project over the last 12 months,
 // excluding projects with zero profit.
 func (s *Service) GetProjectProfitability(ctx context.Context) (*dto.ProjectProfitabilityResponse, error) {
+	// 12-month aggregation over all projects; serve from a short-lived cache.
+	// Cleared with the "dashboard:*" pattern on timesheet/project mutations.
+	cacheKey := s.CacheService.GenerateDashboardCacheKey("project_profitability")
+	var cached dto.ProjectProfitabilityResponse
+	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
+		return &cached, nil
+	}
+
 	since := clock.Now().AddDate(0, -12, 0)
 
 	rows, err := s.TimesheetAnalyticsRepo.GetProfitByProjectSince(ctx, since)
@@ -59,10 +69,14 @@ func (s *Service) GetProjectProfitability(ctx context.Context) (*dto.ProjectProf
 		items[i].Rank = uint(i + 1)
 	}
 
-	return &dto.ProjectProfitabilityResponse{
+	response := &dto.ProjectProfitabilityResponse{
 		Projects:   items,
 		TotalCount: len(items),
-	}, nil
+	}
+
+	_ = s.CacheService.Set(ctx, cacheKey, response, constants.DashboardSummaryCacheTTL)
+
+	return response, nil
 }
 
 // GetProjectWeeklyProfit returns cumulative daily profit per project for the last N days.
@@ -72,6 +86,14 @@ func (s *Service) GetProjectProfitability(ctx context.Context) (*dto.ProjectProf
 func (s *Service) GetProjectWeeklyProfit(ctx context.Context, days int) (*dto.ProjectWeeklyProfitResponse, error) {
 	if days <= 0 || days > 365 {
 		days = 84 // default ~12 weeks
+	}
+
+	// Daily-profit window aggregation; serve from a short-lived cache keyed by
+	// the window length. Cleared with the "dashboard:*" pattern on mutations.
+	cacheKey := s.CacheService.GenerateDashboardCacheKey("project_weekly_profit", fmt.Sprintf("%d", days))
+	var cached dto.ProjectWeeklyProfitResponse
+	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
+		return &cached, nil
 	}
 
 	now := clock.Now()
@@ -127,8 +149,12 @@ func (s *Service) GetProjectWeeklyProfit(ctx context.Context, days int) (*dto.Pr
 		return series[i].TotalProfit > series[j].TotalProfit
 	})
 
-	return &dto.ProjectWeeklyProfitResponse{
+	response := &dto.ProjectWeeklyProfitResponse{
 		Series: series,
 		Days:   daySlice,
-	}, nil
+	}
+
+	_ = s.CacheService.Set(ctx, cacheKey, response, constants.DashboardSummaryCacheTTL)
+
+	return response, nil
 }

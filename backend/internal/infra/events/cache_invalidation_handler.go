@@ -67,7 +67,8 @@ func (h *CacheInvalidationHandler) CanHandle(eventType string) bool {
 		strings.Contains(eventType, "Loan") ||
 		strings.Contains(eventType, "Lender") ||
 		strings.Contains(eventType, "Asset") ||
-		strings.Contains(eventType, "Settlement")
+		strings.Contains(eventType, "Settlement") ||
+		strings.Contains(eventType, "BulkTransfer")
 }
 
 // getCachePatternsForEvent maps event types to cache patterns that need invalidation
@@ -79,6 +80,7 @@ func (h *CacheInvalidationHandler) getCachePatternsForEvent(eventType string) []
 	case strings.Contains(eventType, "ProjectEmployee"):
 		patterns = append(patterns,
 			"projects:list*",
+			"projects:count*",
 			"employees:*",
 			"dashboard:project_summary*",
 			"dashboard:partner_project_summary*",
@@ -122,6 +124,21 @@ func (h *CacheInvalidationHandler) getCachePatternsForEvent(eventType string) []
 			"dashboard:*",
 		)
 
+	// Bulk transfer events fire when a disbursement batch completes — the
+	// moment payment statuses and paid amounts change most. Refresh the
+	// dashboard analytics, timesheet list/summary, and transaction caches that
+	// derive from them. Checked before "Transaction" because
+	// BulkTransferTransactionCreated matches both substrings.
+	case strings.Contains(eventType, "BulkTransfer"):
+		patterns = append(patterns,
+			"dashboard:*",
+			"timesheets:list:*",
+			"timesheets:summary:*",
+			"transactions:list:*",
+			"transactions:detail:*",
+			"transactions:pending:*",
+		)
+
 	// Transaction events invalidate transaction caches and dashboard cache
 	case strings.Contains(eventType, "Transaction"):
 		patterns = append(patterns,
@@ -135,6 +152,7 @@ func (h *CacheInvalidationHandler) getCachePatternsForEvent(eventType string) []
 	case strings.Contains(eventType, "Project"):
 		patterns = append(patterns,
 			"projects:list*",
+			"projects:count*",
 			"dashboard:project_summary*",
 			"dashboard:partner_project_summary*",
 			"dashboard:*",

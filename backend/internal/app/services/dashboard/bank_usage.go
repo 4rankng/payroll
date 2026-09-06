@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"api-server/internal/app/dto"
+	"api-server/internal/constants"
 )
 
 // GetBankUsage returns bank usage breakdown, optionally filtered by project.
@@ -108,6 +109,15 @@ func (s *Service) getBankUsageForProject(ctx context.Context, projectID uint) (*
 func (s *Service) GetBankUsageAllProjects(ctx context.Context) (*dto.BankUsageAllProjectsResponse, error) {
 	s.logger.Info("Getting bank usage for all projects")
 
+	// Two heavy GROUP BY scans over paid timesheets; serve from a short-lived
+	// cache. Cleared with the "dashboard:*" pattern by the cache invalidation
+	// handler on timesheet/employee/project mutations.
+	cacheKey := s.CacheService.GenerateDashboardCacheKey("bank_usage_all_projects")
+	var cached dto.BankUsageAllProjectsResponse
+	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
+		return &cached, nil
+	}
+
 	projectRows, err := s.TimesheetAnalyticsRepo.GetBankUsageAllProjects(ctx)
 	if err != nil {
 		s.logger.Error("Failed to get bank usage all projects", "error", err)
@@ -161,10 +171,14 @@ func (s *Service) GetBankUsageAllProjects(ctx context.Context) (*dto.BankUsageAl
 		return nil, err
 	}
 
-	return &dto.BankUsageAllProjectsResponse{
+	response := &dto.BankUsageAllProjectsResponse{
 		Projects: projects,
 		Overall:  *overall,
-	}, nil
+	}
+
+	_ = s.CacheService.Set(ctx, cacheKey, response, constants.DashboardSummaryCacheTTL)
+
+	return response, nil
 }
 
 func roundPct(v float64) float64 {

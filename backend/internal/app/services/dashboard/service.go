@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/infrastructure"
+	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/domain/services"
 	"api-server/internal/infra/persistence/repositories"
@@ -190,6 +191,19 @@ func convertCapitalToHistorical(data []dto.CapitalData) []dto.CapitalHistorical 
 func (s *Service) GetMonthlyFinancials(ctx context.Context, req *dto.MonthlyFinancialsRequest) (*dto.MonthlyFinancialsResponse, error) {
 	const months = 12
 
+	// 12-month aggregation over paid timesheets; serve from a short-lived
+	// cache keyed by the requested period. Cleared with the "dashboard:*"
+	// pattern by the cache invalidation handler on timesheet mutations.
+	period := "3m"
+	if req != nil && req.Period != "" {
+		period = req.Period
+	}
+	cacheKey := s.CacheService.GenerateDashboardCacheKey("monthly_financials", period)
+	var cached dto.MonthlyFinancialsResponse
+	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
+		return &cached, nil
+	}
+
 	now := clock.Now()
 	startDate := time.Date(now.Year(), now.Month()-time.Month(months-1), 1, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, time.UTC) // exclusive upper bound
@@ -232,7 +246,7 @@ func (s *Service) GetMonthlyFinancials(ctx context.Context, req *dto.MonthlyFina
 		totalFee += fee
 	}
 
-	return &dto.MonthlyFinancialsResponse{
+	response := &dto.MonthlyFinancialsResponse{
 		Period: "1y",
 		Months: result,
 		Total: dto.MonthlyFinancialRow{
@@ -241,5 +255,9 @@ func (s *Service) GetMonthlyFinancials(ctx context.Context, req *dto.MonthlyFina
 			Billed:    totalBilled,
 			FeeEarned: totalFee,
 		},
-	}, nil
+	}
+
+	_ = s.CacheService.Set(ctx, cacheKey, response, constants.DashboardSummaryCacheTTL)
+
+	return response, nil
 }

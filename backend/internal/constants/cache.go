@@ -39,7 +39,12 @@ const (
 
 	// Employee/Project Cache TTLs (15 seconds for reference data)
 	EmployeeListCacheTTL = 15 * time.Second
-	ProjectListCacheTTL  = 15 * time.Second
+	// ProjectListCacheTTL is longer than the employee list TTL: projects change
+	// rarely and every mutation path (CRUD, assignment changes, cron auto
+	// activate/complete) publishes a domain event that the cache invalidation
+	// handler maps to "projects:list*" / "projects:count*", so staleness is
+	// bounded by event coverage rather than the TTL alone.
+	ProjectListCacheTTL = 60 * time.Second
 
 	// Employee Summary Cache TTLs (different intervals based on data volatility)
 	EmployeeTimesheetSummaryCacheTTL = 5 * time.Minute  // Timesheet data changes frequently

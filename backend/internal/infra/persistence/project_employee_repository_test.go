@@ -126,7 +126,7 @@ func TestProjectEmployeeRepository_HasActiveFlexiblePaymentScheduleByEmployeeID(
 			(1, 201, ?, NULL, 'flexible'),
 			(2, 202, ?, ?, 'flexible'),
 			(3, 203, ?, NULL, 'weekly')
-	`, today.AddDate(0, 0, -1), today.AddDate(0, 0, -7), today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)).Error)
+	`, today.AddDate(0, 0, -2), today.AddDate(0, 0, -7), today.AddDate(0, 0, -1), today.AddDate(0, 0, -2)).Error)
 
 	repo := &ProjectEmployeeRepository{BaseRepository: &BaseRepository{DB: db}}
 	hasFlexible, err := repo.HasActiveFlexiblePaymentScheduleByEmployeeID(context.Background(), 201)

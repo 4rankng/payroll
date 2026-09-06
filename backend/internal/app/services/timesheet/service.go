@@ -670,6 +670,11 @@ func (s *TimesheetService) generateSummaryStatsCacheKey(filters domain.Timesheet
 	if filters.PayrateID != nil {
 		params = append(params, "payrate", fmt.Sprintf("%d", *filters.PayrateID))
 	}
+	// The query builders apply Search to list, grouped, and summary queries;
+	// omitting it here would make different searches share one cache entry.
+	if filters.Search != "" {
+		params = append(params, "search", strings.ToLower(strings.TrimSpace(filters.Search)))
+	}
 	if filters.CreatedBy != nil {
 		params = append(params, "created_by", fmt.Sprintf("%d", *filters.CreatedBy))
 	}
@@ -908,8 +913,45 @@ func (s *TimesheetService) RecalculateTimesheetsForAssignment(ctx context.Contex
 // ListGroupedByEmployee retrieves timesheets grouped by employee with server-side pagination
 // This ensures consistent pagination by employee (not by individual timesheet entries)
 func (s *TimesheetService) ListGroupedByEmployee(ctx context.Context, filters domain.TimesheetFilters) ([]domain.EmployeeGroupResult, []*domain.Timesheet, int64, error) {
-	// Simple delegation to repository - no business logic needed
-	return s.timesheetRepo.ListGroupedByEmployee(ctx, filters)
+	// Microcache the grouped view (distinct-employee count + aggregate + row
+	// fetch + relation loads). The key includes partner scoping and every data
+	// filter, and lives under "timesheets:list:grouped*" so existing
+	// Timesheet/Payrate event invalidation ("timesheets:list:*") clears it.
+	cacheKey := s.generateGroupedCacheKey(filters)
+
+	var cached groupedTimesheetsCacheEntry
+	if err := s.cache.Get(ctx, cacheKey, &cached); err == nil && len(cached.Groups) > 0 {
+		return cached.Groups, cached.Timesheets, cached.Total, nil
+	}
+
+	groups, timesheets, total, err := s.timesheetRepo.ListGroupedByEmployee(ctx, filters)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	if len(groups) > 0 {
+		_ = s.cache.Set(ctx, cacheKey, groupedTimesheetsCacheEntry{
+			Groups:     groups,
+			Timesheets: timesheets,
+			Total:      total,
+		}, constants.TimesheetListCacheTTL)
+	}
+
+	return groups, timesheets, total, nil
+}
+
+// groupedTimesheetsCacheEntry is the cached shape of ListGroupedByEmployee.
+type groupedTimesheetsCacheEntry struct {
+	Groups     []domain.EmployeeGroupResult `json:"groups"`
+	Timesheets []*domain.Timesheet          `json:"timesheets"`
+	Total      int64                        `json:"total"`
+}
+
+// generateGroupedCacheKey reuses the summary filter key (which includes
+// partner-scoping fields) under the grouped-list prefix.
+func (s *TimesheetService) generateGroupedCacheKey(filters domain.TimesheetFilters) string {
+	summaryKey := s.generateSummaryStatsCacheKey(filters)
+	return strings.Replace(summaryKey, "timesheets:summary", "timesheets:list:grouped", 1)
 }
 
 // CountDistinctEmployees returns the count of distinct employees matching filters
