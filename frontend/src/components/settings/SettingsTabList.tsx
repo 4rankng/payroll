@@ -1,4 +1,4 @@
-import { Bell, Mail, MessageCircle, Receipt, Settings } from 'lucide-react';
+import { Bell, Mail, Megaphone, MessageCircle, Receipt, Settings } from 'lucide-react';
 
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -8,21 +8,20 @@ export const SETTINGS_TABS = {
   email: 'email',
   notifications: 'notifications',
   zalo: 'zalo',
+  ads: 'ads',
 } as const;
 
 export const VALID_SETTINGS_TABS = new Set<string>(Object.values(SETTINGS_TABS));
 
+// Six tabs on a grid-cols-6 layout: every tab takes one equal column so the
+// row stays a single full-width band on mobile.
 const tabs = [
   { value: SETTINGS_TABS.general, label: 'Trả lương', icon: Settings, mobileSpan: 'col-span-2' },
   { value: SETTINGS_TABS.feeConfig, label: 'Tạm ứng', icon: Receipt, mobileSpan: 'col-span-2' },
   { value: SETTINGS_TABS.email, label: 'Email', icon: Mail, mobileSpan: 'col-span-2' },
-  {
-    value: SETTINGS_TABS.notifications,
-    label: 'Thông báo',
-    icon: Bell,
-    mobileSpan: 'col-span-3',
-  },
-  { value: SETTINGS_TABS.zalo, label: 'Zalo ZNS', icon: MessageCircle, mobileSpan: 'col-span-3' },
+  { value: SETTINGS_TABS.notifications, label: 'Thông báo', icon: Bell, mobileSpan: 'col-span-2' },
+  { value: SETTINGS_TABS.zalo, label: 'Zalo ZNS', icon: MessageCircle, mobileSpan: 'col-span-2' },
+  { value: SETTINGS_TABS.ads, label: 'Quảng cáo', icon: Megaphone, mobileSpan: 'col-span-2' },
 ] as const;
 
 export const SettingsTabList = () => (

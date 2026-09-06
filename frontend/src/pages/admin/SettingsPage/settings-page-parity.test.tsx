@@ -70,6 +70,9 @@ vi.mock('@/components/settings/SendNotificationComposer', () => ({
 vi.mock('@/components/settings/ZaloConnectionSection', () => ({
   ZaloConnectionSection: () => <div>Quy trình cấu hình Zalo ZNS</div>,
 }));
+vi.mock('@/components/settings/AdBannerSection', () => ({
+  AdBannerSection: () => <div>Chiến dịch quảng cáo</div>,
+}));
 
 describe.each([
   ['desktop', SettingsPage],
@@ -161,5 +164,16 @@ describe.each([
 
     expect(screen.getByRole('tab', { name: /Zalo ZNS/ })).toHaveAttribute('data-state', 'active');
     expect(screen.getByText('Quy trình cấu hình Zalo ZNS')).toBeInTheDocument();
+  });
+
+  it('keeps the ad campaign management available', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/settings?tab=ads']}>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('tab', { name: /Quảng cáo/ })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByText('Chiến dịch quảng cáo')).toBeInTheDocument();
   });
 });

@@ -18,6 +18,7 @@ import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
+import { AdBannerSection } from '@/components/settings/AdBannerSection';
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
@@ -119,6 +120,10 @@ const SettingsPageMobile = () => {
 
           <TabsContent value={SETTINGS_TABS.zalo} className="mt-0">
             <ZaloConnectionSection />
+          </TabsContent>
+
+          <TabsContent value={SETTINGS_TABS.ads} className="mt-0">
+            <AdBannerSection />
           </TabsContent>
         </Tabs>
       </div>
