@@ -39,6 +39,11 @@ cd /opt/payroll && docker compose up -d --force-recreate --no-deps frontend back
 
 ## Demo Deploy
 
+> **RETIRED (verified 2026-09-06):** the `demo` / `push-demo` / `deploy-demo`
+> Makefile targets no longer exist in any Makefile. `demo.tingting.vip` still
+> serves the last build pushed before the targets were removed; it is not part
+> of the current deploy flow. The section below is kept for history only.
+
 ```bash
 make demo
 ```

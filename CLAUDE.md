@@ -74,7 +74,6 @@ cd frontend && pnpm test:e2e                    # Playwright E2E
 
 # Deployment
 make deploy           # Build + push amd64 images + SSH deploy to production
-make demo             # Deploy to demo.tingting.vip
 make backup           # Backup production DB to OneDrive
 make restore          # Restore latest backup to local dev
 make adminer          # SSH tunnel to production DB UI at localhost:18081
