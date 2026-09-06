@@ -97,6 +97,21 @@ Pattern: exact copy of `GetDashboardSummary` flow (Get → miss → compute → 
   of every cached shape. Verdict: DONE_WITH_CONCERNS → all concerns addressed
   above.
 
+## Follow-up invalidation gaps closed (post-review, user-directed fix-all)
+
+- `app/workers/bulk_transfer_worker.go`: payment-status writes invalidated
+  `timesheets:list/summary` directly but not `dashboard:*` → added.
+- `app/services/payroll/service.go` `MarkExternallyPaid`: published no event
+  (manual "paid externally" flow changes paid amounts) → now publishes the
+  previously-unused `BulkTransferPaymentStatusUpdatedEvent`, which the new
+  `BulkTransfer` invalidation case catches (dashboard/timesheets/transactions).
+  Added `events` field to PayrollService (bus was already a constructor param,
+  previously only forwarded to the bulktransfer sub-service).
+- `BulkPaymentService.UpdatePaymentStatuses` has no active callers (dead
+  interface path) — no change needed.
+- Re-verified after these edits: full unit suite zero failures; api-test
+  304/281/0/23.
+
 ## Live smoke evidence (local dev, air-rebuilt binary)
 
 | Endpoint | miss | hit |
