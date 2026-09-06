@@ -31,6 +31,10 @@ func (s *Seeder) seedSettings(ctx context.Context, db *gorm.DB) error {
 		{"bulk_transfer_workbook_limit_vnd", "400000000", "number"},
 		{"self_check_in_advance_percentage", "70", "number"},
 		{"self_check_in_advance_hold_hours", "24", "number"},
+		// Seeded so GET /settings/key/transfer_bank_visible stops 404ing for
+		// environments where the admin has never saved the sao kê bank panel
+		// (the settings form creates the row on first save).
+		{"transfer_bank_visible", "true", "string"},
 	}
 
 	for _, setting := range settings {
