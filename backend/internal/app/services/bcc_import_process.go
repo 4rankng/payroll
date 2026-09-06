@@ -78,17 +78,7 @@ func (s *BCCImportService) processAssetData(
 		// calendar dates and the file has no rate row (rateless path).
 		parsed, err = excelparser.ParseDateRowBCCFile(xf, formatResult.DateRowSheets)
 	default:
-		// The "BCC" sheet name can carry a date-row layout (partner T09
-		// template), so route by parse outcome: ordered strategies run until
-		// one actually reads the file, and the format reflects the winner so
-		// post-parse behavior keys to the parser that ran.
-		var winner excelparser.BCCFormat
-		parsed, winner, err = excelparser.ParseBCCData(xf)
-		if err == nil {
-			slog.Info("BCCImport: strategy routing picked parser",
-				"format", winner, "filename", filename)
-			formatResult.Format = winner
-		}
+		parsed, err = parseLegacyRoute(xf, formatResult, filename)
 	}
 	if err != nil {
 		return fail("failed", fmt.Sprintf("lỗi phân tích file BCC: %v", err))
@@ -155,206 +145,12 @@ func (s *BCCImportService) processAssetData(
 	position := deducePosition(flatRates, parsed.ShiftRates)
 	monthStartDate := time.Date(year, month, 1, 0, 0, 0, 0, loc)
 
-	// Pre-declare importErrors so STK auto-creation failures are surfaced to the user.
-	var importErrors []domain.ImportError
-
-	var stkRows []excelparser.STKRow
-	if formatResult.Format == excelparser.FormatDateRow {
-		// Date-row template: the BCC sheet itself carries employee and bank
-		// info, so employees are upserted from the parsed rows. A real STK
-		// sheet, when present, still wins for bank/mobile corrections and
-		// STK-only hires.
-		stkRows = dateRowEmployeeToSTKRows(parsed.Employees)
-		if stkParsed, stkErr := excelparser.ParseSTKSheet(xf); stkErr != nil {
-			slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
-		} else {
-			stkRows = mergeSTKRows(stkRows, stkParsed)
-		}
-	} else {
-		var stkErr error
-		stkRows, stkErr = excelparser.ParseSTKSheet(xf)
-		if stkErr != nil {
-			slog.Warn("BCCImport: failed to parse STK sheet", "error", stkErr)
-		}
-	}
-
-	// Build STK CCCD→Name lookup for cross-validation against BCC employee names.
-	stkNameByCCCD := make(map[string]string, len(stkRows))
-	for _, row := range stkRows {
-		if row.CCCD != "" && row.FullName != "" {
-			stkNameByCCCD[row.CCCD] = row.FullName
-		}
-	}
-
-	if len(stkRows) > 0 {
-		slog.Info("BCCImport: found STK sheet, processing employee auto-creation",
-			"count", len(stkRows), "position", position)
-
-		// Cache bank name → ID to avoid redundant DB queries per row.
-		// Wrap STK auto-creation in a transaction to prevent orphaned records.
-		stkErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
-			bankCache := make(map[string]*uint)
-
-			for _, row := range stkRows {
-				cccd := row.CCCD
-				fullName := row.FullName
-				if cccd == "" || fullName == "" {
-					continue
-				}
-
-				// 1. Resolve Bank ID (cached)
-				var bankID *uint
-				if row.BankName != "" {
-					if cached, ok := bankCache[row.BankName]; ok {
-						bankID = cached
-					} else {
-						bankID = s.employeeService.ResolveBankID(txCtx, row.BankName)
-						bankCache[row.BankName] = bankID
-					}
-				}
-
-				// 2. Check if employee already exists by CCCD
-				existingEmp, empErr := s.employeeService.GetEmployeeByCCCD(txCtx, cccd)
-				if empErr != nil && !domain.IsNotFoundError(empErr) {
-					// Real DB error — don't conflate with "not found".
-					slog.Error("BCCImport: DB error looking up employee by CCCD",
-						"cccd", cccd, "error", empErr)
-					importErrors = append(importErrors, domain.ImportError{
-						Employee: fullName,
-						Reason:   fmt.Sprintf("lỗi tra cứu nhân viên CCCD %s: %v", cccd, empErr),
-					})
-					continue
-				}
-
-				var emp *domain.Employee
-				if existingEmp == nil {
-					// Create new employee
-					emp = &domain.Employee{
-						Fullname:  fullName,
-						CCCD:      cccd,
-						Mobile:    row.Mobile,
-						CreatedBy: uploaderID,
-					}
-					// Attach bank fields only when STK provides enough info to
-					// build a complete record; otherwise the profile is created
-					// without banking info and can be filled in later.
-					applySTKBankFields(emp, row, bankID, fullName)
-					createdEmp, createErr := s.employeeService.CreateEmployeeFromImport(txCtx, emp, uploaderID)
-					if createErr != nil {
-						slog.Error("BCCImport: failed to auto-create employee",
-							"cccd", cccd, "name", fullName, "error", createErr)
-						importErrors = append(importErrors, domain.ImportError{
-							Employee: fullName,
-							Reason:   fmt.Sprintf("không thể tạo nhân viên CCCD %s: %v", cccd, createErr),
-						})
-						continue
-					}
-					emp = createdEmp
-					slog.Info("BCCImport: auto-created employee profile and user account",
-						"cccd", cccd, "employee_id", emp.ID)
-				} else {
-					emp = existingEmp
-
-					// Apply changed bank info from STK using a targeted,
-					// atomically validated update.
-					if bankUpdates := buildSTKBankUpdates(emp, row, bankID, fullName); bankUpdates != nil {
-						if updateErr := s.employeeService.UpdateBankInfo(txCtx, emp.ID, bankUpdates); updateErr != nil {
-							slog.Error("BCCImport: failed to update bank info for employee",
-								"employee_id", emp.ID, "error", updateErr)
-							importErrors = append(importErrors, domain.ImportError{
-								Employee: fullName,
-								Reason:   "Không thể cập nhật thông tin ngân hàng",
-							})
-						} else {
-							slog.Info("BCCImport: updated bank info for existing employee",
-								"employee_id", emp.ID, "cccd", cccd)
-						}
-					}
-
-					// Fill missing mobile from STK when employee has none.
-					if row.Mobile != "" && emp.Mobile == "" {
-						if err := s.employeeService.UpdateMobile(txCtx, emp.ID, row.Mobile); err != nil {
-							slog.Error("BCCImport: failed to fill mobile for existing employee",
-								"employee_id", emp.ID, "error", err)
-						}
-					}
-
-					if emp.UserID == nil {
-						if err := s.ensureEmployeeUserAccount(txCtx, emp.ID); err != nil {
-							importErrors = append(importErrors, domain.ImportError{
-								Employee: fullName,
-								Reason:   fmt.Sprintf("không thể tạo tài khoản nhân viên CCCD %s: %v", cccd, err),
-							})
-							continue
-						}
-					}
-				}
-
-				// 3. Ensure employee is assigned to the project
-				existingAssignment, assignErr := s.employeeService.GetActiveAssignment(txCtx, projectID, emp.ID)
-				if assignErr != nil || existingAssignment == nil {
-					// Deduce position specifically for this employee based on their timesheet entries
-					empPosition := position
-					var matchedParsedEmp *excelparser.BCCEmployeeData
-					for idx := range parsed.Employees {
-						if parsed.Employees[idx].CCCD == cccd {
-							matchedParsedEmp = &parsed.Employees[idx]
-							break
-						}
-					}
-					if matchedParsedEmp != nil && len(matchedParsedEmp.Entries) > 0 {
-						empRates := make(map[string]int64)
-						for _, entry := range matchedParsedEmp.Entries {
-							if rate, ok := parsed.ShiftRates[entry.ShiftLabel]; ok {
-								empRates[entry.ShiftLabel] = rate
-							}
-						}
-						empPosition = deducePosition(flatRates, empRates)
-					}
-
-					// Date-row templates carry each employee's position in the
-					// file's "Vị trí" column; it outranks rate-based deduction,
-					// which is meaningless for rateless files (always "phổ
-					// thông"). Blank cells keep the deduced default.
-					if formatResult.Format == excelparser.FormatDateRow &&
-						matchedParsedEmp != nil && strings.TrimSpace(matchedParsedEmp.Position) != "" {
-						empPosition = strings.TrimSpace(matchedParsedEmp.Position)
-					}
-
-					assignment := &domain.ProjectEmployee{
-						ProjectID:       projectID,
-						EmployeeID:      emp.ID,
-						EmployeeName:    emp.Fullname,
-						EmployeeCCCD:    emp.CCCD,
-						Position:        empPosition,
-						StartDate:       monthStartDate,
-						PaymentSchedule: string(domain.PaymentScheduleWeekly),
-						// New assignments start advance-request enabled (explicit;
-						// guards later full-row Saves from persisting the zero value).
-						AdvanceRequestEnabled: true,
-						CreatedBy:             uploaderID,
-					}
-
-					if createErr := s.employeeService.CreateAssignment(txCtx, assignment); createErr != nil {
-						slog.Error("BCCImport: failed to auto-assign employee to project",
-							"employee_id", emp.ID, "project_id", projectID, "error", createErr)
-						importErrors = append(importErrors, domain.ImportError{
-							Employee: fullName,
-							Reason:   fmt.Sprintf("không thể phân công nhân viên %s vào dự án: %v", fullName, createErr),
-						})
-					} else {
-						slog.Info("BCCImport: auto-assigned employee to project",
-							"employee_id", emp.ID, "project_id", projectID,
-							"position", empPosition, "start_date", monthStartDate.Format("2006-01-02"))
-					}
-				}
-			}
-			return nil
-		})
-		if stkErr != nil {
-			slog.Error("BCCImport: STK auto-creation transaction failed", "error", stkErr)
-		}
-	}
+	stkRows := collectSTKRows(xf, parsed, formatResult.Format)
+	stkNameByCCCD, stkImportErrors := s.autoCreateEmployeesFromSTK(
+		ctx, stkRows, parsed, formatResult.Format,
+		projectID, uploaderID, position, monthStartDate, flatRates,
+	)
+	importErrors := stkImportErrors
 
 	// 7. Load all active project employees, build lookup maps.
 	assignments, err := s.employeeService.GetActiveAssignments(ctx, projectID)
@@ -373,12 +169,7 @@ func (s *BCCImportService) processAssetData(
 	}
 
 	// 8. Build timesheet entries, collecting employee errors.
-	// Label-keyed resolution (column code = payrate shift leaf) is a date-row
-	// template concept: only there do column codes like NT/T7/CN name payrate
-	// leaves. Legacy rateless files must keep the calendar path — their CN
-	// means "ca ngày" while a date-row config's CN leaf means Chủ Nhật, so
-	// running label-first on them silently re-prices old templates.
-	labelKeyedFile := ratelessFile && formatResult.Format == excelparser.FormatDateRow
+	labelKeyedFile := useLabelKeyedResolution(ratelessFile, formatResult.Format)
 	var (
 		entries             []domainservices.BulkCreateTimesheetEntry
 		flexibleEmployeeIDs = make(map[uint]struct{})
@@ -400,34 +191,14 @@ func (s *BCCImportService) processAssetData(
 			continue
 		}
 
-		// STK cross-check: if the same CCCD appears in STK with a different name,
-		// the BCC sheet likely has a CCCD typo (one CCCD assigned to two different people).
-		if stkName, ok := stkNameByCCCD[emp.CCCD]; ok && stkName != "" {
-			// Normalize both names for comparison: trim, NFC, lower-case. NFC is
-			// important because Excel files from macOS can ship Vietnamese text
-			// in NFD form, which would otherwise produce a spurious mismatch.
-			bccNorm := bccNormName(emp.FullName)
-			stkNorm := bccNormName(stkName)
-			if bccNorm != stkNorm {
-				// Names differ after NFC normalization. Try a diacritic-stripped
-				// comparison before rejecting: a single accent typo (e.g. "Thì" vs
-				// "Thị") is data-entry noise, not a real CCCD mismatch. Allow the
-				// import and log a warning so the partner can correct the typo.
-				if bccNormNameLoose(emp.FullName) == bccNormNameLoose(stkName) {
-					slog.Warn("BCCImport: STK/BCC name differs only by diacritic, allowing import",
-						"cccd", emp.CCCD, "bcc_name", emp.FullName, "stk_name", stkName)
-				} else {
-					cleanBCCName := strings.TrimSpace(emp.FullName)
-					cleanSTKName := strings.TrimSpace(stkName)
-					importErrors = append(importErrors, domain.ImportError{
-						Row:      rowNum,
-						Employee: cleanBCCName,
-						Reason:   fmt.Sprintf("CCCD %s thuộc về %s (theo STK), không phải %s — có thể sai CCCD", emp.CCCD, cleanSTKName, cleanBCCName),
-					})
-					rowNum++
-					continue
-				}
-			}
+		// STK cross-check: if the same CCCD appears in STK with a different
+		// name, the BCC sheet likely has a CCCD typo (one CCCD assigned to
+		// two different people).
+		if mismatch := crossCheckSTKName(emp, stkNameByCCCD); mismatch != nil {
+			mismatch.Row = rowNum
+			importErrors = append(importErrors, *mismatch)
+			rowNum++
+			continue
 		}
 
 		if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {
@@ -540,23 +311,12 @@ func (s *BCCImportService) processAssetData(
 			}
 		}
 		if len(importErrors) > 0 {
-			detail := marshalErrors(importErrors)
-			now := clock.Now()
-			stats := BCCImportStats{
+			return s.failWithImportErrors(ctx, createdAsset, uploaderID, BCCImportStats{
 				ProjectID:    projectID,
 				OriginalName: filename,
 				ForMonth:     effectiveMonth,
-				Status:       "failed",
 				TotalRows:    totalRows,
-				ErrorCount:   len(importErrors),
-				ErrorDetail:  detail,
-				ProcessedAt:  &now,
-			}
-			if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
-				slog.Error("BCCImport: metadata update failed for empty-entries path", "asset_id", createdAsset.ID, "error", metaErr)
-			}
-			return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt),
-				fmt.Errorf("import failed: %s", FirstErrorReason(detail))
+			}, importErrors)
 		}
 		return fail("failed", reason)
 	}
@@ -601,9 +361,33 @@ func (s *BCCImportService) processAssetData(
 		ErrorDetail:  errDetail,
 		ProcessedAt:  &now,
 	}
-	if metaErr := s.updateAssetMetadata(ctx, createdAsset.ID, &stats); metaErr != nil {
-		slog.Error("BCCImport: metadata update failed for success path", "asset_id", createdAsset.ID, "error", metaErr)
-	}
+	return s.finalizeBCCImport(ctx, createdAsset, uploaderID, stats)
+}
 
-	return buildResult(stats, createdAsset.ID, uploaderID, createdAsset.CreatedAt), nil
+// parseLegacyRoute handles the default (BCC-sheet-named) dispatch branch: the
+// "BCC" sheet name can carry a date-row layout (partner T09), so route by
+// parse outcome — ordered strategies run until one actually reads the file.
+//
+// Load-bearing contract: on success the winner's format REPLACES the
+// sheet-name detection in formatResult. The downstream behavior keys
+// (collectSTKRows, resolveImportPosition, useLabelKeyedResolution) read the
+// winner, not what DetectFormat guessed.
+func parseLegacyRoute(xf *excelize.File, formatResult *excelparser.FormatDetectionResult, filename string) (*excelparser.BCCImportData, error) {
+	parsed, winner, err := excelparser.ParseBCCData(xf)
+	if err == nil {
+		slog.Info("BCCImport: strategy routing picked parser",
+			"format", winner, "filename", filename)
+		formatResult.Format = winner
+	}
+	return parsed, err
+}
+
+// useLabelKeyedResolution reports whether entries resolve payrate leaves by
+// column code (label) first. Label-keyed resolution is a date-row template
+// concept: only there do column codes like NT/T7/CN name payrate leaves.
+// Legacy rateless files must keep the calendar path — their CN means "ca
+// ngày" while a date-row config's CN leaf means Chủ Nhật, so running
+// label-first on them silently re-prices old templates.
+func useLabelKeyedResolution(ratelessFile bool, format excelparser.BCCFormat) bool {
+	return ratelessFile && format == excelparser.FormatDateRow
 }

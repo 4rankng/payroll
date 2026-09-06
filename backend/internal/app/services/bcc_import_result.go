@@ -32,6 +32,20 @@ func failedBCCImportResult(
 	return buildResult(stats, asset.ID, job.UploadedBy, asset.CreatedAt)
 }
 
+// finalizeBCCImport persists the final stats to the asset's import metadata
+// and builds the API result for a finished (completed or failed) import.
+func (s *BCCImportService) finalizeBCCImport(
+	ctx context.Context,
+	asset *domain.Asset,
+	uploaderID uint,
+	stats BCCImportStats,
+) (*BCCImportResult, error) {
+	if err := s.updateAssetMetadata(ctx, asset.ID, &stats); err != nil {
+		slog.Error("BCCImport: metadata update failed for final stats", "asset_id", asset.ID, "error", err)
+	}
+	return buildResult(stats, asset.ID, uploaderID, asset.CreatedAt), nil
+}
+
 func (s *BCCImportService) failWithImportErrors(
 	ctx context.Context,
 	createdAsset *domain.Asset,
